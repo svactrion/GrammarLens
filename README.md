@@ -1,4 +1,4 @@
-# GrammarLens (working title)
+# GrammarLens
 
 **An AI-powered grammar coach for people who learned English by speaking it — not by studying it.**
 
@@ -53,6 +53,6 @@ Flutter · LLM API (structured JSON feedback) · AI-assisted development (Claude
 
 ## About
 
-Built by [Ahmet Emin Tayfur](linkedin.com/in/ahmettayfur/) — statistics graduate moving
+Built by [Ahmet Emin Tayfur](https://www.linkedin.com/in/ahmettayfur) — statistics graduate moving
 into product management. This repo doubles as my learning-in-public log;
-process write-up coming on [Medium](medium.com/@ahmet-tayfur).
+process write-up coming on [Medium](https://medium.com/@ahmet-tayfur).
