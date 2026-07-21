@@ -34,7 +34,7 @@ This project follows a structured product process, documented as it happens:
 - [ ] User research (interviews with IELTS candidates)
 - [ ] Competitor analysis
 - [x] PRD → [`/docs/prd.md`](docs/prd.md)
-- [ ] MVP prototype (Flutter + LLM API)
+- [x] MVP prototype (Flutter + LLM API)
 - [ ] User testing (5+ testers)
 - [ ] Iteration based on feedback
 
