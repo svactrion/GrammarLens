@@ -38,8 +38,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
               timestamp: now,
             ))
         .toList();
-    if (entries.isNotEmpty) {
+    if (entries.isEmpty) return;
+    try {
       await widget.storageService.insertErrors(entries);
+    } catch (e) {
+      // Don't let a storage failure pass silently — without this the Review
+      // tab looks broken later with no clue why (errors were never recorded).
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save this to your error profile: $e')),
+      );
     }
   }
 

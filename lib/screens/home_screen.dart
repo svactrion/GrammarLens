@@ -4,7 +4,7 @@ import '../data/topics.dart';
 import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
-import 'practice_screen.dart';
+import 'practice_launch.dart';
 
 class HomeScreen extends StatefulWidget {
   final ClaudeService claudeService;
@@ -23,29 +23,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _generating = false;
 
-  Future<void> _startPractice(Topic topic) async {
-    setState(() => _generating = true);
-    try {
-      final practiceSet = await widget.claudeService.generatePracticeSet(topic);
-      if (!mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PracticeScreen(
-            topic: topic,
-            practiceSet: practiceSet,
-            claudeService: widget.claudeService,
-            storageService: widget.storageService,
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not generate practice: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _generating = false);
-    }
+  Future<void> _startPractice(Topic topic) {
+    return launchPracticeSet(
+      context: context,
+      topic: topic,
+      claudeService: widget.claudeService,
+      storageService: widget.storageService,
+      setGenerating: (value) {
+        if (mounted) setState(() => _generating = value);
+      },
+      errorPrefix: 'Could not generate practice',
+    );
   }
 
   @override
