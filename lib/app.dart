@@ -21,7 +21,16 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   Widget build(BuildContext context) {
     final screens = [
       HomeScreen(claudeService: _claudeService, storageService: _storageService),
-      ReviewScreen(claudeService: _claudeService, storageService: _storageService),
+      ReviewScreen(
+        claudeService: _claudeService,
+        storageService: _storageService,
+        // IndexedStack keeps this screen's State alive across tab switches
+        // instead of recreating it, so initState alone won't pick up errors
+        // saved while a different tab (e.g. after a Home practice session)
+        // was active. Passing whether this tab is currently selected lets
+        // ReviewScreen detect "just became visible" and reload then.
+        active: _tabIndex == 1,
+      ),
     ];
 
     return MaterialApp(

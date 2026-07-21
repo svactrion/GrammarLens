@@ -51,6 +51,14 @@ Why: documented in the PRD.
 
 Flutter · LLM API (structured JSON feedback) · AI-assisted development (Claude Code)
 
+## Dev Notes
+
+- Run the web build with a fixed port, e.g.
+  `flutter run -d chrome --web-port=5555 --dart-define=ANTHROPIC_API_KEY=...`.
+  The local error profile is stored in the browser's IndexedDB, which is
+  scoped per-origin *including port* — a random port each run means a fresh,
+  empty database every time.
+
 ## About
 
 Built by [Ahmet Emin Tayfur](https://www.linkedin.com/in/ahmettayfur) — statistics graduate moving
