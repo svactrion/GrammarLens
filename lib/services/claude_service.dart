@@ -34,6 +34,10 @@ class ClaudeService {
         'content-type': 'application/json',
         'x-api-key': _apiKey,
         'anthropic-version': _apiVersion,
+        // Allows direct browser calls to the Anthropic API, bypassing CORS.
+        // Needed only for local prototype testing on web; mobile builds
+        // (iOS/Android) don't hit CORS and don't need this header.
+        'anthropic-dangerous-direct-browser-access': 'true',
       };
 
   Future<PracticeSet> generatePracticeSet(Topic topic) async {
