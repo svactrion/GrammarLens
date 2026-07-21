@@ -31,9 +31,9 @@ app can't build a personalized curriculum from your own writing.
 
 This project follows a structured product process, documented as it happens:
 
-- [x] User research (interviews with IELTS candidates)
+- [ ] User research (interviews with IELTS candidates)
 - [ ] Competitor analysis
-- [ ] PRD → [`/docs/prd.md`](docs/prd.md)
+- [x] PRD → [`/docs/prd.md`](docs/prd.md)
 - [ ] MVP prototype (Flutter + LLM API)
 - [ ] User testing (5+ testers)
 - [ ] Iteration based on feedback
