@@ -4,7 +4,7 @@ import '../data/topics.dart';
 import '../models/error_entry.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
-import 'practice_screen.dart';
+import 'practice_launch.dart';
 
 /// Resurfaces the user's weak spots and lets them launch a freshly
 /// generated set targeting the same error type (PRD §4 step 5 — the
@@ -33,34 +33,33 @@ class _ReviewScreenState extends State<ReviewScreen> {
     _weakSpots = widget.storageService.getWeakSpots();
   }
 
-  Future<void> _practiceWeakSpot(WeakSpot spot) async {
+  void _reloadWeakSpots() {
+    // Block body, NOT `=> _weakSpots = ...`: an arrow body's value is the
+    // assignment's value (a Future here), and setState() asserts in debug
+    // mode if its callback returns one — "setState() callback argument
+    // returned a Future." A block body with the assignment as a statement
+    // has no return value, so the assert never sees the Future.
+    setState(() {
+      _weakSpots = widget.storageService.getWeakSpots();
+    });
+  }
+
+  Future<void> _practiceWeakSpot(WeakSpot spot) {
     final topic = kTopics.firstWhere(
       (t) => t.id.name == spot.topicId,
       orElse: () => kTopics.first,
     );
-    setState(() => _generating = true);
-    try {
-      final practiceSet = await widget.claudeService.generatePracticeSet(topic);
-      if (!mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PracticeScreen(
-            topic: topic,
-            practiceSet: practiceSet,
-            claudeService: widget.claudeService,
-            storageService: widget.storageService,
-          ),
-        ),
-      );
-      setState(() => _weakSpots = widget.storageService.getWeakSpots());
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not generate review set: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _generating = false);
-    }
+    return launchPracticeSet(
+      context: context,
+      topic: topic,
+      claudeService: widget.claudeService,
+      storageService: widget.storageService,
+      setGenerating: (value) {
+        if (mounted) setState(() => _generating = value);
+      },
+      errorPrefix: 'Could not generate review set',
+      onReturned: _reloadWeakSpots,
+    );
   }
 
   @override
@@ -72,10 +71,33 @@ class _ReviewScreenState extends State<ReviewScreen> {
           : FutureBuilder<List<WeakSpot>>(
               future: _weakSpots,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState != ConnectionState.done) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final spots = snapshot.data!;
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline, size: 40),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Could not load your error profile.\n${snapshot.error}',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: _reloadWeakSpots,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                final spots = snapshot.data ?? const <WeakSpot>[];
                 if (spots.isEmpty) {
                   return const Center(
                     child: Padding(
