@@ -5,6 +5,7 @@ import '../models/practice_set.dart';
 import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../utils/error_banner.dart';
 import 'results_screen.dart';
 
 class PracticeScreen extends StatefulWidget {
@@ -42,15 +43,15 @@ class _PracticeScreenState extends State<PracticeScreen> {
           builder: (_) => ResultsScreen(
             topic: widget.topic,
             result: result,
+            practiceSet: widget.practiceSet,
+            answers: Map.of(_answers),
             storageService: widget.storageService,
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not score answers: $e')),
-      );
+      showErrorSnackBar(context, 'Could not score answers: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

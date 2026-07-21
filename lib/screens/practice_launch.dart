@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../utils/error_banner.dart';
 import 'practice_screen.dart';
 
 /// Generates a fresh practice set for [topic] and pushes [PracticeScreen].
@@ -41,9 +42,7 @@ Future<void> launchPracticeSet({
     onReturned?.call();
   } catch (e) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$errorPrefix: $e')),
-    );
+    showErrorSnackBar(context, '$errorPrefix: $e');
   } finally {
     setGenerating(false);
   }

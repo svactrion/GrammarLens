@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../models/error_entry.dart';
+import '../models/practice_set.dart';
 import '../models/scoring_result.dart';
 import '../models/topic.dart';
 import '../services/storage_service.dart';
+import '../utils/error_banner.dart';
 
 class ResultsScreen extends StatefulWidget {
   final Topic topic;
   final ScoringResult result;
+  final PracticeSet practiceSet;
+  final Map<String, String> answers;
   final StorageService storageService;
 
   const ResultsScreen({
     super.key,
     required this.topic,
     required this.result,
+    required this.practiceSet,
+    required this.answers,
     required this.storageService,
   });
 
@@ -31,11 +37,21 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Future<void> _saveErrors() async {
     final now = DateTime.now();
     final entries = widget.result.feedback
-        .where((f) => !f.isCorrect && f.errorType != null)
+        .where((f) =>
+            !f.isCorrect &&
+            f.errorType != null &&
+            !nonGrammarErrorTypes.contains(f.errorType))
         .map((f) => ErrorEntry(
               topicId: widget.topic.id.name,
               errorType: f.errorType!,
               timestamp: now,
+              prompt: widget.practiceSet.items
+                  .firstWhere((item) => item.id == f.itemId)
+                  .prompt,
+              userAnswer: widget.answers[f.itemId],
+              correctedAnswer: f.correctedAnswer,
+              explanation: f.explanation,
+              rule: f.rule,
             ))
         .toList();
     if (entries.isEmpty) return;
@@ -45,9 +61,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       // Don't let a storage failure pass silently — without this the Review
       // tab looks broken later with no clue why (errors were never recorded).
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save this to your error profile: $e')),
-      );
+      showErrorSnackBar(context, 'Could not save this to your error profile: $e');
     }
   }
 
