@@ -6,6 +6,7 @@ import '../models/scoring_result.dart';
 import '../models/topic.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
+import '../utils/text_format.dart';
 
 class ResultsScreen extends StatefulWidget {
   final Topic topic;
@@ -74,22 +75,31 @@ class _ResultsScreenState extends State<ResultsScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            '${result.correctCount} / ${result.totalCount} correct',
+            result.skippedCount > 0
+                ? '${result.correctCount}/${result.totalCount} correct '
+                    '· ${result.skippedCount} skipped'
+                : '${result.correctCount}/${result.totalCount} correct',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
           for (final item in result.feedback) ...[
             Card(
-              color: item.isCorrect
-                  ? Colors.green.withValues(alpha: 0.1)
-                  : Colors.red.withValues(alpha: 0.1),
+              color: item.isSkipped
+                  ? Colors.blueGrey.withValues(alpha: 0.1)
+                  : item.isCorrect
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.isCorrect ? 'Correct' : 'Needs work',
+                      item.isSkipped
+                          ? 'Skipped'
+                          : item.isCorrect
+                              ? 'Correct'
+                              : 'Needs work',
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: 4),
@@ -103,7 +113,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     if (item.rule != null) ...[
                       const SizedBox(height: 6),
                       Text(
-                        item.rule!,
+                        humanizeSlug(item.rule!),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
