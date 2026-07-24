@@ -140,7 +140,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                                     mistakes.first.rule != null) ...[
                                   const SizedBox(height: 6),
                                   Text(
-                                    mistakes.first.rule!,
+                                    humanizeSlug(mistakes.first.rule!),
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),

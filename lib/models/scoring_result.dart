@@ -6,6 +6,8 @@ class ScoringResult {
 
   const ScoringResult({required this.topicId, required this.feedback});
 
-  int get correctCount => feedback.where((f) => f.isCorrect).length;
+  int get correctCount =>
+      feedback.where((f) => f.isCorrect && !f.isSkipped).length;
+  int get skippedCount => feedback.where((f) => f.isSkipped).length;
   int get totalCount => feedback.length;
 }

@@ -1,3 +1,5 @@
+import 'error_entry.dart';
+
 class ItemFeedback {
   final String itemId;
   final bool isCorrect;
@@ -14,6 +16,13 @@ class ItemFeedback {
     required this.correctedAnswer,
     required this.explanation,
   });
+
+  /// True when the user left this item blank rather than answering it
+  /// incorrectly — blank isn't wrong, so it shouldn't score or display as
+  /// a mistake (mirrors the exclusion already applied to the error profile,
+  /// see [nonGrammarErrorTypes]).
+  bool get isSkipped =>
+      errorType != null && nonGrammarErrorTypes.contains(errorType);
 
   factory ItemFeedback.fromJson(Map<String, dynamic> json) => ItemFeedback(
         itemId: json['itemId'] as String,
