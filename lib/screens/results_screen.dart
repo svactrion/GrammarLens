@@ -92,10 +92,23 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       item.isCorrect ? 'Correct' : 'Needs work',
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
-                    if (item.rule != null) Text('Rule: ${item.rule}'),
-                    Text('Corrected: ${item.correctedAnswer}'),
                     const SizedBox(height: 4),
-                    Text(item.explanation),
+                    Text(item.explanation, style: Theme.of(context).textTheme.bodyMedium),
+                    const SizedBox(height: 4),
+                    if ((widget.answers[item.itemId] ?? '').isNotEmpty) ...[
+                      Text('You wrote: ${widget.answers[item.itemId]}'),
+                      const SizedBox(height: 4),
+                    ],
+                    Text('Corrected: ${item.correctedAnswer}'),
+                    if (item.rule != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        item.rule!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
                   ],
                 ),
               ),

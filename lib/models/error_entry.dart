@@ -53,15 +53,24 @@ class ErrorEntry {
 }
 
 /// Aggregated view of an error pattern: how often this topic × error type
-/// combination has been logged, driving the Review tab.
+/// combination has been logged and when it was last seen, driving the
+/// Review tab. [latestExplanation]/[latestRule] come from the most recent
+/// logged mistake in the group, so Review can lead with plain language
+/// instead of the rule name (PRD §2.1, Theme 2 and 4).
 class WeakSpot {
   final String topicId;
   final String errorType;
   final int frequency;
+  final DateTime lastSeen;
+  final String? latestExplanation;
+  final String? latestRule;
 
   const WeakSpot({
     required this.topicId,
     required this.errorType,
     required this.frequency,
+    required this.lastSeen,
+    this.latestExplanation,
+    this.latestRule,
   });
 }
