@@ -54,10 +54,11 @@ class ClaudeService {
                 'type': 'string',
                 'enum': ['fill_in_blank', 'error_correction', 'sentence_writing'],
               },
-              'prompt': {'type': 'string'},
+              'context': {'type': 'string'},
+              'instruction': {'type': 'string'},
               'hint': {'type': 'string'},
             },
-            'required': ['id', 'type', 'prompt'],
+            'required': ['id', 'type', 'instruction'],
             'additionalProperties': false,
           },
         },
@@ -123,7 +124,7 @@ class ClaudeService {
         .map((item) => {
               'id': item.id,
               'type': item.type.toJson(),
-              'prompt': item.prompt,
+              'prompt': item.fullText,
               'userAnswer': answers[item.id] ?? '',
             })
         .toList();
@@ -144,9 +145,11 @@ class ClaudeService {
     };
 
     final json = await _post(body);
-    final feedback = (json['feedback'] as List)
-        .map((e) => ItemFeedback.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final feedback = (json['feedback'] as List).map((e) {
+      final map = e as Map<String, dynamic>;
+      final userAnswer = answers[map['itemId'] as String] ?? '';
+      return ItemFeedback.fromJson(map, isSkipped: userAnswer.trim().isEmpty);
+    }).toList();
     return ScoringResult(topicId: practiceSet.topicId, feedback: feedback);
   }
 
@@ -183,13 +186,32 @@ You are an IELTS grammar coach generating practice exercises for a Turkish
 native speaker at B1-C1 English level. Write natural, exam-relevant sentences.
 Keep each item self-contained and unambiguous.
 
+Each item's text is split into two fields, shown to the learner as two
+visually separate blocks: "context" sets the scene (a scenario, background,
+or — for error_correction — the flawed sentence itself), and "instruction"
+is the short, direct task the learner must actually perform. Keep
+"instruction" as one concise sentence. Leave "context" empty only when the
+item is simple enough to stand alone as a single instruction (e.g. a short
+fill_in_blank sentence with nothing to set up).
+
 Weight practice toward production, not recognition: most learners at this
 level can already understand the target structure — their struggle is
-producing it themselves. For sentence_writing items, describe a realistic
-situation or context (e.g. talking about weekend plans, describing a past
-job) and ask the learner to write their own original sentence using the
-target structure. Never ask them to just copy, translate, or complete a
-template. Return only the structured output — no extra commentary.
+producing it themselves. For sentence_writing items, put a realistic
+situation in "context" (e.g. talking about weekend plans, describing a past
+job) and the actual task in "instruction" — for example:
+context: "You are writing an email to a colleague about a project deadline
+that is approaching."
+instruction: "Using 'should' or 'must', write one sentence explaining what
+you or your team needs to do before the deadline."
+Never ask the learner to just copy, translate, or complete a template.
+
+For error_correction items, put a sentence containing exactly one grammar
+mistake in "context", and in "instruction" tell the learner what format to
+answer in, e.g. "Find the mistake and rewrite the full corrected sentence."
+Always ask for the full rewritten sentence, not just the fixed word or
+phrase.
+
+Return only the structured output — no extra commentary.
 ''';
 
   static const _scoringSystemPrompt = '''
@@ -206,5 +228,23 @@ grammar rule in the "rule" field and be precise and consistent about the
 "errorType" slug (e.g. "gerund_vs_infinitive", "modal_past_form") so it can
 be tracked over time — these are secondary/reference detail, not the
 headline of the explanation.
+
+For error_correction items specifically, grade the grammar, not the format.
+If the learner correctly identifies and fixes the target mistake but writes
+only the corrected word/phrase instead of the full rewritten sentence, still
+mark isCorrect: true — they demonstrated the grammar knowledge being tested.
+In that case, append a short, friendly note to the end of the explanation:
+"Right fix — next time write out the full sentence for practice." Only mark
+isCorrect: false on an error_correction item when the grammatical correction
+itself is wrong, incomplete (e.g. it missed a second error in the sentence),
+or introduces a new mistake.
+
+Some items will have an empty userAnswer because the learner left them
+blank. Still give your best correctedAnswer and a short explanation of what
+was expected for these — that reference content is shown to the learner
+regardless. But don't try to phrase isCorrect or errorType around "blank" in
+any special way; the app detects blank answers itself from the raw input and
+ignores your isCorrect/errorType values for those items, so just score them
+as you would any wrong answer.
 ''';
 }

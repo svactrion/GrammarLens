@@ -78,7 +78,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
           for (final item in widget.practiceSet.items) ...[
             Text(_itemLabel(item.type), style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 4),
-            Text(item.prompt, style: Theme.of(context).textTheme.bodyLarge),
+            if (item.context != null && item.context!.trim().isNotEmpty) ...[
+              Text(item.context!, style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: 4),
+            ],
+            Text(
+              item.instruction,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
             if (item.hint != null) ...[
               const SizedBox(height: 4),
               Text(item.hint!, style: Theme.of(context).textTheme.bodySmall),
