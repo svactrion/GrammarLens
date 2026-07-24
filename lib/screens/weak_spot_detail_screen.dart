@@ -69,18 +69,27 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final ruleTitle = humanizeSlug(widget.spot.errorType);
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(ruleTitle)),
+      appBar: AppBar(title: Text(widget.topic.title)),
       body: _generating
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text(ruleTitle, style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  '${widget.topic.title} · seen ${widget.spot.frequency}x',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  ruleTitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 FutureBuilder<List<ErrorEntry>>(
@@ -109,7 +118,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                     }
                     final mistakes = snapshot.data ?? const <ErrorEntry>[];
                     final recap = mistakes.isNotEmpty
-                        ? (mistakes.first.rule ?? mistakes.first.explanation)
+                        ? (mistakes.first.explanation ?? mistakes.first.rule)
                         : null;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,11 +126,27 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                         Card(
                           child: Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Text(
-                              recap ??
-                                  'You\'ve had trouble with $ruleTitle in '
-                                      '${widget.topic.title}. Practicing it '
-                                      'again will help reinforce the rule.',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  recap ??
+                                      'You\'ve had trouble with $ruleTitle in '
+                                          '${widget.topic.title}. Practicing it '
+                                          'again will help reinforce it.',
+                                  style: theme.textTheme.bodyLarge,
+                                ),
+                                if (mistakes.isNotEmpty &&
+                                    mistakes.first.rule != null) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    mistakes.first.rule!,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ),

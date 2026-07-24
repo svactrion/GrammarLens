@@ -77,9 +77,9 @@ class ClaudeService {
         {
           'role': 'user',
           'content': 'Topic: "${topic.title}" — ${topic.description}\n'
-              'Generate 5 fresh practice items mixing fill_in_blank, '
-              'error_correction, and sentence_writing types. Each "id" must '
-              'be a short unique slug.',
+              'Generate exactly 5 fresh practice items: 2 sentence_writing, '
+              '2 error_correction, and 1 fill_in_blank. Each "id" must be a '
+              'short unique slug.',
         },
       ],
     };
@@ -181,15 +181,30 @@ class ClaudeService {
   static const _generationSystemPrompt = '''
 You are an IELTS grammar coach generating practice exercises for a Turkish
 native speaker at B1-C1 English level. Write natural, exam-relevant sentences.
-Keep each item self-contained and unambiguous. Return only the structured
-output — no extra commentary.
+Keep each item self-contained and unambiguous.
+
+Weight practice toward production, not recognition: most learners at this
+level can already understand the target structure — their struggle is
+producing it themselves. For sentence_writing items, describe a realistic
+situation or context (e.g. talking about weekend plans, describing a past
+job) and ask the learner to write their own original sentence using the
+target structure. Never ask them to just copy, translate, or complete a
+template. Return only the structured output — no extra commentary.
 ''';
 
   static const _scoringSystemPrompt = '''
 You are an IELTS grammar coach scoring a learner's practice answers. For each
-item, judge correctness, name the specific grammar rule involved, give the
-corrected version, and a short (1-2 sentence) explanation a B1-C1 learner can
-act on. Be precise and consistent about the error type (e.g.
-"gerund_vs_infinitive", "modal_past_form") so it can be tracked over time.
+item, judge correctness, give the corrected version, and a short (1-2
+sentence) explanation a B1-C1 learner can act on.
+
+Lead the explanation with plain language: describe what sounds wrong and
+what sounds more natural, the way a fluent friend would, not a textbook.
+Avoid grammar terminology in the explanation where possible — e.g. say "the
+timing word doesn't match the rest of the sentence" rather than opening with
+a term like "Past Perfect Continuous". Separately, still name the specific
+grammar rule in the "rule" field and be precise and consistent about the
+"errorType" slug (e.g. "gerund_vs_infinitive", "modal_past_form") so it can
+be tracked over time — these are secondary/reference detail, not the
+headline of the explanation.
 ''';
 }
