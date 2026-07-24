@@ -28,20 +28,31 @@ extension PracticeItemTypeJson on PracticeItemType {
 class PracticeItem {
   final String id;
   final PracticeItemType type;
-  final String prompt;
+  final String? context;
+  final String instruction;
   final String? hint;
 
   const PracticeItem({
     required this.id,
     required this.type,
-    required this.prompt,
+    this.context,
+    required this.instruction,
     this.hint,
   });
 
   factory PracticeItem.fromJson(Map<String, dynamic> json) => PracticeItem(
         id: json['id'] as String,
         type: PracticeItemTypeJson.fromJson(json['type'] as String),
-        prompt: json['prompt'] as String,
+        context: json['context'] as String?,
+        instruction: json['instruction'] as String,
         hint: json['hint'] as String?,
       );
+
+  /// [context] and [instruction] combined into one string, for places that
+  /// need the item's full text as a single value (scoring payload, saved
+  /// error entries) rather than the two display blocks.
+  String get fullText =>
+      (context == null || context!.trim().isEmpty)
+          ? instruction
+          : '$context\n$instruction';
 }

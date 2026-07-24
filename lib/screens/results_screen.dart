@@ -38,17 +38,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Future<void> _saveErrors() async {
     final now = DateTime.now();
     final entries = widget.result.feedback
-        .where((f) =>
-            !f.isCorrect &&
-            f.errorType != null &&
-            !nonGrammarErrorTypes.contains(f.errorType))
+        .where((f) => !f.isCorrect && !f.isSkipped && f.errorType != null)
         .map((f) => ErrorEntry(
               topicId: widget.topic.id.name,
               errorType: f.errorType!,
               timestamp: now,
               prompt: widget.practiceSet.items
                   .firstWhere((item) => item.id == f.itemId)
-                  .prompt,
+                  .fullText,
               userAnswer: widget.answers[f.itemId],
               correctedAnswer: f.correctedAnswer,
               explanation: f.explanation,

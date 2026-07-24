@@ -1,9 +1,3 @@
-/// errorType values the LLM uses to mean "the user didn't answer this item"
-/// rather than an actual grammar mistake. These are never written to the
-/// error profile — an unanswered item says nothing about the user's grammar,
-/// so counting it would pollute Review with false weak spots.
-const Set<String> nonGrammarErrorTypes = {'no_response', 'missing_response'};
-
 class ErrorEntry {
   final int? id;
   final String topicId;
