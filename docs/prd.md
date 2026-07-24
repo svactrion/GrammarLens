@@ -26,7 +26,64 @@ The deeper problem isn't learning a rule once — it's **retention**. Two pain p
 
 **Primary persona:** 20–30 years old, Turkish native speaker, B1–C1 English level, preparing for an exam (IELTS/TOEFL) or professional English requirement. Learned English informally (conversation, media), so speaking fluency exceeds explicit grammar accuracy. Studies roughly 1 hour/day; realistic in-app attention span is a 10–15 minute focused session, not the full hour.
 
-**Initial validation:** Beyond my own experience, classmates in my English course show the same pattern (e.g. widespread difficulty with modal verbs). Structured interviews with 3–5 of them are planned during the build week and will be added to this document.
+**Initial validation:** Beyond my own experience, classmates in my English course show the same pattern (e.g. widespread difficulty with modal verbs). See §2.1 for findings from four interviews conducted during the build week.
+
+## 2.1 Interview Findings
+
+Short informal interviews with four English learners (three classmates from my English course, plus a self-interview — see note below). All are fluent-but-informal speakers preparing for or affected by IELTS requirements. Findings below are paraphrased summaries of what participants reported, not verbatim transcripts.
+
+**Participants**
+
+| ID | Profile | Background |
+|----|---------|------------|
+| P1 | 24, university student | Learned English through games and Discord; strong accent and fluency, weak academic writing |
+| P2 | 27, digital marketing specialist | Erasmus experience, learned via media; wide vocabulary, struggles with IELTS grammar criteria |
+| P3 | 29, sales specialist | Uses English daily at work; high confidence, unaware of his own recurring errors |
+| P4 | 25, recent graduate | Intuitive speaker; IELTS preparation triggered overthinking that disrupted natural fluency |
+
+**Note on P4:** P4 is the author of this document (self-interview). Included deliberately — I am within the target segment — and flagged here for transparency.
+
+### Theme 1 — Fluency without explicit rule knowledge
+
+All four participants can communicate comfortably but cannot name or apply the rules behind what they produce. P1 reported being told repeatedly about tense inconsistency in IELTS writing (starting a sentence in present, ending in past) and having essentially no working model of English punctuation. P4 described knowing structures intuitively but freezing once forced to identify them by name.
+
+*Confirms the core problem statement in §1.*
+
+### Theme 2 — Grammar terminology is a barrier, not a help
+
+P1 reported that being told to "use Past Perfect Continuous" is meaningless to him even though he uses the structure daily. P4 reported that explanations referencing terms like "noun clause" are harder to parse than the mistake itself. Both prefer feedback phrased as "this sounds more natural" over rule-based correction.
+
+*Challenges the current UI: GrammarLens surfaces rule names (e.g. "Gerund vs. Infinitive") as primary labels.*
+
+### Theme 3 — Multiple-choice and fill-in-the-blank practice feels useless
+
+P1 reported that gap-fill exercises frustrate him because real communication never presents blanks with options. P2 reported that selecting answers doesn't improve her English since comprehension isn't her problem — production is. P3 avoids structured grammar study entirely and only does mock tests.
+
+*Direct tension with the MVP's current question mix, which is majority fill-in-the-blank and error-correction.*
+
+### Theme 4 — Demand for personalized error statistics
+
+P3's stated ideal tool tracks his chronic mistakes and reports their frequency (e.g. how often he drops third-person -s, or substitutes simple past for present perfect) without teaching rules at all. P2 wants to be pushed beyond her habitual sentence patterns rather than just corrected.
+
+*Strongly validates the error-profile and Review features — the product's main differentiator.*
+
+### Theme 5 — Correction timing and tone affect willingness to practice
+
+P4 reported that real-time correction during speaking damages confidence and disrupts flow, preferring a summary after finishing. P2 reported that beginner-level apps feel condescending to advanced learners.
+
+*Implication: feedback should arrive after completion (as it currently does) and should never be pitched at beginner level.*
+
+### Tensions and surprises
+
+1. **The strongest validation and the strongest challenge came from the same segment.** Participants want personalized error tracking (Theme 4 — what GrammarLens does well) but reject the exercise format used to collect that data (Theme 3 — what GrammarLens currently relies on).
+2. **Rule names may be a liability.** The MVP treats rule identification as a feature; two participants treat grammar terminology as an obstacle.
+3. **P3 denies having a grammar problem while describing several.** Self-reported weak spots are unreliable — supporting the case for a system that detects errors from actual output rather than asking users what they struggle with.
+
+### Implications for Iteration 2 (candidates, not commitments)
+
+- Shift the question mix toward free production (sentence/short-paragraph writing) and reduce gap-fill weight
+- Present feedback in plain language first, with the rule name as secondary/optional detail
+- Consider surfacing error frequency statistics more prominently in Review, since this was the most requested feature
 
 ## 3. Current Alternatives & Why They Fall Short
 
