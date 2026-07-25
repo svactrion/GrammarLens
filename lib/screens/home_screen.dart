@@ -4,6 +4,7 @@ import '../data/topics.dart';
 import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../utils/loading_view.dart';
 import 'practice_launch.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -38,22 +39,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final hPad = (width * 0.045).clamp(16.0, 28.0);
     return Scaffold(
-      appBar: AppBar(title: const Text('GrammarLens')),
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+          'GrammarLens',
+          style: theme.textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
+          ),
+        ),
+      ),
       body: _generating
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingView(message: 'Preparing your questions…')
           : ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
               itemCount: kTopics.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(height: 14),
               itemBuilder: (context, index) {
                 final topic = kTopics[index];
                 return Card(
-                  child: ListTile(
-                    title: Text(topic.title),
-                    subtitle: Text(topic.description),
-                    trailing: const Icon(Icons.chevron_right),
+                  child: InkWell(
                     onTap: () => _startPractice(topic),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: theme.colorScheme.primaryContainer,
+                            foregroundColor: theme.colorScheme.onPrimaryContainer,
+                            child: const Icon(Icons.menu_book_outlined),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(topic.title, style: theme.textTheme.titleMedium),
+                                const SizedBox(height: 4),
+                                Text(
+                                  topic.description,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },

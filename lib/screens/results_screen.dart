@@ -5,7 +5,9 @@ import '../models/practice_set.dart';
 import '../models/scoring_result.dart';
 import '../models/topic.dart';
 import '../services/storage_service.dart';
+import '../theme.dart';
 import '../utils/error_banner.dart';
+import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 
 class ResultsScreen extends StatefulWidget {
@@ -66,65 +68,98 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   Widget build(BuildContext context) {
     final result = widget.result;
+    final theme = Theme.of(context);
+    final semantic = theme.extension<SemanticColors>()!;
+    final width = MediaQuery.sizeOf(context).width;
+    final hPad = (width * 0.045).clamp(16.0, 28.0);
     return Scaffold(
-      appBar: AppBar(title: const Text('Results')),
+      appBar: AppBar(title: const PageTitle('Results')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
         children: [
           Text(
             result.skippedCount > 0
                 ? '${result.correctCount}/${result.totalCount} correct '
                     '· ${result.skippedCount} skipped'
                 : '${result.correctCount}/${result.totalCount} correct',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: theme.textTheme.headlineSmall,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           for (final item in result.feedback) ...[
             Card(
               color: item.isSkipped
-                  ? Colors.blueGrey.withValues(alpha: 0.1)
+                  ? semantic.skippedBackground
                   : item.isCorrect
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : Colors.red.withValues(alpha: 0.1),
+                      ? semantic.correctBackground
+                      : semantic.incorrectBackground,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.isSkipped
-                          ? 'Skipped'
-                          : item.isCorrect
-                              ? 'Correct'
-                              : 'Needs work',
-                      style: Theme.of(context).textTheme.labelLarge,
+                    Row(
+                      children: [
+                        Icon(
+                          item.isSkipped
+                              ? Icons.remove_circle_outline_rounded
+                              : item.isCorrect
+                                  ? Icons.check_circle_rounded
+                                  : Icons.cancel_rounded,
+                          size: 20,
+                          color: item.isSkipped
+                              ? semantic.onSkippedBackground
+                              : item.isCorrect
+                                  ? semantic.onCorrectBackground
+                                  : semantic.onIncorrectBackground,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          item.isSkipped
+                              ? 'Skipped'
+                              : item.isCorrect
+                                  ? 'Correct'
+                                  : 'Needs work',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: item.isSkipped
+                                ? semantic.onSkippedBackground
+                                : item.isCorrect
+                                    ? semantic.onCorrectBackground
+                                    : semantic.onIncorrectBackground,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(item.explanation, style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 10),
+                    Text(item.explanation, style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 10),
                     if ((widget.answers[item.itemId] ?? '').isNotEmpty) ...[
                       Text('You wrote: ${widget.answers[item.itemId]}'),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                     ],
                     Text('Corrected: ${item.correctedAnswer}'),
                     if (item.rule != null) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         humanizeSlug(item.rule!),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
           ],
-          FilledButton(
-            onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
-            child: const Text('Back to topics'),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+              child: const Text('Back to topics'),
+            ),
           ),
         ],
       ),
