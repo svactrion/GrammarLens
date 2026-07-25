@@ -6,6 +6,8 @@ import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
+import '../utils/loading_view.dart';
+import '../utils/page_title.dart';
 import 'results_screen.dart';
 
 class PracticeScreen extends StatefulWidget {
@@ -70,50 +72,79 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final hPad = (width * 0.045).clamp(16.0, 28.0);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.topic.title)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          for (final item in widget.practiceSet.items) ...[
-            Text(_itemLabel(item.type), style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 4),
-            if (item.context != null && item.context!.trim().isNotEmpty) ...[
-              Text(item.context!, style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 4),
-            ],
-            Text(
-              item.instruction,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+      appBar: AppBar(title: PageTitle(widget.topic.title)),
+      body: _submitting
+          ? const LoadingView(message: 'Reviewing your answers…')
+          : ListView(
+              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
+              children: [
+                for (final item in widget.practiceSet.items) ...[
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _itemLabel(item.type),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (item.context != null &&
+                              item.context!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            Text(item.context!,
+                                style: theme.textTheme.bodyLarge),
+                            const SizedBox(height: 16),
+                            Divider(
+                                height: 1,
+                                color: theme.colorScheme.outlineVariant),
+                            const SizedBox(height: 16),
+                          ] else
+                            const SizedBox(height: 14),
+                          Text(
+                            item.instruction,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (item.hint != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              item.hint!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          TextField(
+                            decoration:
+                                const InputDecoration(hintText: 'Your answer'),
+                            onChanged: (value) => _answers[item.id] = value,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: 20),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _submit,
+                    child: const Text('Submit'),
+                  ),
+                ),
+              ],
             ),
-            if (item.hint != null) ...[
-              const SizedBox(height: 4),
-              Text(item.hint!, style: Theme.of(context).textTheme.bodySmall),
-            ],
-            const SizedBox(height: 8),
-            TextField(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Your answer',
-              ),
-              onChanged: (value) => _answers[item.id] = value,
-            ),
-            const SizedBox(height: 24),
-          ],
-          FilledButton(
-            onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Submit'),
-          ),
-        ],
-      ),
     );
   }
 }

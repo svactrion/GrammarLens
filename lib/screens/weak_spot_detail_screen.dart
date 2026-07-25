@@ -4,6 +4,8 @@ import '../models/error_entry.dart';
 import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../utils/loading_view.dart';
+import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import 'practice_launch.dart';
 
@@ -70,28 +72,37 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
   Widget build(BuildContext context) {
     final ruleTitle = humanizeSlug(widget.spot.errorType);
     final theme = Theme.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final hPad = (width * 0.045).clamp(16.0, 28.0);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.topic.title)),
+      appBar: AppBar(title: PageTitle(widget.topic.title)),
       body: _generating
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingView(message: 'Preparing your questions…')
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
               children: [
-                Text(
-                  formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
                   ruleTitle,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 FutureBuilder<List<ErrorEntry>>(
                   future: _mistakes,
                   builder: (context, snapshot) {
@@ -125,7 +136,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                       children: [
                         Card(
                           child: Padding(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(18),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -138,7 +149,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                                 ),
                                 if (mistakes.isNotEmpty &&
                                     mistakes.first.rule != null) ...[
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 8),
                                   Text(
                                     humanizeSlug(mistakes.first.rule!),
                                     style: theme.textTheme.bodySmall?.copyWith(
@@ -150,21 +161,24 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         Text(
                           'Recent mistakes',
                           style: Theme.of(context).textTheme.labelLarge,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         if (mistakes.isEmpty)
-                          const Text(
+                          Text(
                             'No detailed history stored for these mistakes yet.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           )
                         else
                           for (final mistake in mistakes) ...[
                             Card(
                               child: Padding(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(16),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -172,33 +186,36 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                                       Text(mistake.prompt!),
                                     if (mistake.userAnswer != null &&
                                         mistake.userAnswer!.isNotEmpty) ...[
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 6),
                                       Text('You wrote: ${mistake.userAnswer}'),
                                     ],
                                     if (mistake.correctedAnswer != null) ...[
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 6),
                                       Text(
                                         'Corrected: ${mistake.correctedAnswer}',
                                       ),
                                     ],
                                     if (mistake.explanation != null) ...[
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 6),
                                       Text(mistake.explanation!),
                                     ],
                                   ],
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                           ],
                       ],
                     );
                   },
                 ),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _practice,
-                  child: const Text('Practice this'),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _practice,
+                    child: const Text('Practice this'),
+                  ),
                 ),
               ],
             ),

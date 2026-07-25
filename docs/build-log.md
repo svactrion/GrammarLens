@@ -79,3 +79,15 @@ Claude session Ahmet uses for product calls — each entry is tagged
   `context` and `instruction` as separate JSON fields so the UI can render
   them as two visually distinct blocks (plain-text context, then a bold
   instruction line).
+
+## 2026-07-25
+
+- **[Engineering]** Visual identity pass: adopted Material 3 with a
+  hand-built orange/royal-blue `ColorScheme` (`lib/theme.dart`), an animated
+  `google_nav_bar` bottom nav, full-screen animated loading states for
+  generation/scoring, semantic (soft green/rose/cream) result colors via a
+  `ThemeExtension`, and centered screen headers throughout. Iterated live on
+  the iOS simulator against Ahmet's feedback each round. Light mode uses a
+  vivid orange page background with blue accents; dark mode intentionally
+  diverges to a neutral dark surface with orange/blue accents rather than a
+  dark-orange background, which read as harsh/muddy in early passes.

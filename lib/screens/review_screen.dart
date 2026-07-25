@@ -5,6 +5,7 @@ import '../models/error_entry.dart';
 import '../models/review_sort_order.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import 'weak_spot_detail_screen.dart';
 
@@ -107,7 +108,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Review'),
+        title: const PageTitle('Review'),
         actions: [
           PopupMenuButton<ReviewSortOrder>(
             initialValue: _sortOrder,
@@ -125,7 +126,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.sort),
+                  const Icon(Icons.sort_rounded),
                   const SizedBox(width: 4),
                   Text(_sortOrder.label),
                 ],
@@ -147,7 +148,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 40),
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 40,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       'Could not load your error profile.\n${snapshot.error}',
@@ -165,21 +170,38 @@ class _ReviewScreenState extends State<ReviewScreen> {
           }
           final spots = snapshot.data ?? const <WeakSpot>[];
           if (spots.isEmpty) {
-            return const Center(
+            final theme = Theme.of(context);
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'No weak spots yet. Complete a practice set to '
-                  'start building your error profile.',
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.fact_check_outlined,
+                      size: 40,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No weak spots yet. Complete a practice set to '
+                      'start building your error profile.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
           }
+          final width = MediaQuery.sizeOf(context).width;
+          final hPad = (width * 0.045).clamp(16.0, 28.0);
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
             itemCount: spots.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               final spot = spots[index];
               final topic = kTopics.firstWhere(
@@ -212,21 +234,35 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                formatFrequencyStat(
-                                  spot.frequency,
-                                  spot.lastSeen,
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
                                 ),
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.secondaryContainer,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  formatFrequencyStat(
+                                    spot.frequency,
+                                    spot.lastSeen,
+                                  ),
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSecondaryContainer,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ],
                     ),
                   ),
