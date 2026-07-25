@@ -7,6 +7,7 @@ import '../services/storage_service.dart';
 import '../utils/loading_view.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
+import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
 
 /// Shown before targeted practice starts (Iteration 1 P0, from user testing:
@@ -82,13 +83,15 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
               padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
+                    formatFrequencyStat(
+                        widget.spot.frequency, widget.spot.lastSeen),
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSecondaryContainer,
@@ -179,27 +182,11 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                             Card(
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (mistake.prompt != null)
-                                      Text(mistake.prompt!),
-                                    if (mistake.userAnswer != null &&
-                                        mistake.userAnswer!.isNotEmpty) ...[
-                                      const SizedBox(height: 6),
-                                      Text('You wrote: ${mistake.userAnswer}'),
-                                    ],
-                                    if (mistake.correctedAnswer != null) ...[
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Corrected: ${mistake.correctedAnswer}',
-                                      ),
-                                    ],
-                                    if (mistake.explanation != null) ...[
-                                      const SizedBox(height: 6),
-                                      Text(mistake.explanation!),
-                                    ],
-                                  ],
+                                child: MistakeBreakdown(
+                                  prompt: mistake.prompt,
+                                  userAnswer: mistake.userAnswer,
+                                  correctedAnswer: mistake.correctedAnswer,
+                                  explanation: mistake.explanation,
                                 ),
                               ),
                             ),

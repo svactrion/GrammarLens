@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../utils/error_banner.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
+import '../widgets/mistake_breakdown.dart';
 
 class ResultsScreen extends StatefulWidget {
   final Topic topic;
@@ -61,7 +62,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
       // Don't let a storage failure pass silently — without this the Review
       // tab looks broken later with no clue why (errors were never recorded).
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not save this to your error profile: $e');
+      showErrorSnackBar(
+          context, 'Could not save this to your error profile: $e');
     }
   }
 
@@ -72,6 +74,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
     final semantic = theme.extension<SemanticColors>()!;
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
+    final itemsById = {
+      for (final item in widget.practiceSet.items) item.id: item,
+    };
     return Scaffold(
       appBar: AppBar(title: const PageTitle('Results')),
       body: ListView(
@@ -130,14 +135,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Text(item.explanation, style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 10),
-                    if ((widget.answers[item.itemId] ?? '').isNotEmpty) ...[
-                      Text('You wrote: ${widget.answers[item.itemId]}'),
-                      const SizedBox(height: 6),
-                    ],
-                    Text('Corrected: ${item.correctedAnswer}'),
+                    const SizedBox(height: 14),
+                    MistakeBreakdown(
+                      prompt: itemsById[item.itemId]?.fullText,
+                      userAnswer: widget.answers[item.itemId],
+                      correctedAnswer: item.correctedAnswer,
+                      explanation: item.explanation,
+                    ),
                     if (item.rule != null) ...[
                       const SizedBox(height: 8),
                       Text(

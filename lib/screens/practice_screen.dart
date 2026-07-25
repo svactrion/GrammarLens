@@ -7,7 +7,6 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
 import '../utils/loading_view.dart';
-import '../utils/page_title.dart';
 import 'results_screen.dart';
 
 class PracticeScreen extends StatefulWidget {
@@ -30,7 +29,73 @@ class PracticeScreen extends StatefulWidget {
 
 class _PracticeScreenState extends State<PracticeScreen> {
   final Map<String, String> _answers = {};
+  late final Map<String, TextEditingController> _controllers;
+  int _currentIndex = 0;
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = {
+      for (final item in widget.practiceSet.items)
+        item.id: TextEditingController(),
+    };
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  bool get _isLastQuestion =>
+      _currentIndex == widget.practiceSet.items.length - 1;
+
+  bool get _currentHasAnswer {
+    final item = widget.practiceSet.items[_currentIndex];
+    // Same empty/whitespace predicate the scoring path uses to detect a
+    // skipped item — the button label must never disagree with what
+    // submitting will actually record.
+    return (_answers[item.id] ?? '').trim().isNotEmpty;
+  }
+
+  void _goBack() {
+    if (_currentIndex == 0) return;
+    setState(() => _currentIndex--);
+  }
+
+  void _advance() {
+    if (_isLastQuestion) {
+      _submit();
+    } else {
+      setState(() => _currentIndex++);
+    }
+  }
+
+  Future<void> _confirmExit() async {
+    final shouldLeave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Leave practice?'),
+        content: const Text('Your progress will be lost.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+    if (shouldLeave == true && mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  }
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
@@ -70,19 +135,74 @@ class _PracticeScreenState extends State<PracticeScreen> {
     }
   }
 
+  String _primaryLabel() {
+    if (_isLastQuestion) return 'Submit';
+    return _currentHasAnswer ? 'Next' : 'Skip';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
-    return Scaffold(
-      appBar: AppBar(title: PageTitle(widget.topic.title)),
-      body: _submitting
-          ? const LoadingView(message: 'Reviewing your answers…')
-          : ListView(
-              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
-              children: [
-                for (final item in widget.practiceSet.items) ...[
+    final total = widget.practiceSet.items.length;
+    final item = widget.practiceSet.items[_currentIndex];
+    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+
+    return PopScope(
+      // The top-left close icon isn't the only way to leave this screen —
+      // the system back gesture/button reaches the same route, and would
+      // otherwise abandon the session without the confirmation dialog.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _confirmExit();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: 'Leave practice',
+            onPressed: _confirmExit,
+          ),
+          title: Text(
+            '${_currentIndex + 1}/$total',
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(20),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                // A plain `LinearProgressIndicator` jumps straight to a new
+                // `value` on rebuild; wrapping it lets the fill animate
+                // smoothly to the new fraction each time the question
+                // advances.
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                    begin: 0,
+                    end: (_currentIndex + 1) / total,
+                  ),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  builder: (context, value, _) => LinearProgressIndicator(
+                    value: value,
+                    minHeight: 8,
+                    backgroundColor: colorScheme.surfaceContainerLow,
+                    color: colorScheme.secondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        body: _submitting
+            ? const LoadingView(message: 'Reviewing your answers…')
+            : ListView(
+                padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
+                children: [
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
@@ -92,7 +212,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           Text(
                             _itemLabel(item.type),
                             style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.secondary,
+                              color: colorScheme.secondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -103,48 +223,73 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                 style: theme.textTheme.bodyLarge),
                             const SizedBox(height: 16),
                             Divider(
-                                height: 1,
-                                color: theme.colorScheme.outlineVariant),
+                                height: 1, color: colorScheme.outlineVariant),
                             const SizedBox(height: 16),
                           ] else
                             const SizedBox(height: 14),
                           Text(
                             item.instruction,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: theme.textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           if (item.hint != null) ...[
                             const SizedBox(height: 8),
                             Text(
                               item.hint!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                                color: colorScheme.onSurfaceVariant,
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
                           ],
                           const SizedBox(height: 20),
                           TextField(
+                            key: ValueKey(item.id),
+                            controller: _controllers[item.id],
                             decoration:
                                 const InputDecoration(hintText: 'Your answer'),
-                            onChanged: (value) => _answers[item.id] = value,
+                            onChanged: (value) =>
+                                setState(() => _answers[item.id] = value),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
                 ],
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _submit,
-                    child: const Text('Submit'),
-                  ),
+              ),
+        bottomNavigationBar: _submitting
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+                  child: _currentIndex == 0
+                      ? SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: _advance,
+                            child: Text(_primaryLabel()),
+                          ),
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _goBack,
+                                child: const Text('Back'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: _advance,
+                                child: Text(_primaryLabel()),
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
-              ],
-            ),
+              ),
+      ),
     );
   }
 }
