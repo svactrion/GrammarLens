@@ -40,7 +40,7 @@ class ClaudeService {
         'anthropic-dangerous-direct-browser-access': 'true',
       };
 
-  Future<PracticeSet> generatePracticeSet(Topic topic) async {
+  Future<PracticeSet> generatePracticeSet(Topic topic, {int count = 5}) async {
     const schema = {
       'type': 'object',
       'properties': {
@@ -69,7 +69,9 @@ class ClaudeService {
 
     final body = {
       'model': _model,
-      'max_tokens': 2048,
+      // Scaled off the 2048 baseline tuned for the original 5-item set, so
+      // Extended (10 items) still has enough room to complete.
+      'max_tokens': ((2048 * count) / 5).ceil().clamp(1024, 8192),
       'system': _generationSystemPrompt,
       'output_config': {
         'format': {'type': 'json_schema', 'schema': schema},
@@ -78,9 +80,8 @@ class ClaudeService {
         {
           'role': 'user',
           'content': 'Topic: "${topic.title}" — ${topic.description}\n'
-              'Generate exactly 5 fresh practice items: 2 sentence_writing, '
-              '2 error_correction, and 1 fill_in_blank. Each "id" must be a '
-              'short unique slug.',
+              'Generate exactly $count fresh practice items: '
+              '${_itemMix(count)}. Each "id" must be a short unique slug.',
         },
       ],
     };
@@ -90,6 +91,17 @@ class ClaudeService {
         .map((e) => PracticeItem.fromJson(e as Map<String, dynamic>))
         .toList();
     return PracticeSet(topicId: topic.id.name, items: items);
+  }
+
+  /// Keeps the original 5-item set's 2:2:1 sentence_writing : error_correction
+  /// : fill_in_blank ratio (writing-heavy — see the system prompt's note on
+  /// production over recognition) at any requested [count].
+  String _itemMix(int count) {
+    final sentenceWriting = (count * 0.4).round();
+    final errorCorrection = (count * 0.4).round();
+    final fillInBlank = count - sentenceWriting - errorCorrection;
+    return '$sentenceWriting sentence_writing, $errorCorrection '
+        'error_correction, and $fillInBlank fill_in_blank';
   }
 
   Future<ScoringResult> scoreAnswers({

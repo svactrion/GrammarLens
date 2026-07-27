@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
+import '../models/app_theme_mode.dart';
 import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
@@ -10,11 +11,13 @@ import 'practice_launch.dart';
 class HomeScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
+  final void Function(AppThemeMode mode) onSelectThemeMode;
 
   const HomeScreen({
     super.key,
     required this.claudeService,
     required this.storageService,
+    required this.onSelectThemeMode,
   });
 
   @override
@@ -42,6 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
+    final appBarFg =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -49,9 +55,21 @@ class _HomeScreenState extends State<HomeScreen> {
           'GrammarLens',
           style: theme.textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.w800,
-            color: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
+            color: appBarFg,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+            icon: Icon(
+              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              color: appBarFg,
+            ),
+            onPressed: () => widget.onSelectThemeMode(
+              isDark ? AppThemeMode.light : AppThemeMode.dark,
+            ),
+          ),
+        ],
       ),
       body: _generating
           ? const LoadingView(message: 'Preparing your questions…')

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../models/practice_length.dart';
 import '../models/topic.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
+import 'practice_length_picker.dart';
 import 'practice_screen.dart';
 
-/// Generates a fresh practice set for [topic] and pushes [PracticeScreen].
+/// Shows the "how many questions" length picker, then generates a fresh
+/// practice set for [topic] and pushes [PracticeScreen].
 ///
-/// Shared by HomeScreen and ReviewScreen so the generate → navigate →
-/// handle-errors sequence lives in exactly one place and can't drift apart
-/// between the two entry points.
+/// Shared by HomeScreen and ReviewScreen (weak-spot detail's "Practice this")
+/// so the pick-length → generate → navigate → handle-errors sequence lives
+/// in exactly one place and can't drift apart between entry points.
 ///
 /// [setGenerating] toggles the caller's own loading flag (the caller is
 /// responsible for its own `mounted` check, since a `State`'s `setState`
@@ -25,9 +28,21 @@ Future<void> launchPracticeSet({
   required String errorPrefix,
   VoidCallback? onReturned,
 }) async {
+  final lastLength = await storageService.getPracticeLength();
+  if (!context.mounted) return;
+  final length = await showPracticeLengthPicker(
+    context: context,
+    initial: lastLength,
+  );
+  if (length == null) return;
+  await storageService.setPracticeLength(length);
+
   setGenerating(true);
   try {
-    final practiceSet = await claudeService.generatePracticeSet(topic);
+    final practiceSet = await claudeService.generatePracticeSet(
+      topic,
+      count: length.questionCount,
+    );
     if (!context.mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
