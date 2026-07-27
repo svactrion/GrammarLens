@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum TopicId {
   gerundVsInfinitive,
   modalVerbs,
@@ -10,10 +12,12 @@ class Topic {
   final TopicId id;
   final String title;
   final String description;
+  final IconData icon;
 
   const Topic({
     required this.id,
     required this.title,
     required this.description,
+    required this.icon,
   });
 }

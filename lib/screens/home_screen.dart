@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             radius: 22,
                             backgroundColor: theme.colorScheme.primaryContainer,
                             foregroundColor: theme.colorScheme.onPrimaryContainer,
-                            child: const Icon(Icons.menu_book_outlined),
+                            child: Icon(topic.icon),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
