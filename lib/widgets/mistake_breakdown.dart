@@ -30,7 +30,9 @@ class MistakeBreakdown extends StatelessWidget {
     final semantic = theme.extension<SemanticColors>()!;
     final hasPrompt = (prompt ?? '').trim().isNotEmpty;
     final hasAnswer = (userAnswer ?? '').trim().isNotEmpty;
-    final hasCorrection = (correctedAnswer ?? '').trim().isNotEmpty;
+    final hasCorrection = (correctedAnswer ?? '').trim().isNotEmpty &&
+        correctedAnswer!.trim().toLowerCase() !=
+            (userAnswer ?? '').trim().toLowerCase();
     final hasExplanation = (explanation ?? '').trim().isNotEmpty;
 
     return Column(
@@ -49,8 +51,8 @@ class MistakeBreakdown extends StatelessWidget {
           _LabeledBox(
             label: 'YOU WROTE',
             text: userAnswer!,
-            fillColor: colorScheme.surfaceContainerHighest,
-            borderColor: colorScheme.outlineVariant,
+            fillColor: colorScheme.surface,
+            borderColor: colorScheme.outline,
             labelColor: colorScheme.onSurfaceVariant,
             textColor: colorScheme.onSurface,
           ),
