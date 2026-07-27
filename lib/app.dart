@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
+import 'models/app_theme_mode.dart';
 import 'screens/home_screen.dart';
 import 'screens/review_screen.dart';
 import 'services/claude_service.dart';
@@ -18,11 +21,48 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   final ClaudeService _claudeService = ClaudeService();
   final StorageService _storageService = StorageService();
   int _tabIndex = 0;
+  AppThemeMode _themeMode = AppThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    try {
+      final mode = await _storageService.getThemeMode();
+      if (mounted) setState(() => _themeMode = mode);
+    } catch (_) {
+      // No persisted preference to read (or storage unavailable) — keep
+      // following the system theme.
+    }
+  }
+
+  void _setThemeMode(AppThemeMode mode) {
+    setState(() => _themeMode = mode);
+    unawaited(_storageService.setThemeMode(mode).catchError((_) {}));
+  }
+
+  ThemeMode get _flutterThemeMode {
+    switch (_themeMode) {
+      case AppThemeMode.light:
+        return ThemeMode.light;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+      case AppThemeMode.system:
+        return ThemeMode.system;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final screens = [
-      HomeScreen(claudeService: _claudeService, storageService: _storageService),
+      HomeScreen(
+        claudeService: _claudeService,
+        storageService: _storageService,
+        onSelectThemeMode: _setThemeMode,
+      ),
       ReviewScreen(
         claudeService: _claudeService,
         storageService: _storageService,
@@ -39,7 +79,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
       title: 'GrammarLens',
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
+      themeMode: _flutterThemeMode,
       // `Builder` gets a context nested under the `MaterialApp` above, so
       // `Theme.of` here resolves the light/dark scheme we just set via
       // `theme`/`darkTheme` instead of whatever theme sits above this
