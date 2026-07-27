@@ -80,14 +80,30 @@ class _PracticeScreenState extends State<PracticeScreen> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Leave practice?'),
         content: const Text('Your progress will be lost.'),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Leave'),
+          SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(dialogContext).colorScheme.primary,
+                    foregroundColor:
+                        Theme.of(dialogContext).colorScheme.onPrimary,
+                  ),
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: const Text('Leave'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -171,29 +187,42 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
           ),
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(20),
+            preferredSize: const Size.fromHeight(58),
             child: Padding(
               padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                // A plain `LinearProgressIndicator` jumps straight to a new
-                // `value` on rebuild; wrapping it lets the fill animate
-                // smoothly to the new fraction each time the question
-                // advances.
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween<double>(
-                    begin: 0,
-                    end: (_currentIndex + 1) / total,
+              child: Column(
+                children: [
+                  Text(
+                    widget.topic.title,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: appBarFg,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                  builder: (context, value, _) => LinearProgressIndicator(
-                    value: value,
-                    minHeight: 8,
-                    backgroundColor: colorScheme.surfaceContainerLow,
-                    color: colorScheme.secondary,
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    // A plain `LinearProgressIndicator` jumps straight to a
+                    // new `value` on rebuild; wrapping it lets the fill
+                    // animate smoothly to the new fraction each time the
+                    // question advances.
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(
+                        begin: 0,
+                        end: (_currentIndex + 1) / total,
+                      ),
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      builder: (context, value, _) => LinearProgressIndicator(
+                        value: value,
+                        minHeight: 8,
+                        backgroundColor: colorScheme.surfaceContainerLow,
+                        color: colorScheme.secondary,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
