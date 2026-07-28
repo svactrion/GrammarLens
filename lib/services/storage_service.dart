@@ -5,12 +5,13 @@ import '../models/app_theme_mode.dart';
 import '../models/error_entry.dart';
 import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
+import '../models/topic_stats.dart';
 
 /// Local SQLite-backed error profile (PRD §5: "on-device storage; no
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _dbName = 'grammar_lens.db';
-  static const _dbVersion = 4;
+  static const _dbVersion = 5;
 
   static const _createTable = '''
     CREATE TABLE error_entries (
@@ -47,6 +48,18 @@ class StorageService {
     )
   ''';
 
+  // Running per-topic total of answered (non-skipped) questions, across all
+  // sessions. `error_entries` only logs mistakes, so it can't answer "how
+  // many questions has the user practiced for this topic" on its own — this
+  // is the minimal extra bit of state needed for the home screen's
+  // "X practiced" stat.
+  static const _createTopicPracticeStatsTable = '''
+    CREATE TABLE topic_practice_stats (
+      topic_id TEXT PRIMARY KEY,
+      questions_answered INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -64,6 +77,7 @@ class StorageService {
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
         await db.execute(_createPracticeSettingsTable);
+        await db.execute(_createTopicPracticeStatsTable);
       },
       // Still pre-launch prototype with no real user data to preserve, so a
       // schema change just drops and recreates rather than carrying a real
@@ -73,10 +87,12 @@ class StorageService {
         await db.execute('DROP TABLE IF EXISTS review_settings');
         await db.execute('DROP TABLE IF EXISTS theme_settings');
         await db.execute('DROP TABLE IF EXISTS practice_settings');
+        await db.execute('DROP TABLE IF EXISTS topic_practice_stats');
         await db.execute(_createTable);
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
         await db.execute(_createPracticeSettingsTable);
+        await db.execute(_createTopicPracticeStatsTable);
       },
     );
   }
@@ -200,5 +216,53 @@ class StorageService {
       {'id': 0, 'question_count': length.questionCount},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  /// Adds [questionsAnswered] to the running total for [topicId], called
+  /// once per completed practice set (results screen) so the home screen's
+  /// "X practiced" stat covers every session, not just the current one.
+  Future<void> recordPracticeCompletion(
+    String topicId,
+    int questionsAnswered,
+  ) async {
+    if (questionsAnswered <= 0) return;
+    final db = await _database;
+    await db.rawInsert('''
+      INSERT INTO topic_practice_stats (topic_id, questions_answered)
+      VALUES (?, ?)
+      ON CONFLICT(topic_id) DO UPDATE SET
+        questions_answered = questions_answered + excluded.questions_answered
+    ''', [topicId, questionsAnswered]);
+  }
+
+  /// Per-topic stats for the home screen's topic cards: total questions
+  /// practiced (from [recordPracticeCompletion]) and count of distinct error
+  /// types still logged (from `error_entries`, the same data [getWeakSpots]
+  /// draws on). Topics with no rows in either source are simply absent from
+  /// the map — callers should default to [TopicStats.empty].
+  Future<Map<String, TopicStats>> getTopicStats() async {
+    final db = await _database;
+    final practiceRows = await db.query('topic_practice_stats');
+    final weakSpotRows = await db.rawQuery('''
+      SELECT topic_id, COUNT(DISTINCT error_type) AS weak_spot_count
+      FROM error_entries
+      GROUP BY topic_id
+    ''');
+    final practiced = <String, int>{
+      for (final row in practiceRows)
+        row['topic_id'] as String: row['questions_answered'] as int,
+    };
+    final weakSpots = <String, int>{
+      for (final row in weakSpotRows)
+        row['topic_id'] as String: row['weak_spot_count'] as int,
+    };
+    final topicIds = {...practiced.keys, ...weakSpots.keys};
+    return {
+      for (final id in topicIds)
+        id: TopicStats(
+          practiced: practiced[id] ?? 0,
+          weakSpotCount: weakSpots[id] ?? 0,
+        ),
+    };
   }
 }

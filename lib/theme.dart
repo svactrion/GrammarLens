@@ -327,8 +327,14 @@ ThemeData buildAppTheme(Brightness brightness) {
     ),
     cardTheme: CardThemeData(
       // Real elevation (not tonal tint, since surfaceTint is transparent)
-      // so cards visibly lift off the orange page.
-      elevation: 3,
+      // so cards visibly lift off the orange page. M3's level-3 token (6dp)
+      // rather than the resting level-2 (3dp) — the latter was too faint to
+      // read as "lifted" against the saturated brand background; 6dp is
+      // still a soft, standard M3 shadow (levels go up to 12dp), just one
+      // notch more present. Applies to every `Card` in the app (topic list,
+      // practice questions, results, review) since none override elevation
+      // locally.
+      elevation: 6,
       color: colorScheme.surfaceContainerLow,
       surfaceTintColor: colorScheme.surfaceTint,
       shadowColor: colorScheme.shadow,
