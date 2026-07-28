@@ -38,3 +38,14 @@ String formatFrequencyStat(int frequency, DateTime lastSeen, {DateTime? now}) {
   final times = frequency == 1 ? '1 time' : '$frequency times';
   return '$times · last seen ${formatRecency(lastSeen, now: now)}';
 }
+
+/// "N practiced · M weak spots" label for a home-screen topic card. Callers
+/// should show "Not started yet" instead when [practiced] is 0.
+String formatTopicStatsLine(int practiced, int weakSpotCount) {
+  final practicedLabel =
+      practiced == 1 ? '1 practiced' : '$practiced practiced';
+  final weakSpotLabel = weakSpotCount == 1
+      ? '1 weak spot'
+      : '$weakSpotCount weak spots';
+  return '$practicedLabel · $weakSpotLabel';
+}

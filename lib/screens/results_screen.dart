@@ -36,6 +36,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
   void initState() {
     super.initState();
     _saveErrors();
+    _recordCompletion();
+  }
+
+  Future<void> _recordCompletion() async {
+    final answered = widget.result.totalCount - widget.result.skippedCount;
+    try {
+      await widget.storageService
+          .recordPracticeCompletion(widget.topic.id.name, answered);
+    } catch (_) {
+      // Best-effort: the home screen's practiced count would just be a
+      // session behind, not worth surfacing an error for over the results
+      // the user is actually here to see.
+    }
   }
 
   Future<void> _saveErrors() async {
