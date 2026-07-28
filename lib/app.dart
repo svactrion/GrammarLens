@@ -77,6 +77,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
 
     return MaterialApp(
       title: 'GrammarLens',
+      debugShowCheckedModeBanner: false,
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
       themeMode: _flutterThemeMode,
