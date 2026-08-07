@@ -91,3 +91,20 @@ Claude session Ahmet uses for product calls — each entry is tagged
   vivid orange page background with blue accents; dark mode intentionally
   diverges to a neutral dark surface with orange/blue accents rather than a
   dark-orange background, which read as harsh/muddy in early passes.
+
+## 2026-08-07
+
+- **[Product]** Empty states, roadmap item 1. Reviewed every screen that
+  renders from a list that can be zero-length. Review's "no weak spots"
+  state already existed but was a dead end; gave it a CTA that jumps to the
+  Practice tab. Weak-spot detail's empty mistake list was a bare `Text`
+  inconsistent with Review's icon+text treatment; brought it in line.
+  Deliberately left two screens alone: Results' feedback list can't
+  actually render empty (minimum session length is 3, never 0), and Home
+  already degrades gracefully per-card ("Not started yet") on first run
+  rather than showing a blank page — neither reads as broken, so no
+  speculative empty-state code was added for them.
+- **[Engineering]** Extracted the icon+title/description+CTA pattern into a
+  shared `EmptyState` widget (`lib/widgets/empty_state.dart`) instead of
+  copy-pasting it a second time, with a `dense` inline variant for empty
+  states that sit inside a screen that already has its own CTA elsewhere.
