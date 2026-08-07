@@ -72,6 +72,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
         // was active. Passing whether this tab is currently selected lets
         // ReviewScreen detect "just became visible" and reload then.
         active: _tabIndex == 1,
+        onGoToPractice: () => setState(() => _tabIndex = 0),
       ),
     ];
 
