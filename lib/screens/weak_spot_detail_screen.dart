@@ -7,6 +7,7 @@ import '../services/storage_service.dart';
 import '../utils/loading_view.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
 
@@ -171,11 +172,12 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                         ),
                         const SizedBox(height: 12),
                         if (mistakes.isEmpty)
-                          Text(
-                            'No detailed history stored for these mistakes yet.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                          const EmptyState(
+                            icon: Icons.history_toggle_off_rounded,
+                            description:
+                                'No detailed history stored for these '
+                                'mistakes yet.',
+                            dense: true,
                           )
                         else
                           for (final mistake in mistakes) ...[
