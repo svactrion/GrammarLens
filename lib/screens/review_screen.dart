@@ -7,6 +7,7 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
+import '../widgets/empty_state.dart';
 import 'weak_spot_detail_screen.dart';
 
 /// Resurfaces the user's weak spots and lets them launch a freshly
@@ -16,12 +17,14 @@ class ReviewScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final bool active;
+  final VoidCallback onGoToPractice;
 
   const ReviewScreen({
     super.key,
     required this.claudeService,
     required this.storageService,
     required this.active,
+    required this.onGoToPractice,
   });
 
   @override
@@ -170,28 +173,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
           }
           final spots = snapshot.data ?? const <WeakSpot>[];
           if (spots.isEmpty) {
-            final theme = Theme.of(context);
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.fact_check_outlined,
-                      size: 40,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No weak spots yet. Complete a practice set to '
-                      'start building your error profile.',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                child: EmptyState(
+                  icon: Icons.fact_check_outlined,
+                  title: 'No weak spots yet.',
+                  description:
+                      'Practice a topic and your mistakes will show up here.',
+                  ctaLabel: 'Start practicing',
+                  onCta: widget.onGoToPractice,
                 ),
               ),
             );
