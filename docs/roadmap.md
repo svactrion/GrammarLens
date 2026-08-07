@@ -44,6 +44,9 @@ product continues.
 - Animated bottom nav, full-screen loading states, semantic result colors
 - Per-topic icons, home cards showing personal progress stats
 - Responsive sizing, no hardcoded pixel values
+- Empty states: shared `EmptyState` widget (icon + title/description + optional
+  CTA); Review's no-weak-spots state now has a "Start practicing" CTA, and
+  weak-spot detail's empty mistake list uses the same icon+text pattern
 
 **Documentation**
 - `docs/prd.md` — problem, personas, interview findings (§2.1), scope decisions
@@ -55,16 +58,7 @@ product continues.
 
 ## What's next
 
-### 1. Empty states (small, do first)
-Screens currently show nothing when there's no data yet. A new user opening
-Review sees a blank screen with no explanation.
-
-- Review with no weak spots → icon + "No weak spots yet. Practice a topic and
-  your mistakes will show up here." + CTA to start practicing
-- Any other screen that can render empty (check results/detail paths)
-- First-run state on home if it reads as empty
-
-### 2. Real user testing (highest portfolio value)
+### 1. Real user testing (highest portfolio value)
 The one unchecked box in the README. Everything else is self-assessment.
 
 - 5+ testers from the English course
@@ -75,12 +69,12 @@ The one unchecked box in the README. Everything else is self-assessment.
 - Write findings into `docs/prd.md` as a testing section, same format as the
   interview findings
 
-### 3. Iteration 3 (driven by testing, not by taste)
+### 2. Iteration 3 (driven by testing, not by taste)
 Scope defined *after* testing, not before. Likely candidates based on what
 testing usually surfaces: onboarding/first-run clarity, question wording,
 feedback length, session length defaults.
 
-### 4. Make it try-able
+### 3. Make it try-able
 Right now it only runs on the developer machine, so nobody can experience it.
 
 Options to evaluate:
