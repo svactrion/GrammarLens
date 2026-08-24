@@ -22,7 +22,8 @@ product continues.
 
 ## Where we are now
 
-**Status: MVP complete and polished, not yet tested with real users.**
+**Status: MVP complete, tested with real users, closed. V2 in definition —
+see `docs/prd-v2.md`.**
 
 ### Shipped
 
@@ -59,8 +60,10 @@ product continues.
   keyboard, not just its own "Done" key
 
 **Documentation**
-- `docs/prd.md` — problem, personas, interview findings (§2.1), usability
+- `docs/prd.md` — MVP: problem, personas, interview findings (§2.1), usability
   testing findings (§2.2), scope decisions
+- `docs/prd-v2.md` — v2 scope, evidence-vs-bet labeling, screen architecture,
+  open decisions
 - `docs/build-log.md` — chronological record of decisions and bugs
 - `README.md` — product overview, screenshots, key product decisions
 - Public write-up on Medium
@@ -79,33 +82,50 @@ product continues.
 
 ## What's next
 
-### 1. Iteration 3 (driven by testing, not by taste)
-Candidates from `docs/prd.md` §2.2, in priority order:
+**MVP is closed. Work continues in v2 — see `docs/prd-v2.md`.**
 
-- Verify (don't yet fix) whether typos get misgraded as grammar errors —
-  single-participant concern, unconfirmed, check before touching the scoring
-  prompt
-- Review tab icon visibility — single-participant, low priority
-- Small positive micro-feedback on correct answers (sound/animation) —
-  single-participant, cheap if pursued, not urgent
-- Placement/diagnostic test at first launch — single participant asked for
-  this; reopens a decision deliberately deferred in §5. Don't build off one
-  data point — watch for repetition in future testing rounds
-- Partial-answer submission for error-correction on mobile — tension with
-  the existing "graded on the fix, not the format" decision (build-log,
-  2026-07-24); needs its own product decision, not a quick patch
+### Decision: "make the MVP try-able" dropped (2026-08-24)
+The previous next-item was distributing the MVP build so people could try it.
+Dropped in favor of going public with v2 instead: seven people have already
+used the core loop in person, and another small private round would mostly
+repeat what we know. A public launch is the more useful test, and it needs
+what a bare practice loop lacks — a reason to return, an identity, a
+commercial frame. Recorded as a deliberate reversal, not silent drift.
 
-### 2. Make it try-able
-Right now it only runs on the developer machine, so nobody can experience it.
+### 1. V2 Phase 1 — Onboarding + Home + Settings
+No backend, no new LLM cost. Welcome/value intro → onboarding (name +
+learning goal only) → new mode-selection Home with personalized greeting.
+Settings screen created from scratch (theme, name edit, data reset, optional
+profile fields).
 
-Options to evaluate:
-- Web build deployed to free hosting (fastest, but exposes API key in browser —
-  acceptable only with a limited/disposable key)
-- TestFlight (proper iOS distribution, requires Apple Developer account, $99/yr)
-- Screen-recorded demo video (no distribution, but linkable everywhere)
+### 2. V2 Phase 2 — Premium / early-access screen
+Screen with copy, no payment flow. "Free during early access" framing.
 
-Decision pending — depends on whether the goal is "people actually use it" or
-"people can see it working."
+### 3. V2 Phase 3 — Streak mode
+Largest new surface; carries the open cost decision (`docs/prd-v2.md` §7.1).
+Instrument per-session token usage while building it.
+
+### 4. V2 Phase 4 — Rewarded video gate on streak (free tier)
+
+### 5. V2 Phase 5 — Cost measurement, resolve open decisions §7.1 / §7.2
+
+### 6. V2 Phase 6 — Public launch
+
+### Later phases (post-v2)
+Accounts + backend → social / competition → AI voice practice mode.
+
+### Carried over from MVP Iteration 3 (unscheduled, absorbed into v2 work)
+- Review tab icon visibility — single-participant, low priority; the new Home
+  and post-results navigation in v2 may make this moot
+- Positive micro-feedback on answering — single-participant; overlaps with
+  streak mode's feedback design
+- Placement/diagnostic test — partially addressed by v2's onboarding
+  "learning goal" question feeding topic suggestions
+- Partial-answer submission for error-correction on mobile — still tension
+  with "graded on the fix, not the format" (build-log, 2026-07-24); needs its
+  own product decision
+- ~~Verify whether typos get misgraded as grammar errors~~ — checked
+  2026-08-24, no issue found, no prompt change needed
 
 ---
 

@@ -108,3 +108,12 @@ Claude session Ahmet uses for product calls — each entry is tagged
   shared `EmptyState` widget (`lib/widgets/empty_state.dart`) instead of
   copy-pasting it a second time, with a `dense` inline variant for empty
   states that sit inside a screen that already has its own CTA elsewhere.
+
+## 2026-08-24
+
+- **[Product]** Typo vs. grammar-error distinction verified, no issue found.
+  `docs/prd.md` §2.2 Theme 4 flagged an unconfirmed, single-participant
+  concern (T2 worried a typo might get misread as a grammar mistake).
+  Deliberately tested with a misspelled word in an otherwise grammatically
+  correct sentence — scoring did not misclassify it. No prompt change made;
+  removed from the Iteration 3 candidate list in `docs/roadmap.md`.
