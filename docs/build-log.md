@@ -151,3 +151,23 @@ Claude session Ahmet uses for product calls — each entry is tagged
   behavior; (3) Home's mode cards moved from a vertical list to a
   2-column `GridView`. Verified in both themes via the same debug-harness
   technique as the initial Phase 1 build.
+- **[Product]** Shipped v2 Phase 2 — Premium / early-access screen
+  (`docs/prd-v2.md` §6, `docs/roadmap.md` "What's next" item 1, now closed).
+  New `PremiumScreen`, reached from a fourth Home mode card ("Early
+  Access") that fills out the mode grid to a full 2x2 alongside Topic
+  Practice, Streak Mode, and Voice Practice. Informational only, exactly
+  per §6's scope: no payment flow, no price, no buy button, no credit-card
+  field anywhere on the screen — a new `premium_screen_test.dart` asserts
+  that directly (no `TextField`, no `FilledButton`/`ElevatedButton`, no
+  `$`, no "Buy"/"Subscribe"/"Upgrade" text) rather than relying on a human
+  catching a regression later. Content: the required framing line verbatim
+  ("You're one of our first users — everything is free while we're in
+  early access"), plus two feature tiles — unlimited Streak Mode, AI Voice
+  Practice — each carrying its own "Coming soon" badge since neither
+  feature is built yet either; a closing line makes that explicit.
+  Deliberately avoided "free forever" or unqualified "free" per §6's
+  reasoning: an unbounded promise made now becomes a constraint the moment
+  real pricing ships. Verified in both light and dark mode on the iOS
+  simulator via the same temporary, untracked debug-harness technique used
+  for Phase 1 (direct-render entry point, no tap automation — deleted
+  after use, never committed).

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/screens/home_screen.dart';
+import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
@@ -9,8 +10,8 @@ import 'package:grammar_lens/services/storage_service.dart';
 void main() {
   Future<void> pumpHome(WidgetTester tester) async {
     // The default 800x600 test surface is shorter than the mode grid's
-    // second row (Voice Practice, alone on its own row) — use a
-    // phone-realistic size so every card is actually reachable by taps.
+    // second row — use a phone-realistic size so every card is actually
+    // reachable by taps.
     tester.view.physicalSize = const Size(390, 844) * 3.0;
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -33,12 +34,15 @@ void main() {
     expect(find.text('Welcome back, Ada'), findsOneWidget);
   });
 
-  testWidgets('shows all three mode cards', (tester) async {
+  testWidgets('shows all four mode cards', (tester) async {
     await pumpHome(tester);
     expect(find.text('Topic Practice'), findsOneWidget);
     expect(find.text('Streak Mode'), findsOneWidget);
     expect(find.text('Voice Practice'), findsOneWidget);
+    expect(find.text('Early Access'), findsOneWidget);
     expect(find.text('Coming soon'), findsOneWidget);
+    // Only Voice Practice's badge reads "Premium" — Early Access is a
+    // distinct card title, not another instance of that badge text.
     expect(find.text('Premium'), findsOneWidget);
   });
 
@@ -55,12 +59,14 @@ void main() {
     );
 
     // Topic Practice and Streak Mode share the first row (same top edge);
-    // Voice Practice starts a new row below them.
+    // Voice Practice and Early Access start a new row below them.
     final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
     final streakTop = tester.getTopLeft(find.text('Streak Mode')).dy;
     final voiceTop = tester.getTopLeft(find.text('Voice Practice')).dy;
+    final earlyAccessTop = tester.getTopLeft(find.text('Early Access')).dy;
     expect(topicTop, streakTop);
     expect(voiceTop, greaterThan(topicTop));
+    expect(voiceTop, earlyAccessTop);
   });
 
   testWidgets('Topic Practice opens the existing MVP loop', (tester) async {
@@ -68,6 +74,17 @@ void main() {
     await tester.tap(find.text('Topic Practice'));
     await tester.pumpAndSettle();
     expect(find.byType(TopicPracticeScreen), findsOneWidget);
+  });
+
+  testWidgets('Early Access opens the premium/early-access screen',
+      (tester) async {
+    await pumpHome(tester);
+    await tester.tap(find.text('Early Access'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PremiumScreen), findsOneWidget);
+    // No dialog here — unlike Streak/Voice, this card leads to a real
+    // screen, not a "not built yet" placeholder message.
+    expect(find.byType(AlertDialog), findsNothing);
   });
 
   testWidgets('Streak Mode tap is informative, not a dead tap',
