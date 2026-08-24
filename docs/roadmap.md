@@ -124,6 +124,37 @@ real device:
   untracked debug-harness entry point (same technique as Phase 1 — direct
   render, no tap automation), deleted after use
 
+**V2 Phase 2 continued — pre-launch checklist progress, Home polish,
+avatar picker** (`docs/prd-v2.md` §10.1, §11), five independent commits:
+- **Daily session cap.** Client-side cost guardrail (§10.1): `StorageService`
+  tracks practice sessions started per local calendar day (schema v7);
+  `launchPracticeSet` checks it before even opening the length picker and
+  shows a "That's all for today" dialog instead of triggering generation
+  once the limit (10/day, a placeholder default — see §7.2) is reached. A
+  session only counts once generation actually succeeds; both the check and
+  the write fail open on a storage error
+- **Onboarding privacy note.** One line under the goal options: data stays
+  on-device, never sent to a server (§10.1's privacy-note item, closed)
+- **Firebase Analytics + Crashlytics — code scaffold only, no project
+  connected.** `AnalyticsService` wraps three custom events
+  (`onboarding_completed`, `mode_selected`, `session_completed`) plus
+  Crashlytics's global error hooks in `main.dart`. Connecting an actual
+  Firebase project needs an interactive `flutterfire configure` run against
+  a real account, which isn't something that can be done inside a coding
+  session — so `Firebase.initializeApp()` is wrapped in try/catch and every
+  `AnalyticsService` call is a safe no-op until that happens. Verified the
+  app still builds and runs normally on iOS with the packages present but
+  unconfigured
+- **Early Access given a distinct look on Home.** As a fourth grid tile it
+  read identically to the three practice-mode cards, implying it was one.
+  Pulled into its own full-width outlined/tinted banner below the grid —
+  commercial framing, not a mode, now reads that way on sight
+- **Avatar picker (§11), promoted from the parking lot.** Eight local stock
+  emoji avatars, no upload pipeline. Picker lives in Settings (not
+  onboarding, consistent with onboarding's "every field costs completions"
+  stance); the chosen avatar shows next to Home's personalized greeting.
+  `UserProfile` gains a nullable `avatar` field (schema v8)
+
 ---
 
 ## What's next
@@ -144,9 +175,12 @@ streak mode, not after — see `docs/prd-v2.md` §10 for the reasoning
 building a zero-evidence bet before measuring that defeats the point).
 
 ### 1. Pre-launch checklist
-See `docs/prd-v2.md` §10.1 — distribution channel decision, API key safety
-approach, minimal retention measurement, device coverage, feedback channel,
-privacy note. Several of these are still open decisions, not just tasks.
+See `docs/prd-v2.md` §10.1. Done: daily session cap, privacy note, minimal
+analytics (code scaffold — no Firebase project connected yet, needs an
+interactive `flutterfire configure` run against a real account). Still
+open: distribution channel decision, API key safety approach, device
+coverage, feedback channel — several of these are open decisions, not just
+tasks.
 
 ### 2. Public launch
 Topic mode + onboarding + premium teaser only. No streak mode yet.
