@@ -344,5 +344,28 @@ fully resolved earlier in this document.
 
 ---
 
+## 11. Ideas parking lot (not committed)
+
+Surfaced during Ahmet's own hands-on testing of Phase 1 (2026-08-24, same
+treatment as a self-reported finding — see `prd.md`'s P4 precedent). Not
+scheduled, not designed, recorded so they aren't lost or accidentally treated
+as decided.
+
+- **Profile picture on Home, next to the personalized greeting.** Motivation:
+  identity/ownership — ties into the long-term plan for Home to show learning
+  curves over time, where a face next to your own progress may matter more.
+  Doesn't require user-uploaded photos to start: could launch with a small
+  set of local stock avatars (e.g. recognizable actor/influencer-style faces)
+  to pick from, no upload pipeline needed.
+- **Settings nav icon becomes the user's avatar** instead of a generic gear
+  icon, once avatars exist — matches the profile-icon pattern common in
+  current consumer apps.
+
+Both are zero-evidence bets like the rest of §3's bet list — no participant
+has asked for this, it's Ahmet's own design instinct. Label it that way if it
+ever gets scheduled.
+
+---
+
 *Living document. Open decisions in §7 get resolved in place, with the
 reasoning kept, not overwritten.*
