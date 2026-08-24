@@ -244,3 +244,52 @@ Claude session Ahmet uses for product calls — each entry is tagged
   untracked debug-harness technique as Phase 1/2 (deleted after use, never
   committed); full test suite (47 tests across 9 files) and `flutter
   analyze` clean after each commit.
+- **[Product]** Home + nav bar revision round, referencing Kick/Instagram's
+  nav design, four independent commits:
+  1. **Floating, frosted-glass nav bar.** `app.dart`'s `bottomNavigationBar`
+     rebuilt: margins from all three screen edges, `BorderRadius.circular(32)`
+     pill shape, `ClipRRect` + `BackdropFilter(ImageFilter.blur(...))` +
+     a translucent `colorScheme.surfaceContainerLow` container (alpha 0.55
+     dark / 0.68 light) with a soft border and shadow. `GNav` itself goes
+     transparent so it doesn't paint a second opaque surface on top —
+     existing active-tab styling (icon+label, selected pill) untouched.
+     First attempt also set `extendBody: true` so screen content would draw
+     (and visibly blur) behind the bar; this reliably hid the last row of
+     Home's mode grid underneath the bar on the unscrolled, resting screen
+     — content there simply isn't behind glass, it's behind an
+     opaque-looking pill with nothing readable through it. Chased two fix
+     attempts (reserving clearance as trailing `ListView` padding, then as
+     an outer `Padding` shrinking the scroll viewport — the latter
+     triggered `SliverList`'s cache-extent virtualization to skip building
+     the now out-of-viewport banner entirely on the first frame, so it just
+     never appeared) before concluding the "blur reveals scrolled content"
+     effect wasn't worth the risk class it opened up. Dropped
+     `extendBody`; Scaffold's default behavior (reserving the bar's
+     reported height above `body`) costs nothing and can't overlap by
+     construction.
+  2. **Early Access banner contrast.** Found while re-screenshotting the
+     new nav bar in light mode: the banner's outlined/tinted treatment (10%
+     secondary alpha fill, thin border) read as washed out against the
+     vivid orange page — confirms the exact complaint that prompted this
+     task. Solid `colorScheme.secondary` fill + `onSecondary` text/icons
+     (the same pairing `FilledButton` uses) fixed it in both themes.
+  3. **Avatar moved to the trailing edge.** Row order swapped (greeting
+     first, avatar last), `mainAxisAlignment: MainAxisAlignment.spaceBetween`
+     with a `Flexible` (not `Expanded`) greeting `Text` so the avatar lands
+     flush against the trailing edge regardless of greeting length, and a
+     long name truncates instead of pushing the avatar off-screen.
+  4. **Avatar tap → Settings.** New nullable `HomeScreen.onAvatarTap`,
+     wrapped around `AvatarCircle` with an `InkWell(customBorder:
+     CircleBorder())` for a circular ripple; `app.dart` wires it to
+     `setState(() => _tabIndex = 2)`, the same pattern `ReviewScreen`'s
+     `onGoToPractice` already uses to switch tabs from inside a screen that
+     doesn't own the bottom-nav state itself.
+
+  All four verified in both light and dark mode via the same temporary,
+  untracked debug-harness technique as earlier phases (deleted after use,
+  never committed) — light-mode verification needed a temporary, also-
+  reverted-before-commit `themeMode: ThemeMode.light` override in
+  `app.dart`, since the simulator's `simctl ui appearance` toggle doesn't
+  reliably propagate to an already-running debug build's system-brightness
+  detection. Full test suite (48 tests) and `flutter analyze` clean after
+  each commit.
