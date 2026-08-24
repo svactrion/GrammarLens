@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../models/avatar.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../widgets/avatar_circle.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 
@@ -10,12 +12,14 @@ import 'topic_practice_screen.dart';
 /// screen's only job is the personalized greeting and picking a mode.
 class HomeScreen extends StatefulWidget {
   final String userName;
+  final Avatar? avatar;
   final ClaudeService claudeService;
   final StorageService storageService;
 
   const HomeScreen({
     super.key,
     required this.userName,
+    this.avatar,
     required this.claudeService,
     required this.storageService,
   });
@@ -107,10 +111,24 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListView(
         padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
         children: [
-          Text(
-            'Welcome back, ${widget.userName}',
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
+          // PRD v2 §11: an avatar next to the greeting, not floating
+          // elsewhere on the page, so it reads as "whose home screen this
+          // is" rather than a decorative icon.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AvatarCircle(avatar: widget.avatar, radius: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Welcome back, ${widget.userName}',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: appBarFg,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

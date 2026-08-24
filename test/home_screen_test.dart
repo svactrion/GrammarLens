@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/widgets/avatar_circle.dart';
 
 void main() {
-  Future<void> pumpHome(WidgetTester tester) async {
+  Future<void> pumpHome(WidgetTester tester, {Avatar? avatar}) async {
     // The default 800x600 test surface is shorter than the mode grid's
     // second row — use a phone-realistic size so every card is actually
     // reachable by taps.
@@ -21,6 +23,7 @@ void main() {
       MaterialApp(
         home: HomeScreen(
           userName: 'Ada',
+          avatar: avatar,
           claudeService: ClaudeService(),
           storageService: StorageService(),
         ),
@@ -32,6 +35,19 @@ void main() {
   testWidgets('greets the user by their onboarding name', (tester) async {
     await pumpHome(tester);
     expect(find.text('Welcome back, Ada'), findsOneWidget);
+  });
+
+  testWidgets('shows a placeholder avatar when none has been picked',
+      (tester) async {
+    await pumpHome(tester);
+    final circle = tester.widget<AvatarCircle>(find.byType(AvatarCircle));
+    expect(circle.avatar, isNull);
+  });
+
+  testWidgets('shows the picked avatar next to the greeting', (tester) async {
+    await pumpHome(tester, avatar: Avatar.penguin);
+    final circle = tester.widget<AvatarCircle>(find.byType(AvatarCircle));
+    expect(circle.avatar, Avatar.penguin);
   });
 
   testWidgets('shows the three mode cards plus the Early Access banner',

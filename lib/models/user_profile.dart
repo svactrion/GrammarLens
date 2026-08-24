@@ -1,3 +1,4 @@
+import 'avatar.dart';
 import 'learning_goal.dart';
 
 /// The guest-first user identity (PRD v2 §5 — no accounts, no backend).
@@ -8,12 +9,14 @@ class UserProfile {
   final LearningGoal learningGoal;
   final int? age;
   final String? occupation;
+  final Avatar? avatar;
 
   const UserProfile({
     required this.name,
     required this.learningGoal,
     this.age,
     this.occupation,
+    this.avatar,
   });
 
   UserProfile copyWith({
@@ -25,12 +28,15 @@ class UserProfile {
     bool clearAge = false,
     String? occupation,
     bool clearOccupation = false,
+    Avatar? avatar,
+    bool clearAvatar = false,
   }) {
     return UserProfile(
       name: name ?? this.name,
       learningGoal: learningGoal ?? this.learningGoal,
       age: clearAge ? null : (age ?? this.age),
       occupation: clearOccupation ? null : (occupation ?? this.occupation),
+      avatar: clearAvatar ? null : (avatar ?? this.avatar),
     );
   }
 
@@ -40,6 +46,7 @@ class UserProfile {
         'learning_goal': learningGoal.toJson(),
         'age': age,
         'occupation': occupation,
+        'avatar': avatar?.toJson(),
       };
 
   factory UserProfile.fromMap(Map<String, Object?> map) => UserProfile(
@@ -48,5 +55,6 @@ class UserProfile {
             LearningGoalInfo.fromJson(map['learning_goal'] as String?),
         age: map['age'] as int?,
         occupation: map['occupation'] as String?,
+        avatar: AvatarInfo.fromJson(map['avatar'] as String?),
       );
 }

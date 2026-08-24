@@ -110,6 +110,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
           final screens = [
             HomeScreen(
               userName: _profile!.name,
+              avatar: _profile!.avatar,
               claudeService: _claudeService,
               storageService: _storageService,
             ),
