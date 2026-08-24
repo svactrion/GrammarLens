@@ -12,7 +12,13 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _dbName = 'grammar_lens.db';
-  static const _dbVersion = 6;
+  static const _dbVersion = 7;
+
+  // Pre-launch checklist (PRD v2 §10.1) — a client-side daily cap bounds
+  // Anthropic API spend per device without needing a server-side gate.
+  // "10" is a placeholder reasonable default, not a measured number (§7.2
+  // defers the real free-tier cap to post-launch cost data).
+  static const int dailySessionLimit = 10;
 
   static const _createTable = '''
     CREATE TABLE error_entries (
@@ -73,6 +79,17 @@ class StorageService {
     )
   ''';
 
+  // Keyed by local calendar day ('YYYY-MM-DD') rather than a rolling
+  // 24h window — simpler to reason about ("resets at midnight") and good
+  // enough for a cost guardrail, which doesn't need to be precise to the
+  // second.
+  static const _createDailySessionUsageTable = '''
+    CREATE TABLE daily_session_usage (
+      day TEXT PRIMARY KEY,
+      session_count INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -92,6 +109,7 @@ class StorageService {
         await db.execute(_createPracticeSettingsTable);
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
+        await db.execute(_createDailySessionUsageTable);
       },
       // Still pre-launch prototype with no real user data to preserve, so a
       // schema change just drops and recreates rather than carrying a real
@@ -103,12 +121,14 @@ class StorageService {
         await db.execute('DROP TABLE IF EXISTS practice_settings');
         await db.execute('DROP TABLE IF EXISTS topic_practice_stats');
         await db.execute('DROP TABLE IF EXISTS user_profile');
+        await db.execute('DROP TABLE IF EXISTS daily_session_usage');
         await db.execute(_createTable);
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
         await db.execute(_createPracticeSettingsTable);
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
+        await db.execute(_createDailySessionUsageTable);
       },
     );
   }
@@ -249,6 +269,36 @@ class StorageService {
       ON CONFLICT(topic_id) DO UPDATE SET
         questions_answered = questions_answered + excluded.questions_answered
     ''', [topicId, questionsAnswered]);
+  }
+
+  static String _todayKey() => DateTime.now().toIso8601String().split('T')[0];
+
+  /// How many practice sessions this device has started today (local
+  /// calendar day) — gates new generation once it reaches
+  /// [dailySessionLimit] (`launchPracticeSet`, PRD v2 §10.1).
+  Future<int> getSessionCountForToday() async {
+    final db = await _database;
+    final rows = await db.query(
+      'daily_session_usage',
+      where: 'day = ?',
+      whereArgs: [_todayKey()],
+      limit: 1,
+    );
+    if (rows.isEmpty) return 0;
+    return rows.first['session_count'] as int;
+  }
+
+  /// Called once a practice set has actually been generated (i.e. the LLM
+  /// call this cap exists to bound has happened), not merely requested —
+  /// so an aborted or errored generation doesn't count against the limit.
+  Future<void> recordSessionStarted() async {
+    final db = await _database;
+    await db.rawInsert('''
+      INSERT INTO daily_session_usage (day, session_count)
+      VALUES (?, 1)
+      ON CONFLICT(day) DO UPDATE SET
+        session_count = session_count + 1
+    ''', [_todayKey()]);
   }
 
   /// Per-topic stats for the home screen's topic cards: total questions
