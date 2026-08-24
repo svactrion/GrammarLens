@@ -230,6 +230,28 @@ is simpler, error-profile-driven is more consistent with what users praised.
 
 ---
 
+## 7.4 Infrastructure sequencing (rejected-for-now stack proposal)
+
+A separate AI tool was asked to propose a production stack for this project
+without visibility into this document — it recommended Supabase, RevenueCat,
+PostHog, OneSignal, and Firebase Crashlytics, plus a Clean
+Architecture/MVVM restructure and an ASO keyword strategy, all up front. None
+of it traces to anything in §3's evidence table; it's generic "freemium app"
+best practice, not GrammarLens-specific. Recorded here so the reasoning for
+not doing this now isn't lost if the same proposal resurfaces.
+
+| Tool | What it's for | Why not now | Right time |
+|---|---|---|---|
+| Supabase | Backend, DB, auth | Directly contradicts §5's guest-first decision, made deliberately to avoid standing up backend infra before it's needed | Post-v2, when accounts/social genuinely require a server (see §10 "Later phases") |
+| RevenueCat | Subscription/IAP management | §6 explicitly excludes payment processing from v2 | Once a real pricing decision is made, after early-access data exists — likely post-launch |
+| PostHog | Product analytics, paywall funnels | No traffic yet to analyze; would be tracking empty channels | Phase 6 (public launch) — this one does map to a real need, §9's success criteria (onboarding completion, D1/D7 retention, mode split) require *some* event tracking, so revisit vendor choice then rather than defaulting to PostHog now |
+| OneSignal | Push notifications (streak-break reminders) | Not just premature — in tension with the validated value prop. §3 already flags that streak mode risks pushing the app toward pressure/exam-like feeling (T3's complaint); a "your streak is dying" push is that risk in its most direct form. Building the retention mechanic before the mode it retains users into even exists, and before knowing whether streak mode itself damages the calm/mistake-focused core, is backwards | After streak mode ships and its usage data is visible — and even then, reconsider the framing (not punitive) before defaulting to streak-break alerts |
+| Firebase Crashlytics | Crash reporting | Lowest-risk of the five, but no urgency — single-developer testing on a simulator sees crashes directly | Reasonable to add around Phase 6 when usage moves outside the developer's own machine |
+| Clean Architecture / MVVM restructure | Folder structure to modularly fit the above | Speculative generality — restructuring around five integrations none of which are being built yet | Introduce structure incrementally as each integration actually lands, not ahead of it |
+| ASO / AppTweak keyword strategy | Store listing optimization | No store distribution channel has been decided yet | Right before actual store submission, once a distribution decision is made |
+
+---
+
 ## 8. Out of scope for v2
 
 - Payment processing and pricing (see §6)
