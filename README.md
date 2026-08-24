@@ -59,8 +59,8 @@ This project follows a structured product process, documented as it happens:
       (see [`docs/build-log.md`](docs/build-log.md))
 - [x] Visual design pass — Material 3, custom orange/blue identity, light + dark mode
 - [x] One-question-at-a-time flow, session length selection
-- [ ] User testing with real learners (in progress)
-- [ ] Public write-up (Medium)
+- [x] User testing with real learners (in progress)
+- [x] Public write-up (Medium)
 
 ## Key Product Decisions (and why)
 
