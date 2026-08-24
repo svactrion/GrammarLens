@@ -51,7 +51,12 @@ product continues.
   Skip/Next/Submit button now stays pinned above the on-screen keyboard on
   every free-text question type (fill-in-the-blank, error correction,
   sentence writing), instead of sitting behind it. Answers the T1 finding in
-  `docs/prd.md` §2.2 Theme 2
+  `docs/prd.md` §2.2 Theme 2. Two follow-up fixes from testing this on a real
+  device: the question header (context/instruction/hint) now lives in its
+  own scroll region, separate from the answer field, so it no longer gets
+  dragged half off screen by the keyboard's "scroll the focused field into
+  view" behavior; and tapping anywhere outside the field dismisses the
+  keyboard, not just its own "Done" key
 
 **Documentation**
 - `docs/prd.md` — problem, personas, interview findings (§2.1), usability

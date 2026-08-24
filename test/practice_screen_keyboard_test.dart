@@ -88,11 +88,18 @@ void main() {
     // coupling this check to whichever label the current state happens to
     // show.
     final buttonRect = tester.getRect(find.byType(FilledButton));
+    final fieldRect = tester.getRect(find.byType(TextField));
 
     expect(
       buttonRect.bottom,
       lessThanOrEqualTo(screenHeight - keyboardHeight),
       reason: 'Primary button must stay above the keyboard, not hidden '
+          'behind it.',
+    );
+    expect(
+      fieldRect.bottom,
+      lessThanOrEqualTo(screenHeight - keyboardHeight),
+      reason: 'Answer field must stay above the keyboard, not hidden '
           'behind it.',
     );
   }
@@ -147,6 +154,73 @@ void main() {
         final buttonRect =
             tester.getRect(find.widgetWithText(FilledButton, 'Skip'));
         expect(buttonRect.bottom, greaterThan(screenHeight - 60));
+      });
+
+      testWidgets(
+          'answer field has no scrollable ancestor, so the keyboard can '
+          'never force-scroll the question header to keep it in view',
+          (tester) async {
+        await pumpScreen(
+          tester,
+          logicalSize: device.size,
+          devicePixelRatio: device.dpr,
+        );
+
+        // The header (context/instruction/hint) lives in its own scroll
+        // region, separate from the input. If the TextField ever regained a
+        // Scrollable ancestor spanning the header again, Flutter's built-in
+        // "scroll the focused field into view" behaviour could drag the
+        // header off screen the way it did before this fix.
+        expect(
+          find.ancestor(
+            of: find.byType(TextField),
+            matching: find.byType(Scrollable),
+          ),
+          findsNothing,
+        );
+      });
+
+      testWidgets(
+          'question header position is unaffected by the keyboard opening',
+          (tester) async {
+        await pumpScreen(
+          tester,
+          logicalSize: device.size,
+          devicePixelRatio: device.dpr,
+        );
+        final instructionFinder =
+            find.text(practiceSet.items[0].instruction);
+        final rectBefore = tester.getRect(instructionFinder);
+
+        await tester.tap(find.byType(TextField));
+        await tester.enterText(find.byType(TextField), 'an');
+        tester.view.viewInsets =
+            FakeViewPadding(bottom: 300 * tester.view.devicePixelRatio);
+        addTearDown(tester.view.resetViewInsets);
+        await tester.pumpAndSettle();
+
+        expect(tester.getRect(instructionFinder), rectBefore);
+      });
+
+      testWidgets('tapping outside the text field dismisses the keyboard',
+          (tester) async {
+        await pumpScreen(
+          tester,
+          logicalSize: device.size,
+          devicePixelRatio: device.dpr,
+        );
+
+        await tester.tap(find.byType(TextField));
+        await tester.enterText(find.byType(TextField), 'an');
+        await tester.pumpAndSettle();
+        expect(tester.testTextInput.isVisible, isTrue);
+
+        // Tap the question card's background — nowhere near the field or
+        // the buttons — the way a user reaching to dismiss the keyboard
+        // would.
+        await tester.tap(find.byType(Card));
+        await tester.pumpAndSettle();
+        expect(tester.testTextInput.isVisible, isFalse);
       });
     });
   }
