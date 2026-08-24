@@ -165,14 +165,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       'later update.',
                 ),
               ),
-              _ModeCard(
-                icon: Icons.workspace_premium_rounded,
-                title: 'Early Access',
-                description: "What's coming with premium — free for now.",
-                onTap: () => _openPremium(context),
-              ),
             ],
           ),
+          const SizedBox(height: 14),
+          // Deliberately not a fifth grid tile: Early Access is commercial
+          // framing (PRD v2 §6), not a practice mode, and looking like one
+          // of the learning cards above implied it was. Pulled out of the
+          // grid into its own full-width row with a structurally different
+          // look — outlined/tinted instead of the grid tiles' solid card
+          // fill, horizontal icon+text+chevron instead of their icon-on-top
+          // layout — so the "this is a different kind of thing" reads
+          // instantly, not just via a different color.
+          _EarlyAccessBanner(onTap: () => _openPremium(context)),
         ],
       ),
     );
@@ -257,6 +261,74 @@ class _ModeCard extends StatelessWidget {
                       theme.textTheme.bodySmall?.copyWith(color: muted),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-width, outlined/tinted banner — see the call site's comment for why
+/// this deliberately doesn't reuse `_ModeCard`'s solid-fill, icon-on-top
+/// look. A subtle tinted fill (rather than fully transparent) is needed in
+/// light mode specifically: the page there sits directly on the vivid brand
+/// orange (see theme.dart), where a transparent background made onboarding's
+/// unselected goal cards unreadable for the same reason (see that screen's
+/// history) — some fill is required for the border+text to read as a
+/// surface at all, it just doesn't need to be the same fill the mode cards
+/// use.
+class _EarlyAccessBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _EarlyAccessBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: colorScheme.secondary.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colorScheme.secondary, width: 1.5),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.workspace_premium_outlined,
+                color: colorScheme.secondary,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Early Access',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "See what's coming with premium — free for now.",
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: colorScheme.secondary),
             ],
           ),
         ),

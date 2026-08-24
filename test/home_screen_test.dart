@@ -34,7 +34,8 @@ void main() {
     expect(find.text('Welcome back, Ada'), findsOneWidget);
   });
 
-  testWidgets('shows all four mode cards', (tester) async {
+  testWidgets('shows the three mode cards plus the Early Access banner',
+      (tester) async {
     await pumpHome(tester);
     expect(find.text('Topic Practice'), findsOneWidget);
     expect(find.text('Streak Mode'), findsOneWidget);
@@ -42,7 +43,7 @@ void main() {
     expect(find.text('Early Access'), findsOneWidget);
     expect(find.text('Coming soon'), findsOneWidget);
     // Only Voice Practice's badge reads "Premium" — Early Access is a
-    // distinct card title, not another instance of that badge text.
+    // distinct banner title, not another instance of that badge text.
     expect(find.text('Premium'), findsOneWidget);
   });
 
@@ -59,14 +60,34 @@ void main() {
     );
 
     // Topic Practice and Streak Mode share the first row (same top edge);
-    // Voice Practice and Early Access start a new row below them.
+    // Voice Practice starts a new row below them, alone (the grid only
+    // holds the three practice modes — Early Access is a separate banner
+    // below it, checked in its own test).
     final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
     final streakTop = tester.getTopLeft(find.text('Streak Mode')).dy;
     final voiceTop = tester.getTopLeft(find.text('Voice Practice')).dy;
-    final earlyAccessTop = tester.getTopLeft(find.text('Early Access')).dy;
     expect(topicTop, streakTop);
     expect(voiceTop, greaterThan(topicTop));
-    expect(voiceTop, earlyAccessTop);
+  });
+
+  testWidgets(
+      'Early Access is a distinct banner below the grid, not a fifth mode '
+      'card', (tester) async {
+    await pumpHome(tester);
+
+    // Not one of the GridView's children.
+    final gridChildren = tester.widgetList(
+      find.descendant(
+        of: find.byType(GridView),
+        matching: find.text('Early Access'),
+      ),
+    );
+    expect(gridChildren, isEmpty);
+
+    // Sits below the grid entirely.
+    final gridBottom = tester.getBottomLeft(find.text('Voice Practice')).dy;
+    final bannerTop = tester.getTopLeft(find.text('Early Access')).dy;
+    expect(bannerTop, greaterThan(gridBottom));
   });
 
   testWidgets('Topic Practice opens the existing MVP loop', (tester) async {
