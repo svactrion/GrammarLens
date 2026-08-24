@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/practice_item.dart';
 import '../models/practice_set.dart';
 import '../models/topic.dart';
+import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
@@ -14,6 +15,7 @@ class PracticeScreen extends StatefulWidget {
   final PracticeSet practiceSet;
   final ClaudeService claudeService;
   final StorageService storageService;
+  final AnalyticsService analyticsService;
 
   const PracticeScreen({
     super.key,
@@ -21,6 +23,7 @@ class PracticeScreen extends StatefulWidget {
     required this.practiceSet,
     required this.claudeService,
     required this.storageService,
+    required this.analyticsService,
   });
 
   @override
@@ -129,6 +132,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
             practiceSet: widget.practiceSet,
             answers: Map.of(_answers),
             storageService: widget.storageService,
+            analyticsService: widget.analyticsService,
           ),
         ),
       );

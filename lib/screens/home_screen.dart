@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/avatar.dart';
+import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/avatar_circle.dart';
@@ -15,6 +16,7 @@ class HomeScreen extends StatefulWidget {
   final Avatar? avatar;
   final ClaudeService claudeService;
   final StorageService storageService;
+  final AnalyticsService analyticsService;
 
   const HomeScreen({
     super.key,
@@ -22,6 +24,7 @@ class HomeScreen extends StatefulWidget {
     this.avatar,
     required this.claudeService,
     required this.storageService,
+    required this.analyticsService,
   });
 
   @override
@@ -36,17 +39,20 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _infoDialogOpen = false;
 
   void _openTopicPractice(BuildContext context) {
+    widget.analyticsService.modeSelected(AnalyticsService.modeTopic);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TopicPracticeScreen(
           claudeService: widget.claudeService,
           storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
         ),
       ),
     );
   }
 
   void _openPremium(BuildContext context) {
+    widget.analyticsService.modeSelected(AnalyticsService.modeEarlyAccess);
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const PremiumScreen()),
     );
@@ -164,11 +170,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Streak Mode',
                 description: 'Fast daily rounds to build a streak.',
                 badgeLabel: 'Coming soon',
-                onTap: () => _showComingSoonDialog(
-                  context,
-                  title: 'Coming soon',
-                  message: 'Streak Mode is coming soon.',
-                ),
+                onTap: () {
+                  widget.analyticsService
+                      .modeSelected(AnalyticsService.modeStreak);
+                  _showComingSoonDialog(
+                    context,
+                    title: 'Coming soon',
+                    message: 'Streak Mode is coming soon.',
+                  );
+                },
               ),
               _ModeCard(
                 icon: Icons.mic_rounded,
@@ -176,12 +186,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 description: 'Speaking practice with voice feedback.',
                 badgeLabel: 'Premium',
                 locked: true,
-                onTap: () => _showComingSoonDialog(
-                  context,
-                  title: 'Premium feature',
-                  message: 'Voice Practice will be part of premium, in a '
-                      'later update.',
-                ),
+                onTap: () {
+                  widget.analyticsService
+                      .modeSelected(AnalyticsService.modeVoice);
+                  _showComingSoonDialog(
+                    context,
+                    title: 'Premium feature',
+                    message: 'Voice Practice will be part of premium, in a '
+                        'later update.',
+                  );
+                },
               ),
             ],
           ),

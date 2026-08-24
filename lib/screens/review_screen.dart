@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/topics.dart';
 import '../models/error_entry.dart';
 import '../models/review_sort_order.dart';
+import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/page_title.dart';
@@ -16,6 +17,7 @@ import 'weak_spot_detail_screen.dart';
 class ReviewScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
+  final AnalyticsService analyticsService;
   final bool active;
   final VoidCallback onGoToPractice;
 
@@ -23,6 +25,7 @@ class ReviewScreen extends StatefulWidget {
     super.key,
     required this.claudeService,
     required this.storageService,
+    required this.analyticsService,
     required this.active,
     required this.onGoToPractice,
   });
@@ -101,6 +104,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           spot: spot,
           claudeService: widget.claudeService,
           storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
         ),
       ),
     );

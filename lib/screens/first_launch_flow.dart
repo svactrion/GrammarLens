@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/user_profile.dart';
+import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
 import '../utils/loading_view.dart';
@@ -14,11 +17,13 @@ import 'welcome_screen.dart';
 /// the app shell.
 class FirstLaunchFlow extends StatefulWidget {
   final StorageService storageService;
+  final AnalyticsService analyticsService;
   final ValueChanged<UserProfile> onComplete;
 
   const FirstLaunchFlow({
     super.key,
     required this.storageService,
+    required this.analyticsService,
     required this.onComplete,
   });
 
@@ -36,6 +41,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
     setState(() => _saving = true);
     try {
       await widget.storageService.saveUserProfile(profile);
+      unawaited(widget.analyticsService.onboardingCompleted());
       widget.onComplete(profile);
     } catch (e) {
       if (!mounted) return;

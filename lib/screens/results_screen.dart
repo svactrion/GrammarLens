@@ -4,6 +4,7 @@ import '../models/error_entry.dart';
 import '../models/practice_set.dart';
 import '../models/scoring_result.dart';
 import '../models/topic.dart';
+import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 import '../utils/error_banner.dart';
@@ -17,6 +18,7 @@ class ResultsScreen extends StatefulWidget {
   final PracticeSet practiceSet;
   final Map<String, String> answers;
   final StorageService storageService;
+  final AnalyticsService analyticsService;
 
   const ResultsScreen({
     super.key,
@@ -25,6 +27,7 @@ class ResultsScreen extends StatefulWidget {
     required this.practiceSet,
     required this.answers,
     required this.storageService,
+    required this.analyticsService,
   });
 
   @override
@@ -37,6 +40,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
     super.initState();
     _saveErrors();
     _recordCompletion();
+    widget.analyticsService.sessionCompleted(
+      topicId: widget.topic.id.name,
+      questionCount: widget.result.totalCount,
+    );
   }
 
   Future<void> _recordCompletion() async {

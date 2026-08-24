@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 
@@ -48,6 +49,7 @@ void main() {
         home: TopicPracticeScreen(
           claudeService: ClaudeService(),
           storageService: storageService,
+          analyticsService: AnalyticsService(),
         ),
       ),
     );
@@ -71,6 +73,7 @@ void main() {
         home: TopicPracticeScreen(
           claudeService: ClaudeService(),
           storageService: storageService,
+          analyticsService: AnalyticsService(),
         ),
       ),
     );
