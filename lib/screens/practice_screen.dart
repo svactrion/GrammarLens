@@ -286,36 +286,49 @@ class _PracticeScreenState extends State<PracticeScreen> {
                   ),
                 ],
               ),
+        // Scaffold's `bottomNavigationBar` is pinned to the physical bottom
+        // of the screen — `resizeToAvoidBottomInset` only shrinks `body`, it
+        // doesn't move this slot. Without an explicit push, the keyboard
+        // covers the primary button on any free-text question (fill-in-
+        // blank, error correction, sentence writing) instead of sitting
+        // above it.
         bottomNavigationBar: _submitting
             ? null
-            : SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-                  child: _currentIndex == 0
-                      ? SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            onPressed: _advance,
-                            child: Text(_primaryLabel()),
+            : AnimatedPadding(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+                    child: _currentIndex == 0
+                        ? SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _advance,
+                              child: Text(_primaryLabel()),
+                            ),
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _goBack,
+                                  child: const Text('Back'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: FilledButton(
+                                  onPressed: _advance,
+                                  child: Text(_primaryLabel()),
+                                ),
+                              ),
+                            ],
                           ),
-                        )
-                      : Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _goBack,
-                                child: const Text('Back'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: FilledButton(
-                                onPressed: _advance,
-                                child: Text(_primaryLabel()),
-                              ),
-                            ),
-                          ],
-                        ),
+                  ),
                 ),
               ),
       ),
