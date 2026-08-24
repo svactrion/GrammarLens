@@ -117,3 +117,22 @@ Claude session Ahmet uses for product calls — each entry is tagged
   Deliberately tested with a misspelled word in an otherwise grammatically
   correct sentence — scoring did not misclassify it. No prompt change made;
   removed from the Iteration 3 candidate list in `docs/roadmap.md`.
+- **[Engineering]** Shipped v2 Phase 1 (`docs/prd-v2.md` §4, §5, §10) in
+  three commits, one per screen group: (1) Welcome + two-field onboarding
+  (name + learning goal, guest-first — no signup, profile save doubles as
+  the "onboarding complete" flag), (2) Home rewritten from topic list to
+  mode selection with a personalized greeting, old topic list moved
+  unchanged into its own `TopicPracticeScreen`, (3) Settings screen built
+  from scratch (proper light/dark/system theme picker, name edit, optional
+  age/occupation, scoped "reset progress" that keeps the guest identity).
+  `StorageService` gets a `user_profile` table (schema bump to v6, same
+  drop/recreate-on-upgrade convention as the rest of the schema) and
+  `resetProgressData()`. Existing Topic Practice and Review flows untouched
+  — this phase only added navigation and new screens around them, per
+  scope. Verified per-commit on an iOS simulator in both themes; tap
+  automation in this sandboxed environment turned out unreliable enough
+  (intermittent Accessibility-permission failures, no working mechanism to
+  reliably synthesize touches) that verification leaned on a temporary
+  debug-harness entry point (render a target screen directly, no taps
+  needed) plus one genuine end-to-end run whose saved profile was checked
+  directly in the on-device sqlite file.

@@ -78,6 +78,24 @@ see `docs/prd-v2.md`.**
   rejected outright (3/3, consistent with §2.1 Theme 3) — closes the
   MC-based word-form category as a candidate
 
+**V2 Phase 1 — Onboarding + Home + Settings** (`docs/prd-v2.md` §4, §5, §10)
+- First-launch flow: one-sentence Welcome/value intro → two-field onboarding
+  (name + learning goal only — age/occupation deliberately deferred, see the
+  onboarding screen's doc comment). Guest-first, no signup: the profile
+  saves straight to the existing local sqlite store, and its presence is
+  what "onboarding complete" means — returning launches skip straight to
+  Home
+- Home replaced: was the topic list, now mode selection with a personalized
+  greeting ("Welcome back, {name}") and three mode cards — Topic Practice
+  (active, opens the unchanged MVP loop, now its own TopicPracticeScreen),
+  Streak Mode and Voice Practice (not built yet; tapping either is
+  informative rather than a dead disabled card)
+- Settings screen, new: theme (proper light/dark/system, replacing the old
+  quick toggle), name edit, optional age/occupation fields, and a "reset
+  progress" action — scoped to practice history only, keeps the guest
+  identity intact
+- Bottom nav: three tabs now (Home / Review / Settings)
+
 ---
 
 ## What's next
@@ -97,31 +115,25 @@ streak mode, not after — see `docs/prd-v2.md` §10 for the reasoning
 (launching exists to get real retention signal on the validated core loop;
 building a zero-evidence bet before measuring that defeats the point).
 
-### 1. V2 Phase 1 — Onboarding + Home + Settings
-No backend, no new LLM cost. Welcome/value intro → onboarding (name +
-learning goal only) → new mode-selection Home with personalized greeting.
-Settings screen created from scratch (theme, name edit, data reset, optional
-profile fields). *(In progress.)*
-
-### 2. V2 Phase 2 — Premium / early-access screen
+### 1. V2 Phase 2 — Premium / early-access screen
 Screen with copy, no payment flow. "Free during early access" framing.
 
-### 3. Pre-launch checklist
+### 2. Pre-launch checklist
 See `docs/prd-v2.md` §10.1 — distribution channel decision, API key safety
 approach, minimal retention measurement, device coverage, feedback channel,
 privacy note. Several of these are still open decisions, not just tasks.
 
-### 4. Public launch
+### 3. Public launch
 Topic mode + onboarding + premium teaser only. No streak mode yet.
 
-### 5. Streak mode (post-launch fast-follow)
+### 4. Streak mode (post-launch fast-follow)
 Built after real D1/D7 data exists, not before. Carries the open cost
 decision (`docs/prd-v2.md` §7.1). Instrument per-session token usage while
 building it.
 
-### 6. Rewarded video gate on streak (free tier)
+### 5. Rewarded video gate on streak (free tier)
 
-### 7. Cost measurement, resolve open decisions §7.1 / §7.2
+### 6. Cost measurement, resolve open decisions §7.1 / §7.2
 
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI voice practice mode.
