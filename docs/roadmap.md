@@ -96,6 +96,19 @@ see `docs/prd-v2.md`.**
   identity intact
 - Bottom nav: three tabs now (Home / Review / Settings)
 
+**V2 Phase 1 — revision round**, three fixes found testing the above on a
+real device:
+- Onboarding: centered text/labels (was left-aligned); the learning-goal
+  option cards were unreadable in light mode (transparent fill on the vivid
+  orange page, faint border) — now use an explicit surface color and a
+  stronger border, light mode only, dark mode left untouched
+- Streak/Voice "coming soon" messaging moved off the app-wide SnackBar
+  (which queued on repeat taps and kept showing after navigating away,
+  since it lives above the Navigator) onto a proper modal `showDialog`,
+  matching the app's existing confirm-dialog look
+- Home's mode cards: vertical list → 2-column grid, room to grow into more
+  modes without a layout rethink
+
 ---
 
 ## What's next
