@@ -29,6 +29,24 @@ Future<void> launchPracticeSet({
   required String errorPrefix,
   VoidCallback? onReturned,
 }) async {
+  // Checked first, before the length picker even opens — no point asking
+  // "how many questions" for a session that's about to be refused (PRD v2
+  // §10.1's daily cost cap). Falls back to "allow" on a storage read
+  // failure rather than blocking practice entirely over it, same as the
+  // rest of the app treats local-storage hiccups (see app.dart's profile
+  // and theme loads).
+  int sessionCount;
+  try {
+    sessionCount = await storageService.getSessionCountForToday();
+  } catch (_) {
+    sessionCount = 0;
+  }
+  if (!context.mounted) return;
+  if (sessionCount >= StorageService.dailySessionLimit) {
+    await _showDailyLimitReachedDialog(context);
+    return;
+  }
+
   final lastLength = await storageService.getPracticeLength();
   if (!context.mounted) return;
   final length = await showPracticeLengthPicker(
@@ -44,6 +62,16 @@ Future<void> launchPracticeSet({
       topic,
       count: length.questionCount,
     );
+    // Counted once generation actually succeeds — the LLM call this cap
+    // exists to bound has happened, so it counts even if the user later
+    // backs out of the session itself without answering. Best-effort: a
+    // failed usage-count write shouldn't block a session the generation
+    // cost has already been paid for.
+    try {
+      await storageService.recordSessionStarted();
+    } catch (_) {
+      // Ignored — see comment above.
+    }
     if (!context.mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -63,3 +91,28 @@ Future<void> launchPracticeSet({
     setGenerating(false);
   }
 }
+
+Future<void> _showDailyLimitReachedDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('That\'s all for today'),
+      content: const Text(
+        'You\'ve used all ${StorageService.dailySessionLimit} practice '
+        'sessions for today. Come back tomorrow for more — your progress '
+        'is saved.',
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      actions: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Got it'),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
