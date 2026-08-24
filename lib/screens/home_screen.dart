@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 
 /// Mode-selection Home (PRD v2 §4) — replaces the old topic-list-first Home.
@@ -38,6 +39,12 @@ class _HomeScreenState extends State<HomeScreen> {
           storageService: widget.storageService,
         ),
       ),
+    );
+  }
+
+  void _openPremium(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PremiumScreen()),
     );
   }
 
@@ -112,13 +119,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
           // 2-column grid rather than the vertical stack this used to be.
-          // With just 3 modes today a single column had a lot of unused
-          // width, and a grid is the more natural shape to grow into as
-          // more modes arrive later — no layout rethink needed to add a
-          // 4th tile. A horizontally-swipeable carousel (Instagram-style
-          // mode switching) was considered and set aside as unneeded
-          // complexity for this few items; revisit if the mode count grows
-          // enough that a grid stops being the simpler choice.
+          // A single column had a lot of unused width, and a grid is the
+          // more natural shape to grow into as more modes arrive — no
+          // layout rethink needed to add a 5th tile later. A
+          // horizontally-swipeable carousel (Instagram-style mode
+          // switching) was considered and set aside as unneeded complexity
+          // for this few items; revisit if the mode count grows enough
+          // that a grid stops being the simpler choice.
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -157,6 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   message: 'Voice Practice will be part of premium, in a '
                       'later update.',
                 ),
+              ),
+              _ModeCard(
+                icon: Icons.workspace_premium_rounded,
+                title: 'Early Access',
+                description: "What's coming with premium — free for now.",
+                onTap: () => _openPremium(context),
               ),
             ],
           ),
