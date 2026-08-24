@@ -136,3 +136,18 @@ Claude session Ahmet uses for product calls — each entry is tagged
   debug-harness entry point (render a target screen directly, no taps
   needed) plus one genuine end-to-end run whose saved profile was checked
   directly in the on-device sqlite file.
+- **[Engineering]** v2 Phase 1 revision round, three fixes found testing the
+  above on a real device, each its own commit: (1) onboarding text/labels
+  centered, and the learning-goal option cards fixed in light mode only —
+  their unselected fill was transparent, invisible against light mode's
+  vivid orange page background (dark mode's near-black page happened to
+  make the same transparent fill look fine, which is presumably how this
+  shipped unnoticed); (2) Streak/Voice "coming soon" messaging moved from
+  `ScaffoldMessenger`'s app-wide SnackBar to a screen-scoped `showDialog` —
+  the SnackBar bug (stacked on repeat taps, kept showing after navigating
+  away) traced to that messenger living above the Navigator, shared by
+  every Scaffold in the tree rather than scoped to Home; a same-frame
+  double-tap test pins the fix down alongside the existing barrier-modality
+  behavior; (3) Home's mode cards moved from a vertical list to a
+  2-column `GridView`. Verified in both themes via the same debug-harness
+  technique as the initial Phase 1 build.
