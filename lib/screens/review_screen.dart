@@ -6,6 +6,7 @@ import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../utils/layout_constants.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import '../widgets/empty_state.dart';
@@ -194,7 +195,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           final width = MediaQuery.sizeOf(context).width;
           final hPad = (width * 0.045).clamp(16.0, 28.0);
           return ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
+            padding: EdgeInsets.fromLTRB(hPad, 20, hPad, navBarClearance),
             itemCount: spots.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {

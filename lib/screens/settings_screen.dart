@@ -5,6 +5,7 @@ import '../models/avatar.dart';
 import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
+import '../utils/layout_constants.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_circle.dart';
 
@@ -163,7 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         behavior: HitTestBehavior.opaque,
         onTap: () => FocusScope.of(context).unfocus(),
         child: ListView(
-          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
+          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, navBarClearance),
           children: [
             const _SectionLabel('Appearance'),
             const SizedBox(height: 8),

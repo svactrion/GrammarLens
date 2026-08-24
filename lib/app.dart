@@ -151,82 +151,102 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
           final unselectedColor =
               theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
           return Scaffold(
-            // Deliberately NOT `extendBody: true`: that would let each
-            // screen's content draw behind the floating bar, which sounds
-            // right for "blur reveals scrolled content" but in practice
-            // risks the last item on a short, unscrolled screen (e.g. Home's
-            // mode grid) rendering hidden underneath the bar instead of
-            // above it — a real, easy-to-miss regression for a cosmetic
-            // gain. Scaffold's default behavior (reserving the bar's height
-            // above `body`) costs nothing here: the pill still floats, is
-            // still rounded/translucent/blurred, just never overlaps.
-            body: IndexedStack(index: _tabIndex, children: screens),
-            bottomNavigationBar: SafeArea(
-              child: Padding(
-                // Floats free of all three screen edges (Kick/Instagram-style
-                // pill) rather than the old flush-to-the-bottom bar.
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        // Frosted glass: a translucent surface tint over the
-                        // blur, not a solid fill — content scrolling behind
-                        // the pill should still read through it, softened.
-                        color: colorScheme.surfaceContainerLow
-                            .withValues(alpha: isDark ? 0.55 : 0.68),
+            // A real floating bar, not Scaffold's `bottomNavigationBar`
+            // slot: that slot wraps its child in an opaque `Material`
+            // spanning the FULL WIDTH of the bottom of the screen, so even
+            // with a transparent/rounded child inside it, the slot itself
+            // painted a solid strip behind the pill's rounded corners and
+            // across the margins either side of it — exactly the "opaque
+            // backdrop behind the whole bottom of the screen" bug this
+            // rewrite fixes. A `Stack` with the bar as a `Positioned`
+            // overlay has no such slot: nothing paints anything outside the
+            // pill's own bounds, and screen content genuinely continues
+            // underneath it (scrolling included) rather than stopping at an
+            // invisible-but-present boundary.
+            body: Stack(
+              children: [
+                IndexedStack(index: _tabIndex, children: screens),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 0,
+                  child: SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(32),
-                        border: Border.all(
-                          color:
-                              colorScheme.outlineVariant.withValues(alpha: 0.5),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withValues(alpha: 0.18),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              // Frosted glass: a translucent surface tint
+                              // over the blur, not a solid fill — content
+                              // scrolling behind the pill should still read
+                              // through it, softened.
+                              color: colorScheme.surfaceContainerLow
+                                  .withValues(alpha: isDark ? 0.55 : 0.68),
+                              borderRadius: BorderRadius.circular(32),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant
+                                    .withValues(alpha: 0.5),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      colorScheme.shadow.withValues(alpha: 0.18),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: GNav(
+                              selectedIndex: _tabIndex,
+                              onTabChange: (i) => setState(() => _tabIndex = i),
+                              // The frosted Container above is the bar's
+                              // real surface now — GNav itself stays
+                              // transparent so it doesn't paint a second,
+                              // opaque background on top.
+                              backgroundColor: Colors.transparent,
+                              color: unselectedColor,
+                              activeColor: colorScheme.onSecondaryContainer,
+                              tabBackgroundColor: colorScheme.secondaryContainer,
+                              // GNav defaults to spaceBetween, which pins the
+                              // two tabs to the far edges of the bar; center
+                              // them as a group with margin between them
+                              // instead.
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              tabMargin:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              gap: 8,
+                              iconSize: 24,
+                              tabBorderRadius: 24,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              textStyle: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.onSecondaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              tabs: const [
+                                GButton(
+                                    icon: Icons.home_outlined, text: 'Home'),
+                                GButton(
+                                    icon: Icons.history_outlined,
+                                    text: 'Review'),
+                                GButton(
+                                    icon: Icons.settings_outlined,
+                                    text: 'Settings'),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                      child: GNav(
-                        selectedIndex: _tabIndex,
-                        onTabChange: (i) => setState(() => _tabIndex = i),
-                        // The frosted Container above is the bar's real
-                        // surface now — GNav itself stays transparent so it
-                        // doesn't paint a second, opaque background on top.
-                        backgroundColor: Colors.transparent,
-                        color: unselectedColor,
-                        activeColor: colorScheme.onSecondaryContainer,
-                        tabBackgroundColor: colorScheme.secondaryContainer,
-                        // GNav defaults to spaceBetween, which pins the two
-                        // tabs to the far edges of the bar; center them as a
-                        // group with margin between them instead.
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        tabMargin: const EdgeInsets.symmetric(horizontal: 10),
-                        gap: 8,
-                        iconSize: 24,
-                        tabBorderRadius: 24,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
                         ),
-                        textStyle: theme.textTheme.labelLarge?.copyWith(
-                          color: colorScheme.onSecondaryContainer,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        tabs: const [
-                          GButton(icon: Icons.home_outlined, text: 'Home'),
-                          GButton(icon: Icons.history_outlined, text: 'Review'),
-                          GButton(
-                              icon: Icons.settings_outlined, text: 'Settings'),
-                        ],
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           );
         },
