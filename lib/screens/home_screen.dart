@@ -17,6 +17,10 @@ class HomeScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final AnalyticsService analyticsService;
+  // Nullable, same as ReviewScreen's `onGoToPractice`: the bottom-nav tab
+  // switch lives in app.dart's State, not here, so this is a hook rather
+  // than HomeScreen owning navigation itself.
+  final VoidCallback? onAvatarTap;
 
   const HomeScreen({
     super.key,
@@ -25,6 +29,7 @@ class HomeScreen extends StatefulWidget {
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
+    this.onAvatarTap,
   });
 
   @override
@@ -142,7 +147,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              AvatarCircle(avatar: widget.avatar, radius: 22),
+              // PRD v2 §11's natural follow-up: the avatar is the user's
+              // own identity marker, and Settings is where it (and the
+              // rest of the profile) is edited — tapping it jumps there
+              // directly instead of requiring the Settings tab first.
+              InkWell(
+                customBorder: const CircleBorder(),
+                onTap: widget.onAvatarTap,
+                child: AvatarCircle(avatar: widget.avatar, radius: 22),
+              ),
             ],
           ),
           const SizedBox(height: 4),
