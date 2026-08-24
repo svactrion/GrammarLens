@@ -85,6 +85,143 @@ P4 reported that real-time correction during speaking damages confidence and dis
 - Present feedback in plain language first, with the rule name as secondary/optional detail
 - Consider surfacing error frequency statistics more prominently in Review, since this was the most requested feature
 
+## 2.2 Usability Testing Findings (Round 1)
+
+Structured usability tests with three participants (T1–T3), distinct from the
+§2.1 interview participants (P1–P4), same target segment (informally-fluent,
+IELTS/TOEFL-prep). Each completed the full core loop — topic selection →
+practice → error report → Review — using a think-aloud protocol, followed by
+a short structured interview. Sessions were captured live and reorganized
+into a template with AI assistance; quotes below are paraphrased and
+reorganized, not verbatim transcripts, consistent with the treatment of §2.1.
+
+**Sample size note:** target for this round was 5+ testers (§6 Success
+Criteria); proceeding with 3 was a deliberate scope decision made mid-round,
+not an oversight. Several findings below are supported by a single
+participant and are flagged as such — read them as directional, not
+saturated.
+
+**Participants**
+
+| ID | Profile | Background |
+|----|---------|------------|
+| T1 | 23, architecture graduate student, IELTS Academic (target band 7.0) | Informal learner (shows, YouTube, games); fluent speaking, struggles with grammar in academic writing |
+| T2 | 27, software developer, TOEFL (target 100+) | Learned through work and technical reading; comfortable speaking, confuses tenses in complex sentences |
+| T3 | 22, business undergraduate, IELTS (Erasmus application) | Learned via school and foreign shows; high confidence, practices casually with peers |
+
+### Theme 1 — Multiple-choice format rejected outright
+
+Asked directly whether they'd prefer selecting answers from options instead
+of producing them, all three rejected the idea unprompted and independently.
+T1: "would be boring and artificial — constructing the sentence myself
+without options is far more useful." T2: "that would make it just another
+ordinary test app — being productive is more instructive." T3: "if there
+were options I'd just gamble; without them I actually had to prove I knew
+it."
+
+*Confirms and strengthens §2.1 Theme 3 (P1, P2 also rejected gap-fill/MC).
+Combined across both rounds, 5 of 7 people interviewed reject multiple-choice
+as a practice format. This closes the "word-form (V1/V2/V3) multiple-choice"
+concept discussed as a candidate iteration — if a word-form topic is added,
+it should use the existing production-based question types, not a new MC
+mechanic.*
+
+### Theme 2 — Mobile input friction during production tasks
+
+T1 hit a moment where the on-screen keyboard covered the "Next" button on a
+sentence-writing question and had to scroll to find it. T2 separately found
+typing full corrected sentences on mobile "a bit tiring" for longer items and
+suggested being able to submit just the corrected fragment.
+
+*Two independent reports pointing at the same general area (long-form typing
+on a phone keyboard), though the specific complaints differ. The first part
+(keyboard covering the button) is a low-cost UI fix. The second (partial-
+answer submission) risks reopening the "graded on the fix, not the format"
+decision already made in Iteration 2 (build-log, 2026-07-24) — needs its own
+decision, not a quick patch.*
+
+### Theme 3 — Uncertainty about where to start (single participant)
+
+T1 hesitated roughly 15–20 seconds on the topic selection screen, looked for
+a "Start" or "assess my level" entry point, and later said: "I wish the app
+gave me a mixed 10-question test upfront to point me somewhere." T2 and T3
+did not report this when asked directly — T2's uncertainty was unrelated
+(see Theme 4), and T3 answered "no" outright.
+
+*Correction: an earlier draft of these session notes attributed this finding
+to both T1 and T2. T2's own answer to the direct question ("didn't happen
+when choosing the topic") contradicts that — corrected here to a
+single-participant finding.*
+
+*Distinct from the "random topic picker" idea discussed earlier (which read
+as gamification, already out of scope per §5) — T1 is describing a
+diagnostic/placement mechanism, not a randomizer. This reopens a decision §5
+deliberately deferred ("Placement/level testing — out of scope, v2
+candidate"). One data point isn't enough to reverse that decision, but worth
+watching for in future rounds.*
+
+### Theme 4 — Anxiety about typo vs. grammar-error distinction (single participant, unconfirmed)
+
+T2 raised a hypothetical concern mid-session: "what if I make a typo and the
+system reads it as a grammar mistake?" No actual typo-related misgrading
+occurred during the session — this was a stated worry, not an observed
+failure.
+
+*Not confirmed as a real defect. Verify by deliberately testing typo input
+against the current scoring prompt before treating this as an engineering
+task.*
+
+### Theme 5 — Review tab low visibility (single participant)
+
+T1 needed to be redirected to the Review tab after finishing the error
+report, describing the icon as "faded, didn't catch my attention at all." T2
+and T3 both navigated to Review unprompted.
+
+*Weak signal (1 of 3) against 2 of 3 finding it without help — lower
+priority than Theme 2.*
+
+### Theme 6 — Desire for positive micro-feedback (single participant)
+
+T3, after a correct answer produced only a plain green checkmark, said: "a
+sound or a small congratulatory animation wouldn't hurt — it felt very
+'exam-like.'"
+
+*Distinct from the gamification concepts (streaks, leagues, random wheel)
+already ruled out of MVP scope in §5 — this is a request for lightweight
+feedback on individual answers, not a game mechanic. Single data point; a
+cheap backlog candidate, not an immediate action.*
+
+### Theme 7 — Core value proposition strongly reconfirmed
+
+All three, without prompting, specifically praised the plain-language
+explanations over rule/terminology-first feedback. T1: "it didn't just state
+the rule — it said 'you're talking about a missed opportunity in the past,
+so you need past-tense modals,' like a person would." T2: "it says 'the
+action started in the past and is still going' instead of naming 'Present
+Perfect Continuous' — it gives you the logic." T3: "the explanations don't
+make me memorize rules like school did."
+
+*Strongest, most consistent finding across both research rounds (§2.1 Theme
+2 and this round). No action needed — validates keeping the Iteration 2
+direction (plain-language first, rule name secondary) as-is.*
+
+### Implications for next iteration (candidates, not commitments)
+
+- Keyboard-aware padding on production question screens (Theme 2) — low
+  cost, two-participant evidence, good first candidate
+- Formal decision against the MC-based word-form category as originally
+  conceived (Theme 1) — if a word-form topic is still wanted, scope it as
+  production-based like existing topics
+- Verify (don't yet fix) typo-vs-grammar scoring behavior before any prompt
+  change (Theme 4)
+- Placement/diagnostic test concept (Theme 3) reopens a deliberately-deferred
+  §5 decision — single data point, watch for repetition in future rounds
+  rather than building now
+- Review tab visibility (Theme 5) and micro-feedback on correct answers
+  (Theme 6) — low priority, single-participant, cheap backlog candidates
+
+---
+
 ## 3. Current Alternatives & Why They Fall Short
 
 **Beginner apps (Duolingo etc.):** Start too low, progress too slowly for a B1+ user. Not targeted at specific weak topics.

@@ -49,30 +49,46 @@ product continues.
   weak-spot detail's empty mistake list uses the same icon+text pattern
 
 **Documentation**
-- `docs/prd.md` — problem, personas, interview findings (§2.1), scope decisions
+- `docs/prd.md` — problem, personas, interview findings (§2.1), usability
+  testing findings (§2.2), scope decisions
 - `docs/build-log.md` — chronological record of decisions and bugs
 - `README.md` — product overview, screenshots, key product decisions
 - Public write-up on Medium
+
+**User research**
+- 3-participant usability testing (T1–T3), full core loop, think-aloud +
+  structured questions. Below the original 5+ target — proceeding with 3 was
+  a deliberate call, not an oversight; findings weighted accordingly (see
+  `docs/prd.md` §2.2 for the sample-size note and per-theme evidence
+  strength). Headline results: plain-language feedback strongly reconfirmed
+  (3/3, consistent with §2.1 Theme 2); multiple-choice question format
+  rejected outright (3/3, consistent with §2.1 Theme 3) — closes the
+  MC-based word-form category as a candidate
 
 ---
 
 ## What's next
 
-### 1. Real user testing (highest portfolio value)
-The one unchecked box in the README. Everything else is self-assessment.
-
-- 5+ testers from the English course
-- Watch them use it in person rather than sending a link — observe where they
-  hesitate, what they expect, what they misread
-- Capture: where they got stuck, what they said out loud, whether they'd use
-  it again before an exam
-- Write findings into `docs/prd.md` as a testing section, same format as the
-  interview findings
+### 1. Mobile input UX fix
+From testing (`docs/prd.md` §2.2 Theme 2, 2 of 3 participants): on-screen
+keyboard covers the "Next" button on production-question screens. Low cost,
+do first.
 
 ### 2. Iteration 3 (driven by testing, not by taste)
-Scope defined *after* testing, not before. Likely candidates based on what
-testing usually surfaces: onboarding/first-run clarity, question wording,
-feedback length, session length defaults.
+Candidates from `docs/prd.md` §2.2, in priority order:
+
+- Verify (don't yet fix) whether typos get misgraded as grammar errors —
+  single-participant concern, unconfirmed, check before touching the scoring
+  prompt
+- Review tab icon visibility — single-participant, low priority
+- Small positive micro-feedback on correct answers (sound/animation) —
+  single-participant, cheap if pursued, not urgent
+- Placement/diagnostic test at first launch — single participant asked for
+  this; reopens a decision deliberately deferred in §5. Don't build off one
+  data point — watch for repetition in future testing rounds
+- Partial-answer submission for error-correction on mobile — tension with
+  the existing "graded on the fix, not the format" decision (build-log,
+  2026-07-24); needs its own product decision, not a quick patch
 
 ### 3. Make it try-able
 Right now it only runs on the developer machine, so nobody can experience it.
@@ -92,7 +108,10 @@ Decision pending — depends on whether the goal is "people actually use it" or
 
 - Per-question instant feedback instead of batch evaluation (costs ~5x more
   LLM calls — evaluate against value before doing it)
-- Word-form / inflection question type (drafted, deliberately postponed)
+- Word-form / inflection question type — MC version rejected (5 of 7 tested
+  users across both research rounds reject multiple-choice, see `docs/prd.md`
+  §2.2 Theme 1); if revisited, must use existing production-based question
+  types
 - Spaced repetition scheduling for weak spots (currently recency/frequency only)
 - More topics beyond the initial five
 - Accounts + cloud sync (out of scope for MVP by design)
