@@ -118,6 +118,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
+              onAvatarTap: () => setState(() => _tabIndex = 2),
             ),
             ReviewScreen(
               claudeService: _claudeService,

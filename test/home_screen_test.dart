@@ -11,7 +11,11 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/widgets/avatar_circle.dart';
 
 void main() {
-  Future<void> pumpHome(WidgetTester tester, {Avatar? avatar}) async {
+  Future<void> pumpHome(
+    WidgetTester tester, {
+    Avatar? avatar,
+    VoidCallback? onAvatarTap,
+  }) async {
     // The default 800x600 test surface is shorter than the mode grid's
     // second row — use a phone-realistic size so every card is actually
     // reachable by taps.
@@ -28,6 +32,7 @@ void main() {
           claudeService: ClaudeService(),
           storageService: StorageService(),
           analyticsService: AnalyticsService(),
+          onAvatarTap: onAvatarTap,
         ),
       ),
     );
@@ -67,6 +72,16 @@ void main() {
     // Flush against the trailing screen edge (within the row's own
     // padding), not floating in the middle.
     expect(avatarRect.right, greaterThan(screenWidth - 60));
+  });
+
+  testWidgets('tapping the avatar calls onAvatarTap', (tester) async {
+    var tapped = false;
+    await pumpHome(tester, onAvatarTap: () => tapped = true);
+
+    await tester.tap(find.byType(AvatarCircle));
+    await tester.pump();
+
+    expect(tapped, isTrue);
   });
 
   testWidgets('shows the three mode cards plus the Early Access banner',
