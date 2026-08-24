@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:grammar_lens/models/app_theme_mode.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/claude_service.dart';
@@ -15,7 +14,6 @@ void main() {
           userName: 'Ada',
           claudeService: ClaudeService(),
           storageService: StorageService(),
-          onSelectThemeMode: (AppThemeMode _) {},
         ),
       ),
     );

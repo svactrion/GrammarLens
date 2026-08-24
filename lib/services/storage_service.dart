@@ -300,4 +300,17 @@ class StorageService {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
+  /// Settings' "reset data" (PRD v2 §4) — clears practice history (logged
+  /// mistakes and per-topic counts) so the app reads like a fresh install
+  /// without actually losing the guest identity: name, learning goal, and
+  /// theme preference are deliberately left alone, since those are settings
+  /// the user picked, not progress to start over.
+  Future<void> resetProgressData() async {
+    final db = await _database;
+    final batch = db.batch();
+    batch.delete('error_entries');
+    batch.delete('topic_practice_stats');
+    await batch.commit(noResult: true);
+  }
 }
