@@ -97,6 +97,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         onTap: () => setState(() => _selectedGoal = goal),
                       ),
                     ],
+                    const SizedBox(height: 20),
+                    // PRD v2 §10.1's privacy note: onboarding is the one
+                    // place strangers (not the in-person testers earlier
+                    // rounds had) hand over personal info before they've
+                    // seen the app do anything, so it earns an explicit,
+                    // one-line reassurance rather than assuming a general
+                    // privacy policy will be found and read.
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lock_outline_rounded,
+                          size: 14,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Stored only on this device — never sent to a '
+                            'server.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
