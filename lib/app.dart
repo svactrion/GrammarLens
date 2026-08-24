@@ -209,8 +209,16 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
                               // opaque background on top.
                               backgroundColor: Colors.transparent,
                               color: unselectedColor,
-                              activeColor: colorScheme.onSecondaryContainer,
-                              tabBackgroundColor: colorScheme.secondaryContainer,
+                              // A soft, translucent highlight rather than a
+                              // solid color block — GNav already only
+                              // renders `tabBackgroundColor` for whichever
+                              // tab is active (inactive tabs fade it to
+                              // fully transparent internally), so a low
+                              // alpha here reads as a gentle "you're here"
+                              // tint instead of a heavy filled pill.
+                              activeColor: colorScheme.secondary,
+                              tabBackgroundColor:
+                                  colorScheme.secondary.withValues(alpha: 0.3),
                               // GNav defaults to spaceBetween, which pins the
                               // two tabs to the far edges of the bar; center
                               // them as a group with margin between them
@@ -226,7 +234,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
                                 vertical: 12,
                               ),
                               textStyle: theme.textTheme.labelLarge?.copyWith(
-                                color: colorScheme.onSecondaryContainer,
+                                color: colorScheme.secondary,
                                 fontWeight: FontWeight.w600,
                               ),
                               tabs: const [
