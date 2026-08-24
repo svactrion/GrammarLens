@@ -227,108 +227,118 @@ class _PracticeScreenState extends State<PracticeScreen> {
             ),
           ),
         ),
+        // The question header (context/instruction/hint) and the answer
+        // input are split into separate regions on purpose. Putting the
+        // TextField at the bottom of one tall scrollable Card meant that
+        // when the keyboard opened, Flutter's own "scroll the focused field
+        // into view" behaviour had to drag the whole card up to clear the
+        // keyboard + button — often scrolling the instruction text half off
+        // screen in the process. Keeping the header in its own (rarely
+        // scrolling) region and pinning input+button directly above the
+        // keyboard means neither one depends on that automatic scroll to
+        // stay visible.
         body: _submitting
             ? const LoadingView(message: 'Reviewing your answers…')
-            : ListView(
-                padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
-                children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _itemLabel(item.type),
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: colorScheme.secondary,
-                              fontWeight: FontWeight.w600,
+            : GestureDetector(
+                // Tapping anywhere outside the text field is the standard
+                // mobile way to dismiss the keyboard.
+                behavior: HitTestBehavior.opaque,
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _itemLabel(item.type),
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: colorScheme.secondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (item.context != null &&
+                                    item.context!.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 14),
+                                  Text(item.context!,
+                                      style: theme.textTheme.bodyLarge),
+                                  const SizedBox(height: 16),
+                                  Divider(
+                                      height: 1,
+                                      color: colorScheme.outlineVariant),
+                                  const SizedBox(height: 16),
+                                ] else
+                                  const SizedBox(height: 14),
+                                Text(
+                                  item.instruction,
+                                  style: theme.textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                if (item.hint != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    item.hint!,
+                                    style: theme.textTheme.bodySmall
+                                        ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                          if (item.context != null &&
-                              item.context!.trim().isNotEmpty) ...[
-                            const SizedBox(height: 14),
-                            Text(item.context!,
-                                style: theme.textTheme.bodyLarge),
-                            const SizedBox(height: 16),
-                            Divider(
-                                height: 1, color: colorScheme.outlineVariant),
-                            const SizedBox(height: 16),
-                          ] else
-                            const SizedBox(height: 14),
-                          Text(
-                            item.instruction,
-                            style: theme.textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          if (item.hint != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              item.hint!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 20),
-                          TextField(
-                            key: ValueKey(item.id),
-                            controller: _controllers[item.id],
-                            decoration:
-                                const InputDecoration(hintText: 'Your answer'),
-                            onChanged: (value) =>
-                                setState(() => _answers[item.id] = value),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-        // Scaffold's `bottomNavigationBar` is pinned to the physical bottom
-        // of the screen — `resizeToAvoidBottomInset` only shrinks `body`, it
-        // doesn't move this slot. Without an explicit push, the keyboard
-        // covers the primary button on any free-text question (fill-in-
-        // blank, error correction, sentence writing) instead of sitting
-        // above it.
-        bottomNavigationBar: _submitting
-            ? null
-            : AnimatedPadding(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.viewInsetsOf(context).bottom,
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-                    child: _currentIndex == 0
-                        ? SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: _advance,
-                              child: Text(_primaryLabel()),
-                            ),
-                          )
-                        : Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: _goBack,
-                                  child: const Text('Back'),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
+                      child: TextField(
+                        key: ValueKey(item.id),
+                        controller: _controllers[item.id],
+                        decoration:
+                            const InputDecoration(hintText: 'Your answer'),
+                        onChanged: (value) =>
+                            setState(() => _answers[item.id] = value),
+                      ),
+                    ),
+                    SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+                        child: _currentIndex == 0
+                            ? SizedBox(
+                                width: double.infinity,
                                 child: FilledButton(
                                   onPressed: _advance,
                                   child: Text(_primaryLabel()),
                                 ),
+                              )
+                            : Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: _goBack,
+                                      child: const Text('Back'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: FilledButton(
+                                      onPressed: _advance,
+                                      child: Text(_primaryLabel()),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
       ),
