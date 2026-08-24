@@ -108,6 +108,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
 
           final screens = [
             HomeScreen(
+              userName: _profile!.name,
               claudeService: _claudeService,
               storageService: _storageService,
               onSelectThemeMode: _setThemeMode,
@@ -167,7 +168,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
                     fontWeight: FontWeight.w600,
                   ),
                   tabs: const [
-                    GButton(icon: Icons.school_outlined, text: 'Practice'),
+                    GButton(icon: Icons.home_outlined, text: 'Home'),
                     GButton(icon: Icons.history_outlined, text: 'Review'),
                   ],
                 ),

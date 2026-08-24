@@ -11,7 +11,8 @@ import 'practice_screen.dart';
 /// Shows the "how many questions" length picker, then generates a fresh
 /// practice set for [topic] and pushes [PracticeScreen].
 ///
-/// Shared by HomeScreen and ReviewScreen (weak-spot detail's "Practice this")
+/// Shared by TopicPracticeScreen and ReviewScreen (weak-spot detail's
+/// "Practice this")
 /// so the pick-length → generate → navigate → handle-errors sequence lives
 /// in exactly one place and can't drift apart between entry points.
 ///

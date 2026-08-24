@@ -1,71 +1,59 @@
 import 'package:flutter/material.dart';
 
-import '../data/topics.dart';
 import '../models/app_theme_mode.dart';
-import '../models/topic.dart';
-import '../models/topic_stats.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
-import '../utils/loading_view.dart';
-import '../utils/text_format.dart';
-import 'practice_launch.dart';
+import 'topic_practice_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+/// Mode-selection Home (PRD v2 §4) — replaces the old topic-list-first Home.
+/// Per-topic progress now lives inside Topic Practice's own screen; this
+/// screen's only job is the personalized greeting and picking a mode.
+///
+/// The theme-toggle action here is a placeholder: it's the same quick
+/// toggle the old Home had, kept on this screen only until the Settings
+/// screen (next phase-1 commit) gives theme its proper light/dark/system
+/// picker and this one goes away.
+class HomeScreen extends StatelessWidget {
+  final String userName;
   final ClaudeService claudeService;
   final StorageService storageService;
   final void Function(AppThemeMode mode) onSelectThemeMode;
 
   const HomeScreen({
     super.key,
+    required this.userName,
     required this.claudeService,
     required this.storageService,
     required this.onSelectThemeMode,
   });
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  bool _generating = false;
-  late Future<Map<String, TopicStats>> _statsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _statsFuture = widget.storageService.getTopicStats();
+  void _openTopicPractice(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TopicPracticeScreen(
+          claudeService: claudeService,
+          storageService: storageService,
+        ),
+      ),
+    );
   }
 
-  void _reloadStats() {
-    setState(() {
-      _statsFuture = widget.storageService.getTopicStats();
-    });
-  }
-
-  Future<void> _startPractice(Topic topic) {
-    return launchPracticeSet(
-      context: context,
-      topic: topic,
-      claudeService: widget.claudeService,
-      storageService: widget.storageService,
-      setGenerating: (value) {
-        if (mounted) setState(() => _generating = value);
-      },
-      errorPrefix: 'Could not generate practice',
-      // A completed practice set changes this topic's stats (and possibly
-      // its weak spots), so refresh the cards once the user is back here.
-      onReturned: _reloadStats,
+  void _showComingSoon(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
     final appBarFg =
-        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+        theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
     final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -83,99 +71,144 @@ class _HomeScreenState extends State<HomeScreen> {
               isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
               color: appBarFg,
             ),
-            onPressed: () => widget.onSelectThemeMode(
+            onPressed: () => onSelectThemeMode(
               isDark ? AppThemeMode.light : AppThemeMode.dark,
             ),
           ),
         ],
       ),
-      body: _generating
-          ? const LoadingView(message: 'Preparing your questions…')
-          : FutureBuilder<Map<String, TopicStats>>(
-              future: _statsFuture,
-              builder: (context, snapshot) {
-                final statsByTopic =
-                    snapshot.data ?? const <String, TopicStats>{};
-                return ListView.separated(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
-                  itemCount: kTopics.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final topic = kTopics[index];
-                    final stats =
-                        statsByTopic[topic.id.name] ?? TopicStats.empty;
-                    return _TopicCard(
-                      topic: topic,
-                      stats: stats,
-                      onTap: () => _startPractice(topic),
-                    );
-                  },
-                );
-              },
+      body: ListView(
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
+        children: [
+          Text(
+            'Welcome back, $userName',
+            style: theme.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'What do you want to practice today?',
+            style: theme.textTheme.bodyLarge?.copyWith(color: appBarFg),
+          ),
+          const SizedBox(height: 24),
+          _ModeCard(
+            icon: Icons.school_rounded,
+            title: 'Topic Practice',
+            description:
+                'Deep practice by grammar topic, with plain-language '
+                'feedback on every mistake.',
+            onTap: () => _openTopicPractice(context),
+          ),
+          const SizedBox(height: 14),
+          _ModeCard(
+            icon: Icons.local_fire_department_rounded,
+            title: 'Streak Mode',
+            description: 'Fast daily rounds to build a practice streak.',
+            badgeLabel: 'Coming soon',
+            onTap: () => _showComingSoon(
+              context,
+              'Streak Mode is coming soon.',
             ),
+          ),
+          const SizedBox(height: 14),
+          _ModeCard(
+            icon: Icons.mic_rounded,
+            title: 'Voice Practice',
+            description: 'Practice speaking and get feedback on your voice.',
+            badgeLabel: 'Premium',
+            locked: true,
+            onTap: () => _showComingSoon(
+              context,
+              'Voice Practice will be part of premium, in a later update.',
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// A topic card showing the icon, title, description, and — pulled from the
-/// error profile — a small "practiced / weak spots" line with a thin
-/// activity bar, so the home screen reflects progress instead of staying a
-/// static list.
-class _TopicCard extends StatelessWidget {
-  final Topic topic;
-  final TopicStats stats;
+/// One mode-selection card. [badgeLabel] shows a small pill in the corner
+/// for non-active modes ("Coming soon" / "Premium"); [locked] additionally
+/// mutes the card and swaps the trailing chevron for a lock icon. Every
+/// card stays tappable even when not yet available — PRD v2 §4 calls for
+/// either non-tappable or informative, and a short explanation on tap reads
+/// less like a dead end than a disabled card would.
+class _ModeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final String? badgeLabel;
+  final bool locked;
   final VoidCallback onTap;
 
-  const _TopicCard({
-    required this.topic,
-    required this.stats,
+  const _ModeCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.badgeLabel,
+    this.locked = false,
     required this.onTap,
   });
-
-  // Questions-practiced count at which the activity bar reads as "full" —
-  // just a visual ceiling for a relative sense of activity, not a real
-  // mastery threshold.
-  static const _activityCap = 20;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final muted = colorScheme.onSurfaceVariant;
+    final iconBg =
+        locked ? colorScheme.surfaceContainerHighest : colorScheme.primaryContainer;
+    final iconFg = locked ? muted : colorScheme.onPrimaryContainer;
+
     return Card(
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: theme.colorScheme.primaryContainer,
-                foregroundColor: theme.colorScheme.onPrimaryContainer,
-                child: Icon(topic.icon),
+                backgroundColor: iconBg,
+                foregroundColor: iconFg,
+                child: Icon(icon),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(topic.title, style: theme.textTheme.titleMedium),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: locked ? muted : null,
+                            ),
+                          ),
+                        ),
+                        if (badgeLabel != null) ...[
+                          const SizedBox(width: 8),
+                          _Badge(label: badgeLabel!),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      topic.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      description,
+                      style:
+                          theme.textTheme.bodyMedium?.copyWith(color: muted),
                     ),
-                    const SizedBox(height: 6),
-                    _buildStatsLine(theme),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               Icon(
-                Icons.chevron_right_rounded,
-                color: theme.colorScheme.onSurfaceVariant,
+                locked ? Icons.lock_rounded : Icons.chevron_right_rounded,
+                color: muted,
+                size: locked ? 20 : 24,
               ),
             ],
           ),
@@ -183,71 +216,28 @@ class _TopicCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildStatsLine(ThemeData theme) {
-    final mutedColor = theme.colorScheme.onSurfaceVariant;
-    if (!stats.isStarted) {
-      return Text(
-        'Not started yet',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: mutedColor,
-          fontStyle: FontStyle.italic,
-        ),
-      );
-    }
-    final fraction = stats.practiced / _activityCap;
-    return Row(
-      children: [
-        Flexible(
-          child: Text(
-            formatTopicStatsLine(stats.practiced, stats.weakSpotCount),
-            style: theme.textTheme.bodySmall?.copyWith(color: mutedColor),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Semantics(
-          label: 'Practice activity level',
-          child: _ActivityBar(
-            fraction: fraction,
-            trackColor: theme.colorScheme.outlineVariant,
-            fillColor: theme.colorScheme.secondary,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-/// A small thin bar filled proportionally to practice activity — the
-/// "simple attempt metric" progress indicator alongside the stats line.
-class _ActivityBar extends StatelessWidget {
-  final double fraction;
-  final Color trackColor;
-  final Color fillColor;
+class _Badge extends StatelessWidget {
+  final String label;
 
-  const _ActivityBar({
-    required this.fraction,
-    required this.trackColor,
-    required this.fillColor,
-  });
+  const _Badge({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
-      child: SizedBox(
-        width: 40,
-        height: 5,
-        child: Stack(
-          children: [
-            Container(color: trackColor),
-            FractionallySizedBox(
-              widthFactor: fraction.clamp(0.0, 1.0),
-              child: Container(color: fillColor),
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSecondaryContainer,
+              fontWeight: FontWeight.w600,
             ),
-          ],
-        ),
       ),
     );
   }
