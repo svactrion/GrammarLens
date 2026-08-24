@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../models/app_theme_mode.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import 'topic_practice_screen.dart';
@@ -8,23 +7,16 @@ import 'topic_practice_screen.dart';
 /// Mode-selection Home (PRD v2 §4) — replaces the old topic-list-first Home.
 /// Per-topic progress now lives inside Topic Practice's own screen; this
 /// screen's only job is the personalized greeting and picking a mode.
-///
-/// The theme-toggle action here is a placeholder: it's the same quick
-/// toggle the old Home had, kept on this screen only until the Settings
-/// screen (next phase-1 commit) gives theme its proper light/dark/system
-/// picker and this one goes away.
 class HomeScreen extends StatelessWidget {
   final String userName;
   final ClaudeService claudeService;
   final StorageService storageService;
-  final void Function(AppThemeMode mode) onSelectThemeMode;
 
   const HomeScreen({
     super.key,
     required this.userName,
     required this.claudeService,
     required this.storageService,
-    required this.onSelectThemeMode,
   });
 
   void _openTopicPractice(BuildContext context) {
@@ -52,7 +44,6 @@ class HomeScreen extends StatelessWidget {
     final hPad = (width * 0.045).clamp(16.0, 28.0);
     final appBarFg =
         theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -64,18 +55,6 @@ class HomeScreen extends StatelessWidget {
             color: appBarFg,
           ),
         ),
-        actions: [
-          IconButton(
-            tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
-            icon: Icon(
-              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-              color: appBarFg,
-            ),
-            onPressed: () => onSelectThemeMode(
-              isDark ? AppThemeMode.light : AppThemeMode.dark,
-            ),
-          ),
-        ],
       ),
       body: ListView(
         padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),

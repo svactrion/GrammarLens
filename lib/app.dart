@@ -8,6 +8,7 @@ import 'models/user_profile.dart';
 import 'screens/first_launch_flow.dart';
 import 'screens/home_screen.dart';
 import 'screens/review_screen.dart';
+import 'screens/settings_screen.dart';
 import 'services/claude_service.dart';
 import 'services/storage_service.dart';
 import 'theme.dart';
@@ -111,7 +112,6 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               userName: _profile!.name,
               claudeService: _claudeService,
               storageService: _storageService,
-              onSelectThemeMode: _setThemeMode,
             ),
             ReviewScreen(
               claudeService: _claudeService,
@@ -124,6 +124,14 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               // visible" and reload then.
               active: _tabIndex == 1,
               onGoToPractice: () => setState(() => _tabIndex = 0),
+            ),
+            SettingsScreen(
+              themeMode: _themeMode,
+              onSelectThemeMode: _setThemeMode,
+              profile: _profile!,
+              storageService: _storageService,
+              onProfileUpdated: (profile) =>
+                  setState(() => _profile = profile),
             ),
           ];
 
@@ -170,6 +178,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
                   tabs: const [
                     GButton(icon: Icons.home_outlined, text: 'Home'),
                     GButton(icon: Icons.history_outlined, text: 'Review'),
+                    GButton(icon: Icons.settings_outlined, text: 'Settings'),
                   ],
                 ),
               ),
