@@ -47,6 +47,10 @@ void main() {
     await tester.tap(find.text('Streak Mode'));
     await tester.pump();
     expect(find.text('Streak Mode is coming soon.'), findsOneWidget);
+    // A real dialog, not the old SnackBar (which is where the reported bug
+    // came from — see the other tests in this group).
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
   });
 
   testWidgets('Voice Practice tap is informative, not a dead tap',
@@ -58,5 +62,55 @@ void main() {
       find.text('Voice Practice will be part of premium, in a later update.'),
       findsOneWidget,
     );
+    expect(find.byType(AlertDialog), findsOneWidget);
+  });
+
+  testWidgets(
+      'two taps fired before any frame renders only open one dialog',
+      (tester) async {
+    await pumpHome(tester);
+    // Deliberately no pump between these two. In practice the barrier from
+    // the first tap's dialog already ends up blocking the second (hence
+    // warnIfMissed: false below) — the `_infoDialogOpen` guard is the
+    // backstop for the narrower race where it doesn't.
+    await tester.tap(find.text('Voice Practice'));
+    await tester.tap(find.text('Voice Practice'), warnIfMissed: false);
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsOneWidget);
+  });
+
+  testWidgets('the dialog closes on its own button and does not linger',
+      (tester) async {
+    await pumpHome(tester);
+    await tester.tap(find.text('Streak Mode'));
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    await tester.tap(find.text('Got it'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+
+    // And it can be opened again afterwards — the guard flag correctly
+    // reset rather than permanently locking the card out.
+    await tester.tap(find.text('Streak Mode'));
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsOneWidget);
+  });
+
+  testWidgets(
+      'the dialog is modal, so it cannot be tapped through into another '
+      'screen while open', (tester) async {
+    await pumpHome(tester);
+    await tester.tap(find.text('Streak Mode'));
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    // "Topic Practice" is still technically in the tree underneath the
+    // dialog's modal barrier — tapping it must not reach the card and
+    // navigate, which is exactly the "follows you to another screen" bug
+    // the old app-wide SnackBar had.
+    await tester.tap(find.text('Topic Practice'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.byType(TopicPracticeScreen), findsNothing);
   });
 }

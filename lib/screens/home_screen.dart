@@ -7,7 +7,7 @@ import 'topic_practice_screen.dart';
 /// Mode-selection Home (PRD v2 §4) — replaces the old topic-list-first Home.
 /// Per-topic progress now lives inside Topic Practice's own screen; this
 /// screen's only job is the personalized greeting and picking a mode.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final String userName;
   final ClaudeService claudeService;
   final StorageService storageService;
@@ -19,21 +19,62 @@ class HomeScreen extends StatelessWidget {
     required this.storageService,
   });
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Guards against a second dialog opening from a rapid double-tap before
+  // the first frame with the modal barrier has rendered. Once that barrier
+  // is up, showDialog's own modality already blocks a second tap from
+  // reaching the card underneath — this only covers the same-frame race.
+  bool _infoDialogOpen = false;
+
   void _openTopicPractice(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TopicPracticeScreen(
-          claudeService: claudeService,
-          storageService: storageService,
+          claudeService: widget.claudeService,
+          storageService: widget.storageService,
         ),
       ),
     );
   }
 
-  void _showComingSoon(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+  // A SnackBar here previously used the app-wide ScaffoldMessenger (from
+  // MaterialApp, shared by every Scaffold in the tree, not just this one),
+  // which caused two bugs: repeated taps queued up multiple snackbars
+  // instead of replacing one, and since that messenger lives above the
+  // Navigator, the snackbar kept showing over whatever screen the user
+  // navigated to next instead of closing with this one. A dialog is a real
+  // route on this screen's Navigator — modal (so a second tap on the card
+  // can't reach it while one is already open) and tied to this screen's
+  // lifecycle instead of the whole app's.
+  Future<void> _showComingSoonDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) async {
+    if (_infoDialogOpen) return;
+    setState(() => _infoDialogOpen = true);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Got it'),
+            ),
+          ),
+        ],
+      ),
     );
+    if (mounted) setState(() => _infoDialogOpen = false);
   }
 
   @override
@@ -60,7 +101,7 @@ class HomeScreen extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
         children: [
           Text(
-            'Welcome back, $userName',
+            'Welcome back, ${widget.userName}',
             style: theme.textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
           ),
@@ -84,9 +125,10 @@ class HomeScreen extends StatelessWidget {
             title: 'Streak Mode',
             description: 'Fast daily rounds to build a practice streak.',
             badgeLabel: 'Coming soon',
-            onTap: () => _showComingSoon(
+            onTap: () => _showComingSoonDialog(
               context,
-              'Streak Mode is coming soon.',
+              title: 'Coming soon',
+              message: 'Streak Mode is coming soon.',
             ),
           ),
           const SizedBox(height: 14),
@@ -96,9 +138,11 @@ class HomeScreen extends StatelessWidget {
             description: 'Practice speaking and get feedback on your voice.',
             badgeLabel: 'Premium',
             locked: true,
-            onTap: () => _showComingSoon(
+            onTap: () => _showComingSoonDialog(
               context,
-              'Voice Practice will be part of premium, in a later update.',
+              title: 'Premium feature',
+              message:
+                  'Voice Practice will be part of premium, in a later update.',
             ),
           ),
         ],
