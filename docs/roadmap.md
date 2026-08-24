@@ -47,6 +47,11 @@ product continues.
 - Empty states: shared `EmptyState` widget (icon + title/description + optional
   CTA); Review's no-weak-spots state now has a "Start practicing" CTA, and
   weak-spot detail's empty mistake list uses the same icon+text pattern
+- Keyboard-aware bottom button on practice questions: the primary
+  Skip/Next/Submit button now stays pinned above the on-screen keyboard on
+  every free-text question type (fill-in-the-blank, error correction,
+  sentence writing), instead of sitting behind it. Answers the T1 finding in
+  `docs/prd.md` §2.2 Theme 2
 
 **Documentation**
 - `docs/prd.md` — problem, personas, interview findings (§2.1), usability
@@ -69,12 +74,7 @@ product continues.
 
 ## What's next
 
-### 1. Mobile input UX fix
-From testing (`docs/prd.md` §2.2 Theme 2, 2 of 3 participants): on-screen
-keyboard covers the "Next" button on production-question screens. Low cost,
-do first.
-
-### 2. Iteration 3 (driven by testing, not by taste)
+### 1. Iteration 3 (driven by testing, not by taste)
 Candidates from `docs/prd.md` §2.2, in priority order:
 
 - Verify (don't yet fix) whether typos get misgraded as grammar errors —
@@ -90,7 +90,7 @@ Candidates from `docs/prd.md` §2.2, in priority order:
   the existing "graded on the fix, not the format" decision (build-log,
   2026-07-24); needs its own product decision, not a quick patch
 
-### 3. Make it try-able
+### 2. Make it try-able
 Right now it only runs on the developer machine, so nobody can experience it.
 
 Options to evaluate:
