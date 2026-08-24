@@ -6,12 +6,13 @@ import '../models/error_entry.dart';
 import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
 import '../models/topic_stats.dart';
+import '../models/user_profile.dart';
 
 /// Local SQLite-backed error profile (PRD §5: "on-device storage; no
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _dbName = 'grammar_lens.db';
-  static const _dbVersion = 5;
+  static const _dbVersion = 6;
 
   static const _createTable = '''
     CREATE TABLE error_entries (
@@ -60,6 +61,18 @@ class StorageService {
     )
   ''';
 
+  // Guest-first identity (PRD v2 §5) — a row existing here is what "has
+  // completed onboarding" means, so there's no separate boolean flag.
+  static const _createUserProfileTable = '''
+    CREATE TABLE user_profile (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      name TEXT NOT NULL,
+      learning_goal TEXT NOT NULL,
+      age INTEGER,
+      occupation TEXT
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -78,6 +91,7 @@ class StorageService {
         await db.execute(_createThemeSettingsTable);
         await db.execute(_createPracticeSettingsTable);
         await db.execute(_createTopicPracticeStatsTable);
+        await db.execute(_createUserProfileTable);
       },
       // Still pre-launch prototype with no real user data to preserve, so a
       // schema change just drops and recreates rather than carrying a real
@@ -88,11 +102,13 @@ class StorageService {
         await db.execute('DROP TABLE IF EXISTS theme_settings');
         await db.execute('DROP TABLE IF EXISTS practice_settings');
         await db.execute('DROP TABLE IF EXISTS topic_practice_stats');
+        await db.execute('DROP TABLE IF EXISTS user_profile');
         await db.execute(_createTable);
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
         await db.execute(_createPracticeSettingsTable);
         await db.execute(_createTopicPracticeStatsTable);
+        await db.execute(_createUserProfileTable);
       },
     );
   }
@@ -264,5 +280,24 @@ class StorageService {
           weakSpotCount: weakSpots[id] ?? 0,
         ),
     };
+  }
+
+  /// Null means no profile has been saved yet — the app's signal to show
+  /// the first-launch onboarding flow instead of Home.
+  Future<UserProfile?> getUserProfile() async {
+    final db = await _database;
+    final rows = await db.query('user_profile', limit: 1);
+    if (rows.isEmpty) return null;
+    return UserProfile.fromMap(rows.first);
+  }
+
+  /// Used both to complete onboarding and to save edits from Settings.
+  Future<void> saveUserProfile(UserProfile profile) async {
+    final db = await _database;
+    await db.insert(
+      'user_profile',
+      profile.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 }
