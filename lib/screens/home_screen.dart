@@ -4,6 +4,7 @@ import '../models/avatar.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../utils/layout_constants.dart';
 import '../widgets/avatar_circle.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
@@ -120,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: ListView(
-        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
+        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, navBarClearance),
         children: [
           // PRD v2 §11: an avatar next to the greeting, not floating
           // elsewhere on the page, so it reads as "whose home screen this
