@@ -56,16 +56,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(hPad, 24, hPad, 12),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       'What should we call you?',
+                      textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _nameController,
+                      textAlign: TextAlign.center,
                       textCapitalization: TextCapitalization.words,
                       decoration: const InputDecoration(hintText: 'Your name'),
                       onChanged: (_) => setState(() {}),
@@ -73,12 +75,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     const SizedBox(height: 32),
                     Text(
                       'Why are you learning English?',
+                      textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'This helps us suggest where to start.',
+                      textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -150,9 +154,23 @@ class _GoalOption extends StatelessWidget {
     final titleColor = selected ? onAccent : colorScheme.onSurface;
     final subtitleColor = selected ? onAccent : colorScheme.onSurfaceVariant;
     final iconColor = selected ? onAccent : colorScheme.onSurfaceVariant;
+    // Unselected used a transparent fill, which is invisible in light mode:
+    // the page background there is the vivid brand orange (see theme.dart),
+    // so the "card" was just a faint gray outline floating on orange with
+    // no fill to read as a surface at all. Dark mode's page background is
+    // already near-black — close enough to the surface color below that a
+    // transparent fill was never a problem there, so only light mode
+    // switches to an explicit surface color and a stronger border.
+    final isDark = theme.brightness == Brightness.dark;
+    final unselectedBackground =
+        isDark ? Colors.transparent : colorScheme.surfaceContainerLow;
+    final unselectedBorder = Border.all(
+      color: colorScheme.outline,
+      width: isDark ? 1 : 1.5,
+    );
 
     return Material(
-      color: selected ? colorScheme.secondary : Colors.transparent,
+      color: selected ? colorScheme.secondary : unselectedBackground,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -162,7 +180,7 @@ class _GoalOption extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: selected ? null : Border.all(color: colorScheme.outline),
+            border: selected ? null : unselectedBorder,
           ),
           child: Row(
             children: [
