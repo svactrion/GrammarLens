@@ -171,3 +171,76 @@ Claude session Ahmet uses for product calls — each entry is tagged
   simulator via the same temporary, untracked debug-harness technique used
   for Phase 1 (direct-render entry point, no tap automation — deleted
   after use, never committed).
+- **[Product]** Five independent pre-launch/polish items shipped, each its
+  own commit (`docs/prd-v2.md` §10.1, §11):
+  1. **Daily session cap.** `docs/prd-v2.md` §10.1's cost guardrail.
+     `StorageService` gets a `daily_session_usage` table keyed by local
+     calendar day (schema v7) and `getSessionCountForToday()` /
+     `recordSessionStarted()`. `launchPracticeSet` — the single choke point
+     both TopicPracticeScreen and Review's "Practice this" already funnel
+     through — checks the count before the length picker even opens, so a
+     session at the cap never reaches `generatePracticeSet` at all; a
+     session only counts once generation actually succeeds, and both the
+     check and the write fail open on a storage error rather than blocking
+     practice over it (same posture as `app.dart`'s profile/theme loads).
+     Covered by a real-sqlite (ffi) test for the storage layer and a
+     fake-`StorageService` widget test for the UI gate — a first attempt at
+     the widget test against the real ffi-backed store reliably hung
+     `flutter test` (real I/O doesn't play well inside `testWidgets`' fake-
+     async zone), so it was rebuilt against an in-memory fake instead,
+     matching how the rest of the suite already treats StorageService in a
+     `testWidgets` context.
+  2. **Onboarding privacy note.** One line under the goal options stating
+     the collected name/goal stay on-device only — closes §10.1's privacy-
+     note item, aimed at strangers hitting onboarding pre-launch who
+     (unlike the in-person testers earlier rounds had) haven't seen the app
+     do anything yet.
+  3. **Firebase Analytics + Crashlytics — code scaffold, no project
+     connected.** New `AnalyticsService` (`firebase_analytics`) with three
+     custom events — `onboarding_completed`, `mode_selected` (topic/streak/
+     voice/early_access), `session_completed` — threaded through
+     `FirstLaunchFlow`, `HomeScreen`, and the full practice-launch →
+     `PracticeScreen` → `ResultsScreen` chain (both the Home and Review
+     entry points). `main.dart` wires Crashlytics's global
+     `FlutterError`/`PlatformDispatcher` hooks. Connecting an actual
+     Firebase project needs an interactive `flutterfire configure` run
+     against a real Google/Firebase account — not something a coding
+     session can do — so `Firebase.initializeApp()` (no explicit `options`,
+     relying on native config files that don't exist yet) is wrapped in
+     try/catch and every `AnalyticsService` method is a safe no-op until a
+     project exists. Verified by actually building and running the app on
+     the iOS simulator with the packages present but unconfigured: native
+     Firebase CocoaPods resolve and build fine, Dart-side init fails
+     silently with no console noise, nothing else about the app changes.
+     Also excluded `build/` from `flutter analyze` (adding the packages
+     made an SPM/CocoaPods checkout vendor the flutterfire monorepo's own
+     internal test suite underneath it, which the analyzer had started
+     trying to lint) and gitignored Xcode's shared-workspace SPM
+     resolution state (`Package.resolved`, machine-specific, regenerates on
+     any build).
+  4. **Early Access given a distinct look on Home.** Found while building
+     the above: as a fourth tile in the 2×2 mode grid, Early Access (a
+     commercial framing per §6) looked identical to Topic/Streak/Voice
+     (actual practice modes), implying it was one. Pulled it out of the
+     grid entirely into its own full-width banner below — outlined/tinted
+     fill instead of the grid tiles' solid card look, horizontal
+     icon+text+chevron instead of their icon-on-top layout — so it reads as
+     a different category of thing on sight.
+  5. **Avatar picker, §11 promoted from the parking lot.** Eight local
+     stock emoji avatars on fixed background colors (`lib/models/avatar.dart`,
+     `lib/widgets/avatar_circle.dart`) — no upload pipeline, no image
+     assets. `Avatar` itself stays free of any Flutter dependency, same
+     reasoning as `AppThemeMode`; the emoji/color mapping lives in the
+     UI-layer `AvatarCircle` widget. Picker placed in Settings rather than
+     onboarding — onboarding's own doc comment already argues every field
+     asked before the user has seen value costs completions, and age/
+     occupation already established the pattern of optional profile
+     embellishments living in Settings instead. The chosen avatar (or a
+     generic placeholder icon) shows next to Home's personalized greeting.
+     `UserProfile` gains a nullable `avatar` field, `StorageService`'s
+     `user_profile` table gets an `avatar` column (schema v8).
+
+  All five verified in both light and dark mode via the same temporary,
+  untracked debug-harness technique as Phase 1/2 (deleted after use, never
+  committed); full test suite (47 tests across 9 files) and `flutter
+  analyze` clean after each commit.
