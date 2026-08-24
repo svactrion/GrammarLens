@@ -1,1 +1,10 @@
 include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  # `build/` is generated output (gitignored), not project source — normally
+  # empty of Dart files, but iOS's SPM/CocoaPods checkout for Firebase pods
+  # vendors the flutterfire monorepo's own internal test suite underneath
+  # it, which the analyzer would otherwise happily try to analyze as if it
+  # were part of this project.
+  exclude:
+    - build/**

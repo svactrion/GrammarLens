@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/error_entry.dart';
 import '../models/topic.dart';
+import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/loading_view.dart';
@@ -21,6 +22,7 @@ class WeakSpotDetailScreen extends StatefulWidget {
   final WeakSpot spot;
   final ClaudeService claudeService;
   final StorageService storageService;
+  final AnalyticsService analyticsService;
 
   const WeakSpotDetailScreen({
     super.key,
@@ -28,6 +30,7 @@ class WeakSpotDetailScreen extends StatefulWidget {
     required this.spot,
     required this.claudeService,
     required this.storageService,
+    required this.analyticsService,
   });
 
   @override
@@ -63,6 +66,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
       topic: widget.topic,
       claudeService: widget.claudeService,
       storageService: widget.storageService,
+      analyticsService: widget.analyticsService,
       setGenerating: (value) {
         if (mounted) setState(() => _generating = value);
       },

@@ -5,6 +5,7 @@ import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/widgets/avatar_circle.dart';
@@ -26,6 +27,7 @@ void main() {
           avatar: avatar,
           claudeService: ClaudeService(),
           storageService: StorageService(),
+          analyticsService: AnalyticsService(),
         ),
       ),
     );

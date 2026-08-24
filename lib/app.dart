@@ -9,6 +9,7 @@ import 'screens/first_launch_flow.dart';
 import 'screens/home_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/settings_screen.dart';
+import 'services/analytics_service.dart';
 import 'services/claude_service.dart';
 import 'services/storage_service.dart';
 import 'theme.dart';
@@ -24,6 +25,7 @@ class GrammarLensApp extends StatefulWidget {
 class _GrammarLensAppState extends State<GrammarLensApp> {
   final ClaudeService _claudeService = ClaudeService();
   final StorageService _storageService = StorageService();
+  final AnalyticsService _analyticsService = AnalyticsService();
   int _tabIndex = 0;
   AppThemeMode _themeMode = AppThemeMode.system;
 
@@ -103,6 +105,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
           if (_profile == null) {
             return FirstLaunchFlow(
               storageService: _storageService,
+              analyticsService: _analyticsService,
               onComplete: (profile) => setState(() => _profile = profile),
             );
           }
@@ -113,10 +116,12 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               avatar: _profile!.avatar,
               claudeService: _claudeService,
               storageService: _storageService,
+              analyticsService: _analyticsService,
             ),
             ReviewScreen(
               claudeService: _claudeService,
               storageService: _storageService,
+              analyticsService: _analyticsService,
               // IndexedStack keeps this screen's State alive across tab
               // switches instead of recreating it, so initState alone won't
               // pick up errors saved while a different tab (e.g. after a

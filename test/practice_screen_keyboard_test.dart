@@ -5,6 +5,7 @@ import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/practice_set.dart';
 import 'package:grammar_lens/models/topic.dart';
 import 'package:grammar_lens/screens/practice_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 
@@ -64,6 +65,7 @@ void main() {
           practiceSet: practiceSet,
           claudeService: ClaudeService(),
           storageService: StorageService(),
+          analyticsService: AnalyticsService(),
         ),
       ),
     );

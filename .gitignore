@@ -12,6 +12,11 @@
 .swiftpm/
 migrate_working_dir/
 
+# Xcode's shared-workspace Swift Package Manager resolution — regenerated
+# per machine when a pod (e.g. Firebase's) pulls in SPM dependencies; not
+# portable, not something the project needs to track.
+**/xcshareddata/swiftpm/
+
 # IntelliJ related
 *.iml
 *.ipr

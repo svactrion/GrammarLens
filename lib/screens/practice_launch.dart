@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/practice_length.dart';
 import '../models/topic.dart';
+import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
@@ -25,6 +26,7 @@ Future<void> launchPracticeSet({
   required Topic topic,
   required ClaudeService claudeService,
   required StorageService storageService,
+  required AnalyticsService analyticsService,
   required void Function(bool generating) setGenerating,
   required String errorPrefix,
   VoidCallback? onReturned,
@@ -80,6 +82,7 @@ Future<void> launchPracticeSet({
           practiceSet: practiceSet,
           claudeService: claudeService,
           storageService: storageService,
+          analyticsService: analyticsService,
         ),
       ),
     );
