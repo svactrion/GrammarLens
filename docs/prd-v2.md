@@ -266,33 +266,81 @@ not doing this now isn't lost if the same proposal resurfaces.
 ## 9. Success criteria
 
 The MVP's criteria were qualitative because it had no users. V2 launches
-publicly, so these are measurable:
+publicly, so these are measurable — **at launch**, not once a full analytics
+vendor is in place (that's deferred, §7.4):
 
 - **Onboarding completion rate** — what share of first launches reach Home
 - **Day-1 / Day-7 return rate** — the retention question the MVP could never
-  answer
-- **Mode split** — do users adopt streak mode, topic mode, or both? If streak
-  users never touch topic mode, the tension flagged in §3 is real
-- **Streak mode's effect on topic mode** — complement or cannibalization
+  answer, and the actual reason we're launching before streak mode (§10)
 - **Qualitative:** does the plain-language feedback still get praised once
-  users arrive without a researcher sitting next to them?
+  users arrive without a researcher sitting next to them? — via the feedback
+  channel in §10.1
+- **Deferred until streak mode ships (post-launch):** mode split, and
+  whether streak mode complements or cannibalizes topic-mode use — can't be
+  measured before the mode exists
+
+**Measurement approach for launch:** no PostHog/analytics vendor (§7.4 — no
+traffic to justify it yet, and vendor choice should follow first real usage,
+not precede it). Minimum viable version: lightweight local event logging
+(onboarding started/completed, session started/completed, return visits) that
+can be reviewed manually. This is a real gap in earlier drafts of this
+document — success criteria existed with no plan to measure them before
+launch. Exact implementation (local log reviewed how? exported how?) is a
+build-time decision, not specified further here.
 
 ---
 
-## 10. Sequencing
+## 10. Sequencing — lean launch
 
-Ordered by dependency and risk, not excitement:
+**Decision (2026-08-24): launch before streak mode, not after.** Earlier
+drafts of this document sequenced launch after streak mode, rewarded video,
+and cost analysis were all done. Revised: streak mode is a zero-evidence bet
+(§3), and building it pre-launch delays the exact thing §1 says launching is
+for — real retention signal on the one thing that *is* validated (topic mode
++ plain-language feedback). If nobody returns to topic mode, that's the
+signal to have before deciding streak mode is the right investment, not
+after.
 
 1. **Onboarding + Home + Settings** — no backend, no new LLM cost, unblocks
-   personalization and the new navigation
-2. **Premium / early-access screen** — a screen with copy; cheap, and it makes
-   the commercial frame real before any mechanic depends on it
-3. **Streak mode** — the largest new surface, and the one carrying the open
-   cost decision. Instrument token usage here
-4. **Rewarded video gate** — after streak mode exists to gate
-5. **Cost measurement + decisions 7.1 / 7.2** — with real numbers
-6. **Public launch**
-7. *(Later phases)* accounts + backend → social/competition → AI voice mode
+   personalization and the new navigation. *(In progress.)*
+2. **Premium / early-access screen** — a screen with copy, no payment flow.
+   Makes the commercial frame real before any mechanic depends on it
+3. **Pre-launch checklist** — §10.1 below
+4. **Public launch** — topic mode + onboarding + premium teaser only, no
+   streak mode yet
+5. **Streak mode** — built as a fast-follow *after* launch, informed by real
+   D1/D7 data rather than built blind. Instrument token usage here regardless
+6. **Rewarded video gate** — after streak mode exists to gate
+7. **Cost measurement + decisions 7.1 / 7.2** — with real numbers
+8. *(Later phases)* accounts + backend → social/competition → AI voice mode
+
+### 10.1 Pre-launch checklist
+
+Gaps identified when actually planning the launch step — none of these were
+fully resolved earlier in this document.
+
+- **Distribution channel — still an open decision.** TestFlight (Apple
+  Developer Program enrollment, $99/yr, build signing, ~24–48h Apple review
+  for a public link) vs. a web build vs. both. Affects the timeline directly;
+  needs a decision before step 4 can be scheduled concretely.
+- **API key safety — real gap, not yet solved.** A public build puts the
+  Anthropic key in front of strangers, embedded or (worse, on web) visible in
+  network requests. Two paths: (a) a minimal server-side proxy that holds the
+  key server-side — some backend, but far smaller than the full accounts
+  system deferred in §5; (b) keep the key client-side, accept the risk,
+  mitigate with a local daily session cap, a low spend limit/alert on the key
+  in the Anthropic console, and a plan to rotate the key fast if abused. No
+  decision made yet — needs one before launch.
+- **Minimal retention measurement** — see §9. Must exist before step 4, or
+  launching produces no answer to the question it's for.
+- **Device/OS coverage** — testing so far is the developer's own
+  device/simulator only; public users won't be.
+- **Feedback channel** — usability testing had a researcher in the room;
+  public users don't. Needs some low-effort in-app path (even a mailto link)
+  to collect qualitative signal at all.
+- **Privacy note** — onboarding collects name and learning goal. Even stored
+  locally, a one-line notice is cheap and builds trust with strangers in a
+  way it didn't need to with in-person testers.
 
 ---
 
