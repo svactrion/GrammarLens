@@ -12,7 +12,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _dbName = 'grammar_lens.db';
-  static const _dbVersion = 7;
+  static const _dbVersion = 8;
 
   // Pre-launch checklist (PRD v2 §10.1) — a client-side daily cap bounds
   // Anthropic API spend per device without needing a server-side gate.
@@ -75,7 +75,8 @@ class StorageService {
       name TEXT NOT NULL,
       learning_goal TEXT NOT NULL,
       age INTEGER,
-      occupation TEXT
+      occupation TEXT,
+      avatar TEXT
     )
   ''';
 

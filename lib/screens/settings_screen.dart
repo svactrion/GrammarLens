@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../models/app_theme_mode.dart';
+import '../models/avatar.dart';
 import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
 import '../utils/page_title.dart';
+import '../widgets/avatar_circle.dart';
 
 /// PRD v2 §4 — theme, name edit, data reset, and optional profile fields
 /// (age, occupation) that onboarding deliberately left out. Learning goal
@@ -34,6 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _ageController;
   late final TextEditingController _occupationController;
+  late Avatar? _selectedAvatar;
   bool _savingProfile = false;
   bool _resetting = false;
 
@@ -45,6 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextEditingController(text: widget.profile.age?.toString() ?? '');
     _occupationController =
         TextEditingController(text: widget.profile.occupation ?? '');
+    _selectedAvatar = widget.profile.avatar;
   }
 
   @override
@@ -67,6 +71,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       clearAge: ageText.isEmpty,
       occupation: occupation,
       clearOccupation: occupation.isEmpty,
+      avatar: _selectedAvatar,
+      clearAvatar: _selectedAvatar == null,
     );
 
     setState(() => _savingProfile = true);
@@ -192,6 +198,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text('Avatar', style: theme.textTheme.labelLarge),
+                    const SizedBox(height: 8),
+                    // Local stock avatars only (PRD v2 §11) — no upload,
+                    // just a small fixed set to pick from. Tapping the
+                    // already-selected one clears it back to the generic
+                    // placeholder rather than being a no-op, so there's a
+                    // way out without hunting for a separate "remove"
+                    // control.
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final avatar in Avatar.values)
+                          GestureDetector(
+                            onTap: () => setState(() {
+                              _selectedAvatar =
+                                  _selectedAvatar == avatar ? null : avatar;
+                            }),
+                            child: AvatarCircle(
+                              avatar: avatar,
+                              selected: _selectedAvatar == avatar,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
                     Text('Name', style: theme.textTheme.labelLarge),
                     const SizedBox(height: 8),
                     TextField(
