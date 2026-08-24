@@ -293,3 +293,60 @@ Claude session Ahmet uses for product calls — each entry is tagged
   reliably propagate to an already-running debug build's system-brightness
   detection. Full test suite (48 tests) and `flutter analyze` clean after
   each commit.
+- **[Product]** Nav bar revision round 2 + avatar shape, three independent
+  commits — the previous round's nav bar rewrite didn't actually hit the
+  target Ahmet was pointing at:
+  1. **Genuinely floating nav bar.** Ahmet's report: the pill shape had
+     changed, but there was still an opaque/solid background spanning the
+     entire bottom of the screen behind it, so on Settings the Save button
+     stacked ugly against it. Root cause: the previous rewrite still used
+     Scaffold's `bottomNavigationBar` slot — that slot wraps its child in
+     an opaque `Material` sized to the full width of the screen's bottom
+     *regardless* of what's inside it, so even a transparent, rounded pill
+     sitting inside that slot left a solid strip painted behind it and
+     across its margins. Fixed by dropping the slot entirely: `body`
+     becomes a `Stack` with the tab content filling it and the pill as a
+     `Positioned` overlay near the bottom, wrapped in `SafeArea(top: false)`
+     for the home-indicator inset. Nothing paints anything outside the
+     pill's own rounded bounds now. Re-added `navBarClearance`
+     (`lib/utils/layout_constants.dart`, same name/value class as the
+     previous round's abandoned attempt, this time actually landed) as
+     each tab screen's own trailing `ListView` padding — deliberately
+     *not* an outer `Padding` shrinking the scroll viewport, which is what
+     caused last round's `SliverList` cache-extent bug (content built
+     outside the visible frame just never rendering). Padding inside the
+     scrollable, with the viewport left full height, has no such issue:
+     content sits behind the bar at rest (confirmed via screenshot — the
+     Save button and "Data" section label were visibly readable through/
+     around the pill, not blocked by a wall), and can be scrolled fully
+     clear of it.
+  2. **Active tab: translucent highlight instead of solid fill.** Solid
+     `colorScheme.secondary` + white text swapped for a 30%-alpha tint of
+     the same color, with the accent carried by icon/text
+     (`activeColor`/`textStyle`) instead of a filled block. Confirmed via
+     `google_nav_bar`'s source that `tabBackgroundColor` already only
+     paints for the currently-active tab (inactive tabs animate their fill
+     to fully transparent internally) — no per-tab conditional needed,
+     just a lower-alpha color. (The package also exposes a per-tab
+     `shadow`/`tabShadow` prop, considered for the "or a subtle shadow"
+     half of the ask, but `GNav` applies `tabShadow` to *every* tab
+     uniformly regardless of active state, which would have put a faint
+     shadow silhouette behind inactive icons too — skipped in favor of the
+     translucency-only approach, which the ask named as sufficient on its
+     own.)
+  3. **Avatar shape: circle → rounded square.** `AvatarCircle` renamed to
+     `AvatarTile` (`lib/widgets/avatar_circle.dart` →
+     `lib/widgets/avatar_tile.dart`) since the old name would be actively
+     misleading post-change. `radius` kept as the sizing parameter (half
+     the tile's side) so call sites in Home and Settings didn't need
+     other changes; corner radius is `radius * 0.6` (scales with size
+     rather than a fixed pixel value). Selection ring switched from a
+     circular border to a matching rounded-rect border; Home's avatar tap
+     `InkWell` switched from `CircleBorder` to a matching
+     `RoundedRectangleBorder` so the ripple doesn't visibly mismatch the
+     new tile shape.
+
+  All three verified on Home, Review, and Settings in both themes via the
+  same temporary, untracked debug-harness technique as earlier rounds
+  (deleted after use). Full test suite (48 tests) and `flutter analyze`
+  clean after each commit.
