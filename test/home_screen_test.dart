@@ -52,6 +52,23 @@ void main() {
     expect(circle.avatar, Avatar.penguin);
   });
 
+  testWidgets(
+      'avatar sits trailing at the far right, after the greeting text, not '
+      'leading before it', (tester) async {
+    await pumpHome(tester);
+
+    final greetingLeft = tester.getTopLeft(find.text('Welcome back, Ada')).dx;
+    final avatarRect = tester.getRect(find.byType(AvatarCircle));
+    final screenWidth = tester.view.physicalSize.width /
+        tester.view.devicePixelRatio;
+
+    // To the right of the greeting text, not before it.
+    expect(avatarRect.left, greaterThan(greetingLeft));
+    // Flush against the trailing screen edge (within the row's own
+    // padding), not floating in the middle.
+    expect(avatarRect.right, greaterThan(screenWidth - 60));
+  });
+
   testWidgets('shows the three mode cards plus the Early Access banner',
       (tester) async {
     await pumpHome(tester);

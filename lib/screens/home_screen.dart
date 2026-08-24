@@ -119,21 +119,30 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // PRD v2 §11: an avatar next to the greeting, not floating
           // elsewhere on the page, so it reads as "whose home screen this
-          // is" rather than a decorative icon.
+          // is" rather than a decorative icon. Greeting leads on the left,
+          // avatar pinned to the far right edge (trailing, not centered
+          // against the text) — `spaceBetween` with a `Flexible` (not
+          // `Expanded`) text so the avatar always lands flush against the
+          // trailing edge regardless of how short the greeting is, while a
+          // long name still truncates instead of pushing the avatar off
+          // the visible row.
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              AvatarCircle(avatar: widget.avatar, radius: 22),
-              const SizedBox(width: 12),
-              Expanded(
+              Flexible(
                 child: Text(
                   'Welcome back, ${widget.userName}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: appBarFg,
                   ),
                 ),
               ),
+              const SizedBox(width: 12),
+              AvatarCircle(avatar: widget.avatar, radius: 22),
             ],
           ),
           const SizedBox(height: 4),
