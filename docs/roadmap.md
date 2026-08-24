@@ -183,6 +183,35 @@ four independent commits:
   directly — wired the same way `ReviewScreen`'s `onGoToPractice` already
   switches tabs, a nullable callback set by `app.dart`
 
+**Nav bar revision round 2 + avatar shape**, three independent commits —
+the first revision round's nav bar didn't actually hit the target:
+- **Genuinely floating nav bar.** The previous pill still used Scaffold's
+  `bottomNavigationBar` slot, which wraps its child in an opaque `Material`
+  spanning the full width of the screen's bottom regardless of what's
+  inside it — so a solid strip was painted behind the pill and across its
+  margins on every screen, most visibly on scrollable Settings where
+  content (the Save button) stacked ugly against an invisible boundary.
+  Replaced with a `Stack`: tab content fills the whole body, the pill is a
+  `Positioned` overlay near the bottom — nothing paints anything outside
+  the pill's own rounded bounds, so content now genuinely scrolls behind
+  it, Instagram-style. Each tab screen's scrollable content gets extra
+  bottom padding (`navBarClearance`) so an important control can be
+  scrolled fully clear of the bar rather than staying stuck under it. This
+  also reverses the previous round's "don't use extendBody" call — that
+  call was avoiding the *symptom* (content hidden behind an opaque
+  boundary) without addressing the actual cause (the slot itself), which
+  this round fixes properly
+- **Active tab: translucent highlight, not a solid block.** Was a solid
+  `colorScheme.secondary` fill with white text; switched to a soft 30%-
+  alpha tint with the accent color carried by the icon/text instead — GNav
+  already only renders the tab background for whichever tab is selected,
+  so this reads as a gentle "you're here" marker rather than a filled pill
+- **Avatar shape: circle → rounded square.** Both Home's greeting avatar
+  and Settings' picker grid. `AvatarCircle` renamed to `AvatarTile`
+  (the old name would be actively misleading now); corner radius scales
+  with size instead of being fixed. Selection ring and the avatar's tap
+  ripple both updated to match the new shape
+
 ---
 
 ## What's next
