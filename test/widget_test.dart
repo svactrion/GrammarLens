@@ -36,4 +36,19 @@ void main() {
     await tester.pump();
     expect(continueButton().onPressed, isNotNull);
   });
+
+  testWidgets(
+      'onboarding states the collected info stays on-device (PRD v2 §10.1)',
+      (tester) async {
+    await tester.pumpWidget(const GrammarLensApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Stored only on this device — never sent to a server.'),
+      findsOneWidget,
+    );
+  });
 }
