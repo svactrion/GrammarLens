@@ -7,7 +7,7 @@ import '../services/storage_service.dart';
 import '../utils/error_banner.dart';
 import '../utils/layout_constants.dart';
 import '../utils/page_title.dart';
-import '../widgets/avatar_circle.dart';
+import '../widgets/avatar_tile.dart';
 
 /// PRD v2 §4 — theme, name edit, data reset, and optional profile fields
 /// (age, occupation) that onboarding deliberately left out. Learning goal
@@ -217,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               _selectedAvatar =
                                   _selectedAvatar == avatar ? null : avatar;
                             }),
-                            child: AvatarCircle(
+                            child: AvatarTile(
                               avatar: avatar,
                               selected: _selectedAvatar == avatar,
                             ),

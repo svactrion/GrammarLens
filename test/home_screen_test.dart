@@ -8,7 +8,7 @@ import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
-import 'package:grammar_lens/widgets/avatar_circle.dart';
+import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 void main() {
   Future<void> pumpHome(
@@ -47,13 +47,13 @@ void main() {
   testWidgets('shows a placeholder avatar when none has been picked',
       (tester) async {
     await pumpHome(tester);
-    final circle = tester.widget<AvatarCircle>(find.byType(AvatarCircle));
+    final circle = tester.widget<AvatarTile>(find.byType(AvatarTile));
     expect(circle.avatar, isNull);
   });
 
   testWidgets('shows the picked avatar next to the greeting', (tester) async {
     await pumpHome(tester, avatar: Avatar.penguin);
-    final circle = tester.widget<AvatarCircle>(find.byType(AvatarCircle));
+    final circle = tester.widget<AvatarTile>(find.byType(AvatarTile));
     expect(circle.avatar, Avatar.penguin);
   });
 
@@ -63,7 +63,7 @@ void main() {
     await pumpHome(tester);
 
     final greetingLeft = tester.getTopLeft(find.text('Welcome back, Ada')).dx;
-    final avatarRect = tester.getRect(find.byType(AvatarCircle));
+    final avatarRect = tester.getRect(find.byType(AvatarTile));
     final screenWidth = tester.view.physicalSize.width /
         tester.view.devicePixelRatio;
 
@@ -78,7 +78,7 @@ void main() {
     var tapped = false;
     await pumpHome(tester, onAvatarTap: () => tapped = true);
 
-    await tester.tap(find.byType(AvatarCircle));
+    await tester.tap(find.byType(AvatarTile));
     await tester.pump();
 
     expect(tapped, isTrue);

@@ -7,7 +7,7 @@ import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
-import 'package:grammar_lens/widgets/avatar_circle.dart';
+import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 /// sqflite has no platform channel in this test environment (see
 /// widget_test.dart's note), so a real `StorageService.saveUserProfile`
@@ -61,9 +61,9 @@ void main() {
   });
 
   bool isSelected(WidgetTester tester, Avatar avatar) {
-    final circle = tester.widget<AvatarCircle>(
+    final circle = tester.widget<AvatarTile>(
       find.byWidgetPredicate(
-        (w) => w is AvatarCircle && w.avatar == avatar,
+        (w) => w is AvatarTile && w.avatar == avatar,
       ),
     );
     return circle.selected;
@@ -72,7 +72,7 @@ void main() {
   testWidgets('shows all eight stock avatars, none selected by default',
       (tester) async {
     await pumpSettings(tester);
-    expect(find.byType(AvatarCircle), findsNWidgets(Avatar.values.length));
+    expect(find.byType(AvatarTile), findsNWidgets(Avatar.values.length));
     for (final avatar in Avatar.values) {
       expect(isSelected(tester, avatar), isFalse);
     }
@@ -83,14 +83,14 @@ void main() {
     await pumpSettings(tester);
 
     await tester.tap(find.byWidgetPredicate(
-      (w) => w is AvatarCircle && w.avatar == Avatar.fox,
+      (w) => w is AvatarTile && w.avatar == Avatar.fox,
     ));
     await tester.pump();
     expect(isSelected(tester, Avatar.fox), isTrue);
     expect(isSelected(tester, Avatar.cat), isFalse);
 
     await tester.tap(find.byWidgetPredicate(
-      (w) => w is AvatarCircle && w.avatar == Avatar.fox,
+      (w) => w is AvatarTile && w.avatar == Avatar.fox,
     ));
     await tester.pump();
     expect(isSelected(tester, Avatar.fox), isFalse);
@@ -106,7 +106,7 @@ void main() {
     );
 
     await tester.tap(find.byWidgetPredicate(
-      (w) => w is AvatarCircle && w.avatar == Avatar.owl,
+      (w) => w is AvatarTile && w.avatar == Avatar.owl,
     ));
     await tester.pump();
 

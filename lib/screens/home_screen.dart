@@ -5,7 +5,7 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/layout_constants.dart';
-import '../widgets/avatar_circle.dart';
+import '../widgets/avatar_tile.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 
@@ -153,9 +153,14 @@ class _HomeScreenState extends State<HomeScreen> {
               // rest of the profile) is edited — tapping it jumps there
               // directly instead of requiring the Settings tab first.
               InkWell(
-                customBorder: const CircleBorder(),
+                // Matches AvatarTile's own corner rounding at radius: 22
+                // (radius * 0.6) — a circular ripple would visibly mismatch
+                // the tile's now-square shape.
+                customBorder: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
                 onTap: widget.onAvatarTap,
-                child: AvatarCircle(avatar: widget.avatar, radius: 22),
+                child: AvatarTile(avatar: widget.avatar, radius: 22),
               ),
             ],
           ),

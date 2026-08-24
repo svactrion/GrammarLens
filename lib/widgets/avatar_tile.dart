@@ -5,13 +5,16 @@ import '../models/avatar.dart';
 /// Shared avatar rendering — an emoji on a fixed, avatar-specific
 /// background color, or a generic person icon when none has been picked
 /// yet. Used by both Settings' avatar picker and Home's personalized
-/// greeting so the two can't visually drift apart (PRD v2 §11).
-class AvatarCircle extends StatelessWidget {
+/// greeting so the two can't visually drift apart (PRD v2 §11). A rounded
+/// square rather than a circle — `radius` is kept as the sizing parameter
+/// (half the tile's side length) so call sites didn't need to change when
+/// this moved off `CircleAvatar`.
+class AvatarTile extends StatelessWidget {
   final Avatar? avatar;
   final double radius;
   final bool selected;
 
-  const AvatarCircle({
+  const AvatarTile({
     super.key,
     required this.avatar,
     this.radius = 22,
@@ -40,10 +43,21 @@ class AvatarCircle extends StatelessWidget {
     final background = chosen == null
         ? colorScheme.surfaceContainerHighest
         : _backgroundColors[chosen]!;
+    final side = radius * 2;
+    // Proportional to size rather than a fixed value, so the "slightly
+    // rounded" look holds whether this is Home's small greeting tile or a
+    // larger one elsewhere later — a squircle-ish rounded square, not a
+    // circle and not sharp corners.
+    final cornerRadius = radius * 0.6;
 
-    final circle = CircleAvatar(
-      radius: radius,
-      backgroundColor: background,
+    final tile = Container(
+      width: side,
+      height: side,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(cornerRadius),
+      ),
       child: chosen == null
           ? Icon(
               Icons.person_rounded,
@@ -53,14 +67,14 @@ class AvatarCircle extends StatelessWidget {
           : Text(chosen.emoji, style: TextStyle(fontSize: radius * 1.1)),
     );
 
-    if (!selected) return circle;
+    if (!selected) return tile;
     return Container(
       padding: const EdgeInsets.all(2.5),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(cornerRadius + 2.5),
         border: Border.all(color: colorScheme.secondary, width: 2.5),
       ),
-      child: circle,
+      child: tile,
     );
   }
 }
