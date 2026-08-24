@@ -111,39 +111,54 @@ class _HomeScreenState extends State<HomeScreen> {
             style: theme.textTheme.bodyLarge?.copyWith(color: appBarFg),
           ),
           const SizedBox(height: 24),
-          _ModeCard(
-            icon: Icons.school_rounded,
-            title: 'Topic Practice',
-            description:
-                'Deep practice by grammar topic, with plain-language '
-                'feedback on every mistake.',
-            onTap: () => _openTopicPractice(context),
-          ),
-          const SizedBox(height: 14),
-          _ModeCard(
-            icon: Icons.local_fire_department_rounded,
-            title: 'Streak Mode',
-            description: 'Fast daily rounds to build a practice streak.',
-            badgeLabel: 'Coming soon',
-            onTap: () => _showComingSoonDialog(
-              context,
-              title: 'Coming soon',
-              message: 'Streak Mode is coming soon.',
-            ),
-          ),
-          const SizedBox(height: 14),
-          _ModeCard(
-            icon: Icons.mic_rounded,
-            title: 'Voice Practice',
-            description: 'Practice speaking and get feedback on your voice.',
-            badgeLabel: 'Premium',
-            locked: true,
-            onTap: () => _showComingSoonDialog(
-              context,
-              title: 'Premium feature',
-              message:
-                  'Voice Practice will be part of premium, in a later update.',
-            ),
+          // 2-column grid rather than the vertical stack this used to be.
+          // With just 3 modes today a single column had a lot of unused
+          // width, and a grid is the more natural shape to grow into as
+          // more modes arrive later — no layout rethink needed to add a
+          // 4th tile. A horizontally-swipeable carousel (Instagram-style
+          // mode switching) was considered and set aside as unneeded
+          // complexity for this few items; revisit if the mode count grows
+          // enough that a grid stops being the simpler choice.
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 14,
+            childAspectRatio: 0.92,
+            children: [
+              _ModeCard(
+                icon: Icons.school_rounded,
+                title: 'Topic Practice',
+                description:
+                    'Deep grammar practice with plain-language feedback.',
+                onTap: () => _openTopicPractice(context),
+              ),
+              _ModeCard(
+                icon: Icons.local_fire_department_rounded,
+                title: 'Streak Mode',
+                description: 'Fast daily rounds to build a streak.',
+                badgeLabel: 'Coming soon',
+                onTap: () => _showComingSoonDialog(
+                  context,
+                  title: 'Coming soon',
+                  message: 'Streak Mode is coming soon.',
+                ),
+              ),
+              _ModeCard(
+                icon: Icons.mic_rounded,
+                title: 'Voice Practice',
+                description: 'Speaking practice with voice feedback.',
+                badgeLabel: 'Premium',
+                locked: true,
+                onTap: () => _showComingSoonDialog(
+                  context,
+                  title: 'Premium feature',
+                  message: 'Voice Practice will be part of premium, in a '
+                      'later update.',
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -151,12 +166,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// One mode-selection card. [badgeLabel] shows a small pill in the corner
-/// for non-active modes ("Coming soon" / "Premium"); [locked] additionally
-/// mutes the card and swaps the trailing chevron for a lock icon. Every
-/// card stays tappable even when not yet available — PRD v2 §4 calls for
-/// either non-tappable or informative, and a short explanation on tap reads
-/// less like a dead end than a disabled card would.
+/// One mode-selection grid tile: icon (with a lock badge for locked modes)
+/// on top, title, status badge, and a short description below — mixing a
+/// horizontal top row with a vertical stack beneath it, rather than the
+/// single full-width horizontal row this used before switching to a grid.
+/// Every card stays tappable even when not yet available — PRD v2 §4 calls
+/// for either non-tappable or informative, and a short explanation on tap
+/// reads less like a dead end than a disabled card would.
 class _ModeCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -179,59 +195,54 @@ class _ModeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final muted = colorScheme.onSurfaceVariant;
-    final iconBg =
-        locked ? colorScheme.surfaceContainerHighest : colorScheme.primaryContainer;
+    final iconBg = locked
+        ? colorScheme.surfaceContainerHighest
+        : colorScheme.primaryContainer;
     final iconFg = locked ? muted : colorScheme.onPrimaryContainer;
 
     return Card(
       child: InkWell(
+        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-          child: Row(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: iconBg,
-                foregroundColor: iconFg,
-                child: Icon(icon),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: iconBg,
+                    foregroundColor: iconFg,
+                    child: Icon(icon, size: 20),
+                  ),
+                  const Spacer(),
+                  if (locked)
+                    Icon(Icons.lock_rounded, color: muted, size: 18),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: locked ? muted : null,
-                            ),
-                          ),
-                        ),
-                        if (badgeLabel != null) ...[
-                          const SizedBox(width: 8),
-                          _Badge(label: badgeLabel!),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style:
-                          theme.textTheme.bodyMedium?.copyWith(color: muted),
-                    ),
-                  ],
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: locked ? muted : null,
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(
-                locked ? Icons.lock_rounded : Icons.chevron_right_rounded,
-                color: muted,
-                size: locked ? 20 : 24,
+              if (badgeLabel != null) ...[
+                const SizedBox(height: 6),
+                _Badge(label: badgeLabel!),
+              ],
+              const SizedBox(height: 6),
+              Expanded(
+                child: Text(
+                  description,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      theme.textTheme.bodySmall?.copyWith(color: muted),
+                ),
               ),
             ],
           ),

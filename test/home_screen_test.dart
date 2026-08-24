@@ -8,6 +8,14 @@ import 'package:grammar_lens/services/storage_service.dart';
 
 void main() {
   Future<void> pumpHome(WidgetTester tester) async {
+    // The default 800x600 test surface is shorter than the mode grid's
+    // second row (Voice Practice, alone on its own row) — use a
+    // phone-realistic size so every card is actually reachable by taps.
+    tester.view.physicalSize = const Size(390, 844) * 3.0;
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       MaterialApp(
         home: HomeScreen(
@@ -32,6 +40,27 @@ void main() {
     expect(find.text('Voice Practice'), findsOneWidget);
     expect(find.text('Coming soon'), findsOneWidget);
     expect(find.text('Premium'), findsOneWidget);
+  });
+
+  testWidgets('mode cards are laid out as a 2-column grid', (tester) async {
+    await pumpHome(tester);
+    expect(find.byType(GridView), findsOneWidget);
+
+    final delegate =
+        tester.widget<GridView>(find.byType(GridView)).gridDelegate;
+    expect(delegate, isA<SliverGridDelegateWithFixedCrossAxisCount>());
+    expect(
+      (delegate as SliverGridDelegateWithFixedCrossAxisCount).crossAxisCount,
+      2,
+    );
+
+    // Topic Practice and Streak Mode share the first row (same top edge);
+    // Voice Practice starts a new row below them.
+    final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
+    final streakTop = tester.getTopLeft(find.text('Streak Mode')).dy;
+    final voiceTop = tester.getTopLeft(find.text('Voice Practice')).dy;
+    expect(topicTop, streakTop);
+    expect(voiceTop, greaterThan(topicTop));
   });
 
   testWidgets('Topic Practice opens the existing MVP loop', (tester) async {
