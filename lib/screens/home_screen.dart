@@ -301,15 +301,15 @@ class _ModeCard extends StatelessWidget {
   }
 }
 
-/// Full-width, outlined/tinted banner — see the call site's comment for why
-/// this deliberately doesn't reuse `_ModeCard`'s solid-fill, icon-on-top
-/// look. A subtle tinted fill (rather than fully transparent) is needed in
-/// light mode specifically: the page there sits directly on the vivid brand
-/// orange (see theme.dart), where a transparent background made onboarding's
-/// unselected goal cards unreadable for the same reason (see that screen's
-/// history) — some fill is required for the border+text to read as a
-/// surface at all, it just doesn't need to be the same fill the mode cards
-/// use.
+/// Full-width, solid-fill banner in the app's deep-blue accent — see the
+/// call site's comment for why this deliberately doesn't reuse
+/// `_ModeCard`'s icon-on-top look. A first pass used a faint tinted fill
+/// with just an outline, which read as washed-out against the vivid brand
+/// orange in light mode (too close to the page color to register as a
+/// distinct surface) — a solid `colorScheme.secondary` fill, the same
+/// color/contrast pairing `FilledButton` already uses elsewhere, reads
+/// clearly against both the orange page and the cream/white mode cards
+/// without needing a border to define its edges.
 class _EarlyAccessBanner extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -319,24 +319,23 @@ class _EarlyAccessBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final onSecondary = colorScheme.onSecondary;
 
     return Material(
-      color: colorScheme.secondary.withValues(alpha: 0.10),
+      color: colorScheme.secondary,
+      elevation: 4,
+      shadowColor: colorScheme.shadow,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colorScheme.secondary, width: 1.5),
-          ),
           child: Row(
             children: [
               Icon(
                 Icons.workspace_premium_outlined,
-                color: colorScheme.secondary,
+                color: onSecondary,
                 size: 22,
               ),
               const SizedBox(width: 12),
@@ -348,19 +347,20 @@ class _EarlyAccessBanner extends StatelessWidget {
                       'Early Access',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: colorScheme.secondary,
+                        color: onSecondary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       "See what's coming with premium — free for now.",
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: onSecondary.withValues(alpha: 0.85),
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: colorScheme.secondary),
+              Icon(Icons.chevron_right_rounded, color: onSecondary),
             ],
           ),
         ),
