@@ -155,6 +155,34 @@ avatar picker** (`docs/prd-v2.md` §10.1, §11), five independent commits:
   stance); the chosen avatar shows next to Home's personalized greeting.
   `UserProfile` gains a nullable `avatar` field (schema v8)
 
+**Home + nav bar revision round**, referencing Kick/Instagram's nav design,
+four independent commits:
+- **Floating, frosted-glass nav bar.** Replaced the flush, flat-background
+  bottom bar with a pill: margins from all three screen edges, fully
+  rounded corners, translucent `BackdropFilter`-blurred container. Existing
+  active-tab styling (icon+label, selected pill) untouched — only the bar's
+  own surface changed. Deliberately not `extendBody: true` (letting screen
+  content draw behind the bar): a first attempt at that hid Home's mode
+  grid's last row underneath the bar on an unscrolled screen instead of
+  stopping above it — a real regression for a cosmetic "blur reveals
+  scrolled content" nicety. Scaffold's default behavior (reserving the
+  bar's height above `body`) avoids that risk entirely and still delivers
+  the floating/rounded/translucent look
+- **Early Access banner contrast.** The outlined/tinted treatment (10%
+  secondary fill, thin border) read as washed out against the vivid orange
+  page — too close to the page color to register as its own surface.
+  Switched to a solid `colorScheme.secondary` fill with `onSecondary` text,
+  the same pairing `FilledButton` already uses — reads clearly against both
+  the orange page and the cream/white mode cards
+- **Avatar moved to the trailing edge.** Was leading the greeting text;
+  swapped order (greeting first, avatar last) with a `spaceBetween` Row so
+  the avatar sits flush against the screen's trailing edge instead of
+  floating near the center-left
+- **Avatar tap → Settings.** The avatar is the user's own identity marker
+  and Settings is where it's actually edited, so tapping it jumps there
+  directly — wired the same way `ReviewScreen`'s `onGoToPractice` already
+  switches tabs, a nullable callback set by `app.dart`
+
 ---
 
 ## What's next
