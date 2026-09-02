@@ -13,13 +13,13 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 /// something that should ever be able to crash or block the app it's
 /// instrumenting.
 class AnalyticsService {
-  /// Practice mode identifiers for the `mode_selected` event — matches the
-  /// four entries on Home (PRD v2 §4): the three practice-mode cards plus
+  /// Practice mode identifiers for the `mode_selected` event — matches
+  /// Home's two tappable entries (PRD v2 §4): the Topic Practice card and
   /// the Early Access banner, since knowing what people tap there is
   /// exactly the kind of pre-launch interest signal analytics exists for.
+  /// (Streak Mode and Voice Practice identifiers were removed along with
+  /// their Home tiles — see docs/roadmap.md.)
   static const String modeTopic = 'topic';
-  static const String modeStreak = 'streak';
-  static const String modeVoice = 'voice';
   static const String modeEarlyAccess = 'early_access';
 
   Future<void> onboardingCompleted() {
