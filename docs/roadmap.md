@@ -225,6 +225,18 @@ swaps to filled, icon/label recolor to the accent blue, label goes bold,
 and a 4px accent dot appears centered beneath — no background shape at
 all, Instagram-style. `google_nav_bar` is no longer a dependency.
 
+**Removed Streak Mode and Voice Practice from Home.** Both were "coming
+soon"/"premium" tiles in Home's mode grid leading only to an informational
+dialog — neither is actually built. Per `docs/prd-v2.md` §12.6, that's an
+Apple App Review completeness risk (tiles for core-looking features that
+don't do anything) and pure duplication besides, since the Premium screen
+(reached via the Early Access banner) already lists "unlimited Streak
+Mode" and "AI Voice Practice" as coming-soon premium features. Removed
+the tiles, their tap dialogs, and the now-dead `_showComingSoonDialog`
+machinery; Topic Practice — the only real mode — is now a single
+full-width card instead of a lone tile in an otherwise-empty 2-column
+grid.
+
 ---
 
 ## What's next

@@ -38,12 +38,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Guards against a second dialog opening from a rapid double-tap before
-  // the first frame with the modal barrier has rendered. Once that barrier
-  // is up, showDialog's own modality already blocks a second tap from
-  // reaching the card underneath — this only covers the same-frame race.
-  bool _infoDialogOpen = false;
-
   void _openTopicPractice(BuildContext context) {
     widget.analyticsService.modeSelected(AnalyticsService.modeTopic);
     Navigator.of(context).push(
@@ -62,42 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const PremiumScreen()),
     );
-  }
-
-  // A SnackBar here previously used the app-wide ScaffoldMessenger (from
-  // MaterialApp, shared by every Scaffold in the tree, not just this one),
-  // which caused two bugs: repeated taps queued up multiple snackbars
-  // instead of replacing one, and since that messenger lives above the
-  // Navigator, the snackbar kept showing over whatever screen the user
-  // navigated to next instead of closing with this one. A dialog is a real
-  // route on this screen's Navigator — modal (so a second tap on the card
-  // can't reach it while one is already open) and tied to this screen's
-  // lifecycle instead of the whole app's.
-  Future<void> _showComingSoonDialog(
-    BuildContext context, {
-    required String title,
-    required String message,
-  }) async {
-    if (_infoDialogOpen) return;
-    setState(() => _infoDialogOpen = true);
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Got it'),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (mounted) setState(() => _infoDialogOpen = false);
   }
 
   @override
@@ -170,62 +128,20 @@ class _HomeScreenState extends State<HomeScreen> {
             style: theme.textTheme.bodyLarge?.copyWith(color: appBarFg),
           ),
           const SizedBox(height: 24),
-          // 2-column grid rather than the vertical stack this used to be.
-          // A single column had a lot of unused width, and a grid is the
-          // more natural shape to grow into as more modes arrive — no
-          // layout rethink needed to add a 5th tile later. A
-          // horizontally-swipeable carousel (Instagram-style mode
-          // switching) was considered and set aside as unneeded complexity
-          // for this few items; revisit if the mode count grows enough
-          // that a grid stops being the simpler choice.
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 14,
-            crossAxisSpacing: 14,
-            childAspectRatio: 0.92,
-            children: [
-              _ModeCard(
-                icon: Icons.school_rounded,
-                title: 'Topic Practice',
-                description:
-                    'Deep grammar practice with plain-language feedback.',
-                onTap: () => _openTopicPractice(context),
-              ),
-              _ModeCard(
-                icon: Icons.local_fire_department_rounded,
-                title: 'Streak Mode',
-                description: 'Fast daily rounds to build a streak.',
-                badgeLabel: 'Coming soon',
-                onTap: () {
-                  widget.analyticsService
-                      .modeSelected(AnalyticsService.modeStreak);
-                  _showComingSoonDialog(
-                    context,
-                    title: 'Coming soon',
-                    message: 'Streak Mode is coming soon.',
-                  );
-                },
-              ),
-              _ModeCard(
-                icon: Icons.mic_rounded,
-                title: 'Voice Practice',
-                description: 'Speaking practice with voice feedback.',
-                badgeLabel: 'Premium',
-                locked: true,
-                onTap: () {
-                  widget.analyticsService
-                      .modeSelected(AnalyticsService.modeVoice);
-                  _showComingSoonDialog(
-                    context,
-                    title: 'Premium feature',
-                    message: 'Voice Practice will be part of premium, in a '
-                        'later update.',
-                  );
-                },
-              ),
-            ],
+          // Streak Mode and Voice Practice used to fill out a 2-column grid
+          // alongside this card, each just a "coming soon" tile leading to
+          // an informational dialog — neither is actually built. Apple's
+          // App Review guidance flags that pattern as a completeness risk,
+          // and both are already listed as coming-soon premium features on
+          // the Premium screen below, so keeping them here was pure
+          // duplication. With only one real mode left, a single full-width
+          // card reads as deliberate rather than a leftover grid slot.
+          _PracticeModeCard(
+            icon: Icons.school_rounded,
+            title: 'Topic Practice',
+            description:
+                'Deep grammar practice with plain-language feedback.',
+            onTap: () => _openTopicPractice(context),
           ),
           const SizedBox(height: 14),
           // Deliberately not a fifth grid tile: Early Access is commercial
@@ -243,27 +159,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// One mode-selection grid tile: icon (with a lock badge for locked modes)
-/// on top, title, status badge, and a short description below — mixing a
-/// horizontal top row with a vertical stack beneath it, rather than the
-/// single full-width horizontal row this used before switching to a grid.
-/// Every card stays tappable even when not yet available — PRD v2 §4 calls
-/// for either non-tappable or informative, and a short explanation on tap
-/// reads less like a dead end than a disabled card would.
-class _ModeCard extends StatelessWidget {
+/// The single mode-selection card: a full-width row rather than the
+/// icon-on-top grid tile this used to be alongside Streak Mode and Voice
+/// Practice — with only one real mode left, a lone icon-on-top tile in a
+/// now-empty 2-column grid would read as a layout bug, not a deliberate
+/// choice.
+class _PracticeModeCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
-  final String? badgeLabel;
-  final bool locked;
   final VoidCallback onTap;
 
-  const _ModeCard({
+  const _PracticeModeCard({
     required this.icon,
     required this.title,
     required this.description,
-    this.badgeLabel,
-    this.locked = false,
     required this.onTap,
   });
 
@@ -272,55 +182,42 @@ class _ModeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final muted = colorScheme.onSurfaceVariant;
-    final iconBg = locked
-        ? colorScheme.surfaceContainerHighest
-        : colorScheme.primaryContainer;
-    final iconFg = locked ? muted : colorScheme.onPrimaryContainer;
 
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(18),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: iconBg,
-                    foregroundColor: iconFg,
-                    child: Icon(icon, size: 20),
-                  ),
-                  const Spacer(),
-                  if (locked)
-                    Icon(Icons.lock_rounded, color: muted, size: 18),
-                ],
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: colorScheme.primaryContainer,
+                foregroundColor: colorScheme.onPrimaryContainer,
+                child: Icon(icon, size: 26),
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: locked ? muted : null,
-                ),
-              ),
-              if (badgeLabel != null) ...[
-                const SizedBox(height: 6),
-                _Badge(label: badgeLabel!),
-              ],
-              const SizedBox(height: 6),
+              const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  description,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style:
-                      theme.textTheme.bodySmall?.copyWith(color: muted),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style:
+                          theme.textTheme.bodySmall?.copyWith(color: muted),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: muted),
             ],
           ),
         ),
@@ -331,7 +228,7 @@ class _ModeCard extends StatelessWidget {
 
 /// Full-width, solid-fill banner in the app's deep-blue accent — see the
 /// call site's comment for why this deliberately doesn't reuse
-/// `_ModeCard`'s icon-on-top look. A first pass used a faint tinted fill
+/// `_PracticeModeCard`'s look. A first pass used a faint tinted fill
 /// with just an outline, which read as washed-out against the vivid brand
 /// orange in light mode (too close to the page color to register as a
 /// distinct surface) — a solid `colorScheme.secondary` fill, the same
@@ -392,31 +289,6 @@ class _EarlyAccessBanner extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final String label;
-
-  const _Badge({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSecondaryContainer,
-              fontWeight: FontWeight.w600,
-            ),
       ),
     );
   }
