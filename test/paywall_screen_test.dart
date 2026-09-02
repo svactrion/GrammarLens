@@ -114,21 +114,23 @@ void main() {
   });
 
   testWidgets(
-      'Privacy Policy / Terms links are present but show "not available '
-      'yet" rather than crashing on an empty URL', (tester) async {
+      'Privacy Policy / Terms links are present but disabled while '
+      "AppLinks' URLs are still empty (no hosted pages exist yet)",
+      (tester) async {
     await pumpPaywall(tester, _FakeSubscriptionService(offering: null));
 
-    final privacyLink = find.text('Privacy Policy');
-    await tester.scrollUntilVisible(privacyLink, 300);
-    await tester.ensureVisible(privacyLink);
-    await tester.pumpAndSettle();
-    expect(privacyLink, findsOneWidget);
+    expect(find.text('Privacy Policy'), findsOneWidget);
     expect(find.text('Terms of Service'), findsOneWidget);
 
-    await tester.tap(privacyLink);
-    await tester.pump();
-
-    expect(find.textContaining("isn't available yet"), findsOneWidget);
+    final privacyButton =
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'Privacy Policy'));
+    final termsButton =
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'Terms of Service'));
+    // AppLinks.privacyPolicyUrl / termsUrl are still the empty pre-launch
+    // placeholder (see app_links.dart) — disabled (onPressed: null), not a
+    // dead/broken tap that goes nowhere.
+    expect(privacyButton.onPressed, isNull);
+    expect(termsButton.onPressed, isNull);
   });
 
   group('with a package available (a real RevenueCat product connected)', () {
