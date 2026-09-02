@@ -49,10 +49,14 @@ void main() {
   late _FakeClaudeService claudeService;
   late DailyTestService dailyTestService;
 
+  // A file distinct from other ffi-backed test files' — `flutter test` runs
+  // files concurrently, and they'd otherwise race on the same real db path.
+  const dbName = 'test_daily_test_service.db';
+
   setUp(() async {
-    final path = join(await getDatabasesPath(), 'grammar_lens.db');
+    final path = join(await getDatabasesPath(), dbName);
     await databaseFactory.deleteDatabase(path);
-    storageService = StorageService();
+    storageService = StorageService(dbName: dbName);
     claudeService = _FakeClaudeService();
     dailyTestService = DailyTestService(
       claudeService: claudeService,

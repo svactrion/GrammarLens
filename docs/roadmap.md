@@ -273,6 +273,26 @@ either way. `DailyTestService` ties it together (get-cached-or-generate,
 mark-completed) for a future screen to call. No UI, no Home/onboarding
 wiring, no paywall/entitlement checks — next batch.
 
+**Daily Test — screens built, still not reachable from Home/onboarding.**
+`DailyTestScreen` (`lib/screens/daily_test_screen.dart`) and
+`DailyTestResultScreen` (`daily_test_result_screen.dart`) on top of the
+previous batch's data layer. The question flow deliberately mirrors
+PracticeScreen's layout — same progress bar, same keyboard-aware bottom
+button, same header/answer split into separate scroll regions (the
+hard-won fix for the keyboard dragging the question off screen, not
+worth regressing here) — but simpler: fixed 5-question count, no length
+picker, no submit-time API call (grading is instant and local via
+`checkDailyTestAnswer`). The result screen reuses `SemanticColors` and
+`MistakeBreakdown` for the same correct/incorrect/skipped card treatment
+Topic Practice's ResultsScreen already uses, plus an optional
+`bottomBuilder` extension point (deliberately no hardcoded "Back to
+Home") for the next batch's trial/paywall pitch. Verified via a
+temporary debug harness (both screens, both themes) — no real entry
+point exists yet; wiring into Home is the next batch. Also: gave
+`StorageService` an injectable `dbName` so the growing set of
+ffi-backed test files (this batch added a third) stop racing on the
+same real db path under `flutter test`'s default concurrency.
+
 ---
 
 ## What's next

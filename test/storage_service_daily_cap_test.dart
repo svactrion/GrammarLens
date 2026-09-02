@@ -18,10 +18,14 @@ void main() {
 
   late StorageService storageService;
 
+  // A file distinct from other ffi-backed test files' — `flutter test` runs
+  // files concurrently, and they'd otherwise race on the same real db path.
+  const dbName = 'test_daily_cap.db';
+
   setUp(() async {
-    final path = join(await getDatabasesPath(), 'grammar_lens.db');
+    final path = join(await getDatabasesPath(), dbName);
     await databaseFactory.deleteDatabase(path);
-    storageService = StorageService();
+    storageService = StorageService(dbName: dbName);
   });
 
   test('a fresh day starts at zero sessions', () async {
