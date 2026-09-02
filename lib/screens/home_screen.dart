@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../models/avatar.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
+import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
 import '../utils/layout_constants.dart';
 import '../widgets/avatar_tile.dart';
+import 'daily_test_screen.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 
@@ -38,6 +40,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  void _openDailyTest(BuildContext context) {
+    widget.analyticsService.modeSelected(AnalyticsService.modeDailyTest);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DailyTestScreen(
+          dailyTestService: DailyTestService(
+            claudeService: widget.claudeService,
+            storageService: widget.storageService,
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openTopicPractice(BuildContext context) {
     widget.analyticsService.modeSelected(AnalyticsService.modeTopic);
     Navigator.of(context).push(
@@ -129,13 +145,26 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
           // Streak Mode and Voice Practice used to fill out a 2-column grid
-          // alongside this card, each just a "coming soon" tile leading to
-          // an informational dialog — neither is actually built. Apple's
-          // App Review guidance flags that pattern as a completeness risk,
-          // and both are already listed as coming-soon premium features on
-          // the Premium screen below, so keeping them here was pure
-          // duplication. With only one real mode left, a single full-width
-          // card reads as deliberate rather than a leftover grid slot.
+          // alongside a single Topic Practice card, each just a "coming
+          // soon" tile leading to an informational dialog — neither was
+          // actually built. Apple's App Review guidance flags that pattern
+          // as a completeness risk, and both are already listed as
+          // coming-soon premium features on the Premium screen below, so
+          // keeping them here was pure duplication. Daily Test (PRD v2
+          // §12.2) is a real, functioning second mode, not a placeholder —
+          // stacking two full-width cards reads as deliberate the same way
+          // one did; a 2-column grid would cramp each card's description
+          // again for no benefit at this width. Daily Test leads since it's
+          // the always-free entry point (Topic Practice will be trial/paid-
+          // gated once the paywall exists — not yet, see docs/roadmap.md).
+          _PracticeModeCard(
+            icon: Icons.today_rounded,
+            title: 'Daily Test',
+            description:
+                'A quick 5-question warm-up, refreshed every day.',
+            onTap: () => _openDailyTest(context),
+          ),
+          const SizedBox(height: 14),
           _PracticeModeCard(
             icon: Icons.school_rounded,
             title: 'Topic Practice',
