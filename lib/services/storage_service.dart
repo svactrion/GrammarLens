@@ -15,8 +15,16 @@ import '../models/user_profile.dart';
 /// Local SQLite-backed error profile (PRD §5: "on-device storage; no
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
-  static const _dbName = 'grammar_lens.db';
+  static const _defaultDbName = 'grammar_lens.db';
   static const _dbVersion = 9;
+
+  // Overridable only so tests that exercise real SQLite (via
+  // sqflite_common_ffi) can give each test file its own file on disk —
+  // `flutter test` runs files concurrently, and they'd otherwise all
+  // race on the one real device filename below.
+  final String _dbName;
+
+  StorageService({String dbName = _defaultDbName}) : _dbName = dbName;
 
   // Pre-launch checklist (PRD v2 §10.1) — a client-side daily cap bounds
   // Anthropic API spend per device without needing a server-side gate.
