@@ -89,29 +89,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
     });
   }
 
-  void _openLink(String url, String label) {
-    if (url.isEmpty) {
-      // Expected right now — see app_links.dart's pre-launch-blocker
-      // comment. A graceful "not yet" message rather than attempting to
-      // launch an empty URL.
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("$label isn't available yet.")),
-      );
-      return;
-    }
-    // TODO: launch `url` (e.g. via url_launcher) once AppLinks has a real
-    // value — see app_links.dart.
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
+    final package = _package;
 
     return Scaffold(
       appBar: AppBar(title: const PageTitle('Topic Practice')),
+      // A single flowing list, not a scrollable-region-plus-pinned-footer
+      // split: an earlier pass here tried pinning Restore Purchases/the
+      // legal links to the true bottom of the screen via Expanded, which
+      // actually made the "floating in isolation" problem *worse* — it
+      // turned a short gap into a large, deliberate-looking void between
+      // the error card and the actions below it. Keeping everything in one
+      // Column means these elements stay tightly grouped right after
+      // whatever pricing content precedes them, and any leftover space
+      // simply trails at the very bottom of the screen — normal for a
+      // short scrollable screen, not an isolated floating cluster.
       body: ListView(
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
         children: [
@@ -122,7 +119,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (_package == null)
+          else if (package == null)
             _UnavailableCard(
               theme: theme,
               colorScheme: colorScheme,
@@ -133,7 +130,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
             )
           else ...[
             _TrialTermsCard(
-              package: _package!,
+              package: package,
               theme: theme,
               colorScheme: colorScheme,
             ),
@@ -160,9 +157,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          // Required by App Store guidelines for any paywall, regardless
+          // of whether pricing itself is currently available — always
+          // present, never gated on [package].
           Center(
             child: TextButton(
+              // Explicit color: an unstyled TextButton defaults to Material
+              // 3's colorScheme.primary, which in light mode *is* the
+              // page's own vivid-orange background (see theme.dart's
+              // filledButtonTheme comment — the same clash it already
+              // works around for FilledButton) — without this, the button
+              // renders orange-on-orange and disappears in light mode.
+              style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
               onPressed: _restoring ? null : _restore,
               child: Text(_restoring ? 'Restoring…' : 'Restore Purchases'),
             ),
@@ -179,26 +186,54 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 ),
               ),
             ),
-          const SizedBox(height: 12),
-          Center(
+          const SizedBox(height: 4),
+          const Center(
             child: Wrap(
               alignment: WrapAlignment.center,
               children: [
-                TextButton(
-                  onPressed: () =>
-                      _openLink(AppLinks.privacyPolicyUrl, 'Privacy Policy'),
-                  child: const Text('Privacy Policy'),
+                _LegalLink(
+                  label: 'Privacy Policy',
+                  url: AppLinks.privacyPolicyUrl,
                 ),
-                TextButton(
-                  onPressed: () =>
-                      _openLink(AppLinks.termsUrl, 'Terms of Service'),
-                  child: const Text('Terms of Service'),
+                _LegalLink(
+                  label: 'Terms of Service',
+                  url: AppLinks.termsUrl,
                 ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A small text link to a legal page, disabled (greyed out, non-
+/// interactive) rather than shown as live and then failing silently or
+/// erroring, whenever [url] is still the empty placeholder from
+/// app_links.dart — see that file's pre-launch-blocker comment. Once a
+/// real URL is set, this starts launching it; that launch itself isn't
+/// implemented yet (no url_launcher dependency), since there's nothing
+/// real to launch to until then.
+class _LegalLink extends StatelessWidget {
+  final String label;
+  final String url;
+
+  const _LegalLink({required this.label, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      // Explicit color for the same reason Restore Purchases' button
+      // needs one — see that TextButton's comment — even though this one
+      // is disabled today; it stays correct once a real URL lands.
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).colorScheme.secondary,
+      ),
+      // TODO: launch `url` (e.g. via url_launcher) once AppLinks has a
+      // real value — see app_links.dart.
+      onPressed: url.isEmpty ? null : () {},
+      child: Text(label),
     );
   }
 }

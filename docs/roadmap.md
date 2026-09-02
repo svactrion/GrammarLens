@@ -361,6 +361,30 @@ against a faked `SubscriptionService` — the real one hangs indefinitely
 against RevenueCat's platform channel with no engine to answer it in a
 plain widget test) are clean.
 
+**Paywall follow-up: fixed an invisible Restore Purchases button in light
+mode.** A quick correction on the batch above. Restore Purchases and the
+Privacy Policy/Terms links were already there, but an unstyled
+`TextButton` defaults to Material 3's `colorScheme.primary` — which in
+this app's light theme *is* the page's own vivid-orange background (the
+exact clash `theme.dart`'s `filledButtonTheme` comment already documents
+working around for `FilledButton`). Result: Restore Purchases rendered
+orange-on-orange and was completely invisible in light mode, never caught
+before because earlier verification only screenshotted the top of the
+scrollable screen. Fixed with an explicit `foregroundColor:
+colorScheme.secondary` on both that button and the legal links. The legal
+links also changed from a tap-triggers-a-SnackBar pattern to a properly
+disabled (`onPressed: null`) button while `AppLinks`' URLs are still
+empty — simpler, and reads correctly as "not yet available" rather than
+a live-looking link that does something unexpected. Also tried, then
+reverted, pinning Restore Purchases/the legal links to the true bottom of
+the screen via an `Expanded` split (matching `practice_screen.dart`'s
+pinned-button pattern) to address a reported empty-space gap — that
+actually made it worse, turning a short gap into a large deliberate-
+looking void; reverted to a single flowing list, which keeps these
+elements tightly grouped right after whatever pricing content precedes
+them. Re-verified on-device in both themes; `flutter analyze` and the
+full test suite are clean.
+
 ---
 
 ## What's next
