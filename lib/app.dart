@@ -239,12 +239,12 @@ const _navTabs = [
 // Replaces the previous `google_nav_bar` GNav widget. GNav's active-tab
 // indicator is a `tabBackgroundColor` block painted by its own internal
 // `Button`/`GButton` layout (see the package source), which is built around
-// an animated icon+label "chip" — there's no seam to hang a below-label dot
-// off of, and two rounds of trying to fix that block's geometry against the
-// floating pill's edges didn't land (see docs/roadmap.md). A plain custom
-// row gives full control over the active-tab treatment instead: icon swaps
-// outline → filled, icon/label recolor to the accent, and a small dot
-// renders directly beneath — no background shape at all.
+// an animated icon+label "chip" — there's no seam to customize that
+// geometry from outside, and two rounds of trying to fix that block's
+// alignment against the floating pill's edges didn't land (see
+// docs/roadmap.md). A plain custom row gives full control over the
+// active-tab treatment instead: icon swaps outline → filled and icon/label
+// recolor to the accent — no background shape at all.
 class _FloatingNavBar extends StatelessWidget {
   const _FloatingNavBar({
     required this.selectedIndex,
@@ -322,19 +322,6 @@ class _NavTab extends StatelessWidget {
                 style: labelStyle?.copyWith(
                   color: color,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Fixed-size dot slot so the active tab's dot doesn't shift
-              // the bar's height or the other tabs' baselines — inactive
-              // tabs render the same circle fully transparent instead of
-              // omitting it.
-              Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: active ? activeColor : Colors.transparent,
                 ),
               ),
             ],
