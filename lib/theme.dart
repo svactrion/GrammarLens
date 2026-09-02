@@ -386,9 +386,9 @@ ThemeData buildAppTheme(Brightness brightness) {
       hintStyle:
           textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
     ),
-    // Bottom nav is now the `google_nav_bar` GNav widget (see app.dart),
-    // styled directly from `colorScheme` there since GNav has no ThemeData
-    // integration point — no NavigationBarThemeData needed here.
+    // Bottom nav is a custom widget (`_FloatingNavBar` in app.dart), styled
+    // directly from `colorScheme` there — no NavigationBarThemeData needed
+    // here.
     snackBarTheme: SnackBarThemeData(
       backgroundColor: colorScheme.inverseSurface,
       contentTextStyle:

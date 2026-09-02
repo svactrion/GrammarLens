@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 
 import 'models/app_theme_mode.dart';
 import 'models/user_profile.dart';
@@ -200,53 +200,12 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
                                 ),
                               ],
                             ),
-                            child: GNav(
+                            child: _FloatingNavBar(
                               selectedIndex: _tabIndex,
                               onTabChange: (i) => setState(() => _tabIndex = i),
-                              // The frosted Container above is the bar's
-                              // real surface now — GNav itself stays
-                              // transparent so it doesn't paint a second,
-                              // opaque background on top.
-                              backgroundColor: Colors.transparent,
-                              color: unselectedColor,
-                              // A soft, translucent highlight rather than a
-                              // solid color block — GNav already only
-                              // renders `tabBackgroundColor` for whichever
-                              // tab is active (inactive tabs fade it to
-                              // fully transparent internally), so a low
-                              // alpha here reads as a gentle "you're here"
-                              // tint instead of a heavy filled pill.
+                              unselectedColor: unselectedColor,
                               activeColor: colorScheme.secondary,
-                              tabBackgroundColor:
-                                  colorScheme.secondary.withValues(alpha: 0.3),
-                              // GNav defaults to spaceBetween, which pins the
-                              // two tabs to the far edges of the bar; center
-                              // them as a group with margin between them
-                              // instead.
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              tabMargin:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              gap: 8,
-                              iconSize: 24,
-                              tabBorderRadius: 24,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              textStyle: theme.textTheme.labelLarge?.copyWith(
-                                color: colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              tabs: const [
-                                GButton(
-                                    icon: Icons.home_outlined, text: 'Home'),
-                                GButton(
-                                    icon: Icons.history_outlined,
-                                    text: 'Review'),
-                                GButton(
-                                    icon: Icons.settings_outlined,
-                                    text: 'Settings'),
-                              ],
+                              labelStyle: theme.textTheme.labelMedium,
                             ),
                           ),
                         ),
@@ -258,6 +217,129 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _NavTabData {
+  const _NavTabData(this.icon, this.activeIcon, this.label);
+
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+}
+
+const _navTabs = [
+  _NavTabData(Icons.home_outlined, Icons.home, 'Home'),
+  _NavTabData(Icons.history_outlined, Icons.history, 'Review'),
+  _NavTabData(Icons.settings_outlined, Icons.settings, 'Settings'),
+];
+
+// Replaces the previous `google_nav_bar` GNav widget. GNav's active-tab
+// indicator is a `tabBackgroundColor` block painted by its own internal
+// `Button`/`GButton` layout (see the package source), which is built around
+// an animated icon+label "chip" — there's no seam to hang a below-label dot
+// off of, and two rounds of trying to fix that block's geometry against the
+// floating pill's edges didn't land (see docs/roadmap.md). A plain custom
+// row gives full control over the active-tab treatment instead: icon swaps
+// outline → filled, icon/label recolor to the accent, and a small dot
+// renders directly beneath — no background shape at all.
+class _FloatingNavBar extends StatelessWidget {
+  const _FloatingNavBar({
+    required this.selectedIndex,
+    required this.onTabChange,
+    required this.unselectedColor,
+    required this.activeColor,
+    required this.labelStyle,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onTabChange;
+  final Color unselectedColor;
+  final Color activeColor;
+  final TextStyle? labelStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (var i = 0; i < _navTabs.length; i++)
+            _NavTab(
+              data: _navTabs[i],
+              active: i == selectedIndex,
+              unselectedColor: unselectedColor,
+              activeColor: activeColor,
+              labelStyle: labelStyle,
+              onTap: () {
+                if (i != selectedIndex) HapticFeedback.selectionClick();
+                onTabChange(i);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavTab extends StatelessWidget {
+  const _NavTab({
+    required this.data,
+    required this.active,
+    required this.unselectedColor,
+    required this.activeColor,
+    required this.labelStyle,
+    required this.onTap,
+  });
+
+  final _NavTabData data;
+  final bool active;
+  final Color unselectedColor;
+  final Color activeColor;
+  final TextStyle? labelStyle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? activeColor : unselectedColor;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(active ? data.activeIcon : data.icon, size: 24, color: color),
+              const SizedBox(height: 4),
+              Text(
+                data.label,
+                style: labelStyle?.copyWith(
+                  color: color,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Fixed-size dot slot so the active tab's dot doesn't shift
+              // the bar's height or the other tabs' baselines — inactive
+              // tabs render the same circle fully transparent instead of
+              // omitting it.
+              Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: active ? activeColor : Colors.transparent,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

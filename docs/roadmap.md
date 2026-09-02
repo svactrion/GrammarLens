@@ -212,6 +212,19 @@ the first revision round's nav bar didn't actually hit the target:
   with size instead of being fixed. Selection ring and the avatar's tap
   ripple both updated to match the new shape
 
+**Nav bar revision round 3: drop the active-tab indicator entirely.** Two
+prior rounds tried to fix the active tab's `tabBackgroundColor` block —
+first a solid fill, then a translucent tint — and neither ever sat flush
+against the floating pill's edges; the block is painted by `GNav`'s own
+internal animated icon+label layout, which has no seam to fix that
+geometry from outside. Rather than a third attempt at re-geometrying it,
+removed the block outright and replaced `GNav`/`google_nav_bar` with a
+small custom row widget (`_FloatingNavBar` in `app.dart`) so the active
+tab is communicated purely by icon + color + a small dot: outline icon
+swaps to filled, icon/label recolor to the accent blue, label goes bold,
+and a 4px accent dot appears centered beneath — no background shape at
+all, Instagram-style. `google_nav_bar` is no longer a dependency.
+
 ---
 
 ## What's next
