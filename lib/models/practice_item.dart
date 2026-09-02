@@ -48,6 +48,17 @@ class PracticeItem {
         hint: json['hint'] as String?,
       );
 
+  /// Round-trips through [fromJson] — needed so items can be cached locally
+  /// (Daily Test's generated set, saved once per day) rather than only ever
+  /// flowing one-way from the API into memory.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type.toJson(),
+        if (context != null) 'context': context,
+        'instruction': instruction,
+        if (hint != null) 'hint': hint,
+      };
+
   /// [context] and [instruction] combined into one string, for places that
   /// need the item's full text as a single value (scoring payload, saved
   /// error entries) rather than the two display blocks.
