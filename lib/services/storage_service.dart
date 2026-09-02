@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/app_theme_mode.dart';
+import '../models/daily_test_question.dart';
+import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
 import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
@@ -12,7 +16,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _dbName = 'grammar_lens.db';
-  static const _dbVersion = 8;
+  static const _dbVersion = 9;
 
   // Pre-launch checklist (PRD v2 §10.1) — a client-side daily cap bounds
   // Anthropic API spend per device without needing a server-side gate.
@@ -91,6 +95,21 @@ class StorageService {
     )
   ''';
 
+  // A separate cache from `daily_session_usage` above — Daily Test
+  // generation must not consume or interact with Topic Practice's daily
+  // session cap (PRD v2 §12.2: they're structurally different tiers). One
+  // row per calendar day holds the whole generated set as JSON (there's
+  // nothing to query inside it — it's always read/written as a unit) plus
+  // a nullable completion timestamp, so re-opening the app the same day
+  // shows the same set instead of generating a new one.
+  static const _createDailyTestSetsTable = '''
+    CREATE TABLE daily_test_sets (
+      day TEXT PRIMARY KEY,
+      questions_json TEXT NOT NULL,
+      completed_at TEXT
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -111,6 +130,7 @@ class StorageService {
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
         await db.execute(_createDailySessionUsageTable);
+        await db.execute(_createDailyTestSetsTable);
       },
       // Still pre-launch prototype with no real user data to preserve, so a
       // schema change just drops and recreates rather than carrying a real
@@ -123,6 +143,7 @@ class StorageService {
         await db.execute('DROP TABLE IF EXISTS topic_practice_stats');
         await db.execute('DROP TABLE IF EXISTS user_profile');
         await db.execute('DROP TABLE IF EXISTS daily_session_usage');
+        await db.execute('DROP TABLE IF EXISTS daily_test_sets');
         await db.execute(_createTable);
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
@@ -130,6 +151,7 @@ class StorageService {
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
         await db.execute(_createDailySessionUsageTable);
+        await db.execute(_createDailyTestSetsTable);
       },
     );
   }
@@ -300,6 +322,71 @@ class StorageService {
       ON CONFLICT(day) DO UPDATE SET
         session_count = session_count + 1
     ''', [_todayKey()]);
+  }
+
+  /// Today's cached Daily Test set, if one has already been generated —
+  /// null means none exists yet for the local calendar day, which is the
+  /// caller's signal to generate one.
+  Future<DailyTestSet?> getDailyTestSetForToday() async {
+    final db = await _database;
+    final rows = await db.query(
+      'daily_test_sets',
+      where: 'day = ?',
+      whereArgs: [_todayKey()],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return _dailyTestSetFromRow(rows.first);
+  }
+
+  /// Caches [questions] as today's Daily Test set, replacing any existing
+  /// row for today (there should never be one — this is only called after
+  /// [getDailyTestSetForToday] came back null — but `replace` keeps this
+  /// safe against a same-day double-generation race rather than throwing).
+  /// Freshly generated, so never completed yet.
+  Future<DailyTestSet> saveDailyTestSet(
+    List<DailyTestQuestion> questions,
+  ) async {
+    final db = await _database;
+    final day = _todayKey();
+    await db.insert(
+      'daily_test_sets',
+      {
+        'day': day,
+        'questions_json':
+            jsonEncode(questions.map((q) => q.toJson()).toList()),
+        'completed_at': null,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    return DailyTestSet(day: day, questions: questions);
+  }
+
+  /// Marks today's Daily Test set completed. A no-op if there's no row for
+  /// today (shouldn't happen — completing implies a set was already
+  /// fetched/generated — but this is called from UI code in a future batch,
+  /// so it degrades quietly rather than throwing on an unexpected order of
+  /// operations).
+  Future<void> markDailyTestCompleted() async {
+    final db = await _database;
+    await db.update(
+      'daily_test_sets',
+      {'completed_at': DateTime.now().toIso8601String()},
+      where: 'day = ?',
+      whereArgs: [_todayKey()],
+    );
+  }
+
+  DailyTestSet _dailyTestSetFromRow(Map<String, Object?> row) {
+    final questions = (jsonDecode(row['questions_json'] as String) as List)
+        .map((e) => DailyTestQuestion.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final completedAt = row['completed_at'] as String?;
+    return DailyTestSet(
+      day: row['day'] as String,
+      questions: questions,
+      completedAt: completedAt == null ? null : DateTime.parse(completedAt),
+    );
   }
 
   /// Per-topic stats for the home screen's topic cards: total questions

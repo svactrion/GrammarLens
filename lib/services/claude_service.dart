@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../data/topics.dart';
+import '../models/daily_test_question.dart';
+import '../models/error_entry.dart';
 import '../models/item_feedback.dart';
 import '../models/practice_item.dart';
 import '../models/practice_set.dart';
@@ -102,6 +105,121 @@ class ClaudeService {
     final fillInBlank = count - sentenceWriting - errorCorrection;
     return '$sentenceWriting sentence_writing, $errorCorrection '
         'error_correction, and $fillInBlank fill_in_blank';
+  }
+
+  /// Generates a Daily Test set (PRD v2 §12.5, §12.8) — [count] questions,
+  /// each with its answer key and 2-3 predicted common wrong answers (with
+  /// canned comments) generated up front so grading afterward is local and
+  /// deterministic, no second API call. [weakSpots] is the device's local
+  /// error profile (`StorageService.getWeakSpots`); an empty list means no
+  /// profile yet (new user), which asks for a general/varied mix instead
+  /// of biasing toward anything.
+  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
+    required int count,
+    required List<WeakSpot> weakSpots,
+  }) async {
+    // Not `const`: the topicId enum below is built from `kTopics`, which a
+    // const map literal can't express.
+    final schema = {
+      'type': 'object',
+      'properties': {
+        'questions': {
+          'type': 'array',
+          'items': {
+            'type': 'object',
+            'properties': {
+              'id': {'type': 'string'},
+              // Fixed-answer types only (PRD v2 §12.5) — sentence_writing
+              // has no single correct answer to check deterministically
+              // against, and multiple-choice is off the table entirely
+              // (docs/prd.md §2.2 Theme 1).
+              'type': {
+                'type': 'string',
+                'enum': ['fill_in_blank', 'error_correction'],
+              },
+              'context': {'type': 'string'},
+              'instruction': {'type': 'string'},
+              'hint': {'type': 'string'},
+              'topicId': {
+                'type': 'string',
+                'enum': [for (final topic in kTopics) topic.id.name],
+              },
+              'correctAnswer': {'type': 'string'},
+              'commonWrongAnswers': {
+                'type': 'array',
+                'items': {
+                  'type': 'object',
+                  'properties': {
+                    'answer': {'type': 'string'},
+                    'comment': {'type': 'string'},
+                  },
+                  'required': ['answer', 'comment'],
+                  'additionalProperties': false,
+                },
+              },
+            },
+            'required': [
+              'id',
+              'type',
+              'instruction',
+              'topicId',
+              'correctAnswer',
+              'commonWrongAnswers',
+            ],
+            'additionalProperties': false,
+          },
+        },
+      },
+      'required': ['questions'],
+      'additionalProperties': false,
+    };
+
+    final body = {
+      'model': _model,
+      'max_tokens': ((2048 * count) / 5).ceil().clamp(1024, 8192),
+      'system': _dailyTestSystemPrompt,
+      'output_config': {
+        'format': {'type': 'json_schema', 'schema': schema},
+      },
+      'messages': [
+        {
+          'role': 'user',
+          'content': _dailyTestUserPrompt(count, weakSpots),
+        },
+      ],
+    };
+
+    final json = await _post(body);
+    return (json['questions'] as List)
+        .map((e) => DailyTestQuestion.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Ranks topics by how often each appears in [weakSpots] (summed across
+  /// its error types) and asks for questions biased toward the most
+  /// frequent first; an empty profile asks for general variety instead.
+  String _dailyTestUserPrompt(int count, List<WeakSpot> weakSpots) {
+    if (weakSpots.isEmpty) {
+      return 'Generate exactly $count Daily Test questions. This user has '
+          'no practice history yet, so cover a varied general mix across '
+          'these topics: ${kTopics.map((t) => t.title).join(', ')}.';
+    }
+
+    final frequencyByTopic = <String, int>{};
+    for (final weakSpot in weakSpots) {
+      frequencyByTopic[weakSpot.topicId] =
+          (frequencyByTopic[weakSpot.topicId] ?? 0) + weakSpot.frequency;
+    }
+    final rankedTopicTitles = (frequencyByTopic.keys.toList()
+          ..sort(
+            (a, b) => frequencyByTopic[b]!.compareTo(frequencyByTopic[a]!),
+          ))
+        .map((id) => topicById(TopicId.values.byName(id)).title);
+
+    return 'Generate exactly $count Daily Test questions. Bias topic '
+        "selection toward this user's most frequent error categories, most "
+        'frequent first: ${rankedTopicTitles.join(', ')}. Still include some '
+        'variety rather than every question targeting the same topic.';
   }
 
   Future<ScoringResult> scoreAnswers({
@@ -222,6 +340,38 @@ mistake in "context", and in "instruction" tell the learner what format to
 answer in, e.g. "Find the mistake and rewrite the full corrected sentence."
 Always ask for the full rewritten sentence, not just the fixed word or
 phrase.
+
+Return only the structured output — no extra commentary.
+''';
+
+  static const _dailyTestSystemPrompt = '''
+You are an IELTS grammar coach generating a free, no-login "Daily Test" for
+a Turkish native speaker at B1-C1 English level — one fixed set of
+fill_in_blank and error_correction items, checked entirely offline against
+the answer key you provide now (no further model call happens). Getting
+the answer key right matters more than usual: whatever you write in
+"correctAnswer" is compared, after trimming/case/whitespace normalization,
+directly against the learner's typed answer, with no human or model
+judgment in between.
+
+Follow the same "context" (scene-setting) / "instruction" (the direct task)
+split, and the same production-over-recognition weighting, as regular
+practice generation. For fill_in_blank, "correctAnswer" is the exact word
+or short phrase that fills the blank. For error_correction, put the single
+flawed sentence in "context" and require the full corrected sentence back
+in "instruction" — "correctAnswer" must then be that full rewritten
+sentence, in the same form a learner would actually type it (not a
+fragment), since matching is exact after normalization, not semantic.
+
+For each item, also predict 2-3 common wrong answers a learner at this
+level plausibly gives — real mistakes (a tense slip, a preposition swap, a
+half-corrected sentence), not random noise — each as a full answer string
+in the same shape as "correctAnswer" would be typed, paired with a short
+(1 sentence) "comment" in plain, friendly language explaining why it's
+tempting and what's actually wrong, the same non-technical tone regular
+scoring explanations use. These are shown verbatim if the learner's answer
+matches that prediction, so write them as if speaking directly to the
+learner ("you" / "your"), not about them.
 
 Return only the structured output — no extra commentary.
 ''';

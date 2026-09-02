@@ -253,6 +253,26 @@ one is created. This batch is the service layer only: no paywall UI, no
 gating of Topic Practice, nothing wired to a purchase button — later
 batches consume this.
 
+**Daily Test — data/logic layer only, not reachable from any screen yet.**
+The free tier's fixed daily set (PRD v2 §12.2, §12.5, §12.8): 5
+fill-in-the-blank/error-correction questions (no multiple-choice —
+conclusively rejected in user research, `docs/prd.md` §2.2 Theme 1),
+generated once per calendar day per device and graded entirely offline.
+Added `DailyTestQuestion`/`DailyTestSet` (`lib/models/`), a local schema
+v9 cache table in `StorageService` (`daily_test_sets` — a separate
+per-day cache from Topic Practice's session-cap table, deliberately not
+sharing or touching it), `ClaudeService.generateDailyTestQuestions`
+(structured JSON: each question's correct answer plus 2-3 predicted
+common wrong answers with pre-written comments, generated up front so no
+second LLM call is needed to grade), and `answer_matching.dart`'s
+deterministic checker (normalize → exact match → common-wrong match →
+generic fallback). Personalizes by biasing topic selection toward the
+device's local error profile (`StorageService.getWeakSpots`) when one
+exists, general/varied mix otherwise — same single generation call
+either way. `DailyTestService` ties it together (get-cached-or-generate,
+mark-completed) for a future screen to call. No UI, no Home/onboarding
+wiring, no paywall/entitlement checks — next batch.
+
 ---
 
 ## What's next
