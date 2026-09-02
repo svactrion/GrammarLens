@@ -4,7 +4,7 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-08-24
+**Last updated:** 2026-09-03
 
 ---
 
@@ -312,6 +312,55 @@ a real tap in this environment — a unit test asserts the Daily Test
 card's tap handler is wired distinctly from Topic Practice/Early Access
 as a deterministic proxy for that gap.
 
+**Paywall screen built and reachable from Premium — not yet gating Topic
+Practice or wired into onboarding.** New `PaywallScreen`
+(`lib/screens/paywall_screen.dart`), on top of the RevenueCat scaffold
+service layer from the batch above. Leads with the personalized-feedback
+pitch (docs/prd.md §2.1 Theme 2 / §2.2 Theme 7 — the thing every one of
+the three usability testers praised unprompted), then price/trial terms
+read live from `SubscriptionService.getOfferings` (new method added this
+batch) rather than hardcoded, a Restore Purchases action, and Privacy
+Policy/Terms links wired to a new `AppLinks` constant
+(`lib/utils/app_links.dart`) that is **still empty** — no hosted pages
+exist yet, confirmed, not an oversight. **This is a real pre-launch
+blocker**: the App Store requires a working Privacy Policy link for any
+app that collects data, and a Terms link specifically for auto-renewable
+subscriptions (PRD v2 §10.1, §12.6). PremiumScreen's copy is revised to
+match: it no longer claims "everything is free while we're in early
+access" (PRD v2 §12.2's real split — Daily Test free, Topic Practice
+3-day-trial-then-paid, Streak/Voice paid once built), and gained a "Start
+free trial" button navigating to `PaywallScreen`.
+
+Neither screen is wired to anything else yet: Topic Practice still opens
+directly with no entitlement check, and the Day-0 onboarding flow (PRD v2
+§12.3's "Daily Test result → paywall pitch" step, `DailyTestResultScreen`'s
+`bottomBuilder` extension point from the previous batch) still isn't
+connected to this screen. Both are later batches.
+
+**A real bug found and fixed while verifying this on the iOS simulator:**
+calling any `Purchases.*` method before `Purchases.configure()` succeeds
+throws a *native* Swift `fatalError` (`Purchases has not been
+configured`), not a catchable Dart exception — it crashed the app outright
+the first time `PaywallScreen` actually called `getOfferings()` on-device,
+despite `SubscriptionService`'s existing try/catch blocks (which cannot
+catch a native fatal error). Since no RevenueCat API key is set at build
+time, the app never calls `Purchases.configure()`, so this was live in
+`hasFullAccess`/`purchasePackage`/`restorePurchases` since the RevenueCat
+scaffold batch too — nothing had exercised them from the UI until this
+batch's paywall screen did. Fixed with an explicit `_configured` flag,
+set only after `Purchases.configure` actually succeeds; every method now
+checks it and returns its safe default *before* touching the SDK, instead
+of trusting a try/catch that structurally can't contain this failure.
+Re-verified on-device after the fix: the paywall now shows its
+"pricing unavailable" state, not a crash — this is also the state real
+testing hits today, since no RevenueCat/App Store Connect product exists
+yet either. Screenshotted in both light and dark mode (PremiumScreen and
+PaywallScreen); `flutter analyze` and the full test suite (including new
+`paywall_screen_test.dart` and updated `premium_screen_test.dart`,
+against a faked `SubscriptionService` — the real one hangs indefinitely
+against RevenueCat's platform channel with no engine to answer it in a
+plain widget test) are clean.
+
 ---
 
 ## What's next
@@ -337,7 +386,11 @@ analytics (code scaffold — no Firebase project connected yet, needs an
 interactive `flutterfire configure` run against a real account). Still
 open: distribution channel decision, API key safety approach, device
 coverage, feedback channel — several of these are open decisions, not just
-tasks.
+tasks. **Also now blocking, surfaced by the paywall screen above:** no
+Privacy Policy/Terms of Service pages exist yet (`AppLinks` in
+`lib/utils/app_links.dart` is empty), and no RevenueCat/App Store Connect
+product is connected, so purchases can't actually complete — see PRD v2
+§10.1 and §12.6.
 
 ### 2. Public launch
 Topic mode + onboarding + premium teaser only. No streak mode yet.

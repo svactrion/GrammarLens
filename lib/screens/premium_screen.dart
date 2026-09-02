@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../utils/page_title.dart';
+import 'paywall_screen.dart';
 
-/// PRD v2 §6 — informational only. No payment flow, no price, no "buy"
-/// button anywhere on this screen: its only job is to make the commercial
-/// frame real ("this becomes a paid product eventually") without promising
-/// free access will last forever, since that promise would become a
-/// constraint the moment real pricing ships.
+/// PRD v2 §6's original framing revised for §12.2's free/trial/paid split
+/// (decided §12.1: Topic Practice triggers a real Sonnet call per user, so
+/// "everything free during early access" stopped being sustainable). Daily
+/// Test — deterministic, one shared generation a day — is the only feature
+/// that stays unconditionally free; Topic Practice is trial-then-paid.
+/// This screen states that split and is the entry point to [PaywallScreen],
+/// which itself still has no live product to purchase against (see
+/// docs/roadmap.md) — that gap is real and left visible there, not hidden.
 class PremiumScreen extends StatelessWidget {
   const PremiumScreen({super.key});
+
+  void _openPaywall(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PaywallScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +47,16 @@ class PremiumScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "You're one of our first users — everything is free "
-                    'while we\'re in early access.',
+                    "You're one of our first users — Daily Test is free, "
+                    'always, and Topic Practice starts with a free trial.',
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'No credit card, no purchase, nothing to set up — just '
-                    'full access, on us, for now.',
+                    'No credit card surprises — trial length, price, and '
+                    'billing terms are always shown clearly before you '
+                    'start anything.',
                     style: theme.textTheme.bodyMedium
                         ?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
@@ -54,15 +65,33 @@ class PremiumScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
-          const _SectionLabel('What premium will include'),
+          const _SectionLabel("What's free, trial, and paid"),
           const SizedBox(height: 8),
+          const _FeatureTile(
+            icon: Icons.today_rounded,
+            title: 'Daily Test',
+            description:
+                'A quick 5-question warm-up, refreshed every day — free, '
+                'no trial or account needed.',
+            status: 'Free',
+          ),
+          const SizedBox(height: 12),
+          const _FeatureTile(
+            icon: Icons.school_rounded,
+            title: 'Topic Practice',
+            description:
+                'Personalized questions and plain-language feedback on '
+                'your own recurring mistakes.',
+            status: '3-day trial',
+          ),
+          const SizedBox(height: 12),
           const _FeatureTile(
             icon: Icons.local_fire_department_rounded,
             title: 'Unlimited Streak Mode',
             description:
                 'Start streak runs instantly, with no daily limit and no '
                 'ad to watch first.',
-            comingSoon: true,
+            status: 'Coming soon',
           ),
           const SizedBox(height: 12),
           const _FeatureTile(
@@ -71,13 +100,22 @@ class PremiumScreen extends StatelessWidget {
             description:
                 'A speaking mode with real-time voice feedback, on top of '
                 "today's writing practice.",
-            comingSoon: true,
+            status: 'Coming soon',
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => _openPaywall(context),
+              child: const Text('Start free trial'),
+            ),
           ),
           const SizedBox(height: 20),
           Text(
-            'Both modes are still being built. This screen exists so it\'s '
-            'clear up front what premium will be, and that right now — '
-            'during early access — it costs nothing.',
+            'Topic Practice generates a real AI call for every session, so '
+            "it can't stay free at scale the way Daily Test's single "
+            'shared, once-a-day generation can. The trial is there so you '
+            'can try the personalized feedback before deciding.',
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
@@ -109,13 +147,13 @@ class _FeatureTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
-  final bool comingSoon;
+  final String? status;
 
   const _FeatureTile({
     required this.icon,
     required this.title,
     required this.description,
-    this.comingSoon = false,
+    this.status,
   });
 
   @override
@@ -149,9 +187,9 @@ class _FeatureTile extends StatelessWidget {
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
-                      if (comingSoon) ...[
+                      if (status != null) ...[
                         const SizedBox(width: 8),
-                        const _Badge(label: 'Coming soon'),
+                        _Badge(label: status!),
                       ],
                     ],
                   ),
