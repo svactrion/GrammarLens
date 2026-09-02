@@ -237,6 +237,22 @@ machinery; Topic Practice — the only real mode — is now a single
 full-width card instead of a lone tile in an otherwise-empty 2-column
 grid.
 
+**RevenueCat integration scaffold — code only, no product connected yet.**
+Added `SubscriptionService` (`lib/services/subscription_service.dart`),
+wrapping `purchases_flutter`'s SDK configuration, entitlement check
+(`hasFullAccess`), `purchasePackage`, and `restorePurchases`, initialized
+in main.dart the same "safe no-op until configured" way Firebase already
+is: no RevenueCat public SDK key set at build time (or `Purchases.configure`
+throwing) means every method degrades to its safe default
+(`false`/`PurchaseOutcome.failure`) instead of crashing, matching
+`AnalyticsService`'s pattern for an unconnected Firebase project. Same
+caveat as that Firebase entry: **no RevenueCat account or App Store
+Connect product exists yet** — entitlement id `premium` and product id
+`grammarlens_premium_monthly` are just the identifiers reserved for when
+one is created. This batch is the service layer only: no paywall UI, no
+gating of Topic Practice, nothing wired to a purchase button — later
+batches consume this.
+
 ---
 
 ## What's next
