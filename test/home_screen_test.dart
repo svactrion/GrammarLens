@@ -10,11 +10,28 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
+/// Records `modeSelected` calls instead of the real (best-effort, silently
+/// swallowed) Firebase call, so a test can assert which Home entry point a
+/// tap actually reached — needed for Daily Test specifically, since unlike
+/// Topic Practice/Early Access, DailyTestScreen's real initial load has
+/// nothing to succeed against in this test environment and pops itself
+/// back to Home on that failure, making the pushed screen itself too
+/// transient to reliably catch mid-flight.
+class _RecordingAnalyticsService extends AnalyticsService {
+  final List<String> modesSelected = [];
+
+  @override
+  Future<void> modeSelected(String mode) async {
+    modesSelected.add(mode);
+  }
+}
+
 void main() {
   Future<void> pumpHome(
     WidgetTester tester, {
     Avatar? avatar,
     VoidCallback? onAvatarTap,
+    AnalyticsService? analyticsService,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = const Size(390, 844) * 3.0;
@@ -29,7 +46,7 @@ void main() {
           avatar: avatar,
           claudeService: ClaudeService(),
           storageService: StorageService(),
-          analyticsService: AnalyticsService(),
+          analyticsService: analyticsService ?? AnalyticsService(),
           onAvatarTap: onAvatarTap,
         ),
       ),
@@ -82,9 +99,11 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('shows the Topic Practice card plus the Early Access banner',
-      (tester) async {
+  testWidgets(
+      'shows the Daily Test and Topic Practice cards plus the Early Access '
+      'banner', (tester) async {
     await pumpHome(tester);
+    expect(find.text('Daily Test'), findsOneWidget);
     expect(find.text('Topic Practice'), findsOneWidget);
     expect(find.text('Early Access'), findsOneWidget);
     // Streak Mode and Voice Practice were removed from Home entirely (App
@@ -95,28 +114,46 @@ void main() {
     expect(find.text('Voice Practice'), findsNothing);
   });
 
-  testWidgets('Topic Practice is a single full-width card, not a grid tile',
-      (tester) async {
+  testWidgets(
+      'Daily Test and Topic Practice are both full-width cards, not grid '
+      'tiles', (tester) async {
     await pumpHome(tester);
     expect(find.byType(GridView), findsNothing);
 
     final width = tester.view.physicalSize.width / tester.view.devicePixelRatio;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
-    final cardRect = tester.getRect(
-      find.ancestor(of: find.text('Topic Practice'), matching: find.byType(Card)),
-    );
-    expect(cardRect.left, closeTo(hPad, 1));
-    expect(cardRect.right, closeTo(width - hPad, 1));
+    for (final title in ['Daily Test', 'Topic Practice']) {
+      final cardRect = tester.getRect(
+        find.ancestor(of: find.text(title), matching: find.byType(Card)),
+      );
+      expect(cardRect.left, closeTo(hPad, 1));
+      expect(cardRect.right, closeTo(width - hPad, 1));
+    }
   });
 
   testWidgets(
-      'Early Access sits below Topic Practice, not beside it as another '
-      'card', (tester) async {
+      'cards stack in order: Daily Test, then Topic Practice, then Early '
+      'Access', (tester) async {
     await pumpHome(tester);
 
-    final topicBottom = tester.getBottomLeft(find.text('Topic Practice')).dy;
+    final dailyTestTop = tester.getTopLeft(find.text('Daily Test')).dy;
+    final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
     final bannerTop = tester.getTopLeft(find.text('Early Access')).dy;
-    expect(bannerTop, greaterThan(topicBottom));
+
+    expect(topicTop, greaterThan(dailyTestTop));
+    expect(bannerTop, greaterThan(topicTop));
+  });
+
+  testWidgets(
+      'Daily Test is wired to its own entry point, distinct from Topic '
+      'Practice/Early Access', (tester) async {
+    final analyticsService = _RecordingAnalyticsService();
+    await pumpHome(tester, analyticsService: analyticsService);
+
+    await tester.tap(find.text('Daily Test'));
+    await tester.pump();
+
+    expect(analyticsService.modesSelected, [AnalyticsService.modeDailyTest]);
   });
 
   testWidgets('Topic Practice opens the existing MVP loop', (tester) async {

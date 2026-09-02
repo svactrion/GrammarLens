@@ -293,6 +293,25 @@ point exists yet; wiring into Home is the next batch. Also: gave
 ffi-backed test files (this batch added a third) stop racing on the
 same real db path under `flutter test`'s default concurrency.
 
+**Daily Test is now reachable from Home.** A second full-width card,
+stacked above Topic Practice (Daily Test leads since it's the always-
+free entry point — Topic Practice becomes trial/paid-gated once the
+paywall exists), wired to the existing `DailyTestScreen` →
+`DailyTestResultScreen` flow via `DailyTestService`; no new generation/
+caching/checking logic, just the entry point and an analytics identifier
+(`AnalyticsService.modeDailyTest`) to match. No entitlement/paywall
+gating yet on either card — anyone can open both, same as before; that
+depends on the paywall screen, which doesn't exist yet. The first-launch
+Day-0 flow (PRD v2 §12.3's "Welcome → Onboarding → Daily Test → Results
+→ paywall pitch" sequence) is also still pending — this batch only
+covers Daily Test's placement inside the existing Home, not onboarding.
+Verified on the real running app (not a debug harness) for Home itself;
+the flow screens (unchanged from the previous batch) were re-confirmed
+via the same temporary harness technique, since there's no way to script
+a real tap in this environment — a unit test asserts the Daily Test
+card's tap handler is wired distinctly from Topic Practice/Early Access
+as a deterministic proxy for that gap.
+
 ---
 
 ## What's next
