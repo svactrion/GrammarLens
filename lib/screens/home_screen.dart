@@ -5,9 +5,11 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import '../utils/layout_constants.dart';
 import '../widgets/avatar_tile.dart';
 import 'daily_test_screen.dart';
+import 'paywall_screen.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 
@@ -20,26 +22,63 @@ class HomeScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final AnalyticsService analyticsService;
+  final SubscriptionService subscriptionService;
   // Nullable, same as ReviewScreen's `onGoToPractice`: the bottom-nav tab
   // switch lives in app.dart's State, not here, so this is a hook rather
   // than HomeScreen owning navigation itself.
   final VoidCallback? onAvatarTap;
 
-  const HomeScreen({
+  HomeScreen({
     super.key,
     required this.userName,
     this.avatar,
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
+    SubscriptionService? subscriptionService,
     this.onAvatarTap,
-  });
+  }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Starts closed rather than "unknown/loading" — PRD v2 §12.2's default
+  // for anyone not confirmed to have a trial/subscription is Free, and
+  // fail-closed here matches SubscriptionService.hasFullAccess's own
+  // fail-closed default (never grant access nobody paid for while a check
+  // is still in flight).
+  bool _hasFullAccess = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAccess();
+    // Live updates (PRD v2 §12.3/§12.6): a trial starting or expiring
+    // should re-gate this card without requiring an app restart — this is
+    // what actually delivers that, not [_checkAccess]'s one-shot read
+    // above (which only covers this screen's own initial build).
+    widget.subscriptionService.addAccessListener(_onAccessChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.subscriptionService.removeAccessListener(_onAccessChanged);
+    super.dispose();
+  }
+
+  Future<void> _checkAccess() async {
+    final hasAccess = await widget.subscriptionService.hasFullAccess;
+    if (!mounted) return;
+    setState(() => _hasFullAccess = hasAccess);
+  }
+
+  void _onAccessChanged(bool hasFullAccess) {
+    if (!mounted) return;
+    setState(() => _hasFullAccess = hasFullAccess);
+  }
+
   void _openDailyTest(BuildContext context) {
     widget.analyticsService.modeSelected(AnalyticsService.modeDailyTest);
     Navigator.of(context).push(
@@ -55,6 +94,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openTopicPractice(BuildContext context) {
+    // Gated by entitlement (PRD v2 §12.2/§12.3): free tier doesn't include
+    // Topic Practice at all — a locked tap goes to the paywall instead of
+    // ever reaching the real screen, same "no fake it" reasoning as the
+    // daily session cap already applies to generation itself.
+    if (!_hasFullAccess) {
+      _openPaywall(context);
+      return;
+    }
     widget.analyticsService.modeSelected(AnalyticsService.modeTopic);
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -62,6 +109,16 @@ class _HomeScreenState extends State<HomeScreen> {
           claudeService: widget.claudeService,
           storageService: widget.storageService,
           analyticsService: widget.analyticsService,
+        ),
+      ),
+    );
+  }
+
+  void _openPaywall(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PaywallScreen(
+          subscriptionService: widget.subscriptionService,
         ),
       ),
     );
@@ -168,8 +225,11 @@ class _HomeScreenState extends State<HomeScreen> {
           _PracticeModeCard(
             icon: Icons.school_rounded,
             title: 'Topic Practice',
-            description:
-                'Deep grammar practice with plain-language feedback.',
+            description: _hasFullAccess
+                ? 'Deep grammar practice with plain-language feedback.'
+                : 'Try it free for 3 days, then continue with a '
+                    'subscription.',
+            locked: !_hasFullAccess,
             onTap: () => _openTopicPractice(context),
           ),
           const SizedBox(height: 14),
@@ -197,12 +257,18 @@ class _PracticeModeCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
+  // Same lock-icon visual language the old Voice Practice grid tile used
+  // (muted icon-avatar fill + a small lock glyph) before Streak/Voice were
+  // removed from Home — reused here for Topic Practice's entitlement gate
+  // (PRD v2 §12.2/§12.3) rather than inventing a new "locked" treatment.
+  final bool locked;
   final VoidCallback onTap;
 
   const _PracticeModeCard({
     required this.icon,
     required this.title,
     required this.description,
+    this.locked = false,
     required this.onTap,
   });
 
@@ -211,6 +277,9 @@ class _PracticeModeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final muted = colorScheme.onSurfaceVariant;
+    final iconBg =
+        locked ? colorScheme.surfaceContainerHighest : colorScheme.primaryContainer;
+    final iconFg = locked ? muted : colorScheme.onPrimaryContainer;
 
     return Card(
       child: InkWell(
@@ -222,8 +291,8 @@ class _PracticeModeCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor: colorScheme.primaryContainer,
-                foregroundColor: colorScheme.onPrimaryContainer,
+                backgroundColor: iconBg,
+                foregroundColor: iconFg,
                 child: Icon(icon, size: 26),
               ),
               const SizedBox(width: 16),
@@ -231,10 +300,22 @@ class _PracticeModeCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: locked ? muted : null,
+                            ),
+                          ),
+                        ),
+                        if (locked) ...[
+                          const SizedBox(width: 6),
+                          Icon(Icons.lock_rounded, size: 16, color: muted),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(

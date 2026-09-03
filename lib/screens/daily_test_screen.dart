@@ -21,7 +21,29 @@ import 'daily_test_result_screen.dart';
 class DailyTestScreen extends StatefulWidget {
   final DailyTestService dailyTestService;
 
-  const DailyTestScreen({super.key, required this.dailyTestService});
+  /// Called with the finished set + answers instead of the default
+  /// pushReplacement-to-results navigation, when non-null. Exists for the
+  /// Day-0 first-launch flow (see `first_launch_flow.dart`), which shows
+  /// this screen without ever pushing it as a route — there, replacing the
+  /// "current route" with results via Navigator would actually replace
+  /// the app's root route, breaking the reactive `home:` swap that flow
+  /// relies on to reach the tabbed shell afterward. Null (the default) for
+  /// every other caller (Home's `_openDailyTest`, which does push this
+  /// screen normally) keeps today's Navigator-based transition unchanged.
+  final void Function(DailyTestSet, Map<String, String>)? onFinished;
+
+  /// Called instead of `Navigator.of(context).pop()` when the user leaves
+  /// (confirms exit, or the initial load fails) — same Day-0 reasoning as
+  /// [onFinished]: this screen isn't a pushed route there, so there's
+  /// nothing to pop. Null (the default) keeps the existing pop behavior.
+  final VoidCallback? onExit;
+
+  const DailyTestScreen({
+    super.key,
+    required this.dailyTestService,
+    this.onFinished,
+    this.onExit,
+  });
 
   @override
   State<DailyTestScreen> createState() => _DailyTestScreenState();
@@ -55,6 +77,14 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, "Could not load today's test: $e");
+      _leave();
+    }
+  }
+
+  void _leave() {
+    if (widget.onExit != null) {
+      widget.onExit!();
+    } else {
       Navigator.of(context).pop();
     }
   }
@@ -90,6 +120,10 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
   }
 
   void _finish() {
+    if (widget.onFinished != null) {
+      widget.onFinished!(_dailyTestSet!, Map.of(_answers));
+      return;
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => DailyTestResultScreen(
@@ -136,7 +170,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
       ),
     );
     if (shouldLeave == true && mounted) {
-      Navigator.of(context).pop();
+      _leave();
     }
   }
 

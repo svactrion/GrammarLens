@@ -75,6 +75,54 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  // "Maybe later"/post-success "Continue" both pop this screen — that's
+  // only observable by actually pushing it onto a real stack first, unlike
+  // [pumpPaywall] above which plants it as the app's sole route.
+  Future<void> pumpPaywallPushed(
+    WidgetTester tester,
+    SubscriptionService service, {
+    VoidCallback? onDone,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PaywallScreen(
+                      subscriptionService: service,
+                      onDone: onDone,
+                    ),
+                  ),
+                ),
+                child: const Text('open paywall'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open paywall'));
+    await tester.pumpAndSettle();
+  }
+
+  // find.tap()'s default finder skips offstage elements, and a ListView
+  // only paints what's within the current viewport — "Maybe later" and
+  // "Continue" both sit low enough in the scrollable list to start out
+  // genuinely offstage (not just outside cache extent), so scroll each
+  // into the visible viewport before tapping rather than assuming a taller
+  // test surface alone would do it (it doesn't — offstage is about paint
+  // visibility, not whether a sliver child is merely mounted).
+  Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(finder, 300);
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
       'with no RevenueCat product connected, shows an unavailable state '
       'instead of crashing or hanging', (tester) async {
@@ -131,6 +179,33 @@ void main() {
     // dead/broken tap that goes nowhere.
     expect(privacyButton.onPressed, isNull);
     expect(termsButton.onPressed, isNull);
+  });
+
+  testWidgets(
+      '"Maybe later" is always present, calls onDone, and returns to '
+      'whatever pushed this screen', (tester) async {
+    var doneCalled = false;
+    await pumpPaywallPushed(
+      tester,
+      _FakeSubscriptionService(offering: null),
+      onDone: () => doneCalled = true,
+    );
+
+    await scrollAndTap(tester, find.text('Maybe later'));
+
+    expect(doneCalled, isTrue);
+    expect(find.byType(PaywallScreen), findsNothing);
+    expect(find.text('open paywall'), findsOneWidget);
+  });
+
+  testWidgets('with no onDone provided (Home/Premium-reached), "Maybe '
+      "later\" just pops without crashing", (tester) async {
+    await pumpPaywallPushed(tester, _FakeSubscriptionService(offering: null));
+
+    await scrollAndTap(tester, find.text('Maybe later'));
+
+    expect(find.byType(PaywallScreen), findsNothing);
+    expect(find.text('open paywall'), findsOneWidget);
   });
 
   group('with a package available (a real RevenueCat product connected)', () {
@@ -214,6 +289,30 @@ void main() {
         find.textContaining("couldn't start"),
         findsOneWidget,
       );
+    });
+
+    testWidgets(
+        'after a successful purchase, the primary button becomes '
+        '"Continue" (not a second "Start free trial") and calling it fires '
+        'onDone then returns', (tester) async {
+      var doneCalled = false;
+      final service = _FakeSubscriptionService(
+        offering: offering,
+        purchaseOutcome: PurchaseOutcome.success,
+      );
+      await pumpPaywallPushed(tester, service, onDone: () => doneCalled = true);
+
+      await scrollAndTap(tester, find.text('Start free trial'));
+
+      expect(find.text('Continue'), findsOneWidget);
+      expect(find.text('Start free trial'), findsNothing);
+      // Redundant with "Continue" once a trial has actually started.
+      expect(find.text('Maybe later'), findsNothing);
+
+      await scrollAndTap(tester, find.text('Continue'));
+
+      expect(doneCalled, isTrue);
+      expect(find.byType(PaywallScreen), findsNothing);
     });
   });
 }

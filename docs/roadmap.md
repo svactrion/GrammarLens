@@ -4,7 +4,7 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-03
+**Last updated:** 2026-09-03 (v2.1 flow wiring)
 
 ---
 
@@ -385,6 +385,67 @@ elements tightly grouped right after whatever pricing content precedes
 them. Re-verified on-device in both themes; `flutter analyze` and the
 full test suite are clean.
 
+**The v2.1 free/trial/paid flow is now wired end-to-end (PRD v2 §12.3).**
+Everything built across the RevenueCat scaffold, Daily Test, and paywall
+batches above is now actually connected — routing and gating logic only,
+no new screens:
+
+- **Topic Practice gated by entitlement on Home**, live. `HomeScreen` now
+  checks `SubscriptionService.hasFullAccess` on load and subscribes to a
+  new `SubscriptionService.addAccessListener`/`removeAccessListener` pair
+  (wrapping `Purchases.addCustomerInfoUpdateListener`, which — unlike
+  every other `Purchases.*` call — is a local, SDK-config-independent
+  operation, so it's safe to register even before/without a configured
+  project). A trial starting or expiring updates the card without an app
+  restart. Locked state reuses the old Voice Practice tile's lock-icon
+  visual language (muted icon-avatar fill + a small lock glyph next to
+  the title) adapted to the current full-width card layout; tapping a
+  locked card opens `PaywallScreen` instead of `TopicPracticeScreen`.
+- **`PaywallScreen` gained a "Maybe later" skip**, below Restore
+  Purchases/the legal links, plus an `onDone` callback so where it leads
+  depends on how the screen was reached: null (Home's locked card,
+  Premium's CTA) just pops; the Day-0 flow below passes a real callback.
+  The primary button also now repurposes itself to "Continue" once a
+  trial has actually started, instead of adding a second button.
+- **The Day-0 first-launch flow** (Welcome → Onboarding → Daily Test →
+  Result-with-paywall-pitch → Home) is real. `FirstLaunchFlow` gained
+  `dailyTest`/`dailyTestResult` steps to its existing widget-swap state
+  machine — deliberately *not* routed via `Navigator.push`: this flow has
+  no nested Navigator, so a `pushReplacement` (which is what
+  `DailyTestScreen` normally uses to reach results) would replace the
+  app's root route entirely and break the reactive `home:`-swap
+  app.dart's onboarding-complete transition depends on. `DailyTestScreen`
+  gained optional `onFinished`/`onExit` callbacks (null keeps its
+  existing pushReplacement/pop behavior for Home's own entry point)
+  specifically so the Day-0 case can reach results and handle "leave"
+  through plain state changes instead. The result screen's `bottomBuilder`
+  slot (built but left empty in the Daily Test screens batch) now shows a
+  short pitch + "Start free trial"/"Maybe later" — tapping "Start free
+  trial" pushes the real `PaywallScreen` (a genuine, poppable excursion on
+  top of the still-intact root route); either skip path calls
+  `FirstLaunchFlow`'s own finish, which hands the already-saved profile to
+  `onComplete` exactly like plain onboarding-complete always has. Onboarding
+  completing a *second* time (returning launches) is unaffected — that
+  distinction was already fully carried by "does a profile exist," no new
+  flag needed.
+- **The daily session cap is untouched** — confirmed by diff, not just
+  assumption: `practice_launch.dart`/`storage_service.dart`'s cap logic
+  has zero coupling to `SubscriptionService`, so it applies the same way
+  to trial and paid users as it always has, independent of Daily Test's
+  own separate once-a-day generation.
+
+Also fixed along the way: a `testWidgets()`-only hang discovered while
+building `first_launch_flow_test.dart` — genuine `sqflite_common_ffi` I/O
+(which works fine in a plain `test()`, per the existing ffi-backed test
+files) stalls indefinitely inside `flutter_test`'s fake-async test
+binding. Worked around with an in-memory fake `StorageService` for that
+one test file rather than real ffi.
+
+Verified on-device in both themes (locked Topic Practice card, Day-0
+result-with-paywall screen); `flutter analyze` and the full test suite
+(85 tests, including a new `first_launch_flow_test.dart` driving the
+entire Day-0 flow through both exit paths) are clean.
+
 ---
 
 ## What's next
@@ -407,14 +468,23 @@ building a zero-evidence bet before measuring that defeats the point).
 ### 1. Pre-launch checklist
 See `docs/prd-v2.md` §10.1. Done: daily session cap, privacy note, minimal
 analytics (code scaffold — no Firebase project connected yet, needs an
-interactive `flutterfire configure` run against a real account). Still
-open: distribution channel decision, API key safety approach, device
-coverage, feedback channel — several of these are open decisions, not just
-tasks. **Also now blocking, surfaced by the paywall screen above:** no
-Privacy Policy/Terms of Service pages exist yet (`AppLinks` in
-`lib/utils/app_links.dart` is empty), and no RevenueCat/App Store Connect
-product is connected, so purchases can't actually complete — see PRD v2
-§10.1 and §12.6.
+interactive `flutterfire configure` run against a real account), and now
+the full v2.1 free/trial/paid flow (previous section) — functionally
+complete, but not launch-ready. Still open: distribution channel
+decision, API key safety approach, device coverage, feedback channel —
+several of these are open decisions, not just tasks. **Three concrete
+blockers the flow above surfaced, none of them code:**
+- No RevenueCat/App Store Connect product is connected — every purchase
+  attempt fails safe (confirmed on-device), but nobody can actually
+  start a real trial or get charged yet.
+- No Privacy Policy/Terms of Service pages exist (`AppLinks` in
+  `lib/utils/app_links.dart` is empty) — required for any App Store
+  submission with auto-renewable subscriptions, see PRD v2 §10.1/§12.6.
+- **A dedicated visual-polish pass across Daily Test/Paywall/Premium is
+  still pending** — deliberately deferred until this batch made the flow
+  functionally complete end-to-end; these screens have had layout/
+  contrast fixes as issues surfaced (e.g. the invisible-button bug two
+  batches back) but no holistic design review yet.
 
 ### 2. Public launch
 Topic mode + onboarding + premium teaser only. No streak mode yet.
