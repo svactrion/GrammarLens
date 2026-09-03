@@ -3,7 +3,10 @@
 **An AI-powered grammar coach for people who learned English by speaking it — not by studying it.**
 
 > Personal product case study, built in public: research → PRD → MVP → iteration.
-> Status: **MVP complete, iterating based on real testing.**
+> Status: **MVP (v1) complete, tested with real users, closed. v2 — a free/
+> trial/paid pivot with a new daily mode — is functionally built; a visual
+> polish pass is still pending before wider testing.** See
+> [Product Evolution](#product-evolution) below.
 
 ## The Problem
 
@@ -18,33 +21,55 @@ chat has no memory of your recurring mistakes across sessions.
 
 ## The Idea
 
-A mobile app (Flutter, iOS) that teaches grammar from **your own answers**:
+A mobile app (Flutter, iOS) that teaches grammar from **your own answers**,
+with two entry points:
 
-1. Pick a topic and a session length (Quick · 3, Standard · 5, Extended · 10)
-2. Answer a mixed set — sentence writing, error correction, fill-in-the-blank
-3. Get instant, jargon-light feedback: what sounded wrong, what sounds
-   natural, and why — with the grammar rule kept as secondary detail, not
-   the headline
-4. Mistakes are saved to a personal **error profile**
-5. **Review** resurfaces your weak spots later with freshly generated
-   practice — not the same questions, real reinforcement
+- **Daily Test** — free, forever, for everyone: a 5-question daily warm-up,
+  the same set for every user, graded instantly with no AI call per
+  answer. The always-free hook into the product.
+- **Topic Practice** — the AI-personalized core loop, and the part that
+  actually costs money to run: pick a topic and a session length
+  (Quick · 3, Standard · 5, Extended · 10), answer a mixed set (sentence
+  writing, error correction, fill-in-the-blank), and get instant,
+  jargon-light feedback — what sounded wrong, what sounds natural, and
+  why, with the grammar rule kept as secondary detail, not the headline.
+  Free to try for 3 days, then a subscription. The purchase flow is built
+  on RevenueCat and functional end-to-end, but no live App Store Connect
+  product is connected yet, so no real subscription can complete today.
+
+Mistakes from either mode feed a personal **error profile**; **Review**
+resurfaces weak spots later with freshly generated practice — not the same
+questions, real reinforcement.
 
 AI is not a feature here — it's the foundation. A static rules-and-quizzes
 app can't build a personalized curriculum from what you actually get wrong.
 
-## Screenshots
+## Product Evolution
+
+| Version | Timeframe | Screenshots | What it was |
+|---|---|---|---|
+| **v1 — MVP** | Jul–Aug 2026 | [`screenshots/v1/`](screenshots/v1/) | The original topic-mode build: pick a topic, answer a mixed question set, get plain-language feedback, review weak spots. Tested with real users, closed. |
+| **v2** | Aug–Sep 2026 (in progress) | [`screenshots/v2/`](screenshots/v2/) — *pending, see note below* | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). |
+| **v3 — planned, not yet scoped** | — | — | A possible future gamification-driven iteration is under consideration (see [`docs/roadmap.md`](docs/roadmap.md), "Later phases"). Not committed, no scope, no screens yet. |
+
+**v2 screenshot note:** v2's screens (Daily Test, Paywall, the new
+mode-selection Home/nav) are functionally done but deliberately not yet
+visually polished — a dedicated design pass is planned before capturing
+screenshots for `screenshots/v2/`.
+
+## Screenshots (v1 / MVP)
 
 | Home | Length selection | Practice |
 |---|---|---|
-| ![Home screen](screenshots/mainscr.png) | ![Length selection](screenshots/length.png) | ![Practice question](screenshots/questions.png) |
+| ![Home screen](screenshots/v1/mainscr.png) | ![Length selection](screenshots/v1/length.png) | ![Practice question](screenshots/v1/questions.png) |
 
 | Correct answer | Incorrect answer | Skipped answer |
 |---|---|---|
-| ![Correct result](screenshots/trueanswer.png) | ![Incorrect result](screenshots/falseanswer.png) | ![Skipped result](screenshots/blankanswer.png) |
+| ![Correct result](screenshots/v1/trueanswer.png) | ![Incorrect result](screenshots/v1/falseanswer.png) | ![Skipped result](screenshots/v1/blankanswer.png) |
 
 | Loading state | Review | Weak spot detail |
 |---|---|---|
-| ![Loading](screenshots/loadscreen.png) | ![Review list](screenshots/reviews.png) | ![Weak spot detail](screenshots/inspectrev.png) |
+| ![Loading](screenshots/v1/loadscreen.png) | ![Review list](screenshots/v1/reviews.png) | ![Weak spot detail](screenshots/v1/inspectrev.png) |
 
 ## Product Process
 
@@ -64,6 +89,29 @@ This project follows a structured product process, documented as it happens:
 
 ## Key Product Decisions (and why)
 
+- **Cost forced the monetization model, not the other way around.** Topic
+  Practice triggers a real Claude API call every session, regardless of
+  whether the user has paid — a permanently free, unlimited version scales
+  cost directly with user count (rough estimate: ~$90–270/mo at 100 daily
+  active users, ~$900–2,700/mo at 1,000). That made the original
+  "everything free during early access" positioning unsustainable the
+  moment growth became the goal. The alternative — a hard paywall in front
+  of all value — was rejected too: it would mean nobody experiences the
+  plain-language feedback that usability testers praised, undermining the
+  actual thing a public launch exists to measure. Landed on a structural
+  split instead: a free, deterministic daily mode with near-zero marginal
+  cost, and a time-boxed trial of the real AI-personalized mode.
+- **A new business constraint doesn't override a closed research finding.**
+  The free daily mode needed some way to explain a wrong answer without a
+  live LLM call per answer — the literal solution is multiple-choice-style
+  "you picked B, the answer was A" framing. But multiple-choice had already
+  been conclusively rejected by users (5 of 7 across two research rounds —
+  see `docs/prd.md` §2.2 Theme 1) as feeling like guessing rather than
+  production. Rather than reopening that finding under monetization
+  pressure, kept free-text answer types and pre-generated the 2-3 most
+  likely wrong answers — with canned explanations — alongside the question
+  itself: reads as personalized, costs nothing extra since it rides the one
+  generation call already being made.
 - **Skipped ≠ wrong.** An unanswered question is not a grammar error. Detected
   deterministically in code (empty answer field) rather than trusting the
   model's own labeling, which varied between runs.
@@ -90,7 +138,8 @@ This project follows a structured product process, documented as it happens:
 ## Stack
 
 Flutter (iOS) · Anthropic API (Claude Sonnet, structured JSON outputs) ·
-sqflite (local storage) · Material 3 · AI-assisted development (Claude Code)
+sqflite (local storage) · RevenueCat (subscriptions — built, no live
+product connected yet) · Material 3 · AI-assisted development (Claude Code)
 
 ## About
 
