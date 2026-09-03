@@ -362,5 +362,158 @@ designed, recorded so they aren't lost or accidentally treated as decided.
 
 ---
 
+## 12. v2.1 — Serbest / deneme / ücretli akış (2026-09-02, taslak — açık noktalar işaretli)
+
+Bu bölüm, launch öncesi maliyet gerçeğinin netleşmesiyle ortaya çıkan bir ek karar
+turu. §6 ve §7.1/§7.2'yi geçersiz kılmıyor, onları somutlaştırıyor. Kendi ilkemiz
+gereği ("Open decisions in §7 get resolved in place") ayrı bir doküman açmak yerine
+burada, gerekçesiyle birlikte işleniyor.
+
+### 12.1 Neden bu değişiklik
+
+Topic Practice, ödeme yapsın yapmasın her kullanıcı için gerçek bir Sonnet API
+çağrısı tetikliyor (üretim + toplu değerlendirme). Ölçeklenmiş, kalıcı ve tamamen
+ücretsiz bir Topic Practice, kullanıcı sayısı büyüdükçe doğrudan orantılı bir
+maliyet demek — 100 günlük aktif kullanıcıda kaba tahminle aylık ~$90-270, 1000'de
+~$900-2.700 (gerçek token ölçümü henüz yapılmadı, bkz. §7.1 önkoşulu). Bu, "her şey
+erken erişimde ücretsiz" konumlandırmasını (§6) sürdürülemez kılıyor.
+
+### 12.2 Yeni özellik matrisi
+
+| | Free (kalıcı) | Trial (3 gün, yeni kullanıcıya bir kez) | Paid |
+|---|---|---|---|
+| Günlük test | Var — herkese aynı, günde 1 kez üretilir, sabit cevap anahtarı, LLM değerlendirmesi yok | Var | Var |
+| Topic Practice | Yok | Var — tam kişiselleştirilmiş üretim + plain-language feedback | Var |
+| Streak / Voice | Yok (henüz üretilmiş özellik yok) | Yok | Var olduklarında |
+| Marjinal API maliyeti | ~0 (deterministik) | ~$0.03/seans (bkz. §12.4) | ~$0.03/seans |
+
+Free tier artık "az özellikli Topic Practice" değil, yapısal olarak farklı bir
+mekanik — bu yüzden maliyeti kullanıcı sayısıyla neredeyse hiç büyümüyor.
+
+### 12.3 Ekran akışı (v2.1)
+
+```
+İlk açılış
+  Welcome (değer anlatımı)
+    -> Onboarding (isim + öğrenme amacı, local)
+      -> Günlük Test (Day 0, herkes görür)
+        -> Sonuç ekranı (statik, önceden yazılmış yorumlarla — §12.5)
+          -> Paywall/Trial teklifi ("kişisel geri bildirim" çekirdek vaadiyle)
+            - 3 gün dene -> Topic Practice tam açık (trial süresi boyunca)
+            - Şimdilik geç -> Home, sadece Günlük Test + kilitli Topic Practice tile'ı
+
+Sonraki açılışlar
+  Home
+    - Günlük Test (her zaman erişilebilir)
+    - Topic Practice — trial/paid aktifse açık, değilse kilitli -> dokunulunca paywall
+    - Streak / Voice — [AÇIK NOKTA, bkz. 12.6] henüz yok, App Store riski nedeniyle
+         Home'dan tamamen kaldırılıp Premium ekranına taşınması öneriliyor
+    - Review, Settings — değişmiyor
+    - Trial bitti + ödeme yoksa -> sessizce Free'ye düşer [AÇIK NOKTA, bkz. 12.6]
+```
+
+### 12.4 Trial maliyeti (kaba tahmin, Sonnet 5 fiyatlandırmasıyla: $2/$10 MTok)
+
+Seans başına ~$0.03 varsayımıyla, 3 günlük trial:
+- Gerçekçi kullanım (1-3 seans/gün): toplam ~$0.09–$0.27
+- En kötü senaryo (günlük cap'e dayanma): toplam ~$0.90
+
+Trial başına maliyet, normal bir müşteri kazanım maliyeti seviyesinde — asıl risk
+kalıcı/sınırsız ücretsiz kullanımdı, o artık §12.2'deki mekanikle kapanıyor.
+
+### 12.5 Günlük Test'te "neden yanlış" yorumu — MC'ye dönmeden
+
+Fikir: kullanıcının verdiği yanlış cevaba önceden yazılmış, esprili/açıklayıcı bir
+yorum göstermek ("değer hissi" yaratmak için). Kabul edilebilir ve maliyeti sıfıra
+yakın (günlük üretim sırasında, tek bir LLM çağrısıyla üretilip statik olarak
+saklanıyor — kullanıcı sayısından bağımsız).
+
+Ama literal "A yerine B'yi seçti" çerçevesi çoktan seçmeli formatı gerektiriyor —
+bu, prd.md §2.2 Theme 1'de 7 kullanıcının 5'inin reddettiği, kesin kapatılmış bir
+format. Free Test'te bile MC'ye dönmek bu bulguyu es geçmek olur.
+
+Önerilen çözüm: format serbest metin kalır (fill-in-the-blank / error-correction,
+mevcut tipler). Günlük üretim sırasında, LLM'den doğru cevabın yanında en yaygın
+2-3 yanlış cevabı ve her biri için önceden yazılmış yorumu da üretmesini istiyoruz.
+Kullanıcı cevabı yazınca: tam eşleşiyorsa doğru; önceden tahmin edilen yaygın
+hatalardan biriyle eşleşiyorsa o hataya özel yorum; hiçbiriyle eşleşmiyorsa jenerik
+"tam değil, doğrusu şu" mesajı. Format kullanıcıya hâlâ serbest yazım olarak
+görünüyor, MC hissi yok — ama en sık yapılan hatalarda kişiselleşmiş gibi hisseden
+statik bir yanıt var.
+
+Not: bu, kimsenin talep etmediği bir bahis (§3'ün evidence tablosu anlamında) —
+Ahmet'in ürün sezgisi, araştırma bulgusu değil. Böyle etiketlenmeli.
+
+### 12.6 Kararlar (2026-09-02)
+
+- **RevenueCat kullanılacak.** Ücretsiz (2.500$ takip edilen gelire kadar), receipt/
+  entitlement yönetimini sıfırdan yazmaktan daha güvenli, ayrıca trial→paid dönüşüm
+  gibi PM verisini hazır dashboard'da veriyor.
+- **Trial mekanizması teyit edildi:** ödeme yöntemi trial başlarken alınıyor, 3 gün
+  sonunda kullanıcı iptal etmediyse otomatik ücretlendirme oluyor — bu App Store'un
+  auto-renewable subscription + introductory trial yapısının standart işleyişi,
+  ayrıca bir "paywall hatırlatma ekranı" kurmamıza gerek yok, yenileme bildirimini
+  Apple sistem seviyesinde zaten gönderiyor. Tek fark: bu, "trial'ı hiç başlatmadan
+  Free'de kalan" kullanıcı için geçerli değil — onlara trial'ı tekrar teklif edip
+  etmeyeceğimiz (ör. X gün sonra bir kez daha) hâlâ ayrı ve açık bir soru, bkz. 12.7.
+- **Streak/Voice tile'ları Home'dan kaldırılacak.**
+- **Günlük Test soru havuzu: hata-profiline-göre "cohort" yaklaşımıyla — bkz. 12.8.**
+- **Nav bar: D önerisi onaylandı** (pill kabuğu kalır, iç blok kalkar, sadece ikon/
+  renk/nokta ile aktif durum).
+- Paywall ekranının App Store zorunlu unsurları (Restore Purchases, fiyat/süre net
+  gösterimi, gizlilik/şartlar linki) — v2.1 kapsamına eklenmeli.
+
+### 12.7 Trial'ı hiç başlatmayan kullanıcı — hatırlatma (açık, küçük öneri)
+
+Teknik mekanizma zaten trial-başlatmış kullanıcı için bir hatırlatmaya ihtiyaç
+duymuyor (12.6). Ama "no fake it" / güven inşası ilkemize uygun, zorunlu olmayan
+bir ekleme: trial bitmeden ~1 gün önce, uygulama açıldığında "deneme yarın bitiyor,
+ondan sonra X ücret alınacak, iptal buradan" diyen küçük bir in-app banner —
+Apple'ın kendi sistem bildirimine ek, kullanıcının "beni bilgilendirmeden ücret
+kesildi" hissetmesini engelleyen ucuz bir güven adımı. Zorunlu değil, önerilir.
+
+### 12.8 Günlük Test soru havuzu — rastgele mi, profile göre mi, maliyet farkı
+
+Fark şurada: tamamen paylaşımlı (mevcut plan) günde **1** üretim çağrısı demek —
+kaç free kullanıcı olursa olsun sabit, neredeyse sıfır maliyet. Kullanıcı başına
+tam kişiselleştirme ise günde **kullanıcı sayısı kadar** üretim çağrısı demek —
+tam olarak az önce çözdüğümüz ölçeklenen-maliyet sorununu geri getirir (üretim-
+sadece maliyeti bile 1.000 free kullanıcıda kabaca aylık $300-450 civarına çıkar).
+
+Orta yol — **cohort/bucket yaklaşımı, önerilen:** her gün tek bir soru seti yerine,
+hata kategorisi başına (ör. "artikeller", "zamanlar", "edatlar" gibi 5-8 kategori)
+birkaç varyant üretilir. Free kullanıcının hata profili varsa (geçmiş pratikten),
+en sık hatasına en yakın varyanta deterministik olarak atanır; profili yoksa
+(yeni kullanıcı) rastgele/varsayılan varyant. Günlük üretim çağrısı sayısı 5-8'de
+sabit kalır — kullanıcı sayısından bağımsız, aylık maliyet birkaç dolar civarında
+kalır — ama kullanıcı "bana göre" hissini büyük ölçüde alır. Maliyetsiz gerçek
+kişiselleştirme yok; ama bu, hissi neredeyse aynı verip maliyeti sabit tutan bir
+uzlaşma.
+
+**Karar (2026-09-02): cohort/bucket yaklaşımı onaylandı.** §12'deki tüm açık
+noktalar bu turla kapandı.
+
+**Düzeltme (2026-09-02, aynı gün):** Yukarıdaki cohort/bucket maliyet mantığı
+yanlıştı — "günde 1 üretim, herkese paylaşımlı" varsayımı bir backend gerektirir.
+GrammarLens'te backend yok (§5, bilinçli guest-first kararı); her cihaz kendi
+Günlük Test'ini kendi API çağrısıyla üretmek zorunda. Yani paylaşımlı ile
+kullanıcı-başına-kişisel arasında gerçek maliyet farkı yok — ikisi de günde 1
+üretim çağrısı/cihaz.
+
+**Güncel karar:** cohort/bucket karmaşasına gerek yok. Günlük Test doğrudan
+cihazın kendi (local) hata profiline göre üretilir — zaten günde 1 çağrı
+yapılacaktı, kişiselleştirmenin ek maliyeti yok. Profili olmayan (yeni)
+kullanıcı için genel/rastgele bir set üretilir. Gerçek maliyet avantajı
+paylaşımdan değil, iki şeyden gelir: günde yalnızca 1 kez üretilmesi (Topic
+Practice gibi tekrar tekrar değil) ve hiç LLM değerlendirme çağrısı
+yapmaması (deterministik kontrol). Kaba tahmin: ~$0.01-0.015/cihaz/gün
+(yalnızca üretim) → 100 DAU'da aylık ~$30-45, 1000 DAU'da ~$300-450 — Topic
+Practice'ten belirgin ucuz ama "neredeyse sıfır" değil. Gerçek paylaşımlı
+üretim (sunucusuz bir fonksiyonla günde 1 kez üretip tüm cihazlara aynısını
+servis etmek) bir backend eklemek demek — kullanım büyürse değerlendirilecek
+bir sonraki adım olarak not düşülüyor, şimdilik yapılmıyor.
+
+---
+
 *Living document. Open decisions in §7 get resolved in place, with the
 reasoning kept, not overwritten.*
