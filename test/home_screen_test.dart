@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
+import 'package:grammar_lens/screens/paywall_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 /// Records `modeSelected` calls instead of the real (best-effort, silently
@@ -26,12 +28,45 @@ class _RecordingAnalyticsService extends AnalyticsService {
   }
 }
 
+/// Controls [hasFullAccess] and lets a test fire a live update through
+/// whatever listener Home actually registered — the real SubscriptionService
+/// would need an actual RevenueCat project to ever change entitlement state,
+/// which this stands in for deterministically (see paywall_screen_test.dart
+/// for the same pattern applied to PaywallScreen).
+class _FakeSubscriptionService extends SubscriptionService {
+  bool hasAccess;
+  AccessListener? _listener;
+
+  _FakeSubscriptionService({this.hasAccess = false});
+
+  @override
+  Future<bool> get hasFullAccess async => hasAccess;
+
+  @override
+  void addAccessListener(AccessListener listener) {
+    _listener = listener;
+  }
+
+  @override
+  void removeAccessListener(AccessListener listener) {
+    if (identical(_listener, listener)) _listener = null;
+  }
+
+  /// Simulates RevenueCat reporting a change — a trial starting, expiring,
+  /// or a restore completing — without needing a real project connected.
+  void emitAccessChange(bool value) {
+    hasAccess = value;
+    _listener?.call(value);
+  }
+}
+
 void main() {
   Future<void> pumpHome(
     WidgetTester tester, {
     Avatar? avatar,
     VoidCallback? onAvatarTap,
     AnalyticsService? analyticsService,
+    SubscriptionService? subscriptionService,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = const Size(390, 844) * 3.0;
@@ -47,6 +82,7 @@ void main() {
           claudeService: ClaudeService(),
           storageService: StorageService(),
           analyticsService: analyticsService ?? AnalyticsService(),
+          subscriptionService: subscriptionService ?? _FakeSubscriptionService(),
           onAvatarTap: onAvatarTap,
         ),
       ),
@@ -156,8 +192,43 @@ void main() {
     expect(analyticsService.modesSelected, [AnalyticsService.modeDailyTest]);
   });
 
-  testWidgets('Topic Practice opens the existing MVP loop', (tester) async {
-    await pumpHome(tester);
+  testWidgets(
+      'Topic Practice opens the existing MVP loop when the entitlement is '
+      'active', (tester) async {
+    await pumpHome(
+      tester,
+      subscriptionService: _FakeSubscriptionService(hasAccess: true),
+    );
+    await tester.tap(find.text('Topic Practice'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TopicPracticeScreen), findsOneWidget);
+  });
+
+  testWidgets(
+      'Topic Practice shows locked and opens the paywall instead, with no '
+      'entitlement active (PRD v2 §12.2/§12.3)', (tester) async {
+    await pumpHome(tester); // default fake: hasAccess: false
+    expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
+
+    await tester.tap(find.text('Topic Practice'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TopicPracticeScreen), findsNothing);
+    expect(find.byType(PaywallScreen), findsOneWidget);
+  });
+
+  testWidgets(
+      'reacts live to an entitlement change — a trial starting unlocks the '
+      'card without rebuilding the screen', (tester) async {
+    final subscriptionService = _FakeSubscriptionService();
+    await pumpHome(tester, subscriptionService: subscriptionService);
+    expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
+
+    subscriptionService.emitAccessChange(true);
+    await tester.pump();
+
+    expect(find.byIcon(Icons.lock_rounded), findsNothing);
+
     await tester.tap(find.text('Topic Practice'));
     await tester.pumpAndSettle();
     expect(find.byType(TopicPracticeScreen), findsOneWidget);

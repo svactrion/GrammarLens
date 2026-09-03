@@ -105,6 +105,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
           }
           if (_profile == null) {
             return FirstLaunchFlow(
+              claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
               onComplete: (profile) => setState(() => _profile = profile),

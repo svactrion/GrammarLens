@@ -5,6 +5,10 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 /// without needing to know RevenueCat's own exception/error-code shape.
 enum PurchaseOutcome { success, failure, cancelled }
 
+/// Called with the current [SubscriptionService.hasFullAccess]-equivalent
+/// value whenever it changes — see [SubscriptionService.addAccessListener].
+typedef AccessListener = void Function(bool hasFullAccess);
+
 /// Wraps RevenueCat subscription/entitlement checking (PRD v2 §12.6's
 /// trial/paid mechanism) — code scaffold only as of this commit, no real
 /// App Store Connect product or RevenueCat project connected yet (see
@@ -128,5 +132,44 @@ class SubscriptionService {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Maps each registered [AccessListener] to the RevenueCat-shaped
+  /// listener it's bridged through — needed because
+  /// [Purchases.removeCustomerInfoUpdateListener] matches by the exact
+  /// function reference that was added, and that reference isn't
+  /// [AccessListener] itself (see [addAccessListener]).
+  static final Map<AccessListener, CustomerInfoUpdateListener> _bridges = {};
+
+  /// Subscribes [listener] to live entitlement changes — a trial starting,
+  /// a subscription expiring, a restore completing — so a screen like Home
+  /// can gate Topic Practice without re-checking [hasFullAccess] on a timer
+  /// or requiring an app restart to notice a change. Fires once immediately
+  /// with the last known value if RevenueCat has already reported one, then
+  /// again on every subsequent change — mirrors
+  /// [Purchases.addCustomerInfoUpdateListener]'s own behavior, which this
+  /// wraps.
+  ///
+  /// Safe to call even when RevenueCat isn't configured: unlike every other
+  /// method here, registering a listener is a local, SDK-side-effect-free
+  /// operation (RevenueCat's own implementation just adds to an in-memory
+  /// Dart `Set`, no platform channel involved) — the listener is registered
+  /// either way, it will simply never fire until/unless a real project gets
+  /// connected.
+  void addAccessListener(AccessListener listener) {
+    void bridge(CustomerInfo info) {
+      listener(info.entitlements.active.containsKey(entitlementIdPremium));
+    }
+
+    _bridges[listener] = bridge;
+    Purchases.addCustomerInfoUpdateListener(bridge);
+  }
+
+  /// Unsubscribes a listener previously passed to [addAccessListener] —
+  /// call from a screen's `dispose()` to avoid leaking it past the
+  /// widget's lifetime.
+  void removeAccessListener(AccessListener listener) {
+    final bridge = _bridges.remove(listener);
+    if (bridge != null) Purchases.removeCustomerInfoUpdateListener(bridge);
   }
 }

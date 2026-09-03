@@ -23,8 +23,19 @@ enum _PurchaseState { idle, purchasing, success, cancelled, error }
 class PaywallScreen extends StatefulWidget {
   final SubscriptionService subscriptionService;
 
-  PaywallScreen({super.key, SubscriptionService? subscriptionService})
-      : subscriptionService = subscriptionService ?? SubscriptionService();
+  /// Called when the user is done here — either they dismissed via "Maybe
+  /// later," or a trial just started and they tapped "Continue" — right
+  /// before this screen pops itself. Null (the default, for every entry
+  /// point except the Day-0 flow) means there's nothing extra to do beyond
+  /// the pop itself: Home's locked-card tap and the Premium screen's CTA
+  /// both just want to return to whatever pushed this screen.
+  final VoidCallback? onDone;
+
+  PaywallScreen({
+    super.key,
+    SubscriptionService? subscriptionService,
+    this.onDone,
+  }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -89,6 +100,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
     });
   }
 
+  /// Shared by "Maybe later" and the post-success "Continue" button — both
+  /// mean "I'm done with this screen." Runs [PaywallScreen.onDone] first
+  /// (e.g. the Day-0 flow's own onboarding-completion step) so its side
+  /// effects are in flight before this route disappears, then pops.
+  void _dismiss() {
+    widget.onDone?.call();
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -143,17 +163,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed:
-                    _purchaseState == _PurchaseState.purchasing
-                        ? null
-                        : _startTrial,
+                // Once the trial has actually started, this button's job
+                // changes from "start it" to "acknowledge and move on" —
+                // reusing the same primary button for that rather than
+                // adding a separate one keeps a single, consistent
+                // continuation point regardless of outcome.
+                onPressed: switch (_purchaseState) {
+                  _PurchaseState.purchasing => null,
+                  _PurchaseState.success => _dismiss,
+                  _ => _startTrial,
+                },
                 child: _purchaseState == _PurchaseState.purchasing
                     ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Start free trial'),
+                    : Text(_purchaseState == _PurchaseState.success
+                        ? 'Continue'
+                        : 'Start free trial'),
               ),
             ),
           ],
@@ -202,6 +230,22 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ],
             ),
           ),
+          // Low-emphasis skip, below everything else the App Store
+          // requires — not shown once a trial has actually started (the
+          // primary button already covers "I'm done" via "Continue" then,
+          // so a second identical exit here would be redundant).
+          if (_purchaseState != _PurchaseState.success) ...[
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.onSurfaceVariant,
+                ),
+                onPressed: _dismiss,
+                child: const Text('Maybe later'),
+              ),
+            ),
+          ],
         ],
       ),
     );
