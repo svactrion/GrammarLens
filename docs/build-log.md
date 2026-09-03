@@ -350,3 +350,111 @@ Claude session Ahmet uses for product calls — each entry is tagged
   same temporary, untracked debug-harness technique as earlier rounds
   (deleted after use). Full test suite (48 tests) and `flutter analyze`
   clean after each commit.
+
+## 2026-09-02
+
+- **[Product]** v2.1 pivot: free/trial/paid split, replacing "everything free
+  during early access" — full reasoning in `docs/prd-v2.md` §12. Short
+  version: Topic Practice triggers a real Sonnet API call every session
+  regardless of payment status, and a permanently free, unlimited Topic
+  Practice scales cost directly with user count (~$90-270/mo at 100 DAU,
+  ~$900-2,700/mo at 1,000 DAU on rough estimates — real token measurement
+  still pending, §7.1). Ruled out a hard paywall in front of all value —
+  would have meant nobody ever experiences the plain-language feedback 3/3
+  usability testers praised, undercutting the one thing v2 launch is
+  supposed to measure (§9). Landed on: a free, deterministic, no-LLM-eval
+  "Daily Test" everyone gets forever, plus a time-boxed free trial of real
+  Topic Practice for new users, converting to paid via standard App Store
+  auto-renewable subscription mechanics.
+- **[Product]** RevenueCat chosen over hand-rolling receipt validation/
+  entitlement tracking — free under $2,500 tracked monthly revenue, well
+  within reach for a while; also gives trial-to-paid conversion/churn
+  reporting for free, which App Store Connect's own reporting doesn't do
+  well and a solo PM needs.
+- **[Product]** 3-day trial length, Ahmet's call after weighing the
+  trade-off: shorter trials are a known "user forgets to cancel" growth
+  lever (the ethically grayer reason 3-day trials are popular industry-
+  wide), 7 days gives a fuller habit-formation window for what's meant to
+  be a daily habit product. Chose 3.
+- **[Product]** Daily Test's "why was this wrong" commentary designed to
+  stay clear of multiple-choice: literal "you picked B, correct was A"
+  framing requires closed-option UI, which `docs/prd.md` §2.2 Theme 1
+  already closed out (5 of 7 users across two research rounds rejected
+  MC). Landed on: free-text answer types stay (fill-in-the-blank/error-
+  correction), with 2-3 predicted common-wrong-answers and pre-written
+  comments generated alongside the question at generation time, matched
+  by normalized string comparison at check time — feels personal, costs
+  nothing extra since it rides on the one generation call.
+- **[Product]** Correction made mid-session: the original "cohort/bucket"
+  plan to make Daily Test generation scale-independent assumed a shared
+  backend that doesn't exist — GrammarLens is guest-first/local-only
+  (`prd-v2.md` §5) by deliberate design, so there's no server to generate
+  once and serve to every device. Every device generates its own Daily
+  Test regardless, which makes cohort-bucketing pointless (it saves
+  nothing without sharing) but also means direct per-device
+  personalization against the user's own local error profile is
+  effectively free — simplified to that instead. The real cost lever is
+  generation-once-per-day-per-device plus zero eval calls, not sharing.
+- **[Engineering]** Nav bar: removed the `google_nav_bar` active-tab
+  background block (two prior revision rounds tried to fix its alignment/
+  padding against the floating pill and didn't land) in favor of icon-fill
+  + accent color + bold label only, no background shape. A small active-
+  state dot was added then removed the same day per feedback (over-
+  decorated once seen on-device).
+- **[Engineering]** Home cleanup: Streak Mode / Voice Practice tiles
+  removed entirely (App Store 2.1 completeness risk for "coming soon"
+  tiles that read as core features, plus redundant with the Premium
+  screen's existing coming-soon list). Topic Practice became a single
+  full-width card.
+- **[Engineering]** RevenueCat scaffold: added `purchases_flutter`, new
+  `SubscriptionService` mirroring `AnalyticsService`'s safe-no-op-until-
+  configured pattern (the Firebase precedent) — `hasFullAccess`,
+  `purchasePackage()`, `restorePurchases()`, all fail closed to `false`/
+  an error state rather than crash with no RevenueCat account connected.
+  Entitlement id `premium`, product id `grammarlens_premium_monthly` —
+  placeholders until a real App Store Connect product exists.
+- **[Engineering]** Daily Test data layer: new model + once-per-calendar-
+  day-per-device generation (cached locally, new schema version),
+  deterministic checking against the correct answer / common-wrong-answer
+  set / generic fallback, unit-tested. `DailyTestScreen` +
+  `DailyTestResultScreen` built reusing Topic Practice's existing UI
+  patterns (keyboard-aware bottom button, header/answer-field kept in
+  separate scroll regions, empty-answer ≠ wrong handling) rather than
+  reinventing them; the result screen left an explicit extension slot for
+  the paywall CTA, filled in later rather than rewritten. Wired into Home
+  as a second real card. (Hit the already-known `ANTHROPIC_API_KEY` via
+  `--dart-define` requirement here too — not a new issue, just newly hit
+  testing this flow.)
+- **[Engineering]** `PaywallScreen`: price/trial terms pulled live from
+  RevenueCat's offering (not hardcoded), Restore Purchases, Privacy
+  Policy/Terms links wired to empty `AppLinks` constants (no hosted pages
+  exist yet — a real gap, not a placeholder standing in for one). First
+  commit shipped without Restore Purchases or the legal links visible
+  (caught from a review screenshot); a follow-up commit added both and
+  tightened the layout. Premium/"Early Access" screen copy revised from
+  "everything free during early access" to the actual free/trial/paid
+  matrix.
+- **[Engineering]** Full flow wiring: Home's Topic Practice card now
+  reactively checks `SubscriptionService.hasFullAccess` via new
+  `addAccessListener`/`removeAccessListener`, so a trial starting or
+  expiring updates the card without an app restart; locked state reuses
+  the old Voice Practice tile's lock-icon treatment and routes to
+  `PaywallScreen`. `PaywallScreen` gained a "Maybe later" skip action and
+  a context-dependent `onDone` callback. The first-launch Day-0 flow
+  (Welcome → Onboarding → Daily Test → result-with-paywall-pitch → Home)
+  required extending `FirstLaunchFlow`'s existing widget-swap state
+  machine rather than using `Navigator.push`, to avoid breaking the
+  reactive `home:` swap the app relies on — both exit paths (trial start
+  or skip) land on Home; returning launches are unaffected. Bug found and
+  fixed along the way: `sqflite_common_ffi` hangs indefinitely inside
+  `testWidgets()`'s fake-async binding (works fine under plain `test()`)
+  — worked around with an in-memory fake `StorageService` for the new
+  integration test. 85 tests green, including a new
+  `first_launch_flow_test.dart` driving the full Day-0 flow through both
+  exits.
+- **[Product]** Result: v2.1's free/trial/paid flow is functionally
+  complete end-to-end. Three concrete pre-launch blockers remain, none of
+  them code: no real RevenueCat/App Store Connect product connected, no
+  Privacy Policy/Terms of Service pages exist yet, and a dedicated
+  visual-polish pass across Daily Test/Paywall/Premium is still pending
+  (deliberately deferred until the flow was functionally done).
