@@ -618,3 +618,88 @@ Claude session Ahmet uses for product calls — each entry is tagged
   path as before this batch. `flutter analyze` and the full test suite
   (109 tests, including a dedicated `subscription_service_debug_override_test.dart`
   covering the release-simulation case) clean after every commit.
+
+## 2026-09-05 (message/error behavior — visual polish is a separate, later pass)
+
+- **[Engineering]** Messages that never went away, across the whole app:
+  SnackBars stuck on screen, their own Dismiss action not working, and
+  surviving navigation to a different screen. Two distinct root causes,
+  both real, not one:
+  1. **A SnackBar with an action defaults `persist` to `true`**
+     (`SnackBar`'s own doc comment / `snack_bar.dart` source: `persist =
+     persist ?? action != null`) — meaning `error_banner.dart`'s original
+     "add a Dismiss action so a 10s-duration error is actually readable"
+     fix silently disabled auto-dismiss entirely, regardless of the
+     duration set. This is the real reason messages never went away on
+     their own — not a queuing artifact, the duration was never honored
+     to begin with. Found by reading Flutter's own scaffold.dart/
+     snack_bar.dart source after a widget test kept failing in a way that
+     made no sense otherwise (a plain `pump(duration)` + `pumpAndSettle()`
+     worked with no action attached, and stopped working the moment one
+     was added — regardless of what that action's `onPressed` did).
+  2. `MaterialApp` provides exactly one `ScaffoldMessenger` for the whole
+     app (every `Scaffold` below it shares that same one), so a message
+     shown on one screen visually survives navigating to another (no
+     per-route scoping) and a repeated `showSnackBar` call enqueues
+     rather than replaces. The same failure mode had already forced one
+     call site (Streak/Voice's "coming soon" message) off SnackBar
+     entirely once before, onto a dialog (2026-08-24 above) — this fixes
+     it generally instead of moving each offending call site one at a
+     time.
+
+  Fixed with a single `AppMessenger` helper (`lib/utils/app_messenger.dart`)
+  that every existing call site now routes through — `error_banner.dart`
+  retired, no parallel path left: a `scaffoldMessengerKey` +
+  `NavigatorObserver` wired into `MaterialApp` (`app.dart`) so a route
+  change clears a lingering message; `AppMessenger.show` always clears
+  before showing so a repeat call replaces rather than stacks; and
+  `persist: false` set explicitly so the fixed duration is actually
+  honored despite the Dismiss action. Bottom-nav tab switches aren't
+  Navigator routes (an `IndexedStack` swap), so app.dart's new
+  `_switchTab` clears directly before flipping `_tabIndex`, rather than
+  relying on the `NavigatorObserver`, which would never see it. New
+  `app_messenger_test.dart` covers all four guarantees (auto-dismiss,
+  Dismiss actually closing it, a Navigator push/pop clearing a lingering
+  message, and a repeat trigger replacing rather than queuing) end to
+  end through a real `MaterialApp`/`Navigator`, not by inspecting
+  internals.
+- **[Product]** Daily Test's load failure used to surface as a raw
+  SnackBar (a type-cast error, an API-key message — whatever the
+  underlying exception happened to say) and then leave the screen
+  entirely, via the same `_leave()` call every other exit path used —
+  hitting a first-time user mid-Day-0-flow with a scary error and no way
+  to retry. Given its own in-screen error state instead: reuses
+  `EmptyState`'s existing icon+title/description+CTA pattern (deliberately
+  not a new visual treatment — a dedicated visual-polish pass is planned
+  separately and this batch is explicitly behavior-only) with one human
+  sentence and a "Try again" button that calls `_load()` again. The raw
+  exception string is shown only `if (kDebugMode)`, directly below the
+  human sentence — never in a release build. AppBar title/progress-bar
+  conditions switched from checking `!_loading` to checking
+  `_dailyTestSet != null`, since the error state also has `_loading ==
+  false` but nothing to read `.questions.length` from. New
+  `daily_test_screen_test.dart` (an in-memory fake `StorageService`, same
+  shape as `first_launch_flow_test.dart`'s own — real
+  `sqflite_common_ffi` hangs inside `testWidgets()`'s fake-async binding,
+  a landmine that file already hit and documented) drives a flaky fake
+  `ClaudeService` through: the error state itself, "Try again" actually
+  re-invoking generation, a second failure not crashing, the debug-only
+  detail text, and — the invariant locked down last batch — that a
+  failed attempt is never cached as today's test, only a real success is.
+- **[Engineering]** `StorageService.resetOnboarding` (debug-only): deletes
+  the saved profile so `getUserProfile()` is null again — the app's only
+  "onboarding complete" signal — without touching practice history,
+  theme, or daily caches. Deliberately the opposite scope of the
+  existing `resetProgressData` (keeps identity, clears history; this one
+  clears only identity). Wired into Settings' "Developer" section
+  (alongside A2's entitlement override) as a "Reset first-launch state"
+  button, `if (kDebugMode)`-gated the same way — needed to re-trigger the
+  Day-0 flow for the upcoming visual-polish pass without reinstalling the
+  app each time. Deliberately no confirmation dialog, unlike "Reset
+  progress data" right below it: this is a fast, repeatable developer
+  action expected to get tapped a lot during that pass, not a real user
+  giving up real progress. `app.dart` wires the callback to
+  `setState(() => _profile = null)`, the same signal a null profile
+  already means everywhere else in the app.
+- **[Product]** `flutter analyze` and the full test suite (126 tests)
+  clean after every commit in this batch.
