@@ -137,48 +137,65 @@ This project follows a structured product process, documented as it happens:
 
 ## Local setup
 
-The app needs an Anthropic API key at build/run time (`AppConfig` in
-`lib/config/app_config.dart`); without it, Daily Test and Topic Practice
-fail with a `ClaudeApiException` telling you to do the below.
+The Anthropic API key is not in the client at all — the app talks to a
+small Cloudflare Workers proxy (`proxy/`) that holds it as a secret; see
+`docs/build-log.md` for why (short version: a key compiled into a shipped
+binary via `--dart-define` is extractable, so it moved behind a backend
+that owns the model/prompt/schema for every call and enforces its own
+quota). The app only needs two build-time values (`AppConfig` in
+`lib/config/app_config.dart`): where the proxy is, and an app token: without
+them, Daily Test and Topic Practice fail with a `ClaudeApiException`
+telling you to do the below.
 
-1. Copy `config/dev.example.json` to `config/dev.json` and fill in your
-   real key:
+1. Copy `config/dev.example.json` to `config/dev.json`:
    ```json
-   { "ANTHROPIC_API_KEY": "sk-ant-..." }
+   { "PROXY_BASE_URL": "http://localhost:8787", "APP_TOKEN": "..." }
    ```
-   `config/dev.json` is gitignored — it never gets committed.
-2. Run it: `./scripts/dev.sh` — wraps
-   `flutter run --dart-define-from-file=config/dev.json` so the flag
-   never needs retyping by hand. Any extra arguments (e.g. `-d chrome`)
-   pass straight through to `flutter run`.
+   `APP_TOKEN` here just has to match whatever you put in the proxy's own
+   `proxy/.dev.vars` (see `proxy/README.md`) — pick any string for local
+   dev. `config/dev.json` is gitignored — it never gets committed.
+2. Run it: `./scripts/dev.sh` — starts the proxy locally (`wrangler dev`,
+   in the background, only if nothing's already listening on its port)
+   and then runs `flutter run --dart-define-from-file=config/dev.json`, so
+   one command brings up both halves. Any extra arguments (e.g.
+   `-d chrome`) pass straight through to `flutter run`. First time only:
+   copy `proxy/.dev.vars.example` to `proxy/.dev.vars` and fill in a real
+   Anthropic API key (see `proxy/README.md`) — that's the only place a
+   real key needs to exist on a dev machine.
    - **VS Code** users can use the "GrammarLens (dev)" launch config
      (`.vscode/launch.json`, committed) instead — same flag, wired to
-     Run/Debug. `scripts/dev.sh` is the primary path since day-to-day
-     development on this project happens from the terminal.
+     Run/Debug, but doesn't start the proxy for you; run `npm run dev` in
+     `proxy/` yourself first. `scripts/dev.sh` is the primary path since
+     day-to-day development on this project happens from the terminal.
 3. **Xcode**: hitting the Run button directly in Xcode does **not** pass
    any `--dart-define`/`--dart-define-from-file` flags — the app will
-   build but every API call will fail with the missing-key error above.
-   Launch from `scripts/dev.sh` or VS Code instead when you need the key.
-4. **Release / TestFlight builds** need the same flag —
-   `flutter build ipa --dart-define-from-file=config/dev.json` (or
-   whatever config file holds the release key). Easy to forget since
+   build but every API call will fail with the missing-config error
+   above. Launch from `scripts/dev.sh` or VS Code instead when you need
+   it configured.
+4. **Release / TestFlight builds** use a separate `config/prod.json`
+   (copy `config/prod.example.json`, fill in the real deployed proxy URL
+   and app token — see `proxy/README.md` for deploying it) and need the
+   matching flag: `flutter build ipa
+   --dart-define-from-file=config/prod.json`. Easy to forget since
    `flutter build ipa` alone still succeeds; the resulting build just
-   fails the same missing-key check at runtime instead. The same class
-   of mistake already happened once for a plain `flutter run`
+   fails the same missing-config check at runtime instead. The same
+   class of mistake already happened once for a plain `flutter run`
    (`docs/build-log.md`, 2026-07-21, "Fixed a 401 'invalid API key'
    error") — worth spelling out explicitly here so it doesn't repeat for
    a release build.
 5. **Run `./scripts/preflight.sh` before `flutter build ipa`.** It checks
-   that pre-launch requirements which are easy to forget mid-build (right
-   now: `AppLinks`' Privacy Policy/Terms URLs actually being set) are
-   real, and exits non-zero naming exactly what's missing if not. More
-   checks land here over time rather than each as its own script.
+   that pre-launch requirements which are easy to forget mid-build —
+   `AppLinks`' Privacy Policy/Terms URLs, and `config/prod.json`'s proxy
+   URL/app token — actually being set, and exits non-zero naming exactly
+   what's missing if not. More checks land here over time rather than
+   each as its own script.
 
 ## Stack
 
-Flutter (iOS) · Anthropic API (Claude Sonnet, structured JSON outputs) ·
-sqflite (local storage) · RevenueCat (subscriptions — built, no live
-product connected yet) · Material 3 · AI-assisted development (Claude Code)
+Flutter (iOS) · Anthropic API via a Cloudflare Workers proxy (Claude
+Sonnet, structured JSON outputs — see `proxy/`) · sqflite (local storage)
+· RevenueCat (subscriptions — built, no live product connected yet) ·
+Material 3 · AI-assisted development (Claude Code)
 
 ## About
 
