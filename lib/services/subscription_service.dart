@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -76,8 +77,12 @@ class SubscriptionService {
   }
 
   /// Whether the current user has the [entitlementIdPremium] entitlement
-  /// active right now.
+  /// active right now. Checks [debugAccessOverride] first — see that
+  /// getter's doc comment for why this is the single place the override
+  /// takes effect, rather than every gated screen checking it separately.
   Future<bool> get hasFullAccess async {
+    final override = debugAccessOverride;
+    if (override != null) return override;
     if (!_configured) return false;
     try {
       final info = await Purchases.getCustomerInfo();
@@ -171,5 +176,56 @@ class SubscriptionService {
   void removeAccessListener(AccessListener listener) {
     final bridge = _bridges.remove(listener);
     if (bridge != null) Purchases.removeCustomerInfoUpdateListener(bridge);
+  }
+
+  // --- Debug-only entitlement override -------------------------------
+  //
+  // Lets a developer preview Topic Practice (and anything else gated by
+  // [hasFullAccess]) locked or unlocked from Settings' "Developer" section
+  // without a real RevenueCat subscription — see docs/build-log.md for why
+  // this exists and why it's shaped this way.
+
+  /// Always [kDebugMode] in a real build — that's the only thing every
+  /// method below actually checks, so the whole override is a structural
+  /// no-op in release (Dart folds `if (false)` away at compile time, this
+  /// isn't just a UI-layer hide). Exposed as a mutable `@visibleForTesting`
+  /// static purely so a test can simulate "as if this were a release
+  /// build": `flutter test` itself always runs in a debug-like mode, so
+  /// [kDebugMode] can never actually read `false` from inside a test.
+  /// Nothing outside a test ever assigns this.
+  @visibleForTesting
+  static bool debugModeForTesting = kDebugMode;
+
+  static bool? _debugAccessOverride;
+
+  /// The current debug-only entitlement override: `true` forces
+  /// [hasFullAccess] to report full access, `false` forces it to report
+  /// none, `null` means no override — use the real RevenueCat status.
+  /// Always `null` outside a debug build, regardless of what was last set.
+  ///
+  /// Deliberately `bool?`, not a three-way (free/trial/full) enum:
+  /// [hasFullAccess] itself only ever distinguishes two states — RevenueCat
+  /// entitlements are active or they aren't, and an active trial and a
+  /// paid subscriber both count as active (see [hasFullAccess]'s own doc
+  /// comment) — so this override mirrors exactly what the app can already
+  /// tell apart today, not a state the rest of the app has no way to act
+  /// on.
+  bool? get debugAccessOverride =>
+      debugModeForTesting ? _debugAccessOverride : null;
+
+  /// Sets (`true`/`false`) or clears (`null`) the debug override and
+  /// immediately notifies every listener already registered via
+  /// [addAccessListener] with the resulting [hasFullAccess] value — exactly
+  /// what a real RevenueCat entitlement change would do, so Home's Topic
+  /// Practice card updates live without an app restart and without any
+  /// gated screen needing to know this override exists. A complete no-op
+  /// outside a debug build.
+  Future<void> setDebugAccessOverride(bool? value) async {
+    if (!debugModeForTesting) return;
+    _debugAccessOverride = value;
+    final current = await hasFullAccess;
+    for (final listener in _bridges.keys.toList()) {
+      listener(current);
+    }
   }
 }
