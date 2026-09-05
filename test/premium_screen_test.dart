@@ -62,6 +62,40 @@ Package _fakeMonthlyPackage() {
   );
 }
 
+// pricePerMonth/pricePerMonthString are set explicitly here the way
+// RevenueCat/StoreKit would compute and format them for a real annual
+// product — a fake has no SDK behind it to derive these, so they're
+// supplied directly, matching the $9.99/mo vs $89.99/yr numbers PRD v2
+// §13.3 uses in its own "Save 25%" example ((9.99 - 7.49) / 9.99 ≈ 25%).
+Package _fakeAnnualPackage() {
+  const context = PresentedOfferingContext('default', null, null);
+  const product = StoreProduct(
+    'grammarlens_premium_annual',
+    'Full access to Topic Practice (annual)',
+    'GrammarLens Premium (Annual)',
+    89.99,
+    '\$89.99',
+    'USD',
+    introductoryPrice: IntroductoryPrice(
+      0,
+      '\$0.00',
+      'P7D',
+      1,
+      PeriodUnit.day,
+      7,
+    ),
+    subscriptionPeriod: 'P1Y',
+    pricePerMonth: 7.49,
+    pricePerMonthString: '\$7.49',
+  );
+  return const Package(
+    '\$rc_annual',
+    PackageType.annual,
+    product,
+    context,
+  );
+}
+
 void main() {
   Future<void> pumpPremium(
     WidgetTester tester,
@@ -224,7 +258,7 @@ void main() {
     testWidgets('has no invented social proof', (tester) async {
       await pumpPremium(
         tester,
-        _FakeSubscriptionService(offering: _offeringWithPackage()),
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
       );
       await scrollToEnd(tester);
       expect(find.textContaining('most popular'), findsNothing);
@@ -324,11 +358,11 @@ void main() {
 
   group('with a package available (a real RevenueCat product connected)', () {
     testWidgets(
-        'states trial length, price, billing period, and auto-renewal',
-        (tester) async {
+        'annual is preselected, states trial length, its own price, '
+        'billing period, and auto-renewal', (tester) async {
       await pumpPremium(
         tester,
-        _FakeSubscriptionService(offering: _offeringWithPackage()),
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
       );
 
       final startButton = find.text('Start free trial');
@@ -338,7 +372,9 @@ void main() {
         find.text('${SubscriptionService.trialLengthDays}-day free trial'),
         findsOneWidget,
       );
-      expect(find.textContaining('\$9.99 / month'), findsOneWidget);
+      // The disclosure block reflects the *selected* plan — annual by
+      // default — not always the monthly product.
+      expect(find.textContaining('\$89.99 / year'), findsOneWidget);
       expect(
         find.textContaining('Auto-renews until cancelled'),
         findsOneWidget,
@@ -346,9 +382,93 @@ void main() {
       expect(startButton, findsOneWidget);
     });
 
+    testWidgets(
+        'switching to Monthly updates the disclosure block to the '
+        'monthly product', (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+
+      await scrollAndTap(tester, find.text('Monthly'));
+
+      // The disclosure card's own price line ("Then $X / month, billed
+      // automatically...") is distinct text from the plan picker's big
+      // figure ("$X / month" alone) — checked separately below — so this
+      // checks the disclosure line specifically, not just any "$9.99"
+      // substring anywhere on screen.
+      expect(
+        find.textContaining('Then \$9.99 / month, billed automatically'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('\$89.99 / year'), findsNothing);
+    });
+
+    testWidgets(
+        'the annual plan shows its real per-month equivalent as the big '
+        'figure, the real annual total as the small detail, and a savings '
+        'badge computed from both real prices — nothing hardcoded',
+        (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+      // The plan picker sits below the table and the explanatory
+      // paragraph — scroll to its own price line, which also forces
+      // everything above it (including the picker itself) to be built.
+      final bigFigure = find.text('\$7.49 / month');
+      await tester.scrollUntilVisible(bigFigure, 300);
+
+      // Big figure: the annual product's own pricePerMonthString (SDK-
+      // computed from its real $89.99 price), not $9.99 (the monthly
+      // product's price) and not a manually divided number.
+      expect(bigFigure, findsOneWidget);
+      // Small detail: the real annual total.
+      expect(find.text('Billed \$89.99 annually.'), findsOneWidget);
+      // Savings: (9.99 - 7.49) / 9.99 ≈ 25%, computed from the two real
+      // products' prices, not a hardcoded "25%" string anywhere in the
+      // widget itself.
+      expect(find.text('Save 25%'), findsOneWidget);
+    });
+
+    testWidgets(
+        'the monthly plan shows its own price as the big figure and no '
+        'savings badge', (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+
+      await scrollAndTap(tester, find.text('Monthly'));
+
+      // Exact match: the plan picker's big figure line, distinct from
+      // the disclosure card's "Then $9.99 / month, billed..." sentence
+      // checked in the previous test.
+      expect(find.text('\$9.99 / month'), findsOneWidget);
+      expect(find.text('Billed monthly.'), findsOneWidget);
+      expect(find.textContaining('Save'), findsNothing);
+    });
+
+    testWidgets(
+        'an offering with only one plan configured is treated as '
+        'unavailable, not a picker with one dead option', (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithOnlyMonthly()),
+      );
+      await scrollToEnd(tester);
+
+      expect(
+        find.text("Trial pricing isn't available right now"),
+        findsOneWidget,
+      );
+      expect(find.text('Monthly'), findsNothing);
+      expect(find.text('Annual'), findsNothing);
+    });
+
     testWidgets('a successful purchase shows a success state', (tester) async {
       final service = _FakeSubscriptionService(
-        offering: _offeringWithPackage(),
+        offering: _offeringWithBothPlans(),
         purchaseOutcome: PurchaseOutcome.success,
       );
       await pumpPremium(tester, service);
@@ -367,7 +487,7 @@ void main() {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(
-          offering: _offeringWithPackage(),
+          offering: _offeringWithBothPlans(),
           purchaseOutcome: PurchaseOutcome.cancelled,
         ),
       );
@@ -386,7 +506,7 @@ void main() {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(
-          offering: _offeringWithPackage(),
+          offering: _offeringWithBothPlans(),
           purchaseOutcome: PurchaseOutcome.failure,
         ),
       );
@@ -402,7 +522,7 @@ void main() {
         'onDone then returns', (tester) async {
       var doneCalled = false;
       final service = _FakeSubscriptionService(
-        offering: _offeringWithPackage(),
+        offering: _offeringWithBothPlans(),
         purchaseOutcome: PurchaseOutcome.success,
       );
       await pumpPremiumPushed(tester, service, onDone: () => doneCalled = true);
@@ -422,11 +542,20 @@ void main() {
   });
 }
 
-// Single package only — matches this batch's screen, which still picks
-// `offering.monthly ?? packages.first` the same way the old Paywall
-// screen did. The two-plan (monthly/annual) picker lands in a follow-up
-// commit; its own tests live there.
-Offering _offeringWithPackage() {
+Offering _offeringWithBothPlans() {
+  final monthly = _fakeMonthlyPackage();
+  final annual = _fakeAnnualPackage();
+  return Offering(
+    'default',
+    'Default offering',
+    const {},
+    [monthly, annual],
+    monthly: monthly,
+    annual: annual,
+  );
+}
+
+Offering _offeringWithOnlyMonthly() {
   final monthly = _fakeMonthlyPackage();
   return Offering(
     'default',

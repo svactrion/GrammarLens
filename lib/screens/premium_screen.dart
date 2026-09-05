@@ -6,6 +6,7 @@ import '../utils/app_links.dart';
 import '../utils/page_title.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
+enum _PlanPeriod { monthly, annual }
 
 /// The single Premium screen (PRD v2 §13.1): explains what's free/trial/paid
 /// and sells the subscription in one place. Replaces two screens that used
@@ -54,7 +55,11 @@ class PremiumScreen extends StatefulWidget {
 
 class _PremiumScreenState extends State<PremiumScreen> {
   bool _loadingOffer = true;
-  Package? _package;
+  Package? _monthlyPackage;
+  Package? _annualPackage;
+  // Annual preselected (PRD v2 §13.3) — it's the plan the "Save X%" badge
+  // and the big/small price split are built to promote.
+  _PlanPeriod _selectedPeriod = _PlanPeriod.annual;
   _PurchaseState _purchaseState = _PurchaseState.idle;
   bool _restoring = false;
   String? _restoreMessage;
@@ -67,17 +72,28 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Future<void> _loadOffer() async {
     final offering = await widget.subscriptionService.getOfferings();
-    final packages = offering?.availablePackages ?? const <Package>[];
     if (!mounted) return;
     setState(() {
-      _package =
-          packages.isEmpty ? null : (offering!.monthly ?? packages.first);
+      _monthlyPackage = offering?.monthly;
+      _annualPackage = offering?.annual;
       _loadingOffer = false;
     });
   }
 
+  /// Both plans need to exist for the picker below to mean anything — a
+  /// one-sided offering (only monthly, or only annual configured) is
+  /// treated the same as no offering at all, the honest "unavailable"
+  /// state rather than a picker with one dead option.
+  bool get _offeringsAvailable =>
+      _monthlyPackage != null && _annualPackage != null;
+
+  Package? get _selectedPackage => switch (_selectedPeriod) {
+        _PlanPeriod.monthly => _monthlyPackage,
+        _PlanPeriod.annual => _annualPackage,
+      };
+
   Future<void> _startTrial() async {
-    final package = _package;
+    final package = _selectedPackage;
     if (package == null) return;
     setState(() {
       _purchaseState = _PurchaseState.purchasing;
@@ -126,7 +142,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
-    final package = _package;
+    final monthly = _monthlyPackage;
+    final annual = _annualPackage;
 
     return Scaffold(
       appBar: AppBar(title: const PageTitle('Premium')),
@@ -184,7 +201,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (package == null)
+          else if (!_offeringsAvailable || monthly == null || annual == null)
             _UnavailableCard(
               theme: theme,
               colorScheme: colorScheme,
@@ -194,8 +211,17 @@ class _PremiumScreenState extends State<PremiumScreen> {
               },
             )
           else ...[
+            _PlanPicker(
+              monthly: monthly,
+              annual: annual,
+              selected: _selectedPeriod,
+              onChanged: (period) => setState(() => _selectedPeriod = period),
+              theme: theme,
+              colorScheme: colorScheme,
+            ),
+            const SizedBox(height: 16),
             _TrialTermsCard(
-              package: package,
+              package: _selectedPackage!,
               theme: theme,
               colorScheme: colorScheme,
             ),
@@ -517,6 +543,149 @@ class _Badge extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Monthly/annual toggle (PRD v2 §13.3), annual preselected, plus the
+/// price line and "Save X%" badge for whichever is currently selected.
+/// Every number here comes from the two real [Package.storeProduct]s —
+/// nothing is computed from a hardcoded price or divided by a hardcoded
+/// 12; see [_planPricing].
+class _PlanPicker extends StatelessWidget {
+  final Package monthly;
+  final Package annual;
+  final _PlanPeriod selected;
+  final ValueChanged<_PlanPeriod> onChanged;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+
+  const _PlanPicker({
+    required this.monthly,
+    required this.annual,
+    required this.selected,
+    required this.onChanged,
+    required this.theme,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pricing = _planPricing(selected, monthly, annual);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedButton<_PlanPeriod>(
+          segments: const [
+            ButtonSegment(
+              value: _PlanPeriod.monthly,
+              label: Text('Monthly'),
+            ),
+            ButtonSegment(
+              value: _PlanPeriod.annual,
+              label: Text('Annual'),
+            ),
+          ],
+          selected: {selected},
+          onSelectionChanged: (s) => onChanged(s.first),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pricing.bigAmount,
+                    style: theme.textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    pricing.smallDetail,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            if (pricing.savingsLabel != null)
+              _Badge(label: pricing.savingsLabel!),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// The two numbers shown per plan: a large "big" figure (the annual
+/// plan's own per-month equivalent when annual is selected, or the
+/// monthly product's own price when monthly is selected) and a smaller
+/// detail line underneath (the annual total, or "billed monthly").
+class _PlanPricing {
+  final String bigAmount;
+  final String smallDetail;
+  final String? savingsLabel;
+
+  const _PlanPricing({
+    required this.bigAmount,
+    required this.smallDetail,
+    this.savingsLabel,
+  });
+}
+
+/// Computes [_PlanPricing] entirely from the two real products' own
+/// fields — never a hardcoded number, never a manual divide-by-12.
+///
+/// The annual plan's monthly-equivalent price ([StoreProduct.pricePerMonth]/
+/// [StoreProduct.pricePerMonthString]) is computed and formatted by
+/// RevenueCat/StoreKit itself from the real annual price, already in the
+/// viewer's own currency — this reads that directly rather than
+/// reimplementing currency formatting by hand (which risks assuming a
+/// "$" prefix that breaks for every other currency). The savings
+/// percentage compares that same real monthly-equivalent against the
+/// real standalone monthly product's price — both plain numbers already
+/// in the same currency, so no manual currency handling is needed there
+/// either.
+///
+/// Falls back to the plain annual price (no "per month" figure, no
+/// savings badge) if the SDK doesn't supply a monthly-equivalent for some
+/// reason, rather than inventing one.
+_PlanPricing _planPricing(
+  _PlanPeriod period,
+  Package monthlyPackage,
+  Package annualPackage,
+) {
+  final monthlyProduct = monthlyPackage.storeProduct;
+  final annualProduct = annualPackage.storeProduct;
+
+  if (period == _PlanPeriod.monthly) {
+    return _PlanPricing(
+      bigAmount: '${monthlyProduct.priceString} / month',
+      smallDetail: 'Billed monthly.',
+    );
+  }
+
+  final perMonth = annualProduct.pricePerMonth;
+  final perMonthString = annualProduct.pricePerMonthString;
+  if (perMonth == null || perMonthString == null) {
+    return _PlanPricing(
+      bigAmount: annualProduct.priceString,
+      smallDetail: 'Billed annually.',
+    );
+  }
+
+  String? savingsLabel;
+  if (monthlyProduct.price > 0) {
+    final savings =
+        (monthlyProduct.price - perMonth) / monthlyProduct.price * 100;
+    if (savings > 0) savingsLabel = 'Save ${savings.round()}%';
+  }
+
+  return _PlanPricing(
+    bigAmount: '$perMonthString / month',
+    smallDetail: 'Billed ${annualProduct.priceString} annually.',
+    savingsLabel: savingsLabel,
+  );
 }
 
 /// A small text link to a legal page, disabled (greyed out, non-
