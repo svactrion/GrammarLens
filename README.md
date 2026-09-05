@@ -168,6 +168,11 @@ fail with a `ClaudeApiException` telling you to do the below.
    (`docs/build-log.md`, 2026-07-21, "Fixed a 401 'invalid API key'
    error") — worth spelling out explicitly here so it doesn't repeat for
    a release build.
+5. **Run `./scripts/preflight.sh` before `flutter build ipa`.** It checks
+   that pre-launch requirements which are easy to forget mid-build (right
+   now: `AppLinks`' Privacy Policy/Terms URLs actually being set) are
+   real, and exits non-zero naming exactly what's missing if not. More
+   checks land here over time rather than each as its own script.
 
 ## Stack
 
