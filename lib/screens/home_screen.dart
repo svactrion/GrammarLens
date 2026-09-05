@@ -12,9 +12,9 @@ import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/answer_matching.dart';
-import '../utils/layout_constants.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
+import '../widgets/floating_nav_shell.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
 import 'premium_screen.dart';
@@ -272,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: ListView(
-        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, navBarClearance),
+        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, NavBarClearance.of(context)),
         children: [
           // PRD v2 §11: an avatar next to the greeting, not floating
           // elsewhere on the page, so it reads as "whose home screen this

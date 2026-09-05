@@ -9,9 +9,9 @@ import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
-import '../utils/layout_constants.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
+import '../widgets/floating_nav_shell.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
 /// a UI-layer concept only. [SubscriptionService.debugAccessOverride]
@@ -237,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         behavior: HitTestBehavior.opaque,
         onTap: () => FocusScope.of(context).unfocus(),
         child: ListView(
-          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, navBarClearance),
+          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, NavBarClearance.of(context)),
           children: [
             const _SectionLabel('Appearance'),
             const SizedBox(height: 8),
