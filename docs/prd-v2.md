@@ -515,5 +515,98 @@ bir sonraki adım olarak not düşülüyor, şimdilik yapılmıyor.
 
 ---
 
+## 13. v2.2 — Monetization surface and Home (2026-09-05)
+
+Decided in a working session after the design audit (`docs/design-audit.md`).
+These supersede the parts of §6 and §12 they contradict; the earlier reasoning
+is kept in place rather than rewritten.
+
+### 13.1 "Early Access" is retired
+
+The Early Access screen and the Paywall screen were doing the same job badly.
+Early Access listed what is free / trial / paid and carried a "Start free
+trial" button; the Paywall argued the value and carried the same button. A user
+heard a different story depending on which one they reached, and neither screen
+was complete.
+
+**Decision:** merge them into one Premium screen that both explains and sells.
+Early Access's free/trial/paid table is good content and survives the merge;
+the Paywall's purchase block, price and required disclosure sit under it. The
+name "Early Access" no longer describes anything — it was never a time-limited
+campaign — and is dropped.
+
+### 13.2 Trial model: 7 days, card up front, auto-converting
+
+Replaces the 3-day trial everywhere (Home locked card, the free/trial/paid
+table, the Day-0 pitch, the paywall). Configured as a 1-week introductory offer
+on the App Store Connect products; RevenueCat reads it rather than defining it.
+
+Two implementation constraints, both App Store review matters, not preferences:
+- Trial length is never written into copy by hand. It comes from a single
+  source — ideally the package's introductory offer once RevenueCat is
+  connected, a single named constant until then. Displayed terms that disagree
+  with what is actually sold are a rejection reason.
+- The purchase point must disclose trial length, the price after it, the
+  renewal period, that it auto-renews unless cancelled, and carry Privacy and
+  Terms links.
+
+### 13.3 Pricing
+
+$9.99/month, $89.99/year. The annual plan is presented as its per-month
+equivalent ($7.49/month, billed annually at $89.99) with a "Save 25%" marker;
+annual is preselected. The 7-day trial applies to both plans.
+
+Prices are never hardcoded — Apple returns them in the viewer's currency, and
+the per-month figure is computed from the real annual price in the same
+currency, not stored as a second constant.
+
+No invented social proof ("most popular", "join thousands"). The product has no
+users yet and the repo's first working principle forbids claiming otherwise.
+
+### 13.4 Nothing unbuilt is sold
+
+"Unlimited Streak Mode" and "AI Practice Partner" were listed with "Coming
+soon" tags on the old Early Access screen. That was acceptable on an
+informational screen. It is not acceptable on a screen that takes money: Apple
+expects advertised subscription features to exist, and listing them as part of
+the offer contradicts the project's own no-fake-it rule.
+
+**Decision:** the purchase surface lists only what exists today — Topic
+Practice and its personalized plain-language feedback. Roadmap items, if shown
+at all, sit outside the purchase block and are not tied to the price.
+
+### 13.5 Home becomes a "today" screen, not a menu
+
+Home looked empty after Streak Mode and Voice Practice were removed. Putting
+them back was considered and rejected: they were removed precisely because they
+were dead coming-soon cards, and filling space with non-existent features is
+the failure mode this project is built to avoid.
+
+The real problem is that Home has data and shows none of it. New structure:
+
+1. Orange header band — greeting and avatar.
+2. **Today** — the actual state of the Daily Test: an invitation if unsolved, the
+   score plus "new test tomorrow" if solved. Largest block on the screen, since
+   this is the free core loop.
+3. **Topic Practice** — locked or unlocked, as today.
+4. **Your weak spots** — the two or three most frequent, tappable through to
+   detail; shown only when they exist (no empty state — the Review tab already
+   covers that). For a free user these are locked, and the tap opens the
+   Premium screen naming that specific weak spot.
+5. A quiet Premium row for free users — a row, not a banner.
+
+### 13.6 Evidence status of the above
+
+All of §13 is a **bet**, not a finding. No user has seen any of it. In
+particular, one tension is recorded rather than resolved: a 7-day trial
+requires a card, and the Day-0 flow asks for it roughly two minutes into first
+launch, before the user has ever used Topic Practice. That may convert poorly
+and may read as pressure, which sits badly with the calm, no-pressure
+positioning this product is built on. The alternative — surfacing the offer at
+the moment the user feels the limit instead — cannot be compared without
+retention data we do not have. Revisit once real numbers exist.
+
+---
+
 *Living document. Open decisions in §7 get resolved in place, with the
 reasoning kept, not overwritten.*

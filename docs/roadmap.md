@@ -4,7 +4,7 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-03 (v2.1 flow wiring)
+**Last updated:** 2026-09-05 (v2.2 planning — design audit, monetization decisions)
 
 ---
 
@@ -473,34 +473,71 @@ interactive `flutterfire configure` run against a real account), and now
 the full v2.1 free/trial/paid flow (previous section) — functionally
 complete, but not launch-ready. Still open: distribution channel
 decision, API key safety approach, device coverage, feedback channel —
-several of these are open decisions, not just tasks. **Three concrete
-blockers the flow above surfaced, none of them code:**
-- No RevenueCat/App Store Connect product is connected — every purchase
-  attempt fails safe (confirmed on-device), but nobody can actually
-  start a real trial or get charged yet.
-- No Privacy Policy/Terms of Service pages exist (`AppLinks` in
-  `lib/utils/app_links.dart` is empty) — required for any App Store
-  submission with auto-renewable subscriptions, see PRD v2 §10.1/§12.6.
-- **A dedicated visual-polish pass across Daily Test/Paywall/Premium is
-  still pending** — deliberately deferred until this batch made the flow
-  functionally complete end-to-end; these screens have had layout/
-  contrast fixes as issues surfaced (e.g. the invisible-button bug two
-  batches back) but no holistic design review yet.
+several of these are open decisions, not just tasks. **Blocker status, reconciled 2026-09-05** (previous
+entries here were partly stale and partly optimistic — corrected against what
+actually exists):
+- **RevenueCat / App Store Connect: nothing done.** No RevenueCat account, no
+  project, no App Store Connect app record, no products, no agreements/tax/
+  banking section. The Apple Developer membership is paid and the account is
+  approved — that is the only part that is real. Purchases still fail safe in
+  the app.
+- **Privacy Policy / Terms: still do not exist** (`AppLinks` in
+  `lib/utils/app_links.dart` is empty). Blocked behind a domain purchase by
+  choice: the pages will live on a real domain rather than a default
+  subdomain. The text does not depend on the domain and can be written first,
+  but it does depend on the API-key architecture decision below.
+- **API key safety is a launch blocker, not an open decision.** The key is
+  compiled into the binary via `--dart-define`, which is extractable from a
+  shipped build. Decision taken 2026-09-05: move it behind a Cloudflare
+  Workers proxy that holds the key as a secret, accepts only GrammarLens's
+  request shape (fixed model and max-token ceiling, so it cannot be used as a
+  general-purpose proxy) and rate-limits per device. Not built yet.
+- **Visual polish: audited, not yet applied.** A screen-by-screen review was
+  done on 2026-09-05 and written up in `docs/design-audit.md`, with the
+  decisions it produced. The work itself is the v2.2 block below.
+- **README overhaul: confirmed applied** (verified against the repo
+  2026-09-05). Closed.
 
-### 2. Public launch
+### 2. v2.2 — structure, then finish
+Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
+
+**B-structure** (do first — polishing screens whose structure is about to
+change is wasted work):
+- Merge Early Access and Paywall into one Premium screen; retire the "Early
+  Access" name
+- Replace the 3-day trial with the 7-day card-up-front model everywhere; trial
+  length and prices from a single source, never hardcoded copy
+- Add the required App Store disclosure block to the purchase point
+- Remove unbuilt features from the purchase surface
+- Rebuild Home as a "today" screen (Daily Test state, Topic Practice, weak
+  spots, quiet premium row) — explicitly *not* by restoring coming-soon cards
+- Demote Skip from primary on Daily Test questions
+- Fix the nav bar overlapping scrollable content
+- Fix the duplicated topic label in Review
+
+**B-polish** (after the above): apply the hybrid theme rule across screens,
+collapse to a single blue, introduce a spacing scale, fix the contrast
+failures listed in the audit. Verify every batch on-device in dark mode.
+
+### 3. Public launch
 Topic mode + onboarding + premium teaser only. No streak mode yet.
 
-### 3. Streak mode (post-launch fast-follow)
+### 4. Streak mode (post-launch fast-follow)
 Built after real D1/D7 data exists, not before. Carries the open cost
 decision (`docs/prd-v2.md` §7.1). Instrument per-session token usage while
 building it.
 
-### 4. Rewarded video gate on streak (free tier)
+### 5. Rewarded video gate on streak (free tier)
 
-### 5. Cost measurement, resolve open decisions §7.1 / §7.2
+### 6. Cost measurement, resolve open decisions §7.1 / §7.2
 
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.
+
+**Heads-up, not yet decided (2026-09-02):** Ahmet has flagged a possible
+v3/v4 gamification iteration further out, which would likely bring another
+visual design pass. Recorded here only so it isn't lost — no scope, no
+screens, no commitment yet. Needs its own decision pass when we get there.
 
 ### Carried over from MVP Iteration 3 (unscheduled, absorbed into v2 work)
 - Review tab icon visibility — single-participant, low priority; the new Home
