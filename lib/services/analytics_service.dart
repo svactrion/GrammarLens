@@ -15,13 +15,14 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 class AnalyticsService {
   /// Practice mode identifiers for the `mode_selected` event — matches
   /// Home's three tappable entries (PRD v2 §4): Daily Test, Topic Practice,
-  /// and the Early Access banner, since knowing what people tap there is
-  /// exactly the kind of pre-launch interest signal analytics exists for.
-  /// (Streak Mode and Voice Practice identifiers were removed along with
-  /// their Home tiles — see docs/roadmap.md.)
+  /// and the Premium banner (formerly "Early Access", retired — PRD v2
+  /// §13.1), since knowing what people tap there is exactly the kind of
+  /// pre-launch interest signal analytics exists for. (Streak Mode and
+  /// Voice Practice identifiers were removed along with their Home tiles
+  /// — see docs/roadmap.md.)
   static const String modeDailyTest = 'daily_test';
   static const String modeTopic = 'topic';
-  static const String modeEarlyAccess = 'early_access';
+  static const String modePremium = 'premium';
 
   Future<void> onboardingCompleted() {
     return _logEvent('onboarding_completed');
