@@ -9,7 +9,6 @@ import '../services/subscription_service.dart';
 import '../utils/layout_constants.dart';
 import '../widgets/avatar_tile.dart';
 import 'daily_test_screen.dart';
-import 'paywall_screen.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 
@@ -95,11 +94,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openTopicPractice(BuildContext context) {
     // Gated by entitlement (PRD v2 §12.2/§12.3): free tier doesn't include
-    // Topic Practice at all — a locked tap goes to the paywall instead of
-    // ever reaching the real screen, same "no fake it" reasoning as the
-    // daily session cap already applies to generation itself.
+    // Topic Practice at all — a locked tap goes to the Premium screen
+    // instead of ever reaching the real screen, same "no fake it"
+    // reasoning as the daily session cap already applies to generation
+    // itself.
     if (!_hasFullAccess) {
-      _openPaywall(context);
+      _openPremium(context);
       return;
     }
     widget.analyticsService.modeSelected(AnalyticsService.modeTopic);
@@ -114,20 +114,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openPaywall(BuildContext context) {
+  /// Single entry point to the merged Premium screen (PRD v2 §13.1) —
+  /// reached either from a locked Topic Practice tap above or the Premium
+  /// row below. Logs the same `mode_selected` event either way now that
+  /// both land on the same screen; previously only the row tap did (the
+  /// old Paywall, reached from the locked tap, had no analytics call of
+  /// its own).
+  void _openPremium(BuildContext context) {
+    widget.analyticsService.modeSelected(AnalyticsService.modePremium);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => PaywallScreen(
+        builder: (_) => PremiumScreen(
           subscriptionService: widget.subscriptionService,
         ),
       ),
-    );
-  }
-
-  void _openPremium(BuildContext context) {
-    widget.analyticsService.modeSelected(AnalyticsService.modeEarlyAccess);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PremiumScreen()),
     );
   }
 
@@ -204,16 +204,17 @@ class _HomeScreenState extends State<HomeScreen> {
           // Streak Mode and Voice Practice used to fill out a 2-column grid
           // alongside a single Topic Practice card, each just a "coming
           // soon" tile leading to an informational dialog — neither was
-          // actually built. Apple's App Review guidance flags that pattern
-          // as a completeness risk, and both are already listed as
-          // coming-soon premium features on the Premium screen below, so
-          // keeping them here was pure duplication. Daily Test (PRD v2
-          // §12.2) is a real, functioning second mode, not a placeholder —
+          // actually built, which Apple's App Review guidance flags as a
+          // completeness risk. Also pure duplication at the time with the
+          // Premium screen's own coming-soon list — since removed from
+          // there too (PRD v2 §13.4: nothing unbuilt gets listed on the
+          // screen that actually takes money). Daily Test (PRD v2 §12.2)
+          // is a real, functioning second mode, not a placeholder —
           // stacking two full-width cards reads as deliberate the same way
           // one did; a 2-column grid would cramp each card's description
-          // again for no benefit at this width. Daily Test leads since it's
-          // the always-free entry point (Topic Practice will be trial/paid-
-          // gated once the paywall exists — not yet, see docs/roadmap.md).
+          // again for no benefit at this width. Daily Test leads since
+          // it's the always-free entry point; Topic Practice below is
+          // already trial/paid-gated (PRD v2 §12.2/§12.3).
           _PracticeModeCard(
             icon: Icons.today_rounded,
             title: 'Daily Test',
@@ -233,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => _openTopicPractice(context),
           ),
           const SizedBox(height: 14),
-          // Deliberately not a fifth grid tile: Early Access is commercial
+          // Deliberately not a fifth grid tile: Premium is commercial
           // framing (PRD v2 §6), not a practice mode, and looking like one
           // of the learning cards above implied it was. Pulled out of the
           // grid into its own full-width row with a structurally different
@@ -241,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // fill, horizontal icon+text+chevron instead of their icon-on-top
           // layout — so the "this is a different kind of thing" reads
           // instantly, not just via a different color.
-          _EarlyAccessBanner(onTap: () => _openPremium(context)),
+          _PremiumBanner(onTap: () => _openPremium(context)),
         ],
       ),
     );
@@ -345,10 +346,10 @@ class _PracticeModeCard extends StatelessWidget {
 /// color/contrast pairing `FilledButton` already uses elsewhere, reads
 /// clearly against both the orange page and the cream/white mode cards
 /// without needing a border to define its edges.
-class _EarlyAccessBanner extends StatelessWidget {
+class _PremiumBanner extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _EarlyAccessBanner({required this.onTap});
+  const _PremiumBanner({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -379,7 +380,7 @@ class _EarlyAccessBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Early Access',
+                      'Premium',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: onSecondary,
@@ -387,7 +388,7 @@ class _EarlyAccessBanner extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "See what's coming with premium — free for now.",
+                      "See what's free, trial, and paid.",
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: onSecondary.withValues(alpha: 0.85),
                       ),

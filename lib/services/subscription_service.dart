@@ -26,8 +26,9 @@ typedef AccessListener = void Function(bool hasFullAccess);
 /// `fatalError` (`PurchasesHybridCommon/CommonFunctionality.swift: Fatal
 /// error: Purchases has not been configured`), which crashes the app
 /// outright and is not something a Dart `catch` can intercept — confirmed
-/// by actually hitting it on the iOS simulator while building
-/// PaywallScreen. [_configured] is what actually prevents that: every
+/// by actually hitting it on the iOS simulator while building the
+/// original paywall screen (since merged into `PremiumScreen`).
+/// [_configured] is what actually prevents that: every
 /// method below checks it and returns its safe default *before* ever
 /// touching the SDK, rather than trusting try/catch to contain a crash it
 /// structurally cannot.

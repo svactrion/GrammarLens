@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
-import 'package:grammar_lens/screens/paywall_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
@@ -15,7 +14,7 @@ import 'package:grammar_lens/widgets/avatar_tile.dart';
 /// Records `modeSelected` calls instead of the real (best-effort, silently
 /// swallowed) Firebase call, so a test can assert which Home entry point a
 /// tap actually reached — needed for Daily Test specifically, since unlike
-/// Topic Practice/Early Access, DailyTestScreen's real initial load has
+/// Topic Practice/Premium, DailyTestScreen's real initial load has
 /// nothing to succeed against in this test environment, landing on its own
 /// in-screen error state (see daily_test_screen_test.dart) rather than
 /// anything this file's simpler `tester.pump()`-only assertions could
@@ -32,8 +31,8 @@ class _RecordingAnalyticsService extends AnalyticsService {
 /// Controls [hasFullAccess] and lets a test fire a live update through
 /// whatever listener Home actually registered — the real SubscriptionService
 /// would need an actual RevenueCat project to ever change entitlement state,
-/// which this stands in for deterministically (see paywall_screen_test.dart
-/// for the same pattern applied to PaywallScreen).
+/// which this stands in for deterministically (see premium_screen_test.dart
+/// for the same pattern applied to PremiumScreen).
 class _FakeSubscriptionService extends SubscriptionService {
   bool hasAccess;
   AccessListener? _listener;
@@ -137,16 +136,16 @@ void main() {
   });
 
   testWidgets(
-      'shows the Daily Test and Topic Practice cards plus the Early Access '
+      'shows the Daily Test and Topic Practice cards plus the Premium '
       'banner', (tester) async {
     await pumpHome(tester);
     expect(find.text('Daily Test'), findsOneWidget);
     expect(find.text('Topic Practice'), findsOneWidget);
-    expect(find.text('Early Access'), findsOneWidget);
+    expect(find.text('Premium'), findsOneWidget);
     // Streak Mode and Voice Practice were removed from Home entirely (App
-    // Store completeness risk + redundant with the Premium screen, which
-    // already lists both as coming-soon premium features) — see
-    // docs/roadmap.md.
+    // Store completeness risk at the time; both were also later dropped
+    // from the Premium screen itself — PRD v2 §13.4, nothing unbuilt gets
+    // sold) — see docs/roadmap.md.
     expect(find.text('Streak Mode'), findsNothing);
     expect(find.text('Voice Practice'), findsNothing);
   });
@@ -169,13 +168,13 @@ void main() {
   });
 
   testWidgets(
-      'cards stack in order: Daily Test, then Topic Practice, then Early '
-      'Access', (tester) async {
+      'cards stack in order: Daily Test, then Topic Practice, then '
+      'Premium', (tester) async {
     await pumpHome(tester);
 
     final dailyTestTop = tester.getTopLeft(find.text('Daily Test')).dy;
     final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
-    final bannerTop = tester.getTopLeft(find.text('Early Access')).dy;
+    final bannerTop = tester.getTopLeft(find.text('Premium')).dy;
 
     expect(topicTop, greaterThan(dailyTestTop));
     expect(bannerTop, greaterThan(topicTop));
@@ -183,7 +182,7 @@ void main() {
 
   testWidgets(
       'Daily Test is wired to its own entry point, distinct from Topic '
-      'Practice/Early Access', (tester) async {
+      'Practice/Premium', (tester) async {
     final analyticsService = _RecordingAnalyticsService();
     await pumpHome(tester, analyticsService: analyticsService);
 
@@ -206,8 +205,8 @@ void main() {
   });
 
   testWidgets(
-      'Topic Practice shows locked and opens the paywall instead, with no '
-      'entitlement active (PRD v2 §12.2/§12.3)', (tester) async {
+      'Topic Practice shows locked and opens the Premium screen instead, '
+      'with no entitlement active (PRD v2 §12.2/§12.3)', (tester) async {
     await pumpHome(tester); // default fake: hasAccess: false
     expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
 
@@ -215,7 +214,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TopicPracticeScreen), findsNothing);
-    expect(find.byType(PaywallScreen), findsOneWidget);
+    expect(find.byType(PremiumScreen), findsOneWidget);
   });
 
   testWidgets(
@@ -235,10 +234,9 @@ void main() {
     expect(find.byType(TopicPracticeScreen), findsOneWidget);
   });
 
-  testWidgets('Early Access opens the premium/early-access screen',
-      (tester) async {
+  testWidgets('the Premium banner opens the Premium screen', (tester) async {
     await pumpHome(tester);
-    await tester.tap(find.text('Early Access'));
+    await tester.tap(find.text('Premium'));
     await tester.pumpAndSettle();
     expect(find.byType(PremiumScreen), findsOneWidget);
   });

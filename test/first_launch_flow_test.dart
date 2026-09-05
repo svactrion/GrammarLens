@@ -9,7 +9,7 @@ import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/first_launch_flow.dart';
-import 'package:grammar_lens/screens/paywall_screen.dart';
+import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
@@ -98,7 +98,7 @@ void main() {
     WidgetTester tester, {
     required ValueChanged<UserProfile> onComplete,
   }) async {
-    // Tall enough that every button in the flow (including PaywallScreen's
+    // Tall enough that every button in the flow (including PremiumScreen's
     // trailing actions) is reachable without a per-screen scroll dance.
     tester.view.physicalSize = const Size(390, 844) * 3.0;
     tester.view.devicePixelRatio = 3.0;
@@ -185,7 +185,7 @@ void main() {
 
   testWidgets(
       'tapping "Start free trial" on the result CTA opens the real '
-      'PaywallScreen, and its own "Maybe later" also completes onboarding',
+      'PremiumScreen, and its own "Maybe later" also completes onboarding',
       (tester) async {
     UserProfile? completed;
     await pumpFlow(tester, onComplete: (p) => completed = p);
@@ -194,13 +194,13 @@ void main() {
 
     await scrollAndTap(tester, find.text('Start free trial'));
 
-    expect(find.byType(PaywallScreen), findsOneWidget);
+    expect(find.byType(PremiumScreen), findsOneWidget);
     expect(completed, isNull);
 
     await scrollAndTap(tester, find.text('Maybe later'));
 
     expect(completed, isNotNull);
-    expect(find.byType(PaywallScreen), findsNothing);
+    expect(find.byType(PremiumScreen), findsNothing);
   });
 
   testWidgets(

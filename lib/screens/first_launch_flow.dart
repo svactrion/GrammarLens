@@ -14,10 +14,10 @@ import '../utils/loading_view.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
 import 'onboarding_screen.dart';
-import 'paywall_screen.dart';
+import 'premium_screen.dart';
 import 'welcome_screen.dart';
 
-/// Welcome → Onboarding → Daily Test → Result-with-paywall-pitch, shown once
+/// Welcome → Onboarding → Daily Test → Result-with-Premium-pitch, shown once
 /// on first launch (PRD v2 §4, §12.3's Day-0 sequence). Every step but the
 /// last swaps a local `_step` between plain widgets rather than pushing
 /// routes — no nested Navigator, no route to leave behind once the flow
@@ -29,9 +29,9 @@ import 'welcome_screen.dart';
 /// reached via `Navigator.push` instead, [onComplete] firing wouldn't
 /// visibly do anything — the pushed route would just keep showing on top,
 /// since nothing here is popping it. [DailyTestScreen.onFinished] and
-/// [PaywallScreen.onDone] both exist to let this flow reach the finish line
+/// [PremiumScreen.onDone] both exist to let this flow reach the finish line
 /// through plain widget swaps instead, with the sole exception of the
-/// (fully reversible) excursion into a real, pushed [PaywallScreen] when
+/// (fully reversible) excursion into a real, pushed [PremiumScreen] when
 /// the user actually taps "Start free trial."
 class FirstLaunchFlow extends StatefulWidget {
   final ClaudeService claudeService;
@@ -96,7 +96,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   /// onComplete] so app.dart swaps in the tabbed Home shell. Reached from
   /// three places, all equally valid endings (PRD v2 §12.3): abandoning
   /// Daily Test itself, tapping "Maybe later" on the result screen's
-  /// pitch, or dismissing the real [PaywallScreen] (whether that's via its
+  /// pitch, or dismissing the real [PremiumScreen] (whether that's via its
   /// own "Maybe later" or after a trial actually started).
   void _finish() {
     widget.onComplete(_profile!);
@@ -138,16 +138,16 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
 /// The Day-0 result screen's ending (PRD v2 §12.3), replacing the plain
 /// "back to Home" a Home-reached Daily Test leaves this slot empty for
 /// (see DailyTestResultScreen's own doc comment). Deliberately light: a
-/// one-line pitch plus the two ways out, not a duplicate of PaywallScreen's
+/// one-line pitch plus the two ways out, not a duplicate of PremiumScreen's
 /// own pitch/pricing card — that real screen is one tap away via "Start
 /// free trial," this is just the invitation to go there.
 class _DayZeroPaywallCta extends StatelessWidget {
-  // Named to match PaywallScreen.onDone, not just "onSkip": this same
+  // Named to match PremiumScreen.onDone, not just "onSkip": this same
   // callback is threaded through to that screen's own onDone too, so it
-  // fires whether the user taps "Maybe later" right here, taps Paywall's
-  // own "Maybe later," or actually starts a trial and taps "Continue"
-  // there — all three are "done here" moments (PRD v2 §12.3: whichever
-  // path, it ends on Home).
+  // fires whether the user taps "Maybe later" right here, taps the
+  // Premium screen's own "Maybe later," or actually starts a trial and
+  // taps "Continue" there — all three are "done here" moments (PRD v2
+  // §12.3: whichever path, it ends on Home).
   final VoidCallback onDone;
 
   const _DayZeroPaywallCta({required this.onDone});
@@ -181,7 +181,7 @@ class _DayZeroPaywallCta extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => PaywallScreen(onDone: onDone),
+                    builder: (_) => PremiumScreen(onDone: onDone),
                   ),
                 );
               },
