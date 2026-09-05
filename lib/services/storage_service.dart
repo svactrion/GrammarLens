@@ -16,7 +16,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 9;
+  static const _dbVersion = 10;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -118,6 +118,18 @@ class StorageService {
     )
   ''';
 
+  // Debug-only developer setting (see SubscriptionService.debugAccessOverride):
+  // 'full' / 'free' / absent-row (no override, use the real status). Reading
+  // and writing this table is harmless in a release build — it's inert data
+  // no release code path ever consults — the actual release-safety gate is
+  // SubscriptionService's own kDebugMode check, not anything here.
+  static const _createDebugSettingsTable = '''
+    CREATE TABLE debug_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      access_override TEXT
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -139,6 +151,7 @@ class StorageService {
         await db.execute(_createUserProfileTable);
         await db.execute(_createDailySessionUsageTable);
         await db.execute(_createDailyTestSetsTable);
+        await db.execute(_createDebugSettingsTable);
       },
       // Still pre-launch prototype with no real user data to preserve, so a
       // schema change just drops and recreates rather than carrying a real
@@ -152,6 +165,7 @@ class StorageService {
         await db.execute('DROP TABLE IF EXISTS user_profile');
         await db.execute('DROP TABLE IF EXISTS daily_session_usage');
         await db.execute('DROP TABLE IF EXISTS daily_test_sets');
+        await db.execute('DROP TABLE IF EXISTS debug_settings');
         await db.execute(_createTable);
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
@@ -160,6 +174,7 @@ class StorageService {
         await db.execute(_createUserProfileTable);
         await db.execute(_createDailySessionUsageTable);
         await db.execute(_createDailyTestSetsTable);
+        await db.execute(_createDebugSettingsTable);
       },
     );
   }
@@ -394,6 +409,37 @@ class StorageService {
       day: row['day'] as String,
       questions: questions,
       completedAt: completedAt == null ? null : DateTime.parse(completedAt),
+    );
+  }
+
+  /// The developer's persisted debug entitlement override (see
+  /// `SubscriptionService.debugAccessOverride`) — `true`/`false` forces
+  /// [SubscriptionService.hasFullAccess], `null` means no override is set,
+  /// use the real status. Reading this in a release build is harmless
+  /// (plain inert data); the actual release-safety guarantee lives in
+  /// SubscriptionService's own `kDebugMode` check, not here.
+  Future<bool?> getDebugAccessOverride() async {
+    final db = await _database;
+    final rows = await db.query('debug_settings', limit: 1);
+    if (rows.isEmpty) return null;
+    final value = rows.first['access_override'] as String?;
+    if (value == null) return null;
+    return value == 'full';
+  }
+
+  /// Persists the developer's debug entitlement override so it survives an
+  /// app restart, same single-row-table convention as [setThemeMode].
+  /// `null` clears it (back to "use the real status").
+  Future<void> setDebugAccessOverride(bool? hasFullAccess) async {
+    final db = await _database;
+    await db.insert(
+      'debug_settings',
+      {
+        'id': 0,
+        'access_override':
+            hasFullAccess == null ? null : (hasFullAccess ? 'full' : 'free'),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
