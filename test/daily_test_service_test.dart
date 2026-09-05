@@ -111,6 +111,7 @@ void main() {
         topicId: 'articles',
         errorType: 'missing_article',
         timestamp: DateTime.now(),
+        source: ErrorSource.topicPractice,
       ),
     ]);
 

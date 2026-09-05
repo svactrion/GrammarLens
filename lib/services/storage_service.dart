@@ -16,7 +16,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 11;
+  static const _dbVersion = 12;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -32,6 +32,12 @@ class StorageService {
   // defers the real free-tier cap to post-launch cost data).
   static const int dailySessionLimit = 10;
 
+  // `source` (added schema v12) distinguishes a Topic Practice mistake
+  // from a Daily Test one — both write here now (2026-09-05 decision:
+  // free tier diagnoses via Daily Test, paid tier treats via Topic
+  // Practice — see docs/build-log.md). Defaults to the value every row
+  // predating this column really was, since Topic Practice was the only
+  // writer until now.
   static const _createTable = '''
     CREATE TABLE error_entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,7 +48,8 @@ class StorageService {
       user_answer TEXT,
       corrected_answer TEXT,
       explanation TEXT,
-      rule TEXT
+      rule TEXT,
+      source TEXT NOT NULL DEFAULT 'topic_practice'
     )
   ''';
 

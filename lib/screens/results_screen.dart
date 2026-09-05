@@ -73,6 +73,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               correctedAnswer: f.correctedAnswer,
               explanation: f.explanation,
               rule: f.rule,
+              source: ErrorSource.topicPractice,
             ))
         .toList();
     if (entries.isEmpty) return;
