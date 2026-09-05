@@ -53,9 +53,9 @@ void main() {
     // The revised, longer early-access copy pushes these two tiles below
     // the fold even at a tall test viewport — scroll them into the
     // Sliver's build range rather than assuming they're already mounted.
-    await tester.scrollUntilVisible(find.text('AI Voice Practice'), 300);
+    await tester.scrollUntilVisible(find.text('AI Practice Partner'), 300);
     expect(find.text('Unlimited Streak Mode'), findsOneWidget);
-    expect(find.text('AI Voice Practice'), findsOneWidget);
+    expect(find.text('AI Practice Partner'), findsOneWidget);
     expect(find.text('Coming soon'), findsNWidgets(2));
   });
 
