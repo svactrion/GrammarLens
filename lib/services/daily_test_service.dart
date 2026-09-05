@@ -23,6 +23,13 @@ class DailyTestService {
   /// Returns today's Daily Test set, generating and caching one first if
   /// today's device hasn't already gotten one — so a repeat open the same
   /// day never triggers a second generation call.
+  ///
+  /// Deliberately generate-then-save, not save-as-you-go: `await` on
+  /// [ClaudeService.generateDailyTestQuestions] means a failure there (bad
+  /// API response, a parse error) throws before [StorageService.saveDailyTestSet]
+  /// is ever reached, so a half/failed generation can never get cached as
+  /// "today's test" — a retry always gets a real attempt, not a
+  /// permanently broken cached row for the day.
   Future<DailyTestSet> getTodaysSet() async {
     final cached = await storageService.getDailyTestSetForToday();
     if (cached != null) return cached;
