@@ -51,8 +51,12 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   }
 
   Future<void> _markCompleted() async {
+    // Already recorded — this is a re-view of an already-completed set
+    // (e.g. Home's "view result again"), not a fresh finish, so there's
+    // nothing new to persist.
+    if (widget.dailyTestSet.isCompleted) return;
     try {
-      await widget.dailyTestService.markCompleted();
+      await widget.dailyTestService.markCompleted(widget.answers);
     } catch (_) {
       // Best-effort, same reasoning as ResultsScreen._recordCompletion:
       // not worth surfacing an error for over the results the user is

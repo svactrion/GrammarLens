@@ -16,7 +16,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 10;
+  static const _dbVersion = 11;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -109,12 +109,19 @@ class StorageService {
   // row per calendar day holds the whole generated set as JSON (there's
   // nothing to query inside it — it's always read/written as a unit) plus
   // a nullable completion timestamp, so re-opening the app the same day
-  // shows the same set instead of generating a new one.
+  // shows the same set instead of generating a new one. `answers_json`
+  // (added schema v11) holds the user's answers at the moment of
+  // completion — needed so Home's "today" summary (PRD v2 §13.5) can show
+  // a score and let the user view the result again without re-deriving
+  // either from nothing: the score was never persisted anywhere before
+  // this, only computed transiently in DailyTestResultScreen from an
+  // in-memory answers map.
   static const _createDailyTestSetsTable = '''
     CREATE TABLE daily_test_sets (
       day TEXT PRIMARY KEY,
       questions_json TEXT NOT NULL,
-      completed_at TEXT
+      completed_at TEXT,
+      answers_json TEXT
     )
   ''';
 
@@ -379,22 +386,29 @@ class StorageService {
         'questions_json':
             jsonEncode(questions.map((q) => q.toJson()).toList()),
         'completed_at': null,
+        'answers_json': null,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     return DailyTestSet(day: day, questions: questions);
   }
 
-  /// Marks today's Daily Test set completed. A no-op if there's no row for
-  /// today (shouldn't happen — completing implies a set was already
-  /// fetched/generated — but this is called from UI code in a future batch,
-  /// so it degrades quietly rather than throwing on an unexpected order of
-  /// operations).
-  Future<void> markDailyTestCompleted() async {
+  /// Marks today's Daily Test set completed and persists [answers] — the
+  /// only record of what the user actually answered, since nothing else
+  /// stores it. Needed so a score can be shown (and the result viewed
+  /// again) later without a live in-memory answers map, e.g. from Home's
+  /// "today" summary (PRD v2 §13.5). A no-op if there's no row for today
+  /// (shouldn't happen — completing implies a set was already fetched/
+  /// generated — but this is called from UI code, so it degrades quietly
+  /// rather than throwing on an unexpected order of operations).
+  Future<void> markDailyTestCompleted(Map<String, String> answers) async {
     final db = await _database;
     await db.update(
       'daily_test_sets',
-      {'completed_at': DateTime.now().toIso8601String()},
+      {
+        'completed_at': DateTime.now().toIso8601String(),
+        'answers_json': jsonEncode(answers),
+      },
       where: 'day = ?',
       whereArgs: [_todayKey()],
     );
@@ -405,10 +419,14 @@ class StorageService {
         .map((e) => DailyTestQuestion.fromJson(e as Map<String, dynamic>))
         .toList();
     final completedAt = row['completed_at'] as String?;
+    final answersJson = row['answers_json'] as String?;
     return DailyTestSet(
       day: row['day'] as String,
       questions: questions,
       completedAt: completedAt == null ? null : DateTime.parse(completedAt),
+      answers: answersJson == null
+          ? null
+          : Map<String, String>.from(jsonDecode(answersJson) as Map),
     );
   }
 
