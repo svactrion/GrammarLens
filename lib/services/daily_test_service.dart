@@ -1,4 +1,5 @@
 import '../models/daily_test_set.dart';
+import '../models/error_entry.dart';
 import 'claude_service.dart';
 import 'storage_service.dart';
 
@@ -50,4 +51,15 @@ class DailyTestService {
   /// `StorageService.markDailyTestCompleted`'s own doc comment for why.
   Future<void> markCompleted(Map<String, String> answers) =>
       storageService.markDailyTestCompleted(answers);
+
+  /// Records this session's wrong answers into the shared error profile —
+  /// the exact same `insertErrors` path Topic Practice's ResultsScreen
+  /// already writes through, not a second one (2026-09-05 decision: the
+  /// free tier diagnoses via Daily Test, the paid tier treats via Topic
+  /// Practice — see docs/build-log.md). A no-op for an empty list, so
+  /// callers don't need their own emptiness check first.
+  Future<void> recordErrors(List<ErrorEntry> entries) {
+    if (entries.isEmpty) return Future.value();
+    return storageService.insertErrors(entries);
+  }
 }

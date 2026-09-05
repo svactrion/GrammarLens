@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
+import '../models/error_entry.dart';
 import '../services/daily_test_service.dart';
 import '../theme.dart';
 import '../utils/answer_matching.dart';
+import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/mistake_breakdown.dart';
 
@@ -47,6 +49,13 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       for (final question in widget.dailyTestSet.questions)
         _QuestionResult.from(question, widget.answers[question.item.id]),
     ];
+    // Both guarded on the same "is this a fresh finish, not a re-view"
+    // check as _markCompleted below — a re-view (Home's "view result
+    // again") must not re-log the same mistakes a second time and
+    // inflate their frequency.
+    if (!widget.dailyTestSet.isCompleted) {
+      _saveErrors();
+    }
     _markCompleted();
   }
 
@@ -61,6 +70,44 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       // Best-effort, same reasoning as ResultsScreen._recordCompletion:
       // not worth surfacing an error for over the results the user is
       // actually here to see.
+    }
+  }
+
+  /// Feeds wrong (never skipped) answers into the same error profile
+  /// Topic Practice's ResultsScreen writes to — 2026-09-05 decision: the
+  /// free tier diagnoses via Daily Test, the paid tier treats via Topic
+  /// Practice (see docs/build-log.md). [ErrorEntry.explanation] is only
+  /// ever [AnswerMatchResult.comment] — genuinely null when the wrong
+  /// answer didn't match a predicted common mistake, never the screen's
+  /// own generic "Not quite" display fallback and never an invented one:
+  /// Daily Test has no LLM call to generate a real explanation from, so a
+  /// thinner record is the honest one. [ErrorEntry.errorType] is the
+  /// question's topicId — Daily Test has no finer per-mistake
+  /// classification the way Topic Practice's LLM scoring does, so this is
+  /// the coarsest-but-true category available, not a fabricated one.
+  Future<void> _saveErrors() async {
+    final now = DateTime.now();
+    final entries = _results
+        .where((r) => !r.isSkipped && !r.isCorrect)
+        .map((r) => ErrorEntry(
+              topicId: r.question.topicId,
+              errorType: r.question.topicId,
+              timestamp: now,
+              prompt: r.question.item.fullText,
+              userAnswer: r.userAnswer,
+              correctedAnswer: r.question.correctAnswer,
+              explanation: r.match?.comment,
+              source: ErrorSource.dailyTest,
+            ))
+        .toList();
+    try {
+      await widget.dailyTestService.recordErrors(entries);
+    } catch (e) {
+      // Don't let a storage failure pass silently — without this the
+      // Review tab looks broken later with no clue why (see
+      // ResultsScreen._saveErrors' identical reasoning).
+      if (!mounted) return;
+      AppMessenger.show('Could not save this to your error profile: $e');
     }
   }
 
