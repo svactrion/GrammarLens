@@ -458,3 +458,39 @@ Claude session Ahmet uses for product calls — each entry is tagged
   Privacy Policy/Terms of Service pages exist yet, and a dedicated
   visual-polish pass across Daily Test/Paywall/Premium is still pending
   (deliberately deferred until the flow was functionally done).
+
+## 2026-09-05
+
+- **[Engineering]** Build-time config centralized, decided ahead of the
+  planned Cloudflare Workers proxy migration (API key moving out of the
+  client entirely, not yet started): rather than fix the immediate
+  symptom (Daily Test throwing `ANTHROPIC_API_KEY is not set` on every IDE
+  run) with a one-off workaround, consolidated all `String.fromEnvironment`
+  reads behind a new `AppConfig` (`lib/config/app_config.dart`) so the
+  proxy migration later only touches one file, not every call site. Four
+  independent commits: (1) `AppConfig` itself (`anthropicApiKey`,
+  `isConfigured`), `ClaudeService` reads through it instead of calling
+  `String.fromEnvironment` directly, small new test; (2)
+  `--dart-define-from-file` scheme — `config/dev.example.json` committed
+  as the template, real `config/dev.json` gitignored, `.vscode/launch.json`
+  committed wiring VS Code's Run/Debug to it (`.vscode/` itself stays
+  gitignored via a `.vscode/*` / `!.vscode/launch.json` pair, since the
+  rest of that folder is editor-local state); (3) the missing-key
+  exception message rewritten to name the actual fix (copy
+  `config/dev.example.json`, see README) instead of just repeating the
+  bare `--dart-define` flag it already required; (4) a short README
+  "Local setup" section, including the Xcode caveat found while checking
+  this — a direct Xcode Run doesn't pass `--dart-define`/
+  `--dart-define-from-file` flags at all, so the key still needs
+  `flutter run` or the VS Code config. `subscription_service.dart`'s
+  separate `REVENUECAT_API_KEY` read was deliberately left untouched —
+  out of scope for this batch, and not a secrecy concern the way the
+  Anthropic key is (RevenueCat's SDK key is meant to be public). `flutter
+  analyze` and the full test suite (88 tests) clean after every commit.
+- **[Product]** Ran a git-history secret scan as a standalone check (no
+  code change): searched all 79 commits across all refs for the `sk-ant`
+  pattern and for any committed file with an env/config/secret-like name.
+  No real Anthropic API key has ever been committed — the only `sk-ant`
+  hit is the placeholder string in this batch's own new README section,
+  and the only env-like filename ever added is `config/dev.example.json`
+  (this batch), which has only ever held an empty placeholder value.
