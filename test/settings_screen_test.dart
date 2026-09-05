@@ -7,16 +7,30 @@ import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 /// sqflite has no platform channel in this test environment (see
 /// widget_test.dart's note), so a real `StorageService.saveUserProfile`
 /// call throws — this fake lets the one test that needs `onProfileUpdated`
 /// to actually fire (it only fires after a successful save) work without
-/// real persistence.
+/// real persistence. Also stands in for the debug-access-override
+/// persistence the Developer section reads/writes, in-memory instead of
+/// real sqlite, so a test can both seed a starting value and assert what
+/// got saved.
 class _FakeStorageService extends StorageService {
+  bool? debugAccessOverride;
+
   @override
   Future<void> saveUserProfile(UserProfile profile) async {}
+
+  @override
+  Future<bool?> getDebugAccessOverride() async => debugAccessOverride;
+
+  @override
+  Future<void> setDebugAccessOverride(bool? hasFullAccess) async {
+    debugAccessOverride = hasFullAccess;
+  }
 }
 
 void main() {
@@ -28,6 +42,7 @@ void main() {
     ValueChanged<AppThemeMode>? onSelectThemeMode,
     ValueChanged<UserProfile>? onProfileUpdated,
     StorageService? storageService,
+    SubscriptionService? subscriptionService,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -37,6 +52,7 @@ void main() {
           profile: profile,
           storageService: storageService ?? StorageService(),
           onProfileUpdated: onProfileUpdated ?? (_) {},
+          subscriptionService: subscriptionService,
         ),
       ),
     );
@@ -151,5 +167,126 @@ void main() {
     // reset call would surface as an error snackbar — its absence here
     // confirms Cancel never triggered one.
     expect(find.textContaining('Could not reset'), findsNothing);
+  });
+
+  group('Developer section (debug-only entitlement override)', () {
+    testWidgets('shows the three override options', (tester) async {
+      await pumpSettings(tester, storageService: _FakeStorageService());
+      await tester.drag(find.byType(ListView), const Offset(0, -800));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Developer'), findsOneWidget);
+      expect(find.text('Real'), findsOneWidget);
+      expect(find.text('Free'), findsOneWidget);
+      expect(find.text('Full access'), findsOneWidget);
+    });
+
+    // `_DebugAccessChoice` is private to settings_screen.dart, so this
+    // identifies the Developer section's SegmentedButton by elimination
+    // (the only other one on screen is the theme picker, `AppThemeMode`
+    // values) and reads its selection via `toString()`, which — unlike
+    // the enum's `.name` getter — isn't stripped from this test build.
+    String selectedDebugChoiceName(WidgetTester tester) {
+      final buttons =
+          tester.widgetList(find.byWidgetPredicate((w) => w is SegmentedButton));
+      for (final w in buttons) {
+        final selected = (w as dynamic).selected.first;
+        if (selected is AppThemeMode) continue;
+        return selected.toString().split('.').last;
+      }
+      throw StateError('Developer section SegmentedButton not found');
+    }
+
+    testWidgets(
+      'the initial selection reflects subscriptionService.debugAccessOverride '
+      'at mount time, not always "Real"',
+      (tester) async {
+        final subscriptionService = SubscriptionService();
+        await subscriptionService.setDebugAccessOverride(true);
+        addTearDown(() => subscriptionService.setDebugAccessOverride(null));
+
+        await pumpSettings(
+          tester,
+          storageService: _FakeStorageService(),
+          subscriptionService: subscriptionService,
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, -800));
+        await tester.pumpAndSettle();
+
+        expect(selectedDebugChoiceName(tester), 'full');
+      },
+    );
+
+    testWidgets(
+      'picking "Full access" forces hasFullAccess and persists the choice',
+      (tester) async {
+        final storage = _FakeStorageService();
+        final subscriptionService = SubscriptionService();
+        addTearDown(() => subscriptionService.setDebugAccessOverride(null));
+
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          subscriptionService: subscriptionService,
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, -800));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Full access'));
+        await tester.pumpAndSettle();
+
+        expect(await subscriptionService.hasFullAccess, isTrue);
+        expect(storage.debugAccessOverride, isTrue);
+      },
+    );
+
+    testWidgets(
+      'picking "Free" forces hasFullAccess to false and persists it',
+      (tester) async {
+        final storage = _FakeStorageService();
+        final subscriptionService = SubscriptionService();
+        addTearDown(() => subscriptionService.setDebugAccessOverride(null));
+
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          subscriptionService: subscriptionService,
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, -800));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Free'));
+        await tester.pumpAndSettle();
+
+        expect(await subscriptionService.hasFullAccess, isFalse);
+        expect(storage.debugAccessOverride, isFalse);
+      },
+    );
+
+    testWidgets(
+      'picking "Real" clears the override back to the actual status',
+      (tester) async {
+        final storage = _FakeStorageService();
+        final subscriptionService = SubscriptionService();
+        // Starts already on "Full access" — otherwise tapping "Real" (the
+        // default selection) would be a same-segment tap, not a real change.
+        await subscriptionService.setDebugAccessOverride(true);
+        addTearDown(() => subscriptionService.setDebugAccessOverride(null));
+
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          subscriptionService: subscriptionService,
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, -800));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Real'));
+        await tester.pumpAndSettle();
+
+        expect(subscriptionService.debugAccessOverride, isNull);
+        expect(storage.debugAccessOverride, isNull);
+      },
+    );
   });
 }
