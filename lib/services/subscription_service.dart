@@ -43,6 +43,25 @@ class SubscriptionService {
   /// (not yet created) premium monthly subscription.
   static const String productIdPremiumMonthly = 'grammarlens_premium_monthly';
 
+  /// The App Store Connect / RevenueCat product identifier for the
+  /// (not yet created) premium annual subscription — the counterpart to
+  /// [productIdPremiumMonthly] (PRD v2 §13.3's two-plan pricing).
+  static const String productIdPremiumAnnual = 'grammarlens_premium_annual';
+
+  /// Marketing-copy trial length (PRD v2 §13.2), for every place that
+  /// states the trial length without a live RevenueCat package to read it
+  /// from — Home's locked card, the free/trial/paid table, the Day-0
+  /// pitch. `PremiumScreen`'s own purchase/disclosure block prefers the
+  /// selected package's real `introductoryPrice` instead (see its
+  /// `_TrialTermsCard`), so it can never disagree with what's actually
+  /// configured once a real product exists; until then, this is the one
+  /// place "7" is written by hand, so a length change is a single-line
+  /// diff instead of a hunt across the app. Must match whatever gets
+  /// configured as the App Store Connect introductory offer — a mismatch
+  /// between displayed and sold trial length is a review rejection
+  /// reason, not a preference.
+  static const int trialLengthDays = 7;
+
   /// RevenueCat's public SDK key, read at build/run time via
   /// `--dart-define=REVENUECAT_API_KEY=...` — same mechanism ClaudeService
   /// uses for the Anthropic key, but for a different reason: RevenueCat's
