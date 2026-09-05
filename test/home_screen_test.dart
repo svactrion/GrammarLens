@@ -16,9 +16,10 @@ import 'package:grammar_lens/widgets/avatar_tile.dart';
 /// swallowed) Firebase call, so a test can assert which Home entry point a
 /// tap actually reached — needed for Daily Test specifically, since unlike
 /// Topic Practice/Early Access, DailyTestScreen's real initial load has
-/// nothing to succeed against in this test environment and pops itself
-/// back to Home on that failure, making the pushed screen itself too
-/// transient to reliably catch mid-flight.
+/// nothing to succeed against in this test environment, landing on its own
+/// in-screen error state (see daily_test_screen_test.dart) rather than
+/// anything this file's simpler `tester.pump()`-only assertions could
+/// reliably match against.
 class _RecordingAnalyticsService extends AnalyticsService {
   final List<String> modesSelected = [];
 
