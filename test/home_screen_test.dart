@@ -417,5 +417,29 @@ void main() {
       );
       expect(find.text('Premium'), findsNothing);
     });
+
+    testWidgets('states what it offers, not just the word "Premium"',
+        (tester) async {
+      await pumpHome(tester);
+      expect(
+        find.text('Unlock targeted practice on your weak spots'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'text color is the scaffold foreground, not the low-contrast '
+        'onSurfaceVariant meant for a surface background — this row sits '
+        'directly on the orange scaffold in light mode', (tester) async {
+      await pumpHome(tester);
+
+      final theme = Theme.of(tester.element(find.text('Premium')));
+      final expectedFg =
+          theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+
+      final style = tester.widget<Text>(find.text('Premium')).style;
+      expect(style?.color, expectedFg);
+      expect(style?.color, isNot(theme.colorScheme.onSurfaceVariant));
+    });
   });
 }
