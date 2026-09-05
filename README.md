@@ -135,6 +135,28 @@ This project follows a structured product process, documented as it happens:
 - No accounts or cloud sync — local storage only
 - Single language pair (Turkish → English) to start
 
+## Local setup
+
+The app needs an Anthropic API key at build/run time (`AppConfig` in
+`lib/config/app_config.dart`); without it, Daily Test and Topic Practice
+fail with a `ClaudeApiException` telling you to do the below.
+
+1. Copy `config/dev.example.json` to `config/dev.json` and fill in your
+   real key:
+   ```json
+   { "ANTHROPIC_API_KEY": "sk-ant-..." }
+   ```
+   `config/dev.json` is gitignored — it never gets committed.
+2. Run it one of two ways:
+   - **VS Code**: use the "GrammarLens (dev)" launch config
+     (`.vscode/launch.json`, committed) — Run/Debug already passes
+     `--dart-define-from-file=config/dev.json`.
+   - **Terminal**: `flutter run --dart-define-from-file=config/dev.json`
+3. **Xcode**: hitting the Run button directly in Xcode does **not** pass
+   any `--dart-define`/`--dart-define-from-file` flags — the app will
+   build but every API call will fail with the missing-key error above.
+   Launch from `flutter run` or VS Code instead when you need the key.
+
 ## Stack
 
 Flutter (iOS) · Anthropic API (Claude Sonnet, structured JSON outputs) ·
