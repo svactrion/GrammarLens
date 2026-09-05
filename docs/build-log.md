@@ -730,3 +730,84 @@ Claude session Ahmet uses for product calls — each entry is tagged
     "Streak Mode and [this feature]" — not a literal instance of the
     feature's own name, and "Streak/AI Practice Partner" wouldn't read
     as a shorthand at all.
+
+## 2026-09-05 (v2.2 structure batch: Premium screen merge, 7-day trial,
+two-plan pricing, disclosure gate)
+
+- **[Product]** `docs/design-audit.md` (new) and `docs/prd-v2.md` §13
+  were authored outside this session, ahead of this batch — a
+  screen-by-screen review of the app as it looked on device, split into
+  system-level causes, screen-specific defects, and taste (only the
+  first two justify code changes), plus the decisions it produced.
+  Committed as written, not rewritten. This batch implements §13's
+  **B-structure** half only (§10.1/roadmap.md's own split): the Premium
+  screen merge, the 7-day trial, two-plan pricing, the disclosure gate,
+  and pulling unbuilt features off the purchase surface. Home's "today"
+  screen rework, the nav-bar overlap fix, the Review duplicate-label
+  bug, and demoting Skip on Daily Test are **not** in this batch —
+  separate work, tracked in `docs/roadmap.md`.
+- **[Engineering]** Merged the Early Access and Paywall screens into one
+  `PremiumScreen` (PRD v2 §13.1) across two commits: the free/trial/paid
+  table (Early Access's content) followed by the purchase block, price,
+  and required disclosure (Paywall's content), initially still a single
+  package the way Paywall always worked, then upgraded to a real
+  monthly/annual picker. `PaywallScreen` is deleted; every caller (Home's
+  locked Topic Practice card and its own Premium row, the Day-0 pitch in
+  `first_launch_flow.dart`) now pushes `PremiumScreen`. "Early Access" is
+  retired everywhere it named this screen — the AppBar title (now
+  "Premium", also fixing Paywall's own AppBar bug where it read "Topic
+  Practice"), Home's banner (renamed `_PremiumBanner`),
+  `AnalyticsService.modeEarlyAccess` (now `modePremium`, value
+  `"premium"`) — while deliberately left alone wherever it names the
+  *already-removed* Home grid tile from 2026-09-02, the same
+  don't-rewrite-history reasoning as the rename batch above. New
+  `PremiumScreen.sourceContext` (nullable): mechanism for a future caller
+  to open this screen already naming what prompted it (a specific weak
+  spot, per PRD v2 §13.5) — no caller passes a value yet, mechanism only.
+- **[Engineering]** Replaced the 3-day trial with 7 days from a single
+  source: `SubscriptionService.trialLengthDays`, read by Home's locked
+  card, the free/trial/paid table, and the Day-0 pitch — the one place
+  "7" is written by hand, so it can't drift between them. The
+  purchase/disclosure block itself still prefers the *live* package's
+  own `introductoryPrice` over this constant wherever a real product
+  exists (unchanged behavior, already correct) — the constant is
+  specifically the fallback for copy that has no package to read from.
+  A mismatch between what's displayed and what's actually configured on
+  App Store Connect is a review rejection reason, not a preference.
+- **[Product]** Two-plan pricing (PRD v2 §13.3): monthly and annual,
+  annual preselected, the annual plan's big figure showing its
+  per-month equivalent with the real annual total underneath and a
+  "Save X%" badge. Every figure is read from the two real
+  `Package.storeProduct`s — the per-month equivalent is
+  `StoreProduct.pricePerMonth`/`pricePerMonthString`, which RevenueCat/
+  StoreKit itself computes and formats in the viewer's currency from the
+  real annual price (used directly rather than reimplementing currency
+  formatting, which risks assuming a "$" prefix that breaks for every
+  other currency); the savings percentage compares that figure against
+  the real monthly product's price. An offering with only one of the two
+  plans configured is treated the same as no offering at all — the
+  existing honest "unavailable" state, not a picker with one dead
+  option. No invented social proof anywhere on the screen.
+- **[Product]** Nothing unbuilt is sold (PRD v2 §13.4): "Unlimited Streak
+  Mode" and "AI Practice Partner", both still just "Coming soon" tags on
+  the old Early Access screen, are gone from the merged Premium screen
+  entirely — that screen now takes money, and Apple expects advertised
+  subscription features to actually exist.
+- **[Engineering]** The required App Store disclosure block (trial
+  length, price after it, renewal period, auto-renews-unless-cancelled,
+  Privacy/Terms links) already existed on the old Paywall screen,
+  generated from real product data — ported unchanged. Added a real
+  pre-submission gate for the one known gap it can't close on its own
+  (`AppLinks`' Privacy Policy/Terms URLs still being empty, a known
+  launch blocker): `test/app_links_test.dart` is a `skip()`'d test
+  asserting those URLs are non-empty, with a loud reason printed on
+  every test run, so it can't be silently forgotten without permanently
+  turning the suite red (which just trains everyone to ignore red);
+  `scripts/preflight.sh` is the actual gate, run right before
+  `flutter build ipa` per README's updated Local setup section, exiting
+  non-zero naming exactly what's still missing. The existing green
+  regression test (legal links render disabled, not dead-but-clickable,
+  while the URLs are empty) stays as a separate, permanent test.
+- **[Product]** `flutter analyze` and the full test suite (130 passing,
+  1 deliberately skipped with a printed reason) clean after every
+  commit in this batch.
