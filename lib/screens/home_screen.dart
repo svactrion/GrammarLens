@@ -670,13 +670,23 @@ class _WeakSpotRow extends StatelessWidget {
   }
 }
 
-/// A quiet single-line row (PRD v2 §13.5 item 5) — deliberately not a
-/// Card, not filled, no elevation, so it can never outweigh the Today
-/// card or Topic Practice above it. Replaces what used to be a solid
-/// deep-blue banner; that treatment made sense when Premium was one of
-/// only three things on the screen; it doesn't once Home actually leads
-/// with real data. Only shown to a user without full access — see the
-/// build() call site.
+/// A quiet row (PRD v2 §13.5 item 5) — deliberately not a Card, not
+/// filled, no elevation, so it can never outweigh the Today card or Topic
+/// Practice above it. Replaces what used to be a solid deep-blue banner;
+/// that treatment made sense when Premium was one of only three things on
+/// the screen; it doesn't once Home actually leads with real data. Only
+/// shown to a user without full access — see the build() call site.
+///
+/// Text color is deliberately not `colorScheme.onSurfaceVariant` — this
+/// row sits directly on the scaffold, which in light mode is the vivid
+/// orange `primary` (see theme.dart), and `onSurfaceVariant` is a muted
+/// gray meant for a neutral surface. On orange it measures ~3.6:1 (fails
+/// AA for body text) and reads as washed-out — the exact contrast defect
+/// docs/design-audit.md flagged. `theme.appBarTheme.foregroundColor` is
+/// the color the app bar already uses for content on this same
+/// background (`onPrimary` in light mode, contrast-checked in theme.dart;
+/// `onSurface` in dark mode, where the scaffold isn't orange), so reusing
+/// it keeps this row legible without inventing a third color role.
 class _PremiumRow extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -685,7 +695,7 @@ class _PremiumRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurfaceVariant;
+    final fg = theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),
@@ -694,15 +704,26 @@ class _PremiumRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
         child: Row(
           children: [
-            Icon(Icons.workspace_premium_outlined, size: 18, color: muted),
+            Icon(Icons.workspace_premium_outlined, size: 20, color: fg),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                'Premium',
-                style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Premium',
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: fg, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Unlock targeted practice on your weak spots',
+                    style: theme.textTheme.bodySmall?.copyWith(color: fg),
+                  ),
+                ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, size: 18, color: muted),
+            Icon(Icons.chevron_right_rounded, size: 18, color: fg),
           ],
         ),
       ),
