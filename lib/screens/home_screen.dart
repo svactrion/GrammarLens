@@ -5,7 +5,6 @@ import '../models/avatar.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
 import '../models/review_sort_order.dart';
-import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
@@ -15,6 +14,7 @@ import '../utils/answer_matching.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/floating_nav_shell.dart';
+import '../widgets/weak_spot_card.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
 import 'premium_screen.dart';
@@ -344,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const _SectionLabel('Your weak spots'),
             const SizedBox(height: 8),
             for (final spot in _weakSpots) ...[
-              _WeakSpotRow(
+              WeakSpotCard(
                 topic: kTopics.firstWhere(
                   (t) => t.id.name == spot.topicId,
                   orElse: () => kTopics.first,
@@ -578,97 +578,6 @@ class _PracticeModeCard extends StatelessWidget {
   }
 }
 
-/// One of Home's 2-3 most frequent weak spots (PRD v2 §13.5 item 4) —
-/// deliberately the same card shape ReviewScreen's own list already uses
-/// (explanation as the lead line, topic/error-type + frequency stat below)
-/// rather than a condensed variant, so this reads as "the same weak spot
-/// you'd see in Review", not a different summary of it. [locked] reuses
-/// `_PracticeModeCard`'s lock-badge treatment for the same reason.
-class _WeakSpotRow extends StatelessWidget {
-  final Topic topic;
-  final WeakSpot spot;
-  final bool locked;
-  final VoidCallback onTap;
-
-  const _WeakSpotRow({
-    required this.topic,
-    required this.spot,
-    required this.locked,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final muted = colorScheme.onSurfaceVariant;
-
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            spot.latestExplanation ??
-                                humanizeSlug(spot.errorType),
-                            style: theme.textTheme.bodyLarge,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (locked) ...[
-                          const SizedBox(width: 6),
-                          Icon(Icons.lock_rounded, size: 16, color: muted),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${topic.title} · ${humanizeSlug(spot.errorType)}',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: muted),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        formatFrequencyStat(spot.frequency, spot.lastSeen),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSecondaryContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: muted),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// A quiet row (PRD v2 §13.5 item 5) — deliberately not a Card, not
 /// filled, no elevation, so it can never outweigh the Today card or Topic

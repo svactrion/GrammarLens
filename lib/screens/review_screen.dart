@@ -7,9 +7,9 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/page_title.dart';
-import '../utils/text_format.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/floating_nav_shell.dart';
+import '../widgets/weak_spot_card.dart';
 import 'weak_spot_detail_screen.dart';
 
 /// Resurfaces the user's weak spots and lets them launch a freshly
@@ -204,65 +204,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 (t) => t.id.name == spot.topicId,
                 orElse: () => kTopics.first,
               );
-              final theme = Theme.of(context);
-              return Card(
-                child: InkWell(
-                  onTap: () => _openWeakSpot(spot),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                spot.latestExplanation ??
-                                    humanizeSlug(spot.errorType),
-                                style: theme.textTheme.bodyLarge,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${topic.title} · ${humanizeSlug(spot.errorType)}',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  formatFrequencyStat(
-                                    spot.frequency,
-                                    spot.lastSeen,
-                                  ),
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.onSecondaryContainer,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              return WeakSpotCard(
+                topic: topic,
+                spot: spot,
+                onTap: () => _openWeakSpot(spot),
               );
             },
           );
