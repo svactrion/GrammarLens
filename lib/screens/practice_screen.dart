@@ -6,7 +6,7 @@ import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
-import '../utils/error_banner.dart';
+import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
 import 'results_screen.dart';
 
@@ -138,7 +138,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not score answers: $e');
+      AppMessenger.show('Could not score answers: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

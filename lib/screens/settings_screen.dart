@@ -8,7 +8,7 @@ import '../models/avatar.dart';
 import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
-import '../utils/error_banner.dart';
+import '../utils/app_messenger.dart';
 import '../utils/layout_constants.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
@@ -131,12 +131,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await widget.storageService.saveUserProfile(updated);
       widget.onProfileUpdated(updated);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile saved.')),
-      );
+      AppMessenger.show('Profile saved.');
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not save profile: $e');
+      AppMessenger.show('Could not save profile: $e');
     } finally {
       if (mounted) setState(() => _savingProfile = false);
     }
@@ -190,12 +188,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await widget.storageService.resetProgressData();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Progress reset.')),
-      );
+      AppMessenger.show('Progress reset.');
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Could not reset progress: $e');
+      AppMessenger.show('Could not reset progress: $e');
     } finally {
       if (mounted) setState(() => _resetting = false);
     }

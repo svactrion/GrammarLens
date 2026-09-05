@@ -5,7 +5,7 @@ import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
-import '../utils/error_banner.dart';
+import '../utils/app_messenger.dart';
 import 'practice_length_picker.dart';
 import 'practice_screen.dart';
 
@@ -89,7 +89,7 @@ Future<void> launchPracticeSet({
     onReturned?.call();
   } catch (e) {
     if (!context.mounted) return;
-    showErrorSnackBar(context, '$errorPrefix: $e');
+    AppMessenger.show('$errorPrefix: $e');
   } finally {
     setGenerating(false);
   }
