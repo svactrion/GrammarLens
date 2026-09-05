@@ -24,12 +24,11 @@ migrate_working_dir/
 .idea/
 
 # VS Code
-.vscode/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# launch.json is committed on purpose (see .vscode/launch.json) so the
+# --dart-define-from-file wiring is shared; everything else in .vscode/
+# (workspace-local editor state) stays ignored.
+.vscode/*
+!.vscode/launch.json
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -65,3 +64,4 @@ app.*.map.json
 # Secrets — never commit API keys
 .env
 *.env.local
+config/dev.json
