@@ -985,3 +985,91 @@ two-plan pricing, disclosure gate)
   visual-polish pass later.
 - **[Product]** `flutter analyze` and the full test suite (156
   passing, 1 deliberately skipped) clean after this commit.
+
+## 2026-09-05 (B-structure batch: nav bar clipping, duplicate weak-spot
+label, wrong-field card title, Skip demotion)
+
+Four items from `docs/design-audit.md`'s B-structure list
+(`docs/roadmap.md` §2), one shared mechanism/widget per item rather than
+per-screen patches, each landed as its own commit.
+
+- **[Engineering] Nav bar overlapping scrollable content (S4).** Every
+  tab screen (Home, Review, Settings) padded its scroll view by a fixed
+  guessed constant (`navBarClearance = 110`,
+  `lib/utils/layout_constants.dart`) meant to clear the floating nav
+  bar. The guess didn't actually match the bar's real footprint — its
+  own visual chrome plus the device's bottom safe-area inset, which
+  varies by device — closely enough, so on some devices content stayed
+  clipped behind the bar even scrolled all the way to the end: Home's
+  Premium row's bottom half, Settings' Save button and "Data" heading.
+  Fixed with one mechanism instead of three guesses: extracted the
+  floating nav bar (previously built inline in `app.dart`) into
+  `FloatingNavShell` (`lib/widgets/floating_nav_shell.dart`), which
+  measures the bar's actual laid-out height via a `GlobalKey` after
+  every frame that could change it and publishes that number through a
+  `NavBarClearance` `InheritedWidget`. The three tab screens now read
+  `NavBarClearance.of(context)` instead of the old constant, which is
+  removed along with `layout_constants.dart`. Tests scroll a tab's
+  content to its absolute end on a simulated device with a real
+  safe-area inset and assert nothing is left behind the bar — the exact
+  case the old fixed guess got wrong.
+
+- **[Engineering] Duplicated topic label and wrong-field card title on
+  weak spots.** Reported before changing anything, per the task:
+  `home_screen.dart`'s `_WeakSpotRow` and `review_screen.dart`'s inline
+  card were two separate, already-drifted copies of the same layout,
+  both building the subtitle as `'${topic.title} ·
+  ${humanizeSlug(spot.errorType)}'`. For a Daily Test-sourced weak spot,
+  `spot.errorType` *is* `topic.id.name` (Daily Test has no finer
+  per-mistake classification than its topic — see `ErrorSource`'s doc
+  comment, 2026-09-05 batch above), and `humanizeSlug` is specifically
+  built (its "vs" → "vs." rule) to turn that id back into the exact same
+  string as `topic.title` — so for such a record the two halves of that
+  label were never two different facts; printing both printed the same
+  fact twice ("Gerund vs. Infinitive · Gerund vs. Infinitive"). The
+  card's title had a related bug: `spot.latestExplanation ??
+  humanizeSlug(spot.errorType)` meant a Topic Practice record (real
+  explanation) showed a truncated mid-sentence fragment of that
+  explanation as its title, while a Daily Test record showed the
+  topic/error-type name only because that branch happened to be the
+  fallback, not by design.
+  Fixed both by extracting the shared `WeakSpotCard`
+  (`lib/widgets/weak_spot_card.dart`) — the duplication is exactly how
+  the two copies drifted in the first place — and changing what each
+  part shows: title is always `humanizeSlug(spot.errorType)`, which is
+  never less specific than the topic (Topic Practice's errorType is a
+  finer classification under it; Daily Test's errorType is the topic id
+  itself), with the explanation moved to its own line in the body,
+  never standing in for the title. The topic-name subtitle renders only
+  when it differs from the title, so a Daily Test record's card shows
+  the topic name once, not twice. Tested with a record shaped like each
+  source.
+
+- **[Product] Skip demoted from primary on question screens (D3).** On
+  both `DailyTestScreen` and `PracticeScreen`, the single primary
+  `FilledButton` doubled as "Skip" whenever the answer field was empty —
+  the biggest, most filled control on the screen invited abandoning the
+  question (`docs/design-audit.md`: two consecutive audit runs on Daily
+  Test finished 0/5 correct, 5 skipped). Fixed with one shared widget,
+  `PracticeStepFooter` (`lib/widgets/practice_step_footer.dart`, the
+  bottom-button row was previously identical inline code in both
+  screens): the primary button is always Submit/Next/Finish, never
+  "Skip", and disabled while the field is empty — including on the last
+  question, which previously stayed a big enabled Submit/Finish even
+  unanswered. Skip is its own quiet `TextButton` below the primary row,
+  always present rather than conditionally shown, reachable but not
+  inviting. The disabled primary button uses an explicit
+  `surfaceContainerHighest`/`onSurfaceVariant` pairing (the same one
+  `_PracticeModeCard`'s locked state already uses) instead of Material's
+  default translucent disabled treatment, which — composited over this
+  app's orange scaffold — is exactly what made onboarding's disabled
+  "Continue" nearly invisible; an unstyled Skip `TextButton` would have
+  repeated the Restore Purchases orange-on-orange bug the same way, so
+  both are explicit. Confirmed the same bug pattern existed verbatim on
+  Topic Practice's question screen (identical `_primaryLabel`/
+  `_currentHasAnswer`/`_advance` shape) and applied the same fix there,
+  per the task's own instruction to check before assuming Daily Test was
+  the only place it applied.
+
+- **[Product]** `flutter analyze` and the full test suite (176 passing,
+  1 deliberately skipped) clean after every commit in this batch.
