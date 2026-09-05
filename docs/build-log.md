@@ -548,3 +548,73 @@ Claude session Ahmet uses for product calls — each entry is tagged
   (4) the failed-generation-never-cached invariant test and doc comment
   above. `flutter analyze` and the full test suite (92 tests) clean
   after each commit.
+
+## 2026-09-05 (terminal ergonomics + debug entitlement override)
+
+- **[Engineering]** Terminal-first completion of A1's config batch.
+  `.vscode/launch.json` solved this for VS Code, but development on this
+  project actually happens from the terminal / Claude Code, and retyping
+  `--dart-define-from-file=config/dev.json` by hand every run isn't
+  sustainable. Added `scripts/dev.sh` (executable, resolves the repo root
+  from its own location so it works from any cwd, forwards extra args to
+  `flutter run`) and rewrote README's "Local setup" section to lead with
+  it — VS Code's launch config is now the documented *alternative*, not
+  the only path. Also added an explicit note that release/TestFlight
+  builds need the same flag (`flutter build ipa
+  --dart-define-from-file=...`), which `flutter build ipa` alone won't
+  warn about; the same class of mistake already happened once for a
+  plain `flutter run` (2026-07-21 above).
+- **[Product]** Debug-only entitlement override, decided ahead of doing
+  any visual work on Topic Practice/Daily Test/Paywall: as a real free
+  user by default, the developer couldn't reach or preview any gated
+  screen without an actual RevenueCat subscription (none exists), and
+  had no easy way to check what a free user actually sees either.
+  Deliberately scoped to mirror what `SubscriptionService.hasFullAccess`
+  already distinguishes — **exactly two states, not three**: RevenueCat
+  entitlements are active or they aren't, and an active trial and a paid
+  subscriber already collapse into the same boolean there (see
+  `hasFullAccess`'s own doc comment) — there is no separate "trial" state
+  anywhere in the app to preview. So the override is `bool?`
+  (`null`/`false`/`true` → Real/Free/Full access), not a three-way enum
+  invented for this.
+- **[Engineering]** Implemented across four commits, smallest-first:
+  1. `StorageService`: new `debug_settings` table (schema v10, same
+     drop/recreate-on-upgrade convention as the rest of the schema),
+     `get`/`setDebugAccessOverride` mirroring `getThemeMode`/
+     `setThemeMode`'s single-row-table pattern exactly — no new storage
+     dependency.
+  2. `SubscriptionService`: `hasFullAccess` now checks
+     `debugAccessOverride` first, so the override goes through the exact
+     path every gated screen (Home's Topic Practice card, the paywall)
+     already calls — no gating logic duplicated anywhere new.
+     `setDebugAccessOverride` notifies every listener already registered
+     via `addAccessListener` with the resulting value, the same thing a
+     real RevenueCat entitlement change already does — reused, not
+     reimplemented. Gated on a new `debugModeForTesting` static
+     (`@visibleForTesting`, defaults to `kDebugMode`) rather than
+     checking `kDebugMode` inline: every debug-override method checks
+     this instead, so a test can flip it to simulate "as if this were a
+     release build" and prove the override is a complete no-op —
+     `flutter test` can't compile an actual release binary, so this is
+     the seam that makes that guarantee testable at all. The real
+     release-safety mechanism is still `kDebugMode` itself, a
+     compile-time constant that folds to `false` in an actual release
+     build and lets the Dart compiler eliminate everything behind it —
+     this seam only lets the *logic* of that gate be exercised from a
+     test, it doesn't replace the compile-time elimination.
+  3. `SettingsScreen`: new "Developer" section, rendered only
+     `if (kDebugMode)`, a `SegmentedButton` (Real/Free/Full access)
+     mapped onto the `bool?` override. The initial selection reads
+     `subscriptionService.debugAccessOverride` directly (not storage
+     again) so it can never show something SubscriptionService isn't
+     actually enforcing.
+  4. `app.dart`: loads the persisted override into `SubscriptionService`
+     at startup (debug builds only, same fail-open-on-storage-error
+     posture as the existing theme/profile loads) so a developer's prior
+     choice takes effect before Home ever checks `hasFullAccess` — not
+     only after Settings happens to be reopened.
+
+  With the override off, `hasFullAccess` is bit-for-bit the same code
+  path as before this batch. `flutter analyze` and the full test suite
+  (109 tests, including a dedicated `subscription_service_debug_override_test.dart`
+  covering the release-simulation case) clean after every commit.
