@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/avatar.dart';
 import '../models/learning_goal.dart';
 import '../models/user_profile.dart';
 import '../utils/page_title.dart';
@@ -36,6 +37,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     widget.onComplete(UserProfile(
       name: _nameController.text.trim(),
       learningGoal: _selectedGoal!,
+      // Assigned now, not left null, so Home's greeting doesn't show the
+      // generic placeholder glyph on day one (PRD v2 §13.5) — changeable
+      // any time from Settings' avatar picker.
+      avatar: Avatar.random(),
     ));
   }
 
