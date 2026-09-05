@@ -39,6 +39,20 @@ class _FakeClaudeService extends ClaudeService {
   }
 }
 
+/// Simulates a generation call that fails partway through parsing the
+/// API response (e.g. the schema-mismatch bug documented in
+/// docs/build-log.md) — throws instead of ever returning a question list,
+/// so `DailyTestService.getTodaysSet` never reaches `saveDailyTestSet`.
+class _FailingClaudeService extends ClaudeService {
+  @override
+  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
+    required int count,
+    required List<WeakSpot> weakSpots,
+  }) async {
+    throw const FormatException('simulated parse failure');
+  }
+}
+
 void main() {
   setUpAll(() {
     sqfliteFfiInit();
@@ -105,6 +119,31 @@ void main() {
     expect(claudeService.lastWeakSpots, isNotEmpty);
     expect(claudeService.lastWeakSpots!.single.topicId, 'articles');
   });
+
+  test(
+    'a failed generation is never cached as "today\'s test" — no half/'
+    'broken set gets saved, and a retry can still succeed',
+    () async {
+      final failingService = DailyTestService(
+        claudeService: _FailingClaudeService(),
+        storageService: storageService,
+      );
+
+      await expectLater(
+        failingService.getTodaysSet(),
+        throwsA(isA<FormatException>()),
+      );
+
+      // Nothing should have been written for today — the failure happened
+      // before saveDailyTestSet was ever called.
+      expect(await storageService.getDailyTestSetForToday(), isNull);
+
+      // A subsequent attempt (e.g. the user reopening Daily Test) with a
+      // working ClaudeService must not be blocked by a stale/partial row.
+      final retried = await dailyTestService.getTodaysSet();
+      expect(retried.questions, hasLength(DailyTestService.questionCount));
+    },
+  );
 
   test('markCompleted flows through to the cached set', () async {
     await dailyTestService.getTodaysSet();
