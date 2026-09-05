@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../models/practice_item.dart';
+import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../utils/loading_view.dart';
 import '../widgets/empty_state.dart';
@@ -300,22 +301,36 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
   /// inventing a new visual treatment. The raw error detail is debug-only:
   /// a real user gets one human sentence, never a stack-trace-shaped
   /// string; a developer chasing a bug still sees exactly what failed.
+  ///
+  /// Quota-exceeded gets its own copy, not the generic "check your
+  /// connection" message — that would be actively wrong here (nothing is
+  /// wrong with the connection, and retrying can't succeed until
+  /// tomorrow), and there's no CTA for the same reason: "Try again" would
+  /// just fail again with the same answer.
   Widget _buildError(ColorScheme colorScheme) {
+    final error = _error;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            EmptyState(
-              icon: Icons.error_outline_rounded,
-              title: "Couldn't load today's test",
-              description:
-                  'Something went wrong generating it. Check your '
-                  'connection and try again.',
-              ctaLabel: 'Try again',
-              onCta: _load,
-            ),
+            (error is ClaudeApiException && error.kind == ClaudeApiErrorKind.quotaExceeded)
+                ? EmptyState(
+                    icon: Icons.hourglass_bottom_rounded,
+                    title: "Today's limit reached",
+                    description: error.message,
+                  )
+                : EmptyState(
+                    icon: Icons.error_outline_rounded,
+                    title: "Couldn't load today's test",
+                    description:
+                        'Something went wrong generating it. Check your '
+                        'connection and try again.',
+                    ctaLabel: 'Try again',
+                    onCta: _load,
+                  ),
             if (kDebugMode) ...[
               const SizedBox(height: 12),
               Text(

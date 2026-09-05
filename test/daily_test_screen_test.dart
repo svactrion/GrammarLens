@@ -23,6 +23,7 @@ class _FlakyClaudeService extends ClaudeService {
 
   @override
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
+    required String deviceId,
     required int count,
     required List<WeakSpot> weakSpots,
   }) async {
@@ -42,6 +43,23 @@ class _FlakyClaudeService extends ClaudeService {
         correctAnswer: 'answer$i',
         commonWrongAnswers: const [],
       ),
+    );
+  }
+}
+
+/// Always throws a quota-exceeded ClaudeApiException, simulating the
+/// proxy's 429 response once the device/global daily cap is reached.
+class _QuotaExceededClaudeService extends ClaudeService {
+  @override
+  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
+    required String deviceId,
+    required int count,
+    required List<WeakSpot> weakSpots,
+  }) async {
+    throw const ClaudeApiException(
+      "You've reached today's practice limit on this device. Please try "
+      'again tomorrow.',
+      kind: ClaudeApiErrorKind.quotaExceeded,
     );
   }
 }
@@ -73,6 +91,9 @@ class _FakeStorageService extends StorageService {
     todaysSet = set;
     return set;
   }
+
+  @override
+  Future<String> getOrCreateDeviceId() async => 'test-device';
 }
 
 void main() {
@@ -230,6 +251,35 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Question 1'), findsOneWidget);
+    });
+  });
+
+  group('quota exceeded (Cloudflare Workers proxy 429)', () {
+    testWidgets(
+        'shows accurate copy, not the generic "check your connection" '
+        'message — retrying can\'t succeed until tomorrow', (tester) async {
+      final service = DailyTestService(
+        claudeService: _QuotaExceededClaudeService(),
+        storageService: storageService,
+      );
+
+      await pumpScreen(tester, service);
+
+      expect(find.text("Today's limit reached"), findsOneWidget);
+      expect(find.textContaining('try again tomorrow'), findsWidgets);
+      expect(find.textContaining('check your connection'), findsNothing);
+    });
+
+    testWidgets('has no "Try again" CTA — it would just fail again with '
+        'the same answer', (tester) async {
+      final service = DailyTestService(
+        claudeService: _QuotaExceededClaudeService(),
+        storageService: storageService,
+      );
+
+      await pumpScreen(tester, service);
+
+      expect(find.text('Try again'), findsNothing);
     });
   });
 }

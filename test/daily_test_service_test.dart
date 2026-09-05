@@ -18,6 +18,7 @@ class _FakeClaudeService extends ClaudeService {
 
   @override
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
+    required String deviceId,
     required int count,
     required List<WeakSpot> weakSpots,
   }) async {
@@ -46,6 +47,7 @@ class _FakeClaudeService extends ClaudeService {
 class _FailingClaudeService extends ClaudeService {
   @override
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
+    required String deviceId,
     required int count,
     required List<WeakSpot> weakSpots,
   }) async {
