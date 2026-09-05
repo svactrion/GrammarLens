@@ -903,3 +903,61 @@ two-plan pricing, disclosure gate)
 - **[Product]** `flutter analyze` and the full test suite (142 passing,
   1 deliberately skipped with a printed reason) clean after every
   commit in this batch.
+
+## 2026-09-05 (Daily Test now feeds the error profile)
+
+- **[Product]** Pre-check, per the task's own request: is "Daily Test
+  mistakes don't feed the error profile" a conscious, documented
+  decision? Searched `build-log.md`, `prd.md`, and `prd-v2.md` for any
+  written rationale. None exists — the gap was found and *noted* in
+  the entry directly above this one ("Consequence: a user who has
+  never had Topic Practice access will never accumulate weak
+  spots... `DailyTestService`/`DailyTestResultScreen` only ever *read*
+  `getWeakSpots`, never write to it"), but noting a gap is not the
+  same as deciding it should stay a gap, and nothing in any doc argues
+  for that. So: not a conscious decision, proceeding to fix it.
+  Decision made now, to close that gap: the free tier diagnoses, the
+  paid tier treats. Daily Test is free and accumulates the user's weak
+  spots; targeted practice on those weak spots is Topic Practice,
+  which is subscription-gated. This way the user sees their own
+  mistakes before paying, rather than a free tier that produces a
+  score with no lasting record and a paid tier that's the only thing
+  that ever populates Review.
+- **[Engineering]** Implementation, deliberately not a second
+  parallel-write path: `ErrorEntry` gained a `source` field
+  (`ErrorSource.topicPractice` / `.dailyTest`, schema v11 → v12,
+  `DEFAULT 'topic_practice'` since every row written before this
+  column existed really was one) so a stored mistake's origin is
+  distinguishable — not used by any reader yet, but the task
+  anticipated needing it later. `DailyTestResultScreen` now writes
+  wrong (never skipped — the existing empty-answer-isn't-an-error rule
+  is unchanged) answers through the exact same
+  `StorageService.insertErrors` call `ResultsScreen._saveErrors`
+  already uses (via a new `DailyTestService.recordErrors` passthrough),
+  not a second write path — `getWeakSpots`' aggregation was already
+  source-agnostic (`GROUP BY topic_id, error_type`) and stays that way,
+  so both flows feed one unified weak-spot view. Guarded on the same
+  "is this a fresh finish, not a re-view" check `_markCompleted`
+  already had, so reopening an already-completed set (Home's "view
+  result again") doesn't re-log the same mistakes and inflate their
+  frequency.
+  Daily Test has no LLM scoring call, so its records are honestly
+  thinner than Topic Practice's, not padded to look equivalent:
+  `explanation` is set to `AnswerMatchResult.comment` exactly —
+  non-null only when the wrong answer matched a predicted common
+  mistake with a real pre-written comment, null otherwise. Never the
+  screen's own generic "Not quite — here's the correct answer." display
+  fallback, and never an invented explanation from an extra LLM call
+  made just to fill the field. `errorType` falls back to the
+  question's `topicId`, since Daily Test has no finer per-mistake
+  classification the way Topic Practice's LLM scoring produces one —
+  the coarsest true category available, not a fabricated finer one.
+  Tests: a wrong Daily Test answer is written and tagged
+  `ErrorSource.dailyTest`; a skipped one is not; a match with a real
+  comment keeps it; a match with none stays null (and is asserted to
+  not contain the UI's own fallback text); reopening a completed set
+  writes nothing a second time; both sources aggregate into the same
+  `WeakSpot` when topic and error type match.
+- **[Product]** `flutter analyze` and the full test suite (154
+  passing, 1 deliberately skipped) clean after every commit in this
+  batch.
