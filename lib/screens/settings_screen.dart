@@ -47,6 +47,12 @@ class SettingsScreen extends StatefulWidget {
   final ValueChanged<UserProfile> onProfileUpdated;
   final SubscriptionService subscriptionService;
 
+  /// Debug-only: called after the profile is cleared in storage, so the
+  /// app can drop back to the Welcome/Onboarding flow (app.dart sets its
+  /// `_profile` back to null) without an app restart. Only ever invoked
+  /// from the "Developer" section below, itself `if (kDebugMode)`-gated.
+  final VoidCallback onResetOnboarding;
+
   SettingsScreen({
     super.key,
     required this.themeMode,
@@ -54,6 +60,7 @@ class SettingsScreen extends StatefulWidget {
     required this.profile,
     required this.storageService,
     required this.onProfileUpdated,
+    required this.onResetOnboarding,
     SubscriptionService? subscriptionService,
   }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
@@ -68,6 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late Avatar? _selectedAvatar;
   bool _savingProfile = false;
   bool _resetting = false;
+  bool _resettingOnboarding = false;
   late _DebugAccessChoice _debugAccessChoice;
 
   @override
@@ -100,6 +108,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .setDebugAccessOverride(choice.override)
           .catchError((_) {}),
     );
+  }
+
+  /// Debug-only: clears the saved profile and hands off to
+  /// [SettingsScreen.onResetOnboarding] so app.dart drops back to the
+  /// Welcome/Onboarding flow. No confirmation dialog, unlike "reset
+  /// progress data" below — this is a developer convenience meant to be
+  /// triggered repeatedly while reviewing those screens, and losing a
+  /// throwaway dev profile isn't the same stakes as a real user losing
+  /// practice history.
+  Future<void> _resetOnboarding() async {
+    setState(() => _resettingOnboarding = true);
+    try {
+      await widget.storageService.resetOnboarding();
+      widget.onResetOnboarding();
+    } catch (e) {
+      AppMessenger.show('Could not reset onboarding: $e');
+    } finally {
+      if (mounted) setState(() => _resettingOnboarding = false);
+    }
   }
 
   @override
@@ -398,6 +425,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         selected: {_debugAccessChoice},
                         onSelectionChanged: (selection) =>
                             _setDebugAccessChoice(selection.first),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'First-launch flow',
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Clears the saved profile so the app shows Welcome/'
+                        'Onboarding again — the only way to re-see the '
+                        'Day-0 flow without reinstalling.',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed:
+                              _resettingOnboarding ? null : _resetOnboarding,
+                          child: Text(
+                            _resettingOnboarding
+                                ? 'Resetting…'
+                                : 'Reset first-launch state',
+                          ),
+                        ),
                       ),
                     ],
                   ),
