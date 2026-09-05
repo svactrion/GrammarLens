@@ -1,0 +1,4 @@
+{
+  "PROXY_BASE_URL": "https://grammarlens-proxy.<your-subdomain>.workers.dev",
+  "APP_TOKEN": ""
+}
