@@ -505,4 +505,17 @@ class StorageService {
     batch.delete('topic_practice_stats');
     await batch.commit(noResult: true);
   }
+
+  /// Debug-only: deletes the saved profile so the app treats this like a
+  /// fresh install and shows the Welcome/Onboarding flow again on next
+  /// build — a profile row existing is the *only* thing that gates that
+  /// (see [getUserProfile]'s doc comment, no separate flag). Deliberately
+  /// the opposite scope of [resetProgressData]: that one keeps identity/
+  /// settings and clears history; this one clears only the identity gate,
+  /// nothing else — practice history, theme, and daily caches are
+  /// untouched.
+  Future<void> resetOnboarding() async {
+    final db = await _database;
+    await db.delete('user_profile');
+  }
 }
