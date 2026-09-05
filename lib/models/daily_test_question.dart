@@ -54,9 +54,19 @@ class DailyTestQuestion {
           'answer to check against.',
         );
 
+  /// Parses the flat shape actually requested from the Claude API in
+  /// `ClaudeService.generateDailyTestQuestions` — id/type/context/
+  /// instruction/hint sit at the same level as topicId/correctAnswer/
+  /// commonWrongAnswers, not nested under an "item" key the JSON schema
+  /// sent to the API never asked for. [toJson] mirrors this exactly, so
+  /// the local cache round-trips through the same shape this reads from
+  /// the live API — one schema, not two silently drifting apart (this
+  /// used to expect a nested "item" map that was never actually present,
+  /// throwing a null-cast error on every real generation call — see
+  /// docs/build-log.md).
   factory DailyTestQuestion.fromJson(Map<String, dynamic> json) =>
       DailyTestQuestion(
-        item: PracticeItem.fromJson(json['item'] as Map<String, dynamic>),
+        item: PracticeItem.fromJson(json),
         topicId: json['topicId'] as String,
         correctAnswer: json['correctAnswer'] as String,
         commonWrongAnswers: (json['commonWrongAnswers'] as List)
@@ -66,7 +76,7 @@ class DailyTestQuestion {
       );
 
   Map<String, dynamic> toJson() => {
-        'item': item.toJson(),
+        ...item.toJson(),
         'topicId': topicId,
         'correctAnswer': correctAnswer,
         'commonWrongAnswers':
