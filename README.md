@@ -147,15 +147,27 @@ fail with a `ClaudeApiException` telling you to do the below.
    { "ANTHROPIC_API_KEY": "sk-ant-..." }
    ```
    `config/dev.json` is gitignored — it never gets committed.
-2. Run it one of two ways:
-   - **VS Code**: use the "GrammarLens (dev)" launch config
-     (`.vscode/launch.json`, committed) — Run/Debug already passes
-     `--dart-define-from-file=config/dev.json`.
-   - **Terminal**: `flutter run --dart-define-from-file=config/dev.json`
+2. Run it: `./scripts/dev.sh` — wraps
+   `flutter run --dart-define-from-file=config/dev.json` so the flag
+   never needs retyping by hand. Any extra arguments (e.g. `-d chrome`)
+   pass straight through to `flutter run`.
+   - **VS Code** users can use the "GrammarLens (dev)" launch config
+     (`.vscode/launch.json`, committed) instead — same flag, wired to
+     Run/Debug. `scripts/dev.sh` is the primary path since day-to-day
+     development on this project happens from the terminal.
 3. **Xcode**: hitting the Run button directly in Xcode does **not** pass
    any `--dart-define`/`--dart-define-from-file` flags — the app will
    build but every API call will fail with the missing-key error above.
-   Launch from `flutter run` or VS Code instead when you need the key.
+   Launch from `scripts/dev.sh` or VS Code instead when you need the key.
+4. **Release / TestFlight builds** need the same flag —
+   `flutter build ipa --dart-define-from-file=config/dev.json` (or
+   whatever config file holds the release key). Easy to forget since
+   `flutter build ipa` alone still succeeds; the resulting build just
+   fails the same missing-key check at runtime instead. The same class
+   of mistake already happened once for a plain `flutter run`
+   (`docs/build-log.md`, 2026-07-21, "Fixed a 401 'invalid API key'
+   error") — worth spelling out explicitly here so it doesn't repeat for
+   a release build.
 
 ## Stack
 
