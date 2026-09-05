@@ -81,7 +81,7 @@ launch, not before:
   increases perceived value and urgency
 - **Rewarded video to unlock streak runs** — bet: users accept a 30s ad for a
   free feature and it makes premium legible
-- **AI voice practice mode** — bet: speaking practice is the premium-worthy
+- **AI Practice Partner** — bet: speaking practice is the premium-worthy
   feature. Note this reverses `prd.md` §5, which excluded speech as "a
   different problem, heavy integration cost." That reasoning still stands; the
   bet is that it's worth the cost as a paid differentiator
@@ -110,7 +110,7 @@ Returning launch
 Home (mode selection, personalized greeting)
   ├─ Topic Practice  (existing MVP loop)
   ├─ Streak Mode     (new)
-  ├─ Voice Practice  (premium — later phase, locked placeholder in v2)
+  ├─ AI Practice Partner  (premium — later phase, locked placeholder in v2)
   ├─ Review tab      (existing)
   ├─ Settings        (new)
   └─ Premium / early-access screen  (new)
@@ -257,7 +257,7 @@ not doing this now isn't lost if the same proposal resurfaces.
 - Payment processing and pricing (see §6)
 - Friend comparison, leaderboards, competition modes — depend on accounts and
   a backend; v2's job is to not block them
-- AI voice practice — premium placeholder only in v2; built in a later phase
+- AI Practice Partner — premium placeholder only in v2; built in a later phase
 - Multiple language pairs
 - Spaced repetition scheduling (still in backlog from MVP)
 
@@ -312,7 +312,7 @@ after.
    D1/D7 data rather than built blind. Instrument token usage here regardless
 6. **Rewarded video gate** — after streak mode exists to gate
 7. **Cost measurement + decisions 7.1 / 7.2** — with real numbers
-8. *(Later phases)* accounts + backend → social/competition → AI voice mode
+8. *(Later phases)* accounts + backend → social/competition → AI Practice Partner
 
 ### 10.1 Pre-launch checklist
 

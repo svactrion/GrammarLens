@@ -88,7 +88,7 @@ see `docs/prd-v2.md`.**
 - Home replaced: was the topic list, now mode selection with a personalized
   greeting ("Welcome back, {name}") and three mode cards — Topic Practice
   (active, opens the unchanged MVP loop, now its own TopicPracticeScreen),
-  Streak Mode and Voice Practice (not built yet; tapping either is
+  Streak Mode and AI Practice Partner (not built yet; tapping either is
   informative rather than a dead disabled card)
 - Settings screen, new: theme (proper light/dark/system, replacing the old
   quick toggle), name edit, optional age/occupation fields, and a "reset
@@ -112,11 +112,11 @@ real device:
 **V2 Phase 2 — Premium / early-access screen** (`docs/prd-v2.md` §6, §10 item 2)
 - New `PremiumScreen`, reached from a fourth Home mode card ("Early
   Access", fills out the 2×2 grid alongside Topic Practice / Streak Mode /
-  Voice Practice). Informational only, per §6: no payment flow, no price,
-  no buy button anywhere on it
+  AI Practice Partner). Informational only, per §6: no payment flow, no
+  price, no buy button anywhere on it
 - Content: the required framing line ("You're one of our first users —
   everything is free while we're in early access") plus a short list of
-  what premium will include — unlimited Streak Mode, AI Voice Practice —
+  what premium will include — unlimited Streak Mode, AI Practice Partner —
   each tagged "Coming soon" since neither feature exists yet either.
   Deliberately did not say "free forever" or unqualified "free" (§6:
   becomes a constraint once real pricing ships)
@@ -225,13 +225,14 @@ swaps to filled, icon/label recolor to the accent blue, label goes bold,
 and a 4px accent dot appears centered beneath — no background shape at
 all, Instagram-style. `google_nav_bar` is no longer a dependency.
 
-**Removed Streak Mode and Voice Practice from Home.** Both were "coming
-soon"/"premium" tiles in Home's mode grid leading only to an informational
-dialog — neither is actually built. Per `docs/prd-v2.md` §12.6, that's an
-Apple App Review completeness risk (tiles for core-looking features that
-don't do anything) and pure duplication besides, since the Premium screen
-(reached via the Early Access banner) already lists "unlimited Streak
-Mode" and "AI Voice Practice" as coming-soon premium features. Removed
+**Removed Streak Mode and AI Practice Partner from Home.** Both were
+"coming soon"/"premium" tiles in Home's mode grid leading only to an
+informational dialog — neither is actually built. Per `docs/prd-v2.md`
+§12.6, that's an Apple App Review completeness risk (tiles for
+core-looking features that don't do anything) and pure duplication
+besides, since the Premium screen (reached via the Early Access banner)
+already lists "unlimited Streak Mode" and "AI Practice Partner" as
+coming-soon premium features. Removed
 the tiles, their tap dialogs, and the now-dead `_showComingSoonDialog`
 machinery; Topic Practice — the only real mode — is now a single
 full-width card instead of a lone tile in an otherwise-empty 2-column
@@ -499,7 +500,7 @@ building it.
 ### 5. Cost measurement, resolve open decisions §7.1 / §7.2
 
 ### Later phases (post-v2)
-Accounts + backend → social / competition → AI voice practice mode.
+Accounts + backend → social / competition → AI Practice Partner.
 
 ### Carried over from MVP Iteration 3 (unscheduled, absorbed into v2 work)
 - Review tab icon visibility — single-participant, low priority; the new Home

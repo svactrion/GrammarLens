@@ -703,3 +703,30 @@ Claude session Ahmet uses for product calls — each entry is tagged
   already means everywhere else in the app.
 - **[Product]** `flutter analyze` and the full test suite (126 tests)
   clean after every commit in this batch.
+
+## 2026-09-05 (rename: "AI Voice Practice" → "AI Practice Partner")
+
+- **[Product]** Renamed the not-yet-built speaking-mode feature from "AI
+  Voice Practice" to "AI Practice Partner" everywhere it's still a live,
+  current-state name: the Premium/Early Access screen's coming-soon tile
+  (`lib/screens/premium_screen.dart`), its test
+  (`premium_screen_test.dart`), and every place `docs/prd-v2.md`/
+  `docs/roadmap.md` describe it as a current or still-planned feature.
+  Decision: a benefit-focused name ("a practice partner") reads better
+  for a coming-soon marketing tile than a name that just states the
+  underlying tech ("voice"). The feature itself is still not built — the
+  "Coming soon" badge is untouched, nothing about scope or timeline
+  changed here, only the label.
+  - Deliberately left alone: `docs/build-log.md`'s own past entries
+    (this file is a chronological record, not rewritten after the fact —
+    they correctly describe what the feature was called *at the time*),
+    and a handful of code comments/tests in `home_screen.dart`,
+    `analytics_service.dart`, and `home_screen_test.dart` that explicitly
+    describe the *old, already-removed* Home grid tile named "Voice
+    Practice" (see 2026-09-02 above) — renaming those would misdescribe
+    history the same way editing build-log would.
+  - Also left alone: the "Streak/Voice" shorthand used in a few places
+    in `docs/prd-v2.md`/`docs/roadmap.md` as a compact stand-in for
+    "Streak Mode and [this feature]" — not a literal instance of the
+    feature's own name, and "Streak/AI Practice Partner" wouldn't read
+    as a shorthand at all.

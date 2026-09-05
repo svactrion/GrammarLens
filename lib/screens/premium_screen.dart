@@ -96,7 +96,7 @@ class PremiumScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const _FeatureTile(
             icon: Icons.mic_rounded,
-            title: 'AI Voice Practice',
+            title: 'AI Practice Partner',
             description:
                 'A speaking mode with real-time voice feedback, on top of '
                 "today's writing practice.",
