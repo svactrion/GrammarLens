@@ -135,8 +135,13 @@ void main() {
   }
 
   Future<void> answerThroughDailyTest(WidgetTester tester) async {
+    // Skips every question without entering an answer — this flow only
+    // cares about reaching the result screen, not the answers themselves.
+    // The primary button is disabled while empty (item 4's fix, see
+    // PracticeStepFooter), so this taps the quiet Skip text action instead,
+    // same as a real user would.
     for (var i = 0; i < DailyTestService.questionCount; i++) {
-      await tester.tap(find.byType(FilledButton).last);
+      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
       await tester.pumpAndSettle();
     }
   }

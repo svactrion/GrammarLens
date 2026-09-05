@@ -180,4 +180,56 @@ void main() {
 
     expect(find.textContaining('simulated generation failure'), findsOneWidget);
   });
+
+  group('Skip is never the primary action (docs/design-audit.md D3)', () {
+    testWidgets(
+        'with an empty answer, the primary button reads Next/Finish, '
+        'disabled — never "Skip"', (tester) async {
+      final service = DailyTestService(
+        claudeService: _FlakyClaudeService(failCount: 0),
+        storageService: storageService,
+      );
+
+      await pumpScreen(tester, service);
+
+      expect(find.widgetWithText(FilledButton, 'Skip'), findsNothing);
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Next'),
+      );
+      expect(button.onPressed, isNull);
+      // Still reachable, just quiet — not gone.
+      expect(find.widgetWithText(TextButton, 'Skip'), findsOneWidget);
+    });
+
+    testWidgets('entering an answer enables the primary button',
+        (tester) async {
+      final service = DailyTestService(
+        claudeService: _FlakyClaudeService(failCount: 0),
+        storageService: storageService,
+      );
+
+      await pumpScreen(tester, service);
+      await tester.enterText(find.byType(TextField), 'answer0');
+      await tester.pump();
+
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Next'),
+      );
+      expect(button.onPressed, isNotNull);
+    });
+
+    testWidgets('tapping Skip with an empty answer still advances to the '
+        'next question', (tester) async {
+      final service = DailyTestService(
+        claudeService: _FlakyClaudeService(failCount: 0),
+        storageService: storageService,
+      );
+
+      await pumpScreen(tester, service);
+      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Question 1'), findsOneWidget);
+    });
+  });
 }

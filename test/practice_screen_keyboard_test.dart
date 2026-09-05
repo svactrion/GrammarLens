@@ -10,11 +10,12 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 
 // Verifies the fix for docs/prd.md Theme 2 / roadmap "What's next #1": the
-// on-screen keyboard must not cover the primary Next/Skip/Submit button on
-// free-text question screens. `FakeViewPadding` is how Flutter reports a
-// real keyboard's height to the app, so setting `tester.view.viewInsets`
-// reproduces the exact signal a live device sends when its keyboard opens —
-// without needing a live simulator keyboard or simulated taps.
+// on-screen keyboard must not cover the primary Next/Submit button (or the
+// quiet Skip text action beside it) on free-text question screens.
+// `FakeViewPadding` is how Flutter reports a real keyboard's height to the
+// app, so setting `tester.view.viewInsets` reproduces the exact signal a
+// live device sends when its keyboard opens — without needing a live
+// simulator keyboard or simulated taps.
 void main() {
   const topic = Topic(
     id: TopicId.articles,
@@ -86,7 +87,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Exactly one FilledButton is on screen at a time — the primary action
-    // (Skip/Next/Submit, whichever label applies). Finding by type avoids
+    // (Next/Submit, whichever label applies). Finding by type avoids
     // coupling this check to whichever label the current state happens to
     // show.
     final buttonRect = tester.getRect(find.byType(FilledButton));
@@ -126,8 +127,11 @@ void main() {
           logicalSize: device.size,
           devicePixelRatio: device.dpr,
         );
-        // Advance to the second (long-form) question.
-        await tester.tap(find.widgetWithText(FilledButton, 'Skip'));
+        // Advance to the second (long-form) question. The primary button
+        // is disabled with an empty field (item 4's fix — see
+        // PracticeStepFooter), so this uses the quiet Skip text action,
+        // same as a real user would.
+        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextField),
@@ -143,8 +147,7 @@ void main() {
           logicalSize: device.size,
           devicePixelRatio: device.dpr,
         );
-        final screenHeight =
-            tester.view.physicalSize.height / tester.view.devicePixelRatio;
+        final restingRect = tester.getRect(find.byType(FilledButton));
 
         tester.view.viewInsets =
             FakeViewPadding(bottom: 300 * tester.view.devicePixelRatio);
@@ -153,9 +156,12 @@ void main() {
         tester.view.viewInsets = FakeViewPadding.zero;
         await tester.pumpAndSettle();
 
-        final buttonRect =
-            tester.getRect(find.widgetWithText(FilledButton, 'Skip'));
-        expect(buttonRect.bottom, greaterThan(screenHeight - 60));
+        // Compares against its own pre-keyboard position rather than a
+        // fixed pixel-from-bottom threshold — robust to the footer's own
+        // height (e.g. item 4's added Skip row) rather than tied to
+        // whatever that height happened to be when this number was
+        // chosen.
+        expect(tester.getRect(find.byType(FilledButton)), restingRect);
       });
 
       testWidgets(
