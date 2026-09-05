@@ -1,3 +1,5 @@
+import '../utils/json_parsing.dart';
+
 enum PracticeItemType { fillInBlank, errorCorrection, sentenceWriting }
 
 extension PracticeItemTypeJson on PracticeItemType {
@@ -41,10 +43,12 @@ class PracticeItem {
   });
 
   factory PracticeItem.fromJson(Map<String, dynamic> json) => PracticeItem(
-        id: json['id'] as String,
-        type: PracticeItemTypeJson.fromJson(json['type'] as String),
+        id: requireJsonField<String>(json, 'id'),
+        type: PracticeItemTypeJson.fromJson(
+          requireJsonField<String>(json, 'type'),
+        ),
         context: json['context'] as String?,
-        instruction: json['instruction'] as String,
+        instruction: requireJsonField<String>(json, 'instruction'),
         hint: json['hint'] as String?,
       );
 

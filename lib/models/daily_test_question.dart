@@ -1,3 +1,4 @@
+import '../utils/json_parsing.dart';
 import 'practice_item.dart';
 
 /// One pre-written wrong answer the model predicted a learner might give,
@@ -14,8 +15,8 @@ class CommonWrongAnswer {
 
   factory CommonWrongAnswer.fromJson(Map<String, dynamic> json) =>
       CommonWrongAnswer(
-        answer: json['answer'] as String,
-        comment: json['comment'] as String,
+        answer: requireJsonField<String>(json, 'answer'),
+        comment: requireJsonField<String>(json, 'comment'),
       );
 
   Map<String, dynamic> toJson() => {'answer': answer, 'comment': comment};
@@ -67,9 +68,9 @@ class DailyTestQuestion {
   factory DailyTestQuestion.fromJson(Map<String, dynamic> json) =>
       DailyTestQuestion(
         item: PracticeItem.fromJson(json),
-        topicId: json['topicId'] as String,
-        correctAnswer: json['correctAnswer'] as String,
-        commonWrongAnswers: (json['commonWrongAnswers'] as List)
+        topicId: requireJsonField<String>(json, 'topicId'),
+        correctAnswer: requireJsonField<String>(json, 'correctAnswer'),
+        commonWrongAnswers: requireJsonField<List>(json, 'commonWrongAnswers')
             .map((e) =>
                 CommonWrongAnswer.fromJson(e as Map<String, dynamic>))
             .toList(),
