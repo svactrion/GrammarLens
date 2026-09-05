@@ -288,8 +288,10 @@ class ClaudeService {
   Future<Map<String, dynamic>> _post(Map<String, dynamic> body) async {
     if (!AppConfig.isConfigured) {
       throw const ClaudeApiException(
-        'ANTHROPIC_API_KEY is not set. Run with '
-        '--dart-define=ANTHROPIC_API_KEY=your_key',
+        'ANTHROPIC_API_KEY is not set. Copy config/dev.example.json to '
+        'config/dev.json, fill in your key, and run via VS Code (or pass '
+        '--dart-define-from-file=config/dev.json yourself). See the '
+        '"Local setup" section in README.md.',
       );
     }
 
