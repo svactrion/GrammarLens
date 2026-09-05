@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/daily_test_question.dart';
+import 'package:grammar_lens/models/daily_test_set.dart';
+import 'package:grammar_lens/models/error_entry.dart';
+import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/models/review_sort_order.dart';
+import 'package:grammar_lens/screens/daily_test_result_screen.dart';
+import 'package:grammar_lens/screens/daily_test_screen.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
+import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 /// Records `modeSelected` calls instead of the real (best-effort, silently
@@ -60,6 +69,61 @@ class _FakeSubscriptionService extends SubscriptionService {
   }
 }
 
+/// Real StorageService methods throw in this test environment (no
+/// platform channel) — fine for tests that don't care what Home's "today"
+/// card or weak-spot section show (they fail open to "nothing yet", same
+/// as every other best-effort read in this app), but the tests that assert
+/// on *specific* Daily Test/weak-spot content need deterministic data,
+/// which this fake supplies.
+class _FakeStorageService extends StorageService {
+  DailyTestSet? todaysDailyTest;
+  List<WeakSpot> weakSpots = const [];
+
+  @override
+  Future<DailyTestSet?> getDailyTestSetForToday() async => todaysDailyTest;
+
+  @override
+  Future<List<WeakSpot>> getWeakSpots({
+    int limit = 10,
+    ReviewSortOrder sortOrder = ReviewSortOrder.recent,
+  }) async =>
+      weakSpots;
+}
+
+DailyTestSet _completedDailyTestSet({required int correct, required int total}) {
+  final questions = List.generate(
+    total,
+    (i) => DailyTestQuestion(
+      item: PracticeItem(
+        id: 'q$i',
+        type: PracticeItemType.fillInBlank,
+        instruction: 'Question $i',
+      ),
+      topicId: 'tenseSelection',
+      correctAnswer: 'right$i',
+      commonWrongAnswers: const [],
+    ),
+  );
+  final answers = {
+    for (var i = 0; i < total; i++) 'q$i': i < correct ? 'right$i' : 'wrong',
+  };
+  return DailyTestSet(
+    day: '2026-01-01',
+    questions: questions,
+    completedAt: DateTime(2026, 1, 1),
+    answers: answers,
+  );
+}
+
+WeakSpot _weakSpot({String topicId = 'articles', int frequency = 5}) =>
+    WeakSpot(
+      topicId: topicId,
+      errorType: 'missing_article',
+      frequency: frequency,
+      lastSeen: DateTime.now(),
+      latestExplanation: 'You left out "the" before a specific noun.',
+    );
+
 void main() {
   Future<void> pumpHome(
     WidgetTester tester, {
@@ -67,6 +131,7 @@ void main() {
     VoidCallback? onAvatarTap,
     AnalyticsService? analyticsService,
     SubscriptionService? subscriptionService,
+    StorageService? storageService,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = const Size(390, 844) * 3.0;
@@ -76,11 +141,17 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        // DailyTestResultScreen (reachable from the Today card once
+        // completed) reads SemanticColors off the theme — the app's real
+        // theme registers it, MaterialApp's default doesn't (same fix
+        // first_launch_flow_test.dart already needed for the same
+        // screen).
+        theme: buildAppTheme(Brightness.light),
         home: HomeScreen(
           userName: 'Ada',
           avatar: avatar,
           claudeService: ClaudeService(),
-          storageService: StorageService(),
+          storageService: storageService ?? StorageService(),
           analyticsService: analyticsService ?? AnalyticsService(),
           subscriptionService: subscriptionService ?? _FakeSubscriptionService(),
           onAvatarTap: onAvatarTap,
@@ -135,13 +206,56 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets(
-      'shows the Daily Test and Topic Practice cards plus the Premium '
-      'banner', (tester) async {
+  group('Today (Daily Test state, PRD v2 §13.5 item 2)', () {
+    testWidgets(
+        'not yet done: shows an invitation, tapping opens Daily Test',
+        (tester) async {
+      await pumpHome(tester, storageService: _FakeStorageService());
+
+      expect(find.text('Daily Test'), findsOneWidget);
+      expect(
+        find.textContaining("ready — free, always"),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Daily Test'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DailyTestScreen), findsOneWidget);
+    });
+
+    testWidgets(
+        'done: shows the score and "new test tomorrow", not the '
+        'invitation', (tester) async {
+      final storage = _FakeStorageService()
+        ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
+      await pumpHome(tester, storageService: storage);
+
+      expect(find.textContaining('3/5 correct'), findsOneWidget);
+      expect(find.textContaining('New test tomorrow'), findsOneWidget);
+      expect(find.text('Daily Test'), findsNothing);
+    });
+
+    testWidgets('done: tapping it views the result again, not a new test',
+        (tester) async {
+      final storage = _FakeStorageService()
+        ..todaysDailyTest = _completedDailyTestSet(correct: 2, total: 5);
+      await pumpHome(tester, storageService: storage);
+
+      await tester.tap(find.textContaining('2/5 correct'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DailyTestResultScreen), findsOneWidget);
+      expect(find.byType(DailyTestScreen), findsNothing);
+      // The real score, reconstructed from the persisted answers, not
+      // recomputed from nothing.
+      expect(find.textContaining('2/5 correct'), findsOneWidget);
+    });
+  });
+
+  testWidgets('shows the Topic Practice card', (tester) async {
     await pumpHome(tester);
-    expect(find.text('Daily Test'), findsOneWidget);
     expect(find.text('Topic Practice'), findsOneWidget);
-    expect(find.text('Premium'), findsOneWidget);
     // Streak Mode and Voice Practice were removed from Home entirely (App
     // Store completeness risk at the time; both were also later dropped
     // from the Premium screen itself — PRD v2 §13.4, nothing unbuilt gets
@@ -151,8 +265,8 @@ void main() {
   });
 
   testWidgets(
-      'Daily Test and Topic Practice are both full-width cards, not grid '
-      'tiles', (tester) async {
+      'the Today card and Topic Practice card are both full-width, not '
+      'grid tiles', (tester) async {
     await pumpHome(tester);
     expect(find.byType(GridView), findsNothing);
 
@@ -168,16 +282,16 @@ void main() {
   });
 
   testWidgets(
-      'cards stack in order: Daily Test, then Topic Practice, then '
-      'Premium', (tester) async {
+      'stacks in order: Today, then Topic Practice, then the Premium row',
+      (tester) async {
     await pumpHome(tester);
 
-    final dailyTestTop = tester.getTopLeft(find.text('Daily Test')).dy;
+    final todayTop = tester.getTopLeft(find.text('Daily Test')).dy;
     final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
-    final bannerTop = tester.getTopLeft(find.text('Premium')).dy;
+    final premiumTop = tester.getTopLeft(find.text('Premium')).dy;
 
-    expect(topicTop, greaterThan(dailyTestTop));
-    expect(bannerTop, greaterThan(topicTop));
+    expect(topicTop, greaterThan(todayTop));
+    expect(premiumTop, greaterThan(topicTop));
   });
 
   testWidgets(
@@ -234,10 +348,74 @@ void main() {
     expect(find.byType(TopicPracticeScreen), findsOneWidget);
   });
 
-  testWidgets('the Premium banner opens the Premium screen', (tester) async {
-    await pumpHome(tester);
-    await tester.tap(find.text('Premium'));
-    await tester.pumpAndSettle();
-    expect(find.byType(PremiumScreen), findsOneWidget);
+  group('weak spots (PRD v2 §13.5 item 4)', () {
+    testWidgets('no section at all when there are none — no empty state',
+        (tester) async {
+      await pumpHome(tester, storageService: _FakeStorageService());
+      expect(find.text('Your weak spots'), findsNothing);
+    });
+
+    testWidgets('shows up to the most frequent, tappable through when '
+        'unlocked', (tester) async {
+      final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
+      await pumpHome(
+        tester,
+        storageService: storage,
+        subscriptionService: _FakeSubscriptionService(hasAccess: true),
+      );
+
+      expect(find.text('Your weak spots'), findsOneWidget);
+      expect(
+        find.text('You left out "the" before a specific noun.'),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.lock_rounded), findsNothing);
+
+      await tester.tap(
+        find.text('You left out "the" before a specific noun.'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WeakSpotDetailScreen), findsOneWidget);
+    });
+
+    testWidgets(
+        'shows locked when the entitlement is not active, and tapping '
+        'opens the Premium screen naming that weak spot', (tester) async {
+      final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
+      await pumpHome(tester, storageService: storage); // hasAccess: false
+
+      expect(find.byIcon(Icons.lock_rounded), findsWidgets);
+
+      await tester.tap(
+        find.text('You left out "the" before a specific noun.'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WeakSpotDetailScreen), findsNothing);
+      final premium = tester.widget<PremiumScreen>(
+        find.byType(PremiumScreen),
+      );
+      expect(premium.sourceContext, 'Missing Article');
+    });
+  });
+
+  group('Premium row (PRD v2 §13.5 item 5)', () {
+    testWidgets('shown for a free user, opens the Premium screen',
+        (tester) async {
+      await pumpHome(tester);
+      await tester.tap(find.text('Premium'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PremiumScreen), findsOneWidget);
+    });
+
+    testWidgets('not shown once the entitlement is active — no repeated '
+        'upsell to someone already subscribed', (tester) async {
+      await pumpHome(
+        tester,
+        subscriptionService: _FakeSubscriptionService(hasAccess: true),
+      );
+      expect(find.text('Premium'), findsNothing);
+    });
   });
 }
