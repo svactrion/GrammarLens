@@ -227,8 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Topic Practice',
             description: _hasFullAccess
                 ? 'Deep grammar practice with plain-language feedback.'
-                : 'Try it free for 3 days, then continue with a '
-                    'subscription.',
+                : 'Try it free for ${SubscriptionService.trialLengthDays} '
+                    'days, then continue with a subscription.',
             locked: !_hasFullAccess,
             onTap: () => _openTopicPractice(context),
           ),
