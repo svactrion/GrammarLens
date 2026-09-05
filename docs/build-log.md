@@ -811,3 +811,95 @@ two-plan pricing, disclosure gate)
 - **[Product]** `flutter analyze` and the full test suite (130 passing,
   1 deliberately skipped with a printed reason) clean after every
   commit in this batch.
+
+## 2026-09-05 (Home rebuilt as a "today" screen, PRD v2 §13.5)
+
+- **[Product]** Verified from code, before writing anything, per the
+  task's own request: does Daily Test feed the error profile the same
+  way Topic Practice does? No.
+  `StorageService.insertErrors` — the only write path into
+  `error_entries`, which `getWeakSpots` reads — is called from exactly
+  one place in the whole codebase, `ResultsScreen._saveErrors` (Topic
+  Practice's results screen). `DailyTestService`/
+  `DailyTestResultScreen` only ever *read* `getWeakSpots` (to bias
+  which topics Daily Test generates), never write to it. Consequence: a
+  user who has never had Topic Practice access will never accumulate
+  weak spots — Topic Practice is the sole source. Home's weak-spots
+  section (item 4 below) genuinely won't render for such a user, not
+  "locked", just empty, per its own no-empty-state rule. It *is* real
+  and reachable for a user whose trial has since expired but who
+  generated weak spots while it was active — that's the actual case
+  the "locked row → Premium naming it" behavior serves.
+- **[Engineering]** A second, related gap found while tracing this, not
+  asked but directly blocking item 2 as written: `daily_test_sets`
+  persisted only the question set and a completion timestamp, never
+  the user's answers or a score — `DailyTestResultScreen` computed
+  everything from an in-memory answers map that vanished once the
+  session ended. "Existing data" alone could say whether today's test
+  was done, but not what the score was, and there was nothing to
+  reconstruct "view the result again" from. Fixed with the minimal
+  addition actually needed, not a new tracking system: one nullable
+  `answers_json` column on the same `daily_test_sets` row (schema
+  v10 → v11, same drop/recreate convention as the rest of the schema).
+  `StorageService.markDailyTestCompleted`/`DailyTestService.markCompleted`
+  now take the answers map alongside the timestamp;
+  `DailyTestResultScreen` skips re-marking completion when reopened
+  against an already-completed set (a view-again, not a fresh finish)
+  instead of re-writing the same data every time it's viewed. New
+  `computeDailyTestScore` (`answer_matching.dart`) gives Home's summary
+  an aggregate-only score without duplicating
+  `DailyTestResultScreen`'s own per-item detail logic.
+- **[Engineering]** Onboarding now assigns `Avatar.random()` when
+  building the profile, instead of leaving it null — every new user
+  used to see the generic placeholder glyph on Home despite eight
+  stock avatars existing, since nobody saw one of them until they
+  visited Settings. No schema change: `user_profile.avatar` has been
+  nullable since schema v8; this only changes what gets written into
+  it. Settings' existing picker still changes it any time.
+  `Avatar.random([Random?])` takes an injectable `Random` for
+  deterministic tests.
+- **[Product]** Home rebuilt from a mode-selection menu into a "today"
+  screen (PRD v2 §13.5): two practice cards and a banner, half the
+  screen empty since Streak Mode/Voice Practice were removed. Not
+  fixed by restoring those cards — they were removed for being dead
+  coming-soon tiles, and refilling that space with cards for features
+  that don't exist would repeat exactly the mistake removing them
+  fixed (`docs/design-audit.md`). The actual gap: Home already had real
+  data (today's Daily Test state, the error profile) and showed none
+  of it.
+  - **Today** (largest, topmost block): Daily Test's real state, read
+    directly from `StorageService.getDailyTestSetForToday()` — never
+    triggers generation itself. Not solved: an invitation, tapping
+    opens Daily Test. Solved: the score plus "new test tomorrow" and a
+    tap that replays the existing `DailyTestResultScreen` with the
+    persisted answers (see the schema addition above) rather than a
+    new screen.
+  - **Topic Practice**: unchanged behavior, locked/unlocked as before.
+  - **Your weak spots**: the 2-3 most frequent
+    (`getWeakSpots(limit: 3, sortOrder: frequent)`, same aggregation
+    Review's own "Most frequent" sort already uses). No empty state —
+    Review already covers "no weak spots yet", so the section simply
+    doesn't render when there are none, per the finding above. Locked
+    for a free user; tapping a locked row opens `PremiumScreen` naming
+    that weak spot via `sourceContext` — the first real caller of the
+    mechanism added in the Premium-screen-merge batch, unused until
+    now.
+  - **Premium row**: shown only to a free user, demoted from a
+    solid-fill banner to a single quiet line (no Card, no fill, no
+    elevation) — that treatment made sense when Premium was one of
+    only three things on the screen, not once Home leads with real
+    data above it.
+  - Entitlement transitions still flow through the existing
+    `addAccessListener` mechanism, untouched — Topic Practice, the
+    weak-spot rows, and the Premium row's visibility all still update
+    live without a restart.
+  - Noted, not fixed, out of scope for this batch: Review's own
+    weak-spot → "Practice this" flow (`practice_launch.dart`) has no
+    entitlement check at all — a free user can already reach a real,
+    billed Topic Practice generation through Review today, bounded
+    only by the daily session cap, not by `hasFullAccess`. Home's new
+    weak-spot row is correctly gated per this batch's spec; Review's
+    equivalent path predates it and isn't touched here.
+- **[Product]** `flutter analyze` and the full test suite (142 passing,
+  1 deliberately skipped with a printed reason) clean after every
+  commit in this batch.
