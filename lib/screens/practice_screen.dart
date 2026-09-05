@@ -8,6 +8,7 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
+import '../widgets/practice_step_footer.dart';
 import 'results_screen.dart';
 
 class PracticeScreen extends StatefulWidget {
@@ -155,10 +156,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
     }
   }
 
-  String _primaryLabel() {
-    if (_isLastQuestion) return 'Submit';
-    return _currentHasAnswer ? 'Next' : 'Skip';
-  }
+  // Never "Skip" — see PracticeStepFooter's doc comment for why the
+  // primary action must never invite abandoning the question. Skip is
+  // its own separate, quiet action, always available regardless of this
+  // label.
+  String _primaryLabel() => _isLastQuestion ? 'Submit' : 'Next';
 
   @override
   Widget build(BuildContext context) {
@@ -315,31 +317,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       top: false,
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-                        child: _currentIndex == 0
-                            ? SizedBox(
-                                width: double.infinity,
-                                child: FilledButton(
-                                  onPressed: _advance,
-                                  child: Text(_primaryLabel()),
-                                ),
-                              )
-                            : Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: _goBack,
-                                      child: const Text('Back'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: FilledButton(
-                                      onPressed: _advance,
-                                      child: Text(_primaryLabel()),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        child: PracticeStepFooter(
+                          showBack: _currentIndex != 0,
+                          onBack: _goBack,
+                          primaryLabel: _primaryLabel(),
+                          primaryEnabled: _currentHasAnswer,
+                          onPrimary: _advance,
+                          onSkip: _advance,
+                        ),
                       ),
                     ),
                   ],

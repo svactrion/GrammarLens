@@ -7,6 +7,7 @@ import '../models/practice_item.dart';
 import '../services/daily_test_service.dart';
 import '../utils/loading_view.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/practice_step_footer.dart';
 import 'daily_test_result_screen.dart';
 
 /// One-question-at-a-time flow over today's cached Daily Test set (PRD v2
@@ -202,10 +203,11 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     }
   }
 
-  String _primaryLabel() {
-    if (_isLastQuestion) return 'Finish';
-    return _currentHasAnswer ? 'Next' : 'Skip';
-  }
+  // Never "Skip" — see PracticeStepFooter's doc comment for why the
+  // primary action must never invite abandoning the question. Skip is
+  // its own separate, quiet action, always available regardless of this
+  // label.
+  String _primaryLabel() => _isLastQuestion ? 'Finish' : 'Next';
 
   @override
   Widget build(BuildContext context) {
@@ -405,31 +407,14 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
             top: false,
             child: Padding(
               padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-              child: _currentIndex == 0
-                  ? SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _advance,
-                        child: Text(_primaryLabel()),
-                      ),
-                    )
-                  : Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _goBack,
-                            child: const Text('Back'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: _advance,
-                            child: Text(_primaryLabel()),
-                          ),
-                        ),
-                      ],
-                    ),
+              child: PracticeStepFooter(
+                showBack: _currentIndex != 0,
+                onBack: _goBack,
+                primaryLabel: _primaryLabel(),
+                primaryEnabled: _currentHasAnswer,
+                onPrimary: _advance,
+                onSkip: _advance,
+              ),
             ),
           ),
         ],
