@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../config/app_config.dart';
 import '../data/topics.dart';
 import '../models/daily_test_question.dart';
 import '../models/error_entry.dart';
@@ -22,13 +23,14 @@ class ClaudeApiException implements Exception {
 /// Talks to the Anthropic Messages API to generate practice sets and score
 /// answers, using structured JSON output (PRD §7).
 ///
-/// The API key is read at build/run time via `--dart-define=ANTHROPIC_API_KEY=...`
-/// so it never lands in source control. Calling the API directly from the
-/// client embeds the key in the app binary — acceptable for this local
-/// prototype with a handful of known testers, but move this behind a small
-/// backend before distributing more widely.
+/// The API key comes from [AppConfig], read at build/run time via
+/// `--dart-define=ANTHROPIC_API_KEY=...` so it never lands in source
+/// control. Calling the API directly from the client embeds the key in the
+/// app binary — acceptable for this local prototype with a handful of
+/// known testers, but move this behind a small backend before distributing
+/// more widely.
 class ClaudeService {
-  static const _apiKey = String.fromEnvironment('ANTHROPIC_API_KEY');
+  static const _apiKey = AppConfig.anthropicApiKey;
   static const _endpoint = 'https://api.anthropic.com/v1/messages';
   static const _model = 'claude-sonnet-4-6';
   static const _apiVersion = '2023-06-01';
@@ -284,7 +286,7 @@ class ClaudeService {
   }
 
   Future<Map<String, dynamic>> _post(Map<String, dynamic> body) async {
-    if (_apiKey.isEmpty) {
+    if (!AppConfig.isConfigured) {
       throw const ClaudeApiException(
         'ANTHROPIC_API_KEY is not set. Run with '
         '--dart-define=ANTHROPIC_API_KEY=your_key',
