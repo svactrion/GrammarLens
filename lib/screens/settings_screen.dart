@@ -1,13 +1,39 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import '../models/app_theme_mode.dart';
 import '../models/avatar.dart';
 import '../models/user_profile.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import '../utils/error_banner.dart';
 import '../utils/layout_constants.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
+
+/// The three choices shown in Settings' debug-only "Developer" section —
+/// a UI-layer concept only. [SubscriptionService.debugAccessOverride]
+/// itself is `bool?` (real/free/full collapses to null/false/true): see
+/// that field's doc comment for why no third domain state exists.
+enum _DebugAccessChoice {
+  real,
+  free,
+  full;
+
+  bool? get override => switch (this) {
+        _DebugAccessChoice.real => null,
+        _DebugAccessChoice.free => false,
+        _DebugAccessChoice.full => true,
+      };
+
+  static _DebugAccessChoice fromOverride(bool? override) => switch (override) {
+        null => _DebugAccessChoice.real,
+        false => _DebugAccessChoice.free,
+        true => _DebugAccessChoice.full,
+      };
+}
 
 /// PRD v2 §4 — theme, name edit, data reset, and optional profile fields
 /// (age, occupation) that onboarding deliberately left out. Learning goal
@@ -19,15 +45,17 @@ class SettingsScreen extends StatefulWidget {
   final UserProfile profile;
   final StorageService storageService;
   final ValueChanged<UserProfile> onProfileUpdated;
+  final SubscriptionService subscriptionService;
 
-  const SettingsScreen({
+  SettingsScreen({
     super.key,
     required this.themeMode,
     required this.onSelectThemeMode,
     required this.profile,
     required this.storageService,
     required this.onProfileUpdated,
-  });
+    SubscriptionService? subscriptionService,
+  }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -40,6 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late Avatar? _selectedAvatar;
   bool _savingProfile = false;
   bool _resetting = false;
+  late _DebugAccessChoice _debugAccessChoice;
 
   @override
   void initState() {
@@ -50,6 +79,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _occupationController =
         TextEditingController(text: widget.profile.occupation ?? '');
     _selectedAvatar = widget.profile.avatar;
+    // Reads the already-loaded in-memory override (app.dart applies
+    // whatever was persisted at app startup — see its own
+    // _loadDebugAccessOverride) rather than re-reading storage here, so
+    // this always reflects exactly what SubscriptionService is actually
+    // enforcing right now, never a stale/independent copy of it.
+    _debugAccessChoice = _DebugAccessChoice.fromOverride(
+      widget.subscriptionService.debugAccessOverride,
+    );
+  }
+
+  Future<void> _setDebugAccessChoice(_DebugAccessChoice choice) async {
+    setState(() => _debugAccessChoice = choice);
+    // Goes through the same hasFullAccess/addAccessListener path every
+    // gated screen already uses (see SubscriptionService.setDebugAccessOverride)
+    // — Home's card updates live, no separate gating logic here.
+    await widget.subscriptionService.setDebugAccessOverride(choice.override);
+    unawaited(
+      widget.storageService
+          .setDebugAccessOverride(choice.override)
+          .catchError((_) {}),
+    );
   }
 
   @override
@@ -309,6 +359,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 32),
+              const _SectionLabel('Developer'),
+              const SizedBox(height: 8),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Entitlement override',
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Debug builds only. Lets you preview Topic '
+                        "Practice locked or unlocked without a real "
+                        'subscription. Never has any effect in a release '
+                        'build.',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 16),
+                      SegmentedButton<_DebugAccessChoice>(
+                        segments: const [
+                          ButtonSegment(
+                            value: _DebugAccessChoice.real,
+                            label: Text('Real'),
+                          ),
+                          ButtonSegment(
+                            value: _DebugAccessChoice.free,
+                            label: Text('Free'),
+                          ),
+                          ButtonSegment(
+                            value: _DebugAccessChoice.full,
+                            label: Text('Full access'),
+                          ),
+                        ],
+                        selected: {_debugAccessChoice},
+                        onSelectionChanged: (selection) =>
+                            _setDebugAccessChoice(selection.first),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

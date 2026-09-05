@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
@@ -13,6 +14,7 @@ import 'screens/settings_screen.dart';
 import 'services/analytics_service.dart';
 import 'services/claude_service.dart';
 import 'services/storage_service.dart';
+import 'services/subscription_service.dart';
 import 'theme.dart';
 import 'utils/loading_view.dart';
 
@@ -42,6 +44,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
     super.initState();
     _loadThemeMode();
     _loadProfile();
+    if (kDebugMode) _loadDebugAccessOverride();
   }
 
   Future<void> _loadThemeMode() async {
@@ -67,6 +70,22 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
         _profile = profile;
         _profileLoading = false;
       });
+    }
+  }
+
+  /// Applies whatever debug entitlement override a developer set last
+  /// session (Settings' "Developer" section) before any screen has a
+  /// chance to check `SubscriptionService.hasFullAccess` — so Home's
+  /// Topic Practice card reflects it immediately on launch, not only
+  /// after Settings happens to be opened. Debug builds only; a no-op call
+  /// either way since `SubscriptionService.setDebugAccessOverride` itself
+  /// is release-gated (see docs/build-log.md).
+  Future<void> _loadDebugAccessOverride() async {
+    try {
+      final override = await _storageService.getDebugAccessOverride();
+      await SubscriptionService().setDebugAccessOverride(override);
+    } catch (_) {
+      // No persisted override (or storage unavailable) — leave unset.
     }
   }
 
