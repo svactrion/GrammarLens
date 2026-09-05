@@ -1073,3 +1073,136 @@ per-screen patches, each landed as its own commit.
 
 - **[Product]** `flutter analyze` and the full test suite (176 passing,
   1 deliberately skipped) clean after every commit in this batch.
+
+## 2026-09-06 (Anthropic API key moved behind a Cloudflare Workers proxy)
+
+Closes the "API key safety" pre-launch blocker (`docs/roadmap.md`,
+decision taken 2026-09-05): the key compiled into the shipped binary via
+`--dart-define` is extractable from any built app. Cloudflare account
+created, `wrangler login` done, this batch builds and deploys the proxy
+and rewires the client to it.
+
+- **[Product] Why operation-based, not a forwarding proxy — the actual
+  design decision here.** A forwarding proxy (client sends the same
+  Anthropic-shaped request, proxy just reattaches the key) would have
+  been far less code, but it wouldn't have closed the blocker it exists
+  to close: the request today (model, system prompt, JSON schema,
+  `max_tokens`) is built entirely client-side, so a forwarding proxy
+  still lets anything holding the app token send an arbitrary system
+  prompt and arbitrary `max_tokens` through a real API key — the key
+  would be safe from static extraction but not from a client that's been
+  decompiled or simply reverse-engineered by watching its traffic. It
+  also can't validate anything meaningful (a "request" is just an opaque
+  blob to forward) and can't reason about cost per operation, since it
+  has no concept of what operation is even happening.
+  Operation-based means the client sends a named operation
+  (`generate_practice_set` / `generate_daily_test` / `score_answers`)
+  and a small structured payload — a topic id, a count, a device id, a
+  list of weak-spot `{topicId, frequency}` pairs, or already-extracted
+  item `{id, type, prompt, userAnswer}` fields — and the proxy itself
+  owns the model, every system prompt, every JSON schema, and
+  `max_tokens`, all ported as-is from `ClaudeService` (scanned the
+  actual call sites first, per the task's own instruction — these three
+  are the complete list; all three went through one `_post` method).
+  This is what actually makes the rest of the design possible: strict
+  per-operation field validation (unexpected fields rejected, not
+  ignored), a fixed known topic-id list so the client can never inject
+  its own title/description text into a prompt, and a quota that means
+  something (bounding real operations, not opaque bytes). A forwarding
+  proxy could do none of that.
+
+- **[Engineering] The proxy itself** (`proxy/`, its own `wrangler.jsonc`/
+  `package.json`, not part of the Flutter build):
+  - `src/auth.ts`: a build-time app token in an `x-grammarlens-token`
+    header, constant-time compared. Known extractable from a shipped
+    binary like any client-side value — filters casual/automated
+    scanning, explicitly not the sole defense.
+  - `src/validation.ts`: strict allowlist per operation, string/array
+    size caps, topic ids checked against `src/topics.ts` (mirrors
+    `lib/data/topics.dart` — duplicated on purpose, not shared, since
+    this is a separate deployable with no access to the Dart source).
+  - `src/quota.ts`: per-device and global daily caps in Workers KV,
+    reserved *before* the Anthropic call (counts the attempt, not just
+    a success — that's what actually bounds spend). Documented
+    non-atomic tradeoff (`proxy/README.md`): two near-simultaneous
+    requests can both read the same pre-increment count. Accepted at
+    this project's traffic scale, not a Durable Object problem yet.
+  - `src/anthropic.ts`: never forwards Anthropic's raw error body to the
+    client — every failure maps to a generic `upstream_error`, with
+    detail logged server-side only (`wrangler tail`).
+  - Tested with `@cloudflare/vitest-pool-workers` (real Workers runtime
+    via Miniflare, not a Node approximation): auth, per-operation
+    validation, quota (device cap, global cap, UTC-day reset), and the
+    full fetch handler with Anthropic's own call mocked — including a
+    test asserting the client's `deviceId` and app token never leak
+    into the request Anthropic actually receives. 39 tests, `tsc
+    --noEmit` clean.
+
+- **[Engineering] The Flutter side.** `AppConfig` no longer holds an API
+  key at all — just `proxyBaseUrl`/`appToken`. `ClaudeService` is now a
+  thin client: build the small payload, POST to the proxy, parse the
+  same `{items}`/`{questions}`/`{feedback}` shape Anthropic always
+  returned (the proxy forwards that shape verbatim on success, so this
+  parsing code didn't need to change at all). `ClaudeApiException`
+  gained a `kind` (`ClaudeApiErrorKind`) so a screen can special-case
+  what it needs without knowing the proxy's error-code strings;
+  `DailyTestScreen`'s error state now shows accurate copy for
+  quota-exceeded specifically (no "check your connection" — nothing is
+  wrong with the connection and retrying can't succeed until tomorrow;
+  no "Try again" CTA for the same reason). Added
+  `StorageService.getOrCreateDeviceId` (schema v13): a random,
+  app-generated id, never a real device attribute — anonymous by
+  construction, not just by policy — deliberately *not* dropped on a
+  future schema bump the way every other table here is, since losing it
+  on an unrelated change would reset a real install's quota identity
+  more often than intended.
+
+- **[Engineering] Dev workflow.** No second Anthropic key went back into
+  the app for local development. `scripts/dev.sh` now starts the proxy
+  locally too (`wrangler dev`, backgrounded, skipped if something's
+  already listening on its port) before running `flutter run` — one
+  command for both halves. A developer's own Anthropic key now only
+  ever needs to exist in one place on a dev machine:
+  `proxy/.dev.vars`. `scripts/preflight.sh` gained the requested check:
+  a release build's `config/prod.json` must exist with a non-empty
+  `PROXY_BASE_URL` and `APP_TOKEN`, same "missing this silently breaks
+  every API call in the shipped build" reasoning the existing AppLinks
+  check already used.
+
+- **[Product] Deployed and verified end-to-end on-device**, with one
+  environment-specific wrinkle worth recording honestly: this sandbox's
+  network egress blocks Cloudflare's Workers anycast IP range outright
+  (confirmed by DNS resolving `grammarlens-proxy.aetayfur78.workers.dev`
+  correctly but a raw TCP connect to the resolved IP on 443 timing out,
+  from both `curl` in this shell and the iOS Simulator itself — not a
+  DNS or app-level problem, a network-level one specific to this
+  sandbox). Cloudflare's own control-plane API (a different host) was
+  reachable throughout, so `wrangler secret put`
+  `ANTHROPIC_API_KEY`/`APP_TOKEN`, `wrangler deploy`, and `wrangler
+  deployments list` all completed and confirm the Worker is live.
+  For the actual on-device round trip, verified instead against
+  `wrangler dev` running locally with the real Anthropic key (same
+  source `wrangler deploy` just shipped, exercised on localhost instead
+  of the blocked `workers.dev` hostname) from the real iOS Simulator
+  app, via a temporary hook in `main()` calling the three real
+  `ClaudeService` methods directly with real `StorageService`/
+  `AppConfig` — deliberately not a fake harness screen, the actual
+  production call sites, removed after this verification (no diff left
+  in `lib/main.dart`). Confirmed on-device: `generatePracticeSet`,
+  `scoreAnswers`, and `generateDailyTestQuestions` all round-tripped
+  successfully; then, with `DEVICE_DAILY_LIMIT` temporarily overridden
+  to 2 (via `wrangler dev --var`, never touching the committed
+  `wrangler.jsonc`) and that device's count already past it from the
+  successful run above, the next call correctly threw
+  `ClaudeApiException` with `kind: ClaudeApiErrorKind.quotaExceeded` and
+  the clean "You've reached today's practice limit..." message — proving
+  the real device → real Worker → real KV quota path end-to-end. The
+  corresponding UI (`DailyTestScreen`'s quota-specific empty state) is
+  covered by its own widget tests rather than an interactive screenshot
+  here, since this environment has no tap-automation path into a real
+  running simulator (the same constraint noted in earlier "temporary
+  debug harness" entries above).
+
+- **[Product]** `flutter analyze` and the full test suite (191 passing,
+  1 deliberately skipped) clean; proxy `npm test` (39 passing) and `npm
+  run typecheck` clean.
