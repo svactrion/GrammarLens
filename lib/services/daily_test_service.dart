@@ -39,7 +39,9 @@ class DailyTestService {
     // asks ClaudeService for a general/varied mix instead of a biased one
     // — see generateDailyTestQuestions' doc comment.
     final weakSpots = await storageService.getWeakSpots(limit: questionCount);
+    final deviceId = await storageService.getOrCreateDeviceId();
     final questions = await claudeService.generateDailyTestQuestions(
+      deviceId: deviceId,
       count: questionCount,
       weakSpots: weakSpots,
     );

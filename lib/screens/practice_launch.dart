@@ -60,8 +60,10 @@ Future<void> launchPracticeSet({
 
   setGenerating(true);
   try {
+    final deviceId = await storageService.getOrCreateDeviceId();
     final practiceSet = await claudeService.generatePracticeSet(
       topic,
+      deviceId: deviceId,
       count: length.questionCount,
     );
     // Counted once generation actually succeeds — the LLM call this cap

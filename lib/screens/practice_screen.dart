@@ -120,7 +120,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
+      final deviceId = await widget.storageService.getOrCreateDeviceId();
       final result = await widget.claudeService.scoreAnswers(
+        deviceId: deviceId,
         practiceSet: widget.practiceSet,
         answers: _answers,
       );

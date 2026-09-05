@@ -4,15 +4,20 @@ import 'package:grammar_lens/config/app_config.dart';
 
 void main() {
   group('AppConfig', () {
-    test('isConfigured tracks whether anthropicApiKey is set', () {
-      expect(AppConfig.isConfigured, AppConfig.anthropicApiKey.isNotEmpty);
+    test('isConfigured is true only when both proxyBaseUrl and appToken are set', () {
+      expect(
+        AppConfig.isConfigured,
+        AppConfig.proxyBaseUrl.isNotEmpty && AppConfig.appToken.isNotEmpty,
+      );
     });
 
-    test('anthropicApiKey is empty when no --dart-define is passed', () {
-      // This test suite runs without --dart-define=ANTHROPIC_API_KEY=...,
-      // so the const should fall back to the empty default rather than
-      // throwing or reading some ambient environment variable.
-      expect(AppConfig.anthropicApiKey, isEmpty);
+    test('proxyBaseUrl/appToken are empty when no --dart-define is passed', () {
+      // This test suite runs without --dart-define=PROXY_BASE_URL=...
+      // /APP_TOKEN=..., so both consts should fall back to the empty
+      // default rather than throwing or reading some ambient environment
+      // variable.
+      expect(AppConfig.proxyBaseUrl, isEmpty);
+      expect(AppConfig.appToken, isEmpty);
       expect(AppConfig.isConfigured, isFalse);
     });
   });

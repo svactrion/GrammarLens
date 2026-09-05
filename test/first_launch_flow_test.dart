@@ -23,6 +23,7 @@ import 'package:grammar_lens/theme.dart';
 class _FakeClaudeService extends ClaudeService {
   @override
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
+    required String deviceId,
     required int count,
     required List<WeakSpot> weakSpots,
   }) async {
@@ -86,6 +87,9 @@ class _FakeStorageService extends StorageService {
           current.copyWith(completedAt: DateTime.now(), answers: answers);
     }
   }
+
+  @override
+  Future<String> getOrCreateDeviceId() async => 'test-device';
 }
 
 void main() {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -16,7 +17,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 12;
+  static const _dbVersion = 13;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -144,6 +145,28 @@ class StorageService {
     )
   ''';
 
+  // Schema v13 — an anonymous, app-generated identifier the Cloudflare
+  // Workers proxy uses for its per-device daily quota (docs/build-log.md).
+  // Deliberately not a real device attribute (IDFV, ANDROID_ID, ...): a
+  // random opaque token carries no personal data and is exactly as good
+  // for "tell this install's requests apart from another's" as a real
+  // identifier would be, without identifying anything real. Created once
+  // on first use; resets on reinstall/data clear, which is fine since this
+  // only bounds API cost per install, not a durable identity.
+  //
+  // Deliberately NOT dropped on a future schema upgrade the way every
+  // other table here is (see onUpgrade below) — unlike a UI preference,
+  // losing this value on every unrelated schema bump would reset the
+  // quota-tracking identity for real installs more often than intended.
+  // `IF NOT EXISTS` so the same statement is safe to run unconditionally
+  // in onUpgrade too, without a matching DROP first.
+  static const _createDeviceIdentityTable = '''
+    CREATE TABLE IF NOT EXISTS device_identity (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      device_id TEXT NOT NULL
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -166,6 +189,7 @@ class StorageService {
         await db.execute(_createDailySessionUsageTable);
         await db.execute(_createDailyTestSetsTable);
         await db.execute(_createDebugSettingsTable);
+        await db.execute(_createDeviceIdentityTable);
       },
       // Still pre-launch prototype with no real user data to preserve, so a
       // schema change just drops and recreates rather than carrying a real
@@ -189,6 +213,7 @@ class StorageService {
         await db.execute(_createDailySessionUsageTable);
         await db.execute(_createDailyTestSetsTable);
         await db.execute(_createDebugSettingsTable);
+        await db.execute(_createDeviceIdentityTable);
       },
     );
   }
@@ -292,6 +317,25 @@ class StorageService {
       {'id': 0, 'mode': mode.toJson()},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  /// Anonymous, app-generated device identifier the Cloudflare Workers
+  /// proxy uses for its per-device daily quota (see
+  /// `_createDeviceIdentityTable`'s doc comment for why this isn't a real
+  /// device attribute) — created on first call, then stable across calls.
+  Future<String> getOrCreateDeviceId() async {
+    final db = await _database;
+    final rows = await db.query('device_identity', limit: 1);
+    if (rows.isNotEmpty) return rows.first['device_id'] as String;
+
+    final id = _generateDeviceId();
+    await db.insert('device_identity', {'id': 0, 'device_id': id});
+    return id;
+  }
+
+  static String _generateDeviceId() {
+    final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
   /// The user's last-picked practice set length, so the length picker
