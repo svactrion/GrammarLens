@@ -494,3 +494,57 @@ Claude session Ahmet uses for product calls — each entry is tagged
   hit is the placeholder string in this batch's own new README section,
   and the only env-like filename ever added is `config/dev.example.json`
   (this batch), which has only ever held an empty placeholder value.
+
+## 2026-09-05 (continued)
+
+- **[Engineering]** Bug found the first time Daily Test actually reached a
+  real API call (the previous entry's config fix is what finally let it
+  get that far): every generation crashed after a long loading spinner
+  with `type 'Null' is not a subtype of type 'Map<String, dynamic>' in
+  type cast`. Diagnosed by tracing the full generate → parse → save →
+  read chain rather than guessing — root cause was a **schema mismatch
+  in our own code**, not bad API data or a half-written cache row (the
+  two hypotheses considered and ruled out in turn):
+  - `ClaudeService.generateDailyTestQuestions`'s JSON schema asks the API
+    for `id`/`type`/`context`/`instruction`/`hint` as flat sibling fields
+    on each question, alongside `topicId`/`correctAnswer`/
+    `commonWrongAnswers`. The API was returning exactly that shape.
+  - `DailyTestQuestion.fromJson` (`lib/models/daily_test_question.dart`),
+    however, expected those five fields nested under an `item` key —
+    a shape the schema never asked for and the API never sent.
+    `json['item']` was therefore always `null`, and casting it to
+    `Map<String, dynamic>` crashed on every real generation call. Topic
+    Practice's own generation never hit this: `PracticeItem.fromJson`
+    there already reads the same flat shape directly, no wrapper
+    assumed.
+  - Confirmed hypothesis (b) — a half-generated set cached and read back
+    broken — did not apply: `DailyTestService.getTodaysSet` awaits
+    `generateDailyTestQuestions` fully before ever calling
+    `saveDailyTestSet`, so the thrown parse exception propagated before
+    anything reached storage. Nothing partial was ever written; this
+    already held before the fix, and a new regression test
+    (`daily_test_service_test.dart`) now locks it down explicitly with a
+    `ClaudeService` fake that fails partway through generation, plus a
+    doc comment on `getTodaysSet` stating the invariant so a future
+    save-as-you-go refactor doesn't quietly reintroduce it.
+  - Why the existing test suite missed this: `daily_test_service_test.dart`
+    stubs `ClaudeService` entirely, so it never exercised the real
+    `generateDailyTestQuestions` parsing path — the only path the bug
+    lived in.
+
+  Fixed across four commits: (1) made `DailyTestQuestion.fromJson`/
+  `toJson` use the same flat shape as the actual request schema and the
+  local cache — one schema instead of two silently drifting apart, no
+  storage schema bump needed since the cache is a pure daily-regenerated
+  cache, not data worth preserving across an update; (2) added
+  `requireJsonField<T>` (`lib/utils/json_parsing.dart`), which fails with
+  a message naming the missing/wrong-typed field instead of an opaque
+  cast error, applied to `PracticeItem` and
+  `DailyTestQuestion`/`CommonWrongAnswer`'s required fields — the parse
+  chain this bug lived in; (3) a regression test
+  (`daily_test_question_parsing_test.dart`) feeding a fixed JSON object
+  shaped exactly like the real request schema straight into the parser,
+  no network involved, plus a missing-field case and a round-trip check;
+  (4) the failed-generation-never-cached invariant test and doc comment
+  above. `flutter analyze` and the full test suite (92 tests) clean
+  after each commit.
