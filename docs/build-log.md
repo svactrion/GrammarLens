@@ -961,3 +961,27 @@ two-plan pricing, disclosure gate)
 - **[Product]** `flutter analyze` and the full test suite (154
   passing, 1 deliberately skipped) clean after every commit in this
   batch.
+
+## 2026-09-05 (Home's Premium row: readable contrast + benefit line)
+
+- **[Engineering]** Fixed: Home's Premium row was near-invisible —
+  pale gray text on the orange page background, the same contrast
+  defect `docs/design-audit.md` already flagged elsewhere. Root cause:
+  the row uses `colorScheme.onSurfaceVariant`, a muted gray meant for
+  text on a neutral surface (a Card), but this row deliberately has no
+  Card of its own and sits directly on the scaffold — which in light
+  mode is the vivid orange `primary` (see `theme.dart`'s role
+  mapping). That pairing measures ~3.6:1, failing AA for body text.
+  Fixed by switching to `theme.appBarTheme.foregroundColor` — the
+  color the app bar already uses for content on this same background
+  (`onPrimary` in light mode, contrast-checked in `theme.dart`;
+  `onSurface` in dark mode, where the scaffold isn't orange) — rather
+  than inventing a third color role.
+  Also now states what Premium actually offers ("Unlock targeted
+  practice on your weak spots") instead of just the word "Premium",
+  matching `PremiumScreen`'s own pitch-copy tone. Still a plain row —
+  no Card, no fill, no elevation — so it stays quieter than the Today
+  card above it. This is a readability fix only; the row gets a fuller
+  visual-polish pass later.
+- **[Product]** `flutter analyze` and the full test suite (156
+  passing, 1 deliberately skipped) clean after this commit.
