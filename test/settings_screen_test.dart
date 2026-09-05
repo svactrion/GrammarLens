@@ -20,6 +20,8 @@ import 'package:grammar_lens/widgets/avatar_tile.dart';
 /// got saved.
 class _FakeStorageService extends StorageService {
   bool? debugAccessOverride;
+  bool onboardingReset = false;
+  bool throwOnResetOnboarding = false;
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {}
@@ -30,6 +32,14 @@ class _FakeStorageService extends StorageService {
   @override
   Future<void> setDebugAccessOverride(bool? hasFullAccess) async {
     debugAccessOverride = hasFullAccess;
+  }
+
+  @override
+  Future<void> resetOnboarding() async {
+    if (throwOnResetOnboarding) {
+      throw Exception('simulated storage failure');
+    }
+    onboardingReset = true;
   }
 }
 
@@ -43,6 +53,7 @@ void main() {
     ValueChanged<UserProfile>? onProfileUpdated,
     StorageService? storageService,
     SubscriptionService? subscriptionService,
+    VoidCallback? onResetOnboarding,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -53,6 +64,7 @@ void main() {
           storageService: storageService ?? StorageService(),
           onProfileUpdated: onProfileUpdated ?? (_) {},
           subscriptionService: subscriptionService,
+          onResetOnboarding: onResetOnboarding ?? () {},
         ),
       ),
     );
@@ -286,6 +298,77 @@ void main() {
 
         expect(subscriptionService.debugAccessOverride, isNull);
         expect(storage.debugAccessOverride, isNull);
+      },
+    );
+  });
+
+  group('First-launch flow reset (debug-only)', () {
+    testWidgets('shows the reset action', (tester) async {
+      await pumpSettings(tester, storageService: _FakeStorageService());
+      await tester.drag(find.byType(ListView), const Offset(0, -1000));
+      await tester.pumpAndSettle();
+
+      expect(find.text('First-launch flow'), findsOneWidget);
+      expect(find.text('Reset first-launch state'), findsOneWidget);
+    });
+
+    testWidgets(
+      'tapping it clears the profile in storage and calls onResetOnboarding',
+      (tester) async {
+        final storage = _FakeStorageService();
+        var resetCalled = false;
+
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          onResetOnboarding: () => resetCalled = true,
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, -1000));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Reset first-launch state'));
+        await tester.pumpAndSettle();
+
+        expect(storage.onboardingReset, isTrue);
+        expect(resetCalled, isTrue);
+      },
+    );
+
+    testWidgets(
+      'no confirmation dialog — unlike Reset progress data, this is a '
+      'fast dev action',
+      (tester) async {
+        await pumpSettings(tester, storageService: _FakeStorageService());
+        await tester.drag(find.byType(ListView), const Offset(0, -1000));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Reset first-launch state'));
+        await tester.pump();
+
+        expect(find.byType(AlertDialog), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'a storage failure does not call onResetOnboarding — the app stays '
+      'on Settings rather than pretending the reset worked',
+      (tester) async {
+        final storage = _FakeStorageService()..throwOnResetOnboarding = true;
+        var resetCalled = false;
+
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          onResetOnboarding: () => resetCalled = true,
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, -1000));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Reset first-launch state'));
+        await tester.pumpAndSettle();
+
+        expect(resetCalled, isFalse);
+        expect(find.text('Reset first-launch state'), findsOneWidget);
       },
     );
   });

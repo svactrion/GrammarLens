@@ -173,6 +173,11 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               profile: _profile!,
               storageService: _storageService,
               onProfileUpdated: (profile) => setState(() => _profile = profile),
+              // Debug-only action inside SettingsScreen's own
+              // `if (kDebugMode)`-gated "Developer" section — this
+              // callback itself is harmless either way, since it's never
+              // invoked unless that section rendered in the first place.
+              onResetOnboarding: () => setState(() => _profile = null),
             ),
           ];
 
