@@ -4,7 +4,7 @@ import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../models/practice_item.dart';
 import '../services/daily_test_service.dart';
-import '../utils/error_banner.dart';
+import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
 import 'daily_test_result_screen.dart';
 
@@ -76,7 +76,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, "Could not load today's test: $e");
+      AppMessenger.show("Could not load today's test: $e");
       _leave();
     }
   }

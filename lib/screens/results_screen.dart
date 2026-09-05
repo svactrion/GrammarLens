@@ -7,7 +7,7 @@ import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
-import '../utils/error_banner.dart';
+import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import '../widgets/mistake_breakdown.dart';
@@ -82,8 +82,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       // Don't let a storage failure pass silently — without this the Review
       // tab looks broken later with no clue why (errors were never recorded).
       if (!mounted) return;
-      showErrorSnackBar(
-          context, 'Could not save this to your error profile: $e');
+      AppMessenger.show('Could not save this to your error profile: $e');
     }
   }
 

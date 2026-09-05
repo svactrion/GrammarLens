@@ -8,7 +8,7 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
-import '../utils/error_banner.dart';
+import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
@@ -78,7 +78,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showErrorSnackBar(context, 'Could not save your profile: $e');
+      AppMessenger.show('Could not save your profile: $e');
     }
   }
 

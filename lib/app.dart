@@ -16,6 +16,7 @@ import 'services/claude_service.dart';
 import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
 import 'theme.dart';
+import 'utils/app_messenger.dart';
 import 'utils/loading_view.dart';
 
 class GrammarLensApp extends StatefulWidget {
@@ -94,6 +95,17 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
     unawaited(_storageService.setThemeMode(mode).catchError((_) {}));
   }
 
+  /// Every bottom-nav tab switch goes through this instead of setting
+  /// `_tabIndex` directly, so a message left showing on the tab being left
+  /// (e.g. an error banner) doesn't visually follow the user to the next
+  /// one — this is an `IndexedStack` swap, not a Navigator route change,
+  /// so `AppMessenger.navigatorObserver` never sees it and can't clear it
+  /// on its own.
+  void _switchTab(int index) {
+    AppMessenger.clear();
+    setState(() => _tabIndex = index);
+  }
+
   ThemeMode get _flutterThemeMode {
     switch (_themeMode) {
       case AppThemeMode.light:
@@ -110,6 +122,8 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
     return MaterialApp(
       title: 'GrammarLens',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: AppMessenger.key,
+      navigatorObservers: [AppMessenger.navigatorObserver],
       theme: buildAppTheme(Brightness.light),
       darkTheme: buildAppTheme(Brightness.dark),
       themeMode: _flutterThemeMode,
@@ -138,7 +152,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
-              onAvatarTap: () => setState(() => _tabIndex = 2),
+              onAvatarTap: () => _switchTab(2),
             ),
             ReviewScreen(
               claudeService: _claudeService,
@@ -151,7 +165,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               // is currently selected lets ReviewScreen detect "just became
               // visible" and reload then.
               active: _tabIndex == 1,
-              onGoToPractice: () => setState(() => _tabIndex = 0),
+              onGoToPractice: () => _switchTab(0),
             ),
             SettingsScreen(
               themeMode: _themeMode,
@@ -222,7 +236,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
                             ),
                             child: _FloatingNavBar(
                               selectedIndex: _tabIndex,
-                              onTabChange: (i) => setState(() => _tabIndex = i),
+                              onTabChange: _switchTab,
                               unselectedColor: unselectedColor,
                               activeColor: colorScheme.secondary,
                               labelStyle: theme.textTheme.labelMedium,
