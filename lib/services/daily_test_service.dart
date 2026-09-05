@@ -45,6 +45,9 @@ class DailyTestService {
     return storageService.saveDailyTestSet(questions);
   }
 
-  /// Records today's set as completed once the learner finishes it.
-  Future<void> markCompleted() => storageService.markDailyTestCompleted();
+  /// Records today's set as completed once the learner finishes it,
+  /// persisting [answers] alongside — see
+  /// `StorageService.markDailyTestCompleted`'s own doc comment for why.
+  Future<void> markCompleted(Map<String, String> answers) =>
+      storageService.markDailyTestCompleted(answers);
 }

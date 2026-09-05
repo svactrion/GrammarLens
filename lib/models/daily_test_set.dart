@@ -15,17 +15,30 @@ class DailyTestSet {
   final List<DailyTestQuestion> questions;
   final DateTime? completedAt;
 
+  /// The user's answers at the moment of completion, keyed by
+  /// `DailyTestQuestion.item.id` — null until [completedAt] is set. This
+  /// is the only persisted record of what was actually answered; without
+  /// it neither a score nor "view the result again" (PRD v2 §13.5) can be
+  /// reconstructed once the live session that computed them is gone.
+  final Map<String, String>? answers;
+
   const DailyTestSet({
     required this.day,
     required this.questions,
     this.completedAt,
+    this.answers,
   });
 
   bool get isCompleted => completedAt != null;
 
-  DailyTestSet copyWith({DateTime? completedAt}) => DailyTestSet(
+  DailyTestSet copyWith({
+    DateTime? completedAt,
+    Map<String, String>? answers,
+  }) =>
+      DailyTestSet(
         day: day,
         questions: questions,
         completedAt: completedAt ?? this.completedAt,
+        answers: answers ?? this.answers,
       );
 }

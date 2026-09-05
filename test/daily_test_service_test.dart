@@ -145,11 +145,13 @@ void main() {
     },
   );
 
-  test('markCompleted flows through to the cached set', () async {
+  test('markCompleted flows through to the cached set, answers included',
+      () async {
     await dailyTestService.getTodaysSet();
-    await dailyTestService.markCompleted();
+    await dailyTestService.markCompleted({'q0': 'answer0'});
 
     final set = await storageService.getDailyTestSetForToday();
     expect(set!.isCompleted, isTrue);
+    expect(set.answers, {'q0': 'answer0'});
   });
 }

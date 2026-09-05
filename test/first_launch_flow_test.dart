@@ -79,10 +79,11 @@ class _FakeStorageService extends StorageService {
   }
 
   @override
-  Future<void> markDailyTestCompleted() async {
+  Future<void> markDailyTestCompleted(Map<String, String> answers) async {
     final current = _todaysSet;
     if (current != null) {
-      _todaysSet = current.copyWith(completedAt: DateTime.now());
+      _todaysSet =
+          current.copyWith(completedAt: DateTime.now(), answers: answers);
     }
   }
 }

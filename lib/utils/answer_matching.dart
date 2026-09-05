@@ -74,3 +74,26 @@ AnswerMatchResult checkDailyTestAnswer(
     correctAnswer: question.correctAnswer,
   );
 }
+
+/// Aggregate score only (no per-question detail) — for a summary line
+/// (Home's "today" card, PRD v2 §13.5) that doesn't need the full
+/// per-item breakdown `DailyTestResultScreen` builds for itself. Same
+/// empty-answer-is-skipped, not-scored rule as everywhere else Daily Test
+/// answers are graded.
+({int correct, int total, int skipped}) computeDailyTestScore(
+  List<DailyTestQuestion> questions,
+  Map<String, String> answers,
+) {
+  var correct = 0;
+  var skipped = 0;
+  for (final question in questions) {
+    final raw = (answers[question.item.id] ?? '').trim();
+    if (raw.isEmpty) {
+      skipped++;
+    } else if (checkDailyTestAnswer(question, raw).kind ==
+        AnswerMatchKind.correct) {
+      correct++;
+    }
+  }
+  return (correct: correct, total: questions.length, skipped: skipped);
+}

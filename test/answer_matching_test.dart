@@ -134,4 +134,38 @@ void main() {
       expect(normalizeAnswer("She isn't ready."), "she isn't ready");
     });
   });
+
+  group('computeDailyTestScore', () {
+    DailyTestQuestion questionAt(int i) => DailyTestQuestion(
+          item: PracticeItem(
+            id: 'q$i',
+            type: PracticeItemType.fillInBlank,
+            instruction: 'Question $i',
+          ),
+          topicId: 'tenseSelection',
+          correctAnswer: 'answer$i',
+          commonWrongAnswers: const [],
+        );
+
+    test('counts correct, wrong, and skipped separately', () {
+      final questions = [questionAt(0), questionAt(1), questionAt(2)];
+      final result = computeDailyTestScore(questions, {
+        'q0': 'answer0', // correct
+        'q1': 'something else', // wrong
+        'q2': '', // skipped
+      });
+
+      expect(result.correct, 1);
+      expect(result.total, 3);
+      expect(result.skipped, 1);
+    });
+
+    test('a missing answer counts as skipped, not wrong', () {
+      final questions = [questionAt(0)];
+      final result = computeDailyTestScore(questions, const {});
+
+      expect(result.correct, 0);
+      expect(result.skipped, 1);
+    });
+  });
 }

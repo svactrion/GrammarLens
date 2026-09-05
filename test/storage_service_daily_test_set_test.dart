@@ -87,18 +87,20 @@ void main() {
     expect(fetched.questions.single.item.id, 'q2');
   });
 
-  test('markDailyTestCompleted sets a completion timestamp', () async {
+  test('markDailyTestCompleted sets a completion timestamp and persists '
+      'the answers', () async {
     await storageService.saveDailyTestSet(sampleQuestions());
-    await storageService.markDailyTestCompleted();
+    await storageService.markDailyTestCompleted({'q1': 'goes'});
 
     final fetched = await storageService.getDailyTestSetForToday();
     expect(fetched!.isCompleted, isTrue);
     expect(fetched.completedAt, isNotNull);
+    expect(fetched.answers, {'q1': 'goes'});
   });
 
   test('markDailyTestCompleted with no set for today is a harmless no-op',
       () async {
-    await storageService.markDailyTestCompleted();
+    await storageService.markDailyTestCompleted({'q1': 'goes'});
     expect(await storageService.getDailyTestSetForToday(), isNull);
   });
 
