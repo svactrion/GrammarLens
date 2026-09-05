@@ -1,11 +1,12 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../models/practice_item.dart';
 import '../services/daily_test_service.dart';
-import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
+import '../widgets/empty_state.dart';
 import 'daily_test_result_screen.dart';
 
 /// One-question-at-a-time flow over today's cached Daily Test set (PRD v2
@@ -54,6 +55,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
   Map<String, TextEditingController>? _controllers;
   DailyTestSet? _dailyTestSet;
   bool _loading = true;
+  Object? _error;
   int _currentIndex = 0;
 
   @override
@@ -62,7 +64,17 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     _load();
   }
 
+  /// Generation failing here never leaves anything cached as "today's
+  /// test" — `DailyTestService.getTodaysSet` only calls `saveDailyTestSet`
+  /// after a full, successful generation, so a thrown error here always
+  /// means nothing was saved (see its own doc comment). Re-entering this
+  /// method — via the initial call or a "Try again" tap — is always a
+  /// real attempt, never blocked by a stale/partial cache row.
   Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final dailyTestSet = await widget.dailyTestService.getTodaysSet();
       if (!mounted) return;
@@ -76,8 +88,10 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      AppMessenger.show("Could not load today's test: $e");
-      _leave();
+      setState(() {
+        _loading = false;
+        _error = e;
+      });
     }
   }
 
@@ -217,14 +231,17 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
             tooltip: 'Leave Daily Test',
             onPressed: _confirmExit,
           ),
-          title: _loading
+          // Guarded on `_dailyTestSet` rather than `!_loading`: the error
+          // state below also has `_loading == false` but no set to read
+          // `.questions.length` from.
+          title: _dailyTestSet == null
               ? null
               : Text(
                   '${_currentIndex + 1}/${_dailyTestSet!.questions.length}',
                   style: theme.textTheme.titleLarge
                       ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
                 ),
-          bottom: _loading
+          bottom: _dailyTestSet == null
               ? null
               : PreferredSize(
                   preferredSize: const Size.fromHeight(58),
@@ -267,7 +284,46 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         ),
         body: _loading
             ? const LoadingView(message: "Preparing today's test…")
-            : _buildQuestion(theme, colorScheme, hPad),
+            : _error != null
+                ? _buildError(colorScheme)
+                : _buildQuestion(theme, colorScheme, hPad),
+      ),
+    );
+  }
+
+  /// In-screen error state instead of a SnackBar (this used to show a raw
+  /// exception via SnackBar, then leave the screen entirely — surfacing a
+  /// cast/API-key error to a first-time user with no way to retry). Reuses
+  /// EmptyState's existing icon+title/description+CTA pattern rather than
+  /// inventing a new visual treatment. The raw error detail is debug-only:
+  /// a real user gets one human sentence, never a stack-trace-shaped
+  /// string; a developer chasing a bug still sees exactly what failed.
+  Widget _buildError(ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            EmptyState(
+              icon: Icons.error_outline_rounded,
+              title: "Couldn't load today's test",
+              description:
+                  'Something went wrong generating it. Check your '
+                  'connection and try again.',
+              ctaLabel: 'Try again',
+              onCta: _load,
+            ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 12),
+              Text(
+                '$_error',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
