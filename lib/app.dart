@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
 
 import 'models/app_theme_mode.dart';
 import 'models/user_profile.dart';
@@ -18,6 +16,7 @@ import 'services/subscription_service.dart';
 import 'theme.dart';
 import 'utils/app_messenger.dart';
 import 'utils/loading_view.dart';
+import 'widgets/floating_nav_shell.dart';
 
 class GrammarLensApp extends StatefulWidget {
   const GrammarLensApp({super.key});
@@ -181,78 +180,12 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
             ),
           ];
 
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
-          final isDark = theme.brightness == Brightness.dark;
-          // Same contrast-checked color the app bar uses for content sitting
-          // directly on the orange (light) / near-black (dark) scaffold —
-          // see theme.dart's `appBarFg` for the reasoning.
-          final unselectedColor =
-              theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
           return Scaffold(
-            // A real floating bar, not Scaffold's `bottomNavigationBar`
-            // slot: that slot wraps its child in an opaque `Material`
-            // spanning the FULL WIDTH of the bottom of the screen, so even
-            // with a transparent/rounded child inside it, the slot itself
-            // painted a solid strip behind the pill's rounded corners and
-            // across the margins either side of it — exactly the "opaque
-            // backdrop behind the whole bottom of the screen" bug this
-            // rewrite fixes. A `Stack` with the bar as a `Positioned`
-            // overlay has no such slot: nothing paints anything outside the
-            // pill's own bounds, and screen content genuinely continues
-            // underneath it (scrolling included) rather than stopping at an
-            // invisible-but-present boundary.
-            body: Stack(
-              children: [
-                IndexedStack(index: _tabIndex, children: screens),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 0,
-                  child: SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(32),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              // Frosted glass: a translucent surface tint
-                              // over the blur, not a solid fill — content
-                              // scrolling behind the pill should still read
-                              // through it, softened.
-                              color: colorScheme.surfaceContainerLow
-                                  .withValues(alpha: isDark ? 0.55 : 0.68),
-                              borderRadius: BorderRadius.circular(32),
-                              border: Border.all(
-                                color: colorScheme.outlineVariant
-                                    .withValues(alpha: 0.5),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      colorScheme.shadow.withValues(alpha: 0.18),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: _FloatingNavBar(
-                              selectedIndex: _tabIndex,
-                              onTabChange: _switchTab,
-                              unselectedColor: unselectedColor,
-                              activeColor: colorScheme.secondary,
-                              labelStyle: theme.textTheme.labelMedium,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            body: FloatingNavShell(
+              body: IndexedStack(index: _tabIndex, children: screens),
+              tabs: _navTabs,
+              selectedIndex: _tabIndex,
+              onTabChange: _switchTab,
             ),
           );
         },
@@ -261,112 +194,20 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   }
 }
 
-class _NavTabData {
-  const _NavTabData(this.icon, this.activeIcon, this.label);
-
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-}
-
 const _navTabs = [
-  _NavTabData(Icons.home_outlined, Icons.home, 'Home'),
-  _NavTabData(Icons.history_outlined, Icons.history, 'Review'),
-  _NavTabData(Icons.settings_outlined, Icons.settings, 'Settings'),
+  NavShellTab(
+    icon: Icons.home_outlined,
+    activeIcon: Icons.home,
+    label: 'Home',
+  ),
+  NavShellTab(
+    icon: Icons.history_outlined,
+    activeIcon: Icons.history,
+    label: 'Review',
+  ),
+  NavShellTab(
+    icon: Icons.settings_outlined,
+    activeIcon: Icons.settings,
+    label: 'Settings',
+  ),
 ];
-
-// Replaces the previous `google_nav_bar` GNav widget. GNav's active-tab
-// indicator is a `tabBackgroundColor` block painted by its own internal
-// `Button`/`GButton` layout (see the package source), which is built around
-// an animated icon+label "chip" — there's no seam to customize that
-// geometry from outside, and two rounds of trying to fix that block's
-// alignment against the floating pill's edges didn't land (see
-// docs/roadmap.md). A plain custom row gives full control over the
-// active-tab treatment instead: icon swaps outline → filled and icon/label
-// recolor to the accent — no background shape at all.
-class _FloatingNavBar extends StatelessWidget {
-  const _FloatingNavBar({
-    required this.selectedIndex,
-    required this.onTabChange,
-    required this.unselectedColor,
-    required this.activeColor,
-    required this.labelStyle,
-  });
-
-  final int selectedIndex;
-  final ValueChanged<int> onTabChange;
-  final Color unselectedColor;
-  final Color activeColor;
-  final TextStyle? labelStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          for (var i = 0; i < _navTabs.length; i++)
-            _NavTab(
-              data: _navTabs[i],
-              active: i == selectedIndex,
-              unselectedColor: unselectedColor,
-              activeColor: activeColor,
-              labelStyle: labelStyle,
-              onTap: () {
-                if (i != selectedIndex) HapticFeedback.selectionClick();
-                onTabChange(i);
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NavTab extends StatelessWidget {
-  const _NavTab({
-    required this.data,
-    required this.active,
-    required this.unselectedColor,
-    required this.activeColor,
-    required this.labelStyle,
-    required this.onTap,
-  });
-
-  final _NavTabData data;
-  final bool active;
-  final Color unselectedColor;
-  final Color activeColor;
-  final TextStyle? labelStyle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? activeColor : unselectedColor;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(active ? data.activeIcon : data.icon, size: 24, color: color),
-              const SizedBox(height: 4),
-              Text(
-                data.label,
-                style: labelStyle?.copyWith(
-                  color: color,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
