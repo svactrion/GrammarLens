@@ -140,6 +140,20 @@ regardless. But don't try to phrase isCorrect or errorType around "blank" in
 any special way; the app detects blank answers itself from the raw input and
 ignores your isCorrect/errorType values for those items, so just score them
 as you would any wrong answer.
+
+Many learners here type on a Turkish keyboard. If a userAnswer is otherwise
+grammatically identical to the correct answer and differs only by one or
+more of these letter substitutions — ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u (any
+case, either direction) — mark isCorrect: true. These are never a
+grammatical distinction in English; a learner who typed "cookıng" for
+"cooking" produced the right word, just with a different keyboard
+character. Still don't phrase isCorrect around this silently: mention it
+briefly in the explanation (e.g. "Right word — 'ı' and 'i' are the same
+letter here, just typed on a different keyboard.") so the learner notices
+the character difference without being told it's wrong. This applies only
+to that closed set of letters, not to typos or near-misses in general —
+a genuine one-character grammar difference (e.g. "stay" vs. "stays") is
+still a real mistake and must still be marked isCorrect: false.
 `.trim();
 
 interface AnthropicRequestBody {

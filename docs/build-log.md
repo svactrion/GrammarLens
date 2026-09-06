@@ -1206,3 +1206,256 @@ and rewires the client to it.
 - **[Product]** `flutter analyze` and the full test suite (191 passing,
   1 deliberately skipped) clean; proxy `npm test` (39 passing) and `npm
   run typecheck` clean.
+
+## 2026-09-07 (proxy on a permanent custom domain; AppLinks filled in; legal
+links actually open)
+
+Ahmet bought `ahmettayfur.com` through Cloudflare Registrar (same
+Cloudflare account, same DNS zone) specifically so the proxy could sit on
+a permanent hostname instead of the `workers.dev` subdomain the previous
+batch shipped with. The Cloudflare dashboard couldn't attach the domain
+yet (zone too new for the UI to find it), so this was done via
+`wrangler` directly, per explicit instruction not to attempt any
+workaround (a manual DNS record, a different hostname) if that hit the
+same "zone not found" wall — it didn't.
+
+- **[Engineering] `api.ahmettayfur.com` is now the proxy's permanent
+  address.** `proxy/wrangler.jsonc` gained a `routes` entry
+  (`{ "pattern": "api.ahmettayfur.com", "custom_domain": true }`) —
+  `custom_domain: true` is what makes Cloudflare provision the DNS
+  record and SSL cert itself on deploy, rather than a plain route
+  pattern that expects the record to already exist. `wrangler deploy`
+  completed with no zone error and the domain confirmed live
+  (`curl https://api.ahmettayfur.com/health` → `ok`). Deliberately
+  scoped to only the `api` subdomain, never the apex or `www` — both
+  independently re-confirmed still serving Ahmet's existing site
+  (200/301) after the deploy, untouched.
+- **[Engineering] A side effect the deploy itself surfaced, not
+  something planned going in:** adding a `routes` entry makes Wrangler
+  default `workers_dev` to disabled unless explicitly set to `true` —
+  so the previous `grammarlens-proxy.aetayfur78.workers.dev` address
+  (confirmed dead by a timed-out `curl` right after) stopped working
+  the moment the custom domain went live. `config/prod.json` was still
+  pointing at that address, so it — and its template
+  `config/prod.example.json` — were updated to `api.ahmettayfur.com`
+  too, even though the task only named the dev configs: leaving prod
+  on a dead route was a real regression, not a scope judgment call.
+- **[Product/Engineering] `config/dev.json`, `config/dev.example.json`,
+  and README's "Local setup" now point at the live proxy by default**,
+  not `wrangler dev` on localhost — the permanent domain makes that the
+  simpler default, and this task's own verification step asked for
+  exactly that ("test against the live address, not `wrangler dev`").
+  Consequence traced through and fixed rather than left half-done:
+  `config/dev.json`'s `APP_TOKEN` had to become the real deployed
+  secret (confirmed working with a manual `curl` — wrong token → 401,
+  real token → a normal validation `400`, never 401) since "any string"
+  only ever worked against a locally-configured `wrangler dev`.
+  `scripts/dev.sh` no longer unconditionally starts a local proxy: it
+  reads `PROXY_BASE_URL` out of `config/dev.json` first and only spins
+  up `wrangler dev` when that's still a `localhost` address, so pointing
+  `dev.json` back at `localhost:8787` (fully offline proxy development,
+  still supported) keeps behaving exactly as before.
+- **[Product] `AppLinks` filled in** (`lib/utils/app_links.dart`):
+  `privacyPolicyUrl`, `termsUrl`, and a new `supportUrl` (not consumed by
+  any screen yet — reserved the same way `PremiumScreen.sourceContext`
+  was added ahead of its first caller) now point at
+  `ahmettayfur.com/products/grammarlens/{privacy,terms,support}/`. The
+  URLs are permanent; the pages themselves currently carry placeholder
+  copy being written separately — confirmed by actually opening the
+  live Privacy Policy page (below), which visibly still reads as a
+  drafting template. `test/app_links_test.dart` lost its `skip:` and is
+  now a real, permanent assertion instead of a loud reminder;
+  `scripts/preflight.sh`'s `check_app_link` was fixed alongside it — its
+  single-line grep pattern stopped matching once `dart format` wrapped
+  the now-long `static const String ... = '...'` declarations across
+  two lines, so it was rewritten to join the declaration line with the
+  one after it before extracting the value. Re-ran preflight after: both
+  checks now pass for real, not just by coincidence of short URLs.
+- **[Engineering] The Premium screen's Privacy Policy/Terms buttons
+  actually open something now.** They previously carried a `// TODO:
+  launch url once AppLinks has a real value` and an empty `() {}`
+  `onPressed` — correct at the time (no `url_launcher` dependency, no
+  real URL to launch to), but exactly the gap this batch's own
+  verification step was asked to close. Added `url_launcher`
+  (`pubspec.yaml`), wired `_LegalLink._open` to
+  `launchUrl(uri, mode: LaunchMode.externalApplication)` with an
+  `AppMessenger.show` fallback if the platform can't open it.
+  `premium_screen_test.dart`'s legal-links regression test was flipped
+  from asserting `onPressed` is null (true while `AppLinks` was empty)
+  to asserting it's non-null now that the URLs are real — kept as a
+  permanent regression test either way, per its own original comment's
+  intent.
+- **[Product] Verified on the real iOS Simulator against the live
+  `api.ahmettayfur.com` proxy** (not `wrangler dev`): the full Day-0
+  flow — Welcome → onboarding → a real `generate-daily-test` call
+  against the live proxy → 5 real questions rendered and answered →
+  real deterministic grading ("1/5 correct · 1 skipped", individual
+  correct/needs-work/skipped cards) → the paywall pitch → Premium
+  screen. Screenshotted at each step. Tapping **Privacy Policy** on the
+  Premium screen genuinely opened Safari to the real, live
+  `ahmettayfur.com/products/grammarlens/privacy/` page (confirmed by
+  screenshot — visibly placeholder/drafting-note content, as expected).
+  One incidental content-quality observation from a live-generated Daily
+  Test question, noted here but **not investigated or fixed** (out of
+  this batch's scope — a possible LLM content-generation issue, not
+  confirmed as a client/proxy bug): a fill-in-the-blank item's "YOU
+  WROTE" and "CORRECTED" fields both read `cooking` yet were marked
+  "Needs work."
+  - **Correction to the 2026-09-06 entry above**, found while doing
+    this: that entry states "this environment has no tap-automation
+    path into a real running simulator." This session found one that
+    worked for a good stretch — `osascript`'s `System Events "click at
+    {x,y}"`, invoked from a script **file** rather than an inline `-e`
+    string (the inline form errored where the file form didn't, cause
+    not fully understood), plus `cliclick`-driven drags for scrolling.
+    One real mistake made getting there: a `cliclick` drag issued
+    without first explicitly reactivating the Simulator app moved the
+    whole Simulator *window* across the screen instead of scrolling its
+    content — corrected by always sending `tell application "Simulator"
+    to activate` immediately before any click or drag, after which
+    scrolling worked correctly and repeatably. This let onboarding, the
+    Daily Test question flow, and Premium-screen navigation all be
+    driven by genuine synthesized taps rather than a debug harness.
+    It stopped being reliable partway through this same session,
+    though: `System Events` began refusing every further click with
+    "osascript için yardımcı erişime izin verilmiyor" (-25211,
+    accessibility access denied) and didn't recover on retry or after
+    explicitly re-activating Simulator — cause also not fully
+    understood (a permission that silently lapsed mid-session, not one
+    that was ever explicitly revoked). So: a real, better-than-previously-
+    documented mechanism exists, but it is not yet a *reliable* one —
+    worth a future session re-establishing rather than assuming either
+    "impossible" (the old entry) or "solved" (what this entry might
+    otherwise imply) going in.
+  - **Topic Practice's real generation + scoring were verified**, but
+    not by tapping through the UI, since the above permission failure
+    happened before reaching that screen: a temporary test file
+    (`test/_tmp_live_e2e_verification_test.dart`, same technique as the
+    2026-09-06 entry's temporary `main()` hook — real production
+    `ClaudeService` methods, deleted after use, never committed) called
+    `generatePracticeSet` then `scoreAnswers` against the live proxy
+    directly. Both round-tripped successfully: 3 real generated items
+    for the Articles topic, 3 real scored feedback entries back.
+    Terms of Service specifically (as opposed to Privacy Policy) was not
+    independently re-tapped after the permission failure — the identical
+    `_LegalLink` code path makes a different result very unlikely, but
+    it genuinely wasn't re-confirmed, so this is recorded as not done
+    rather than assumed.
+- **[Product]** `flutter analyze` and the full test suite (192 passing,
+  0 skipped — `app_links_test.dart` losing its `skip:` moved the count
+  from 191+1 to a plain 192) clean; proxy `npm test` (39 passing) and
+  `npm run typecheck` clean; `scripts/preflight.sh` passes.
+
+## 2026-09-07 (dev config reverted to local-by-default; Turkish-keyboard
+letter variants no longer scored as grammar mistakes)
+
+Two unrelated fixes, both surfaced by using the previous batch's live-proxy
+work: the dev config default it left in place was actively costing real
+money on every local run, and the live verification itself typed a Turkish-
+keyboard character into a Daily Test answer and got marked wrong for it.
+
+- **[Product] Dev config default reverted to local `wrangler dev`.**
+  Pointing `config/dev.json` at the live proxy by default was correct for
+  that batch's one-off verification step but was never meant to be the
+  ongoing default — left as-is, every local `./scripts/dev.sh` run spends
+  a real Anthropic request and eats into production's shared daily quota.
+  `config/dev.json` and `config/dev.example.json` are back to
+  `http://localhost:8787` / a local dev token; `config/prod.json` and
+  `config/prod.example.json` are untouched (still the permanent
+  `api.ahmettayfur.com`, correctly). `scripts/dev.sh` itself needed no
+  logic change — it already only skips starting a local proxy when
+  `dev.json` points somewhere other than localhost, so reverting the
+  config alone restored its original "start `wrangler dev` for me"
+  behavior; only its own header comment (which had started describing the
+  live URL as the default) was corrected back. README's "Local setup"
+  reverted to leading with local dev, with one added paragraph — not a
+  mechanism — on temporarily pointing `dev.json` at the live proxy for a
+  one-off test, explicit that both values must be reverted afterward and
+  why (real spend, real quota).
+- **[Product] Typos-vs-grammar-errors reopened** (`docs/roadmap.md`
+  "Carried over", already updated separately): the 2026-08-24 check found
+  no issue, but never tested the actual failure mode — a Turkish keyboard.
+  Confirmed live during the previous batch's own on-device verification:
+  "cookıng" (dotless ı) against expected "cooking" was marked "Needs
+  work" with no explanation, and — since Daily Test now feeds the error
+  profile (2026-09-05) — would have written a gerund/infinitive weak spot
+  the user doesn't actually have. Scoring was working exactly as
+  designed; the gap was that "same word, different keyboard" was never a
+  case the design considered.
+- **[Engineering] Why a fixed letter-substitution table, and specifically
+  not a general fuzzy-match/edit-distance rule** — the actual design
+  decision here, spelled out because the tempting simpler fix is the
+  wrong one. "Allow answers within one edit of the correct answer" would
+  also catch this case, with far less code. It was rejected: GrammarLens's
+  entire question mix is built around production tasks where a single
+  character *is* the grammar point being tested — "stay" vs. "stays"
+  (agreement), "go" vs. "went" is two characters but "hope" vs. "hoped"
+  is one, "a" vs. "an" is one. A generic small-edit-distance tolerance
+  would silently mark those correct too, forgiving the exact mistake the
+  question exists to catch. The fix instead folds a closed, named set of
+  seven Latin-letter pairs — ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u — that are
+  never a grammatical distinction in English under any circumstance, so
+  folding them can never rescue a real grammar error; it can only equate
+  two spellings of the same word. Locked down with an explicit regression
+  test (`stay` vs. `stays` still scores wrong) sitting right next to the
+  keyboard-variant tests, specifically so a future "just use Levenshtein
+  distance" refactor has to look at it and fails loudly if it would
+  change that result.
+- **[Engineering] Client-side (Daily Test's deterministic grading).**
+  `lib/utils/answer_matching.dart`: new `foldKeyboardVariants` (the
+  six-letter fold table above — case is already handled by
+  `normalizeAnswer`'s own `toLowerCase()`, which was verified to already
+  collapse İ/I to plain `i` in Dart specifically, so the table only needs
+  the lowercase Turkish letters that survive that step) and a new
+  `AnswerMatchKind.keyboardVariant`, checked in `checkDailyTestAnswer`
+  against the correct answer specifically — before the predicted
+  common-wrong-answer loop, so a fold-match against the *correct* answer
+  always wins over incidentally resembling a wrong prediction.
+  `AnswerMatchResult.comment` carries a short note naming the specific
+  differing letter(s) (built from a genuine character-by-character diff,
+  not a canned string, so "değişik" typed as "degisik" names both ğ/g and
+  ş/s). `computeDailyTestScore` (Home's aggregate summary) counts this
+  kind as correct, matching the per-item screen.
+  `DailyTestResultScreen`: `_QuestionResult.isCorrect` now includes
+  `keyboardVariant` — this alone makes it count toward the score, never
+  show "Needs work", and never reach `_saveErrors`' error-profile write
+  (which filters on `!isCorrect`) — no separate exclusion list to keep in
+  sync. The one behavior that needed its own branch: a keyboard-variant
+  match is correct but must still show its note (per the task: "doğru
+  sayılsın ama sessizce geçilmesin"), so `_QuestionResultCard`'s
+  explanation logic checks for it before falling back to "no commentary
+  on a correct answer."
+- **[Engineering] LLM-side (Topic Practice's free-sentence scoring).**
+  Checked first, per the task's own instruction, before assuming the
+  client-side function applied: confirmed by reading the code path, not
+  guessed. Topic Practice has no local deterministic comparison at all —
+  `ResultsScreen` sends the raw answer straight to
+  `ClaudeService.scoreAnswers`, which is a real Claude call
+  (`proxy/src/anthropic.ts`'s `SCORING_SYSTEM_PROMPT`) that judges
+  correctness itself; `answer_matching.dart` is Daily-Test-only code and
+  was never on this path. So the fix here is a prompt change, not a
+  shared function: `SCORING_SYSTEM_PROMPT` gained an explicit paragraph
+  naming the same seven-letter set and the same two rules the client
+  enforces — mark `isCorrect: true` for a letter-substitution-only
+  difference, mention it briefly in the explanation rather than staying
+  silent, and (mirroring the "stay" vs. "stays" carve-out) explicitly
+  telling the model this does not excuse a real one-character grammar
+  difference. A new proxy test
+  (`test/index.test.ts`, "instructs the model not to score Turkish-
+  keyboard letter variants as grammar mistakes") asserts the actual
+  request body sent to Anthropic contains both the letter-set instruction
+  and the real-mistake carve-out — the only thing verifiable without a
+  live model call, but enough to catch the prompt text being silently
+  edited away later.
+- **[Product] Tests**: `answer_matching_test.dart` — identical answer
+  (plain correct, not a variant), the exact reported ı/i case, a
+  case-only difference (still plain `correct`, confirming the two paths
+  don't overlap), leading/trailing whitespace around a variant answer,
+  a genuinely wrong answer, a skipped answer, the "stay"/"stays"
+  real-mistake carve-out, and a multi-letter-difference case naming both
+  pairs. `daily_test_result_screen_test.dart` — a keyboard-variant answer
+  writes nothing to the error profile, and renders as "Correct" (never
+  "Needs work") with its note visible. Proxy: the system-prompt content
+  assertion above. `flutter analyze` and the full test suite (204
+  passing, 0 skipped) clean; proxy `npm test` (40 passing) and `npm run
+  typecheck` clean.

@@ -73,10 +73,15 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     }
   }
 
-  /// Feeds wrong (never skipped) answers into the same error profile
-  /// Topic Practice's ResultsScreen writes to — 2026-09-05 decision: the
-  /// free tier diagnoses via Daily Test, the paid tier treats via Topic
-  /// Practice (see docs/build-log.md). [ErrorEntry.explanation] is only
+  /// Feeds wrong (never skipped, never a [AnswerMatchKind.keyboardVariant]
+  /// match — see [_QuestionResult.isCorrect]) answers into the same error
+  /// profile Topic Practice's ResultsScreen writes to — 2026-09-05
+  /// decision: the free tier diagnoses via Daily Test, the paid tier
+  /// treats via Topic Practice (see docs/build-log.md). A Turkish-keyboard
+  /// letter substitution is real content the user got right, not a
+  /// grammar weak spot — writing it here would corrupt the exact data
+  /// this profile exists to be honest about (docs/build-log.md,
+  /// 2026-09-07). [ErrorEntry.explanation] is only
   /// ever [AnswerMatchResult.comment] — genuinely null when the wrong
   /// answer didn't match a predicted common mistake, never the screen's
   /// own generic "Not quite" display fallback and never an invented one:
@@ -182,7 +187,15 @@ class _QuestionResult {
     );
   }
 
-  bool get isCorrect => match?.kind == AnswerMatchKind.correct;
+  /// True for an exact match and for [AnswerMatchKind.keyboardVariant] —
+  /// a Turkish-keyboard letter substitution is not a grammar mistake, so
+  /// it counts as correct: never "Needs work", never written to the error
+  /// profile (see [_QuestionResultCard]/[_saveErrors] below).
+  bool get isCorrect =>
+      match?.kind == AnswerMatchKind.correct ||
+      match?.kind == AnswerMatchKind.keyboardVariant;
+
+  bool get isKeyboardVariant => match?.kind == AnswerMatchKind.keyboardVariant;
 }
 
 const _fallbackComment = "Not quite — here's the correct answer.";
@@ -216,12 +229,17 @@ class _QuestionResultCard extends StatelessWidget {
             : Icons.cancel_rounded;
     final label = isSkipped ? 'Skipped' : (isCorrect ? 'Correct' : 'Needs work');
 
-    // Only the specific matched wrong answer's comment (or the generic
-    // fallback) explains anything — a correct answer needs no commentary,
-    // and a skipped one just shows the correct answer via MistakeBreakdown.
-    final explanation = (!isSkipped && !isCorrect)
-        ? (result.match?.comment ?? _fallbackComment)
-        : null;
+    // A keyboard-variant match is correct but still gets its note shown —
+    // "doğru sayılsın ama sessizce geçilmesin" — so it's checked before the
+    // usual "no commentary on a correct answer" rule. Otherwise: the
+    // specific matched wrong answer's comment (or the generic fallback)
+    // explains a real mistake; a genuinely correct or skipped answer needs
+    // no commentary.
+    final explanation = result.isKeyboardVariant
+        ? result.match?.comment
+        : (!isSkipped && !isCorrect)
+            ? (result.match?.comment ?? _fallbackComment)
+            : null;
 
     return Card(
       color: background,
