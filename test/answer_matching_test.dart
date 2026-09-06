@@ -119,6 +119,119 @@ void main() {
     });
   });
 
+  group('Turkish-keyboard letter variants (docs/build-log.md, 2026-09-07)',
+      () {
+    final keyboardQuestion = DailyTestQuestion(
+      item: const PracticeItem(
+        id: 'kb1',
+        type: PracticeItemType.fillInBlank,
+        instruction: "Fill in the blank: I really enjoy ___ for people.",
+      ),
+      topicId: 'gerundVsInfinitive',
+      correctAnswer: 'cooking',
+      commonWrongAnswers: const [
+        CommonWrongAnswer(
+          answer: 'cook',
+          comment: "Use the '-ing' form after 'enjoy'.",
+        ),
+      ],
+    );
+
+    test('an exact identical answer is plain correct, not a keyboard variant',
+        () {
+      final result = checkDailyTestAnswer(keyboardQuestion, 'cooking');
+      expect(result.kind, AnswerMatchKind.correct);
+      expect(result.comment, isNull);
+    });
+
+    test(
+        'a dotless-ı vs. dotted-i difference (the actual reported case) is a '
+        'keyboard variant, not a mistake', () {
+      final result = checkDailyTestAnswer(keyboardQuestion, 'cookıng');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+      expect(result.correctAnswer, 'cooking');
+      expect(result.comment, isNotNull);
+      expect(result.comment, contains('ı'));
+      expect(result.comment, contains('i'));
+    });
+
+    test('a case-only difference is plain correct, not a keyboard variant',
+        () {
+      // normalizeAnswer's own lowercasing resolves this before the
+      // keyboard-variant fold ever runs — locks down that the two paths
+      // don't overlap.
+      final result = checkDailyTestAnswer(keyboardQuestion, 'COOKING');
+      expect(result.kind, AnswerMatchKind.correct);
+    });
+
+    test('leading/trailing whitespace around a keyboard-variant answer '
+        'still matches as a variant', () {
+      final result = checkDailyTestAnswer(keyboardQuestion, '  cookıng  ');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+    });
+
+    test('a genuinely wrong answer is unaffected by keyboard-variant folding',
+        () {
+      final result = checkDailyTestAnswer(keyboardQuestion, 'swimming');
+      expect(result.kind, AnswerMatchKind.fallback);
+    });
+
+    test('a skipped (empty) answer is unaffected by keyboard-variant folding',
+        () {
+      final result = checkDailyTestAnswer(keyboardQuestion, '');
+      expect(result.kind, AnswerMatchKind.fallback);
+    });
+
+    test(
+        'a real one-character grammar difference is still wrong — folding '
+        'is a closed letter set, not general edit-distance', () {
+      final tenseQuestion = DailyTestQuestion(
+        item: const PracticeItem(
+          id: 'kb2',
+          type: PracticeItemType.fillInBlank,
+          instruction: "Fill in the blank: She usually ___ home late.",
+        ),
+        topicId: 'tenseSelection',
+        correctAnswer: 'stays',
+        commonWrongAnswers: const [],
+      );
+
+      final result = checkDailyTestAnswer(tenseQuestion, 'stay');
+      expect(result.kind, AnswerMatchKind.fallback);
+    });
+
+    test('multiple differing keyboard letters are all named in the note',
+        () {
+      final multiQuestion = DailyTestQuestion(
+        item: const PracticeItem(
+          id: 'kb3',
+          type: PracticeItemType.fillInBlank,
+          instruction: 'Fill in the blank: This is a ___ topic.',
+        ),
+        topicId: 'articles',
+        correctAnswer: 'değişik',
+        commonWrongAnswers: const [],
+      );
+
+      final result = checkDailyTestAnswer(multiQuestion, 'degisik');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+      // Both differing letter pairs (ğ/g and ş/s) named, not just the
+      // first one found.
+      expect(result.comment, contains('ğ'));
+      expect(result.comment, contains('ş'));
+    });
+  });
+
+  group('foldKeyboardVariants', () {
+    test('folds each Turkish letter to its plain-ASCII variant', () {
+      expect(foldKeyboardVariants('ışığı çözüyor'), 'isigi cozuyor');
+    });
+
+    test('leaves plain ASCII and unrelated characters untouched', () {
+      expect(foldKeyboardVariants('stays, right?'), 'stays, right?');
+    });
+  });
+
   group('normalizeAnswer', () {
     test('trims, lowercases, and collapses internal whitespace', () {
       expect(normalizeAnswer('  Goes   Home '), 'goes home');

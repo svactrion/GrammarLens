@@ -162,6 +162,16 @@ telling you to do the below.
    copy `proxy/.dev.vars.example` to `proxy/.dev.vars` and fill in a real
    Anthropic API key (see `proxy/README.md`) — that's the only place a
    real key needs to exist on a dev machine.
+   - **Testing against the live proxy instead of `wrangler dev`**: the
+     proxy also lives at the permanent `https://api.ahmettayfur.com`
+     (Cloudflare Workers custom domain — see `proxy/wrangler.jsonc`).
+     Temporarily set `config/dev.json`'s `PROXY_BASE_URL` to that and
+     `APP_TOKEN` to the real deployed secret (`config/prod.json`'s value,
+     if you have it) — `./scripts/dev.sh` detects a non-localhost URL and
+     skips starting a local proxy. Revert both back to `localhost:8787`
+     and the local dev token afterward: every call against the live
+     address spends a real Anthropic request and counts against
+     production's daily quota, so this isn't the default for a reason.
    - **VS Code** users can use the "GrammarLens (dev)" launch config
      (`.vscode/launch.json`, committed) instead — same flag, wired to
      Run/Debug, but doesn't start the proxy for you; run `npm run dev` in

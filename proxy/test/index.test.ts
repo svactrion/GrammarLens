@@ -198,6 +198,22 @@ describe('POST /v1/score-answers', () => {
 
     expect(response.status).toBe(200);
   });
+
+  it('instructs the model not to score Turkish-keyboard letter variants as grammar mistakes', async () => {
+    mockAnthropicSuccess({ feedback: [] });
+
+    await post('/v1/score-answers', {
+      deviceId: 'd1',
+      items: [{ id: 'q1', type: 'fill_in_blank', prompt: 'I saw ___ cat.', userAnswer: 'the' }],
+    });
+
+    expect(fetchCalls).toHaveLength(1);
+    const body = JSON.parse(String(fetchCalls[0]?.init?.body)) as { system: string };
+    // The letter-substitution instruction itself, and the explicit carve-out
+    // so a real one-character grammar difference is still never excused.
+    expect(body.system).toContain('ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u');
+    expect(body.system).toContain('stay');
+  });
 });
 
 describe('quota', () => {

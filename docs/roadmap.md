@@ -549,8 +549,18 @@ screens, no commitment yet. Needs its own decision pass when we get there.
 - Partial-answer submission for error-correction on mobile — still tension
   with "graded on the fix, not the format" (build-log, 2026-07-24); needs its
   own product decision
-- ~~Verify whether typos get misgraded as grammar errors~~ — checked
-  2026-08-24, no issue found, no prompt change needed
+- **Typos misgraded as grammar errors — reopened 2026-09-06.** The
+  2026-08-24 check concluded "no issue found"; that check missed the case
+  that actually matters for this audience. Using the app on a Turkish
+  keyboard, an answer typed as "cookıng" (dotless ı) against the expected
+  "cooking" is marked "Needs work" with no explanation — the two strings are
+  near-indistinguishable at body-text size. Scoring behaved correctly; the
+  product decision behind it did not. Two harms: the feedback is negative and
+  unexplained, and since Daily Test now feeds the error profile, it writes a
+  grammar weak spot the user does not actually have, corrupting the data the
+  free tier's value rests on. Turkish-keyboard character substitutions
+  (ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u) are never grammatical distinctions in
+  English and must not be scored as grammar errors
 
 ---
 

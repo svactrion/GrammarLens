@@ -170,6 +170,51 @@ void main() {
     });
 
     testWidgets(
+        'a keyboard-variant answer (docs/build-log.md, 2026-09-07) is not '
+        'written to the error profile', (tester) async {
+      final keyboardQuestions = [
+        _question(id: 'k1', topicId: 'gerundVsInfinitive', correctAnswer: 'cooking'),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: DailyTestResultScreen(
+            dailyTestSet: DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
+            answers: const {'k1': 'cookıng'},
+            dailyTestService: dailyTestService,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(storageService.insertedErrors, isEmpty);
+    });
+
+    testWidgets(
+        'a keyboard-variant answer is shown as Correct, never Needs work, '
+        'with a short note explaining the character difference',
+        (tester) async {
+      final keyboardQuestions = [
+        _question(id: 'k1', topicId: 'gerundVsInfinitive', correctAnswer: 'cooking'),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: DailyTestResultScreen(
+            dailyTestSet: DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
+            answers: const {'k1': 'cookıng'},
+            dailyTestService: dailyTestService,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Correct'), findsOneWidget);
+      expect(find.text('Needs work'), findsNothing);
+      expect(find.textContaining('keyboard character'), findsOneWidget);
+    });
+
+    testWidgets(
         'reopening an already-completed set (Home\'s "view result again") '
         'does not re-log the same mistakes a second time', (tester) async {
       final completedSet = DailyTestSet(
