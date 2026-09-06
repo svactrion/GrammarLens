@@ -1,4 +1,4 @@
 {
-  "PROXY_BASE_URL": "https://grammarlens-proxy.<your-subdomain>.workers.dev",
+  "PROXY_BASE_URL": "https://api.ahmettayfur.com",
   "APP_TOKEN": ""
 }

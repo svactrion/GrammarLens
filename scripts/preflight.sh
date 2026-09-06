@@ -14,7 +14,13 @@ failed=0
 check_app_link() {
   local field="$1"
   local value
-  value=$(grep -o "$field = '[^']*'" "$app_links_file" | sed -E "s/.*= '([^']*)'/\1/")
+  # The declaration and its string literal can be split across two lines
+  # (dart format wraps a long `static const String foo = '...'` line), so
+  # join the declaration line with the one after it before extracting the
+  # value instead of assuming both are on one line.
+  value=$(grep -A1 "static const String $field" "$app_links_file" \
+    | tr -d '\n' \
+    | sed -E "s/.*$field[[:space:]]*=[[:space:]]*'([^']*)'.*/\1/")
   if [[ -z "$value" ]]; then
     echo "✗ AppLinks.$field is empty — set a real hosted URL in $app_links_file before a release build."
     failed=1

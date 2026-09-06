@@ -301,9 +301,8 @@ void main() {
 
   group('legal links (App Store required)', () {
     testWidgets(
-        'Privacy Policy / Terms are present but rendered disabled — not a '
-        "dead-but-clickable link — while AppLinks' URLs are still empty",
-        (tester) async {
+        'Privacy Policy / Terms are present and enabled now that '
+        "AppLinks' URLs are real", (tester) async {
       await pumpPremium(tester, _FakeSubscriptionService(offering: null));
       await scrollToEnd(tester);
 
@@ -316,15 +315,15 @@ void main() {
       final termsButton = tester.widget<TextButton>(
         find.widgetWithText(TextButton, 'Terms of Service'),
       );
-      // AppLinks.privacyPolicyUrl / termsUrl are still the empty
-      // pre-launch placeholder (see app_links.dart) — disabled
-      // (onPressed: null), not a dead/broken tap that goes nowhere. This
-      // is a permanent regression test: keep it green (and keep it) even
-      // once real URLs are set, at which point onPressed should no
-      // longer be null — see app_links_test.dart for the reminder that
-      // catches *that* half.
-      expect(privacyButton.onPressed, isNull);
-      expect(termsButton.onPressed, isNull);
+      // AppLinks.privacyPolicyUrl / termsUrl are real, permanent URLs as
+      // of the custom-domain batch (see app_links.dart) — the buttons
+      // must be enabled (onPressed non-null), not the disabled
+      // placeholder state from before those URLs existed. This stays a
+      // permanent regression test: if AppLinks is ever emptied out again
+      // (it shouldn't be), this is what would catch a live-looking but
+      // dead link shipping instead.
+      expect(privacyButton.onPressed, isNotNull);
+      expect(termsButton.onPressed, isNotNull);
     });
   });
 
