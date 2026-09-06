@@ -6,6 +6,15 @@
   "observability": {
     "enabled": true
   },
+  // Custom domain for the deployed Worker. `custom_domain: true` tells
+  // Cloudflare to provision the DNS record + SSL cert for this hostname
+  // itself on deploy (as opposed to a plain route pattern, which expects
+  // the DNS record to already exist). Only the `api` subdomain — never
+  // the apex `ahmettayfur.com` or `www`, which serve an unrelated website
+  // on the same Cloudflare account/zone.
+  "routes": [
+    { "pattern": "api.ahmettayfur.com", "custom_domain": true }
+  ],
   // Not secrets — safe defaults, overridable per environment without a
   // redeploy of secret material. The real secrets (ANTHROPIC_API_KEY,
   // APP_TOKEN) are set via `wrangler secret put` and never appear here or
