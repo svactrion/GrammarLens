@@ -194,19 +194,20 @@ void main() {
     });
 
     // `_DebugAccessChoice` is private to settings_screen.dart, so this
-    // identifies the Developer section's SegmentedButton by elimination
-    // (the only other one on screen is the theme picker, `AppThemeMode`
-    // values) and reads its selection via `toString()`, which — unlike
-    // the enum's `.name` getter — isn't stripped from this test build.
+    // identifies the Developer section's SegmentedButton by elimination —
+    // the only other one on screen is the theme picker, whose selection is
+    // an `AppThemeMode`.
+    Finder debugSegmentedButtonFinder() => find.byWidgetPredicate((w) {
+          if (w is! SegmentedButton) return false;
+          return (w as dynamic).selected.first is! AppThemeMode;
+        });
+
+    // Reads the selection via `toString()`, which — unlike the enum's
+    // `.name` getter — isn't stripped from this test build.
     String selectedDebugChoiceName(WidgetTester tester) {
-      final buttons =
-          tester.widgetList(find.byWidgetPredicate((w) => w is SegmentedButton));
-      for (final w in buttons) {
-        final selected = (w as dynamic).selected.first;
-        if (selected is AppThemeMode) continue;
-        return selected.toString().split('.').last;
-      }
-      throw StateError('Developer section SegmentedButton not found');
+      final button =
+          tester.widget(debugSegmentedButtonFinder()) as dynamic;
+      return (button.selected.first as Object).toString().split('.').last;
     }
 
     testWidgets(
@@ -298,6 +299,36 @@ void main() {
 
         expect(subscriptionService.debugAccessOverride, isNull);
         expect(storage.debugAccessOverride, isNull);
+      },
+    );
+
+    testWidgets(
+      'the control is the same width no matter which option is selected',
+      (tester) async {
+        await pumpSettings(tester, storageService: _FakeStorageService());
+        await tester.drag(find.byType(ListView), const Offset(0, -800));
+        await tester.pumpAndSettle();
+
+        final realWidth = tester.getSize(debugSegmentedButtonFinder()).width;
+
+        await tester.tap(find.text('Free'));
+        await tester.pumpAndSettle();
+        final freeWidth = tester.getSize(debugSegmentedButtonFinder()).width;
+
+        await tester.tap(find.text('Full access'));
+        await tester.pumpAndSettle();
+        final fullWidth = tester.getSize(debugSegmentedButtonFinder()).width;
+
+        expect(
+          freeWidth,
+          realWidth,
+          reason: 'Real=$realWidth Free=$freeWidth Full=$fullWidth',
+        );
+        expect(
+          fullWidth,
+          realWidth,
+          reason: 'Real=$realWidth Free=$freeWidth Full=$fullWidth',
+        );
       },
     );
   });

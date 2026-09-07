@@ -6,6 +6,7 @@ import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
+import '../widgets/app_segmented_button.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
 
@@ -571,7 +572,7 @@ class _PlanPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SegmentedButton<_PlanPeriod>(
+        AppSegmentedButton<_PlanPeriod>(
           segments: const [
             ButtonSegment(
               value: _PlanPeriod.monthly,
