@@ -266,14 +266,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
           // [package].
           Center(
             child: TextButton(
-              // Explicit color: an unstyled TextButton defaults to Material
-              // 3's colorScheme.primary, which in light mode *is* the
-              // page's own vivid-orange background (see theme.dart's
-              // filledButtonTheme comment — the same clash it already
-              // works around for FilledButton) — without this, the button
-              // renders orange-on-orange and disappears in light mode.
-              style:
-                  TextButton.styleFrom(foregroundColor: colorScheme.secondary),
+              // No explicit style: theme.dart's textButtonTheme now covers
+              // the orange-on-orange contrast fix this call site used to
+              // patch individually.
               onPressed: _restoring ? null : _restore,
               child: Text(_restoring ? 'Restoring…' : 'Restore Purchases'),
             ),
