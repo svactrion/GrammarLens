@@ -375,6 +375,18 @@ ThemeData buildAppTheme(Brightness brightness) {
             ?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
+    textButtonTheme: TextButtonThemeData(
+      // Explicit color for the same reason FilledButton/OutlinedButton
+      // need one above: M3's default TextButton foreground is
+      // colorScheme.primary, which in light mode *is* the page's own
+      // vivid-orange background — an unstyled TextButton renders
+      // orange-on-orange and disappears. Several call sites (Restore
+      // Purchases, Skip, "Maybe later") had been patching this
+      // individually; centralizing it here means any new TextButton gets
+      // a readable color by default, in both themes, without repeating
+      // the fix.
+      style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest,
