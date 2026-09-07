@@ -1,114 +1,310 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../models/practice_length.dart';
+import '../spacing.dart';
 
-/// Quick "how many questions" step shown before a practice set is generated
-/// (see `practice_launch.dart`, which calls this ahead of every topic launch
-/// and every Review "Practice this" launch so the two entry points can't
-/// drift apart). [initial] — the user's last choice — is pre-highlighted;
-/// tapping any option immediately resolves the future with that choice.
-/// Dismissing without tapping one (e.g. the back gesture) resolves `null`,
-/// which the caller treats as "cancelled, don't generate anything".
+/// "How many questions" step shown before a practice set is generated (see
+/// `practice_launch.dart`, which calls this ahead of every topic launch and
+/// every Review "Practice this" launch so the two entry points can't drift
+/// apart). [initial] — the user's last choice — is pre-selected.
+///
+/// A single drag gesture across the three options, rather than a list of
+/// tappable cards (docs/design-audit.md §2's "Session-length dialog"
+/// finding) — the slider's own drag replaces tap-to-select, so choosing and
+/// confirming are now two separate steps: drag to preview a length, then
+/// tap "Start N questions" to confirm. Dismissing without tapping it (the
+/// back gesture, swipe-down, or tapping the scrim) resolves `null`, which
+/// the caller treats as "cancelled, don't generate anything" — the same
+/// contract the previous dialog had.
 Future<PracticeLength?> showPracticeLengthPicker({
   required BuildContext context,
   required PracticeLength initial,
 }) {
-  return showDialog<PracticeLength>(
+  final colorScheme = Theme.of(context).colorScheme;
+  return showModalBottomSheet<PracticeLength>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('How many questions?'),
-      content: SizedBox(
-        // AlertDialog sizes `content` to its children's intrinsic width by
-        // default, which would let the Column's rows shrink to their
-        // longest child instead of filling the dialog — this forces them
-        // to stretch full-width.
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final length in PracticeLength.values) ...[
-              if (length != PracticeLength.values.first)
-                const SizedBox(height: 12),
-              _LengthOption(length: length, selected: length == initial),
-            ],
-          ],
-        ),
-      ),
+    isScrollControlled: true,
+    backgroundColor: colorScheme.surfaceContainerLowest,
+    // A pure black scrim over the orange page reads as a muddy brown
+    // (docs/design-audit.md §2) — tinted off the page's own foreground
+    // color instead, at a mid opacity.
+    barrierColor: colorScheme.onSurface.withValues(alpha: 0.42),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
+    builder: (sheetContext) => _PracticeLengthSheet(initial: initial),
   );
 }
 
-IconData _iconFor(PracticeLength length) {
-  switch (length) {
-    case PracticeLength.quick:
-      return Icons.bolt_rounded;
-    case PracticeLength.standard:
-      return Icons.track_changes_rounded;
-    case PracticeLength.extended:
-      return Icons.terrain_rounded;
-  }
+class _PracticeLengthSheet extends StatefulWidget {
+  final PracticeLength initial;
+
+  const _PracticeLengthSheet({required this.initial});
+
+  @override
+  State<_PracticeLengthSheet> createState() => _PracticeLengthSheetState();
 }
 
-class _LengthOption extends StatelessWidget {
-  final PracticeLength length;
-  final bool selected;
+class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
+  late PracticeLength _selected = widget.initial;
 
-  const _LengthOption({required this.length, required this.selected});
+  void _onSliderChanged(double value) {
+    final next = PracticeLength.values[value.round()];
+    if (next == _selected) return;
+    HapticFeedback.selectionClick();
+    setState(() => _selected = next);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final onAccent = colorScheme.onSecondary;
-    final titleColor = selected ? onAccent : colorScheme.onSurface;
-    final subtitleColor = selected ? onAccent : colorScheme.onSurfaceVariant;
-    final iconColor = selected ? onAccent : colorScheme.onSurfaceVariant;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
-    return Material(
-      color: selected ? colorScheme.secondary : Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(context).pop(length),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: selected ? null : Border.all(color: colorScheme.outline),
-          ),
-          child: Row(
-            children: [
-              Icon(_iconFor(length), color: iconColor, size: 26),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${length.label} · ${length.questionCount} questions',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      length.description,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: subtitleColor),
-                    ),
-                  ],
-                ),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.xl,
+          Spacing.md,
+          Spacing.xl,
+          Spacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle — purely visual; showModalBottomSheet's own
+            // swipe-to-dismiss already works over the whole sheet without
+            // needing a gesture wired to this specifically.
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
               ),
-              if (selected) ...[
-                const SizedBox(width: 8),
-                Icon(Icons.check_circle_rounded, color: onAccent, size: 22),
+            ),
+            const SizedBox(height: Spacing.lg),
+            Text(
+              'How many questions?',
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: Spacing.lg),
+            _SelectionCard(selected: _selected, reduceMotion: reduceMotion),
+            SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 8,
+                trackShape: const RoundedRectSliderTrackShape(),
+                activeTrackColor: colorScheme.secondary,
+                inactiveTrackColor: colorScheme.surfaceContainerHigh,
+                thumbColor: colorScheme.secondary,
+                activeTickMarkColor: colorScheme.onSecondary,
+                inactiveTickMarkColor: colorScheme.outline,
+                thumbShape: _DragHandleThumbShape(
+                  radius: 22,
+                  chevronColor: colorScheme.onSecondary,
+                ),
+                overlayShape: SliderComponentShape.noOverlay,
+                // The selection card above already shows the picked value
+                // prominently — a floating value bubble under the thumb
+                // while dragging would just repeat it.
+                showValueIndicator: ShowValueIndicator.never,
+              ),
+              child: Slider(
+                min: 0,
+                max: 2,
+                divisions: 2,
+                value: _selected.index.toDouble(),
+                onChanged: _onSliderChanged,
+                semanticFormatterCallback: (value) {
+                  final length = PracticeLength.values[value.round()];
+                  return '${length.questionCount} questions, ${length.label}';
+                },
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (final length in PracticeLength.values)
+                  Text(
+                    '${length.questionCount}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight:
+                          length == _selected ? FontWeight.w700 : FontWeight.w600,
+                      color: length == _selected
+                          ? colorScheme.secondary
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
               ],
-            ],
-          ),
+            ),
+            const SizedBox(height: Spacing.sm),
+            Text(
+              'Drag to set the session length',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: Spacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(_selected),
+                child: Text('Start ${_selected.questionCount} questions'),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+/// The big-number "this is what you've picked" card. Its content swaps via
+/// [AnimatedSwitcher] rather than in place, so a length change reads as a
+/// distinct step rather than text quietly changing underneath the reader.
+class _SelectionCard extends StatelessWidget {
+  final PracticeLength selected;
+  final bool reduceMotion;
+
+  const _SelectionCard({required this.selected, required this.reduceMotion});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final onCard = colorScheme.onSecondaryContainer;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: AnimatedSwitcher(
+        duration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
+        child: Row(
+          key: ValueKey(selected),
+          children: [
+            Text(
+              '${selected.questionCount}',
+              style: TextStyle(
+                fontSize: 56,
+                fontWeight: FontWeight.w700,
+                height: 1.0,
+                color: onCard,
+              ),
+            ),
+            const SizedBox(width: Spacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    selected.label,
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
+                      color: onCard,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    selected.description,
+                    style: TextStyle(fontSize: 13, color: onCard),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A big, unmissable drag handle — a filled circle with a soft drop shadow
+/// and two small chevrons — in place of the plain circle a default Material
+/// slider thumb draws. This screen's entire premise is that the choice is
+/// made by dragging; a thumb that doesn't visibly invite that would defeat
+/// the point.
+class _DragHandleThumbShape extends SliderComponentShape {
+  final double radius;
+  final Color chevronColor;
+
+  const _DragHandleThumbShape({
+    required this.radius,
+    required this.chevronColor,
+  });
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      Size.fromRadius(radius);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final canvas = context.canvas;
+    final fillColor = sliderTheme.thumbColor!;
+
+    canvas.drawCircle(
+      center.translate(0, 2),
+      radius,
+      Paint()
+        ..color = const Color(0x33000000)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawCircle(center, radius, Paint()..color = fillColor);
+
+    final chevronPaint = Paint()
+      ..color = chevronColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    _drawChevron(
+      canvas,
+      center + const Offset(-5, 0),
+      pointRight: false,
+      paint: chevronPaint,
+    );
+    _drawChevron(
+      canvas,
+      center + const Offset(5, 0),
+      pointRight: true,
+      paint: chevronPaint,
+    );
+  }
+}
+
+void _drawChevron(
+  Canvas canvas,
+  Offset origin, {
+  required bool pointRight,
+  required Paint paint,
+}) {
+  final dir = pointRight ? 1.0 : -1.0;
+  final apex = origin + Offset(3 * dir, 0);
+  final top = origin + Offset(-2 * dir, -4);
+  final bottom = origin + Offset(-2 * dir, 4);
+  final path = Path()
+    ..moveTo(top.dx, top.dy)
+    ..lineTo(apex.dx, apex.dy)
+    ..lineTo(bottom.dx, bottom.dy);
+  canvas.drawPath(path, paint);
 }
