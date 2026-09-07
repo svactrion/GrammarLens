@@ -12,6 +12,7 @@ import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/floating_nav_shell.dart';
+import 'theme_preview_screen.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
 /// a UI-layer concept only. [SubscriptionService.debugAccessOverride]
@@ -461,6 +462,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ? 'Resetting…'
                                 : 'Reset first-launch state',
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Theme preview',
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Every color role, semantic result color, and core '
+                        'component in one scroll — for checking a token '
+                        'change before it ships.',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ThemePreviewScreen(),
+                            ),
+                          ),
+                          child: const Text('Open theme preview'),
                         ),
                       ),
                     ],
