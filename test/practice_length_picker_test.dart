@@ -155,4 +155,53 @@ void main() {
         tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher));
     expect(switcher.duration, const Duration(milliseconds: 180));
   });
+
+  testWidgets(
+      'each length label sits centered under its actual slider stop '
+      '(regression: labels used to be laid out across the full row width '
+      'while the slider track is inset by its thumb radius, so only the '
+      'middle stop lined up by coincidence of symmetry)', (tester) async {
+    await _openPicker(tester, initial: PracticeLength.standard);
+
+    final sliderFinder = find.byType(Slider);
+    final sliderTopLeft = tester.getTopLeft(sliderFinder);
+    final sliderRenderBox = tester.renderObject<RenderBox>(sliderFinder);
+    final sliderThemeData =
+        tester.widget<SliderTheme>(find.byType(SliderTheme)).data;
+
+    // The exact track-shape class and SliderThemeData the widget itself
+    // renders with — this measures the real inset Flutter computes for
+    // this slider, rather than assuming a number.
+    final trackShape = sliderThemeData.trackShape!;
+    final trackRect = trackShape.getPreferredRect(
+      parentBox: sliderRenderBox,
+      sliderTheme: sliderThemeData,
+      isEnabled: true,
+      isDiscrete: true,
+    );
+
+    final expectedStopX = [
+      sliderTopLeft.dx + trackRect.left,
+      sliderTopLeft.dx + (trackRect.left + trackRect.right) / 2,
+      sliderTopLeft.dx + trackRect.right,
+    ];
+
+    for (var i = 0; i < PracticeLength.values.length; i++) {
+      final length = PracticeLength.values[i];
+      // Keyed rather than found by text: the label row also contains an
+      // invisible same-styled sizer Text that can share a value ("10")
+      // with a real label, which would otherwise make `find.text` matches
+      // ambiguous.
+      final labelCenter = tester.getCenter(
+        find.byKey(ValueKey('lengthLabel_${length.name}')),
+      );
+      expect(
+        labelCenter.dx,
+        closeTo(expectedStopX[i], 1.0),
+        reason:
+            '${length.label} label should sit under its slider stop, not '
+            'wherever the full-width row happens to place it',
+      );
+    }
+  });
 }
