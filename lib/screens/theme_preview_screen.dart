@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../spacing.dart';
 import '../theme.dart';
 import '../utils/page_title.dart';
+import '../widgets/app_segmented_button.dart';
 import '../widgets/floating_nav_shell.dart';
 
 /// Debug-only design reference: every [ColorScheme] role, [SemanticColors],
@@ -273,7 +274,7 @@ class _ComponentGallery extends StatelessWidget {
         // Settings (theme, entitlement override) and Premium (plan
         // period) — reused here rather than a one-off pill mockup, so
         // this preview reflects exactly what those screens render.
-        SegmentedButton<bool>(
+        AppSegmentedButton<bool>(
           segments: const [
             ButtonSegment(value: false, label: Text('Unselected')),
             ButtonSegment(value: true, label: Text('Selected')),

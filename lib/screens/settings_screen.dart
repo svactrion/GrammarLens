@@ -10,6 +10,7 @@ import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
+import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/floating_nav_shell.dart';
 import 'theme_preview_screen.dart';
@@ -242,7 +243,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const _SectionLabel('Appearance'),
             const SizedBox(height: 8),
-            SegmentedButton<AppThemeMode>(
+            AppSegmentedButton<AppThemeMode>(
               segments: const [
                 ButtonSegment(
                   value: AppThemeMode.system,
@@ -408,7 +409,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 16),
-                      SegmentedButton<_DebugAccessChoice>(
+                      AppSegmentedButton<_DebugAccessChoice>(
                         segments: const [
                           ButtonSegment(
                             value: _DebugAccessChoice.real,
