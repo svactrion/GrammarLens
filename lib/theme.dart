@@ -33,8 +33,15 @@ const Color _lightOnPrimaryContainer = Color(0xFF241200);
 // selected nav item, progress/"correct" chips.
 const Color _lightSecondary = Color(0xFF0D3B8F);
 const Color _lightOnSecondary = Color(0xFFFFFFFF);
-const Color _lightSecondaryContainer = Color(0xFF3D5AFE);
-const Color _lightOnSecondaryContainer = Color(0xFFFFFFFF);
+
+// Secondary container — a light tint of the same navy above, not a second
+// hue. Previously a separate saturated violet-blue (#3D5AFE) that read as
+// an unrelated second "blue" system-wide (the Settings/Premium segmented
+// buttons' selected fill, Premium's icon circles, the Review frequency
+// pill, the weak-spot detail pill) — docs/design-audit.md S2/D2. Every one
+// of those now derives from this single navy family.
+const Color _lightSecondaryContainer = Color(0xFFD7E1FA);
+const Color _lightOnSecondaryContainer = Color(0xFF0A2E70);
 
 const Color _lightError = Color(0xFFBA1A1A);
 const Color _lightOnError = Color(0xFFFFFFFF);
@@ -243,6 +250,8 @@ ColorScheme _buildColorScheme(Brightness brightness) {
     onSecondary: _lightOnSecondary,
     secondaryContainer: _lightSecondaryContainer,
     onSecondaryContainer: _lightOnSecondaryContainer,
+    // tertiary aliases secondary rather than introducing a third hue — one
+    // blue system-wide (D2).
     tertiary: _lightSecondary,
     onTertiary: _lightOnSecondary,
     tertiaryContainer: _lightSecondaryContainer,
