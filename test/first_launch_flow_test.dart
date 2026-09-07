@@ -110,6 +110,16 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    // Welcome's ambient decorations animate on an infinite loop by design
+    // (see welcome_screen.dart), which never lets `pumpAndSettle()` find a
+    // quiet frame. Reporting "reduce motion" exercises this app's real
+    // accessibility path instead of working around the hang some other way.
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(
+      tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+
     await tester.pumpWidget(
       MaterialApp(
         // DailyTestResultScreen (reached partway through this flow) reads
