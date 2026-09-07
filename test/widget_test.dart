@@ -3,6 +3,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/app.dart';
 
 void main() {
+  // Welcome's ambient decorations (breathing mark, scan rings, drifting
+  // background glow, twinkle dots) animate on an infinite loop by design,
+  // which never lets `pumpAndSettle()` find a quiet frame — the same
+  // class of hang any perpetual animation (e.g. a spinner) causes in
+  // widget tests. Reporting "reduce motion" here exercises this app's
+  // real accessibility path (see welcome_screen.dart) instead of working
+  // around the hang some other way.
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized()
+        .platformDispatcher
+        .accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+  });
+
+  tearDown(() {
+    TestWidgetsFlutterBinding.ensureInitialized()
+        .platformDispatcher
+        .clearAccessibilityFeaturesTestValue();
+  });
+
   testWidgets('shows the welcome screen on a fresh install', (tester) async {
     // sqflite has no platform channel in the plain widget-test environment,
     // so `getUserProfile()` throws and the app falls back to onboarding —
