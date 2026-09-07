@@ -4,6 +4,21 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import '../models/practice_length.dart';
 import '../spacing.dart';
 
+/// The custom thumb's radius (see [_DragHandleThumbShape]) — and, not
+/// coincidentally, exactly how far Flutter insets the slider's track from
+/// each edge of its own width.
+///
+/// [BaseSliderTrackShape.getPreferredRect] (the mixin `RoundedRectSliderTrackShape`
+/// uses) computes that inset as `max(thumbWidth, overlayWidth) / 2`; the
+/// overlay is disabled to zero width below, so the inset collapses to
+/// exactly this thumb radius. The length-label row has to divide up that
+/// same *inset* track width, not the sheet's full width, to land its
+/// labels under the actual stops — previously it didn't, and the two could
+/// only ever agree by coincidence at the exact midpoint. Both the thumb
+/// shape and the label row read this one constant so they can't drift
+/// apart again; see the regression test in practice_length_picker_test.dart.
+const double _kSliderThumbRadius = 22;
+
 /// "How many questions" step shown before a practice set is generated (see
 /// `practice_launch.dart`, which calls this ahead of every topic launch and
 /// every Review "Practice this" launch so the two entry points can't drift
@@ -48,6 +63,13 @@ class _PracticeLengthSheet extends StatefulWidget {
 
 class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
   late PracticeLength _selected = widget.initial;
+
+  // Both the Slider itself and the label row below need "how many stops"
+  // and "the last stop's index" — computed once from the enum, rather than
+  // the slider hardcoding max/divisions separately from whatever the label
+  // row assumes.
+  static final double _maxStopIndex =
+      (PracticeLength.values.length - 1).toDouble();
 
   void _onSliderChanged(double value) {
     final next = PracticeLength.values[value.round()];
@@ -103,7 +125,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                 activeTickMarkColor: colorScheme.onSecondary,
                 inactiveTickMarkColor: colorScheme.outline,
                 thumbShape: _DragHandleThumbShape(
-                  radius: 22,
+                  radius: _kSliderThumbRadius,
                   chevronColor: colorScheme.onSecondary,
                 ),
                 overlayShape: SliderComponentShape.noOverlay,
@@ -114,8 +136,8 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
               ),
               child: Slider(
                 min: 0,
-                max: 2,
-                divisions: 2,
+                max: _maxStopIndex,
+                divisions: PracticeLength.values.length - 1,
                 value: _selected.index.toDouble(),
                 onChanged: _onSliderChanged,
                 semanticFormatterCallback: (value) {
@@ -124,22 +146,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                 },
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                for (final length in PracticeLength.values)
-                  Text(
-                    '${length.questionCount}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight:
-                          length == _selected ? FontWeight.w700 : FontWeight.w600,
-                      color: length == _selected
-                          ? colorScheme.secondary
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-              ],
-            ),
+            _LengthLabelRow(selected: _selected),
             const SizedBox(height: Spacing.sm),
             Text(
               'Drag to set the session length',
@@ -158,6 +165,74 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The 3/5/10 row under the slider. Each label sits at the exact x position
+/// of its slider stop rather than being laid out by `Row`/`MainAxisAlignment`
+/// across the row's full width — the slider's own track is inset by
+/// [_kSliderThumbRadius] on each side, so a naive full-width row only ever
+/// lined up at the midpoint by coincidence (see the regression test in
+/// practice_length_picker_test.dart, and this file's diagnosis in the
+/// commit that introduced this class).
+///
+/// [FractionalTranslation] centers each label exactly on its computed point
+/// regardless of the label's own text width ("3" and "10" render at
+/// different widths) — a `Row` with any `MainAxisAlignment` would still be
+/// off by a fraction of that width difference.
+class _LengthLabelRow extends StatelessWidget {
+  final PracticeLength selected;
+
+  const _LengthLabelRow({required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    const values = PracticeLength.values;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final trackWidth = constraints.maxWidth - 2 * _kSliderThumbRadius;
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: Stack(
+            children: [
+              // Invisible — establishes the Stack's height from the same
+              // text style the real labels use, instead of a guessed pixel
+              // constant. The digit itself is arbitrary (only the style's
+              // line height matters) — picked to not collide with any real
+              // question count when a test looks labels up by text.
+              Opacity(
+                opacity: 0,
+                child: Text('0', style: theme.textTheme.bodyMedium),
+              ),
+              for (var i = 0; i < values.length; i++)
+                Positioned(
+                  left: _kSliderThumbRadius +
+                      trackWidth * i / (values.length - 1),
+                  top: 0,
+                  child: FractionalTranslation(
+                    translation: const Offset(-0.5, 0),
+                    child: Text(
+                      key: ValueKey('lengthLabel_${values[i].name}'),
+                      '${values[i].questionCount}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: values[i] == selected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        color: values[i] == selected
+                            ? colorScheme.secondary
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
