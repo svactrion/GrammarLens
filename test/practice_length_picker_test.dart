@@ -134,7 +134,7 @@ void main() {
     expect(slider.semanticFormatterCallback!(2), '10 questions, Extended');
   });
 
-  testWidgets('reduced motion skips the selection-card transition',
+  testWidgets('reduced motion skips the selection-card transitions',
       (tester) async {
     tester.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
@@ -142,18 +142,30 @@ void main() {
 
     await _openPicker(tester, initial: PracticeLength.standard);
 
-    final switcher =
-        tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher));
-    expect(switcher.duration, Duration.zero);
+    // Two independent AnimatedSwitchers now: the name/description text,
+    // and the dial's own centered count (kept outside the dial's ring
+    // animation so the ring can tween continuously — see _LengthDial).
+    for (final key in ['lengthTextSwitcher', 'lengthNumberSwitcher']) {
+      final switcher =
+          tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
+      expect(switcher.duration, Duration.zero, reason: key);
+    }
   });
 
-  testWidgets('normal motion animates the selection-card transition over 180ms',
+  testWidgets(
+      'normal motion animates the selection-card transitions over 180ms',
       (tester) async {
     await _openPicker(tester, initial: PracticeLength.standard);
 
-    final switcher =
-        tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher));
-    expect(switcher.duration, const Duration(milliseconds: 180));
+    for (final key in ['lengthTextSwitcher', 'lengthNumberSwitcher']) {
+      final switcher =
+          tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
+      expect(
+        switcher.duration,
+        const Duration(milliseconds: 180),
+        reason: key,
+      );
+    }
   });
 
   testWidgets(
@@ -203,5 +215,33 @@ void main() {
             'wherever the full-width row happens to place it',
       );
     }
+  });
+
+  group('practiceLengthDialRatio', () {
+    test('is each length\'s question count over the largest one, not a '
+        'hand-written constant', () {
+      final maxCount = PracticeLength.values
+          .map((length) => length.questionCount)
+          .reduce((a, b) => a > b ? a : b);
+
+      for (final length in PracticeLength.values) {
+        expect(
+          practiceLengthDialRatio(length),
+          length.questionCount / maxCount,
+        );
+      }
+    });
+
+    test('the longest option always fills the dial completely', () {
+      final longest = PracticeLength.values
+          .reduce((a, b) => a.questionCount > b.questionCount ? a : b);
+      expect(practiceLengthDialRatio(longest), 1.0);
+    });
+  });
+
+  testWidgets('the selection card paints a dial (not just a plain number)',
+      (tester) async {
+    await _openPicker(tester, initial: PracticeLength.standard);
+    expect(find.byType(CustomPaint), findsWidgets);
   });
 }

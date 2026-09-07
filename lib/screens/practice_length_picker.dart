@@ -1,8 +1,26 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../models/practice_length.dart';
 import '../spacing.dart';
+
+/// The largest [PracticeLength.questionCount] — the dial's "full circle"
+/// reference. Computed from the enum so it stays correct if a length is
+/// ever added or its question count changes, rather than a hand-written
+/// ratio constant per option.
+final int _maxQuestionCount =
+    PracticeLength.values.map((length) => length.questionCount).reduce(math.max);
+
+/// The selection card dial's fill fraction for [length] — its question
+/// count over the largest question count across [PracticeLength.values],
+/// never a hand-written ratio per option. A top-level function (rather than
+/// inlined where the dial uses it) so this specific "derived, not
+/// hardcoded" claim has a direct unit test.
+@visibleForTesting
+double practiceLengthDialRatio(PracticeLength length) =>
+    length.questionCount / _maxQuestionCount;
 
 /// The custom thumb's radius (see [_DragHandleThumbShape]) — and, not
 /// coincidentally, exactly how far Flutter insets the slider's track from
@@ -253,29 +271,37 @@ class _SelectionCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+      // Card color is fixed regardless of selection — only the dial and
+      // text inside change.
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: AnimatedSwitcher(
-        duration:
-            reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
-        child: Row(
-          key: ValueKey(selected),
-          children: [
-            Text(
-              '${selected.questionCount}',
-              style: TextStyle(
-                fontSize: 56,
-                fontWeight: FontWeight.w700,
-                height: 1.0,
-                color: onCard,
-              ),
-            ),
-            const SizedBox(width: Spacing.lg),
-            Expanded(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Deliberately outside the text's AnimatedSwitcher below: the
+          // dial keeps its own State alive across a selection change so
+          // its ring can tween continuously between two ratios (see
+          // _LengthDialState.didUpdateWidget) — an AnimatedSwitcher would
+          // discard and recreate it on every change instead, which is
+          // exactly right for a discrete text swap but wrong for a
+          // continuous sweep.
+          _LengthDial(
+            questionCount: selected.questionCount,
+            ratio: practiceLengthDialRatio(selected),
+            reduceMotion: reduceMotion,
+          ),
+          const SizedBox(width: Spacing.lg),
+          Expanded(
+            child: AnimatedSwitcher(
+              key: const Key('lengthTextSwitcher'),
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
               child: Column(
+                key: ValueKey(selected),
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -295,11 +321,184 @@ class _SelectionCard extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
+
+/// The selection card's dial: a ring whose filled fraction is
+/// `questionCount / _maxQuestionCount`, with the count itself centered on
+/// top. Shows, at a glance, that a longer session is also visually "more
+/// full" — no duration is implied or shown; this is purely a question-count
+/// ratio.
+///
+/// Deliberately not rebuilt via a keyed swap ([AnimatedSwitcher]) the way
+/// the card's text is — this widget's own State has to survive a selection
+/// change for [didUpdateWidget] to tween the ring smoothly between two
+/// ratios. The count text still gets the same discrete-swap treatment as
+/// before, just scoped to this widget's own internal [AnimatedSwitcher]
+/// instead of the whole card.
+class _LengthDial extends StatefulWidget {
+  final int questionCount;
+  final double ratio;
+  final bool reduceMotion;
+
+  const _LengthDial({
+    required this.questionCount,
+    required this.ratio,
+    required this.reduceMotion,
+  });
+
+  @override
+  State<_LengthDial> createState() => _LengthDialState();
+}
+
+class _LengthDialState extends State<_LengthDial>
+    with SingleTickerProviderStateMixin {
+  static const _size = 84.0;
+  static const _strokeWidth = 8.0;
+
+  late final AnimationController _controller;
+  late final CurvedAnimation _curve;
+  late Tween<double> _ratioTween;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      // Starts "complete" so the very first frame shows widget.ratio
+      // directly rather than animating in from zero on mount.
+      value: 1,
+    );
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _ratioTween = Tween<double>(begin: widget.ratio, end: widget.ratio);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LengthDial oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.ratio == widget.ratio) return;
+    final currentRatio = _ratioTween.evaluate(_curve);
+    _ratioTween = Tween<double>(begin: currentRatio, end: widget.ratio);
+    if (widget.reduceMotion) {
+      _controller.value = 1;
+    } else {
+      _controller
+        ..value = 0
+        ..forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final trackColor = colorScheme.onSecondaryContainer.withValues(alpha: 0.22);
+    final fillColor = colorScheme.secondary;
+    final textColor = colorScheme.onSecondaryContainer;
+
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) => CustomPaint(
+                size: const Size(_size, _size),
+                painter: _DialPainter(
+                  ratio: _ratioTween.evaluate(_curve),
+                  strokeWidth: _strokeWidth,
+                  trackColor: trackColor,
+                  fillColor: fillColor,
+                ),
+              ),
+            ),
+          ),
+          AnimatedSwitcher(
+            key: const Key('lengthNumberSwitcher'),
+            duration: widget.reduceMotion
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
+            child: Text(
+              '${widget.questionCount}',
+              key: ValueKey(widget.questionCount),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DialPainter extends CustomPainter {
+  final double ratio;
+  final double strokeWidth;
+  final Color trackColor;
+  final Color fillColor;
+
+  const _DialPainter({
+    required this.ratio,
+    required this.strokeWidth,
+    required this.trackColor,
+    required this.fillColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final arcRect = Rect.fromCircle(center: center, radius: radius);
+
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = trackColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Starts at 12 o'clock (-pi/2 in Canvas's 0-at-3-o'clock convention)
+    // and sweeps clockwise (positive angle, since Canvas's y axis points
+    // down) — a positive sweep is required for drawArc regardless, so
+    // this only needs the start angle to land on 12 o'clock.
+    canvas.drawArc(
+      arcRect,
+      -math.pi / 2,
+      2 * math.pi * ratio.clamp(0.0, 1.0),
+      false,
+      Paint()
+        ..color = fillColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _DialPainter oldDelegate) =>
+      oldDelegate.ratio != ratio ||
+      oldDelegate.trackColor != trackColor ||
+      oldDelegate.fillColor != fillColor;
 }
 
 /// A big, unmissable drag handle — a filled circle with a soft drop shadow
