@@ -119,6 +119,15 @@ const Color _darkOnIncorrectBg = Color(0xFFF4B8B4);
 const Color _darkSkippedBg = Color(0xFF36353A);
 const Color _darkOnSkippedBg = Color(0xFFC9C5D0);
 
+// Brand mark (see widgets/brand_mark.dart) — the loupe's glass and glint
+// are fixed identity colors, not theme roles: unlike everything else in
+// this file they don't change with light/dark mode (the mark's rim does —
+// it uses colorScheme.secondary directly). Public and named here, rather
+// than embedded as hex in the widget, so the mark's palette stays defined
+// in one place alongside the rest of the brand system.
+const Color brandMarkGlass = Color(0xFFFFF6EC);
+const Color brandMarkGlint = Color(0xFFFFCDA3);
+
 /// Semantic feedback colors for the results screen, kept out of
 /// [ColorScheme] (which only has roles for the brand palette) via Flutter's
 /// [ThemeExtension] mechanism — the idiomatic way to add app-specific theme
