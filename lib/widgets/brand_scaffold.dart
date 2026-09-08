@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'floating_nav_shell.dart';
 
-/// The D1 hybrid-theme shell (docs/design-audit.md §5): an orange header
-/// band in light mode / neutral band in dark mode (see [ColorScheme]'s
-/// `bandBackground`/`bandForeground` extension in `theme.dart` — this
-/// widget reads those, never its own color), over a neutral
-/// `surfaceContainerLow` body in both themes. Every screen except Welcome
-/// (D1's one deliberate exception, staying full orange) migrates onto this
-/// widget one batch at a time rather than all at once.
+/// The D1 hybrid-theme shell (docs/design-audit.md §5, closed): an orange
+/// header band in light mode / neutral band in dark mode (see
+/// [ColorScheme]'s `bandBackground`/`bandForeground` extension in
+/// `theme.dart` — this widget reads those, never its own color), over a
+/// neutral `surfaceContainerLow` body in both themes. Every screen uses
+/// this widget now except Welcome — D1's one deliberate exception, staying
+/// full orange.
 ///
 /// Also the single place that solves scroll behavior, safe-area, and
 /// bottom-nav clearance for a D1 screen, so docs/design-audit.md S4 (the
@@ -54,7 +54,7 @@ class BrandScaffold extends StatelessWidget {
   /// this exists: its own Back/Close/progress-row layout has nothing in
   /// common with a plain title bar. The custom app bar owns its own
   /// `scrolledUnderElevation`/colors; this widget still supplies the
-  /// neutral body and card-theme override around it either way.
+  /// neutral body around it either way.
   final PreferredSizeWidget? appBar;
 
   final Widget? leading;
@@ -102,8 +102,8 @@ class BrandScaffold extends StatelessWidget {
   /// item in a scroll view. Mutually exclusive with [children] — see its
   /// doc comment for the enforced-not-just-documented reasoning; when set,
   /// [controller] and [horizontalPadding] don't apply (the caller owns
-  /// this content's layout entirely). Band, neutral body background, and
-  /// the local card-theme override still apply either way.
+  /// this content's layout entirely). The band and neutral body background
+  /// still apply either way.
   final Widget? body;
 
   @override
@@ -117,11 +117,10 @@ class BrandScaffold extends StatelessWidget {
         : MediaQuery.paddingOf(context).bottom + 16;
 
     return Scaffold(
-      // Overrides the app-wide default (still the band color, for every
-      // screen not yet migrated) with D1's neutral body — the app bar
-      // below is left to inherit `bandBackground`/`bandForeground` from
-      // the theme rather than repeating that expression here, since
-      // they're already identical by construction (see theme.dart).
+      // The app bar below is left to inherit `bandBackground`/
+      // `bandForeground` from the theme rather than repeating that
+      // expression here, since they're already identical by construction
+      // (see theme.dart's `BandColors` extension).
       backgroundColor: colorScheme.surfaceContainerLow,
       appBar: appBar ??
           AppBar(
@@ -145,54 +144,18 @@ class BrandScaffold extends StatelessWidget {
             // its own doc comment) makes this same call for itself.
             scrolledUnderElevation: 0,
           ),
-      body: Theme(
-        // A card sitting directly on this body would be the same color as
-        // the body itself (both `surfaceContainerLow`) and separate only
-        // by shadow or the color step to `surfaceContainerHigh` — measured
-        // directly (docs/build-log.md) and neither holds up alone in both
-        // themes: the color step is a soft ~1.14-1.20:1 in both, and the
-        // 6dp shadow that works in light mode (~1.73:1 against body) is
-        // nearly inert in dark mode (~1.06:1). A border is what's added
-        // here specifically because it's the one mechanism that doesn't
-        // depend on shadow rendering or a subtle tonal step at all — the
-        // same role, same visible line, in either theme.
-        //
-        // `outline`, not `outlineVariant` — tried `outlineVariant` first
-        // (the usual divider/border role elsewhere in this app) and
-        // measured it directly on-device: ~1.34:1 against body in light
-        // mode, and the line was genuinely hard to see, not just a
-        // borderline number on paper. `outline` measures ~3.11:1 against
-        // body / ~2.72:1 against the card in light mode, ~5.05:1 / ~4.20:1
-        // in dark — comfortably legible in both, still an existing role,
-        // nothing invented. Not fixed by changing line thickness instead:
-        // the problem was contrast, not size.
-        // Elevation is kept, deliberately reduced rather than dropped to 0
-        // (`elevation: 1`, M3's smallest non-zero step): the border is now
-        // the primary, theme-consistent signal, and a heavier shadow would
-        // have re-created exactly what this was meant to close — light
-        // mode separating by two mechanisms while dark mode only gets one,
-        // cards visibly heavier in one theme than the other.
-        // Scoped to this subtree only, so screens that haven't migrated
-        // onto BrandScaffold yet keep today's `surfaceContainerLow` cards
-        // at the app-wide 6dp elevation on their still-orange/near-black
-        // scaffold, unchanged.
-        data: theme.copyWith(
-          cardTheme: theme.cardTheme.copyWith(
-            color: colorScheme.surfaceContainerHigh,
-            elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: colorScheme.outline),
-            ),
+      // No local card-theme override here anymore (docs/design-audit.md §5
+      // D1, closed): every screen is on this neutral body now, so the
+      // card treatment that used to be scoped to this widget's own subtree
+      // while migration was in progress is simply the app-wide default —
+      // see `theme.dart`'s `cardTheme` for the current values and the
+      // reasoning behind them.
+      body: body ??
+          ListView(
+            controller: controller,
+            padding: EdgeInsets.fromLTRB(hPad, 20, hPad, bottomPadding),
+            children: children!,
           ),
-        ),
-        child: body ??
-            ListView(
-              controller: controller,
-              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, bottomPadding),
-              children: children!,
-            ),
-      ),
     );
   }
 }

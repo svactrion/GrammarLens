@@ -386,30 +386,42 @@ ThemeData buildAppTheme(Brightness brightness) {
           ?.copyWith(fontWeight: FontWeight.w600, color: appBarFg),
     ),
     cardTheme: CardThemeData(
-      // Real elevation (not tonal tint, since surfaceTint is transparent)
-      // so cards visibly lift off the orange page. M3's level-3 token (6dp)
-      // rather than the resting level-2 (3dp) — the latter was too faint to
-      // read as "lifted" against the saturated brand background; 6dp is
-      // still a soft, standard M3 shadow (levels go up to 12dp), just one
-      // notch more present. This is the app-wide default for every screen
-      // still sitting on the orange/near-black scaffold, where shadow is
-      // the only separation signal available — `BrandScaffold` overrides
-      // both `elevation` and `color` locally (see below), so this no
-      // longer applies to every `Card` in the app.
+      // The app-wide card treatment (docs/design-audit.md §5 D1, closed):
+      // every screen is now on `BrandScaffold`'s neutral body (Welcome is
+      // the one deliberate exception, and never uses `Card`), so there's
+      // exactly one card language, not the scoped-override-during-
+      // migration split this used to require. `BrandScaffold` previously
+      // carried a local `Theme` copy of these exact values for its own
+      // subtree while migration was still in progress; that override is
+      // gone now that there's nothing left for it to be scoped against.
       //
-      // Still `surfaceContainerLow` here — this is the app-wide default for
-      // every screen still sitting on the orange/near-black scaffold
-      // (unchanged by D1 until each screen migrates). A card inside a
-      // `BrandScaffold` body needs a different color (that body *is*
-      // `surfaceContainerLow`, so a same-color card would separate by
-      // shadow alone) — `BrandScaffold` applies that locally via a `Theme`
-      // override scoped to its own subtree, not by changing this app-wide
-      // default. See `brand_scaffold.dart`.
-      elevation: 6,
-      color: colorScheme.surfaceContainerLow,
+      // `surfaceContainerHigh`, one step up from the body's own
+      // `surfaceContainerLow` — a card the same color as the body it sits
+      // on would separate by shadow alone, measured directly (see the
+      // border note below) to not hold up in dark mode.
+      color: colorScheme.surfaceContainerHigh,
+      // 1dp, not M3's level-3 (6dp) this app used before D1: back when
+      // shadow was the only separation signal (full-orange/near-black
+      // scaffold), 6dp was deliberately heavier than the M3 default to
+      // read as "lifted" at all. The border below is now the primary,
+      // theme-consistent signal, so elevation is a light lift rather than
+      // dominant depth — measured directly: the previous 6dp shadow was
+      // ~1.73:1 against the body in light mode but only ~1.06:1 in dark
+      // (docs/build-log.md, 2026-09-09), i.e. it was never reliable in
+      // both themes to begin with.
+      elevation: 1,
+      // `outline`, not `outlineVariant` (this app's usual divider/border
+      // role) — tried `outlineVariant` first and measured it directly
+      // on-device: ~1.34:1 against the body in light mode, genuinely hard
+      // to see, not just a borderline number on paper. `outline` measures
+      // ~3.11:1 (body) / ~2.72:1 (card) in light, ~5.05:1 / ~4.20:1 in
+      // dark — comfortably legible in both, still an existing role.
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: colorScheme.outline),
+      ),
       surfaceTintColor: colorScheme.surfaceTint,
       shadowColor: colorScheme.shadow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
     ),
