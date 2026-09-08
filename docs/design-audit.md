@@ -49,6 +49,15 @@ a large gap below a bottom-pinned CTA. Separately: the sparkle brand mark is
 reused as Topic Practice's feature icon on the paywall — a brand mark should
 not double as a feature icon.
 
+**Status (2026-09-08): the brand-mark half is closed.** `Icons.auto_awesome_rounded`
+is gone from the app entirely (confirmed by search — no remaining use anywhere
+in `lib/`) — replaced by a hand-drawn `BrandMark` (a loupe/magnifying glass,
+`lib/widgets/brand_mark.dart`), animated into Welcome's entrance. The ~40%
+empty-space layout itself is unchanged (that commit's own message is explicit:
+"text, layout, and the CTA itself are otherwise unchanged") — the space is now
+filled with ambient motion (breathing mark, sonar rings, drifting glows,
+twinkle dots) rather than restructured, so this half stays open.
+
 **Onboarding.** The disabled "Continue" button is dark orange on orange and is
 close to invisible — the worst contrast failure in the app, and it is the state
 a first-time user sees before typing anything. Large dead gap between the
@@ -77,6 +86,17 @@ but is absent at scroll-top.
 - "Maybe later" has the same contrast problem and no container.
 - The screen carries no price, plan or terms, because no product is connected.
 
+**Status: superseded, effectively closed.** The standalone Paywall screen
+this finding describes no longer exists — it was merged into `PremiumScreen`
+on 2026-09-05 (fixing the "Topic Practice" app-bar title bug as a side
+effect). `AppLinks` now holds real, permanent URLs (2026-09-07) and every
+`TextButton` — including Privacy Policy/Terms and "Maybe later" — reads from
+the centralized `textButtonTheme` fix below, closing the contrast complaint.
+This round (2026-09-08) went further: the merged screen was reordered so the
+price/plan area is reachable without scrolling, and gained explicit
+loading/loaded/unavailable states for the no-product-connected case instead
+of silently showing nothing — see `docs/build-log.md`, 2026-09-08.
+
 **Home.** The Premium entry is a solid full-width blue bar while the other two
 entries are light cards; it reads as a button and outranks Daily Test, which is
 the free core loop. Its internal layout differs too (icon vertically centered,
@@ -91,6 +111,10 @@ cards the vertically centered icon reads as misaligned.
 
 **Session-length dialog.** The scrim turns the orange background muddy brown;
 a plain black scrim over a saturated ground reads as dirt.
+
+**Status (2026-09-08): closed.** The `AlertDialog` was replaced with a modal
+bottom sheet (`practice_length_picker.dart`) whose scrim is tinted off
+`colorScheme.onSurface` at 42% instead of plain black.
 
 **Results (Topic Practice).** Color coding works (green correct / red needs
 work / neutral skipped). Only exit is "Back to topics" — no path to practice
@@ -147,8 +171,27 @@ Considered and rejected: keeping orange everywhere (keeps identity but leaves
 us patching contrast and voids screen by screen), and going fully neutral
 (fixes everything but makes the app generic).
 
+**Status (2026-09-08): still open, not started.** No screen has the header
+band yet. Also still undecided, and worth settling before implementation
+starts rather than during it: what the header band looks like in dark mode —
+a deep-orange band (keeping the same identity treatment as light mode) or a
+neutral band (matching dark mode's existing divergence from light mode's
+vivid-orange page background, per this file's own "Design" note in
+`docs/roadmap.md`). Neither option has been chosen.
+
 **D2 — One blue.** Deep navy only, consistent with PRD v2's stated
 "orange primary / deep blue accent". The violet-blue is removed everywhere.
+
+**Status (2026-09-08): closed.** `secondaryContainer`/`onSecondaryContainer`
+(the violet-blue #3D5AFE pair) replaced with `#D7E1FA` on `#0A2E70` in the
+light scheme (`lib/theme.dart`) — a light tint of the same navy `secondary`
+already in use, not a new hue, ~9.8:1 contrast. Reasoning (from the
+implementing commit): this makes `secondaryContainer` "part of the same navy
+family" instead of a second, unrelated blue system, closing S2's actual
+complaint. The dark scheme's existing `secondaryContainer` pair (~7.1:1) was
+already fine and is untouched. `tertiaryContainer` continues aliasing
+`secondaryContainer` in both themes, so nothing keyed off it needed a
+separate change.
 
 **D3 — Skip stops being the primary action** on Daily Test questions.
 

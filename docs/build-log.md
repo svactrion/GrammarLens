@@ -1459,3 +1459,162 @@ keyboard character into a Daily Test answer and got marked wrong for it.
   assertion above. `flutter analyze` and the full test suite (204
   passing, 0 skipped) clean; proxy `npm test` (40 passing) and `npm run
   typecheck` clean.
+
+## 2026-09-08 (visual polish tour: brand mark, session-length picker,
+Premium comparison table + reorder + pricing states, question-screen
+buttons)
+
+Start of the B-polish work `docs/roadmap.md` §2 scoped after B-structure
+(above). Several independent decisions, each recorded here because none of
+them were written down anywhere before this entry.
+
+- **[Product] Brand mark: sparkle → hand-drawn loupe.** The generic
+  `Icons.auto_awesome_rounded` sparkle used as a placeholder identity mark
+  since early on is replaced by `BrandMark` (`lib/widgets/brand_mark.dart`),
+  a hand-drawn magnifying glass painted with `CustomPainter` in a fixed
+  100x100 space and scaled to any requested size — no new dependency, no
+  image asset. Deliberately meant to become the single source app-icon
+  generation draws from later, not just a Welcome-screen decoration. Rim
+  color follows `colorScheme.secondary` (the D2 single-blue role below); the
+  glass fill/glint are fixed brand-identity colors, not theme roles, defined
+  as named constants in `theme.dart`. Checked before writing this: the old
+  sparkle icon closed `docs/design-audit.md`'s "brand mark reused as a
+  feature icon" complaint by disappearing outright — `Icons.auto_awesome`
+  no longer appears anywhere in `lib/`.
+- **[Product] Session-length dialog → draggable bottom sheet.** Closes
+  `docs/design-audit.md`'s "muddy scrim" finding, but the actual redesign
+  reason is interaction, not color: three tappable cards in an `AlertDialog`
+  became a single 3-stop `Slider` in a modal bottom sheet, because a
+  selection you can't clearly see how to make counts as not being there —
+  the stock `Slider` thumb (a plain filled circle) doesn't read as
+  draggable on its own, which matters specifically here since dragging is
+  the screen's entire interaction. Replaced with a custom thumb (a filled
+  circle with two small chevron strokes pointing left/right) that visibly
+  signals "drag me." Dragging live-previews the choice in a big selection
+  card; a full-width "Start N questions" button confirms it. Scrim tinted
+  off `colorScheme.onSurface` at 42% instead of black, fixing the "muddy
+  brown over orange" complaint as a side effect of the redesign, not the
+  goal of it. `PracticeLength` itself and the picker's public contract
+  (`Future<PracticeLength?>`, null on cancel) are unchanged.
+- **[Product] Selection card's number → fill-ratio dial.** The card's big
+  number became an 84px ring whose filled fraction is
+  `questionCount / (the largest questionCount across PracticeLength.values)`
+  — derived from the enum, never a hardcoded ratio per option (unit-tested
+  directly via the extracted `practiceLengthDialRatio()`). Two decisions
+  made alongside it, neither written down before now:
+  - **Rejected: coloring the card itself per option** (e.g. green for the
+    shortest/3-question option, red for the longest/10-question option).
+    Green and red already carry a fixed meaning throughout this app —
+    correct and incorrect (`SemanticColors`, used on every results screen).
+    Reusing them here to mean "short" and "long" would contradict that
+    meaning the first time a user reaches a results screen after picking
+    the "red" session length. The card's background stays
+    `secondaryContainer` regardless of which option is selected.
+  - **The dial shows no duration.** Nothing in this product measures how
+    long a 3/5/10-question session actually takes (no per-session timing is
+    recorded anywhere in `StorageService`), so a minutes label on the dial
+    would be invented, not measured. The ring encodes question count only —
+    stated directly in the widget's own doc comment so a future change
+    doesn't add a duration guess without noticing this was deliberate.
+- **[Product] Premium's benefit list → a Free/Premium comparison table.**
+  Closes `docs/design-audit.md` S3 (the same component — icon circles —
+  carrying two different color languages across screens): the two-tile
+  "Everything in Free, plus" icon-circle list is replaced by a table
+  reading the same five real features PRD v2 §13.4 already allows, nothing
+  invented. Purely a layout change — purchase logic, price/product
+  sourcing, the disclosure block, and the restore flow are all untouched,
+  same classes and code paths.
+- **[Product] Premium reordered so price is reachable without scrolling —
+  diagnosis before the change, not after.** Measured against the layout
+  this replaced, at a 390x844 viewport (the size this app already tests
+  against elsewhere): reaching "Start free trial" required scrolling
+  **1357px past an 844px viewport** — more than the entire viewport height
+  again, after two long description cards and the comparison table above
+  them. That number is the actual reason for the reorder below, not an
+  aesthetic call. Three hypotheses were tested for why the price section
+  was unreachable: (H1) the expected two-card plan picker didn't exist yet
+  (it was a `SegmentedButton`) — confirmed; (H2) an empty product list was
+  silently hiding the section — not the cause, the section still rendered,
+  just poorly; (H3) the section existed but sat far below the fold with no
+  scroll affordance — confirmed as the dominant cause by the 1357px figure
+  above. Fix: reordered to title → headline → comparison table → two
+  side-by-side plan cards (Annual preselected, a computed "Save N%" badge,
+  never hardcoded) → a compact one-sentence trial/renewal disclosure →
+  "Start free trial" → "Maybe later" → legal links, with the two long
+  description cards removed entirely (the table already carries the
+  free/premium difference). At 390x844 with pricing loaded, everything
+  from the title bar through the primary button now fits without
+  scrolling.
+- **[Product] The three pricing-area states, closing a real launch
+  blocker, not just a nicety.** Reachable via H2 above: a paywall that
+  can't fetch its products and silently shows nothing is a real App Review
+  rejection reason, not a hypothetical one. The price-card slot now has
+  three explicit states — loading (a static skeleton shaped like the two
+  cards, not an unrelated spinner), loaded (the real cards), and
+  unavailable (a compact one-row message with an inline "Try again" that
+  re-triggers the fetch) — replacing a slot that previously either showed
+  a generic spinner or nothing distinguishable from "loaded with zero
+  options."
+- **[Product] Question screens: Back/Close moved to the app bar; Skip
+  demoted beside Next, not below it.** On both `DailyTestScreen` and
+  `PracticeScreen`: Back moves from the bottom footer to the app bar's
+  top-left as a 40x40 bordered circle icon button in the on-band
+  foreground color; Close takes the equivalent top-right slot. The
+  progress bar now shares a row with the "N / M" counter instead of
+  stacking separately. Skip moves from a quiet text link below the primary
+  button to an `OutlinedButton` beside it, at a fixed width clearly
+  narrower than the primary `FilledButton` (52 tall, 12px gap) — still
+  demoted per D3 (docs/design-audit.md), just no longer text-only, since a
+  bare text link was reading as too easy to miss entirely on real devices.
+  The one structural requirement this needed solving: on question 1, where
+  there is no valid Back destination, the button's 40x40 footprint is
+  preserved as an invisible placeholder (`HeaderCircleIconButton`'s
+  `visible` flag) rather than the button being omitted — omitting it would
+  shrink the app bar's leading slot and shift the centered title sideways
+  the moment Back appears on question 2. Verified directly: a widget test
+  asserts the title's on-screen center x is identical on question 1 (Back
+  hidden) and question 2 (Back visible).
+- **[Engineering]** `lib/spacing.dart` (a named 4/8/12/16/24/32/48 scale)
+  landed alongside the D2 color fix, but this is a foundation only —
+  adopted in the screens touched this round (Welcome, the length picker,
+  the debug-only Theme Preview screen) and not migrated across the rest of
+  the app. Recorded as open in `docs/roadmap.md`'s B-polish list, not as
+  done.
+- **[Engineering] Known debts surfaced this round, left open rather than
+  quietly fixed or silently ignored:**
+  - **The FittedBox(scaleDown) fix on the comparison table's "PREMIUM"/
+    "FREE" headers works against Dynamic Type.** It was added to solve a
+    real overflow (the label wrapped to two lines at the specified
+    12px/w700/tracked size in a 56px column on-device) by treating that
+    size as a maximum rather than a fixed value — correct for the overflow
+    case, but the same mechanism silently shrinks the label back down
+    whenever a user's own larger accessibility text size would otherwise
+    make it grow, defeating that preference specifically on this label.
+    Not fixed here — needs a real column-width fix, not another scale-down
+    layer.
+  - **Light theme's disabled `FilledButton` is still hard to read on the
+    orange scaffold.** `theme.dart`'s `filledButtonTheme` sets explicit
+    enabled colors but no explicit disabled ones, so a disabled
+    `FilledButton` without its own override (onboarding's "Continue" is the
+    concrete case — confirmed unfixed by reading `onboarding_screen.dart`)
+    still falls back to Material's default translucent-disabled treatment,
+    which reads as dark-orange-on-orange. This is expected to be resolved
+    by D1 (orange stops being the page background almost everywhere), not
+    patched button-by-button ahead of it.
+  - **The widget-test suite's animated screens are only ever exercised with
+    reduced motion, never their real animation path.** Not because it's set
+    globally and never cleared — checked directly: every file that sets
+    `accessibilityFeaturesTestValue` (`widget_test.dart`,
+    `first_launch_flow_test.dart`, `practice_length_picker_test.dart`)
+    already clears it via `tearDown`/`addTearDown`, correctly scoped to
+    that file. The real gap is narrower: any test that reaches Welcome or
+    the length picker *has* to force reduced motion first, or
+    `pumpAndSettle()` hangs against their infinite ambient animations — so
+    the suite has no test anywhere that runs those two screens' real,
+    non-reduced animation code path (the breathing mark, the sonar rings,
+    the dial's 200ms tween) at all.
+  - **flutter analyze and the full test suite (227 passing) are clean as
+    of this entry** (verified directly, not carried over from a commit
+    message) — this covers the state of the repo as of this documentation
+    pass, not a claim about every individual commit above having been
+    re-verified.
