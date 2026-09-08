@@ -191,15 +191,17 @@ void main() {
   }
 
   testWidgets(
-      'states the free/first-users message without an unbounded promise',
-      (tester) async {
+      'never references the retired Early Access framing or an unbounded '
+      'free promise', (tester) async {
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    expect(find.textContaining("one of our first users"), findsOneWidget);
     expect(find.textContaining('early access'), findsNothing);
     expect(find.text('Early Access'), findsNothing);
     // PRD v2 §6/§12.2: never say "free forever" or unqualified "free" for
     // Topic Practice — that promise stopped being true once it moved to
     // trial-then-paid. Daily Test is the one thing genuinely free/always.
+    // The reordering batch removed the long framing card that used to
+    // carry this claim entirely, rather than relocating it — its absence
+    // is the fix, not a specific replacement sentence.
     expect(find.textContaining('forever'), findsNothing);
   });
 
@@ -390,22 +392,27 @@ void main() {
       final startButton = find.text('Start free trial');
       await tester.scrollUntilVisible(startButton, 300);
 
+      // The disclosure line reflects the *selected* plan — annual by
+      // default — not always the monthly product. It's a single combined
+      // sentence now (the reordering batch condensed the old three-line
+      // _TrialTermsCard to fit the "at most two lines" requirement), but
+      // still built from the same live trial length, price, and period.
       expect(
-        find.text('${SubscriptionService.trialLengthDays}-day free trial'),
+        find.textContaining(
+          '${SubscriptionService.trialLengthDays}-day free trial',
+        ),
         findsOneWidget,
       );
-      // The disclosure block reflects the *selected* plan — annual by
-      // default — not always the monthly product.
       expect(find.textContaining('\$89.99 / year'), findsOneWidget);
       expect(
-        find.textContaining('Auto-renews until cancelled'),
+        find.textContaining('auto-renews unless cancelled'),
         findsOneWidget,
       );
       expect(startButton, findsOneWidget);
     });
 
     testWidgets(
-        'switching to Monthly updates the disclosure block to the '
+        'switching to Monthly updates the disclosure line to the '
         'monthly product', (tester) async {
       await pumpPremium(
         tester,
@@ -414,16 +421,16 @@ void main() {
 
       await scrollAndTap(tester, find.text('Monthly'));
 
-      // The disclosure card's own price line ("Then $X / month, billed
-      // automatically...") is distinct text from the plan picker's big
-      // figure ("$X / month" alone) — checked separately below — so this
-      // checks the disclosure line specifically, not just any "$9.99"
-      // substring anywhere on screen.
+      // The disclosure line's own price mention ("then $X / month, ...")
+      // is distinct text from the plan card's big figure ("$X / month"
+      // alone) — checked separately below — so this checks the
+      // disclosure line specifically, not just any "$9.99" substring
+      // anywhere on screen.
       expect(
-        find.textContaining('Then \$9.99 / month, billed automatically'),
+        find.textContaining('then \$9.99 / month, auto-renews'),
         findsOneWidget,
       );
-      expect(find.textContaining('\$89.99 / year'), findsNothing);
+      expect(find.textContaining('then \$89.99 / year'), findsNothing);
     });
 
     testWidgets(
@@ -455,7 +462,8 @@ void main() {
 
     testWidgets(
         'the monthly plan shows its own price as the big figure and no '
-        'savings badge', (tester) async {
+        'savings badge, regardless of which card is currently selected',
+        (tester) async {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(offering: _offeringWithBothPlans()),
@@ -463,12 +471,23 @@ void main() {
 
       await scrollAndTap(tester, find.text('Monthly'));
 
-      // Exact match: the plan picker's big figure line, distinct from
-      // the disclosure card's "Then $9.99 / month, billed..." sentence
+      // Exact match: the monthly card's own big figure line, distinct
+      // from the disclosure line's "then $9.99 / month, ..." sentence
       // checked in the previous test.
       expect(find.text('\$9.99 / month'), findsOneWidget);
       expect(find.text('Billed monthly.'), findsOneWidget);
-      expect(find.textContaining('Save'), findsNothing);
+
+      // Both plan cards render at once now (unlike the old segmented
+      // toggle, which only ever showed the selected plan's price row) —
+      // so Annual's own "Save 25%" badge is still on screen even with
+      // Monthly selected. What must hold is that it's *inside the Annual
+      // card specifically*, not the Monthly one.
+      final monthlyCard = find.byKey(const ValueKey('planCard_Monthly'));
+      expect(
+        find.descendant(of: monthlyCard, matching: find.textContaining('Save')),
+        findsNothing,
+      );
+      expect(find.textContaining('Save'), findsOneWidget);
     });
 
     testWidgets(
@@ -560,6 +579,65 @@ void main() {
 
       expect(doneCalled, isTrue);
       expect(find.byType(PremiumScreen), findsNothing);
+    });
+  });
+
+  group('the reordering batch\'s "fits on one screen" requirement', () {
+    testWidgets(
+        'at 390x844 with pricing loaded, the primary button is on screen '
+        'without scrolling', (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+
+      // No scrollUntilVisible here on purpose — the whole point of this
+      // batch's reordering is that the primary button is reachable
+      // without scrolling at this size, so simply finding it after the
+      // initial pump (no drag) is the actual assertion.
+      final buttonRect = tester.getRect(find.text('Start free trial'));
+      final viewportHeight =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+
+      expect(
+        buttonRect.bottom,
+        lessThanOrEqualTo(viewportHeight),
+        reason: 'Start free trial should be visible on a 390x844 screen '
+            'without scrolling.',
+      );
+    });
+
+    testWidgets(
+        'no overflow at a small screen (375x667) with a large text scale',
+        (tester) async {
+      tester.view.physicalSize = const Size(375, 667) * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(
+        tester.platformDispatcher.clearTextScaleFactorTestValue,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            subscriptionService:
+                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+
+      // The content is expected to genuinely exceed this viewport at this
+      // text scale — confirms the "no overflow" result above is because
+      // the screen is properly scrollable, not because there was nothing
+      // to overflow in the first place.
+      final scrollable =
+          tester.state<ScrollableState>(find.byType(Scrollable).first);
+      expect(scrollable.position.maxScrollExtent, greaterThan(0));
     });
   });
 }

@@ -7,7 +7,6 @@ import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
-import '../widgets/app_segmented_button.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
 
@@ -20,6 +19,14 @@ enum _PlanPeriod { monthly, annual }
 /// table, no purchase flow) and a separate Paywall (the purchase flow, no
 /// context for what it was selling). "Early Access" never described a real
 /// time-limited campaign and is retired along with the split.
+///
+/// Layout order (the differentiator and the price, in as few beats as
+/// possible — see the reordering batch's diagnosis in build-log.md/the
+/// commit that introduced this ordering): headline, comparison table, plan
+/// cards, the required trial/renewal disclosure, then the primary button.
+/// The two long description cards that used to sit above all of this are
+/// gone — the table already carries that differentiation, and duplicating
+/// it in prose only delayed reaching the price.
 ///
 /// Price and trial terms are read live from RevenueCat's current offering
 /// ([SubscriptionService.getOfferings]), never hardcoded, so this screen
@@ -132,13 +139,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
     });
   }
 
-  /// Shared by "Maybe later" and the post-success "Continue" button — both
-  /// mean "I'm done with this screen." Runs [PremiumScreen.onDone] first
-  /// (e.g. the Day-0 flow's own onboarding-completion step) so its side
-  /// effects are in flight before this route disappears, then pops.
+  /// Shared by "Maybe later," the top-right close button, and the
+  /// post-success "Continue" button — all three mean "I'm done with this
+  /// screen." Runs [PremiumScreen.onDone] first (e.g. the Day-0 flow's own
+  /// onboarding-completion step) so its side effects are in flight before
+  /// this route disappears, then pops.
   void _dismiss() {
     widget.onDone?.call();
     Navigator.of(context).pop();
+  }
+
+  String get _headline {
+    final source = widget.sourceContext;
+    return source != null
+        ? 'Unlock personalized feedback on "$source"'
+        : 'Personalized feedback, not a feature list';
   }
 
   @override
@@ -151,40 +166,31 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final annual = _annualPackage;
 
     return Scaffold(
-      appBar: AppBar(title: const PageTitle('Premium')),
-      // A single flowing list, not a scrollable-region-plus-pinned-footer
-      // split: an earlier pass on the old Paywall screen tried pinning
-      // Restore Purchases/the legal links to the true bottom via Expanded,
-      // which actually made the "floating in isolation" problem worse — it
-      // turned a short gap into a large, deliberate-looking void. Keeping
-      // everything in one Column means these elements stay tightly grouped
-      // right after whatever precedes them either way.
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
-        children: [
-          _HeaderCard(theme: theme, colorScheme: colorScheme),
-          const SizedBox(height: 16),
-          _PitchCard(
-            theme: theme,
-            colorScheme: colorScheme,
-            sourceContext: widget.sourceContext,
+      appBar: AppBar(
+        title: const PageTitle('Premium'),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: 'Close',
+            onPressed: _dismiss,
           ),
-          const SizedBox(height: 28),
+        ],
+      ),
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 20),
+        children: [
+          Text(
+            _headline,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 20),
           const _SectionLabel("What's free, trial, and paid"),
           const SizedBox(height: 8),
           _ComparisonTable(theme: theme, colorScheme: colorScheme),
-          const SizedBox(height: 16),
-          Text(
-            'Topic Practice generates a real AI call for every session, so '
-            "it can't stay free at scale the way Daily Test's single "
-            'shared, once-a-day generation can. The trial is there so you '
-            'can try the personalized feedback before deciding.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 28),
-          const _SectionLabel('Subscribe'),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
           if (_loadingOffer)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
@@ -200,7 +206,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               },
             )
           else ...[
-            _PlanPicker(
+            _PlanCards(
               monthly: monthly,
               annual: annual,
               selected: _selectedPeriod,
@@ -208,11 +214,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
               theme: theme,
               colorScheme: colorScheme,
             ),
-            const SizedBox(height: 16),
-            _TrialTermsCard(
-              package: _selectedPackage!,
-              theme: theme,
-              colorScheme: colorScheme,
+            const SizedBox(height: 12),
+            Text(
+              _disclosureText(_selectedPackage!),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             _PurchaseStatusBanner(
@@ -249,7 +258,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
           // Required by App Store guidelines for any screen that sells a
           // subscription, regardless of whether pricing itself is
           // currently available — always present, never gated on
-          // [package].
+          // [package]. Not one of the reordering batch's eight named
+          // steps; kept here, right after the primary action, since
+          // restoring is functionally an alternative path to the same
+          // thing that button does.
           Center(
             child: TextButton(
               // No explicit style: theme.dart's textButtonTheme now covers
@@ -271,6 +283,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 ),
               ),
             ),
+          const SizedBox(height: 8),
+          // Low-emphasis skip — not shown once a trial has actually
+          // started (the primary button already covers "I'm done" via
+          // "Continue" then, so a second identical exit here would be
+          // redundant).
+          if (_purchaseState != _PurchaseState.success)
+            Center(
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.onSurfaceVariant,
+                ),
+                onPressed: _dismiss,
+                child: const Text('Maybe later'),
+              ),
+            ),
           const SizedBox(height: 4),
           const Center(
             child: Wrap(
@@ -287,137 +314,31 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ],
             ),
           ),
-          // Low-emphasis skip, below everything else the App Store
-          // requires — not shown once a trial has actually started (the
-          // primary button already covers "I'm done" via "Continue" then,
-          // so a second identical exit here would be redundant).
-          if (_purchaseState != _PurchaseState.success) ...[
-            const SizedBox(height: 8),
-            Center(
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.onSurfaceVariant,
-                ),
-                onPressed: _dismiss,
-                child: const Text('Maybe later'),
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-/// The framing header (was the old Early Access screen's own top card):
-/// states plainly that Daily Test is free forever and Topic Practice is a
-/// trial. Deliberately never says "free forever"/unqualified "free" for
-/// Topic Practice itself — that stopped being true once it moved to
-/// trial-then-paid (PRD v2 §12.2/§6).
-class _HeaderCard extends StatelessWidget {
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  const _HeaderCard({required this.theme, required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: colorScheme.primaryContainer,
-              foregroundColor: colorScheme.onPrimaryContainer,
-              child: const Icon(Icons.workspace_premium_rounded, size: 26),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "You're one of our first users — Daily Test is free, "
-              'always, and Topic Practice starts with a free trial.',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'No credit card surprises — trial length, price, and '
-              'billing terms are always shown clearly before you '
-              'start anything.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// The core sales pitch (was the old Paywall screen's own top card; PRD v2
-/// §12.1, docs/prd.md §2.1 Theme 2 and §2.2 Theme 7): personalized,
-/// plain-language feedback on the user's own mistakes — not a generic
-/// feature list — since that's the specific thing every one of the three
-/// usability testers praised unprompted, and the thing a fixed-answer-key
-/// Daily Test structurally can't do. Swaps to a weak-spot-specific
-/// headline when [sourceContext] is given (see [PremiumScreen.sourceContext]).
-class _PitchCard extends StatelessWidget {
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-  final String? sourceContext;
-
-  const _PitchCard({
-    required this.theme,
-    required this.colorScheme,
-    this.sourceContext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final source = sourceContext;
-    final headline = source != null
-        ? 'Unlock personalized feedback on "$source"'
-        : 'Personalized feedback, not a feature list';
-    final body = source != null
-        ? 'Topic Practice generates fresh questions targeting "$source" '
-            "specifically, then explains what's wrong in plain English — "
-            'never grammar terminology.'
-        : 'Topic Practice generates fresh questions from your own '
-            "recurring mistakes, then explains what's wrong in plain "
-            "English — never grammar terminology. It's the part of "
-            'GrammarLens people notice first.';
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: colorScheme.secondaryContainer,
-              foregroundColor: colorScheme.onSecondaryContainer,
-              child: const Icon(Icons.auto_awesome_rounded, size: 24),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              headline,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              body,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+/// The App Store's required auto-renewable-subscription disclosure,
+/// compressed to a single sentence (at most two lines once wrapped):
+/// trial length, price + billing period after it, and that it auto-renews
+/// unless cancelled. Reuses [_hyphenatedDuration] and
+/// [_formatSubscriptionPeriod] — the same parsing the old, three-line
+/// _TrialTermsCard used — so every number here still comes from
+/// [package]'s own live StoreKit/RevenueCat data, never hardcoded.
+String _disclosureText(Package package) {
+  final product = package.storeProduct;
+  final trial = product.introductoryPrice;
+  final trialPart = trial != null
+      ? '${_hyphenatedDuration(trial.periodNumberOfUnits, trial.periodUnit)} '
+          'free trial'
+      : 'Free trial';
+  final billingPeriod = _formatSubscriptionPeriod(product.subscriptionPeriod);
+  final priceStr = billingPeriod == null
+      ? product.priceString
+      : '${product.priceString} / $billingPeriod';
+  return '$trialPart, then $priceStr, auto-renews unless cancelled.';
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -506,8 +427,8 @@ class _ComparisonTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Matches the 20px padding every other card on this screen uses
-    // (_HeaderCard, _PitchCard, _TrialTermsCard) — not a new number.
+    // Matches the 20px padding every other card on this screen uses —
+    // not a new number.
     const contentPadding = EdgeInsets.symmetric(horizontal: 20);
     final rowDividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
 
@@ -722,12 +643,15 @@ class _Badge extends StatelessWidget {
   }
 }
 
-/// Monthly/annual toggle (PRD v2 §13.3), annual preselected, plus the
-/// price line and "Save X%" badge for whichever is currently selected.
-/// Every number here comes from the two real [Package.storeProduct]s —
-/// nothing is computed from a hardcoded price or divided by a hardcoded
-/// 12; see [_planPricing].
-class _PlanPicker extends StatelessWidget {
+/// Two side-by-side selectable plan cards (PRD v2 §13.3) — replaces the
+/// old Annual/Monthly SegmentedButton. That component was this batch's H1
+/// finding: the design called for two price cards, but the thing actually
+/// in the tree was a segmented toggle with a single price line underneath
+/// it, not two cards at all. Annual is preselected and carries the
+/// "Save N%" badge; both cards' prices come from [_planPricing] — the
+/// exact same helper the old segmented picker used, called once per
+/// period — so nothing about where the numbers come from changes here.
+class _PlanCards extends StatelessWidget {
   final Package monthly;
   final Package annual;
   final _PlanPeriod selected;
@@ -735,7 +659,7 @@ class _PlanPicker extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
 
-  const _PlanPicker({
+  const _PlanCards({
     required this.monthly,
     required this.annual,
     required this.selected,
@@ -746,50 +670,113 @@ class _PlanPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pricing = _planPricing(selected, monthly, annual);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppSegmentedButton<_PlanPeriod>(
-          segments: const [
-            ButtonSegment(
-              value: _PlanPeriod.monthly,
-              label: Text('Monthly'),
-            ),
-            ButtonSegment(
-              value: _PlanPeriod.annual,
-              label: Text('Annual'),
-            ),
-          ],
-          selected: {selected},
-          onSelectionChanged: (s) => onChanged(s.first),
+        Expanded(
+          child: _PlanCard(
+            label: 'Annual',
+            pricing: _planPricing(_PlanPeriod.annual, monthly, annual),
+            selected: selected == _PlanPeriod.annual,
+            onTap: () => onChanged(_PlanPeriod.annual),
+            theme: theme,
+            colorScheme: colorScheme,
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pricing.bigAmount,
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    pricing.smallDetail,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-            if (pricing.savingsLabel != null)
-              _Badge(label: pricing.savingsLabel!),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: _PlanCard(
+            label: 'Monthly',
+            pricing: _planPricing(_PlanPeriod.monthly, monthly, annual),
+            selected: selected == _PlanPeriod.monthly,
+            onTap: () => onChanged(_PlanPeriod.monthly),
+            theme: theme,
+            colorScheme: colorScheme,
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  final String label;
+  final _PlanPricing pricing;
+  final bool selected;
+  final VoidCallback onTap;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+
+  const _PlanCard({
+    required this.label,
+    required this.pricing,
+    required this.selected,
+    required this.onTap,
+    required this.theme,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor =
+        selected ? colorScheme.secondary : colorScheme.outlineVariant;
+    final bgColor =
+        selected ? colorScheme.secondaryContainer : colorScheme.surfaceContainerLow;
+    final onBg = selected ? colorScheme.onSecondaryContainer : colorScheme.onSurface;
+    final mutedOnBg = selected
+        ? colorScheme.onSecondaryContainer
+        : colorScheme.onSurfaceVariant;
+    final savings = pricing.savingsLabel;
+
+    return Semantics(
+      key: ValueKey('planCard_$label'),
+      button: true,
+      selected: selected,
+      container: true,
+      excludeSemantics: true,
+      label: '$label plan, ${pricing.bigAmount}, ${pricing.smallDetail}'
+          '${savings != null ? ', $savings' : ''}',
+      child: Material(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: borderColor, width: selected ? 2 : 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (savings != null) ...[
+                  _Badge(label: savings),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  label,
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w700, color: onBg),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  pricing.bigAmount,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700, color: onBg),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  pricing.smallDetail,
+                  style: theme.textTheme.bodySmall?.copyWith(color: mutedOnBg),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -903,7 +890,9 @@ class _LegalLink extends StatelessWidget {
 /// Shown when [SubscriptionService.getOfferings] comes back empty — no
 /// RevenueCat/App Store Connect product connected (expected right now, see
 /// this file's class doc comment) or a transient failure. Either way, a
-/// clear non-crashing state rather than a blank or broken screen.
+/// clear non-crashing state rather than a blank or broken screen — this is
+/// also a launch blocker, not just a nicety: App Review rejects a paywall
+/// it opens that can't fetch products.
 class _UnavailableCard extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
@@ -945,66 +934,6 @@ class _UnavailableCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// App Store Connect's required auto-renewable-subscription disclosure:
-/// trial length, price + billing period after it, and that it auto-renews
-/// unless cancelled — all three read live off [package], never hardcoded.
-class _TrialTermsCard extends StatelessWidget {
-  final Package package;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  const _TrialTermsCard({
-    required this.package,
-    required this.theme,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final product = package.storeProduct;
-    final trial = product.introductoryPrice;
-    final trialText = trial != null
-        ? '${_hyphenatedDuration(trial.periodNumberOfUnits, trial.periodUnit)} '
-            'free trial'
-        : 'Free trial';
-    final billingPeriod = _formatSubscriptionPeriod(product.subscriptionPeriod);
-    final priceLine = billingPeriod == null
-        ? 'Then ${product.priceString}, billed automatically unless you '
-            'cancel before the trial ends.'
-        : 'Then ${product.priceString} / $billingPeriod, billed '
-            'automatically unless you cancel before the trial ends.';
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              trialText,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              priceLine,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Auto-renews until cancelled. Manage or cancel anytime in '
-              'your App Store account settings.',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
           ],
         ),
       ),
