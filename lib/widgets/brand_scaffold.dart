@@ -13,8 +13,11 @@ import 'floating_nav_shell.dart';
 /// Also the single place that solves scroll behavior, safe-area, and
 /// bottom-nav clearance for a D1 screen, so docs/design-audit.md S4 (the
 /// nav bar overlapping scrollable content) can't reappear screen by screen
-/// the way it did before `NavBarClearance` existed: every caller passes
-/// [children] for a `ListView`, not a pre-built scroll view of its own.
+/// the way it did before `NavBarClearance` existed: the common case passes
+/// [children] for a `ListView` this widget owns, not a pre-built scroll
+/// view of its own. [body] is the deliberate exception, for a single
+/// loading/error/empty state that needs centering rather than scrolling —
+/// see its own doc comment.
 class BrandScaffold extends StatelessWidget {
   const BrandScaffold({
     super.key,
@@ -25,8 +28,12 @@ class BrandScaffold extends StatelessWidget {
     this.isTabRoot = false,
     this.horizontalPadding,
     this.controller,
-    required this.children,
-  });
+    this.children,
+    this.body,
+  }) : assert(
+          (children == null) != (body == null),
+          'Provide exactly one of children or body',
+        );
 
   /// The band's title widget — a plain [Text] on most screens (often via
   /// `PageTitle`), but left as a [Widget] since Home's brand wordmark
@@ -56,8 +63,19 @@ class BrandScaffold extends StatelessWidget {
   /// own.
   final ScrollController? controller;
 
-  /// The screen's own content, laid out in a [ListView] this widget owns.
-  final List<Widget> children;
+  /// The screen's own content, laid out in a [ListView] this widget owns —
+  /// mutually exclusive with [body]. Use this for ordinary scrollable
+  /// content (the common case).
+  final List<Widget>? children;
+
+  /// An escape hatch for content the owned [ListView] can't lay out
+  /// correctly — a single loading/error/empty state that needs to be
+  /// centered in the full available height, not stacked top-down as one
+  /// item in a scroll view. Mutually exclusive with [children]; when set,
+  /// [controller] and [horizontalPadding] don't apply (the caller owns
+  /// this content's layout entirely). Band, neutral body background, and
+  /// the local card-theme override still apply either way.
+  final Widget? body;
 
   @override
   Widget build(BuildContext context) {
@@ -136,11 +154,12 @@ class BrandScaffold extends StatelessWidget {
             ),
           ),
         ),
-        child: ListView(
-          controller: controller,
-          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, bottomPadding),
-          children: children,
-        ),
+        child: body ??
+            ListView(
+              controller: controller,
+              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, bottomPadding),
+              children: children!,
+            ),
       ),
     );
   }

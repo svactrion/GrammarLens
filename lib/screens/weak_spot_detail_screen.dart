@@ -8,6 +8,7 @@ import '../services/storage_service.dart';
 import '../utils/loading_view.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
@@ -78,140 +79,139 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
   Widget build(BuildContext context) {
     final ruleTitle = humanizeSlug(widget.spot.errorType);
     final theme = Theme.of(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
-    return Scaffold(
-      appBar: AppBar(title: PageTitle(widget.topic.title)),
-      body: _generating
-          ? const LoadingView(message: 'Preparing your questions…')
-          : ListView(
-              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(10),
+    // Not migrated onto BrandScaffold — LoadingView fills the whole screen
+    // with its own scaffold-colored background (still the pre-D1 band
+    // color everywhere) and is explicitly Batch 3's job, not this one's.
+    if (_generating) {
+      return Scaffold(
+        appBar: AppBar(title: PageTitle(widget.topic.title)),
+        body: const LoadingView(message: 'Preparing your questions…'),
+      );
+    }
+    return BrandScaffold(
+      title: PageTitle(widget.topic.title),
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSecondaryContainer,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          ruleTitle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 20),
+        FutureBuilder<List<ErrorEntry>>(
+          future: _mistakes,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (snapshot.hasError) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Could not load your recent mistakes.\n${snapshot.error}',
                   ),
-                  child: Text(
-                    formatFrequencyStat(
-                        widget.spot.frequency, widget.spot.lastSeen),
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSecondaryContainer,
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: _reloadMistakes,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              );
+            }
+            final mistakes = snapshot.data ?? const <ErrorEntry>[];
+            final recap = mistakes.isNotEmpty
+                ? (mistakes.first.explanation ?? mistakes.first.rule)
+                : null;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          recap ??
+                              'You\'ve had trouble with $ruleTitle in '
+                                  '${widget.topic.title}. Practicing it '
+                                  'again will help reinforce it.',
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                        if (mistakes.isNotEmpty &&
+                            mistakes.first.rule != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            humanizeSlug(mistakes.first.rule!),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
                 Text(
-                  ruleTitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                FutureBuilder<List<ErrorEntry>>(
-                  future: _mistakes,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Could not load your recent mistakes.\n${snapshot.error}',
-                          ),
-                          const SizedBox(height: 8),
-                          FilledButton(
-                            onPressed: _reloadMistakes,
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      );
-                    }
-                    final mistakes = snapshot.data ?? const <ErrorEntry>[];
-                    final recap = mistakes.isNotEmpty
-                        ? (mistakes.first.explanation ?? mistakes.first.rule)
-                        : null;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(18),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  recap ??
-                                      'You\'ve had trouble with $ruleTitle in '
-                                          '${widget.topic.title}. Practicing it '
-                                          'again will help reinforce it.',
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                                if (mistakes.isNotEmpty &&
-                                    mistakes.first.rule != null) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    humanizeSlug(mistakes.first.rule!),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Recent mistakes',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        const SizedBox(height: 12),
-                        if (mistakes.isEmpty)
-                          const EmptyState(
-                            icon: Icons.history_toggle_off_rounded,
-                            description:
-                                'No detailed history stored for these '
-                                'mistakes yet.',
-                            dense: true,
-                          )
-                        else
-                          for (final mistake in mistakes) ...[
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: MistakeBreakdown(
-                                  prompt: mistake.prompt,
-                                  userAnswer: mistake.userAnswer,
-                                  correctedAnswer: mistake.correctedAnswer,
-                                  explanation: mistake.explanation,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                          ],
-                      ],
-                    );
-                  },
+                  'Recent mistakes',
+                  style: Theme.of(context).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _practice,
-                    child: const Text('Practice this'),
-                  ),
-                ),
+                if (mistakes.isEmpty)
+                  const EmptyState(
+                    icon: Icons.history_toggle_off_rounded,
+                    description: 'No detailed history stored for these '
+                        'mistakes yet.',
+                    dense: true,
+                  )
+                else
+                  for (final mistake in mistakes) ...[
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: MistakeBreakdown(
+                          prompt: mistake.prompt,
+                          userAnswer: mistake.userAnswer,
+                          correctedAnswer: mistake.correctedAnswer,
+                          explanation: mistake.explanation,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
               ],
-            ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _practice,
+            child: const Text('Practice this'),
+          ),
+        ),
+      ],
     );
   }
 }

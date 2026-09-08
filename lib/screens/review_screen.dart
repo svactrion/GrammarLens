@@ -7,8 +7,8 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/page_title.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/floating_nav_shell.dart';
 import '../widgets/weak_spot_card.dart';
 import 'weak_spot_detail_screen.dart';
 
@@ -114,43 +114,45 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const PageTitle('Review'),
-        actions: [
-          PopupMenuButton<ReviewSortOrder>(
-            initialValue: _sortOrder,
-            onSelected: _changeSortOrder,
-            itemBuilder: (context) => ReviewSortOrder.values
-                .map(
-                  (order) => PopupMenuItem(
-                    value: order,
-                    child: Text(order.label),
-                  ),
-                )
-                .toList(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.sort_rounded),
-                  const SizedBox(width: 4),
-                  Text(_sortOrder.label),
-                ],
-              ),
+    final sortAction = PopupMenuButton<ReviewSortOrder>(
+      initialValue: _sortOrder,
+      onSelected: _changeSortOrder,
+      itemBuilder: (context) => ReviewSortOrder.values
+          .map(
+            (order) => PopupMenuItem(
+              value: order,
+              child: Text(order.label),
             ),
-          ),
-        ],
+          )
+          .toList(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.sort_rounded),
+            const SizedBox(width: 4),
+            Text(_sortOrder.label),
+          ],
+        ),
       ),
-      body: FutureBuilder<List<WeakSpot>>(
-        future: _weakSpots,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
+    );
+
+    return FutureBuilder<List<WeakSpot>>(
+      future: _weakSpots,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return BrandScaffold(
+            title: const PageTitle('Review'),
+            actions: [sortAction],
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return BrandScaffold(
+            title: const PageTitle('Review'),
+            actions: [sortAction],
+            body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -174,11 +176,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ],
                 ),
               ),
-            );
-          }
-          final spots = snapshot.data ?? const <WeakSpot>[];
-          if (spots.isEmpty) {
-            return Center(
+            ),
+          );
+        }
+        final spots = snapshot.data ?? const <WeakSpot>[];
+        if (spots.isEmpty) {
+          return BrandScaffold(
+            title: const PageTitle('Review'),
+            actions: [sortAction],
+            body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: EmptyState(
@@ -190,29 +196,28 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   onCta: widget.onGoToPractice,
                 ),
               ),
-            );
-          }
-          final width = MediaQuery.sizeOf(context).width;
-          final hPad = (width * 0.045).clamp(16.0, 28.0);
-          return ListView.separated(
-            padding: EdgeInsets.fromLTRB(hPad, 20, hPad, NavBarClearance.of(context)),
-            itemCount: spots.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 14),
-            itemBuilder: (context, index) {
-              final spot = spots[index];
-              final topic = kTopics.firstWhere(
-                (t) => t.id.name == spot.topicId,
-                orElse: () => kTopics.first,
-              );
-              return WeakSpotCard(
-                topic: topic,
+            ),
+          );
+        }
+        return BrandScaffold(
+          title: const PageTitle('Review'),
+          actions: [sortAction],
+          isTabRoot: true,
+          children: [
+            for (final spot in spots) ...[
+              WeakSpotCard(
+                topic: kTopics.firstWhere(
+                  (t) => t.id.name == spot.topicId,
+                  orElse: () => kTopics.first,
+                ),
                 spot: spot,
                 onTap: () => _openWeakSpot(spot),
-              );
-            },
-          );
-        },
-      ),
+              ),
+              if (spot != spots.last) const SizedBox(height: 14),
+            ],
+          ],
+        );
+      },
     );
   }
 }
