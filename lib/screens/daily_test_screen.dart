@@ -9,6 +9,7 @@ import '../services/daily_test_service.dart';
 import '../utils/loading_view.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/practice_step_footer.dart';
+import '../widgets/question_app_bar.dart';
 import 'daily_test_result_screen.dart';
 
 /// One-question-at-a-time flow over today's cached Daily Test set (PRD v2
@@ -228,63 +229,34 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         if (!didPop) _confirmExit();
       },
       child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded),
-            tooltip: 'Leave Daily Test',
-            onPressed: _confirmExit,
-          ),
-          // Guarded on `_dailyTestSet` rather than `!_loading`: the error
-          // state below also has `_loading == false` but no set to read
-          // `.questions.length` from.
-          title: _dailyTestSet == null
-              ? null
-              : Text(
-                  '${_currentIndex + 1}/${_dailyTestSet!.questions.length}',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
-                ),
-          bottom: _dailyTestSet == null
-              ? null
-              : PreferredSize(
-                  preferredSize: const Size.fromHeight(58),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Daily Test',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: appBarFg,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween<double>(
-                              begin: 0,
-                              end: (_currentIndex + 1) /
-                                  _dailyTestSet!.questions.length,
-                            ),
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOut,
-                            builder: (context, value, _) =>
-                                LinearProgressIndicator(
-                              value: value,
-                              minHeight: 8,
-                              backgroundColor: colorScheme.surfaceContainerLow,
-                              color: colorScheme.secondary,
-                            ),
-                          ),
-                        ),
-                      ],
+        // Guarded on `_dailyTestSet` rather than `!_loading`: the error
+        // state below also has `_loading == false` but no set to read
+        // `.questions.length` from. Before the set exists, there's no
+        // question index/progress to show yet — just the close button, in
+        // the same style QuestionAppBar itself uses so it doesn't change
+        // appearance once the question flow appears under it.
+        appBar: _dailyTestSet == null
+            ? AppBar(
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: HeaderCircleIconButton(
+                      icon: Icons.close_rounded,
+                      onPressed: _confirmExit,
+                      tooltip: 'Leave Daily Test',
+                      color: appBarFg,
                     ),
                   ),
-                ),
-        ),
+                ],
+              )
+            : QuestionAppBar(
+                title: 'Daily Test',
+                currentIndex: _currentIndex,
+                total: _dailyTestSet!.questions.length,
+                showBack: _currentIndex != 0,
+                onBack: _goBack,
+                onClose: _confirmExit,
+              ),
         body: _loading
             ? const LoadingView(message: "Preparing today's test…")
             : _error != null
@@ -423,8 +395,6 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
               child: PracticeStepFooter(
-                showBack: _currentIndex != 0,
-                onBack: _goBack,
                 primaryLabel: _primaryLabel(),
                 primaryEnabled: _currentHasAnswer,
                 onPrimary: _advance,

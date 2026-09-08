@@ -9,6 +9,7 @@ import '../services/storage_service.dart';
 import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
 import '../widgets/practice_step_footer.dart';
+import '../widgets/question_app_bar.dart';
 import 'results_screen.dart';
 
 class PracticeScreen extends StatefulWidget {
@@ -172,10 +173,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
     final hPad = (width * 0.045).clamp(16.0, 28.0);
     final total = widget.practiceSet.items.length;
     final item = widget.practiceSet.items[_currentIndex];
-    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
     return PopScope(
-      // The top-left close icon isn't the only way to leave this screen —
+      // The top-right close icon isn't the only way to leave this screen —
       // the system back gesture/button reaches the same route, and would
       // otherwise abandon the session without the confirmation dialog.
       canPop: false,
@@ -183,57 +183,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
         if (!didPop) _confirmExit();
       },
       child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.close_rounded),
-            tooltip: 'Leave practice',
-            onPressed: _confirmExit,
-          ),
-          title: Text(
-            '${_currentIndex + 1}/$total',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(58),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
-              child: Column(
-                children: [
-                  Text(
-                    widget.topic.title,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: appBarFg,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    // A plain `LinearProgressIndicator` jumps straight to a
-                    // new `value` on rebuild; wrapping it lets the fill
-                    // animate smoothly to the new fraction each time the
-                    // question advances.
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(
-                        begin: 0,
-                        end: (_currentIndex + 1) / total,
-                      ),
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      builder: (context, value, _) => LinearProgressIndicator(
-                        value: value,
-                        minHeight: 8,
-                        backgroundColor: colorScheme.surfaceContainerLow,
-                        color: colorScheme.secondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        appBar: QuestionAppBar(
+          title: widget.topic.title,
+          currentIndex: _currentIndex,
+          total: total,
+          showBack: _currentIndex != 0,
+          onBack: _goBack,
+          onClose: _confirmExit,
         ),
         // The question header (context/instruction/hint) and the answer
         // input are split into separate regions on purpose. Putting the
@@ -320,8 +276,6 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
                         child: PracticeStepFooter(
-                          showBack: _currentIndex != 0,
-                          onBack: _goBack,
                           primaryLabel: _primaryLabel(),
                           primaryEnabled: _currentHasAnswer,
                           onPrimary: _advance,
