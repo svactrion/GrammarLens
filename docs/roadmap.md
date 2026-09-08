@@ -690,6 +690,19 @@ below is marked done unless verified directly against the current code):
     color to the new role directly, and re-check every migrated screen in
     both themes** — not left as a lingering scoped exception once nothing
     is left on the old scaffold to justify it.
+  - **Deferred, not decided (Contrast and states / Consistency details,
+    2026-09-09): Settings' two user-facing section-container cards**
+    (Profile form, Data/reset — the three Developer cards are debug-only,
+    out of scope for this question) **look identical to Home's tappable
+    cards.** The same visual treatment implies tappability, which can
+    invite an empty tap on a card that isn't actually a single tap
+    target — this doesn't fit either of the kart kuralı's two "keep"
+    reasons (not a single tappable object, not carrying semantic color),
+    so it's a third, not-yet-named justification (control grouping) that
+    the rule isn't being extended to cover yet. Kept as-is for now,
+    revisit once every screen has migrated onto the neutral body: look at
+    both themes and decide then between a quieter treatment (no border,
+    no shadow, a flat tonal block) or removing the container entirely.
 - [ ] Introduce a spacing scale — **partial.** `lib/spacing.dart` exists and
   is used in the screens touched this round (Welcome, the session-length
   picker, the debug-only Theme Preview screen); the rest of the app (Home,

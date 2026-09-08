@@ -9,6 +9,7 @@ import '../services/storage_service.dart';
 import '../utils/loading_view.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
+import '../widgets/brand_scaffold.dart';
 import 'practice_launch.dart';
 
 /// The MVP's original core loop, now one mode reached from the v2 Home
@@ -65,35 +66,33 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
-    return Scaffold(
-      appBar: AppBar(title: const PageTitle('Topic Practice')),
-      body: _generating
-          ? const LoadingView(message: 'Preparing your questions…')
-          : FutureBuilder<Map<String, TopicStats>>(
-              future: _statsFuture,
-              builder: (context, snapshot) {
-                final statsByTopic =
-                    snapshot.data ?? const <String, TopicStats>{};
-                return ListView.separated(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
-                  itemCount: kTopics.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final topic = kTopics[index];
-                    final stats =
-                        statsByTopic[topic.id.name] ?? TopicStats.empty;
-                    return _TopicCard(
-                      topic: topic,
-                      stats: stats,
-                      onTap: () => _startPractice(topic),
-                    );
-                  },
-                );
-              },
-            ),
+    // Not migrated onto BrandScaffold — LoadingView fills the whole screen
+    // with its own scaffold-colored background (still the pre-D1 band
+    // color everywhere) and is explicitly Batch 3's job, not this one's.
+    if (_generating) {
+      return Scaffold(
+        appBar: AppBar(title: const PageTitle('Topic Practice')),
+        body: const LoadingView(message: 'Preparing your questions…'),
+      );
+    }
+    return FutureBuilder<Map<String, TopicStats>>(
+      future: _statsFuture,
+      builder: (context, snapshot) {
+        final statsByTopic = snapshot.data ?? const <String, TopicStats>{};
+        return BrandScaffold(
+          title: const PageTitle('Topic Practice'),
+          children: [
+            for (final topic in kTopics) ...[
+              _TopicCard(
+                topic: topic,
+                stats: statsByTopic[topic.id.name] ?? TopicStats.empty,
+                onTap: () => _startPractice(topic),
+              ),
+              if (topic != kTopics.last) const SizedBox(height: 14),
+            ],
+          ],
+        );
+      },
     );
   }
 }

@@ -12,7 +12,7 @@ import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
-import '../widgets/floating_nav_shell.dart';
+import '../widgets/brand_scaffold.dart';
 import 'theme_preview_screen.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
@@ -230,123 +230,159 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
 
-    return Scaffold(
-      appBar: AppBar(title: const PageTitle('Settings')),
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, NavBarClearance.of(context)),
-          children: [
-            const _SectionLabel('Appearance'),
-            const SizedBox(height: 8),
-            AppSegmentedButton<AppThemeMode>(
-              segments: const [
-                ButtonSegment(
-                  value: AppThemeMode.system,
-                  label: Text('System'),
-                  icon: Icon(Icons.brightness_auto_rounded),
-                ),
-                ButtonSegment(
-                  value: AppThemeMode.light,
-                  label: Text('Light'),
-                  icon: Icon(Icons.light_mode_rounded),
-                ),
-                ButtonSegment(
-                  value: AppThemeMode.dark,
-                  label: Text('Dark'),
-                  icon: Icon(Icons.dark_mode_rounded),
-                ),
-              ],
-              selected: {widget.themeMode},
-              onSelectionChanged: (selection) =>
-                  widget.onSelectThemeMode(selection.first),
-            ),
-            const SizedBox(height: 32),
-            const _SectionLabel('Profile'),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Avatar', style: theme.textTheme.labelLarge),
-                    const SizedBox(height: 8),
-                    // Local stock avatars only (PRD v2 §11) — no upload,
-                    // just a small fixed set to pick from. Tapping the
-                    // already-selected one clears it back to the generic
-                    // placeholder rather than being a no-op, so there's a
-                    // way out without hunting for a separate "remove"
-                    // control.
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        for (final avatar in Avatar.values)
-                          GestureDetector(
-                            onTap: () => setState(() {
-                              _selectedAvatar =
-                                  _selectedAvatar == avatar ? null : avatar;
-                            }),
-                            child: AvatarTile(
-                              avatar: avatar,
-                              selected: _selectedAvatar == avatar,
-                            ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: BrandScaffold(
+        title: const PageTitle('Settings'),
+        isTabRoot: true,
+        children: [
+          const _SectionLabel('Appearance'),
+          const SizedBox(height: 8),
+          AppSegmentedButton<AppThemeMode>(
+            segments: const [
+              ButtonSegment(
+                value: AppThemeMode.system,
+                label: Text('System'),
+                icon: Icon(Icons.brightness_auto_rounded),
+              ),
+              ButtonSegment(
+                value: AppThemeMode.light,
+                label: Text('Light'),
+                icon: Icon(Icons.light_mode_rounded),
+              ),
+              ButtonSegment(
+                value: AppThemeMode.dark,
+                label: Text('Dark'),
+                icon: Icon(Icons.dark_mode_rounded),
+              ),
+            ],
+            selected: {widget.themeMode},
+            onSelectionChanged: (selection) =>
+                widget.onSelectThemeMode(selection.first),
+          ),
+          const SizedBox(height: 32),
+          const _SectionLabel('Profile'),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Avatar', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  // Local stock avatars only (PRD v2 §11) — no upload,
+                  // just a small fixed set to pick from. Tapping the
+                  // already-selected one clears it back to the generic
+                  // placeholder rather than being a no-op, so there's a
+                  // way out without hunting for a separate "remove"
+                  // control.
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (final avatar in Avatar.values)
+                        GestureDetector(
+                          onTap: () => setState(() {
+                            _selectedAvatar =
+                                _selectedAvatar == avatar ? null : avatar;
+                          }),
+                          child: AvatarTile(
+                            avatar: avatar,
+                            selected: _selectedAvatar == avatar,
                           ),
-                      ],
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text('Name', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(hintText: 'Your name'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Age (optional)',
+                    style: theme.textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _ageController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(hintText: 'Age'),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Occupation (optional)',
+                    style: theme.textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _occupationController,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(hintText: 'Occupation'),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _canSaveProfile && !_savingProfile
+                          ? _saveProfile
+                          : null,
+                      child: Text(_savingProfile ? 'Saving…' : 'Save'),
                     ),
-                    const SizedBox(height: 20),
-                    Text('Name', style: theme.textTheme.labelLarge),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _nameController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(hintText: 'Your name'),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Age (optional)',
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _ageController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(hintText: 'Age'),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Occupation (optional)',
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _occupationController,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration:
-                          const InputDecoration(hintText: 'Occupation'),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _canSaveProfile && !_savingProfile
-                            ? _saveProfile
-                            : null,
-                        child: Text(_savingProfile ? 'Saving…' : 'Save'),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
+          ),
+          const SizedBox(height: 32),
+          const _SectionLabel('Data'),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Reset progress',
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Clears practice history and weak spots. Your name, '
+                    'goal, and theme stay as they are.',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colorScheme.error,
+                        side: BorderSide(color: colorScheme.error),
+                      ),
+                      onPressed: _resetting ? null : _confirmResetData,
+                      child: Text(
+                        _resetting ? 'Resetting…' : 'Reset progress data',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (kDebugMode) ...[
             const SizedBox(height: 32),
-            const _SectionLabel('Data'),
+            const _SectionLabel('Developer'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -355,14 +391,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Reset progress',
+                      'Entitlement override',
                       style: theme.textTheme.titleSmall
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Clears practice history and weak spots. Your name, '
-                      'goal, and theme stay as they are.',
+                      'Debug builds only. Lets you preview Topic '
+                      "Practice locked or unlocked without a real "
+                      'subscription. Never has any effect in a release '
+                      'build.',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 16),
+                    AppSegmentedButton<_DebugAccessChoice>(
+                      segments: const [
+                        ButtonSegment(
+                          value: _DebugAccessChoice.real,
+                          label: Text('Real'),
+                        ),
+                        ButtonSegment(
+                          value: _DebugAccessChoice.free,
+                          label: Text('Free'),
+                        ),
+                        ButtonSegment(
+                          value: _DebugAccessChoice.full,
+                          label: Text('Full access'),
+                        ),
+                      ],
+                      selected: {_debugAccessChoice},
+                      onSelectionChanged: (selection) =>
+                          _setDebugAccessChoice(selection.first),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'First-launch flow',
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Clears the saved profile so the app shows Welcome/'
+                      'Onboarding again — the only way to re-see the '
+                      'Day-0 flow without reinstalling.',
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
@@ -370,13 +452,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colorScheme.error,
-                          side: BorderSide(color: colorScheme.error),
-                        ),
-                        onPressed: _resetting ? null : _confirmResetData,
+                        onPressed:
+                            _resettingOnboarding ? null : _resetOnboarding,
                         child: Text(
-                          _resetting ? 'Resetting…' : 'Reset progress data',
+                          _resettingOnboarding
+                              ? 'Resetting…'
+                              : 'Reset first-launch state',
                         ),
                       ),
                     ),
@@ -384,130 +465,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 32),
-              const _SectionLabel('Developer'),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Entitlement override',
-                        style: theme.textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Debug builds only. Lets you preview Topic '
-                        "Practice locked or unlocked without a real "
-                        'subscription. Never has any effect in a release '
-                        'build.',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: colorScheme.onSurfaceVariant),
-                      ),
-                      const SizedBox(height: 16),
-                      AppSegmentedButton<_DebugAccessChoice>(
-                        segments: const [
-                          ButtonSegment(
-                            value: _DebugAccessChoice.real,
-                            label: Text('Real'),
-                          ),
-                          ButtonSegment(
-                            value: _DebugAccessChoice.free,
-                            label: Text('Free'),
-                          ),
-                          ButtonSegment(
-                            value: _DebugAccessChoice.full,
-                            label: Text('Full access'),
-                          ),
-                        ],
-                        selected: {_debugAccessChoice},
-                        onSelectionChanged: (selection) =>
-                            _setDebugAccessChoice(selection.first),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'First-launch flow',
-                        style: theme.textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Clears the saved profile so the app shows Welcome/'
-                        'Onboarding again — the only way to re-see the '
-                        'Day-0 flow without reinstalling.',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: colorScheme.onSurfaceVariant),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed:
-                              _resettingOnboarding ? null : _resetOnboarding,
-                          child: Text(
-                            _resettingOnboarding
-                                ? 'Resetting…'
-                                : 'Reset first-launch state',
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Theme preview',
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Every color role, semantic result color, and core '
+                      'component in one scroll — for checking a token '
+                      'change before it ships.',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ThemePreviewScreen(),
                           ),
                         ),
+                        child: const Text('Open theme preview'),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Theme preview',
-                        style: theme.textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Every color role, semantic result color, and core '
-                        'component in one scroll — for checking a token '
-                        'change before it ships.',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: colorScheme.onSurfaceVariant),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ThemePreviewScreen(),
-                            ),
-                          ),
-                          child: const Text('Open theme preview'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
