@@ -100,6 +100,12 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
     final hPad = (width * 0.045).clamp(16.0, 28.0);
 
     return AppBar(
+      // Same call BrandScaffold's own built-in app bar makes, for the same
+      // reason (docs/design-audit.md: a scroll-triggered shadow would add
+      // a second, inconsistent edge signal on top of the band's already-
+      // permanent color-cut boundary) — this app bar is custom, so it has
+      // to make that call for itself rather than inheriting it.
+      scrolledUnderElevation: 0,
       leading: Center(
         child: HeaderCircleIconButton(
           icon: Icons.arrow_back_rounded,

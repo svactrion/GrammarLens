@@ -1618,3 +1618,82 @@ them were written down anywhere before this entry.
     message) — this covers the state of the repo as of this documentation
     pass, not a claim about every individual commit above having been
     re-verified.
+
+## 2026-09-09 (D1 Batch 3: question screens, Onboarding, Loading)
+
+- **[Engineering] `BrandScaffold` gained a fully custom `appBar` slot.**
+  The question screens' `QuestionAppBar` (Back/Close/progress row) has
+  nothing in common with a plain title bar, so forcing it through
+  `title`/`leading`/`actions` wasn't an option — `appBar` replaces the
+  whole built-in `AppBar` when set, mutually exclusive with `title` and
+  enforced by the same kind of constructor assertion as `children`/`body`
+  (passing both, or neither, fails immediately rather than picking one
+  silently). `QuestionAppBar` sets its own `scrolledUnderElevation: 0` to
+  match the same call `BrandScaffold`'s own app bar makes, since it's now
+  building its `AppBar` independently.
+- **[Product] Keyboard-open layout verified on-device, in both themes, for
+  both question screens — this batch's actual risk, not assumed.**
+  `docs/design-audit.md` §4 recorded this as an explicit gap ("the
+  question screen wasn't captured with the keyboard open; the keyboard-
+  aware layout has a history of issues there"), and `BrandScaffold` is now
+  the single owner of padding/scroll for every migrated screen — exactly
+  where a regression would land if one existed. Confirmed by screenshot in
+  all four combinations (DailyTestScreen/PracticeScreen × light/dark) with
+  the keyboard genuinely open (not simulated): the band stays pinned, the
+  answer field sits directly above the keyboard, Skip/Next stay reachable,
+  and the layout correctly returns to its resting state once the keyboard
+  closes. Verifying this needed two unrelated workarounds, recorded here
+  since they're likely to recur: (1) cliclick-driven taps on the simulator
+  were unreliable again this session (a calibration tap on a large,
+  unambiguous target — Skip — produced no state change at all after
+  several coordinate-mapping attempts), so focus was driven
+  programmatically instead (`FocusScope.of(context).nextFocus()`, traced
+  via debug prints first to find the right call count rather than
+  guessed — PracticeScreen's app bar Close button takes the first call and
+  the answer field's `EditableText` the second; DailyTestScreen's pushed
+  route absorbs one additional call into its own modal focus scope first,
+  so it takes three); (2) genuinely focusing the field didn't show a
+  software keyboard at all until "Connect Hardware Keyboard" was found
+  checked in the Simulator's own I/O ▸ Keyboard menu (a `defaults write`
+  toggle plus an app restart did not clear this — only unchecking the menu
+  item directly did) — reverted back to its original state afterward,
+  since it's a machine-level preference outside the repo, not something
+  this batch should leave changed.
+- **[Product] Onboarding's disabled "Continue" button — the audit's worst-
+  rated contrast finding — closed, measured rather than assumed fixed.**
+  Migrating onto `BrandScaffold` put the button on the neutral body
+  instead of the vivid orange page, with no button-level change at all
+  (`onboarding_screen.dart`'s `FilledButton` is untouched). Pixel-sampled
+  the actual rendered label/background colors on-device rather than
+  trusting the theory: light mode's disabled fill/label render as
+  `#DFD9D3`/`#94918F` (~2.24:1), dark mode's as `#343337`/`#77767A`
+  (~2.78:1). Both sit below WCAG's 4.5:1 normal-text threshold, but WCAG
+  1.4.3 explicitly exempts inactive/disabled controls from contrast
+  requirements, and this is Material 3's own standard disabled-button
+  convention (`onSurface` at reduced opacity over the surface it sits on),
+  not a residual defect introduced or left by this batch. The actual
+  complaint — a button that read as blank because its label and
+  background shared the same hue — is gone; no follow-up patch is needed
+  for this specific button.
+- **[Engineering] `LoadingView` no longer paints its own background.**
+  Previously `ColoredBox(color: theme.scaffoldBackgroundColor)` — always
+  redundant (every `Scaffold` it sits in already paints that color behind
+  `body` on its own) and actively wrong the moment a host `Scaffold`'s
+  background diverges from the ambient theme default, which
+  `BrandScaffold` does deliberately (neutral body vs. the old band color).
+  Left inside a `BrandScaffold` body unchanged, it would have silently
+  repainted the pre-D1 band color under itself, erasing the neutral look
+  specifically during loading. Fixed by removing the `ColoredBox` and
+  trusting the host's own fill — correct in both the migrated and
+  not-yet-migrated case, no special-casing. Scope was deliberately not
+  extended past this: the audit's separate "no real progress signal"
+  finding for Loading stays out of scope, exactly as asked — this batch
+  only moves the widget, it doesn't add one.
+- **[Engineering]** `test/practice_screen_keyboard_test.dart`'s "tapping
+  outside the text field dismisses the keyboard" test tapped the question
+  header's `Card` as a stand-in for "somewhere away from the field" —
+  that `Card` is gone (this batch's kart kuralı removal, see the D1 status
+  entry in `docs/roadmap.md`), so the test now taps the instruction text
+  instead; the same ancestor `GestureDetector` still owns the dismiss.
+- **[Product]** `flutter analyze` and the full test suite (227 passing)
+  clean.

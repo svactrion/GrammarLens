@@ -7,6 +7,7 @@ import '../models/practice_item.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../utils/loading_view.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
@@ -108,8 +109,8 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
 
   @override
   void dispose() {
-    for (final controller in _controllers?.values ??
-        const <TextEditingController>[]) {
+    for (final controller
+        in _controllers?.values ?? const <TextEditingController>[]) {
       controller.dispose();
     }
     super.dispose();
@@ -217,8 +218,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.045).clamp(16.0, 28.0);
-    final appBarFg =
-        theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
     return PopScope(
       // Same reasoning as PracticeScreen: the system back gesture reaches
@@ -228,7 +228,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) _confirmExit();
       },
-      child: Scaffold(
+      child: BrandScaffold(
         // Guarded on `_dailyTestSet` rather than `!_loading`: the error
         // state below also has `_loading == false` but no set to read
         // `.questions.length` from. Before the set exists, there's no
@@ -237,6 +237,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         // appearance once the question flow appears under it.
         appBar: _dailyTestSet == null
             ? AppBar(
+                scrolledUnderElevation: 0,
                 actions: [
                   Padding(
                     padding: const EdgeInsets.only(right: 16),
@@ -288,7 +289,8 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            (error is ClaudeApiException && error.kind == ClaudeApiErrorKind.quotaExceeded)
+            (error is ClaudeApiException &&
+                    error.kind == ClaudeApiErrorKind.quotaExceeded)
                 ? EmptyState(
                     icon: Icons.hourglass_bottom_rounded,
                     title: "Today's limit reached",
@@ -308,7 +310,8 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
               Text(
                 '$_error',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                style: TextStyle(
+                    color: colorScheme.onSurfaceVariant, fontSize: 12),
               ),
             ],
           ],
@@ -322,8 +325,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     ColorScheme colorScheme,
     double hPad,
   ) {
-    final DailyTestQuestion question =
-        _dailyTestSet!.questions[_currentIndex];
+    final DailyTestQuestion question = _dailyTestSet!.questions[_currentIndex];
     final item = question.item;
     final controller = _controllers![item.id]!;
 
@@ -337,46 +339,45 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _itemLabel(item.type),
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: colorScheme.secondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (item.context != null &&
-                          item.context!.trim().isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        Text(item.context!, style: theme.textTheme.bodyLarge),
-                        const SizedBox(height: 16),
-                        Divider(height: 1, color: colorScheme.outlineVariant),
-                        const SizedBox(height: 16),
-                      ] else
-                        const SizedBox(height: 14),
-                      Text(
-                        item.instruction,
-                        style: theme.textTheme.bodyLarge
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      if (item.hint != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          item.hint!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ],
+              // No Card here (docs/design-audit.md §5 D1's kart kuralı) —
+              // this text existed on a card only to stay legible on the old
+              // full-orange scaffold; the neutral BrandScaffold body it
+              // sits on now already does that job.
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _itemLabel(item.type),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colorScheme.secondary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                  if (item.context != null &&
+                      item.context!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    Text(item.context!, style: theme.textTheme.bodyLarge),
+                    const SizedBox(height: 16),
+                    Divider(height: 1, color: colorScheme.outlineVariant),
+                    const SizedBox(height: 16),
+                  ] else
+                    const SizedBox(height: 14),
+                  Text(
+                    item.instruction,
+                    style: theme.textTheme.bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  if (item.hint != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      item.hint!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -386,8 +387,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
               key: ValueKey(item.id),
               controller: controller,
               decoration: const InputDecoration(hintText: 'Your answer'),
-              onChanged: (value) =>
-                  setState(() => _answers[item.id] = value),
+              onChanged: (value) => setState(() => _answers[item.id] = value),
             ),
           ),
           SafeArea(

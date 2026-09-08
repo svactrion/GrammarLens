@@ -4,6 +4,7 @@ import '../models/avatar.dart';
 import '../models/learning_goal.dart';
 import '../models/user_profile.dart';
 import '../utils/page_title.dart';
+import '../widgets/brand_scaffold.dart';
 
 /// Two fields only — name and learning goal (PRD v2 §4). Age and occupation
 /// are deliberately left out here: every field asked before the user has
@@ -50,8 +51,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = (width * 0.06).clamp(20.0, 32.0);
 
-    return Scaffold(
-      appBar: AppBar(title: const PageTitle('Let\'s get started')),
+    return BrandScaffold(
+      title: const PageTitle('Let\'s get started'),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => FocusScope.of(context).unfocus(),

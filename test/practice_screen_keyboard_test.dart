@@ -223,10 +223,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.testTextInput.isVisible, isTrue);
 
-        // Tap the question card's background — nowhere near the field or
+        // Tap the question instruction text — nowhere near the field or
         // the buttons — the way a user reaching to dismiss the keyboard
-        // would.
-        await tester.tap(find.byType(Card));
+        // would. Previously tapped the question header's Card background;
+        // that Card is gone (docs/design-audit.md §5 D1's kart kuralı —
+        // BrandScaffold's neutral body no longer needs it for legibility),
+        // but the same GestureDetector still wraps this text either way.
+        await tester.tap(find.text(practiceSet.items[0].instruction));
         await tester.pumpAndSettle();
         expect(tester.testTextInput.isVisible, isFalse);
       });

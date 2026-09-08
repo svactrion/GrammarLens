@@ -674,9 +674,46 @@ below is marked done unless verified directly against the current code):
   becomes a surface in dark mode; only light mode keeps the orange band).
   `BrandScaffold` (`lib/widgets/brand_scaffold.dart`) is the shared
   band+body shell. Migrated so far: **Home** (Batch 1), **Topic list,
-  Review, Weak-spot detail, Settings** (Batch 2). Still on the pre-D1
-  full-band scaffold: the question screens and Loading (Batch 3), the
-  results screens and Premium (Batch 4).
+  Review, Weak-spot detail, Settings** (Batch 2), **Daily Test question,
+  Topic Practice question, Onboarding, Loading** (Batch 3). Still on the
+  pre-D1 full-band scaffold: the results screens and Premium (Batch 4).
+  - **Batch 3 needed `BrandScaffold` to support a fully custom app bar**
+    (`appBar`, mutually exclusive with `title` — enforced by assertion,
+    same pattern as `children`/`body`): the question screens' own
+    `QuestionAppBar` (Back/Close/progress row) has nothing in common with
+    a plain title bar, so it's passed through as-is rather than forced
+    into the title/leading/actions shape. `QuestionAppBar` sets its own
+    `scrolledUnderElevation: 0` for the same reason `BrandScaffold`'s
+    built-in app bar does.
+  - **Keyboard-open layout verified on-device for both question screens,
+    in both themes** (this batch's actual risk — `BrandScaffold` now owns
+    padding/scroll for every migrated screen, question screens included):
+    answer field stays pinned directly above the keyboard, the band stays
+    in place, Skip/Next stay reachable, and the layout correctly resets
+    once the keyboard closes. Confirmed by screenshot, not assumed.
+  - **Onboarding's disabled "Continue" button — the audit's worst-rated
+    contrast finding, and D1 does resolve the actual problem, measured.**
+    Before: dark orange text on the vivid orange page background — the
+    button was effectively invisible. After migrating onto `BrandScaffold`
+    (neutral body instead of the orange page), the same unstyled disabled
+    `FilledButton` measures **~2.24:1 (light) / ~2.78:1 (dark)** between
+    its own label and background (pixel-sampled on-device, not estimated).
+    Both are below WCAG AA's 4.5:1 body-text threshold — but WCAG 1.4.3
+    explicitly exempts inactive/disabled controls from that requirement,
+    and this is Material 3's own standard disabled-button convention
+    (`onSurface` at reduced opacity), not a residual defect. The thing the
+    audit actually flagged — a button that reads as blank/invisible
+    because label and background shared the same hue — is what's fixed;
+    no follow-up button-level patch is needed.
+  - **Loading moved onto `BrandScaffold`, scope held exactly where asked:
+    no progress signal added.** `LoadingView` no longer paints its own
+    background (previously `theme.scaffoldBackgroundColor`, which would
+    have silently redrawn the old band color under it inside a neutral
+    body) — every `Scaffold` it sits in, migrated or not, already paints
+    its own background, so this was redundant even before and became
+    actively wrong once the two colors diverged. Purely a background-
+    painting fix; the "no real progress signal" finding from the audit is
+    still explicitly out of scope, untouched.
   - **A scoped-override exit plan is committed now, before more screens
     migrate onto it** (`docs/design-audit.md` S3's own complaint —
     two card colors in the app at once — is otherwise exactly what this
@@ -708,16 +745,18 @@ below is marked done unless verified directly against the current code):
   is used in the screens touched this round (Welcome, the session-length
   picker, the debug-only Theme Preview screen); the rest of the app (Home,
   Review, Settings, Premium, question screens) is not migrated onto it.
-- [ ] Fix the contrast failures listed in the audit — **partial.** Every
-  `TextButton` now reads through a centralized `textButtonTheme` (fixes the
-  orange-on-orange class of bug across the app, including the Premium
-  screen's legal links and "Maybe later"); the session-length dialog's
-  muddy scrim is gone (replaced by a tinted-scrim bottom sheet). Still
-  open: onboarding's disabled "Continue" button — the audit's worst-rated
-  contrast failure — is unfixed; confirmed by reading
-  `onboarding_screen.dart`, it still relies on `FilledButton`'s default
-  disabled treatment rather than an explicit override, and is expected to
-  be resolved by D1 rather than patched individually.
+- [x] Fix the contrast failures listed in the audit — **closed 2026-09-09.**
+  Every `TextButton` now reads through a centralized `textButtonTheme`
+  (fixes the orange-on-orange class of bug across the app, including the
+  Premium screen's legal links and "Maybe later"); the session-length
+  dialog's muddy scrim is gone (replaced by a tinted-scrim bottom sheet).
+  Onboarding's disabled "Continue" button — the audit's worst-rated
+  contrast failure — is fixed exactly as predicted: migrating onto
+  `BrandScaffold`'s neutral body (D1) resolved it without a button-level
+  patch, measured on-device at ~2.24:1 (light) / ~2.78:1 (dark) — see the
+  D1 entry above for the full measurement and why that's a real fix
+  despite sitting below WCAG's normal-text threshold (disabled controls
+  are exempt from it).
 - [~] Verify every batch on-device in dark mode — several of this round's
   batches record their own on-device dark-mode verification in their commit
   messages (the fill-ratio dial, the Theme Preview screen, Welcome's
