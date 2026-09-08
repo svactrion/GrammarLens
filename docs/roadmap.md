@@ -673,9 +673,10 @@ below is marked done unless verified directly against the current code):
   2026-09-09.** Dark mode's band is decided (stays neutral — orange never
   becomes a surface in dark mode; only light mode keeps the orange band).
   `BrandScaffold` (`lib/widgets/brand_scaffold.dart`) is the shared
-  band+body shell; only **Home** is migrated onto it so far. Topic list,
-  Review, Weak-spot detail, Settings, the question screens, and the
-  results/Premium screens are still on the pre-D1 full-band scaffold.
+  band+body shell. Migrated so far: **Home** (Batch 1), **Topic list,
+  Review, Weak-spot detail, Settings** (Batch 2). Still on the pre-D1
+  full-band scaffold: the question screens and Loading (Batch 3), the
+  results screens and Premium (Batch 4).
   - **A scoped-override exit plan is committed now, before more screens
     migrate onto it** (`docs/design-audit.md` S3's own complaint —
     two card colors in the app at once — is otherwise exactly what this
