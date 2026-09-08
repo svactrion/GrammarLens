@@ -98,14 +98,42 @@ class BrandScaffold extends StatelessWidget {
       body: Theme(
         // A card sitting directly on this body would be the same color as
         // the body itself (both `surfaceContainerLow`) and separate only
-        // by shadow — weak in light mode, and shadow barely reads at all
-        // in dark mode. Scoped to this subtree only, so screens that
-        // haven't migrated onto BrandScaffold yet keep today's
-        // `surfaceContainerLow` cards on their still-orange/near-black
+        // by shadow or the color step to `surfaceContainerHigh` — measured
+        // directly (docs/build-log.md) and neither holds up alone in both
+        // themes: the color step is a soft ~1.14-1.20:1 in both, and the
+        // 6dp shadow that works in light mode (~1.73:1 against body) is
+        // nearly inert in dark mode (~1.06:1). A border is what's added
+        // here specifically because it's the one mechanism that doesn't
+        // depend on shadow rendering or a subtle tonal step at all — the
+        // same role, same visible line, in either theme.
+        //
+        // `outline`, not `outlineVariant` — tried `outlineVariant` first
+        // (the usual divider/border role elsewhere in this app) and
+        // measured it directly on-device: ~1.34:1 against body in light
+        // mode, and the line was genuinely hard to see, not just a
+        // borderline number on paper. `outline` measures ~3.11:1 against
+        // body / ~2.72:1 against the card in light mode, ~5.05:1 / ~4.20:1
+        // in dark — comfortably legible in both, still an existing role,
+        // nothing invented. Not fixed by changing line thickness instead:
+        // the problem was contrast, not size.
+        // Elevation is kept, deliberately reduced rather than dropped to 0
+        // (`elevation: 1`, M3's smallest non-zero step): the border is now
+        // the primary, theme-consistent signal, and a heavier shadow would
+        // have re-created exactly what this was meant to close — light
+        // mode separating by two mechanisms while dark mode only gets one,
+        // cards visibly heavier in one theme than the other.
+        // Scoped to this subtree only, so screens that haven't migrated
+        // onto BrandScaffold yet keep today's `surfaceContainerLow` cards
+        // at the app-wide 6dp elevation on their still-orange/near-black
         // scaffold, unchanged.
         data: theme.copyWith(
           cardTheme: theme.cardTheme.copyWith(
             color: colorScheme.surfaceContainerHigh,
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: colorScheme.outline),
+            ),
           ),
         ),
         child: ListView(

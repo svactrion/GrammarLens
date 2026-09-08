@@ -391,9 +391,11 @@ ThemeData buildAppTheme(Brightness brightness) {
       // rather than the resting level-2 (3dp) — the latter was too faint to
       // read as "lifted" against the saturated brand background; 6dp is
       // still a soft, standard M3 shadow (levels go up to 12dp), just one
-      // notch more present. Applies to every `Card` in the app (topic list,
-      // practice questions, results, review) since none override elevation
-      // locally.
+      // notch more present. This is the app-wide default for every screen
+      // still sitting on the orange/near-black scaffold, where shadow is
+      // the only separation signal available — `BrandScaffold` overrides
+      // both `elevation` and `color` locally (see below), so this no
+      // longer applies to every `Card` in the app.
       //
       // Still `surfaceContainerLow` here — this is the app-wide default for
       // every screen still sitting on the orange/near-black scaffold
