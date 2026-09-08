@@ -8,7 +8,9 @@ import '../theme.dart';
 import '../utils/answer_matching.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/mistake_breakdown.dart';
+import '../widgets/result_score_band.dart';
 
 /// Shown after the last Daily Test question. Grading is entirely local —
 /// [checkDailyTestAnswer] against the answer key the data layer generated
@@ -120,35 +122,27 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final semantic = theme.extension<SemanticColors>()!;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
 
     final correctCount = _results.where((r) => r.isCorrect).length;
     final skippedCount = _results.where((r) => r.isSkipped).length;
     final totalCount = _results.length;
+    final scoreText = skippedCount > 0
+        ? '$correctCount/$totalCount correct · $skippedCount skipped'
+        : '$correctCount/$totalCount correct';
 
-    return Scaffold(
-      appBar: AppBar(title: const PageTitle('Daily Test Results')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
-        children: [
-          Text(
-            skippedCount > 0
-                ? '$correctCount/$totalCount correct · $skippedCount skipped'
-                : '$correctCount/$totalCount correct',
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 20),
-          for (final result in _results) ...[
-            _QuestionResultCard(result: result, semantic: semantic),
-            const SizedBox(height: 14),
-          ],
-          if (widget.bottomBuilder != null) ...[
-            const SizedBox(height: 6),
-            widget.bottomBuilder!(context),
-          ],
+    return BrandScaffold(
+      title: const PageTitle('Daily Test Results'),
+      bandBottom: ResultScoreBand(text: scoreText),
+      children: [
+        for (final result in _results) ...[
+          _QuestionResultCard(result: result, semantic: semantic),
+          const SizedBox(height: 14),
         ],
-      ),
+        if (widget.bottomBuilder != null) ...[
+          const SizedBox(height: 6),
+          widget.bottomBuilder!(context),
+        ],
+      ],
     );
   }
 }
@@ -227,7 +221,8 @@ class _QuestionResultCard extends StatelessWidget {
         : isCorrect
             ? Icons.check_circle_rounded
             : Icons.cancel_rounded;
-    final label = isSkipped ? 'Skipped' : (isCorrect ? 'Correct' : 'Needs work');
+    final label =
+        isSkipped ? 'Skipped' : (isCorrect ? 'Correct' : 'Needs work');
 
     // A keyboard-variant match is correct but still gets its note shown —
     // "doğru sayılsın ama sessizce geçilmesin" — so it's checked before the
@@ -265,8 +260,7 @@ class _QuestionResultCard extends StatelessWidget {
             MistakeBreakdown(
               prompt: result.question.item.fullText,
               userAnswer: result.userAnswer,
-              correctedAnswer:
-                  isCorrect ? null : result.question.correctAnswer,
+              correctedAnswer: isCorrect ? null : result.question.correctAnswer,
               explanation: explanation,
             ),
           ],

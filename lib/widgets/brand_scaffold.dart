@@ -24,6 +24,7 @@ class BrandScaffold extends StatelessWidget {
     this.title,
     this.appBar,
     this.leading,
+    this.automaticallyImplyLeading = true,
     this.actions,
     this.bandBottom,
     this.isTabRoot = false,
@@ -57,6 +58,13 @@ class BrandScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
 
   final Widget? leading;
+
+  /// Passed straight through to the built-in app bar's own field of the
+  /// same name — e.g. Premium sets this false to suppress the automatic
+  /// back chevron a pushed route would otherwise get, since Close already
+  /// covers dismissal there. Ignored when [appBar] is set.
+  final bool automaticallyImplyLeading;
+
   final List<Widget>? actions;
 
   /// Extra band content below the title — e.g. a results screen's score
@@ -119,6 +127,7 @@ class BrandScaffold extends StatelessWidget {
           AppBar(
             title: title,
             leading: leading,
+            automaticallyImplyLeading: automaticallyImplyLeading,
             actions: actions,
             bottom: bandBottom,
             // Decided once here, not per screen (docs/design-audit.md: Daily

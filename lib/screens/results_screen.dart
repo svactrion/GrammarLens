@@ -10,7 +10,9 @@ import '../theme.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/mistake_breakdown.dart';
+import '../widgets/result_score_band.dart';
 
 class ResultsScreen extends StatefulWidget {
   final Topic topic;
@@ -92,101 +94,93 @@ class _ResultsScreenState extends State<ResultsScreen> {
     final result = widget.result;
     final theme = Theme.of(context);
     final semantic = theme.extension<SemanticColors>()!;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
     final itemsById = {
       for (final item in widget.practiceSet.items) item.id: item,
     };
-    return Scaffold(
-      appBar: AppBar(title: const PageTitle('Results')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
-        children: [
-          Text(
-            result.skippedCount > 0
-                ? '${result.correctCount}/${result.totalCount} correct '
-                    '· ${result.skippedCount} skipped'
-                : '${result.correctCount}/${result.totalCount} correct',
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 20),
-          for (final item in result.feedback) ...[
-            Card(
-              color: item.isSkipped
-                  ? semantic.skippedBackground
-                  : item.isCorrect
-                      ? semantic.correctBackground
-                      : semantic.incorrectBackground,
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          item.isSkipped
-                              ? Icons.remove_circle_outline_rounded
-                              : item.isCorrect
-                                  ? Icons.check_circle_rounded
-                                  : Icons.cancel_rounded,
-                          size: 20,
+    final scoreText = result.skippedCount > 0
+        ? '${result.correctCount}/${result.totalCount} correct '
+            '· ${result.skippedCount} skipped'
+        : '${result.correctCount}/${result.totalCount} correct';
+    return BrandScaffold(
+      title: const PageTitle('Results'),
+      bandBottom: ResultScoreBand(text: scoreText),
+      children: [
+        for (final item in result.feedback) ...[
+          Card(
+            color: item.isSkipped
+                ? semantic.skippedBackground
+                : item.isCorrect
+                    ? semantic.correctBackground
+                    : semantic.incorrectBackground,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        item.isSkipped
+                            ? Icons.remove_circle_outline_rounded
+                            : item.isCorrect
+                                ? Icons.check_circle_rounded
+                                : Icons.cancel_rounded,
+                        size: 20,
+                        color: item.isSkipped
+                            ? semantic.onSkippedBackground
+                            : item.isCorrect
+                                ? semantic.onCorrectBackground
+                                : semantic.onIncorrectBackground,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.isSkipped
+                            ? 'Skipped'
+                            : item.isCorrect
+                                ? 'Correct'
+                                : 'Needs work',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
                           color: item.isSkipped
                               ? semantic.onSkippedBackground
                               : item.isCorrect
                                   ? semantic.onCorrectBackground
                                   : semantic.onIncorrectBackground,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          item.isSkipped
-                              ? 'Skipped'
-                              : item.isCorrect
-                                  ? 'Correct'
-                                  : 'Needs work',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: item.isSkipped
-                                ? semantic.onSkippedBackground
-                                : item.isCorrect
-                                    ? semantic.onCorrectBackground
-                                    : semantic.onIncorrectBackground,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    MistakeBreakdown(
-                      prompt: itemsById[item.itemId]?.fullText,
-                      userAnswer: widget.answers[item.itemId],
-                      correctedAnswer: item.correctedAnswer,
-                      explanation: item.explanation,
-                    ),
-                    if (item.rule != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        humanizeSlug(item.rule!),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 14),
+                  MistakeBreakdown(
+                    prompt: itemsById[item.itemId]?.fullText,
+                    userAnswer: widget.answers[item.itemId],
+                    correctedAnswer: item.correctedAnswer,
+                    explanation: item.explanation,
+                  ),
+                  if (item.rule != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      humanizeSlug(item.rule!),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 14),
-          ],
-          const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
-              child: const Text('Back to topics'),
-            ),
           ),
+          const SizedBox(height: 14),
         ],
-      ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+            child: const Text('Back to topics'),
+          ),
+        ),
+      ],
     );
   }
 }

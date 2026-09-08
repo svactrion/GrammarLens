@@ -7,6 +7,7 @@ import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
+import '../widgets/brand_scaffold.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
 
@@ -160,159 +161,152 @@ class _PremiumScreenState extends State<PremiumScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
     final monthly = _monthlyPackage;
     final annual = _annualPackage;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const PageTitle('Premium'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close_rounded),
-            tooltip: 'Close',
-            onPressed: _dismiss,
+    return BrandScaffold(
+      title: const PageTitle('Premium'),
+      automaticallyImplyLeading: false,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.close_rounded),
+          tooltip: 'Close',
+          onPressed: _dismiss,
+        ),
+      ],
+      children: [
+        Text(
+          _headline,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 20),
+        const _SectionLabel("What's free, trial, and paid"),
+        const SizedBox(height: 8),
+        _ComparisonTable(theme: theme, colorScheme: colorScheme),
+        const SizedBox(height: 20),
+        if (_loadingOffer)
+          _PlanCardsSkeleton(colorScheme: colorScheme)
+        else if (!_offeringsAvailable || monthly == null || annual == null)
+          _UnavailableCard(
+            theme: theme,
+            colorScheme: colorScheme,
+            onRetry: () {
+              setState(() => _loadingOffer = true);
+              _loadOffer();
+            },
+          )
+        else ...[
+          _PlanCards(
+            monthly: monthly,
+            annual: annual,
+            selected: _selectedPeriod,
+            onChanged: (period) => setState(() => _selectedPeriod = period),
+            theme: theme,
+            colorScheme: colorScheme,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _disclosureText(_selectedPackage!),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          _PurchaseStatusBanner(
+            state: _purchaseState,
+            theme: theme,
+            colorScheme: colorScheme,
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              // Once the trial has actually started, this button's job
+              // changes from "start it" to "acknowledge and move on" —
+              // reusing the same primary button for that rather than
+              // adding a separate one keeps a single, consistent
+              // continuation point regardless of outcome.
+              onPressed: switch (_purchaseState) {
+                _PurchaseState.purchasing => null,
+                _PurchaseState.success => _dismiss,
+                _ => _startTrial,
+              },
+              child: _purchaseState == _PurchaseState.purchasing
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(_purchaseState == _PurchaseState.success
+                      ? 'Continue'
+                      : 'Start free trial'),
+            ),
           ),
         ],
-      ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 20),
-        children: [
-          Text(
-            _headline,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+        const SizedBox(height: 16),
+        // Required by App Store guidelines for any screen that sells a
+        // subscription, regardless of whether pricing itself is
+        // currently available — always present, never gated on
+        // [package]. Not one of the reordering batch's eight named
+        // steps; kept here, right after the primary action, since
+        // restoring is functionally an alternative path to the same
+        // thing that button does.
+        Center(
+          child: TextButton(
+            // No explicit style: theme.dart's textButtonTheme now covers
+            // the orange-on-orange contrast fix this call site used to
+            // patch individually.
+            onPressed: _restoring ? null : _restore,
+            child: Text(_restoring ? 'Restoring…' : 'Restore Purchases'),
           ),
-          const SizedBox(height: 20),
-          const _SectionLabel("What's free, trial, and paid"),
-          const SizedBox(height: 8),
-          _ComparisonTable(theme: theme, colorScheme: colorScheme),
-          const SizedBox(height: 20),
-          if (_loadingOffer)
-            _PlanCardsSkeleton(colorScheme: colorScheme)
-          else if (!_offeringsAvailable || monthly == null || annual == null)
-            _UnavailableCard(
-              theme: theme,
-              colorScheme: colorScheme,
-              onRetry: () {
-                setState(() => _loadingOffer = true);
-                _loadOffer();
-              },
-            )
-          else ...[
-            _PlanCards(
-              monthly: monthly,
-              annual: annual,
-              selected: _selectedPeriod,
-              onChanged: (period) => setState(() => _selectedPeriod = period),
-              theme: theme,
-              colorScheme: colorScheme,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _disclosureText(_selectedPackage!),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            _PurchaseStatusBanner(
-              state: _purchaseState,
-              theme: theme,
-              colorScheme: colorScheme,
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                // Once the trial has actually started, this button's job
-                // changes from "start it" to "acknowledge and move on" —
-                // reusing the same primary button for that rather than
-                // adding a separate one keeps a single, consistent
-                // continuation point regardless of outcome.
-                onPressed: switch (_purchaseState) {
-                  _PurchaseState.purchasing => null,
-                  _PurchaseState.success => _dismiss,
-                  _ => _startTrial,
-                },
-                child: _purchaseState == _PurchaseState.purchasing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(_purchaseState == _PurchaseState.success
-                        ? 'Continue'
-                        : 'Start free trial'),
+        ),
+        if (_restoreMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Center(
+              child: Text(
+                _restoreMessage!,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ),
-          ],
-          const SizedBox(height: 16),
-          // Required by App Store guidelines for any screen that sells a
-          // subscription, regardless of whether pricing itself is
-          // currently available — always present, never gated on
-          // [package]. Not one of the reordering batch's eight named
-          // steps; kept here, right after the primary action, since
-          // restoring is functionally an alternative path to the same
-          // thing that button does.
+          ),
+        const SizedBox(height: 8),
+        // Low-emphasis skip — not shown once a trial has actually
+        // started (the primary button already covers "I'm done" via
+        // "Continue" then, so a second identical exit here would be
+        // redundant).
+        if (_purchaseState != _PurchaseState.success)
           Center(
             child: TextButton(
-              // No explicit style: theme.dart's textButtonTheme now covers
-              // the orange-on-orange contrast fix this call site used to
-              // patch individually.
-              onPressed: _restoring ? null : _restore,
-              child: Text(_restoring ? 'Restoring…' : 'Restore Purchases'),
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.onSurfaceVariant,
+              ),
+              onPressed: _dismiss,
+              child: const Text('Maybe later'),
             ),
           ),
-          if (_restoreMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Center(
-                child: Text(
-                  _restoreMessage!,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
-                ),
+        const SizedBox(height: 4),
+        const Center(
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              _LegalLink(
+                label: 'Privacy Policy',
+                url: AppLinks.privacyPolicyUrl,
               ),
-            ),
-          const SizedBox(height: 8),
-          // Low-emphasis skip — not shown once a trial has actually
-          // started (the primary button already covers "I'm done" via
-          // "Continue" then, so a second identical exit here would be
-          // redundant).
-          if (_purchaseState != _PurchaseState.success)
-            Center(
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.onSurfaceVariant,
-                ),
-                onPressed: _dismiss,
-                child: const Text('Maybe later'),
+              _LegalLink(
+                label: 'Terms of Service',
+                url: AppLinks.termsUrl,
               ),
-            ),
-          const SizedBox(height: 4),
-          const Center(
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              children: [
-                _LegalLink(
-                  label: 'Privacy Policy',
-                  url: AppLinks.privacyPolicyUrl,
-                ),
-                _LegalLink(
-                  label: 'Terms of Service',
-                  url: AppLinks.termsUrl,
-                ),
-              ],
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -717,9 +711,11 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor =
         selected ? colorScheme.secondary : colorScheme.outlineVariant;
-    final bgColor =
-        selected ? colorScheme.secondaryContainer : colorScheme.surfaceContainerLow;
-    final onBg = selected ? colorScheme.onSecondaryContainer : colorScheme.onSurface;
+    final bgColor = selected
+        ? colorScheme.secondaryContainer
+        : colorScheme.surfaceContainerLow;
+    final onBg =
+        selected ? colorScheme.onSecondaryContainer : colorScheme.onSurface;
     final mutedOnBg = selected
         ? colorScheme.onSecondaryContainer
         : colorScheme.onSurfaceVariant;
