@@ -476,11 +476,64 @@ decision, API key safety approach, device coverage, feedback channel —
 several of these are open decisions, not just tasks. **Blocker status, reconciled 2026-09-05** (previous
 entries here were partly stale and partly optimistic — corrected against what
 actually exists):
-- **RevenueCat / App Store Connect: nothing done.** No RevenueCat account, no
-  project, no App Store Connect app record, no products, no agreements/tax/
-  banking section. The Apple Developer membership is paid and the account is
-  approved — that is the only part that is real. Purchases still fail safe in
-  the app.
+- **RevenueCat / App Store Connect: in progress since 2026-09-07** (this
+  bullet previously read "nothing done"). What is actually true now:
+  - **Legal entity** completed in App Store Connect — registered as an
+    individual (gerçek kişi), which fixes the US tax form as **W-8BEN**.
+  - **Paid Apps Agreement (Schedule 2)** accepted; Contact Info and Tax Forms
+    submitted and **awaiting Apple's approval**.
+  - **Bank account: the one open item.** Deliberately not submitted yet — see
+    the tax note below. Until it clears, the agreement cannot go Active and no
+    subscription product can be sold.
+  - **EU DSA trader status** declared and contact details submitted. Trader
+    contact info is displayed publicly on the EU product pages, so the support
+    address is `support@ahmettayfur.com` rather than a personal inbox.
+  - **`support@ahmettayfur.com` now works** — Cloudflare Email Routing on the
+    existing zone, forwarding to a personal inbox. Receive-only: replies still
+    leave from the personal address until an SMTP sender is added. Not urgent,
+    but it is a real gap for a public support address.
+  - Still nothing done: no RevenueCat account, no App Store Connect app
+    record, no products. Purchases still fail safe in the app.
+
+- **Bank account is a tax decision, not a banking preference (2026-09-07).**
+  Turkey's GVK Mükerrer 20/B exemption covers mobile app development income
+  sold through app stores: the bank withholds 15% as final tax and no return
+  is filed, under the 2026 threshold. Its binding condition is that **all
+  revenue is collected exclusively through one dedicated bank account** — an
+  everyday personal account does not qualify. A new dedicated account is
+  therefore being opened before anything is submitted to Apple, since changing
+  the bank account in App Store Connect later re-triggers Apple's multi-day
+  verification. Currency (TRY vs USD) is being settled with an accountant at
+  the same time, because the withholding mechanics differ. Not tax advice —
+  recorded here as the reason this step is deliberately paused.
+
+- **Bundle ID is still Flutter's placeholder — launch blocker found 2026-09-07.**
+  `ios/Runner.xcodeproj/project.pbxproj` carries `com.example.grammarLens`
+  (six occurrences, three of them the `.RunnerTests` target). Apple rejects any
+  identifier under `com.example.*`, so no App ID can be registered and no app
+  record created until this changes. Proposed: `com.ahmettayfur.grammarlens` —
+  reverse-DNS of a domain actually owned, all lowercase. **A bundle ID cannot
+  be changed once it is attached to an App Store Connect app record**, so this
+  is a get-it-right-once decision and it comes before everything else in C2.
+  Related, and worth deciding at the same time: `CFBundleDisplayName` is
+  "Grammar Lens" (with a space) while the product is "GrammarLens" — pick one
+  deliberately rather than shipping the accident.
+
+- **Product identifiers are already reserved in code and must be matched
+  exactly in App Store Connect** (these are permanent once created and cannot
+  be renamed or reused, even after deletion): entitlement `premium`, products
+  `grammarlens_premium_monthly` and `grammarlens_premium_annual`, all three in
+  `lib/services/subscription_service.dart`. One subscription group holds both
+  products, so Apple's one-introductory-offer-per-group-per-customer rule
+  means a user who takes the 7-day trial on monthly cannot take a second one
+  on annual — intended, but the paywall copy is written knowing it.
+
+- **Apple Small Business Program: enroll.** 15% commission instead of 30%,
+  which roughly doubles net revenue at this scale and is what every margin
+  figure in `docs/prd-v2.md` §13.7 assumes. Requires Schedule 2 accepted
+  (done). Adjusted proceeds only take effect 15 days after the end of the
+  fiscal month in which enrollment is approved, so enrolling early is worth
+  real money. **Not yet done.**
 - **Privacy Policy / Terms: still do not exist** (`AppLinks` in
   `lib/utils/app_links.dart` is empty). Blocked behind a domain purchase by
   choice: the pages will live on a real domain rather than a default
