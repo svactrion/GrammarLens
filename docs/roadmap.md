@@ -669,14 +669,20 @@ what's actually done, per `docs/build-log.md`'s 2026-09-08 entry (no item
 below is marked done unless verified directly against the current code):
 - [x] Collapse to a single blue (D2) — closed. `secondaryContainer` is a
   light tint of the existing navy, not a second hue.
-- [~] Apply the hybrid theme rule (D1) across screens — **started
-  2026-09-09.** Dark mode's band is decided (stays neutral — orange never
-  becomes a surface in dark mode; only light mode keeps the orange band).
+- [x] Apply the hybrid theme rule (D1) across screens — **closed
+  2026-09-09.** Dark mode's band is neutral, not deep orange — orange never
+  becomes a surface color in dark mode; only light mode keeps the orange
+  band, decided in Batch 1 and confirmed on-device in every batch since.
   `BrandScaffold` (`lib/widgets/brand_scaffold.dart`) is the shared
-  band+body shell. Migrated so far: **Home** (Batch 1), **Topic list,
-  Review, Weak-spot detail, Settings** (Batch 2), **Daily Test question,
-  Topic Practice question, Onboarding, Loading** (Batch 3). Still on the
-  pre-D1 full-band scaffold: the results screens and Premium (Batch 4).
+  band+body shell, and every screen now uses it except Welcome — D1's one
+  deliberate exception, staying full orange. Migrated across four batches:
+  **Home** (Batch 1), **Topic list, Review, Weak-spot detail, Settings**
+  (Batch 2), **Daily Test question, Topic Practice question, Onboarding,
+  Loading** (Batch 3), **Daily Test Results, Topic Practice Results,
+  Premium** (Batch 4). Batch 4 also gave the two results screens a shared
+  `ResultScoreBand` widget (`lib/widgets/result_score_band.dart`) so the
+  score sits in the band the same way on both, by construction, rather than
+  each screen independently choosing to agree.
   - **Batch 3 needed `BrandScaffold` to support a fully custom app bar**
     (`appBar`, mutually exclusive with `title` — enforced by assertion,
     same pattern as `children`/`body`): the question screens' own
@@ -720,14 +726,21 @@ below is marked done unless verified directly against the current code):
     would become permanently). Today: a `BrandScaffold` body uses
     `surfaceContainerHigh` for cards via a local `Theme` override scoped to
     its own subtree; every screen still on the old scaffold keeps the
-    app-wide `surfaceContainerLow` card color, unchanged. This is correct
+    app-wide `surfaceContainerLow` card color, unchanged. This was correct
     *during* the rollout (screens migrate one batch at a time, so two
-    coexisting treatments are unavoidable mid-migration) but is not an
-    acceptable end state. **The last step of the D1 rollout (end of
-    Batch 4) is: delete the local override, move `cardTheme`'s app-wide
-    color to the new role directly, and re-check every migrated screen in
-    both themes** — not left as a lingering scoped exception once nothing
-    is left on the old scaffold to justify it.
+    coexisting treatments are unavoidable mid-migration) but was never
+    meant as an acceptable end state.
+  - **Done, end of Batch 4 (2026-09-09).** The local override is deleted;
+    `lib/theme.dart`'s app-wide `cardTheme` now owns color/elevation/border
+    directly (`surfaceContainerHigh`, `elevation: 1`, an `outline`-colored
+    1px border — `docs/build-log.md`, 2026-09-09, carries the measurements
+    behind each of the three). Every card-bearing screen from all four
+    batches (Home, Topic list, Review, Weak-spot detail, Settings, Daily
+    Test Results, Topic Practice Results) was re-verified on-device in
+    both themes against the shared default — none regressed. Closes this
+    file's own reference to `docs/design-audit.md` S3's "two color
+    languages" pattern, which is exactly what a permanently-scoped
+    override would have become.
   - **Deferred, not decided (Contrast and states / Consistency details,
     2026-09-09): Settings' two user-facing section-container cards**
     (Profile form, Data/reset — the three Developer cards are debug-only,
@@ -741,6 +754,16 @@ below is marked done unless verified directly against the current code):
     revisit once every screen has migrated onto the neutral body: look at
     both themes and decide then between a quieter treatment (no border,
     no shadow, a flat tonal block) or removing the container entirely.
+  - **Still open, not part of D1's own scope: Onboarding's disabled
+    "Continue" button's label readability.** D1 fixed the bug this audit
+    actually described — label and background sharing one orange hue, so
+    the button read as blank — but didn't make the label AA-compliant, and
+    was never meant to: ~2.24:1 (light) / ~2.78:1 (dark), pixel-measured,
+    both still under WCAG AA's 4.5:1 body-text threshold even though WCAG
+    1.4.3 exempts disabled controls from it and this matches Material 3's
+    own disabled-button convention. Whether the label should be more
+    readable regardless is a separate design question this batch wasn't
+    scoped to answer, and D1's closure above does not close it.
 - [ ] Introduce a spacing scale — **partial.** `lib/spacing.dart` exists and
   is used in the screens touched this round (Welcome, the session-length
   picker, the debug-only Theme Preview screen); the rest of the app (Home,
@@ -756,7 +779,9 @@ below is marked done unless verified directly against the current code):
   patch, measured on-device at ~2.24:1 (light) / ~2.78:1 (dark) — see the
   D1 entry above for the full measurement and why that's a real fix
   despite sitting below WCAG's normal-text threshold (disabled controls
-  are exempt from it).
+  are exempt from it). That fix closes the audit's own finding; whether
+  the label should be more readable than that regardless is tracked as its
+  own still-open item under D1 above, not folded into this closure.
 - [~] Verify every batch on-device in dark mode — several of this round's
   batches record their own on-device dark-mode verification in their commit
   messages (the fill-ratio dial, the Theme Preview screen, Welcome's
