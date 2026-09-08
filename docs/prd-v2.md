@@ -556,6 +556,23 @@ $9.99/month, $89.99/year. The annual plan is presented as its per-month
 equivalent ($7.49/month, billed annually at $89.99) with a "Save 25%" marker;
 annual is preselected. The 7-day trial applies to both plans.
 
+**Superseded 2026-09-07 — final pricing: $5.99/month, $49.99/year.** The
+annual plan is presented as $4.17/month, billed annually at $49.99, with a
+computed "Save 30%" marker; annual stays preselected and the 7-day trial still
+applies to both. The reasoning above is kept rather than rewritten, per this
+document's own rule.
+
+Why the change, in order of weight:
+- The $89.99/$9.99 pair was a 25% annual discount. $49.99 against $5.99 is
+  30% (8.4 months paid for 12), a stronger pull toward the plan that is worth
+  more to us: cash up front, the 7-day trial cost amortized over twelve
+  months, and no monthly churn decision.
+- $5.99 sits clearly under the category comparison set (Duolingo, Grammarly,
+  ELSA all around $12) without reading as disposable.
+- Margin holds. See §13.7. The binding cost risk was never the price point.
+
+Recorded as a bet, not a finding — no user has seen either number.
+
 Prices are never hardcoded — Apple returns them in the viewer's currency, and
 the per-month figure is computed from the real annual price in the same
 currency, not stored as a second constant.
@@ -605,6 +622,59 @@ and may read as pressure, which sits badly with the calm, no-pressure
 positioning this product is built on. The alternative — surfacing the offer at
 the moment the user feels the limit instead — cannot be compared without
 retention data we do not have. Revisit once real numbers exist.
+
+### 13.7 Unit economics (2026-09-07)
+
+Derived from the deployed proxy, not from guesswork about the app: model
+`claude-sonnet-4-6`, fixed 5-question sets, a Topic Practice session is two
+calls (`generate_practice_set` + `score_answers`), Daily Test is one
+generation call per device per day, `max_tokens` 2048 throughout.
+
+**Correction to §12.4.** That estimate priced tokens at $2/$10 per MTok
+(Claude Sonnet 5). The model actually deployed is Sonnet 4.6 at **$3/$15** —
+50% higher per token. §12.4's ~$0.03/session figure happens to survive the
+correction; its stated basis does not.
+
+| Unit | Cost |
+|---|---|
+| One Topic Practice session (generate + score) | $0.034 |
+| One Daily Test generation | $0.021 |
+
+Monthly cost per device:
+
+| Scenario | Monthly |
+|---|---|
+| Free, occasional (10 daily tests) | $0.21 |
+| Free, every day (30 daily tests) | $0.63 |
+| Premium, light (12 active days, 12 sessions) | $0.66 |
+| Premium, typical (20 active days, 30 sessions) | $1.43 |
+| Premium, heavy (30 days, 60 sessions) | $2.66 |
+
+Against $5.99/month (net $5.09 after Apple's 15%): 87% margin light, **72%
+typical**, 48% heavy. Against $49.99/year (net $3.54/month): 81% light, **60%
+typical**, 25% heavy. The annual plan is the thinner of the two by design —
+that is what the up-front cash and removed churn are bought with.
+
+**§12.2's feature table is now wrong** where it lists the free tier's marginal
+API cost as "~0 (deterministik)". §12.8 already corrected the reasoning — every
+device generates its own Daily Test, there is no shared backend — but the table
+was never updated. A free user who opens the app daily costs **~$0.63/month and
+returns nothing**. That, not the subscription price, is the structural cost
+exposure.
+
+**Device cap lowered 30 → 15/day (2026-09-07).** At 30 operations/day a single
+device could run ~14 sessions/day and cost ~$30/month against $5.09 of revenue.
+15/day still allows ~7 sessions/day — beyond any real usage pattern — and caps
+worst-case exposure at roughly $8-15/month per device. `GLOBAL_DAILY_LIMIT`
+stays at 300, which bounds total spend at ~$300/month until it is raised.
+
+**Everything above is estimated, not measured.** System prompt sizes are real
+(read from `proxy/src/anthropic.ts`); user prompt and completion sizes are
+modelled. Anthropic returns `usage.input_tokens` / `usage.output_tokens` on
+every response and the proxy currently discards it. Logging those two numbers
+per operation closes §7.1's instrumentation prerequisite and replaces this
+whole section with data. Do that before the numbers here are used for any
+further decision.
 
 ---
 
