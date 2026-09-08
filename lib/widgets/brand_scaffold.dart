@@ -24,6 +24,7 @@ class BrandScaffold extends StatelessWidget {
     this.bandBottom,
     this.isTabRoot = false,
     this.horizontalPadding,
+    this.controller,
     required this.children,
   });
 
@@ -50,6 +51,11 @@ class BrandScaffold extends StatelessWidget {
   /// that default.
   final double? horizontalPadding;
 
+  /// Optional — lets a caller observe/drive scroll position (e.g. a
+  /// "back to top" affordance later). Null lets the [ListView] manage its
+  /// own.
+  final ScrollController? controller;
+
   /// The screen's own content, laid out in a [ListView] this widget owns.
   final List<Widget> children;
 
@@ -75,6 +81,19 @@ class BrandScaffold extends StatelessWidget {
         leading: leading,
         actions: actions,
         bottom: bandBottom,
+        // Decided once here, not per screen (docs/design-audit.md: Daily
+        // Test results showed "an opaque orange app bar with a hard edge
+        // appears on scroll but is absent at scroll-top" — content
+        // scrolling under the band must look the same at rest and mid-
+        // scroll, not gain a new edge). The band already has a permanent
+        // separation from the body via bandBackground/bandForeground alone
+        // (a hard, un-blurred color cut, not a gradient — visible at every
+        // scroll position because it's the app bar's own bottom edge, not
+        // scroll-triggered) — the default Material scrolled-under shadow
+        // would only add a second, redundant edge signal on top of that,
+        // so it's turned off explicitly rather than left to the inherited
+        // default.
+        scrolledUnderElevation: 0,
       ),
       body: Theme(
         // A card sitting directly on this body would be the same color as
@@ -90,6 +109,7 @@ class BrandScaffold extends StatelessWidget {
           ),
         ),
         child: ListView(
+          controller: controller,
           padding: EdgeInsets.fromLTRB(hPad, 20, hPad, bottomPadding),
           children: children,
         ),

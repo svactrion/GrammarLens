@@ -669,9 +669,27 @@ what's actually done, per `docs/build-log.md`'s 2026-09-08 entry (no item
 below is marked done unless verified directly against the current code):
 - [x] Collapse to a single blue (D2) — closed. `secondaryContainer` is a
   light tint of the existing navy, not a second hue.
-- [ ] Apply the hybrid theme rule (D1) across screens — **not started.** No
-  screen has the orange header band yet, and dark mode's version of it
-  (deep orange vs. neutral) isn't decided either.
+- [~] Apply the hybrid theme rule (D1) across screens — **started
+  2026-09-09.** Dark mode's band is decided (stays neutral — orange never
+  becomes a surface in dark mode; only light mode keeps the orange band).
+  `BrandScaffold` (`lib/widgets/brand_scaffold.dart`) is the shared
+  band+body shell; only **Home** is migrated onto it so far. Topic list,
+  Review, Weak-spot detail, Settings, the question screens, and the
+  results/Premium screens are still on the pre-D1 full-band scaffold.
+  - **A scoped-override exit plan is committed now, before more screens
+    migrate onto it** (`docs/design-audit.md` S3's own complaint —
+    two card colors in the app at once — is otherwise exactly what this
+    would become permanently). Today: a `BrandScaffold` body uses
+    `surfaceContainerHigh` for cards via a local `Theme` override scoped to
+    its own subtree; every screen still on the old scaffold keeps the
+    app-wide `surfaceContainerLow` card color, unchanged. This is correct
+    *during* the rollout (screens migrate one batch at a time, so two
+    coexisting treatments are unavoidable mid-migration) but is not an
+    acceptable end state. **The last step of the D1 rollout (end of
+    Batch 4) is: delete the local override, move `cardTheme`'s app-wide
+    color to the new role directly, and re-check every migrated screen in
+    both themes** — not left as a lingering scoped exception once nothing
+    is left on the old scaffold to justify it.
 - [ ] Introduce a spacing scale — **partial.** `lib/spacing.dart` exists and
   is used in the screens touched this round (Welcome, the session-length
   picker, the debug-only Theme Preview screen); the rest of the app (Home,
