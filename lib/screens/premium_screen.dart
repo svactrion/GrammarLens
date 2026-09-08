@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/practice_length.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../utils/app_messenger.dart';
@@ -171,23 +172,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           const SizedBox(height: 28),
           const _SectionLabel("What's free, trial, and paid"),
           const SizedBox(height: 8),
-          const _FeatureTile(
-            icon: Icons.today_rounded,
-            title: 'Daily Test',
-            description:
-                'A quick 5-question warm-up, refreshed every day — free, '
-                'no trial or account needed.',
-            status: 'Free',
-          ),
-          const SizedBox(height: 12),
-          const _FeatureTile(
-            icon: Icons.school_rounded,
-            title: 'Topic Practice',
-            description:
-                'Personalized questions and plain-language feedback on '
-                'your own recurring mistakes.',
-            status: '${SubscriptionService.trialLengthDays}-day trial',
-          ),
+          _ComparisonTable(theme: theme, colorScheme: colorScheme),
           const SizedBox(height: 16),
           Text(
             'Topic Practice generates a real AI call for every session, so '
@@ -453,68 +438,261 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _FeatureTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final String? status;
+/// One row of the Free/Premium comparison table. Text only, so the table
+/// itself (see [_ComparisonTable]) can render every row from one list
+/// instead of hand-laying-out each one — PRD v2 §13.4: exactly these five
+/// features, nothing today's app doesn't actually have.
+class _ComparisonRow {
+  final String label;
+  final bool free;
+  final bool premium;
 
-  const _FeatureTile({
-    required this.icon,
-    required this.title,
-    required this.description,
-    this.status,
+  const _ComparisonRow({
+    required this.label,
+    required this.free,
+    required this.premium,
+  });
+}
+
+/// Row 5's question counts, joined the way a sentence would ("3, 5 or 10"
+/// — no Oxford comma) rather than a plain comma list, and read off
+/// [PracticeLength] so this can't drift from what session lengths the app
+/// actually offers.
+String _joinWithOr(List<String> items) {
+  if (items.length == 1) return items.first;
+  return '${items.sublist(0, items.length - 1).join(', ')} or ${items.last}';
+}
+
+final List<_ComparisonRow> _comparisonRows = [
+  const _ComparisonRow(
+    label: 'Daily Test, refreshed every day',
+    free: true,
+    premium: true,
+  ),
+  const _ComparisonRow(
+    label: 'Topic Practice, all five topics',
+    free: false,
+    premium: true,
+  ),
+  const _ComparisonRow(
+    label: 'Questions from your own mistakes',
+    free: false,
+    premium: true,
+  ),
+  const _ComparisonRow(
+    label: 'Targeted weak-spot practice',
+    free: false,
+    premium: true,
+  ),
+  _ComparisonRow(
+    label: 'Sessions of '
+        '${_joinWithOr(PracticeLength.values.map((l) => '${l.questionCount}').toList())} '
+        'questions',
+    free: false,
+    premium: true,
+  ),
+];
+
+/// The Free/Premium comparison table (replaces the old two-tile benefit
+/// list — docs/design-audit.md S3, both of its blue icon circles go with
+/// it). Purely presentational: purchase logic, product/price sourcing, the
+/// App Store disclosure block, and the restore flow are all elsewhere on
+/// this screen, unchanged.
+class _ComparisonTable extends StatelessWidget {
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+
+  const _ComparisonTable({required this.theme, required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    // Matches the 20px padding every other card on this screen uses
+    // (_HeaderCard, _PitchCard, _TrialTermsCard) — not a new number.
+    const contentPadding = EdgeInsets.symmetric(horizontal: 20);
+    final rowDividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: contentPadding,
+            child: _ComparisonHeaderRow(colorScheme: colorScheme),
+          ),
+          Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
+          for (var i = 0; i < _comparisonRows.length; i++) ...[
+            Padding(
+              padding: contentPadding,
+              child: _ComparisonDataRow(
+                row: _comparisonRows[i],
+                theme: theme,
+                colorScheme: colorScheme,
+              ),
+            ),
+            if (i != _comparisonRows.length - 1)
+              Divider(height: 1, thickness: 1, color: rowDividerColor),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonHeaderRow extends StatelessWidget {
+  final ColorScheme colorScheme;
+
+  const _ComparisonHeaderRow({required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      // 0.04em at a 12px size — CSS-style relative tracking rather than a
+      // literal 0.04 logical pixel, which would be imperceptible.
+      letterSpacing: 12 * 0.04,
+    );
+    return SizedBox(
+      height: 38,
+      child: Row(
+        children: [
+          const Expanded(child: SizedBox.shrink()),
+          SizedBox(
+            width: 56,
+            child: Center(
+              // "PREMIUM" at 12px/w700/tracked doesn't quite fit 56px in
+              // the system font — FittedBox keeps both header words on
+              // one line at their specified size whenever there's room,
+              // only scaling down the one that needs it, rather than
+              // wrapping or clipping.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'FREE',
+                  maxLines: 1,
+                  style: style.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 56,
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'PREMIUM',
+                  maxLines: 1,
+                  style: style.copyWith(
+                    color: colorScheme.onSecondaryContainer,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonDataRow extends StatelessWidget {
+  final _ComparisonRow row;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+
+  const _ComparisonDataRow({
+    required this.row,
+    required this.theme,
+    required this.colorScheme,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: colorScheme.secondaryContainer,
-              foregroundColor: colorScheme.onSecondaryContainer,
-              child: Icon(icon, size: 20),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      if (status != null) ...[
-                        const SizedBox(width: 8),
-                        _Badge(label: status!),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                row.label,
+                style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
               ),
             ),
-          ],
-        ),
+          ),
+          SizedBox(
+            width: 56,
+            child: Center(
+              child: _ComparisonCell(
+                included: row.free,
+                includedColor: colorScheme.onSurfaceVariant,
+                dashColor: colorScheme.outline,
+                tier: 'Free',
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 56,
+            child: Center(
+              child: _ComparisonCell(
+                included: row.premium,
+                includedColor: colorScheme.secondary,
+                dashColor: colorScheme.outline,
+                tier: 'Premium',
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// One table cell: a checkmark or an em-dash, standing in for a boolean a
+/// screen reader can't read visually. [Semantics.excludeSemantics] replaces
+/// whatever VoiceOver/TalkBack would otherwise announce for the glyph
+/// itself (a checkmark icon is normally silent; an em-dash would be read
+/// literally) with an actual sentence — never two cells in a row both
+/// announcing as an unqualified "checkmark."
+class _ComparisonCell extends StatelessWidget {
+  final bool included;
+  final Color includedColor;
+  final Color dashColor;
+  final String tier;
+
+  const _ComparisonCell({
+    required this.included,
+    required this.includedColor,
+    required this.dashColor,
+    required this.tier,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: included ? 'Included in $tier' : 'Not included in $tier',
+      excludeSemantics: true,
+      // Forces this into its own semantics node instead of merging its
+      // label into whatever ancestor node it would otherwise combine
+      // with (the row's label text, in this layout) — each cell needs to
+      // be independently reachable by its own exact label.
+      container: true,
+      child: included
+          ? Icon(Icons.check_rounded, size: 20, color: includedColor)
+          : Text(
+              '—',
+              style: TextStyle(
+                color: dashColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
     );
   }
 }

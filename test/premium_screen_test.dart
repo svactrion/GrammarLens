@@ -204,17 +204,40 @@ void main() {
   });
 
   testWidgets(
-      'reflects the real free/trial/paid split with the current trial '
-      'length, not a hardcoded one', (tester) async {
-    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    final trialBadge =
-        find.text('${SubscriptionService.trialLengthDays}-day trial');
-    await tester.scrollUntilVisible(trialBadge, 300);
+      'the comparison table lists exactly the five real features, Daily '
+      'Test free on both sides and the rest Premium-only', (tester) async {
+    // bySemanticsLabel needs the semantics tree actually built, which
+    // (unlike a real device with an accessibility service running) is off
+    // by default in a plain widget test. Disposed explicitly at the end
+    // of this test body — addTearDown runs too late for the framework's
+    // own end-of-test "no handle left open" check.
+    final semantics = tester.ensureSemantics();
 
-    expect(find.text('Daily Test'), findsOneWidget);
-    expect(find.text('Free'), findsOneWidget);
-    expect(find.text('Topic Practice'), findsOneWidget);
-    expect(trialBadge, findsOneWidget);
+    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+    final header = find.text('FREE');
+    await tester.scrollUntilVisible(header, 300);
+
+    expect(header, findsOneWidget);
+    expect(find.text('PREMIUM'), findsOneWidget);
+
+    expect(find.text('Daily Test, refreshed every day'), findsOneWidget);
+    expect(find.text('Topic Practice, all five topics'), findsOneWidget);
+    expect(find.text('Questions from your own mistakes'), findsOneWidget);
+    expect(find.text('Targeted weak-spot practice'), findsOneWidget);
+    // Session lengths read off PracticeLength, not hardcoded — see
+    // premium_screen.dart's _joinWithOr.
+    expect(find.text('Sessions of 3, 5 or 10 questions'), findsOneWidget);
+
+    // Daily Test is the only row free on both sides: one checkmark in the
+    // Free column, five in Premium (every row, since Premium includes
+    // everything free does plus the rest).
+    expect(
+      find.bySemanticsLabel('Included in Free'),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('Not included in Free'), findsNWidgets(4));
+    expect(find.bySemanticsLabel('Included in Premium'), findsNWidgets(5));
+    semantics.dispose();
   });
 
   testWidgets(
