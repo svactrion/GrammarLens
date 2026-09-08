@@ -4,7 +4,10 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-05 (v2.2 planning — design audit, monetization decisions)
+**Last updated:** 2026-09-08 (App Store Connect/RevenueCat setup in progress;
+v2.2 B-structure batch shipped; B-polish visual-polish tour underway —
+D2 single blue closed, brand mark, session-length picker, Premium paywall
+reorder + pricing states, question-screen button layout)
 
 ---
 
@@ -447,6 +450,88 @@ result-with-paywall screen); `flutter analyze` and the full test suite
 (85 tests, including a new `first_launch_flow_test.dart` driving the
 entire Day-0 flow through both exit paths) are clean.
 
+**v2.2 B-structure batch — shipped** (`docs/prd-v2.md` §13,
+`docs/design-audit.md` §5 D1–D4). Closes every item in the B-structure list
+under "What's next" §2 below:
+- Early Access and Paywall merged into one `PremiumScreen`; 3-day trial
+  replaced by a 7-day trial from a single `SubscriptionService.trialLengthDays`
+  source; two-plan (monthly/annual) pricing with a computed "Save N%" badge;
+  the required App Store disclosure block; unbuilt features ("Unlimited
+  Streak Mode", "AI Practice Partner") removed from the purchase surface.
+- Home rebuilt from a mode-selection menu into a "today" screen: today's
+  Daily Test state, Topic Practice, the 2-3 most frequent weak spots
+  (locked for a free user, naming the specific weak spot via
+  `PremiumScreen.sourceContext`), and a quiet Premium row — replacing the
+  half-empty 3-item list left after Streak Mode/AI Practice Partner were
+  removed.
+- Daily Test now feeds the error profile (previously Topic Practice-only),
+  tagged by source (`ErrorSource.topicPractice` / `.dailyTest`) so both
+  flows aggregate into one unified weak-spot view.
+- Design-audit fixes: the nav bar overlapping scrollable content (S4, fixed
+  via a measured `NavBarClearance` instead of a guessed constant), the
+  duplicated topic label and wrong-field card title on weak-spot cards, and
+  Skip demoted from the primary button on question screens (D3).
+
+Also shipped alongside this batch, closing the "API key safety" pre-launch
+blocker: the Anthropic API key moved out of the client entirely, behind an
+operation-based Cloudflare Workers proxy (`proxy/`) now on a permanent
+custom domain (`api.ahmettayfur.com`); `AppLinks`' Privacy Policy/Terms/
+Support URLs are real and permanent (the pages themselves still carry
+placeholder copy — see the pre-launch checklist below); Turkish-keyboard
+letter variants (ı/i, ş/s, ğ/g, ç/c, ö/o, ü/u) are no longer scored as
+grammar mistakes. Full detail for all of the above: `docs/build-log.md`,
+2026-09-05 through 2026-09-07.
+
+**v2.2 B-polish — visual-polish tour, in progress** (`docs/design-audit.md`
+§5). Started 2026-09-08, after the structure batch above per D4's own
+sequencing ("polishing screens whose structure is about to change is wasted
+work"). See `docs/build-log.md`, 2026-09-08 for full reasoning on each item:
+- **D2 (one blue) closed.** The violet-blue `secondaryContainer` pair
+  replaced with a light tint of the existing navy (`#D7E1FA` on `#0A2E70`,
+  ~9.8:1 contrast) — `secondaryContainer` is now part of the same navy
+  family everywhere, not a second hue. D1 (the hybrid theme / orange header
+  band) is still open — no screen has it yet, and dark mode's version of
+  the band (deep orange vs. neutral) isn't decided either.
+- **A named spacing scale exists** (`lib/spacing.dart`, 4/8/12/16/24/32/48)
+  but is a foundation only — used in the screens touched this round
+  (Welcome, the session-length picker, the debug-only Theme Preview screen),
+  not migrated across the rest of the app yet.
+- **Brand mark replaced**: the placeholder sparkle icon
+  (`Icons.auto_awesome_rounded`) is gone from the whole app, replaced by a
+  hand-drawn `BrandMark` (a loupe), animated into Welcome's entrance —
+  closes the design audit's "brand mark reused as a feature icon" finding.
+  Meant to become the source app-icon generation draws from later.
+- **Session-length picker rebuilt**: the `AlertDialog` of three tappable
+  cards is now a draggable modal bottom sheet built around a single slider,
+  with a custom drag-affordant thumb and the selection card's number
+  redrawn as a fill-ratio dial (question count only — no duration is shown,
+  since no per-session timing is measured anywhere). Closes the audit's
+  "muddy scrim" finding as a side effect of the redesign.
+- **Premium screen**: the "Everything in Free, plus" benefit list replaced
+  with a Free/Premium comparison table; the screen was then reordered
+  (measured reason: the old layout needed 1357px of scrolling past an
+  844px viewport to reach "Start free trial") so price is reachable without
+  scrolling; the price-card slot gained explicit loading/loaded/unavailable
+  states instead of silently showing nothing when no product is connected
+  (a real App Review rejection risk, not just a nicety).
+- **Question screens** (`DailyTestScreen`, `PracticeScreen`): Back and
+  Close moved from the bottom footer into the app bar (40x40 bordered
+  circles, top-left/top-right); Skip moved beside the primary button as a
+  narrower `OutlinedButton` instead of a text link below it, still demoted
+  per D3. Back's slot is preserved as an invisible placeholder on question 1
+  (no valid Back destination) so the centered title never shifts between
+  questions — verified by a widget test.
+
+Known debts opened by this round, not yet fixed (`docs/build-log.md`,
+2026-09-08 for detail): the comparison table's `FittedBox(scaleDown)`
+header fix works against Dynamic Type; light theme's disabled
+`FilledButton` (onboarding's "Continue" is the concrete case) is still hard
+to read on the orange scaffold, expected to be resolved by D1 rather than
+patched individually; the widget-test suite has no coverage of Welcome's or
+the length picker's real (non-reduced-motion) animation path, since every
+test that reaches them has to force reduced motion to avoid `pumpAndSettle`
+hanging against their infinite ambient animations.
+
 ---
 
 ## What's next
@@ -534,20 +619,31 @@ actually exists):
   (done). Adjusted proceeds only take effect 15 days after the end of the
   fiscal month in which enrollment is approved, so enrolling early is worth
   real money. **Not yet done.**
-- **Privacy Policy / Terms: still do not exist** (`AppLinks` in
-  `lib/utils/app_links.dart` is empty). Blocked behind a domain purchase by
-  choice: the pages will live on a real domain rather than a default
-  subdomain. The text does not depend on the domain and can be written first,
-  but it does depend on the API-key architecture decision below.
-- **API key safety is a launch blocker, not an open decision.** The key is
-  compiled into the binary via `--dart-define`, which is extractable from a
-  shipped build. Decision taken 2026-09-05: move it behind a Cloudflare
-  Workers proxy that holds the key as a secret, accepts only GrammarLens's
-  request shape (fixed model and max-token ceiling, so it cannot be used as a
-  general-purpose proxy) and rate-limits per device. Not built yet.
-- **Visual polish: audited, not yet applied.** A screen-by-screen review was
-  done on 2026-09-05 and written up in `docs/design-audit.md`, with the
-  decisions it produced. The work itself is the v2.2 block below.
+- **Privacy Policy / Terms: URLs are real, page content is not — updated
+  2026-09-08, corrected from a stale "still do not exist" note.** Checked
+  directly against `lib/utils/app_links.dart`: `privacyPolicyUrl`, `termsUrl`,
+  and `supportUrl` are no longer empty — all three point at permanent pages
+  under `ahmettayfur.com/products/grammarlens/`, live since 2026-09-07, and
+  the Premium screen's legal links actually open them (`url_launcher`). What
+  remains open is narrower than before: the pages themselves still carry
+  placeholder/drafting copy (confirmed by opening the live Privacy Policy
+  page), not the real Privacy Policy/Terms text. Writing that real text is
+  the actual remaining launch blocker here, not a domain or architecture
+  dependency — both of those are resolved.
+- **API key safety: done, closed 2026-09-06/07.** The key is no longer
+  compiled into the client at all. Moved behind an operation-based
+  Cloudflare Workers proxy (`proxy/`) that owns the model, every system
+  prompt, and `max_tokens` server-side, validates each request against a
+  fixed per-operation schema, and rate-limits per device and globally in
+  Workers KV. Deployed on a permanent custom domain (`api.ahmettayfur.com`)
+  as of 2026-09-07, replacing the initial `workers.dev` address. Full design
+  reasoning (why operation-based rather than a forwarding proxy) and the
+  on-device verification: `docs/build-log.md`, 2026-09-06 and 2026-09-07.
+- **Visual polish: audited, now underway.** A screen-by-screen review was
+  done on 2026-09-05 and written up in `docs/design-audit.md`. The
+  B-structure half of the resulting work is shipped and the B-polish half is
+  in progress as of 2026-09-08 — see "Where we are now" above and the split
+  status in the v2.2 section below.
 - **README overhaul: confirmed applied** (verified against the repo
   2026-09-05). Closed.
 
@@ -555,22 +651,51 @@ actually exists):
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
 
 **B-structure** (do first — polishing screens whose structure is about to
-change is wasted work):
-- Merge Early Access and Paywall into one Premium screen; retire the "Early
+change is wasted work) — **all shipped**, see "Where we are now" above:
+- [x] Merge Early Access and Paywall into one Premium screen; retire the "Early
   Access" name
-- Replace the 3-day trial with the 7-day card-up-front model everywhere; trial
+- [x] Replace the 3-day trial with the 7-day card-up-front model everywhere; trial
   length and prices from a single source, never hardcoded copy
-- Add the required App Store disclosure block to the purchase point
-- Remove unbuilt features from the purchase surface
-- Rebuild Home as a "today" screen (Daily Test state, Topic Practice, weak
+- [x] Add the required App Store disclosure block to the purchase point
+- [x] Remove unbuilt features from the purchase surface
+- [x] Rebuild Home as a "today" screen (Daily Test state, Topic Practice, weak
   spots, quiet premium row) — explicitly *not* by restoring coming-soon cards
-- Demote Skip from primary on Daily Test questions
-- Fix the nav bar overlapping scrollable content
-- Fix the duplicated topic label in Review
+- [x] Demote Skip from primary on Daily Test questions
+- [x] Fix the nav bar overlapping scrollable content
+- [x] Fix the duplicated topic label in Review
 
-**B-polish** (after the above): apply the hybrid theme rule across screens,
-collapse to a single blue, introduce a spacing scale, fix the contrast
-failures listed in the audit. Verify every batch on-device in dark mode.
+**B-polish** (after the above) — **in progress as of 2026-09-08**, split by
+what's actually done, per `docs/build-log.md`'s 2026-09-08 entry (no item
+below is marked done unless verified directly against the current code):
+- [x] Collapse to a single blue (D2) — closed. `secondaryContainer` is a
+  light tint of the existing navy, not a second hue.
+- [ ] Apply the hybrid theme rule (D1) across screens — **not started.** No
+  screen has the orange header band yet, and dark mode's version of it
+  (deep orange vs. neutral) isn't decided either.
+- [ ] Introduce a spacing scale — **partial.** `lib/spacing.dart` exists and
+  is used in the screens touched this round (Welcome, the session-length
+  picker, the debug-only Theme Preview screen); the rest of the app (Home,
+  Review, Settings, Premium, question screens) is not migrated onto it.
+- [ ] Fix the contrast failures listed in the audit — **partial.** Every
+  `TextButton` now reads through a centralized `textButtonTheme` (fixes the
+  orange-on-orange class of bug across the app, including the Premium
+  screen's legal links and "Maybe later"); the session-length dialog's
+  muddy scrim is gone (replaced by a tinted-scrim bottom sheet). Still
+  open: onboarding's disabled "Continue" button — the audit's worst-rated
+  contrast failure — is unfixed; confirmed by reading
+  `onboarding_screen.dart`, it still relies on `FilledButton`'s default
+  disabled treatment rather than an explicit override, and is expected to
+  be resolved by D1 rather than patched individually.
+- [~] Verify every batch on-device in dark mode — several of this round's
+  batches record their own on-device dark-mode verification in their commit
+  messages (the fill-ratio dial, the Theme Preview screen, Welcome's
+  animated entrance); not exhaustively re-confirmed across every batch as
+  part of this documentation pass.
+
+Also newly identified while working through this list, not yet fixed: the
+comparison table's `FittedBox(scaleDown)` header text works against Dynamic
+Type (shrinks back down under a larger accessibility text size instead of
+growing with it) — see `docs/build-log.md`, 2026-09-08.
 
 ### 3. Public launch
 Topic mode + onboarding + premium teaser only. No streak mode yet.
@@ -602,18 +727,22 @@ screens, no commitment yet. Needs its own decision pass when we get there.
 - Partial-answer submission for error-correction on mobile — still tension
   with "graded on the fix, not the format" (build-log, 2026-07-24); needs its
   own product decision
-- **Typos misgraded as grammar errors — reopened 2026-09-06.** The
-  2026-08-24 check concluded "no issue found"; that check missed the case
-  that actually matters for this audience. Using the app on a Turkish
-  keyboard, an answer typed as "cookıng" (dotless ı) against the expected
-  "cooking" is marked "Needs work" with no explanation — the two strings are
-  near-indistinguishable at body-text size. Scoring behaved correctly; the
-  product decision behind it did not. Two harms: the feedback is negative and
-  unexplained, and since Daily Test now feeds the error profile, it writes a
-  grammar weak spot the user does not actually have, corrupting the data the
-  free tier's value rests on. Turkish-keyboard character substitutions
-  (ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u) are never grammatical distinctions in
-  English and must not be scored as grammar errors
+- ~~**Typos misgraded as grammar errors — reopened 2026-09-06.**~~ **Fixed
+  2026-09-07** (stale here since; corrected 2026-09-08). Was: using the app
+  on a Turkish keyboard, an answer typed as "cookıng" (dotless ı) against the
+  expected "cooking" was marked "Needs work" with no explanation, and — since
+  Daily Test feeds the error profile — wrote a grammar weak spot the user
+  didn't actually have. Fixed on both scoring paths: Daily Test's
+  deterministic checker folds a closed, named set of seven Turkish-keyboard
+  letter pairs (ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u — confirmed in
+  `lib/utils/answer_matching.dart`'s `foldKeyboardVariants`) before comparing,
+  and still surfaces a short note naming the differing letter(s) rather than
+  going silent; Topic Practice's LLM-based scoring got the same instruction
+  added to its system prompt (`proxy/src/anthropic.ts`). Deliberately not a
+  general fuzzy-match/edit-distance rule — this product's question mix
+  depends on single-character differences ("stay" vs. "stays") actually being
+  graded wrong; only this specific, closed letter set is folded. See
+  `docs/build-log.md`, 2026-09-07, for the full reasoning.
 
 ---
 
