@@ -4,26 +4,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/practice_step_footer.dart';
 
-/// Covers item 4's fix (docs/design-audit.md D3): the primary button must
-/// never be labeled "Skip" or double as the skip action, and its disabled
-/// state must stay legible rather than repeating the onboarding "Continue"
-/// contrast failure.
+/// Covers docs/design-audit.md D3: the primary button must never be
+/// labeled "Skip" or double as the skip action, and its disabled state
+/// must stay legible rather than repeating the onboarding "Continue"
+/// contrast failure. Also covers the button-layout batch: Skip is now an
+/// outlined button beside the primary action (not a text link below it),
+/// at a fixed width clearly narrower than the primary button, so it never
+/// reads as an equal alternative to it.
 void main() {
   Future<void> pump(
     WidgetTester tester, {
-    bool showBack = false,
     bool primaryEnabled = true,
     VoidCallback? onPrimary,
     VoidCallback? onSkip,
-    VoidCallback? onBack,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(Brightness.light),
         home: Scaffold(
           body: PracticeStepFooter(
-            showBack: showBack,
-            onBack: onBack ?? () {},
             primaryLabel: 'Next',
             primaryEnabled: primaryEnabled,
             onPrimary: onPrimary ?? () {},
@@ -40,13 +39,37 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);
   });
 
-  testWidgets('Skip is a quiet text action, always present regardless of '
-      'whether the primary button is enabled', (tester) async {
+  testWidgets(
+      'Skip is an outlined button, always present regardless of whether '
+      'the primary button is enabled', (tester) async {
     await pump(tester, primaryEnabled: true);
-    expect(find.widgetWithText(TextButton, 'Skip'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Skip'), findsOneWidget);
 
     await pump(tester, primaryEnabled: false);
-    expect(find.widgetWithText(TextButton, 'Skip'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Skip'), findsOneWidget);
+  });
+
+  testWidgets('Skip is clearly narrower than the primary button, never an '
+      'equal-width alternative to it (D3)', (tester) async {
+    await pump(tester);
+    final skipWidth =
+        tester.getSize(find.widgetWithText(OutlinedButton, 'Skip')).width;
+    final primaryWidth =
+        tester.getSize(find.widgetWithText(FilledButton, 'Next')).width;
+    expect(skipWidth, lessThan(primaryWidth));
+  });
+
+  testWidgets('Skip and the primary button are both 52 tall, 12 apart',
+      (tester) async {
+    await pump(tester);
+    final skipRect =
+        tester.getRect(find.widgetWithText(OutlinedButton, 'Skip'));
+    final primaryRect =
+        tester.getRect(find.widgetWithText(FilledButton, 'Next'));
+
+    expect(skipRect.height, 52);
+    expect(primaryRect.height, 52);
+    expect(primaryRect.left - skipRect.right, 12);
   });
 
   testWidgets('the primary button is disabled while primaryEnabled is false',
@@ -71,16 +94,8 @@ void main() {
     var skipped = false;
     await pump(tester, primaryEnabled: false, onSkip: () => skipped = true);
 
-    await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
     expect(skipped, isTrue);
-  });
-
-  testWidgets('Back only renders when showBack is true', (tester) async {
-    await pump(tester, showBack: false);
-    expect(find.widgetWithText(OutlinedButton, 'Back'), findsNothing);
-
-    await pump(tester, showBack: true);
-    expect(find.widgetWithText(OutlinedButton, 'Back'), findsOneWidget);
   });
 
   testWidgets(

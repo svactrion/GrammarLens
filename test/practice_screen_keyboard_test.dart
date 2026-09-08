@@ -131,7 +131,7 @@ void main() {
         // is disabled with an empty field (item 4's fix — see
         // PracticeStepFooter), so this uses the quiet Skip text action,
         // same as a real user would.
-        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+        await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextField),
