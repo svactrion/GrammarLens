@@ -171,13 +171,38 @@ Considered and rejected: keeping orange everywhere (keeps identity but leaves
 us patching contrast and voids screen by screen), and going fully neutral
 (fixes everything but makes the app generic).
 
-**Status (2026-09-08): still open, not started.** No screen has the header
-band yet. Also still undecided, and worth settling before implementation
-starts rather than during it: what the header band looks like in dark mode —
-a deep-orange band (keeping the same identity treatment as light mode) or a
-neutral band (matching dark mode's existing divergence from light mode's
-vivid-orange page background, per this file's own "Design" note in
-`docs/roadmap.md`). Neither option has been chosen.
+**Status (2026-09-09): closed.** Rolled out across four batches
+(`docs/build-log.md`, 2026-09-09) via a shared `BrandScaffold` widget
+(`lib/widgets/brand_scaffold.dart`): Home; Topic list, Review, Weak-spot
+detail, Settings; Daily Test question, Topic Practice question, Onboarding,
+Loading; Daily Test Results, Topic Practice Results, Premium. Welcome is the
+one deliberate exception, staying full orange. Dark mode's band is neutral,
+not deep orange — decided in Batch 1 (orange never becomes a surface color
+in dark mode; only light mode keeps the orange band) and confirmed
+on-device in every batch since.
+
+The scoped `cardTheme` override this rollout needed mid-migration (so a
+`BrandScaffold` card and a not-yet-migrated screen's card could legitimately
+differ while both existed at once) was retired once Batch 4 left every
+screen on `BrandScaffold`: `lib/theme.dart`'s app-wide `cardTheme` now owns
+the card color/elevation/border directly, and every card-bearing screen
+from all four batches was re-verified on-device in both themes against that
+shared default. This closes the pattern this file's own S3 names ("the same
+component carries two color languages") as it would otherwise have applied
+permanently to cards, not just icon circles.
+
+One item D1's work surfaced stays open, tracked separately rather than
+folded into this closure: Onboarding's disabled "Continue" button.
+Migrating it onto `BrandScaffold`'s neutral body fixed the actual defect
+this audit described — a button that read as blank because its label and
+background shared the same orange hue — measured at ~2.24:1 (light) /
+~2.78:1 (dark), up from effectively invisible. Both numbers are still under
+WCAG AA's 4.5:1 body-text threshold; WCAG 1.4.3 exempts disabled controls
+from that requirement, and this matches Material 3's own disabled-button
+convention, so it isn't a residual instance of the bug D1 fixed — but
+whether that label should be more readable regardless is a distinct,
+still-open question that this fix wasn't scoped to answer. See
+`docs/roadmap.md`'s D1 entry.
 
 **D2 — One blue.** Deep navy only, consistent with PRD v2's stated
 "orange primary / deep blue accent". The violet-blue is removed everywhere.

@@ -1697,3 +1697,83 @@ them were written down anywhere before this entry.
   instead; the same ancestor `GestureDetector` still owns the dismiss.
 - **[Product]** `flutter analyze` and the full test suite (227 passing)
   clean.
+
+## 2026-09-09 (D1 Batch 4: results screens, Premium, cardTheme retirement — D1 closed)
+
+- **[Product] Daily Test Results, Topic Practice Results, and Premium
+  migrated onto `BrandScaffold`** — the last three screens D1's rollout
+  needed. Welcome remains the one deliberate exception.
+- **[Engineering] New `ResultScoreBand` (`lib/widgets/result_score_band.dart`)
+  is the first real use of `BrandScaffold`'s `bandBottom` slot**, reserved
+  for exactly this since Batch 1. Both result screens now show their score
+  the same way — in the band, not the body — because they share one widget,
+  not because two screens independently chose to agree. Verified on-device,
+  both screens, both themes: the band carries "N/M correct" (plus "· K
+  skipped" when applicable) in identical position and type style on Daily
+  Test Results and Topic Practice Results alike.
+- **[Engineering] `BrandScaffold` gained `automaticallyImplyLeading`**, a
+  plain pass-through to the built-in `AppBar`'s own field — Premium needs
+  it `false` to suppress the automatic back chevron a pushed route would
+  otherwise get, since its own Close action already covers dismissal.
+- **[Product] Scope held exactly where asked** — none of the following were
+  touched this batch, all recorded as separate future work: the skipped-
+  answer "CORRECTED" box's green tint (a candidate for the same
+  neutral-conversion D1 gave other components), Premium's
+  `FittedBox(scaleDown)` header's Dynamic Type debt, a second exit path
+  from Topic Practice Results.
+
+### Scoped `cardTheme` override retired — D1's exit plan, executed
+
+This was committed to in Batch 1/2 (`docs/roadmap.md`) as D1's mandatory
+last step, precisely because leaving it undone would let
+`docs/design-audit.md` S3's "the same component carries two color
+languages" pattern reappear permanently for cards: a `BrandScaffold` card
+using `surfaceContainerHigh` via a local `Theme` override while any
+not-yet-migrated screen's card still read `cardTheme`'s app-wide
+`surfaceContainerLow` default. Once Batch 4 left every screen except
+Welcome on `BrandScaffold`, that split had nothing left to be scoped
+against.
+
+- **[Engineering] `lib/theme.dart`'s app-wide `cardTheme` now carries the
+  values directly** — `color: colorScheme.surfaceContainerHigh`,
+  `elevation: 1`, `shape: RoundedRectangleBorder(... side:
+  BorderSide(color: colorScheme.outline))` — the same three values
+  `BrandScaffold`'s local override used, with their measured reasoning
+  moved into this file's own comments rather than left in a widget that no
+  longer needs to state them: the previous `elevation: 6` reasoning was
+  written for the pre-D1 all-orange scaffold and is now stale (superseded
+  by the border as the primary signal, per the `elevation: 1` decision
+  earlier this round); the `outline` vs. `outlineVariant` measurement
+  (~3.11:1/~2.72:1 light, ~5.05:1/~4.20:1 dark vs. ~1.34:1) is repeated
+  here since this is now the values' permanent home.
+- **[Engineering] `lib/widgets/brand_scaffold.dart`'s local `Theme(data:
+  theme.copyWith(cardTheme: ...))` wrapper is deleted outright**, not left
+  as a no-op — `body` now renders directly under the ambient theme. Four
+  stale doc comments referencing the removed override or the "migrates one
+  batch at a time" framing were also updated (class-level, the
+  `backgroundColor` inline comment, and the `body`/`appBar` field docs).
+- **[Product] Every card-bearing screen from all four batches re-verified
+  on-device, both themes, against the app-wide default — not sampled.**
+  Home, Topic list, Review, Weak-spot detail, Settings, Daily Test Results,
+  Topic Practice Results: 14 screenshots (7 screens × 2 themes) via a
+  temporary `SCREEN=`-switched debug harness, deleted before committing.
+  All fourteen show the same border+reduced-elevation card treatment as
+  before the retirement, now sourced from the shared default instead of
+  the widget-local one — no regression on any screen.
+- **[Product]** `flutter analyze` and the full test suite (227 passing)
+  clean after the retirement. Committed separately from the screen
+  migration, per plan (`2db4519`), since the two are independently
+  revertible changes.
+
+### D1 closed
+
+Four batches, `docs/design-audit.md` §5 and `docs/roadmap.md` both updated
+to reflect it. One item D1's own work surfaced is deliberately left open
+rather than folded into this closure: Onboarding's disabled "Continue"
+button's label readability. D1 fixed the bug the audit actually described
+(label and background sharing one hue, reading as blank) but the resulting
+~2.24:1/~2.78:1 contrast, while a real improvement and within Material 3's
+disabled-control convention, is still under WCAG AA's normal-text
+threshold — whether that's worth addressing further is a separate,
+still-open design question, recorded as such in both docs rather than
+silently marked done alongside D1.
