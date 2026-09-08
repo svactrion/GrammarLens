@@ -192,10 +192,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           _ComparisonTable(theme: theme, colorScheme: colorScheme),
           const SizedBox(height: 20),
           if (_loadingOffer)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
-            )
+            _PlanCardsSkeleton(colorScheme: colorScheme)
           else if (!_offeringsAvailable || monthly == null || annual == null)
             _UnavailableCard(
               theme: theme,
@@ -893,6 +890,12 @@ class _LegalLink extends StatelessWidget {
 /// clear non-crashing state rather than a blank or broken screen — this is
 /// also a launch blocker, not just a nicety: App Review rejects a paywall
 /// it opens that can't fetch products.
+///
+/// One compact row — icon, a single short sentence, an inline retry — not
+/// the earlier title-plus-paragraph-plus-full-width-button card. This
+/// state replaces the plan cards one-for-one in the layout, so it stays
+/// close to their own footprint instead of the page growing taller
+/// specifically for the unhappy path.
 class _UnavailableCard extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
@@ -906,36 +909,79 @@ class _UnavailableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Trial pricing isn't available right now",
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(onPressed: onRetry, child: const Text('Try again')),
+        ],
+      ),
+    );
+  }
+}
+
+/// The loading state's placeholder — shaped like the two plan cards it
+/// will become, rather than a spinner unrelated to what's arriving. Plain
+/// muted boxes, not an animated shimmer: this app has no shimmer/skeleton
+/// package today and this batch doesn't add one, so the "skeleton" here is
+/// static shape only.
+class _PlanCardsSkeleton extends StatelessWidget {
+  final ColorScheme colorScheme;
+
+  const _PlanCardsSkeleton({required this.colorScheme});
+
+  Widget _bar({required double height, required double width}) => Container(
+        height: height,
+        width: width,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      );
+
+  Widget _card() => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Icon(Icons.error_outline_rounded, color: colorScheme.error),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    "Trial pricing isn't available right now",
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "We couldn't reach the subscription service. Please check "
-              'back soon.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+            _bar(height: 14, width: 56),
+            const SizedBox(height: 10),
+            _bar(height: 20, width: 84),
+            const SizedBox(height: 6),
+            _bar(height: 12, width: 104),
           ],
         ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Loading pricing',
+      child: Row(
+        children: [
+          Expanded(child: _card()),
+          const SizedBox(width: 12),
+          Expanded(child: _card()),
+        ],
       ),
     );
   }

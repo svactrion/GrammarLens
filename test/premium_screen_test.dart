@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -17,13 +19,25 @@ class _FakeSubscriptionService extends SubscriptionService {
   final PurchaseOutcome purchaseOutcome;
   int purchaseCalls = 0;
 
+  /// When set, [getOfferings] awaits this instead of resolving
+  /// immediately — lets a test observe the *loading* state itself (a
+  /// single `pump()` before completing it) rather than only ever seeing
+  /// whichever state the fetch settles into by the time `pumpAndSettle`
+  /// returns.
+  final Completer<Offering?>? offeringsCompleter;
+
   _FakeSubscriptionService({
     this.offering,
     this.purchaseOutcome = PurchaseOutcome.failure,
+    this.offeringsCompleter,
   });
 
   @override
-  Future<Offering?> getOfferings() async => offering;
+  Future<Offering?> getOfferings() async {
+    final completer = offeringsCompleter;
+    if (completer != null) return completer.future;
+    return offering;
+  }
 
   @override
   Future<PurchaseOutcome> purchasePackage(Package package) async {
@@ -310,6 +324,78 @@ void main() {
     // The unavailable state shouldn't show any number at all, hardcoded
     // or otherwise — there's nothing real to show yet.
     expect(find.textContaining('\$'), findsNothing);
+  });
+
+  group('the three pricing-area states (a paywall that can\'t fetch '
+      'products must not silently hide the whole price section)', () {
+    testWidgets('loading shows a skeleton shaped like the plan cards, not '
+        'a spinner', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final completer = Completer<Offering?>();
+
+      // Not the shared pumpPremium helper: this specifically needs to
+      // observe the screen *before* getOfferings() resolves, via a plain
+      // pump() rather than pumpAndSettle().
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            subscriptionService:
+                _FakeSubscriptionService(offeringsCompleter: completer),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.bySemanticsLabel('Loading pricing'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Start free trial'), findsNothing);
+
+      completer.complete(null);
+      await tester.pumpAndSettle();
+      semantics.dispose();
+    });
+
+    testWidgets('loaded shows the real plan cards, not the skeleton',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+
+      expect(find.bySemanticsLabel('Loading pricing'), findsNothing);
+      final startButton = find.text('Start free trial');
+      await tester.scrollUntilVisible(startButton, 300);
+      expect(startButton, findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets(
+        'unavailable shows a short message with an inline retry — no '
+        'plan cards, no skeleton, and never just nothing', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+      await scrollToEnd(tester);
+
+      expect(find.bySemanticsLabel('Loading pricing'), findsNothing);
+      final retry = find.widgetWithText(TextButton, 'Try again');
+      expect(retry, findsOneWidget);
+
+      // Retrying re-fetches for real (not a silent no-op) — with a fake
+      // that still resolves to no offering, it lands back on the same
+      // unavailable state rather than crashing or getting stuck.
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(
+        find.text("Trial pricing isn't available right now"),
+        findsOneWidget,
+      );
+      semantics.dispose();
+    });
   });
 
   testWidgets('Restore Purchases is always reachable and never crashes',
