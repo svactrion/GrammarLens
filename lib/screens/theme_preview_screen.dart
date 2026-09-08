@@ -4,6 +4,7 @@ import '../spacing.dart';
 import '../theme.dart';
 import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/floating_nav_shell.dart';
 
 /// Debug-only design reference: every [ColorScheme] role, [SemanticColors],
@@ -60,8 +61,54 @@ class ThemePreviewScreen extends StatelessWidget {
           const _SectionLabel('Components'),
           const SizedBox(height: Spacing.sm),
           const _ComponentGallery(),
+          const SizedBox(height: Spacing.xxl),
+          const _SectionLabel('BrandScaffold (D1 header band)'),
+          const SizedBox(height: Spacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const _BrandScaffoldDemo()),
+              ),
+              child: const Text('Open BrandScaffold example'),
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// A live example, not a static mockup — pushes a real `BrandScaffold` so
+/// the band (orange in light, neutral in dark) and a card sitting on its
+/// neutral body are exercised through the actual widget, not a
+/// description of it. Reached only from this debug screen.
+class _BrandScaffoldDemo extends StatelessWidget {
+  const _BrandScaffoldDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return const BrandScaffold(
+      title: PageTitle('BrandScaffold example'),
+      children: [
+        Card(
+          child: Padding(
+            padding: EdgeInsets.all(Spacing.lg),
+            child: Text(
+              'A card inside a BrandScaffold body — should still read as '
+              'a distinct, elevated surface in both themes, not blend '
+              'into the neutral background behind it.',
+            ),
+          ),
+        ),
+        SizedBox(height: Spacing.lg),
+        Card(
+          child: Padding(
+            padding: EdgeInsets.all(Spacing.lg),
+            child: Text('A second card, to compare spacing and elevation.'),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -136,7 +183,8 @@ class _ColorRoleGrid extends StatelessWidget {
       crossAxisSpacing: Spacing.sm,
       childAspectRatio: 1.6,
       children: [
-        for (final (name, color) in _roles) _ColorRoleTile(name: name, color: color),
+        for (final (name, color) in _roles)
+          _ColorRoleTile(name: name, color: color),
       ],
     );
   }
@@ -237,7 +285,8 @@ class _ComponentGallery extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: FilledButton(onPressed: () {}, child: const Text('Enabled')),
+              child:
+                  FilledButton(onPressed: () {}, child: const Text('Enabled')),
             ),
             const SizedBox(width: Spacing.sm),
             const Expanded(
