@@ -66,3 +66,4 @@ app.*.map.json
 *.env.local
 config/dev.json
 config/prod.json
+.claude/
