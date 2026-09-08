@@ -128,6 +128,43 @@ const Color _darkOnSkippedBg = Color(0xFFC9C5D0);
 const Color brandMarkGlass = Color(0xFFFFF6EC);
 const Color brandMarkGlint = Color(0xFFFFCDA3);
 
+/// D1's header-band colors (docs/design-audit.md §5), read as an
+/// extension on [ColorScheme] rather than a new field: the band's own
+/// color is not a single role but this `isDark ? X : Y` expression, and
+/// this extension is the *one* place that expression lives. Both
+/// [buildAppTheme] (today's full-screen scaffold/app-bar background, for
+/// every screen not yet migrated onto [BrandScaffold]) and
+/// `BrandScaffold` itself read from here — reverting D1 (or changing what
+/// "neutral" means in dark mode) is a one-line change in this extension,
+/// not a per-call-site sweep, but it is a code change, not a single
+/// token/value swap, since the band was never one role to begin with.
+///
+/// Accepted, deliberate coupling from reading `primary`/`onPrimary` in
+/// light mode: a handful of dialog "Cancel" buttons across the app
+/// (`practice_screen.dart`, `settings_screen.dart`, `daily_test_screen.dart`)
+/// already override `FilledButton` to `colorScheme.primary`/`onPrimary`
+/// explicitly, for the same "read as the least-committal action" reason a
+/// plain-orange button reads that way today. Because the band reads from
+/// the same role, the band's orange and those buttons' orange are — and
+/// will stay — bit-for-bit identical. Before D1 this was invisible (the
+/// whole screen was that color, so there was nothing to compare against);
+/// once the band is a distinct region, this is a real, visible
+/// consequence of the role choice, not a new bug — accepted rather than
+/// worked around with a second orange.
+extension BandColors on ColorScheme {
+  /// The header band's background — orange (`primary`) in light mode, the
+  /// neutral `surface` in dark mode. Dark mode never uses orange as a
+  /// surface (docs/design-audit.md §5 D1's dark-mode decision).
+  Color get bandBackground => brightness == Brightness.dark ? surface : primary;
+
+  /// The band's title/icon color, paired with [bandBackground].
+  /// Light: `onPrimary` on `primary`, ~6.93:1. Dark: `onSurface` on
+  /// `surface`, ~14.56:1. Both computed directly (WCAG relative
+  /// luminance), comfortably clearing AA for either text or UI components.
+  Color get bandForeground =>
+      brightness == Brightness.dark ? onSurface : onPrimary;
+}
+
 /// Semantic feedback colors for the results screen, kept out of
 /// [ColorScheme] (which only has roles for the brand palette) via Flutter's
 /// [ThemeExtension] mechanism — the idiomatic way to add app-specific theme
@@ -198,8 +235,8 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
           Color.lerp(onCorrectBackground, other.onCorrectBackground, t)!,
       incorrectBackground:
           Color.lerp(incorrectBackground, other.incorrectBackground, t)!,
-      onIncorrectBackground: Color.lerp(
-          onIncorrectBackground, other.onIncorrectBackground, t)!,
+      onIncorrectBackground:
+          Color.lerp(onIncorrectBackground, other.onIncorrectBackground, t)!,
       skippedBackground:
           Color.lerp(skippedBackground, other.skippedBackground, t)!,
       onSkippedBackground:
@@ -318,9 +355,14 @@ ThemeData buildAppTheme(Brightness brightness) {
   // Light mode: the page and app bar sit directly on the brand orange, with
   // `onPrimary` (dark, contrast-checked above) for title/back-button/icons.
   // Dark mode keeps a neutral near-black page (see the dark-palette note
-  // above) so app bar foreground is the ordinary light `onSurface`.
-  final scaffoldBg = isDark ? colorScheme.surface : colorScheme.primary;
-  final appBarFg = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+  // above) so app bar foreground is the ordinary light `onSurface`. Same
+  // expression `BandColors.bandBackground`/`bandForeground` reads for
+  // `BrandScaffold` (docs/design-audit.md §5 D1) — this is the whole-screen
+  // default for every screen not yet migrated onto that widget; screens
+  // that have migrated override `Scaffold.backgroundColor` to the neutral
+  // body color but leave the app bar to inherit these same colors.
+  final scaffoldBg = colorScheme.bandBackground;
+  final appBarFg = colorScheme.bandForeground;
 
   return base.copyWith(
     textTheme: textTheme,
@@ -352,6 +394,15 @@ ThemeData buildAppTheme(Brightness brightness) {
       // notch more present. Applies to every `Card` in the app (topic list,
       // practice questions, results, review) since none override elevation
       // locally.
+      //
+      // Still `surfaceContainerLow` here — this is the app-wide default for
+      // every screen still sitting on the orange/near-black scaffold
+      // (unchanged by D1 until each screen migrates). A card inside a
+      // `BrandScaffold` body needs a different color (that body *is*
+      // `surfaceContainerLow`, so a same-color card would separate by
+      // shadow alone) — `BrandScaffold` applies that locally via a `Theme`
+      // override scoped to its own subtree, not by changing this app-wide
+      // default. See `brand_scaffold.dart`.
       elevation: 6,
       color: colorScheme.surfaceContainerLow,
       surfaceTintColor: colorScheme.surfaceTint,
@@ -399,8 +450,7 @@ ThemeData buildAppTheme(Brightness brightness) {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,

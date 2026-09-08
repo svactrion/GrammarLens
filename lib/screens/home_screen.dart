@@ -13,7 +13,7 @@ import '../services/subscription_service.dart';
 import '../utils/answer_matching.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
-import '../widgets/floating_nav_shell.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/weak_spot_card.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
@@ -255,118 +255,110 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
-    final appBarFg =
-        theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          'GrammarLens',
-          style: theme.textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: appBarFg,
-          ),
+    return BrandScaffold(
+      isTabRoot: true,
+      title: Text(
+        'GrammarLens',
+        style: theme.textTheme.headlineLarge?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: appBarFg,
         ),
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, NavBarClearance.of(context)),
-        children: [
-          // PRD v2 §11: an avatar next to the greeting, not floating
-          // elsewhere on the page, so it reads as "whose home screen this
-          // is" rather than a decorative icon. Greeting leads on the left,
-          // avatar pinned to the far right edge (trailing, not centered
-          // against the text) — `spaceBetween` with a `Flexible` (not
-          // `Expanded`) text so the avatar always lands flush against the
-          // trailing edge regardless of how short the greeting is, while a
-          // long name still truncates instead of pushing the avatar off
-          // the visible row.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  'Welcome back, ${widget.userName}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: appBarFg,
-                  ),
+      children: [
+        // PRD v2 §11: an avatar next to the greeting, not floating
+        // elsewhere on the page, so it reads as "whose home screen this
+        // is" rather than a decorative icon. Greeting leads on the left,
+        // avatar pinned to the far right edge (trailing, not centered
+        // against the text) — `spaceBetween` with a `Flexible` (not
+        // `Expanded`) text so the avatar always lands flush against the
+        // trailing edge regardless of how short the greeting is, while a
+        // long name still truncates instead of pushing the avatar off
+        // the visible row.
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                'Welcome back, ${widget.userName}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: appBarFg,
                 ),
               ),
-              const SizedBox(width: 12),
-              // PRD v2 §11's natural follow-up: the avatar is the user's
-              // own identity marker, and Settings is where it (and the
-              // rest of the profile) is edited — tapping it jumps there
-              // directly instead of requiring the Settings tab first.
-              InkWell(
-                // Matches AvatarTile's own corner rounding at radius: 22
-                // (radius * 0.6) — a circular ripple would visibly mismatch
-                // the tile's now-square shape.
-                customBorder: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                onTap: widget.onAvatarTap,
-                child: AvatarTile(avatar: widget.avatar, radius: 22),
+            ),
+            const SizedBox(width: 12),
+            // PRD v2 §11's natural follow-up: the avatar is the user's
+            // own identity marker, and Settings is where it (and the
+            // rest of the profile) is edited — tapping it jumps there
+            // directly instead of requiring the Settings tab first.
+            InkWell(
+              // Matches AvatarTile's own corner rounding at radius: 22
+              // (radius * 0.6) — a circular ripple would visibly mismatch
+              // the tile's now-square shape.
+              customBorder: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(13),
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const _SectionLabel('Today'),
-          const SizedBox(height: 8),
-          _TodayCard(
-            loading: _loadingToday,
-            dailyTestSet: _todaysDailyTest,
-            onStart: () => _openDailyTest(context),
-            onViewResult: (set) => _openDailyTestResult(context, set),
-          ),
-          const SizedBox(height: 24),
-          _PracticeModeCard(
-            icon: Icons.school_rounded,
-            title: 'Topic Practice',
-            description: _hasFullAccess
-                ? 'Deep grammar practice with plain-language feedback.'
-                : 'Try it free for ${SubscriptionService.trialLengthDays} '
-                    'days, then continue with a subscription.',
-            locked: !_hasFullAccess,
-            onTap: () => _openTopicPractice(context),
-          ),
-          // Deliberately no empty state here (PRD v2 §13.5 item 4) — the
-          // Review tab already covers "no weak spots yet", and repeating
-          // that message on Home too would just be noise on a screen
-          // that's supposed to lead with what's actually there.
-          if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            const _SectionLabel('Your weak spots'),
-            const SizedBox(height: 8),
-            for (final spot in _weakSpots) ...[
-              WeakSpotCard(
-                topic: kTopics.firstWhere(
-                  (t) => t.id.name == spot.topicId,
-                  orElse: () => kTopics.first,
-                ),
-                spot: spot,
-                locked: !_hasFullAccess,
-                onTap: () => _openWeakSpot(context, spot),
-              ),
-              if (spot != _weakSpots.last) const SizedBox(height: 10),
-            ],
+              onTap: widget.onAvatarTap,
+              child: AvatarTile(avatar: widget.avatar, radius: 22),
+            ),
           ],
-          // Quiet by design (PRD v2 §13.5 item 5) — a plain row, not the
-          // solid-fill banner this used to be, and only for a free user:
-          // someone already on a trial or subscribed doesn't need the
-          // upsell repeated at them. Must never outweigh the Today card
-          // above, which is why this has no Card/fill of its own.
-          if (!_hasFullAccess) ...[
-            const SizedBox(height: 8),
-            _PremiumRow(onTap: () => _openPremium(context)),
+        ),
+        const SizedBox(height: 24),
+        const _SectionLabel('Today'),
+        const SizedBox(height: 8),
+        _TodayCard(
+          loading: _loadingToday,
+          dailyTestSet: _todaysDailyTest,
+          onStart: () => _openDailyTest(context),
+          onViewResult: (set) => _openDailyTestResult(context, set),
+        ),
+        const SizedBox(height: 24),
+        _PracticeModeCard(
+          icon: Icons.school_rounded,
+          title: 'Topic Practice',
+          description: _hasFullAccess
+              ? 'Deep grammar practice with plain-language feedback.'
+              : 'Try it free for ${SubscriptionService.trialLengthDays} '
+                  'days, then continue with a subscription.',
+          locked: !_hasFullAccess,
+          onTap: () => _openTopicPractice(context),
+        ),
+        // Deliberately no empty state here (PRD v2 §13.5 item 4) — the
+        // Review tab already covers "no weak spots yet", and repeating
+        // that message on Home too would just be noise on a screen
+        // that's supposed to lead with what's actually there.
+        if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const _SectionLabel('Your weak spots'),
+          const SizedBox(height: 8),
+          for (final spot in _weakSpots) ...[
+            WeakSpotCard(
+              topic: kTopics.firstWhere(
+                (t) => t.id.name == spot.topicId,
+                orElse: () => kTopics.first,
+              ),
+              spot: spot,
+              locked: !_hasFullAccess,
+              onTap: () => _openWeakSpot(context, spot),
+            ),
+            if (spot != _weakSpots.last) const SizedBox(height: 10),
           ],
         ],
-      ),
+        // Quiet by design (PRD v2 §13.5 item 5) — a plain row, not the
+        // solid-fill banner this used to be, and only for a free user:
+        // someone already on a trial or subscribed doesn't need the
+        // upsell repeated at them. Must never outweigh the Today card
+        // above, which is why this has no Card/fill of its own.
+        if (!_hasFullAccess) ...[
+          const SizedBox(height: 8),
+          _PremiumRow(onTap: () => _openPremium(context)),
+        ],
+      ],
     );
   }
 }
@@ -474,8 +466,7 @@ class _TodayCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style:
-                          theme.textTheme.bodySmall?.copyWith(color: muted),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
                   ],
                 ),
@@ -519,8 +510,9 @@ class _PracticeModeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final muted = colorScheme.onSurfaceVariant;
-    final iconBg =
-        locked ? colorScheme.surfaceContainerHighest : colorScheme.primaryContainer;
+    final iconBg = locked
+        ? colorScheme.surfaceContainerHighest
+        : colorScheme.primaryContainer;
     final iconFg = locked ? muted : colorScheme.onPrimaryContainer;
 
     return Card(
@@ -562,8 +554,7 @@ class _PracticeModeCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style:
-                          theme.textTheme.bodySmall?.copyWith(color: muted),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
                   ],
                 ),
@@ -578,7 +569,6 @@ class _PracticeModeCard extends StatelessWidget {
   }
 }
 
-
 /// A quiet row (PRD v2 §13.5 item 5) — deliberately not a Card, not
 /// filled, no elevation, so it can never outweigh the Today card or Topic
 /// Practice above it. Replaces what used to be a solid deep-blue banner;
@@ -586,16 +576,15 @@ class _PracticeModeCard extends StatelessWidget {
 /// the screen; it doesn't once Home actually leads with real data. Only
 /// shown to a user without full access — see the build() call site.
 ///
-/// Text color is deliberately not `colorScheme.onSurfaceVariant` — this
-/// row sits directly on the scaffold, which in light mode is the vivid
-/// orange `primary` (see theme.dart), and `onSurfaceVariant` is a muted
-/// gray meant for a neutral surface. On orange it measures ~3.6:1 (fails
-/// AA for body text) and reads as washed-out — the exact contrast defect
-/// docs/design-audit.md flagged. `theme.appBarTheme.foregroundColor` is
-/// the color the app bar already uses for content on this same
-/// background (`onPrimary` in light mode, contrast-checked in theme.dart;
-/// `onSurface` in dark mode, where the scaffold isn't orange), so reusing
-/// it keeps this row legible without inventing a third color role.
+/// Text color reuses `theme.appBarTheme.foregroundColor` (the band's own
+/// foreground, docs/design-audit.md §5 D1) — a leftover from when this row
+/// sat directly on the vivid-orange scaffold and `onSurfaceVariant`
+/// measured ~3.6:1 there (failing AA). Since Home migrated onto
+/// `BrandScaffold`, this row sits on the neutral body instead, where
+/// `onSurfaceVariant` would work fine again — but the band foreground is
+/// still comfortably legible here too (very dark on near-white in light
+/// mode), so it was left as-is rather than switched for its own sake;
+/// revisit if a future batch has a real reason to.
 class _PremiumRow extends StatelessWidget {
   final VoidCallback onTap;
 
