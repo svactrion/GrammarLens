@@ -8,6 +8,7 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
+import '../widgets/brand_scaffold.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import 'results_screen.dart';
@@ -182,7 +183,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) _confirmExit();
       },
-      child: Scaffold(
+      child: BrandScaffold(
         appBar: QuestionAppBar(
           title: widget.topic.title,
           currentIndex: _currentIndex,
@@ -213,50 +214,48 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     Expanded(
                       child: SingleChildScrollView(
                         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _itemLabel(item.type),
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color: colorScheme.secondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if (item.context != null &&
-                                    item.context!.trim().isNotEmpty) ...[
-                                  const SizedBox(height: 14),
-                                  Text(item.context!,
-                                      style: theme.textTheme.bodyLarge),
-                                  const SizedBox(height: 16),
-                                  Divider(
-                                      height: 1,
-                                      color: colorScheme.outlineVariant),
-                                  const SizedBox(height: 16),
-                                ] else
-                                  const SizedBox(height: 14),
-                                Text(
-                                  item.instruction,
-                                  style: theme.textTheme.bodyLarge
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                if (item.hint != null) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    item.hint!,
-                                    style: theme.textTheme.bodySmall
-                                        ?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ],
-                              ],
+                        // No Card here (docs/design-audit.md §5 D1's kart
+                        // kuralı) — this text existed on a card only to stay
+                        // legible on the old full-orange scaffold; the
+                        // neutral BrandScaffold body it sits on now already
+                        // does that job.
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _itemLabel(item.type),
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
+                            if (item.context != null &&
+                                item.context!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 14),
+                              Text(item.context!,
+                                  style: theme.textTheme.bodyLarge),
+                              const SizedBox(height: 16),
+                              Divider(
+                                  height: 1, color: colorScheme.outlineVariant),
+                              const SizedBox(height: 16),
+                            ] else
+                              const SizedBox(height: 14),
+                            Text(
+                              item.instruction,
+                              style: theme.textTheme.bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            if (item.hint != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                item.hint!,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ),

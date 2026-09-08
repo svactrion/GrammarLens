@@ -21,7 +21,8 @@ import 'floating_nav_shell.dart';
 class BrandScaffold extends StatelessWidget {
   const BrandScaffold({
     super.key,
-    required this.title,
+    this.title,
+    this.appBar,
     this.leading,
     this.actions,
     this.bandBottom,
@@ -30,15 +31,31 @@ class BrandScaffold extends StatelessWidget {
     this.controller,
     this.children,
     this.body,
-  }) : assert(
+  })  : assert(
           (children == null) != (body == null),
           'Provide exactly one of children or body',
+        ),
+        assert(
+          (title == null) != (appBar == null),
+          'Provide exactly one of title or appBar',
         );
 
   /// The band's title widget — a plain [Text] on most screens (often via
   /// `PageTitle`), but left as a [Widget] since Home's brand wordmark
-  /// needs its own explicit style.
-  final Widget title;
+  /// needs its own explicit style. Mutually exclusive with [appBar],
+  /// enforced the same way as [children]/[body] — see that field's doc
+  /// comment for why this is an assertion, not just a convention.
+  final Widget? title;
+
+  /// A fully custom app bar, replacing the one this widget would otherwise
+  /// build from [title]/[leading]/[actions]/[bandBottom] (all ignored when
+  /// this is set) — the question screens' `QuestionAppBar` is the reason
+  /// this exists: its own Back/Close/progress-row layout has nothing in
+  /// common with a plain title bar. The custom app bar owns its own
+  /// `scrolledUnderElevation`/colors; this widget still supplies the
+  /// neutral body and card-theme override around it either way.
+  final PreferredSizeWidget? appBar;
+
   final Widget? leading;
   final List<Widget>? actions;
 
@@ -64,14 +81,18 @@ class BrandScaffold extends StatelessWidget {
   final ScrollController? controller;
 
   /// The screen's own content, laid out in a [ListView] this widget owns —
-  /// mutually exclusive with [body]. Use this for ordinary scrollable
-  /// content (the common case).
+  /// mutually exclusive with [body]: passing both, or neither, fails an
+  /// assertion at construction rather than silently picking one or
+  /// rendering nothing, since a caller getting this wrong should find out
+  /// immediately, not from a screen that quietly looks incomplete. Use
+  /// this for ordinary scrollable content (the common case).
   final List<Widget>? children;
 
   /// An escape hatch for content the owned [ListView] can't lay out
   /// correctly — a single loading/error/empty state that needs to be
   /// centered in the full available height, not stacked top-down as one
-  /// item in a scroll view. Mutually exclusive with [children]; when set,
+  /// item in a scroll view. Mutually exclusive with [children] — see its
+  /// doc comment for the enforced-not-just-documented reasoning; when set,
   /// [controller] and [horizontalPadding] don't apply (the caller owns
   /// this content's layout entirely). Band, neutral body background, and
   /// the local card-theme override still apply either way.
@@ -94,25 +115,27 @@ class BrandScaffold extends StatelessWidget {
       // the theme rather than repeating that expression here, since
       // they're already identical by construction (see theme.dart).
       backgroundColor: colorScheme.surfaceContainerLow,
-      appBar: AppBar(
-        title: title,
-        leading: leading,
-        actions: actions,
-        bottom: bandBottom,
-        // Decided once here, not per screen (docs/design-audit.md: Daily
-        // Test results showed "an opaque orange app bar with a hard edge
-        // appears on scroll but is absent at scroll-top" — content
-        // scrolling under the band must look the same at rest and mid-
-        // scroll, not gain a new edge). The band already has a permanent
-        // separation from the body via bandBackground/bandForeground alone
-        // (a hard, un-blurred color cut, not a gradient — visible at every
-        // scroll position because it's the app bar's own bottom edge, not
-        // scroll-triggered) — the default Material scrolled-under shadow
-        // would only add a second, redundant edge signal on top of that,
-        // so it's turned off explicitly rather than left to the inherited
-        // default.
-        scrolledUnderElevation: 0,
-      ),
+      appBar: appBar ??
+          AppBar(
+            title: title,
+            leading: leading,
+            actions: actions,
+            bottom: bandBottom,
+            // Decided once here, not per screen (docs/design-audit.md: Daily
+            // Test results showed "an opaque orange app bar with a hard edge
+            // appears on scroll but is absent at scroll-top" — content
+            // scrolling under the band must look the same at rest and mid-
+            // scroll, not gain a new edge). The band already has a permanent
+            // separation from the body via bandBackground/bandForeground
+            // alone (a hard, un-blurred color cut, not a gradient — visible
+            // at every scroll position because it's the app bar's own
+            // bottom edge, not scroll-triggered) — the default Material
+            // scrolled-under shadow would only add a second, redundant edge
+            // signal on top of that, so it's turned off explicitly rather
+            // than left to the inherited default. A custom [appBar] (see
+            // its own doc comment) makes this same call for itself.
+            scrolledUnderElevation: 0,
+          ),
       body: Theme(
         // A card sitting directly on this body would be the same color as
         // the body itself (both `surfaceContainerLow`) and separate only
