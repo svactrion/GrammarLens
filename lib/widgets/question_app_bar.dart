@@ -85,7 +85,7 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onClose,
   });
 
-  static const double _bottomHeight = 40;
+  static const double _bottomHeight = 28;
 
   @override
   Size get preferredSize =>
@@ -94,10 +94,8 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    final appBarFg =
+        theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
 
     return AppBar(
       // Same call BrandScaffold's own built-in app bar makes, for the same
@@ -133,42 +131,22 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ],
+      // The progress bar this used to share a row with is gone
+      // (docs/design-audit.md, Batch 0 item 7): it and this counter told
+      // the same story, and for the small, fixed counts this app actually
+      // uses (3/5/10 questions), an exact "N / total" is more informative
+      // than an approximate fill anyway. Losing that row is also what
+      // shortens the header — this widget's own audit-flagged complaint.
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(_bottomHeight),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  // A plain `LinearProgressIndicator` jumps straight to a
-                  // new `value` on rebuild; wrapping it lets the fill
-                  // animate smoothly to the new fraction each time the
-                  // question advances.
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(
-                      begin: 0,
-                      end: (currentIndex + 1) / total,
-                    ),
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    builder: (context, value, _) => LinearProgressIndicator(
-                      value: value,
-                      minHeight: 8,
-                      backgroundColor: colorScheme.surfaceContainerLow,
-                      color: colorScheme.secondary,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '${currentIndex + 1} / $total',
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
-              ),
-            ],
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Center(
+            child: Text(
+              '${currentIndex + 1} / $total',
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
+            ),
           ),
         ),
       ),

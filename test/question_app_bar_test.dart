@@ -97,14 +97,13 @@ void main() {
     expect(backSize, closeSize);
   });
 
-  testWidgets('progress bar and counter share one row, counter on the right',
-      (tester) async {
+  testWidgets(
+      'shows only the N / total counter — no progress bar duplicating it '
+      '(docs/design-audit.md, Batch 0 item 7)', (tester) async {
     await pump(tester, showBack: true);
 
-    final progressRect = tester.getRect(find.byType(LinearProgressIndicator));
-    final counterRect = tester.getRect(find.text('2 / 5'));
-
-    expect(counterRect.left, greaterThan(progressRect.right));
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('2 / 5'), findsOneWidget);
   });
 
   testWidgets('tapping Back and Close fire their own callbacks',

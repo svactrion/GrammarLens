@@ -125,7 +125,16 @@ class _TopicCard extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          // Top-aligned, not the Row default of centered (docs/design-audit.md,
+          // Batch 0 item 9): this card's text column runs three lines
+          // (title/description/stats), so centering the icon against the
+          // whole block reads as misaligned — it visibly sits low relative
+          // to the title it belongs to. Top-aligning it against the title
+          // is the fix; the trailing chevron is re-centered within its own
+          // icon-height band below so it doesn't inherit the same
+          // low-against-three-lines problem.
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
                 radius: 22,
@@ -152,9 +161,14 @@ class _TopicCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: theme.colorScheme.onSurfaceVariant,
+              SizedBox(
+                height: 44,
+                child: Center(
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
             ],
           ),
