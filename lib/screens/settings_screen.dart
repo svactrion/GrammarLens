@@ -265,119 +265,94 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 32),
           const _SectionLabel('Profile'),
           const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Avatar', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  // Local stock avatars only (PRD v2 §11) — no upload,
-                  // just a small fixed set to pick from. Tapping the
-                  // already-selected one clears it back to the generic
-                  // placeholder rather than being a no-op, so there's a
-                  // way out without hunting for a separate "remove"
-                  // control.
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      for (final avatar in Avatar.values)
-                        GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedAvatar =
-                                _selectedAvatar == avatar ? null : avatar;
-                          }),
-                          child: AvatarTile(
-                            avatar: avatar,
-                            selected: _selectedAvatar == avatar,
-                          ),
-                        ),
-                    ],
+          // No Card wrap (docs/design-audit.md, Batch 0 item 8): this
+          // isn't a single tappable target the way Home's cards are, so
+          // giving it the same card treatment implied a tap that does
+          // nothing. Matches the flush layout Appearance above already
+          // uses — the section label plus this file's existing 32px
+          // section gap carries the grouping instead of a container.
+          Text('Avatar', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          // Local stock avatars only (PRD v2 §11) — no upload, just a
+          // small fixed set to pick from. Tapping the already-selected
+          // one clears it back to the generic placeholder rather than
+          // being a no-op, so there's a way out without hunting for a
+          // separate "remove" control.
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final avatar in Avatar.values)
+                GestureDetector(
+                  onTap: () => setState(() {
+                    _selectedAvatar = _selectedAvatar == avatar ? null : avatar;
+                  }),
+                  child: AvatarTile(
+                    avatar: avatar,
+                    selected: _selectedAvatar == avatar,
                   ),
-                  const SizedBox(height: 20),
-                  Text('Name', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(hintText: 'Your name'),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Age (optional)',
-                    style: theme.textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _ageController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(hintText: 'Age'),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Occupation (optional)',
-                    style: theme.textTheme.labelLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _occupationController,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(hintText: 'Occupation'),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _canSaveProfile && !_savingProfile
-                          ? _saveProfile
-                          : null,
-                      child: Text(_savingProfile ? 'Saving…' : 'Save'),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text('Name', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _nameController,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(hintText: 'Your name'),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 16),
+          Text('Age (optional)', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _ageController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(hintText: 'Age'),
+          ),
+          const SizedBox(height: 16),
+          Text('Occupation (optional)', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _occupationController,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(hintText: 'Occupation'),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed:
+                  _canSaveProfile && !_savingProfile ? _saveProfile : null,
+              child: Text(_savingProfile ? 'Saving…' : 'Save'),
             ),
           ),
           const SizedBox(height: 32),
           const _SectionLabel('Data'),
           const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Reset progress',
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Clears practice history and weak spots. Your name, '
-                    'goal, and theme stay as they are.',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colorScheme.error,
-                        side: BorderSide(color: colorScheme.error),
-                      ),
-                      onPressed: _resetting ? null : _confirmResetData,
-                      child: Text(
-                        _resetting ? 'Resetting…' : 'Reset progress data',
-                      ),
-                    ),
-                  ),
-                ],
+          Text(
+            'Reset progress',
+            style:
+                theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Clears practice history and weak spots. Your name, goal, and '
+            'theme stay as they are.',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colorScheme.error,
+                side: BorderSide(color: colorScheme.error),
               ),
+              onPressed: _resetting ? null : _confirmResetData,
+              child: Text(_resetting ? 'Resetting…' : 'Reset progress data'),
             ),
           ),
           if (kDebugMode) ...[

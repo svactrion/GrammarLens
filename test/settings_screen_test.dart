@@ -336,7 +336,11 @@ void main() {
   group('First-launch flow reset (debug-only)', () {
     testWidgets('shows the reset action', (tester) async {
       await pumpSettings(tester, storageService: _FakeStorageService());
-      await tester.drag(find.byType(ListView), const Offset(0, -1000));
+      await tester.dragUntilVisible(
+        find.text('Reset first-launch state'),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('First-launch flow'), findsOneWidget);
@@ -354,7 +358,11 @@ void main() {
           storageService: storage,
           onResetOnboarding: () => resetCalled = true,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -1000));
+        await tester.dragUntilVisible(
+          find.text('Reset first-launch state'),
+          find.byType(ListView),
+          const Offset(0, -200),
+        );
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Reset first-launch state'));
@@ -370,7 +378,11 @@ void main() {
       'fast dev action',
       (tester) async {
         await pumpSettings(tester, storageService: _FakeStorageService());
-        await tester.drag(find.byType(ListView), const Offset(0, -1000));
+        await tester.dragUntilVisible(
+          find.text('Reset first-launch state'),
+          find.byType(ListView),
+          const Offset(0, -200),
+        );
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Reset first-launch state'));
@@ -392,7 +404,11 @@ void main() {
           storageService: storage,
           onResetOnboarding: () => resetCalled = true,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -1000));
+        await tester.dragUntilVisible(
+          find.text('Reset first-launch state'),
+          find.byType(ListView),
+          const Offset(0, -200),
+        );
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Reset first-launch state'));
