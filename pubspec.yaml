@@ -25,6 +25,21 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
   sqflite_common_ffi: ^2.4.2
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
+
+# Generates ios/Runner/Assets.xcassets/AppIcon.appiconset from one master
+# image (`dart run flutter_launcher_icons`) instead of hand-maintaining
+# every explicit size — the previous Contents.json referenced Flutter's
+# default placeholder filenames, orphaned once a real icon replaced them.
+# iOS only: this app has no Android release track, so android/'s icon is
+# untouched. `remove_alpha_ios: true` matches the source image, which
+# already has no alpha channel and no baked-in corner rounding (both are
+# App Store requirements — Apple applies its own mask).
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  ios: true
+  android: false
+  remove_alpha_ios: true
