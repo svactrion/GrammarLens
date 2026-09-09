@@ -14,6 +14,7 @@ import '../utils/answer_matching.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/locked_premium_pill.dart';
 import '../widgets/weak_spot_card.dart';
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
@@ -534,22 +535,12 @@ class _PracticeModeCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: locked ? muted : null,
-                            ),
-                          ),
-                        ),
-                        if (locked) ...[
-                          const SizedBox(width: 6),
-                          Icon(Icons.lock_rounded, size: 16, color: muted),
-                        ],
-                      ],
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: locked ? muted : null,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -560,7 +551,9 @@ class _PracticeModeCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: muted),
+              locked
+                  ? const LockedPremiumPill()
+                  : Icon(Icons.chevron_right_rounded, color: muted),
             ],
           ),
         ),

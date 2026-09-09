@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/error_entry.dart';
 import '../models/topic.dart';
 import '../utils/text_format.dart';
+import 'locked_premium_pill.dart';
 
 /// A weak spot's card, shared by Home's "Your weak spots" section and
 /// Review's list — previously two separate, drifted copies of the same
@@ -74,22 +75,11 @@ class WeakSpotCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: theme.textTheme.bodyLarge,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (locked) ...[
-                          const SizedBox(width: 6),
-                          Icon(Icons.lock_rounded, size: 16, color: muted),
-                        ],
-                      ],
+                    Text(
+                      title,
+                      style: theme.textTheme.bodyLarge,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     if (topicSubtitle != null) ...[
                       const SizedBox(height: 4),
@@ -129,7 +119,9 @@ class WeakSpotCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: muted),
+              locked
+                  ? const LockedPremiumPill()
+                  : Icon(Icons.chevron_right_rounded, color: muted),
             ],
           ),
         ),

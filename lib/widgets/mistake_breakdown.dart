@@ -34,6 +34,17 @@ class MistakeBreakdown extends StatelessWidget {
         correctedAnswer!.trim().toLowerCase() !=
             (userAnswer ?? '').trim().toLowerCase();
     final hasExplanation = (explanation ?? '').trim().isNotEmpty;
+    // Skippedness is never passed in — it's the same fact `hasAnswer`
+    // already computes (an empty answer), derived once here rather than as
+    // a caller-supplied bool. Every caller that has a real "skipped" state
+    // (ScoringResult/DailyTest results) sets it exactly by leaving
+    // userAnswer empty, so this can't drift out of sync with a caller the
+    // way a separate parameter could if one call site forgot to pass it
+    // (docs/design-audit.md, Batch 0 item 1's correction). Weak-spot
+    // detail's mistakes are always real wrong answers (never skipped ones
+    // are recorded there), so `isSkipped` is always false for that caller
+    // and its box is unaffected.
+    final isSkipped = hasCorrection && !hasAnswer;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,13 +70,23 @@ class MistakeBreakdown extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         if (hasCorrection) ...[
+          // A skipped question was never attempted, so the correct answer
+          // here isn't a correction of anything — the green "CORRECTED"
+          // treatment (this app's success color) doesn't apply, and gets
+          // the same neutral box "YOU WROTE" already uses above instead.
           _LabeledBox(
-            label: 'CORRECTED',
+            label: isSkipped ? 'CORRECT ANSWER' : 'CORRECTED',
             text: correctedAnswer!,
-            fillColor: semantic.correctBackground,
-            borderColor: semantic.onCorrectBackground,
-            labelColor: semantic.onCorrectBackground,
-            textColor: semantic.onCorrectBackground,
+            fillColor:
+                isSkipped ? colorScheme.surface : semantic.correctBackground,
+            borderColor: isSkipped
+                ? colorScheme.outline
+                : semantic.onCorrectBackground,
+            labelColor: isSkipped
+                ? colorScheme.onSurfaceVariant
+                : semantic.onCorrectBackground,
+            textColor:
+                isSkipped ? colorScheme.onSurface : semantic.onCorrectBackground,
           ),
           const SizedBox(height: 16),
         ],

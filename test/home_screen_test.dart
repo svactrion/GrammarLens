@@ -20,6 +20,21 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
+/// The bottom "Premium" upsell row's own label — disambiguated from
+/// `LockedPremiumPill`'s identically-worded "Premium" text (shown on a
+/// locked Topic Practice card, docs/design-audit.md Batch 0 item 3) by
+/// anchoring on the row's own description line, which only ever sits next
+/// to the row's label, never the pill's.
+Finder _premiumRowLabel() => find.descendant(
+      of: find
+          .ancestor(
+            of: find.text('Unlock targeted practice on your weak spots'),
+            matching: find.byType(Column),
+          )
+          .first,
+      matching: find.text('Premium'),
+    );
+
 /// Records `modeSelected` calls instead of the real (best-effort, silently
 /// swallowed) Firebase call, so a test can assert which Home entry point a
 /// tap actually reached — needed for Daily Test specifically, since unlike
@@ -288,7 +303,7 @@ void main() {
 
     final todayTop = tester.getTopLeft(find.text('Daily Test')).dy;
     final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
-    final premiumTop = tester.getTopLeft(find.text('Premium')).dy;
+    final premiumTop = tester.getTopLeft(_premiumRowLabel()).dy;
 
     expect(topicTop, greaterThan(todayTop));
     expect(premiumTop, greaterThan(topicTop));
@@ -404,7 +419,7 @@ void main() {
     testWidgets('shown for a free user, opens the Premium screen',
         (tester) async {
       await pumpHome(tester);
-      await tester.tap(find.text('Premium'));
+      await tester.tap(_premiumRowLabel());
       await tester.pumpAndSettle();
       expect(find.byType(PremiumScreen), findsOneWidget);
     });
@@ -415,7 +430,10 @@ void main() {
         tester,
         subscriptionService: _FakeSubscriptionService(hasAccess: true),
       );
-      expect(find.text('Premium'), findsNothing);
+      expect(
+        find.text('Unlock targeted practice on your weak spots'),
+        findsNothing,
+      );
     });
 
     testWidgets('states what it offers, not just the word "Premium"',
@@ -433,11 +451,11 @@ void main() {
         'directly on the orange scaffold in light mode', (tester) async {
       await pumpHome(tester);
 
-      final theme = Theme.of(tester.element(find.text('Premium')));
+      final theme = Theme.of(tester.element(_premiumRowLabel()));
       final expectedFg =
           theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
 
-      final style = tester.widget<Text>(find.text('Premium')).style;
+      final style = tester.widget<Text>(_premiumRowLabel()).style;
       expect(style?.color, expectedFg);
       expect(style?.color, isNot(theme.colorScheme.onSurfaceVariant));
     });
