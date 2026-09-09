@@ -128,6 +128,38 @@ const Color _darkOnSkippedBg = Color(0xFFC9C5D0);
 const Color brandMarkGlass = Color(0xFFFFF6EC);
 const Color brandMarkGlint = Color(0xFFFFCDA3);
 
+/// Avatar tile background colors (see widgets/avatar_tile.dart) — named,
+/// theme-independent decorative identity colors, the same kind of exception
+/// [brandMarkGlass]/[brandMarkGlint] above already are: a chat app's
+/// per-user color needs to stay recognizable as "this person" regardless of
+/// light/dark mode, so these deliberately don't come from [ColorScheme] and
+/// don't change with it. They also can't be *derived* from a semantic role
+/// (docs/design-audit.md, Batch 0 item 2) — a green avatar would read as
+/// "correct", a red one as "a mistake", the moment it sat next to this
+/// app's actual correct/incorrect colors, which a decorative identity color
+/// must never do.
+///
+/// Redesigned as a set (not picked independently per avatar, which is how
+/// the previous palette ended up with two identical-hue pairs — fox/lion
+/// both orange, panda/koala both blue-grey, leaving only 6 of 8 actually
+/// distinguishable by color alone): eight hues spaced roughly evenly around
+/// the wheel, one fixed saturation/lightness (60%/56%) so none reads as
+/// more prominent than another, chosen to also sit clear of this app's two
+/// meaningful hues — [SemanticColors]' correct-green (~123°) and
+/// error/incorrect-red (~0°) — so no avatar is ever mistakable for a
+/// success or failure cue. Each avatar still carries its own animal emoji
+/// glyph on top, which is what actually carries identity; the color only
+/// needs to keep tiles from blending into each other, not be
+/// colorblind-safe on its own.
+const Color avatarFoxBackground = Color(0xFFD29A4B);
+const Color avatarCatBackground = Color(0xFFBCD24B);
+const Color avatarOwlBackground = Color(0xFF6DD24B);
+const Color avatarPandaBackground = Color(0xFF4BD284);
+const Color avatarKoalaBackground = Color(0xFF4BC7D2);
+const Color avatarPenguinBackground = Color(0xFF4B4BD2);
+const Color avatarLionBackground = Color(0xFFA54BD2);
+const Color avatarTurtleBackground = Color(0xFFD24BBC);
+
 /// D1's header-band colors (docs/design-audit.md §5), read as an
 /// extension on [ColorScheme] rather than a new field: the band's own
 /// color is not a single role but this `isDark ? X : Y` expression, and
