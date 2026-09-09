@@ -30,12 +30,32 @@ meanings.
 **S3 — The same component carries two color languages.** Icon circles are
 orange on Home and the topic list, blue on the Premium screen.
 
+**Status (2026-09-10): closed, no code change needed.** Premium's two blue
+icon circles were already gone by the time this was checked — they went away
+as a side effect of the benefit-list-to-comparison-table change (D3-adjacent
+polish work), confirmed by grepping for `primaryContainer`/`onPrimaryContainer`
+usage across every icon-circle call site: all of them, everywhere in the app,
+now read from that one pair. Nothing left carrying the old blue.
+
 **S4 — The bottom nav bar overlaps scrollable content.** On Settings it covers
 the profile save button and the "Data" heading. Scroll views have no bottom
 padding for the nav's height. This is a usability defect, not a preference.
 
 **S5 — Two back-button treatments.** A plain chevron on Topic Practice /
 Premium / weak-spot detail; a chevron inside a filled circle on Results.
+
+**Status (2026-09-10): closed.** The specific pairing above is stale — D1's
+migration onto `BrandScaffold` already put Results on the same plain chevron
+as everything else, leaving the real split as a *bordered* circle
+(`HeaderCircleIconButton`) on the two question screens (Practice/Daily Test)
+versus the plain chevron everywhere else. Two directions (spread the circle
+everywhere vs. drop it everywhere) were mocked up on-device, both themes, on
+a question screen and a normal screen, and reviewed before picking: plain
+chevron everywhere, chosen over the circle because it matches the platform's
+own back-gesture convention and reads fine on the orange band too. The
+question screens' circle button is gone (`HeaderCircleIconButton` renamed to
+`HeaderIconButton`, no border); every screen in the app now uses one
+treatment.
 
 **S6 — Vertical rhythm varies per screen.** Title-to-content and
 card-to-card spacing differ across screens; there is no spacing scale.
@@ -63,6 +83,17 @@ close to invisible — the worst contrast failure in the app, and it is the stat
 a first-time user sees before typing anything. Large dead gap between the
 privacy line and the button.
 
+**Status (2026-09-10): closed, no further code change.** D1 already fixed the
+actual defect described here — label and background sharing one orange hue,
+reading as blank — by moving this button onto `BrandScaffold`'s neutral body.
+Checked again on-device in both themes for this closure: ~2.24:1 (light) /
+~2.78:1 (dark), pixel-measured. Both are under WCAG AA's 4.5:1 body-text
+threshold, but WCAG 1.4.3 exempts disabled controls from that requirement and
+this is Material 3's own disabled-button convention, not a residual bug. The
+label reads; nothing here is left "open" — whether a disabled control should
+be held to the stricter standard anyway is a taste question, not a defect,
+and isn't being pursued further.
+
 **Daily Test — question.** Two defects:
 - *"Skip" is the large filled primary button.* The most visually dominant
   control on the screen invites abandoning the question. Observed in the audit
@@ -73,11 +104,29 @@ privacy line and the button.
   void, with the answer field and button pinned at the bottom. The header also
   stacks three progress signals: "1/5", the screen title, and a progress bar.
 
+**Status (2026-09-10): the header-stacking half is closed.** The progress bar
+was telling the same story as the "N / total" counter next to it — removed,
+counter stays, since an exact count is more informative than an approximate
+fill for the small fixed session lengths this app uses (3/5/10). This is also
+what shortens the header. Skip-as-primary-button was already closed earlier
+by D3. The 40%-card/orange-void layout itself is untouched — out of scope for
+this round.
+
 **Daily Test — results.** Skipped questions show the right answer in a green
 "CORRECTED" box. Green carries success semantics on a question that was never
 attempted; skipped should read as neutral and the label should not say
 "corrected". Also, an opaque orange app bar with a hard edge appears on scroll
 but is absent at scroll-top.
+
+**Status (2026-09-10): the "CORRECTED" half is closed.** `MistakeBreakdown`
+(shared by this screen and Topic Practice's own results screen) now derives
+skippedness from the answer already being empty — the same fact its own
+`hasAnswer` check computes — rather than trusting each caller to pass a
+separate flag; a skipped item's correction box uses the neutral "YOU WROTE"
+treatment and reads "CORRECT ANSWER", not "CORRECTED". Regression-tested
+directly (`test/mistake_breakdown_test.dart`). The scroll-edge app-bar
+finding is unrelated and untouched — see D1's own `scrolledUnderElevation: 0`
+decision, already in effect app-wide.
 
 **Paywall.**
 - The app bar reads "Topic Practice" on what is the paywall.
@@ -106,8 +155,27 @@ it. The avatar tile shows a generic person glyph although eight avatars exist.
 In the locked state, the lock glyph is small; the real signal is carried by the
 copy alone.
 
+**Status (2026-09-10): the locked-state half is closed.** The 16px lock glyph
+next to the title is gone; a `LockedPremiumPill` (lock icon + "Premium",
+neutral color, its own trailing chevron) now sits in the trailing slot both
+the Topic Practice card and a locked weak-spot row already had a plain
+chevron in — same fix, same slot, both card types. Checked what tapping a
+locked card does today before making this change: the whole card was already
+one tap target opening `PremiumScreen`, so the new pill keeps a forward-going
+chevron built into it rather than silently dropping that signal. The rest of
+this paragraph (Premium's old full-width bar, the 3-item list, the generic
+avatar glyph before one is picked) describes a Home layout that no longer
+exists — superseded by the "today" screen rebuild, `docs/roadmap.md`'s
+v2.2 B-structure entry.
+
 **Topic list.** The most internally consistent screen. Minor: on three-line
 cards the vertically centered icon reads as misaligned.
+
+**Status (2026-09-10): closed.** The card's `Row` top-aligns the icon against
+the title now instead of centering it against the full three-line block
+(title/description/stats); the trailing chevron is re-centered within its
+own icon-height band so it doesn't inherit the same low-against-three-lines
+problem.
 
 **Session-length dialog.** The scrim turns the orange background muddy brown;
 a plain black scrim over a saturated ground reads as dirt.
@@ -132,6 +200,33 @@ topic name is restated three times (title, pill subtitle, card caption).
 tiles use background colors belonging to no palette. The theme selector uses
 the violet-blue of S2. The Developer section (debug-only entitlement override
 and first-launch reset) is correct and clearly labeled.
+
+**Status (2026-09-10): the avatar-palette half is closed; a further
+consistency defect found and fixed alongside it.** S4 and the theme selector
+were already closed separately (D1, D2). The avatar palette is now a named,
+documented exception (see below) rather than unnamed hex — see item 2's own
+note for why "no palette" is correct by design here, not a gap. Also fixed:
+Profile and Data were wrapped in `Card`, reading identically to Home's
+tappable cards while being a container for several independent controls, not
+a single tap target — dropped, matching Appearance's already-cardless layout.
+This was flagged but deliberately left open in `docs/build-log.md`'s D1
+Batch 4 entry ("a third, not-yet-named justification... revisit once every
+screen has migrated"); revisited now.
+
+**Named exception: the avatar background palette
+(`lib/theme.dart`'s `avatarFoxBackground` etc.).** Eight fixed,
+theme-independent colors — like a chat app's per-user color, these are
+decorative identity colors, not semantic UI colors, so they deliberately
+don't come from `ColorScheme` and don't change with light/dark mode. They
+also can't be derived from a semantic role: a green avatar would read as
+"correct," a red one as "a mistake," the moment it sat next to this app's
+actual correct/incorrect colors. Redesigned this round from a set with two
+identical-hue pairs (fox/lion both orange, panda/koala both blue-grey — only
+6 of 8 actually distinguishable by color alone) to eight hues spaced evenly
+around the wheel at one fixed saturation/lightness, chosen to also sit clear
+of this app's meaningful hues (`SemanticColors`' correct-green and
+error/incorrect-red). Verified on-device in both themes, at actual tile
+size, in the picker grid, including glyph contrast on the tile.
 
 **Loading.** A single glyph on full orange with "Reviewing your answers…" and
 no progress signal, on a wait that can run long — the same treatment covers
@@ -204,6 +299,12 @@ whether that label should be more readable regardless is a distinct,
 still-open question that this fix wasn't scoped to answer. See
 `docs/roadmap.md`'s D1 entry.
 
+**Status (2026-09-10): closed — no further action.** Re-checked on-device in
+both themes as part of this round's contrast/states pass; the numbers above
+are unchanged and are being accepted as-is (WCAG 1.4.3's disabled-control
+exemption plus Material 3's own convention), not chased toward AA's normal-
+text threshold. See the Onboarding entry in §2 above.
+
 **D2 — One blue.** Deep navy only, consistent with PRD v2's stated
 "orange primary / deep blue accent". The violet-blue is removed everywhere.
 
@@ -228,3 +329,16 @@ structure is about to change is wasted work.
 
 Monetization and Home decisions that came out of this audit are recorded in
 `docs/prd-v2.md` §13, not here.
+
+**D5 — Batch 0 (2026-09-10): the remaining contrast/states and consistency
+findings, closed in one round.** Nine items, decided together before any
+code was written, four with a correction applied before implementing (see
+each item's own status note above and in `docs/roadmap.md`'s B-polish list):
+the skipped-answer "CORRECTED" box, the avatar palette's real hue
+separation, the locked-card pill, Onboarding's disabled button (no code —
+closing the "still open" tracking), single back-button treatment (S5,
+direction chosen after an on-device two-way comparison), icon circles (S3,
+no code — already closed by other work), Daily Test's redundant progress
+bar, Settings' Profile/Data losing their `Card` wrap, and the topic list's
+icon alignment. `docs/build-log.md` has the implementation detail and
+verification for each.

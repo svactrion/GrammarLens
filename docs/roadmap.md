@@ -4,10 +4,11 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-08 (App Store Connect/RevenueCat setup in progress;
-v2.2 B-structure batch shipped; B-polish visual-polish tour underway —
-D2 single blue closed, brand mark, session-length picker, Premium paywall
-reorder + pricing states, question-screen button layout)
+**Last updated:** 2026-09-10 (App Store Connect/RevenueCat setup in progress;
+v2.2 B-structure batch shipped; B-polish visual-polish tour — D1 hybrid theme
+and D2 single blue both closed; this round closed the remaining contrast/
+states and consistency findings (D5) plus D1's own test gap; app icon
+generated from a real source image, replacing Flutter's placeholder)
 
 ---
 
@@ -532,6 +533,42 @@ the length picker's real (non-reduced-motion) animation path, since every
 test that reaches them has to force reduced motion to avoid `pumpAndSettle`
 hanging against their infinite ambient animations.
 
+**2026-09-10 — App icon generated; the remaining B-polish findings (D5)
+closed; D1's test gap closed.** Three independent pieces of work:
+
+- **App icon.** A real 1024px source image (a loupe/magnifying glass on
+  navy, matching `BrandMark`'s identity) replaced Flutter's placeholder
+  icon and its stale `Contents.json` (still referencing default filenames).
+  Generated every iOS size from the one source via `flutter_launcher_icons`
+  (iOS only — no Android release track) rather than hand-maintained sizes;
+  `remove_alpha_ios: true` matches the source's own lack of an alpha channel
+  and baked-in corner rounding. Verified with a clean build: the real icon,
+  not the Flutter default, shows on the simulator's home screen.
+- **D5 — the remaining contrast/states and consistency findings, closed in
+  one round.** See `docs/design-audit.md` D5 and the B-polish checklist
+  above for the full list (nine items, four batches): the skipped-answer
+  "CORRECTED" box now reads neutral; the avatar palette gives all eight a
+  real, distinguishable hue; locked cards get a shared pill instead of a
+  near-invisible lock glyph; Onboarding's disabled-button tracking closed
+  with no further code; one back-button treatment app-wide (plain chevron,
+  chosen after an on-device two-direction comparison); Daily Test's
+  progress bar dropped in favor of the counter it duplicated; Settings'
+  Profile/Data lost their `Card` wrap; the topic list's icon alignment
+  fixed.
+- **D1's own test gap closed.** Seven screens moved onto `BrandScaffold`
+  during D1, `ResultScoreBand` was written from scratch, and none of it had
+  a test — the count stayed at 227 throughout. Added `brand_scaffold_test.dart`
+  (both constructor asserts actually throw; `isTabRoot` correctly chooses its
+  padding source), `results_screen_test.dart` (Topic Practice's own results
+  screen had no test file before this), a `ResultScoreBand` check added to
+  `daily_test_result_screen_test.dart`, and `mistake_breakdown_test.dart`
+  (the skipped-answer regression). 237 tests passing, up from 227.
+
+Every code change this round was verified on-device in both themes via a
+temporary, untracked debug harness, deleted before each commit — same
+technique D1's own batches used. `flutter analyze` and the full test suite
+are clean throughout.
+
 ---
 
 ## What's next
@@ -780,13 +817,51 @@ below is marked done unless verified directly against the current code):
   D1 entry above for the full measurement and why that's a real fix
   despite sitting below WCAG's normal-text threshold (disabled controls
   are exempt from it). That fix closes the audit's own finding; whether
-  the label should be more readable than that regardless is tracked as its
-  own still-open item under D1 above, not folded into this closure.
+  the label should be more readable than that regardless was tracked as a
+  still-open item under D1 above — **closed 2026-09-10** (see below), not
+  pursued further.
 - [~] Verify every batch on-device in dark mode — several of this round's
   batches record their own on-device dark-mode verification in their commit
   messages (the fill-ratio dial, the Theme Preview screen, Welcome's
   animated entrance); not exhaustively re-confirmed across every batch as
   part of this documentation pass.
+- [x] Close the remaining contrast/states and consistency findings —
+  **closed 2026-09-10** (`docs/design-audit.md` D5, `docs/build-log.md` for
+  implementation detail), nine items decided together before coding, four
+  batches, each verified on-device in both themes:
+  - The skipped-answer "CORRECTED" box now reads neutral, labeled "CORRECT
+    ANSWER" — skippedness derived from the answer already being empty
+    (`MistakeBreakdown`'s own `hasAnswer` check), not a caller-supplied
+    flag, specifically so a result screen can't silently forget to pass it
+    and reintroduce the bug. Regression-tested
+    (`test/mistake_breakdown_test.dart`).
+  - Avatar palette redesigned to eight evenly-spaced hues at one fixed
+    saturation/lightness (two identical-hue pairs before — fox/lion,
+    panda/koala — meant only 6 of 8 were actually distinguishable),
+    documented as a named, theme-independent exception in `theme.dart`
+    rather than raw hex.
+  - Locked Home cards (Topic Practice, a weak-spot row) get a shared
+    `LockedPremiumPill` instead of a near-invisible 16px lock glyph;
+    today's tap behavior (opens `PremiumScreen`) was confirmed unchanged
+    first, and the pill carries its own forward chevron so that signal
+    isn't lost along with the old plain one.
+  - Onboarding's disabled "Continue" button: no code change, re-verified
+    on-device, the "still open" tracking above closed.
+  - S5 (two back-button treatments) closed: plain chevron everywhere,
+    chosen over spreading the bordered circle after reviewing both
+    directions on-device, in both themes, on a question screen and a
+    normal screen. `HeaderCircleIconButton` renamed to `HeaderIconButton`.
+  - S3 (icon circles) closed with no code change — Premium's blue circles
+    were already gone from earlier polish work; confirmed by grep.
+  - Daily Test's progress bar (redundant with the "N / total" counter next
+    to it) removed; the counter stays and the header gets shorter.
+  - Settings' Profile/Data lost their `Card` wrap — flush now, matching
+    Appearance's existing layout, since neither was a single tap target.
+  - Topic list's three-line cards top-align the leading icon against the
+    title instead of centering it against the whole text block.
+  - D1's own test gap (BrandScaffold's two asserts, `isTabRoot`'s padding
+    source, both result screens sharing `ResultScoreBand`) closed
+    alongside this round: 237 tests passing, up from 227.
 
 Also newly identified while working through this list, not yet fixed: the
 comparison table's `FittedBox(scaleDown)` header text works against Dynamic

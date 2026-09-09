@@ -1777,3 +1777,180 @@ disabled-control convention, is still under WCAG AA's normal-text
 threshold — whether that's worth addressing further is a separate,
 still-open design question, recorded as such in both docs rather than
 silently marked done alongside D1.
+
+## 2026-09-10 (App icon; Batch 0 — contrast/states + consistency; D1's test gap)
+
+Three independent commits, each verified on-device in both themes via a
+temporary, untracked debug harness (`lib/main_debug_harness.dart`, a
+separate entry point — never touches `main.dart`/`app.dart`), deleted before
+committing. `flutter analyze` and the full test suite clean throughout.
+
+### App icon
+
+- **[Engineering] `flutter_launcher_icons` generates every iOS icon size
+  from one source (`assets/icon/app_icon.png`).** A real 1024px icon (a
+  loupe/magnifying glass on navy, matching `BrandMark`'s identity) had been
+  dropped into `ios/Runner/Assets.xcassets/AppIcon.appiconset/` but
+  `Contents.json` still referenced Flutter's default placeholder filenames —
+  the new icon was never actually wired up. Two options were on the table:
+  hand-convert `Contents.json` to a single-size (1024-only, Xcode
+  auto-generates the rest) format, or use `flutter_launcher_icons` to
+  generate every explicit size. Chose the generator: this app's
+  `IPHONEOS_DEPLOYMENT_TARGET` is 13.0, and the single-size format's actual
+  minimum-OS requirements weren't worth the risk of getting wrong on a
+  pre-launch app with a real (if old) deployment floor. `ios: true,
+  android: false` — no Android release track exists, so `android/`'s icon
+  is deliberately untouched. `remove_alpha_ios: true` matches the source,
+  which already has no alpha channel (confirmed: `file` reports "8-bit/color
+  RGB", not RGBA) and no baked-in corner rounding — both are App Store
+  requirements, Apple applies its own mask.
+- **[Engineering] Reverted one unintended side effect of running the
+  generator.** `flutter_launcher_icons`' icon-name patcher
+  (`ios.dart:changeIosLauncherIcon`) matches any Xcode build setting whose
+  name contains `ASSETCATALOG`, not just the one it means to set
+  (`ASSETCATALOG_COMPILER_APPICON_NAME`) — it also clobbered
+  `ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS` from `YES`
+  to `AppIcon` in two of the three build configurations. Caught by diffing
+  `project.pbxproj` after running the tool rather than assuming a clean
+  generator run; reverted that one setting back to `YES`, unrelated to app
+  icon naming. `ASSETCATALOG_COMPILER_APPICON_NAME` itself was already
+  correctly `AppIcon` before and after — confirmed the final diff against
+  `project.pbxproj` is empty.
+- **[Product] Verified with a clean build, not assumed.** `flutter clean`
+  (which also surfaced and required fixing an unrelated stale Swift Package
+  Manager artifact-cache reference — a known issue after `flutter clean` on
+  a project with Firebase's SPM-based pods; resolved by letting Xcode
+  re-resolve packages with network access rather than reusing a now-missing
+  local cache path) then a real run on the iOS simulator: returned to the
+  home screen and screenshotted it — the actual generated icon (not the
+  Flutter default) is what's installed.
+- Deleted the now-orphaned original `AppIcon-1024.png` from inside the
+  appiconset folder (not referenced by the regenerated `Contents.json`,
+  redundant with the new canonical `assets/icon/app_icon.png` source).
+
+### Batch 0 — contrast/states + consistency (`docs/design-audit.md` D5)
+
+Nine decisions, four with a correction applied before implementing — full
+review and reasoning in `docs/design-audit.md`'s own per-finding status
+notes and D5 summary; `docs/roadmap.md`'s B-polish checklist has the
+consolidated list. Implementation detail not already covered there:
+
+- **[Product] `MistakeBreakdown`'s skipped-answer fix derives skippedness,
+  never takes it as a parameter.** The correction to this item's original
+  proposal: passing `isSkipped` as a bool would require both result screens
+  (Topic Practice's `ResultsScreen`, `DailyTestResultScreen`) to pass the
+  right value every time, and one forgetting would silently reintroduce the
+  exact bug being fixed. Checked whether the fact is already derivable
+  before accepting the correction: `ClaudeService.scoreAnswers` computes
+  `ItemFeedback.isSkipped` from the same "is the trimmed answer empty" check
+  `DailyTestResultScreen`'s own `_QuestionResult.from` uses, and that's
+  exactly the condition `MistakeBreakdown`'s existing `hasAnswer` local
+  already computed for a different reason (whether to show the "YOU WROTE"
+  box at all) — so `isSkipped = hasCorrection && !hasAnswer` is the same
+  fact, not a new one, and can't drift from what each screen actually did.
+  Weak-spot detail's call is provably unaffected: every `ErrorEntry` it
+  reads is filtered to `!isSkipped` before being written by both screens'
+  own `_saveErrors`, so `hasAnswer` is always true there.
+- **[Product] Avatar palette redesigned as a named exception, not derived
+  from `ColorScheme`.** The correction: avatar colors reading as semantic
+  (a green avatar next to this app's actual green "correct" color) would be
+  worse than the original problem. Eight hues spaced roughly evenly (35°,
+  70°, 105°, 145°, 185°, 240°, 280°, 310° — computed to keep pairwise
+  separation ≥30° and stay ≥18° clear of this app's correct-green (~123°)
+  and error-red (~0°) hues) at one fixed saturation/lightness (60%/56%),
+  replacing a set where fox/lion shared one hue and panda/koala shared
+  another. Named constants in `theme.dart` (`avatarFoxBackground` etc.),
+  same pattern as the existing `brandMarkGlass`/`brandMarkGlint` precedent,
+  referenced from `avatar_tile.dart` rather than inlined as raw hex there.
+  Verified on-device in both themes, at the actual 22-radius tile size used
+  by both Settings' picker grid and Home's greeting tile, glyph contrast
+  included (each avatar's emoji renders in its own colors regardless of
+  tile background, so the actual risk was tile-vs-tile distinctness and
+  tile-vs-surface visibility, not glyph legibility).
+- **[Product] `LockedPremiumPill` replaces a 16px lock glyph, in the same
+  trailing slot both `_PracticeModeCard` and `WeakSpotCard` already used for
+  a plain chevron.** The correction: before removing the chevron, checked
+  what tapping a locked card actually does today — the whole `Card` is
+  already one `InkWell` opening `PremiumScreen`, on both card types, so the
+  chevron was the only visible "this goes somewhere" signal for an
+  already-real conversion path. The pill keeps that signal built into
+  itself (a chevron drawn inside the pill, after the "Premium" label)
+  rather than requiring a second icon alongside it, so dropping the old
+  standalone chevron doesn't remove what it was for.
+- **[Product] Back button: direction chosen after review, not decided
+  unilaterally.** Built both candidate directions as real, on-device
+  mockups — Direction A (spread `HeaderCircleIconButton`'s bordered circle
+  to every screen's back button) and Direction B (drop it, plain chevron
+  everywhere) — each showing a question screen and a normal screen
+  (Results), in both themes, and sent all four screenshots before
+  implementing either. Direction B chosen. `HeaderCircleIconButton` renamed
+  to `HeaderIconButton` (the old name would be actively misleading now) with
+  the `CircleBorder`/border-color styling dropped; the footprint-reservation
+  behavior it exists for (a constant 40x40 box whether or not Back is
+  usable, so question 1→ question 2's title never shifts) is unchanged and
+  still covered by its existing regression test. `DailyTestScreen`'s
+  pre-load Close button (shown before a question set exists, styled to
+  match `QuestionAppBar`'s own Close per that call site's own doc comment)
+  updated to match.
+- **[Product] Daily Test's progress bar removed from `QuestionAppBar`
+  (shared by both question screens).** Kept the "N / total" counter, which
+  told the same story more precisely for this app's small fixed session
+  lengths (3/5/10). `_bottomHeight` reduced 40→28 to match the now-simpler
+  single-line content, closing the audit's "header stacks three signals"
+  complaint as a side effect of removing one of the three.
+- **[Engineering] Settings' Profile/Data `Card` wrap removed**, matching
+  Appearance's already-cardless layout — flagged but deliberately left open
+  in the 2026-09-09 D1 Batch 4 entry above ("a third, not-yet-named
+  justification... revisit once every screen has migrated"); revisited now
+  since D1 finished migrating every screen. Surfaced a real, unrelated test-
+  layout bug while verifying: four `settings_screen_test.dart` cases scrolled
+  with a fixed pixel `drag()` amount calibrated against the old, taller,
+  card-wrapped layout. `ListView`'s `Sliver` machinery estimates the extent
+  of not-yet-built off-screen children and corrects that estimate (grows it)
+  once more items get built during a scroll; the shorter post-fix layout
+  changed where that correction landed relative to a fixed drag amount,
+  leaving the target below the fold. Diagnosed with a throwaway probe test
+  printing `ScrollPosition.maxScrollExtent`/`pixels` before and after the
+  drag (deleted once understood, never committed) rather than guessing at
+  a new magic number. Fixed by switching to `tester.dragUntilVisible`, which
+  is robust to this regardless of exact content height.
+- **[Product] Topic list's three-line cards top-align the leading icon**
+  against the title (`CrossAxisAlignment.start` on the card's `Row`,
+  previously the default `center`) instead of centering it against the
+  whole title/description/stats block, where it read as sitting low. The
+  trailing chevron is wrapped in its own 44-tall `SizedBox`+`Center` so it
+  stays centered within the icon's own height band rather than inheriting
+  the same low-against-three-lines problem the fix addresses.
+
+### D1's test gap (`docs/roadmap.md`'s B-polish checklist)
+
+- **[Engineering] `test/brand_scaffold_test.dart` (new).** Both
+  constructor asserts (`body`/`children`, `title`/`appBar` — exactly one of
+  each required) verified to actually throw, both violation directions each
+  (both provided, neither provided). `isTabRoot: true` reads
+  `NavBarClearance.of(context)`'s real value; `isTabRoot: false` (the
+  default) uses `MediaQuery.paddingOf(context).bottom + 16` and ignores an
+  ancestor `NavBarClearance` even when one happens to be present — both
+  verified by inspecting the built `ListView`'s own `padding.bottom`.
+- **[Engineering] `test/results_screen_test.dart` (new).** Topic Practice's
+  own `ResultsScreen` had no test file at all before this. Added narrowly
+  for this batch's actual ask — confirming it renders its score through the
+  shared `ResultScoreBand`, the same widget `DailyTestResultScreen` uses —
+  rather than building out a full test suite for the screen, which is a
+  separate, larger gap not in this round's scope. Fixture deliberately has
+  zero non-skipped-incorrect items, so `_saveErrors` returns before calling
+  `StorageService.insertErrors`, letting the test use a real (non-fake)
+  `StorageService`/`AnalyticsService` — both already fail safe with no
+  platform channel under test.
+- **[Engineering] `daily_test_result_screen_test.dart` gained the
+  equivalent `ResultScoreBand` check**, reusing its existing four-outcome
+  fixture (one correct, one wrong-matching-a-prediction, one wrong-matching-
+  nothing, one skipped) rather than adding a new one.
+- **[Engineering] `test/mistake_breakdown_test.dart` (new).** Direct
+  regression coverage for the skipped-answer fix above: a skipped item's
+  correction renders in the neutral box labeled "CORRECT ANSWER" (not the
+  green "CORRECTED" a real mistake still gets), checked both by the
+  rendered text and by reading back the actual `Container`'s `BoxDecoration`
+  color against `colorScheme.surface`/`SemanticColors.correctBackground`.
+- **[Product]** 237 tests passing (up from 227 throughout D1), `flutter
+  analyze` clean.
