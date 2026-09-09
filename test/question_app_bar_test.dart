@@ -10,7 +10,7 @@ import 'package:grammar_lens/widgets/question_app_bar.dart';
 /// bottom footer and was omitted outright on question 1 rather than shown
 /// disabled — omitting it shrank the app bar's leading slot, which shifted
 /// the centered title's on-screen x position the moment Back appeared on
-/// question 2. HeaderCircleIconButton's `visible` flag fixes this by
+/// question 2. HeaderIconButton's `visible` flag fixes this by
 /// always reserving Back's exact footprint, whether or not it's usable
 /// right now.
 void main() {
@@ -53,7 +53,7 @@ void main() {
       (tester) async {
     await pump(tester, showBack: false);
 
-    // No tappable Back button — but HeaderCircleIconButton still occupies
+    // No tappable Back button — but HeaderIconButton still occupies
     // the same box, invisible rather than absent.
     expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
     expect(
@@ -65,7 +65,7 @@ void main() {
             )
             .first,
       ).width,
-      HeaderCircleIconButton.size,
+      HeaderIconButton.size,
     );
   });
 
@@ -76,7 +76,7 @@ void main() {
     final closeSize = tester.getSize(find.byIcon(Icons.close_rounded));
 
     // The icons themselves are drawn smaller than the 40x40 touch target
-    // (see HeaderCircleIconButton) — what must match is each button's own
+    // (see HeaderIconButton) — what must match is each button's own
     // full SizedBox footprint, not the icon glyph size.
     Size buttonSize(Finder icon) => tester.getSize(
           find
@@ -86,11 +86,11 @@ void main() {
 
     expect(
       buttonSize(find.byIcon(Icons.arrow_back_rounded)),
-      const Size(HeaderCircleIconButton.size, HeaderCircleIconButton.size),
+      const Size(HeaderIconButton.size, HeaderIconButton.size),
     );
     expect(
       buttonSize(find.byIcon(Icons.close_rounded)),
-      const Size(HeaderCircleIconButton.size, HeaderCircleIconButton.size),
+      const Size(HeaderIconButton.size, HeaderIconButton.size),
     );
     // Sanity: the icon glyphs themselves are non-empty and equal-sized to
     // each other, even though smaller than their touch targets.

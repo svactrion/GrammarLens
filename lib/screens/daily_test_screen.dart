@@ -241,7 +241,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                 actions: [
                   Padding(
                     padding: const EdgeInsets.only(right: 16),
-                    child: HeaderCircleIconButton(
+                    child: HeaderIconButton(
                       icon: Icons.close_rounded,
                       onPressed: _confirmExit,
                       tooltip: 'Leave Daily Test',

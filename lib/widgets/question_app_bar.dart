@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// A 40x40 bordered circle icon button — the Back (top-left) and Close
-/// (top-right) affordances on a question screen's app bar.
+/// A plain (unbordered) 40x40 icon button — the Back (top-left) and Close
+/// (top-right) affordances on a question screen's app bar. Single back-
+/// button treatment, direction B (docs/design-audit.md, Batch 0 item 5):
+/// this used to be a bordered circle, the one thing that made question
+/// screens visually different from every other screen's plain chevron —
+/// dropped so the whole app uses one treatment, chosen over spreading the
+/// circle everywhere because a flat chevron is the platform convention
+/// (most users already reach for the system back gesture) and it stays
+/// legible on the orange band the same way the circle did.
 ///
 /// When [visible] is false, this renders an empty box of the exact same
 /// footprint instead of nothing at all. That matters specifically for
@@ -10,7 +17,7 @@ import 'package:flutter/material.dart';
 /// leading slot, shifting the centered title sideways the moment a second
 /// question makes Back appear — see [QuestionAppBar]'s own doc comment
 /// and the regression test in question_app_bar_test.dart.
-class HeaderCircleIconButton extends StatelessWidget {
+class HeaderIconButton extends StatelessWidget {
   static const double size = 40;
 
   final IconData icon;
@@ -19,7 +26,7 @@ class HeaderCircleIconButton extends StatelessWidget {
   final Color color;
   final bool visible;
 
-  const HeaderCircleIconButton({
+  const HeaderIconButton({
     super.key,
     required this.icon,
     required this.onPressed,
@@ -40,21 +47,16 @@ class HeaderCircleIconButton extends StatelessWidget {
         padding: EdgeInsets.zero,
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: Icon(icon, size: 20, color: color),
-        style: IconButton.styleFrom(
-          shape: CircleBorder(
-            side: BorderSide(color: color.withValues(alpha: 0.4)),
-          ),
-        ),
+        icon: Icon(icon, size: 24, color: color),
       ),
     );
   }
 }
 
 /// The app bar shared by PracticeScreen's and DailyTestScreen's question
-/// flow: Back (top-left) and Close (top-right) as identical 40x40 bordered
-/// circles, the topic/screen name centered between them, and a progress
-/// bar + "N / total" counter sharing one row underneath.
+/// flow: Back (top-left) and Close (top-right) as identical plain 40x40
+/// icon buttons, the topic/screen name centered between them, and the
+/// "N / total" counter underneath.
 ///
 /// Back and Close both live in the app bar now — previously Back sat in
 /// the bottom footer instead, shown only when [showBack] was true and
@@ -64,7 +66,7 @@ class HeaderCircleIconButton extends StatelessWidget {
 /// centered *within* that slot, its on-screen center shifted sideways
 /// between questions purely because of whether Back happened to exist —
 /// never intentional, easy to miss when Back and the title lived in
-/// different widgets entirely. [HeaderCircleIconButton]'s `visible` flag
+/// different widgets entirely. [HeaderIconButton]'s `visible` flag
 /// fixes this at the root: Back is always present as a widget, at a
 /// constant size, whether or not [showBack] currently allows using it.
 class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -105,7 +107,7 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
       // to make that call for itself rather than inheriting it.
       scrolledUnderElevation: 0,
       leading: Center(
-        child: HeaderCircleIconButton(
+        child: HeaderIconButton(
           icon: Icons.arrow_back_rounded,
           onPressed: onBack,
           tooltip: 'Previous question',
@@ -123,7 +125,7 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 16),
-          child: HeaderCircleIconButton(
+          child: HeaderIconButton(
             icon: Icons.close_rounded,
             onPressed: onClose,
             tooltip: 'Leave',
