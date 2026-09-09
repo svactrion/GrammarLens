@@ -10,6 +10,7 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/result_score_band.dart';
 
 /// Captures what DailyTestResultScreen actually writes, instead of hitting
 /// the real (platform-channel-backed, throwing-in-tests) StorageService.
@@ -229,5 +230,25 @@ void main() {
       expect(storageService.insertedErrors, isEmpty);
       expect(storageService.markCompletedCalls, 0);
     });
+  });
+
+  testWidgets(
+      'shows its score via the shared ResultScoreBand widget '
+      '(docs/design-audit.md, Batch 0/4 — both result screens must agree '
+      'by construction, not by each independently matching the other)',
+      (tester) async {
+    await pumpResult(
+      tester,
+      DailyTestSet(day: '2026-01-01', questions: questions),
+    );
+
+    expect(find.byType(ResultScoreBand), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ResultScoreBand),
+        matching: find.text('1/4 correct · 1 skipped'),
+      ),
+      findsOneWidget,
+    );
   });
 }
