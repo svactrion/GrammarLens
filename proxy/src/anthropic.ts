@@ -345,7 +345,7 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
   const decoded = (await response.json()) as { content?: { type: string; text?: string }[] };
   const textBlock = decoded.content?.find((block) => block.type === 'text');
   if (!textBlock?.text) {
-    console.error('Anthropic response had no text content block', decoded);
+    console.error('Anthropic response had no text content block');
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
 
