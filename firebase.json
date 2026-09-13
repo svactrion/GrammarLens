@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"ios":{"default":{"projectId":"grammarlens-18d47","appId":"1:586236008651:ios:7010cb02b0b0c4c2c4e34e","uploadDebugSymbols":true,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"grammarlens-18d47","configurations":{"ios":"1:586236008651:ios:7010cb02b0b0c4c2c4e34e"}}}}}}
