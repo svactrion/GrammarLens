@@ -20,7 +20,7 @@
   // APP_TOKEN) are set via `wrangler secret put` and never appear here or
   // anywhere else in this repo.
   "vars": {
-    "DEVICE_DAILY_LIMIT": "30",
+    "DEVICE_DAILY_LIMIT": "15",
     "GLOBAL_DAILY_LIMIT": "300"
   },
   "kv_namespaces": [
