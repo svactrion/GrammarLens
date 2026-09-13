@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '../config/app_config.dart';
+
 /// Outcome of a purchase attempt, for a future paywall screen to react to
 /// without needing to know RevenueCat's own exception/error-code shape.
 enum PurchaseOutcome { success, failure, cancelled }
@@ -63,13 +65,13 @@ class SubscriptionService {
   /// reason, not a preference.
   static const int trialLengthDays = 7;
 
-  /// RevenueCat's public SDK key, read at build/run time via
-  /// `--dart-define=REVENUECAT_API_KEY=...` — same mechanism ClaudeService
-  /// uses for the Anthropic key, but for a different reason: RevenueCat's
-  /// SDK key is meant to be public/embeddable (unlike a server API key),
-  /// so this isn't a secrecy measure, just keeping it in one configurable
-  /// place instead of hardcoded in source.
-  static const _apiKey = String.fromEnvironment('REVENUECAT_API_KEY');
+  /// RevenueCat's public SDK key, read via [AppConfig.revenueCatApiKey] —
+  /// same `--dart-define`/`config/*.json` mechanism as `PROXY_BASE_URL`/
+  /// `APP_TOKEN`, but for a different reason: RevenueCat's SDK key is meant
+  /// to be public/embeddable (unlike a server API key), so this isn't a
+  /// secrecy measure, just keeping it in one configurable place instead of
+  /// hardcoded in source.
+  static const _apiKey = AppConfig.revenueCatApiKey;
 
   /// Set only after `Purchases.configure` actually succeeds — static
   /// because RevenueCat's SDK config is itself process-global, and every

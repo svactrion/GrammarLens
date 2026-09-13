@@ -13,6 +13,8 @@ class AppConfig {
 
   static const String proxyBaseUrl = String.fromEnvironment('PROXY_BASE_URL');
   static const String appToken = String.fromEnvironment('APP_TOKEN');
+  static const String revenueCatApiKey =
+      String.fromEnvironment('REVENUECAT_API_KEY');
 
   static bool get isConfigured => proxyBaseUrl.isNotEmpty && appToken.isNotEmpty;
 }
