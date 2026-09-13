@@ -1,4 +1,4 @@
-package com.example.grammar_lens
+package com.ahmettayfur.grammarlens
 
 import io.flutter.embedding.android.FlutterActivity
 
