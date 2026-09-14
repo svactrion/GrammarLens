@@ -629,17 +629,21 @@ actually exists):
   the same time, because the withholding mechanics differ. Not tax advice —
   recorded here as the reason this step is deliberately paused.
 
-- **Bundle ID is still Flutter's placeholder — launch blocker found 2026-09-07.**
-  `ios/Runner.xcodeproj/project.pbxproj` carries `com.example.grammarLens`
-  (six occurrences, three of them the `.RunnerTests` target). Apple rejects any
-  identifier under `com.example.*`, so no App ID can be registered and no app
-  record created until this changes. Proposed: `com.ahmettayfur.grammarlens` —
-  reverse-DNS of a domain actually owned, all lowercase. **A bundle ID cannot
-  be changed once it is attached to an App Store Connect app record**, so this
-  is a get-it-right-once decision and it comes before everything else in C2.
-  Related, and worth deciding at the same time: `CFBundleDisplayName` is
-  "Grammar Lens" (with a space) while the product is "GrammarLens" — pick one
-  deliberately rather than shipping the accident.
+- **Bundle ID: fixed, closed 2026-09-13** (was: "still Flutter's placeholder —
+  launch blocker found 2026-09-07"). `ios/Runner.xcodeproj/project.pbxproj`
+  carried `com.example.grammarLens` (six occurrences, three of them the
+  `.RunnerTests` target); Apple rejects any identifier under `com.example.*`,
+  so no App ID could be registered and no app record created until this
+  changed. Chosen then, applied now: `com.ahmettayfur.grammarlens` —
+  reverse-DNS of a domain actually owned, all lowercase — deliberately,
+  since **a bundle ID cannot be changed once it is attached to an App Store
+  Connect app record**. Verified directly against the file (commit
+  `f95d63c`): all six occurrences now read `com.ahmettayfur.grammarlens` /
+  `com.ahmettayfur.grammarlens.RunnerTests`. The same commit also closed the
+  related item decided alongside it: `CFBundleDisplayName` had drifted to
+  "Grammar Lens" (with a space) instead of matching the product name
+  "GrammarLens" — verified directly against `ios/Runner/Info.plist`, now
+  reads `GrammarLens`.
 
 - **Product identifiers are already reserved in code and must be matched
   exactly in App Store Connect** (these are permanent once created and cannot
