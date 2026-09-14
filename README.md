@@ -177,6 +177,11 @@ telling you to do the below.
      Run/Debug, but doesn't start the proxy for you; run `npm run dev` in
      `proxy/` yourself first. `scripts/dev.sh` is the primary path since
      day-to-day development on this project happens from the terminal.
+   - **Physical device**: `scripts/dev.sh` is simulator-only —
+     `config/dev.json`'s `PROXY_BASE_URL` points at `localhost`, which on a
+     real device means the device itself, so every proxy call fails. Use
+     `flutter run --dart-define-from-file=config/prod.json -d <device-id>`
+     instead.
 3. **Xcode**: hitting the Run button directly in Xcode does **not** pass
    any `--dart-define`/`--dart-define-from-file` flags — the app will
    build but every API call will fail with the missing-config error
