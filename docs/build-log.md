@@ -1954,3 +1954,38 @@ consolidated list. Implementation detail not already covered there:
   color against `colorScheme.surface`/`SemanticColors.correctBackground`.
 - **[Product]** 237 tests passing (up from 227 throughout D1), `flutter
   analyze` clean.
+
+## 2026-09-14
+
+- **[Engineering]** First install and run on a physical iPhone — every prior
+  verification in this log was simulator-only. Device: iPhone 14 Plus, iOS
+  26.6.2, UDID `00008110-00064D5801B9401E`, signed with the paid team
+  `37U9L67C2J`. Command: `flutter run
+  --dart-define-from-file=config/prod.json -d <UDID>`.
+- **[Product]** `scripts/dev.sh` doesn't work on a physical device: it points
+  at `config/dev.json`, which targets `localhost` — on the phone, `localhost`
+  means the phone itself, so every proxy call fails. Real-device testing has
+  to go through `config/prod.json` (the live Cloudflare Worker), which spends
+  a real `DEVICE_DAILY_LIMIT` unit against the real quota, unlike simulator
+  runs against a dev config. Worth deciding later whether README's "Local
+  setup" section should call this out explicitly — not done as part of this
+  entry, flagged for a separate decision.
+- **[Engineering]** Two misleading Xcode 26 errors hit during signing/first
+  launch, both with a root cause other than what the error text suggests:
+  1. Signing panel: "Communication with Apple failed" / "your team has no
+     devices". Not an account problem — the run destination was still set to
+     "Any iOS Device (arm64)". Switching the destination to the actual
+     connected iPhone let Xcode generate a real provisioning profile.
+  2. After a successful build: "Timed out waiting for
+     CONFIGURATION_BUILD_DIR to update". The app had already installed; iOS
+     was refusing to launch it until the device verified the signing
+     certificate online. Resolved by giving the phone internet access and
+     opening the app once by hand.
+- **[Engineering]** No extra setup needed for wireless debugging: Xcode 26
+  has dropped the "Connect via network" checkbox, and an iOS 17+ device
+  connects automatically over Wi-Fi once paired — `flutter devices` lists it
+  as `(wireless)` on the same network with no prior pairing step in this
+  session.
+- **[Product]** This was a `flutter run` install, not a TestFlight build —
+  `docs/prd-v2.md` §10.1's real-device/TestFlight verification is still
+  open, nothing has been uploaded to TestFlight yet.
