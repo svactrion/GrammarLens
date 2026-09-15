@@ -202,6 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
               claudeService: widget.claudeService,
               storageService: widget.storageService,
               analyticsService: widget.analyticsService,
+              subscriptionService: widget.subscriptionService,
             ),
           ),
         )
@@ -230,6 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
               claudeService: widget.claudeService,
               storageService: widget.storageService,
               analyticsService: widget.analyticsService,
+              subscriptionService: widget.subscriptionService,
             ),
           ),
         )

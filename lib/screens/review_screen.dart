@@ -6,6 +6,7 @@ import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
@@ -15,10 +16,17 @@ import 'weak_spot_detail_screen.dart';
 /// Resurfaces the user's weak spots and lets them launch a freshly
 /// generated set targeting the same error type (PRD §4 step 5 — the
 /// differentiator: revision without rewriting).
+///
+/// Deliberately never gates or locks this list itself (this batch's own
+/// decision): reading your own past mistakes is genuinely free, no
+/// entitlement or quota involved — only the "Practice this" action on the
+/// detail screen it leads to is. `WeakSpotCard` here stays unlocked the
+/// same way it always has, unlike Home's copy of the same widget.
 class ReviewScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final AnalyticsService analyticsService;
+  final SubscriptionService subscriptionService;
   final bool active;
   final VoidCallback onGoToPractice;
 
@@ -27,6 +35,7 @@ class ReviewScreen extends StatefulWidget {
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
+    required this.subscriptionService,
     required this.active,
     required this.onGoToPractice,
   });
@@ -106,6 +115,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           claudeService: widget.claudeService,
           storageService: widget.storageService,
           analyticsService: widget.analyticsService,
+          subscriptionService: widget.subscriptionService,
         ),
       ),
     );

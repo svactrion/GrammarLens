@@ -5,13 +5,16 @@ import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import '../utils/loading_view.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/locked_premium_pill.dart';
 import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
+import 'premium_screen.dart';
 
 /// Shown before targeted practice starts (Iteration 1 P0, from user testing:
 /// tapping a weak spot used to jump straight into fresh questions with no
@@ -24,6 +27,7 @@ class WeakSpotDetailScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final AnalyticsService analyticsService;
+  final SubscriptionService subscriptionService;
 
   const WeakSpotDetailScreen({
     super.key,
@@ -32,6 +36,7 @@ class WeakSpotDetailScreen extends StatefulWidget {
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
+    required this.subscriptionService,
   });
 
   @override
@@ -42,10 +47,45 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
   late Future<List<ErrorEntry>> _mistakes;
   bool _generating = false;
 
+  // Starts closed/zero the same way HomeScreen's own `_hasFullAccess` does
+  // (fail-closed default while a check is in flight) — this screen only
+  // needs a one-shot read, not HomeScreen's addAccessListener live-update
+  // wiring: `launchPracticeSet` re-checks both entitlement and quota fresh
+  // at the moment of the actual tap regardless, so a value that's gone
+  // stale during the brief time this screen is open is a cosmetic risk,
+  // not an enforcement one.
+  bool _loadingAccess = true;
+  bool _hasFullAccess = false;
+  int _freePracticeUsedToday = 0;
+
   @override
   void initState() {
     super.initState();
     _mistakes = _loadMistakes();
+    _loadAccess();
+  }
+
+  Future<void> _loadAccess() async {
+    bool hasFullAccess;
+    try {
+      hasFullAccess = await widget.subscriptionService.hasFullAccess;
+    } catch (_) {
+      hasFullAccess = false;
+    }
+    var usedToday = 0;
+    if (!hasFullAccess) {
+      try {
+        usedToday = await widget.storageService.getFreePracticeCountForToday();
+      } catch (_) {
+        usedToday = 0;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _hasFullAccess = hasFullAccess;
+      _freePracticeUsedToday = usedToday;
+      _loadingAccess = false;
+    });
   }
 
   Future<List<ErrorEntry>> _loadMistakes() {
@@ -68,10 +108,30 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
       claudeService: widget.claudeService,
       storageService: widget.storageService,
       analyticsService: widget.analyticsService,
+      subscriptionService: widget.subscriptionService,
       setGenerating: (value) {
         if (mounted) setState(() => _generating = value);
       },
       errorPrefix: 'Could not generate review set',
+    );
+  }
+
+  /// The exhausted-quota row's tap target — same mechanism
+  /// `HomeScreen._openWeakSpot` already uses to name what prompted the
+  /// paywall, via `PremiumScreen.sourceContext`. Logs the same
+  /// "quota → paywall" event `launchPracticeSet`'s own backstop check would
+  /// log if this row didn't exist — this is the path that actually fires in
+  /// practice, since the row is shown specifically to stop the tap from
+  /// ever reaching `launchPracticeSet` in the first place.
+  void _openPremium() {
+    widget.analyticsService.freePracticeQuotaExhausted();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PremiumScreen(
+          subscriptionService: widget.subscriptionService,
+          sourceContext: humanizeSlug(widget.spot.errorType),
+        ),
+      ),
     );
   }
 
@@ -204,14 +264,143 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
           },
         ),
         const SizedBox(height: 12),
+        _PracticeAction(
+          loadingAccess: _loadingAccess,
+          hasFullAccess: _hasFullAccess,
+          freePracticeUsedToday: _freePracticeUsedToday,
+          onPractice: _practice,
+          onLockedTap: _openPremium,
+        ),
+      ],
+    );
+  }
+}
+
+/// The bottom action, across the three states this screen can be in.
+/// Deliberately never hidden, even when the free quota is exhausted — this
+/// batch's explicit call — there's always something to tap: either into
+/// the practice session, or into Premium.
+class _PracticeAction extends StatelessWidget {
+  final bool loadingAccess;
+  final bool hasFullAccess;
+  final int freePracticeUsedToday;
+  final VoidCallback onPractice;
+  final VoidCallback onLockedTap;
+
+  const _PracticeAction({
+    required this.loadingAccess,
+    required this.hasFullAccess,
+    required this.freePracticeUsedToday,
+    required this.onPractice,
+    required this.onLockedTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (loadingAccess) {
+      return const SizedBox(
+        height: 48,
+        child: Center(
+          child: SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    final remaining =
+        StorageService.freeDailyPracticeLimit - freePracticeUsedToday;
+    if (!hasFullAccess && remaining <= 0) {
+      return _LockedPracticeRow(onTap: onLockedTap);
+    }
+
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        // Premium has no caption at all — no quota to name (PRD v2 §12.2,
+        // and this batch's own "unlimited" ban: the honest thing to say
+        // about a premium session here is nothing, not an inflated claim).
+        if (!hasFullAccess) ...[
+          Text(
+            '$remaining free practice${remaining == 1 ? '' : 's'} today',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 8),
+        ],
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: _practice,
+            onPressed: onPractice,
             child: const Text('Practice this'),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The exhausted-quota state — the exact visual language Home's locked
+/// Topic Practice card already uses (`_PracticeModeCard` in
+/// home_screen.dart): a muted icon avatar, a muted title, a subtitle
+/// explaining why, and the shared [LockedPremiumPill] trailing it. Same
+/// widget shape as that card, not a new "locked" treatment invented for
+/// this screen. Still a real tap target, not a disabled button — tapping
+/// opens Premium instead of generating.
+class _LockedPracticeRow extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _LockedPracticeRow({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final muted = colorScheme.onSurfaceVariant;
+
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                foregroundColor: muted,
+                child: const Icon(Icons.edit_note_rounded, size: 26),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Practice this',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: muted,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "You've used today's free practice. Premium unlocks "
+                      'Topic Practice and more sessions each day.',
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const LockedPremiumPill(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

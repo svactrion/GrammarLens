@@ -7,6 +7,7 @@ import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/services/subscription_service.dart';
 
 /// Real sqlite I/O (even via the ffi factory) doesn't play well inside
 /// `testWidgets`' fake-async zone — a widget test exercising the daily-cap
@@ -39,6 +40,17 @@ class _FakeStorageService extends StorageService {
   Future<void> setPracticeLength(PracticeLength length) async {}
 }
 
+/// A full-access user throughout this file — [StorageService.dailySessionLimit]
+/// is the pre-existing global cost guardrail applied regardless of
+/// entitlement (docs/build-log.md's PRD v2 §10.1), so these tests fix
+/// entitlement at "full access" specifically to isolate that guardrail from
+/// the free tier's own, separate `freeDailyPracticeLimit` gate — covered
+/// instead by practice_launch_free_tier_test.dart.
+class _FakeFullAccessSubscriptionService extends SubscriptionService {
+  @override
+  Future<bool> get hasFullAccess async => true;
+}
+
 void main() {
   testWidgets(
       'starting a session under the daily cap opens the length picker',
@@ -50,6 +62,7 @@ void main() {
           claudeService: ClaudeService(),
           storageService: storageService,
           analyticsService: AnalyticsService(),
+          subscriptionService: _FakeFullAccessSubscriptionService(),
         ),
       ),
     );
@@ -74,6 +87,7 @@ void main() {
           claudeService: ClaudeService(),
           storageService: storageService,
           analyticsService: AnalyticsService(),
+          subscriptionService: _FakeFullAccessSubscriptionService(),
         ),
       ),
     );
