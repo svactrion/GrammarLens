@@ -4,11 +4,18 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-10 (App Store Connect/RevenueCat setup in progress;
-v2.2 B-structure batch shipped; B-polish visual-polish tour — D1 hybrid theme
-and D2 single blue both closed; this round closed the remaining contrast/
-states and consistency findings (D5) plus D1's own test gap; app icon
-generated from a real source image, replacing Flutter's placeholder)
+**Last updated:** 2026-09-15 (closed the free-tier "Practice this" leak —
+`launchPracticeSet` now checks entitlement and a new per-day free-practice
+quota itself, instead of relying on each screen to gate it. See "Free tier
+practice quota" below and `docs/build-log.md`'s 2026-09-15 entry. Previous
+update 2026-09-14: Firebase and RevenueCat now actually configured; legal
+pages written and live; first run on a physical iPhone; App Store Connect
+bank account submitted and the banking/tax sequencing decision reversed — see
+"Current wiring" immediately below, and the 2026-09-14 entries in §1's blocker
+status. Previous update 2026-09-10: v2.2 B-structure batch shipped; B-polish
+visual-polish tour — D1 hybrid theme and D2 single blue both closed, remaining
+contrast/states and consistency findings (D5) plus D1's own test gap closed;
+app icon generated from a real source image, replacing Flutter's placeholder)
 
 ---
 
@@ -28,6 +35,34 @@ product continues.
 
 **Status: MVP complete, tested with real users, closed. V2 in definition —
 see `docs/prd-v2.md`.**
+
+### Current wiring — verified against the repo, 2026-09-14
+
+Earlier entries in this file describe Firebase and RevenueCat as unconfigured
+scaffolds. That was true when each was written and is no longer true. Those
+entries stay as the record of when the batches landed; **this block is what is
+actually wired today.** Checked against the filesystem, not from memory.
+
+- **Firebase — connected.** Project `grammarlens-18d47`.
+  `lib/firebase_options.dart`, `ios/Runner/GoogleService-Info.plist` and
+  `firebase.json` present since 2026-09-13. Analytics and Crashlytics collect
+  for real; `AnalyticsService` is no longer a no-op. **iOS only** — there is
+  no `android/app/google-services.json`.
+- **RevenueCat — configured.** `REVENUECAT_API_KEY` populated in both
+  `config/dev.json` and `config/prod.json` (both gitignored). Entitlement id
+  `premium`.
+- **App Store Connect app record — created**, bundle id
+  `com.ahmettayfur.grammarlens`.
+- **Subscription products — not created yet.** They cannot be until the Paid
+  Apps Agreement goes Active, which waits on bank verification.
+- **Legal pages — written and live**, no longer placeholder:
+  `/products/grammarlens/privacy/`, `/terms/` and `/support/` on
+  ahmettayfur.com.
+
+**Open consequence:** the onboarding privacy note — "data stays on-device,
+never sent to a server" — is now wrong twice over: answers go through the
+proxy *and* telemetry goes to Firebase. A false privacy claim is a real App
+Review rejection reason. Submission blocker, not yet fixed.
 
 ### Shipped
 
@@ -148,7 +183,8 @@ avatar picker** (`docs/prd-v2.md` §10.1, §11), five independent commits:
   session — so `Firebase.initializeApp()` is wrapped in try/catch and every
   `AnalyticsService` call is a safe no-op until that happens. Verified the
   app still builds and runs normally on iOS with the packages present but
-  unconfigured
+  unconfigured. *(Superseded 2026-09-13 — the Firebase project is now
+  connected. See "Current wiring" near the top of this file.)*
 - **Early Access given a distinct look on Home.** As a fourth grid tile it
   read identically to the three practice-mode cards, implying it was one.
   Pulled into its own full-width outlined/tinted banner below the grid —
@@ -254,7 +290,9 @@ throwing) means every method degrades to its safe default
 caveat as that Firebase entry: **no RevenueCat account or App Store
 Connect product exists yet** — entitlement id `premium` and product id
 `grammarlens_premium_monthly` are just the identifiers reserved for when
-one is created. This batch is the service layer only: no paywall UI, no
+one is created. *(Superseded 2026-09-14 — the RevenueCat key is now set and
+the app record exists; products still do not. See "Current wiring" near the
+top of this file.)* This batch is the service layer only: no paywall UI, no
 gating of Topic Practice, nothing wired to a purchase button — later
 batches consume this.
 
@@ -569,6 +607,78 @@ temporary, untracked debug harness, deleted before each commit — same
 technique D1's own batches used. `flutter analyze` and the full test suite
 are clean throughout.
 
+**2026-09-15 — Free tier practice quota: closed the "Practice this" leak.**
+A diagnosis batch (`docs/build-log.md`, same date) found that
+`launchPracticeSet` — the one function every real practice-set generation
+goes through — checked only the blanket `dailySessionLimit` cost guardrail,
+never entitlement. Entitlement was only ever checked as a navigation guard
+inside `HomeScreen`'s own tap handlers, so `ReviewScreen`'s weak-spot →
+`WeakSpotDetailScreen` → "Practice this" path reached real, billed
+generation with no gate at all — already noted and deferred in this file's
+2026-09-05 entry, closed now:
+
+- **The gate moved into `launchPracticeSet` itself**, as required,
+  non-optional logic — both real callers (`TopicPracticeScreen`,
+  `WeakSpotDetailScreen`) now pass a `subscriptionService` the function
+  always consults, no boolean any caller can use to skip it.
+- **New policy:** `hasFullAccess == true` → unchanged, only
+  `dailySessionLimit` applies. `hasFullAccess == false` → checked against a
+  new, independent daily counter, `StorageService.freeDailyPracticeLimit`
+  (`1`/day) — the free tier's one real "Practice this" session, separate
+  from `dailySessionLimit` and from Daily Test's own cache, matching PRD v2
+  §12.2's tiers. Limit reached → the same `PremiumScreen` Home's locked
+  card already opens, not a new dialog.
+- **A free session skips the length picker and always generates the
+  shortest set** (`PracticeLength.quick`, 3 questions) — the previous
+  behavior let a free session pick the most expensive length for free.
+  Premium's picker is unchanged.
+- **Storage:** a new `free_practice_usage(day, session_count)` table,
+  deliberately not sharing `daily_session_usage` or `daily_test_sets` —
+  same local-calendar-day reset convention as both (`StorageService`'s
+  `_todayKey()`, now backed by an injectable test clock,
+  `clockForTesting`, added in this batch for exactly this kind of
+  day-rollover test).
+- **Quota is consumed on generation success**, at the same moment
+  `recordSessionStarted()` already fires — a failed generation never burns
+  the day's one free session.
+- **Onboarding is unaffected by design**: the Day-0 Daily Test never reads
+  or writes `free_practice_usage` — verified by a new test asserting
+  neither method is ever called during that flow, not just assumed from
+  reading the code.
+- **Review's weak-spot list stays visually unlocked** (`WeakSpotCard.locked`
+  still defaults to `false` there) — reading your own past mistakes is
+  genuinely free; only the practice action on the detail screen is gated.
+  `WeakSpotDetailScreen`'s bottom action now has two states: an enabled
+  button with a caption naming the remaining free count when quota is
+  available, or — when it's exhausted — a locked row in the exact visual
+  language `HomeScreen`'s locked Topic Practice card already uses (reusing
+  `LockedPremiumPill` directly, not a new treatment), tapping through to
+  `PremiumScreen` with `sourceContext` naming the weak spot.
+- **Checked, not found:** no existing UI copy (`PremiumScreen`/paywall
+  included) claims "unlimited" anywhere — grepped across `lib/` to confirm
+  before writing this batch's own copy, which also avoids the word, since
+  premium is actually bounded by `dailySessionLimit` (10/day), not
+  unlimited.
+- **Analytics:** two new events, `free_practice_used` and
+  `free_practice_quota_exhausted`, so post-launch data can actually say
+  whether `freeDailyPracticeLimit = 1` is the right number, not just
+  whether the gate exists.
+- Full test suite: 251 tests passing (up from 237), including new coverage
+  of the choke point through both real entry points, the exhausted-quota UI
+  state, the day-rollover seam, and the onboarding-independence invariant
+  above. `flutter analyze` clean.
+
+**Open decision, found while implementing the above, not resolved —
+proxy quota headroom for premium.** A full premium Topic Practice session
+costs **2** proxy quota units (`generate_practice_set` + `score_answers`,
+`proxy/src/index.ts`), and `dailySessionLimit` allows **10** sessions/day —
+up to 20 units against a `DEVICE_DAILY_LIMIT` of **15**
+(`proxy/wrangler.jsonc`). A premium user practicing normally can hit the
+proxy's per-device wall (a generic "come back tomorrow" message, not
+anything premium-aware) before ever reaching their own local cap. Needs a
+decision before launch: raise `DEVICE_DAILY_LIMIT` to ~25, or lower
+`dailySessionLimit` to 7. Not resolved here — recorded so it isn't lost.
+
 ---
 
 ## What's next
@@ -614,8 +724,29 @@ actually exists):
     existing zone, forwarding to a personal inbox. Receive-only: replies still
     leave from the personal address until an SMTP sender is added. Not urgent,
     but it is a real gap for a public support address.
-  - Still nothing done: no RevenueCat account, no App Store Connect app
-    record, no products. Purchases still fail safe in the app.
+  - **Updated 2026-09-14** (this bullet previously read "Still nothing done:
+    no RevenueCat account, no App Store Connect app record, no products"):
+    the RevenueCat key is set in `config/*.json`, the App Store Connect app
+    record exists, and Firebase is connected. **Subscription products still do
+    not exist** — they cannot be created until Paid Apps is Active.
+  - **Bank account submitted 2026-09-14** — a personal USD account at Ziraat,
+    pending Apple's verification; Paid Apps stays *Pending User Info* until it
+    clears. This reverses the "deliberately not submitted yet" line above; the
+    reasoning is in the reversal note below.
+  - **EU DSA trader verification — In Review** (Apple case 102955281512). The
+    Turkish utility bill submitted as address proof was rejected **for
+    language only**, not content: Apple's document review reads nine
+    languages, Turkish not among them. A signed, self-certified English
+    translation was uploaded with the Turkish original attached, translation
+    first, page 1 only — the page Apple already had; adding unseen pages would
+    have restarted content review. While preparing it the declared trader
+    address turned out to be incomplete (street name plus an unverifiable site
+    name, no neighbourhood, building or apartment number). A membership
+    information change request was filed to match the invoice exactly:
+    *Aydinli Mah. Ozlu Sk. No:1 D:9, Tuzla, Istanbul 34953, Turkiye* — and the
+    correction was disclosed to Apple in the reply on the case rather than
+    left for the reviewer to find. This address is published publicly on EU
+    product pages.
 
 - **Bank account is a tax decision, not a banking preference (2026-09-07).**
   Turkey's GVK Mükerrer 20/B exemption covers mobile app development income
@@ -628,6 +759,31 @@ actually exists):
   verification. Currency (TRY vs USD) is being settled with an accountant at
   the same time, because the withholding mechanics differ. Not tax advice —
   recorded here as the reason this step is deliberately paused.
+
+  **Reversed 2026-09-14.** The dedicated-account-first order was dropped once
+  it became clear what the 20/B application actually triggers: confirming the
+  istisna belgesi dilekçesi files an *işe başlama bildirimi* with SGK and
+  starts **4/b (Bağ-Kur)** — roughly 10,157 TL/month in 2026, running from
+  that date whether or not there is any revenue. The key realisation is that
+  **Bağ-Kur is the price of monetizing, not the price of 20/B**: any
+  commercial income creates mükellefiyet, which creates 4/b, so skipping 20/B
+  would keep the premium and merely forfeit the flat-15%-final treatment while
+  adding beyanname, geçici vergi, defter and an accountant. The order was
+  therefore inverted: a personal USD account goes in now to unblock Paid Apps
+  so that products and RevenueCat can proceed, and the 20/B dilekçe — saved as
+  a draft in Dijital Vergi Dairesi — is confirmed later. Apple pays ~45 days
+  after the fiscal month closes and the certificate plus branch account takes
+  ~2 weeks, so the dilekçe gets confirmed about **3 weeks before the expected
+  first payout**, then the App Store Connect bank account is switched.
+  **The trigger is a date, not a revenue level:** the exemption never applies
+  retroactively, so it is the first payout landing in a non-dedicated account
+  that would cost it, however small that payout is.
+
+  A free launch was weighed as the alternative that avoids the premium
+  entirely — the Free Apps Agreement is already Active and needs no bank
+  account — and was **explicitly rejected**: working on funnel-flow
+  optimization is one of the goals of this project, and shipping free defers
+  exactly that. Recorded so the option is not re-opened without new reasons.
 
 - **Bundle ID: fixed, closed 2026-09-13** (was: "still Flutter's placeholder —
   launch blocker found 2026-09-07"). `ios/Runner.xcodeproj/project.pbxproj`
@@ -687,6 +843,14 @@ actually exists):
   status in the v2.2 section below.
 - **README overhaul: confirmed applied** (verified against the repo
   2026-09-05). Closed.
+- **Open decision, found 2026-09-15, not yet resolved: proxy quota headroom
+  for a premium user.** A full Topic Practice session costs 2 proxy quota
+  units (generate + score); `dailySessionLimit` allows 10/day = up to 20
+  units against `DEVICE_DAILY_LIMIT`'s 15. A premium user practicing
+  normally can hit the proxy's generic per-device wall before their own
+  local cap ever kicks in. Needs a decision before launch: raise
+  `DEVICE_DAILY_LIMIT` to ~25, or lower `dailySessionLimit` to 7. See the
+  2026-09-15 "Free tier practice quota" entry above for how this was found.
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
