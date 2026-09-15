@@ -75,6 +75,8 @@ Future<void> launchPracticeSet({
         MaterialPageRoute(
           builder: (_) => PremiumScreen(
             storageService: storageService,
+            analyticsService: analyticsService,
+            analyticsSource: AnalyticsService.paywallSourcePracticeLaunch,
             subscriptionService: subscriptionService,
             sourceContext: topic.title,
           ),

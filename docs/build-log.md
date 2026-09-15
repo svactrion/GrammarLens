@@ -3138,3 +3138,66 @@ sub-headline)
   centered composition.
 - **[Product]** `flutter analyze` and the full test suite (327 tests, up
   from 322) clean.
+
+## 2026-09-15 (Premium screen redesign, Batch 4 — paywall analytics)
+
+- **[Engineering] Four new PII-free events on `AnalyticsService`**,
+  matching its existing pattern exactly (a plain `Future<void>` method
+  per event, named string constants for every enum-shaped parameter,
+  routed through the same private `_logEvent`): `paywallViewed(source)`,
+  `paywallDismissed({source, method})`, `purchaseStarted(plan)`,
+  `purchaseResult({plan, outcome})`. `source` is one of four constants
+  (`paywallSourceHome`/`WeakSpotQuota`/`PracticeLaunch`/`Onboarding`) —
+  one per real `PremiumScreen` push call site, confirmed by reading each
+  one in Batch 0, not guessed. `method` is `close_button`/`maybe_later`/
+  `system_back`. `plan` is `monthly`/`annual`. `outcome` is `success`/
+  `cancelled`/`error` (the last one renamed from `PurchaseOutcome`'s own
+  `failure` to match the word already used everywhere this outcome is
+  shown to a user). `AnalyticsService.modeSelected` and
+  `freePracticeQuotaExhausted` are completely untouched — confirmed by
+  diff, not just by not having edited them.
+- **`PremiumScreen` gained `required AnalyticsService analyticsService` and
+  `required String analyticsSource`** — the latter deliberately required,
+  not defaulted, since Batch 0 already established there are exactly four
+  real entry points and no "unknown" case worth a silent fallback.
+  `paywallViewed` fires once in `initState`.
+- **`purchaseStarted`/`purchaseResult` wired into `_startTrial`** — the
+  plan id is read from `_selectedPeriod` (whichever card is actually
+  selected when the button is tapped, not always the preselected annual
+  one), and `purchaseResult` always fires after the real
+  `subscriptionService.purchasePackage` call resolves, mapping
+  `PurchaseOutcome` to the three outcome strings.
+- **`paywallDismissed` needed real design work, not just a call at each
+  button** — three genuinely different trigger shapes exist: the X
+  button and "Maybe later" each have their own `onPressed` (trivial to
+  tag directly), but a system back gesture/hardware back button reaches
+  a pop without going through either. Solved by wrapping the screen in
+  `PopScope` (`canPop: true` — purely observing, not blocking, unlike
+  `AvatarPickerScreen`'s own `PopScope` which has a real before-the-pop
+  timing requirement this screen doesn't) plus a new `_exitHandled` flag:
+  `_dismiss()` (shared by X, "Maybe later," and the post-success
+  "Continue") sets it *before* triggering the pop, so `PopScope`'s own
+  observer can tell "already logged by a specific button" apart from "a
+  system back that reached a pop with none of this screen's own code
+  involved" — logging `system_back` only in the latter case, and never
+  double-logging when `_dismiss()`'s own `Navigator.pop()` call is what
+  triggers the observer. The post-success "Continue" path calls
+  `_dismiss()` with no dismiss method at all — a completed purchase
+  isn't an abandonment, and it's already covered by `purchaseResult`.
+- **[Engineering] New `_FakeAnalyticsService`** (`premium_screen_test.dart`)
+  records every call (name + parameters) instead of hitting Firebase,
+  the same "fake the platform-channel-backed service" approach this
+  suite already uses for `SubscriptionService`. Eight new tests cover:
+  `paywall_viewed` firing once with the right source; `paywall_dismissed`
+  for all three methods (the `system_back` one driven by
+  `tester.binding.handlePopRoute()` — the standard way to simulate a
+  real system back gesture in a widget test, not a button tap); the
+  purchase-flow pair firing in order with the correct plan id for both
+  the preselected annual and a switched-to monthly selection, across all
+  three outcomes; and that a successful purchase's "Continue" logs no
+  `paywall_dismissed`. `analytics_service_test.dart` gained six more
+  "does not throw without a Firebase project" tests for the new methods
+  (plus the two from the free-practice-quota batch, which turned out to
+  have been added to the service without ever getting one here).
+- **[Product]** `flutter analyze` and the full test suite (340 tests, up
+  from 327) clean.

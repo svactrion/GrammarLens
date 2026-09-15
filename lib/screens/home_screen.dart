@@ -257,6 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(
         builder: (_) => PremiumScreen(
           storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          analyticsSource: AnalyticsService.paywallSourceHome,
           subscriptionService: widget.subscriptionService,
           sourceContext: sourceContext,
         ),

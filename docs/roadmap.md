@@ -4,15 +4,24 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (Premium screen redesign, Batch 3 shipped —
-a hero avatar group at the top (the user's own avatar front-and-center,
+**Last updated:** 2026-09-15 (Premium screen redesign closed out — Batch
+4 shipped four new paywall analytics events (`paywall_viewed`,
+`paywall_dismissed`, `purchase_started`, `purchase_result`), tagged by
+the four real entry points Batch 0 confirmed. The dismissal event needed
+a genuinely designed solution, not just a call per button: a system back
+gesture reaches a pop without going through any of this screen's own
+`onPressed` handlers, solved with an observing `PopScope` plus an
+`_exitHandled` flag so it never double-logs. See "Premium screen
+redesign, underway" below and `docs/build-log.md`'s same-date entries
+for the full four-batch arc. Previous update, same day (Batch 3, hero
+avatar group): a hero avatar group at the top (the user's own avatar
+front-and-center,
 four others deterministically picked, layered behind it), no `Hero`
 wrapper on any of them since this screen has no push/pop flight partner
 and wrapping would risk colliding with Home's/Settings' own avatar Hero
 tags. Found and fixed a real accessibility gap while building it, not
 just in review: a bare `AvatarTile` carries no semantic label on its
-own. See "Premium screen redesign, underway" below and
-`docs/build-log.md`'s same-date entries. Previous update, same day
+own. Previous update, same day
 (Batch 2, structure): the CTA is now genuinely pinned in a fixed footer
 instead of just
 happening to fit on one common screen size, the comparison table merged
@@ -1164,6 +1173,20 @@ measurement below: `docs/build-log.md`, same date.
   mostly-noisy ones. Sub-headline "Practice the mistakes you actually
   make." added below the existing contextual headline. 327 tests passing
   (up from 322), `flutter analyze` clean.
+- **Batch 4 (paywall analytics) — shipped, closes this redesign.** Four
+  new PII-free events on `AnalyticsService` — `paywall_viewed {source}`,
+  `paywall_dismissed {source, method}`, `purchase_started {plan}`,
+  `purchase_result {plan, outcome}` — `source` matching the four real
+  push call sites Batch 0 confirmed (home, weak_spot_quota,
+  practice_launch, onboarding). The dismissal event needed real design
+  work: a system back gesture reaches a pop without going through either
+  of the screen's own buttons, solved with an observing (not blocking)
+  `PopScope` plus an `_exitHandled` flag so it never double-logs whatever
+  a button's own `onPressed` already tagged, and a completed purchase's
+  "Continue" logs no dismissal at all (already covered by
+  `purchase_result`). `modeSelected`/`freePracticeQuotaExhausted`
+  untouched, confirmed by diff. 340 tests passing (up from 327),
+  `flutter analyze` clean.
 
 ---
 

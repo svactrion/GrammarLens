@@ -60,6 +60,72 @@ class AnalyticsService {
     return _logEvent('free_practice_quota_exhausted');
   }
 
+  /// `PremiumScreen`'s `source` identifiers (`paywall_viewed`/
+  /// `paywall_dismissed`) — one per distinct push call site, confirmed by
+  /// reading each one rather than guessed: Home's own Premium row and
+  /// locked-Topic-Practice-card taps (both funnel through the same push),
+  /// the weak-spot detail screen's quota-exhausted redirect,
+  /// `launchPracticeSet`'s own backstop version of that same check, and
+  /// the Day-0 onboarding pitch.
+  static const String paywallSourceHome = 'home';
+  static const String paywallSourceWeakSpotQuota = 'weak_spot_quota';
+  static const String paywallSourcePracticeLaunch = 'practice_launch';
+  static const String paywallSourceOnboarding = 'onboarding';
+
+  /// `PremiumScreen`'s dismissal methods (`paywall_dismissed`) — the X in
+  /// the band, the footer's "Maybe later", or a system back gesture/
+  /// hardware back button (the one path not triggered by this app's own
+  /// code, so `PremiumScreen` has to observe it via `PopScope` rather than
+  /// tag it at a specific `onPressed`). Never logged for the post-success
+  /// "Continue" button — that's a completed purchase, not an abandonment,
+  /// and already covered by [purchaseResult].
+  static const String paywallDismissCloseButton = 'close_button';
+  static const String paywallDismissMaybeLater = 'maybe_later';
+  static const String paywallDismissSystemBack = 'system_back';
+
+  /// `PremiumScreen`'s plan identifiers (`purchase_started`/
+  /// `purchase_result`) — matches its own two `Package`s (PRD v2 §13.3).
+  static const String planMonthly = 'monthly';
+  static const String planAnnual = 'annual';
+
+  /// A `PremiumScreen` visit — fired once per screen mount, tagged by
+  /// [source] (see the `paywallSource*` constants above) so post-launch
+  /// data can say which entry points actually convert, not just that the
+  /// paywall was shown somewhere.
+  Future<void> paywallViewed(String source) {
+    return _logEvent('paywall_viewed', {'source': source});
+  }
+
+  /// The paywall was left without buying — [source] is the same entry
+  /// point [paywallViewed] recorded for this visit, [method] one of the
+  /// `paywallDismiss*` constants above.
+  Future<void> paywallDismissed({
+    required String source,
+    required String method,
+  }) {
+    return _logEvent(
+      'paywall_dismissed',
+      {'source': source, 'method': method},
+    );
+  }
+
+  /// A purchase attempt actually started — [plan] is [planMonthly] or
+  /// [planAnnual].
+  Future<void> purchaseStarted(String plan) {
+    return _logEvent('purchase_started', {'plan': plan});
+  }
+
+  /// How a purchase attempt ended — [outcome] is `'success'`,
+  /// `'cancelled'`, or `'error'` (`PurchaseOutcome.failure`'s own event
+  /// name here, matching the wording used everywhere else this outcome is
+  /// shown to the user rather than the enum's internal Dart name).
+  Future<void> purchaseResult({
+    required String plan,
+    required String outcome,
+  }) {
+    return _logEvent('purchase_result', {'plan': plan, 'outcome': outcome});
+  }
+
   Future<void> _logEvent(String name, [Map<String, Object>? parameters]) async {
     try {
       await FirebaseAnalytics.instance

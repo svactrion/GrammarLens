@@ -131,6 +131,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
           dailyTestService: _dailyTestService,
           bottomBuilder: (context) => _DayZeroPaywallCta(
             storageService: widget.storageService,
+            analyticsService: widget.analyticsService,
             onDone: _finish,
           ),
         );
@@ -153,9 +154,11 @@ class _DayZeroPaywallCta extends StatelessWidget {
   // §12.3: whichever path, it ends on Home).
   final VoidCallback onDone;
   final StorageService storageService;
+  final AnalyticsService analyticsService;
 
   const _DayZeroPaywallCta({
     required this.storageService,
+    required this.analyticsService,
     required this.onDone,
   });
 
@@ -190,6 +193,8 @@ class _DayZeroPaywallCta extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) => PremiumScreen(
                       storageService: storageService,
+                      analyticsService: analyticsService,
+                      analyticsSource: AnalyticsService.paywallSourceOnboarding,
                       onDone: onDone,
                     ),
                   ),

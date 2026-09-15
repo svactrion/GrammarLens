@@ -28,4 +28,37 @@ void main() {
       questionCount: 5,
     );
   });
+
+  test('freePracticeUsed does not throw without a Firebase project',
+      () async {
+    await analyticsService.freePracticeUsed();
+  });
+
+  test('freePracticeQuotaExhausted does not throw without a Firebase project',
+      () async {
+    await analyticsService.freePracticeQuotaExhausted();
+  });
+
+  test('paywallViewed does not throw without a Firebase project', () async {
+    await analyticsService.paywallViewed(AnalyticsService.paywallSourceHome);
+  });
+
+  test('paywallDismissed does not throw without a Firebase project',
+      () async {
+    await analyticsService.paywallDismissed(
+      source: AnalyticsService.paywallSourceWeakSpotQuota,
+      method: AnalyticsService.paywallDismissMaybeLater,
+    );
+  });
+
+  test('purchaseStarted does not throw without a Firebase project', () async {
+    await analyticsService.purchaseStarted(AnalyticsService.planAnnual);
+  });
+
+  test('purchaseResult does not throw without a Firebase project', () async {
+    await analyticsService.purchaseResult(
+      plan: AnalyticsService.planMonthly,
+      outcome: 'error',
+    );
+  });
 }

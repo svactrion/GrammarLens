@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/avatar.dart';
 import '../models/practice_length.dart';
 import '../models/user_profile.dart';
+import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
@@ -54,6 +55,15 @@ class PremiumScreen extends StatefulWidget {
   /// them one extra named argument, not a new dependency.
   final StorageService storageService;
 
+  final AnalyticsService analyticsService;
+
+  /// Which of `AnalyticsService`'s `paywallSource*` constants this visit
+  /// came from — required, not optional with a guessed default: every
+  /// real call site is one of exactly four known entry points (checked in
+  /// Batch 0), so there is no "unknown" case worth silently falling back
+  /// to.
+  final String analyticsSource;
+
   /// Called when the user is done here — either they dismissed via "Maybe
   /// later," or a trial just started and they tapped "Continue" — right
   /// before this screen pops itself. Null (the default, for every entry
@@ -73,6 +83,8 @@ class PremiumScreen extends StatefulWidget {
   PremiumScreen({
     super.key,
     required this.storageService,
+    required this.analyticsService,
+    required this.analyticsSource,
     SubscriptionService? subscriptionService,
     this.onDone,
     this.sourceContext,
@@ -106,9 +118,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
   // storage read is in flight.
   late Avatar _userAvatar = _fallbackAvatar;
 
+  // Set by _dismiss() (covers the X button, "Maybe later," and the
+  // post-success "Continue" alike) before it *ever* triggers a pop —
+  // PopScope's own observer below checks this to tell "this app's code
+  // already accounted for the exit" apart from a system back gesture/
+  // hardware back button, which is the one path that reaches a pop
+  // without going through _dismiss() at all.
+  bool _exitHandled = false;
+
   @override
   void initState() {
     super.initState();
+    widget.analyticsService.paywallViewed(widget.analyticsSource);
     _loadOffer();
     _loadAvatar();
   }
@@ -147,9 +168,16 @@ class _PremiumScreenState extends State<PremiumScreen> {
         _PlanPeriod.annual => _annualPackage,
       };
 
+  String get _selectedPlanAnalyticsId => switch (_selectedPeriod) {
+        _PlanPeriod.monthly => AnalyticsService.planMonthly,
+        _PlanPeriod.annual => AnalyticsService.planAnnual,
+      };
+
   Future<void> _startTrial() async {
     final package = _selectedPackage;
     if (package == null) return;
+    final plan = _selectedPlanAnalyticsId;
+    widget.analyticsService.purchaseStarted(plan);
     setState(() {
       _purchaseState = _PurchaseState.purchasing;
       _restoreMessage = null;
@@ -165,6 +193,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
         _purchaseState = _PurchaseState.error;
       }
     });
+    final outcomeId = switch (outcome) {
+      PurchaseOutcome.success => 'success',
+      PurchaseOutcome.cancelled => 'cancelled',
+      PurchaseOutcome.failure => 'error',
+    };
+    widget.analyticsService.purchaseResult(plan: plan, outcome: outcomeId);
   }
 
   Future<void> _restore() async {
@@ -184,10 +218,23 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   /// Shared by "Maybe later," the top-right close button, and the
   /// post-success "Continue" button — all three mean "I'm done with this
-  /// screen." Runs [PremiumScreen.onDone] first (e.g. the Day-0 flow's own
+  /// screen." [dismissMethod] is one of `AnalyticsService`'s
+  /// `paywallDismiss*` constants for the first two (a real abandonment,
+  /// worth logging), or null for "Continue" (a completed purchase, not a
+  /// dismissal — already covered by [purchaseResult]). Sets [_exitHandled]
+  /// unconditionally, before the pop, so the `PopScope` observer below
+  /// never double-logs whichever path actually triggered this. Runs
+  /// [PremiumScreen.onDone] first (e.g. the Day-0 flow's own
   /// onboarding-completion step) so its side effects are in flight before
   /// this route disappears, then pops.
-  void _dismiss() {
+  void _dismiss({String? dismissMethod}) {
+    _exitHandled = true;
+    if (dismissMethod != null) {
+      widget.analyticsService.paywallDismissed(
+        source: widget.analyticsSource,
+        method: dismissMethod,
+      );
+    }
     widget.onDone?.call();
     Navigator.of(context).pop();
   }
@@ -205,7 +252,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final colorScheme = theme.colorScheme;
     final monthly = _monthlyPackage;
     final annual = _annualPackage;
-    final offeringsReady = _offeringsAvailable && monthly != null && annual != null;
+    final offeringsReady =
+        _offeringsAvailable && monthly != null && annual != null;
     final width = MediaQuery.sizeOf(context).width;
     // Matches BrandScaffold's own responsive horizontal padding formula
     // (`body:` bypasses it — see that widget's doc comment — so this
@@ -213,128 +261,148 @@ class _PremiumScreenState extends State<PremiumScreen> {
     // does for the same reason).
     final hPad = (width * 0.045).clamp(16.0, 28.0);
 
-    return BrandScaffold(
-      title: const PageTitle('Premium'),
-      automaticallyImplyLeading: false,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.close_rounded),
-          tooltip: 'Close',
-          onPressed: _dismiss,
-        ),
-      ],
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _AvatarHero(centerAvatar: _userAvatar),
-                  const SizedBox(height: 20),
-                  Text(
-                    _headline,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Practice the mistakes you actually make.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 20),
-                  const _SectionLabel("What's free, trial, and paid"),
-                  const SizedBox(height: 8),
-                  _ComparisonTable(theme: theme, colorScheme: colorScheme),
-                  const SizedBox(height: 20),
-                  if (_loadingOffer)
-                    _PlanCardsSkeleton(colorScheme: colorScheme)
-                  else if (!offeringsReady)
-                    _UnavailableCard(
-                      theme: theme,
-                      colorScheme: colorScheme,
-                      onRetry: () {
-                        setState(() => _loadingOffer = true);
-                        _loadOffer();
-                      },
-                    )
-                  else
-                    _PlanCards(
-                      monthly: monthly,
-                      annual: annual,
-                      selected: _selectedPeriod,
-                      onChanged: (period) =>
-                          setState(() => _selectedPeriod = period),
-                      theme: theme,
-                      colorScheme: colorScheme,
-                    ),
-                  const SizedBox(height: 24),
-                  // Required by App Store guidelines for any screen that
-                  // sells a subscription, regardless of whether pricing
-                  // itself is currently available — always present, never
-                  // gated on an offering existing.
-                  Center(
-                    child: TextButton(
-                      // No explicit style: theme.dart's textButtonTheme
-                      // now covers the orange-on-orange contrast fix this
-                      // call site used to patch individually.
-                      onPressed: _restoring ? null : _restore,
-                      child:
-                          Text(_restoring ? 'Restoring…' : 'Restore Purchases'),
-                    ),
-                  ),
-                  if (_restoreMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Center(
-                        child: Text(
-                          _restoreMessage!,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: colorScheme.onSurfaceVariant),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  const Center(
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      children: [
-                        _LegalLink(
-                          label: 'Privacy Policy',
-                          url: AppLinks.privacyPolicyUrl,
-                        ),
-                        _LegalLink(
-                          label: 'Terms of Service',
-                          url: AppLinks.termsUrl,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+    return PopScope(
+      // Observes rather than blocks (canPop stays true): unlike
+      // AvatarPickerScreen's own PopScope, there's no timing-sensitive
+      // side effect that must run *before* the pop here — this only
+      // needs to know, after the fact, whether the pop happened without
+      // going through _dismiss() at all (a system back gesture/hardware
+      // back button), the one path not already tagged with a dismiss
+      // method at its own button.
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop || _exitHandled) return;
+        widget.analyticsService.paywallDismissed(
+          source: widget.analyticsSource,
+          method: AnalyticsService.paywallDismissSystemBack,
+        );
+      },
+      child: BrandScaffold(
+        title: const PageTitle('Premium'),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: 'Close',
+            onPressed: () => _dismiss(
+              dismissMethod: AnalyticsService.paywallDismissCloseButton,
             ),
           ),
-          _PremiumFooter(
-            key: const Key('premiumFooter'),
-            loading: _loadingOffer,
-            offeringsReady: offeringsReady,
-            purchaseState: _purchaseState,
-            disclosureText:
-                offeringsReady ? _disclosureText(_selectedPackage!) : null,
-            onStartTrial: _startTrial,
-            onContinue: _dismiss,
-            onMaybeLater: _dismiss,
-            theme: theme,
-            colorScheme: colorScheme,
-            horizontalPadding: hPad,
-          ),
         ],
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _AvatarHero(centerAvatar: _userAvatar),
+                    const SizedBox(height: 20),
+                    Text(
+                      _headline,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Practice the mistakes you actually make.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 20),
+                    const _SectionLabel("What's free, trial, and paid"),
+                    const SizedBox(height: 8),
+                    _ComparisonTable(theme: theme, colorScheme: colorScheme),
+                    const SizedBox(height: 20),
+                    if (_loadingOffer)
+                      _PlanCardsSkeleton(colorScheme: colorScheme)
+                    else if (!offeringsReady)
+                      _UnavailableCard(
+                        theme: theme,
+                        colorScheme: colorScheme,
+                        onRetry: () {
+                          setState(() => _loadingOffer = true);
+                          _loadOffer();
+                        },
+                      )
+                    else
+                      _PlanCards(
+                        monthly: monthly,
+                        annual: annual,
+                        selected: _selectedPeriod,
+                        onChanged: (period) =>
+                            setState(() => _selectedPeriod = period),
+                        theme: theme,
+                        colorScheme: colorScheme,
+                      ),
+                    const SizedBox(height: 24),
+                    // Required by App Store guidelines for any screen that
+                    // sells a subscription, regardless of whether pricing
+                    // itself is currently available — always present, never
+                    // gated on an offering existing.
+                    Center(
+                      child: TextButton(
+                        // No explicit style: theme.dart's textButtonTheme
+                        // now covers the orange-on-orange contrast fix this
+                        // call site used to patch individually.
+                        onPressed: _restoring ? null : _restore,
+                        child: Text(
+                            _restoring ? 'Restoring…' : 'Restore Purchases'),
+                      ),
+                    ),
+                    if (_restoreMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Center(
+                          child: Text(
+                            _restoreMessage!,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    const Center(
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _LegalLink(
+                            label: 'Privacy Policy',
+                            url: AppLinks.privacyPolicyUrl,
+                          ),
+                          _LegalLink(
+                            label: 'Terms of Service',
+                            url: AppLinks.termsUrl,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            _PremiumFooter(
+              key: const Key('premiumFooter'),
+              loading: _loadingOffer,
+              offeringsReady: offeringsReady,
+              purchaseState: _purchaseState,
+              disclosureText:
+                  offeringsReady ? _disclosureText(_selectedPackage!) : null,
+              onStartTrial: _startTrial,
+              onContinue: _dismiss,
+              onMaybeLater: () => _dismiss(
+                dismissMethod: AnalyticsService.paywallDismissMaybeLater,
+              ),
+              theme: theme,
+              colorScheme: colorScheme,
+              horizontalPadding: hPad,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -350,8 +418,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
 List<Avatar> _otherAvatarsFor(Avatar center) {
   const offsets = [2, 4, 6, 8];
   return offsets
-      .map((offset) =>
-          Avatar.values[(center.index - 1 + offset) % Avatar.count])
+      .map(
+          (offset) => Avatar.values[(center.index - 1 + offset) % Avatar.count])
       .toList();
 }
 
@@ -740,7 +808,8 @@ class _ComparisonTable extends StatelessWidget {
   /// need only one line just centers within the extra room.
   double _measuredHeight(BuildContext context, TextStyle style, int maxLines) {
     final painter = TextPainter(
-      text: TextSpan(text: List.filled(maxLines, 'Mg').join('\n'), style: style),
+      text:
+          TextSpan(text: List.filled(maxLines, 'Mg').join('\n'), style: style),
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
@@ -786,7 +855,8 @@ class _ComparisonTable extends StatelessWidget {
   }
 }
 
-const TextStyle _headerStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+const TextStyle _headerStyle =
+    TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
 
 class _ComparisonHeaderRow extends StatelessWidget {
   final ColorScheme colorScheme;
@@ -896,8 +966,8 @@ class _ComparisonRowLine extends StatelessWidget {
                         row.label,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(fontSize: 13),
+                        style:
+                            theme.textTheme.bodySmall?.copyWith(fontSize: 13),
                       ),
                     ),
                     if (row.freeLabel != null)

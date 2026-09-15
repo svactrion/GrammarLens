@@ -129,6 +129,8 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
       MaterialPageRoute(
         builder: (_) => PremiumScreen(
           storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          analyticsSource: AnalyticsService.paywallSourceWeakSpotQuota,
           subscriptionService: widget.subscriptionService,
           sourceContext: humanizeSlug(widget.spot.errorType),
         ),

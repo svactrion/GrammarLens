@@ -8,9 +8,58 @@ import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+
+/// Records every call instead of the real (best-effort, silently
+/// swallowed) Firebase call — needed so a test can assert exactly which
+/// analytics events fired, in what order, with what parameters.
+class _FakeAnalyticsCall {
+  final String name;
+  final Map<String, Object?> parameters;
+  const _FakeAnalyticsCall(this.name, this.parameters);
+
+  @override
+  String toString() => '$name($parameters)';
+}
+
+class _FakeAnalyticsService extends AnalyticsService {
+  final List<_FakeAnalyticsCall> calls = [];
+
+  @override
+  Future<void> paywallViewed(String source) async {
+    calls.add(_FakeAnalyticsCall('paywall_viewed', {'source': source}));
+  }
+
+  @override
+  Future<void> paywallDismissed({
+    required String source,
+    required String method,
+  }) async {
+    calls.add(_FakeAnalyticsCall(
+      'paywall_dismissed',
+      {'source': source, 'method': method},
+    ));
+  }
+
+  @override
+  Future<void> purchaseStarted(String plan) async {
+    calls.add(_FakeAnalyticsCall('purchase_started', {'plan': plan}));
+  }
+
+  @override
+  Future<void> purchaseResult({
+    required String plan,
+    required String outcome,
+  }) async {
+    calls.add(_FakeAnalyticsCall(
+      'purchase_result',
+      {'plan': plan, 'outcome': outcome},
+    ));
+  }
+}
 
 /// Real [SubscriptionService] methods go through RevenueCat's platform
 /// channel, which just hangs forever in a plain widget test (no engine to
@@ -135,6 +184,7 @@ void main() {
     WidgetTester tester,
     SubscriptionService service, {
     String? sourceContext,
+    AnalyticsService? analyticsService,
   }) async {
     // The default test surface (800x600 logical px) is too short to lay
     // out the table + purchase block + legal links without scrolling, and
@@ -150,6 +200,8 @@ void main() {
       MaterialApp(
         home: PremiumScreen(
           storageService: _FakeStorageServiceForAvatar(),
+          analyticsService: analyticsService ?? _FakeAnalyticsService(),
+          analyticsSource: AnalyticsService.paywallSourceHome,
           subscriptionService: service,
           sourceContext: sourceContext,
         ),
@@ -165,6 +217,7 @@ void main() {
     WidgetTester tester,
     SubscriptionService service, {
     VoidCallback? onDone,
+    AnalyticsService? analyticsService,
   }) async {
     tester.view.physicalSize = const Size(390, 844) * 3.0;
     tester.view.devicePixelRatio = 3.0;
@@ -181,6 +234,9 @@ void main() {
                   MaterialPageRoute(
                     builder: (_) => PremiumScreen(
                       storageService: _FakeStorageServiceForAvatar(),
+                      analyticsService:
+                          analyticsService ?? _FakeAnalyticsService(),
+                      analyticsSource: AnalyticsService.paywallSourceHome,
                       subscriptionService: service,
                       onDone: onDone,
                     ),
@@ -380,6 +436,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService:
                 _FakeSubscriptionService(offeringsCompleter: completer),
           ),
@@ -764,6 +822,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService:
                 _FakeSubscriptionService(offering: _offeringWithBothPlans()),
           ),
@@ -801,6 +861,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService: service,
           ),
         ),
@@ -856,6 +918,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService:
                 _FakeSubscriptionService(offeringsCompleter: completer),
           ),
@@ -1050,6 +1114,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(profile),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService: _FakeSubscriptionService(offering: null),
           ),
         ),
@@ -1070,6 +1136,8 @@ void main() {
           MaterialApp(
             home: PremiumScreen(
               storageService: _FakeStorageServiceForAvatar(profile),
+              analyticsService: _FakeAnalyticsService(),
+              analyticsSource: AnalyticsService.paywallSourceHome,
               subscriptionService: _FakeSubscriptionService(offering: null),
             ),
           ),
@@ -1099,6 +1167,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(legacyProfile),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService: _FakeSubscriptionService(offering: null),
           ),
         ),
@@ -1119,6 +1189,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(profile),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService: _FakeSubscriptionService(offering: null),
           ),
         ),
@@ -1139,6 +1211,8 @@ void main() {
         MaterialApp(
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(profile),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
             subscriptionService: _FakeSubscriptionService(offering: null),
           ),
         ),
@@ -1147,6 +1221,164 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(AvatarTile), findsNWidgets(5));
+    });
+  });
+
+  group('paywall analytics (Batch 4)', () {
+    testWidgets('paywall_viewed fires once on mount with the correct source',
+        (tester) async {
+      final analytics = _FakeAnalyticsService();
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: null),
+        analyticsService: analytics,
+      );
+
+      final viewed =
+          analytics.calls.where((c) => c.name == 'paywall_viewed').toList();
+      expect(viewed, hasLength(1));
+      expect(viewed.single.parameters['source'],
+          AnalyticsService.paywallSourceHome);
+    });
+
+    testWidgets(
+        'tapping the close button logs paywall_dismissed with method '
+        'close_button', (tester) async {
+      final analytics = _FakeAnalyticsService();
+      await pumpPremiumPushed(
+        tester,
+        _FakeSubscriptionService(offering: null),
+        analyticsService: analytics,
+      );
+
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+
+      final dismissed = analytics.calls
+          .where((c) => c.name == 'paywall_dismissed')
+          .toList();
+      expect(dismissed, hasLength(1));
+      expect(dismissed.single.parameters['method'],
+          AnalyticsService.paywallDismissCloseButton);
+      expect(dismissed.single.parameters['source'],
+          AnalyticsService.paywallSourceHome);
+    });
+
+    testWidgets(
+        'tapping "Maybe later" logs paywall_dismissed with method '
+        'maybe_later', (tester) async {
+      final analytics = _FakeAnalyticsService();
+      await pumpPremiumPushed(
+        tester,
+        _FakeSubscriptionService(offering: null),
+        analyticsService: analytics,
+      );
+
+      await scrollAndTap(tester, find.text('Maybe later'));
+
+      final dismissed = analytics.calls
+          .where((c) => c.name == 'paywall_dismissed')
+          .toList();
+      expect(dismissed, hasLength(1));
+      expect(dismissed.single.parameters['method'],
+          AnalyticsService.paywallDismissMaybeLater);
+    });
+
+    testWidgets(
+        'a system back gesture (no button tapped) logs paywall_dismissed '
+        'with method system_back, via PopScope observing the pop rather '
+        'than a specific onPressed', (tester) async {
+      final analytics = _FakeAnalyticsService();
+      await pumpPremiumPushed(
+        tester,
+        _FakeSubscriptionService(offering: null),
+        analyticsService: analytics,
+      );
+
+      // The standard way to simulate a hardware/gesture back in a widget
+      // test — this reaches the same Navigator.maybePop() path a real
+      // system back would, without going through any of this screen's
+      // own buttons.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PremiumScreen), findsNothing);
+      final dismissed = analytics.calls
+          .where((c) => c.name == 'paywall_dismissed')
+          .toList();
+      expect(dismissed, hasLength(1));
+      expect(dismissed.single.parameters['method'],
+          AnalyticsService.paywallDismissSystemBack);
+    });
+
+    testWidgets(
+        'a successful purchase logs purchase_started then '
+        'purchase_result(success) for the preselected annual plan, and '
+        'the post-success "Continue" logs no paywall_dismissed at all',
+        (tester) async {
+      final analytics = _FakeAnalyticsService();
+      final service = _FakeSubscriptionService(
+        offering: _offeringWithBothPlans(),
+        purchaseOutcome: PurchaseOutcome.success,
+      );
+      await pumpPremium(tester, service, analyticsService: analytics);
+
+      await scrollAndTap(tester, find.text('Start free trial'));
+
+      expect(
+        analytics.calls.map((c) => c.name),
+        containsAllInOrder(['purchase_started', 'purchase_result']),
+      );
+      final started =
+          analytics.calls.firstWhere((c) => c.name == 'purchase_started');
+      expect(started.parameters['plan'], AnalyticsService.planAnnual);
+      final result =
+          analytics.calls.firstWhere((c) => c.name == 'purchase_result');
+      expect(result.parameters['plan'], AnalyticsService.planAnnual);
+      expect(result.parameters['outcome'], 'success');
+
+      await scrollAndTap(tester, find.text('Continue'));
+      expect(
+        analytics.calls.where((c) => c.name == 'paywall_dismissed'),
+        isEmpty,
+        reason: 'a completed purchase is not an abandonment — already '
+            'covered by purchase_result',
+      );
+    });
+
+    testWidgets(
+        'switching to Monthly before purchasing logs plan: monthly, '
+        'outcome: cancelled', (tester) async {
+      final analytics = _FakeAnalyticsService();
+      final service = _FakeSubscriptionService(
+        offering: _offeringWithBothPlans(),
+        purchaseOutcome: PurchaseOutcome.cancelled,
+      );
+      await pumpPremium(tester, service, analyticsService: analytics);
+
+      await scrollAndTap(tester, find.text('Monthly'));
+      await scrollAndTap(tester, find.text('Start free trial'));
+
+      final result =
+          analytics.calls.firstWhere((c) => c.name == 'purchase_result');
+      expect(result.parameters['plan'], AnalyticsService.planMonthly);
+      expect(result.parameters['outcome'], 'cancelled');
+    });
+
+    testWidgets('a failed purchase logs purchase_result(error)',
+        (tester) async {
+      final analytics = _FakeAnalyticsService();
+      final service = _FakeSubscriptionService(
+        offering: _offeringWithBothPlans(),
+        purchaseOutcome: PurchaseOutcome.failure,
+      );
+      await pumpPremium(tester, service, analyticsService: analytics);
+
+      await scrollAndTap(tester, find.text('Start free trial'));
+
+      final result =
+          analytics.calls.firstWhere((c) => c.name == 'purchase_result');
+      expect(result.parameters['outcome'], 'error');
     });
   });
 }
