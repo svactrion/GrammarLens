@@ -29,6 +29,13 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   final ClaudeService _claudeService = ClaudeService();
   final StorageService _storageService = StorageService();
   final AnalyticsService _analyticsService = AnalyticsService();
+  // Shared explicitly with both HomeScreen and ReviewScreen (rather than
+  // each defaulting to its own `SubscriptionService()`) so both go through
+  // one instance at this level, matching how the other three services
+  // above are already shared — `SubscriptionService`'s own entitlement/
+  // override state is static regardless, but there's no reason for this
+  // one to be the odd one out.
+  final SubscriptionService _subscriptionService = SubscriptionService();
   int _tabIndex = 0;
   AppThemeMode _themeMode = AppThemeMode.system;
 
@@ -83,7 +90,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   Future<void> _loadDebugAccessOverride() async {
     try {
       final override = await _storageService.getDebugAccessOverride();
-      await SubscriptionService().setDebugAccessOverride(override);
+      await _subscriptionService.setDebugAccessOverride(override);
     } catch (_) {
       // No persisted override (or storage unavailable) — leave unset.
     }
@@ -151,12 +158,14 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
+              subscriptionService: _subscriptionService,
               onAvatarTap: () => _switchTab(2),
             ),
             ReviewScreen(
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
+              subscriptionService: _subscriptionService,
               // IndexedStack keeps this screen's State alive across tab
               // switches instead of recreating it, so initState alone won't
               // pick up errors saved while a different tab (e.g. after a

@@ -6,6 +6,7 @@ import '../models/topic_stats.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import '../utils/loading_view.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
@@ -19,12 +20,14 @@ class TopicPracticeScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final AnalyticsService analyticsService;
+  final SubscriptionService subscriptionService;
 
   const TopicPracticeScreen({
     super.key,
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
+    required this.subscriptionService,
   });
 
   @override
@@ -54,6 +57,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
       claudeService: widget.claudeService,
       storageService: widget.storageService,
       analyticsService: widget.analyticsService,
+      subscriptionService: widget.subscriptionService,
       setGenerating: (value) {
         if (mounted) setState(() => _generating = value);
       },
