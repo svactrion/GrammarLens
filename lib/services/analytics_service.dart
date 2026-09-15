@@ -42,6 +42,24 @@ class AnalyticsService {
     });
   }
 
+  /// A free (non-`hasFullAccess`) user actually started their one daily
+  /// "Practice this" session — the conversion funnel's first half. Without
+  /// this and [freePracticeQuotaExhausted], there's no way to tell after
+  /// launch whether `StorageService.freeDailyPracticeLimit` is the right
+  /// number.
+  Future<void> freePracticeUsed() {
+    return _logEvent('free_practice_used');
+  }
+
+  /// A free user hit `StorageService.freeDailyPracticeLimit` and was routed
+  /// to `PremiumScreen` because of it — logged from both the spot where a
+  /// user taps an already-locked "Practice this" and `launchPracticeSet`'s
+  /// own backstop check, since either one is a real "quota → paywall" event
+  /// worth counting the same way.
+  Future<void> freePracticeQuotaExhausted() {
+    return _logEvent('free_practice_quota_exhausted');
+  }
+
   Future<void> _logEvent(String name, [Map<String, Object>? parameters]) async {
     try {
       await FirebaseAnalytics.instance
