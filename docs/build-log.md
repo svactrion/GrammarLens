@@ -2125,7 +2125,7 @@ consolidated list. Implementation detail not already covered there:
   checklist as an open pre-launch decision (raise `DEVICE_DAILY_LIMIT` to
   ~25, or lower `dailySessionLimit` to 7).
 
-## 2026-09-16 (avatar picker: layout-bug diagnosis, carousel replacement,
+## 2026-09-15 (avatar picker: layout-bug diagnosis, carousel replacement,
 illustrated avatar set)
 
 - **[Product] Bug report, device-verified:** picking the last avatar in
@@ -2273,7 +2273,7 @@ illustrated avatar set)
   `main.dart` by `git diff` after reverting. `flutter analyze` and the
   full test suite (277 tests, up from 251) are clean.
 
-## 2026-09-17 (Home: time-of-day greeting, bigger avatar, one leftover
+## 2026-09-15 (Home: time-of-day greeting, bigger avatar, one leftover
 check from the previous batch)
 
 - **[Product] Fixed "Welcome back" copy, checked what it combined with
@@ -2331,7 +2331,8 @@ check from the previous batch)
   not part of the band at all — so growing the avatar has no effect on
   band height, nothing to report there. Also checked: Settings' own
   avatar row (the one wearing the `Hero` to `AvatarPickerScreen`,
-  2026-09-16) is an independent call site of the same `AvatarTile` widget
+  2026-09-15's avatar-carousel batch) is an independent call site of the
+  same `AvatarTile` widget
   at its own `radius: 26` — untouched by this change, so that `Hero`
   pairing is unaffected. Verified on-device at 2.2× text scale with a
   deliberately long name: the row's existing `Flexible` +
@@ -2347,9 +2348,9 @@ check from the previous batch)
   oversight — the previous batch's own instruction was explicitly to
   expand the palette "to 10" colors, not to 12, and the cycling formula
   was written and documented with that constraint in mind (see
-  `theme.dart`'s own comment on `avatarRingColor`, 2026-09-16). Per this
-  batch's own instruction to leave an intentional decision as-is, no
-  code changed here.
+  `theme.dart`'s own comment on `avatarRingColor`, 2026-09-15's
+  avatar-carousel batch). Per this batch's own instruction to leave an
+  intentional decision as-is, no code changed here.
 - **[Engineering] A real test flake found and fixed while verifying this
   batch, in a test this batch didn't otherwise touch:**
   `settings_screen_test.dart`'s avatar-autosave test used the plain
@@ -2370,7 +2371,7 @@ check from the previous batch)
   reverting. `flutter analyze` and the full test suite (285 tests, up
   from 277) are clean.
 
-## 2026-09-18 (Avatar picker screen: Done button, warmer copy, bigger
+## 2026-09-15 (Avatar picker screen: Done button, warmer copy, bigger
 avatars — scoped to Settings' full-screen picker only)
 
 - **[Product] Scope boundary honored, checked by inspection before and
@@ -2404,7 +2405,8 @@ avatars — scoped to Settings' full-screen picker only)
   already flushes any pending debounced write before the widget goes
   away, specifically so a fast "swipe then immediately leave" doesn't
   lose the change — this was built for the back button in the previous
-  batch (2026-09-16) but is exit-path-agnostic by construction: it fires
+  batch (2026-09-15's avatar-carousel batch) but is exit-path-agnostic by
+  construction: it fires
   on `dispose()`, which *any* pop reaches, Done's included. So Done's
   entire handler is `Navigator.of(context).pop()` — nothing else. Back
   and Done are equivalent exit paths not because they were special-cased
@@ -2468,9 +2470,9 @@ avatars — scoped to Settings' full-screen picker only)
   unchanged. `flutter analyze` and the full test suite (289 tests, up
   from 285) are clean, including three consecutive clean full-suite runs
   to rule out the gesture-based flakiness this exact test file has hit
-  before (2026-09-17).
+  before (2026-09-15's Home greeting/avatar batch).
 
-## 2026-09-19 (Avatar asset fix: the vertical-line bug, Dinosaur → Crab)
+## 2026-09-15 (Avatar asset fix: the vertical-line bug, Dinosaur → Crab)
 
 - **[Product] Diagnosed a vertical-line bug reported inside the
   onboarding carousel's selection ring, on the Dinosaur avatar
@@ -2549,7 +2551,8 @@ avatars — scoped to Settings' full-screen picker only)
   comments now read "Crab" for avatar_07, with a note that it stays in
   that test's coverage for the index/ring-color pairing, not because a
   crab is green.** Deliberately left alone: `docs/build-log.md`'s own
-  2026-09-16 entry and `docs/roadmap.md`'s matching passage, both of
+  2026-09-15 "avatar picker: layout-bug diagnosis, carousel replacement"
+  entry and `docs/roadmap.md`'s matching passage, both of
   which correctly describe the app as it was named at the time — the
   same don't-rewrite-history call already made for the "AI Voice
   Practice" → "AI Practice Partner" rename (2026-09-05, this file).

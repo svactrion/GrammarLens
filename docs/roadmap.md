@@ -4,7 +4,7 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-19 (a vertical-line rendering bug reported on
+**Last updated:** 2026-09-15 (a vertical-line rendering bug reported on
 the onboarding carousel's Dinosaur avatar, diagnosed to a corrupted pixel
 stripe baked into `avatar_07.webp` itself — not a render or layout bug.
 Dinosaur was retired and replaced with a new Crab illustration in that
@@ -13,24 +13,33 @@ re-encoded to match the pipeline, a new regression test that decodes
 every avatar's real bytes and checks its edges, and two much smaller
 pre-existing edge artifacts on unrelated avatars fixed along the way. See
 "Avatar asset fix: the vertical-line bug, Dinosaur → Crab" below and
-`docs/build-log.md`'s 2026-09-19 entry. Previous update 2026-09-18: the
+`docs/build-log.md`'s 2026-09-15 "Avatar asset fix" entry.
+**Note on dates:** this and the next three "previous update" entries
+below were all originally logged with sequentially incremented dates
+(2026-09-16 through 2026-09-19); `git log` shows all four batches were
+actually committed on 2026-09-15, so their dates are corrected here to
+match — see `docs/build-log.md`'s own 2026-09-15 entries for the
+detailed, now-consistent record. Previous update, same day (Avatar
+picker screen): the
 avatar picker screen — Settings' full-screen "Change avatar" — gained a
 "Done" button, warmer/plainer heading copy, and a bigger center avatar
 with neighbors still peeking at the edges; onboarding's embedded carousel
 is untouched. See "Avatar picker screen: Done button, copy, bigger
-avatars" below and `docs/build-log.md`'s 2026-09-18 entry. Previous
-update 2026-09-17:
+avatars" below and `docs/build-log.md`'s 2026-09-15 "Avatar picker
+screen" entry. Previous update, same day (Home greeting):
 Home's greeting is time-of-day now, not a fixed "Welcome back", and its
 avatar is bigger — see "Home: time-of-day greeting + bigger avatar"
-below and `docs/build-log.md`'s 2026-09-17 entry. Also confirmed, not
+below and `docs/build-log.md`'s 2026-09-15 "Home: time-of-day greeting"
+entry. Also confirmed, not
 fixed: the avatar ring palette's 10-into-12 cycling is intentional, from
 the previous batch's own explicit instruction, not an oversight.
-Previous update 2026-09-16: replaced the
+Previous update, same day (Avatar carousel): replaced the
 avatar picker: a real layout bug in the old tap-a-grid-tile picker —
 selecting a tile changed its own footprint and broke the grid — is fixed
 by moving to a swipeable carousel over twelve illustrated avatars, never
 a grid again. See "Avatar carousel" below and `docs/build-log.md`'s
-2026-09-16 entry. Previous update 2026-09-15: closed the free-tier "Practice this" leak —
+2026-09-15 "avatar picker: layout-bug diagnosis, carousel replacement"
+entry. Previous update 2026-09-15: closed the free-tier "Practice this" leak —
 `launchPracticeSet` now checks entitlement and a new per-day free-practice
 quota itself, instead of relying on each screen to gate it. See "Free tier
 practice quota" below and `docs/build-log.md`'s 2026-09-15 entry. Previous
@@ -705,7 +714,7 @@ anything premium-aware) before ever reaching their own local cap. Needs a
 decision before launch: raise `DEVICE_DAILY_LIMIT` to ~25, or lower
 `dailySessionLimit` to 7. Not resolved here — recorded so it isn't lost.
 
-**2026-09-16 — Avatar carousel: fixed the layout bug, replaced the picker
+**2026-09-15 — Avatar carousel: fixed the layout bug, replaced the picker
 and the avatar set.** Diagnosed first, confirmed, then fixed
 (`docs/build-log.md`, same date): `AvatarTile`'s `selected` state used to
 wrap the same fixed-size box in an extra border+padding container,
@@ -754,7 +763,7 @@ layout footprint, anywhere in this app's avatar UI.
   used. `flutter analyze` and the full test suite (277 tests, up from
   251) are clean.
 
-**2026-09-17 — Home: time-of-day greeting + bigger avatar.**
+**2026-09-15 — Home: time-of-day greeting + bigger avatar.**
 
 - **The greeting is time-of-day now, three slices, local device clock:**
   "Good morning" (05:00–11:59), "Good afternoon" (12:00–17:59), "Good
@@ -813,7 +822,7 @@ layout footprint, anywhere in this app's avatar UI.
   commit. `flutter analyze` and the full test suite (285 tests, up from
   277) are clean.
 
-**2026-09-18 — Avatar picker screen: Done button, copy, bigger
+**2026-09-15 — Avatar picker screen: Done button, copy, bigger
 avatars.** Scoped to Settings' full-screen "Change avatar" picker only —
 `AvatarCarousel`'s shared physics, pop, haptic, ring-color transition,
 `Hero`, and onboarding's own embedded use are untouched by design (the
@@ -864,7 +873,7 @@ assumed.
   own screen is pixel-identical to before. `flutter analyze` and the full
   test suite (289 tests, up from 285) are clean.
 
-**2026-09-19 — Avatar asset fix: the vertical-line bug, Dinosaur → Crab.**
+**2026-09-15 — Avatar asset fix: the vertical-line bug, Dinosaur → Crab.**
 A thin vertical line reported inside the onboarding carousel's selection
 ring, on the Dinosaur avatar specifically. Diagnosed first, against real
 pixel data rather than the widget tree: `avatar_07.webp`'s columns 1–3
@@ -892,8 +901,9 @@ along the way: `docs/build-log.md`, same date.
   defects (a couple of imperceptible alpha=1/255 pixels each on
   `avatar_01.webp`/`avatar_03.webp`, unrelated to Dinosaur/Crab) — fixed
   rather than carved out as exceptions to the new test.
-- `docs/build-log.md`'s own 2026-09-16 entry (and this file's matching
-  passage) still say "Dinosaur" — left alone deliberately, same
+- `docs/build-log.md`'s own 2026-09-15 "avatar picker: layout-bug
+  diagnosis, carousel replacement" entry (and this file's matching
+  passage above) still say "Dinosaur" — left alone deliberately, same
   don't-rewrite-history call already made for the "AI Voice Practice" →
   "AI Practice Partner" rename (2026-09-05): they correctly describe the
   app as it was named at the time.
@@ -1072,7 +1082,7 @@ actually exists):
   local cap ever kicks in. Needs a decision before launch: raise
   `DEVICE_DAILY_LIMIT` to ~25, or lower `dailySessionLimit` to 7. See the
   2026-09-15 "Free tier practice quota" entry above for how this was found.
-- **Open bug, found 2026-09-17, not yet fixed: Home doesn't refresh Daily
+- **Open bug, found 2026-09-15, not yet fixed: Home doesn't refresh Daily
   Test's day-rollover (or its own greeting) on resume, because nothing in
   this app hooks `AppLifecycleState` at all.** `HomeScreen._loadTodaysDailyTest`
   only runs from `initState`; a device left open across local midnight
@@ -1081,7 +1091,7 @@ actually exists):
   not automatically at midnight. Needs a `WidgetsBindingObserver` on
   `AppLifecycleState.resumed` — real fix, not a `Timer`. Found while
   checking whether the greeting had something to attach a refresh to; see
-  the 2026-09-17 "Home: time-of-day greeting + bigger avatar" entry above.
+  the 2026-09-15 "Home: time-of-day greeting + bigger avatar" entry above.
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
