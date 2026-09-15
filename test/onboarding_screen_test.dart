@@ -71,6 +71,20 @@ void main() {
   );
 
   testWidgets(
+    'the embedded carousel has no Done button — only the full-screen '
+    "Settings picker (AvatarPickerScreen) does; onboarding's own "
+    'Continue button already covers confirming the whole form',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: OnboardingScreen(onComplete: (_) {})),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(FilledButton, 'Done'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'swiping the carousel before continuing changes which avatar is '
     'actually submitted, not a value re-rolled independently at submit '
     'time',
