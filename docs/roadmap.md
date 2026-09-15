@@ -4,7 +4,12 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (closed the free-tier "Practice this" leak —
+**Last updated:** 2026-09-16 (replaced the avatar picker: a real layout bug
+in the old tap-a-grid-tile picker — selecting a tile changed its own
+footprint and broke the grid — is fixed by moving to a swipeable carousel
+over twelve illustrated avatars, never a grid again. See "Avatar carousel"
+below and `docs/build-log.md`'s 2026-09-16 entry. Previous update
+2026-09-15: closed the free-tier "Practice this" leak —
 `launchPracticeSet` now checks entitlement and a new per-day free-practice
 quota itself, instead of relying on each screen to gate it. See "Free tier
 practice quota" below and `docs/build-log.md`'s 2026-09-15 entry. Previous
@@ -678,6 +683,55 @@ proxy's per-device wall (a generic "come back tomorrow" message, not
 anything premium-aware) before ever reaching their own local cap. Needs a
 decision before launch: raise `DEVICE_DAILY_LIMIT` to ~25, or lower
 `dailySessionLimit` to 7. Not resolved here — recorded so it isn't lost.
+
+**2026-09-16 — Avatar carousel: fixed the layout bug, replaced the picker
+and the avatar set.** Diagnosed first, confirmed, then fixed
+(`docs/build-log.md`, same date): `AvatarTile`'s `selected` state used to
+wrap the same fixed-size box in an extra border+padding container,
+growing the tile by 5px only while selected — enough to make Settings'
+avatar `Wrap` recompute its line breaks and visibly reflow everything
+below it whenever the last tile in a row was tapped. The fix is
+structural, not cosmetic: selection state now never changes any widget's
+layout footprint, anywhere in this app's avatar UI.
+
+- **The picker is a `PageView` carousel now** (`AvatarCarousel`,
+  `lib/widgets/avatar_carousel.dart`), not a grid — the center avatar is
+  the selection, no separate confirm button. Neighbors peek from the
+  edges at reduced scale/opacity, continuously tracking drag position.
+  Settling (not mid-drag) fires a haptic, a brief pop on the center tile,
+  and reports the change — the same widget embedded inline in
+  `OnboardingScreen` (above the name field, not a new step) and pushed
+  as `AvatarPickerScreen` from Settings (autosaves, debounced, no Save
+  button of its own).
+- **Selection itself is a single ring layer behind the `PageView`**
+  (`AnimatedContainer`, recolored on settle, never resized) — the actual
+  fix, not just a different picker shape. `AvatarTile` lost its
+  `selected` parameter entirely rather than keeping a fixed-but-unused
+  knob that caused a real bug once already.
+- **The avatar set is illustrated now**, twelve assets
+  (`assets/avatars/avatar_01.webp`–`avatar_12.webp`, registered as a
+  folder), replacing the previous eight emoji-on-flat-color avatars.
+  `Avatar` (`lib/models/avatar.dart`) is a plain indexed class generated
+  from a single `count` constant, not an enum — adding avatar_13 is
+  "drop the file, add its label, bump the constant," not a new case
+  touching every switch. Ids persist as `avatar_NN`; an unrecognized or
+  legacy id (`Avatar.fromJson`) falls back to `null` — no avatar set,
+  never a crash — which is exactly what happens to a real device's
+  pre-existing profile carrying an old, now-meaningless id like `fox`.
+- **The ring color palette carried forward, renamed and expanded** — see
+  `docs/design-audit.md`'s own updated status note on the "named
+  exception" section for the full reasoning; ten colors now
+  (`avatarRingColor1`–`10`), cycling across the twelve avatars, verified
+  by a regression test that none of the three green-illustrated avatars
+  (Frog, Dinosaur, Turtle) ever lands on a green-ish ring.
+- **`Hero`** ties the picker's centered avatar to Settings' own preview
+  row for the return flight; onboarding's inline carousel has no such
+  transition (no push/pop boundary to animate across).
+- Verified on-device in both themes (Settings' preview row, the picker
+  carousel, onboarding's embedded carousel) via a temporary, untracked
+  debug harness, deleted before commit — same technique earlier batches
+  used. `flutter analyze` and the full test suite (277 tests, up from
+  251) are clean.
 
 ---
 

@@ -228,6 +228,32 @@ of this app's meaningful hues (`SemanticColors`' correct-green and
 error/incorrect-red). Verified on-device in both themes, at actual tile
 size, in the picker grid, including glyph contrast on the tile.
 
+**Status (2026-09-16): the avatar system itself was replaced; this
+palette's own reasoning carried forward, renamed and expanded.** The old
+tap-a-grid-tile picker (the "picker grid" the paragraph above verified
+against) had a real layout bug: its selected-tile treatment added a
+border+padding wrapper that grew the tile's own footprint, which broke
+the grid's line-wrapping every time the last tile in a row was selected —
+found and fixed this round (`docs/build-log.md`, 2026-09-16). Fixing it
+properly meant replacing the grid with a swipeable carousel and the
+eight emoji-on-flat-color avatars with twelve illustrated ones
+(`assets/avatars/`), which made the old per-avatar color mapping
+(`avatarFoxBackground` keyed to `Avatar.fox`, etc.) meaningless — most of
+those animals don't exist in the new set. The *decision* this section
+argued for is untouched and was deliberately not re-litigated: still
+named, still theme-independent, still chosen to stay clear of
+`SemanticColors`' correct-green and error/incorrect-red. What changed is
+mechanical: the eight colors are renamed to a plain numbered palette
+(`avatarRingColor1`–`avatarRingColor10`) and expanded to ten (two new
+hues bisecting this set's own two largest non-reserved gaps, not a
+re-spaced redesign), now serving as the carousel's selection ring behind
+whichever avatar is centered rather than a tile's own background fill.
+Verified on-device in both themes, in the carousel, including the
+specific case this section's own "can't be derived from a semantic role"
+argument extends to: none of the three green-illustrated avatars (Frog,
+Dinosaur, Turtle) ever get a green-ish ring — checked by a regression
+test, not left to inspection.
+
 **Loading.** A single glyph on full orange with "Reviewing your answers…" and
 no progress signal, on a wait that can run long — the same treatment covers
 Daily Test generation.

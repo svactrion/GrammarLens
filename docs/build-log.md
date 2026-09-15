@@ -2124,3 +2124,151 @@ consolidated list. Implementation detail not already covered there:
   in this batch, not fixed here. Recorded in `docs/roadmap.md`'s pre-launch
   checklist as an open pre-launch decision (raise `DEVICE_DAILY_LIMIT` to
   ~25, or lower `dailySessionLimit` to 7).
+
+## 2026-09-16 (avatar picker: layout-bug diagnosis, carousel replacement,
+illustrated avatar set)
+
+- **[Product] Bug report, device-verified:** picking the last avatar in
+  the first row of Settings' avatar grid made the grid itself visibly
+  reflow — everything below it jumped down. Diagnosis done and confirmed
+  before any code changed, one paragraph, per the task's own request:
+  `AvatarTile` (`lib/widgets/avatar_tile.dart`) rendered a fixed
+  `side × side` box for the unselected state, but wrapped that same box
+  in an *additional* `Container` with `padding: EdgeInsets.all(2.5)` and
+  a 2.5px `border` whenever `selected == true` — and since that outer
+  `Container` had no explicit `width`/`height` of its own, it sized
+  itself to "child + padding," making the selected tile's footprint
+  `side + 5` logical pixels in both dimensions instead of `side`. The
+  picker laid these out in a `Wrap` (not a `GridView`), which greedily
+  fills each row up to the available width and only breaks to a new line
+  once a tile no longer fits; growing one tile by 5px exactly at a row
+  boundary was enough to push it (and everything after it) over that
+  width threshold, so tapping the last tile in a row made the `Wrap`
+  recompute where lines break and visibly reflow everything below it.
+  Confirmed exactly as hypothesized — no surprises once traced.
+- **[Product] The fix is structural, decided before writing the
+  replacement:** selection state must never change a widget's own layout
+  footprint — a ring/scale/pop is drawn *inside* a slot whose outer size
+  is already fixed regardless of selection, never added around it via
+  border+padding. Closing this the "same shape as the bug" way (a
+  smaller border, a max-width clamp) would have just made the threshold
+  harder to hit, not removed it — the actual fix is architectural: no
+  code that draws a selection state may report a different size for the
+  same content.
+- **[Engineering] Picker replaced with a carousel, not just patched.**
+  `AvatarCarousel` (`lib/widgets/avatar_carousel.dart`): a `PageView`
+  (`viewportFraction: 0.45`) where the centered avatar *is* the selection
+  — no separate confirm button. Neighbors continuously track drag
+  position (scale ~0.8, opacity ~0.5 at one page away, computed from
+  `pageController.page`, not a binary snapped state) so dragging feels
+  smooth. Settling (via `NotificationListener<ScrollEndNotification>`,
+  not `onPageChanged`, which fires mid-drag) fires
+  `HapticFeedback.selectionClick()`, a one-shot ~180ms pop
+  (`TweenSequence<double>` 1.0→1.06→1.0) on the settled tile, and
+  `onSettled(avatar)`. Selection itself is a *separate* ring layer — one
+  `AnimatedContainer` behind the `PageView` in a `Stack`, fixed
+  width/height, recolored (never resized) whenever the settled avatar
+  changes. This is the actual fix, not a different picker shape wearing
+  the same bug: nothing about selecting an avatar here can change any
+  widget's own size, because the thing that changes (the ring's fill
+  color) lives in a box whose size was never a function of selection to
+  begin with.
+  - `AvatarTile` lost its `selected` parameter entirely instead of
+    keeping a fixed-but-dead knob that already caused one real bug —
+    after the ring moved into the carousel's own layer, nothing
+    anywhere in the app still needed `AvatarTile` to draw a selection
+    state itself. Confirmed by grep before removing it.
+  - Reduced-motion (`MediaQuery.disableAnimationsOf`) zeroes both the
+    pop's and the ring's animation duration, same pattern
+    `practice_length_picker.dart` already established — not a new
+    convention.
+  - Reused, both inline: `OnboardingScreen` embeds `AvatarCarousel`
+    directly above the name field ("face + name" as one identity screen,
+    no new onboarding step — a random avatar is selected on mount, per
+    the existing "no empty state" rule this app already applies
+    elsewhere); `AvatarPickerScreen` (`lib/screens/avatar_picker_screen.dart`)
+    pushes it from Settings, autosaving on settle (debounced 500ms so a
+    fast multi-swipe writes once, not once per settle along the way; a
+    pending debounce is flushed on `dispose()` so leaving mid-window
+    doesn't lose the change) and `Hero`-flying the centered tile back to
+    Settings' own preview row on pop. The carousel widget itself stays
+    `Hero`-agnostic — an optional `centerTileBuilder` hook lets
+    `AvatarPickerScreen` wrap just the settled tile in a `Hero`, without
+    `OnboardingScreen` (which has no push/pop boundary to animate across)
+    needing to know `Hero` exists at all.
+- **[Product] The avatar set itself is illustrated now, not emoji.**
+  Twelve pre-existing assets (`assets/avatars/avatar_01.webp`–
+  `avatar_12.webp`, already in the repo, 508×508, transparent, ~360KB
+  total — not created or renamed this batch), registered in `pubspec.yaml`
+  as a folder (`assets/avatars/`), not listed file-by-file. `Avatar`
+  (`lib/models/avatar.dart`) is rewritten as a plain class generated from
+  one `count` constant (12) rather than the previous 8-case `enum` —
+  `values` holds `count` singleton instances built once, so every
+  accessor (`random`, `fromJson`, iterating `values` itself) returns an
+  existing instance and `==` is plain reference equality, the same
+  guarantee an enum gives for free. Adding avatar_13 later is "drop the
+  file, add its character label, bump `count`" — no new switch case
+  anywhere. Character labels (Koala, Snail, Elephant, Bee, Frog, Chick,
+  Dinosaur, Cat, Turtle, Penguin, Giraffe, Hedgehog) were hand-matched to
+  each asset (the task's own instruction — images aren't visible to the
+  model building this) and read aloud via `Semantics` for VoiceOver/
+  TalkBack, since the English-only UI convention already established
+  elsewhere in this app (`docs/roadmap.md`'s backlog) means an English
+  label, not a literal transliteration of "Kirpi."
+- **[Product] Migration: an old id falls back silently, confirmed on a
+  real device, not just in a unit test.** `Avatar.fromJson` returns
+  `null` for anything that doesn't parse as `avatar_NN` with `NN` in
+  range — including every id from the previous emoji-based set ('fox',
+  'owl', 'lion', ...). Running the actual app against its own real,
+  pre-existing sqlite profile (which still carried an old-scheme avatar
+  id) showed Home's greeting fall back to the generic person-glyph
+  placeholder exactly as designed — no crash, confirmed by screenshot,
+  not assumed from reading the code.
+- **[Product] The ring-color palette (docs/design-audit.md's "named
+  exception") carried forward, renamed and expanded to ten — see that
+  file's own updated status note under the Settings section for the
+  full reasoning, including why the eight original hex values are
+  unchanged and only two new ones were added.** `avatarRingColor(Avatar)`
+  cycles the ten colors by index (`(avatar.index - 1) % 10`) rather than
+  a hand-written 12-entry table — checked, not assumed, that this
+  cycling doesn't accidentally land a green-ish ring on Frog (05),
+  Dinosaur (07), or Turtle (09): it doesn't, and
+  `avatar_ring_color_test.dart` pins that down as a regression test
+  rather than trusting the coincidence as the set grows.
+- **[Engineering] `UserProfile.copyWith` lost its `clearAvatar` flag** —
+  dead after this batch (the carousel has no "clear back to nothing"
+  gesture the way the old grid's tap-to-deselect did), confirmed by grep
+  before removing it rather than left as an unused, previously-buggy knob
+  sitting next to `clearAge`/`clearOccupation`, which stay legitimately
+  used.
+- **[Engineering] A test-only clock/seam and a real flake, both worth
+  recording:**
+  - `StorageService.clockForTesting` already existed from the previous
+    batch; this one needed no equivalent for the carousel itself — the
+    settle detection is driven by real scroll notifications, not a wall
+    clock.
+  - `tester.fling` on the carousel's `PageView` turned out genuinely
+    flaky in this suite (velocity-based physics occasionally settling on
+    a different page — or not moving at all — than intended); switched
+    every carousel-driving test to `tester.drag` + `pumpAndSettle`, the
+    more deterministic pattern for this kind of gesture. A second, real
+    flake survived that switch: `OnboardingScreen`'s carousel starts on a
+    genuinely random avatar with no injectable seam, so a test asserting
+    "swiping changes the selection" could occasionally start already at
+    the end of the list, where a forward drag has nowhere to go
+    (`PageView` clamps, it doesn't wrap) and settles right back where it
+    started. Fixed in the test, not the app: retry the opposite drag
+    direction when the first one didn't move anything, rather than
+    forcing a deterministic seed into `OnboardingScreen` just to make one
+    test convenient.
+- **[Product] Verified on-device in both themes** (Settings' preview row,
+  the picker's carousel — including the Frog/cyan-ring case specifically,
+  to see the green-avoidance rule with real eyes, not just the regression
+  test — and onboarding's embedded carousel) via a temporary, untracked
+  debug harness (`main.dart` swapped to directly render one target
+  screen at a time, forcing `themeMode` explicitly rather than relying on
+  the simulator's own appearance toggle — same technique and same
+  reason earlier batches recorded this doesn't reliably propagate),
+  deleted before commit; confirmed identical to the last-committed
+  `main.dart` by `git diff` after reverting. `flutter analyze` and the
+  full test suite (277 tests, up from 251) are clean.
