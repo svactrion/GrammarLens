@@ -2964,3 +2964,108 @@ fixture)
   reality behavior and that toggling it never writes to storage.
 - **[Product]** `flutter analyze` and the full test suite (312 tests, up
   from 299) clean.
+
+## 2026-09-15 (Premium screen redesign, Batch 2 — structure, comparison
+rows, the Premium strip)
+
+- **[Engineering] Structure: `BrandScaffold`'s `children:` (implicit
+  `ListView`) replaced with `body:` + a manual `Column` — a scrollable
+  `Expanded` middle plus a genuinely fixed footer**, the same shape
+  `AvatarPickerScreen` already uses. This is the actual fix for Batch 0's
+  finding that the CTA was never really pinned before — it just happened
+  to be reachable without scrolling at one common screen size.
+- **Footer content, by state** (`_PremiumFooter`, `Key('premiumFooter')`
+  for tests): **loading** — a disabled `FilledButton` with an inline
+  spinner (no disclosure, nothing to disclose yet) plus "Maybe later".
+  **loaded** — the purchase status banner (idle/purchasing show nothing,
+  already covered by the button itself), the CTA, the disclosure line,
+  "Maybe later" (hidden once a trial has actually started — the CTA
+  becomes "Continue" then, a second identical exit would be redundant).
+  **pricing-unavailable** — *only* "Maybe later", no CTA, no disclosure;
+  the retry card stays in the scrollable body, not duplicated into the
+  footer. **purchase error** — unchanged from before: the same CTA allows
+  retrying directly, no separate "Retry" button. Restore Purchases and
+  the legal links moved to the end of the scrollable body, per this
+  batch's own instruction.
+- **Footer height measured at all four required combinations** (`Size ×
+  textScale`, fake offering loaded so the disclosure line is present —
+  the tallest realistic footer state):
+
+  | Size | textScale | Footer height | % of viewport |
+  |---|---|---|---|
+  | 320×568 | 1.0 | 160.0pt | 28.2% |
+  | 320×568 | 1.3 | 174.0pt | 30.6% |
+  | 375×667 | 1.0 | 160.0pt | 24.0% |
+  | 375×667 | 1.3 | 170.0pt | 25.5% |
+
+  All four comfortably clear of the 40%-of-viewport stop-and-report
+  threshold (worst case 30.6%, at 320×568 @1.3×) — no stop needed, but
+  recorded here as the actual measurement this batch's brief asked for,
+  not an assumption.
+- **Comparison table merged from five rows to four**, per Batch 0's own
+  finding: "Questions from your own mistakes" and "Targeted weak-spot
+  practice" both claimed free = "—", which was wrong — `launchPracticeSet`
+  genuinely grants `StorageService.freeDailyPracticeLimit` (1) such
+  sessions/day. Merged into "Practice your weak spots", Free shown as
+  **"${StorageService.freeDailyPracticeLimit} a day"** (read from the
+  constant via string interpolation, never retyped as a literal "1") —
+  `_ComparisonRow` gained an optional `freeLabel` field specifically for
+  this, since the other three rows still use a plain checkmark/dash.
+  Grepped the whole screen for "unlimited"/"Unlimited": zero hits, by
+  design.
+- **The Premium column reads as one continuous, rounded, highlighted
+  strip** — built as N adjacent same-fill cells (one per row, zero gap
+  between them, only the very first/last corners rounded) rather than a
+  single overlay spanning the table, specifically so a row's own height
+  (which can now vary — see below) is a non-issue: each cell simply
+  fills whatever height its own row needs. Fill color is
+  `colorScheme.secondaryContainer` / `colorScheme.onSecondaryContainer`
+  for both the header text and the checkmark icon — **not**
+  `colorScheme.secondary`, which the previous per-cell-icon design used
+  and which Batch 0 measured at only 2.53:1 against this background in
+  dark mode (fails the 3:1 non-text minimum). The new pairing measures
+  9.79:1 light / 7.13:1 dark, both comfortably clearing 4.5:1 (text) and
+  3:1 (icon).
+- **The selected plan card still reads as selected next to the strip**,
+  checked directly rather than assumed: it shares the exact same fill
+  color (`secondaryContainer`) as the highlighted column now, but keeps
+  its own 2px `colorScheme.secondary` border (1px when unselected) —
+  verified via a new test asserting the border width switches between
+  cards on selection, not just eyeballed. The two elements are also
+  spatially separate (a whole card vs. a thin table column) and visually
+  distinct in shape, so the shared hue doesn't collapse them into one
+  reading.
+- **`FittedBox(scaleDown)` removed from "PREMIUM"** — the column is now
+  sized by actually measuring "PREMIUM" at the *current* text scale via
+  `TextPainter` (`_ComparisonTable._premiumColumnWidth`), not a fixed
+  56px constant, so there's no scale-down safety net needed at any
+  Dynamic Type setting.
+- **A real bug found and fixed while verifying the above at large text
+  scale, not assumed away: `IntrinsicHeight` does not combine reliably
+  with an `Expanded` child.** The first version of each comparison row
+  used `IntrinsicHeight` + `CrossAxisAlignment.stretch` to make the
+  Premium strip cell match its row's own (possibly wrapped) label
+  height — this under-measured badly at 2.0x text scale (one row's
+  reported height came back as 735 logical pixels, absorbing the rest of
+  the table's own space and causing a real overflow elsewhere). Replaced
+  with a height *measured up front* via `TextPainter` (one line for the
+  header, two for data rows) and a plain `SizedBox(height: ...)` —
+  `IntrinsicHeight` removed entirely from this file. Labels are capped
+  at two lines with an ellipsis to match the two-line budget, and the
+  merged row's own free-column text (`Flexible`, not a bare `Text`) can
+  wrap to two short lines too, since the Premium strip's own measured
+  width leaves little room beside it at 2.0x scale — found via the same
+  overflow, fixed the same way, rather than shrinking the strip and
+  reintroducing the original "PREMIUM" clipping bug.
+- **[Engineering] Test suite substantially extended**
+  (`test/premium_screen_test.dart`, 25 → 35 tests): the four-row table
+  content and semantics counts updated for the merge; a new footer group
+  covering all three content states, the four height measurements above,
+  no-overflow at 320pt/375pt and at 1.3×/2.0× text scale specifically for
+  the "PREMIUM" header, and the selected-card-border check. One existing
+  test's assumption ("no spinner anywhere while loading") was corrected,
+  not just patched, to scope specifically to the body's plan-card area —
+  the footer legitimately has its own spinner now, by this batch's own
+  design.
+- **[Product]** `flutter analyze` and the full test suite (322 tests, up
+  from 312) clean.

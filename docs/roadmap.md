@@ -4,14 +4,22 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (Premium screen redesign underway — Batch 0's
-diagnosis found a real factual error in the comparison table and a real
-contrast failure in the current premium-checkmark color (2.53:1 in dark
-mode), among other findings; Batch 1 shipped a debug-only pricing fixture
-so the paywall's loaded state is finally previewable with no App Store
-Connect product connected yet. See "Premium screen redesign, underway"
-below and `docs/build-log.md`'s same-date entries. Previous update, same
-day (Home avatar Hero): Home's avatar tap now opens Settings' avatar
+**Last updated:** 2026-09-15 (Premium screen redesign, Batch 2 shipped —
+the CTA is now genuinely pinned in a fixed footer instead of just
+happening to fit on one common screen size, the comparison table merged
+two wrong/overlapping rows into one correct one, and the Premium column
+is now a real highlighted strip using a contrast-checked color pairing
+instead of the one Batch 0 found failing in dark mode. A real
+`IntrinsicHeight`/`Expanded` reliability bug was found and fixed along
+the way, not hypothetical — it caused an actual overflow at 2.0× text
+scale during this batch's own testing. See "Premium screen redesign,
+underway" below and `docs/build-log.md`'s same-date entries. Previous
+update, same day (Batch 1, pricing fixture): a debug-only pricing
+fixture shipped so the paywall's loaded state is finally previewable
+with no App Store Connect product connected yet, and Batch 0's own
+diagnosis found a real factual error in the comparison table beforehand.
+Previous update, same day (Home avatar Hero): Home's avatar tap now
+opens Settings' avatar
 picker via a real route push, with a genuine `Hero` flight to the
 carousel's centered avatar — checked first that the old tab-switch
 mechanism couldn't support a Hero at all, since it has no push/pop
@@ -128,8 +136,18 @@ actually wired today.** Checked against the filesystem, not from memory.
   `premium`.
 - **App Store Connect app record — created**, bundle id
   `com.ahmettayfur.grammarlens`.
-- **Subscription products — not created yet.** They cannot be until the Paid
-  Apps Agreement goes Active, which waits on bank verification.
+- **Paid Apps Agreement — Active as of 2026-09-15.** The bank account
+  ("USD account", Türkiye, USD, royalty currency USD) went Active one
+  day after submission — verification took ~1 day, not the "multi-day"
+  re-verification this file previously assumed. Tax forms Active since 7 Sep.
+  **The banking blocker is closed; the whole store/billing chain is open.**
+- **Subscription products — not created yet.** Now unblocked: the subscription
+  group and the two products ($5.99/mo, $49.99/yr, 7-day introductory offer on
+  both) are the next thing to build, and RevenueCat offerings cannot be wired
+  until they exist.
+- **EU DSA — still In Review** (Apple case 102955281512). Not a blocker for the
+  primary market: the regulation covers the 27 EU countries and Türkiye is not
+  among them. If verification stalls, the exposure is EU distribution only.
 - **Legal pages — written and live**, no longer placeholder:
   `/products/grammarlens/privacy/`, `/terms/` and `/support/` on
   ahmettayfur.com.
@@ -1102,6 +1120,25 @@ measurement below: `docs/build-log.md`, same date.
   session-only "Preview paywall pricing" toggle (never written to
   storage, unlike the entitlement override next to it). 312 tests
   passing (up from 299), `flutter analyze` clean.
+- **Batch 2 (structure, comparison rows, the Premium strip) — shipped.**
+  Replaced `BrandScaffold`'s implicit `ListView` with a scrollable middle
+  + a genuinely fixed footer (`AvatarPickerScreen`'s own shape) — the
+  actual fix for Batch 0's "the CTA isn't really pinned" finding. Footer
+  content varies correctly by state (loading/loaded/pricing-unavailable/
+  purchase-error), measured at all four required size×textScale
+  combinations (worst case 320×568 @1.3×: 174.0pt, 30.6% of viewport —
+  well clear of the 40% stop threshold). Comparison table merged from
+  five rows to four (the two overlapping "—" rows became one, correctly
+  showing free = "1 a day" from the real quota constant). The Premium
+  column is now one continuous highlighted strip
+  (`secondaryContainer`/`onSecondaryContainer`, not `secondary` — which
+  measured only 2.53:1 in dark mode); confirmed the selected plan card
+  still reads as selected next to it via its own border width, not
+  assumed. `FittedBox(scaleDown)` removed from "PREMIUM", replaced by an
+  actually-measured column width. Found and fixed a real `IntrinsicHeight`
+  + `Expanded` reliability bug along the way (a genuine overflow at 2.0×
+  text scale, not hypothetical) by switching to pre-measured fixed row
+  heights. 322 tests passing (up from 312), `flutter analyze` clean.
 
 ---
 

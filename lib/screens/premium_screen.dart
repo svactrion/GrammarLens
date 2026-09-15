@@ -3,6 +3,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/practice_length.dart';
+import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../utils/app_messenger.dart';
@@ -21,21 +22,22 @@ enum _PlanPeriod { monthly, annual }
 /// context for what it was selling). "Early Access" never described a real
 /// time-limited campaign and is retired along with the split.
 ///
-/// Layout order (the differentiator and the price, in as few beats as
-/// possible — see the reordering batch's diagnosis in build-log.md/the
-/// commit that introduced this ordering): headline, comparison table, plan
-/// cards, the required trial/renewal disclosure, then the primary button.
-/// The two long description cards that used to sit above all of this are
-/// gone — the table already carries that differentiation, and duplicating
-/// it in prose only delayed reaching the price.
+/// Layout (the visual-redesign batch, docs/build-log.md same date as this
+/// comment): a scrollable middle (headline, comparison table, plan cards,
+/// Restore Purchases, legal links) plus a *fixed* footer (purchase status,
+/// the primary CTA, the disclosure line, "Maybe later") — the same
+/// scroll-body-plus-fixed-footer shape `AvatarPickerScreen` already uses,
+/// adopted here because the previous single-`ListView` layout never
+/// actually pinned the CTA the way a paywall's primary action should be.
 ///
 /// Price and trial terms are read live from RevenueCat's current offering
 /// ([SubscriptionService.getOfferings]), never hardcoded, so this screen
 /// can't silently drift from whatever is actually configured in App Store
 /// Connect. As of this commit no RevenueCat/App Store Connect product
-/// exists yet, so that fetch always comes back empty — the "pricing
-/// unavailable" state below, not a crash, is the expected result of
-/// testing this screen today.
+/// exists yet, so that fetch always comes back empty unless Settings'
+/// debug-only "Preview paywall pricing" toggle is on — the "pricing
+/// unavailable" state below, not a crash, is the expected real-device
+/// result without it.
 class PremiumScreen extends StatefulWidget {
   final SubscriptionService subscriptionService;
 
@@ -163,6 +165,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final colorScheme = theme.colorScheme;
     final monthly = _monthlyPackage;
     final annual = _annualPackage;
+    final offeringsReady = _offeringsAvailable && monthly != null && annual != null;
+    final width = MediaQuery.sizeOf(context).width;
+    // Matches BrandScaffold's own responsive horizontal padding formula
+    // (`body:` bypasses it — see that widget's doc comment — so this
+    // screen owns its own padding, same as AvatarPickerScreen already
+    // does for the same reason).
+    final hPad = (width * 0.045).clamp(16.0, 28.0);
 
     return BrandScaffold(
       title: const PageTitle('Premium'),
@@ -174,139 +183,109 @@ class _PremiumScreenState extends State<PremiumScreen> {
           onPressed: _dismiss,
         ),
       ],
-      children: [
-        Text(
-          _headline,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 20),
-        const _SectionLabel("What's free, trial, and paid"),
-        const SizedBox(height: 8),
-        _ComparisonTable(theme: theme, colorScheme: colorScheme),
-        const SizedBox(height: 20),
-        if (_loadingOffer)
-          _PlanCardsSkeleton(colorScheme: colorScheme)
-        else if (!_offeringsAvailable || monthly == null || annual == null)
-          _UnavailableCard(
-            theme: theme,
-            colorScheme: colorScheme,
-            onRetry: () {
-              setState(() => _loadingOffer = true);
-              _loadOffer();
-            },
-          )
-        else ...[
-          _PlanCards(
-            monthly: monthly,
-            annual: annual,
-            selected: _selectedPeriod,
-            onChanged: (period) => setState(() => _selectedPeriod = period),
-            theme: theme,
-            colorScheme: colorScheme,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _disclosureText(_selectedPackage!),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 16),
-          _PurchaseStatusBanner(
-            state: _purchaseState,
-            theme: theme,
-            colorScheme: colorScheme,
-          ),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              // Once the trial has actually started, this button's job
-              // changes from "start it" to "acknowledge and move on" —
-              // reusing the same primary button for that rather than
-              // adding a separate one keeps a single, consistent
-              // continuation point regardless of outcome.
-              onPressed: switch (_purchaseState) {
-                _PurchaseState.purchasing => null,
-                _PurchaseState.success => _dismiss,
-                _ => _startTrial,
-              },
-              child: _purchaseState == _PurchaseState.purchasing
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    _headline,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const _SectionLabel("What's free, trial, and paid"),
+                  const SizedBox(height: 8),
+                  _ComparisonTable(theme: theme, colorScheme: colorScheme),
+                  const SizedBox(height: 20),
+                  if (_loadingOffer)
+                    _PlanCardsSkeleton(colorScheme: colorScheme)
+                  else if (!offeringsReady)
+                    _UnavailableCard(
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      onRetry: () {
+                        setState(() => _loadingOffer = true);
+                        _loadOffer();
+                      },
                     )
-                  : Text(_purchaseState == _PurchaseState.success
-                      ? 'Continue'
-                      : 'Start free trial'),
+                  else
+                    _PlanCards(
+                      monthly: monthly,
+                      annual: annual,
+                      selected: _selectedPeriod,
+                      onChanged: (period) =>
+                          setState(() => _selectedPeriod = period),
+                      theme: theme,
+                      colorScheme: colorScheme,
+                    ),
+                  const SizedBox(height: 24),
+                  // Required by App Store guidelines for any screen that
+                  // sells a subscription, regardless of whether pricing
+                  // itself is currently available — always present, never
+                  // gated on an offering existing.
+                  Center(
+                    child: TextButton(
+                      // No explicit style: theme.dart's textButtonTheme
+                      // now covers the orange-on-orange contrast fix this
+                      // call site used to patch individually.
+                      onPressed: _restoring ? null : _restore,
+                      child:
+                          Text(_restoring ? 'Restoring…' : 'Restore Purchases'),
+                    ),
+                  ),
+                  if (_restoreMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Center(
+                        child: Text(
+                          _restoreMessage!,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  const Center(
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _LegalLink(
+                          label: 'Privacy Policy',
+                          url: AppLinks.privacyPolicyUrl,
+                        ),
+                        _LegalLink(
+                          label: 'Terms of Service',
+                          url: AppLinks.termsUrl,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+          _PremiumFooter(
+            key: const Key('premiumFooter'),
+            loading: _loadingOffer,
+            offeringsReady: offeringsReady,
+            purchaseState: _purchaseState,
+            disclosureText:
+                offeringsReady ? _disclosureText(_selectedPackage!) : null,
+            onStartTrial: _startTrial,
+            onContinue: _dismiss,
+            onMaybeLater: _dismiss,
+            theme: theme,
+            colorScheme: colorScheme,
+            horizontalPadding: hPad,
           ),
         ],
-        const SizedBox(height: 16),
-        // Required by App Store guidelines for any screen that sells a
-        // subscription, regardless of whether pricing itself is
-        // currently available — always present, never gated on
-        // [package]. Not one of the reordering batch's eight named
-        // steps; kept here, right after the primary action, since
-        // restoring is functionally an alternative path to the same
-        // thing that button does.
-        Center(
-          child: TextButton(
-            // No explicit style: theme.dart's textButtonTheme now covers
-            // the orange-on-orange contrast fix this call site used to
-            // patch individually.
-            onPressed: _restoring ? null : _restore,
-            child: Text(_restoring ? 'Restoring…' : 'Restore Purchases'),
-          ),
-        ),
-        if (_restoreMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Center(
-              child: Text(
-                _restoreMessage!,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-            ),
-          ),
-        const SizedBox(height: 8),
-        // Low-emphasis skip — not shown once a trial has actually
-        // started (the primary button already covers "I'm done" via
-        // "Continue" then, so a second identical exit here would be
-        // redundant).
-        if (_purchaseState != _PurchaseState.success)
-          Center(
-            child: TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: colorScheme.onSurfaceVariant,
-              ),
-              onPressed: _dismiss,
-              child: const Text('Maybe later'),
-            ),
-          ),
-        const SizedBox(height: 4),
-        const Center(
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            children: [
-              _LegalLink(
-                label: 'Privacy Policy',
-                url: AppLinks.privacyPolicyUrl,
-              ),
-              _LegalLink(
-                label: 'Terms of Service',
-                url: AppLinks.termsUrl,
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -315,8 +294,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 /// compressed to a single sentence (at most two lines once wrapped):
 /// trial length, price + billing period after it, and that it auto-renews
 /// unless cancelled. Reuses [_hyphenatedDuration] and
-/// [_formatSubscriptionPeriod] — the same parsing the old, three-line
-/// _TrialTermsCard used — so every number here still comes from
+/// [_formatSubscriptionPeriod] so every number here still comes from
 /// [package]'s own live StoreKit/RevenueCat data, never hardcoded.
 String _disclosureText(Package package) {
   final product = package.storeProduct;
@@ -330,6 +308,145 @@ String _disclosureText(Package package) {
       ? product.priceString
       : '${product.priceString} / $billingPeriod';
   return '$trialPart, then $priceStr, auto-renews unless cancelled.';
+}
+
+/// The screen's fixed bottom area — never scrolls away, unlike the
+/// previous single-`ListView` layout. Content varies by state rather than
+/// always showing the same three things:
+///
+/// - **loading**: a disabled CTA with an inline spinner (no disclosure —
+///   there's no price yet to disclose) plus "Maybe later".
+/// - **offerings ready**: the purchase status banner (nothing shown for
+///   idle/purchasing, which already have their own affordance), the CTA
+///   (label/enabled-state driven by [purchaseState]), the disclosure line,
+///   and "Maybe later" — hidden once a trial has actually started, since
+///   the CTA itself becomes "Continue" then and a second identical exit
+///   would be redundant.
+/// - **pricing unavailable**: *only* "Maybe later" — no CTA, no
+///   disclosure, since neither means anything without a real price. The
+///   retry affordance itself stays in the scrollable body
+///   ([_UnavailableCard]), not duplicated here.
+class _PremiumFooter extends StatelessWidget {
+  final bool loading;
+  final bool offeringsReady;
+  final _PurchaseState purchaseState;
+  final String? disclosureText;
+  final VoidCallback onStartTrial;
+  final VoidCallback onContinue;
+  final VoidCallback onMaybeLater;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final double horizontalPadding;
+
+  const _PremiumFooter({
+    super.key,
+    required this.loading,
+    required this.offeringsReady,
+    required this.purchaseState,
+    required this.disclosureText,
+    required this.onStartTrial,
+    required this.onContinue,
+    required this.onMaybeLater,
+    required this.theme,
+    required this.colorScheme,
+    required this.horizontalPadding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final showCta = offeringsReady;
+    final showMaybeLater = purchaseState != _PurchaseState.success;
+
+    return DecoratedBox(
+      // A hard edge (not a shadow/blur) between the scrollable content and
+      // the fixed footer — the same "permanent, not scroll-triggered"
+      // separation BrandScaffold's own band/body boundary already uses,
+      // for the same reason: a shadow that only appears once scrolled
+      // reads as a bug (looks fine at rest, gains an edge mid-scroll).
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            12,
+            horizontalPadding,
+            8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading) ...[
+                const SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: null,
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ] else if (showCta) ...[
+                _PurchaseStatusBanner(
+                  state: purchaseState,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    // Once the trial has actually started, this button's
+                    // job changes from "start it" to "acknowledge and move
+                    // on" — reusing the same primary button for that
+                    // rather than adding a separate one keeps a single,
+                    // consistent continuation point regardless of outcome.
+                    onPressed: switch (purchaseState) {
+                      _PurchaseState.purchasing => null,
+                      _PurchaseState.success => onContinue,
+                      _ => onStartTrial,
+                    },
+                    child: purchaseState == _PurchaseState.purchasing
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(purchaseState == _PurchaseState.success
+                            ? 'Continue'
+                            : 'Start free trial'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  disclosureText!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 4),
+              ],
+              if (showMaybeLater)
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: colorScheme.onSurfaceVariant,
+                  ),
+                  onPressed: onMaybeLater,
+                  child: const Text('Maybe later'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -350,23 +467,25 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// One row of the Free/Premium comparison table. Text only, so the table
-/// itself (see [_ComparisonTable]) can render every row from one list
-/// instead of hand-laying-out each one — PRD v2 §13.4: exactly these five
-/// features, nothing today's app doesn't actually have.
+/// One row of the Free/Premium comparison table. [freeLabel] overrides the
+/// usual checkmark/dash with specific text (today, only "1 a day" for the
+/// merged weak-spot row) — null everywhere else, meaning [free] alone
+/// decides the glyph.
 class _ComparisonRow {
   final String label;
   final bool free;
+  final String? freeLabel;
   final bool premium;
 
   const _ComparisonRow({
     required this.label,
     required this.free,
+    this.freeLabel,
     required this.premium,
   });
 }
 
-/// Row 5's question counts, joined the way a sentence would ("3, 5 or 10"
+/// Row 4's question counts, joined the way a sentence would ("3, 5 or 10"
 /// — no Oxford comma) rather than a plain comma list, and read off
 /// [PracticeLength] so this can't drift from what session lengths the app
 /// actually offers.
@@ -375,6 +494,13 @@ String _joinWithOr(List<String> items) {
   return '${items.sublist(0, items.length - 1).join(', ')} or ${items.last}';
 }
 
+/// Four rows (down from five): "Questions from your own mistakes" and
+/// "Targeted weak-spot practice" used to describe the same underlying
+/// capability twice, both showing free as "—" — which was also wrong.
+/// `launchPracticeSet` (practice_launch.dart) genuinely grants a free user
+/// [StorageService.freeDailyPracticeLimit] such sessions per day; merged
+/// into one row with that real value, read from the constant rather than
+/// retyped, so it can't drift from the actual quota again.
 final List<_ComparisonRow> _comparisonRows = [
   const _ComparisonRow(
     label: 'Daily Test, refreshed every day',
@@ -387,13 +513,9 @@ final List<_ComparisonRow> _comparisonRows = [
     premium: true,
   ),
   const _ComparisonRow(
-    label: 'Questions from your own mistakes',
+    label: 'Practice your weak spots',
     free: false,
-    premium: true,
-  ),
-  const _ComparisonRow(
-    label: 'Targeted weak-spot practice',
-    free: false,
+    freeLabel: '${StorageService.freeDailyPracticeLimit} a day',
     premium: true,
   ),
   _ComparisonRow(
@@ -405,23 +527,74 @@ final List<_ComparisonRow> _comparisonRows = [
   ),
 ];
 
-/// The Free/Premium comparison table (replaces the old two-tile benefit
-/// list — docs/design-audit.md S3, both of its blue icon circles go with
-/// it). Purely presentational: purchase logic, product/price sourcing, the
-/// App Store disclosure block, and the restore flow are all elsewhere on
-/// this screen, unchanged.
+/// The Free/Premium comparison table. The Premium column reads as one
+/// continuous, rounded, highlighted strip running from the header down to
+/// the last row — not per-cell coloring — built from each row independently
+/// painting its own [_PremiumStripCell] flush against its neighbors (zero
+/// gap, matching fill color, only the very first/last corners rounded) so
+/// adjacent cells visually fuse into one strip regardless of how tall any
+/// individual row happens to be (a wrapped label at large Dynamic Type
+/// grows only *that* row — see [_ComparisonRowLine]'s own doc comment).
+///
+/// Strip color is `colorScheme.secondaryContainer`/`onSecondaryContainer`
+/// — not `colorScheme.secondary`, which the previous per-cell-icon design
+/// used and which measures only 2.53:1 against `secondaryContainer` in
+/// dark mode (fails the 3:1 non-text minimum). `onSecondaryContainer`
+/// measures 9.79:1 light / 7.13:1 dark against that same background —
+/// D1's own rule (orange never becomes a surface in dark mode) already
+/// ruled out `primary`, and `secondaryContainer` is the pair the selected
+/// plan card already uses, so this doesn't introduce a second color
+/// language.
 class _ComparisonTable extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
 
   const _ComparisonTable({required this.theme, required this.colorScheme});
 
+  /// The Premium column's width — enough for "PREMIUM" at the *current*
+  /// text scale, measured directly via [TextPainter] rather than a fixed
+  /// constant, so this is correct at any Dynamic Type setting instead of
+  /// needing a `FittedBox(scaleDown)` safety net (the previous design's
+  /// actual bug: a fixed 56px column plus letter-spacing didn't fit the
+  /// word at the *default* scale, let alone a larger one).
+  double _premiumColumnWidth(BuildContext context) {
+    final painter = TextPainter(
+      text: const TextSpan(text: 'PREMIUM', style: _headerStyle),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    // Horizontal padding inside the strip on each side, plus a floor so a
+    // single small checkmark icon never makes the strip look pinched.
+    return (painter.width + 28).clamp(56, double.infinity);
+  }
+
+  /// Row heights are computed up front (measured, not `IntrinsicHeight`) —
+  /// `IntrinsicHeight` combined with an `Expanded` child is a known
+  /// unreliable pairing (Flutter asks a flex child for its "intrinsic"
+  /// height independent of the width it will actually be allocated, which
+  /// can under-measure badly): this surfaced as a real overflow at 2.0x
+  /// text scale during this batch's own testing, not a hypothetical
+  /// concern. A fixed, measured height per row type — enough for the
+  /// header's own single line, or two lines for a data row's label — is
+  /// simpler and doesn't have that failure mode; a label short enough to
+  /// need only one line just centers within the extra room.
+  double _measuredHeight(BuildContext context, TextStyle style, int maxLines) {
+    final painter = TextPainter(
+      text: TextSpan(text: List.filled(maxLines, 'Mg').join('\n'), style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    return painter.height + 20; // 10 top + 10 bottom padding, both row types
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Matches the 20px padding every other card on this screen uses —
-    // not a new number.
-    const contentPadding = EdgeInsets.symmetric(horizontal: 20);
     final rowDividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
+    final premiumWidth = _premiumColumnWidth(context);
+    final labelStyle =
+        theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
+    final headerHeight = _measuredHeight(context, _headerStyle, 1);
+    final dataRowHeight = _measuredHeight(context, labelStyle, 2);
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -431,137 +604,225 @@ class _ComparisonTable extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Padding(
-            padding: contentPadding,
-            child: _ComparisonHeaderRow(colorScheme: colorScheme),
+          _ComparisonHeaderRow(
+            colorScheme: colorScheme,
+            premiumWidth: premiumWidth,
+            height: headerHeight,
           ),
-          Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
-          for (var i = 0; i < _comparisonRows.length; i++) ...[
-            Padding(
-              padding: contentPadding,
-              child: _ComparisonDataRow(
-                row: _comparisonRows[i],
-                theme: theme,
-                colorScheme: colorScheme,
-              ),
+          for (var i = 0; i < _comparisonRows.length; i++)
+            _ComparisonRowLine(
+              row: _comparisonRows[i],
+              theme: theme,
+              colorScheme: colorScheme,
+              premiumWidth: premiumWidth,
+              height: dataRowHeight,
+              showDivider: i != _comparisonRows.length - 1,
+              dividerColor: rowDividerColor,
+              isLastRow: i == _comparisonRows.length - 1,
             ),
-            if (i != _comparisonRows.length - 1)
-              Divider(height: 1, thickness: 1, color: rowDividerColor),
-          ],
         ],
       ),
     );
   }
 }
+
+const TextStyle _headerStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
 
 class _ComparisonHeaderRow extends StatelessWidget {
   final ColorScheme colorScheme;
+  final double premiumWidth;
+  final double height;
 
-  const _ComparisonHeaderRow({required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
-    const style = TextStyle(
-      fontSize: 12,
-      fontWeight: FontWeight.w700,
-      // 0.04em at a 12px size — CSS-style relative tracking rather than a
-      // literal 0.04 logical pixel, which would be imperceptible.
-      letterSpacing: 12 * 0.04,
-    );
-    return SizedBox(
-      height: 38,
-      child: Row(
-        children: [
-          const Expanded(child: SizedBox.shrink()),
-          SizedBox(
-            width: 56,
-            child: Center(
-              // "PREMIUM" at 12px/w700/tracked doesn't quite fit 56px in
-              // the system font — FittedBox keeps both header words on
-              // one line at their specified size whenever there's room,
-              // only scaling down the one that needs it, rather than
-              // wrapping or clipping.
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  'FREE',
-                  maxLines: 1,
-                  style: style.copyWith(color: colorScheme.onSurfaceVariant),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 56,
-            child: Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  'PREMIUM',
-                  maxLines: 1,
-                  style: style.copyWith(
-                    color: colorScheme.onSecondaryContainer,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonDataRow extends StatelessWidget {
-  final _ComparisonRow row;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  const _ComparisonDataRow({
-    required this.row,
-    required this.theme,
+  const _ComparisonHeaderRow({
     required this.colorScheme,
+    required this.premiumWidth,
+    required this.height,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: height,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Text(
-                row.label,
-                style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+              padding: const EdgeInsets.fromLTRB(20, 10, 12, 10),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'FREE',
+                  style: _headerStyle.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
             ),
           ),
-          SizedBox(
-            width: 56,
-            child: Center(
-              child: _ComparisonCell(
-                included: row.free,
-                includedColor: colorScheme.onSurfaceVariant,
-                dashColor: colorScheme.outline,
-                tier: 'Free',
-              ),
+          _PremiumStripCell(
+            colorScheme: colorScheme,
+            width: premiumWidth,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
-          ),
-          SizedBox(
-            width: 56,
-            child: Center(
-              child: _ComparisonCell(
-                included: row.premium,
-                includedColor: colorScheme.secondary,
-                dashColor: colorScheme.outline,
-                tier: 'Premium',
+            child: Text(
+              'PREMIUM',
+              maxLines: 1,
+              style: _headerStyle.copyWith(
+                color: colorScheme.onSecondaryContainer,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One data row, split into two siblings sharing one [Row] (not two
+/// independently-laid-out columns): the label+free portion (an [Expanded]
+/// carrying its own bottom divider) and the Premium strip cell.
+/// [CrossAxisAlignment.stretch] plus a fixed, pre-measured [height] (see
+/// [_ComparisonTable._measuredHeight] — deliberately *not*
+/// `IntrinsicHeight`, which doesn't combine reliably with an `Expanded`
+/// child; that pairing under-measured badly enough to genuinely overflow
+/// at 2.0x text scale during this batch's own testing) makes the strip
+/// cell match the label+free side's height. The label itself is capped at
+/// two lines with an ellipsis rather than wrapping indefinitely, since
+/// [height] is sized for exactly two lines.
+class _ComparisonRowLine extends StatelessWidget {
+  final _ComparisonRow row;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+  final double premiumWidth;
+  final double height;
+  final bool showDivider;
+  final Color dividerColor;
+  final bool isLastRow;
+
+  const _ComparisonRowLine({
+    required this.row,
+    required this.theme,
+    required this.colorScheme,
+    required this.premiumWidth,
+    required this.height,
+    required this.showDivider,
+    required this.dividerColor,
+    required this.isLastRow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: showDivider
+                    ? Border(bottom: BorderSide(color: dividerColor))
+                    : null,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 12, 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        row.label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(fontSize: 13),
+                      ),
+                    ),
+                    if (row.freeLabel != null)
+                      // Flexible, not a bare Text: at large Dynamic Type
+                      // the Premium strip's own measured width (enough for
+                      // "PREMIUM" — see _premiumColumnWidth) leaves little
+                      // room on this side of the row, and this label
+                      // wrapping to two short lines is a far better outcome
+                      // than a fixed-width Text forcing a real overflow.
+                      Flexible(
+                        child: Text(
+                          row.freeLabel!,
+                          textAlign: TextAlign.right,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    else
+                      _ComparisonCell(
+                        included: row.free,
+                        includedColor: colorScheme.onSurfaceVariant,
+                        dashColor: colorScheme.outline,
+                        tier: 'Free',
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          _PremiumStripCell(
+            colorScheme: colorScheme,
+            width: premiumWidth,
+            borderRadius: isLastRow
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  )
+                : null,
+            child: _ComparisonCell(
+              included: row.premium,
+              includedColor: colorScheme.onSecondaryContainer,
+              dashColor: colorScheme.onSecondaryContainer,
+              tier: 'Premium',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One segment of the continuous Premium strip — see [_ComparisonTable]'s
+/// own doc comment for why this is built as N adjacent same-color cells
+/// (one per row) rather than a single overlay spanning the table: it
+/// makes per-row height (a wrapped label at large Dynamic Type) a
+/// non-issue, since each cell simply fills whatever height its own row
+/// turns out to need.
+class _PremiumStripCell extends StatelessWidget {
+  final ColorScheme colorScheme;
+  final double width;
+  final BorderRadius? borderRadius;
+  final Widget child;
+
+  const _PremiumStripCell({
+    required this.colorScheme,
+    required this.width,
+    required this.borderRadius,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: borderRadius,
+      ),
+      alignment: Alignment.center,
+      child: child,
     );
   }
 }
@@ -634,14 +895,9 @@ class _Badge extends StatelessWidget {
   }
 }
 
-/// Two side-by-side selectable plan cards (PRD v2 §13.3) — replaces the
-/// old Annual/Monthly SegmentedButton. That component was this batch's H1
-/// finding: the design called for two price cards, but the thing actually
-/// in the tree was a segmented toggle with a single price line underneath
-/// it, not two cards at all. Annual is preselected and carries the
-/// "Save N%" badge; both cards' prices come from [_planPricing] — the
-/// exact same helper the old segmented picker used, called once per
-/// period — so nothing about where the numbers come from changes here.
+/// Two side-by-side selectable plan cards (PRD v2 §13.3). Annual is
+/// preselected and carries the "Save N%" badge; both cards' prices come
+/// from [_planPricing], called once per period.
 class _PlanCards extends StatelessWidget {
   final Package monthly;
   final Package annual;

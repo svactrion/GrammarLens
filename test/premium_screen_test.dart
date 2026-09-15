@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:grammar_lens/screens/premium_screen.dart';
+import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 
 /// Real [SubscriptionService] methods go through RevenueCat's platform
@@ -199,7 +200,7 @@ void main() {
   // a single scrollUntilVisible (which only guarantees its own target).
   Future<void> scrollToEnd(WidgetTester tester) async {
     for (var i = 0; i < 10; i++) {
-      await tester.drag(find.byType(ListView), const Offset(0, -600));
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
       await tester.pumpAndSettle();
     }
   }
@@ -220,8 +221,9 @@ void main() {
   });
 
   testWidgets(
-      'the comparison table lists exactly the five real features, Daily '
-      'Test free on both sides and the rest Premium-only', (tester) async {
+      'the comparison table lists exactly the four real features (merged '
+      'down from five), Daily Test free on both sides, weak-spot practice '
+      'free at its real quota, and the rest Premium-only', (tester) async {
     // bySemanticsLabel needs the semantics tree actually built, which
     // (unlike a real device with an accessibility service running) is off
     // by default in a plain widget test. Disposed explicitly at the end
@@ -238,21 +240,32 @@ void main() {
 
     expect(find.text('Daily Test, refreshed every day'), findsOneWidget);
     expect(find.text('Topic Practice, all five topics'), findsOneWidget);
-    expect(find.text('Questions from your own mistakes'), findsOneWidget);
-    expect(find.text('Targeted weak-spot practice'), findsOneWidget);
+    // "Questions from your own mistakes" and "Targeted weak-spot practice"
+    // used to be two separate rows, both wrongly showing free as "—" —
+    // merged into one, with the real per-day quota
+    // (StorageService.freeDailyPracticeLimit) shown as text, not a
+    // checkmark/dash.
+    expect(find.text('Questions from your own mistakes'), findsNothing);
+    expect(find.text('Targeted weak-spot practice'), findsNothing);
+    expect(find.text('Practice your weak spots'), findsOneWidget);
+    expect(
+      find.text('${StorageService.freeDailyPracticeLimit} a day'),
+      findsOneWidget,
+    );
     // Session lengths read off PracticeLength, not hardcoded — see
     // premium_screen.dart's _joinWithOr.
     expect(find.text('Sessions of 3, 5 or 10 questions'), findsOneWidget);
+    // Never claims unlimited anywhere on the table.
+    expect(find.textContaining('Unlimited'), findsNothing);
+    expect(find.textContaining('unlimited'), findsNothing);
 
-    // Daily Test is the only row free on both sides: one checkmark in the
-    // Free column, five in Premium (every row, since Premium includes
-    // everything free does plus the rest).
-    expect(
-      find.bySemanticsLabel('Included in Free'),
-      findsOneWidget,
-    );
-    expect(find.bySemanticsLabel('Not included in Free'), findsNWidgets(4));
-    expect(find.bySemanticsLabel('Included in Premium'), findsNWidgets(5));
+    // Daily Test is free (checkmark); Topic Practice and Sessions are not
+    // (dash); the merged weak-spot row uses its own text value instead of
+    // either glyph, so it contributes to neither count. Premium includes
+    // all four rows.
+    expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
+    expect(find.bySemanticsLabel('Not included in Free'), findsNWidgets(2));
+    expect(find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
     semantics.dispose();
   });
 
@@ -328,8 +341,10 @@ void main() {
 
   group('the three pricing-area states (a paywall that can\'t fetch '
       'products must not silently hide the whole price section)', () {
-    testWidgets('loading shows a skeleton shaped like the plan cards, not '
-        'a spinner', (tester) async {
+    testWidgets(
+        'loading shows a skeleton shaped like the plan cards in the body '
+        '(a spinner belongs in the fixed footer instead, not here)',
+        (tester) async {
       final semantics = tester.ensureSemantics();
       final completer = Completer<Offering?>();
 
@@ -351,7 +366,25 @@ void main() {
       await tester.pump();
 
       expect(find.bySemanticsLabel('Loading pricing'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      // The fixed footer legitimately shows its own spinner while loading
+      // (Batch 2's own spec) — what this test actually guards is that the
+      // *body* (the plan-cards area) shows the shaped skeleton, not a
+      // spinner standing in for it.
+      final footer = find.byKey(const Key('premiumFooter'));
+      expect(
+        find.descendant(
+          of: footer,
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.bySemanticsLabel('Loading pricing'),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsNothing,
+      );
       expect(find.text('Start free trial'), findsNothing);
 
       completer.complete(null);
@@ -724,6 +757,244 @@ void main() {
       final scrollable =
           tester.state<ScrollableState>(find.byType(Scrollable).first);
       expect(scrollable.position.maxScrollExtent, greaterThan(0));
+    });
+  });
+
+  group('the fixed footer (Batch 2: structure, states, premium strip)', () {
+    Future<void> pumpAt(
+      WidgetTester tester, {
+      required Size size,
+      required double textScale,
+      required SubscriptionService service,
+    }) async {
+      tester.view.physicalSize = size * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await tester.pumpWidget(
+        MaterialApp(home: PremiumScreen(subscriptionService: service)),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+        'pricing-unavailable: the footer shows only "Maybe later" — no CTA, '
+        'no disclosure (the retry card stays in the scrollable body, not '
+        'duplicated here)', (tester) async {
+      await pumpAt(
+        tester,
+        size: const Size(375, 667),
+        textScale: 1.0,
+        service: _FakeSubscriptionService(offering: null),
+      );
+
+      final footer = find.byKey(const Key('premiumFooter'));
+      expect(
+        find.descendant(of: footer, matching: find.text('Maybe later')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: footer, matching: find.text('Start free trial')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: footer,
+          matching: find.textContaining('auto-renews'),
+        ),
+        findsNothing,
+      );
+      // The retry affordance is real, just outside the footer.
+      expect(find.widgetWithText(TextButton, 'Try again'), findsOneWidget);
+    });
+
+    testWidgets(
+        'loading: the footer shows a disabled spinner CTA and "Maybe '
+        'later", no disclosure yet', (tester) async {
+      final completer = Completer<Offering?>();
+      // Not the pumpAt helper: it pumpAndSettle()s internally, which would
+      // hang forever against a completer that's deliberately never
+      // completed — this needs a single plain pump() to observe the
+      // loading state itself, the same reasoning the earlier "loading
+      // shows a skeleton" test already documents.
+      tester.view.physicalSize = const Size(375, 667) * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            subscriptionService:
+                _FakeSubscriptionService(offeringsCompleter: completer),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final footer = find.byKey(const Key('premiumFooter'));
+      final ctaButton = tester.widget<FilledButton>(
+        find.descendant(of: footer, matching: find.byType(FilledButton)),
+      );
+      expect(ctaButton.onPressed, isNull);
+      expect(
+        find.descendant(
+          of: footer,
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: footer, matching: find.text('Maybe later')),
+        findsOneWidget,
+      );
+
+      completer.complete(null);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+        'purchase error: the existing retry-via-the-same-CTA behavior is '
+        'unchanged in the new footer', (tester) async {
+      await pumpAt(
+        tester,
+        size: const Size(375, 667),
+        textScale: 1.0,
+        service: _FakeSubscriptionService(
+          offering: _offeringWithBothPlans(),
+          purchaseOutcome: PurchaseOutcome.failure,
+        ),
+      );
+
+      final footer = find.byKey(const Key('premiumFooter'));
+      await tester.tap(
+        find.descendant(of: footer, matching: find.text('Start free trial')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: footer,
+          matching: find.textContaining("couldn't start"),
+        ),
+        findsOneWidget,
+      );
+      final ctaButton = tester.widget<FilledButton>(
+        find.descendant(of: footer, matching: find.byType(FilledButton)),
+      );
+      expect(ctaButton.onPressed, isNotNull,
+          reason: 'the CTA must allow retrying directly after an error');
+    });
+
+    // Batch 2 item 3: measure the footer's own height at both target
+    // widths/heights and both text scales, and stop if the worst case
+    // (320x568 @1.3) would exceed 40% of the viewport — reported via the
+    // build-log entry for this batch, not asserted as a hard failure here
+    // unless that threshold is actually crossed.
+    for (final size in [const Size(320, 568), const Size(375, 667)]) {
+      for (final scale in [1.0, 1.3]) {
+        testWidgets(
+            'footer height at ${size.width.toInt()}x${size.height.toInt()} '
+            '@${scale}x textScale', (tester) async {
+          await pumpAt(
+            tester,
+            size: size,
+            textScale: scale,
+            service:
+                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          );
+
+          final footerHeight =
+              tester.getSize(find.byKey(const Key('premiumFooter'))).height;
+          final fraction = footerHeight / size.height;
+          // ignore: avoid_print
+          print('footer height @ ${size.width.toInt()}x${size.height.toInt()} '
+              '@${scale}x = ${footerHeight.toStringAsFixed(1)}pt '
+              '(${(fraction * 100).toStringAsFixed(1)}% of viewport height)');
+
+          if (size == const Size(320, 568) && scale == 1.3) {
+            expect(fraction, lessThanOrEqualTo(0.40),
+                reason: 'the footer would take up '
+                    '${(fraction * 100).toStringAsFixed(1)}% of a 320x568 '
+                    'viewport at 1.3x text scale — stop-and-report threshold '
+                    'from this batch\'s own brief');
+          }
+        });
+      }
+    }
+
+    testWidgets(
+        "the PREMIUM header doesn't overflow at 1.3x or 2.0x text scale "
+        '(replaces the old FittedBox(scaleDown) safety net with a real '
+        'measured width)', (tester) async {
+      for (final scale in [1.3, 2.0]) {
+        await pumpAt(
+          tester,
+          size: const Size(375, 667),
+          textScale: scale,
+          service: _FakeSubscriptionService(offering: null),
+        );
+        await tester.scrollUntilVisible(find.text('PREMIUM'), 300);
+        expect(tester.takeException(), isNull,
+            reason: 'overflow at ${scale}x text scale');
+      }
+    });
+
+    testWidgets(
+        'no overflow anywhere at 320pt or 375pt width, default text scale',
+        (tester) async {
+      for (final width in [320.0, 375.0]) {
+        await pumpAt(
+          tester,
+          size: Size(width, 667),
+          textScale: 1.0,
+          service: _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+        );
+        expect(tester.takeException(), isNull, reason: 'width=$width');
+      }
+    });
+
+    testWidgets(
+        'the selected plan card still reads as selected next to the '
+        'Premium strip, even though both use secondaryContainer — the '
+        "card's own border is the distinguishing signal, checked directly "
+        'rather than assumed from the shared fill color', (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+      final annualCard = find.byKey(const ValueKey('planCard_Annual'));
+      await tester.scrollUntilVisible(annualCard, 300);
+
+      final selectedContainer = tester.widget<Container>(
+        find.descendant(of: annualCard, matching: find.byType(Container)).first,
+      );
+      final selectedDecoration = selectedContainer.decoration as BoxDecoration;
+      final selectedBorder = selectedDecoration.border as Border;
+      expect(selectedBorder.top.width, 2,
+          reason: 'the selected card keeps its own 2px border, distinct '
+              'from an unselected 1px one, regardless of fill color');
+
+      await scrollAndTap(tester, find.text('Monthly'));
+      final monthlyCard = find.byKey(const ValueKey('planCard_Monthly'));
+      final selectedContainer2 = tester.widget<Container>(
+        find
+            .descendant(of: monthlyCard, matching: find.byType(Container))
+            .first,
+      );
+      final selectedBorder2 =
+          (selectedContainer2.decoration as BoxDecoration).border as Border;
+      expect(selectedBorder2.top.width, 2);
+
+      final annualContainerNowUnselected = tester.widget<Container>(
+        find.descendant(of: annualCard, matching: find.byType(Container)).first,
+      );
+      final unselectedBorder =
+          (annualContainerNowUnselected.decoration as BoxDecoration).border
+              as Border;
+      expect(unselectedBorder.top.width, 1);
     });
   });
 }
