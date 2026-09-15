@@ -142,11 +142,13 @@ WeakSpot _weakSpot({String topicId = 'articles', int frequency = 5}) =>
 void main() {
   Future<void> pumpHome(
     WidgetTester tester, {
+    String userName = 'Ada',
     Avatar? avatar,
     VoidCallback? onAvatarTap,
     AnalyticsService? analyticsService,
     SubscriptionService? subscriptionService,
     StorageService? storageService,
+    DateTime Function()? clock,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = const Size(390, 844) * 3.0;
@@ -163,13 +165,18 @@ void main() {
         // screen).
         theme: buildAppTheme(Brightness.light),
         home: HomeScreen(
-          userName: 'Ada',
+          userName: userName,
           avatar: avatar,
           claudeService: ClaudeService(),
           storageService: storageService ?? StorageService(),
           analyticsService: analyticsService ?? AnalyticsService(),
           subscriptionService: subscriptionService ?? _FakeSubscriptionService(),
           onAvatarTap: onAvatarTap,
+          // Fixed at a mid-morning instant by default so the greeting text
+          // this file asserts on doesn't depend on when the suite happens
+          // to run — timeOfDayGreeting's own boundary tests live in
+          // greeting_test.dart, this file only needs one stable value.
+          clock: clock ?? () => DateTime(2026, 1, 1, 9, 0),
         ),
       ),
     );
@@ -178,7 +185,24 @@ void main() {
 
   testWidgets('greets the user by their onboarding name', (tester) async {
     await pumpHome(tester);
-    expect(find.text('Welcome back, Ada'), findsOneWidget);
+    expect(find.text('Good morning, Ada'), findsOneWidget);
+  });
+
+  testWidgets(
+      'renders the greeting word alone, with no dangling comma, when there '
+      'is no name', (tester) async {
+    await pumpHome(tester, userName: '');
+    expect(find.text('Good morning'), findsOneWidget);
+    // Not just absence of the old copy — nothing starting with "Good "
+    // should carry a trailing ", " with nothing after it.
+    expect(find.textContaining('Good morning,'), findsNothing);
+  });
+
+  testWidgets('the greeting follows the injected clock, not a fixed word',
+      (tester) async {
+    await pumpHome(tester, clock: () => DateTime(2026, 1, 1, 19, 0));
+    expect(find.text('Good evening, Ada'), findsOneWidget);
+    expect(find.text('Good morning, Ada'), findsNothing);
   });
 
   testWidgets('shows a placeholder avatar when none has been picked',
@@ -201,7 +225,7 @@ void main() {
       'leading before it', (tester) async {
     await pumpHome(tester);
 
-    final greetingLeft = tester.getTopLeft(find.text('Welcome back, Ada')).dx;
+    final greetingLeft = tester.getTopLeft(find.text('Good morning, Ada')).dx;
     final avatarRect = tester.getRect(find.byType(AvatarTile));
     final screenWidth = tester.view.physicalSize.width /
         tester.view.devicePixelRatio;

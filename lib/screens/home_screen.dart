@@ -11,6 +11,7 @@ import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/answer_matching.dart';
+import '../utils/greeting.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
@@ -40,6 +41,11 @@ class HomeScreen extends StatefulWidget {
   // switch lives in app.dart's State, not here, so this is a hook rather
   // than HomeScreen owning navigation itself.
   final VoidCallback? onAvatarTap;
+  // Test-only clock seam (defaults to the real DateTime.now) — the
+  // time-of-day greeting's boundary tests need to construct exact
+  // 04:59/05:00-style instants, not depend on whatever time the suite
+  // happens to run at. No caller outside a test ever overrides this.
+  final DateTime Function() clock;
 
   HomeScreen({
     super.key,
@@ -50,7 +56,9 @@ class HomeScreen extends StatefulWidget {
     required this.analyticsService,
     SubscriptionService? subscriptionService,
     this.onAvatarTap,
-  }) : subscriptionService = subscriptionService ?? SubscriptionService();
+    DateTime Function()? clock,
+  })  : subscriptionService = subscriptionService ?? SubscriptionService(),
+        clock = clock ?? DateTime.now;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -254,6 +262,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // "Good {morning/afternoon/evening}, {name}" — same "$word, $name"
+  // shape the old fixed "Welcome back, $name" copy always used, generalized
+  // to a time-of-day word instead of a constant one, plus the one new case
+  // that copy never needed: an empty name (`userName` is a required
+  // `String`, never `null`, but nothing stops it being empty) renders the
+  // greeting word alone, no dangling ", ".
+  //
+  // Computed fresh on every build rather than cached in state — Home
+  // already rebuilds for other reasons (Daily Test/weak-spot loads,
+  // entitlement changes), so this rides along on those instead of needing
+  // its own refresh mechanism. It intentionally does *not* refresh purely
+  // from time passing while the app sits open with nothing else changing —
+  // see docs/build-log.md for why that gap is accepted here rather than
+  // patched with a new lifecycle hook or a Timer.
+  String get _greeting {
+    final word = timeOfDayGreeting(widget.clock());
+    return widget.userName.isEmpty ? word : '$word, ${widget.userName}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -278,14 +305,20 @@ class _HomeScreenState extends State<HomeScreen> {
         // `Expanded`) text so the avatar always lands flush against the
         // trailing edge regardless of how short the greeting is, while a
         // long name still truncates instead of pushing the avatar off
-        // the visible row.
+        // the visible row. `maxLines: 1` + `overflow: ellipsis` here is
+        // also what keeps this row safe at large Dynamic Type sizes: the
+        // text clips to one line and shrinks the space it claims instead
+        // of wrapping into the avatar or growing the row unpredictably;
+        // the avatar's own size never changes with text scale, and the
+        // `Row` (no fixed height) grows to fit whichever of the two is
+        // taller, so nothing clips vertically either.
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Flexible(
               child: Text(
-                'Welcome back, ${widget.userName}',
+                _greeting,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.headlineSmall?.copyWith(
@@ -299,15 +332,24 @@ class _HomeScreenState extends State<HomeScreen> {
             // own identity marker, and Settings is where it (and the
             // rest of the profile) is edited — tapping it jumps there
             // directly instead of requiring the Settings tab first.
+            // Enlarged from the original radius: 22 (a 44pt tile — this
+            // batch's own instruction to make it more prominent as the
+            // "whose home screen this is" marker); 44pt was already
+            // exactly at the ≥44pt touch-target minimum, so growing it
+            // only makes that minimum more comfortably exceeded, never
+            // at risk. This row lives in Home's own scrollable body
+            // (BrandScaffold's `children`), not its app bar/band, so the
+            // band's height is untouched by this change — confirmed by
+            // reading BrandScaffold itself, not assumed.
             InkWell(
-              // Matches AvatarTile's own corner rounding at radius: 22
+              // Matches AvatarTile's own corner rounding at radius: 30
               // (radius * 0.6) — a circular ripple would visibly mismatch
               // the tile's now-square shape.
               customBorder: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(13),
+                borderRadius: BorderRadius.circular(18),
               ),
               onTap: widget.onAvatarTap,
-              child: AvatarTile(avatar: widget.avatar, radius: 22),
+              child: AvatarTile(avatar: widget.avatar, radius: 30),
             ),
           ],
         ),
