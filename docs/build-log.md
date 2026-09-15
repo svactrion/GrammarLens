@@ -2756,3 +2756,98 @@ after the ring's removal)
   to either constant gets caught here rather than only on a real device.
 - **[Product]** `flutter analyze` and the full test suite (293 tests, up
   from 291) clean.
+
+## 2026-09-15 (Home avatar → Settings' avatar picker: a real transition,
+after checking what "transition" could even mean here)
+
+- **[Product] Checked the actual navigation mechanism before assuming a
+  Hero flight was possible at all.** Home's avatar tap goes through
+  `app.dart`'s `_switchTab(2)` — an `IndexedStack` index swap, not a
+  `Navigator` route change. `Hero` only animates across a route push/pop
+  transition; there is no such transition for a tab swap to hang one off
+  of. Settings' own avatar preview row already wraps its `AvatarTile` in
+  `Hero(tag: avatarHeroTag, ...)`, for the *existing* Settings → picker →
+  back flight — a separate, already-working case.
+- **[Product] Stopped and presented options rather than picking one**,
+  per this batch's own instruction once the tab-switch finding came back.
+  Landed on a third option beyond the two originally offered: keep the
+  tab model itself untouched everywhere else, but change Home's avatar
+  specifically to push the *existing* `AvatarPickerScreen` route directly
+  (the same screen Settings' "Change avatar" already opens) instead of
+  switching tabs — giving Home's avatar a real Hero flight to the
+  carousel's centered avatar, without turning Settings into a differently
+  -reached screen for every other path into it.
+- **[Engineering] `AvatarPickerScreen` gained a required `heroTag`
+  parameter** — `avatarHeroTag` (Settings' own, unchanged) and a new
+  `homeAvatarHeroTag`, both defined in `avatar_picker_screen.dart`.
+  Deliberately *not* the same tag reused for both entry points: Home and
+  Settings are both permanently mounted inside `app.dart`'s
+  `IndexedStack` (every tab stays alive, not just the visible one), so if
+  Home's avatar and Settings' preview row shared one Hero tag, both would
+  be mounted simultaneously the instant either one pushed this screen —
+  Flutter throws on exactly that ("multiple heroes that share the same
+  tag"). One tag per *entry point* avoids this by construction rather
+  than by convention. `AvatarCarousel`'s own existing architecture already
+  guarantees the tag lives on exactly one page at a time (`centerTileBuilder`
+  only ever wraps the *settled* index, never a page mid-drag) — verified
+  directly with a new test that checks the tagged-Hero count stays at
+  exactly 1 through a drag, not just at rest.
+- **[Product] `HomeScreen`'s own avatar wrapped in
+  `Hero(tag: homeAvatarHeroTag, ...)`**; `app.dart`'s `onAvatarTap` now
+  calls a new `_openAvatarPickerFromHome(context)` instead of
+  `_switchTab(2)`, pushing `AvatarPickerScreen` with that tag and a
+  `_changeAvatar` callback that mirrors `SettingsScreen._changeAvatar`
+  (save via `StorageService`, update `_profile` via `setState`) — written
+  again rather than shared, since the two call sites read from different
+  state shapes and sharing would cost more indirection than the ~5 lines
+  saved. A `late final Avatar _fallbackAvatarForPicker` mirrors
+  `SettingsScreen`'s own fallback for the same edge case: a legacy
+  profile with no avatar yet, computed once so it doesn't re-roll on
+  every open.
+- **[Engineering] A real, if subtle, flicker risk found and fixed while
+  making sure the flight would actually look right, not assumed away.**
+  `AvatarPickerScreen`'s pending-debounced-change flush used to live only
+  in `dispose()` — fine for a plain pop, but `dispose()` doesn't run
+  until *after* a pop's transition animation finishes, which is too late
+  for a Hero flight: the destination avatar (Home's or Settings') needs
+  to already show the new avatar *before* the flight starts, or it
+  visibly arrives showing the old one and only then jumps to the new one.
+  Fixed by wrapping the screen in `PopScope(canPop: false,
+  onPopInvokedWithResult: ...)`, routing every exit path — Done, the
+  AppBar back chevron, a system back gesture — through one `_popNow`
+  that flushes synchronously *before* calling `Navigator.pop()` itself.
+  This is a change to the *shared* `AvatarPickerScreen` widget, so it
+  also fixes the same latent risk for Settings' existing flow, not just
+  Home's new one — Settings' own entry point and destination are
+  otherwise completely unchanged, confirmed by diff. New regression test
+  pumps a single frame right after tapping Done (mid-transition, well
+  before `dispose()` would ever run) and asserts the change has already
+  been reported.
+- **[Product] The ground shadow needed no special handling at all for the
+  flight, checked rather than assumed.** It's painted inside `AvatarTile`
+  itself, which is what `Hero` wraps on both ends — Flutter's default
+  Hero shuttle flies one captured widget subtree (image + shadow
+  together) and scales the whole thing between the two endpoint rects, so
+  the shadow scales in lock-step with the illustration throughout, with
+  no separate logic needed to keep it from breaking or duplicating.
+- **[Product] `MediaQuery.disableAnimationsOf` branches the push itself**:
+  a zero-`transitionDuration`/`reverseTransitionDuration` `PageRouteBuilder`
+  when true, the normal `MaterialPageRoute` otherwise — the same
+  manual-gating pattern this app already uses everywhere else motion
+  appears, since Flutter route transitions don't automatically respect
+  this setting on their own.
+- **[Engineering] Tests, in `home_screen_test.dart` and
+  `avatar_picker_screen_test.dart`**: tapping Home's avatar opens
+  `AvatarPickerScreen` via a real push (Home itself is covered, not just
+  hidden — confirming this isn't the old tab switch in disguise); Done
+  pops back to `HomeScreen`; the pushed route's own `transitionDuration`
+  is zero under `disableAnimations` and non-zero otherwise (checking the
+  route's configuration directly, this suite's own established idiom,
+  rather than racing partial animation frames); the mid-debounce flush
+  timing fix above, and the exactly-one-tagged-Hero invariant through a
+  drag. Reused the "minimal harness reproducing the real wiring" testing
+  approach this file and `avatar_picker_screen_test.dart` already used
+  (rather than driving the full `GrammarLensApp` through onboarding just
+  to reach Home) — consistent with, not a new pattern for, this suite.
+- **[Product]** `flutter analyze` and the full test suite (299 tests, up
+  from 293) clean.

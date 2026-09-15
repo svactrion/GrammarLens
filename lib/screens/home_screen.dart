@@ -17,6 +17,7 @@ import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/locked_premium_pill.dart';
 import '../widgets/weak_spot_card.dart';
+import 'avatar_picker_screen.dart' show homeAvatarHeroTag;
 import 'daily_test_result_screen.dart';
 import 'daily_test_screen.dart';
 import 'premium_screen.dart';
@@ -349,7 +350,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(18),
               ),
               onTap: widget.onAvatarTap,
-              child: AvatarTile(avatar: widget.avatar, radius: 30),
+              // Hero, not just AvatarTile: `app.dart`'s onAvatarTap now
+              // pushes AvatarPickerScreen directly (a real route push, not
+              // the tab switch this used to be), so this flies to the
+              // carousel's centered avatar there and back. `homeAvatarHeroTag`
+              // is its own tag, distinct from Settings' `avatarHeroTag` —
+              // see that constant's own doc comment for why sharing one tag
+              // across both entry points would crash (both routes' Heroes
+              // stay mounted simultaneously, since Home and Settings are
+              // both permanently alive inside app.dart's IndexedStack).
+              child: Hero(
+                tag: homeAvatarHeroTag,
+                child: AvatarTile(avatar: widget.avatar, radius: 30),
+              ),
             ),
           ],
         ),

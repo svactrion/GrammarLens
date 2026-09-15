@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import 'models/app_theme_mode.dart';
+import 'models/avatar.dart';
 import 'models/user_profile.dart';
+import 'screens/avatar_picker_screen.dart';
 import 'screens/first_launch_flow.dart';
 import 'screens/home_screen.dart';
 import 'screens/review_screen.dart';
@@ -112,6 +114,62 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
     setState(() => _tabIndex = index);
   }
 
+  // Mirrors SettingsScreen's own `_fallbackAvatar`: `AvatarPickerScreen`
+  // requires a non-null starting avatar (PRD v2 §13.5's "no empty state"
+  // rule), but `_profile!.avatar` is nullable — only a legacy profile from
+  // before onboarding started auto-assigning one can actually be null in
+  // practice. Computed once, not per tap, so a legacy profile doesn't show
+  // a different random character on every open before the user ever
+  // settles on one.
+  late final Avatar _fallbackAvatarForPicker = Avatar.random();
+
+  /// Persists an avatar change and updates in-memory state — the same two
+  /// steps `SettingsScreen._changeAvatar` already does for its own entry
+  /// point, written again here rather than shared: the two call sites read
+  /// from different state shapes (`SettingsScreen` has `widget.profile`/
+  /// `widget.onProfileUpdated`; this class has `_profile`/`setState`
+  /// directly), so sharing would cost more in indirection than the ~5
+  /// lines it would save.
+  Future<void> _changeAvatar(Avatar avatar) async {
+    final updated = _profile!.copyWith(avatar: avatar);
+    try {
+      await _storageService.saveUserProfile(updated);
+      setState(() => _profile = updated);
+    } catch (_) {
+      // Silent by design, matching SettingsScreen's own posture for this
+      // exact failure mode: a failed background save shouldn't surface an
+      // error over what's otherwise a cosmetic preference.
+    }
+  }
+
+  /// Home's avatar now opens the same full-screen picker Settings does,
+  /// via a real route push (not `_switchTab`) so the `Hero` flight in
+  /// `HomeScreen`/`AvatarPickerScreen` has an actual route transition to
+  /// animate across — a tab switch is an `IndexedStack` swap, which Hero
+  /// cannot animate through at all: it has no push/pop transition for a
+  /// flight to run during. `MediaQuery.disableAnimationsOf` is checked
+  /// explicitly, the same manual-gating pattern this app already uses
+  /// everywhere else motion appears (e.g. `AvatarCarousel`'s own pop
+  /// animation) — Flutter's route transitions don't automatically shorten
+  /// themselves for reduced-motion settings.
+  void _openAvatarPickerFromHome(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final picker = AvatarPickerScreen(
+      currentAvatar: _profile!.avatar ?? _fallbackAvatarForPicker,
+      onAvatarChanged: _changeAvatar,
+      heroTag: homeAvatarHeroTag,
+    );
+    Navigator.of(context).push(
+      reduceMotion
+          ? PageRouteBuilder(
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+              pageBuilder: (_, __, ___) => picker,
+            )
+          : MaterialPageRoute(builder: (_) => picker),
+    );
+  }
+
   ThemeMode get _flutterThemeMode {
     switch (_themeMode) {
       case AppThemeMode.light:
@@ -159,7 +217,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               storageService: _storageService,
               analyticsService: _analyticsService,
               subscriptionService: _subscriptionService,
-              onAvatarTap: () => _switchTab(2),
+              onAvatarTap: () => _openAvatarPickerFromHome(context),
             ),
             ReviewScreen(
               claudeService: _claudeService,

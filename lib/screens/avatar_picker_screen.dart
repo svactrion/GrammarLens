@@ -8,24 +8,41 @@ import '../widgets/avatar_carousel.dart';
 import '../widgets/brand_scaffold.dart';
 
 /// Shared between this screen's centered avatar and Settings' own small
-/// preview row (`settings_screen.dart`) — the only two places this tag is
-/// ever used, so a `Hero` flight only ever has exactly one matching pair
-/// at a time.
+/// preview row (`settings_screen.dart`), for the Settings → picker → back
+/// flight.
 const String avatarHeroTag = 'profile-avatar';
 
-/// Settings' own avatar-picking screen — pushed from its preview row,
-/// wrapping [AvatarCarousel] with autosave and the `Hero` flight back to
-/// that row. No "Save" button of its own: every settle silently persists
-/// via [onAvatarChanged], debounced so a fast multi-swipe writes once
-/// after the user actually stops, not on every settle along the way.
+/// Shared between this screen's centered avatar and Home's own greeting
+/// avatar (`home_screen.dart`), for the Home → picker → back flight.
+/// Deliberately a *different* tag from [avatarHeroTag], not reused: both
+/// Home and Settings live inside the same `IndexedStack` in `app.dart`
+/// (every tab stays mounted, not just the visible one), so if both routes
+/// used the same tag, two `Hero`s with an identical tag would be mounted
+/// simultaneously the moment either one pushes this screen — Flutter
+/// throws on exactly that ("multiple heroes that share the same tag").
+/// One tag per *entry point*, not one tag per destination, keeps that
+/// impossible by construction.
+const String homeAvatarHeroTag = 'home-avatar';
+
+/// Shared avatar-picking screen — pushed from either Settings' preview row
+/// or Home's own greeting avatar (`heroTag` tells it which, so the `Hero`
+/// flight back always lands on the right place — see [avatarHeroTag]/
+/// [homeAvatarHeroTag]'s own doc comments for why they're kept distinct).
+/// Wraps [AvatarCarousel] with autosave and the `Hero` flight back to
+/// whichever entry point pushed it. No "Save" button of its own: every
+/// settle silently persists via [onAvatarChanged], debounced so a fast
+/// multi-swipe writes once after the user actually stops, not on every
+/// settle along the way.
 class AvatarPickerScreen extends StatefulWidget {
   final Avatar currentAvatar;
   final ValueChanged<Avatar> onAvatarChanged;
+  final String heroTag;
 
   const AvatarPickerScreen({
     super.key,
     required this.currentAvatar,
     required this.onAvatarChanged,
+    required this.heroTag,
   });
 
   @override
@@ -47,14 +64,32 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
     });
   }
 
+  // Shared by dispose() (a safety net for any teardown that doesn't go
+  // through _popNow — e.g. the whole route stack being torn down by an
+  // ancestor rebuild) and _popNow (the actual exit paths: Done, the back
+  // chevron, a system back gesture). Flushing here rather than only in
+  // dispose() matters specifically for the Hero flight this screen now
+  // participates in: dispose() doesn't run until *after* a pop's
+  // transition animation finishes, which is too late — the destination's
+  // own Hero (Home's or Settings' avatar) needs to already show the new
+  // avatar *before* the flight starts, or the flight visibly arrives at
+  // the wrong image and only then flickers to the right one.
+  void _flushPending() {
+    final pending = _pendingAvatar;
+    if (pending == null) return;
+    _pendingAvatar = null;
+    _debounce?.cancel();
+    widget.onAvatarChanged(pending);
+  }
+
+  void _popNow(BuildContext context) {
+    _flushPending();
+    Navigator.of(context).pop();
+  }
+
   @override
   void dispose() {
-    // Leaving mid-debounce (a swipe followed immediately by tapping back)
-    // shouldn't lose the change just because the window hadn't elapsed —
-    // flush it now instead of letting the about-to-be-cancelled timer
-    // simply never fire.
-    final pending = _pendingAvatar;
-    if (pending != null) widget.onAvatarChanged(pending);
+    _flushPending();
     _debounce?.cancel();
     super.dispose();
   }
@@ -94,64 +129,74 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
     // inventing a different one).
     final hPad = (width * 0.045).clamp(16.0, 28.0);
 
-    return BrandScaffold(
-      title: const PageTitle('Choose your avatar'),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // No card/box around this — it's a single line of text
-                  // with nothing to group visually or tap as a unit, so
-                  // giving it a container would be exactly the "readability
-                  // only" wrap docs/design-audit.md already argues against
-                  // (Settings' Profile/Data section, 2026-09-10). Solved
-                  // with typography alone: a title-weight role straight off
-                  // the theme, not a new style or a new color value.
-                  Text(
-                    'Pick your study buddy',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 32),
-                  AvatarCarousel(
-                    initialAvatar: widget.currentAvatar,
-                    onSettled: _onSettled,
-                    centerRadius: _centerRadius,
-                    viewportFraction: _viewportFraction,
-                    centerTileBuilder: (avatar, tile) =>
-                        Hero(tag: avatarHeroTag, child: tile),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // The only way to leave used to be the app bar's back chevron —
-          // no completion affordance at all. Deliberately just a pop, not
-          // a second write: the carousel's own autosave (on settle,
-          // debounced) already persisted whatever's selected by the time
-          // this is tapped, or AvatarPickerScreen's own dispose() flushes
-          // it if the debounce hadn't fired yet (see that method) — the
-          // exact same path the back button already goes through. So back
-          // and Done are already equivalent by construction; this button
-          // adds a second obvious way to trigger the same pop, not a
-          // second way to save.
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Done'),
+    return PopScope(
+      // Intercept every exit path (Done, the AppBar back chevron, a
+      // system back gesture) through the same _popNow — canPop: false
+      // means nothing pops until this callback explicitly does it,
+      // giving _flushPending a chance to run and take effect *before*
+      // the pop's Hero flight starts (see _flushPending's own comment).
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _popNow(context);
+      },
+      child: BrandScaffold(
+        title: const PageTitle('Choose your avatar'),
+        body: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // No card/box around this — it's a single line of text
+                    // with nothing to group visually or tap as a unit, so
+                    // giving it a container would be exactly the "readability
+                    // only" wrap docs/design-audit.md already argues against
+                    // (Settings' Profile/Data section, 2026-09-10). Solved
+                    // with typography alone: a title-weight role straight off
+                    // the theme, not a new style or a new color value.
+                    Text(
+                      'Pick your study buddy',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 32),
+                    AvatarCarousel(
+                      initialAvatar: widget.currentAvatar,
+                      onSettled: _onSettled,
+                      centerRadius: _centerRadius,
+                      viewportFraction: _viewportFraction,
+                      centerTileBuilder: (avatar, tile) =>
+                          Hero(tag: widget.heroTag, child: tile),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
+            // The only way to leave used to be the app bar's back chevron —
+            // no completion affordance at all. Deliberately just a pop, not
+            // a second write: _popNow already flushes any pending debounced
+            // change before popping, and the PopScope above routes the back
+            // chevron/a system back gesture through that exact same method
+            // — so Done isn't a second way to save, it's a second obvious
+            // way to trigger the one exit path every other trigger already
+            // uses.
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => _popNow(context),
+                    child: const Text('Done'),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

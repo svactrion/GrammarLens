@@ -14,6 +14,7 @@ void main() {
         home: AvatarPickerScreen(
           currentAvatar: Avatar.values[3],
           onAvatarChanged: changes.add,
+          heroTag: avatarHeroTag,
         ),
       ),
     );
@@ -43,6 +44,7 @@ void main() {
                   builder: (_) => AvatarPickerScreen(
                     currentAvatar: Avatar.values[3],
                     onAvatarChanged: changes.add,
+                    heroTag: avatarHeroTag,
                   ),
                 ),
               ),
@@ -73,6 +75,7 @@ void main() {
         home: AvatarPickerScreen(
           currentAvatar: Avatar.values[3],
           onAvatarChanged: (_) {},
+          heroTag: avatarHeroTag,
         ),
       ),
     );
@@ -80,6 +83,42 @@ void main() {
 
     final heroes = tester.widgetList<Hero>(find.byType(Hero));
     expect(heroes.any((h) => h.tag == avatarHeroTag), isTrue);
+  });
+
+  testWidgets(
+      'exactly one page ever carries the Hero tag at a time — never zero, '
+      'never two, including mid-drag before a settle', (tester) async {
+    // The requirement this pins down: a Hero tag must live on exactly one
+    // widget per route. AvatarCarousel's centerTileBuilder only wraps the
+    // *settled* page (never a mid-drag one), so this should hold even
+    // while dragging through several neighbors before releasing.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AvatarPickerScreen(
+          currentAvatar: Avatar.values[3],
+          onAvatarChanged: (_) {},
+          heroTag: avatarHeroTag,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    int taggedHeroCount() => tester
+        .widgetList<Hero>(find.byType(Hero))
+        .where((h) => h.tag == avatarHeroTag)
+        .length;
+
+    expect(taggedHeroCount(), 1);
+
+    // Mid-drag, well before it would settle on a new page.
+    await tester.drag(find.byType(PageView), const Offset(-200, 0));
+    await tester.pump();
+    expect(taggedHeroCount(), 1,
+        reason: 'still mid-drag — the tag must not have moved or doubled');
+
+    await tester.pumpAndSettle();
+    expect(taggedHeroCount(), 1,
+        reason: 'settled on a (possibly different) page — still exactly one');
   });
 
   Future<void> pumpPushed(
@@ -96,6 +135,7 @@ void main() {
                   builder: (_) => AvatarPickerScreen(
                     currentAvatar: Avatar.values[3],
                     onAvatarChanged: onAvatarChanged,
+                    heroTag: avatarHeroTag,
                   ),
                 ),
               ),
@@ -127,6 +167,36 @@ void main() {
     expect(find.byType(AvatarPickerScreen), findsNothing);
     expect(changes, hasLength(1));
     expect(changes.single, isNot(Avatar.values[3]));
+  });
+
+  testWidgets(
+      'a mid-debounce change is flushed before the pop transition starts, '
+      "not after it finishes — the actual no-flicker guarantee for a Hero "
+      'flight to the destination avatar', (tester) async {
+    // dispose() also flushes, but only once the pop's transition animation
+    // completes — too late for a Hero flight, whose destination Hero
+    // needs to already show the new avatar from the flight's very first
+    // frame. This pins down that the flush happens synchronously as part
+    // of triggering the pop, not deferred to teardown.
+    final changes = <Avatar>[];
+    await pumpPushed(tester, onAvatarChanged: changes.add);
+
+    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(changes, isEmpty); // still inside the debounce window
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+    // A single frame, mid-transition — AvatarPickerScreen (and its State,
+    // including dispose()) is still very much alive at this point.
+    await tester.pump();
+
+    expect(find.byType(AvatarPickerScreen), findsOneWidget,
+        reason: 'the pop transition should still be in flight here');
+    expect(changes, hasLength(1),
+        reason: 'the flush must already have happened by this frame, not '
+            "only once dispose() runs at the transition's end");
+
+    await tester.pumpAndSettle();
   });
 
   testWidgets(
@@ -190,6 +260,7 @@ void main() {
           home: AvatarPickerScreen(
             currentAvatar: Avatar.values[3],
             onAvatarChanged: (_) {},
+            heroTag: avatarHeroTag,
           ),
         ),
       );

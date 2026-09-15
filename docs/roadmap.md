@@ -4,7 +4,19 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (Settings' avatar picker screen got a bigger
+**Last updated:** 2026-09-15 (Home's avatar tap now opens Settings' avatar
+picker via a real route push, with a genuine `Hero` flight to the
+carousel's centered avatar — checked first that the old tab-switch
+mechanism couldn't support a Hero at all, since it has no push/pop
+transition; stopped and presented options before picking one. Found and
+fixed a real flicker risk along the way, in the *shared* picker widget
+(so it also closes the same latent risk in Settings' own existing flow):
+the pending-avatar-change flush used to happen only in `dispose()`, too
+late for the destination Hero to already show the new avatar before the
+flight starts. See "Home avatar → Settings' avatar picker: a real
+transition" below and `docs/build-log.md`'s same-date entry. Previous
+update, same day (bigger picker avatar): Settings' avatar picker screen
+got a bigger
 center avatar, a second look now that the colored ring is gone — center
 avatar 128pt → 160pt diameter, with the neighbor peek still measured at
 exactly half-visible at both 320pt and 375pt. Corrected a belief in the
@@ -1016,6 +1028,42 @@ instead.
   widths against the real `AvatarPickerScreen`, re-measured rather than
   pinned to today's constants.
 - `flutter analyze` and the full test suite (293 tests, up from 291) are
+  clean. Full detail: `docs/build-log.md`, same date.
+
+**2026-09-15 — Home avatar → Settings' avatar picker: a real transition.**
+Checked first: Home's avatar tap was an `IndexedStack` tab swap, not a
+`Navigator` route change — `Hero` cannot animate across that at all,
+having no push/pop transition to run during. Stopped and presented
+options rather than assuming an answer; landed on a third path beyond
+the two originally offered.
+
+- Home's avatar now pushes the *existing* `AvatarPickerScreen` route
+  directly (the same screen Settings' "Change avatar" already opens),
+  instead of switching tabs — a real `Hero` flight to the carousel's
+  centered avatar, with the tab model itself untouched everywhere else.
+- `AvatarPickerScreen` gained a required `heroTag` — `avatarHeroTag`
+  (Settings', unchanged) and a new `homeAvatarHeroTag`, kept deliberately
+  distinct: Home and Settings are both permanently mounted inside
+  `app.dart`'s `IndexedStack`, so sharing one tag would mount two Heroes
+  with the same tag simultaneously the instant either entry point pushed
+  this screen — a Flutter crash, not just an edge case. New test confirms
+  exactly one tagged Hero exists at a time, including mid-drag.
+- **A real flicker risk found and fixed, not assumed away:** the pending-
+  debounced-change flush used to live only in `dispose()`, which doesn't
+  run until *after* a pop's transition finishes — too late for a Hero
+  flight, whose destination needs the new avatar showing *before* the
+  flight starts. Fixed with `PopScope` routing every exit path (Done,
+  back chevron, system back gesture) through one flush-then-pop method.
+  This is a fix to the *shared* `AvatarPickerScreen` widget, so it also
+  closes the same latent risk in Settings' own existing flow — Settings'
+  entry point and destination are otherwise unchanged, confirmed by diff.
+- The ground shadow needed no special handling for the flight: it's
+  painted inside `AvatarTile`, which is what `Hero` wraps on both ends,
+  so it scales with the illustration automatically.
+- `MediaQuery.disableAnimationsOf` branches the push itself (a
+  zero-duration `PageRouteBuilder` vs. the normal `MaterialPageRoute`) —
+  Flutter route transitions don't respect this setting on their own.
+- `flutter analyze` and the full test suite (299 tests, up from 293) are
   clean. Full detail: `docs/build-log.md`, same date.
 
 ---

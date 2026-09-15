@@ -7,6 +7,7 @@ import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
+import 'package:grammar_lens/screens/avatar_picker_screen.dart';
 import 'package:grammar_lens/screens/daily_test_result_screen.dart';
 import 'package:grammar_lens/screens/daily_test_screen.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
@@ -245,6 +246,122 @@ void main() {
     await tester.pump();
 
     expect(tapped, isTrue);
+  });
+
+  group('avatar tap opens the picker via a real route push, with a Hero '
+      'flight (app.dart, batch: Home avatar → Settings picker transition)',
+      () {
+    // Mirrors app.dart's real _openAvatarPickerFromHome exactly (a real
+    // Navigator.push, branching on MediaQuery.disableAnimationsOf the same
+    // manual way this app already gates motion everywhere else) — the
+    // same "minimal harness reproducing the real wiring" approach this
+    // suite's sibling files already use (avatar_picker_screen_test.dart's
+    // own pumpPushed) rather than driving the whole GrammarLensApp through
+    // onboarding just to reach Home.
+    Future<void> pumpHomeInNavigator(
+      WidgetTester tester, {
+      required ValueChanged<Avatar> onAvatarChanged,
+    }) async {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: Builder(
+            builder: (context) => HomeScreen(
+              userName: 'Ada',
+              avatar: Avatar.values[3],
+              claudeService: ClaudeService(),
+              storageService: StorageService(),
+              analyticsService: AnalyticsService(),
+              subscriptionService: _FakeSubscriptionService(),
+              clock: () => DateTime(2026, 1, 1, 9, 0),
+              onAvatarTap: () {
+                final reduceMotion = MediaQuery.disableAnimationsOf(context);
+                final picker = AvatarPickerScreen(
+                  currentAvatar: Avatar.values[3],
+                  onAvatarChanged: onAvatarChanged,
+                  heroTag: homeAvatarHeroTag,
+                );
+                Navigator.of(context).push(
+                  reduceMotion
+                      ? PageRouteBuilder(
+                          transitionDuration: Duration.zero,
+                          reverseTransitionDuration: Duration.zero,
+                          pageBuilder: (_, __, ___) => picker,
+                        )
+                      : MaterialPageRoute(builder: (_) => picker),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('tapping the avatar opens AvatarPickerScreen, not a tab '
+        'switch', (tester) async {
+      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
+
+      expect(find.byType(AvatarPickerScreen), findsNothing);
+      await tester.tap(find.byType(AvatarTile).first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AvatarPickerScreen), findsOneWidget);
+      expect(find.byType(HomeScreen), findsNothing,
+          reason: 'a real push covers Home, unlike the old tab switch');
+    });
+
+    testWidgets('Done on the picker pops back to Home', (tester) async {
+      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
+      await tester.tap(find.byType(AvatarTile).first);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AvatarPickerScreen), findsNothing);
+      expect(find.byType(HomeScreen), findsOneWidget);
+    });
+
+    testWidgets(
+        'with MediaQuery.disableAnimations on, the route has a zero-duration '
+        'transition — no flight, an instant switch', (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
+      await tester.tap(find.byType(AvatarTile).first);
+      await tester.pump();
+
+      final route = ModalRoute.of(
+        tester.element(find.byType(AvatarPickerScreen)),
+      ) as PageRoute;
+      expect(route.transitionDuration, Duration.zero);
+    });
+
+    testWidgets(
+        'with normal motion, the route animates with MaterialPageRoute\'s '
+        'own (non-zero) transition duration', (tester) async {
+      await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
+      await tester.tap(find.byType(AvatarTile).first);
+      // A normal (non-zero-duration) route needs two pumps here: the
+      // first only processes the tap's own push() call, the second
+      // actually builds the incoming route's page.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+
+      final route = ModalRoute.of(
+        tester.element(find.byType(AvatarPickerScreen)),
+      ) as PageRoute;
+      expect(route.transitionDuration, isNot(Duration.zero));
+      await tester.pumpAndSettle();
+    });
   });
 
   group('Today (Daily Test state, PRD v2 §13.5 item 2)', () {
