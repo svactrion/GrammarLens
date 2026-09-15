@@ -4,12 +4,22 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-18 (the avatar picker screen — Settings' full-
-screen "Change avatar" — gained a "Done" button, warmer/plainer heading
-copy, and a bigger center avatar with neighbors still peeking at the
-edges; onboarding's embedded carousel is untouched. See "Avatar picker
-screen: Done button, copy, bigger avatars" below and
-`docs/build-log.md`'s 2026-09-18 entry. Previous update 2026-09-17:
+**Last updated:** 2026-09-19 (a vertical-line rendering bug reported on
+the onboarding carousel's Dinosaur avatar, diagnosed to a corrupted pixel
+stripe baked into `avatar_07.webp` itself — not a render or layout bug.
+Dinosaur was retired and replaced with a new Crab illustration in that
+slot; this batch closed out that asset swap properly — resized/
+re-encoded to match the pipeline, a new regression test that decodes
+every avatar's real bytes and checks its edges, and two much smaller
+pre-existing edge artifacts on unrelated avatars fixed along the way. See
+"Avatar asset fix: the vertical-line bug, Dinosaur → Crab" below and
+`docs/build-log.md`'s 2026-09-19 entry. Previous update 2026-09-18: the
+avatar picker screen — Settings' full-screen "Change avatar" — gained a
+"Done" button, warmer/plainer heading copy, and a bigger center avatar
+with neighbors still peeking at the edges; onboarding's embedded carousel
+is untouched. See "Avatar picker screen: Done button, copy, bigger
+avatars" below and `docs/build-log.md`'s 2026-09-18 entry. Previous
+update 2026-09-17:
 Home's greeting is time-of-day now, not a fixed "Welcome back", and its
 avatar is bigger — see "Home: time-of-day greeting + bigger avatar"
 below and `docs/build-log.md`'s 2026-09-17 entry. Also confirmed, not
@@ -853,6 +863,42 @@ assumed.
   larger (iPhone 17) simulator, plus a direct re-check that onboarding's
   own screen is pixel-identical to before. `flutter analyze` and the full
   test suite (289 tests, up from 285) are clean.
+
+**2026-09-19 — Avatar asset fix: the vertical-line bug, Dinosaur → Crab.**
+A thin vertical line reported inside the onboarding carousel's selection
+ring, on the Dinosaur avatar specifically. Diagnosed first, against real
+pixel data rather than the widget tree: `avatar_07.webp`'s columns 1–3
+carried a translucent stray stripe running the asset's full height,
+present in every other render site too (Home's greeting, Settings'
+preview row) since it's in the shipped file's own pixels — the colored
+selection ring some render sites lack was never the cause. Full
+diagnosis, including the render- and layout-level hypotheses ruled out
+along the way: `docs/build-log.md`, same date.
+
+- Dinosaur was retired and replaced with a new Crab illustration in the
+  same avatar_07 slot (a manual asset swap, verified clean on-device
+  before this batch); `Avatar`'s numbering is by asset slot, not
+  identity, so no index/count change was needed, only the semantic label
+  VoiceOver/TalkBack reads.
+- The replacement asset didn't match this project's own avatar pipeline
+  (1024×1024 and ~4× the file size other avatars run at) — resized to
+  508×508 and re-encoded lossy quality 90, this set's own established
+  convention, landing back at a normal ~33KB.
+- **New regression test, `avatar_asset_edges_test.dart`, decodes every
+  bundled avatar's real bytes and checks its outermost edge for stray
+  alpha** — the only path that could actually have caught the original
+  bug, since it lived in the shipped pixels, not in any widget's
+  behavior. Writing it surfaced two further, much smaller pre-existing
+  defects (a couple of imperceptible alpha=1/255 pixels each on
+  `avatar_01.webp`/`avatar_03.webp`, unrelated to Dinosaur/Crab) — fixed
+  rather than carved out as exceptions to the new test.
+- `docs/build-log.md`'s own 2026-09-16 entry (and this file's matching
+  passage) still say "Dinosaur" — left alone deliberately, same
+  don't-rewrite-history call already made for the "AI Voice Practice" →
+  "AI Practice Partner" rename (2026-09-05): they correctly describe the
+  app as it was named at the time.
+- `flutter analyze` and the full test suite (290 tests, up from 289) are
+  clean.
 
 ---
 

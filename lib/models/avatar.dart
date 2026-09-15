@@ -66,7 +66,7 @@ class Avatar {
     'Bee',
     'Frog',
     'Chick',
-    'Dinosaur',
+    'Crab',
     'Cat',
     'Turtle',
     'Penguin',

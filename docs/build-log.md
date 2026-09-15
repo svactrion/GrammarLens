@@ -2469,3 +2469,89 @@ avatars — scoped to Settings' full-screen picker only)
   from 285) are clean, including three consecutive clean full-suite runs
   to rule out the gesture-based flakiness this exact test file has hit
   before (2026-09-17).
+
+## 2026-09-19 (Avatar asset fix: the vertical-line bug, Dinosaur → Crab)
+
+- **[Product] Diagnosed a vertical-line bug reported inside the
+  onboarding carousel's selection ring, on the Dinosaur avatar
+  specifically — root cause confirmed by inspecting real pixel data, not
+  guessed from the widget tree.** Decoded all twelve bundled `.webp`
+  files directly and found the defect in exactly one: `avatar_07.webp`'s
+  columns x=1–3 carried a translucent light-gray stripe (alpha ~11–45%
+  of full) running the asset's entire 508px height, while every other
+  avatar's edge columns/rows were fully transparent (alpha 0). Two
+  competing hypotheses were checked and ruled out rather than assumed
+  away:
+  - **Render-time filter bleed at scale-up** — ruled out because the
+    stripe already exists at that opacity across 508 continuous rows in
+    the *raw decoded pixels*, before `Image.asset`'s default filtering
+    ever touches it. Filtering could soften it by a fraction of a pixel;
+    it can't manufacture 508 rows of correlated alpha out of clean data.
+  - **`PageView` neighbor-page bleed at the carousel's center slot** —
+    ruled out on two grounds: `_CarouselPage`'s `Transform.scale` never
+    scales the settled/center page past 1.0× its own slot (only a brief
+    1.06× "pop"), so nothing has room to bleed in from an adjacent page;
+    and, decisively, the line only ever appeared on Dinosaur, never on
+    whichever avatar happened to be centered — a layout-level seam would
+    show on any avatar sitting in that position, not one specific
+    illustration.
+  - Also confirmed, not assumed: the colored selection ring
+    (`avatarRingColor`) was never the cause and removing it would not
+    have fixed this on its own. `AvatarTile` (Home's greeting, Settings'
+    preview row) already renders with **no background at all**, and the
+    defect is in the asset's own pixels — it shows there too, just
+    against whatever sits behind it instead of a ring.
+  - No source PNG/PSD exists in the repo to compare against (only the
+    final `.webp`s are ever committed), so which pipeline step
+    introduced the defect is unknown — moot, since the fix is to the
+    shipped file regardless of when it was introduced.
+- **[Product] Dinosaur retired; a new Crab illustration takes the
+  avatar_07 slot** — a manual asset replacement made outside this
+  session, verified clean on-device beforehand. `Avatar`'s numbering is
+  by asset slot (`avatar_07.webp`), not creature identity, so this needed
+  no `count`/index change, only the semantic label
+  (`_semanticLabels[6]`) VoiceOver/TalkBack reads aloud.
+- **[Engineering] Closed out the manual swap properly instead of trusting
+  it at face value.** The replacement file was a genuine WebP with a real
+  alpha channel (confirmed by decoding it, not by trusting the `.webp`
+  extension) — but 1024×1024 against every sibling avatar's 508×508, and
+  121KB against the set's normal 25–43KB range. Resized to 508×508 and
+  re-encoded lossy quality 90: read each sibling file's own RIFF/VP8
+  header first to confirm the set's actual convention (lossy `VP8 ` +
+  a separate `ALPH` alpha chunk, not lossless `VP8L`) rather than
+  guessing at a format to match. Landed at 33KB, back in the normal
+  range. The source file's own edges had a clean 10px fully-transparent
+  margin before downscaling, checked explicitly so the resize filter had
+  no hard alpha edge to ring against.
+- **[Engineering] Writing the promised regression test surfaced two more,
+  much smaller, unrelated pre-existing defects — fixed, not carved out as
+  exceptions.** Running the same edge-alpha sweep across all twelve
+  assets (not just avatar_07) found `avatar_01.webp` carrying 22 isolated
+  pixels at alpha=1/255 on its top row and `avatar_03.webp` carrying 2 at
+  alpha=1/255 on its bottom row — WebP lossy-compression noise at the
+  boundary of an already-transparent region, invisible at that opacity
+  and scattered rather than a contiguous line, so a materially different
+  (and far less severe) defect than Dinosaur's. Zeroed both rows outright
+  — safe, since the only nonzero pixels on either row were these already-
+  imperceptible stragglers — rather than shipping a "checks all twelve"
+  regression test that actually carried a two-file asterisk.
+- **[Engineering] New `avatar_asset_edges_test.dart` decodes real asset
+  bytes — the only path that could have caught the original bug.** Loads
+  each of the twelve bundled `.webp` files via `rootBundle.load` (real
+  bytes, not a mock or a widget-level check), decodes with `dart:ui`'s
+  `instantiateImageCodec`, and asserts alpha is 0 on every pixel of the
+  outermost edge on all four sides. A widget test on `AvatarTile`/
+  `AvatarCarousel` could never have caught this class of bug — those
+  widgets render whatever bytes the asset file contains, correctly; the
+  defect was in the bytes themselves.
+- **[Product] Textual "Dinosaur" references updated where they describe
+  current behavior — `avatar_ring_color_test.dart`'s expectations and
+  comments now read "Crab" for avatar_07, with a note that it stays in
+  that test's coverage for the index/ring-color pairing, not because a
+  crab is green.** Deliberately left alone: `docs/build-log.md`'s own
+  2026-09-16 entry and `docs/roadmap.md`'s matching passage, both of
+  which correctly describe the app as it was named at the time — the
+  same don't-rewrite-history call already made for the "AI Voice
+  Practice" → "AI Practice Partner" rename (2026-09-05, this file).
+- **[Product]** `flutter analyze` and the full test suite (290 tests, up
+  from 289) clean.

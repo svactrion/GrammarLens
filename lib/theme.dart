@@ -188,14 +188,16 @@ const List<Color> _avatarRingColors = [
 /// The ring color for [avatar] — cycles through [_avatarRingColors] by
 /// index (`(avatar.index - 1) % 10`), the same "generated from a pattern,
 /// no per-item table" approach [Avatar] itself uses, rather than a
-/// hand-written 12-entry lookup. This cycling happens to land Frog (05),
-/// Dinosaur (07), and Turtle (09) on colors 5/7/9 — cyan, blue, and
-/// purple, none of them this palette's three green-ish entries
-/// (2/3/4) — satisfying the "a ring must never match its own avatar's
-/// dominant color" rule without a hardcoded exception; see
-/// `avatar_ring_color_test.dart` for the regression test that pins this
-/// down rather than trusting it stays true by coincidence as the set
-/// grows.
+/// hand-written 12-entry lookup. This cycling happens to land Frog (05)
+/// and Turtle (09) on colors 5 and 9 — cyan and purple, neither of them
+/// this palette's three green-ish entries (2/3/4) — satisfying the "a
+/// ring must never match its own avatar's dominant color" rule without a
+/// hardcoded exception. Avatar 07 (Crab, replacing the green-illustrated
+/// Dinosaur this asset slot originally shipped with) lands on color 7,
+/// blue, which was already clear of the green band before the swap; see
+/// `avatar_ring_color_test.dart` for the regression test that pins all
+/// three down rather than trusting it stays true by coincidence as the
+/// set grows.
 Color avatarRingColor(Avatar avatar) =>
     _avatarRingColors[(avatar.index - 1) % _avatarRingColors.length];
 
