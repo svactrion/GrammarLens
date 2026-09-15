@@ -168,4 +168,57 @@ void main() {
     expect(backChanges, hasLength(1));
     expect(doneChanges.single, backChanges.single);
   });
+
+  group('neighbor peek stays at least half-visible at both target widths', () {
+    // Regression coverage for the batch that enlarged the center avatar
+    // (docs/build-log.md, same date): measuring the real widget tree (not
+    // hand-derived arithmetic) found the neighbor's visible fraction
+    // depends only on viewportFraction, not on centerRadius at all — so
+    // this stays true regardless of whatever centerRadius is currently
+    // set to, as long as viewportFraction itself doesn't move above 0.5.
+    Future<void> expectHalfVisibleAt(
+      WidgetTester tester,
+      double screenWidth,
+    ) async {
+      tester.view.physicalSize = Size(screenWidth, 800) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AvatarPickerScreen(
+            currentAvatar: Avatar.values[3],
+            onAvatarChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final neighborLabel = Avatar.values[4].semanticLabel;
+      final neighborImage = find.descendant(
+        of: find.bySemanticsLabel(neighborLabel),
+        matching: find.byWidgetPredicate((w) => w is Image),
+      );
+      expect(neighborImage, findsOneWidget,
+          reason: 'the neighbor should already be built and peeking in');
+
+      final rect = tester.getRect(neighborImage);
+      final visibleWidth = (screenWidth - rect.left).clamp(0.0, rect.width);
+      final fraction = visibleWidth / rect.width;
+
+      expect(fraction, greaterThanOrEqualTo(0.5),
+          reason: 'at $screenWidth pt, only ${(fraction * 100).round()}% of '
+              'the neighbor is visible — swiping is the only way to pick, '
+              'so this signal must never drop below half');
+    }
+
+    testWidgets('375pt (iPhone SE)', (tester) async {
+      await expectHalfVisibleAt(tester, 375);
+    });
+
+    testWidgets('320pt (1st-gen iPhone SE width)', (tester) async {
+      await expectHalfVisibleAt(tester, 320);
+    });
+  });
 }

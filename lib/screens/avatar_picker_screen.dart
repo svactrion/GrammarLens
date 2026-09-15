@@ -59,25 +59,29 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
     super.dispose();
   }
 
-  // Enlarged from AvatarCarousel's own default (56 / 0.45, still what
-  // OnboardingScreen's embedded use gets) — this screen has a full page to
-  // itself, unlike onboarding's carousel squeezed above a name field, so it
-  // can afford a more prominent center avatar.
+  // Enlarged again, now that the colored selection ring is gone
+  // (docs/design-audit.md's avatar section) — the ring used to be a
+  // second, tighter constraint alongside neighbor-peek visibility ("ring
+  // strictly narrower than its own page"), and that's what actually
+  // capped the previous radius (64) well below what peek visibility alone
+  // allowed, though the reasoning written down at the time didn't
+  // separate the two clearly.
   //
-  // The two are tuned together, and neither moved as far as a first pass
-  // suggested: growing viewportFraction *with* the radius (e.g. 80/0.6)
-  // actually shrank how much of each neighbor peeks in, because a wider
-  // page slot leaves less of the *next* page's own page-width exposed at
-  // the screen edge — worked out numerically, then confirmed on-device,
-  // not assumed. 64/0.5 is the largest radius that keeps a neighbor's own
-  // avatar at least half-visible (measured at exactly 50%, 375×375's own
-  // avatar-diameter arithmetic) at both 375pt (iPhone SE) and 320pt width
-  // with its ring still strictly narrower than its page (no overflow at
-  // either), which is the actual constraint here — not "as big as
-  // possible," since a bigger center avatar directly costs neighbor
-  // visibility, and losing that signal (swiping is the only way to pick)
-  // would be a worse regression than shipping a smaller enlargement.
-  static const double _centerRadius = 64;
+  // Measured directly against the real widget tree (not hand-derived),
+  // sweeping radius from 56 to 88 at viewportFraction 0.4/0.45/0.5/0.55,
+  // at both 320pt and 375pt: the neighbor's own visible fraction turns
+  // out to depend on `viewportFraction` alone, not on `radius` at all —
+  // exactly 50% at vf 0.5, regardless of radius, at either width. So
+  // `viewportFraction` stays exactly 0.5, unchanged: it's still the
+  // largest value satisfying "at least half visible" (above 0.5 the
+  // fraction drops below half; below 0.5 it's comfortably more than
+  // half). The actual remaining limit on `_centerRadius` is the settled
+  // tile's own diameter fitting inside its own page slot
+  // (`viewportFraction * screenWidth`) at the narrowest supported width
+  // (320pt, iPhone SE) — `2 * radius <= 0.5 * 320` gives radius <= 80.
+  // 80 is exactly that boundary: the tile fills its own page slot at
+  // 320pt with no overflow, and has slack to spare at 375pt.
+  static const double _centerRadius = 80;
   static const double _viewportFraction = 0.5;
 
   @override

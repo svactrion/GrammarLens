@@ -2680,3 +2680,79 @@ background + ground shadow)
   unchanged.
 - **[Product]** `flutter analyze` and the full test suite (291 tests, up
   from 290) clean.
+
+## 2026-09-15 (Settings' avatar picker: bigger center avatar, second look
+after the ring's removal)
+
+- **[Product] Measured the actual "empty space" before touching anything,
+  per this batch's own instruction — it isn't a layout gap.** The tile's
+  own box is a square (`side × side`) and every avatar asset is a square
+  508×508 canvas, so `BoxFit.contain` already fills the box edge to edge
+  with no letterboxing — there's no slack in the *layout* to reclaim.
+  What reads as empty space is padding baked into each illustration's own
+  canvas, and it varies far more than expected across the set: computed
+  each avatar's non-transparent bounding box directly. Fill ratio ranges
+  from 63% width (Giraffe, avatar_11) to 99% height (Snail, avatar_03) —
+  Snail in particular has almost zero margin (0.2–0.4% top/bottom).
+  **Conclusion: a uniform crop/zoom into the illustrations themselves
+  isn't safe** — any zoom factor large enough to meaningfully shrink the
+  padding on the roomier avatars would clip Snail's already-tight
+  canvas. Confirms this batch's own step 2 (grow the slot, not the
+  image) is the right lever, not a fallback.
+- **[Engineering] The previous batch's "64/0.5 is the largest radius that
+  keeps the neighbor half-visible" belief doesn't survive being measured
+  directly — corrected, not just accepted at face value.** Built a widget
+  test that renders the real `AvatarCarousel` at a grid of `centerRadius`
+  (56 through 88) and `viewportFraction` (0.4/0.45/0.5/0.55) values, at
+  both 320pt and 375pt, and reads the neighbor avatar's own rendered rect
+  to compute its actually-visible fraction (rather than trusting hand
+  algebra, which this session also derived and cross-checked against the
+  measurement — they agree). Result: **the visible fraction depends only
+  on `viewportFraction`, not on `centerRadius` at all** — exactly 50% at
+  vf 0.5 for every radius tested, at both widths. The previous batch's
+  own reasoning had silently conflated two different constraints: peek
+  visibility (radius-independent) and the *ring's* own diameter needing
+  to stay narrower than its page (very much radius-dependent, and — with
+  the ring now deleted — no longer a constraint that exists at all).
+- **[Product] New binding constraint, found the same way: the settled
+  tile's own diameter fitting inside its own page slot at the narrowest
+  supported width.** `2 * centerRadius <= viewportFraction * screenWidth`
+  at the tightest case (320pt, `viewportFraction` fixed at 0.5, the
+  largest value that still keeps peek visibility at exactly half) gives
+  `centerRadius <= 80`. Picked exactly 80: the settled tile fills its own
+  page slot with zero overflow at 320pt, and has slack to spare at 375pt.
+  `viewportFraction` itself is unchanged at 0.5 — the actual lever this
+  batch pulls is `centerRadius` alone.
+  - **Before → after:** center avatar diameter 128pt → 160pt (+25%,
+    every avatar scales uniformly, so a 63%-fill avatar like Giraffe
+    still shows proportionally the same character size increase as a
+    99%-fill one like Snail). Neighbor's own rendered tile: 102.4pt →
+    128pt diameter; visible peek width **51.2pt → 64pt, identical at
+    320pt and 375pt** (the neighbor's own size depends only on `radius`
+    and the fixed `neighborScale`, never on screen width — confirmed by
+    the same measurement, and worth recording since the previous batch
+    treated 320pt/375pt as needing separately-recomputed numbers, which
+    they no longer do without the ring's width-vs-page constraint).
+  - `AvatarCarousel`'s own `_neighborScale` (0.8) is untouched — reducing
+    it further (offered as a fallback lever in this batch's own brief)
+    turned out unnecessary once the actual binding constraint was
+    corrected; the radius increase alone is a full, geometry-justified
+    +25%.
+- **[Product] Scoped to exactly the Settings full-screen picker, verified
+  by diff, not just intent.** Only `avatar_picker_screen.dart`'s own
+  `_centerRadius` constant changed; `AvatarCarousel`'s defaults (56/0.45,
+  what `OnboardingScreen`'s embedded carousel still gets) are untouched,
+  and `git status` after this batch shows exactly two files touched (the
+  screen and its test) — nothing in `avatar_carousel.dart` itself needed
+  to change, since `centerRadius`/`viewportFraction` were already
+  per-instance constructor parameters from the previous enlargement
+  batch (2026-09-18 originally, corrected to 2026-09-15 above).
+- **[Engineering] New regression test group in
+  `avatar_picker_screen_test.dart`** asserts the neighbor stays ≥50%
+  visible at both 375pt and 320pt against the *real* `AvatarPickerScreen`
+  (not a bare `AvatarCarousel` with hand-picked parameters) — written to
+  hold regardless of whatever `centerRadius` is currently set to (it
+  re-measures the actual rendered geometry each time), so a future change
+  to either constant gets caught here rather than only on a real device.
+- **[Product]** `flutter analyze` and the full test suite (293 tests, up
+  from 291) clean.

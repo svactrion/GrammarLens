@@ -4,7 +4,16 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (the avatar carousel's colored selection
+**Last updated:** 2026-09-15 (Settings' avatar picker screen got a bigger
+center avatar, a second look now that the colored ring is gone — center
+avatar 128pt → 160pt diameter, with the neighbor peek still measured at
+exactly half-visible at both 320pt and 375pt. Corrected a belief in the
+previous ring-removal batch's own reasoning along the way: the ring, not
+the peek-visibility rule itself, was the real reason radius used to be
+capped low. See "Settings' avatar picker: bigger center avatar, second
+look after the ring's removal" below and `docs/build-log.md`'s same-date
+entry. Previous update, same day (ring removed): the avatar carousel's
+colored selection
 ring is gone — background is transparent now, with a soft theme-aware
 ground shadow under the illustration instead, applied everywhere an
 avatar renders: the carousel, Home's greeting, Settings' preview row.
@@ -976,6 +985,37 @@ before is deleted outright, not renamed or expanded a third time.
 - Legacy/unknown avatar ids unaffected, confirmed by the existing test
   suite passing unchanged.
 - `flutter analyze` and the full test suite (291 tests, up from 290) are
+  clean. Full detail: `docs/build-log.md`, same date.
+
+**2026-09-15 — Settings' avatar picker: bigger center avatar, second look
+after the ring's removal.** Measured first: the tile's own box has no
+layout slack to reclaim (a square asset in a square box, no
+letterboxing) — what reads as empty space is padding baked into each
+illustration, and it varies too much (63%–99% fill ratio across the set,
+Snail at near-zero margin) to safely crop/zoom uniformly. Grew the slot
+instead.
+
+- **The previous batch's "64/0.5 is the largest radius that keeps the
+  neighbor half-visible" turned out to be wrong, corrected by measuring
+  the real widget tree**: the neighbor's visible fraction depends only on
+  `viewportFraction`, not `centerRadius` at all (exactly 50% at vf 0.5,
+  any radius, both 320pt and 375pt). The real limit is the settled tile's
+  own diameter fitting its own page slot at 320pt, giving `centerRadius
+  <= 80`.
+- **Center avatar: 128pt → 160pt diameter (+25%)**, `viewportFraction`
+  unchanged at 0.5. Neighbor's own peek width: 51.2pt → 64pt, identical
+  at both 320pt and 375pt (it depends on radius and `neighborScale`
+  alone, not screen width — no longer needing separately-recomputed
+  numbers per width now that the ring's own extra constraint is gone).
+  `neighborScale` (0.8) untouched — unnecessary once the real constraint
+  was corrected.
+- Scoped to exactly `avatar_picker_screen.dart`'s own constant —
+  `AvatarCarousel`'s defaults (what onboarding's embedded carousel uses)
+  untouched, confirmed by diff.
+- New regression test group asserts ≥50% neighbor visibility at both
+  widths against the real `AvatarPickerScreen`, re-measured rather than
+  pinned to today's constants.
+- `flutter analyze` and the full test suite (293 tests, up from 291) are
   clean. Full detail: `docs/build-log.md`, same date.
 
 ---
