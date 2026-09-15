@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/avatar.dart';
 import '../models/practice_length.dart';
+import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
+import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
@@ -41,6 +44,16 @@ enum _PlanPeriod { monthly, annual }
 class PremiumScreen extends StatefulWidget {
   final SubscriptionService subscriptionService;
 
+  /// Needed only for the hero avatar group's own avatar — this screen
+  /// doesn't receive a `UserProfile`/`Avatar` from any of its four call
+  /// sites today (two of them are plain functions, not widgets already
+  /// holding profile state), so it reads its own copy here rather than
+  /// threading `Avatar?` through four inconsistent call sites. Every call
+  /// site already holds a `StorageService` instance for other reasons
+  /// (confirmed by reading each one, not assumed), so this costs each of
+  /// them one extra named argument, not a new dependency.
+  final StorageService storageService;
+
   /// Called when the user is done here — either they dismissed via "Maybe
   /// later," or a trial just started and they tapped "Continue" — right
   /// before this screen pops itself. Null (the default, for every entry
@@ -59,6 +72,7 @@ class PremiumScreen extends StatefulWidget {
 
   PremiumScreen({
     super.key,
+    required this.storageService,
     SubscriptionService? subscriptionService,
     this.onDone,
     this.sourceContext,
@@ -79,10 +93,24 @@ class _PremiumScreenState extends State<PremiumScreen> {
   bool _restoring = false;
   String? _restoreMessage;
 
+  // Computed once per screen visit (not per rebuild), the same reasoning
+  // SettingsScreen's own `_fallbackAvatar` already uses: a legacy profile
+  // with no avatar yet, or one carrying an id this build doesn't recognize
+  // (Avatar.fromJson returns null either way), shouldn't show a different
+  // random character on every unrelated rebuild — and per this batch's
+  // own instruction, the hero never shows the generic placeholder at all,
+  // so a real fallback avatar is picked up front rather than left null.
+  late final Avatar _fallbackAvatar = Avatar.random();
+  // Starts as the fallback, not null — the hero has a real avatar to show
+  // from the very first frame, never a placeholder state while the async
+  // storage read is in flight.
+  late Avatar _userAvatar = _fallbackAvatar;
+
   @override
   void initState() {
     super.initState();
     _loadOffer();
+    _loadAvatar();
   }
 
   Future<void> _loadOffer() async {
@@ -93,6 +121,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
       _annualPackage = offering?.annual;
       _loadingOffer = false;
     });
+  }
+
+  Future<void> _loadAvatar() async {
+    UserProfile? profile;
+    try {
+      profile = await widget.storageService.getUserProfile();
+    } catch (_) {
+      // Fails open to the fallback avatar below — a hero visual is purely
+      // decorative, never worth surfacing a storage error over.
+    }
+    if (!mounted) return;
+    setState(() => _userAvatar = profile?.avatar ?? _fallbackAvatar);
   }
 
   /// Both plans need to exist for the picker below to mean anything — a
@@ -191,11 +231,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  _AvatarHero(centerAvatar: _userAvatar),
+                  const SizedBox(height: 20),
                   Text(
                     _headline,
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Practice the mistakes you actually make.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 20),
                   const _SectionLabel("What's free, trial, and paid"),
@@ -285,6 +335,116 @@ class _PremiumScreenState extends State<PremiumScreen> {
             horizontalPadding: hPad,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Four avatars distinct from [center] and from each other, picked by a
+/// fixed offset from its own index rather than [Avatar.random] — the same
+/// visitor sees the same group every time they open this screen (no
+/// re-roll on every rebuild), and it's trivially testable. Offsets (2, 4,
+/// 6, 8 positions around the 12-avatar cycle) are spread out rather than
+/// adjacent so the four don't cluster right next to the center avatar's
+/// own asset-numbering neighborhood.
+List<Avatar> _otherAvatarsFor(Avatar center) {
+  const offsets = [2, 4, 6, 8];
+  return offsets
+      .map((offset) =>
+          Avatar.values[(center.index - 1 + offset) % Avatar.count])
+      .toList();
+}
+
+/// The hero visual (this batch): the user's own avatar front-and-center,
+/// four others peeking from behind — "here's your identity among the
+/// set," not a feature illustration. Built from the existing [AvatarTile]
+/// (transparent background + ground shadow already baked in, since the
+/// ring-removal batch) with no [Hero] wrapper at all: this screen has no
+/// push/pop partner to fly to, and wrapping these in `Hero` risked
+/// colliding with Home's or Settings' own avatar Hero tags, both of which
+/// stay mounted at the same time as this screen (see `home_screen.dart`'s
+/// own `homeAvatarHeroTag` doc comment for why that would crash). [center]
+/// is never null by the time this builds — [_PremiumScreenState] resolves
+/// a real fallback avatar before this is ever rendered, so there is no
+/// placeholder state here to design for.
+class _AvatarHero extends StatelessWidget {
+  final Avatar centerAvatar;
+
+  const _AvatarHero({required this.centerAvatar});
+
+  @override
+  Widget build(BuildContext context) {
+    final others = _otherAvatarsFor(centerAvatar);
+    // Inner pair sits closer to center (peeks more), outer pair further
+    // out and slightly smaller (peeks less) — a layered "huddle" rather
+    // than five same-size tiles in a row. Vertical offsets alternate so
+    // the group doesn't read as a rigid straight line.
+    const centerRadius = 48.0;
+    const innerRadius = 32.0;
+    const outerRadius = 26.0;
+    const innerOffsetX = 58.0;
+    const outerOffsetX = 90.0;
+
+    // Stack's own `alignment: center` centers each non-positioned child
+    // first; Transform.translate then offsets it purely at paint time — no
+    // Positioned needed, and no effect on any child's own layout size.
+    Widget positioned({
+      required Avatar avatar,
+      required double radius,
+      required double dx,
+      required double dy,
+    }) {
+      return Transform.translate(
+        offset: Offset(dx, dy),
+        child: Opacity(
+          opacity: 0.6,
+          child: AvatarTile(avatar: avatar, radius: radius),
+        ),
+      );
+    }
+
+    // One semantic node for the whole group, not five: the other four
+    // avatars are purely decorative (nothing to tap, nothing individually
+    // meaningful about *which* four they are), so exposing each one to a
+    // screen reader would just be noise. The one thing worth announcing —
+    // whose avatar this is — is stated directly instead.
+    return Semantics(
+      label: "Your avatar: ${centerAvatar.semanticLabel}",
+      container: true,
+      child: ExcludeSemantics(
+        child: SizedBox(
+          height: 120,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              positioned(
+                avatar: others[0],
+                radius: outerRadius,
+                dx: -outerOffsetX,
+                dy: 8,
+              ),
+              positioned(
+                avatar: others[1],
+                radius: innerRadius,
+                dx: -innerOffsetX,
+                dy: -6,
+              ),
+              positioned(
+                avatar: others[2],
+                radius: innerRadius,
+                dx: innerOffsetX,
+                dy: -6,
+              ),
+              positioned(
+                avatar: others[3],
+                radius: outerRadius,
+                dx: outerOffsetX,
+                dy: 8,
+              ),
+              AvatarTile(avatar: centerAvatar, radius: centerRadius),
+            ],
+          ),
+        ),
       ),
     );
   }

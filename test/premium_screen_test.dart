@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/learning_goal.dart';
+import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 /// Real [SubscriptionService] methods go through RevenueCat's platform
 /// channel, which just hangs forever in a plain widget test (no engine to
@@ -48,6 +52,21 @@ class _FakeSubscriptionService extends SubscriptionService {
 
   @override
   Future<bool> restorePurchases() async => false;
+}
+
+/// A real [StorageService]'s `getUserProfile()` goes through sqflite,
+/// which has no platform channel in this test environment and throws —
+/// `PremiumScreen._loadAvatar`'s own try/catch already handles that by
+/// falling back to a random avatar (fine for tests that don't care what
+/// the hero shows), but the hero-specific tests below need a *known*
+/// avatar, hence this fake.
+class _FakeStorageServiceForAvatar extends StorageService {
+  final UserProfile? profile;
+
+  _FakeStorageServiceForAvatar([this.profile]);
+
+  @override
+  Future<UserProfile?> getUserProfile() async => profile;
 }
 
 Package _fakeMonthlyPackage() {
@@ -130,6 +149,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: PremiumScreen(
+          storageService: _FakeStorageServiceForAvatar(),
           subscriptionService: service,
           sourceContext: sourceContext,
         ),
@@ -160,6 +180,7 @@ void main() {
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => PremiumScreen(
+                      storageService: _FakeStorageServiceForAvatar(),
                       subscriptionService: service,
                       onDone: onDone,
                     ),
@@ -358,6 +379,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
             subscriptionService:
                 _FakeSubscriptionService(offeringsCompleter: completer),
           ),
@@ -741,6 +763,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
             subscriptionService:
                 _FakeSubscriptionService(offering: _offeringWithBothPlans()),
           ),
@@ -775,7 +798,12 @@ void main() {
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
       await tester.pumpWidget(
-        MaterialApp(home: PremiumScreen(subscriptionService: service)),
+        MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            subscriptionService: service,
+          ),
+        ),
       );
       await tester.pumpAndSettle();
     }
@@ -827,6 +855,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
             subscriptionService:
                 _FakeSubscriptionService(offeringsCompleter: completer),
           ),
@@ -995,6 +1024,129 @@ void main() {
           (annualContainerNowUnselected.decoration as BoxDecoration).border
               as Border;
       expect(unselectedBorder.top.width, 1);
+    });
+  });
+
+  group('the hero avatar group (Batch 3)', () {
+    final profile = UserProfile(
+      name: 'Ada',
+      learningGoal: LearningGoal.work,
+      avatar: Avatar.values[6], // avatar_07, arbitrary but fixed
+    );
+
+    // Reads each AvatarTile's own `avatar` property directly rather than
+    // scanning semantics labels — the hero collapses to one semantic node
+    // (see _AvatarHero's own doc comment: the other four are decorative,
+    // not individually meaningful to a screen reader), so which avatars
+    // are actually shown is only observable at the widget level now.
+    List<Avatar?> avatarsShown(WidgetTester tester) => tester
+        .widgetList<AvatarTile>(find.byType(AvatarTile))
+        .map((tile) => tile.avatar)
+        .toList();
+
+    testWidgets('shows exactly five avatars, the center one matching the '
+        "real profile's avatar", (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(profile),
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final shown = avatarsShown(tester);
+      expect(shown, hasLength(5));
+      expect(shown, contains(profile.avatar));
+    });
+
+    testWidgets(
+        'the four other avatars are distinct from the center and from '
+        'each other, and are the same every time (deterministic, not '
+        'Avatar.random)', (tester) async {
+      Future<List<Avatar?>> pumpAndRead() async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: PremiumScreen(
+              storageService: _FakeStorageServiceForAvatar(profile),
+              subscriptionService: _FakeSubscriptionService(offering: null),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        return avatarsShown(tester);
+      }
+
+      final first = await pumpAndRead();
+      expect(first, hasLength(5),
+          reason: 'the center avatar plus four distinct others');
+      expect(first.toSet(), hasLength(5),
+          reason: 'no repeats among the five shown avatars');
+
+      // Same profile, freshly pumped again — the four others must be the
+      // exact same set, not re-rolled.
+      final second = await pumpAndRead();
+      expect(second.toSet(), first.toSet());
+    });
+
+    testWidgets(
+        'a null avatar (legacy profile) never shows the generic '
+        'placeholder — five real avatars are shown instead', (tester) async {
+      const legacyProfile =
+          UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(legacyProfile),
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AvatarTile), findsNWidgets(5));
+      for (final tile in tester.widgetList<AvatarTile>(find.byType(AvatarTile))) {
+        expect(tile.avatar, isNotNull,
+            reason: 'no tile should fall back to the null/placeholder '
+                'branch in the hero');
+      }
+    });
+
+    testWidgets('no Hero wraps any hero avatar — nothing to collide with '
+        "Home's or Settings' own avatar Hero tags", (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(profile),
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Hero), findsNothing);
+    });
+
+    testWidgets('all five avatars fit within a 320pt-wide viewport, no '
+        'overflow', (tester) async {
+      tester.view.physicalSize = const Size(320, 568) * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(profile),
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AvatarTile), findsNWidgets(5));
     });
   });
 }

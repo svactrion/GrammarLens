@@ -129,7 +129,10 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
           dailyTestSet: _dailyTestSet!,
           answers: _dailyTestAnswers,
           dailyTestService: _dailyTestService,
-          bottomBuilder: (context) => _DayZeroPaywallCta(onDone: _finish),
+          bottomBuilder: (context) => _DayZeroPaywallCta(
+            storageService: widget.storageService,
+            onDone: _finish,
+          ),
         );
     }
   }
@@ -149,8 +152,12 @@ class _DayZeroPaywallCta extends StatelessWidget {
   // taps "Continue" there — all three are "done here" moments (PRD v2
   // §12.3: whichever path, it ends on Home).
   final VoidCallback onDone;
+  final StorageService storageService;
 
-  const _DayZeroPaywallCta({required this.onDone});
+  const _DayZeroPaywallCta({
+    required this.storageService,
+    required this.onDone,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +188,10 @@ class _DayZeroPaywallCta extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => PremiumScreen(onDone: onDone),
+                    builder: (_) => PremiumScreen(
+                      storageService: storageService,
+                      onDone: onDone,
+                    ),
                   ),
                 );
               },

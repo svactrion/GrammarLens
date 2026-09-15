@@ -4,16 +4,24 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (Premium screen redesign, Batch 2 shipped —
-the CTA is now genuinely pinned in a fixed footer instead of just
+**Last updated:** 2026-09-15 (Premium screen redesign, Batch 3 shipped —
+a hero avatar group at the top (the user's own avatar front-and-center,
+four others deterministically picked, layered behind it), no `Hero`
+wrapper on any of them since this screen has no push/pop flight partner
+and wrapping would risk colliding with Home's/Settings' own avatar Hero
+tags. Found and fixed a real accessibility gap while building it, not
+just in review: a bare `AvatarTile` carries no semantic label on its
+own. See "Premium screen redesign, underway" below and
+`docs/build-log.md`'s same-date entries. Previous update, same day
+(Batch 2, structure): the CTA is now genuinely pinned in a fixed footer
+instead of just
 happening to fit on one common screen size, the comparison table merged
 two wrong/overlapping rows into one correct one, and the Premium column
 is now a real highlighted strip using a contrast-checked color pairing
 instead of the one Batch 0 found failing in dark mode. A real
 `IntrinsicHeight`/`Expanded` reliability bug was found and fixed along
 the way, not hypothetical — it caused an actual overflow at 2.0× text
-scale during this batch's own testing. See "Premium screen redesign,
-underway" below and `docs/build-log.md`'s same-date entries. Previous
+scale during this batch's own testing. Previous
 update, same day (Batch 1, pricing fixture): a debug-only pricing
 fixture shipped so the paywall's loaded state is finally previewable
 with no App Store Connect product connected yet, and Batch 0's own
@@ -1139,6 +1147,23 @@ measurement below: `docs/build-log.md`, same date.
   + `Expanded` reliability bug along the way (a genuine overflow at 2.0×
   text scale, not hypothetical) by switching to pre-measured fixed row
   heights. 322 tests passing (up from 312), `flutter analyze` clean.
+- **Batch 3 (hero avatar group, sub-headline) — shipped.** `PremiumScreen`
+  gained a required `StorageService` to read the real user's avatar
+  itself (all four call sites already held one for other reasons, so
+  this is one added argument each, not a new dependency) instead of
+  threading `Avatar?` by hand through two plain-function call sites that
+  don't carry profile state. `_AvatarHero`: the user's own avatar
+  front-and-center, four others layered behind it (picked deterministically
+  by a fixed index offset, not `Avatar.random`), no `Hero` wrapper at all
+  (no push/pop partner here, and wrapping would risk colliding with
+  Home's/Settings' own avatar Hero tags). A real accessibility gap was
+  found and fixed while building it, not just caught in review: a bare
+  `AvatarTile` carries no semantic label on its own, unlike
+  `AvatarCarousel`'s pages — fixed by wrapping the whole decorative group
+  in one clear `Semantics` node instead of exposing five separate,
+  mostly-noisy ones. Sub-headline "Practice the mistakes you actually
+  make." added below the existing contextual headline. 327 tests passing
+  (up from 322), `flutter analyze` clean.
 
 ---
 

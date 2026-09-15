@@ -128,6 +128,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PremiumScreen(
+          storageService: widget.storageService,
           subscriptionService: widget.subscriptionService,
           sourceContext: humanizeSlug(widget.spot.errorType),
         ),

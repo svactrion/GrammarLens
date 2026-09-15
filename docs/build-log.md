@@ -3069,3 +3069,72 @@ rows, the Premium strip)
   design.
 - **[Product]** `flutter analyze` and the full test suite (322 tests, up
   from 312) clean.
+
+## 2026-09-15 (Premium screen redesign, Batch 3 — hero avatar group and
+sub-headline)
+
+- **[Engineering] `PremiumScreen` gained a required `StorageService`**,
+  read once in `initState` (`_loadAvatar`) to get the real user's avatar
+  for the hero, rather than threading `Avatar?` through its four call
+  sites by hand — two of them (`practice_launch.dart`,
+  `weak_spot_detail_screen.dart`'s own function-shaped caller) don't hold
+  profile state today, and all four already hold a `StorageService`
+  instance for other reasons (checked by reading each one, not assumed,
+  in Batch 0). Updated all four: `home_screen.dart`,
+  `weak_spot_detail_screen.dart`, `practice_launch.dart`, and
+  `first_launch_flow.dart`'s `_DayZeroPaywallCta` (which didn't carry a
+  `StorageService` at all before this — added).
+- **Checked, not assumed: by the time the Day-0 flow's own `PremiumScreen`
+  push happens, the profile is already saved.** `_DayZeroPaywallCta` only
+  renders once `FirstLaunchFlow` has reached its `dailyTestResult` step,
+  which only happens after `_completeOnboarding` has already awaited
+  `storageService.saveUserProfile(profile)` successfully — so
+  `getUserProfile()` inside `PremiumScreen._loadAvatar` reliably finds a
+  real, already-random-assigned avatar on this path, not a legacy-null
+  edge case.
+- **A fallback avatar is picked immediately, not left null** —
+  `late Avatar _userAvatar = _fallbackAvatar` (`_fallbackAvatar` itself a
+  `late final Avatar.random()`, the same "computed once per visit, not
+  re-rolled" pattern `SettingsScreen`'s own fallback already uses) — so
+  the hero always has a real avatar to render from the very first frame,
+  overwritten by the real one once the storage read resolves (or left as
+  the fallback if the profile has none / an unrecognized legacy id). Per
+  this batch's own instruction, the hero never shows the generic
+  placeholder at all, confirmed by a new test asserting every `AvatarTile`
+  in the hero always has a non-null `avatar`.
+- **The four other avatars are picked deterministically** —
+  `_otherAvatarsFor` offsets the center avatar's own index by 2/4/6/8
+  positions around the 12-avatar cycle, not `Avatar.random()` — the same
+  visitor sees the same group every time, verified by a test that pumps
+  the screen twice and checks the same five avatars come back both times.
+- **`_AvatarHero`: the user's own avatar front-and-center (radius 48),
+  four others layered behind it (radius 32 inner pair, 26 outer pair,
+  horizontal offsets ±58/±90, slight vertical stagger) at 60% opacity**,
+  built from the existing `AvatarTile` (transparent background + ground
+  shadow already baked in since the ring-removal batch) with **no `Hero`
+  wrapper at all** — this screen has no push/pop partner to fly to, and
+  wrapping these would risk colliding with Home's or Settings' own
+  avatar Hero tags, both of which stay mounted simultaneously with this
+  screen. A new test confirms zero `Hero` widgets anywhere on this
+  screen, not just that the *right* tag is used.
+- **[Engineering] A real accessibility gap found and fixed while writing
+  the widget, not just while testing it: a bare `AvatarTile` carries no
+  semantic label of its own** — `AvatarCarousel` adds one per page
+  itself; this hero, built directly from `AvatarTile`, initially had
+  none at all. Rather than replicate the carousel's per-tile
+  `Semantics` (five separate nodes for what's actually one decorative
+  group — the four "other" avatars aren't individually meaningful),
+  wrapped the whole hero in one `Semantics(label: "Your avatar:
+  $name")` over an `ExcludeSemantics`'d `Stack` — a screen reader hears
+  one clear sentence instead of noise. Tests that need to know *which*
+  avatars are actually rendered now read `AvatarTile.avatar` directly at
+  the widget level instead of scanning semantics labels, since the
+  labels are deliberately excluded now.
+- **Sub-headline added below the existing (unchanged) contextual
+  headline/fallback**: "Practice the mistakes you actually make." Both
+  the headline and this line are now center-aligned, matching the
+  centered hero visual above them — a small, deliberate visual-coherence
+  call, not requested verbatim but consistent with the hero's own
+  centered composition.
+- **[Product]** `flutter analyze` and the full test suite (327 tests, up
+  from 322) clean.

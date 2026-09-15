@@ -256,6 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PremiumScreen(
+          storageService: widget.storageService,
           subscriptionService: widget.subscriptionService,
           sourceContext: sourceContext,
         ),

@@ -74,6 +74,7 @@ Future<void> launchPracticeSet({
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => PremiumScreen(
+            storageService: storageService,
             subscriptionService: subscriptionService,
             sourceContext: topic.title,
           ),
