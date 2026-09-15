@@ -43,11 +43,27 @@ class AvatarCarousel extends StatefulWidget {
   /// tile as-is.
   final Widget Function(Avatar avatar, Widget tile)? centerTileBuilder;
 
+  /// The center avatar's own tile radius. Defaults to the one size this
+  /// carousel has ever shipped with — `OnboardingScreen`'s embedded use
+  /// doesn't override this, so it's completely unaffected by
+  /// `AvatarPickerScreen` (Settings' full-screen picker) passing a larger
+  /// value for its own, roomier layout.
+  final double centerRadius;
+
+  /// [PageController.viewportFraction] — tuned together with
+  /// [centerRadius], never independently: a bigger avatar needs a wider
+  /// page slot to keep neighbors peeking in from the edges rather than
+  /// crowding them out. Same default-preserves-onboarding reasoning as
+  /// [centerRadius].
+  final double viewportFraction;
+
   const AvatarCarousel({
     super.key,
     required this.initialAvatar,
     required this.onSettled,
     this.centerTileBuilder,
+    this.centerRadius = 56,
+    this.viewportFraction = 0.45,
   });
 
   @override
@@ -56,12 +72,11 @@ class AvatarCarousel extends StatefulWidget {
 
 class _AvatarCarouselState extends State<AvatarCarousel>
     with SingleTickerProviderStateMixin {
-  // The center avatar's own tile radius; neighbors are scaled down from
-  // this via Transform.scale in the item builder below, never by asking
-  // AvatarTile for a smaller radius — a paint-time transform doesn't clip
-  // a page to its own layout bounds by default, which is exactly what
-  // lets a scaled-down neighbor spill past its slot's edge into view.
-  static const double _centerRadius = 56;
+  // Neighbors are scaled down from widget.centerRadius via Transform.scale
+  // in the item builder below, never by asking AvatarTile for a smaller
+  // radius — a paint-time transform doesn't clip a page to its own layout
+  // bounds by default, which is exactly what lets a scaled-down neighbor
+  // spill past its slot's edge into view.
   static const double _neighborScale = 0.8;
   static const double _neighborOpacity = 0.5;
   static const double _ringPadding = 14;
@@ -78,7 +93,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
     super.initState();
     _settledIndex = widget.initialAvatar.index - 1;
     _pageController = PageController(
-      viewportFraction: 0.45,
+      viewportFraction: widget.viewportFraction,
       initialPage: _settledIndex,
     );
     _popController = AnimationController(vsync: this, duration: _popDuration);
@@ -116,7 +131,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final ringColor = avatarRingColor(Avatar.values[_settledIndex]);
-    const ringDiameter = _centerRadius * 2 + _ringPadding * 2;
+    final ringDiameter = widget.centerRadius * 2 + _ringPadding * 2;
 
     return SizedBox(
       width: double.infinity,
@@ -147,7 +162,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
                 popAnimation: _popAnimation,
                 index: index,
                 settledIndex: _settledIndex,
-                radius: _centerRadius,
+                radius: widget.centerRadius,
                 neighborScale: _neighborScale,
                 neighborOpacity: _neighborOpacity,
                 centerTileBuilder: widget.centerTileBuilder,
