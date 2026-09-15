@@ -2533,10 +2533,24 @@ avatars — scoped to Settings' full-screen picker only)
   alpha=1/255 on its bottom row — WebP lossy-compression noise at the
   boundary of an already-transparent region, invisible at that opacity
   and scattered rather than a contiguous line, so a materially different
-  (and far less severe) defect than Dinosaur's. Zeroed both rows outright
-  — safe, since the only nonzero pixels on either row were these already-
-  imperceptible stragglers — rather than shipping a "checks all twelve"
-  regression test that actually carried a two-file asterisk.
+  (and far less severe) defect than Dinosaur's.
+  **Corrected after review, in a follow-up commit:** the first pass
+  zeroed both rows and re-saved through the same lossy quality-90 path
+  used for avatar_07, which re-compresses every pixel in the image, not
+  just the ~1px sliver actually being fixed — the wrong tool for a
+  targeted correction, even at a quality setting high enough that no
+  difference was visible. Redone from each file's own pre-fix original
+  (`git show` against the commit before this fix): decoded to raw RGBA,
+  zeroed only the exact pixels found nonzero (confirmed programmatically
+  — 22 on avatar_01, 2 on avatar_03, matching the counts above exactly),
+  and re-saved as **lossless** WebP (`lossless=True, exact=True`) so
+  every other pixel in each file is bit-for-bit identical to the
+  original — verified directly, not assumed, by diffing the decoded
+  arrays. This makes both files noticeably larger than the lossy set's
+  normal 25–43KB range (avatar_01: 31.5KB → 84.1KB; avatar_03: 42.7KB →
+  84.9KB) — an accepted, deliberate tradeoff: pixel-exact correctness on
+  two files the pipeline otherwise wouldn't touch again, not a size
+  target.
 - **[Engineering] New `avatar_asset_edges_test.dart` decodes real asset
   bytes — the only path that could have caught the original bug.** Loads
   each of the twelve bundled `.webp` files via `rootBundle.load` (real

@@ -900,7 +900,16 @@ along the way: `docs/build-log.md`, same date.
   behavior. Writing it surfaced two further, much smaller pre-existing
   defects (a couple of imperceptible alpha=1/255 pixels each on
   `avatar_01.webp`/`avatar_03.webp`, unrelated to Dinosaur/Crab) — fixed
-  rather than carved out as exceptions to the new test.
+  rather than carved out as exceptions to the new test. First fixed via
+  the same lossy quality-90 re-encode as avatar_07, then corrected on
+  review to a lossless re-save from each file's own pre-fix original
+  that changes only those exact pixels (verified by diffing decoded
+  pixel arrays) — the lossy pass re-compressed every pixel for a 1px
+  fix, the wrong tool even though no visible difference resulted. Both
+  files are now noticeably larger than the lossy set's usual range as a
+  result (avatar_01: 31.5KB → 84.1KB; avatar_03: 42.7KB → 84.9KB),
+  accepted deliberately for pixel-exact correctness. See
+  `docs/build-log.md`'s same-date entry for the full detail.
 - `docs/build-log.md`'s own 2026-09-15 "avatar picker: layout-bug
   diagnosis, carousel replacement" entry (and this file's matching
   passage above) still say "Dinosaur" — left alone deliberately, same
