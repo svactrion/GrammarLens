@@ -28,15 +28,22 @@ class UserProfile {
     bool clearAge = false,
     String? occupation,
     bool clearOccupation = false,
+    // No clearAvatar flag: unlike age/occupation, nothing in the app ever
+    // clears an avatar back to null any more — the carousel picker
+    // (avatar_carousel.dart) always has some avatar centered, never an
+    // empty state, so there's no "remove" gesture left to plumb through
+    // here. A stored profile can still have a null avatar (a legacy
+    // install from before onboarding started assigning one, or an id
+    // `Avatar.fromJson` didn't recognize), but nothing in the UI ever
+    // asks to set it back to null on purpose.
     Avatar? avatar,
-    bool clearAvatar = false,
   }) {
     return UserProfile(
       name: name ?? this.name,
       learningGoal: learningGoal ?? this.learningGoal,
       age: clearAge ? null : (age ?? this.age),
       occupation: clearOccupation ? null : (occupation ?? this.occupation),
-      avatar: clearAvatar ? null : (avatar ?? this.avatar),
+      avatar: avatar ?? this.avatar,
     );
   }
 
@@ -55,6 +62,6 @@ class UserProfile {
             LearningGoalInfo.fromJson(map['learning_goal'] as String?),
         age: map['age'] as int?,
         occupation: map['occupation'] as String?,
-        avatar: AvatarInfo.fromJson(map['avatar'] as String?),
+        avatar: Avatar.fromJson(map['avatar'] as String?),
       );
 }

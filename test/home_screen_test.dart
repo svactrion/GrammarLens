@@ -189,9 +189,11 @@ void main() {
   });
 
   testWidgets('shows the picked avatar next to the greeting', (tester) async {
-    await pumpHome(tester, avatar: Avatar.penguin);
+    final penguin =
+        Avatar.values.firstWhere((a) => a.semanticLabel == 'Penguin');
+    await pumpHome(tester, avatar: penguin);
     final circle = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(circle.avatar, Avatar.penguin);
+    expect(circle.avatar, penguin);
   });
 
   testWidgets(
