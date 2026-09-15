@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'models/avatar.dart';
+
 // The whole ColorScheme is hand-built rather than derived via
 // `ColorScheme.fromSeed`, for two reasons that both bit us with the seeded
 // approach: (1) `fromSeed` desaturates any seed toward muted M3 tonal
@@ -128,37 +130,74 @@ const Color _darkOnSkippedBg = Color(0xFFC9C5D0);
 const Color brandMarkGlass = Color(0xFFFFF6EC);
 const Color brandMarkGlint = Color(0xFFFFCDA3);
 
-/// Avatar tile background colors (see widgets/avatar_tile.dart) — named,
-/// theme-independent decorative identity colors, the same kind of exception
-/// [brandMarkGlass]/[brandMarkGlint] above already are: a chat app's
-/// per-user color needs to stay recognizable as "this person" regardless of
-/// light/dark mode, so these deliberately don't come from [ColorScheme] and
-/// don't change with it. They also can't be *derived* from a semantic role
-/// (docs/design-audit.md, Batch 0 item 2) — a green avatar would read as
-/// "correct", a red one as "a mistake", the moment it sat next to this
-/// app's actual correct/incorrect colors, which a decorative identity color
-/// must never do.
+/// The avatar carousel's selection ring colors (see
+/// `widgets/avatar_carousel.dart`) — named, theme-independent decorative
+/// identity colors, the same kind of exception [brandMarkGlass]/
+/// [brandMarkGlint] above already are: a chat app's per-user color needs to
+/// stay recognizable regardless of light/dark mode, so these deliberately
+/// don't come from [ColorScheme] and don't change with it. They also can't
+/// be *derived* from a semantic role (docs/design-audit.md, Batch 0 item
+/// 2) — a green ring would read as "correct", a red one as "a mistake",
+/// the moment it sat next to this app's actual correct/incorrect colors,
+/// which a decorative identity color must never do.
 ///
-/// Redesigned as a set (not picked independently per avatar, which is how
-/// the previous palette ended up with two identical-hue pairs — fox/lion
-/// both orange, panda/koala both blue-grey, leaving only 6 of 8 actually
-/// distinguishable by color alone): eight hues spaced roughly evenly around
-/// the wheel, one fixed saturation/lightness (60%/56%) so none reads as
-/// more prominent than another, chosen to also sit clear of this app's two
+/// Originally eight colors keyed one-to-one by avatar identity
+/// (`avatarFoxBackground` etc., on the previous emoji-based avatar set).
+/// That set is gone (replaced by twelve illustrated avatars with no
+/// relation to the old names), so these are renamed to a plain numbered
+/// palette and expanded to ten — see [avatarRingColor] below for how
+/// twelve avatars map onto these ten. Values 1–8 are numerically
+/// unchanged from the original set (same hex, same reasoning); 9 and 10
+/// are new, added by finding this set's two largest remaining hue gaps
+/// (55.1° and 40.0°) that don't fall inside either exclusion band below,
+/// and bisecting them — not a re-spaced redesign of the original eight,
+/// consistent with "expand the system, don't replace it."
+///
+/// One fixed saturation/lightness (60%/56%) across all ten so none reads
+/// as more prominent than another; every hue sits clear of this app's two
 /// meaningful hues — [SemanticColors]' correct-green (~123°) and
-/// error/incorrect-red (~0°) — so no avatar is ever mistakable for a
-/// success or failure cue. Each avatar still carries its own animal emoji
-/// glyph on top, which is what actually carries identity; the color only
-/// needs to keep tiles from blending into each other, not be
-/// colorblind-safe on its own.
-const Color avatarFoxBackground = Color(0xFFD29A4B);
-const Color avatarCatBackground = Color(0xFFBCD24B);
-const Color avatarOwlBackground = Color(0xFF6DD24B);
-const Color avatarPandaBackground = Color(0xFF4BD284);
-const Color avatarKoalaBackground = Color(0xFF4BC7D2);
-const Color avatarPenguinBackground = Color(0xFF4B4BD2);
-const Color avatarLionBackground = Color(0xFFA54BD2);
-const Color avatarTurtleBackground = Color(0xFFD24BBC);
+/// error/incorrect-red (~0°) — so no ring is ever mistakable for a success
+/// or failure cue. Each avatar still carries its own illustration, which
+/// is what actually carries identity; the ring only needs to keep two
+/// avatars' rings from reading as the same color, not be colorblind-safe
+/// on its own.
+const Color avatarRingColor1 = Color(0xFFD29A4B); // ~35°, orange
+const Color avatarRingColor2 = Color(0xFFBCD24B); // ~70°, yellow-green
+const Color avatarRingColor3 = Color(0xFF6DD24B); // ~105°, green
+const Color avatarRingColor4 = Color(0xFF4BD284); // ~145°, mint
+const Color avatarRingColor5 = Color(0xFF4BC7D2); // ~185°, cyan
+const Color avatarRingColor6 = Color(0xFF4B89D2); // ~212°, sky blue (new)
+const Color avatarRingColor7 = Color(0xFF4B4BD2); // ~240°, blue
+const Color avatarRingColor8 = Color(0xFF784BD2); // ~260°, indigo (new)
+const Color avatarRingColor9 = Color(0xFFA54BD2); // ~280°, purple
+const Color avatarRingColor10 = Color(0xFFD24BBC); // ~310°, magenta
+
+const List<Color> _avatarRingColors = [
+  avatarRingColor1,
+  avatarRingColor2,
+  avatarRingColor3,
+  avatarRingColor4,
+  avatarRingColor5,
+  avatarRingColor6,
+  avatarRingColor7,
+  avatarRingColor8,
+  avatarRingColor9,
+  avatarRingColor10,
+];
+
+/// The ring color for [avatar] — cycles through [_avatarRingColors] by
+/// index (`(avatar.index - 1) % 10`), the same "generated from a pattern,
+/// no per-item table" approach [Avatar] itself uses, rather than a
+/// hand-written 12-entry lookup. This cycling happens to land Frog (05),
+/// Dinosaur (07), and Turtle (09) on colors 5/7/9 — cyan, blue, and
+/// purple, none of them this palette's three green-ish entries
+/// (2/3/4) — satisfying the "a ring must never match its own avatar's
+/// dominant color" rule without a hardcoded exception; see
+/// `avatar_ring_color_test.dart` for the regression test that pins this
+/// down rather than trusting it stays true by coincidence as the set
+/// grows.
+Color avatarRingColor(Avatar avatar) =>
+    _avatarRingColors[(avatar.index - 1) % _avatarRingColors.length];
 
 /// D1's header-band colors (docs/design-audit.md §5), read as an
 /// extension on [ColorScheme] rather than a new field: the band's own

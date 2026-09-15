@@ -13,6 +13,7 @@ import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import 'avatar_picker_screen.dart';
 import 'theme_preview_screen.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
@@ -74,7 +75,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _ageController;
   late final TextEditingController _occupationController;
-  late Avatar? _selectedAvatar;
   bool _savingProfile = false;
   bool _resetting = false;
   bool _resettingOnboarding = false;
@@ -88,7 +88,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextEditingController(text: widget.profile.age?.toString() ?? '');
     _occupationController =
         TextEditingController(text: widget.profile.occupation ?? '');
-    _selectedAvatar = widget.profile.avatar;
     // Reads the already-loaded in-memory override (app.dart applies
     // whatever was persisted at app startup — see its own
     // _loadDebugAccessOverride) rather than re-reading storage here, so
@@ -145,14 +144,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!_canSaveProfile) return;
     final ageText = _ageController.text.trim();
     final occupation = _occupationController.text.trim();
+    // Avatar is deliberately not part of this form any more — the
+    // carousel picker autosaves on its own (see _changeAvatar below), so
+    // this Save button only ever touches the fields still shown above it.
     final updated = widget.profile.copyWith(
       name: _nameController.text.trim(),
       age: int.tryParse(ageText),
       clearAge: ageText.isEmpty,
       occupation: occupation,
       clearOccupation: occupation.isEmpty,
-      avatar: _selectedAvatar,
-      clearAvatar: _selectedAvatar == null,
     );
 
     setState(() => _savingProfile = true);
@@ -168,6 +168,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) setState(() => _savingProfile = false);
     }
   }
+
+  /// The picker's own silent autosave (debounced inside
+  /// `AvatarPickerScreen` itself) — deliberately no snackbar, no
+  /// `_savingProfile` flag: this is a background update, not a user
+  /// action with its own explicit feedback loop the way the profile
+  /// form's Save button has. A write failure is swallowed for the same
+  /// reason it's silent on success — there's no in-flow place to surface
+  /// it from a screen the user has likely already left.
+  Future<void> _changeAvatar(Avatar avatar) async {
+    final updated = widget.profile.copyWith(avatar: avatar);
+    try {
+      await widget.storageService.saveUserProfile(updated);
+      widget.onProfileUpdated(updated);
+    } catch (_) {
+      // Silent by design — see the doc comment above.
+    }
+  }
+
+  void _openAvatarPicker() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AvatarPickerScreen(
+          currentAvatar: widget.profile.avatar ?? _fallbackAvatar,
+          onAvatarChanged: _changeAvatar,
+        ),
+      ),
+    );
+  }
+
+  // Computed once per Settings visit (not per rebuild) so a legacy
+  // profile with no avatar yet doesn't show a different random character
+  // on every unrelated rebuild (e.g. a theme change) before the user ever
+  // opens the picker — only real installs from before onboarding started
+  // assigning one automatically ever hit this at all.
+  late final Avatar _fallbackAvatar = Avatar.random();
 
   Future<void> _confirmResetData() async {
     final confirmed = await showDialog<bool>(
@@ -273,26 +308,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // section gap carries the grouping instead of a container.
           Text('Avatar', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
-          // Local stock avatars only (PRD v2 §11) — no upload, just a
-          // small fixed set to pick from. Tapping the already-selected
-          // one clears it back to the generic placeholder rather than
-          // being a no-op, so there's a way out without hunting for a
-          // separate "remove" control.
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              for (final avatar in Avatar.values)
-                GestureDetector(
-                  onTap: () => setState(() {
-                    _selectedAvatar = _selectedAvatar == avatar ? null : avatar;
-                  }),
-                  child: AvatarTile(
-                    avatar: avatar,
-                    selected: _selectedAvatar == avatar,
+          // Local stock avatars only (PRD v2 §11) — no upload. Picking one
+          // is a separate screen now (a swipeable carousel,
+          // `AvatarPickerScreen`), not an inline grid here — this row is
+          // just a preview of the current choice plus the way in. `Hero`
+          // ties this tile to the picker's own centered avatar so leaving
+          // that screen visibly flies the choice back here rather than
+          // just popping.
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: _openAvatarPicker,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Hero(
+                    tag: avatarHeroTag,
+                    child: AvatarTile(
+                      avatar: widget.profile.avatar ?? _fallbackAvatar,
+                      radius: 26,
+                    ),
                   ),
-                ),
-            ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Change avatar',
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           Text('Name', style: theme.textTheme.labelLarge),

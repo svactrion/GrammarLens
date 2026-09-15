@@ -6,26 +6,104 @@ import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/onboarding_screen.dart';
 
 void main() {
+  Future<void> fillNameAndGoal(WidgetTester tester) async {
+    await tester.enterText(find.byType(TextField), 'Ada');
+    await tester.ensureVisible(find.text('Exam prep'));
+    await tester.tap(find.text('Exam prep'));
+    await tester.pump();
+  }
+
+  Future<void> tapContinue(WidgetTester tester) async {
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pump();
+  }
+
+  /// Whichever avatar's own `Semantics` label currently sits at the
+  /// carousel's horizontal center — i.e. whichever avatar is actually
+  /// selected right now, read the same way a screen reader would, not
+  /// from any private state.
+  String centeredAvatarLabel(WidgetTester tester) {
+    final center = tester.getCenter(find.byType(PageView)).dx;
+    for (final avatar in Avatar.values) {
+      final finder = find.bySemanticsLabel(avatar.semanticLabel);
+      if (finder.evaluate().isEmpty) continue;
+      final rect = tester.getRect(finder);
+      if (rect.left <= center && center <= rect.right) {
+        return avatar.semanticLabel;
+      }
+    }
+    throw StateError('no centered avatar found');
+  }
+
   testWidgets(
-    'completing onboarding assigns one of the eight stock avatars, not '
-    'the generic placeholder (PRD v2 §13.5)',
+    'completing onboarding without ever touching the avatar carousel '
+    'still assigns a real avatar — no empty state (PRD v2 §13.5)',
     (tester) async {
       UserProfile? completed;
       await tester.pumpWidget(
-        MaterialApp(
-          home: OnboardingScreen(onComplete: (p) => completed = p),
-        ),
+        MaterialApp(home: OnboardingScreen(onComplete: (p) => completed = p)),
       );
+      await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'Ada');
-      await tester.tap(find.text('Exam prep'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
-      await tester.pump();
+      await fillNameAndGoal(tester);
+      await tapContinue(tester);
 
       expect(completed, isNotNull);
       expect(completed!.avatar, isNotNull);
       expect(Avatar.values, contains(completed!.avatar));
+    },
+  );
+
+  testWidgets(
+    'the avatar carousel sits above the name step — face and name are one '
+    'identity screen, not two',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: OnboardingScreen(onComplete: (_) {})),
+      );
+      await tester.pumpAndSettle();
+
+      final carouselTop = tester.getTopLeft(find.byType(PageView)).dy;
+      final nameFieldTop = tester.getTopLeft(find.byType(TextField)).dy;
+      expect(carouselTop, lessThan(nameFieldTop));
+    },
+  );
+
+  testWidgets(
+    'swiping the carousel before continuing changes which avatar is '
+    'actually submitted, not a value re-rolled independently at submit '
+    'time',
+    (tester) async {
+      UserProfile? completed;
+      await tester.pumpWidget(
+        MaterialApp(home: OnboardingScreen(onComplete: (p) => completed = p)),
+      );
+      await tester.pumpAndSettle();
+
+      final before = centeredAvatarLabel(tester);
+
+      await tester.drag(find.byType(PageView), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+
+      // The carousel starts on a random avatar (no seam to fix it for this
+      // test) — if that happened to land near the end of the list, a
+      // forward drag has nowhere further to go and settles right back
+      // where it started (PageView clamps, it doesn't wrap). Retry the
+      // other direction rather than let the test flake on that boundary.
+      var after = centeredAvatarLabel(tester);
+      if (after == before) {
+        await tester.drag(find.byType(PageView), const Offset(500, 0));
+        await tester.pumpAndSettle();
+        after = centeredAvatarLabel(tester);
+      }
+      expect(after, isNot(before));
+
+      await fillNameAndGoal(tester);
+      await tapContinue(tester);
+
+      expect(completed, isNotNull);
+      expect(completed!.avatar!.semanticLabel, after);
     },
   );
 }

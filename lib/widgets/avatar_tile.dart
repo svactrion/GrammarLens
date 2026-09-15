@@ -1,51 +1,39 @@
 import 'package:flutter/material.dart';
 
 import '../models/avatar.dart';
-import '../theme.dart';
 
-/// Shared avatar rendering — an emoji on a fixed, avatar-specific
-/// background color, or a generic person icon when none has been picked
-/// yet. Used by both Settings' avatar picker and Home's personalized
-/// greeting so the two can't visually drift apart (PRD v2 §11). A rounded
+/// Shared avatar rendering — one of the bundled illustrations
+/// (`assets/avatars/`), or a generic person icon when none has been picked
+/// yet (or a stored id this build doesn't recognize — see
+/// `Avatar.fromJson`). Used wherever an avatar is just displayed, not
+/// picked from: Home's personalized greeting and Settings' own preview
+/// row (`avatar_picker_screen.dart` owns the actual picking UI). A rounded
 /// square rather than a circle — `radius` is kept as the sizing parameter
 /// (half the tile's side length) so call sites didn't need to change when
-/// this moved off `CircleAvatar`.
+/// this moved off `CircleAvatar`, long before illustrations replaced the
+/// old emoji-on-flat-color rendering.
+///
+/// Deliberately has no notion of "selected" any more. It used to (a
+/// `selected` flag drew an extra border+padding wrapper around the same
+/// box), and that wrapper is exactly what caused a real bug: the wrapper
+/// added to the tile's own footprint only while selected, so Settings'
+/// avatar grid (a `Wrap`) recomputed its line breaks and visibly reflowed
+/// everything below it the moment the last tile in a row was tapped. The
+/// fix wasn't a smaller border — it's that a *display* widget has no
+/// business owning selection chrome at all. The avatar carousel
+/// (`avatar_carousel.dart`) is the only place selection is drawn now, as
+/// its own ring layer behind the carousel's `PageView`, never as part of
+/// this widget — so the geometry bug this class used to own has no
+/// remaining surface here to reintroduce.
 class AvatarTile extends StatelessWidget {
   final Avatar? avatar;
   final double radius;
-  final bool selected;
 
-  const AvatarTile({
-    super.key,
-    required this.avatar,
-    this.radius = 22,
-    this.selected = false,
-  });
-
-  // Fixed, theme-independent palette — like a chat app's per-user color,
-  // these are decorative identity colors rather than semantic UI colors, so
-  // they deliberately don't come from ColorScheme and stay constant across
-  // light/dark instead of being recomputed per theme. Named exception,
-  // documented alongside the values themselves in theme.dart (see
-  // `avatarFoxBackground` etc.'s doc comment) rather than as raw hex here.
-  static const Map<Avatar, Color> _backgroundColors = {
-    Avatar.fox: avatarFoxBackground,
-    Avatar.cat: avatarCatBackground,
-    Avatar.owl: avatarOwlBackground,
-    Avatar.panda: avatarPandaBackground,
-    Avatar.koala: avatarKoalaBackground,
-    Avatar.penguin: avatarPenguinBackground,
-    Avatar.lion: avatarLionBackground,
-    Avatar.turtle: avatarTurtleBackground,
-  };
+  const AvatarTile({super.key, required this.avatar, this.radius = 22});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final chosen = avatar;
-    final background = chosen == null
-        ? colorScheme.surfaceContainerHighest
-        : _backgroundColors[chosen]!;
     final side = radius * 2;
     // Proportional to size rather than a fixed value, so the "slightly
     // rounded" look holds whether this is Home's small greeting tile or a
@@ -53,31 +41,24 @@ class AvatarTile extends StatelessWidget {
     // circle and not sharp corners.
     final cornerRadius = radius * 0.6;
 
-    final tile = Container(
+    return SizedBox(
       width: side,
       height: side,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(cornerRadius),
-      ),
-      child: chosen == null
-          ? Icon(
-              Icons.person_rounded,
-              size: radius,
-              color: colorScheme.onSurfaceVariant,
+      child: avatar == null
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(cornerRadius),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.person_rounded,
+                  size: radius,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
             )
-          : Text(chosen.emoji, style: TextStyle(fontSize: radius * 1.1)),
-    );
-
-    if (!selected) return tile;
-    return Container(
-      padding: const EdgeInsets.all(2.5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(cornerRadius + 2.5),
-        border: Border.all(color: colorScheme.secondary, width: 2.5),
-      ),
-      child: tile,
+          : Image.asset(avatar!.assetPath, fit: BoxFit.contain),
     );
   }
 }

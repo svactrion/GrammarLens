@@ -4,13 +4,14 @@ import '../models/avatar.dart';
 import '../models/learning_goal.dart';
 import '../models/user_profile.dart';
 import '../utils/page_title.dart';
+import '../widgets/avatar_carousel.dart';
 import '../widgets/brand_scaffold.dart';
 
-/// Two fields only — name and learning goal (PRD v2 §4). Age and occupation
-/// are deliberately left out here: every field asked before the user has
-/// experienced any value costs completions on an app with no brand
-/// recognition, and those two are marketing data with no in-product use yet.
-/// They're available later, optionally, from Settings.
+/// "Face + name" as one identity step, plus learning goal (PRD v2 §4). Age
+/// and occupation are deliberately left out here: every field asked before
+/// the user has experienced any value costs completions on an app with no
+/// brand recognition, and those two are marketing data with no in-product
+/// use yet. They're available later, optionally, from Settings.
 class OnboardingScreen extends StatefulWidget {
   final ValueChanged<UserProfile> onComplete;
 
@@ -23,6 +24,13 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final _nameController = TextEditingController();
   LearningGoal? _selectedGoal;
+
+  // Random on mount, never null (PRD v2 §13.5's "no empty state" rule) —
+  // a user who never touches the carousel still ends up with a real,
+  // personalized avatar the moment they tap Continue, exactly as already
+  // happened before this batch when onboarding picked one on submit
+  // instead of on mount.
+  late Avatar _selectedAvatar = Avatar.random();
 
   @override
   void dispose() {
@@ -38,10 +46,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     widget.onComplete(UserProfile(
       name: _nameController.text.trim(),
       learningGoal: _selectedGoal!,
-      // Assigned now, not left null, so Home's greeting doesn't show the
-      // generic placeholder glyph on day one (PRD v2 §13.5) — changeable
-      // any time from Settings' avatar picker.
-      avatar: Avatar.random(),
+      avatar: _selectedAvatar,
     ));
   }
 
@@ -64,6 +69,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // "Face + name" as one identity screen (this batch) —
+                    // placed above the name field rather than as its own
+                    // step, so onboarding doesn't gain a step. No caller
+                    // needed here: onComplete's own avatar keeps updating
+                    // via setState as the carousel settles.
+                    AvatarCarousel(
+                      initialAvatar: _selectedAvatar,
+                      onSettled: (avatar) =>
+                          setState(() => _selectedAvatar = avatar),
+                    ),
+                    const SizedBox(height: 24),
                     Text(
                       'What should we call you?',
                       textAlign: TextAlign.center,

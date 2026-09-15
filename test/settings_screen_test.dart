@@ -5,6 +5,7 @@ import 'package:grammar_lens/models/app_theme_mode.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
+import 'package:grammar_lens/screens/avatar_picker_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
@@ -54,13 +55,23 @@ void main() {
     StorageService? storageService,
     SubscriptionService? subscriptionService,
     VoidCallback? onResetOnboarding,
+    UserProfile? profileOverride,
   }) async {
+    // A phone-realistic size (same convention as home_screen_test.dart) —
+    // the default test surface is small enough that the avatar row's own
+    // height pushes Save/Data past the ListView's lazy-build cache
+    // extent, so tests that need those widgets never even reach them.
+    tester.view.physicalSize = const Size(390, 844) * 3.0;
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       MaterialApp(
         home: SettingsScreen(
           themeMode: themeMode,
           onSelectThemeMode: onSelectThemeMode ?? (_) {},
-          profile: profile,
+          profile: profileOverride ?? profile,
           storageService: storageService ?? StorageService(),
           onProfileUpdated: onProfileUpdated ?? (_) {},
           subscriptionService: subscriptionService,
@@ -88,64 +99,89 @@ void main() {
     expect(saveButton().onPressed, isNull);
   });
 
-  bool isSelected(WidgetTester tester, Avatar avatar) {
-    final circle = tester.widget<AvatarTile>(
-      find.byWidgetPredicate(
-        (w) => w is AvatarTile && w.avatar == avatar,
-      ),
-    );
-    return circle.selected;
-  }
-
-  testWidgets('shows all eight stock avatars, none selected by default',
+  testWidgets('the avatar row previews the profile\'s current avatar',
       (tester) async {
-    await pumpSettings(tester);
-    expect(find.byType(AvatarTile), findsNWidgets(Avatar.values.length));
-    for (final avatar in Avatar.values) {
-      expect(isSelected(tester, avatar), isFalse);
-    }
-  });
-
-  testWidgets('tapping an avatar selects it, tapping it again clears it',
-      (tester) async {
-    await pumpSettings(tester);
-
-    await tester.tap(find.byWidgetPredicate(
-      (w) => w is AvatarTile && w.avatar == Avatar.fox,
-    ));
-    await tester.pump();
-    expect(isSelected(tester, Avatar.fox), isTrue);
-    expect(isSelected(tester, Avatar.cat), isFalse);
-
-    await tester.tap(find.byWidgetPredicate(
-      (w) => w is AvatarTile && w.avatar == Avatar.fox,
-    ));
-    await tester.pump();
-    expect(isSelected(tester, Avatar.fox), isFalse);
-  });
-
-  testWidgets('saving passes the selected avatar to onProfileUpdated',
-      (tester) async {
-    UserProfile? saved;
+    final koala = Avatar.values.firstWhere((a) => a.semanticLabel == 'Koala');
     await pumpSettings(
       tester,
-      storageService: _FakeStorageService(),
-      onProfileUpdated: (p) => saved = p,
+      profileOverride: const UserProfile(
+        name: 'Ada',
+        learningGoal: LearningGoal.work,
+      ).copyWith(avatar: koala),
     );
+    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
+    expect(tile.avatar, koala);
+  });
 
-    await tester.tap(find.byWidgetPredicate(
-      (w) => w is AvatarTile && w.avatar == Avatar.owl,
-    ));
-    await tester.pump();
+  testWidgets(
+      'a legacy profile with no avatar yet still shows a real one, not the '
+      'placeholder — the picker has no empty state either', (tester) async {
+    await pumpSettings(tester); // default profile has avatar: null
+    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
+    expect(tile.avatar, isNotNull);
+  });
 
-    // The Save button sits below the fold at the default test-surface size
-    // once the avatar row pushed the rest of the form down.
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
+  testWidgets('tapping the avatar row opens the avatar picker',
+      (tester) async {
+    await pumpSettings(tester);
+    await tester.tap(find.byType(AvatarTile));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-    await tester.pump();
+    expect(find.byType(AvatarPickerScreen), findsOneWidget);
+  });
 
-    expect(saved?.avatar, Avatar.owl);
+  testWidgets(
+      'changing the avatar in the picker persists it and updates the '
+      "row after returning — decoupled from the profile form's own Save "
+      'button entirely', (tester) async {
+    tester.view.physicalSize = const Size(390, 844) * 3.0;
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    UserProfile? saved;
+    final storage = _FakeStorageService();
+    // A StatefulBuilder standing in for app.dart's own onProfileUpdated ->
+    // setState -> re-pass-profile-down loop, so this test exercises the
+    // real round trip (autosave actually reaching the row it's a preview
+    // of) rather than just the autosave call in isolation.
+    var currentProfile = profile;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) => SettingsScreen(
+            themeMode: AppThemeMode.system,
+            onSelectThemeMode: (_) {},
+            profile: currentProfile,
+            storageService: storage,
+            onProfileUpdated: (p) {
+              saved = p;
+              setState(() => currentProfile = p);
+            },
+            onResetOnboarding: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(AvatarTile));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 600)); // past the debounce
+
+    expect(saved, isNotNull);
+    expect(saved!.avatar, isNotNull);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    // The Save button was never touched — this is the point of the
+    // decoupling.
+    expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
+    expect(tile.avatar, saved!.avatar);
   });
 
   testWidgets('picking a theme segment calls onSelectThemeMode',
