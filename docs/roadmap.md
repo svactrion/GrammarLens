@@ -4,12 +4,18 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-17 (Home's greeting is time-of-day now, not a
-fixed "Welcome back", and its avatar is bigger — see "Home: time-of-day
-greeting + bigger avatar" below and `docs/build-log.md`'s 2026-09-17
-entry. Also confirmed, not fixed: the avatar ring palette's 10-into-12
-cycling is intentional, from the previous batch's own explicit
-instruction, not an oversight. Previous update 2026-09-16: replaced the
+**Last updated:** 2026-09-18 (the avatar picker screen — Settings' full-
+screen "Change avatar" — gained a "Done" button, warmer/plainer heading
+copy, and a bigger center avatar with neighbors still peeking at the
+edges; onboarding's embedded carousel is untouched. See "Avatar picker
+screen: Done button, copy, bigger avatars" below and
+`docs/build-log.md`'s 2026-09-18 entry. Previous update 2026-09-17:
+Home's greeting is time-of-day now, not a fixed "Welcome back", and its
+avatar is bigger — see "Home: time-of-day greeting + bigger avatar"
+below and `docs/build-log.md`'s 2026-09-17 entry. Also confirmed, not
+fixed: the avatar ring palette's 10-into-12 cycling is intentional, from
+the previous batch's own explicit instruction, not an oversight.
+Previous update 2026-09-16: replaced the
 avatar picker: a real layout bug in the old tap-a-grid-tile picker —
 selecting a tile changed its own footprint and broke the grid — is fixed
 by moving to a swipeable carousel over twelve illustrated avatars, never
@@ -796,6 +802,57 @@ layout footprint, anywhere in this app's avatar UI.
   harness (also checked large Dynamic Type there), deleted before
   commit. `flutter analyze` and the full test suite (285 tests, up from
   277) are clean.
+
+**2026-09-18 — Avatar picker screen: Done button, copy, bigger
+avatars.** Scoped to Settings' full-screen "Change avatar" picker only —
+`AvatarCarousel`'s shared physics, pop, haptic, ring-color transition,
+`Hero`, and onboarding's own embedded use are untouched by design (the
+task's own explicit boundary), and are verified untouched, not just
+assumed.
+
+- **A "Done" button, pinned at the bottom** (the app's own default
+  `FilledButton` style, no new one invented — its theme-wide
+  `minimumSize: Size.fromHeight(52)` already clears the 44pt touch-target
+  minimum with no extra work). It only pops the screen — no new
+  persistence logic. The autosave-on-settle behavior (debounced) and
+  `dispose()`'s existing "flush a pending debounce before leaving"
+  safeguard were already exactly what's needed for this: since Done and
+  the back button both just trigger the same pop → dispose() path, they
+  were already equivalent exit paths by construction the moment Done's
+  handler is nothing but `Navigator.pop()`. No double-write risk to guard
+  against separately.
+- **Copy changed, no box to remove:** "Swipe to choose your avatar" →
+  "Pick your study buddy". Checked first, per the task's own instruction:
+  there was no card/container around the old text to remove — it was
+  already plain `Text`. The "robotic" complaint was really about
+  typography, not a phantom box: it's now `titleMedium`/w700 off the
+  theme (the same role Onboarding's own prompts already use), no new
+  color value or font.
+- **The picker's center avatar is bigger — but less than a first attempt,
+  and the reduction was deliberate, not a compromise:** radius 56 → 64,
+  `viewportFraction` 0.45 → 0.5 (`AvatarCarousel` gained these as
+  optional constructor parameters, defaulting to the original values so
+  `OnboardingScreen`'s call site is untouched). A first pass tried 80/0.6
+  — visibly bigger — but growing `viewportFraction` alongside the radius
+  actually *shrank* how much of each neighbor peeks in (a wider page slot
+  leaves less of the next page's own width exposed at the screen edge);
+  worked out numerically before landing on 64/0.5, which keeps a neighbor
+  at least half-visible at both 375pt (iPhone SE) and 320pt width with
+  its ring still strictly narrower than its own page at either size — the
+  actual constraint (neighbors must keep signaling "there's more to
+  swipe to"), not "as big as will fit." Verified on a real 375pt
+  simulator; 320pt is calculation-only — Xcode's current iOS runtime no
+  longer supports creating a 1st-generation iPhone SE (320pt) simulator
+  at all, confirmed by trying.
+- Tests added: Done pops and keeps the swiped avatar saved (including
+  mid-debounce, via the same flush `dispose()` already provided); tapping
+  Done after the autosave already fired doesn't write a second time; Done
+  and the back button produce the identical saved result; onboarding's
+  embedded carousel has no Done button.
+- Verified on-device in both themes, on both a 375pt (iPhone SE) and a
+  larger (iPhone 17) simulator, plus a direct re-check that onboarding's
+  own screen is pixel-identical to before. `flutter analyze` and the full
+  test suite (289 tests, up from 285) are clean.
 
 ---
 

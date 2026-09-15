@@ -2369,3 +2369,103 @@ check from the previous batch)
   identical to the last-committed `main.dart` by `git diff` after
   reverting. `flutter analyze` and the full test suite (285 tests, up
   from 277) are clean.
+
+## 2026-09-18 (Avatar picker screen: Done button, warmer copy, bigger
+avatars — scoped to Settings' full-screen picker only)
+
+- **[Product] Scope boundary honored, checked by inspection before and
+  after:** the task named exactly what must stay untouched — transition
+  animations, pop, haptic, ring-color transition, `Hero`, `PageView`
+  physics, and `OnboardingScreen`'s embedded carousel — and all of it
+  lives in the one shared `AvatarCarousel` widget both screens use.
+  Rather than fork the widget or special-case Settings inside it, the
+  two geometry values that needed to change (center radius,
+  `viewportFraction`) became optional constructor parameters defaulting
+  to the exact values already shipped, so `OnboardingScreen`'s call site
+  (which doesn't pass either) is provably unaffected — not just
+  unmodified source, confirmed by re-screenshotting onboarding
+  side-by-side with before and finding it pixel-identical.
+- **[Engineering] A "Done" button, and specifically *not* a second save
+  path.** `AvatarPickerScreen` previously had no completion affordance at
+  all — the app bar's back chevron was the only way out. Added a
+  `FilledButton` reading "Done", pinned at the bottom via the same
+  `SafeArea(top: false) + Padding` pattern `OnboardingScreen`'s own
+  "Continue" button already uses — no new button style, and the app's
+  `filledButtonTheme` already sets `minimumSize: Size.fromHeight(52)`,
+  so the ≥44pt touch-target requirement is met by construction, not by
+  anything added here.
+
+  The explicit instruction was to *not* remove the existing autosave and
+  *not* make Done into a second, competing save action — the worry named
+  outright was a user who picks an avatar, leaves via the back button
+  instead of Done, and loses the choice because it was never persisted.
+  Traced the existing code before writing anything: `AvatarPickerScreen`
+  already autosaves on every settle (debounced 500ms) and its `dispose()`
+  already flushes any pending debounced write before the widget goes
+  away, specifically so a fast "swipe then immediately leave" doesn't
+  lose the change — this was built for the back button in the previous
+  batch (2026-09-16) but is exit-path-agnostic by construction: it fires
+  on `dispose()`, which *any* pop reaches, Done's included. So Done's
+  entire handler is `Navigator.of(context).pop()` — nothing else. Back
+  and Done are equivalent exit paths not because they were special-cased
+  to agree, but because they both funnel through the one flush that
+  already existed. Confirmed with a dedicated test that tapping Done
+  immediately after a swipe (still inside the debounce window) still
+  saves exactly once, a second test that Done after the autosave already
+  fired does *not* write again, and a third that both exit paths land on
+  the identical saved avatar.
+- **[Product] Copy and typography, checked before touching either.** The
+  task's own card rule (docs/design-audit.md, 2026-09-10: a container is
+  only justified around a single tap target or something carrying
+  semantic color, never just "for readability") turned out not to apply
+  here at all — read the actual widget tree first rather than assuming:
+  "Swipe to choose your avatar" was already plain `Text`, no
+  card/box/frame around it to remove. The real complaint was the
+  typography (`bodyMedium`, a caption-weight role) reading as an
+  afterthought instead of the screen's actual instruction. Changed the
+  copy to "Pick your study buddy" and the style to
+  `textTheme.titleMedium` at `FontWeight.w700` — the same role/weight
+  pair `OnboardingScreen`'s own "What should we call you?" /
+  "Why are you learning English?" prompts already use, so this screen's
+  one line of instructional text now reads with the same voice the rest
+  of the app already established, not a new one. No new color or font
+  defined; both come straight off `Theme.of(context).textTheme`.
+- **[Product] Avatar enlarged, measured first, and *reduced* from a first
+  attempt once the actual constraint was checked numerically instead of
+  by eye.** Current radius (56) and `viewportFraction` (0.45) confirmed
+  by reading `avatar_carousel.dart` before changing anything. A first
+  pass grew both together to 80/0.6, on the assumption that a bigger
+  avatar needs a wider page slot — screenshotted on the 375pt iPhone SE
+  simulator and found the neighbor avatars reduced to a barely-visible
+  sliver of color at the screen edge, nowhere near "still recognizably an
+  avatar," which is the task's own named critical constraint (swiping is
+  the *only* selection method, so losing the "there's something to swipe
+  to" signal is a real regression, not a nicety). Worked the geometry out
+  numerically instead of guessing again: a wider `viewportFraction`
+  shrinks how much of the *next* page's own width is exposed at the
+  screen edge, which is what actually controls neighbor visibility —
+  growing it alongside the radius was working against the goal, not
+  toward it. Grid-searched center radius against `viewportFraction` for
+  the largest radius that keeps a neighbor's own avatar at least
+  half-visible at both 375pt and 320pt width while its ring stays
+  strictly narrower than its own page (no overflow) at either size;
+  landed on radius 64 / `viewportFraction` 0.5 — a real but modest
+  enlargement (+14% over 56), deliberately smaller than the first
+  attempt once neighbor visibility was treated as the binding constraint
+  rather than "as big as possible."
+
+  320pt verification is calculation-only, not on-device: tried creating a
+  1st-generation iPhone SE (320pt) simulator against the currently
+  installed iOS 26.5 runtime and Xcode refused it outright
+  ("Incompatible device") — that hardware profile is no longer
+  supported at all on current tooling, not something this session could
+  work around.
+- **[Product] Verified on-device in both themes, two widths:** the 375pt
+  iPhone SE simulator (light and dark) and the larger iPhone 17 simulator
+  (light), via a temporary, untracked debug harness rendering
+  `AvatarPickerScreen` directly, deleted before commit; a separate pass
+  of the same technique re-confirmed `OnboardingScreen`'s own screen is
+  unchanged. `flutter analyze` and the full test suite (289 tests, up
+  from 285) are clean, including three consecutive clean full-suite runs
+  to rule out the gesture-based flakiness this exact test file has hit
+  before (2026-09-17).
