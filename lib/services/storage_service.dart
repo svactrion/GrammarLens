@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -17,7 +18,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 13;
+  static const _dbVersion = 14;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -32,6 +33,28 @@ class StorageService {
   // "10" is a placeholder reasonable default, not a measured number (§7.2
   // defers the real free-tier cap to post-launch cost data).
   static const int dailySessionLimit = 10;
+
+  // Free tier's own daily cap on "Practice this" — the one real,
+  // Claude-generated practice session a free (non-`hasFullAccess`) user gets
+  // per day, from a weak spot's detail screen (`launchPracticeSet`).
+  // Deliberately independent of [dailySessionLimit] above: that one is a
+  // blanket cost guardrail applied to everyone regardless of entitlement,
+  // this one is the actual product boundary between free and paid — Topic
+  // Practice itself stays fully locked for a free user (`HomeScreen`), this
+  // is the single exception. A free user is bounded by both numbers at
+  // once (this one binds first, since it's the smaller of the two). Single
+  // named constant so the gate, the button's caption, and the
+  // exhausted-state copy all read the same number — never a literal.
+  static const int freeDailyPracticeLimit = 1;
+
+  /// Injectable clock, test-only — same seam pattern as
+  /// `SubscriptionService.debugModeForTesting`. [_todayKey] reads through
+  /// this instead of calling `DateTime.now()` directly so a test can prove
+  /// a daily counter (session cap, free-practice quota, Daily Test cache)
+  /// actually resets on a new calendar day without waiting for one or
+  /// mutating the host clock. Never assigned outside a test.
+  @visibleForTesting
+  static DateTime Function() clockForTesting = DateTime.now;
 
   // `source` (added schema v12) distinguishes a Topic Practice mistake
   // from a Daily Test one — both write here now (2026-09-05 decision:
@@ -106,6 +129,19 @@ class StorageService {
   // second.
   static const _createDailySessionUsageTable = '''
     CREATE TABLE daily_session_usage (
+      day TEXT PRIMARY KEY,
+      session_count INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
+
+  // A third, separate daily counter — deliberately not a column on
+  // `daily_session_usage` above, for the same reason `daily_test_sets`
+  // isn't either (see that table's own comment): these are structurally
+  // different tiers (PRD v2 §12.2) and must not interact. This one backs
+  // [freeDailyPracticeLimit], counting only free-tier "Practice this"
+  // sessions.
+  static const _createFreePracticeUsageTable = '''
+    CREATE TABLE free_practice_usage (
       day TEXT PRIMARY KEY,
       session_count INTEGER NOT NULL DEFAULT 0
     )
@@ -187,6 +223,7 @@ class StorageService {
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
         await db.execute(_createDailySessionUsageTable);
+        await db.execute(_createFreePracticeUsageTable);
         await db.execute(_createDailyTestSetsTable);
         await db.execute(_createDebugSettingsTable);
         await db.execute(_createDeviceIdentityTable);
@@ -202,6 +239,7 @@ class StorageService {
         await db.execute('DROP TABLE IF EXISTS topic_practice_stats');
         await db.execute('DROP TABLE IF EXISTS user_profile');
         await db.execute('DROP TABLE IF EXISTS daily_session_usage');
+        await db.execute('DROP TABLE IF EXISTS free_practice_usage');
         await db.execute('DROP TABLE IF EXISTS daily_test_sets');
         await db.execute('DROP TABLE IF EXISTS debug_settings');
         await db.execute(_createTable);
@@ -211,6 +249,7 @@ class StorageService {
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
         await db.execute(_createDailySessionUsageTable);
+        await db.execute(_createFreePracticeUsageTable);
         await db.execute(_createDailyTestSetsTable);
         await db.execute(_createDebugSettingsTable);
         await db.execute(_createDeviceIdentityTable);
@@ -375,7 +414,8 @@ class StorageService {
     ''', [topicId, questionsAnswered]);
   }
 
-  static String _todayKey() => DateTime.now().toIso8601String().split('T')[0];
+  static String _todayKey() =>
+      clockForTesting().toIso8601String().split('T')[0];
 
   /// How many practice sessions this device has started today (local
   /// calendar day) — gates new generation once it reaches
@@ -399,6 +439,37 @@ class StorageService {
     final db = await _database;
     await db.rawInsert('''
       INSERT INTO daily_session_usage (day, session_count)
+      VALUES (?, 1)
+      ON CONFLICT(day) DO UPDATE SET
+        session_count = session_count + 1
+    ''', [_todayKey()]);
+  }
+
+  /// How many free-tier "Practice this" sessions this device has started
+  /// today (local calendar day) — gates new free-tier generation once it
+  /// reaches [freeDailyPracticeLimit] (`launchPracticeSet`). Independent of
+  /// [getSessionCountForToday]'s counter — see [freeDailyPracticeLimit]'s
+  /// own doc comment for why these two never share a table.
+  Future<int> getFreePracticeCountForToday() async {
+    final db = await _database;
+    final rows = await db.query(
+      'free_practice_usage',
+      where: 'day = ?',
+      whereArgs: [_todayKey()],
+      limit: 1,
+    );
+    if (rows.isEmpty) return 0;
+    return rows.first['session_count'] as int;
+  }
+
+  /// Called once a free-tier practice set has actually been generated —
+  /// same "count success, not the attempt" posture as [recordSessionStarted],
+  /// and for the same reason: a failed generation shouldn't burn the one
+  /// free session a free user gets today.
+  Future<void> recordFreePracticeStarted() async {
+    final db = await _database;
+    await db.rawInsert('''
+      INSERT INTO free_practice_usage (day, session_count)
       VALUES (?, 1)
       ON CONFLICT(day) DO UPDATE SET
         session_count = session_count + 1
