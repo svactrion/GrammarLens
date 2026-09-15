@@ -55,9 +55,29 @@ class _FakeStorageService extends StorageService {
   UserProfile? savedProfile;
   DailyTestSet? _todaysSet;
 
+  // Tracks whether the Day-0 Daily Test step ever touches the free-tier
+  // practice quota (`StorageService.freeDailyPracticeLimit`) — it must not
+  // (this batch's decision 7): Daily Test and "Practice this" are two
+  // independent counters, and onboarding only ever exercises the former.
+  bool freePracticeCountRead = false;
+  bool freePracticeStartedRecorded = false;
+  int freePracticeCount = 0;
+
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
     savedProfile = profile;
+  }
+
+  @override
+  Future<int> getFreePracticeCountForToday() async {
+    freePracticeCountRead = true;
+    return freePracticeCount;
+  }
+
+  @override
+  Future<void> recordFreePracticeStarted() async {
+    freePracticeStartedRecorded = true;
+    freePracticeCount++;
   }
 
   @override
@@ -237,5 +257,22 @@ void main() {
 
     expect(completed, isNotNull);
     expect(completed!.name, 'Ada');
+  });
+
+  testWidgets(
+      "the Day-0 Daily Test step never touches the free-practice quota, "
+      "and a user who just finished onboarding still has today's free "
+      'practice session available (decision 7: the two counters are '
+      'independent)', (tester) async {
+    UserProfile? completed;
+    await pumpFlow(tester, onComplete: (p) => completed = p);
+    await completeOnboardingForm(tester);
+    await answerThroughDailyTest(tester);
+    await scrollAndTap(tester, find.text('Maybe later'));
+
+    expect(completed, isNotNull);
+    expect(storageService.freePracticeCountRead, isFalse);
+    expect(storageService.freePracticeStartedRecorded, isFalse);
+    expect(storageService.freePracticeCount, 0);
   });
 }
