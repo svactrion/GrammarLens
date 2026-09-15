@@ -79,6 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _resetting = false;
   bool _resettingOnboarding = false;
   late _DebugAccessChoice _debugAccessChoice;
+  late bool _previewPaywallPricing;
 
   @override
   void initState() {
@@ -96,6 +97,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _debugAccessChoice = _DebugAccessChoice.fromOverride(
       widget.subscriptionService.debugAccessOverride,
     );
+    // Session-only by design (PRD ask: never written to persistent
+    // storage) — reads whatever SubscriptionService currently holds in
+    // memory rather than a separate stored preference, so this can never
+    // disagree with what PremiumScreen would actually see right now.
+    _previewPaywallPricing =
+        widget.subscriptionService.debugFixtureOffering != null;
   }
 
   Future<void> _setDebugAccessChoice(_DebugAccessChoice choice) async {
@@ -109,6 +116,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .setDebugAccessOverride(choice.override)
           .catchError((_) {}),
     );
+  }
+
+  /// Debug-only, session-only (no `StorageService` write, unlike the
+  /// entitlement override above) — see
+  /// `SubscriptionService.setDebugFixtureOffering`'s own doc comment for
+  /// why this substitutes a fixture rather than a real RevenueCat call.
+  void _setPreviewPaywallPricing(bool enabled) {
+    setState(() => _previewPaywallPricing = enabled);
+    widget.subscriptionService.setDebugFixtureOffering(enabled: enabled);
   }
 
   /// Debug-only: clears the saved profile and hands off to
@@ -486,6 +502,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               : 'Reset first-launch state',
                         ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Preview paywall pricing',
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Debug builds only, session-only (never saved). Shows '
+                      "Premium's plan cards with fixture prices "
+                      '(PRD v2 §13.2) since no App Store Connect product '
+                      'exists yet. Never has any effect in a release build.',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Preview pricing'),
+                      value: _previewPaywallPricing,
+                      onChanged: _setPreviewPaywallPricing,
                     ),
                   ],
                 ),

@@ -151,7 +151,14 @@ class SubscriptionService {
   /// the call otherwise fails. Same safe-default pattern as every other
   /// method here: a paywall screen calling this should treat null as "show
   /// an unavailable state," never crash.
+  ///
+  /// Checks [debugFixtureOffering] first, the same "override short-circuits
+  /// before the real SDK call" shape [hasFullAccess] already uses for
+  /// [debugAccessOverride] — see that section's own comment for why this
+  /// is a complete no-op outside a debug build.
   Future<Offering?> getOfferings() async {
+    final fixture = debugFixtureOffering;
+    if (fixture != null) return fixture;
     if (!_configured) return null;
     try {
       final offerings = await Purchases.getOfferings();
@@ -250,4 +257,110 @@ class SubscriptionService {
       listener(current);
     }
   }
+
+  // --- Debug-only pricing fixture --------------------------------------
+  //
+  // No RevenueCat/App Store Connect product exists yet (see this file's
+  // class doc comment), so `PremiumScreen` always hits its own
+  // "pricing unavailable" state today — nobody has ever actually seen the
+  // loaded-and-priced layout. This lets Settings' "Preview paywall
+  // pricing" toggle (Developer section) substitute a fixture [Offering]
+  // built from PRD v2 §13.2's stated prices, session-only, so that layout
+  // is reviewable before real products exist.
+
+  static Offering? _debugFixtureOffering;
+
+  /// The current debug-only fixture offering, or `null` for none — same
+  /// `debugModeForTesting`-gated shape as [debugAccessOverride], and for
+  /// the same reason: always `null` outside a debug build regardless of
+  /// what was last set, so this is a structural no-op in release, not
+  /// just a UI-layer hide.
+  Offering? get debugFixtureOffering =>
+      debugModeForTesting ? _debugFixtureOffering : null;
+
+  /// Turns the fixture on (`enabled: true`) or off (`false`). Building a
+  /// fresh [Offering] each time rather than caching one, so this can never
+  /// go stale against [buildDebugFixtureOffering]'s own logic. A complete
+  /// no-op outside a debug build.
+  void setDebugFixtureOffering({required bool enabled}) {
+    if (!debugModeForTesting) return;
+    _debugFixtureOffering = enabled ? buildDebugFixtureOffering() : null;
+  }
+}
+
+/// Builds the debug-only fixture [Offering] — PRD v2 §13.2's stated prices
+/// ($5.99/month, $49.99/year), a 7-day free trial on both plans. Only the
+/// *raw* product data is fixed here (price, currency, subscription
+/// period, trial length); every derived figure `PremiumScreen` shows
+/// (the annual plan's per-month equivalent, the "Save X%" badge) is
+/// computed from these raw numbers the same way a real StoreKit/RevenueCat
+/// product would arrive with them already computed — not typed out as an
+/// already-reduced literal — so previewing this fixture actually exercises
+/// `PremiumScreen`'s real savings-percentage math instead of bypassing it.
+///
+/// Public (not `_`-prefixed) specifically so a test can call it directly
+/// without going through the `kDebugMode`-gated setter, to check the
+/// fixture's own numbers independent of the gating mechanism.
+Offering buildDebugFixtureOffering() {
+  const currencyCode = 'USD';
+  const monthlyPrice = 5.99;
+  const annualPrice = 49.99;
+  const annualPricePerMonth = annualPrice / 12;
+
+  String money(double amount) => '\$${amount.toStringAsFixed(2)}';
+
+  const offeringContext = PresentedOfferingContext(
+    'debug_fixture_offering',
+    null,
+    null,
+  );
+
+  const trial = IntroductoryPrice(0, 'Free', 'P7D', 1, PeriodUnit.day, 7);
+
+  final monthlyProduct = StoreProduct(
+    'grammarlens_premium_monthly_fixture',
+    'GrammarLens Premium (Monthly) — debug preview fixture',
+    'GrammarLens Premium (Monthly)',
+    monthlyPrice,
+    money(monthlyPrice),
+    currencyCode,
+    introductoryPrice: trial,
+    subscriptionPeriod: 'P1M',
+  );
+
+  final annualProduct = StoreProduct(
+    'grammarlens_premium_annual_fixture',
+    'GrammarLens Premium (Annual) — debug preview fixture',
+    'GrammarLens Premium (Annual)',
+    annualPrice,
+    money(annualPrice),
+    currencyCode,
+    introductoryPrice: trial,
+    subscriptionPeriod: 'P1Y',
+    pricePerMonth: annualPricePerMonth,
+    pricePerMonthString: money(annualPricePerMonth),
+  );
+
+  final monthlyPackage = Package(
+    'monthly_fixture',
+    PackageType.monthly,
+    monthlyProduct,
+    offeringContext,
+  );
+  final annualPackage = Package(
+    'annual_fixture',
+    PackageType.annual,
+    annualProduct,
+    offeringContext,
+  );
+
+  return Offering(
+    'debug_fixture_offering',
+    'Debug-only fixture — PRD v2 §13.2 prices, never shown in a release '
+        'build',
+    const {},
+    [monthlyPackage, annualPackage],
+    monthly: monthlyPackage,
+    annual: annualPackage,
+  );
 }

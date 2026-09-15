@@ -4,7 +4,14 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (Home's avatar tap now opens Settings' avatar
+**Last updated:** 2026-09-15 (Premium screen redesign underway — Batch 0's
+diagnosis found a real factual error in the comparison table and a real
+contrast failure in the current premium-checkmark color (2.53:1 in dark
+mode), among other findings; Batch 1 shipped a debug-only pricing fixture
+so the paywall's loaded state is finally previewable with no App Store
+Connect product connected yet. See "Premium screen redesign, underway"
+below and `docs/build-log.md`'s same-date entries. Previous update, same
+day (Home avatar Hero): Home's avatar tap now opens Settings' avatar
 picker via a real route push, with a genuine `Hero` flight to the
 carousel's centered avatar — checked first that the old tab-switch
 mechanism couldn't support a Hero at all, since it has no push/pop
@@ -1065,6 +1072,36 @@ the two originally offered.
   Flutter route transitions don't respect this setting on their own.
 - `flutter analyze` and the full test suite (299 tests, up from 293) are
   clean. Full detail: `docs/build-log.md`, same date.
+
+**2026-09-15 — Premium screen redesign, underway.** Moving the Premium
+screen from a text-heavy list toward a visually stronger layout (hero
+avatar visual, a highlighted Premium column, a fixed bottom CTA) —
+Duolingo Super's *pattern*, not its look, over several small batches
+each verified and committed separately. Full diagnosis and every
+measurement below: `docs/build-log.md`, same date.
+
+- **Batch 0 (diagnosis, no code):** found a real factual error in the
+  comparison table (free users actually get 1 targeted weak-spot
+  practice/day, the table said "—"); measured the compliant highlighted-
+  strip color (`onSecondaryContainer` on `secondaryContainer` — 9.79:1
+  light, 7.13:1 dark) and caught that the *current* premium checkmark
+  color would fail at only 2.53:1 in dark mode; confirmed a debug-only
+  pricing fixture is buildable from `purchases_flutter`'s own `const`
+  constructors, no platform channel needed; found the CTA isn't actually
+  pinned today (a real structural gap, not cosmetic); confirmed the
+  paywall's own analytics surface is empty today (no internal events
+  exist yet) so nothing existing is at risk.
+- **Batch 1 (debug-only pricing fixture) — shipped.**
+  `SubscriptionService.getOfferings()` now checks a `debugFixtureOffering`
+  first, the same `kDebugMode`-gated/tree-shaken-in-release shape as the
+  existing entitlement override. `buildDebugFixtureOffering()` builds PRD
+  v2 §13.2's stated prices ($5.99/month, $49.99/year, 7-day trial) with
+  only the raw numbers fixed — the annual plan's per-month figure is a
+  real `49.99 / 12` computed in code, so `PremiumScreen`'s existing
+  "Save %" math actually runs against it. Settings > Developer gained a
+  session-only "Preview paywall pricing" toggle (never written to
+  storage, unlike the entitlement override next to it). 312 tests
+  passing (up from 299), `flutter analyze` clean.
 
 ---
 

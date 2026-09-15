@@ -2851,3 +2851,116 @@ after checking what "transition" could even mean here)
   to reach Home) — consistent with, not a new pattern for, this suite.
 - **[Product]** `flutter analyze` and the full test suite (299 tests, up
   from 293) clean.
+
+## 2026-09-15 (Premium screen redesign, Batch 0 — diagnosis, no code)
+
+- **[Product]** A diagnosis-only batch, per its own instruction ("Kod yok.
+  Ölçüm iste, izlenim değil"): every claim below is checked against real
+  code or measured numerically, not eyeballed. Full report given to Ahmet
+  in-conversation; recorded here so the reasoning survives past that
+  message.
+- **Comparison table had a real factual error**, not just stale copy:
+  "Targeted weak-spot practice" showed free = "—", but
+  `StorageService.freeDailyPracticeLimit = 1` and `launchPracticeSet`
+  (lines 64–84) genuinely grant a free user one such session per day.
+  "Questions from your own mistakes" turned out to be either describing
+  the same capability redundantly, or Daily Test's own free error-profile
+  personalization mislabeled as premium-only — either reading makes it
+  wrong or redundant. Recommended merging both into one row, "Practice
+  your weak spots", Free = "1 a day" (read from the constant, never
+  retyped), Premium = ✓.
+- **Premium strip color measured, not assumed.** D1's own rule (orange
+  never becomes a surface in dark mode) rules out `primary`; the existing
+  `secondaryContainer`/`onSecondaryContainer` pair (already used by the
+  selected plan card) is the compliant choice. Contrast:
+  `onSecondaryContainer` on `secondaryContainer` — **9.79:1 light, 7.13:1
+  dark**, both comfortably clearing 4.5:1 (text) and 3:1 (icon). Checked
+  what the *current* code actually uses for premium checkmarks
+  (`colorScheme.secondary`) against that same background and found a real
+  problem hiding there: **2.53:1 in dark mode — fails the 3:1 icon
+  minimum outright.** Must switch to `onSecondaryContainer`, not just add
+  a colored strip and leave the icon color alone.
+- **FittedBox(scaleDown) on "PREMIUM"**: caused by a fixed 56px column
+  plus letter-spacing pushing the word past it. Fix falls out of the
+  redesign (the column becomes a real proportional width once it's a
+  highlighted strip) plus dropping the tracking; needs a widget-test check
+  at large `TextScaler` once built, since 12px literal font size still
+  scales with the ambient text scaler by default.
+- **Debug fixture pricing is concretely feasible, checked against the
+  actual SDK source**, not assumed: `purchases_flutter`'s `Offering`/
+  `Package`/`StoreProduct`/`IntroductoryPrice` all have public `const`
+  constructors — a realistic fixture is buildable in pure Dart, no
+  platform channel involved. Recommended mirroring
+  `debugAccessOverride`'s exact release-safety shape (`kDebugMode`-gated,
+  tree-shaken out of a release build) rather than inventing a new
+  mechanism.
+- **A real structural gap found for "sticky CTA"**: `PremiumScreen`
+  currently uses `BrandScaffold`'s `children:` (an implicit `ListView`),
+  so the CTA is *not* pinned today — it scrolls with everything else.
+  Achieving a fixed footer needs the `body:` + manual
+  `Column(Expanded scrollable + fixed footer)` shape
+  `AvatarPickerScreen` already uses. Not cosmetic — a real layout change.
+- **Analytics surface checked, found smaller than expected**: neither
+  `PremiumScreen` nor `SubscriptionService` fire any event internally
+  today (no `paywall_viewed`/`trial_started` instrumentation exists at
+  all) — the only two events anywhere near this screen
+  (`modeSelected(modePremium)`, `freePracticeQuotaExhausted()`) fire
+  *before* `PremiumScreen` is even pushed, from Home and the weak-spot
+  quota path respectively, and are untouched by an internal redesign.
+- **Hero avatar data source**: `PremiumScreen` doesn't receive
+  `avatar`/`UserProfile` today. All four push call sites
+  (`HomeScreen`, `FirstLaunchFlow`, `practice_launch.dart`,
+  `WeakSpotDetailScreen`) already hold a `StorageService` instance,
+  confirmed by grep — recommended `PremiumScreen` take
+  `required StorageService storageService` and read the profile itself
+  in `initState`, rather than threading `Avatar?` through four
+  inconsistent call sites (two of which are plain functions, not widgets
+  with profile state already in scope).
+- **X + "Maybe later"**: recommended keeping both, but moving "Maybe
+  later" into the new fixed footer — today it can scroll out of view
+  entirely on a long page, an existing latent gap the restructure
+  incidentally closes.
+- No code changed this batch.
+
+## 2026-09-15 (Premium screen redesign, Batch 1 — debug-only pricing
+fixture)
+
+- **[Engineering] `SubscriptionService.getOfferings()` checks a new
+  debug-only fixture first**, mirroring `debugAccessOverride`'s exact
+  shape: `debugFixtureOffering` (getter, `debugModeForTesting`-gated) and
+  `setDebugFixtureOffering({required bool enabled})` (setter, same gate).
+  Release-safety is the same proven mechanism, not a new one —
+  `kDebugMode` folds to `false` at compile time and the Dart compiler
+  tree-shakes everything behind it out of a release binary; a new test
+  file (`subscription_service_debug_fixture_offering_test.dart`) proves
+  this the same way `subscription_service_debug_override_test.dart`
+  already does for the entitlement override (simulate release via
+  `debugModeForTesting = false`, assert the fixture is unreachable even
+  if one was set beforehand).
+- **`buildDebugFixtureOffering()` (public, top-level)** builds the
+  fixture from PRD v2 §13.2's stated prices — $5.99/month, $49.99/year,
+  a 7-day free trial on both — using `purchases_flutter`'s own `const`
+  constructors (`Offering`/`Package`/`StoreProduct`/`IntroductoryPrice`),
+  confirmed available by reading the installed package source directly
+  rather than assuming. **Only the raw numbers are fixed**: the annual
+  plan's per-month equivalent (`pricePerMonth`/`pricePerMonthString`) is
+  computed here as `49.99 / 12`, a real division in code, not a
+  separately typed-out literal that could silently drift from it — so
+  `PremiumScreen._planPricing`'s existing "Save %" computation runs
+  against this fixture for real, exercising the same math path a real
+  product would, rather than being bypassed by a fixture that already
+  did the work. Public specifically so a test can check the fixture's
+  own numbers independent of the `kDebugMode` gate around it.
+- **Settings > Developer gained "Preview paywall pricing"** — a plain
+  `SwitchListTile`, not the `SegmentedButton` the entitlement override
+  uses, since this is a single boolean, not a three-way choice.
+  **Session-only by design, per this batch's own instruction**: reads
+  its initial value from `subscriptionService.debugFixtureOffering`
+  directly (never a separate stored preference, so it can't disagree
+  with what `PremiumScreen` would actually see), and its setter
+  (`_setPreviewPaywallPricing`) never touches `StorageService` at all —
+  unlike the entitlement override right above it in the same section,
+  which does persist. New tests confirm both the initial-value-reflects-
+  reality behavior and that toggling it never writes to storage.
+- **[Product]** `flutter analyze` and the full test suite (312 tests, up
+  from 299) clean.

@@ -377,6 +377,109 @@ void main() {
     );
   });
 
+  group('Developer section (debug-only paywall pricing preview)', () {
+    testWidgets('shows the toggle, off by default', (tester) async {
+      await pumpSettings(tester, storageService: _FakeStorageService());
+      await tester.dragUntilVisible(
+        find.text('Preview paywall pricing'),
+        find.byType(ListView),
+        const Offset(0, -300),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Preview paywall pricing'), findsOneWidget);
+      final tile = tester.widget<SwitchListTile>(
+        find.byType(SwitchListTile),
+      );
+      expect(tile.value, isFalse);
+    });
+
+    testWidgets(
+      'the initial value reflects subscriptionService.debugFixtureOffering '
+      'at mount time, not always off',
+      (tester) async {
+        final subscriptionService = SubscriptionService();
+        subscriptionService.setDebugFixtureOffering(enabled: true);
+        addTearDown(
+          () => subscriptionService.setDebugFixtureOffering(enabled: false),
+        );
+
+        await pumpSettings(
+          tester,
+          storageService: _FakeStorageService(),
+          subscriptionService: subscriptionService,
+        );
+        await tester.dragUntilVisible(
+          find.byType(SwitchListTile),
+          find.byType(ListView),
+          const Offset(0, -300),
+        );
+        await tester.pumpAndSettle();
+
+        final tile = tester.widget<SwitchListTile>(
+          find.byType(SwitchListTile),
+        );
+        expect(tile.value, isTrue);
+      },
+    );
+
+    testWidgets(
+      'toggling it on makes getOfferings return the fixture, and never '
+      'writes to StorageService',
+      (tester) async {
+        final storage = _FakeStorageService();
+        final subscriptionService = SubscriptionService();
+        addTearDown(
+          () => subscriptionService.setDebugFixtureOffering(enabled: false),
+        );
+
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          subscriptionService: subscriptionService,
+        );
+        await tester.dragUntilVisible(
+          find.byType(SwitchListTile),
+          find.byType(ListView),
+          const Offset(0, -300),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(SwitchListTile));
+        await tester.pumpAndSettle();
+
+        expect(await subscriptionService.getOfferings(), isNotNull);
+        expect(storage.debugAccessOverride, isNull,
+            reason: 'this preference must never reach persistent storage');
+      },
+    );
+
+    testWidgets('toggling it off clears the fixture', (tester) async {
+      final subscriptionService = SubscriptionService();
+      subscriptionService.setDebugFixtureOffering(enabled: true);
+      addTearDown(
+        () => subscriptionService.setDebugFixtureOffering(enabled: false),
+      );
+
+      await pumpSettings(
+        tester,
+        storageService: _FakeStorageService(),
+        subscriptionService: subscriptionService,
+      );
+      await tester.dragUntilVisible(
+        find.byType(SwitchListTile),
+        find.byType(ListView),
+        const Offset(0, -300),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pumpAndSettle();
+
+      expect(await subscriptionService.getOfferings(), isNull);
+    });
+  });
+
   group('First-launch flow reset (debug-only)', () {
     testWidgets('shows the reset action', (tester) async {
       await pumpSettings(tester, storageService: _FakeStorageService());
