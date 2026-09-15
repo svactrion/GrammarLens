@@ -144,7 +144,15 @@ void main() {
     // setState -> re-pass-profile-down loop, so this test exercises the
     // real round trip (autosave actually reaching the row it's a preview
     // of) rather than just the autosave call in isolation.
-    var currentProfile = profile;
+    //
+    // Starts with an explicit avatar, not the plain `profile` const (whose
+    // avatar is null): a null avatar makes the picker fall back to
+    // Avatar.random(), which occasionally lands near the end of the list,
+    // where a fixed-direction drag has nowhere further to go and never
+    // settles on a different avatar at all — the same flake already found
+    // and fixed in onboarding_screen_test.dart. Avatar.values[3] is safely
+    // clear of either boundary regardless of drag direction.
+    var currentProfile = profile.copyWith(avatar: Avatar.values[3]);
     await tester.pumpWidget(
       MaterialApp(
         home: StatefulBuilder(
