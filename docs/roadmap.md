@@ -4,12 +4,17 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-16 (replaced the avatar picker: a real layout bug
-in the old tap-a-grid-tile picker — selecting a tile changed its own
-footprint and broke the grid — is fixed by moving to a swipeable carousel
-over twelve illustrated avatars, never a grid again. See "Avatar carousel"
-below and `docs/build-log.md`'s 2026-09-16 entry. Previous update
-2026-09-15: closed the free-tier "Practice this" leak —
+**Last updated:** 2026-09-17 (Home's greeting is time-of-day now, not a
+fixed "Welcome back", and its avatar is bigger — see "Home: time-of-day
+greeting + bigger avatar" below and `docs/build-log.md`'s 2026-09-17
+entry. Also confirmed, not fixed: the avatar ring palette's 10-into-12
+cycling is intentional, from the previous batch's own explicit
+instruction, not an oversight. Previous update 2026-09-16: replaced the
+avatar picker: a real layout bug in the old tap-a-grid-tile picker —
+selecting a tile changed its own footprint and broke the grid — is fixed
+by moving to a swipeable carousel over twelve illustrated avatars, never
+a grid again. See "Avatar carousel" below and `docs/build-log.md`'s
+2026-09-16 entry. Previous update 2026-09-15: closed the free-tier "Practice this" leak —
 `launchPracticeSet` now checks entitlement and a new per-day free-practice
 quota itself, instead of relying on each screen to gate it. See "Free tier
 practice quota" below and `docs/build-log.md`'s 2026-09-15 entry. Previous
@@ -733,6 +738,65 @@ layout footprint, anywhere in this app's avatar UI.
   used. `flutter analyze` and the full test suite (277 tests, up from
   251) are clean.
 
+**2026-09-17 — Home: time-of-day greeting + bigger avatar.**
+
+- **The greeting is time-of-day now, three slices, local device clock:**
+  "Good morning" (05:00–11:59), "Good afternoon" (12:00–17:59), "Good
+  evening" (18:00–04:59) — replacing the fixed "Welcome back" copy.
+  Deliberately three slices, not four: no "Good night," since that's an
+  English farewell, not a greeting, on an app that teaches English.
+  `timeOfDayGreeting` (`lib/utils/greeting.dart`) is a pure function over
+  a concrete `DateTime`, and `HomeScreen` gained an injectable `clock`
+  (`DateTime Function()`, defaulting to `DateTime.now`) so the boundary
+  tests don't depend on when the suite happens to run. The "$word, $name"
+  shape is exactly the old "Welcome back, $name" pattern, generalized —
+  plus one case that copy never needed: an empty name (the field itself
+  is a non-nullable `String`, but nothing enforces non-empty) now renders
+  the greeting word alone, no dangling comma.
+- **Not refreshed purely by time passing while the app sits open** —
+  checked first, not built around blindly: `HomeScreen` (and the rest of
+  the app) has no `AppLifecycleState` hook to attach a refresh to today,
+  and per this batch's own instruction, none was added for this alone
+  (no new lifecycle observer, no polling `Timer`). The greeting still
+  recomputes on every rebuild Home already does for other reasons (Daily
+  Test/weak-spot loads, entitlement changes), so it's rarely stale in
+  practice, but a user who opens the app at 11:58 and leaves it
+  foregrounded with nothing else happening won't see it flip at 12:00 on
+  its own. **Found and flagged as a separate, more important gap while
+  checking this:** Daily Test's own day-rollover likely has the exact
+  same non-issue — `_loadTodaysDailyTest` only runs from `initState`,
+  so a device open across local midnight wouldn't show a new day's test
+  as available until the next natural rebuild either. Not fixed here —
+  recorded in "What's next" below since it's a real product gap, not a
+  copy nicety.
+- **The avatar next to the greeting is bigger:** radius 22 → 30 (44pt →
+  60pt tile). Measured before changing it, per this batch's own
+  instruction: 44pt was already exactly at the ≥44pt touch-target
+  minimum, so this only grows that margin, never puts it at risk.
+  Confirmed by reading `BrandScaffold` itself (not assumed) that this row
+  lives in Home's scrollable body (`children`), not its app bar/band —
+  so the band's own height is untouched by the avatar's size, nothing to
+  report there. Confirmed by inspection that Settings' own avatar row
+  (which does carry the `Hero` to `AvatarPickerScreen`) is a separate
+  call site at its own radius, untouched by this change. Verified at 2.2×
+  text scale with a deliberately long name: the existing `Flexible` +
+  `maxLines: 1` + `ellipsis` treatment (already there before this batch)
+  handles it correctly — the greeting truncates, the avatar keeps its own
+  fixed size, nothing overflows or clips vertically.
+- **Checked, left as-is (from the previous batch's own explicit
+  instruction, not an oversight): the avatar ring palette is 10 colors
+  cycling across 12 avatars, not 10 distinct-per-avatar or 12 colors.**
+  `avatarRingColor` computes `(avatar.index - 1) % 10`, so avatar 11
+  (Giraffe) reuses avatar 1's color (orange) and avatar 12 (Hedgehog)
+  reuses avatar 2's color (yellow-green) — confirmed intentional
+  cycling, not a bug, from the prior batch's own instruction to expand
+  the palette "to 10," not to 12. Left unchanged per this batch's own
+  "if intentional, leave it" instruction.
+- Verified on-device in both themes via a temporary, untracked debug
+  harness (also checked large Dynamic Type there), deleted before
+  commit. `flutter analyze` and the full test suite (285 tests, up from
+  277) are clean.
+
 ---
 
 ## What's next
@@ -905,6 +969,16 @@ actually exists):
   local cap ever kicks in. Needs a decision before launch: raise
   `DEVICE_DAILY_LIMIT` to ~25, or lower `dailySessionLimit` to 7. See the
   2026-09-15 "Free tier practice quota" entry above for how this was found.
+- **Open bug, found 2026-09-17, not yet fixed: Home doesn't refresh Daily
+  Test's day-rollover (or its own greeting) on resume, because nothing in
+  this app hooks `AppLifecycleState` at all.** `HomeScreen._loadTodaysDailyTest`
+  only runs from `initState`; a device left open across local midnight
+  (or a time-of-day boundary, for the greeting — the smaller half of this)
+  keeps showing yesterday's Daily Test state until the next full rebuild,
+  not automatically at midnight. Needs a `WidgetsBindingObserver` on
+  `AppLifecycleState.resumed` — real fix, not a `Timer`. Found while
+  checking whether the greeting had something to attach a refresh to; see
+  the 2026-09-17 "Home: time-of-day greeting + bigger avatar" entry above.
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.

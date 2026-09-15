@@ -2272,3 +2272,100 @@ illustrated avatar set)
   deleted before commit; confirmed identical to the last-committed
   `main.dart` by `git diff` after reverting. `flutter analyze` and the
   full test suite (277 tests, up from 251) are clean.
+
+## 2026-09-17 (Home: time-of-day greeting, bigger avatar, one leftover
+check from the previous batch)
+
+- **[Product] Fixed "Welcome back" copy, checked what it combined with
+  before changing anything:** `HomeScreen`'s greeting was a fixed string,
+  `'Welcome back, ${widget.userName}'` — `userName` is a required, non-
+  nullable `String`, so there was never actually an empty-name case in
+  practice (onboarding requires non-empty text), but nothing in the type
+  system prevents one either. Replaced with `timeOfDayGreeting`
+  (`lib/utils/greeting.dart`), a pure function over a `DateTime` returning
+  exactly three words — "Good morning" (05:00–11:59), "Good afternoon"
+  (12:00–17:59), "Good evening" (18:00–04:59, wrapping past midnight) —
+  deliberately no fourth "night" slice and never "Good night": that
+  phrase is an English farewell, not a greeting, and this app teaches
+  English, so getting it backwards would be a real, visible mistake on
+  the app's own home screen, not a style nit. The "$word, $name" shape is
+  the same interpolation the old copy always used, generalized rather
+  than reinvented; the one new case ("yoksa sadece") — an empty name
+  rendering the greeting word alone, no dangling comma — was added
+  because the task asked for it, not because a real profile can produce
+  one today.
+- **[Engineering] Clock seam, not `DateTime.now()` inline:** `HomeScreen`
+  gained an injectable `clock` field (`DateTime Function()`, defaulting to
+  `DateTime.now`), matching the class of seam
+  `StorageService.clockForTesting` already established in this codebase
+  (2026-09-15) — a boundary test constructing an exact `04:59`/`05:00`
+  instant needs to control the clock directly, not depend on when the
+  suite happens to run. `timeOfDayGreeting` itself doesn't need its own
+  clock at all: it's a pure function over a concrete `DateTime`, which is
+  what actually makes the four required boundary pairs
+  (04:59/05:00, 11:59/12:00, 17:59/18:00, 23:59/00:00) trivial to assert
+  directly, no fake clock required for that half of the tests.
+- **[Product] Refresh-on-resume: checked before building anything, per
+  the task's own instruction not to invent a second mechanism.** Grepped
+  the app for `AppLifecycleState`/`WidgetsBindingObserver` — neither
+  exists anywhere in this codebase. Per instruction, that means no new
+  lifecycle hook and no polling `Timer` for the greeting alone; it
+  recomputes on whatever rebuilds Home already does for other reasons
+  (Daily Test/weak-spot loads, entitlement changes) and is accepted as
+  not refreshing purely from time passing with nothing else happening.
+  **The more important finding this surfaced:** `HomeScreen._loadTodaysDailyTest`
+  has the identical gap for Daily Test's own day-rollover — it only runs
+  from `initState`, so a device left open across local midnight won't
+  show a new day's test as available until the next full rebuild either.
+  Not fixed in this batch (out of scope, and a real `WidgetsBindingObserver`
+  is the right fix, not something to bolt on as a side effect of a copy
+  change) — recorded as an open bug in `docs/roadmap.md`'s pre-launch
+  checklist instead.
+- **[Product] Avatar enlarged, measured first:** the greeting-row avatar
+  was `radius: 22` (a 44pt tile — exactly, not approximately, today's
+  `≥44pt` touch-target minimum), confirmed by reading the code before
+  changing it. Grown to `radius: 30` (60pt). Checked, not assumed, before
+  touching it: `BrandScaffold` (`lib/widgets/brand_scaffold.dart`) builds
+  its "band" as a plain `AppBar` from `title`/`appBar`; Home's greeting
+  row is the first item of `children` (the scrollable body `ListView`),
+  not part of the band at all — so growing the avatar has no effect on
+  band height, nothing to report there. Also checked: Settings' own
+  avatar row (the one wearing the `Hero` to `AvatarPickerScreen`,
+  2026-09-16) is an independent call site of the same `AvatarTile` widget
+  at its own `radius: 26` — untouched by this change, so that `Hero`
+  pairing is unaffected. Verified on-device at 2.2× text scale with a
+  deliberately long name: the row's existing `Flexible` +
+  `maxLines: 1` + `TextOverflow.ellipsis` treatment (already there before
+  this batch, for the old fixed copy) still does its job unmodified —
+  text ellipsizes, the avatar keeps its own fixed size, nothing overflows
+  or clips vertically.
+- **[Product] Leftover check from the previous batch, confirmed
+  intentional, left unchanged:** `avatarRingColor` cycles 10 named ring
+  colors across 12 avatars (`(avatar.index - 1) % 10`), so avatar 11
+  (Giraffe) and avatar 1 (Koala) share a ring color, and avatar 12
+  (Hedgehog) and avatar 2 (Snail) share another. This is not a bug or an
+  oversight — the previous batch's own instruction was explicitly to
+  expand the palette "to 10" colors, not to 12, and the cycling formula
+  was written and documented with that constraint in mind (see
+  `theme.dart`'s own comment on `avatarRingColor`, 2026-09-16). Per this
+  batch's own instruction to leave an intentional decision as-is, no
+  code changed here.
+- **[Engineering] A real test flake found and fixed while verifying this
+  batch, in a test this batch didn't otherwise touch:**
+  `settings_screen_test.dart`'s avatar-autosave test used the plain
+  `profile` const (no avatar set), so the picker it opens falls back to
+  `Avatar.random()` — the exact same unseeded-random class of flake
+  already found and fixed in `onboarding_screen_test.dart` the previous
+  batch, just not caught there because that fix didn't audit every other
+  call site for the same pattern. Fixed the same way: started the test
+  from an explicit `Avatar.values[3]`, safely clear of either end of the
+  list, instead of a value that occasionally lands at the boundary a
+  fixed-direction drag can't move past. Confirmed by five consecutive
+  clean full-suite runs after the fix (it had failed roughly one run in
+  nine before).
+- **[Product] Verified on-device in both themes** (morning/dark,
+  evening/light, plus a 2.2× text-scale + long-name stress check) via a
+  temporary, untracked debug harness, deleted before commit; confirmed
+  identical to the last-committed `main.dart` by `git diff` after
+  reverting. `flutter analyze` and the full test suite (285 tests, up
+  from 277) are clean.
