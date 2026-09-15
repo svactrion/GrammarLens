@@ -4,11 +4,23 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (a vertical-line rendering bug reported on
+**Last updated:** 2026-09-15 (the avatar carousel's colored selection
+ring is gone — background is transparent now, with a soft theme-aware
+ground shadow under the illustration instead, applied everywhere an
+avatar renders: the carousel, Home's greeting, Settings' preview row.
+The ring-color palette this section's own history carried forward twice
+before is deleted outright this time, not renamed or expanded again —
+see `docs/design-audit.md`'s avatar section for the closing status note.
+Also fixed along the way: a real zero-size rendering bug in `AvatarTile`
+introduced while building this, caught by a widget test before it ever
+reached a device. See "Avatar presentation: dropped the colored ring,
+transparent background + ground shadow" below and `docs/build-log.md`'s
+same-date entry. Previous update, same day (Avatar asset fix): a
+vertical-line rendering bug reported on
 the onboarding carousel's Dinosaur avatar, diagnosed to a corrupted pixel
 stripe baked into `avatar_07.webp` itself — not a render or layout bug.
 Dinosaur was retired and replaced with a new Crab illustration in that
-slot; this batch closed out that asset swap properly — resized/
+slot; that batch closed out the asset swap properly — resized/
 re-encoded to match the pipeline, a new regression test that decodes
 every avatar's real bytes and checks its edges, and two much smaller
 pre-existing edge artifacts on unrelated avatars fixed along the way. See
@@ -918,6 +930,53 @@ along the way: `docs/build-log.md`, same date.
   app as it was named at the time.
 - `flutter analyze` and the full test suite (290 tests, up from 289) are
   clean.
+
+**2026-09-15 — Avatar presentation: dropped the colored ring, transparent
+background + ground shadow.** `docs/design-audit.md`'s avatar
+named-exception section is now closed (status block added, not
+rewritten): the ring-color palette that section carried forward twice
+before is deleted outright, not renamed or expanded a third time.
+
+- **Inventory confirmed the colored circle was drawn in exactly one
+  place** — `AvatarCarousel`'s own selection-ring layer — before touching
+  anything: `AvatarTile` (Home's greeting, Settings' preview row) already
+  had no background circle at all.
+- **Ring and `avatarRingColor1`–`10` deleted**, along with
+  `avatar_ring_color_test.dart`. Selection now reads purely from the
+  carousel's existing paint-only scale/opacity differential (full
+  size/opacity centered, ~0.8 scale/~0.5 opacity faded either side,
+  continuously interpolated by drag position) — already implemented, not
+  new work, just no longer backed by the ring as the more obvious cue.
+  `radius`/`viewportFraction` untouched on both call sites, so the
+  previous batch's measured neighbor-peek geometry at 375pt/320pt still
+  holds.
+- **Semantics gained an explicit `selected` flag** on the carousel's
+  per-page `Semantics` node — checked first, not assumed to already
+  exist; nothing previously marked the centered avatar as selected for a
+  screen reader.
+- **Ground shadow lives inside `AvatarTile` itself**, so the carousel,
+  Home (60pt), and Settings' preview row all get it from one change: a
+  blurred ellipse sized as a formula of `radius` (width `×1.3`, height
+  `×0.32`, blur `×0.16`), not four hand-tuned constants. Skipped for the
+  null-avatar placeholder, which already reads as a filled UI element,
+  not a floating illustration.
+- **Theme-aware color, measured not guessed:** a black shadow works in
+  light mode (~1.6–1.8 contrast at 20–25% alpha against `#FAF3EC`) but is
+  nearly invisible in dark mode (~1.16 contrast even at 65% alpha against
+  the near-black `#1C1B1F`) — dark mode uses white at 11% alpha instead,
+  landing both themes at a comparable ~1.4–1.6 contrast.
+- **A real bug found while building this, not by inspection:** wrapping
+  `Image.asset` in a `Stack` (for the shadow layer) made it loosely
+  constrained instead of tightly sized by the tile's own `SizedBox`,
+  which collapsed it to zero size for any frame before the asset decodes
+  — invisible in normal use but caught by a widget test's hit-test
+  warning at one specific viewport size. Fixed with explicit
+  `width`/`height` on the `Image.asset`; new regression test asserts the
+  illustration's own rect, not just the tile's outer box.
+- Legacy/unknown avatar ids unaffected, confirmed by the existing test
+  suite passing unchanged.
+- `flutter analyze` and the full test suite (291 tests, up from 290) are
+  clean. Full detail: `docs/build-log.md`, same date.
 
 ---
 

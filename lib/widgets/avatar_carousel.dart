@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../models/avatar.dart';
-import '../theme.dart';
 import 'avatar_tile.dart';
 
 /// The avatar-picking carousel — this batch's replacement for the old
@@ -15,14 +14,18 @@ import 'avatar_tile.dart';
 ///
 /// Used inline by both `OnboardingScreen` (embedded above the name field)
 /// and `AvatarPickerScreen` (Settings' own pushed screen) — one widget, so
-/// the swipe/settle/haptic/ring behavior can't drift between the two.
+/// the swipe/settle/haptic behavior can't drift between the two.
 ///
-/// Selection is drawn as a single ring layer *behind* the `PageView`,
-/// recolored (never resized) as the settled avatar changes — the one
-/// place this carousel changes appearance based on selection, and it
-/// never touches any page's own layout size. That's the actual fix this
-/// batch is about: selection state changes what's painted inside a slot
-/// that was already reserved for it, never the slot's own footprint.
+/// Selection has no background chrome at all — no colored ring, no fill.
+/// It reads purely from the center page's own paint-only scale/opacity
+/// (full size, full opacity) against its neighbors (scaled down, faded),
+/// continuously interpolated by drag position in `_CarouselPage` below.
+/// Never touches any page's own layout size: `Transform.scale` and
+/// `Opacity` both paint within the slot `PageView` already reserved for
+/// that page, so a settle changing what's painted never changes any
+/// slot's own footprint. (A colored selection ring used to live here —
+/// removed along with its ring-color palette; see
+/// docs/design-audit.md's avatar section for why.)
 class AvatarCarousel extends StatefulWidget {
   /// The avatar centered when this widget first mounts — never null
   /// (PRD v2 §11's "no empty state" rule now extends here too): a caller
@@ -79,8 +82,10 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   // spill past its slot's edge into view.
   static const double _neighborScale = 0.8;
   static const double _neighborOpacity = 0.5;
-  static const double _ringPadding = 14;
-  static const Duration _ringDuration = Duration(milliseconds: 250);
+  // Extra height beyond the tile's own diameter — just enough slack for
+  // the settle "pop" (scales up to 1.06x) and the ground shadow's blur to
+  // paint without visibly clipping against this box's own edge.
+  static const double _verticalSlack = 1.12;
   static const Duration _popDuration = Duration(milliseconds: 180);
 
   late final PageController _pageController;
@@ -129,47 +134,28 @@ class _AvatarCarouselState extends State<AvatarCarousel>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final ringColor = avatarRingColor(Avatar.values[_settledIndex]);
-    final ringDiameter = widget.centerRadius * 2 + _ringPadding * 2;
+    final boxHeight = widget.centerRadius * 2 * _verticalSlack;
 
     return SizedBox(
       width: double.infinity,
-      height: ringDiameter,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AnimatedContainer(
-            // Findable by test: avatar_carousel_test.dart asserts this
-            // box's own size never changes across a settle that recolors
-            // it — the actual regression test for the bug this batch
-            // fixes (a selection change must only ever repaint a slot
-            // already sized for it, never resize it).
-            key: const Key('avatarSelectionRing'),
-            duration: reduceMotion ? Duration.zero : _ringDuration,
-            width: ringDiameter,
-            height: ringDiameter,
-            decoration: BoxDecoration(color: ringColor, shape: BoxShape.circle),
+      height: boxHeight,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onScrollNotification,
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: Avatar.count,
+          itemBuilder: (context, index) => _CarouselPage(
+            avatar: Avatar.values[index],
+            pageController: _pageController,
+            popAnimation: _popAnimation,
+            index: index,
+            settledIndex: _settledIndex,
+            radius: widget.centerRadius,
+            neighborScale: _neighborScale,
+            neighborOpacity: _neighborOpacity,
+            centerTileBuilder: widget.centerTileBuilder,
           ),
-          NotificationListener<ScrollNotification>(
-            onNotification: _onScrollNotification,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: Avatar.count,
-              itemBuilder: (context, index) => _CarouselPage(
-                avatar: Avatar.values[index],
-                pageController: _pageController,
-                popAnimation: _popAnimation,
-                index: index,
-                settledIndex: _settledIndex,
-                radius: widget.centerRadius,
-                neighborScale: _neighborScale,
-                neighborOpacity: _neighborOpacity,
-                centerTileBuilder: widget.centerTileBuilder,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -232,6 +218,13 @@ class _CarouselPage extends StatelessWidget {
               scale: scale * pop,
               child: Semantics(
                 label: avatar.semanticLabel,
+                // The visual selection cue is now purely paint-only
+                // (this page's own full scale/opacity vs. its faded,
+                // shrunk neighbors) — no colored ring backs it up
+                // anymore. `selected` keeps a screen reader announcing
+                // which avatar is centered explicitly, rather than
+                // leaning on a sighted-only visual difference.
+                selected: isSettled,
                 container: true,
                 child: tile,
               ),

@@ -254,6 +254,24 @@ argument extends to: none of the three green-illustrated avatars (Frog,
 Dinosaur, Turtle) ever get a green-ish ring — checked by a regression
 test, not left to inspection.
 
+**Status (2026-09-15): removed entirely, not replaced by another named
+exception.** A vertical-line bug traced to a corrupted pixel column in
+one avatar asset (`docs/build-log.md`, 2026-09-15 "Avatar asset fix"
+entry) prompted a wider look at the carousel's presentation, and the
+ring itself — not just the asset defect — turned out to be worth
+dropping: a colored circle behind every avatar was chrome the carousel's
+own scale/opacity selection cue (full size/opacity centered, faded and
+shrunk either side) didn't actually need to communicate "this one is
+selected." Replaced with a transparent background and a soft elliptical
+ground-shadow beneath the illustration instead (`avatarGroundShadowColor`/
+`avatarGroundShadowOpacity` in `lib/theme.dart`, applied inside
+`AvatarTile` itself so every render site — the carousel, Home's greeting,
+Settings' preview row — gets it for free). This section's own reasoning
+doesn't carry forward the way it did in the 2026-09-16 status update
+above: a ground shadow isn't a per-avatar identity color at all, so there
+is no new named exception to document here — `avatarRingColor1`–`10` and
+`avatar_ring_color_test.dart` are deleted, not renamed or expanded again.
+
 **Loading.** A single glyph on full orange with "Reviewing your answers…" and
 no progress signal, on a wait that can run long — the same treatment covers
 Daily Test generation.

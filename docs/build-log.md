@@ -2572,3 +2572,111 @@ avatars — scoped to Settings' full-screen picker only)
   Practice" → "AI Practice Partner" rename (2026-09-05, this file).
 - **[Product]** `flutter analyze` and the full test suite (290 tests, up
   from 289) clean.
+
+## 2026-09-15 (Avatar presentation: dropped the colored ring, transparent
+background + ground shadow)
+
+- **[Product] Inventory before touching anything, per this batch's own
+  request: where is the colored circle actually drawn?** Grepped every
+  avatar render site (`avatar_tile.dart`, `avatar_carousel.dart`,
+  `avatar_picker_screen.dart`, `settings_screen.dart`, `home_screen.dart`,
+  `onboarding_screen.dart`) for `BoxShape.circle`/`CircleBorder`/
+  `BoxDecoration`. Confirmed exactly the expected single location:
+  `AvatarCarousel`'s own `AnimatedContainer` selection-ring layer, behind
+  its `PageView`. `AvatarTile` itself — used bare on Home's greeting and
+  Settings' preview row — already had no background circle at all (only
+  its null-avatar placeholder branch draws a filled box, for an entirely
+  different reason: a generic person-icon tile, not a per-avatar color).
+  So "remove the ring" was scoped to one widget, confirmed rather than
+  assumed before writing any code.
+- **[Engineering] The ring layer and its color palette are deleted, not
+  replaced by another named exception.** `AvatarCarousel`'s
+  `AnimatedContainer`/`Key('avatarSelectionRing')` is gone; the carousel's
+  outer `SizedBox` height is now `centerRadius * 2 * 1.12` (just enough
+  slack for the settle "pop" animation's 1.06× scale and the new ground
+  shadow's blur to paint without clipping), replacing the old
+  `centerRadius * 2 + ringPadding * 2` ring-diameter formula.
+  `avatarRingColor1`–`avatarRingColor10`, `_avatarRingColors`, and
+  `avatarRingColor()` are deleted from `theme.dart`; `avatar_ring_color_
+  test.dart` is deleted outright, not left disabled. `docs/design-audit.md`'s
+  avatar named-exception section gets a new status block recording the
+  removal and why nothing replaces it as a named exception (a ground
+  shadow isn't a per-avatar identity color).
+- **[Product] Selection indicator: unchanged mechanism, now doing the
+  whole job on its own.** `_CarouselPage` already scaled the settled page
+  to full size/opacity against neighbors at ~0.8 scale/~0.5 opacity,
+  continuously interpolated by drag position (`Transform.scale`/`Opacity`
+  reading `pageController.page`) — this was already implemented, just
+  previously upstaged by the ring as the more obvious cue. No change to
+  `radius`/`viewportFraction` on either call site (onboarding's embedded
+  carousel or `AvatarPickerScreen`), so the existing "neighbor stays
+  ≥50% visible at 375pt/320pt" geometry from the previous batch is
+  untouched — confirmed by diff, not re-measured.
+- **[Product] Semantics: `selected` added explicitly, not assumed to
+  already exist.** Checked first: the carousel's `Semantics` wrapper on
+  each page had no `selected` flag before this batch — nothing marked
+  the centered avatar as selected for a screen reader beyond it being
+  the widget currently in view. Added `selected: index == settledIndex`
+  so a screen reader announces the change explicitly, independent of any
+  visual cue (the ring no longer exists to lean on even implicitly). New
+  test in `avatar_carousel_test.dart` drags the carousel and asserts the
+  `SemanticsFlags.isSelected` tristate flips off the original avatar and
+  onto whichever one actually settled.
+- **[Engineering] Ground shadow: soft ellipse behind the illustration,
+  inside `AvatarTile` itself so every render site gets it automatically.**
+  A `Stack` inside `AvatarTile`'s existing `SizedBox` — the illustration
+  on top, a blurred elliptical mark (`_AvatarGroundShadow`) positioned
+  near the bottom, both scaled by `radius` so Home's 30, Settings' 26,
+  and the carousel's 56/64 all get a proportionally sized mark with one
+  formula, not four hand-tuned constants: ellipse width `radius * 1.3`,
+  height `radius * 0.32`, blur sigma `radius * 0.16`, anchored `radius *
+  0.12` above the tile's own bottom edge. Positioned by a fixed fraction
+  of tile height rather than measured per illustration — the twelve
+  assets share a consistent centered-character-with-headroom composition,
+  so one general-purpose placement reads correctly across the set without
+  tuning each individually. The null-avatar placeholder is deliberately
+  excluded: it already reads as a filled UI element (a bordered icon
+  tile), not a floating illustration, so grounding it the same way would
+  be redundant, not consistent.
+- **[Product] Theme-aware color, measured rather than guessed — one
+  black shadow does not work in both themes.** `BrandScaffold`'s own body
+  color is `colorScheme.surfaceContainerLow`: `#FAF3EC` (light) and
+  `#1C1B1F` (dark, matching the task's own reference value). Computed
+  WCAG contrast of a black shadow blended into each: light hits a good
+  ~1.6–1.8 contrast at 20–25% alpha, but dark tops out at only ~1.16
+  contrast even at 65% alpha — a black shadow is nearly invisible on a
+  body that's already near-black. Landed on `avatarGroundShadowColor`/
+  `avatarGroundShadowOpacity` (`theme.dart`): black at 20% alpha in
+  light, **white** at 11% alpha in dark — matching Material 3's own
+  dark-theme convention that grounded/elevated surfaces read lighter, not
+  darker, against a near-black background. Both land at a comparable
+  ~1.4–1.6 contrast against their own body.
+- **[Engineering] A real bug found while adding the shadow's `Stack`,
+  not by inspection — an image collapsing to zero size in a way that
+  only a widget test surfaced.** Wrapping `Image.asset` in a `Stack`
+  alongside the new shadow layer (previously it was the tile's sole,
+  tightly-constrained `SizedBox` child) changed it from tightly
+  constrained to loosely constrained: `Stack` gives a non-`Positioned`
+  child loose constraints, and `RenderImage` with no explicit
+  width/height falls back to `Size.zero` for any frame before the asset
+  has actually decoded — a case the old tight `SizedBox` constraint never
+  exposed, since tight constraints force a size regardless of decode
+  state. Surfaced as a `tester.tap` hit-test warning in
+  `settings_screen_test.dart` (only at that test's own custom 390pt
+  viewport, which is what made it visible at all) — diagnosed by
+  measuring the actual `Image` rect directly rather than guessing from
+  the warning text, which showed a genuine `Rect.fromLTRB(43.5, 278.0,
+  43.5, 278.0)`, i.e. a real zero-size collapse, not test flakiness.
+  Fixed with explicit `width`/`height` on the `Image.asset` matching the
+  tile's own side length — removes the ambiguity outright rather than
+  working around Stack's sizing behavior. New regression test in
+  `avatar_tile_test.dart` asserts the illustration's own rendered rect is
+  exactly `radius * 2` on both axes, not just the outer tile's.
+- **[Product] Legacy/unknown avatar ids:** unaffected by this batch,
+  confirmed rather than assumed — `Avatar.fromJson`'s existing null
+  fallback and `AvatarTile`'s existing null-avatar placeholder branch
+  were not touched, and the full existing `avatar_test.dart` suite
+  (including the previous-emoji-set-id fallback case) still passes
+  unchanged.
+- **[Product]** `flutter analyze` and the full test suite (291 tests, up
+  from 290) clean.

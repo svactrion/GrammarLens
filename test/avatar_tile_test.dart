@@ -44,4 +44,30 @@ void main() {
     );
     expect(tester.getSize(find.byType(AvatarTile)), const Size(74, 74));
   });
+
+  testWidgets(
+      'the illustration itself renders at the tile\'s full size, not '
+      'collapsed to zero — regression test for the ground-shadow batch: '
+      'Image.asset became a Stack child (for the shadow layer behind it) '
+      'and lost the tight sizing a bare SizedBox child got for free',
+      (tester) async {
+    const radius = 30.0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: AvatarTile(avatar: Avatar.values.first, radius: radius),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final imageRect = tester.getRect(find.descendant(
+      of: find.byType(AvatarTile),
+      matching: find.byType(Image),
+    ));
+    expect(imageRect.width, radius * 2);
+    expect(imageRect.height, radius * 2);
+  });
 }
