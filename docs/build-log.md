@@ -1989,3 +1989,138 @@ consolidated list. Implementation detail not already covered there:
 - **[Product]** This was a `flutter run` install, not a TestFlight build —
   `docs/prd-v2.md` §10.1's real-device/TestFlight verification is still
   open, nothing has been uploaded to TestFlight yet.
+
+## 2026-09-15 (free-tier "Practice this" leak — diagnosis + fix)
+
+- **[Product]** A device-verified bug reported: a free user completes
+  onboarding's Daily Test, sees the paywall, taps "Maybe later" — and Home
+  correctly locks Topic Practice behind it. But Review's weak-spot →
+  `WeakSpotDetailScreen` → "Practice this" button had no entitlement or
+  quota check at all, so a free user could trigger real, billed Topic
+  Practice-grade generation from there indefinitely (bounded only by the
+  generic `dailySessionLimit` cost cap shared by everyone, 10/day). This
+  wasn't a fresh regression — it was noted and explicitly deferred in this
+  file's 2026-09-05 entry ("Home rebuilt as a 'today' screen": *"Review's
+  own weak-spot → 'Practice this' flow has no entitlement check at all ...
+  Home's new weak-spot row is correctly gated per this batch's spec;
+  Review's equivalent path predates it and isn't touched here"*). This
+  batch closes it.
+- **[Engineering] Root cause, diagnosed before any code changed.**
+  `launchPracticeSet` (`lib/screens/practice_launch.dart`) is the single
+  function every real practice-set generation goes through — its own doc
+  comment already called it the shared choke point. It checked exactly one
+  thing: the blanket `dailySessionLimit` cap, applied regardless of
+  entitlement. Entitlement (`SubscriptionService.hasFullAccess`) was only
+  ever checked inside `HomeScreen`'s own tap handlers, as a *navigation
+  guard* ("should I let you open this screen"), never inside the function
+  that actually starts generation ("should I let this generation happen").
+  `ReviewScreen._openWeakSpot` pushes `WeakSpotDetailScreen` unconditionally
+  — no `SubscriptionService` even in scope there before this batch — so its
+  "Practice this" button inherited zero protection. Confirmed by grep: only
+  two call sites of `launchPracticeSet` exist in the whole codebase
+  (`TopicPracticeScreen`, `WeakSpotDetailScreen`); Daily Test's own
+  generation is a separate, already-correctly-capped path
+  (`DailyTestService.getTodaysSet` caches by local calendar day, confirmed
+  a failed attempt is never cached); no other entry point (a results
+  screen "try again", a deep link) exists to audit. Also confirmed: no test
+  file existed for either `review_screen.dart` or
+  `weak_spot_detail_screen.dart` at all — the only reason this shipped
+  unnoticed for as long as it did.
+- **[Product] Fix policy, decided ahead of writing code:**
+  - The check moves *into* `launchPracticeSet` itself as required, shared
+    logic — a new required `subscriptionService` parameter, not a boolean
+    either caller could pass to skip it. Both real callers now go through
+    the identical check.
+  - `hasFullAccess == true`: unchanged, only `dailySessionLimit` applies —
+    no new limit for premium.
+  - `hasFullAccess == false`: checked against a new, named constant,
+    `StorageService.freeDailyPracticeLimit = 1` — the free tier's one real
+    "Practice this" session per day. Limit reached routes to the same
+    `PremiumScreen` Home's locked card already opens (no separate "limit
+    reached" dialog invented for this — the ask was explicitly for the same
+    feel as Home's existing lock).
+  - Free session length: no picker, generates `PracticeLength.quick`
+    (3 questions) directly. Before this fix a free session reaching this
+    path could pick the most expensive length (10 questions) for free —
+    closed alongside the entitlement gate itself, not left for later.
+  - Storage: a new, independent `free_practice_usage(day, session_count)`
+    table — deliberately not sharing `daily_session_usage` (the blanket
+    cost cap) or `daily_test_sets` (Daily Test's own cache), matching PRD
+    v2 §12.2's three structurally separate tiers. Same local-calendar-day
+    reset convention as both of those (`StorageService._todayKey()`).
+  - Quota is spent on generation *success*, at the exact moment
+    `recordSessionStarted()` already fires — a failed generation (network,
+    parse error) never burns the day's one free session.
+  - Onboarding's Day-0 Daily Test never touches this counter — confirmed by
+    a new test asserting the fake storage's `getFreePracticeCountForToday`/
+    `recordFreePracticeStarted` are never called during that flow, not just
+    assumed from reading the code.
+  - Review's weak-spot list itself stays visually unlocked
+    (`WeakSpotCard(locked: ...)` still defaults to `false` there) —
+    reading your own past mistakes is genuinely free; only the practice
+    action on the detail screen is gated. Home's own list is unaffected.
+  - **Copy check, done before writing new copy:** grepped `lib/` and
+    `PremiumScreen`/the old paywall specifically for any existing
+    "unlimited" claim — found none. New copy for this batch (the caption
+    naming the remaining free count, and the exhausted-state subtitle)
+    also avoids the word deliberately: premium is bounded by
+    `dailySessionLimit` (10/day), so "unlimited" would be a false
+    subscription claim (both a "no fake it" violation and a real App
+    Review risk).
+- **[Engineering] Implementation, one small piece at a time:**
+  1. `StorageService`: `freeDailyPracticeLimit` constant,
+     `free_practice_usage` table (schema v13 → v14, same drop/recreate
+     convention as `daily_session_usage`/`daily_test_sets`),
+     `getFreePracticeCountForToday`/`recordFreePracticeStarted` mirroring
+     the existing session-cap methods exactly. Also added
+     `StorageService.clockForTesting` (`@visibleForTesting`, same seam
+     pattern as `SubscriptionService.debugModeForTesting`) — `_todayKey()`
+     now reads through it, letting a test prove a day-keyed counter
+     actually resets on a new calendar day without waiting for one; no
+     existing day-keyed counter had a test for this before.
+  2. `AnalyticsService`: two new events, `free_practice_used` and
+     `free_practice_quota_exhausted` — without them there's no way to tell
+     after launch whether `freeDailyPracticeLimit = 1` is the right number,
+     or whether the quota is actually converting anyone.
+  3. `launchPracticeSet`: the entitlement + quota gate, ordered before the
+     existing `dailySessionLimit` check (the free quota is the smaller,
+     more specific boundary); the length-picker branch now depends on
+     `hasFullAccess`. `TopicPracticeScreen` and `WeakSpotDetailScreen` both
+     gained a required `subscriptionService` field, threaded from
+     `HomeScreen`/`ReviewScreen`. `app.dart` now holds one shared
+     `SubscriptionService` instance passed to both `HomeScreen` and
+     `ReviewScreen`, instead of `ReviewScreen` having none at all and
+     `HomeScreen` defaulting to its own.
+  4. `WeakSpotDetailScreen`'s bottom action gained two states: unchanged
+     enabled button plus a caption naming the remaining free count when
+     quota is available (nothing shown for a premium user — no quota to
+     name); a locked row when exhausted, in the *exact* visual language
+     `HomeScreen`'s locked Topic Practice card already uses — same muted
+     icon-avatar treatment, and the existing `LockedPremiumPill` widget
+     reused verbatim, not reimplemented. Tapping it opens `PremiumScreen`
+     with `sourceContext` naming the weak spot, the same mechanism
+     `HomeScreen._openWeakSpot` already uses.
+- **[Product] Tests: 14 new, 251 passing overall (up from 237),
+  `flutter analyze` clean.** New coverage: the choke point proven through
+  *both* real callers with identical fakes (quota available → generates
+  the shortest set directly, skips the picker; quota exhausted →
+  generation is never called, routes to Premium instead) —
+  `TopicPracticeScreen`'s case proves `launchPracticeSet`'s own internal
+  gate fires even without a screen-level lock UI in front of it (defense in
+  depth, the actual point of moving the check into the shared function);
+  premium unaffected even with the free counter already over its limit (a
+  new-check-is-a-no-op-for-premium test); the free-practice table's own
+  day rollover via the new clock seam, real ffi-backed
+  (`storage_service_free_practice_test.dart`); the onboarding-independence
+  invariant above; and `WeakSpotDetailScreen`'s own visual states (enabled
+  button + caption, locked row + `LockedPremiumPill`, premium shows no
+  caption, "unlimited" never appears in any of it).
+- **[Product] Not done in this batch, recorded as an open decision:**
+  found while tracing proxy quota math for the free tier (1 Daily Test +
+  1 free practice session = 3 proxy units/day, comfortably under
+  `DEVICE_DAILY_LIMIT`'s 15) that a *premium* user's existing
+  `dailySessionLimit` (10 sessions/day × 2 proxy units each = up to 20) can
+  already exceed that same 15-unit device limit — independent of anything
+  in this batch, not fixed here. Recorded in `docs/roadmap.md`'s pre-launch
+  checklist as an open pre-launch decision (raise `DEVICE_DAILY_LIMIT` to
+  ~25, or lower `dailySessionLimit` to 7).
