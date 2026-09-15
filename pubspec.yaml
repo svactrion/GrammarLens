@@ -29,6 +29,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # The stock avatar illustrations (lib/models/avatar.dart) — registered as
+  # a folder, not file-by-file, so adding avatar_13.webp later is just
+  # dropping the file in plus bumping Avatar.count, nothing here to edit.
+  assets:
+    - assets/avatars/
 
 # Generates ios/Runner/Assets.xcassets/AppIcon.appiconset from one master
 # image (`dart run flutter_launcher_icons`) instead of hand-maintaining
