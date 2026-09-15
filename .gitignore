@@ -67,3 +67,5 @@ app.*.map.json
 config/dev.json
 config/prod.json
 .claude/
+.DS_Store
+docs/Claude outputs/
