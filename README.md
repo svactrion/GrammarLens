@@ -80,8 +80,21 @@ app can't build a personalized curriculum from what you actually get wrong.
 
 ## Screenshots (v2)
 
-_Pending capture — see [`docs/build-log.md`](docs/build-log.md) for
-status. Table lands here once the images exist._
+| Onboarding | Home (empty) | Daily Test question |
+|---|---|---|
+| ![Onboarding screen with name and learning goal](screenshots/v2/onboarding.png) | ![Home screen, empty state](screenshots/v2/home_empty.png) | ![Daily Test question](screenshots/v2/daily_test_question.png) |
+
+| Daily Test results | Daily Test results (continued) | Home after use — daily free practice used, Topic Practice locked |
+|---|---|---|
+| ![Daily Test results, correct and skipped answers](screenshots/v2/daily_test_results.png) | ![Daily Test results, continued, showing a needs-work answer](screenshots/v2/daily_test_results_continued.png) | ![Home screen after use, with today's Daily Test result and Topic Practice still locked behind Premium](screenshots/v2/home_after_use.png) |
+
+| Premium | Review | Weak spot detail |
+|---|---|---|
+| ![Premium paywall with feature comparison and pricing](screenshots/v2/premium.png) | ![Review list of weak spots](screenshots/v2/review.png) | ![Weak spot detail for Articles](screenshots/v2/weak_spot_detail.png) |
+
+| Settings | Change avatar | Home (dark) |
+|---|---|---|
+| ![Settings screen with appearance and profile options](screenshots/v2/settings.png) | ![Change avatar screen, reached from Settings](screenshots/v2/change_avatar.png) | ![Home screen after use, dark mode](screenshots/v2/home_dark.png) |
 
 ## Product Process
 
