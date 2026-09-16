@@ -292,12 +292,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
+                padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 10),
                 child: Column(
+                  key: const Key('premiumBody'),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _AvatarHero(centerAvatar: _userAvatar),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 4),
                     Text(
                       _headline,
                       textAlign: TextAlign.center,
@@ -305,18 +306,26 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       'Practice the mistakes you actually make.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
-                    const SizedBox(height: 20),
-                    const _SectionLabel("What's free, trial, and paid"),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     _ComparisonTable(theme: theme, colorScheme: colorScheme),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: Text(
+                        "What's free, trial, and paid",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.secondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     if (_loadingOffer)
                       _PlanCardsSkeleton(colorScheme: colorScheme)
                     else if (!offeringsReady)
@@ -338,7 +347,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         theme: theme,
                         colorScheme: colorScheme,
                       ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     // Required by App Store guidelines for any screen that
                     // sells a subscription, regardless of whether pricing
                     // itself is currently available — always present, never
@@ -447,11 +456,19 @@ class _AvatarHero extends StatelessWidget {
     // out and slightly smaller (peeks less) — a layered "huddle" rather
     // than five same-size tiles in a row. Vertical offsets alternate so
     // the group doesn't read as a rigid straight line.
-    const centerRadius = 48.0;
-    const innerRadius = 32.0;
-    const outerRadius = 26.0;
-    const innerOffsetX = 58.0;
-    const outerOffsetX = 90.0;
+    //
+    // Radii/offsets scaled to 0.8x the original dimensions (density pass,
+    // docs/build-log.md same date as this comment); the outer [SizedBox]
+    // below is trimmed a further notch to 90pt (still within the ~90-100pt
+    // band this pass targeted) since the avatars' own painted extent
+    // leaves comfortable margin within it. Both changes chase the same
+    // goal: the loaded-state screen fitting above the fixed footer
+    // without scrolling on a 393x852 device.
+    const centerRadius = 38.0;
+    const innerRadius = 26.0;
+    const outerRadius = 21.0;
+    const innerOffsetX = 46.0;
+    const outerOffsetX = 72.0;
 
     // Stack's own `alignment: center` centers each non-positioned child
     // first; Transform.translate then offsets it purely at paint time — no
@@ -481,7 +498,7 @@ class _AvatarHero extends StatelessWidget {
       container: true,
       child: ExcludeSemantics(
         child: SizedBox(
-          height: 120,
+          height: 90,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -489,25 +506,25 @@ class _AvatarHero extends StatelessWidget {
                 avatar: others[0],
                 radius: outerRadius,
                 dx: -outerOffsetX,
-                dy: 8,
+                dy: 6,
               ),
               positioned(
                 avatar: others[1],
                 radius: innerRadius,
                 dx: -innerOffsetX,
-                dy: -6,
+                dy: -5,
               ),
               positioned(
                 avatar: others[2],
                 radius: innerRadius,
                 dx: innerOffsetX,
-                dy: -6,
+                dy: -5,
               ),
               positioned(
                 avatar: others[3],
                 radius: outerRadius,
                 dx: outerOffsetX,
-                dy: 8,
+                dy: 6,
               ),
               AvatarTile(avatar: centerAvatar, radius: centerRadius),
             ],
@@ -584,6 +601,15 @@ class _PremiumFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final showCta = offeringsReady;
     final showMaybeLater = purchaseState != _PurchaseState.success;
+    // The hard-edge separator below only earns its keep when there's
+    // actual footer content above "Maybe later" for it to separate from
+    // the scrollable body (the loading spinner or the loaded CTA). In the
+    // pricing-unavailable state the footer is just "Maybe later" alone,
+    // and the same line reads as a stray, orphaned rule sitting directly
+    // above it rather than a section boundary — dropped for that state
+    // only; the retry affordance itself already lives in the scrollable
+    // body ([_UnavailableCard]), not duplicated here.
+    final showTopBorder = loading || showCta;
 
     return DecoratedBox(
       // A hard edge (not a shadow/blur) between the scrollable content and
@@ -593,7 +619,9 @@ class _PremiumFooter extends StatelessWidget {
       // reads as a bug (looks fine at rest, gains an edge mid-scroll).
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        border: showTopBorder
+            ? Border(top: BorderSide(color: colorScheme.outlineVariant))
+            : null,
       ),
       child: SafeArea(
         top: false,
@@ -672,24 +700,6 @@ class _PremiumFooter extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      text,
-      style: theme.textTheme.labelLarge?.copyWith(
-        color: theme.colorScheme.secondary,
-        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -790,14 +800,16 @@ const TextStyle _freeValueStyle =
 /// grows only *that* row — see [_ComparisonRowLine]'s own doc comment).
 ///
 /// Strip color is `colorScheme.secondaryContainer`/`onSecondaryContainer`
-/// — not `colorScheme.secondary`, which the previous per-cell-icon design
-/// used and which measures only 2.53:1 against `secondaryContainer` in
-/// dark mode (fails the 3:1 non-text minimum). `onSecondaryContainer`
-/// measures 9.79:1 light / 7.13:1 dark against that same background —
-/// D1's own rule (orange never becomes a surface in dark mode) already
-/// ruled out `primary`, and `secondaryContainer` is the pair the selected
-/// plan card already uses, so this doesn't introduce a second color
-/// language.
+/// in light mode — not `colorScheme.secondary`, which the previous
+/// per-cell-icon design used and which measures only 2.53:1 against
+/// `secondaryContainer` in dark mode (fails the 3:1 non-text minimum).
+/// Dark mode uses `colorScheme.surfaceContainerHighest` for the fill
+/// instead of `secondaryContainer` (visual-polish batch, same date as
+/// this comment): the saturated navy read as too dominant a block of
+/// color against the dark body, and `onSecondaryContainer` still holds
+/// 9.34:1 against this calmer neutral fill (measured, up from 7.13:1 —
+/// still comfortably clears both the 4.5:1 text and 3:1 icon minimums).
+/// Light mode is untouched — its 9.79:1 pairing was never the complaint.
 class _ComparisonTable extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
@@ -831,7 +843,7 @@ class _ComparisonTable extends StatelessWidget {
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
-    return painter.height + 16; // 8 top + 8 bottom padding, both row types
+    return painter.height + 10; // 5 top + 5 bottom padding, both row types
   }
 
   @override
@@ -982,6 +994,7 @@ class _ComparisonHeaderRow extends StatelessWidget {
             ),
           ),
           _PremiumStripCell(
+            key: const Key('premiumStripHeader'),
             colorScheme: colorScheme,
             width: premiumWidth,
             borderRadius: const BorderRadius.only(
@@ -1055,7 +1068,7 @@ class _ComparisonRowLine extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(border: divider),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 8, 8),
+                padding: const EdgeInsets.fromLTRB(20, 5, 8, 5),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -1129,6 +1142,7 @@ class _PremiumStripCell extends StatelessWidget {
   final Widget child;
 
   const _PremiumStripCell({
+    super.key,
     required this.colorScheme,
     required this.width,
     required this.borderRadius,
@@ -1137,10 +1151,14 @@ class _PremiumStripCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dark mode's own calmer fill — see _ComparisonTable's doc comment.
+    final fillColor = colorScheme.brightness == Brightness.dark
+        ? colorScheme.surfaceContainerHighest
+        : colorScheme.secondaryContainer;
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
+        color: fillColor,
         borderRadius: borderRadius,
       ),
       alignment: Alignment.center,
@@ -1287,16 +1305,16 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fill stays the plain card surface regardless of selection — visual-
+    // polish batch, same date as this comment. It used to switch to
+    // `secondaryContainer` when selected, the same fill the comparison
+    // table's Premium strip uses a few rows above; next to that strip a
+    // selected card and "this is the Premium column" read as the same
+    // signal. Selection is carried entirely by the 2px `secondary` border
+    // (unchanged) plus an explicit check mark below, so it no longer
+    // borrows a color language that means something else on this screen.
     final borderColor =
         selected ? colorScheme.secondary : colorScheme.outlineVariant;
-    final bgColor = selected
-        ? colorScheme.secondaryContainer
-        : colorScheme.surfaceContainerLow;
-    final onBg =
-        selected ? colorScheme.onSecondaryContainer : colorScheme.onSurface;
-    final mutedOnBg = selected
-        ? colorScheme.onSecondaryContainer
-        : colorScheme.onSurfaceVariant;
     final savings = pricing.savingsLabel;
 
     return Semantics(
@@ -1308,41 +1326,60 @@ class _PlanCard extends StatelessWidget {
       label: '$label plan, ${pricing.bigAmount}, ${pricing.smallDetail}'
           '${savings != null ? ', $savings' : ''}',
       child: Material(
-        color: bgColor,
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: borderColor, width: selected ? 2 : 1),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            child: Stack(
               children: [
-                if (savings != null) ...[
-                  _Badge(label: savings),
-                  const SizedBox(height: 8),
-                ],
-                Text(
-                  label,
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w700, color: onBg),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (savings != null) ...[
+                      _Badge(label: savings),
+                      const SizedBox(height: 4),
+                    ],
+                    Text(
+                      label,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      pricing.bigAmount,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      pricing.smallDetail,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  pricing.bigAmount,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700, color: onBg),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  pricing.smallDetail,
-                  style: theme.textTheme.bodySmall?.copyWith(color: mutedOnBg),
-                ),
+                if (selected)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      size: 18,
+                      color: colorScheme.secondary,
+                    ),
+                  ),
               ],
             ),
           ),

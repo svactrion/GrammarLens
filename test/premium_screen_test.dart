@@ -11,6 +11,7 @@ import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 /// Records every call instead of the real (best-effort, silently
@@ -1054,10 +1055,10 @@ void main() {
     });
 
     testWidgets(
-        'the selected plan card still reads as selected next to the '
-        'Premium strip, even though both use secondaryContainer — the '
-        "card's own border is the distinguishing signal, checked directly "
-        'rather than assumed from the shared fill color', (tester) async {
+        'the selected plan card is distinguished from the Premium strip by '
+        'its own 2px border and check mark, not by sharing the strip\'s '
+        'fill color (visual-polish batch: card fill no longer switches to '
+        'secondaryContainer on selection)', (tester) async {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(offering: _offeringWithBothPlans()),
@@ -1073,9 +1074,35 @@ void main() {
       expect(selectedBorder.top.width, 2,
           reason: 'the selected card keeps its own 2px border, distinct '
               'from an unselected 1px one, regardless of fill color');
+      expect(
+        find.descendant(
+          of: annualCard,
+          matching: find.byIcon(Icons.check_circle_rounded),
+        ),
+        findsOneWidget,
+        reason: 'the selected card carries an explicit check mark, not '
+            'just a fill-color change',
+      );
+
+      final monthlyCard = find.byKey(const ValueKey('planCard_Monthly'));
+      final unselectedMaterial = tester.widget<Material>(
+        find.descendant(of: monthlyCard, matching: find.byType(Material)).first,
+      );
+      final selectedMaterial = tester.widget<Material>(
+        find.descendant(of: annualCard, matching: find.byType(Material)).first,
+      );
+      expect(unselectedMaterial.color, selectedMaterial.color,
+          reason: 'card fill is identical selected or not — the surface '
+              'never doubles as the selection signal');
+      expect(
+        find.descendant(
+          of: monthlyCard,
+          matching: find.byIcon(Icons.check_circle_rounded),
+        ),
+        findsNothing,
+      );
 
       await scrollAndTap(tester, find.text('Monthly'));
-      final monthlyCard = find.byKey(const ValueKey('planCard_Monthly'));
       final selectedContainer2 = tester.widget<Container>(
         find
             .descendant(of: monthlyCard, matching: find.byType(Container))
@@ -1084,6 +1111,13 @@ void main() {
       final selectedBorder2 =
           (selectedContainer2.decoration as BoxDecoration).border as Border;
       expect(selectedBorder2.top.width, 2);
+      expect(
+        find.descendant(
+          of: monthlyCard,
+          matching: find.byIcon(Icons.check_circle_rounded),
+        ),
+        findsOneWidget,
+      );
 
       final annualContainerNowUnselected = tester.widget<Container>(
         find.descendant(of: annualCard, matching: find.byType(Container)).first,
@@ -1092,6 +1126,13 @@ void main() {
           (annualContainerNowUnselected.decoration as BoxDecoration).border
               as Border;
       expect(unselectedBorder.top.width, 1);
+      expect(
+        find.descendant(
+          of: annualCard,
+          matching: find.byIcon(Icons.check_circle_rounded),
+        ),
+        findsNothing,
+      );
     });
   });
 
@@ -1498,6 +1539,210 @@ void main() {
             'edge');
   });
 
+  group('the Premium strip\'s fill color (visual-polish batch: dark mode '
+      'no longer uses the same saturated secondaryContainer as light '
+      'mode)', () {
+    testWidgets(
+        'dark theme: the strip fills with the calmer surfaceContainerHighest',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.dark),
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final strip = find.byKey(const Key('premiumStripHeader'));
+      await tester.scrollUntilVisible(strip, 300);
+      final container = tester.widget<Container>(
+        find.descendant(of: strip, matching: find.byType(Container)).first,
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(
+        decoration.color,
+        buildAppTheme(Brightness.dark).colorScheme.surfaceContainerHighest,
+      );
+    });
+
+    testWidgets('light theme: the strip keeps secondaryContainer, unchanged',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final strip = find.byKey(const Key('premiumStripHeader'));
+      await tester.scrollUntilVisible(strip, 300);
+      final container = tester.widget<Container>(
+        find.descendant(of: strip, matching: find.byType(Container)).first,
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(
+        decoration.color,
+        buildAppTheme(Brightness.light).colorScheme.secondaryContainer,
+      );
+    });
+  });
+
+  testWidgets(
+      "What's free, trial, and paid renders below the table and is "
+      'horizontally centered', (tester) async {
+    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+    final link = find.text("What's free, trial, and paid");
+    await tester.scrollUntilVisible(link, 300);
+
+    final linkRect = tester.getRect(link);
+    final tableBottom = tester.getBottomLeft(find.text('FREE')).dy;
+    expect(linkRect.top, greaterThan(tableBottom),
+        reason: 'the link must render below the comparison table, not '
+            'above it as a section heading');
+
+    final screenWidth = tester.view.physicalSize.width /
+        tester.view.devicePixelRatio;
+    final linkCenterX = linkRect.center.dx;
+    expect((linkCenterX - screenWidth / 2).abs(), lessThan(1.0),
+        reason: 'the link must be horizontally centered under the table');
+  });
+
+  group('the pricing-unavailable footer no longer has a stray divider '
+      'directly above "Maybe later"', () {
+    testWidgets('no top border in the footer when only "Maybe later" shows',
+        (tester) async {
+      await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+
+      final footer = tester.widget<DecoratedBox>(
+        find
+            .descendant(
+              of: find.byKey(const Key('premiumFooter')),
+              matching: find.byType(DecoratedBox),
+            )
+            .first,
+      );
+      final decoration = footer.decoration as BoxDecoration;
+      expect(decoration.border, isNull,
+          reason: 'the loaded/loading states\' top border is a real '
+              'section separator; with only "Maybe later" in the footer '
+              'it read as an orphaned line sitting right above it instead');
+    });
+
+    testWidgets('the top border is still there once pricing has loaded',
+        (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+
+      final footer = tester.widget<DecoratedBox>(
+        find
+            .descendant(
+              of: find.byKey(const Key('premiumFooter')),
+              matching: find.byType(DecoratedBox),
+            )
+            .first,
+      );
+      final decoration = footer.decoration as BoxDecoration;
+      expect(decoration.border, isNotNull,
+          reason: 'the loaded state still separates the fixed footer from '
+              'the scrollable body above it');
+    });
+  });
+
+  group('density pass (visual-polish batch): the loaded state fits above '
+      'the fixed footer without scrolling at common device sizes', () {
+    Future<void> pumpAt(WidgetTester tester, Size size) async {
+      tester.view.physicalSize = size * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService:
+                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    for (final size in [const Size(393, 852), const Size(375, 667)]) {
+      testWidgets(
+          'reports total content height and scroll extent at '
+          '${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+        await pumpAt(tester, size);
+        final bodyHeight =
+            tester.getSize(find.byKey(const Key('premiumBody'))).height;
+        final scrollable =
+            tester.state<ScrollableState>(find.byType(Scrollable).first);
+        final footerHeight =
+            tester.getSize(find.byKey(const Key('premiumFooter'))).height;
+        final footerTop =
+            tester.getTopLeft(find.byKey(const Key('premiumFooter'))).dy;
+        final annualCardBottom =
+            tester.getRect(find.byKey(const ValueKey('planCard_Annual')))
+                .bottom;
+        // ignore: avoid_print
+        print(
+            'premium body content height @ ${size.width.toInt()}x'
+            '${size.height.toInt()} = ${bodyHeight.toStringAsFixed(1)}pt, '
+            'maxScrollExtent = '
+            '${scrollable.position.maxScrollExtent.toStringAsFixed(1)}pt, '
+            'footerHeight = ${footerHeight.toStringAsFixed(1)}pt, '
+            'footerTop = ${footerTop.toStringAsFixed(1)}pt, '
+            'annualCardBottom = ${annualCardBottom.toStringAsFixed(1)}pt');
+      });
+    }
+
+    testWidgets(
+        'at 393x852 with pricing loaded, the plan cards are fully visible '
+        'above the fixed footer without scrolling (the batch\'s own '
+        'requirement is specifically about the plan cards, not the whole '
+        'scrollable body — Restore Purchases and the legal links below '
+        'them may still require a scroll)', (tester) async {
+      await pumpAt(tester, const Size(393, 852));
+
+      final footerTop =
+          tester.getTopLeft(find.byKey(const Key('premiumFooter'))).dy;
+      final annualBottom =
+          tester.getRect(find.byKey(const ValueKey('planCard_Annual')))
+              .bottom;
+      final monthlyBottom =
+          tester.getRect(find.byKey(const ValueKey('planCard_Monthly')))
+              .bottom;
+
+      expect(annualBottom, lessThanOrEqualTo(footerTop),
+          reason: 'the Annual plan card must be fully visible above the '
+              'fixed footer at 393x852 without scrolling');
+      expect(monthlyBottom, lessThanOrEqualTo(footerTop),
+          reason: 'the Monthly plan card must be fully visible above the '
+              'fixed footer at 393x852 without scrolling');
+
+      // The primary CTA lives in the fixed footer, not the scrollable
+      // body, so it's on screen by construction — checked directly anyway
+      // since a tall enough footer could still push it off, in principle.
+      final ctaRect = tester.getRect(find.text('Start free trial'));
+      final viewportHeight =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      expect(ctaRect.bottom, lessThanOrEqualTo(viewportHeight));
+    });
+  });
 }
 
 Offering _offeringWithBothPlans() {
