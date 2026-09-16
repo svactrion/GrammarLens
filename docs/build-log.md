@@ -1798,7 +1798,10 @@ committing. `flutter analyze` and the full test suite clean throughout.
   generate every explicit size. Chose the generator: this app's
   `IPHONEOS_DEPLOYMENT_TARGET` is 13.0, and the single-size format's actual
   minimum-OS requirements weren't worth the risk of getting wrong on a
-  pre-launch app with a real (if old) deployment floor. `ios: true,
+  pre-launch app with a real (if old) deployment floor. *(Superseded
+  2026-09-16 — the floor is 15.0 now, forced by the Xcode toolchain no
+  longer supporting a simulator build below it. See that date's own
+  entry.)* `ios: true,
   android: false` — no Android release track exists, so `android/`'s icon
   is deliberately untouched. `remove_alpha_ios: true` matches the source,
   which already has no alpha channel (confirmed: `file` reports "8-bit/color
@@ -3201,3 +3204,55 @@ sub-headline)
   have been added to the service without ever getting one here).
 - **[Product]** `flutter analyze` and the full test suite (340 tests, up
   from 327) clean.
+
+## 2026-09-16 (iOS minimum deployment target: 13.0 → 15.0)
+
+- **[Engineering] Reason.** The installed Xcode toolchain rejects a
+  simulator build below iOS 15.0 outright: "The iOS Simulator deployment
+  target IPHONEOS_DEPLOYMENT_TARGET is set to 13.0, but the range of
+  supported deployment target versions is 15.0 to 27.0.x." Confirmed via
+  `xcodebuild -showBuildSettings` against a concrete simulator
+  destination — `DEPLOYMENT_TARGET_SUGGESTED_VALUES` for this SDK starts
+  at 15.0, matching the error's own stated floor exactly.
+- **[Product] Decision: minimum iOS 15.** iOS 13-14 devices are no longer
+  supported. Not a meaningful reach reduction pre-launch — Apple's own
+  adoption data has iOS 13/14 at a small single-digit share by this point
+  — and the alternative (patching a global Xcode/Flutter toolchain
+  mismatch some other way) isn't a real option.
+- **[Engineering] No `ios/Podfile` in this project** — confirmed via
+  `.flutter-plugins-dependencies`' `swift_package_manager_enabled: true`
+  and the absence of `ios/Pods/`/`Podfile.lock`: this app uses Flutter's
+  Swift Package Manager integration, not CocoaPods. So the fix is a
+  single-file change: all three `IPHONEOS_DEPLOYMENT_TARGET = 13.0`
+  occurrences in `Runner.xcodeproj/project.pbxproj` (the project-level
+  Debug/Release/Profile configurations — `RunnerTests` has no override of
+  its own, it inherits these) bumped to `15.0`. Nothing to add to a
+  post-install hook that doesn't exist.
+- **[Engineering] Pod versions unaffected, by construction.** There are
+  no pods to change — `pubspec.lock` is unchanged (confirmed by diff)
+  after `flutter clean` + `flutter pub get`, so no package version moved
+  either.
+- **[Engineering] Checked every native iOS dependency's own minimum
+  before raising the floor.** Each SPM plugin's generated `Package.swift`
+  (`ios/Flutter/ephemeral/Packages/.packages/<name>/Package.swift`)
+  declares its own platform minimum: `firebase_analytics`,
+  `firebase_core`, `firebase_crashlytics`, and `url_launcher_ios` at
+  `.iOS("13.0")`, `purchases_flutter` at `.iOS(.v13)`, `sqflite_darwin`
+  at `.iOS("12.0")`. None asks for higher than 15.0, so raising the app's
+  own floor doesn't get blocked by a dependency.
+- **[Engineering] Build verification blocked by an unrelated,
+  pre-existing toolchain bug — not a regression from this change.**
+  `flutter build ios --simulator --debug` fails on this machine with
+  "Binary ... does not contain architectures 'arm64 x86_64'" even though
+  `lipo -info` shows both are genuinely present in the framework binary.
+  Root-caused: this Xcode's `lipo -verify_arch` now rejects being passed
+  more than one architecture at once (`lipo: -verify_arch requires
+  exactly one input file`, reproduced directly), which breaks Flutter
+  3.44.6's own `thinFramework` step
+  (`flutter_tools/lib/src/build_system/targets/darwin.dart`) — a Flutter/
+  Xcode version mismatch, unrelated to this project. Confirmed the
+  deployment-target change isn't the cause: reproduced the identical
+  failure by stashing this commit and rebuilding against the original
+  13.0 setting from a fully cleared `DerivedData`. `flutter analyze` and
+  the full test suite (355 tests) are unaffected and clean, since neither
+  touches native iOS compilation.
