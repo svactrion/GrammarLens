@@ -4,11 +4,14 @@
 
 > Personal product case study, built in public: research → PRD → MVP → iteration.
 > Status: **MVP (v1) complete, tested with real users, closed. v2 — a free/
-> trial/paid pivot with a new daily mode — is functionally built, and a
-> visual polish pass has been done across most of the app** (see
-> [`docs/design-audit.md`](docs/design-audit.md)); a couple of items are
-> still open, including the paywall's density on the smallest supported
-> screen width. See [Product Evolution](#product-evolution) below.
+> trial/paid pivot with a new daily mode — is functionally built and
+> visually polished** (see [`docs/design-audit.md`](docs/design-audit.md));
+> one known debt remains, the paywall's density on the smallest supported
+> screen width. **Pre-launch**: not on the App Store, no TestFlight build
+> yet, and the subscription products themselves don't exist in App Store
+> Connect yet (see [`docs/roadmap.md`](docs/roadmap.md) for current
+> wiring). **v3 is planned but not scoped or built** — a gamification layer
+> and a Home redesign. See [Product Evolution](#product-evolution) below.
 
 ## The Problem
 
@@ -35,8 +38,12 @@ with two entry points:
   writing, error correction, fill-in-the-blank), and get instant,
   jargon-light feedback — what sounded wrong, what sounds natural, and
   why, with the grammar rule kept as secondary detail, not the headline.
-  Free to try for 3 days, then a subscription. The purchase flow is built
-  on RevenueCat and functional end-to-end, but no live App Store Connect
+  Free to try for 7 days (a payment method is required up front, per
+  standard App Store subscription mechanics — it auto-renews unless
+  cancelled), then a subscription. Free-tier users (trial declined or
+  expired) still get one Topic Practice session per day at no cost,
+  reachable from a weak spot in Review. The purchase flow is built on
+  RevenueCat and functional end-to-end, but no live App Store Connect
   product is connected yet, so no real subscription can complete today.
 
 Mistakes from either mode feed a personal **error profile**; **Review**
@@ -51,15 +58,11 @@ app can't build a personalized curriculum from what you actually get wrong.
 | Version | Timeframe | Screenshots | What it was |
 |---|---|---|---|
 | **v1 — MVP** | Jul–Aug 2026 | [`screenshots/v1/`](screenshots/v1/) | The original topic-mode build: pick a topic, answer a mixed question set, get plain-language feedback, review weak spots. Tested with real users, closed. |
-| **v2** | Aug–Sep 2026 (in progress) | [`screenshots/v2/`](screenshots/v2/) — *pending, see note below* | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). |
-| **v3 — planned, not yet scoped** | — | — | A possible future gamification-driven iteration is under consideration (see [`docs/roadmap.md`](docs/roadmap.md), "Later phases"). Not committed, no scope, no screens yet. |
+| **v2** | Aug–Sep 2026 | [Screenshots (v2)](#screenshots-v2) below | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). This is the current build. |
+| **v3 — planned, not yet scoped** | — | — | Two directions under consideration, neither built: a gamification layer (a "Monthly Climb" progression mechanic, redesigned from an earlier weekly-cycle draft — see [`docs/prd-gamification.md`](docs/prd-gamification.md), status draft, design work happening outside this repo) and a Home screen redesign. No scope, no screens, no code in this repo yet. |
 
-**v2 screenshot note:** v2's screens (Daily Test, the merged Premium
-screen, and the rebuilt "today" Home) have had a visual-polish pass —
-screenshots for `screenshots/v2/` are still pending capture, not blocked
-on further design work.
-
-## Screenshots (v1 / MVP)
+<details>
+<summary><strong>Screenshots (v1 / MVP)</strong></summary>
 
 | Home | Length selection | Practice |
 |---|---|---|
@@ -72,6 +75,13 @@ on further design work.
 | Loading state | Review | Weak spot detail |
 |---|---|---|
 | ![Loading](screenshots/v1/loadscreen.png) | ![Review list](screenshots/v1/reviews.png) | ![Weak spot detail](screenshots/v1/inspectrev.png) |
+
+</details>
+
+## Screenshots (v2)
+
+_Pending capture — see [`docs/build-log.md`](docs/build-log.md) for
+status. Table lands here once the images exist._
 
 ## Product Process
 
@@ -86,7 +96,9 @@ This project follows a structured product process, documented as it happens:
       (see [`docs/build-log.md`](docs/build-log.md))
 - [x] Visual design pass — Material 3, custom orange/blue identity, light + dark mode
 - [x] One-question-at-a-time flow, session length selection
-- [x] User testing with real learners (in progress)
+- [x] User testing with real learners — 3 participants (T1–T3), closed
+      (below the original 5+ target, a deliberate call — see
+      [`docs/prd.md` §2.2](docs/prd.md) for the sample-size note)
 - [x] Public write-up (Medium)
 
 ## Key Product Decisions (and why)
@@ -130,6 +142,9 @@ This project follows a structured product process, documented as it happens:
   correct grammar, they struggle to produce it under pressure.
 
 ## Scope Decisions (what's deliberately NOT in the MVP)
+
+_v1/MVP scope only — see [Product Evolution](#product-evolution) for what
+v2 adds and what v3 is considering._
 
 - No speech/audio features
 - No gamification, streaks, levels
@@ -211,8 +226,10 @@ telling you to do the below.
 
 Flutter (iOS) · Anthropic API via a Cloudflare Workers proxy (Claude
 Sonnet, structured JSON outputs — see `proxy/`) · sqflite (local storage)
-· RevenueCat (subscriptions — built, no live product connected yet) ·
-Material 3 · AI-assisted development (Claude Code)
+· Firebase Analytics + Crashlytics (connected and collecting, iOS only —
+see `docs/roadmap.md` "Current wiring") · RevenueCat (subscriptions —
+built, no live product connected yet) · Material 3 · AI-assisted
+development (Claude Code)
 
 ## About
 

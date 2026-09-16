@@ -1,5 +1,13 @@
 # PRD — Weekly Climb (Haftalık Tırmanış)
 
+> **Status note (2026-09-16, added during a docs sync, not part of the
+> original PRD body below):** this is the earlier **weekly**-cycle draft.
+> Direction has since moved to a **monthly** cycle ("Monthly Climb"); that
+> redesign is being done outside this repo and has not been committed here
+> yet. Nothing in this PRD has been approved or implemented — no
+> gamification code exists anywhere in this codebase as of this note. Read
+> the body below as historical/superseded context, not current spec.
+
 **Modül:** Daily Test üzerine oyunlaştırma katmanı
 **Durum:** Taslak, 2026-09-10
 **Kapsam:** Faz 1 bağlayıcı; Faz 2 taslak, karar verilmedi

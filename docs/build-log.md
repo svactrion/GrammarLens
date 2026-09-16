@@ -3345,3 +3345,69 @@ changed.
   - **iOS minimum deployment target, 13.0 → 15.0 (`e5e8c7d`, `f307027`).**
     Already logged in full in this file's own entry immediately above —
     not duplicated here.
+
+## 2026-09-16 (pre-v3 repo snapshot: docs synced to code, v2/v3 boundary defined)
+
+- **[Product]** Read-only audit first, no code changes: confirmed 15
+  unpushed commits on `main` (all authored by Ahmet Tayfur,
+  `Co-Authored-By: Claude Sonnet 5`, no other author on any commit, no
+  other branch/stash/worktree), `flutter analyze` clean, `flutter test`
+  355/355 passing.
+- **[Product]** Checked, against the task's own premise, whether Weekly
+  Climb gamification had actually been built by a separate Codex session:
+  **it had not.** `grep -ril "Climb|Mountain|trailhead|badge"` across
+  `lib/` and `test/` returns zero matches, and the only gamification-
+  related commit in the entire git history is `7a40ff1`, which added
+  `docs/prd-gamification.md` (status Taslak/draft) and nothing else. The
+  two untracked files present at audit time —
+  [`docs/gamification-handoff.md`](gamification-handoff.md) (dated
+  2026-09-16, addressed to "the external AI tool that will build Weekly
+  Climb's visuals and code" — a briefing for work not yet started, not a
+  record of work done) and [`docs/AGENTS.md`](AGENTS.md) (an unrelated
+  imported project-instructions file) — confirm this rather than
+  contradict it. Both stay untracked; neither is committed here.
+- **[Product]** v2/v3 boundary, decided: **v2 is the current build,
+  frozen as-is** — the monetization pivot (free/trial/paid split, Daily
+  Test, the merged Premium screen), the B-structure/B-polish visual pass,
+  the free-tier practice quota, avatars, and the time-of-day greeting.
+  Screenshots for `screenshots/v2/` are captured from this build.
+  **v3 is next and not yet built:** a gamification layer (direction has
+  moved from a weekly cycle, `docs/prd-gamification.md`'s "Weekly Climb"
+  draft, to a monthly one, "Monthly Climb" — that redesign is happening
+  outside this repo) plus a Home screen redesign. Freezing v2 now, before
+  either lands, is deliberate: it gives the project a real before/after
+  to show, rather than screenshotting a build that's already mid-change
+  underneath the next iteration.
+- **[Engineering]** Docs brought in line with the above and with what the
+  audit actually found in code (not rewritten wholesale — targeted
+  fixes):
+  - `README.md`: trial length corrected 3→7 days (matches
+    `SubscriptionService.trialLengthDays`) and the "payment method
+    required up front / auto-renews unless cancelled" mechanics spelled
+    out; the free tier's one-practice-session-per-day allowance
+    (`StorageService.freeDailyPracticeLimit`) added, previously
+    undocumented; Firebase Analytics + Crashlytics added to the Stack
+    section (connected since 2026-09-13, previously missing from this
+    list entirely); the contradictory `[x]` next to "User testing (in
+    progress)" fixed to state the actual closed, 3-participant (T1–T3)
+    result; the top status blockquote rewritten to state plainly that
+    the app is pre-launch (not on the App Store, no TestFlight build,
+    no subscription products in App Store Connect yet); the v1
+    screenshot table moved into a collapsed `<details>` block and an
+    empty "Screenshots (v2)" heading added as a placeholder for the next
+    batch; the "Scope Decisions" (No gamification, streaks, levels)
+    section labeled explicitly as v1/MVP-only scope, since it reads
+    differently now that v3 has a name.
+  - `docs/prd-gamification.md`: a status note added at the top only
+    (body untouched) stating this is the superseded weekly-cycle draft,
+    direction has moved to monthly, and nothing in it is implemented.
+  - `docs/roadmap.md`: a stale "Paid Apps stays Pending User Info" line
+    in the "Pre-launch checklist" narrative — left behind when "Current
+    wiring" was updated to record Paid Apps going Active on 2026-09-15 —
+    given its own update note rather than being silently left to
+    contradict the newer section above it; the 2026-09-02 "heads-up, not
+    yet decided" gamification note under "Later phases" replaced with a
+    dated entry reflecting the actual current state (no code, draft PRD,
+    direction changed).
+- **[Product]** `flutter analyze` and `flutter test` (355 tests) clean;
+  no code changed in this batch, docs only.

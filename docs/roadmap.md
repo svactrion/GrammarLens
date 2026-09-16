@@ -4,12 +4,22 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-16 (iOS minimum deployment target raised to
-15.0 — the installed Xcode toolchain rejects a simulator build below it;
-pure build-setting change, no dependency versions moved. See "Premium
-screen redesign, underway" below and this file's own 2026-09-16 entries
-for detail, and "What's next" §1 for a separate, unrelated toolchain bug
-found while verifying the build). Previous update, same day (Premium
+**Last updated:** 2026-09-16 (docs sync: defined the v2/v3 boundary — v2
+is this build, frozen as-is for a visible before/after; v3 is a
+gamification layer plus a Home redesign, neither built. Corrected a
+stale Paid Apps Agreement status left in the "Pre-launch checklist"
+narrative below "Current wiring" moved past it on 2026-09-15. Replaced
+the old 2026-09-02 gamification heads-up with a dated entry under "Later
+phases" reflecting the actual current state — no gamification code
+exists anywhere in this repo; `docs/prd-gamification.md` is a draft, and
+direction has since moved from weekly to monthly. See "Later phases
+(post-v2)" below.). Previous update, same day (iOS minimum deployment
+target raised to 15.0 — the installed Xcode toolchain rejects a simulator
+build below it; pure build-setting change, no dependency versions moved.
+See "Premium screen redesign, underway" below and this file's own
+2026-09-16 entries for detail, and "What's next" §1 for a separate,
+unrelated toolchain bug found while verifying the build). Previous
+update, same day (Premium
 screen redesign: on-device review fixes): the redesign's four batches
 were checked on-device and two follow-up commits fixed what didn't hold
 up — an ad-copy headline with no real source, a row-overlap bug ordinary
@@ -1299,7 +1309,10 @@ actually exists):
   - **Bank account submitted 2026-09-14** — a personal USD account at Ziraat,
     pending Apple's verification; Paid Apps stays *Pending User Info* until it
     clears. This reverses the "deliberately not submitted yet" line above; the
-    reasoning is in the reversal note below.
+    reasoning is in the reversal note below. **Update 2026-09-15: cleared.**
+    Paid Apps Agreement went Active the day after submission — see "Current
+    wiring" near the top of this file. Subscription products still do not
+    exist (unblocked now, not yet created).
   - **EU DSA trader verification — In Review** (Apple case 102955281512). The
     Turkish utility bill submitted as address proof was rejected **for
     language only**, not content: Apple's document review reads nine
@@ -1647,10 +1660,26 @@ building it.
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.
 
-**Heads-up, not yet decided (2026-09-02):** Ahmet has flagged a possible
+**v3 — planned, status draft, not scoped or built (updated 2026-09-16).**
+Two directions, neither has code in this repo:
+- **Gamification layer.** `docs/prd-gamification.md` (committed
+  2026-09-15) is a weekly-cycle draft ("Weekly Climb"), status Taslak
+  (draft), with six open decisions in its own §10 and never approved or
+  implemented — confirmed by grep, zero gamification code anywhere in
+  `lib/`. Direction has since moved to a **monthly** cycle ("Monthly
+  Climb"); that redesign is happening outside this repo and hasn't been
+  committed here. See the status note added to the top of
+  `docs/prd-gamification.md`.
+- **Home screen redesign.** No scope written yet.
+
+This replaces the 2026-09-02 "heads-up, not yet decided" note below, which
+described the same thing before either direction had a name.
+
+~~**Heads-up, not yet decided (2026-09-02):** Ahmet has flagged a possible
 v3/v4 gamification iteration further out, which would likely bring another
 visual design pass. Recorded here only so it isn't lost — no scope, no
-screens, no commitment yet. Needs its own decision pass when we get there.
+screens, no commitment yet. Needs its own decision pass when we get
+there.~~
 
 ### Carried over from MVP Iteration 3 (unscheduled, absorbed into v2 work)
 - Review tab icon visibility — single-participant, low priority; the new Home
