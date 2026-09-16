@@ -242,8 +242,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
   String get _headline {
     final source = widget.sourceContext;
     return source != null
-        ? 'Unlock personalized feedback on "$source"'
-        : 'Personalized feedback, not a feature list';
+        ? 'Unlock personalized feedback on $source'
+        : 'Unlock personalized feedback';
   }
 
   @override
@@ -729,31 +729,56 @@ String _joinWithOr(List<String> items) {
 /// [StorageService.freeDailyPracticeLimit] such sessions per day; merged
 /// into one row with that real value, read from the constant rather than
 /// retyped, so it can't drift from the actual quota again.
-final List<_ComparisonRow> _comparisonRows = [
-  const _ComparisonRow(
-    label: 'Daily Test, refreshed every day',
-    free: true,
-    premium: true,
-  ),
-  const _ComparisonRow(
-    label: 'Topic Practice, all five topics',
-    free: false,
-    premium: true,
-  ),
-  const _ComparisonRow(
-    label: 'Practice your weak spots',
-    free: false,
-    freeLabel: '${StorageService.freeDailyPracticeLimit} a day',
-    premium: true,
-  ),
-  _ComparisonRow(
-    label: 'Sessions of '
-        '${_joinWithOr(PracticeLength.values.map((l) => '${l.questionCount}').toList())} '
-        'questions',
-    free: false,
-    premium: true,
-  ),
-];
+///
+/// [weakSpotFreeLabel] is the only piece [_ComparisonTable] varies at
+/// build time — it picks between the full "N a day" phrasing and an
+/// abbreviated "N/day" once it's measured whether the full phrase fits
+/// the free-value column on one line at the current width (see that
+/// class's own doc comment on the overlap this replaced).
+List<_ComparisonRow> _buildComparisonRows(String weakSpotFreeLabel) => [
+      const _ComparisonRow(
+        label: 'Daily Test, refreshed every day',
+        free: true,
+        premium: true,
+      ),
+      const _ComparisonRow(
+        label: 'Topic Practice, all five topics',
+        free: false,
+        premium: true,
+      ),
+      _ComparisonRow(
+        label: 'Practice your weak spots',
+        free: false,
+        freeLabel: weakSpotFreeLabel,
+        premium: true,
+      ),
+      _ComparisonRow(
+        label: 'Sessions of '
+            '${_joinWithOr(PracticeLength.values.map((l) => '${l.questionCount}').toList())} '
+            'questions',
+        free: false,
+        premium: true,
+      ),
+    ];
+
+/// Measures a single line of [text] in [style] at the context's current
+/// [TextScaler] — the shared primitive behind every fixed-but-Dynamic-
+/// Type-aware column width in [_ComparisonTable], so none of them drift
+/// out of sync with each other or need a `FittedBox(scaleDown)` safety
+/// net (the previous design's actual bug: a fixed-pixel column didn't fit
+/// its own header word at the *default* text scale, let alone a larger
+/// one).
+double _measureTextWidth(BuildContext context, String text, TextStyle style) {
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: style),
+    textDirection: TextDirection.ltr,
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout();
+  return painter.width;
+}
+
+const TextStyle _freeValueStyle =
+    TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
 
 /// The Free/Premium comparison table. The Premium column reads as one
 /// continuous, rounded, highlighted strip running from the header down to
@@ -780,20 +805,13 @@ class _ComparisonTable extends StatelessWidget {
   const _ComparisonTable({required this.theme, required this.colorScheme});
 
   /// The Premium column's width — enough for "PREMIUM" at the *current*
-  /// text scale, measured directly via [TextPainter] rather than a fixed
-  /// constant, so this is correct at any Dynamic Type setting instead of
-  /// needing a `FittedBox(scaleDown)` safety net (the previous design's
-  /// actual bug: a fixed 56px column plus letter-spacing didn't fit the
-  /// word at the *default* scale, let alone a larger one).
+  /// text scale, measured directly via [_measureTextWidth] rather than a
+  /// fixed constant, so this is correct at any Dynamic Type setting.
   double _premiumColumnWidth(BuildContext context) {
-    final painter = TextPainter(
-      text: const TextSpan(text: 'PREMIUM', style: _headerStyle),
-      textDirection: TextDirection.ltr,
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
+    final width = _measureTextWidth(context, 'PREMIUM', _headerStyle);
     // Horizontal padding inside the strip on each side, plus a floor so a
     // single small checkmark icon never makes the strip look pinched.
-    return (painter.width + 28).clamp(56, double.infinity);
+    return (width + 28).clamp(56, double.infinity);
   }
 
   /// Row heights are computed up front (measured, not `IntrinsicHeight`) —
@@ -813,44 +831,111 @@ class _ComparisonTable extends StatelessWidget {
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
-    return painter.height + 20; // 10 top + 10 bottom padding, both row types
+    return painter.height + 16; // 8 top + 8 bottom padding, both row types
   }
 
   @override
   Widget build(BuildContext context) {
-    final rowDividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
-    final premiumWidth = _premiumColumnWidth(context);
-    final labelStyle =
-        theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
-    final headerHeight = _measuredHeight(context, _headerStyle, 1);
-    final dataRowHeight = _measuredHeight(context, labelStyle, 2);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final rowDividerColor =
+            colorScheme.outlineVariant.withValues(alpha: 0.4);
+        final premiumWidth = _premiumColumnWidth(context);
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          _ComparisonHeaderRow(
-            colorScheme: colorScheme,
-            premiumWidth: premiumWidth,
-            height: headerHeight,
+        // The free-value column ("FREE" header, checkmark/dash, and the
+        // weak-spot row's own quota text) used to share a flex factor with
+        // the row label in one Row — which split the row 50/50 regardless
+        // of how much either side actually needed, squeezed "1 a day" into
+        // a narrow sliver that wrapped to two lines, and let that second
+        // line silently paint outside the row's fixed height (a *vertical*
+        // RenderFlex overflow, which Flutter doesn't report the way it
+        // does a horizontal one — the exact reason ordinary overflow tests
+        // never caught this). Giving the free-value column its own
+        // measured, non-flexible width instead — sized to fit its own
+        // longest real content on one line — makes that vertical overflow
+        // structurally impossible: the label gets every remaining pixel
+        // to itself and wraps only within its own column, and the
+        // free-value column never needs more than one line because it was
+        // sized for exactly the text it holds.
+        const freeColumnHorizontalPadding = 24.0; // 12 each side
+        // Below this much room for the label column, a two-line wrapped
+        // label stops being legible — the threshold this table falls back
+        // to the shorter "N/day" phrasing at, rather than an untested
+        // guess: PRD copy review confirmed 96pt is the narrowest a label
+        // like "Practice your weak spots" reads comfortably at 2 lines,
+        // 13sp, on this table's own font.
+        const minLabelWidth = 96.0;
+        final freeHeaderWidth =
+            _measureTextWidth(context, 'FREE', _headerStyle);
+        // The checkmark icon (_ComparisonCell's `included` branch) is 20pt
+        // square — included as a width candidate so the column is never
+        // narrower than the icon itself even if every text candidate
+        // measures smaller (not the case today, but keeps this correct if
+        // the header/quota text ever gets shorter than that).
+        const checkmarkWidth = 20.0;
+        const limit = StorageService.freeDailyPracticeLimit;
+        const longFreeText = '$limit a day';
+        const shortFreeText = '$limit/day';
+        final longFreeWidth =
+            _measureTextWidth(context, longFreeText, _freeValueStyle);
+        final shortFreeWidth =
+            _measureTextWidth(context, shortFreeText, _freeValueStyle);
+
+        double columnWidthFor(double freeTextWidth) =>
+            [freeHeaderWidth, checkmarkWidth, freeTextWidth]
+                .reduce((a, b) => a > b ? a : b) +
+            freeColumnHorizontalPadding;
+
+        var freeText = longFreeText;
+        var freeColumnWidth = columnWidthFor(longFreeWidth);
+        final availableForLabel =
+            constraints.maxWidth - premiumWidth - freeColumnWidth;
+        if (availableForLabel < minLabelWidth) {
+          freeText = shortFreeText;
+          freeColumnWidth = columnWidthFor(shortFreeWidth);
+        }
+
+        final rows = _buildComparisonRows(freeText);
+        final labelStyle =
+            theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
+        final headerHeight = _measuredHeight(context, _headerStyle, 1);
+        final dataRowHeight = _measuredHeight(context, labelStyle, 2);
+
+        return Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(20),
           ),
-          for (var i = 0; i < _comparisonRows.length; i++)
-            _ComparisonRowLine(
-              row: _comparisonRows[i],
-              theme: theme,
-              colorScheme: colorScheme,
-              premiumWidth: premiumWidth,
-              height: dataRowHeight,
-              showDivider: i != _comparisonRows.length - 1,
-              dividerColor: rowDividerColor,
-              isLastRow: i == _comparisonRows.length - 1,
-            ),
-        ],
-      ),
+          child: Column(
+            children: [
+              _ComparisonHeaderRow(
+                colorScheme: colorScheme,
+                freeColumnWidth: freeColumnWidth,
+                premiumWidth: premiumWidth,
+                height: headerHeight,
+              ),
+              for (var i = 0; i < rows.length; i++)
+                _ComparisonRowLine(
+                  // Identifies each row's own rendered rect for the
+                  // geometry regression tests guarding the vertical-
+                  // overflow class of bug this table used to have — see
+                  // this class's own doc comment.
+                  key: ValueKey('comparisonRow_${rows[i].label}'),
+                  row: rows[i],
+                  theme: theme,
+                  colorScheme: colorScheme,
+                  freeColumnWidth: freeColumnWidth,
+                  premiumWidth: premiumWidth,
+                  height: dataRowHeight,
+                  showDivider: i != rows.length - 1,
+                  dividerColor: rowDividerColor,
+                  isLastRow: i == rows.length - 1,
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -860,11 +945,13 @@ const TextStyle _headerStyle =
 
 class _ComparisonHeaderRow extends StatelessWidget {
   final ColorScheme colorScheme;
+  final double freeColumnWidth;
   final double premiumWidth;
   final double height;
 
   const _ComparisonHeaderRow({
     required this.colorScheme,
+    required this.freeColumnWidth,
     required this.premiumWidth,
     required this.height,
   });
@@ -876,16 +963,20 @@ class _ComparisonHeaderRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 12, 10),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'FREE',
-                  style: _headerStyle.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+          // Purely a spacer matching the label column's own left padding —
+          // "FREE" itself now lives in the fixed-width column below, the
+          // same one every row's checkmark/dash/quota-text renders in, so
+          // the header centers on exactly the same x-position as what it
+          // labels (docs/design-audit.md's own "FREE should share a center
+          // with the ticks and dividers below it" finding).
+          const Expanded(child: SizedBox.shrink()),
+          SizedBox(
+            width: freeColumnWidth,
+            child: Center(
+              child: Text(
+                'FREE',
+                style: _headerStyle.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -911,21 +1002,25 @@ class _ComparisonHeaderRow extends StatelessWidget {
   }
 }
 
-/// One data row, split into two siblings sharing one [Row] (not two
-/// independently-laid-out columns): the label+free portion (an [Expanded]
-/// carrying its own bottom divider) and the Premium strip cell.
+/// One data row, split into three siblings sharing one [Row]: the label
+/// (an [Expanded] carrying its own bottom divider, with the whole
+/// remaining width to itself), the free-value column (a fixed
+/// [freeColumnWidth] — see [_ComparisonTable]'s own doc comment for why
+/// this is measured rather than flexed), and the Premium strip cell.
 /// [CrossAxisAlignment.stretch] plus a fixed, pre-measured [height] (see
 /// [_ComparisonTable._measuredHeight] — deliberately *not*
 /// `IntrinsicHeight`, which doesn't combine reliably with an `Expanded`
 /// child; that pairing under-measured badly enough to genuinely overflow
-/// at 2.0x text scale during this batch's own testing) makes the strip
-/// cell match the label+free side's height. The label itself is capped at
-/// two lines with an ellipsis rather than wrapping indefinitely, since
-/// [height] is sized for exactly two lines.
+/// at 2.0x text scale during this batch's own testing) makes every column
+/// match the row's own height. The label itself is capped at two lines
+/// with an ellipsis rather than wrapping indefinitely, since [height] is
+/// sized for exactly two lines; the free-value text is capped at one —
+/// [freeColumnWidth] is sized so it never actually needs to wrap.
 class _ComparisonRowLine extends StatelessWidget {
   final _ComparisonRow row;
   final ThemeData theme;
   final ColorScheme colorScheme;
+  final double freeColumnWidth;
   final double premiumWidth;
   final double height;
   final bool showDivider;
@@ -933,9 +1028,11 @@ class _ComparisonRowLine extends StatelessWidget {
   final bool isLastRow;
 
   const _ComparisonRowLine({
+    super.key,
     required this.row,
     required this.theme,
     required this.colorScheme,
+    required this.freeColumnWidth,
     required this.premiumWidth,
     required this.height,
     required this.showDivider,
@@ -945,6 +1042,10 @@ class _ComparisonRowLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final divider = showDivider
+        ? Border(bottom: BorderSide(color: dividerColor))
+        : null;
+
     return SizedBox(
       height: height,
       child: Row(
@@ -952,53 +1053,44 @@ class _ComparisonRowLine extends StatelessWidget {
         children: [
           Expanded(
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: showDivider
-                    ? Border(bottom: BorderSide(color: dividerColor))
-                    : null,
-              ),
+              decoration: BoxDecoration(border: divider),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 12, 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        row.label,
-                        maxLines: 2,
+                padding: const EdgeInsets.fromLTRB(20, 8, 8, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    row.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: freeColumnWidth,
+            child: DecoratedBox(
+              decoration: BoxDecoration(border: divider),
+              child: Center(
+                child: row.freeLabel != null
+                    ? Text(
+                        row.freeLabel!,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            theme.textTheme.bodySmall?.copyWith(fontSize: 13),
-                      ),
-                    ),
-                    if (row.freeLabel != null)
-                      // Flexible, not a bare Text: at large Dynamic Type
-                      // the Premium strip's own measured width (enough for
-                      // "PREMIUM" — see _premiumColumnWidth) leaves little
-                      // room on this side of the row, and this label
-                      // wrapping to two short lines is a far better outcome
-                      // than a fixed-width Text forcing a real overflow.
-                      Flexible(
-                        child: Text(
-                          row.freeLabel!,
-                          textAlign: TextAlign.right,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       )
-                    else
-                      _ComparisonCell(
+                    : _ComparisonCell(
                         included: row.free,
                         includedColor: colorScheme.onSurfaceVariant,
                         dashColor: colorScheme.outline,
                         tier: 'Free',
                       ),
-                  ],
-                ),
               ),
             ),
           ),

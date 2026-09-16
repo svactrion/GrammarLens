@@ -347,12 +347,19 @@ void main() {
   });
 
   testWidgets(
-      'leads with the personalized-feedback pitch, not a feature list',
-      (tester) async {
+      'leads with the personalized-feedback pitch, not invented ad copy '
+      'about "a feature list"', (tester) async {
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+    // Visual-redesign follow-up: the previous fallback headline
+    // ("Personalized feedback, not a feature list") traced to no spec —
+    // it was written directly as ad copy in the commit that introduced
+    // the standalone Paywall screen, not a quote from docs/prd.md despite
+    // that commit citing it. Replaced with a plain statement of the pitch
+    // itself, consistent with the sourceContext-present branch below.
+    expect(find.text('Unlock personalized feedback'), findsOneWidget);
     expect(
-      find.text('Personalized feedback, not a feature list'),
-      findsOneWidget,
+      find.textContaining('not a feature list'),
+      findsNothing,
     );
   });
 
@@ -365,13 +372,10 @@ void main() {
       sourceContext: 'definite articles',
     );
     expect(
-      find.text('Unlock personalized feedback on "definite articles"'),
+      find.text('Unlock personalized feedback on definite articles'),
       findsOneWidget,
     );
-    expect(
-      find.text('Personalized feedback, not a feature list'),
-      findsNothing,
-    );
+    expect(find.text('Unlock personalized feedback'), findsNothing);
   });
 
   group('nothing unbuilt is sold (PRD v2 §13.4)', () {
@@ -1381,6 +1385,119 @@ void main() {
       expect(result.parameters['outcome'], 'error');
     });
   });
+
+  group('the free-value column (bugfix batch: no longer shares a flex '
+      "factor with the row label, which used to squeeze the weak-spot "
+      'row\'s "1 a day" into a narrow sliver that silently overflowed '
+      "its row vertically — a failure mode ordinary overflow tests don't "
+      'catch, since Flutter only reports a *horizontal* RenderFlex '
+      'overflow as an exception)', () {
+    Future<void> pumpAt(
+      WidgetTester tester, {
+      required Size size,
+      required double textScale,
+    }) async {
+      tester.view.physicalSize = size * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService:
+                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    for (final size in [
+      const Size(320, 700),
+      const Size(375, 700),
+      const Size(393, 852),
+    ]) {
+      for (final scale in [1.0, 1.3]) {
+        testWidgets(
+            'the weak-spot row\'s label, its free value, and the row '
+            'itself never overlap at ${size.width.toInt()}x'
+            '${size.height.toInt()} @${scale}x textScale', (tester) async {
+          await pumpAt(tester, size: size, textScale: scale);
+          expect(tester.takeException(), isNull);
+
+          final row = find.byKey(
+            const ValueKey('comparisonRow_Practice your weak spots'),
+          );
+          await tester.scrollUntilVisible(row, 300);
+          final rowRect = tester.getRect(row);
+
+          final labelRect = tester.getRect(
+            find.descendant(
+              of: row,
+              matching: find.text('Practice your weak spots'),
+            ),
+          );
+          // Either "1 a day" (the common case) or the "1/day" fallback at
+          // the narrowest widths — either way, exactly one free-value
+          // text renders, on one line.
+          final freeValueFinder = find.descendant(
+            of: row,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Text &&
+                  (widget.data == '1 a day' || widget.data == '1/day'),
+            ),
+          );
+          expect(freeValueFinder, findsOneWidget);
+          final freeValueRect = tester.getRect(freeValueFinder);
+
+          expect(labelRect.overlaps(freeValueRect), isFalse,
+              reason: 'the label and the free-value text must never '
+                  'occupy the same screen space');
+          expect(
+            rowRect.top <= freeValueRect.top &&
+                freeValueRect.bottom <= rowRect.bottom,
+            isTrue,
+            reason: 'the free value must stay within its own row\'s '
+                'vertical bounds, not spill into the divider or the row '
+                'below it — this is exactly the silent, non-throwing '
+                'overflow this batch fixed',
+          );
+        });
+      }
+    }
+  });
+
+  testWidgets(
+      'the FREE header shares a horizontal center with the checkmarks '
+      'below it, not just a right edge', (tester) async {
+    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+    final freeHeader = find.text('FREE');
+    await tester.scrollUntilVisible(freeHeader, 300);
+    final freeHeaderCenterX = tester.getCenter(freeHeader).dx;
+
+    final firstRow = find.byKey(
+      const ValueKey('comparisonRow_Daily Test, refreshed every day'),
+    );
+    // Row 1 is free (a checkmark, not text) — its free-column check mark
+    // is the first "Included in Free" glyph in the tree, distinct from
+    // that same row's Premium-column check mark.
+    final freeCheck = find
+        .descendant(of: firstRow, matching: find.byIcon(Icons.check_rounded))
+        .first;
+    final freeCheckCenterX = tester.getCenter(freeCheck).dx;
+
+    expect((freeHeaderCenterX - freeCheckCenterX).abs(), lessThan(1.0),
+        reason: 'FREE and the column of checkmarks/dashes beneath it must '
+            'share one x-center, not just happen to line up at the right '
+            'edge');
+  });
+
 }
 
 Offering _offeringWithBothPlans() {
