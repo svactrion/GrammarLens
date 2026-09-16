@@ -3256,3 +3256,92 @@ sub-headline)
   13.0 setting from a fully cleared `DerivedData`. `flutter analyze` and
   the full test suite (355 tests) are unaffected and clean, since neither
   touches native iOS compilation.
+
+## 2026-09-16 (Two checks, and recent history cross-checked against git log)
+
+Read-only session: two specific checks, then this file and
+`docs/roadmap.md` brought in line with what's actually committed. No code
+changed.
+
+- **[Product] Check 1 — Settings > Change avatar's avatar-enlargement work
+  is committed.** `b27187a` ("Settings avatar picker: bigger center
+  avatar (128pt -> 160pt)", 2026-09-15): `AvatarPickerScreen`'s own
+  `_centerRadius` constant, 64 → 80 (diameter 128pt → 160pt, +25%),
+  `viewportFraction` unchanged at 0.5. Scoped to that one screen's
+  constant — `AvatarCarousel`'s own defaults (what onboarding's embedded
+  carousel uses) are untouched. This is the second of two enlargements on
+  this same screen; the first (`329e0aa`, radius 56 → 64) landed the
+  batch before it. Both are already documented in this file's own
+  2026-09-15 "Avatar picker screen" and "Settings' avatar picker: bigger
+  center avatar" entries — verified against `git show b27187a`, not just
+  recalled.
+- **[Product] Check 2 — when `FirstLaunchFlow` opens the Premium screen
+  from the Day-0 paywall pitch, the real profile (with its chosen avatar)
+  is already saved, so the hero shows it — not the fallback.** Traced the
+  actual call order in `lib/screens/first_launch_flow.dart` and
+  `lib/screens/onboarding_screen.dart`: `OnboardingScreen._continue()`
+  always includes a real `avatar` in the `UserProfile` it hands to
+  `onComplete` (`_selectedAvatar` starts as `Avatar.random()` on mount
+  and is never null, `docs/design-audit.md`'s avatar section already
+  documents the "no empty state" rule this satisfies); `FirstLaunchFlow.
+  _completeOnboarding` `await`s `storageService.saveUserProfile(profile)`
+  *before* advancing `_step` to `dailyTest`, and only `dailyTest` →
+  `dailyTestResult` → the paywall CTA's `PremiumScreen` push follows
+  after that. So by the time a user can even reach "Start free trial" on
+  the Day-0 result screen, the profile is already persisted.
+  `PremiumScreen._loadAvatar()` still reads it asynchronously
+  (`storageService.getUserProfile()`), so the hero briefly shows its own
+  `_fallbackAvatar` for one frame while that read is in flight — a normal
+  loading flash, not a wrong-data bug: the data being read is the real
+  saved avatar, not a placeholder standing in for a missing profile.
+- **[Product] Recent history cross-checked against git log — hashes and
+  dates below verified directly (`git log`/`git show`), not recalled.
+  Every item is already documented in full elsewhere in this file; this
+  is a verification pass, not a rewrite.**
+  - **Avatar asset fix — a defect fix, not a design choice.**
+    `avatar_07.webp`'s own pixels carried a corrupted translucent stripe;
+    Dinosaur was retired for Crab in that slot *because of that defect*,
+    confirmed by decoding the shipped bytes, not a stylistic swap. New
+    edge-alpha regression test; two unrelated pre-existing 1-pixel
+    defects on `avatar_01`/`avatar_03` fixed losslessly in a follow-up
+    (`52611dc`, `fad17b6`). Date correction: `9afa17b`. See this file's
+    own 2026-09-15 "Avatar asset fix" entry.
+  - **Transparent avatar background + ground shadow — a design choice,
+    not a response to a user-reported finding.** Made as part of this
+    round's own avatar-presentation redesign (dropping the colored
+    selection ring in favor of the carousel's existing scale/opacity
+    cue), not because anyone flagged the ring as broken; the ring's own
+    color palette was deleted outright, not carried forward again
+    (`b286c48`). See this file's own 2026-09-15 "Avatar presentation"
+    entry and `docs/design-audit.md`'s avatar named-exception section.
+  - **Home avatar tap opens the avatar picker directly, with a real Hero
+    flight — not a switch to the Settings tab (`e1c4696`).** Reasoning
+    verified against the commit: keeps the tab model untouched everywhere
+    else while still giving Home's avatar a genuine push/pop transition
+    to fly across (a tab swap has none); a user tapping their own avatar
+    is reaching for "change my avatar," which is exactly where this
+    lands them, one screen closer than Settings would.
+  - **Premium redesign, four batches (`4c5b9aa`, `4750c88`, `c977ed5`,
+    `b3d8edd`).** Debug-only pricing fixture; a genuinely fixed footer;
+    a comparison-table correctness fix (free users get 1 targeted
+    weak-spot practice/day, the table previously said "—"); the Premium
+    column as one highlighted strip; the hero avatar group; four paywall
+    analytics events.
+  - **Premium visual fix, on-device review, two commits (`d22be63`,
+    `17d8232`).** The four-batch redesign was checked on-device and not
+    accepted as-is: overlap and density problems the batches' own tests
+    didn't catch. Root cause of the overlap: ordinary overflow tests only
+    catch a *horizontal* `RenderFlex` overflow, never a vertical one —
+    new geometry tests (checking rendered rects, not just the absence of
+    an exception) now guard it. The fallback headline ("Personalized
+    feedback, not a feature list") traced to no spec doc — `git log -S`
+    shows it was written directly as ad copy in `5b2b9c4`, despite that
+    commit's own message citing `docs/prd.md` — removed. Dark-mode
+    Premium strip fill changed to `surfaceContainerHighest` (9.34:1
+    contrast for the existing text, up from 7.13:1). Known debt, left
+    open: at 375×667 the plan cards still extend below the fixed
+    footer's own top edge. See this file's own 2026-09-16 entries and
+    `docs/roadmap.md`'s matching "on-device review fixes" entry.
+  - **iOS minimum deployment target, 13.0 → 15.0 (`e5e8c7d`, `f307027`).**
+    Already logged in full in this file's own entry immediately above —
+    not duplicated here.

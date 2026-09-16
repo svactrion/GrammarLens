@@ -4,9 +4,11 @@
 
 > Personal product case study, built in public: research → PRD → MVP → iteration.
 > Status: **MVP (v1) complete, tested with real users, closed. v2 — a free/
-> trial/paid pivot with a new daily mode — is functionally built; a visual
-> polish pass is still pending before wider testing.** See
-> [Product Evolution](#product-evolution) below.
+> trial/paid pivot with a new daily mode — is functionally built, and a
+> visual polish pass has been done across most of the app** (see
+> [`docs/design-audit.md`](docs/design-audit.md)); a couple of items are
+> still open, including the paywall's density on the smallest supported
+> screen width. See [Product Evolution](#product-evolution) below.
 
 ## The Problem
 
@@ -52,10 +54,10 @@ app can't build a personalized curriculum from what you actually get wrong.
 | **v2** | Aug–Sep 2026 (in progress) | [`screenshots/v2/`](screenshots/v2/) — *pending, see note below* | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). |
 | **v3 — planned, not yet scoped** | — | — | A possible future gamification-driven iteration is under consideration (see [`docs/roadmap.md`](docs/roadmap.md), "Later phases"). Not committed, no scope, no screens yet. |
 
-**v2 screenshot note:** v2's screens (Daily Test, Paywall, the new
-mode-selection Home/nav) are functionally done but deliberately not yet
-visually polished — a dedicated design pass is planned before capturing
-screenshots for `screenshots/v2/`.
+**v2 screenshot note:** v2's screens (Daily Test, the merged Premium
+screen, and the rebuilt "today" Home) have had a visual-polish pass —
+screenshots for `screenshots/v2/` are still pending capture, not blocked
+on further design work.
 
 ## Screenshots (v1 / MVP)
 

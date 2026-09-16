@@ -4,8 +4,19 @@
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-15 (Premium screen redesign closed out — Batch
-4 shipped four new paywall analytics events (`paywall_viewed`,
+**Last updated:** 2026-09-16 (iOS minimum deployment target raised to
+15.0 — the installed Xcode toolchain rejects a simulator build below it;
+pure build-setting change, no dependency versions moved. See "Premium
+screen redesign, underway" below and this file's own 2026-09-16 entries
+for detail, and "What's next" §1 for a separate, unrelated toolchain bug
+found while verifying the build). Previous update, same day (Premium
+screen redesign: on-device review fixes): the redesign's four batches
+were checked on-device and two follow-up commits fixed what didn't hold
+up — an ad-copy headline with no real source, a row-overlap bug ordinary
+overflow tests can't catch, and a density/color-language pass; one known
+debt left open (375×667 still needs a scroll). Previous update 2026-09-15
+(Premium screen redesign closed out — Batch 4 shipped four new paywall
+analytics events (`paywall_viewed`,
 `paywall_dismissed`, `purchase_started`, `purchase_result`), tagged by
 the four real entry points Batch 0 confirmed. The dismissal event needed
 a genuinely designed solution, not just a call per button: a system back
@@ -1188,6 +1199,51 @@ measurement below: `docs/build-log.md`, same date.
   untouched, confirmed by diff. 340 tests passing (up from 327),
   `flutter analyze` clean.
 
+**2026-09-16 — Premium screen: on-device review fixes, two commits.**
+The four-batch redesign above (4c5b9aa–b3d8edd) was checked on-device and
+not visually accepted — overlap and density problems, not caught by the
+batches' own tests. Full detail: `docs/build-log.md`, same date.
+- **Fixes (`d22be63`):** the fallback headline ("Personalized feedback,
+  not a feature list") traced to no spec doc — `git log -S` shows it was
+  written directly as ad copy in `5b2b9c4`, the commit that first added
+  the standalone Paywall screen, despite that commit's own message citing
+  `docs/prd.md`. Removed, replaced by a plain "Unlock personalized
+  feedback[, on `<topic>`]". Also fixed: the weak-spot row's free-quota
+  text ("1 a day") shared a flex factor with the row label, which let it
+  silently overflow its row's own fixed height — the root cause is that
+  ordinary overflow tests only catch a *horizontal* `RenderFlex`
+  overflow, never a vertical one, so this shipped undetected; new
+  geometry tests (checking rendered rects directly, not just absence of
+  an exception) now guard it. The FREE header and the checkmarks/dividers
+  below it now share one measured column, hence one x-center.
+- **Visual pass (`17d8232`):** hero avatar group shrunk (120pt → 90pt)
+  and spacing tightened so the loaded state's plan cards clear the fixed
+  footer without scrolling at 393×852; the selected plan card no longer
+  fills with the same `secondaryContainer` the comparison table's Premium
+  strip uses (fill stays plain surface, selection reads from the border +
+  a check mark instead); the dark-mode Premium strip fill changed from
+  the saturated `secondaryContainer` navy to the calmer
+  `surfaceContainerHighest` (9.34:1 contrast for the existing
+  `onSecondaryContainer` text, up from 7.13:1 — light mode untouched);
+  "What's free, trial, and paid" moved below the table, centered, small;
+  the pricing-unavailable footer's top border no longer shows when
+  "Maybe later" is the only thing in it.
+- **Known debt, not fixed:** at 375×667, the plan cards still extend
+  below the fixed footer's own top edge (measured: footer top at 507pt,
+  cards' own bottom at ~706–710pt) — a scroll is still needed there. Only
+  393×852 was brought fully above the fold this round.
+- 355 tests passing, `flutter analyze` clean.
+
+**2026-09-16 — iOS minimum deployment target: 13.0 → 15.0.** The
+installed Xcode toolchain rejects a simulator build below iOS 15
+outright. Pure build-setting change (`e5e8c7d`) — this project has no
+`ios/Podfile` (Swift Package Manager, not CocoaPods), so the fix is the
+three `IPHONEOS_DEPLOYMENT_TARGET` occurrences in
+`Runner.xcodeproj/project.pbxproj`; no dependency versions moved
+(`pubspec.lock` diff is empty). Every native plugin's own minimum is
+well under 15.0. Full reasoning and the separate toolchain bug found
+while verifying it: `docs/build-log.md`, same date (`e5e8c7d`, `f307027`).
+
 ---
 
 ## What's next
@@ -1209,8 +1265,10 @@ building a zero-evidence bet before measuring that defeats the point).
 
 ### 1. Pre-launch checklist
 See `docs/prd-v2.md` §10.1. Done: daily session cap, privacy note, minimal
-analytics (code scaffold — no Firebase project connected yet, needs an
-interactive `flutterfire configure` run against a real account), and now
+analytics (a real Firebase project has been connected since 2026-09-13 —
+see "Current wiring" above; this line used to read "code scaffold — no
+Firebase project connected yet, needs an interactive `flutterfire
+configure` run against a real account", which is stale now), and now
 the full v2.1 free/trial/paid flow (previous section) — functionally
 complete, but not launch-ready. Still open: distribution channel
 decision, API key safety approach, device coverage, feedback channel —
@@ -1370,6 +1428,25 @@ actually exists):
   `AppLifecycleState.resumed` — real fix, not a `Timer`. Found while
   checking whether the greeting had something to attach a refresh to; see
   the 2026-09-15 "Home: time-of-day greeting + bigger avatar" entry above.
+- **Open blocker, found 2026-09-16, not project-caused: the local iOS
+  simulator build is broken by an Xcode 27 / Flutter toolchain
+  incompatibility.** This Xcode's `lipo -verify_arch` now rejects being
+  passed more than one architecture at once, which breaks Flutter
+  3.44.6's own framework-thinning step
+  (`flutter_tools/lib/src/build_system/targets/darwin.dart`) even though
+  the framework binary genuinely contains both `arm64` and `x86_64`
+  (verified directly with `lipo -info`/`-verify_arch` on the actual
+  file). Tracked upstream as flutter/flutter#188461. Waiting on a Flutter
+  release that fixes it (or a different Xcode); not something this repo
+  can work around. See the 2026-09-16 "iOS minimum deployment target"
+  entry above for how this was found and confirmed unrelated to that
+  change.
+- **Open debt, found 2026-09-16, not yet fixed: the Premium screen's
+  plan cards don't clear the fixed footer at 375×667 without scrolling.**
+  The density pass that fixed this at 393×852 didn't close the gap at
+  the smaller iPhone SE size (measured: footer top at 507pt, cards'
+  own bottom at ~706–710pt). See the 2026-09-16 "Premium screen: on-
+  device review fixes" entry above.
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.

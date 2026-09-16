@@ -146,6 +146,16 @@ price/plan area is reachable without scrolling, and gained explicit
 loading/loaded/unavailable states for the no-product-connected case instead
 of silently showing nothing — see `docs/build-log.md`, 2026-09-08.
 
+**Debt opened by that same 2026-09-08 round, closed 2026-09-15.** Replacing
+the benefit list with a comparison table introduced a `FittedBox(scaleDown)`
+safety net on the "PREMIUM" column header, which works against Dynamic
+Type — it shrinks the text back down under a larger accessibility text
+size instead of letting it grow. The Premium redesign's Batch 2
+(`docs/build-log.md`, 2026-09-15) removed it, replacing it with a column
+width actually measured against the current `TextScaler` via `TextPainter`,
+so the header now sizes correctly at any text scale instead of needing a
+shrink-to-fit fallback.
+
 **Home.** The Premium entry is a solid full-width blue bar while the other two
 entries are light cards; it reads as a button and outranks Daily Test, which is
 the free core loop. Its internal layout differs too (icon vertically centered,
