@@ -3623,17 +3623,18 @@ changed.
 
 - **[Product]** `main` and the `v2-snapshot` tag were rewritten with
   `git-filter-repo` to remove personal data that had been committed
-  (docs/roadmap.md, since 2026-09-15): the trader street address from the
-  earlier EU DSA paragraph, and a bank-account fragment ("[pattern]
-  (5007)"). Both were already condensed out of the *current* file content
-  earlier the same day; this rewrite is what removes them from *history*
-  — every commit that ever carried either string, not just the tip. Only
-  those two exact literal phrases were targeted (not a regex on short
-  fragments like "5387" or "[pattern]", which a pickaxe survey confirmed would
-  have clobbered unrelated content — `web/sqflite_sw.js`'s generated
-  `case 5007:` switch statement alone accounts for ~198 unrelated commits
-  matching bare "5007"). Verified zero hits afterward:
-  `git log -p main v2-snapshot | grep -i -E "[pattern]|[pattern]|[pattern]|[pattern] \(5007\)"`.
+  (docs/roadmap.md, since 2026-09-15): the trader street address line and
+  a bank-account fragment. Both were already condensed out of the
+  *current* file content earlier the same day; this rewrite is what
+  removes them from *history* — every commit that ever carried either
+  string, not just the tip. Only the two exact literal phrases were
+  targeted, never a regex on short fragments of either one — a pickaxe
+  survey confirmed a short-fragment regex would have clobbered unrelated
+  content, since `web/sqflite_sw.js`'s generated `case 5007:` switch
+  statement alone accounts for ~198 unrelated commits matching the bare
+  numeric fragment of the account number. Verified zero hits afterward
+  against a local, un-committed pattern file (see the note at the end of
+  this entry on where that file lives and why it isn't in the repo).
 - **[Engineering]** Full mirror backup taken first
   (`../GrammarLens-backup.git`), confirmed before any rewrite. The rewrite
   itself ran in a throwaway clone made with `git clone --no-local
@@ -3654,10 +3655,10 @@ changed.
   rebase its new commits onto the rewritten equivalent of 84deb91
   (`ff52197`) with `git rebase --onto ff52197 84deb91
   codex/monthly-climb`, then confirm `git log -p main..codex/monthly-climb
-  | grep -i -E '[pattern]|[pattern]|[pattern]|[pattern]'` returns zero. Its worktree
-  copy of docs/roadmap.md still contains the address line — resolve any
-  conflict in favour of the redacted text.** See the matching note in
-  `docs/roadmap.md`'s Monthly Climb item.
+  | grep -i -F -f ~/.config/grammarlens/pii-patterns.txt` returns
+  nothing. Its worktree copy of docs/roadmap.md still contains the
+  address line — resolve any conflict in favour of the redacted text.**
+  See the matching note in `docs/roadmap.md`'s Monthly Climb item.
 - **[Product]** Local `main` and `v2-snapshot` were updated to the
   rewritten history (old tips `f170af0`/`d86e31c` → new `647ecb9`/
   `aa2e0e5`); a separate commit ("docs: update commit references after
@@ -3668,3 +3669,11 @@ changed.
   Force-pushed: `git push --force-with-lease origin main` and
   `git push --force origin v2-snapshot`. `v1-mvp` was untouched (predates
   the personal data) and was not pushed.
+- **[Product]** The exact patterns this cleanup searches for and removes
+  are deliberately not written out in this repo, in any commit, anywhere
+  — quoting them here would just re-commit fragments of what was just
+  redacted. They live in a local, un-committed file,
+  `~/.config/grammarlens/pii-patterns.txt` (one pattern per line, for
+  `grep -F -i -f`), and every verification/guard command in this file and
+  in `docs/roadmap.md` reads from that file rather than spelling anything
+  out inline.

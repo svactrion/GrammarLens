@@ -1735,10 +1735,13 @@ Two directions, neither has code in this repo:
   as-is.** Before merging, rebase its new commits onto the rewritten
   equivalent of 84deb91 (`ff52197`) with `git rebase --onto ff52197
   84deb91 codex/monthly-climb`, then confirm
-  `git log -p main..codex/monthly-climb | grep -i -E '[pattern]|[pattern]|[pattern]|[pattern]'`
-  returns zero. Its worktree copy of docs/roadmap.md still contains the
-  address line — resolve any conflict in favour of the redacted text.
-  Full detail: `docs/build-log.md`, 2026-09-17.
+  `git log -p main..codex/monthly-climb | grep -i -F -f
+  ~/.config/grammarlens/pii-patterns.txt` returns nothing — that local,
+  un-committed file (one pattern per line) is deliberately not in this
+  repo, so the patterns themselves are never spelled out here. Its
+  worktree copy of docs/roadmap.md still contains the address line —
+  resolve any conflict in favour of the redacted text. Full detail:
+  `docs/build-log.md`, 2026-09-17.
 - **Home screen redesign.** No scope written yet.
 
 This replaces the 2026-09-02 "heads-up, not yet decided" note below, which
