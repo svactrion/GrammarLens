@@ -580,6 +580,20 @@ computed "Save 30%" marker; annual stays preselected and the 7-day trial still
 applies to both. The reasoning above is kept rather than rewritten, per this
 document's own rule.
 
+**Superseded 2026-09-17 — the per-month figure and the savings-badge math,
+corrected against a real device.** Confirmed live on-device with the real
+App Store products: StoreKit presents the annual plan's per-month equivalent
+as **$4.16**, not the $4.17 stated above — it truncates 49.99 / 12 = 4.1658...
+to two decimals rather than rounding. The 2026-09-07 note's "Save 30%" was the
+intended figure, but the shipped code computed it from that truncated $4.16
+value and then rounded up, which produced "Save 31%" on-device — an
+overstated discount, not what was written above. The savings badge is now
+computed directly from the two products' real raw prices (annual vs.
+12 × monthly, no intermediate rounding) and floored rather than rounded, so
+display rounding can't overstate the discount again: 1 − 49.99 / (12 × 5.99)
+= 30.44% → 30%, matching what this section always intended. The reasoning
+above is kept rather than rewritten, per this document's own rule.
+
 **Superseded 2026-09-17 — the trial length is no longer the same on both
 plans.** See §13.2's own 2026-09-17 note: monthly is a 3-day trial, annual is
 7 days, deliberately asymmetric to steer toward annual. Pricing itself

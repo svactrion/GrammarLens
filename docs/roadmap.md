@@ -179,10 +179,42 @@ actually wired today.** Checked against the filesystem, not from memory.
   day after submission — verification took ~1 day, not the "multi-day"
   re-verification this file previously assumed. Tax forms Active since 7 Sep.
   **The banking blocker is closed; the whole store/billing chain is open.**
-- **Subscription products — not created yet.** Now unblocked: the subscription
-  group and the two products ($5.99/mo, $49.99/yr, 7-day introductory offer on
-  both) are the next thing to build, and RevenueCat offerings cannot be wired
-  until they exist.
+- **Subscription products — created, Ready to Submit, 2026-09-17.**
+  Subscription group "GrammarLens Premium": `grammarlens_premium_annual`
+  (level 1, 1 year, $49.99, 1-week free introductory offer) and
+  `grammarlens_premium_monthly` (level 2, 1 month, $5.99, 3-day free
+  introductory offer — see PRD v2 §13.2's own 2026-09-17 note on the
+  asymmetric trial). **Not yet submitted for review** — first subscriptions must go
+  out together with a new app version, not on their own.
+  **ASC metadata:** subscription group display name "GrammarLens Premium";
+  product description "Daily topic practice with personalized feedback" —
+  replaced an earlier "Unlimited topic practice…" description, which was
+  false: premium is capped at `dailySessionLimit` (10 sessions/day), never
+  unlimited.
+  **Review assets are placeholders, not launch-ready.** Both products'
+  App Review screenshot is a simulator capture of the debug fixture
+  offering, not a real device/real price screenshot, and their review
+  notes state US prices and describe the path to the paywall. Both must
+  be replaced or re-checked before submission — added to the Pre-launch
+  checklist (§1 below) rather than assumed done here.
+  **RevenueCat:** both App Store products created and attached to the
+  `premium` entitlement; the `default` offering is current, with
+  `$rc_monthly`/`$rc_annual` packages each now holding the real App Store
+  product (the existing Test Store products stay attached alongside, not
+  removed). An App Store Connect API key is added to the RevenueCat
+  project, so its dashboard shows live product status instead of pending.
+  **Verified on a physical iPhone, 2026-09-17,** built against
+  `config/prod.json`: live prices and the per-plan trial lengths (PRD v2
+  §13.2) both load correctly on `PremiumScreen`.
+  **Not yet done:** a sandbox purchase, a restore, and a cancellation
+  haven't been exercised end-to-end; nor has a non-USD storefront (e.g.
+  Türkiye / TRY) been checked for correct prices and a correct savings
+  badge.
+  **Decided against:** Apple's "Monthly with a 12-Month Commitment"
+  billing option is not being configured — it was never part of the
+  pricing decision (PRD v2 §13.3) and `PremiumScreen`'s disclosure block doesn't
+  support disclosing a commitment term. Left as a post-launch idea only,
+  worth revisiting if annual conversion turns out low.
 - **EU DSA — still In Review** (Apple case 102955281512). Not a blocker for the
   primary market: the regulation covers the 27 EU countries and Türkiye is not
   among them. If verification stalls, the exposure is EU distribution only.
@@ -1313,6 +1345,12 @@ actually exists):
     Paid Apps Agreement went Active the day after submission — see "Current
     wiring" near the top of this file. Subscription products still do not
     exist (unblocked now, not yet created).
+  - **Subscription products created and Ready to Submit — 2026-09-17.** Full
+    detail in "Current wiring" above. **Pre-submission to-do, not yet
+    done:** both products' App Review screenshot and review notes are
+    still placeholders (a simulator capture of the debug fixture offering,
+    and notes stating US prices) — replace or re-check both before the
+    first submission that includes them.
   - **EU DSA trader verification — In Review** (Apple case 102955281512). The
     Turkish utility bill submitted as address proof was rejected **for
     language only**, not content: Apple's document review reads nine

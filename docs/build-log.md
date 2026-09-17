@@ -3484,3 +3484,72 @@ changed.
   says "7-day introductory offer on both" in its "Current wiring" block
   and needs its own update once the full App Store/RevenueCat chain is
   verified on device.
+
+## 2026-09-17 (Savings-badge fix, and the store/billing chain completed)
+
+- **[Product]** The subscription products, previously blocked only on Paid
+  Apps Agreement going Active, are created in App Store Connect: subscription
+  group "GrammarLens Premium" holding `grammarlens_premium_annual` (level 1,
+  $49.99/year, 1-week free intro offer) and `grammarlens_premium_monthly`
+  (level 2, $5.99/month, 3-day free intro offer) — status Ready to Submit,
+  not yet submitted for review (first subscriptions go out with a new app
+  version, not standalone). Two findings from actually going through App
+  Store Connect, not assumed from the plan alone:
+  - **The products already existed with no introductory offers configured
+    at all** — a leftover from an earlier, incomplete pass at product
+    creation. Adding the 3-day/1-week offers (§13.2) was the missing step,
+    not a from-scratch creation.
+  - **The subscription group's description said "Unlimited topic
+    practice…"**, which has been false since the free-tier practice quota
+    batch (2026-09-15, this file) capped premium at `dailySessionLimit`
+    (10 sessions/day) — corrected to "Daily topic practice with
+    personalized feedback" before anything gets submitted for review, not
+    left for App Review to catch.
+  - **RevenueCat only had Test Store products attached**, which is the
+    actual reason every real-device paywall check up to this point showed
+    the "pricing unavailable" state — not a RevenueCat misconfiguration
+    unrelated to the missing App Store Connect API key, as previously
+    suspected. Adding that key and creating/attaching the real App Store
+    products (kept alongside the existing Test Store ones, not replacing
+    them) is what made the dashboard show live product status and, in
+    turn, made a real device finally load real prices — see the on-device
+    verification (2026-09-17, `config/prod.json`) below.
+  - **Review assets are still placeholders**: both products' App Review
+    screenshot is a simulator capture of the debug fixture offering, and
+    the review notes state US prices — flagged in `docs/roadmap.md`'s
+    Pre-launch checklist (§1) as a to-do, not marked done here.
+  - **Not yet done**, recorded rather than assumed: a sandbox purchase, a
+    restore, and a cancellation haven't been exercised end-to-end; nor has
+    a non-USD storefront (e.g. Türkiye / TRY) been checked for correct
+    prices and a correct savings badge.
+  - **Decided against** Apple's "Monthly with a 12-Month Commitment"
+    billing option — outside the pricing decision (§13.3) and
+    `PremiumScreen`'s disclosure block has no way to state a commitment
+    term. Left as a post-launch idea only.
+  Full detail: `docs/roadmap.md`'s "Current wiring" block and its
+  Pre-launch checklist (§1), both updated the same day.
+- **[Engineering]** With real prices finally loading on a physical iPhone,
+  the savings badge read "Save 31%" against a true 30.44% saving — filed
+  as a bug, diagnosed before any fix: `_planPricing` computed the
+  percentage from `StoreProduct.pricePerMonth`, which StoreKit truncates
+  to 2 decimals for display (49.99 / 12 = 4.1658... → "4.16", not rounded
+  to "4.17"), then rounded the result — (5.99 - 4.16) / 5.99 × 100 =
+  30.55% → `round()` = 31. The truncated intermediate value plus
+  round-half-up compounded into an overstated discount. Fixed by computing
+  the percentage from the two products' own raw `price` values directly
+  (annual vs. 12 × monthly, full precision, no intermediate rounding) and
+  flooring it, so display rounding can never overstate a discount again:
+  1 − 49.99 / (12 × 5.99) = 30.44% → floor = 30.
+  `buildDebugFixtureOffering()`'s annual `pricePerMonth` is now hardcoded
+  to 4.16 (mirroring StoreKit's own truncation) instead of derived as
+  `annualPrice / 12`, which formatted to "4.17" and silently disagreed
+  with the real product — the fixture would never have caught this bug
+  before the fix, only masked it. A new regression test uses the real
+  $5.99/$49.99 prices and asserts "Save 30%"/not "31%"; confirmed it fails
+  against the pre-fix computation before restoring the fix, not just
+  assumed to. `docs/prd-v2.md` §13.3 gained a dated note: its own
+  2026-09-07 entry had already written "$4.17/month" and "Save 30%" as
+  the intended figures, so this correction is the code catching up to
+  what the doc always specified, not a new decision. Full suite: 357
+  tests (up from 355 — two new cases, the fixture's own truncation
+  assertion and the on-screen regression test), `flutter analyze` clean.

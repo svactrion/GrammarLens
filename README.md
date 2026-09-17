@@ -38,9 +38,9 @@ with two entry points:
   writing, error correction, fill-in-the-blank), and get instant,
   jargon-light feedback — what sounded wrong, what sounds natural, and
   why, with the grammar rule kept as secondary detail, not the headline.
-  Free to try for 7 days (a payment method is required up front, per
-  standard App Store subscription mechanics — it auto-renews unless
-  cancelled), then a subscription. Free-tier users (trial declined or
+  Free to try (a payment method is required up front, per standard App
+  Store subscription mechanics — it auto-renews unless cancelled), then a
+  subscription. Free-tier users (trial declined or
   expired) still get one Topic Practice session per day at no cost,
   reachable from a weak spot in Review. The purchase flow is built on
   RevenueCat and functional end-to-end, but no live App Store Connect
