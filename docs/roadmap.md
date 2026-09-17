@@ -206,10 +206,21 @@ actually wired today.** Checked against the filesystem, not from memory.
   **Verified on a physical iPhone, 2026-09-17,** built against
   `config/prod.json`: live prices and the per-plan trial lengths (PRD v2
   §13.2) both load correctly on `PremiumScreen`.
-  **Not yet done:** a sandbox purchase, a restore, and a cancellation
-  haven't been exercised end-to-end; nor has a non-USD storefront (e.g.
-  Türkiye / TRY) been checked for correct prices and a correct savings
-  badge.
+  **Sandbox purchase completed, same device, same day.** A sandbox tester
+  bought the annual plan's free trial; the `premium` entitlement was
+  granted and Home's locked cards unlocked. After deleting and
+  reinstalling the app (wiping local data and restarting onboarding),
+  premium came back **without tapping Restore Purchases** — StoreKit
+  syncs transactions on launch, which confirms entitlement is actually
+  read from RevenueCat/StoreKit, not reconstructed from anything stored
+  locally.
+  **Not yet done:** an *explicit* Restore Purchases tap has not been
+  exercised in a scenario that actually needs it (a second device, or a
+  signed-out/re-signed-in sandbox account) — added to the TestFlight
+  pre-submission pass, since the reinstall test above happens not to
+  require it. Also still open: expiry/cancellation behavior (locks
+  returning once a subscription actually lapses), and a non-USD
+  storefront check (e.g. Türkiye / TRY) of prices and the savings badge.
   **Decided against:** Apple's "Monthly with a 12-Month Commitment"
   billing option is not being configured — it was never part of the
   pricing decision (PRD v2 §13.3) and `PremiumScreen`'s disclosure block doesn't

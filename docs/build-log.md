@@ -3553,3 +3553,17 @@ changed.
   what the doc always specified, not a new decision. Full suite: 357
   tests (up from 355 — two new cases, the fixture's own truncation
   assertion and the on-screen regression test), `flutter analyze` clean.
+- **[Product]** Sandbox purchase completed, same device, same day: a
+  sandbox tester bought the annual plan's free trial, the `premium`
+  entitlement was granted, and Home's locked cards unlocked. Deleting and
+  reinstalling the app afterward (wiping local data, restarting
+  onboarding) brought premium back without tapping Restore Purchases —
+  StoreKit syncs transactions on launch, so entitlement reads from
+  RevenueCat/StoreKit rather than anything reconstructed from local
+  state, confirmed rather than assumed. Still not done: an *explicit*
+  Restore Purchases tap in a scenario that actually needs it (second
+  device, or a signed-out/re-signed-in sandbox account) — the reinstall
+  test above didn't require it, so it doesn't stand in for it; added to
+  the TestFlight pre-submission pass in `docs/roadmap.md`. Expiry/
+  cancellation behavior and a non-USD storefront (e.g. Türkiye / TRY)
+  price/savings-badge check remain open too. No code changed — docs only.
