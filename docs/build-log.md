@@ -3411,3 +3411,76 @@ changed.
     direction changed).
 - **[Product]** `flutter analyze` and `flutter test` (355 tests) clean;
   no code changed in this batch, docs only.
+
+## 2026-09-17 (Per-plan trial length: monthly 3 days, annual 7 days)
+
+- **[Product]** App Store Connect now configures a different introductory
+  offer per plan: monthly (`grammarlens_premium_monthly`) is a plain 3-day
+  free trial, annual (`grammarlens_premium_annual`) is 7 days — configured
+  as a "1 Week" duration, not "7 Days" (StoreKit/RevenueCat report that
+  back as `periodUnit` WEEK, `periodNumberOfUnits` 1). Rationale: steer
+  users toward annual by putting the longer trial on the plan worth more
+  to us — a bet, not a user finding, same status as the pricing bet
+  already on record. Supersedes PRD v2 §13.2's "7 days on both plans" and
+  the "the 7-day trial still applies to both" clause in §13.3 — both
+  sections got dated superseded notes, original text kept per this
+  document's own rule. Known side effect: introductory offers are one per
+  subscription group, so a user who already used the monthly 3-day trial
+  gets no annual 7-day trial on switching plans.
+- **[Engineering]** Batch 0 (read-only diagnosis, no code) found every
+  place a trial length reaches the UI: `SubscriptionService.trialLengthDays`
+  (the marketing-copy constant, then hardcoded at 7), consumed by Home's
+  locked Topic Practice card and the Day-0 result screen's paywall pitch
+  (`_DayZeroPaywallCta`) — both plan-agnostic, shown before any plan is
+  picked. `PremiumScreen`'s own purchase-point disclosure (`_disclosureText`)
+  was already correct: it reads `_selectedPackage.storeProduct
+  .introductoryPrice` live, never the constant. One inaccuracy found in the
+  same pass: the constant's own doc comment claimed the free/trial/paid
+  comparison table used it too — it never did; that table has no trial
+  number in it at all.
+- **[Engineering]** The same diagnosis pass caught a real bug in
+  `buildDebugFixtureOffering()`: it built one `IntroductoryPrice` object
+  and reused it for both the monthly and annual fixture products, so the
+  debug/preview fixture and its own tests always saw two identical 7-day
+  trials — never the asymmetric case that's now real, and never a
+  week-unit trial at all. Fixed as part of this batch, not filed for
+  later, since implementing the asymmetric trial without fixing the one
+  thing meant to preview it would have shipped code nothing actually
+  exercised.
+- **[Engineering]** Implementation, three commits: (1) copy — Home's
+  locked card and the Day-0 pitch both drop the hand-written number
+  entirely ("Try it free, then continue with a subscription." /
+  "...and you can try it free.") rather than trying to state a number that
+  now differs by plan; `trialLengthDays` deleted along with its stale doc
+  comment, since nothing plan-agnostic states a number anymore and the
+  purchase point never read it. (2) `PremiumScreen._disclosureText` gained
+  `_trialDurationInDays`, converting a week-unit introductory offer to
+  days before formatting (`_hyphenatedDuration`) so the disclosure line
+  reads "7-day free trial" for annual and "3-day free trial" for monthly —
+  comparable units when the user toggles plans. Deliberately scoped to
+  only the trial part: `_formatSubscriptionPeriod` (the separate renewal-
+  period text) parses the product's own ISO subscription period, an
+  entirely different input, so this conversion cannot leak into it — 
+  confirmed by reading both functions, not assumed. (3) the debug fixture
+  split into two distinct `IntroductoryPrice` objects mirroring what
+  StoreKit actually returns (monthly `P3D`/day/3, annual `P1W`/week/1).
+- **[Engineering]** Tests: `subscription_service_debug_fixture_offering
+  _test.dart` now asserts `periodUnit` alongside the count for both plans,
+  catching the week-vs-day distinction the old pair of near-identical
+  assertions couldn't. `premium_screen_test.dart`'s fakes are rebuilt the
+  same way (annual as a week-unit offer, monthly as 3 days); its
+  assertions cover the annual disclosure line reading "7-day" (proving the
+  conversion, not just passing because the fixture happened to already say
+  "day") and the monthly one reading "3-day" after switching plans. No
+  test asserted the old plan-agnostic copy strings verbatim, so Home's and
+  the Day-0 flow's own test files needed no changes. `flutter analyze` and
+  the full suite (355 tests, same count — existing assertions extended in
+  place rather than new cases added) clean before and after every commit.
+- **[Product]** Not in this batch's approved scope, flagged rather than
+  silently touched: `README.md`'s "Free to try for 7 days" line (added in
+  the 2026-09-16 docs-sync batch above, when the trial was still 7 days on
+  both plans) is now inaccurate for the monthly plan. `docs/roadmap.md`
+  was explicitly excluded from this batch too, per instruction — it still
+  says "7-day introductory offer on both" in its "Current wiring" block
+  and needs its own update once the full App Store/RevenueCat chain is
+  verified on device.
