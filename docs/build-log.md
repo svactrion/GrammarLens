@@ -1762,7 +1762,7 @@ against.
   the widget-local one — no regression on any screen.
 - **[Product]** `flutter analyze` and the full test suite (227 passing)
   clean after the retirement. Committed separately from the screen
-  migration, per plan (`2db4519`), since the two are independently
+  migration, per plan (`db6e039`), since the two are independently
   revertible changes.
 
 ### D1 closed
@@ -3264,16 +3264,16 @@ Read-only session: two specific checks, then this file and
 changed.
 
 - **[Product] Check 1 — Settings > Change avatar's avatar-enlargement work
-  is committed.** `b27187a` ("Settings avatar picker: bigger center
+  is committed.** `70903e8` ("Settings avatar picker: bigger center
   avatar (128pt -> 160pt)", 2026-09-15): `AvatarPickerScreen`'s own
   `_centerRadius` constant, 64 → 80 (diameter 128pt → 160pt, +25%),
   `viewportFraction` unchanged at 0.5. Scoped to that one screen's
   constant — `AvatarCarousel`'s own defaults (what onboarding's embedded
   carousel uses) are untouched. This is the second of two enlargements on
-  this same screen; the first (`329e0aa`, radius 56 → 64) landed the
+  this same screen; the first (`eecbdba`, radius 56 → 64) landed the
   batch before it. Both are already documented in this file's own
   2026-09-15 "Avatar picker screen" and "Settings' avatar picker: bigger
-  center avatar" entries — verified against `git show b27187a`, not just
+  center avatar" entries — verified against `git show 70903e8`, not just
   recalled.
 - **[Product] Check 2 — when `FirstLaunchFlow` opens the Premium screen
   from the Day-0 paywall pitch, the real profile (with its chosen avatar)
@@ -3304,7 +3304,7 @@ changed.
     confirmed by decoding the shipped bytes, not a stylistic swap. New
     edge-alpha regression test; two unrelated pre-existing 1-pixel
     defects on `avatar_01`/`avatar_03` fixed losslessly in a follow-up
-    (`52611dc`, `fad17b6`). Date correction: `9afa17b`. See this file's
+    (`eebecba`, `1be458d`). Date correction: `3def6f9`. See this file's
     own 2026-09-15 "Avatar asset fix" entry.
   - **Transparent avatar background + ground shadow — a design choice,
     not a response to a user-reported finding.** Made as part of this
@@ -3312,37 +3312,37 @@ changed.
     selection ring in favor of the carousel's existing scale/opacity
     cue), not because anyone flagged the ring as broken; the ring's own
     color palette was deleted outright, not carried forward again
-    (`b286c48`). See this file's own 2026-09-15 "Avatar presentation"
+    (`af078c4`). See this file's own 2026-09-15 "Avatar presentation"
     entry and `docs/design-audit.md`'s avatar named-exception section.
   - **Home avatar tap opens the avatar picker directly, with a real Hero
-    flight — not a switch to the Settings tab (`e1c4696`).** Reasoning
+    flight — not a switch to the Settings tab (`0e8160a`).** Reasoning
     verified against the commit: keeps the tab model untouched everywhere
     else while still giving Home's avatar a genuine push/pop transition
     to fly across (a tab swap has none); a user tapping their own avatar
     is reaching for "change my avatar," which is exactly where this
     lands them, one screen closer than Settings would.
-  - **Premium redesign, four batches (`4c5b9aa`, `4750c88`, `c977ed5`,
-    `b3d8edd`).** Debug-only pricing fixture; a genuinely fixed footer;
+  - **Premium redesign, four batches (`eee79c2`, `29b08bc`, `7286b36`,
+    `1a1291e`).** Debug-only pricing fixture; a genuinely fixed footer;
     a comparison-table correctness fix (free users get 1 targeted
     weak-spot practice/day, the table previously said "—"); the Premium
     column as one highlighted strip; the hero avatar group; four paywall
     analytics events.
-  - **Premium visual fix, on-device review, two commits (`d22be63`,
-    `17d8232`).** The four-batch redesign was checked on-device and not
+  - **Premium visual fix, on-device review, two commits (`dc5a955`,
+    `7e54966`).** The four-batch redesign was checked on-device and not
     accepted as-is: overlap and density problems the batches' own tests
     didn't catch. Root cause of the overlap: ordinary overflow tests only
     catch a *horizontal* `RenderFlex` overflow, never a vertical one —
     new geometry tests (checking rendered rects, not just the absence of
     an exception) now guard it. The fallback headline ("Personalized
     feedback, not a feature list") traced to no spec doc — `git log -S`
-    shows it was written directly as ad copy in `5b2b9c4`, despite that
+    shows it was written directly as ad copy in `4d327b7`, despite that
     commit's own message citing `docs/prd.md` — removed. Dark-mode
     Premium strip fill changed to `surfaceContainerHighest` (9.34:1
     contrast for the existing text, up from 7.13:1). Known debt, left
     open: at 375×667 the plan cards still extend below the fixed
     footer's own top edge. See this file's own 2026-09-16 entries and
     `docs/roadmap.md`'s matching "on-device review fixes" entry.
-  - **iOS minimum deployment target, 13.0 → 15.0 (`e5e8c7d`, `f307027`).**
+  - **iOS minimum deployment target, 13.0 → 15.0 (`9ac79d9`, `9f04956`).**
     Already logged in full in this file's own entry immediately above —
     not duplicated here.
 
@@ -3357,7 +3357,7 @@ changed.
   Climb gamification had actually been built by a separate Codex session:
   **it had not.** `grep -ril "Climb|Mountain|trailhead|badge"` across
   `lib/` and `test/` returns zero matches, and the only gamification-
-  related commit in the entire git history is `7a40ff1`, which added
+  related commit in the entire git history is `2c70dbb`, which added
   `docs/prd-gamification.md` (status Taslak/draft) and nothing else. The
   two untracked files present at audit time —
   [`docs/gamification-handoff.md`](gamification-handoff.md) (dated

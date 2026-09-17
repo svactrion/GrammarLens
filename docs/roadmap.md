@@ -1260,12 +1260,12 @@ measurement below: `docs/build-log.md`, same date.
   `flutter analyze` clean.
 
 **2026-09-16 — Premium screen: on-device review fixes, two commits.**
-The four-batch redesign above (4c5b9aa–b3d8edd) was checked on-device and
+The four-batch redesign above (eee79c2–1a1291e) was checked on-device and
 not visually accepted — overlap and density problems, not caught by the
 batches' own tests. Full detail: `docs/build-log.md`, same date.
-- **Fixes (`d22be63`):** the fallback headline ("Personalized feedback,
+- **Fixes (`dc5a955`):** the fallback headline ("Personalized feedback,
   not a feature list") traced to no spec doc — `git log -S` shows it was
-  written directly as ad copy in `5b2b9c4`, the commit that first added
+  written directly as ad copy in `4d327b7`, the commit that first added
   the standalone Paywall screen, despite that commit's own message citing
   `docs/prd.md`. Removed, replaced by a plain "Unlock personalized
   feedback[, on `<topic>`]". Also fixed: the weak-spot row's free-quota
@@ -1276,7 +1276,7 @@ batches' own tests. Full detail: `docs/build-log.md`, same date.
   geometry tests (checking rendered rects directly, not just absence of
   an exception) now guard it. The FREE header and the checkmarks/dividers
   below it now share one measured column, hence one x-center.
-- **Visual pass (`17d8232`):** hero avatar group shrunk (120pt → 90pt)
+- **Visual pass (`7e54966`):** hero avatar group shrunk (120pt → 90pt)
   and spacing tightened so the loaded state's plan cards clear the fixed
   footer without scrolling at 393×852; the selected plan card no longer
   fills with the same `secondaryContainer` the comparison table's Premium
@@ -1296,13 +1296,13 @@ batches' own tests. Full detail: `docs/build-log.md`, same date.
 
 **2026-09-16 — iOS minimum deployment target: 13.0 → 15.0.** The
 installed Xcode toolchain rejects a simulator build below iOS 15
-outright. Pure build-setting change (`e5e8c7d`) — this project has no
+outright. Pure build-setting change (`9ac79d9`) — this project has no
 `ios/Podfile` (Swift Package Manager, not CocoaPods), so the fix is the
 three `IPHONEOS_DEPLOYMENT_TARGET` occurrences in
 `Runner.xcodeproj/project.pbxproj`; no dependency versions moved
 (`pubspec.lock` diff is empty). Every native plugin's own minimum is
 well under 15.0. Full reasoning and the separate toolchain bug found
-while verifying it: `docs/build-log.md`, same date (`e5e8c7d`, `f307027`).
+while verifying it: `docs/build-log.md`, same date (`9ac79d9`, `9f04956`).
 
 ---
 
@@ -1432,7 +1432,7 @@ actually exists):
   reverse-DNS of a domain actually owned, all lowercase — deliberately,
   since **a bundle ID cannot be changed once it is attached to an App Store
   Connect app record**. Verified directly against the file (commit
-  `f95d63c`): all six occurrences now read `com.ahmettayfur.grammarlens` /
+  `e289cbb`): all six occurrences now read `com.ahmettayfur.grammarlens` /
   `com.ahmettayfur.grammarlens.RunnerTests`. The same commit also closed the
   related item decided alongside it: `CFBundleDisplayName` had drifted to
   "Grammar Lens" (with a space) instead of matching the product name
