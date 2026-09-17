@@ -63,7 +63,7 @@ class StorageService {
   // predating this column really was, since Topic Practice was the only
   // writer until now.
   static const _createTable = '''
-    CREATE TABLE error_entries (
+    CREATE TABLE IF NOT EXISTS error_entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       topic_id TEXT NOT NULL,
       error_type TEXT NOT NULL,
@@ -78,21 +78,21 @@ class StorageService {
   ''';
 
   static const _createReviewSettingsTable = '''
-    CREATE TABLE review_settings (
+    CREATE TABLE IF NOT EXISTS review_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       sort_order TEXT NOT NULL
     )
   ''';
 
   static const _createThemeSettingsTable = '''
-    CREATE TABLE theme_settings (
+    CREATE TABLE IF NOT EXISTS theme_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       mode TEXT NOT NULL
     )
   ''';
 
   static const _createPracticeSettingsTable = '''
-    CREATE TABLE practice_settings (
+    CREATE TABLE IF NOT EXISTS practice_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       question_count INTEGER NOT NULL
     )
@@ -104,7 +104,7 @@ class StorageService {
   // is the minimal extra bit of state needed for the home screen's
   // "X practiced" stat.
   static const _createTopicPracticeStatsTable = '''
-    CREATE TABLE topic_practice_stats (
+    CREATE TABLE IF NOT EXISTS topic_practice_stats (
       topic_id TEXT PRIMARY KEY,
       questions_answered INTEGER NOT NULL DEFAULT 0
     )
@@ -113,7 +113,7 @@ class StorageService {
   // Guest-first identity (PRD v2 §5) — a row existing here is what "has
   // completed onboarding" means, so there's no separate boolean flag.
   static const _createUserProfileTable = '''
-    CREATE TABLE user_profile (
+    CREATE TABLE IF NOT EXISTS user_profile (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       name TEXT NOT NULL,
       learning_goal TEXT NOT NULL,
@@ -128,7 +128,7 @@ class StorageService {
   // enough for a cost guardrail, which doesn't need to be precise to the
   // second.
   static const _createDailySessionUsageTable = '''
-    CREATE TABLE daily_session_usage (
+    CREATE TABLE IF NOT EXISTS daily_session_usage (
       day TEXT PRIMARY KEY,
       session_count INTEGER NOT NULL DEFAULT 0
     )
@@ -141,7 +141,7 @@ class StorageService {
   // [freeDailyPracticeLimit], counting only free-tier "Practice this"
   // sessions.
   static const _createFreePracticeUsageTable = '''
-    CREATE TABLE free_practice_usage (
+    CREATE TABLE IF NOT EXISTS free_practice_usage (
       day TEXT PRIMARY KEY,
       session_count INTEGER NOT NULL DEFAULT 0
     )
@@ -161,7 +161,7 @@ class StorageService {
   // this, only computed transiently in DailyTestResultScreen from an
   // in-memory answers map.
   static const _createDailyTestSetsTable = '''
-    CREATE TABLE daily_test_sets (
+    CREATE TABLE IF NOT EXISTS daily_test_sets (
       day TEXT PRIMARY KEY,
       questions_json TEXT NOT NULL,
       completed_at TEXT,
@@ -175,7 +175,7 @@ class StorageService {
   // no release code path ever consults — the actual release-safety gate is
   // SubscriptionService's own kDebugMode check, not anything here.
   static const _createDebugSettingsTable = '''
-    CREATE TABLE debug_settings (
+    CREATE TABLE IF NOT EXISTS debug_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       access_override TEXT
     )
@@ -228,33 +228,134 @@ class StorageService {
         await db.execute(_createDebugSettingsTable);
         await db.execute(_createDeviceIdentityTable);
       },
-      // Still pre-launch prototype with no real user data to preserve, so a
-      // schema change just drops and recreates rather than carrying a real
-      // migration — revisit once there's an actual install base to protect.
+      // Incremental, per-version steps — replaying exactly what each past
+      // schema bump actually added (each step below cites the commit that
+      // introduced it), never a drop/recreate. A drop/recreate used to sit
+      // here on the "no real user data yet" theory; once real installs
+      // exist, the same code silently deletes every row in error_entries,
+      // daily_test_sets, user_profile (incl. avatar) and topic_practice_stats
+      // on every single version bump, not just ones that touch those
+      // tables — see docs/build-log.md's migration-safety entry.
+      //
+      // Every step MUST be idempotent — CREATE TABLE IF NOT EXISTS for new
+      // tables, a PRAGMA table_info check before ALTER TABLE ADD COLUMN for
+      // new columns on an existing table — because sqflite silently lowers
+      // the on-disk schema version on a downgrade (installing an older
+      // build after a newer one) without touching the actual table shape:
+      // the next upgrade back to a newer version can then re-run a step
+      // whose table/column already exists. [_addColumnIfMissing] is the
+      // shared guard for that; table-creation steps get it for free from
+      // `IF NOT EXISTS` in the `_createXTable` constants themselves.
       onUpgrade: (db, oldVersion, newVersion) async {
-        await db.execute('DROP TABLE IF EXISTS error_entries');
-        await db.execute('DROP TABLE IF EXISTS review_settings');
-        await db.execute('DROP TABLE IF EXISTS theme_settings');
-        await db.execute('DROP TABLE IF EXISTS practice_settings');
-        await db.execute('DROP TABLE IF EXISTS topic_practice_stats');
-        await db.execute('DROP TABLE IF EXISTS user_profile');
-        await db.execute('DROP TABLE IF EXISTS daily_session_usage');
-        await db.execute('DROP TABLE IF EXISTS free_practice_usage');
-        await db.execute('DROP TABLE IF EXISTS daily_test_sets');
-        await db.execute('DROP TABLE IF EXISTS debug_settings');
-        await db.execute(_createTable);
-        await db.execute(_createReviewSettingsTable);
-        await db.execute(_createThemeSettingsTable);
-        await db.execute(_createPracticeSettingsTable);
-        await db.execute(_createTopicPracticeStatsTable);
-        await db.execute(_createUserProfileTable);
-        await db.execute(_createDailySessionUsageTable);
-        await db.execute(_createFreePracticeUsageTable);
-        await db.execute(_createDailyTestSetsTable);
-        await db.execute(_createDebugSettingsTable);
+        // v1 -> v2: error_entries gained prompt/user_answer/
+        // corrected_answer/explanation/rule (all nullable TEXT).
+        if (oldVersion < 2) {
+          for (final column in [
+            'prompt',
+            'user_answer',
+            'corrected_answer',
+            'explanation',
+            'rule',
+          ]) {
+            await _addColumnIfMissing(db, 'error_entries', column, 'TEXT');
+          }
+        }
+        // v2 -> v3: review_settings.
+        if (oldVersion < 3) {
+          await db.execute(_createReviewSettingsTable);
+        }
+        // v3 -> v4: theme_settings + practice_settings.
+        if (oldVersion < 4) {
+          await db.execute(_createThemeSettingsTable);
+          await db.execute(_createPracticeSettingsTable);
+        }
+        // v4 -> v5: topic_practice_stats.
+        if (oldVersion < 5) {
+          await db.execute(_createTopicPracticeStatsTable);
+        }
+        // v5 -> v6: user_profile. Created in its current (with `avatar`)
+        // shape directly — a table that doesn't exist yet has no data to
+        // preserve in a stale shape, so there's no need to create it
+        // column-by-column across the v6 and v8 bumps; the oldVersion < 8
+        // step below still guards the case where user_profile already
+        // exists (a device already at v6 or v7) without that column.
+        if (oldVersion < 6) {
+          await db.execute(_createUserProfileTable);
+        }
+        // v6 -> v7: daily_session_usage.
+        if (oldVersion < 7) {
+          await db.execute(_createDailySessionUsageTable);
+        }
+        // v7 -> v8: user_profile gained a nullable `avatar` column.
+        if (oldVersion < 8) {
+          await _addColumnIfMissing(db, 'user_profile', 'avatar', 'TEXT');
+        }
+        // v8 -> v9: daily_test_sets, current (with `answers_json`) shape —
+        // same reasoning as user_profile above.
+        if (oldVersion < 9) {
+          await db.execute(_createDailyTestSetsTable);
+        }
+        // v9 -> v10: debug_settings.
+        if (oldVersion < 10) {
+          await db.execute(_createDebugSettingsTable);
+        }
+        // v10 -> v11: daily_test_sets gained a nullable `answers_json`
+        // column (only reachable if the table already existed without it —
+        // a device already at v9 or v10).
+        if (oldVersion < 11) {
+          await _addColumnIfMissing(
+              db, 'daily_test_sets', 'answers_json', 'TEXT');
+        }
+        // v11 -> v12: error_entries gained `source`, defaulting every
+        // pre-existing row to 'topic_practice' — true of every row written
+        // before this column existed, since Topic Practice was the only
+        // writer at the time.
+        if (oldVersion < 12) {
+          await _addColumnIfMissing(db, 'error_entries', 'source',
+              "TEXT NOT NULL DEFAULT 'topic_practice'");
+        }
+        // device_identity is deliberately NOT gated on a version check —
+        // see its own doc comment above: it must survive/exist across every
+        // upgrade, not just the v12 -> v13 bump that introduced it, and
+        // `CREATE TABLE IF NOT EXISTS` makes running it unconditionally
+        // every time safe.
         await db.execute(_createDeviceIdentityTable);
+        // v13 -> v14: free_practice_usage.
+        if (oldVersion < 14) {
+          await db.execute(_createFreePracticeUsageTable);
+        }
       },
     );
+  }
+
+  /// True if [table] already has a column named [column] — the guard every
+  /// `onUpgrade` column-adding step needs before an `ALTER TABLE ADD
+  /// COLUMN`, since that step can legitimately run again over a schema that
+  /// already has it (see `onUpgrade`'s own doc comment on sqflite's
+  /// downgrade behavior).
+  static Future<bool> _hasColumn(
+    DatabaseExecutor db,
+    String table,
+    String column,
+  ) async {
+    final info = await db.rawQuery('PRAGMA table_info($table)');
+    return info.any((row) => row['name'] == column);
+  }
+
+  /// Adds `$column $definition` to [table] unless it's already there.
+  /// [definition] is everything after the column name (type, NOT NULL,
+  /// DEFAULT, ...) — SQLite backfills existing rows with DEFAULT when one
+  /// is given, which is how [error_entries.source] became truthfully
+  /// 'topic_practice' on every pre-v12 row without a separate data write.
+  static Future<void> _addColumnIfMissing(
+    DatabaseExecutor db,
+    String table,
+    String column,
+    String definition,
+  ) async {
+    if (!await _hasColumn(db, table, column)) {
+      await db.execute('ALTER TABLE $table ADD COLUMN $column $definition');
+    }
   }
 
   Future<void> insertErrors(List<ErrorEntry> entries) async {
