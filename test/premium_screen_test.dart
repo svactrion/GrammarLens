@@ -119,6 +119,9 @@ class _FakeStorageServiceForAvatar extends StorageService {
   Future<UserProfile?> getUserProfile() async => profile;
 }
 
+// Trial is 3 days, PeriodUnit.day — matches how App Store Connect's
+// monthly introductory offer (a plain "3 Days" duration) actually reports
+// back through StoreKit/RevenueCat (PRD v2 §13.2's 2026-09-17 note).
 Package _fakeMonthlyPackage() {
   const context = PresentedOfferingContext('default', null, null);
   const product = StoreProduct(
@@ -131,10 +134,10 @@ Package _fakeMonthlyPackage() {
     introductoryPrice: IntroductoryPrice(
       0,
       '\$0.00',
-      'P7D',
+      'P3D',
       1,
       PeriodUnit.day,
-      7,
+      3,
     ),
     subscriptionPeriod: 'P1M',
   );
@@ -151,6 +154,11 @@ Package _fakeMonthlyPackage() {
 // product — a fake has no SDK behind it to derive these, so they're
 // supplied directly, matching the $9.99/mo vs $89.99/yr numbers PRD v2
 // §13.3 uses in its own "Save 25%" example ((9.99 - 7.49) / 9.99 ≈ 25%).
+// Trial is configured in App Store Connect as a "1 Week" duration, not
+// "7 Days" — StoreKit/RevenueCat report that back as PeriodUnit.week /
+// periodNumberOfUnits 1, not as 7 days (PRD v2 §13.2's 2026-09-17 note).
+// Deliberately modeled as a week here, not a day count, so tests exercise
+// PremiumScreen's own week-to-day conversion rather than assuming it away.
 Package _fakeAnnualPackage() {
   const context = PresentedOfferingContext('default', null, null);
   const product = StoreProduct(
@@ -163,10 +171,10 @@ Package _fakeAnnualPackage() {
     introductoryPrice: IntroductoryPrice(
       0,
       '\$0.00',
-      'P7D',
+      'P1W',
       1,
-      PeriodUnit.day,
-      7,
+      PeriodUnit.week,
+      1,
     ),
     subscriptionPeriod: 'P1Y',
     pricePerMonth: 7.49,
@@ -601,6 +609,9 @@ void main() {
       // sentence now (the reordering batch condensed the old three-line
       // _TrialTermsCard to fit the "at most two lines" requirement), but
       // still built from the same live trial length, price, and period.
+      // The annual fixture's introductory offer is modeled as
+      // PeriodUnit.week/1 (matching real StoreKit), so this also proves
+      // the disclosure text converts it to "7-day" rather than "1-week".
       expect(
         find.textContaining('7-day free trial'),
         findsOneWidget,
@@ -633,6 +644,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('then \$89.99 / year'), findsNothing);
+      // The trial part of the same disclosure line also updates — the
+      // monthly fixture's own 3-day (not week-unit) introductory offer,
+      // distinct from annual's 7-day figure above.
+      expect(find.textContaining('3-day free trial'), findsOneWidget);
+      expect(find.textContaining('7-day free trial'), findsNothing);
     });
 
     testWidgets(

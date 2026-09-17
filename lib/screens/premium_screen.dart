@@ -544,10 +544,13 @@ class _AvatarHero extends StatelessWidget {
 String _disclosureText(Package package) {
   final product = package.storeProduct;
   final trial = product.introductoryPrice;
-  final trialPart = trial != null
-      ? '${_hyphenatedDuration(trial.periodNumberOfUnits, trial.periodUnit)} '
-          'free trial'
-      : 'Free trial';
+  String trialPart;
+  if (trial == null) {
+    trialPart = 'Free trial';
+  } else {
+    final (count, unit) = _trialDurationInDays(trial);
+    trialPart = '${_hyphenatedDuration(count, unit)} free trial';
+  }
   final billingPeriod = _formatSubscriptionPeriod(product.subscriptionPeriod);
   final priceStr = billingPeriod == null
       ? product.priceString
@@ -1655,6 +1658,22 @@ class _PurchaseStatusBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Normalizes a trial's (count, unit) pair to days when it's expressed in
+/// weeks, so the disclosure line reads in comparable units regardless of
+/// how the store happens to model a given plan's introductory offer —
+/// App Store Connect models the annual trial as a "1 Week" duration, which
+/// StoreKit/RevenueCat report back as `PeriodUnit.week`/1, not as 7 days
+/// (PRD v2 §13.2). Every other unit passes through unchanged; this is
+/// display-only and never touches [_formatSubscriptionPeriod] (the
+/// separate renewal-period text), which has its own independent input
+/// (the product's ISO subscription period, not the introductory offer).
+(int, PeriodUnit) _trialDurationInDays(IntroductoryPrice trial) {
+  if (trial.periodUnit == PeriodUnit.week) {
+    return (trial.periodNumberOfUnits * 7, PeriodUnit.day);
+  }
+  return (trial.periodNumberOfUnits, trial.periodUnit);
 }
 
 String _hyphenatedDuration(int count, PeriodUnit unit) {

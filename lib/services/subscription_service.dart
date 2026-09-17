@@ -275,9 +275,15 @@ class SubscriptionService {
 }
 
 /// Builds the debug-only fixture [Offering] — PRD v2 §13.2's stated prices
-/// ($5.99/month, $49.99/year), a 7-day free trial on both plans. Only the
-/// *raw* product data is fixed here (price, currency, subscription
-/// period, trial length); every derived figure `PremiumScreen` shows
+/// ($5.99/month, $49.99/year) and, per that section's 2026-09-17 note, a
+/// different trial length per plan: monthly gets a plain 3-day offer,
+/// annual gets the "1 Week" duration App Store Connect actually models it
+/// as (StoreKit/RevenueCat report that back as `PeriodUnit.week`/1, not as
+/// 7 days — mirrored here rather than simplified to `PeriodUnit.day`/7, so
+/// this fixture exercises `PremiumScreen`'s week-to-day display conversion
+/// the same way a real connected product would). Only the *raw* product
+/// data is fixed here (price, currency, subscription period, trial
+/// length); every derived figure `PremiumScreen` shows
 /// (the annual plan's per-month equivalent, the "Save X%" badge) is
 /// computed from these raw numbers the same way a real StoreKit/RevenueCat
 /// product would arrive with them already computed — not typed out as an
@@ -301,7 +307,8 @@ Offering buildDebugFixtureOffering() {
     null,
   );
 
-  const trial = IntroductoryPrice(0, 'Free', 'P7D', 1, PeriodUnit.day, 7);
+  const monthlyTrial = IntroductoryPrice(0, 'Free', 'P3D', 1, PeriodUnit.day, 3);
+  const annualTrial = IntroductoryPrice(0, 'Free', 'P1W', 1, PeriodUnit.week, 1);
 
   final monthlyProduct = StoreProduct(
     'grammarlens_premium_monthly_fixture',
@@ -310,7 +317,7 @@ Offering buildDebugFixtureOffering() {
     monthlyPrice,
     money(monthlyPrice),
     currencyCode,
-    introductoryPrice: trial,
+    introductoryPrice: monthlyTrial,
     subscriptionPeriod: 'P1M',
   );
 
@@ -321,7 +328,7 @@ Offering buildDebugFixtureOffering() {
     annualPrice,
     money(annualPrice),
     currencyCode,
-    introductoryPrice: trial,
+    introductoryPrice: annualTrial,
     subscriptionPeriod: 'P1Y',
     pricePerMonth: annualPricePerMonth,
     pricePerMonthString: money(annualPricePerMonth),

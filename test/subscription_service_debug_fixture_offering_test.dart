@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:purchases_flutter/purchases_flutter.dart' show PeriodUnit;
 
 import 'package:grammar_lens/services/subscription_service.dart';
 
@@ -49,18 +50,23 @@ void main() {
       expect(offering.annual, isNotNull);
     });
 
-    test('monthly is \$5.99 with a 7-day trial (PRD v2 §13.2)', () {
+    test('monthly is \$5.99 with a 3-day trial (PRD v2 §13.2, '
+        '2026-09-17 note)', () {
       final product = offering.monthly!.storeProduct;
       expect(product.price, 5.99);
       expect(product.priceString, r'$5.99');
-      expect(product.introductoryPrice?.periodNumberOfUnits, 7);
+      expect(product.introductoryPrice?.periodUnit, PeriodUnit.day);
+      expect(product.introductoryPrice?.periodNumberOfUnits, 3);
     });
 
-    test('annual is \$49.99 with a 7-day trial (PRD v2 §13.2)', () {
+    test('annual is \$49.99 with a 1-week trial, mirroring the "1 Week" '
+        'duration App Store Connect actually configures (PRD v2 §13.2, '
+        '2026-09-17 note) rather than a simplified 7-day figure', () {
       final product = offering.annual!.storeProduct;
       expect(product.price, 49.99);
       expect(product.priceString, r'$49.99');
-      expect(product.introductoryPrice?.periodNumberOfUnits, 7);
+      expect(product.introductoryPrice?.periodUnit, PeriodUnit.week);
+      expect(product.introductoryPrice?.periodNumberOfUnits, 1);
     });
 
     test(
