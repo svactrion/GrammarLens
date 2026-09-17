@@ -226,9 +226,16 @@ actually wired today.** Checked against the filesystem, not from memory.
   pricing decision (PRD v2 §13.3) and `PremiumScreen`'s disclosure block doesn't
   support disclosing a commitment term. Left as a post-launch idea only,
   worth revisiting if annual conversion turns out low.
-- **EU DSA — still In Review** (Apple case 102955281512). Not a blocker for the
-  primary market: the regulation covers the 27 EU countries and Türkiye is not
-  among them. If verification stalls, the exposure is EU distribution only.
+- **EU DSA — In Review, resubmitted 2026-09-16** (Apple case 102955281512).
+  The first submission was rejected because the declared trader address was
+  incomplete and misspelled, so it couldn't match the proof document — the
+  translation was not the cause. The corrected address was resubmitted with
+  the same invoice PDF (English translation included), now matching it
+  exactly. The DSA trader address is independent of the developer-membership
+  address; the membership address-change case (102963244071) was
+  deliberately dropped — do not reopen without a new reason. Not on the
+  launch critical path: gates EU availability only, and Türkiye is not in
+  the EU. Full story: `docs/build-log.md`, 2026-09-16.
 - **Legal pages — written and live**, no longer placeholder:
   `/products/grammarlens/privacy/`, `/terms/` and `/support/` on
   ahmettayfur.com.
@@ -1371,11 +1378,13 @@ actually exists):
     have restarted content review. While preparing it the declared trader
     address turned out to be incomplete (street name plus an unverifiable site
     name, no neighbourhood, building or apartment number). A membership
-    information change request was filed to match the invoice exactly:
-    [address redacted] — and the
-    correction was disclosed to Apple in the reply on the case rather than
-    left for the reviewer to find. This address is published publicly on EU
-    product pages.
+    information change request was filed to match the invoice exactly, using
+    the corrected address — and the correction was disclosed to Apple in the
+    reply on the case rather than left for the reviewer to find. This address
+    is published publicly on EU product pages. **Superseded 2026-09-16 — see
+    "Current wiring" above and `docs/build-log.md`'s 2026-09-16 entry**: this
+    correction alone did not resolve the case; it was rejected and a
+    different, careless-form-entry cause diagnosed and fixed.
 
 - **Bank account is a tax decision, not a banking preference (2026-09-07).**
   Turkey's GVK Mükerrer 20/B exemption covers mobile app development income

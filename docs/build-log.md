@@ -3412,6 +3412,57 @@ changed.
 - **[Product]** `flutter analyze` and `flutter test` (355 tests) clean;
   no code changed in this batch, docs only.
 
+## 2026-09-16 (EU DSA: rejection diagnosed, corrected, resubmitted)
+
+- **[Product]** EU DSA trader verification (Apple case 102955281512),
+  previously In Review, came back rejected. Apple's notice was generic
+  ("We weren't able to verify your trader contact information") and
+  pointed at a resubmission flow rather than naming a cause, so the cause
+  had to be diagnosed rather than assumed. Two candidates going in: the
+  declared trader address itself, and the translation — the original DSA
+  submission used a self-certified translation, and a separate case
+  Apple had opened on the developer-account membership address (filed
+  earlier, to correct that same address) demanded a solicitor-certified
+  one instead, which looked like it might be a stricter, shared
+  requirement rather than a case-specific one.
+- **[Engineering]** Diagnosed, not guessed: opening the actual resubmit
+  flow (Business → Agreements → Compliance → Digital Services Act →
+  Complete Compliance Requirements) showed the previously submitted
+  trader address had been filled in carelessly — a misspelled city, a
+  placeholder-looking second address line, no street, no building or
+  apartment number. No proof document could ever have matched an address
+  that incomplete, regardless of translation. The translation was not
+  the cause.
+- **[Product]** The resubmit dialog also settled a question that had
+  been open since the membership address-change case appeared: it
+  states outright that the DSA trader information "won't impact the
+  contact details for your Apple accounts or memberships" — the DSA
+  trader address and the developer-account membership address are
+  independent fields, not the same value shown twice. The membership
+  case is therefore not a prerequisite for DSA.
+- **[Product]** Corrected trader information — matching the same signed
+  invoice PDF already on file (English translation included) exactly —
+  was submitted through the DSA dialog itself, and the case is back to
+  In Review as of 2026-09-16.
+- **[Product]** The membership address-change case was dropped
+  deliberately, not left to lapse: it's independent of DSA, that address
+  isn't published anywhere public, and pursuing it would need a fresh
+  certified translation for no real benefit. The developer-account
+  address stays incomplete on purpose until Apple ever re-verifies
+  account identity for an unrelated reason — do not reopen this case
+  without one.
+- **[Product]** Lesson for next time: the first submission failed
+  because of what was actually typed into the form, not because of the
+  document behind it. Check what was declared before assuming the
+  evidence is at fault — the diagnosis here took longer than it needed
+  to because the translation was checked first, not the form itself.
+- **[Product]** Not on the launch critical path: EU DSA gates EU
+  availability only; Türkiye, the primary market, is not in the EU.
+- **[Product]** No phone number, street address, or Apple staff name is
+  recorded in this repo for either case, since this repo is public —
+  `docs/roadmap.md`'s "Current wiring" entry says only "the corrected
+  address."
+
 ## 2026-09-17 (Per-plan trial length: monthly 3 days, annual 7 days)
 
 - **[Product]** App Store Connect now configures a different introductory
