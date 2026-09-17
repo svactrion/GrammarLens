@@ -148,13 +148,130 @@ void main() {
     },
   );
 
-  test('markCompleted flows through to the cached set, answers included',
-      () async {
+  test(
+      'completeDailyTest flows through to the cached set (answers included) '
+      'and the error profile together', () async {
     await dailyTestService.getTodaysSet();
-    await dailyTestService.markCompleted({'q0': 'answer0'});
+    await dailyTestService.completeDailyTest(
+      {'q0': 'answer0'},
+      [
+        ErrorEntry(
+          topicId: 'tenseSelection',
+          errorType: 'tenseSelection',
+          timestamp: DateTime.now(),
+          source: ErrorSource.dailyTest,
+        ),
+      ],
+    );
 
     final set = await storageService.getDailyTestSetForToday();
     expect(set!.isCompleted, isTrue);
     expect(set.answers, {'q0': 'answer0'});
+
+    final mistakes =
+        await storageService.getRecentMistakes('tenseSelection', 'tenseSelection');
+    expect(mistakes, hasLength(1));
+  });
+
+  test(
+      'a failure recording error entries rolls back the completion write too '
+      '— the set stays not-completed rather than half-written', () async {
+    await dailyTestService.getTodaysSet();
+
+    // Seed error_entries with a row at id 1 so the completion call below's
+    // error entry (same explicit id) hits a PRIMARY KEY conflict — forces
+    // a failure inside the transaction's second write, proving the two
+    // writes really share one transaction: if they didn't, the
+    // daily_test_sets update would already have committed on its own
+    // before this failure.
+    await storageService.insertErrors([
+      ErrorEntry(
+        id: 1,
+        topicId: 'seed',
+        errorType: 'seed',
+        timestamp: DateTime.now(),
+        source: ErrorSource.topicPractice,
+      ),
+    ]);
+
+    await expectLater(
+      dailyTestService.completeDailyTest(
+        {'q0': 'go'},
+        [
+          ErrorEntry(
+            id: 1, // conflicts with the seeded row above
+            topicId: 'tenseSelection',
+            errorType: 'tenseSelection',
+            timestamp: DateTime.now(),
+            source: ErrorSource.dailyTest,
+          ),
+        ],
+      ),
+      throwsA(anything),
+    );
+
+    final set = await storageService.getDailyTestSetForToday();
+    expect(set!.isCompleted, isFalse);
+
+    final mistakes =
+        await storageService.getRecentMistakes('tenseSelection', 'tenseSelection');
+    expect(mistakes, isEmpty);
+  });
+
+  test(
+      'retaking a set after a failed completion does not leave duplicate or '
+      'partial error rows once the retry succeeds', () async {
+    await dailyTestService.getTodaysSet();
+    await storageService.insertErrors([
+      ErrorEntry(
+        id: 1,
+        topicId: 'seed',
+        errorType: 'seed',
+        timestamp: DateTime.now(),
+        source: ErrorSource.topicPractice,
+      ),
+    ]);
+
+    // First attempt fails and rolls back completely (same conflict as
+    // above).
+    await expectLater(
+      dailyTestService.completeDailyTest(
+        {'q0': 'go'},
+        [
+          ErrorEntry(
+            id: 1,
+            topicId: 'tenseSelection',
+            errorType: 'tenseSelection',
+            timestamp: DateTime.now(),
+            source: ErrorSource.dailyTest,
+          ),
+        ],
+      ),
+      throwsA(anything),
+    );
+    expect((await storageService.getDailyTestSetForToday())!.isCompleted, isFalse);
+
+    // The still-not-completed set is retaken: a fresh, non-conflicting
+    // completion succeeds.
+    await dailyTestService.completeDailyTest(
+      {'q0': 'went'},
+      [
+        ErrorEntry(
+          topicId: 'tenseSelection',
+          errorType: 'tenseSelection',
+          timestamp: DateTime.now(),
+          source: ErrorSource.dailyTest,
+        ),
+      ],
+    );
+
+    final set = await storageService.getDailyTestSetForToday();
+    expect(set!.isCompleted, isTrue);
+
+    // Exactly one mistake recorded — the failed first attempt left nothing
+    // behind to double up.
+    final mistakes =
+        await storageService.getRecentMistakes('tenseSelection', 'tenseSelection');
+    expect(mistakes, hasLength(1));
   });
 }

@@ -100,7 +100,10 @@ class _FakeStorageService extends StorageService {
   }
 
   @override
-  Future<void> markDailyTestCompleted(Map<String, String> answers) async {
+  Future<void> completeDailyTest(
+    Map<String, String> answers,
+    List<ErrorEntry> errorEntries,
+  ) async {
     final current = _todaysSet;
     if (current != null) {
       _todaysSet =

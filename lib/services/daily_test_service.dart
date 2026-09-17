@@ -48,20 +48,16 @@ class DailyTestService {
     return storageService.saveDailyTestSet(questions);
   }
 
-  /// Records today's set as completed once the learner finishes it,
-  /// persisting [answers] alongside — see
-  /// `StorageService.markDailyTestCompleted`'s own doc comment for why.
-  Future<void> markCompleted(Map<String, String> answers) =>
-      storageService.markDailyTestCompleted(answers);
-
-  /// Records this session's wrong answers into the shared error profile —
-  /// the exact same `insertErrors` path Topic Practice's ResultsScreen
-  /// already writes through, not a second one (2026-09-05 decision: the
-  /// free tier diagnoses via Daily Test, the paid tier treats via Topic
-  /// Practice — see docs/build-log.md). A no-op for an empty list, so
-  /// callers don't need their own emptiness check first.
-  Future<void> recordErrors(List<ErrorEntry> entries) {
-    if (entries.isEmpty) return Future.value();
-    return storageService.insertErrors(entries);
-  }
+  /// Records today's set as completed once the learner finishes it —
+  /// persisting [answers] and this session's wrong answers ([errorEntries],
+  /// the same shape Topic Practice's ResultsScreen writes into the shared
+  /// error profile, 2026-09-05 decision — see docs/build-log.md) together
+  /// in one atomic write. See `StorageService.completeDailyTest`'s own doc
+  /// comment for why these two used to be, and no longer are, independent
+  /// calls.
+  Future<void> completeDailyTest(
+    Map<String, String> answers,
+    List<ErrorEntry> errorEntries,
+  ) =>
+      storageService.completeDailyTest(answers, errorEntries);
 }

@@ -616,25 +616,49 @@ class StorageService {
     return DailyTestSet(day: day, questions: questions);
   }
 
-  /// Marks today's Daily Test set completed and persists [answers] — the
-  /// only record of what the user actually answered, since nothing else
-  /// stores it. Needed so a score can be shown (and the result viewed
-  /// again) later without a live in-memory answers map, e.g. from Home's
-  /// "today" summary (PRD v2 §13.5). A no-op if there's no row for today
+  /// Marks today's Daily Test set completed, persists [answers] — the only
+  /// record of what the user actually answered, since nothing else stores
+  /// it — and records [errorEntries] (the session's wrong answers) into the
+  /// shared error profile, all inside one transaction.
+  ///
+  /// These two writes used to happen independently (`markDailyTestCompleted`
+  /// + `insertErrors`, called back to back and un-awaited relative to each
+  /// other from `DailyTestResultScreen.initState`): if the app was killed
+  /// between them, or either one failed on its own, a retake of the same
+  /// still-not-completed set would re-log the same mistakes a second time,
+  /// or a day that *did* get marked completed would permanently lose that
+  /// session's mistakes with no error ever surfaced. Wrapping both in a
+  /// single `db.transaction` makes them all-or-nothing: if [errorEntries]
+  /// fails to insert, `completed_at` is rolled back too, so the caller sees
+  /// the same not-yet-completed state it started with (and a real
+  /// exception to react to) instead of a silently half-written day.
+  ///
+  /// Still a no-op on the completion write if there's no row for today
   /// (shouldn't happen — completing implies a set was already fetched/
   /// generated — but this is called from UI code, so it degrades quietly
-  /// rather than throwing on an unexpected order of operations).
-  Future<void> markDailyTestCompleted(Map<String, String> answers) async {
+  /// rather than throwing on an unexpected order of operations); an empty
+  /// [errorEntries] list (a perfect day) is likewise a harmless empty batch.
+  Future<void> completeDailyTest(
+    Map<String, String> answers,
+    List<ErrorEntry> errorEntries,
+  ) async {
     final db = await _database;
-    await db.update(
-      'daily_test_sets',
-      {
-        'completed_at': DateTime.now().toIso8601String(),
-        'answers_json': jsonEncode(answers),
-      },
-      where: 'day = ?',
-      whereArgs: [_todayKey()],
-    );
+    await db.transaction((txn) async {
+      await txn.update(
+        'daily_test_sets',
+        {
+          'completed_at': DateTime.now().toIso8601String(),
+          'answers_json': jsonEncode(answers),
+        },
+        where: 'day = ?',
+        whereArgs: [_todayKey()],
+      );
+      final batch = txn.batch();
+      for (final entry in errorEntries) {
+        batch.insert('error_entries', entry.toMap());
+      }
+      await batch.commit(noResult: true);
+    });
   }
 
   DailyTestSet _dailyTestSetFromRow(Map<String, Object?> row) {

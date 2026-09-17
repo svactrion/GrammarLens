@@ -10,22 +10,35 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
 
 /// Captures what DailyTestResultScreen actually writes, instead of hitting
 /// the real (platform-channel-backed, throwing-in-tests) StorageService.
+/// Both halves of a completion (marking the day completed and recording its
+/// wrong answers) now land through the single atomic
+/// `completeDailyTest` — see StorageService.completeDailyTest's own doc
+/// comment for why that replaced two independent calls.
 class _FakeStorageService extends StorageService {
   final List<ErrorEntry> insertedErrors = [];
-  int markCompletedCalls = 0;
+  int completeDailyTestCalls = 0;
+
+  /// When set, `completeDailyTest` throws this instead of recording
+  /// anything — simulates a failed transaction (e.g. a real one rolled
+  /// back by a storage error) to prove the screen reacts to it instead of
+  /// swallowing it.
+  Object? failCompletionWith;
 
   @override
-  Future<void> insertErrors(List<ErrorEntry> entries) async {
-    insertedErrors.addAll(entries);
-  }
-
-  @override
-  Future<void> markDailyTestCompleted(Map<String, String> answers) async {
-    markCompletedCalls++;
+  Future<void> completeDailyTest(
+    Map<String, String> answers,
+    List<ErrorEntry> errorEntries,
+  ) async {
+    if (failCompletionWith != null) {
+      throw failCompletionWith!;
+    }
+    completeDailyTestCalls++;
+    insertedErrors.addAll(errorEntries);
   }
 }
 
@@ -81,11 +94,18 @@ void main() {
     'q4': '', // skipped
   };
 
+  // AppMessenger.key is a process-global GlobalKey, so a leftover message
+  // from one test could otherwise bleed into the next.
+  tearDown(() => AppMessenger.clear());
+
   Future<void> pumpResult(WidgetTester tester, DailyTestSet set) async {
     await tester.pumpWidget(
       MaterialApp(
         // Reads SemanticColors off the theme.
         theme: buildAppTheme(Brightness.light),
+        // Wired the same way app.dart does, so a completion failure's
+        // AppMessenger.show call actually has a messenger to reach.
+        scaffoldMessengerKey: AppMessenger.key,
         home: DailyTestResultScreen(
           dailyTestSet: set,
           answers: answers,
@@ -228,7 +248,26 @@ void main() {
       await pumpResult(tester, completedSet);
 
       expect(storageService.insertedErrors, isEmpty);
-      expect(storageService.markCompletedCalls, 0);
+      expect(storageService.completeDailyTestCalls, 0);
+    });
+  });
+
+  group('atomic completion (StorageService.completeDailyTest)', () {
+    testWidgets(
+        'a completion failure surfaces via the existing AppMessenger toast '
+        'instead of failing silently — this screen has no dedicated retry '
+        'affordance to show instead', (tester) async {
+      storageService.failCompletionWith = Exception('disk full');
+
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+
+      expect(
+        find.textContaining('Could not save your Daily Test results'),
+        findsOneWidget,
+      );
     });
   });
 

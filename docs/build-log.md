@@ -3677,3 +3677,89 @@ changed.
   `grep -F -i -f`), and every verification/guard command in this file and
   in `docs/roadmap.md` reads from that file rather than spelling anything
   out inline.
+
+## 2026-09-17 (Two pre-launch data-integrity fixes: destructive migration, non-atomic Daily Test completion)
+
+A read-only verification pass against a separate branch's two claims about
+`main` (both confirmed true, quoted with file:line, before any code
+changed) turned into two approved fixes, landed as separate commits.
+Neither problem had a regression test before this batch — both are called
+out explicitly below, since that's exactly what let each one ship
+unnoticed.
+
+- **[Engineering] Commit 1 — incremental migration.**
+  `StorageService.onUpgrade` (`lib/services/storage_service.dart`) used to
+  drop and recreate every table but `device_identity` on *any* version
+  transition, regardless of what that bump actually changed — a real
+  schema bump today (`_dbVersion = 14`) would silently wipe every user's
+  error history, Daily Test sets, profile (incl. avatar), and per-topic
+  stats on the next release, not just ones that touch those tables.
+  Replaced with per-version incremental steps (`if (oldVersion < N)`),
+  each one replaying exactly what that historical bump actually added —
+  reconstructed from `git log -p` on the file, not just the file's own
+  comments, since the comments alone don't say which columns v1→v2 or
+  v11→v12 touched. Every step is idempotent: `CREATE TABLE IF NOT EXISTS`
+  for new tables, a `PRAGMA table_info` check
+  (`StorageService._hasColumn`/`_addColumnIfMissing`) before any `ALTER
+  TABLE ADD COLUMN` — required, not defensive polish, because sqflite
+  silently lowers the on-disk schema version on a downgrade (installing an
+  older build after a newer one) without touching the actual table shape,
+  so a later upgrade back to the current version can re-run a step whose
+  table/column already exists. `device_identity`'s own unconditional
+  `CREATE TABLE IF NOT EXISTS` (every upgrade, not gated on a version
+  check) is unchanged, including its existing doc comment on why it's
+  never dropped.
+  New `test/storage_service_migration_test.dart` (3 tests): a real
+  `error_entries` row survives the full v1 → v14 upgrade with every later
+  table created and usable; real rows across every v13 table (error
+  entries with `source`, a profile with an avatar, a completed Daily Test
+  set with `answers_json`, topic stats, review/theme/practice settings, a
+  session-usage row, a debug override, and `device_identity`'s id) survive
+  v13 → v14, including `device_identity` returning its *existing* id
+  rather than regenerating one; running `onUpgrade` a second time over an
+  already-fully-migrated schema (reproducing the downgrade-then-upgrade
+  landmine above by forcing the stored version back down without touching
+  the schema) doesn't throw and doesn't duplicate the seeded row. Confirmed
+  by temporarily reverting to the old drop/recreate implementation: all
+  three new tests fail against it (the seeded rows come back empty), so
+  they genuinely exercise what broke.
+- **[Engineering] Commit 2 — atomic Daily Test completion.**
+  `DailyTestResultScreen.initState` used to fire `_saveErrors()` (writes
+  wrong answers via `insertErrors`) and `_markCompleted()` (writes
+  `completed_at`/`answers_json` via `markDailyTestCompleted`) as two
+  independent, un-awaited calls, each swallowing its own exception. If the
+  app was killed between them, or either write failed on its own, a retake
+  of a still-not-completed set would re-log the same mistakes a second
+  time, or a day that did get marked completed would permanently lose that
+  session's mistakes with no error ever shown — and neither failure mode
+  needed a crash to reach, since each write already caught and discarded
+  its own exception independently. Replaced both with one
+  `StorageService.completeDailyTest(answers, errorEntries)`, wrapping the
+  `daily_test_sets` update and the `error_entries` batch insert in a single
+  `db.transaction`: either both land or neither does. The old
+  `StorageService.markDailyTestCompleted` and the
+  `DailyTestService.markCompleted`/`recordErrors` pair are gone entirely
+  rather than left as an unused parallel path — `completeDailyTest` is now
+  the only way to complete a Daily Test set, at both the storage and
+  service layers. `DailyTestResultScreen` calls it once from
+  `_completeDailyTest`; a thrown exception is surfaced via the same
+  `AppMessenger.show` toast this screen already used for a save failure
+  (`_saveErrors`' old catch block) — checked first, and confirmed: this
+  screen (like Topic Practice's `ResultsScreen`) has no dedicated
+  saving/retry UI at all, so the fix reuses the existing failure-surfacing
+  mechanism rather than inventing one.
+  Tests: `test/daily_test_service_test.dart` gained two new cases proving
+  rollback (a `PRIMARY KEY` conflict on the error-entries insert leaves
+  `completed_at` unset and no error rows written) and clean retry-after-
+  failure (a failed attempt followed by a successful retake leaves exactly
+  one error row, never zero or two); `test/daily_test_result_screen_test.dart`
+  gained a case proving a completion failure now reaches the screen's
+  existing AppMessenger toast instead of failing silently.
+  `test/storage_service_daily_test_set_test.dart` and
+  `test/first_launch_flow_test.dart` updated to the new single method
+  (renamed calls only, no behavior change to what they test).
+- **[Engineering]** Both commits: `flutter analyze` clean, full test suite
+  green (363 tests, up from 357 before this batch — 3 new migration tests
+  in Commit 1, plus Commit 2's net +3: two new atomicity tests and one new
+  failure-surfacing test, minus the one `markCompleted`-specific test that
+  no longer applies once `markCompleted` itself is gone).

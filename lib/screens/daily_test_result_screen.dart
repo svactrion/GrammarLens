@@ -51,50 +51,60 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       for (final question in widget.dailyTestSet.questions)
         _QuestionResult.from(question, widget.answers[question.item.id]),
     ];
-    // Both guarded on the same "is this a fresh finish, not a re-view"
-    // check as _markCompleted below — a re-view (Home's "view result
-    // again") must not re-log the same mistakes a second time and
-    // inflate their frequency.
-    if (!widget.dailyTestSet.isCompleted) {
-      _saveErrors();
-    }
-    _markCompleted();
+    _completeDailyTest();
   }
 
-  Future<void> _markCompleted() async {
-    // Already recorded — this is a re-view of an already-completed set
-    // (e.g. Home's "view result again"), not a fresh finish, so there's
-    // nothing new to persist.
+  /// Marks today's set completed and records this session's wrong answers
+  /// together, in the one atomic `DailyTestService.completeDailyTest` write
+  /// (`StorageService.completeDailyTest`'s doc comment has the full
+  /// reasoning): either both land or neither does, so a failure here can
+  /// never leave a completed day with its mistakes silently lost, or a
+  /// still-not-completed day whose mistakes get logged twice on retake.
+  ///
+  /// Guarded by `isCompleted` — a re-view of an already-completed set
+  /// (e.g. Home's "view result again") must not re-log the same mistakes a
+  /// second time and inflate their frequency, nor re-run the completion
+  /// write at all.
+  Future<void> _completeDailyTest() async {
     if (widget.dailyTestSet.isCompleted) return;
     try {
-      await widget.dailyTestService.markCompleted(widget.answers);
-    } catch (_) {
-      // Best-effort, same reasoning as ResultsScreen._recordCompletion:
-      // not worth surfacing an error for over the results the user is
-      // actually here to see.
+      await widget.dailyTestService.completeDailyTest(
+        widget.answers,
+        _errorEntries(),
+      );
+    } catch (e) {
+      // Unlike ResultsScreen's best-effort completion write, a failure here
+      // means NEITHER half of the write landed (the transaction rolled
+      // back) — the day is still genuinely not completed, so this is a
+      // real, actionable failure, not a background stat falling a session
+      // behind. Surfaced via the same AppMessenger toast this screen
+      // already uses for a save failure elsewhere; there is no dedicated
+      // retry affordance on this screen to show instead.
+      if (!mounted) return;
+      AppMessenger.show('Could not save your Daily Test results: $e');
     }
   }
 
-  /// Feeds wrong (never skipped, never a [AnswerMatchKind.keyboardVariant]
-  /// match — see [_QuestionResult.isCorrect]) answers into the same error
-  /// profile Topic Practice's ResultsScreen writes to — 2026-09-05
-  /// decision: the free tier diagnoses via Daily Test, the paid tier
-  /// treats via Topic Practice (see docs/build-log.md). A Turkish-keyboard
-  /// letter substitution is real content the user got right, not a
-  /// grammar weak spot — writing it here would corrupt the exact data
-  /// this profile exists to be honest about (docs/build-log.md,
-  /// 2026-09-07). [ErrorEntry.explanation] is only
-  /// ever [AnswerMatchResult.comment] — genuinely null when the wrong
-  /// answer didn't match a predicted common mistake, never the screen's
-  /// own generic "Not quite" display fallback and never an invented one:
-  /// Daily Test has no LLM call to generate a real explanation from, so a
+  /// Wrong (never skipped, never a [AnswerMatchKind.keyboardVariant] match —
+  /// see [_QuestionResult.isCorrect]) answers, in the shape fed into the
+  /// same error profile Topic Practice's ResultsScreen writes to —
+  /// 2026-09-05 decision: the free tier diagnoses via Daily Test, the paid
+  /// tier treats via Topic Practice (see docs/build-log.md). A
+  /// Turkish-keyboard letter substitution is real content the user got
+  /// right, not a grammar weak spot — writing it here would corrupt the
+  /// exact data this profile exists to be honest about (docs/build-log.md,
+  /// 2026-09-07). [ErrorEntry.explanation] is only ever
+  /// [AnswerMatchResult.comment] — genuinely null when the wrong answer
+  /// didn't match a predicted common mistake, never the screen's own
+  /// generic "Not quite" display fallback and never an invented one: Daily
+  /// Test has no LLM call to generate a real explanation from, so a
   /// thinner record is the honest one. [ErrorEntry.errorType] is the
   /// question's topicId — Daily Test has no finer per-mistake
   /// classification the way Topic Practice's LLM scoring does, so this is
   /// the coarsest-but-true category available, not a fabricated one.
-  Future<void> _saveErrors() async {
+  List<ErrorEntry> _errorEntries() {
     final now = DateTime.now();
-    final entries = _results
+    return _results
         .where((r) => !r.isSkipped && !r.isCorrect)
         .map((r) => ErrorEntry(
               topicId: r.question.topicId,
@@ -107,15 +117,6 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
               source: ErrorSource.dailyTest,
             ))
         .toList();
-    try {
-      await widget.dailyTestService.recordErrors(entries);
-    } catch (e) {
-      // Don't let a storage failure pass silently — without this the
-      // Review tab looks broken later with no clue why (see
-      // ResultsScreen._saveErrors' identical reasoning).
-      if (!mounted) return;
-      AppMessenger.show('Could not save this to your error profile: $e');
-    }
   }
 
   @override
