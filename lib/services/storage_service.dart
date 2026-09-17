@@ -7,6 +7,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../models/app_theme_mode.dart';
 import '../models/daily_test_question.dart';
+import '../models/daily_test_completion.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
 import '../models/practice_length.dart';
@@ -18,7 +19,7 @@ import '../models/user_profile.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 14;
+  static const _dbVersion = 15;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -190,16 +191,25 @@ class StorageService {
   // on first use; resets on reinstall/data clear, which is fine since this
   // only bounds API cost per install, not a durable identity.
   //
-  // Deliberately NOT dropped on a future schema upgrade the way every
-  // other table here is (see onUpgrade below) — unlike a UI preference,
-  // losing this value on every unrelated schema bump would reset the
-  // quota-tracking identity for real installs more often than intended.
-  // `IF NOT EXISTS` so the same statement is safe to run unconditionally
-  // in onUpgrade too, without a matching DROP first.
+  // Kept across every additive migration, alongside profile and history.
   static const _createDeviceIdentityTable = '''
     CREATE TABLE IF NOT EXISTS device_identity (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       device_id TEXT NOT NULL
+    )
+  ''';
+
+  // One durable record per original set day. Outcome counts are raw facts;
+  // medal scoring/thresholds are deliberately not baked into this schema.
+  static const _createClimbEntriesTable = '''
+    CREATE TABLE IF NOT EXISTS climb_daily_entries (
+      day TEXT PRIMARY KEY NOT NULL,
+      completed_at TEXT NOT NULL,
+      step INTEGER NOT NULL CHECK (step IN (0, 1)),
+      correct_count INTEGER NOT NULL CHECK (correct_count >= 0),
+      wrong_count INTEGER NOT NULL CHECK (wrong_count >= 0),
+      skipped_count INTEGER NOT NULL CHECK (skipped_count >= 0),
+      rule_version INTEGER NOT NULL
     )
   ''';
 
@@ -227,6 +237,7 @@ class StorageService {
         await db.execute(_createDailyTestSetsTable);
         await db.execute(_createDebugSettingsTable);
         await db.execute(_createDeviceIdentityTable);
+        await db.execute(_createClimbEntriesTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -324,6 +335,7 @@ class StorageService {
         if (oldVersion < 14) {
           await db.execute(_createFreePracticeUsageTable);
         }
+        if (oldVersion < 15) await db.execute(_createClimbEntriesTable);
       },
     );
   }
@@ -577,6 +589,8 @@ class StorageService {
     ''', [_todayKey()]);
   }
 
+  String get currentDayKey => _todayKey();
+
   /// Today's cached Daily Test set, if one has already been generated —
   /// null means none exists yet for the local calendar day, which is the
   /// caller's signal to generate one.
@@ -592,73 +606,113 @@ class StorageService {
     return _dailyTestSetFromRow(rows.first);
   }
 
-  /// Caches [questions] as today's Daily Test set, replacing any existing
-  /// row for today (there should never be one — this is only called after
-  /// [getDailyTestSetForToday] came back null — but `replace` keeps this
-  /// safe against a same-day double-generation race rather than throwing).
-  /// Freshly generated, so never completed yet.
-  Future<DailyTestSet> saveDailyTestSet(
-    List<DailyTestQuestion> questions,
-  ) async {
+  /// Cache the generated set for its original day. Unfinished sets retain
+  /// main's replacement behavior; completed sets cannot be reset by a stale
+  /// generation request, which would allow duplicate completion writes.
+  Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
+      {String? day}) async {
     final db = await _database;
-    final day = _todayKey();
-    await db.insert(
-      'daily_test_sets',
-      {
-        'day': day,
-        'questions_json':
-            jsonEncode(questions.map((q) => q.toJson()).toList()),
-        'completed_at': null,
-        'answers_json': null,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-    return DailyTestSet(day: day, questions: questions);
+    final setDay = day ?? _todayKey();
+    return db.transaction((txn) async {
+      final existing = await txn
+          .query('daily_test_sets', where: 'day = ?', whereArgs: [setDay]);
+      if (existing.isNotEmpty && existing.single['completed_at'] != null) {
+        return _dailyTestSetFromRow(existing.single);
+      }
+      await txn.insert(
+          'daily_test_sets',
+          {
+            'day': setDay,
+            'questions_json':
+                jsonEncode(questions.map((q) => q.toJson()).toList()),
+            'completed_at': null,
+            'answers_json': null,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace);
+      final rows = await txn
+          .query('daily_test_sets', where: 'day = ?', whereArgs: [setDay]);
+      return _dailyTestSetFromRow(rows.single);
+    });
   }
 
-  /// Marks today's Daily Test set completed, persists [answers] — the only
-  /// record of what the user actually answered, since nothing else stores
-  /// it — and records [errorEntries] (the session's wrong answers) into the
-  /// shared error profile, all inside one transaction.
-  ///
-  /// These two writes used to happen independently (`markDailyTestCompleted`
-  /// + `insertErrors`, called back to back and un-awaited relative to each
-  /// other from `DailyTestResultScreen.initState`): if the app was killed
-  /// between them, or either one failed on its own, a retake of the same
-  /// still-not-completed set would re-log the same mistakes a second time,
-  /// or a day that *did* get marked completed would permanently lose that
-  /// session's mistakes with no error ever surfaced. Wrapping both in a
-  /// single `db.transaction` makes them all-or-nothing: if [errorEntries]
-  /// fails to insert, `completed_at` is rolled back too, so the caller sees
-  /// the same not-yet-completed state it started with (and a real
-  /// exception to react to) instead of a silently half-written day.
-  ///
-  /// Still a no-op on the completion write if there's no row for today
-  /// (shouldn't happen — completing implies a set was already fetched/
-  /// generated — but this is called from UI code, so it degrades quietly
-  /// rather than throwing on an unexpected order of operations); an empty
-  /// [errorEntries] list (a perfect day) is likewise a harmless empty batch.
+  /// Persists answers, mistakes and the daily climb entry in one transaction.
+  /// Any failed write rolls back all three, so a retry cannot leave a partial
+  /// completion. The original set [day] stays fixed across midnight/timezone
+  /// changes; callers without it retain the existing current-day behavior.
+  /// Missing cached sets are a harmless no-op. Already-completed sets are
+  /// also ignored, preventing duplicate mistakes and retroactive climb credit.
   Future<void> completeDailyTest(
     Map<String, String> answers,
-    List<ErrorEntry> errorEntries,
-  ) async {
+    List<ErrorEntry> errorEntries, {
+    String? day,
+    DateTime? completedAt,
+  }) async {
     final db = await _database;
+    final setDay = day ?? _todayKey();
+    final timestamp = completedAt ?? DateTime.now();
     await db.transaction((txn) async {
+      final rows = await txn
+          .query('daily_test_sets', where: 'day = ?', whereArgs: [setDay]);
+      if (rows.isEmpty || rows.single['completed_at'] != null) return;
+      // Evaluate the persisted answer key, rather than trusting caller counts.
+      final completion = DailyTestCompletion(
+          set: _dailyTestSetFromRow(rows.single),
+          answers: answers,
+          completedAt: timestamp);
       await txn.update(
         'daily_test_sets',
         {
-          'completed_at': DateTime.now().toIso8601String(),
+          'completed_at': timestamp.toIso8601String(),
           'answers_json': jsonEncode(answers),
         },
         where: 'day = ?',
-        whereArgs: [_todayKey()],
+        whereArgs: [setDay],
       );
       final batch = txn.batch();
       for (final entry in errorEntries) {
         batch.insert('error_entries', entry.toMap());
       }
       await batch.commit(noResult: true);
+      await txn.insert('climb_daily_entries', {
+        'day': setDay,
+        'completed_at': timestamp.toIso8601String(),
+        'step': completion.step,
+        'correct_count': completion.correct,
+        'wrong_count': completion.wrong,
+        'skipped_count': completion.skipped,
+        'rule_version': DailyTestCompletion.ruleVersion,
+      });
     });
+  }
+
+  /// Month boundaries use the same original local day keys as Daily Test.
+  /// No reset/delete at rollover: prior months remain durable history.
+  Future<({int steps, int correct, int wrong, int skipped})> getClimbProgress(
+    int year,
+    int month,
+  ) async {
+    if (month < 1 || month > 12 || year < 1 || year > 9999) {
+      throw ArgumentError('Invalid calendar month');
+    }
+    final start =
+        '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-01';
+    final endDate = DateTime(year, month + 1);
+    final end = endDate.toIso8601String().split('T').first;
+    final db = await _database;
+    final rows = await db.rawQuery('''
+      SELECT COALESCE(SUM(step), 0) AS steps,
+        COALESCE(SUM(correct_count), 0) AS correct,
+        COALESCE(SUM(wrong_count), 0) AS wrong,
+        COALESCE(SUM(skipped_count), 0) AS skipped
+      FROM climb_daily_entries WHERE day >= ? AND day < ?
+    ''', [start, end]);
+    final row = rows.single;
+    return (
+      steps: row['steps'] as int,
+      correct: row['correct'] as int,
+      wrong: row['wrong'] as int,
+      skipped: row['skipped'] as int
+    );
   }
 
   DailyTestSet _dailyTestSetFromRow(Map<String, Object?> row) {

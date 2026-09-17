@@ -84,9 +84,8 @@ class _FakeStorageService extends StorageService {
       const [];
 
   @override
-  Future<DailyTestSet> saveDailyTestSet(
-    List<DailyTestQuestion> questions,
-  ) async {
+  Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
+      {String? day}) async {
     final set = DailyTestSet(day: '2026-01-01', questions: questions);
     todaysSet = set;
     return set;
@@ -239,7 +238,8 @@ void main() {
       expect(button.onPressed, isNotNull);
     });
 
-    testWidgets('tapping Skip with an empty answer still advances to the '
+    testWidgets(
+        'tapping Skip with an empty answer still advances to the '
         'next question', (tester) async {
       final service = DailyTestService(
         claudeService: _FlakyClaudeService(failCount: 0),
@@ -270,7 +270,8 @@ void main() {
       expect(find.textContaining('check your connection'), findsNothing);
     });
 
-    testWidgets('has no "Try again" CTA — it would just fail again with '
+    testWidgets(
+        'has no "Try again" CTA — it would just fail again with '
         'the same answer', (tester) async {
       final service = DailyTestService(
         claudeService: _QuotaExceededClaudeService(),

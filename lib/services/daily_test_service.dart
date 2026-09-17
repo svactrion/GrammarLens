@@ -6,8 +6,7 @@ import 'storage_service.dart';
 /// Orchestrates the free-tier Daily Test (PRD v2 §12.2, §12.5, §12.8): get
 /// today's cached set if one exists, otherwise generate exactly one —
 /// personalized from the device's local error profile when it has one —
-/// and cache it. This is the entry point a future paywall-free "always
-/// accessible" Daily Test screen will call; no screen calls it yet.
+/// and cache it. Used by both Home and the Day-0 onboarding test.
 class DailyTestService {
   /// 5 questions — enough to feel like a real test, short enough to finish
   /// in one sitting; matches the existing "Standard" Topic Practice length.
@@ -32,6 +31,7 @@ class DailyTestService {
   /// "today's test" — a retry always gets a real attempt, not a
   /// permanently broken cached row for the day.
   Future<DailyTestSet> getTodaysSet() async {
+    final day = storageService.currentDayKey;
     final cached = await storageService.getDailyTestSetForToday();
     if (cached != null) return cached;
 
@@ -45,19 +45,22 @@ class DailyTestService {
       count: questionCount,
       weakSpots: weakSpots,
     );
-    return storageService.saveDailyTestSet(questions);
+    return storageService.saveDailyTestSet(questions, day: day);
   }
 
   /// Records today's set as completed once the learner finishes it —
   /// persisting [answers] and this session's wrong answers ([errorEntries],
   /// the same shape Topic Practice's ResultsScreen writes into the shared
   /// error profile, 2026-09-05 decision — see docs/build-log.md) together
-  /// in one atomic write. See `StorageService.completeDailyTest`'s own doc
+  /// with the climb entry in one atomic write. See `StorageService.completeDailyTest`'s own doc
   /// comment for why these two used to be, and no longer are, independent
   /// calls.
   Future<void> completeDailyTest(
     Map<String, String> answers,
-    List<ErrorEntry> errorEntries,
-  ) =>
-      storageService.completeDailyTest(answers, errorEntries);
+    List<ErrorEntry> errorEntries, {
+    String? day,
+    DateTime? completedAt,
+  }) =>
+      storageService.completeDailyTest(answers, errorEntries,
+          day: day, completedAt: completedAt);
 }

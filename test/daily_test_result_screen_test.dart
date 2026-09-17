@@ -32,8 +32,10 @@ class _FakeStorageService extends StorageService {
   @override
   Future<void> completeDailyTest(
     Map<String, String> answers,
-    List<ErrorEntry> errorEntries,
-  ) async {
+    List<ErrorEntry> errorEntries, {
+    String? day,
+    DateTime? completedAt,
+  }) async {
     if (failCompletionWith != null) {
       throw failCompletionWith!;
     }
@@ -81,7 +83,8 @@ void main() {
       topicId: 'articles',
       correctAnswer: 'the',
       commonWrongAnswers: const [
-        CommonWrongAnswer(answer: 'a', comment: "Close, but 'the' is specific."),
+        CommonWrongAnswer(
+            answer: 'a', comment: "Close, but 'the' is specific."),
       ],
     ),
     _question(id: 'q3', topicId: 'tenseSelection', correctAnswer: 'went'),
@@ -116,7 +119,24 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  group('feeding the error profile (2026-09-05 decision, see docs/build-log.md)', () {
+  testWidgets('failed atomic save exposes retry without duplicating errors',
+      (tester) async {
+    storageService.failCompletionWith = StateError('simulated disk error');
+    await pumpResult(
+        tester, DailyTestSet(day: '2026-01-01', questions: questions));
+    expect(find.text('Try saving again'), findsOneWidget);
+    expect(storageService.insertedErrors, isEmpty);
+    storageService.failCompletionWith = null;
+    await tester.tap(find.text('Try saving again'));
+    await tester.pumpAndSettle();
+    expect(find.text('Try saving again'), findsNothing);
+    expect(storageService.completeDailyTestCalls, 1);
+    expect(storageService.insertedErrors, hasLength(2));
+  });
+
+  group(
+      'feeding the error profile (2026-09-05 decision, see docs/build-log.md)',
+      () {
     testWidgets('wrong answers are written, correct and skipped are not',
         (tester) async {
       await pumpResult(
@@ -139,7 +159,8 @@ void main() {
       );
 
       expect(
-        storageService.insertedErrors.every((e) => e.source == ErrorSource.dailyTest),
+        storageService.insertedErrors
+            .every((e) => e.source == ErrorSource.dailyTest),
         isTrue,
       );
     });
@@ -152,8 +173,8 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
-      final q2Entry =
-          storageService.insertedErrors.firstWhere((e) => e.prompt == 'Question q2');
+      final q2Entry = storageService.insertedErrors
+          .firstWhere((e) => e.prompt == 'Question q2');
       expect(q2Entry.explanation, "Close, but 'the' is specific.");
     });
 
@@ -166,8 +187,8 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
-      final q3Entry =
-          storageService.insertedErrors.firstWhere((e) => e.prompt == 'Question q3');
+      final q3Entry = storageService.insertedErrors
+          .firstWhere((e) => e.prompt == 'Question q3');
       expect(q3Entry.explanation, isNull);
       // In particular, never the screen's own "Not quite" display fallback
       // — that's UI copy, not something to persist as if it were real
@@ -184,8 +205,8 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
 
-      final q3Entry =
-          storageService.insertedErrors.firstWhere((e) => e.prompt == 'Question q3');
+      final q3Entry = storageService.insertedErrors
+          .firstWhere((e) => e.prompt == 'Question q3');
       expect(q3Entry.topicId, 'tenseSelection');
       expect(q3Entry.errorType, 'tenseSelection');
     });
@@ -194,13 +215,15 @@ void main() {
         'a keyboard-variant answer (docs/build-log.md, 2026-09-07) is not '
         'written to the error profile', (tester) async {
       final keyboardQuestions = [
-        _question(id: 'k1', topicId: 'gerundVsInfinitive', correctAnswer: 'cooking'),
+        _question(
+            id: 'k1', topicId: 'gerundVsInfinitive', correctAnswer: 'cooking'),
       ];
       await tester.pumpWidget(
         MaterialApp(
           theme: buildAppTheme(Brightness.light),
           home: DailyTestResultScreen(
-            dailyTestSet: DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
+            dailyTestSet:
+                DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
             answers: const {'k1': 'cookıng'},
             dailyTestService: dailyTestService,
           ),
@@ -216,13 +239,15 @@ void main() {
         'with a short note explaining the character difference',
         (tester) async {
       final keyboardQuestions = [
-        _question(id: 'k1', topicId: 'gerundVsInfinitive', correctAnswer: 'cooking'),
+        _question(
+            id: 'k1', topicId: 'gerundVsInfinitive', correctAnswer: 'cooking'),
       ];
       await tester.pumpWidget(
         MaterialApp(
           theme: buildAppTheme(Brightness.light),
           home: DailyTestResultScreen(
-            dailyTestSet: DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
+            dailyTestSet:
+                DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
             answers: const {'k1': 'cookıng'},
             dailyTestService: dailyTestService,
           ),
@@ -255,8 +280,7 @@ void main() {
   group('atomic completion (StorageService.completeDailyTest)', () {
     testWidgets(
         'a completion failure surfaces via the existing AppMessenger toast '
-        'instead of failing silently — this screen has no dedicated retry '
-        'affordance to show instead', (tester) async {
+        'alongside the retry affordance', (tester) async {
       storageService.failCompletionWith = Exception('disk full');
 
       await pumpResult(

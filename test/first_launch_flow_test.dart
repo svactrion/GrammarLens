@@ -91,9 +91,8 @@ class _FakeStorageService extends StorageService {
       const [];
 
   @override
-  Future<DailyTestSet> saveDailyTestSet(
-    List<DailyTestQuestion> questions,
-  ) async {
+  Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
+      {String? day}) async {
     final set = DailyTestSet(day: '2026-01-01', questions: questions);
     _todaysSet = set;
     return set;
@@ -102,12 +101,14 @@ class _FakeStorageService extends StorageService {
   @override
   Future<void> completeDailyTest(
     Map<String, String> answers,
-    List<ErrorEntry> errorEntries,
-  ) async {
+    List<ErrorEntry> errorEntries, {
+    String? day,
+    DateTime? completedAt,
+  }) async {
     final current = _todaysSet;
     if (current != null) {
-      _todaysSet =
-          current.copyWith(completedAt: DateTime.now(), answers: answers);
+      _todaysSet = current.copyWith(
+          completedAt: completedAt ?? DateTime.now(), answers: answers);
     }
   }
 
@@ -248,7 +249,8 @@ void main() {
 
   testWidgets(
       'abandoning Daily Test itself (the "leave" confirm dialog) also '
-      'completes onboarding rather than leaving the user stuck', (tester) async {
+      'completes onboarding rather than leaving the user stuck',
+      (tester) async {
     UserProfile? completed;
     await pumpFlow(tester, onComplete: (p) => completed = p);
     await completeOnboardingForm(tester);

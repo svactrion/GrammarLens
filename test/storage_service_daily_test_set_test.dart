@@ -87,7 +87,8 @@ void main() {
     expect(fetched.questions.single.item.id, 'q2');
   });
 
-  test('completeDailyTest sets a completion timestamp and persists '
+  test(
+      'completeDailyTest sets a completion timestamp and persists '
       'the answers', () async {
     await storageService.saveDailyTestSet(sampleQuestions());
     await storageService.completeDailyTest({'q1': 'goes'}, []);
@@ -98,8 +99,7 @@ void main() {
     expect(fetched.answers, {'q1': 'goes'});
   });
 
-  test('completeDailyTest with no set for today is a harmless no-op',
-      () async {
+  test('completeDailyTest with no set for today is a harmless no-op', () async {
     await storageService.completeDailyTest({'q1': 'goes'}, []);
     expect(await storageService.getDailyTestSetForToday(), isNull);
   });

@@ -14,6 +14,7 @@ import 'package:grammar_lens/services/storage_service.dart';
 /// key or a live request.
 class _FakeClaudeService extends ClaudeService {
   int generateCallCount = 0;
+  void Function()? onGenerate;
   List<WeakSpot>? lastWeakSpots;
 
   @override
@@ -23,6 +24,7 @@ class _FakeClaudeService extends ClaudeService {
     required List<WeakSpot> weakSpots,
   }) async {
     generateCallCount++;
+    onGenerate?.call();
     lastWeakSpots = weakSpots;
     return List.generate(
       count,
@@ -80,6 +82,22 @@ void main() {
     );
   });
 
+  tearDown(() => StorageService.clockForTesting = DateTime.now);
+
+  test('generation across midnight keeps the day captured before the request',
+      () async {
+    StorageService.clockForTesting = () => DateTime(2026, 9, 30, 23, 59);
+    claudeService.onGenerate = () {
+      StorageService.clockForTesting = () => DateTime(2026, 10, 1, 0, 1);
+    };
+    final set = await dailyTestService.getTodaysSet();
+    expect(set.day, '2026-09-30');
+    expect(await storageService.getDailyTestSetForToday(), isNull);
+    StorageService.clockForTesting = () => DateTime(2026, 9, 30, 23, 59);
+    expect((await dailyTestService.getTodaysSet()).day, set.day);
+    expect(claudeService.generateCallCount, 1);
+  });
+
   test('generates and caches a set on first open today', () async {
     final set = await dailyTestService.getTodaysSet();
     expect(claudeService.generateCallCount, 1);
@@ -100,14 +118,14 @@ void main() {
     );
   });
 
-  test('a new user with no error profile generates with an empty weak-spot '
+  test(
+      'a new user with no error profile generates with an empty weak-spot '
       'list', () async {
     await dailyTestService.getTodaysSet();
     expect(claudeService.lastWeakSpots, isEmpty);
   });
 
-  test('an existing error profile is passed through to generation',
-      () async {
+  test('an existing error profile is passed through to generation', () async {
     await storageService.insertErrors([
       ErrorEntry(
         topicId: 'articles',
@@ -168,8 +186,8 @@ void main() {
     expect(set!.isCompleted, isTrue);
     expect(set.answers, {'q0': 'answer0'});
 
-    final mistakes =
-        await storageService.getRecentMistakes('tenseSelection', 'tenseSelection');
+    final mistakes = await storageService.getRecentMistakes(
+        'tenseSelection', 'tenseSelection');
     expect(mistakes, hasLength(1));
   });
 
@@ -213,8 +231,8 @@ void main() {
     final set = await storageService.getDailyTestSetForToday();
     expect(set!.isCompleted, isFalse);
 
-    final mistakes =
-        await storageService.getRecentMistakes('tenseSelection', 'tenseSelection');
+    final mistakes = await storageService.getRecentMistakes(
+        'tenseSelection', 'tenseSelection');
     expect(mistakes, isEmpty);
   });
 
@@ -249,7 +267,8 @@ void main() {
       ),
       throwsA(anything),
     );
-    expect((await storageService.getDailyTestSetForToday())!.isCompleted, isFalse);
+    expect(
+        (await storageService.getDailyTestSetForToday())!.isCompleted, isFalse);
 
     // The still-not-completed set is retaken: a fresh, non-conflicting
     // completion succeeds.
@@ -270,8 +289,8 @@ void main() {
 
     // Exactly one mistake recorded — the failed first attempt left nothing
     // behind to double up.
-    final mistakes =
-        await storageService.getRecentMistakes('tenseSelection', 'tenseSelection');
+    final mistakes = await storageService.getRecentMistakes(
+        'tenseSelection', 'tenseSelection');
     expect(mistakes, hasLength(1));
   });
 }
