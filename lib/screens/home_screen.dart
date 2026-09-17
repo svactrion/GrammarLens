@@ -65,7 +65,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // Starts closed rather than "unknown/loading" — PRD v2 §12.2's default
   // for anyone not confirmed to have a trial/subscription is Free, and
   // fail-closed here matches SubscriptionService.hasFullAccess's own
@@ -73,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // is still in flight).
   bool _hasFullAccess = false;
 
+  int _dailyLoadGeneration = 0;
   bool _loadingToday = true;
   DailyTestSet? _todaysDailyTest;
 
@@ -82,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkAccess();
     // Live updates (PRD v2 §12.3/§12.6): a trial starting or expiring
     // should re-gate Topic Practice and the weak-spot rows without
@@ -95,8 +97,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh greeting and cached day after midnight/timezone changes.
+      // This is a local read; resuming never generates another question set.
+      setState(() => _loadingToday = true);
+      _loadTodaysDailyTest();
+      _loadWeakSpots();
+    }
   }
 
   Future<void> _checkAccess() async {
@@ -116,15 +130,16 @@ class _HomeScreenState extends State<HomeScreen> {
   /// started" on a storage error, same posture as every other best-effort
   /// read in this app (theme, profile, session cap).
   Future<void> _loadTodaysDailyTest() async {
+    final generation = ++_dailyLoadGeneration;
     try {
       final set = await widget.storageService.getDailyTestSetForToday();
-      if (!mounted) return;
+      if (!mounted || generation != _dailyLoadGeneration) return;
       setState(() {
         _todaysDailyTest = set;
         _loadingToday = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _dailyLoadGeneration) return;
       setState(() {
         _todaysDailyTest = null;
         _loadingToday = false;

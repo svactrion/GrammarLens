@@ -1,3 +1,165 @@
+# PRD — Monthly Climb
+
+**Durum (2026-09-17):** Aşama 1 görsel önizleme kullanıcı tarafından incelendi;
+Aşama 2 veri bütünlüğü temeli uygulandı. Üretim Home/Profile entegrasyonu ve
+madalya sistemi henüz uygulanmadı. Onaylı yön, açık ürün kararları ve teknik
+öneriler aşağıda ayrıdır. Tarihsel Weekly Climb taslağı bu dosyanın sonunda
+aynen korunur; onun eşikleri ve varsayımları aktif şartname değildir.
+
+## M1. Kaynak ve amaç
+
+Amaç, mevcut Daily Test'e günlük dönüşü ve bağlılığı artırmaktır. Bu hâlâ
+kullanıcı araştırmasıyla doğrulanmamış bir ürün bahsidir; öğrenme kalitesi
+artışı iddia edilmez. Mevcut davranışın kaynağı kod, geliştirme durumunun
+kaynağı roadmap/build-log, aylık ürün yönünün kanonik kaydı bu bölümdür.
+
+Kaynaklar: 2026-09-16 `monthly-climb-development-handoff.md` ve
+`monthly-climb-approved-direction.html` (ChatGPT proje outputs alanı;
+tam konumlar `gamification-handoff.md` içinde). HTML bir tasarım referansıdır,
+Flutter uygulaması veya piksel ölçü şartnamesi değildir. 30 gün, 8→9 adım
+ve örnek madalyalar demo verisidir; madalya eşiklerini belirlemez.
+
+## M2. Onaylı ürün ve görsel yön
+
+- Daily Test ve dağ aynı deneyimdir: yeni mod, soru seti veya ek LLM çağrısı yok.
+- Tamamlanan günlük test bir adım ilerletir. Doğru sayısı patika hareketini
+  değiştirmez; doğru/yanlış sonuçları ayrı puan için saklanır. En az bir
+  boş olmayan cevap gerekir; tamamen atlanan test tamamlanır ama adım vermez.
+- Döngü takvim ayıdır; ayın gün sayısı kadar günlük adım (28–31), ay bazında
+  değişen dağ görünümü. Yanlış cevapta geri düşüş veya ceza animasyonu yok.
+- Aylık bronz/gümüş/altın madalya puana bağlıdır; formül henüz belirlenmedi.
+- Mevcut 12 hayvan avatarından seçili olan piyon olur; şeffaf zemin, hafif
+  gölge. Sabit patikada kesintisiz kısa hareket; fiziksel tırmanma animasyonu yok.
+- Geniş yamaçlar, sivri zirve ve bayrak. 7/14/21/28. adımlarda geniş dönüşler
+  ve sırasıyla kamp ateşi, çadır, dağ evi, seyir terası; uzun durak etiketleri yok.
+- Home: büyük GrammarLens başlığı, karşılama/avatar, avatar yanında yalnız
+  madalyon simgesi, Daily Test/dağ, gün göstergesi, hata önizlemesi,
+  Topic Practice ve uygun kullanıcıya Premium satırı.
+- Madalyon Profile koleksiyonunu açar; avatarın picker'a Hero geçişi korunur.
+  Navigasyon Home / Review / Profile olur. Review görevi ve Settings'in
+  mevcut işlevlerine erişim korunur; debug alanları release'e açılmaz.
+- Arayüz İngilizce; turuncu, parlament mavisi ve kırık beyaz kimlik.
+  Dark mode'da turuncu geniş yüzey olmaz.
+- Dağ vektör geometrisi, tema paleti ve küçük dekoratif katmanlarla kurulur;
+  raster sahne seti veya HTML WebView kullanılmaz.
+
+## M3. Teknik sınırlar ve koddan doğrulanan başlangıç
+
+2026-09-17, base `84deb915d6c812088b1c83f1e4031cfc209a3005`:
+
+- Mevcut StatefulWidget/setState ve constructor üzerinden servis aktarımı
+  korunur; yeni state-management mimarisi gerekmiyor.
+- Daily Test beş soru; `getTodaysSet` günlük cache'i kullanır, değerlendirme
+  `checkDailyTestAnswer` ile yereldir. Cevap eşleştirme kuralları değişmez.
+- `DailyTestSet.day` var; `markDailyTestCompleted` ise bitiş anındaki yerel
+  `_todayKey` ile yazar. Gece yarısı/ay sonu riski çözülmüş değildir.
+- Yarım cevaplar ekran belleğindedir. Kalıcı kaldığı yerden devam yoktur;
+  eski haftalık taslaktaki soru başına kalıcı kazanım uygulanmış değildir.
+- Sonuç ekranı hata yazımı ve tamamlanmayı ayrı çağrılarla başlatır.
+  Aylık kazanım için hata profili ikinci kez yazılmayacak.
+- StorageService v14 yükseltmesi tabloları silip yeniden kurar. Yeni geçiş
+  veri koruyan migration olmalı: profil, avatar, hata geçmişi, tema, cache,
+  günlük haklar ve cihaz kimliği korunmalı.
+- Günlük kazanım unique olmalı; yeniden açılan sonuç ikinci adım/puan
+  yaratmamalı. Mevcut tamamlama ve aylık kayıt transaction veya dayanıklı
+  reconciliation ile tutarlı olmalı. Kalıcı kayıt animasyondan bağımsızdır.
+- Puan, tema ve madalya kuralları sürümlenmeli; eşik değişimi geçmiş
+  madalyaları sessizce yeniden hesaplamamalı.
+- Home resume gün yenilemesi açık hatadır. BrandScaffold, FloatingNavShell
+  ve ölçülen NavBarClearance kullanılmalı; Home üst alanı yerel uyarlanmalı.
+- Firebase initialization ve analytics servisleri mevcut; canlı event
+  doğrulaması ayrı iştir. RevenueCat yapılandırılmış olarak kayıtlıdır,
+  ürün/offerings ve gerçek satın alma bu incelemede doğrulanmamıştır.
+- Free hedefli pratik günlük 1 haktır. Home weak-spot tıklaması free kullanıcıyı
+  paywall'a götürür; Review erişimi ve yeni pratik kotası birbirine karıştırılmaz.
+- İlk gün onboarding testi aynı kazanım yolunu kullanmalı; onboarding ve
+  paywall navigasyonu korunmalı. `proxy/`, `config/`, abonelik koşulları ve
+  soru formatları kapsam dışıdır. Yeni hesap/backend/liderlik tablosu yok.
+
+### M3.1 Uygulanan veri temeli — 2026-09-17
+
+Yukarıdaki base incelemesindeki tamamlama/migration/resume sorunları bu branch'te
+şu değişikliklerle ele alındı:
+
+- Şema v15; v14 → v15 geçişi yalnız `climb_daily_entries` ekler. Daha eski
+  şemalarda eksik tablo/sütunlar eklenir; kullanıcı tabloları silinmez.
+- `DailyTestCompletion` mevcut yerel eşleştirmeyi bir kez yapar; aynı sonuç
+  nesneleri hem ekranı hem hata kaydını besler. Doğru/yanlış/atlanan ayrımı ve
+  klavye varyantlarının doğru sayılması değişmez.
+- Tamamlanma, hata profili ve günlük kazanım tek SQLite transaction'ındadır.
+  DB içinde tamamlanmış gün kontrolü ve günlük primary key tekrarı engeller.
+  Yazma başarısız olursa sonuç ekranı açık hata ve yeniden kaydetme düğmesi gösterir.
+- Kayıt anahtarı setin özgün günüdür. Üretim çağrısından önce gün yakalanır;
+  gece yarısı süren üretim bunu değiştirmez. Aynı gün yeniden cache yazımı
+  ilk seti veya tamamlanmış sonucu ezmez.
+- Günlük tablo `day`, `completed_at`, `step`, doğru/yanlış/atlanan sayıları ve
+  `rule_version=1` tutar. Madalya puan ağırlıkları henüz yoktur.
+- Tamamlanmış eski v2 setleri geriye dönük kazanım almaz. Ay toplamları gün
+  kayıtlarından okunur; ay başında eski kayıtlar silinmez. Telafi testi yoktur.
+- Home resume'da cache ve selamlama yenilenir; ağ çağrısı yapılmaz. Aylık
+  ilerleme henüz Home'a bağlanmadı. Yarım cevapların kalıcı devamı eklenmedi.
+- Mevcut Settings "reset progress" kapsamı (hata/pratik geçmişi) genişletilmedi;
+  yeni aylık kayıtları silmez. Madalya koleksiyonu sıfırlama davranışı bu aşamanın işi değildir.
+
+## M4. Ürün kararları ve kalan kapılar
+
+| Karar | Açık kapsam | Gerekli aşama |
+|---|---|---|
+| Madalya | Doğru/yanlış/atlanan puanları, toplam/oran, minimum katılım, eşikler | 4 |
+| Tamamlanma — onaylandı | En az bir cevap gerekli; tümü atlanırsa tamamlanır ama adım yok | 2 uygulandı |
+| Kısmi ay — kısmen onaylandı | Telafi yok; kullanıcı erişebildiği kadar ilerler. Kısmi ay madalya kuralı açık | Madalya: 4 |
+| Gün/ay — onaylandı | Saat dilimi değişse/ay geçse de setin özgün günü sabit | 2 uygulandı |
+| Geriye dönük kazanım — onaylandı | Eski tamamlanmış v2 testlerine adım verilmez | 2 uygulandı |
+| Geometri — karara bağlandı 2026-09-17 | 28 günlük ayda seyir terası son adımda, bayrak aynı bitiş alanında | 1 |
+| Temalar — kısmen karara bağlandı 2026-09-17 | İlk önizleme Green Slope light/dark; aylık sıra ve diğer temalar açık, volkan onaylı değil | Sonraki tema aşaması |
+| Home hata önizlemesi | Review'a serbest inceleme bağlantısı mevcut paywall yolunu değiştirir mi? | 3 |
+| Streak Mode | Monthly Climb eski backlog maddesinin yerine geçer mi? | Roadmap kararı |
+| Yayın ve ölçüm | v2/v3 yayın sırası, baseline süresi, rollout ve başarı ölçütü | 5 öncesi |
+
+İzole worktree/branch seçimi kullanıcı tarafından kesinleştirilmiştir;
+merge/yayın tarihi bundan türetilmez. Açık kararlar teknik varsayımla kapatılmaz.
+
+## M5. Aşamalar ve doğrulama
+
+0. İzole worktree/branch, kanonik belgeler, test/analyze ve simülatör başlangıç
+   kontrolü. Yeni özellik kodu yok; sonuçlar build-log'a yazılır.
+1. Üretim Home'a bağlanmayan Flutter görsel önizlemesi: ortak Path üzerinden
+   rota, avatar ve duraklar; 28–31 gün, light/dark, reduced motion.
+2. Veri koruyan migration, gün anahtarı, unique kazanım, ay rollover ve resume.
+   Bu aşama mevcut tamamlama davranışına dokunur; değişiklik kapsamı görünür
+   yazılır, cevap değerlendirmesi ve hata profili çıktısı korunur.
+3. Home entegrasyonu: gerçek test/cache/sonuç, tek adım, seçili avatar,
+   loading/empty/error/completed durumları, mevcut erişim kuralları.
+4. Formül kararından sonra madalya motoru, mevcut ay geçici seviyesi, ay sonu
+   kalıcı kazanım, Profile koleksiyonu ve geçmiş ay detayları.
+5. Ölçüm ve yayın: event sözleşmesi baştan planlanır, ilgili aşamalarda eklenir;
+   canlı doğrulama, cihaz regresyonu ve ayrı yayın kararı burada tamamlanır.
+
+Kabul kontrolleri: migration sonrası v2 verileri; aynı sonucun tekrar açılması;
+kill/restart; gece yarısı, ay/yıl ve saat dilimi geçişi; 28–31 gün; yarım/atlanan
+cevaplar; ek üretim çağrısı olmaması; free/trial/full erişim; Day-0, Review,
+Topic Practice, paywall ve avatar Hero; küçük/büyük ekran, büyük metin,
+ekran okuyucu, reduced motion, light/dark, iç/dış kaydırma ve nav clearance.
+Analytics hatası kullanıcı akışını durdurmamalı; cevap metni/PII gönderilmemeli.
+
+Ölçüm mevcut Firebase üzerine kurulacak. D1/D7, Daily Test tamamlama,
+ay içi katılım ve madalya dağılımı aday ölçütlerdir; event adları, paydalar,
+baseline ve başarı eşiği henüz kesin değildir. Home redesign ve gamification
+birlikte açılırsa etki yalnız gamification'a atfedilemez. Eski haftalık rozet
+metrikleri ve analytics sağlayıcı seçimi aktif gereksinim değildir.
+
+Her aşamada küçük kapsam → uygulama → uygun test → light/dark cihaz kontrolü
+→ kullanıcı incelemesi → kodla birlikte belge kaydı. Yapılmayan doğrulama
+geçmiş gibi yazılmaz; commit/push/merge ayrı bildirilir.
+
+---
+
+# Tarihsel ek — Weekly Climb (superseded)
+
+Aşağıdaki özgün metin gerekçeleri korumak için değiştirilmeden saklanmıştır.
+"Bağlayıcı", "şu anda" ve açık karar ifadeleri yazıldığı döneme aittir;
+aktif aylık bölümle çelişirse M1–M5 geçerlidir.
+
 # PRD — Weekly Climb (Haftalık Tırmanış)
 
 > **Status note (2026-09-16, added during a docs sync, not part of the

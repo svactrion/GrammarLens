@@ -106,7 +106,8 @@ class _FakeStorageService extends StorageService {
       weakSpots;
 }
 
-DailyTestSet _completedDailyTestSet({required int correct, required int total}) {
+DailyTestSet _completedDailyTestSet(
+    {required int correct, required int total}) {
   final questions = List.generate(
     total,
     (i) => DailyTestQuestion(
@@ -171,7 +172,8 @@ void main() {
           claudeService: ClaudeService(),
           storageService: storageService ?? StorageService(),
           analyticsService: analyticsService ?? AnalyticsService(),
-          subscriptionService: subscriptionService ?? _FakeSubscriptionService(),
+          subscriptionService:
+              subscriptionService ?? _FakeSubscriptionService(),
           onAvatarTap: onAvatarTap,
           // Fixed at a mid-morning instant by default so the greeting text
           // this file asserts on doesn't depend on when the suite happens
@@ -183,6 +185,23 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('resume refreshes cached test and greeting after local midnight',
+      (tester) async {
+    var now = DateTime(2026, 1, 1, 23, 59);
+    final storage = _FakeStorageService()
+      ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
+    await pumpHome(tester, storageService: storage, clock: () => now);
+    expect(find.text('Good evening, Ada'), findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    now = DateTime(2026, 1, 2, 9);
+    storage.todaysDailyTest = null;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(find.text('Good morning, Ada'), findsOneWidget);
+    expect(find.textContaining('New test tomorrow'), findsNothing);
+    expect(find.textContaining("Today's 5-question warm-up"), findsOneWidget);
+  });
 
   testWidgets('greets the user by their onboarding name', (tester) async {
     await pumpHome(tester);
@@ -228,8 +247,8 @@ void main() {
 
     final greetingLeft = tester.getTopLeft(find.text('Good morning, Ada')).dx;
     final avatarRect = tester.getRect(find.byType(AvatarTile));
-    final screenWidth = tester.view.physicalSize.width /
-        tester.view.devicePixelRatio;
+    final screenWidth =
+        tester.view.physicalSize.width / tester.view.devicePixelRatio;
 
     // To the right of the greeting text, not before it.
     expect(avatarRect.left, greaterThan(greetingLeft));
@@ -248,9 +267,9 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  group('avatar tap opens the picker via a real route push, with a Hero '
-      'flight (app.dart, batch: Home avatar → Settings picker transition)',
-      () {
+  group(
+      'avatar tap opens the picker via a real route push, with a Hero '
+      'flight (app.dart, batch: Home avatar → Settings picker transition)', () {
     // Mirrors app.dart's real _openAvatarPickerFromHome exactly (a real
     // Navigator.push, branching on MediaQuery.disableAnimationsOf the same
     // manual way this app already gates motion everywhere else) — the
@@ -303,7 +322,8 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('tapping the avatar opens AvatarPickerScreen, not a tab '
+    testWidgets(
+        'tapping the avatar opens AvatarPickerScreen, not a tab '
         'switch', (tester) async {
       await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
 
@@ -333,7 +353,8 @@ void main() {
         'transition — no flight, an instant switch', (tester) async {
       tester.platformDispatcher.accessibilityFeaturesTestValue =
           const FakeAccessibilityFeatures(disableAnimations: true);
-      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 
       await pumpHomeInNavigator(tester, onAvatarChanged: (_) {});
       await tester.tap(find.byType(AvatarTile).first);
@@ -365,8 +386,7 @@ void main() {
   });
 
   group('Today (Daily Test state, PRD v2 §13.5 item 2)', () {
-    testWidgets(
-        'not yet done: shows an invitation, tapping opens Daily Test',
+    testWidgets('not yet done: shows an invitation, tapping opens Daily Test',
         (tester) async {
       await pumpHome(tester, storageService: _FakeStorageService());
 
@@ -513,7 +533,8 @@ void main() {
       expect(find.text('Your weak spots'), findsNothing);
     });
 
-    testWidgets('shows up to the most frequent, tappable through when '
+    testWidgets(
+        'shows up to the most frequent, tappable through when '
         'unlocked', (tester) async {
       final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
       await pumpHome(
@@ -567,7 +588,8 @@ void main() {
       expect(find.byType(PremiumScreen), findsOneWidget);
     });
 
-    testWidgets('not shown once the entitlement is active — no repeated '
+    testWidgets(
+        'not shown once the entitlement is active — no repeated '
         'upsell to someone already subscribed', (tester) async {
       await pumpHome(
         tester,
