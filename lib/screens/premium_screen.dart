@@ -1409,18 +1409,24 @@ class _PlanPricing {
 }
 
 /// Computes [_PlanPricing] entirely from the two real products' own
-/// fields — never a hardcoded number, never a manual divide-by-12.
+/// fields — never a hardcoded number.
 ///
 /// The annual plan's monthly-equivalent price ([StoreProduct.pricePerMonth]/
 /// [StoreProduct.pricePerMonthString]) is computed and formatted by
 /// RevenueCat/StoreKit itself from the real annual price, already in the
 /// viewer's own currency — this reads that directly rather than
 /// reimplementing currency formatting by hand (which risks assuming a
-/// "$" prefix that breaks for every other currency). The savings
-/// percentage compares that same real monthly-equivalent against the
-/// real standalone monthly product's price — both plain numbers already
-/// in the same currency, so no manual currency handling is needed there
-/// either.
+/// "$" prefix that breaks for every other currency).
+///
+/// The savings percentage deliberately does **not** reuse [pricePerMonth]
+/// for its own math (found live on-device, 2026-09-17): StoreKit truncates
+/// that figure to 2 decimals for display (49.99/12 = 4.1658... → "4.16"),
+/// and computing the percentage from the truncated number overstated the
+/// real 30.44% saving as 31%. The percentage below instead compares the
+/// two products' own raw [StoreProduct.price] values directly (annual vs.
+/// 12 × monthly) — full precision, no intermediate rounding — and floors
+/// rather than rounds, so display rounding can never overstate a discount
+/// the user isn't actually getting.
 ///
 /// Falls back to the plain annual price (no "per month" figure, no
 /// savings badge) if the SDK doesn't supply a monthly-equivalent for some
@@ -1451,9 +1457,10 @@ _PlanPricing _planPricing(
 
   String? savingsLabel;
   if (monthlyProduct.price > 0) {
+    final yearlyIfMonthly = monthlyProduct.price * 12;
     final savings =
-        (monthlyProduct.price - perMonth) / monthlyProduct.price * 100;
-    if (savings > 0) savingsLabel = 'Save ${savings.round()}%';
+        (yearlyIfMonthly - annualProduct.price) / yearlyIfMonthly * 100;
+    if (savings > 0) savingsLabel = 'Save ${savings.floor()}%';
   }
 
   return _PlanPricing(

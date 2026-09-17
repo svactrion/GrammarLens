@@ -153,7 +153,11 @@ Package _fakeMonthlyPackage() {
 // RevenueCat/StoreKit would compute and format them for a real annual
 // product — a fake has no SDK behind it to derive these, so they're
 // supplied directly, matching the $9.99/mo vs $89.99/yr numbers PRD v2
-// §13.3 uses in its own "Save 25%" example ((9.99 - 7.49) / 9.99 ≈ 25%).
+// §13.3 uses in its own "Save 25%" pricing example. The savings badge
+// itself is computed from the raw prices below, not from this
+// pricePerMonth figure (see _planPricing's own doc comment) — 1 -
+// 89.99 / (12 × 9.99) ≈ 24.94%, floored to 24, one point under the PRD
+// example's own rough math.
 // Trial is configured in App Store Connect as a "1 Week" duration, not
 // "7 Days" — StoreKit/RevenueCat report that back as PeriodUnit.week /
 // periodNumberOfUnits 1, not as 7 days (PRD v2 §13.2's 2026-09-17 note).
@@ -672,10 +676,33 @@ void main() {
       expect(bigFigure, findsOneWidget);
       // Small detail: the real annual total.
       expect(find.text('Billed \$89.99 annually.'), findsOneWidget);
-      // Savings: (9.99 - 7.49) / 9.99 ≈ 25%, computed from the two real
-      // products' prices, not a hardcoded "25%" string anywhere in the
-      // widget itself.
-      expect(find.text('Save 25%'), findsOneWidget);
+      // Savings: 1 - 89.99 / (12 × 9.99) ≈ 24.94%, floored to 24 —
+      // computed from the two products' own real prices (never the
+      // truncated pricePerMonth figure above, and never rounded up), not
+      // a hardcoded "24%" string anywhere in the widget itself.
+      expect(find.text('Save 24%'), findsOneWidget);
+    });
+
+    testWidgets(
+        'regression: with the real live App Store prices (\$5.99/month, '
+        '\$49.99/year), the savings badge reads "Save 30%", not "31%" '
+        '(found on-device 2026-09-17: StoreKit truncates the per-month '
+        'equivalent to \$4.16, and computing the percentage from that '
+        'truncated figure — then rounding — overstated the true 30.44% '
+        'saving as 31)', (tester) async {
+      await pumpPremium(
+        tester,
+        _FakeSubscriptionService(
+          offering: _offeringWithRealLivePrices(),
+        ),
+      );
+
+      final bigFigure = find.text('\$4.16 / month');
+      await tester.scrollUntilVisible(bigFigure, 300);
+
+      expect(bigFigure, findsOneWidget);
+      expect(find.text('Save 30%'), findsOneWidget);
+      expect(find.text('Save 31%'), findsNothing);
     });
 
     testWidgets(
@@ -697,7 +724,7 @@ void main() {
 
       // Both plan cards render at once now (unlike the old segmented
       // toggle, which only ever showed the selected plan's price row) —
-      // so Annual's own "Save 25%" badge is still on screen even with
+      // so Annual's own "Save 24%" badge is still on screen even with
       // Monthly selected. What must hold is that it's *inside the Annual
       // card specifically*, not the Monthly one.
       final monthlyCard = find.byKey(const ValueKey('planCard_Monthly'));
@@ -1780,5 +1807,56 @@ Offering _offeringWithOnlyMonthly() {
     const {},
     [monthly],
     monthly: monthly,
+  );
+}
+
+/// The real live App Store prices ($5.99/month, $49.99/year — PRD v2
+/// §13.3), distinct from [_fakeMonthlyPackage]/[_fakeAnnualPackage]'s
+/// illustrative $9.99/$89.99 pair used elsewhere in this file. `pricePerMonth`
+/// is hardcoded to 4.16, mirroring StoreKit's own truncation of 49.99 / 12
+/// = 4.1658... (confirmed live on-device 2026-09-17) rather than a rounded
+/// 4.17 — the same reasoning `buildDebugFixtureOffering`'s own comment
+/// documents.
+Offering _offeringWithRealLivePrices() {
+  const context = PresentedOfferingContext('default', null, null);
+  const monthlyProduct = StoreProduct(
+    'grammarlens_premium_monthly',
+    'Full access to Topic Practice',
+    'GrammarLens Premium (Monthly)',
+    5.99,
+    '\$5.99',
+    'USD',
+    subscriptionPeriod: 'P1M',
+  );
+  const annualProduct = StoreProduct(
+    'grammarlens_premium_annual',
+    'Full access to Topic Practice (annual)',
+    'GrammarLens Premium (Annual)',
+    49.99,
+    '\$49.99',
+    'USD',
+    subscriptionPeriod: 'P1Y',
+    pricePerMonth: 4.16,
+    pricePerMonthString: '\$4.16',
+  );
+  const monthly = Package(
+    '\$rc_monthly',
+    PackageType.monthly,
+    monthlyProduct,
+    context,
+  );
+  const annual = Package(
+    '\$rc_annual',
+    PackageType.annual,
+    annualProduct,
+    context,
+  );
+  return const Offering(
+    'default',
+    'Default offering',
+    {},
+    [monthly, annual],
+    monthly: monthly,
+    annual: annual,
   );
 }

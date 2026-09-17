@@ -281,14 +281,16 @@ class SubscriptionService {
 /// as (StoreKit/RevenueCat report that back as `PeriodUnit.week`/1, not as
 /// 7 days — mirrored here rather than simplified to `PeriodUnit.day`/7, so
 /// this fixture exercises `PremiumScreen`'s week-to-day display conversion
-/// the same way a real connected product would). Only the *raw* product
-/// data is fixed here (price, currency, subscription period, trial
-/// length); every derived figure `PremiumScreen` shows
-/// (the annual plan's per-month equivalent, the "Save X%" badge) is
-/// computed from these raw numbers the same way a real StoreKit/RevenueCat
-/// product would arrive with them already computed — not typed out as an
-/// already-reduced literal — so previewing this fixture actually exercises
-/// `PremiumScreen`'s real savings-percentage math instead of bypassing it.
+/// the same way a real connected product would). The annual per-month
+/// equivalent is hardcoded to 4.16, not derived as `annualPrice / 12`
+/// (which would give 4.1658..., formatting to "4.17") — StoreKit itself
+/// truncates rather than rounds, confirmed live on-device 2026-09-17, so a
+/// derived-and-rounded figure here would silently disagree with the real
+/// product. The "Save X%" badge is still computed by `PremiumScreen` from
+/// the raw prices below (`monthlyPrice`/`annualPrice`), never from this
+/// truncated per-month figure — see `_planPricing`'s own doc comment for
+/// why — so previewing this fixture still exercises the real savings math,
+/// not a bypassed shortcut.
 ///
 /// Public (not `_`-prefixed) specifically so a test can call it directly
 /// without going through the `kDebugMode`-gated setter, to check the
@@ -297,7 +299,12 @@ Offering buildDebugFixtureOffering() {
   const currencyCode = 'USD';
   const monthlyPrice = 5.99;
   const annualPrice = 49.99;
-  const annualPricePerMonth = annualPrice / 12;
+  // StoreKit truncates the real per-month equivalent (49.99 / 12 =
+  // 4.1658...) to 2 decimals for display — 4.16, not the 4.17 a naive
+  // round would give — confirmed live on-device 2026-09-17. Hardcoded
+  // rather than derived so this fixture keeps mirroring that truncation
+  // even if the raw prices above ever change.
+  const annualPricePerMonth = 4.16;
 
   String money(double amount) => '\$${amount.toStringAsFixed(2)}';
 

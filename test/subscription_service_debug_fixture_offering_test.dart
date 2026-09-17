@@ -70,16 +70,27 @@ void main() {
     });
 
     test(
-      "the annual plan's per-month figure is actually computed from the "
-      'raw annual price (49.99 / 12), not a separately typed-out literal '
-      "that could silently drift from it — this is what lets "
-      "PremiumScreen's real \"Save %\" math run against the fixture "
-      'instead of being bypassed',
-      () {
-        final product = offering.annual!.storeProduct;
-        expect(product.pricePerMonth, closeTo(49.99 / 12, 0.0001));
-      },
-    );
+        "the annual plan's per-month figure mirrors StoreKit's own "
+        'truncation (49.99 / 12 = 4.1658... displayed as "4.16", not a '
+        'rounded "4.17") — found live on-device 2026-09-17, so this fixture '
+        "deliberately does not derive the figure by hand, which would "
+        'round instead of truncate', () {
+      final product = offering.annual!.storeProduct;
+      expect(product.pricePerMonth, 4.16);
+      expect(product.pricePerMonthString, r'$4.16');
+    });
+
+    test(
+        'the savings badge is computed by PremiumScreen from the raw '
+        'monthly/annual prices, not from the truncated per-month figure '
+        'above — so previewing this fixture still exercises the real '
+        'savings math instead of bypassing it', () {
+      final monthly = offering.monthly!.storeProduct;
+      final annual = offering.annual!.storeProduct;
+      final realSavings =
+          (monthly.price * 12 - annual.price) / (monthly.price * 12) * 100;
+      expect(realSavings.floor(), 30);
+    });
   });
 
   group('with debugModeForTesting simulating a release build', () {
