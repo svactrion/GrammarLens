@@ -3618,3 +3618,53 @@ changed.
   the TestFlight pre-submission pass in `docs/roadmap.md`. Expiry/
   cancellation behavior and a non-USD storefront (e.g. Türkiye / TRY)
   price/savings-badge check remain open too. No code changed — docs only.
+
+## 2026-09-17 (History rewrite: personal data removed from `main` and `v2-snapshot`)
+
+- **[Product]** `main` and the `v2-snapshot` tag were rewritten with
+  `git-filter-repo` to remove personal data that had been committed
+  (docs/roadmap.md, since 2026-09-15): the trader street address from the
+  earlier EU DSA paragraph, and a bank-account fragment ("[pattern]
+  (5007)"). Both were already condensed out of the *current* file content
+  earlier the same day; this rewrite is what removes them from *history*
+  — every commit that ever carried either string, not just the tip. Only
+  those two exact literal phrases were targeted (not a regex on short
+  fragments like "5387" or "[pattern]", which a pickaxe survey confirmed would
+  have clobbered unrelated content — `web/sqflite_sw.js`'s generated
+  `case 5007:` switch statement alone accounts for ~198 unrelated commits
+  matching bare "5007"). Verified zero hits afterward:
+  `git log -p main v2-snapshot | grep -i -E "[pattern]|[pattern]|[pattern]|[pattern] \(5007\)"`.
+- **[Engineering]** Full mirror backup taken first
+  (`../GrammarLens-backup.git`), confirmed before any rewrite. The rewrite
+  itself ran in a throwaway clone made with `git clone --no-local
+  --mirror`, not in this working copy — `--no-local` specifically to
+  avoid the hardlinked-object sharing a same-filesystem local clone would
+  otherwise use, so nothing about the rewrite could touch this repo's own
+  object store while it ran. `--refs main refs/tags/v2-snapshot` scoped
+  the rewrite to exactly those two refs.
+- **[Product]** `codex/monthly-climb` was deliberately excluded from this
+  rewrite and left untouched — it was checked out with real uncommitted
+  work in a separate Codex worktree
+  (`/Users/ahmet/.codex/worktrees/575a/GrammarLens`) at the time, and
+  `git worktree list` was checked before doing anything, per plan.
+  **codex/monthly-climb was deliberately left out of the 2026-09-17
+  history rewrite (it had uncommitted work in a Codex worktree). It is
+  based on pre-rewrite commit 84deb91, whose history still contains
+  personal data. NEVER merge or push this branch as-is. Before merging,
+  rebase its new commits onto the rewritten equivalent of 84deb91
+  (`ff52197`) with `git rebase --onto ff52197 84deb91
+  codex/monthly-climb`, then confirm `git log -p main..codex/monthly-climb
+  | grep -i -E '[pattern]|[pattern]|[pattern]|[pattern]'` returns zero. Its worktree
+  copy of docs/roadmap.md still contains the address line — resolve any
+  conflict in favour of the redacted text.** See the matching note in
+  `docs/roadmap.md`'s Monthly Climb item.
+- **[Product]** Local `main` and `v2-snapshot` were updated to the
+  rewritten history (old tips `f170af0`/`d86e31c` → new `647ecb9`/
+  `aa2e0e5`); a separate commit ("docs: update commit references after
+  history rewrite") remapped every short commit hash cited in `docs/` and
+  `README.md` via `git-filter-repo`'s own commit-map, so `git show
+  <hash>` citations in these docs still resolve. `flutter analyze` and
+  the full test suite (357 tests) pass against the rewritten `main`.
+  Force-pushed: `git push --force-with-lease origin main` and
+  `git push --force origin v2-snapshot`. `v1-mvp` was untouched (predates
+  the personal data) and was not pushed.

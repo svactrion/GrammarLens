@@ -1728,6 +1728,17 @@ Two directions, neither has code in this repo:
   Climb"); that redesign is happening outside this repo and hasn't been
   committed here. See the status note added to the top of
   `docs/prd-gamification.md`.
+  **GUARD, 2026-09-17:** `codex/monthly-climb` was deliberately left out
+  of the 2026-09-17 history rewrite (it had uncommitted work in a Codex
+  worktree). It is based on pre-rewrite commit 84deb91, whose history
+  still contains personal data. **NEVER merge or push this branch
+  as-is.** Before merging, rebase its new commits onto the rewritten
+  equivalent of 84deb91 (`ff52197`) with `git rebase --onto ff52197
+  84deb91 codex/monthly-climb`, then confirm
+  `git log -p main..codex/monthly-climb | grep -i -E '[pattern]|[pattern]|[pattern]|[pattern]'`
+  returns zero. Its worktree copy of docs/roadmap.md still contains the
+  address line — resolve any conflict in favour of the redacted text.
+  Full detail: `docs/build-log.md`, 2026-09-17.
 - **Home screen redesign.** No scope written yet.
 
 This replaces the 2026-09-02 "heads-up, not yet decided" note below, which
