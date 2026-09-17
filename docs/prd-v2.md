@@ -550,6 +550,24 @@ Two implementation constraints, both App Store review matters, not preferences:
   renewal period, that it auto-renews unless cancelled, and carry Privacy and
   Terms links.
 
+**Superseded 2026-09-17 — different trial length per plan: 3 days monthly, 7
+days annual.** Configured in App Store Connect the same day: monthly
+(`grammarlens_premium_monthly`) gets a 3-day free introductory offer, annual
+(`grammarlens_premium_annual`) keeps 7 days (App Store Connect models it as a
+"1 Week" duration, not "7 Days" — RevenueCat/StoreKit report it back as
+`periodUnit` WEEK, `periodNumberOfUnits` 1, not as 7 days; the purchase
+point's disclosure text converts week-unit trials to days for display so the
+two plans read in comparable units). Rationale: steer users toward the annual
+plan by putting the longer trial on the plan that is worth more to us — a
+bet, not a user finding, same status as the pricing bet below. Known side
+effect: introductory offers are one per subscription group, so a user who
+already used the monthly 3-day trial does not get the annual 7-day trial on
+switching plans. The first implementation constraint above (never hand-write
+trial length; read it live) is unaffected and, if anything, is now load-
+bearing — the two plans genuinely differ, so no single hardcoded number could
+ever have been correct for both. The reasoning above is kept rather than
+rewritten, per this document's own rule.
+
 ### 13.3 Pricing
 
 $9.99/month, $89.99/year. The annual plan is presented as its per-month
@@ -560,6 +578,14 @@ annual is preselected. The 7-day trial applies to both plans.
 annual plan is presented as $4.17/month, billed annually at $49.99, with a
 computed "Save 30%" marker; annual stays preselected and the 7-day trial still
 applies to both. The reasoning above is kept rather than rewritten, per this
+document's own rule.
+
+**Superseded 2026-09-17 — the trial length is no longer the same on both
+plans.** See §13.2's own 2026-09-17 note: monthly is a 3-day trial, annual is
+7 days, deliberately asymmetric to steer toward annual. Pricing itself
+($5.99/month, $49.99/year, the computed savings marker, annual preselected)
+is unaffected — only the "the 7-day trial still applies to both" clause above
+no longer holds. The reasoning above is kept rather than rewritten, per this
 document's own rule.
 
 Why the change, in order of weight:
