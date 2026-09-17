@@ -8,7 +8,6 @@ import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../services/storage_service.dart';
-import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
 import 'daily_test_result_screen.dart';
@@ -181,8 +180,7 @@ class _DayZeroPaywallCta extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'Topic Practice gives you that same plain-language feedback '
-              'on your own mistakes — try it free for '
-              '${SubscriptionService.trialLengthDays} days.',
+              'on your own mistakes — and you can try it free.',
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),

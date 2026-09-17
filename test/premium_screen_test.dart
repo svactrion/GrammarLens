@@ -602,9 +602,7 @@ void main() {
       // _TrialTermsCard to fit the "at most two lines" requirement), but
       // still built from the same live trial length, price, and period.
       expect(
-        find.textContaining(
-          '${SubscriptionService.trialLengthDays}-day free trial',
-        ),
+        find.textContaining('7-day free trial'),
         findsOneWidget,
       );
       expect(find.textContaining('\$89.99 / year'), findsOneWidget);
