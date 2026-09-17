@@ -1718,30 +1718,17 @@ building it.
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.
 
-**v3 — planned, status draft, not scoped or built (updated 2026-09-16).**
-Two directions, neither has code in this repo:
-- **Gamification layer.** `docs/prd-gamification.md` (committed
-  2026-09-15) is a weekly-cycle draft ("Weekly Climb"), status Taslak
-  (draft), with six open decisions in its own §10 and never approved or
-  implemented — confirmed by grep, zero gamification code anywhere in
-  `lib/`. Direction has since moved to a **monthly** cycle ("Monthly
-  Climb"); that redesign is happening outside this repo and hasn't been
-  committed here. See the status note added to the top of
-  `docs/prd-gamification.md`.
-  **GUARD, 2026-09-17:** `codex/monthly-climb` was deliberately left out
-  of the 2026-09-17 history rewrite (it had uncommitted work in a Codex
-  worktree). It is based on pre-rewrite commit 84deb91, whose history
-  still contains personal data. **NEVER merge or push this branch
-  as-is.** Before merging, rebase its new commits onto the rewritten
-  equivalent of 84deb91 (`ff52197`) with `git rebase --onto ff52197
-  84deb91 codex/monthly-climb`, then confirm
-  `git log -p main..codex/monthly-climb | grep -i -F -f
-  ~/.config/grammarlens/pii-patterns.txt` returns nothing — that local,
-  un-committed file (one pattern per line) is deliberately not in this
-  repo, so the patterns themselves are never spelled out here. Its
-  worktree copy of docs/roadmap.md still contains the address line —
-  resolve any conflict in favour of the redacted text. Full detail:
-  `docs/build-log.md`, 2026-09-17.
+**v3 — planned, status draft, not scoped or built in `main` (updated
+2026-09-18).** Two directions:
+- **Gamification layer ("Monthly Climb").** Lives on branch
+  `monthly-climb-v2`, not merged into `main`. Transplanted onto the
+  rebuilt `main` (post-2026-09-17 history rewrite) on 2026-09-17, from
+  scratch against clean history — not a rebase of the old
+  `codex/monthly-climb` branch, which sat on pre-rewrite history and a
+  stale base and has since been deleted. 381 tests passing on
+  `monthly-climb-v2`. `docs/prd-gamification.md`'s original weekly-cycle
+  draft ("Weekly Climb") is superseded by this monthly-cycle build. Not
+  scoped for merge into `main` — v3, after launch.
 - **Home screen redesign.** No scope written yet.
 
 This replaces the 2026-09-02 "heads-up, not yet decided" note below, which

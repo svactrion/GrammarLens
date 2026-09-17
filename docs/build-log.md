@@ -3763,3 +3763,48 @@ unnoticed.
   in Commit 1, plus Commit 2's net +3: two new atomicity tests and one new
   failure-surfacing test, minus the one `markCompleted`-specific test that
   no longer applies once `markCompleted` itself is gone).
+
+## 2026-09-17 (Monthly Climb transplanted onto rebuilt `main`, new branch `monthly-climb-v2`)
+
+- **[Product]** `codex/monthly-climb` — the old home of the gamification
+  build — was based on pre-rewrite commit `84deb91` and carried that
+  commit's personal data in its history, from before the same-day history
+  rewrite above. Rebasing it onto the rewritten history was the
+  originally guarded plan (see the now-removed GUARD note in
+  `docs/roadmap.md`'s Monthly Climb item), but the branch also predated
+  both data-integrity fixes above (the destructive migration, the
+  non-atomic Daily Test completion) — a straight rebase would have
+  replayed the gamification commits' own, now-superseded versions of that
+  same logic on top of the fixed one. Instead, the branch's uncommitted
+  working-tree changes (still checked out in a separate Codex worktree,
+  `/Users/ahmet/.codex/worktrees/575a/GrammarLens`) were treated as a
+  patch and applied fresh to `monthly-climb-v2`, built from `main` at
+  `0deb213` — after both fixes above, not before.
+- **[Engineering]** What conflicted: the patch's own atomic-completion and
+  migration work (an earlier, gamification-branch-local version of the
+  same two problems Commits 1 and 2 above already fixed on `main`)
+  against `main`'s real implementations. Resolved by keeping `main`'s
+  `StorageService.completeDailyTest`/incremental-migration code as the
+  base and layering the climb-specific parts on top — the
+  `climb_daily_entries` table, `getClimbProgress`, and the transactional
+  climb-entry insert — rather than replaying the branch's own superseded
+  versions.
+- **[Product]** Behavior change worth recording: `completeDailyTest` now
+  returns early when there is no stored set for that day, so no error
+  entries are written in that case either — before, a call against a
+  missing cached set was the `isFalse`-returning no-op case Commit 2's
+  own tests already covered for a *stale* set, but a genuinely missing
+  set wasn't distinguished from one. Locked down by a new test,
+  `test/storage_service_climb_test.dart`'s "a missing cached set never
+  creates a climb entry or mistakes".
+- **[Engineering]** Verified with the full test suite before pushing: 381
+  tests passing, `flutter analyze` clean. Pushed as `monthly-climb-v2`,
+  not merged into `main` — v3 scope, after launch, per
+  `docs/roadmap.md`.
+- **[Product]** Old worktree (`/Users/ahmet/.codex/worktrees/575a/GrammarLens`)
+  and branch `codex/monthly-climb` removed after confirming every file in
+  the worktree's uncommitted changes and untracked additions was already
+  present on `monthly-climb-v2`, byte-identical or intentionally adapted
+  (see above) — nothing was only in the old worktree. `~/GrammarLens-backup.git`
+  still holds `codex/monthly-climb`'s full history if it's ever needed
+  again.
