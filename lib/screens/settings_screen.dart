@@ -94,6 +94,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _medalsLoading = true;
   bool _medalsFailed = false;
 
+  /// Guards against `_loadMedals` calls overlapping and resolving out of
+  /// order (mount + a fast repeated tab re-entry, both possible per
+  /// `didUpdateWidget` below): incremented at the start of every call, and
+  /// checked again after both awaits below finish, so a call whose
+  /// generation is no longer current discards its own result instead of
+  /// clobbering a newer call's — whichever call *started* last always
+  /// wins, regardless of which one *finishes* last.
+  int _medalsGeneration = 0;
+
   @override
   void initState() {
     super.initState();
@@ -129,6 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadMedals() async {
+    final generation = ++_medalsGeneration;
     if (mounted) {
       setState(() {
         _medalsLoading = true;
@@ -141,14 +151,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.storageService.getCurrentMonthlyMedalProgress(),
         widget.storageService.getMonthlyMedalResults(),
       ]);
-      if (!mounted) return;
+      if (!mounted || generation != _medalsGeneration) return;
       setState(() {
         _medalProgress = values[0] as MonthlyMedalProgress;
         _medalResults = values[1] as List<MonthlyMedalResult>;
         _medalsLoading = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _medalsGeneration) return;
       setState(() {
         _medalsLoading = false;
         _medalsFailed = true;

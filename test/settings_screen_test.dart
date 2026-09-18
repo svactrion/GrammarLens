@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -64,6 +66,44 @@ class _FakeStorageService extends StorageService {
     onboardingReset = true;
   }
 }
+
+/// Lets a test control exactly when each `_loadMedals` call's storage
+/// reads resolve, and in what order — every `getCurrentMonthlyMedalProgress`/
+/// `getMonthlyMedalResults` call returns a `Completer`-backed future that
+/// stays pending until the test completes it explicitly, appended to
+/// these lists in call order (index 0 is the first call made, etc).
+class _RaceStorageService extends StorageService {
+  final List<Completer<MonthlyMedalProgress>> progressCompleters = [];
+  final List<Completer<List<MonthlyMedalResult>>> resultsCompleters = [];
+
+  @override
+  Future<void> finalizePastMedalMonths() async {}
+
+  @override
+  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() {
+    final completer = Completer<MonthlyMedalProgress>();
+    progressCompleters.add(completer);
+    return completer.future;
+  }
+
+  @override
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() {
+    final completer = Completer<List<MonthlyMedalResult>>();
+    resultsCompleters.add(completer);
+    return completer.future;
+  }
+}
+
+MonthlyMedalProgress _raceProgress(int score) => MonthlyMedalProgress(
+      year: 2026,
+      month: 9,
+      score: score,
+      maxScore: 300,
+      activeDays: 0,
+      correct: 0,
+      wrong: 0,
+      skipped: 0,
+    );
 
 void main() {
   const profile = UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
@@ -159,6 +199,94 @@ void main() {
     expect(find.text('Monthly medals'), findsOneWidget);
     expect(find.text('Not earned'), findsNWidgets(3));
     expect(find.text('Earned'), findsNothing);
+  });
+
+  testWidgets(
+      'a stale in-flight medal read cannot overwrite a newer one that '
+      'started later (generation token guards SettingsScreen._loadMedals)',
+      (tester) async {
+    final storage = _RaceStorageService();
+
+    // Same phone-realistic size `pumpSettings` uses — see its own doc
+    // comment: the default test surface is too small for "This month" to
+    // reach the ListView's lazy-build cache extent.
+    tester.view.physicalSize = const Size(390, 844) * 3.0;
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    Future<void> pump({required bool active}) => tester.pumpWidget(
+          MaterialApp(
+            home: SettingsScreen(
+              active: active,
+              themeMode: AppThemeMode.system,
+              onSelectThemeMode: (_) {},
+              textSize: AppTextSize.medium,
+              onSelectTextSize: (_) {},
+              profile: profile,
+              storageService: storage,
+              onProfileUpdated: (_) {},
+              onResetOnboarding: () {},
+            ),
+          ),
+        );
+
+    Future<void> reveal() => tester.scrollUntilVisible(
+          find.text('This month'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+
+    // initState's own call (index 0, issued regardless of `active`).
+    // Resolved immediately with a baseline so the screen reaches a
+    // stable, non-loading state before the actual race begins below.
+    await pump(active: false);
+    storage.progressCompleters[0].complete(_raceProgress(10));
+    storage.resultsCompleters[0].complete(const []);
+    await tester.pump();
+    await tester.pump();
+    await reveal();
+    expect(find.text('10 / 300 points · 0 active days'), findsOneWidget);
+
+    // Tab re-entry #1 (`false` -> `true`, the only transition that
+    // triggers another load per `didUpdateWidget`): the older of the two
+    // overlapping reads. Deliberately left in flight.
+    await pump(active: true);
+    expect(storage.progressCompleters, hasLength(2));
+
+    // A second, genuinely new `false` -> `true` transition, started
+    // before read #1 above resolves — the real scenario this guards:
+    // a fast double tab re-entry. Also left in flight for now.
+    await pump(active: false);
+    await pump(active: true);
+    expect(storage.progressCompleters, hasLength(3));
+
+    // The *newer* read (#2) resolves first...
+    storage.progressCompleters[2].complete(_raceProgress(90));
+    storage.resultsCompleters[2].complete(const []);
+    await tester.pump();
+    await tester.pump();
+    await reveal();
+    expect(find.text('90 / 300 points · 0 active days'), findsOneWidget);
+
+    // ...then the older, now-stale read (#1) resolves after it. Without
+    // the generation token, this stale result would win simply by
+    // finishing last, silently reverting the UI to older data.
+    storage.progressCompleters[1].complete(_raceProgress(40));
+    storage.resultsCompleters[1].complete(const []);
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text('90 / 300 points · 0 active days'),
+      findsOneWidget,
+      reason: 'the more-recently-started read must still win',
+    );
+    expect(
+      find.text('40 / 300 points · 0 active days'),
+      findsNothing,
+      reason: 'a stale read finishing later must not overwrite a newer one',
+    );
   });
 
   testWidgets('Save is disabled once the name is cleared', (tester) async {
