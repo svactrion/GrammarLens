@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import 'models/app_theme_mode.dart';
+import 'models/app_text_size.dart';
 import 'models/avatar.dart';
 import 'models/user_profile.dart';
 import 'screens/avatar_picker_screen.dart';
@@ -40,6 +41,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   final SubscriptionService _subscriptionService = SubscriptionService();
   int _tabIndex = 0;
   AppThemeMode _themeMode = AppThemeMode.system;
+  AppTextSize _textSize = AppTextSize.medium;
 
   // Null while loading and stays null until onboarding completes — that's
   // the app's whole "returning vs. first launch" signal (PRD v2 §4), no
@@ -52,6 +54,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   void initState() {
     super.initState();
     _loadThemeMode();
+    _loadTextSize();
     _loadProfile();
     if (kDebugMode) _loadDebugAccessOverride();
   }
@@ -82,6 +85,15 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
     }
   }
 
+  Future<void> _loadTextSize() async {
+    try {
+      final size = await _storageService.getTextSize();
+      if (mounted) setState(() => _textSize = size);
+    } catch (_) {
+      // Keep the readable medium default if storage is unavailable.
+    }
+  }
+
   /// Applies whatever debug entitlement override a developer set last
   /// session (Settings' "Developer" section) before any screen has a
   /// chance to check `SubscriptionService.hasFullAccess` — so Home's
@@ -101,6 +113,11 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   void _setThemeMode(AppThemeMode mode) {
     setState(() => _themeMode = mode);
     unawaited(_storageService.setThemeMode(mode).catchError((_) {}));
+  }
+
+  void _setTextSize(AppTextSize size) {
+    setState(() => _textSize = size);
+    unawaited(_storageService.setTextSize(size).catchError((_) {}));
   }
 
   /// Every bottom-nav tab switch goes through this instead of setting
@@ -188,8 +205,8 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: AppMessenger.key,
       navigatorObservers: [AppMessenger.navigatorObserver],
-      theme: buildAppTheme(Brightness.light),
-      darkTheme: buildAppTheme(Brightness.dark),
+      theme: buildAppTheme(Brightness.light, textSize: _textSize),
+      darkTheme: buildAppTheme(Brightness.dark, textSize: _textSize),
       themeMode: _flutterThemeMode,
       // `Builder` gets a context nested under the `MaterialApp` above, so
       // `Theme.of` here resolves the light/dark scheme we just set via
@@ -211,6 +228,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
 
           final screens = [
             HomeScreen(
+              active: _tabIndex == 0,
               userName: _profile!.name,
               avatar: _profile!.avatar,
               claudeService: _claudeService,
@@ -234,8 +252,11 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               onGoToPractice: () => _switchTab(0),
             ),
             SettingsScreen(
+              active: _tabIndex == 2,
               themeMode: _themeMode,
               onSelectThemeMode: _setThemeMode,
+              textSize: _textSize,
+              onSelectTextSize: _setTextSize,
               profile: _profile!,
               storageService: _storageService,
               onProfileUpdated: (profile) => setState(() => _profile = profile),
@@ -273,8 +294,8 @@ const _navTabs = [
     label: 'Review',
   ),
   NavShellTab(
-    icon: Icons.settings_outlined,
-    activeIcon: Icons.settings,
-    label: 'Settings',
+    icon: Icons.person_outline_rounded,
+    activeIcon: Icons.person_rounded,
+    label: 'Profile',
   ),
 ];

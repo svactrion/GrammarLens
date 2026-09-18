@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/app_theme_mode.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
+import 'package:grammar_lens/models/monthly_medal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
@@ -23,6 +25,25 @@ class _FakeStorageService extends StorageService {
   bool? debugAccessOverride;
   bool onboardingReset = false;
   bool throwOnResetOnboarding = false;
+
+  @override
+  Future<void> finalizePastMedalMonths() async {}
+
+  @override
+  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() async =>
+      const MonthlyMedalProgress(
+        year: 2026,
+        month: 9,
+        score: 0,
+        maxScore: 300,
+        activeDays: 0,
+        correct: 0,
+        wrong: 0,
+        skipped: 0,
+      );
+
+  @override
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async => const [];
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {}
@@ -51,11 +72,14 @@ void main() {
     WidgetTester tester, {
     AppThemeMode themeMode = AppThemeMode.system,
     ValueChanged<AppThemeMode>? onSelectThemeMode,
+    AppTextSize textSize = AppTextSize.medium,
+    ValueChanged<AppTextSize>? onSelectTextSize,
     ValueChanged<UserProfile>? onProfileUpdated,
     StorageService? storageService,
     SubscriptionService? subscriptionService,
     VoidCallback? onResetOnboarding,
     UserProfile? profileOverride,
+    bool active = true,
   }) async {
     // A phone-realistic size (same convention as home_screen_test.dart) —
     // the default test surface is small enough that the avatar row's own
@@ -69,10 +93,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: SettingsScreen(
+          active: active,
           themeMode: themeMode,
           onSelectThemeMode: onSelectThemeMode ?? (_) {},
+          textSize: textSize,
+          onSelectTextSize: onSelectTextSize ?? (_) {},
           profile: profileOverride ?? profile,
-          storageService: storageService ?? StorageService(),
+          storageService: storageService ?? _FakeStorageService(),
           onProfileUpdated: onProfileUpdated ?? (_) {},
           subscriptionService: subscriptionService,
           onResetOnboarding: onResetOnboarding ?? () {},
@@ -82,9 +109,56 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> reveal(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('pre-fills the current name from the profile', (tester) async {
     await pumpSettings(tester);
     expect(find.widgetWithText(TextField, 'Ada'), findsOneWidget);
+  });
+
+  testWidgets('is presented as Profile and exposes three text sizes',
+      (tester) async {
+    await pumpSettings(tester);
+
+    expect(find.text('Profile'), findsWidgets);
+    expect(find.text('Text size'), findsOneWidget);
+    expect(find.text('Small'), findsOneWidget);
+    expect(find.text('Medium'), findsOneWidget);
+    expect(find.text('Large'), findsOneWidget);
+  });
+
+  testWidgets('selecting Large reports the new text-size preference',
+      (tester) async {
+    AppTextSize? selected;
+    await pumpSettings(
+      tester,
+      onSelectTextSize: (value) => selected = value,
+    );
+
+    await tester.tap(find.text('Large'));
+    await tester.pump();
+    expect(selected, AppTextSize.large);
+  });
+
+  testWidgets('Profile shows an explicitly empty monthly medal collection',
+      (tester) async {
+    await pumpSettings(tester);
+    await tester.scrollUntilVisible(
+      find.text('Monthly medals'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('Monthly medals'), findsOneWidget);
+    expect(find.text('Not earned'), findsNWidgets(3));
+    expect(find.text('Earned'), findsNothing);
   });
 
   testWidgets('Save is disabled once the name is cleared', (tester) async {
@@ -121,8 +195,7 @@ void main() {
     expect(tile.avatar, isNotNull);
   });
 
-  testWidgets('tapping the avatar row opens the avatar picker',
-      (tester) async {
+  testWidgets('tapping the avatar row opens the avatar picker', (tester) async {
     await pumpSettings(tester);
     await tester.tap(find.byType(AvatarTile));
     await tester.pumpAndSettle();
@@ -157,8 +230,11 @@ void main() {
       MaterialApp(
         home: StatefulBuilder(
           builder: (context, setState) => SettingsScreen(
+            active: true,
             themeMode: AppThemeMode.system,
             onSelectThemeMode: (_) {},
+            textSize: AppTextSize.medium,
+            onSelectTextSize: (_) {},
             profile: currentProfile,
             storageService: storage,
             onProfileUpdated: (p) {
@@ -210,8 +286,7 @@ void main() {
       (tester) async {
     await pumpSettings(tester);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
-    await tester.pumpAndSettle();
+    await reveal(tester, find.text('Reset progress data'));
     await tester.tap(find.text('Reset progress data'));
     await tester.pumpAndSettle();
     expect(find.text('Reset progress?'), findsOneWidget);
@@ -228,8 +303,7 @@ void main() {
   group('Developer section (debug-only entitlement override)', () {
     testWidgets('shows the three override options', (tester) async {
       await pumpSettings(tester, storageService: _FakeStorageService());
-      await tester.drag(find.byType(ListView), const Offset(0, -800));
-      await tester.pumpAndSettle();
+      await reveal(tester, find.text('Developer'));
 
       expect(find.text('Developer'), findsOneWidget);
       expect(find.text('Real'), findsOneWidget);
@@ -249,8 +323,7 @@ void main() {
     // Reads the selection via `toString()`, which — unlike the enum's
     // `.name` getter — isn't stripped from this test build.
     String selectedDebugChoiceName(WidgetTester tester) {
-      final button =
-          tester.widget(debugSegmentedButtonFinder()) as dynamic;
+      final button = tester.widget(debugSegmentedButtonFinder()) as dynamic;
       return (button.selected.first as Object).toString().split('.').last;
     }
 
@@ -267,8 +340,7 @@ void main() {
           storageService: _FakeStorageService(),
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Developer'));
 
         expect(selectedDebugChoiceName(tester), 'full');
       },
@@ -286,8 +358,7 @@ void main() {
           storageService: storage,
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Full access'));
 
         await tester.tap(find.text('Full access'));
         await tester.pumpAndSettle();
@@ -309,8 +380,7 @@ void main() {
           storageService: storage,
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Free'));
 
         await tester.tap(find.text('Free'));
         await tester.pumpAndSettle();
@@ -335,8 +405,7 @@ void main() {
           storageService: storage,
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Real'));
 
         await tester.tap(find.text('Real'));
         await tester.pumpAndSettle();
@@ -350,8 +419,7 @@ void main() {
       'the control is the same width no matter which option is selected',
       (tester) async {
         await pumpSettings(tester, storageService: _FakeStorageService());
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Free'));
 
         final realWidth = tester.getSize(debugSegmentedButtonFinder()).width;
 
@@ -359,6 +427,7 @@ void main() {
         await tester.pumpAndSettle();
         final freeWidth = tester.getSize(debugSegmentedButtonFinder()).width;
 
+        await reveal(tester, find.text('Full access'));
         await tester.tap(find.text('Full access'));
         await tester.pumpAndSettle();
         final fullWidth = tester.getSize(debugSegmentedButtonFinder()).width;

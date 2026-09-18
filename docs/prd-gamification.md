@@ -1,8 +1,11 @@
 # PRD — Monthly Climb
 
-**Durum (2026-09-17):** Aşama 1 görsel önizleme kullanıcı tarafından incelendi;
-Aşama 2 veri bütünlüğü temeli uygulandı. Üretim Home/Profile entegrasyonu ve
-madalya sistemi henüz uygulanmadı. Onaylı yön, açık ürün kararları ve teknik
+**Durum (2026-09-18):** Aşama 1 görsel önizleme kullanıcı tarafından incelendi;
+Aşama 2 veri bütünlüğü temeli uygulandı. Aşama 3'ün ilk diliminde üretim Home'a
+kalıcı aylık ilerleme ve seçili avatar bağlandı; cihazda Home incelemesi bekliyor.
+Profile/nav entegrasyonu ile kilitli boş madalya koleksiyonu uygulandı; madalya
+puanı, eşikleri ve kalıcı kazanım motoru kural v1 ile uygulanıp cihaz incelemesine
+hazırlandı. Onaylı yön, açık ürün kararları ve teknik
 öneriler aşağıda ayrıdır. Tarihsel Weekly Climb taslağı bu dosyanın sonunda
 aynen korunur; onun eşikleri ve varsayımları aktif şartname değildir.
 
@@ -81,7 +84,8 @@ ve örnek madalyalar demo verisidir; madalya eşiklerini belirlemez.
 Yukarıdaki base incelemesindeki tamamlama/migration/resume sorunları bu branch'te
 şu değişikliklerle ele alındı:
 
-- Şema v15; v14 → v15 geçişi yalnız `climb_daily_entries` ekler. Daha eski
+- Climb tablosu şema v15'te eklendi; v14 → v15 yalnız `climb_daily_entries`
+  ekler. Şema v16 yalnız bağımsız `text_size_settings` tercihini ekler. Daha eski
   şemalarda eksik tablo/sütunlar eklenir; kullanıcı tabloları silinmez.
 - `DailyTestCompletion` mevcut yerel eşleştirmeyi bir kez yapar; aynı sonuç
   nesneleri hem ekranı hem hata kaydını besler. Doğru/yanlış/atlanan ayrımı ve
@@ -103,11 +107,35 @@ Yukarıdaki base incelemesindeki tamamlama/migration/resume sorunları bu branch
 
 ## M4. Ürün kararları ve kalan kapılar
 
+### Aşama 3 ilk dilim — 2026-09-18
+
+Home mevcut `getClimbProgress` üzerinden takvim ayını okur; boş, yükleniyor,
+hata/yeniden deneme ve zirve durumlarını gösterir. Testten/sonuçtan dönüşte,
+kayıt tamamlandığında ve resume'da yerel veriler yenilenir. Kayıt sürerken
+sonuç ekranından çıkılması da tamamlanma bildirimiyle güncellenir. Ay anahtarı
+dağı yeniden kurar; eşit uzunluktaki aylar arasında geri iniş animasyonu olmaz.
+Mevcut storage/migration/transaction implementasyonları değiştirilmedi.
+Home'un mevcut Daily Test, Topic Practice, weak-spot/paywall ve avatar Hero
+yolları korunur; hata önizleme erişim kararı ve Profile/madalya işi hâlâ açıktır.
+Bu dilim tam Home yeniden tasarımının veya Aşama 3 cihaz kabulünün tamamlandığı
+anlamına gelmez. Çalışma `monthly-climb-v2` branch'indedir; yayın launch sonrasıdır.
+
+2026-09-18 cihaz geri bildirimi paket 1: Sonuç sonunda kayda bağlı
+`See your climb` / `Back to Home` butonu uygulanmıştır. Kalıcı yazım bekletilmez;
+yalnız piyonun görsel ilerlemesi sonuç rotası kapandıktan ve Home/dağ görünür
+olduktan sonra oynar. Tekrar açılan sonuç yeni hareket yaratmaz. İlk günün
+mevcut CTA'sı korunur; bu pakette yeni paywall yönlendirmesi yoktur.
+
+Paket 1 kullanıcı tarafından cihazda sorunsuz doğrulandı. Paket 2'de Home'un
+dağ alanı dikey kaydırmayı sayfaya bırakır; piyonun otomatik takibi korunur.
+Alt açıklama kaldırılmış, aylık sayaç başlık alanına taşınmıştır. Haftalık
+katılım şeridi eklenmemiştir; standalone önizleme rotası hâlâ gezilebilir.
+
 | Karar | Açık kapsam | Gerekli aşama |
 |---|---|---|
-| Madalya | Doğru/yanlış/atlanan puanları, toplam/oran, minimum katılım, eşikler | 4 |
+| Madalya — onaylandı/uygulandı | Doğru +2, yanlış +1, atlanan +0; tam ay maksimumunun %25/%50/%75'i; ayrı minimum gün yok | 4 |
 | Tamamlanma — onaylandı | En az bir cevap gerekli; tümü atlanırsa tamamlanır ama adım yok | 2 uygulandı |
-| Kısmi ay — kısmen onaylandı | Telafi yok; kullanıcı erişebildiği kadar ilerler. Kısmi ay madalya kuralı açık | Madalya: 4 |
+| Kısmi ay — onaylandı/uygulandı | Telafi ve oranlama yok; tam ay eşiği korunur, kullanıcı ulaşabildiği seviyeyi alır | Madalya: 4 |
 | Gün/ay — onaylandı | Saat dilimi değişse/ay geçse de setin özgün günü sabit | 2 uygulandı |
 | Geriye dönük kazanım — onaylandı | Eski tamamlanmış v2 testlerine adım verilmez | 2 uygulandı |
 | Geometri — karara bağlandı 2026-09-17 | 28 günlük ayda seyir terası son adımda, bayrak aynı bitiş alanında | 1 |

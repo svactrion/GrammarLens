@@ -51,8 +51,16 @@ void main() {
 
     final next = find.text('Preview next step');
     await reveal(next);
-    await tester.tap(next);
+    tester
+        .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Preview next step'))
+        .onPressed!();
     await tester.pumpAndSettle();
+    final progress = find.text('9 / 30 days');
+    for (var i = 0; i < 12 && progress.evaluate().isEmpty; i++) {
+      await tester.dragFrom(const Offset(8, 120), const Offset(0, 160));
+      await tester.pumpAndSettle();
+    }
     expect(find.text('9 / 30 days'), findsOneWidget);
     await reveal(find.text('28 days'));
     await tester.tap(find.text('28 days'));

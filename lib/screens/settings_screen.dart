@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import '../models/app_theme_mode.dart';
+import '../models/app_text_size.dart';
 import '../models/avatar.dart';
+import '../models/monthly_medal.dart';
 import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
@@ -13,6 +15,7 @@ import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
 import 'theme_preview_screen.dart';
 
@@ -43,8 +46,11 @@ enum _DebugAccessChoice {
 /// isn't editable here: nothing in scope needs it to change, and adding a
 /// second place to set it risks drifting from onboarding's copy.
 class SettingsScreen extends StatefulWidget {
+  final bool active;
   final AppThemeMode themeMode;
   final void Function(AppThemeMode mode) onSelectThemeMode;
+  final AppTextSize textSize;
+  final ValueChanged<AppTextSize> onSelectTextSize;
   final UserProfile profile;
   final StorageService storageService;
   final ValueChanged<UserProfile> onProfileUpdated;
@@ -58,8 +64,11 @@ class SettingsScreen extends StatefulWidget {
 
   SettingsScreen({
     super.key,
+    required this.active,
     required this.themeMode,
     required this.onSelectThemeMode,
+    required this.textSize,
+    required this.onSelectTextSize,
     required this.profile,
     required this.storageService,
     required this.onProfileUpdated,
@@ -80,6 +89,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _resettingOnboarding = false;
   late _DebugAccessChoice _debugAccessChoice;
   late bool _previewPaywallPricing;
+  MonthlyMedalProgress? _medalProgress;
+  List<MonthlyMedalResult> _medalResults = const [];
+  bool _medalsLoading = true;
+  bool _medalsFailed = false;
 
   @override
   void initState() {
@@ -103,6 +116,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // disagree with what PremiumScreen would actually see right now.
     _previewPaywallPricing =
         widget.subscriptionService.debugFixtureOffering != null;
+    unawaited(_loadMedals());
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((!oldWidget.active && widget.active) ||
+        oldWidget.storageService != widget.storageService) {
+      unawaited(_loadMedals());
+    }
+  }
+
+  Future<void> _loadMedals() async {
+    if (mounted) {
+      setState(() {
+        _medalsLoading = true;
+        _medalsFailed = false;
+      });
+    }
+    try {
+      await widget.storageService.finalizePastMedalMonths();
+      final values = await Future.wait([
+        widget.storageService.getCurrentMonthlyMedalProgress(),
+        widget.storageService.getMonthlyMedalResults(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _medalProgress = values[0] as MonthlyMedalProgress;
+        _medalResults = values[1] as List<MonthlyMedalResult>;
+        _medalsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _medalsLoading = false;
+        _medalsFailed = true;
+      });
+    }
   }
 
   Future<void> _setDebugAccessChoice(_DebugAccessChoice choice) async {
@@ -287,7 +338,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       behavior: HitTestBehavior.opaque,
       onTap: () => FocusScope.of(context).unfocus(),
       child: BrandScaffold(
-        title: const PageTitle('Settings'),
+        title: const PageTitle('Profile'),
         isTabRoot: true,
         children: [
           const _SectionLabel('Appearance'),
@@ -313,6 +364,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             selected: {widget.themeMode},
             onSelectionChanged: (selection) =>
                 widget.onSelectThemeMode(selection.first),
+          ),
+          const SizedBox(height: 20),
+          Text('Text size', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          AppSegmentedButton<AppTextSize>(
+            segments: const [
+              ButtonSegment(value: AppTextSize.small, label: Text('Small')),
+              ButtonSegment(value: AppTextSize.medium, label: Text('Medium')),
+              ButtonSegment(value: AppTextSize.large, label: Text('Large')),
+            ],
+            selected: {widget.textSize},
+            onSelectionChanged: (selection) =>
+                widget.onSelectTextSize(selection.first),
           ),
           const SizedBox(height: 32),
           const _SectionLabel('Profile'),
@@ -396,12 +460,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 32),
+          const _SectionLabel('Monthly medals'),
+          const SizedBox(height: 8),
+          if (_medalsLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_medalsFailed)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _loadMedals,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry medal history'),
+              ),
+            )
+          else
+            MonthlyMedalCollection(
+              currentProgress: _medalProgress,
+              results: _medalResults,
+            ),
+          const SizedBox(height: 32),
           const _SectionLabel('Data'),
           const SizedBox(height: 8),
           Text(
             'Reset progress',
-            style:
-                theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(

@@ -18,14 +18,13 @@ import '../widgets/result_score_band.dart';
 /// same per-item `SemanticColors` card treatment, same [MistakeBreakdown]
 /// layout) so this reads as the same app, not a bolted-on separate flow.
 class DailyTestResultScreen extends StatefulWidget {
+  /// Refreshes the owning Home even if the user leaves while saving.
+  final VoidCallback? onCompletionSaved;
   final DailyTestSet dailyTestSet;
   final Map<String, String> answers;
   final DailyTestService dailyTestService;
 
-  /// Extension point for the next batch: a call-to-action (the trial/
-  /// paywall pitch) rendered below the per-question breakdown. Deliberately
-  /// not a hardcoded "Back to Home" button — leaving this null renders
-  /// nothing here rather than assuming what that ending should be.
+  /// Day-0 owns its onboarding CTA. Other result routes get a Home action.
   final WidgetBuilder? bottomBuilder;
 
   const DailyTestResultScreen({
@@ -33,6 +32,7 @@ class DailyTestResultScreen extends StatefulWidget {
     required this.dailyTestSet,
     required this.answers,
     required this.dailyTestService,
+    this.onCompletionSaved,
     this.bottomBuilder,
   });
 
@@ -69,6 +69,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         day: _completion.set.day,
         completedAt: _completion.completedAt,
       );
+      widget.onCompletionSaved?.call();
     } catch (e) {
       if (!mounted) return;
       setState(() => _saveFailed = true);
@@ -108,6 +109,25 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         if (widget.bottomBuilder != null) ...[
           const SizedBox(height: 6),
           widget.bottomBuilder!(context),
+        ] else ...[
+          const SizedBox(height: 6),
+          if (_saveFailed)
+            TextButton(
+              onPressed: _saveCompletion,
+              child: const Text('Retry saving'),
+            ),
+          FilledButton(
+            onPressed: _saving || _saveFailed
+                ? null
+                : () => Navigator.of(context).pop(),
+            child: Text(_saving
+                ? 'Saving your results…'
+                : _saveFailed
+                    ? 'Save results to continue'
+                    : !widget.dailyTestSet.isCompleted && _completion.step > 0
+                        ? 'See your climb'
+                        : 'Back to Home'),
+          ),
         ],
       ],
     );

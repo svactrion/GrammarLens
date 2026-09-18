@@ -6,20 +6,24 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/app_theme_mode.dart';
+import '../models/app_text_size.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_completion.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
+import '../models/medal_tier.dart';
+import '../models/monthly_medal.dart';
 import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
 import '../models/topic_stats.dart';
 import '../models/user_profile.dart';
+import 'monthly_medal_rules.dart';
 
 /// Local SQLite-backed error profile (PRD §5: "on-device storage; no
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 15;
+  static const _dbVersion = 17;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -89,6 +93,13 @@ class StorageService {
     CREATE TABLE IF NOT EXISTS theme_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       mode TEXT NOT NULL
+    )
+  ''';
+
+  static const _createTextSizeSettingsTable = '''
+    CREATE TABLE IF NOT EXISTS text_size_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      size TEXT NOT NULL
     )
   ''';
 
@@ -213,6 +224,21 @@ class StorageService {
     )
   ''';
 
+  static const _createMonthlyMedalResultsTable = '''
+    CREATE TABLE IF NOT EXISTS monthly_medal_results (
+      month TEXT PRIMARY KEY NOT NULL,
+      tier TEXT CHECK (tier IN ('bronze', 'silver', 'gold')),
+      score INTEGER NOT NULL CHECK (score >= 0),
+      max_score INTEGER NOT NULL CHECK (max_score > 0),
+      active_days INTEGER NOT NULL CHECK (active_days >= 0),
+      correct_count INTEGER NOT NULL CHECK (correct_count >= 0),
+      wrong_count INTEGER NOT NULL CHECK (wrong_count >= 0),
+      skipped_count INTEGER NOT NULL CHECK (skipped_count >= 0),
+      rule_version INTEGER NOT NULL,
+      finalized_at TEXT NOT NULL
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -229,6 +255,7 @@ class StorageService {
         await db.execute(_createTable);
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
+        await db.execute(_createTextSizeSettingsTable);
         await db.execute(_createPracticeSettingsTable);
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
@@ -238,6 +265,7 @@ class StorageService {
         await db.execute(_createDebugSettingsTable);
         await db.execute(_createDeviceIdentityTable);
         await db.execute(_createClimbEntriesTable);
+        await db.execute(_createMonthlyMedalResultsTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -336,6 +364,8 @@ class StorageService {
           await db.execute(_createFreePracticeUsageTable);
         }
         if (oldVersion < 15) await db.execute(_createClimbEntriesTable);
+        if (oldVersion < 16) await db.execute(_createTextSizeSettingsTable);
+        if (oldVersion < 17) await db.execute(_createMonthlyMedalResultsTable);
       },
     );
   }
@@ -467,6 +497,24 @@ class StorageService {
     await db.insert(
       'theme_settings',
       {'id': 0, 'mode': mode.toJson()},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// User-selected app typography scale. Medium is deliberately the default:
+  /// Nunito Sans reads slightly smaller than the former platform typeface.
+  Future<AppTextSize> getTextSize() async {
+    final db = await _database;
+    final rows = await db.query('text_size_settings', limit: 1);
+    if (rows.isEmpty) return AppTextSize.medium;
+    return AppTextSizeJson.fromJson(rows.first['size'] as String?);
+  }
+
+  Future<void> setTextSize(AppTextSize size) async {
+    final db = await _database;
+    await db.insert(
+      'text_size_settings',
+      {'id': 0, 'size': size.toJson()},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -714,6 +762,133 @@ class StorageService {
       skipped: row['skipped'] as int
     );
   }
+
+  Future<MonthlyMedalProgress> getMonthlyMedalProgress(
+    int year,
+    int month,
+  ) async {
+    final db = await _database;
+    return _readMonthlyMedalProgress(db, year, month);
+  }
+
+  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() {
+    final now = clockForTesting();
+    return getMonthlyMedalProgress(now.year, now.month);
+  }
+
+  /// Freezes every past month that has at least one Daily Test result. A row
+  /// is written even below Bronze, so later rule changes cannot retroactively
+  /// award it. INSERT OR IGNORE makes repeated app opens harmless.
+  Future<void> finalizePastMedalMonths() async {
+    final now = clockForTesting();
+    final currentMonth = _monthKey(now.year, now.month);
+    final db = await _database;
+    await db.transaction((txn) async {
+      final months = await txn.rawQuery('''
+        SELECT DISTINCT substr(day, 1, 7) AS month
+        FROM climb_daily_entries
+        WHERE day < ?
+          AND substr(day, 1, 7) NOT IN (
+            SELECT month FROM monthly_medal_results
+          )
+        ORDER BY month
+      ''', ['$currentMonth-01']);
+      for (final row in months) {
+        final key = row['month'] as String;
+        final parts = key.split('-');
+        final year = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final progress = await _readMonthlyMedalProgress(txn, year, month);
+        final tier = MonthlyMedalRules.tierFor(
+          year: year,
+          month: month,
+          score: progress.score,
+        );
+        await txn.insert(
+          'monthly_medal_results',
+          {
+            'month': key,
+            'tier': tier?.name,
+            'score': progress.score,
+            'max_score': progress.maxScore,
+            'active_days': progress.activeDays,
+            'correct_count': progress.correct,
+            'wrong_count': progress.wrong,
+            'skipped_count': progress.skipped,
+            'rule_version': MonthlyMedalRules.ruleVersion,
+            'finalized_at': now.toIso8601String(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+    });
+  }
+
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async {
+    final db = await _database;
+    final rows = await db.query(
+      'monthly_medal_results',
+      orderBy: 'month DESC',
+    );
+    return rows.map(_monthlyMedalResultFromRow).toList(growable: false);
+  }
+
+  Future<MonthlyMedalProgress> _readMonthlyMedalProgress(
+    DatabaseExecutor db,
+    int year,
+    int month,
+  ) async {
+    if (month < 1 || month > 12 || year < 1 || year > 9999) {
+      throw ArgumentError('Invalid calendar month');
+    }
+    final key = _monthKey(year, month);
+    final endDate = DateTime(year, month + 1);
+    final end = '${_monthKey(endDate.year, endDate.month)}-01';
+    final rows = await db.rawQuery('''
+      SELECT COALESCE(SUM(step), 0) AS active_days,
+        COALESCE(SUM(correct_count), 0) AS correct,
+        COALESCE(SUM(wrong_count), 0) AS wrong,
+        COALESCE(SUM(skipped_count), 0) AS skipped
+      FROM climb_daily_entries WHERE day >= ? AND day < ?
+    ''', ['$key-01', end]);
+    final row = rows.single;
+    final correct = row['correct'] as int;
+    final wrong = row['wrong'] as int;
+    return MonthlyMedalProgress(
+      year: year,
+      month: month,
+      score: MonthlyMedalRules.score(correct: correct, wrong: wrong),
+      maxScore: MonthlyMedalRules.maxScore(year, month),
+      activeDays: row['active_days'] as int,
+      correct: correct,
+      wrong: wrong,
+      skipped: row['skipped'] as int,
+    );
+  }
+
+  MonthlyMedalResult _monthlyMedalResultFromRow(Map<String, Object?> row) {
+    final parts = (row['month'] as String).split('-');
+    final tierName = row['tier'] as String?;
+    final tier = tierName == null
+        ? null
+        : MedalTier.values.firstWhere((value) => value.name == tierName);
+    return MonthlyMedalResult(
+      year: int.parse(parts[0]),
+      month: int.parse(parts[1]),
+      score: row['score'] as int,
+      maxScore: row['max_score'] as int,
+      activeDays: row['active_days'] as int,
+      correct: row['correct_count'] as int,
+      wrong: row['wrong_count'] as int,
+      skipped: row['skipped_count'] as int,
+      tier: tier,
+      ruleVersion: row['rule_version'] as int,
+      finalizedAt: DateTime.parse(row['finalized_at'] as String),
+    );
+  }
+
+  static String _monthKey(int year, int month) =>
+      '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}';
 
   DailyTestSet _dailyTestSetFromRow(Map<String, Object?> row) {
     final questions = (jsonDecode(row['questions_json'] as String) as List)

@@ -34,6 +34,10 @@ flutter:
   # dropping the file in plus bumping Avatar.count, nothing here to edit.
   assets:
     - assets/avatars/
+  fonts:
+    - family: NunitoSans
+      fonts:
+        - asset: assets/fonts/NunitoSans-Variable.ttf
 
 # Generates ios/Runner/Assets.xcassets/AppIcon.appiconset from one master
 # image (`dart run flutter_launcher_icons`) instead of hand-maintaining

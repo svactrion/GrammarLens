@@ -9,11 +9,16 @@ class MonthlyMountain extends StatefulWidget {
   final int days;
   final int completedDays;
   final Avatar avatar;
+
+  /// Home lets vertical drags reach the page; the standalone preview can
+  /// still explore the full trail. Programmatic pawn tracking works in both.
+  final bool allowUserScroll;
   const MonthlyMountain(
       {super.key,
       required this.days,
       required this.completedDays,
-      required this.avatar});
+      required this.avatar,
+      this.allowUserScroll = true});
 
   @override
   State<MonthlyMountain> createState() => _MonthlyMountainState();
@@ -98,8 +103,13 @@ class _MonthlyMountainState extends State<MonthlyMountain>
             child: ColoredBox(
               color: palette.sky,
               child: Scrollbar(
+                  notificationPredicate: (_) => widget.allowUserScroll,
+                  interactive: widget.allowUserScroll,
                   controller: _scroll,
                   child: SingleChildScrollView(
+                    physics: widget.allowUserScroll
+                        ? null
+                        : const NeverScrollableScrollPhysics(),
                     controller: _scroll,
                     child: SizedBox(
                       width: constraints.maxWidth,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,6 +29,7 @@ class _FakeStorageService extends StorageService {
   /// back by a storage error) to prove the screen reacts to it instead of
   /// swallowing it.
   Object? failCompletionWith;
+  Completer<void>? pendingCompletion;
 
   @override
   Future<void> completeDailyTest(
@@ -36,6 +38,7 @@ class _FakeStorageService extends StorageService {
     String? day,
     DateTime? completedAt,
   }) async {
+    if (pendingCompletion != null) await pendingCompletion!.future;
     if (failCompletionWith != null) {
       throw failCompletionWith!;
     }
@@ -100,6 +103,72 @@ void main() {
   // AppMessenger.key is a process-global GlobalKey, so a leftover message
   // from one test could otherwise bleed into the next.
   tearDown(() => AppMessenger.clear());
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+        'result footer waits for saving, retries failure, and fits large text in $brightness',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final pending = Completer<void>();
+      storageService.pendingCompletion = pending;
+      storageService.failCompletionWith = StateError('disk full');
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(brightness),
+        builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!),
+        home: DailyTestResultScreen(
+          dailyTestSet:
+              DailyTestSet(day: '2026-01-01', questions: [questions.first]),
+          answers: const {'q1': 'the'},
+          dailyTestService: dailyTestService,
+        ),
+      ));
+      await tester.pump();
+      final scroll =
+          tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+      scroll.jumpTo(scroll.maxScrollExtent);
+      await tester.pump();
+      expect(find.text('Saving your results…'), findsOneWidget);
+      expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+          isNull);
+      pending.complete();
+      await tester.pumpAndSettle();
+      scroll.jumpTo(scroll.maxScrollExtent);
+      await tester.pump();
+      expect(find.text('See your climb'), findsNothing);
+      expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+          isNull);
+      storageService.failCompletionWith = null;
+      await tester.tap(find.text('Retry saving'));
+      await tester.pumpAndSettle();
+      expect(find.text('See your climb'), findsOneWidget);
+      expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+          isNotNull);
+      expect(storageService.completeDailyTestCalls, 1);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('all-skipped result offers Home without promising a step',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: DailyTestResultScreen(
+          dailyTestSet:
+              DailyTestSet(day: '2026-01-01', questions: [questions.first]),
+          answers: const {},
+          dailyTestService: dailyTestService,
+        )));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Back to Home'), 200);
+    expect(find.text('See your climb'), findsNothing);
+    expect(storageService.completeDailyTestCalls, 1);
+  });
 
   Future<void> pumpResult(WidgetTester tester, DailyTestSet set) async {
     await tester.pumpWidget(

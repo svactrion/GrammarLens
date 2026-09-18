@@ -72,12 +72,8 @@ class PremiumScreen extends StatefulWidget {
   /// both just want to return to whatever pushed this screen.
   final VoidCallback? onDone;
 
-  /// Optional label for whatever prompted this screen — e.g. a specific
-  /// weak spot's name, so a future caller can open this screen already
-  /// naming what it's for ("Unlock personalized feedback on definite
-  /// articles") instead of a screen-agnostic pitch (PRD v2 §13.5's planned
-  /// weak-spot tap-through). Null for every caller today — mechanism only
-  /// in this batch, nothing passes a value yet.
+  /// The weak spot that prompted this screen. It replaces the supporting
+  /// sentence, keeping the main headline identical across entry points.
   final String? sourceContext;
 
   PremiumScreen({
@@ -239,11 +235,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
     Navigator.of(context).pop();
   }
 
-  String get _headline {
-    final source = widget.sourceContext;
-    return source != null
-        ? 'Unlock personalized feedback on $source'
-        : 'Unlock personalized feedback';
+  String get _supportingText {
+    final source = widget.sourceContext?.trim();
+    return source == null || source.isEmpty
+        ? 'Practice the mistakes you actually make.'
+        : 'Practice $source.';
   }
 
   @override
@@ -300,7 +296,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     _AvatarHero(centerAvatar: _userAvatar),
                     const SizedBox(height: 4),
                     Text(
-                      _headline,
+                      'Unlock personalized feedback',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -308,7 +304,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Practice the mistakes you actually make.',
+                      _supportingText,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(color: colorScheme.onSurfaceVariant),
@@ -433,14 +429,14 @@ List<Avatar> _otherAvatarsFor(Avatar center) {
 }
 
 /// The hero visual (this batch): the user's own avatar front-and-center,
-/// four others peeking from behind — "here's your identity among the
+/// two or four smaller companions alongside — "here's your identity among the
 /// set," not a feature illustration. Built from the existing [AvatarTile]
 /// (transparent background + ground shadow already baked in, since the
 /// ring-removal batch) with no [Hero] wrapper at all: this screen has no
 /// push/pop partner to fly to, and wrapping these in `Hero` risked
 /// colliding with Home's or Settings' own avatar Hero tags, both of which
 /// stay mounted at the same time as this screen (see `home_screen.dart`'s
-/// own `homeAvatarHeroTag` doc comment for why that would crash). [center]
+/// own `homeAvatarHeroTag` doc comment for why that would crash). [centerAvatar]
 /// is never null by the time this builds — [_PremiumScreenState] resolves
 /// a real fallback avatar before this is ever rendered, so there is no
 /// placeholder state here to design for.
@@ -452,41 +448,14 @@ class _AvatarHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final others = _otherAvatarsFor(centerAvatar);
-    // Inner pair sits closer to center (peeks more), outer pair further
-    // out and slightly smaller (peeks less) — a layered "huddle" rather
-    // than five same-size tiles in a row. Vertical offsets alternate so
-    // the group doesn't read as a rigid straight line.
-    //
-    // Radii/offsets scaled to 0.8x the original dimensions (density pass,
-    // docs/build-log.md same date as this comment); the outer [SizedBox]
-    // below is trimmed a further notch to 90pt (still within the ~90-100pt
-    // band this pass targeted) since the avatars' own painted extent
-    // leaves comfortable margin within it. Both changes chase the same
-    // goal: the loaded-state screen fitting above the fixed footer
-    // without scrolling on a 393x852 device.
+    // Keep the user's avatar prominent without fading or overlapping others.
+    // Retain the 90pt hero height so entry-point layout stays consistent.
     const centerRadius = 38.0;
     const innerRadius = 26.0;
     const outerRadius = 21.0;
-    const innerOffsetX = 46.0;
-    const outerOffsetX = 72.0;
-
-    // Stack's own `alignment: center` centers each non-positioned child
-    // first; Transform.translate then offsets it purely at paint time — no
-    // Positioned needed, and no effect on any child's own layout size.
-    Widget positioned({
-      required Avatar avatar,
-      required double radius,
-      required double dx,
-      required double dy,
-    }) {
-      return Transform.translate(
-        offset: Offset(dx, dy),
-        child: Opacity(
-          opacity: 0.6,
-          child: AvatarTile(avatar: avatar, radius: radius),
-        ),
-      );
-    }
+    const gap = 8.0;
+    const fiveAvatarWidth =
+        centerRadius * 2 + innerRadius * 4 + outerRadius * 4 + gap * 4;
 
     // One semantic node for the whole group, not five: the other four
     // avatars are purely decorative (nothing to tap, nothing individually
@@ -499,35 +468,33 @@ class _AvatarHero extends StatelessWidget {
       child: ExcludeSemantics(
         child: SizedBox(
           height: 90,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              positioned(
-                avatar: others[0],
-                radius: outerRadius,
-                dx: -outerOffsetX,
-                dy: 6,
-              ),
-              positioned(
-                avatar: others[1],
-                radius: innerRadius,
-                dx: -innerOffsetX,
-                dy: -5,
-              ),
-              positioned(
-                avatar: others[2],
-                radius: innerRadius,
-                dx: innerOffsetX,
-                dy: -5,
-              ),
-              positioned(
-                avatar: others[3],
-                radius: outerRadius,
-                dx: outerOffsetX,
-                dy: 6,
-              ),
-              AvatarTile(avatar: centerAvatar, radius: centerRadius),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final showOuterPair = constraints.maxWidth >= fiveAvatarWidth;
+              return Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (showOuterPair) ...[
+                        AvatarTile(avatar: others[0], radius: outerRadius),
+                        const SizedBox(width: gap),
+                      ],
+                      AvatarTile(avatar: others[1], radius: innerRadius),
+                      const SizedBox(width: gap),
+                      AvatarTile(avatar: centerAvatar, radius: centerRadius),
+                      const SizedBox(width: gap),
+                      AvatarTile(avatar: others[2], radius: innerRadius),
+                      if (showOuterPair) ...[
+                        const SizedBox(width: gap),
+                        AvatarTile(avatar: others[3], radius: outerRadius),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -1058,9 +1025,8 @@ class _ComparisonRowLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final divider = showDivider
-        ? Border(bottom: BorderSide(color: dividerColor))
-        : null;
+    final divider =
+        showDivider ? Border(bottom: BorderSide(color: dividerColor)) : null;
 
     return SizedBox(
       height: height,
@@ -1260,8 +1226,11 @@ class _PlanCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // Only two natural-height cards: measure the taller content, then stretch
+    // both borders to it. No fixed height or vertical flex clips scaled text.
+    return IntrinsicHeight(
+        child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           child: _PlanCard(
@@ -1285,7 +1254,7 @@ class _PlanCards extends StatelessWidget {
           ),
         ),
       ],
-    );
+    ));
   }
 }
 
@@ -1319,6 +1288,7 @@ class _PlanCard extends StatelessWidget {
     final borderColor =
         selected ? colorScheme.secondary : colorScheme.outlineVariant;
     final savings = pricing.savingsLabel;
+    final borderWidth = selected ? 2.0 : 1.0;
 
     return Semantics(
       key: ValueKey('planCard_$label'),
@@ -1335,7 +1305,10 @@ class _PlanCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            // Decoration contributes the border to padding. Keep the total
+            // inset stable when selection switches between the two plans.
+            padding: EdgeInsets.symmetric(
+                horizontal: 14 - borderWidth, vertical: 12 - borderWidth),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: borderColor, width: selected ? 2 : 1),

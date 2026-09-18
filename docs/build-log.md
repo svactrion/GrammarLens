@@ -3763,3 +3763,230 @@ unnoticed.
   in Commit 1, plus Commit 2's net +3: two new atomicity tests and one new
   failure-surfacing test, minus the one `markCompleted`-specific test that
   no longer applies once `markCompleted` itself is gone).
+
+## 2026-09-18 (Monthly Climb Stage 3: first Home integration slice)
+
+- **[Product]** User approved connecting persisted monthly progress to Home
+  after verifying `monthly-climb-v2` at `0cf7eaa`, with only the two existing
+  untracked docs. This is post-launch work; no main merge or PR. Updated the
+  preview instructions to the current checkout `/Users/ahmet/GrammarLens`.
+- **[Engineering]** Home reads `getClimbProgress` for the current calendar
+  month and renders the existing `MonthlyMountain` with the selected avatar.
+  Added loading, empty, summit and read-error/retry states. Concurrent reads
+  cannot overwrite newer results; a month key recreates the mountain at
+  rollover, including transitions between equally long months. Resume and
+  Daily Test/result return refresh local data without generating questions.
+- **[Engineering]** Home uses DailyTestScreen's existing `onFinished` hook
+  to own the result route and await its return. Added an optional result-screen
+  callback after successful persistence so leaving during a pending write
+  still refreshes Home after commit. No storage, migration, answer-matching or
+  completion transaction implementation was changed. Day-0's existing hooks
+  and navigation remain. Existing Topic Practice/weak-spot paywall gates and
+  avatar Hero remain. At large text sizes, Home's locked Topic Practice card
+  uses a labelled lock icon in place of the wide Premium pill; the new 320px,
+  2× text tests exposed the pill's horizontal overflow.
+- **[Validation]** `flutter analyze --no-pub`: no issues. Full
+  `flutter test --no-pub`: **389 passed**. New Home coverage includes selected
+  avatar/month length, same-length month rollover, stale reads, error/retry,
+  delayed save after leaving results, all-skipped/answered completion, replay
+  without another completion write or generation call, and small-screen large
+  text/reduced motion in light/dark. Existing database atomicity/migration,
+  Daily Test, onboarding and avatar tests passed unchanged.
+- **[Visual/build]** Production entry point built and launched on the dedicated
+  Monthly Climb simulator (iPhone 17 / iOS 26.5). Its data was at onboarding;
+  no on-device Home/completion acceptance is claimed. Production Home widget
+  renders with controlled 8/30 progress were inspected in light/dark; temporary
+  render harness removed, images retained at `/tmp/climb-home-light.png` and
+  `/tmp/climb-home-dark.png`. These omit the app's bottom-nav shell and are
+  layout checks, not screenshots of the complete running app.
+- **[Remaining]** Device Home/completion review, remaining Home redesign and
+  error-preview access decision, medals/Profile and release measurements.
+  Stage 3 is not marked fully accepted. No commit, push, merge or PR in this
+  batch. Existing untracked docs were left untouched.
+
+## 2026-09-18 (Device feedback package 1: result CTA and visible climb movement)
+
+- **[Product]** User approved the first revision package after sharing
+  `IMG_6217.PNG`, which showed the result list ending without a next action.
+  No new paywall redirection in this package. Other planned revisions remain
+  separate; see `monthly-climb-revision-plan.md`.
+- **[Engineering]** Default Daily Test results now end with `See your climb`
+  after a saved answered test, or `Back to Home` for all-skipped/replayed
+  results. While saving, the footer action is disabled and says
+  `Saving your results…`; a failure shows a footer retry and blocks a success
+  CTA. Existing top error/retry and Day-0's custom `bottomBuilder` remain.
+- **[Engineering]** Fixed the animation cause rather than only adding a button:
+  the prior save callback updated Home while the result route still covered it.
+  Home now defers climb presentation during the Daily Test/result flow, waits
+  for the result route's reverse transition to complete, reveals the mountain,
+  then applies the persisted target to its existing animation. The short Home
+  content is kept in one mounted column so scrolling does not discard the
+  mountain's previous position. A pending completion day handles late writes;
+  `HomeScreen.active` is wired from the app's IndexedStack selection so a save
+  finishing on another tab waits for Home. Month keys still reset presentation
+  at rollover. Storage, migration, matching, service and atomic completion
+  implementations were not changed.
+- **[Validation]** `flutter analyze --no-pub`: clean. Targeted Home/result/
+  first-launch tests: **61 passed**; full suite: **397 passed**. New tests
+  compare the pawn's actual initial/intermediate/final positions for both
+  CTA and back navigation, with/without reduced motion. They assert that
+  persistence has completed while the covered Home still shows the old step,
+  that the mountain is onscreen when movement starts, and that replay does
+  not award or move again. Also covered delayed save on an inactive Home tab,
+  busy/error/retry footer states at 320px with 2× text in light/dark, and
+  all-skipped footer copy. Existing migration/transaction and Day-0 tests pass.
+- **[Visual]** Inspected production result-widget renders with five fixture
+  questions at 390×844 in light/dark. Output: `/tmp/climb-result-light.png`
+  and `/tmp/climb-result-dark.png`; the temporary rendering test was removed.
+  These are controlled widget renders, not physical-device screenshots.
+  The user's physical-device acceptance is the next check.
+- **[Delivery]** Changes remain on `monthly-climb-v2`, uncommitted. No push,
+  merge or PR. No new application run/install on the user's phone in this batch.
+
+## 2026-09-18 (Device feedback package 2: Home scrolling and compact progress)
+
+- **[Product]** User confirmed package 1 works correctly on their phone and
+  approved moving to package 2. No weekly participation strip or new mountain
+  detail route was added; the compact monthly counter is retained.
+- **[Engineering]** `MonthlyMountain.allowUserScroll` defaults to true for the
+  standalone preview. Home sets it to false: the inner viewport uses
+  `NeverScrollableScrollPhysics`, and its scrollbar does not respond to
+  notifications or input. Vertical gestures over the mountain now reach the
+  Home page. Programmatic scrolling still follows the pawn during the existing
+  step animation. The long caption below the scene was removed; a wrapping
+  heading holds the month and progress counter, with a live semantic label
+  including the summit state.
+- **[Validation]** Static analysis clean; full Flutter suite **399 passed**.
+  New light/dark tests drag from inside the mountain at 320×568, assert outer
+  page movement with unchanged inner trail position, reach Topic Practice,
+  and verify counter placement and its actual semantic-node label. Existing
+  small-screen/large-text, preview scrolling and package-1 initial/intermediate/
+  final animation-frame tests pass. No physical-device install or check in
+  this batch; package 2 awaits the user's device review.
+- **[Delivery]** `monthly-climb-v2`; no storage/migration/completion changes,
+  commit, push, merge or PR. Other revision packages remain pending.
+
+## 2026-09-18 (Premium 4a: equal Annual/Monthly plan cards)
+
+- **[Product]** User confirmed Home scrolling works and authorized proceeding
+  within the remaining usage window. Scoped this batch to 4a ahead of font
+  selection; the content-driven sizing also accommodates later typography.
+  The final test rerun was interrupted by an automatic approval-review usage
+  limit, then resumed after the user reported that usage had renewed.
+- **[Engineering]** An `IntrinsicHeight` around the two-card horizontal Row
+  stretches both frames to the taller natural content, including Annual's
+  savings badge. This row has no vertical flex or LayoutBuilder children.
+  Compensated card padding for 1px/2px border thickness so selection changes
+  do not shift content width or change height. No fixed height, pricing,
+  discount, purchase or analytics changes.
+- **[Validation]** Static analysis clean. All **67 Premium tests passed**.
+  New tests check equal width/height, aligned tops and stable sizes after
+  selecting Monthly, at 320px/1× and 375px/2× in actual light/dark app themes.
+  The full app suite was not rerun in this isolated pricing-layout batch.
+- **[Open finding]** Testing 320px/2× exposed horizontal overflow in the
+  separate comparison-table header/rows; left for the broader Premium layout
+  pass rather than expanding 4a. Device acceptance of 4a is pending.
+- **[Delivery]** Changes remain uncommitted on `monthly-climb-v2`; no push,
+  main merge or PR. No device installation in this batch.
+
+## 2026-09-18 (Premium 4b: contextual entry without a longer headline)
+
+- **[Product]** User confirmed 4a on their phone and authorized the next item.
+  Kept scope to weak-spot entry layout; avatar composition and typography remain
+  separate. The prior 320px/2× comparison-table overflow remains open.
+- **[Engineering]** Fixed `Unlock personalized feedback` as the shared heading.
+  `sourceContext` now replaces the supporting sentence with `Practice <topic>.`;
+  whitespace-only/absent context keeps the existing generic copy. No additional
+  content block, line clamp, font shrinking, pricing or navigation change.
+- **[Validation]** Static analysis clean; all **70 Premium tests passed**.
+  Actual light/dark themes at 393×852 compare normal entry with Modal past
+  forms, definite articles and blank context: body height, plan-card position,
+  footer position and scroll extent match. A long topic at 375×667 and 2× text
+  remains untruncated with the fixed footer accessible. This proves no extra
+  scroll for the reported examples, not zero scroll on every device. The full
+  app suite was not rerun for this local text/layout change.
+- **[Delivery]** User device acceptance pending. No device install, commit,
+  push, main merge or PR; work remains on `monthly-climb-v2`.
+
+## 2026-09-18 (Premium 4c: opaque, non-overlapping avatar group)
+
+- **[Product]** User confirmed 4b on device and authorized 4c.
+- **[Engineering]** Replaced faded, translated overlapping avatars with a
+  centered row: selected avatar larger, companions smaller and fully opaque,
+  8pt gaps. Available width selects three or five avatars. Hero stays 90pt tall;
+  deterministic identity, fallback and single semantic node remain unchanged.
+  No pricing, storage, migration or completion changes.
+- **[Validation]** Static analysis clean; all 74 Premium tests passed. Added
+  light/dark checks at 320/390pt for count, centered selection, bounds, gaps,
+  relative size and absence of opacity ancestors. Full suite not rerun for
+  this isolated UI change. Physical-device visual acceptance remains pending.
+- **[Delivery]** No install, commit, push, main merge or PR.
+- **[Device acceptance]** User confirmed the 4c layout on their phone.
+
+## 2026-09-18 (app typography: bundled Nunito Sans)
+
+- **[Product]** User approved Nunito Sans after comparing the friendly rounded
+  direction with a more neutral Manrope alternative.
+- **[Engineering]** Added the Google Fonts variable TTF and OFL license to the
+  repository and registered `NunitoSans` in `pubspec.yaml`. The shared theme
+  sets it at the base, covering text themes, app bars and themed controls in
+  light/dark without runtime downloads. Asset size is 571,240 bytes.
+- **[Validation]** Static analysis clean. New tests assert the family across
+  representative theme styles and render Turkish characters. All 120 focused
+  theme/Home/Premium tests and the full **412-test** suite passed. Device review
+  is still required for visual weight and line breaks on Home, Daily Results
+  and the three Premium entry paths.
+- **[Delivery]** No device install, commit, push, main merge or PR.
+
+## 2026-09-18 (Profile tab + persisted text sizing)
+
+- **[Product]** User accepted Nunito Sans but found its initial size small.
+  Preserved that exact size as Small; Medium (1.10×) is the default and Large
+  is 1.20×. Renamed the user-facing Settings tab/page to Profile with person
+  icon while keeping all existing profile, appearance, data and debug tools.
+- **[Storage]** Schema v16 adds only `text_size_settings` (`id=0`, `size`),
+  layered after main's v15 climb ledger. Missing/unknown values safely resolve
+  to Medium. No existing table, migration or atomic completion logic changed.
+- **[Engineering]** The shared Material type scale applies the chosen factor
+  before system MediaQuery accessibility scaling. Profile's Appearance section
+  exposes a three-way segmented choice and persists changes immediately.
+- **[Validation]** Static analysis clean; all **416 tests passed**. Coverage
+  includes ordered scales, Profile labels/callback, preference round trips,
+  oldest-schema migration, existing climb migration/data survival and the full
+  Home/Premium/Daily Test suite. Physical-device acceptance remains pending.
+- **[Delivery]** No device install, commit, push, main merge or PR.
+
+## 2026-09-18 (Profile monthly-medal empty collection)
+
+- **[Product]** User accepted Profile and text sizing on device, then authorized
+  the next medal step. Kept scoring, thresholds, minimum participation and
+  partial-month behavior open exactly as the PRD requires.
+- **[Engineering]** Added a reusable `MonthlyMedalCollection` and `MedalTier`
+  boundary. Profile renders Bronze/Silver/Gold specimens with subdued tier
+  color, mountain mark, lock badge, `Not earned` copy and one semantic label
+  per medal. Production passes no earned tiers; no award storage/migration or
+  score inference was introduced.
+- **[Validation]** Static analysis clean; all **424 tests passed**. Dedicated
+  coverage checks 320pt light/dark at Small/Medium/Large, no overflow, explicit
+  empty state and locked/earned semantics. Device visual acceptance pending.
+- **[Delivery]** No device install, commit, push, main merge or PR.
+- **[Device acceptance]** User confirmed the locked medal collection on phone.
+
+## 2026-09-18 (monthly medal rule v1 + frozen history)
+
+- **[Product]** User approved correct +2, wrong +1, skipped +0 and ceil
+  25/50/75% Bronze/Silver/Gold thresholds against the full month's maximum.
+  No separate minimum-day gate, partial-month proration or catch-up.
+- **[Storage]** Additive schema v17 creates `monthly_medal_results`; main's v15
+  climb ledger, v16 text preference and atomic Daily Test transaction remain
+  unchanged. Past months with ledger activity finalize once, including a null
+  tier below Bronze. Empty months are omitted because profile creation time is
+  not stored. INSERT OR IGNORE plus rule version 1 prevents recalculation.
+- **[Engineering]** Added pure `MonthlyMedalRules`, progress/result models and
+  Profile loading on mount and tab re-entry. Current month remains `In progress`;
+  history shows month, final tier or `No medal`, and frozen score/max.
+- **[Validation]** Static analysis clean; all **436 tests passed**. Tests cover
+  28–31-day ceiling thresholds, exact boundaries, current-month exclusion,
+  below-Bronze persistence, frozen history, migration/data survival, semantics,
+  and populated 320pt light/dark layouts at all three app text sizes.
+- **[Delivery]** No device install, commit, push, main merge or PR.

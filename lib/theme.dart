@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'models/app_text_size.dart';
+
 // The whole ColorScheme is hand-built rather than derived via
 // `ColorScheme.fromSeed`, for two reasons that both bit us with the seeded
 // approach: (1) `fromSeed` desaturates any seed toward muted M3 tonal
@@ -352,7 +354,10 @@ ColorScheme _buildColorScheme(Brightness brightness) {
   );
 }
 
-ThemeData buildAppTheme(Brightness brightness) {
+ThemeData buildAppTheme(
+  Brightness brightness, {
+  AppTextSize textSize = AppTextSize.medium,
+}) {
   final colorScheme = _buildColorScheme(brightness);
   final isDark = brightness == Brightness.dark;
   final base = ThemeData(
@@ -364,17 +369,70 @@ ThemeData buildAppTheme(Brightness brightness) {
   // Comfortable line height across the board (practice screen especially
   // reads as cramped without it) — a height multiplier on top of the M3
   // type scale rather than custom font sizes.
-  final textTheme = base.textTheme.copyWith(
-    headlineSmall: base.textTheme.headlineSmall?.copyWith(height: 1.3),
-    titleLarge: base.textTheme.titleLarge?.copyWith(height: 1.3),
-    titleMedium: base.textTheme.titleMedium?.copyWith(height: 1.35),
-    titleSmall: base.textTheme.titleSmall?.copyWith(height: 1.35),
-    bodyLarge: base.textTheme.bodyLarge?.copyWith(height: 1.5),
-    bodyMedium: base.textTheme.bodyMedium?.copyWith(height: 1.5),
-    bodySmall: base.textTheme.bodySmall?.copyWith(height: 1.45),
-    labelLarge:
-        base.textTheme.labelLarge?.copyWith(height: 1.3, letterSpacing: 0.1),
+  TextStyle materialStyle(TextStyle? style, double fontSize) =>
+      (style ?? const TextStyle()).copyWith(fontSize: fontSize);
+  final materialTextTheme = base.textTheme.copyWith(
+    displayLarge: materialStyle(base.textTheme.displayLarge, 57),
+    displayMedium: materialStyle(base.textTheme.displayMedium, 45),
+    displaySmall: materialStyle(base.textTheme.displaySmall, 36),
+    headlineLarge: materialStyle(base.textTheme.headlineLarge, 32),
+    headlineMedium: materialStyle(base.textTheme.headlineMedium, 28),
+    headlineSmall: materialStyle(base.textTheme.headlineSmall, 24),
+    titleLarge: materialStyle(base.textTheme.titleLarge, 22),
+    titleMedium: materialStyle(base.textTheme.titleMedium, 16),
+    titleSmall: materialStyle(base.textTheme.titleSmall, 14),
+    bodyLarge: materialStyle(base.textTheme.bodyLarge, 16),
+    bodyMedium: materialStyle(base.textTheme.bodyMedium, 14),
+    bodySmall: materialStyle(base.textTheme.bodySmall, 12),
+    labelLarge: materialStyle(base.textTheme.labelLarge, 14),
+    labelMedium: materialStyle(base.textTheme.labelMedium, 12),
+    labelSmall: materialStyle(base.textTheme.labelSmall, 11),
   );
+  final comfortableTextTheme = materialTextTheme.copyWith(
+    headlineSmall: materialTextTheme.headlineSmall?.copyWith(height: 1.3),
+    titleLarge: materialTextTheme.titleLarge?.copyWith(height: 1.3),
+    titleMedium: materialTextTheme.titleMedium?.copyWith(height: 1.35),
+    titleSmall: materialTextTheme.titleSmall?.copyWith(height: 1.35),
+    bodyLarge: materialTextTheme.bodyLarge?.copyWith(height: 1.5),
+    bodyMedium: materialTextTheme.bodyMedium?.copyWith(height: 1.5),
+    bodySmall: materialTextTheme.bodySmall?.copyWith(height: 1.45),
+    labelLarge:
+        materialTextTheme.labelLarge?.copyWith(height: 1.3, letterSpacing: 0.1),
+  );
+  TextStyle? scaled(TextStyle? style) {
+    final fontSize = style?.fontSize;
+    return fontSize == null
+        ? style
+        : style!.copyWith(fontSize: fontSize * textSize.scaleFactor);
+  }
+
+  // TextTheme.apply asserts when even one platform-provided style has no
+  // explicit fontSize. Scale only defined Material styles and leave any
+  // intentionally incomplete fallback style alone.
+  final textTheme = comfortableTextTheme
+      .copyWith(
+        displayLarge: scaled(comfortableTextTheme.displayLarge),
+        displayMedium: scaled(comfortableTextTheme.displayMedium),
+        displaySmall: scaled(comfortableTextTheme.displaySmall),
+        headlineLarge: scaled(comfortableTextTheme.headlineLarge),
+        headlineMedium: scaled(comfortableTextTheme.headlineMedium),
+        headlineSmall: scaled(comfortableTextTheme.headlineSmall),
+        titleLarge: scaled(comfortableTextTheme.titleLarge),
+        titleMedium: scaled(comfortableTextTheme.titleMedium),
+        titleSmall: scaled(comfortableTextTheme.titleSmall),
+        bodyLarge: scaled(comfortableTextTheme.bodyLarge),
+        bodyMedium: scaled(comfortableTextTheme.bodyMedium),
+        bodySmall: scaled(comfortableTextTheme.bodySmall),
+        labelLarge: scaled(comfortableTextTheme.labelLarge),
+        labelMedium: scaled(comfortableTextTheme.labelMedium),
+        labelSmall: scaled(comfortableTextTheme.labelSmall),
+      )
+      .apply(
+        // Bundled rather than fetched at runtime: typography stays identical
+        // offline and on both iOS and Android. Applying the family after the
+        // Material scale is built preserves its concrete font sizes.
+        fontFamily: 'NunitoSans',
+      );
 
   // Light mode: the page and app bar sit directly on the brand orange, with
   // `onPrimary` (dark, contrast-checked above) for title/back-button/icons.

@@ -1,5 +1,86 @@
 # GrammarLens — Roadmap & Status
 
+**Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
+preview and Stage 2 persistence are present. The approved first Stage 3 slice
+now displays persisted monthly progress and the selected avatar on Home, with
+local refresh on completion/return/resume and explicit progress-read retry.
+Main's storage, migration and atomic Daily Test completion remain the base.
+Home device acceptance, the remaining Home redesign/access decisions, medals,
+Profile and rollout are pending. This branch ships after launch; no main merge
+or PR. Older statements below that no gamification exists describe the earlier
+v2 checkpoint. See `prd-gamification.md` M1–M5 for the active monthly direction.
+
+**Device-feedback package 1 — 2026-09-18:** Results now end with a save-aware
+`See your climb` / `Back to Home` action. Persisted progress waits for Home to
+be visible before animating; the mountain is brought into view first. Both
+CTA/back returns, delayed saves and reduced motion are covered. No new paywall
+route; Day-0 retains its existing CTA. Implementation and automated/widget
+visual checks are complete; the user confirmed successful behavior on their
+phone. Home scrolling follows in package 2, per `monthly-climb-revision-plan.md`.
+
+**Device-feedback package 2 — 2026-09-18:** User confirmed package 1 works on
+their phone. Home's mountain now passes vertical drags to the page while its
+automatic pawn tracking remains. The long caption below the mountain is
+removed; a compact accessible monthly counter sits in the heading area.
+Standalone preview exploration remains enabled. Package 2 device review is
+complete: user confirmed it works. Typography/Premium follow next.
+
+**Premium 4a — equal plan-card frames:** The two pricing cards now stretch to
+the taller natural content height; total border/padding insets remain stable
+when switching selection. No pricing or purchase logic changes. Static
+analysis clean and all 67 Premium tests pass, including equality/selection
+stability at 320px/1× and 375px/2× in light/dark. User device review passed.
+Typography and 4b/4c remain open. Separately observed comparison-table overflow
+at 320px/2× is recorded for the broader Premium layout pass.
+
+**Premium 4b — stable contextual entry:** The headline is identical across
+entry points. Weak-spot context replaces the existing supporting sentence
+instead of lengthening the headline. Empty context uses the generic copy;
+long context remains untruncated and may scroll at large text sizes. All 70
+Premium tests pass, including light/dark geometry comparisons against normal
+entry. User device review passed.
+
+**Premium 4c — separated, opaque avatars:** The selected avatar remains larger
+and centered, with two or four smaller companions according to available width.
+Removed overlapping offsets and side-avatar opacity; preserved 90pt hero height,
+deterministic selection, legacy fallback and one semantic announcement. Static
+analysis clean; all 74 Premium tests pass, including light/dark geometry at
+320/390px. User device review passed; typography remains open.
+
+**App typography — Nunito Sans:** User selected Nunito Sans. The variable font
+and its OFL license are bundled locally (~558KB), so rendering has no runtime
+network dependency. The shared light/dark theme now applies it across Material
+text, app bars and controls. Static analysis clean; 120 focused Home/Premium/
+theme tests and all 412 app tests pass, including a Turkish-character render
+check. Physical-device typography acceptance remains pending.
+
+**Profile + user text sizing:** The Settings tab is now user-facing `Profile`
+with a person icon and Profile page title; all prior settings/profile functions
+remain available. Appearance adds persisted Small/Medium/Large choices. The
+original Nunito size is Small; readable Medium (1.10×) is the default and Large
+is 1.20×. Schema v16 adds only `text_size_settings`, preserving the existing
+v15 climb ledger and every prior table. System accessibility scaling remains
+independent. Static analysis clean; all 416 tests pass. Device review pending.
+
+**Profile medal collection shell:** Added a responsive Bronze/Silver/Gold row
+to Profile with distinct subdued tier colors, mountain marks, lock badges and
+explicit `Not earned` copy. Production supplies no earned tiers while scoring,
+minimum participation and partial-month rules remain undecided, so the UI
+cannot imply an award. Semantics announce tier plus locked/earned state. Static
+analysis clean; all 424 tests pass, including 320px light/dark across all three
+app text sizes. Physical-device visual acceptance remains pending.
+User subsequently confirmed the medal collection on their phone.
+
+**Monthly medal rules + durable history:** Approved rule v1 scores correct +2,
+wrong +1 and skipped +0. Bronze/Silver/Gold are ceil(25/50/75% of the full
+calendar month's 10-points-per-day maximum); there is no separate minimum-day
+gate and partial months are not prorated. Schema v17 adds only frozen monthly
+results after main's raw v15 ledger and the independent v16 text preference.
+Past months with at least one ledger row finalize once (including `No medal`),
+never recompute, and empty months create no fake history. Profile shows current
+score/max/active days as `In progress` plus finalized month history. Static
+analysis clean; all 436 tests pass. Physical-device acceptance pending.
+
 **Purpose of this file:** single source of truth for where the project stands.
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.

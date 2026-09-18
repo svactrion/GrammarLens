@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:grammar_lens/models/app_theme_mode.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
@@ -72,7 +73,8 @@ void main() {
       expect(mistakes, hasLength(1));
       expect(mistakes.single.topicId, 'tenseSelection');
       expect(mistakes.single.errorType, 'wrong_tense');
-      expect(mistakes.single.timestamp, DateTime.parse('2026-01-01T00:00:00.000'));
+      expect(
+          mistakes.single.timestamp, DateTime.parse('2026-01-01T00:00:00.000'));
       expect(mistakes.single.prompt, isNull);
       // Backfilled by the v11->v12 column's own DEFAULT — every row
       // written before that column existed really was Topic Practice's.
@@ -88,6 +90,9 @@ void main() {
       expect(await storageService.getOrCreateDeviceId(), isNotEmpty);
       expect(await storageService.getReviewSortOrder(), isNotNull);
       expect(await storageService.getThemeMode(), isNotNull);
+      expect(await storageService.getTextSize(), AppTextSize.medium);
+      await storageService.setTextSize(AppTextSize.large);
+      expect(await storageService.getTextSize(), AppTextSize.large);
       expect(await storageService.getPracticeLength(), isNotNull);
       final topicStats = await storageService.getTopicStats();
       expect(topicStats['tenseSelection']?.weakSpotCount, 1);
@@ -197,7 +202,8 @@ void main() {
         'rule': 'Articles',
         'source': 'daily_test',
       });
-      await oldDb.insert('review_settings', {'id': 0, 'sort_order': 'frequent'});
+      await oldDb
+          .insert('review_settings', {'id': 0, 'sort_order': 'frequent'});
       await oldDb.insert('theme_settings', {'id': 0, 'mode': 'dark'});
       await oldDb.insert('practice_settings', {'id': 0, 'question_count': 10});
       await oldDb.insert('topic_practice_stats',
@@ -210,14 +216,16 @@ void main() {
         'occupation': 'Engineer',
         'avatar': 'avatar_03',
       });
-      await oldDb.insert('daily_session_usage', {'day': '2026-09-16', 'session_count': 4});
+      await oldDb.insert(
+          'daily_session_usage', {'day': '2026-09-16', 'session_count': 4});
       await oldDb.insert('daily_test_sets', {
         'day': '2026-09-16',
         'questions_json': '[]',
         'completed_at': '2026-09-16T09:00:00.000',
         'answers_json': '{"q1":"a dog"}',
       });
-      await oldDb.insert('debug_settings', {'id': 0, 'access_override': 'full'});
+      await oldDb
+          .insert('debug_settings', {'id': 0, 'access_override': 'full'});
       await oldDb.insert(
           'device_identity', {'id': 0, 'device_id': 'existing-device-id'});
       await oldDb.setVersion(13);
@@ -225,13 +233,14 @@ void main() {
 
       final storageService = StorageService(dbName: dbName);
 
-      final mistakes =
-          await storageService.getRecentMistakes('articleUsage', 'missing_article');
+      final mistakes = await storageService.getRecentMistakes(
+          'articleUsage', 'missing_article');
       expect(mistakes, hasLength(1));
       expect(mistakes.single.source, ErrorSource.dailyTest);
       expect(mistakes.single.correctedAnswer, 'I saw a dog.');
 
-      expect(await storageService.getReviewSortOrder(), ReviewSortOrder.frequent);
+      expect(
+          await storageService.getReviewSortOrder(), ReviewSortOrder.frequent);
       expect(await storageService.getThemeMode(), AppThemeMode.dark);
 
       final profile = await storageService.getUserProfile();
@@ -261,7 +270,8 @@ void main() {
     });
   });
 
-  group('idempotency — a downgrade can leave onUpgrade re-running over an '
+  group(
+      'idempotency — a downgrade can leave onUpgrade re-running over an '
       'already-migrated schema', () {
     const dbName = 'test_migration_idempotency.db';
     late String path;
@@ -292,8 +302,10 @@ void main() {
       await oldDb.close();
 
       var storageService = StorageService(dbName: dbName);
-      await storageService.getRecentMistakes('prepositions', 'wrong_preposition');
-      final deviceIdAfterFirstUpgrade = await storageService.getOrCreateDeviceId();
+      await storageService.getRecentMistakes(
+          'prepositions', 'wrong_preposition');
+      final deviceIdAfterFirstUpgrade =
+          await storageService.getOrCreateDeviceId();
 
       // Reproduce sqflite's own silent-downgrade landmine (see
       // `onUpgrade`'s doc comment in storage_service.dart): the stored
@@ -312,8 +324,8 @@ void main() {
       // Must not throw (e.g. "duplicate column name: source" from a
       // non-idempotent ALTER TABLE, or a UNIQUE/PRIMARY KEY violation from
       // a non-idempotent CREATE TABLE).
-      final mistakesAfterSecondUpgrade =
-          await storageService.getRecentMistakes('prepositions', 'wrong_preposition');
+      final mistakesAfterSecondUpgrade = await storageService.getRecentMistakes(
+          'prepositions', 'wrong_preposition');
 
       // The original row must still be exactly one row, not duplicated or
       // altered by the second pass.
@@ -321,7 +333,8 @@ void main() {
       expect(mistakesAfterSecondUpgrade.single.topicId, 'prepositions');
 
       // device_identity must not have been regenerated by the second pass.
-      expect(await storageService.getOrCreateDeviceId(), deviceIdAfterFirstUpgrade);
+      expect(await storageService.getOrCreateDeviceId(),
+          deviceIdAfterFirstUpgrade);
     });
   });
 }
