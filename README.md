@@ -235,6 +235,33 @@ telling you to do the below.
    what's missing if not. More checks land here over time rather than
    each as its own script.
 
+### Visual previews (no build config needed)
+
+`lib/preview/` holds standalone, debug-only entry points for checking a
+feature's every visual state on a device without seeding real data or
+waiting for something to happen (a month rollover, a finalized medal) —
+each is its own `main()`, guarded by `if (!kDebugMode) throw
+StateError(...)` so it can never run in a release build, and none of them
+touch `StorageService` or the real `grammar_lens.db`. Unlike the app
+itself, these need no `config/dev.json`/proxy setup at all.
+
+- **Monthly Climb** (`lib/preview/monthly_climb_preview.dart`): the
+  mountain/route/avatar visual, with sample-progress and month-length
+  controls.
+- **Monthly Medal** (`lib/preview/monthly_medal_preview.dart`): every
+  medal state — In progress, each finalized tier, "No medal", and several
+  finalized months at once — with in-preview dark-mode and Small/Medium/
+  Large text-size toggles, so a device acceptance pass can check all of
+  them without a real month ever rolling over.
+
+Run either directly with `flutter run -t <path>`, or use
+`./scripts/preview_monthly_medal.sh` for the medal one (thin wrapper, no
+VS Code needed — day-to-day development on this project happens from the
+terminal, same as `scripts/dev.sh`). On a physical iPhone: plug it in,
+confirm it shows up with `flutter devices`, then
+`./scripts/preview_monthly_medal.sh -d <device-id>` (any extra arguments
+pass straight through to `flutter run`).
+
 ## Stack
 
 Flutter (iOS) · Anthropic API via a Cloudflare Workers proxy (Claude
