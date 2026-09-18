@@ -338,3 +338,76 @@ adds a new, isolated preview file and its test.
 Everything above is a report; no code changes beyond the deleted throwaway
 probe test in §10.4 were made in this batch, per the task's own
 instruction to stop after reporting.
+
+## 11. Batch 1
+
+Three items, approved from §10, each its own commit. Medal scoring rules
+and the storage schema were not touched.
+
+1. **Medal debug preview** (`bcc58dd`). Added
+   `lib/preview/monthly_medal_preview.dart`, following §10.5's plan and the
+   existing `monthly_climb_preview.dart` pattern exactly: its own
+   `kDebugMode`-guarded `main()`, no dependency on `StorageService` or the
+   real clock. Six selectable states (In progress, Bronze/Silver/Gold
+   finalized, No medal, and a "Multiple months" scenario showing four
+   finalized months at once), each a hand-built `MonthlyMedalProgress`/
+   `MonthlyMedalResult` fixture whose score/tier is derived by *reading*
+   (never modifying) `MonthlyMedalRules`, so a fixture can't silently drift
+   from what the real rule would actually award. In-preview toggles for
+   dark mode and Small/Medium/Large text size. Added
+   `scripts/preview_monthly_medal.sh` (thin `flutter run -t` wrapper) and a
+   new README "Visual previews" section covering both preview files,
+   including the physical-device command
+   (`./scripts/preview_monthly_medal.sh -d <device-id>`) — terminal-only,
+   no VS Code config added. `test/monthly_medal_preview_test.dart` covers
+   all six states with no exception in both themes, checks each scenario's
+   rendered medal outcome text, and checks the busiest scenario at 320pt
+   width across all three text sizes. One real bug found and fixed while
+   building this (not a pre-existing production bug): the scenario
+   dropdown's own longest label overflowed its field at 320pt width —
+   fixed with `isExpanded: true`, confirmed by the same test.
+2. **`SettingsScreen._loadMedals` race** (`f03549b`), the risk flagged in
+   §6/§10.3. Added a monotonic generation counter: incremented at the
+   start of every `_loadMedals` call, re-checked after both awaits finish,
+   so a call whose generation is no longer current discards its own
+   result instead of applying it — the most-recently-*started* call always
+   wins, regardless of which one finishes last. New regression test in
+   `test/settings_screen_test.dart` uses a `Completer`-backed fake
+   `StorageService` to resolve two overlapping reads out of order (the
+   older one finishing last) and asserts the newer one's data survives.
+   Verified the test actually catches the bug, not just passes vacuously:
+   temporarily reverted the fix, confirmed the test failed exactly as
+   expected (the stale value won), then restored the fix.
+3. **Report-only items, no code changed:**
+   - **iOS minimum deployment target: 15.0.** Confirmed via
+     `ios/Runner.xcodeproj/project.pbxproj` —
+     `IPHONEOS_DEPLOYMENT_TARGET = 15.0;` appears identically in all three
+     build configurations (Debug/Release/Profile). Matches
+     `docs/roadmap.md`'s own 2026-09-16 note that this was deliberately
+     raised. `ios/Podfile` sets no separate `platform :ios` override, so
+     the Xcode project setting is authoritative.
+   - **Premium comparison table / "pricing unavailable" state at 375×667,
+     largest accessibility text scale: confirmed overflowing.** Measured
+     with a throwaway widget test (written, run, then deleted — nothing
+     committed), reusing `premium_screen_test.dart`'s own `pumpAt`-style
+     setup. At 375×667 and 2.0x text scale (already covered by
+     `premium_screen_test.dart`'s existing "PREMIUM header" test): **no
+     overflow**, confirming existing coverage is accurate as far as it
+     goes. At 3.0x — a real Dynamic Type accessibility size beyond what
+     any existing test in this repo exercises, chosen here as the actual
+     "largest" stress level rather than reusing the already-tested 2.0x —
+     **both surfaces overflow**: four comparison-table rows at
+     `premium_screen.dart:1033` (`_ComparisonRowLine`, 116–143px each:
+     "Daily Test", "Topic Practice", "Practice your weak spots",
+     "Sessions of 3, 5 or 10 questions"), and the "pricing unavailable"
+     card's own row at `premium_screen.dart:1512` (116px) — the same two
+     locations §10.4 already found overflowing at 320×2.0x, now also
+     confirmed overflowing at the larger 375×667 size once text scale is
+     pushed to a genuinely maximal accessibility setting rather than 2.0x.
+     This is unchanged, pre-existing behavior inherited from `main` (see
+     §10.4) — not something this batch's work touched or introduced.
+
+**Final verification for this batch:** `flutter analyze` — no issues.
+`flutter test` — **442 passing** (436 baseline + 5 new in
+`monthly_medal_preview_test.dart` + 1 new regression test in
+`settings_screen_test.dart`), 0 failing.
