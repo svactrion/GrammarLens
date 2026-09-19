@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
+import '../models/welcome_badge.dart';
 
 class MonthlyMedalCollection extends StatelessWidget {
+  /// A separate, one-time achievement — not a fourth tier. Rendered above
+  /// the Bronze/Silver/Gold row per docs/prd-gamification.md §M6.5/
+  /// docs/gamification-handoff.md §12.4: unlike the monthly tiers, this is
+  /// permanent and never re-earned, so mixing it into the same row would
+  /// misrepresent it as something to renew monthly.
+  final WelcomeBadge? welcomeBadge;
   final MonthlyMedalProgress? currentProgress;
   final List<MonthlyMedalResult> results;
 
   const MonthlyMedalCollection({
     super.key,
+    this.welcomeBadge,
     this.currentProgress,
     this.results = const [],
   });
@@ -26,8 +34,7 @@ class MonthlyMedalCollection extends StatelessWidget {
         .whereType<MedalTier>()
         .fold<MedalTier?>(
           null,
-          (best, tier) =>
-              best == null || tier.index > best.index ? tier : best,
+          (best, tier) => best == null || tier.index > best.index ? tier : best,
         );
     final earnedTiers = highestTier == null
         ? const <MedalTier>{}
@@ -37,6 +44,8 @@ class MonthlyMedalCollection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _WelcomeBadgeRow(badge: welcomeBadge),
+        const SizedBox(height: 20),
         Text(
           earnedTiers.isEmpty
               ? 'Your monthly medals will appear here once earned.'
@@ -78,6 +87,101 @@ class MonthlyMedalCollection extends StatelessWidget {
           ],
         ],
       ],
+    );
+  }
+}
+
+/// The one-time Welcome badge (docs/prd-gamification.md §M6.5), always
+/// rendered — locked-and-"Not earned" when [badge] is null, the same
+/// "always visible, lock badge otherwise" language `_MedalSpecimen` below
+/// already uses for the monthly tiers. A horizontal row, not a specimen
+/// circle, so it reads as its own category of thing rather than a fourth
+/// tier. Color/icon are placeholders — see docs/prd-gamification.md §M6.4.
+class _WelcomeBadgeRow extends StatelessWidget {
+  final WelcomeBadge? badge;
+
+  const _WelcomeBadgeRow({required this.badge});
+
+  static const _tint = Color(0xFF4C7EF3);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final earned = badge != null;
+    final iconColor = earned ? _tint : _tint.withValues(alpha: 0.42);
+    final fill = Color.alphaBlend(
+      iconColor.withValues(alpha: earned ? 0.20 : 0.10),
+      scheme.surfaceContainerHigh,
+    );
+
+    return Semantics(
+      label: 'Welcome badge, ${earned ? 'earned' : 'locked'}.',
+      container: true,
+      child: ExcludeSemantics(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: iconColor, width: 2),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      Icons.emoji_events_rounded,
+                      color: iconColor,
+                      size: 28,
+                    ),
+                    if (!earned)
+                      Align(
+                        alignment: const Alignment(0.9, 0.9),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: scheme.surface,
+                            border: Border.all(color: scheme.outlineVariant),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3),
+                            child: Icon(
+                              Icons.lock_rounded,
+                              size: 11,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome to the climb',
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        earned ? 'Earned' : 'Not earned',
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

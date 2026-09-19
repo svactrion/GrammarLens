@@ -8,6 +8,7 @@ import '../models/app_text_size.dart';
 import '../models/avatar.dart';
 import '../models/monthly_medal.dart';
 import '../models/user_profile.dart';
+import '../models/welcome_badge.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
@@ -89,6 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _resettingOnboarding = false;
   late _DebugAccessChoice _debugAccessChoice;
   late bool _previewPaywallPricing;
+  WelcomeBadge? _welcomeBadge;
   MonthlyMedalProgress? _medalProgress;
   List<MonthlyMedalResult> _medalResults = const [];
   bool _medalsLoading = true;
@@ -147,14 +149,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     try {
       await widget.storageService.finalizePastMedalMonths();
+      // No lazy backfill call here for the Welcome badge, deliberately —
+      // its one and only retroactive award happens once, inside the v18
+      // migration (docs/prd-gamification.md §M6.5). This is a plain read
+      // of whatever is already on record, the same as the monthly medal
+      // reads alongside it.
       final values = await Future.wait([
         widget.storageService.getCurrentMonthlyMedalProgress(),
         widget.storageService.getMonthlyMedalResults(),
+        widget.storageService.getWelcomeBadge(),
       ]);
       if (!mounted || generation != _medalsGeneration) return;
       setState(() {
         _medalProgress = values[0] as MonthlyMedalProgress;
         _medalResults = values[1] as List<MonthlyMedalResult>;
+        _welcomeBadge = values[2] as WelcomeBadge?;
         _medalsLoading = false;
       });
     } catch (_) {
@@ -485,6 +494,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             )
           else
             MonthlyMedalCollection(
+              welcomeBadge: _welcomeBadge,
               currentProgress: _medalProgress,
               results: _medalResults,
             ),

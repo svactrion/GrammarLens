@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/models/monthly_medal.dart';
+import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 
@@ -12,6 +13,7 @@ void main() {
     WidgetTester tester, {
     Brightness brightness = Brightness.light,
     AppTextSize textSize = AppTextSize.medium,
+    WelcomeBadge? welcomeBadge,
     MonthlyMedalProgress? currentProgress,
     List<MonthlyMedalResult> results = const [],
   }) async {
@@ -26,6 +28,7 @@ void main() {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: MonthlyMedalCollection(
+              welcomeBadge: welcomeBadge,
               currentProgress: currentProgress,
               results: results,
             ),
@@ -45,23 +48,31 @@ void main() {
         expect(find.text('Bronze'), findsOneWidget);
         expect(find.text('Silver'), findsOneWidget);
         expect(find.text('Gold'), findsOneWidget);
-        expect(find.text('Not earned'), findsNWidgets(3));
+        // The three tier specimens plus the always-rendered Welcome badge
+        // row, locked since no `welcomeBadge` was passed.
+        expect(find.text('Not earned'), findsNWidgets(4));
         expect(find.text('Earned'), findsNothing);
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('progress and history fit 320px in $brightness at $size',
-          (tester) async {
+      testWidgets(
+          'progress, history and an earned Welcome badge fit 320px in '
+          '$brightness at $size', (tester) async {
         await pumpCollection(
           tester,
           brightness: brightness,
           textSize: size,
+          welcomeBadge: welcomeBadgeFixture,
           currentProgress: currentProgress,
           results: [bronzeResult, noMedalResult],
         );
 
         expect(find.text('In progress'), findsOneWidget);
         expect(find.text('History'), findsOneWidget);
+        expect(
+          find.bySemanticsLabel('Welcome badge, earned.'),
+          findsOneWidget,
+        );
         expect(tester.takeException(), isNull);
       });
     }
@@ -87,7 +98,9 @@ void main() {
     expect(find.bySemanticsLabel('Bronze medal, earned.'), findsOneWidget);
     expect(find.bySemanticsLabel('Silver medal, earned.'), findsOneWidget);
     expect(find.bySemanticsLabel('Gold medal, earned.'), findsOneWidget);
-    expect(find.text('Not earned'), findsNothing);
+    // The Welcome badge row is independent of monthly tiers and stays
+    // locked here since no `welcomeBadge` was passed.
+    expect(find.text('Not earned'), findsOneWidget);
     expect(find.text('Earned'), findsNWidgets(3));
   });
 
@@ -124,6 +137,44 @@ void main() {
     expect(find.bySemanticsLabel('Gold medal, locked.'), findsOneWidget);
   });
 
+  group('Welcome badge (docs/prd-gamification.md §M6.5)', () {
+    testWidgets('always renders, independent of any monthly tier state',
+        (tester) async {
+      await pumpCollection(tester, welcomeBadge: welcomeBadgeFixture);
+
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('Welcome badge, earned.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'locked when null, earned when present, regardless of tier '
+        'unlocking', (tester) async {
+      await pumpCollection(
+        tester,
+        welcomeBadge: welcomeBadgeFixture,
+        results: [goldResult],
+      );
+
+      // A Gold month unlocks all three tier specimens (§M6.2) — the
+      // Welcome row is a separate, unrelated fact and must not be
+      // conflated with or derived from tier state.
+      expect(find.bySemanticsLabel('Welcome badge, earned.'), findsOneWidget);
+      expect(find.bySemanticsLabel('Gold medal, earned.'), findsOneWidget);
+    });
+
+    testWidgets(
+        'stays locked even when every tier is earned, if no badge '
+        'was passed', (tester) async {
+      await pumpCollection(tester, results: [goldResult]);
+
+      expect(find.bySemanticsLabel('Welcome badge, locked.'), findsOneWidget);
+      expect(find.bySemanticsLabel('Gold medal, earned.'), findsOneWidget);
+    });
+  });
+
   testWidgets('shows current progress and finalized history', (tester) async {
     await pumpCollection(
       tester,
@@ -137,6 +188,12 @@ void main() {
     expect(find.text('No medal'), findsOneWidget);
   });
 }
+
+final welcomeBadgeFixture = WelcomeBadge(
+  earnedAt: DateTime(2026, 8, 15),
+  ruleVersion: 1,
+  backfilled: false,
+);
 
 const currentProgress = MonthlyMedalProgress(
   year: 2026,

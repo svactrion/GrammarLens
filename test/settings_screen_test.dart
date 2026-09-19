@@ -9,6 +9,7 @@ import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/monthly_medal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
+import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
@@ -46,6 +47,9 @@ class _FakeStorageService extends StorageService {
 
   @override
   Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async => const [];
+
+  @override
+  Future<WelcomeBadge?> getWelcomeBadge() async => null;
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {}
@@ -92,6 +96,12 @@ class _RaceStorageService extends StorageService {
     resultsCompleters.add(completer);
     return completer.future;
   }
+
+  // Not part of the race this fake exists to reproduce — resolved
+  // immediately so `Future.wait` in `_loadMedals` only ever waits on the
+  // two completers above.
+  @override
+  Future<WelcomeBadge?> getWelcomeBadge() async => null;
 }
 
 MonthlyMedalProgress _raceProgress(int score) => MonthlyMedalProgress(
@@ -187,8 +197,9 @@ void main() {
     expect(selected, AppTextSize.large);
   });
 
-  testWidgets('Profile shows an explicitly empty monthly medal collection',
-      (tester) async {
+  testWidgets(
+      'Profile shows an explicitly empty monthly medal collection and a '
+      'locked Welcome badge', (tester) async {
     await pumpSettings(tester);
     await tester.scrollUntilVisible(
       find.text('Monthly medals'),
@@ -197,8 +208,16 @@ void main() {
     );
 
     expect(find.text('Monthly medals'), findsOneWidget);
-    expect(find.text('Not earned'), findsNWidgets(3));
+    // The three tier specimens plus the Welcome badge row all share the
+    // same "Not earned" copy — see MonthlyMedalCollection's own Welcome
+    // row, deliberately worded to match. The semantics label below is
+    // what actually distinguishes the Welcome row from the tier specimens.
+    expect(find.text('Not earned'), findsNWidgets(4));
     expect(find.text('Earned'), findsNothing);
+    expect(
+      find.bySemanticsLabel('Welcome badge, locked.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -207,10 +226,16 @@ void main() {
       (tester) async {
     final storage = _RaceStorageService();
 
-    // Same phone-realistic size `pumpSettings` uses — see its own doc
-    // comment: the default test surface is too small for "This month" to
-    // reach the ListView's lazy-build cache extent.
-    tester.view.physicalSize = const Size(390, 844) * 3.0;
+    // Deliberately much taller than a real device (unlike `pumpSettings`'
+    // own phone-realistic size): this test's medals section briefly
+    // shrinks to a single CircularProgressIndicator while a new
+    // `_loadMedals` call is in flight, then grows back once it resolves.
+    // A viewport tall enough to fit the whole screen with room to spare
+    // means every one of those shrink/grow cycles stays within the
+    // ListView's cache extent — no scrolling, and no scroll-position
+    // bookkeeping across a content-height change, needed at all. This
+    // test is about the generation-token race, not scroll mechanics.
+    tester.view.physicalSize = const Size(390, 3000) * 3.0;
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -231,11 +256,8 @@ void main() {
           ),
         );
 
-    Future<void> reveal() => tester.scrollUntilVisible(
-          find.text('This month'),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
+    // No scrolling needed anywhere below — the viewport above is tall
+    // enough that "This month" is always already on screen.
 
     // initState's own call (index 0, issued regardless of `active`).
     // Resolved immediately with a baseline so the screen reaches a
@@ -245,7 +267,6 @@ void main() {
     storage.resultsCompleters[0].complete(const []);
     await tester.pump();
     await tester.pump();
-    await reveal();
     expect(find.text('10 / 300 points · 0 active days'), findsOneWidget);
 
     // Tab re-entry #1 (`false` -> `true`, the only transition that
@@ -266,7 +287,6 @@ void main() {
     storage.resultsCompleters[2].complete(const []);
     await tester.pump();
     await tester.pump();
-    await reveal();
     expect(find.text('90 / 300 points · 0 active days'), findsOneWidget);
 
     // ...then the older, now-stale read (#1) resolves after it. Without
