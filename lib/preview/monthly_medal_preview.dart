@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../models/app_text_size.dart';
 import '../services/monthly_medal_rules.dart';
 import '../models/monthly_medal.dart';
+import '../models/welcome_badge.dart';
+import '../services/welcome_badge_rules.dart';
 import '../spacing.dart';
 import '../theme.dart';
 import '../widgets/app_segmented_button.dart';
@@ -123,6 +125,17 @@ MonthlyMedalResult _finalizedFixture({
     finalizedAt: DateTime.utc(year, month + 1, 3),
   );
 }
+
+// docs/gamification-handoff.md §12.5: a toggle orthogonal to the scenario
+// dropdown above, not a doubled scenario list — the Welcome badge can
+// realistically be earned or not alongside any of the six medal states,
+// so this covers every combination with one small addition instead of
+// six new entries to keep in sync by hand.
+final _welcomeBadgeFixture = WelcomeBadge(
+  earnedAt: DateTime.utc(2026, 8, 15),
+  ruleVersion: WelcomeBadgeRules.ruleVersion,
+  backfilled: false,
+);
 
 final _currentInProgress = _progressFixture(
   year: _currentYear,
@@ -249,6 +262,7 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
   bool _dark = const bool.fromEnvironment('MEDAL_PREVIEW_DARK');
   AppTextSize _textSize = AppTextSize.medium;
   _MedalPreviewScenario _scenario = _MedalPreviewScenario.inProgress;
+  bool _welcomeEarned = false;
 
   @override
   Widget build(BuildContext context) {
@@ -289,8 +303,7 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
                     child: Text(scenario.label),
                   ),
               ],
-              onChanged: (scenario) =>
-                  setState(() => _scenario = scenario!),
+              onChanged: (scenario) => setState(() => _scenario = scenario!),
             ),
             const SizedBox(height: Spacing.sm),
             Semantics(
@@ -310,13 +323,24 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
             AppSegmentedButton<AppTextSize>(
               segments: const [
                 ButtonSegment(value: AppTextSize.small, label: Text('Small')),
-                ButtonSegment(
-                    value: AppTextSize.medium, label: Text('Medium')),
+                ButtonSegment(value: AppTextSize.medium, label: Text('Medium')),
                 ButtonSegment(value: AppTextSize.large, label: Text('Large')),
               ],
               selected: {_textSize},
               onSelectionChanged: (selection) =>
                   setState(() => _textSize = selection.first),
+            ),
+            const SizedBox(height: Spacing.lg),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Welcome badge earned'),
+              subtitle: const Text(
+                'Independent of the medal state above — a mid-month '
+                'starter with no medal history yet, or a returning user '
+                'with real history, can each have this on or off.',
+              ),
+              value: _welcomeEarned,
+              onChanged: (value) => setState(() => _welcomeEarned = value),
             ),
             const SizedBox(height: Spacing.xl),
             Text('Monthly medals',
@@ -326,6 +350,7 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
                     ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: Spacing.sm),
             MonthlyMedalCollection(
+              welcomeBadge: _welcomeEarned ? _welcomeBadgeFixture : null,
               currentProgress: fixtures.currentProgress,
               results: fixtures.results,
             ),

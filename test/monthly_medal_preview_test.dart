@@ -103,12 +103,15 @@ void main() {
 
   for (final textSize in ['Small', 'Medium', 'Large']) {
     testWidgets(
-        'the busiest scenario (multiple finalized months) renders with no '
-        'exception at $textSize text, 320pt width', (tester) async {
+        'the busiest scenario (multiple finalized months, Welcome earned) '
+        'renders with no exception at $textSize text, 320pt width',
+        (tester) async {
       setDeviceSize(tester, width: 320);
       await tester.pumpWidget(const MonthlyMedalPreview());
       await tester.pumpAndSettle();
       await selectScenario(tester, 'In progress', 'Multiple months');
+      await tester.tap(find.text('Welcome badge earned'));
+      await tester.pumpAndSettle();
       if (textSize != 'Medium') {
         await tester.tap(find.text(textSize));
         await tester.pumpAndSettle();
@@ -116,4 +119,29 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  group('Welcome badge earned toggle (docs/gamification-handoff.md §12.5)', () {
+    testWidgets(
+        'starts locked, and the toggle flips it independently of '
+        'the medal scenario', (tester) async {
+      setDeviceSize(tester);
+      await tester.pumpWidget(const MonthlyMedalPreview());
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Welcome badge, locked.'), findsOneWidget);
+
+      await tester.tap(find.text('Welcome badge earned'));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Welcome badge, earned.'), findsOneWidget);
+
+      // Switching the medal scenario must not reset or depend on the
+      // Welcome toggle — the two are deliberately orthogonal (§12.5).
+      await selectScenario(tester, 'In progress', 'Gold finalized');
+      expect(find.bySemanticsLabel('Welcome badge, earned.'), findsOneWidget);
+
+      await tester.tap(find.text('Welcome badge earned'));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Welcome badge, locked.'), findsOneWidget);
+    });
+  });
 }
