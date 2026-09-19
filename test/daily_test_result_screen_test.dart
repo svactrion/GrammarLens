@@ -383,6 +383,16 @@ void main() {
       );
 
       expect(find.text('Welcome to the climb'), findsOneWidget);
+      // The copy states the step rule: one answered question earns the day's
+      // step, so it must not promise progress for every completed test.
+      expect(
+        find.text(
+          "Answer at least one question a day to keep moving "
+          "up this month's mountain.",
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Every completed Daily Test'), findsNothing);
     });
 
     testWidgets('an ordinary completion (not the first ever) shows nothing',

@@ -192,8 +192,8 @@ class _WelcomeCelebrationBanner extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Every completed Daily Test moves you forward on "
-                      "this month's mountain.",
+                      "Answer at least one question a day to keep moving "
+                      "up this month's mountain.",
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSecondaryContainer,
                       ),

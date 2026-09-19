@@ -718,10 +718,10 @@ table are untouched.
   earning nothing followed by an answered test earning it once, an
   all-skipped test after the badge changing nothing, and no celebration for
   an all-skipped result screen. All existing Welcome tests still pass.
-- **Not changed:** the celebration banner copy ("Every completed Daily Test
-  moves you forward…") was left as-is; it is slightly loose for an
-  all-skipped test (which completes but doesn't move the avatar), though
-  the banner itself can no longer appear for one.
+- **Not changed (superseded 2026-09-19):** the celebration banner copy
+  ("Every completed Daily Test moves you forward…") was left as-is here; it
+  is now "Answer at least one question a day to keep moving up this month's
+  mountain." to match the step rule.
 
 **Verification:** `flutter analyze` — no issues. `flutter test` — **469
 passing**, 0 failing.
