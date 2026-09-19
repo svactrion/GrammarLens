@@ -681,3 +681,47 @@ implementation proceeded without stopping to ask.
 `monthly_medal_preview_test.dart`, plus updated assertions with no test-count
 change in `settings_screen_test.dart` and elsewhere in
 `monthly_medal_collection_test.dart`/`monthly_medal_preview_test.dart`).
+
+## 14. Welcome rule revision — step = 1
+
+Approved change to the Welcome badge rule implemented in §13: the badge is
+earned when a `climb_daily_entries` row with `step = 1` is first written —
+the first test with at least one answer, the same condition that moves the
+avatar — instead of on the first ledger row of any kind. This supersedes
+§12/§13 wherever they say "first row" or "first completed test". Spec and
+rationale: `docs/prd-gamification.md` §M6.5. Scoring rules and every other
+table are untouched.
+
+- **Live earn** (`e5762ef`): `completeDailyTest` awards the badge only when
+  the row it writes has `step = 1` and the ledger had no `step = 1` row
+  before it — still inside the existing atomic transaction, still reported
+  through the same return value. An all-skipped first test writes its
+  ledger row but earns nothing and does not use the badge up; the next test
+  with an answer earns it, with one celebration.
+- **v18 backfill** (`61636ab`): only a `step = 1` ledger row triggers it,
+  dated to the earliest such row; all-skipped rows are ignored.
+- **Editing v18 in place instead of adding v19 — assessed safe.** v18 has
+  not shipped anywhere: `main` is at schema v14, `origin/monthly-climb-v2`
+  stops before v18 (the v18 commits are local-only, never pushed), and
+  there are no release branches or tags beyond `v1-mvp`/`v2-snapshot`. A
+  real user upgrading from <= v14 runs the `oldVersion < 15` step first,
+  which creates an *empty* ledger, so the backfill finds nothing for them
+  regardless of this edit. It only ever matters for a developer device that
+  already ran an earlier local v18/v17 build. Residual caveat: a device that
+  already opened a build with the *old* v18 keeps whatever `welcome_badge`
+  row that build wrote (sqflite won't re-run a step it already recorded) —
+  a badge from an all-skipped-only history would need a reinstall or manual
+  row delete to clear. Not a product concern; a v19 correction would only
+  be worth adding if a build with the old v18 ever reaches real users.
+- **Tests:** a step = 1 earliest-date backfill (updated), an
+  all-skipped-only ledger backfilling nothing, an all-skipped first test
+  earning nothing followed by an answered test earning it once, an
+  all-skipped test after the badge changing nothing, and no celebration for
+  an all-skipped result screen. All existing Welcome tests still pass.
+- **Not changed:** the celebration banner copy ("Every completed Daily Test
+  moves you forward…") was left as-is; it is slightly loose for an
+  all-skipped test (which completes but doesn't move the avatar), though
+  the banner itself can no longer appear for one.
+
+**Verification:** `flutter analyze` — no issues. `flutter test` — **469
+passing**, 0 failing.
