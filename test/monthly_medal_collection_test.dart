@@ -76,6 +76,54 @@ void main() {
     expect(find.bySemanticsLabel('Gold medal, locked.'), findsOneWidget);
   });
 
+  // docs/prd-gamification.md §M6.2: a month's highest tier is a ladder, not
+  // three independent badges — Gold already implies Bronze and Silver were
+  // cleared that same month, so all three specimens read as earned.
+  testWidgets(
+      'a Gold-finalized month also unlocks the Bronze and Silver specimens',
+      (tester) async {
+    await pumpCollection(tester, results: [goldResult]);
+
+    expect(find.bySemanticsLabel('Bronze medal, earned.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Silver medal, earned.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Gold medal, earned.'), findsOneWidget);
+    expect(find.text('Not earned'), findsNothing);
+    expect(find.text('Earned'), findsNWidgets(3));
+  });
+
+  testWidgets('a Silver-finalized month unlocks Bronze and Silver, not Gold',
+      (tester) async {
+    await pumpCollection(tester, results: [silverResult]);
+
+    expect(find.bySemanticsLabel('Bronze medal, earned.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Silver medal, earned.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Gold medal, locked.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'unlocking looks at the highest tier across every finalized month, '
+      'not just the most recent one', (tester) async {
+    // goldResult (August) is listed after bronzeResult (September) here —
+    // deliberately not already-sorted-descending, since a caller's own
+    // ordering (e.g. StorageService's `month DESC`) shouldn't matter to
+    // which tiers this widget marks as earned.
+    await pumpCollection(tester, results: [bronzeResult, goldResult]);
+
+    expect(find.bySemanticsLabel('Bronze medal, earned.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Silver medal, earned.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Gold medal, earned.'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a No-medal month mixed with a real finalized month is ignored for '
+      'unlocking, not treated as resetting it', (tester) async {
+    await pumpCollection(tester, results: [noMedalResult, bronzeResult]);
+
+    expect(find.bySemanticsLabel('Bronze medal, earned.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Silver medal, locked.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Gold medal, locked.'), findsOneWidget);
+  });
+
   testWidgets('shows current progress and finalized history', (tester) async {
     await pumpCollection(
       tester,
@@ -111,6 +159,34 @@ final bronzeResult = MonthlyMedalResult(
   wrong: 20,
   skipped: 0,
   tier: MedalTier.bronze,
+  ruleVersion: 1,
+  finalizedAt: DateTime(2026, 9, 1),
+);
+
+final silverResult = MonthlyMedalResult(
+  year: 2026,
+  month: 8,
+  score: 160,
+  maxScore: 310,
+  activeDays: 25,
+  correct: 70,
+  wrong: 20,
+  skipped: 35,
+  tier: MedalTier.silver,
+  ruleVersion: 1,
+  finalizedAt: DateTime(2026, 9, 1),
+);
+
+final goldResult = MonthlyMedalResult(
+  year: 2026,
+  month: 8,
+  score: 305,
+  maxScore: 310,
+  activeDays: 31,
+  correct: 150,
+  wrong: 5,
+  skipped: 0,
+  tier: MedalTier.gold,
   ruleVersion: 1,
   finalizedAt: DateTime(2026, 9, 1),
 );

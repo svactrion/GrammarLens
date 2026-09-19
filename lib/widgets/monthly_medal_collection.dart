@@ -16,8 +16,24 @@ class MonthlyMedalCollection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final earnedTiers =
-        results.map((result) => result.tier).whereType<MedalTier>().toSet();
+    // docs/prd-gamification.md §M6.2: a finalized month's highest tier is a
+    // ladder, not three independent badges — reaching Gold already means
+    // Bronze and Silver were cleared that month too, so the collection
+    // marks every tier at or below the best one ever finalized as earned,
+    // not only the exact tier of whichever result happens to be highest.
+    final highestTier = results
+        .map((result) => result.tier)
+        .whereType<MedalTier>()
+        .fold<MedalTier?>(
+          null,
+          (best, tier) =>
+              best == null || tier.index > best.index ? tier : best,
+        );
+    final earnedTiers = highestTier == null
+        ? const <MedalTier>{}
+        : MedalTier.values
+            .where((tier) => tier.index <= highestTier.index)
+            .toSet();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
