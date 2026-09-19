@@ -1,18 +1,47 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
+/// Where [AnalyticsService] hands finished events. `FirebaseAnalytics.instance`
+/// is a static, so without this seam a test could only prove that a call does
+/// not throw — never which event name or parameter keys it produced. Feature
+/// code never touches a sink: it calls the typed [AnalyticsService] methods,
+/// which are the only place an event name or parameter map is built.
+abstract class AnalyticsSink {
+  Future<void> logEvent(String name, Map<String, Object>? parameters);
+  Future<void> setUserProperty(String name, String? value);
+}
+
+/// The production sink: straight through to Firebase Analytics.
+class FirebaseAnalyticsSink implements AnalyticsSink {
+  const FirebaseAnalyticsSink();
+
+  @override
+  Future<void> logEvent(String name, Map<String, Object>? parameters) {
+    return FirebaseAnalytics.instance
+        .logEvent(name: name, parameters: parameters);
+  }
+
+  @override
+  Future<void> setUserProperty(String name, String? value) {
+    return FirebaseAnalytics.instance.setUserProperty(name: name, value: value);
+  }
+}
+
 /// Minimal local event logging (PRD v2 §9's "measurement approach for
 /// launch") plus crash reporting, both anonymous and device-based — no
 /// account/login involved, so this doesn't touch the guest-first identity
-/// model (PRD v2 §5). Three custom events only, matching what §9 actually
-/// needs to answer at launch: onboarding completion, which mode people
-/// pick, and session completion.
+/// model (PRD v2 §5). Contract and privacy rules: docs/analytics-plan.md —
+/// counts, tiers, rule versions and closed-vocabulary strings only; never
+/// question text, answers or any profile field.
 ///
-/// Every method here is a best-effort no-op until a Firebase project is
-/// actually connected (`flutterfire configure` — see main.dart's comment on
-/// [initializeFirebase]) — analytics is a nice-to-have signal, not
-/// something that should ever be able to crash or block the app it's
-/// instrumenting.
+/// Every method here is a best-effort no-op when Firebase is unavailable —
+/// analytics is a nice-to-have signal, not something that should ever be able
+/// to crash or block the app it's instrumenting.
 class AnalyticsService {
+  AnalyticsService({AnalyticsSink sink = const FirebaseAnalyticsSink()})
+      : _sink = sink;
+
+  final AnalyticsSink _sink;
+
   /// Practice mode identifiers for the `mode_selected` event — matches
   /// Home's three tappable entries (PRD v2 §4): Daily Test, Topic Practice,
   /// and the Premium banner (formerly "Early Access", retired — PRD v2
@@ -128,8 +157,7 @@ class AnalyticsService {
 
   Future<void> _logEvent(String name, [Map<String, Object>? parameters]) async {
     try {
-      await FirebaseAnalytics.instance
-          .logEvent(name: name, parameters: parameters);
+      await _sink.logEvent(name, parameters);
     } catch (_) {
       // No Firebase project connected yet, or a transient failure — never
       // let instrumentation take down the feature it's measuring.
