@@ -1,11 +1,11 @@
 # Analytics plan — Monthly Climb launch
 
-**Status: PLAN ONLY. No analytics code has been written for anything in this
-file.** Every event in §2 and §3 is a proposal. Sections marked
-**ONAY BEKLİYOR** (awaiting approval) are drafts that need the owner's
-decision before they are treated as agreed. Written 2026-09-19 on
-`monthly-climb-v2`, the launch branch (see "Launch scope" in
-`docs/roadmap.md`).
+**Status: owner decisions recorded 2026-09-19; implementation follows in
+separate commits.** This file was first written the same day as a plan only.
+The owner's decisions are folded in below ("Decisions" at the end lists
+them). Until the implementation commits land, no analytics code exists for
+the new events. Branch: `monthly-climb-v2`, the launch branch (see "Launch
+scope" in `docs/roadmap.md`).
 
 Why this file exists: the app ships to the App Store for the first time with
 gamification in it, so there is no pre-gamification baseline. Whatever is not
@@ -66,14 +66,13 @@ server-side record of what users did, only a local sqlite ledger.
    event names or parameters, because `FirebaseAnalytics.instance` is a
    static and cannot be substituted. Adding events without a test seam means
    names/params can drift unnoticed.
-4. **Possible blocker — verify first:** `ios/Runner/GoogleService-Info.plist`
-   contains `IS_ANALYTICS_ENABLED = false`. `docs/roadmap.md` says Analytics
-   "collects for real", but that was never confirmed against the console in
-   the record I read. That plist flag normally reflects whether Google
-   Analytics was enabled for the Firebase project when the file was
-   generated. If Analytics is not actually enabled for the project, none of
-   the events in this file (nor the nine above) will reach reports or
-   DebugView. Check this before anything else (§6, step 0).
+4. **`IS_ANALYTICS_ENABLED = false` in the plist — resolved, not a blocker
+   (owner, 2026-09-19).** `ios/Runner/GoogleService-Info.plist` carries that
+   value, but the owner confirmed in the Firebase console that
+   `first_open` and `session_start` are arriving, i.e. Analytics collects.
+   The plist field is a stale leftover from when the file was generated and
+   does not gate collection for this project. Left as is; do not "fix" it
+   by hand, since regenerating the plist is unnecessary churn.
 5. **No token/cost logging in the proxy.** `proxy/src/` has no usage or token
    logging (grep for `usage`, `input_tokens`, `console.log` finds nothing),
    consistent with the case-study note that the proxy drops the `usage`
@@ -99,13 +98,15 @@ value.
 | Fired | In `DailyTestResultScreen._saveCompletion` (`lib/screens/daily_test_result_screen.dart:67-90`), **after** `completeDailyTest` succeeds, and only when the set was not already completed. A failed save that is retried yields one event; reopening a finished result yields none. |
 | Answers | Is the daily habit forming (events/user/week)? What share of tests earn no step (all-skipped)? Does a first-ever (Day-0) test behave differently from later ones? Is scoring "favoring habit over accuracy" (`prd-gamification.md` §M6.1) showing up as a real accuracy spread? |
 
-### E2 — `results_cta_tapped` (priority: nice to have)
+### E2 — `results_cta_tapped` — DROPPED (owner decision, 2026-09-19)
+
+The reasoning below is kept as the record of why. Not implemented.
 
 | | |
 |---|---|
 | Params | `cta` = `see_climb` / `back_home`, `revisit` (0/1: the result was reopened from Home, not a fresh completion) |
-| Fired | The result screen's single `FilledButton` (`daily_test_result_screen.dart:135-149`). |
-| Answers | Of tests that earned a step, how many leave through the "See your climb" button. |
+| Fired | (not built) The result screen's single `FilledButton` (`daily_test_result_screen.dart:135-149`). |
+| Answers | (not measured) Of tests that earned a step, how many leave through the "See your climb" button. |
 
 Honest assessment: this is **one button whose label depends on state**
 (`step > 0` and not already completed → "See your climb", otherwise "Back to
@@ -143,18 +144,21 @@ Log the live earn only, and do not log from the migration.
 | Fired | Once per newly finalized month, from the path that calls `StorageService.finalizePastMedalMonths()` (`lib/screens/settings_screen.dart:142-151`). |
 | Answers | Tier distribution; how close users land to the 25/50/75 % thresholds (validates rule v1); whether finalization is late. |
 
-Two implementation facts to plan around:
+**Decision (owner, 2026-09-19): finalization runs at app launch and on
+resume from background, in addition to Profile.** The first version of this
+plan noted that finalization was lazy (Profile only), so E4 would miss users
+who never open Profile. That is now addressed:
 
-- `finalizePastMedalMonths` currently returns `void`
-  (`storage_service.dart:891`). To log per finalized month it would need to
-  return the months it inserted — a small, additive change to be made only
-  after approval.
-- Finalization is **lazy**: it runs when Profile is opened or re-entered, not
-  at month end. The event timestamp is therefore not the month boundary, and
-  a user who never opens Profile never generates it. `months_ago` exists so
-  late finalizations can be told apart. It also means this event undercounts
-  medal outcomes for users who do not visit Profile — which is itself a
-  finding, not just noise.
+- `StorageService.finalizePastMedalMonths` returns the months it newly
+  finalized (it returned `void`), so each one can be reported.
+- It is called at launch, on `AppLifecycleState.resumed`, and still from
+  Profile. It must stay idempotent: the "already finalized" check and the
+  inserts happen inside one transaction, sqflite serializes transactions, so
+  a second concurrent call finds nothing left to finalize. A month is
+  therefore finalized once and `medal_month_finalized` fires once for it,
+  whichever trigger got there first.
+- `months_ago` still distinguishes late finalizations (a user who did not
+  open the app for several months).
 
 ### E5 — `profile_medals_viewed` (priority: nice to have)
 
@@ -180,15 +184,15 @@ event only says "opened Profile". Its value grows after the first month-end.
 - **`climb_step_earned`** — redundant with E1's `step_earned`.
 - **A separate "mountain viewed" / animation-played event** — the animation
   is a presentation detail; whether the climb matters shows up in E1 volume
-  and retention. Revisit only if E2 shows users skipping the climb.
+  and retention. Revisit only if the climb looks ignored in that data.
 - **A per-medal-tier "unlocked" event** — E4 already carries the tier.
 - **Daily Test generation success/failure** — a reliability signal, not a
   gamification one; belongs in a separate reliability pass (Crashlytics
   already records fatal errors).
 - **Renaming `session_completed` to `practice_completed`** — it is easily
-  confused with `daily_test_completed`. Because nothing has shipped, a rename
-  costs almost nothing now and a lot after launch. Not included in this
-  contract because it is outside Monthly Climb; flagged as a decision.
+  confused with `daily_test_completed`. **Decided 2026-09-19: rename it.**
+  Nothing has shipped, so no dashboards or historical data are affected;
+  after launch it would cost a broken time series.
 
 ### Events that already cover the guardrails (no change proposed)
 
@@ -197,7 +201,7 @@ paywall funnel by `source` and `plan` (§5).
 
 ---
 
-## 3. User property proposal
+## 3. User properties (approved 2026-09-19)
 
 | Property | Value | Set when |
 |---|---|---|
@@ -289,7 +293,7 @@ starts collecting from registration time, so do it before launch.
 
 ---
 
-## 5. Measurement plan — draft — ONAY BEKLİYOR
+## 5. Measurement plan — approved 2026-09-19
 
 **Primary metric: D7 retention**, from Firebase's own Retention report
 (cohorts by first open). Note what Firebase counts: a user is "retained" if
@@ -322,30 +326,28 @@ is no before/after. Therefore:
   enough traffic to detect a difference. Later option, not proposed for
   launch.
 
-Constraints the owner should see before approving:
+**Observation window (approved): at least 4 weeks, and at least one week past
+the first month-end** — whichever is later. E4 fires only after a month
+closes; if launch lands mid-month, the first month-end can fall after four
+weeks, so the window must extend to include it.
 
-- **Four weeks may contain no medal finalization.** E4 fires only after a
-  month closes and Profile is opened. If launch lands mid-month, the first
-  month-end may fall after the 4-week window, so medal engagement cannot be
-  judged inside it. Suggest extending the observation window to at least one
-  week past the first month-end.
+Constraints to keep in mind while reading the data:
 - **Small cohorts.** A first release from a solo developer will have small
   D7 cohorts; Firebase may show limited data for small cohorts. Do not read
   a percentage without its user count.
-- **Cost guardrail has no data source yet.** Free-tier cost needs token or
-  request counts per operation. The proxy does not log them (§1.5). Options,
-  each needing its own approval: the Anthropic console's aggregate spend and
-  Cloudflare's per-Worker request counts as a rough total now, or adding
-  operation-level usage logging to the proxy. Per-user cost cannot be
-  derived from Firebase.
+- **Cost guardrail signal (approved for launch):** the Anthropic console's
+  aggregate spend plus Cloudflare's per-Worker request counts. This is a
+  rough total, not a per-user or per-tier figure — the proxy does not log
+  tokens (§1.5) and Firebase cannot derive cost. **Operation-level usage
+  logging in the proxy is deferred to after launch.**
 
-Draft table (values intentionally blank):
+Measurement table (thresholds intentionally blank until the observation window ends):
 
 | Metric | Source | Threshold |
 |---|---|---|
 | D7 retention (primary) | Firebase Retention | set after week 4 |
 | Paywall view → purchase_started → success | Firebase events, RevenueCat | set after week 4 |
-| Free-tier cost per DAU | not available (proxy) | set after a data source exists |
+| Free-tier cost (rough total) | Anthropic console spend, Cloudflare request counts | set after week 4 |
 | Welcome-badge assumption | E3, `first_step_dom`, D7 by cohort | descriptive only |
 
 ---
@@ -355,13 +357,21 @@ Draft table (values intentionally blank):
 Bundle id: `com.ahmettayfur.grammarlens`. Replace `<DEVICE>` with the name or
 UDID from step 1.
 
-**Step 0 — confirm Analytics is enabled for the project.** In the Firebase
-console (`grammarlens-18d47`): Analytics → Dashboard / DebugView should be
-available, and Project settings → Integrations shows Google Analytics as
-enabled. If Analytics is not enabled, enable it, then re-download
-`GoogleService-Info.plist` and regenerate `lib/firebase_options.dart`
-(`flutterfire configure`); the `IS_ANALYTICS_ENABLED` value in the plist
-should then read `true`. (See §1.4.)
+**Every device command here uses `config/prod.json`.** `config/dev.json`
+points `PROXY_BASE_URL` at `localhost`, which on a physical device means the
+device itself, so every proxy call would fail; and `scripts/dev.sh` is
+simulator-only for the same reason (README, Local setup, "Physical device").
+A device run therefore talks to the real proxy and the real Firebase project:
+use only your own test device, expect real (small) generation cost, and rely
+on DebugView's debug flag plus a developer-traffic filter to keep test events
+out of reports.
+
+**Step 0 — Analytics is already collecting (owner, 2026-09-19).**
+`first_open` and `session_start` are visible in the Firebase console
+(`grammarlens-18d47`), so nothing needs enabling. The
+`IS_ANALYTICS_ENABLED = false` value in `GoogleService-Info.plist` is a stale
+field and does not block collection (§1.4); do not regenerate the plist for
+it.
 
 **Step 1 — find the device.**
 
@@ -375,7 +385,7 @@ non-debug build (debug Flutter builds cannot be launched from the home screen
 on iOS 14+):
 
 ```bash
-flutter build ios --profile --dart-define-from-file=config/dev.json
+flutter build ios --profile --dart-define-from-file=config/prod.json
 ```
 
 ```bash
@@ -398,22 +408,24 @@ disable argument is passed.
 Alternative for the same one-time step: open `ios/Runner.xcworkspace`, Product
 → Scheme → Edit Scheme → Run → Arguments → add the flag(s), and run once
 from Xcode on the device. Xcode runs do not pass `--dart-define` values
-(README's Local setup section), which does not matter for a one-time
-flag-setting launch.
+(README's Local setup section), so the app will not reach the proxy in that
+run; that does not matter for a one-time flag-setting launch.
 
-**Step 3 — day-to-day runs.** With the flag persisted, the normal loop works:
+**Step 3 — day-to-day runs.** With the flag persisted, use the README's
+physical-device command (not `scripts/dev.sh`):
 
 ```bash
-scripts/dev.sh -d <DEVICE>
+flutter run --dart-define-from-file=config/prod.json -d <DEVICE>
 ```
 
 **Step 4 — watch events.** Firebase console → Analytics → DebugView, pick the
 device in the top-left selector. Events appear within seconds, with
 parameters expanded. Walk the checklist: complete a Daily Test (E1; also check
 a fresh-install first test for `day0 = 1` and E3 + the `first_step_dom` user
-property), tap the result button (E2), open Profile (E5), change text size
-(E6). E4 needs a past month in the ledger; use the debug medal fixture or a
-seeded/controlled-clock database, since a real month rollover is impractical.
+property), open Profile (E5), change text size (E6; also the `text_size`
+user property). Launch and resume the app to see E4 trigger (below). E4 needs a past month in the ledger; use a seeded/controlled-clock
+database, since a real month rollover is impractical. Confirm it fires once
+per month across a launch followed by a resume.
 
 **Step 5 — turn debug mode off when finished.**
 
@@ -423,8 +435,7 @@ xcrun devicectl device process launch --device <DEVICE> --terminate-existing com
 
 Caveats: events sent in debug mode are included in the daily BigQuery export
 by default, so configure a developer-traffic data filter in the Analytics
-property before relying on exported data. DebugView needs Analytics enabled
-(step 0). Console log lines are not a substitute: DebugView is the authority.
+property before relying on exported data. Console log lines are not a substitute: DebugView is the authority.
 
 ---
 
@@ -457,20 +468,26 @@ this step creates.
 
 ---
 
-## Decisions needed from the owner
+## Decisions (owner, 2026-09-19)
 
-1. Approve, trim or change the six events in §2 (in particular: keep or drop
-   E2; keep E5 and E6 as nice-to-have or defer).
-2. Approve the two user properties in §3, and the pre-launch custom-dimension
-   registration.
-3. Resolve the `IS_ANALYTICS_ENABLED = false` question (§1.4, §6 step 0)
-   before any coding — it may change whether existing events flow at all.
-4. Decide how to get a free-tier cost signal (§5): console totals only, or
-   proxy usage logging.
-5. Approve the §5 measurement draft, including the observation-window
-   extension past the first month-end.
-6. Rename `session_completed` now or leave it.
+1. **Events approved:** E1 `daily_test_completed`, E3 `welcome_badge_earned`,
+   E4 `medal_month_finalized`, E5 `profile_medals_viewed`, E6
+   `text_size_changed`. **E2 `results_cta_tapped` dropped** (one state-driven
+   button, low decision value; §2).
+2. **User properties approved:** `first_step_dom`, `text_size` (§3).
+3. **Analytics is working** — `first_open` and `session_start` are visible in
+   the Firebase console; `IS_ANALYTICS_ENABLED = false` in the plist is a
+   stale field, not a blocker (§1.4, §6 step 0).
+4. **`session_completed` renamed to `practice_completed`** — nothing has
+   shipped, so no data or dashboards are affected.
+5. **Cost signal for launch:** Anthropic console spend and Cloudflare request
+   counts. Proxy usage logging deferred until after launch (§5).
+6. **Measurement plan approved** (§5), with an observation window of at least
+   4 weeks and at least one week past the first month-end.
+7. **Finalization timing:** `finalizePastMedalMonths` also runs at app launch
+   and on resume, stays idempotent, so E4 counts users who never open Profile
+   (§2, E4).
+8. **Device commands corrected** to `config/prod.json` (§6).
 
-Implementation, once approved, is small and additive: six wrapper methods,
-call sites at the locations above, `finalizePastMedalMonths` returning the
-months it finalized, and a test seam for asserting event names and params.
+Implementation status is tracked in the next batch of commits on this branch;
+this section is updated when it lands.
