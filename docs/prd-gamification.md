@@ -264,32 +264,54 @@ illustrations before their own final assets landed. Swapping the icon
 for real artwork later is expected to be a self-contained, low-risk
 change to `_MedalSpecimen`/`_MedalHistoryRow`, not a structural one.
 
-### M6.5 Welcome badge — ASSUMPTION, unmeasured, not yet approved for build
+### M6.5 Welcome badge — ASSUMPTION, unmeasured; implemented (rule revised)
 
-**Decision:** a first-Daily-Test "Welcome" badge is accepted as a
-*planned* addition to the direction, on the following spec — but marked
-explicitly as an **assumption**, not a validated product decision, and
-**no code is authorized by this entry.** See
-`docs/gamification-handoff.md`'s "Batch 2 — Welcome plan" section for the
-implementation plan; that plan requires separate approval before any
-Welcome code is written.
+**Decision:** a "Welcome" badge is part of the direction, on the following
+spec — but its value is an **assumption**, not a validated product
+decision (see the rationale below). It was implemented in Batch 3
+(`docs/gamification-handoff.md` §13); the earning rule was then revised
+(§14), and the spec below is the current one. The original wording —
+"earned on the first *completed* Daily Test" — and the plan in
+handoff §12 are superseded where they differ.
 
 **Spec:**
-- Earned exactly once, on the user's first *completed* Daily Test —
-  merely opening the app is not enough to earn it.
+- Earned exactly once, when a `climb_daily_entries` row with `step = 1`
+  is first written — i.e. the user's first Daily Test with at least one
+  non-blank answer, the same condition that moves the avatar one step
+  (§M2). Merely opening the app, or completing a test with every
+  question skipped, is not enough. An all-skipped test still completes
+  and still writes its ledger row, but it neither earns the badge nor
+  uses it up: the first later test with an answer earns it.
 - Independent of and does not replace the monthly medals; a user can
   hold both a Welcome badge and any number of monthly medals
   simultaneously.
-- A one-time win moment is shown on the result screen of that first
-  completed Daily Test.
-- Visible in the Profile medal collection.
+- A one-time win moment is shown on the result screen of the test that
+  earned it. A backfilled badge (below) gets no win moment.
+- Visible in the Profile medal collection, as its own item above the
+  Bronze/Silver/Gold row (not a fourth tier); locked and "Not earned"
+  until earned.
 - The award rule is versioned, the same convention `MonthlyMedalRules`
   already uses (`ruleVersion`), so the earning criteria can change later
   without silently reinterpreting a badge already on record.
-- Backfilled retroactively to existing users who already have at least
-  one ledger row (`climb_daily_entries`) — i.e., anyone who has already
-  completed at least one Daily Test earns it the first time the rule
-  runs for them, without needing to complete a *new* one.
+- Backfilled once, inside the v18 schema migration only, to existing
+  users who already have at least one ledger row with `step = 1`; the
+  badge is dated to the earliest such row and marked `backfilled`.
+  All-skipped (`step = 0`) rows are ignored. There is no other backfill
+  path.
+
+**Rationale for the `step = 1` rule (approved 2026-09-19, replacing "first
+ledger row of any kind"):** the badge should reward a real action.
+Under the first version, a user who opened the Daily Test and skipped
+every question — no engagement with the content at all — was greeted
+with "Welcome to the climb" and a permanent badge, while the avatar
+correctly did not move. That mismatch made the badge easy to earn
+without doing anything and contradicted the product's own definition of
+progress (§M2: at least one non-blank answer is required for a step; a
+fully skipped test completes but earns no step). Keying the badge to
+`step = 1` makes the two agree by construction — the badge is earned
+exactly when the user first makes the climb move — so there is one
+definition of "took part" across the avatar, the monthly score and the
+badge, rather than two that can disagree.
 
 **Rationale (why this is a hypothesis, not a confirmed decision):** there
 is no analytics instrumentation live yet (`docs/gamification-handoff.md`
