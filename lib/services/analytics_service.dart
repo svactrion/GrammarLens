@@ -1,5 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
+import '../models/app_text_size.dart';
 import '../models/medal_tier.dart';
 
 /// Where [AnalyticsService] hands finished events. `FirebaseAnalytics.instance`
@@ -39,10 +40,37 @@ class FirebaseAnalyticsSink implements AnalyticsSink {
 /// analytics is a nice-to-have signal, not something that should ever be able
 /// to crash or block the app it's instrumenting.
 class AnalyticsService {
-  AnalyticsService({AnalyticsSink sink = const FirebaseAnalyticsSink()})
-      : _sink = sink;
+  AnalyticsService({
+    AnalyticsSink sink = const FirebaseAnalyticsSink(),
+    DateTime Function() clock = DateTime.now,
+  })  : _sink = sink,
+        _clock = clock;
 
   final AnalyticsSink _sink;
+  final DateTime Function() _clock;
+
+  /// Firebase's default session timeout: after this long in the background,
+  /// the next foreground stretch is a new session. Used only to decide when
+  /// once-per-session events (see [profileMedalsViewed]) may fire again.
+  static const sessionTimeout = Duration(minutes: 30);
+
+  bool _profileViewedThisSession = false;
+  DateTime? _backgroundedAt;
+
+  /// The app went to the background.
+  void appPaused() {
+    _backgroundedAt = _clock();
+  }
+
+  /// The app came back to the foreground. If it was away for at least
+  /// [sessionTimeout], once-per-session events may fire again.
+  void appResumed() {
+    final away = _backgroundedAt;
+    _backgroundedAt = null;
+    if (away != null && _clock().difference(away) >= sessionTimeout) {
+      _profileViewedThisSession = false;
+    }
+  }
 
   /// Practice mode identifiers for the `mode_selected` event — matches
   /// Home's three tappable entries (PRD v2 §4): Daily Test, Topic Practice,
@@ -221,6 +249,45 @@ class AnalyticsService {
       'rule_version': ruleVersion,
       'months_ago': monthsAgo,
     });
+  }
+
+  /// The Profile medal collection was loaded while its tab was showing
+  /// (docs/analytics-plan.md E5). Sent **at most once per session**: Profile
+  /// reloads on every tab re-entry, and an unguarded event would count tab
+  /// bouncing rather than interest. Later calls in the same session are
+  /// dropped here, not by the caller.
+  Future<void> profileMedalsViewed({
+    required int finalizedMonths,
+    required int medalsEarned,
+    required bool welcomeEarned,
+  }) async {
+    if (_profileViewedThisSession) return;
+    _profileViewedThisSession = true;
+    await _logEvent('profile_medals_viewed', {
+      'finalized_months': finalizedMonths,
+      'medals_earned': medalsEarned,
+      'welcome_earned': welcomeEarned ? 1 : 0,
+    });
+  }
+
+  /// The user picked a different text size (docs/analytics-plan.md E6).
+  /// Only real changes: the caller must not report re-selecting the current
+  /// size.
+  Future<void> textSizeChanged({
+    required AppTextSize size,
+    required AppTextSize previous,
+  }) {
+    return _logEvent('text_size_changed', {
+      'size': size.name,
+      'previous': previous.name,
+    });
+  }
+
+  /// User property `text_size` (small/medium/large): the size in effect now.
+  /// Set when the stored preference loads at startup and on every change, so
+  /// retention can be segmented by it.
+  Future<void> setTextSizeProperty(AppTextSize size) {
+    return _setUserProperty('text_size', size.name);
   }
 
   /// User property `first_step_dom`: the day of the month (1–31) of the

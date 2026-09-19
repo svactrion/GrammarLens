@@ -78,7 +78,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _finalizeMedalMonths();
+    if (state == AppLifecycleState.paused) _analyticsService.appPaused();
+    if (state == AppLifecycleState.resumed) {
+      _analyticsService.appResumed();
+      _finalizeMedalMonths();
+    }
   }
 
   /// Freezes past medal months at launch and on every resume, not only when
@@ -127,6 +131,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     try {
       final size = await _storageService.getTextSize();
       if (mounted) setState(() => _textSize = size);
+      unawaited(_analyticsService.setTextSizeProperty(size));
     } catch (_) {
       // Keep the readable medium default if storage is unavailable.
     }
@@ -154,7 +159,13 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   }
 
   void _setTextSize(AppTextSize size) {
+    final previous = _textSize;
     setState(() => _textSize = size);
+    if (size != previous) {
+      unawaited(
+          _analyticsService.textSizeChanged(size: size, previous: previous));
+      unawaited(_analyticsService.setTextSizeProperty(size));
+    }
     unawaited(_storageService.setTextSize(size).catchError((_) {}));
   }
 

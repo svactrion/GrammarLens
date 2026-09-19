@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 
@@ -208,6 +209,76 @@ void main() {
       await service.setFirstStepDayOfMonth(24);
       expect(sink.events, isEmpty);
       expect(sink.userProperties, {'first_step_dom': '24'});
+    });
+
+    test('profile_medals_viewed carries only counts and a 0/1 flag', () async {
+      await service.profileMedalsViewed(
+        finalizedMonths: 3,
+        medalsEarned: 2,
+        welcomeEarned: true,
+      );
+      expectOnly('profile_medals_viewed', {
+        'finalized_months': 3,
+        'medals_earned': 2,
+        'welcome_earned': 1,
+      });
+    });
+
+    test('text_size_changed carries only size and previous', () async {
+      await service.textSizeChanged(
+        size: AppTextSize.large,
+        previous: AppTextSize.medium,
+      );
+      expectOnly('text_size_changed', {'size': 'large', 'previous': 'medium'});
+    });
+
+    test('text_size is a user property carrying the size name', () async {
+      await service.setTextSizeProperty(AppTextSize.small);
+      expect(sink.events, isEmpty);
+      expect(sink.userProperties, {'text_size': 'small'});
+    });
+
+    group('profile_medals_viewed session limit', () {
+      late DateTime now;
+      late RecordingAnalyticsSink sessionSink;
+      late AnalyticsService session;
+
+      Future<void> view() => session.profileMedalsViewed(
+            finalizedMonths: 0,
+            medalsEarned: 0,
+            welcomeEarned: false,
+          );
+
+      setUp(() {
+        now = DateTime(2026, 10, 1, 9);
+        sessionSink = RecordingAnalyticsSink();
+        session = AnalyticsService(sink: sessionSink, clock: () => now);
+      });
+
+      test('a second view in the same session is dropped', () async {
+        await view();
+        await view();
+        expect(sessionSink.named('profile_medals_viewed'), hasLength(1));
+      });
+
+      test('a short trip to the background stays the same session', () async {
+        await view();
+        session.appPaused();
+        now = now.add(const Duration(minutes: 29));
+        session.appResumed();
+        await view();
+        expect(sessionSink.named('profile_medals_viewed'), hasLength(1));
+      });
+
+      test('30 minutes or more in the background starts a new session',
+          () async {
+        await view();
+        session.appPaused();
+        now = now.add(AnalyticsService.sessionTimeout);
+        session.appResumed();
+        await view();
+        expect(sessionSink.named('profile_medals_viewed'), hasLength(2));
+      });
     });
 
     test('a failing sink never throws out of the wrapper', () async {

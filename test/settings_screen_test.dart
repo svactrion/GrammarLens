@@ -12,9 +12,13 @@ import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
+import 'package:grammar_lens/models/medal_tier.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+
+import 'support/recording_analytics_sink.dart';
 
 /// sqflite has no platform channel in this test environment (see
 /// widget_test.dart's note), so a real `StorageService.saveUserProfile`
@@ -129,6 +133,7 @@ void main() {
     SubscriptionService? subscriptionService,
     VoidCallback? onResetOnboarding,
     UserProfile? profileOverride,
+    AnalyticsService? analyticsService,
     bool active = true,
   }) async {
     // A phone-realistic size (same convention as home_screen_test.dart) —
@@ -152,6 +157,7 @@ void main() {
           storageService: storageService ?? _FakeStorageService(),
           onProfileUpdated: onProfileUpdated ?? (_) {},
           subscriptionService: subscriptionService,
+          analyticsService: analyticsService,
           onResetOnboarding: onResetOnboarding ?? () {},
         ),
       ),
@@ -783,4 +789,106 @@ void main() {
       },
     );
   });
+
+  group('profile_medals_viewed (docs/analytics-plan.md E5)', () {
+    late RecordingAnalyticsSink sink;
+    late AnalyticsService analytics;
+
+    setUp(() {
+      sink = RecordingAnalyticsSink();
+      analytics = AnalyticsService(sink: sink);
+    });
+
+    testWidgets(
+        'reports the medal counts once the collection loads on the active '
+        'tab', (tester) async {
+      await pumpSettings(
+        tester,
+        storageService: _MedalsStorage(),
+        analyticsService: analytics,
+      );
+
+      expect(sink.named('profile_medals_viewed'), hasLength(1));
+      expect(sink.named('profile_medals_viewed').single.parameters, {
+        'finalized_months': 2,
+        'medals_earned': 1,
+        'welcome_earned': 1,
+      });
+    });
+
+    testWidgets(
+        'a Profile that is loaded but not showing (built inside the tab '
+        'stack) is not a view; entering the tab is', (tester) async {
+      final storage = _MedalsStorage();
+      await pumpSettings(
+        tester,
+        storageService: storage,
+        analyticsService: analytics,
+        active: false,
+      );
+      expect(sink.events, isEmpty);
+
+      await pumpSettings(
+        tester,
+        storageService: storage,
+        analyticsService: analytics,
+        active: true,
+      );
+      expect(sink.named('profile_medals_viewed'), hasLength(1));
+    });
+
+    testWidgets('bouncing in and out of the tab reports only once per session',
+        (tester) async {
+      final storage = _MedalsStorage();
+      for (final active in [true, false, true, false, true]) {
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          analyticsService: analytics,
+          active: active,
+        );
+      }
+
+      expect(sink.named('profile_medals_viewed'), hasLength(1));
+    });
+  });
+}
+
+class _MedalsStorage extends _FakeStorageService {
+  @override
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async => [
+        MonthlyMedalResult(
+          year: 2026,
+          month: 9,
+          score: 230,
+          maxScore: 300,
+          activeDays: 23,
+          correct: 100,
+          wrong: 30,
+          skipped: 5,
+          tier: MedalTier.gold,
+          ruleVersion: 1,
+          finalizedAt: DateTime(2026, 10, 1),
+        ),
+        MonthlyMedalResult(
+          year: 2026,
+          month: 8,
+          score: 10,
+          maxScore: 310,
+          activeDays: 1,
+          correct: 5,
+          wrong: 0,
+          skipped: 0,
+          tier: null,
+          ruleVersion: 1,
+          finalizedAt: DateTime(2026, 9, 1),
+        ),
+      ];
+
+  @override
+  Future<WelcomeBadge?> getWelcomeBadge() async => WelcomeBadge(
+        earnedAt: DateTime(2026, 8, 12),
+        ruleVersion: 1,
+        backfilled: false,
+      );
 }

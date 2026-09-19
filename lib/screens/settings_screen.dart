@@ -144,6 +144,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// `profile_medals_viewed` (docs/analytics-plan.md E5). Profile is built at
+  /// launch inside the tab stack even while another tab is showing, so a load
+  /// only counts as a view when this tab is the active one. The once-per-
+  /// session limit lives in [AnalyticsService.profileMedalsViewed].
+  void _reportProfileViewed() {
+    if (!widget.active) return;
+    unawaited(widget.analyticsService.profileMedalsViewed(
+      finalizedMonths: _medalResults.length,
+      medalsEarned: _medalResults.where((r) => r.tier != null).length,
+      welcomeEarned: _welcomeBadge != null,
+    ));
+  }
+
   Future<void> _loadMedals() async {
     final generation = ++_medalsGeneration;
     if (mounted) {
@@ -174,6 +187,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _welcomeBadge = values[2] as WelcomeBadge?;
         _medalsLoading = false;
       });
+      _reportProfileViewed();
     } catch (_) {
       if (!mounted || generation != _medalsGeneration) return;
       setState(() {
