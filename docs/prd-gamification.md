@@ -180,6 +180,132 @@ Her aşamada küçük kapsam → uygulama → uygun test → light/dark cihaz ko
 → kullanıcı incelemesi → kodla birlikte belge kaydı. Yapılmayan doğrulama
 geçmiş gibi yazılmaz; commit/push/merge ayrı bildirilir.
 
+## M6. Decisions (2026-09-19)
+
+Approved during a Claude Code review pass (`docs/gamification-handoff.md`
+§10–11, Batch 2). Written in English per that session's own instruction,
+even though the rest of this active section is Turkish — later entries in
+this section should follow the same convention unless told otherwise.
+
+### M6.1 Scoring deliberately favors habit over accuracy
+
+**Decision:** the approved rule v1 (`docs/gamification-handoff.md` §1:
+correct `+2`, wrong `+1`, skipped `+0`) means a user who shows up and
+writes *something* non-blank every day — even answers that are never
+actually correct — still reaches Silver. Concretely: a full month of
+always-wrong-but-answered days scores `1 × 5 questions × daysInMonth`,
+exactly 50% of `maxScore` (`daysInMonth × 10`), which meets the Silver
+threshold (`ceil(50%)`) on its own. **This is not a bug — it is a
+deliberate tradeoff, not an oversight to fix.**
+
+**Rationale:** Monthly Climb's stated purpose (§M1) is daily return and
+habit formation, not an accuracy measurement — accuracy is already
+measured elsewhere (the error profile and the Review tab), and Daily
+Test's own grading is unaffected by this. Rewarding mere participation
+over correctness is the same design stance the superseded Weekly Climb
+draft argued for explicitly (§3.1 of the historical appendix below:
+"the mountain is climbed as much by showing up as by knowing the
+answer") — carried forward into the monthly rule rather than re-argued
+from scratch. A scoring rule that let inconsistent-but-correct users
+out-climb consistent daily users would undermine the one thing this
+feature is actually for.
+
+### M6.2 A month's highest tier also unlocks the lower tiers in the collection
+
+**Decision:** a finalized month's highest tier visually unlocks every
+tier at or below it in `MonthlyMedalCollection` — a Gold month shows
+Bronze, Silver, *and* Gold as earned, not Gold alone. Supersedes the
+"deviation" noted in the original handoff (§5 of this doc's own
+predecessor, `docs/gamification-handoff.md` §5: "`MonthlyMedalCollection`
+marks a tier earned only if a finalized result has exactly that highest
+tier — a Gold result does not also visually unlock Bronze and Silver
+specimens"). Implemented in Batch 2 (see build-log/handoff for the
+commit).
+
+**Rationale:** a tiered scoring ladder (Bronze ⊂ Silver ⊂ Gold by
+threshold, `MonthlyMedalRules.tierFor`) is a strict ordering, not three
+independent achievements — reaching Gold already means the Bronze and
+Silver thresholds were also cleared that month. Showing Bronze/Silver as
+still-locked under a tier the user already exceeded reads as a bug or an
+insult ("why haven't I earned the easy one?"), not as a reward, and
+forces the user to do unnecessary mental math to realize they already
+have it. This also matches how tiered achievement collections
+conventionally work outside this app.
+
+### M6.3 Mountain theme rotation: undecided, draft only
+
+**Decision:** no mountain theme beyond Green Slope is approved or
+implemented. A future rotation (by calendar month, or otherwise) remains
+an open, undecided idea — formalizing what §M4's own table already
+listed as open ("Temalar — kısmen karara bağlandı … aylık sıra ve diğer
+temalar açık, volkan onaylı değil"). This decision changes nothing in
+code; it exists so this stays legible as a deliberate deferral, not a
+forgotten TODO.
+
+**Rationale:** committing to a specific rotation/sequence before any user
+has seen even the first theme on a device risks locking in an untested
+visual direction. Green Slope alone is sufficient to unblock every other
+Monthly Climb milestone (medal engine, Profile integration, device
+acceptance) — the theme rotation is decoupled work that can follow once
+there is real feedback to design against.
+
+### M6.4 Medal artwork is a temporary placeholder
+
+**Decision:** the current medal visuals (the tier-colored
+`Icons.landscape_rounded` circles in `MonthlyMedalCollection`) are
+functional placeholders, not the final design. Final medal illustration
+assets are expected to come from an external design source later.
+
+**Rationale:** the placeholder unblocks every non-visual milestone (the
+scoring engine, storage, Profile integration, accessibility/text-size
+coverage) without waiting on art that doesn't exist yet — the same
+posture this project already took with the app icon and avatar
+illustrations before their own final assets landed. Swapping the icon
+for real artwork later is expected to be a self-contained, low-risk
+change to `_MedalSpecimen`/`_MedalHistoryRow`, not a structural one.
+
+### M6.5 Welcome badge — ASSUMPTION, unmeasured, not yet approved for build
+
+**Decision:** a first-Daily-Test "Welcome" badge is accepted as a
+*planned* addition to the direction, on the following spec — but marked
+explicitly as an **assumption**, not a validated product decision, and
+**no code is authorized by this entry.** See
+`docs/gamification-handoff.md`'s "Batch 2 — Welcome plan" section for the
+implementation plan; that plan requires separate approval before any
+Welcome code is written.
+
+**Spec:**
+- Earned exactly once, on the user's first *completed* Daily Test —
+  merely opening the app is not enough to earn it.
+- Independent of and does not replace the monthly medals; a user can
+  hold both a Welcome badge and any number of monthly medals
+  simultaneously.
+- A one-time win moment is shown on the result screen of that first
+  completed Daily Test.
+- Visible in the Profile medal collection.
+- The award rule is versioned, the same convention `MonthlyMedalRules`
+  already uses (`ruleVersion`), so the earning criteria can change later
+  without silently reinterpreting a badge already on record.
+- Backfilled retroactively to existing users who already have at least
+  one ledger row (`climb_daily_entries`) — i.e., anyone who has already
+  completed at least one Daily Test earns it the first time the rule
+  runs for them, without needing to complete a *new* one.
+
+**Rationale (why this is a hypothesis, not a confirmed decision):** there
+is no analytics instrumentation live yet (`docs/gamification-handoff.md`
+§8; `prd-gamification.md` §M5's own "Ölçüm" section states the same
+precondition for Monthly Climb itself) — this cannot be measured before
+it ships, only after. The hypothesis being tested: a badge earned on day
+one turns a mid-month starter's first partial month from "an
+unreachable goal" (no monthly medal is realistically reachable starting,
+say, the 20th of a 30-day month — see M2/M4's "no proration" decision)
+into "I already earned something," supporting early retention for
+exactly the population the no-proration monthly-medal design otherwise
+leaves with nothing to show for their first days. This must be verified
+against real D1/D7 data once analytics exists, the same "Faz 1 sayıyı
+kıpırdatmıyorsa" evidentiary standard §M5/§9 already applies to Monthly
+Climb itself — not assumed true because it sounds plausible.
+
 ---
 
 # Tarihsel ek — Weekly Climb (superseded)
