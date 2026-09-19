@@ -116,6 +116,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
       case _Step.dailyTest:
         return DailyTestScreen(
           dailyTestService: _dailyTestService,
+          analyticsService: widget.analyticsService,
           onFinished: _onDailyTestFinished,
           // Leaving the very first Daily Test is closer to "not ready yet"
           // than "go back" — there's nothing before it to return to in
@@ -128,6 +129,8 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
           dailyTestSet: _dailyTestSet!,
           answers: _dailyTestAnswers,
           dailyTestService: _dailyTestService,
+          analyticsService: widget.analyticsService,
+          isDay0: true,
           bottomBuilder: (context) => _DayZeroPaywallCta(
             storageService: widget.storageService,
             analyticsService: widget.analyticsService,

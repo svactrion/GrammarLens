@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../models/practice_item.dart';
+import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../utils/loading_view.dart';
@@ -25,6 +26,7 @@ import 'daily_test_result_screen.dart';
 /// ([checkDailyTestAnswer] in DailyTestResultScreen).
 class DailyTestScreen extends StatefulWidget {
   final DailyTestService dailyTestService;
+  final AnalyticsService analyticsService;
 
   /// Called with the finished set + answers instead of the default
   /// pushReplacement-to-results navigation, when non-null. Exists for the
@@ -46,6 +48,7 @@ class DailyTestScreen extends StatefulWidget {
   const DailyTestScreen({
     super.key,
     required this.dailyTestService,
+    required this.analyticsService,
     this.onFinished,
     this.onExit,
   });
@@ -148,6 +151,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
           dailyTestSet: _dailyTestSet!,
           answers: Map.of(_answers),
           dailyTestService: widget.dailyTestService,
+          analyticsService: widget.analyticsService,
         ),
       ),
     );

@@ -287,6 +287,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final result = await navigator.push<(DailyTestSet, Map<String, String>)>(
       MaterialPageRoute(
         builder: (_) => DailyTestScreen(
+          analyticsService: widget.analyticsService,
           onFinished: (set, answers) => navigator.pop((set, answers)),
           dailyTestService: DailyTestService(
             claudeService: widget.claudeService,
@@ -301,6 +302,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         builder: (_) => DailyTestResultScreen(
           dailyTestSet: result.$1,
           answers: result.$2,
+          analyticsService: widget.analyticsService,
           onCompletionSaved: () {
             if (!mounted) return;
             _pendingClimbDay = result.$1.day;
@@ -333,6 +335,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             builder: (_) => DailyTestResultScreen(
               dailyTestSet: set,
               answers: set.answers ?? const {},
+              analyticsService: widget.analyticsService,
               dailyTestService: DailyTestService(
                 claudeService: widget.claudeService,
                 storageService: widget.storageService,

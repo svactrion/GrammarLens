@@ -7,9 +7,12 @@ import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/screens/daily_test_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+
+import 'support/recording_analytics_sink.dart';
 
 /// Fails the first [failCount] calls, then succeeds — simulates a
 /// transient generation failure (a bad API response, a network error, the
@@ -107,7 +110,11 @@ void main() {
     DailyTestService service,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: DailyTestScreen(dailyTestService: service)),
+      MaterialApp(
+          home: DailyTestScreen(
+        dailyTestService: service,
+        analyticsService: AnalyticsService(sink: RecordingAnalyticsSink()),
+      )),
     );
     await tester.pumpAndSettle();
   }

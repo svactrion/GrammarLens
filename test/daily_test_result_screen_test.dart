@@ -7,12 +7,15 @@ import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/screens/daily_test_result_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
+
+import 'support/recording_analytics_sink.dart';
 
 /// Captures what DailyTestResultScreen actually writes, instead of hitting
 /// the real (platform-channel-backed, throwing-in-tests) StorageService.
@@ -74,9 +77,13 @@ DailyTestQuestion _question({
 void main() {
   late _FakeStorageService storageService;
   late DailyTestService dailyTestService;
+  late RecordingAnalyticsSink analyticsSink;
+  late AnalyticsService analyticsService;
 
   setUp(() {
     storageService = _FakeStorageService();
+    analyticsSink = RecordingAnalyticsSink();
+    analyticsService = AnalyticsService(sink: analyticsSink);
     dailyTestService = DailyTestService(
       claudeService: ClaudeService(),
       storageService: storageService,
@@ -133,6 +140,7 @@ void main() {
               DailyTestSet(day: '2026-01-01', questions: [questions.first]),
           answers: const {'q1': 'the'},
           dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
         ),
       ));
       await tester.pump();
@@ -170,6 +178,7 @@ void main() {
               DailyTestSet(day: '2026-01-01', questions: [questions.first]),
           answers: const {},
           dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
         )));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Back to Home'), 200);
@@ -189,6 +198,7 @@ void main() {
           dailyTestSet: set,
           answers: answers,
           dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
         ),
       ),
     );
@@ -302,6 +312,7 @@ void main() {
                 DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
             answers: const {'k1': 'cookıng'},
             dailyTestService: dailyTestService,
+            analyticsService: analyticsService,
           ),
         ),
       );
@@ -326,6 +337,7 @@ void main() {
                 DailyTestSet(day: '2026-01-01', questions: keyboardQuestions),
             answers: const {'k1': 'cookıng'},
             dailyTestService: dailyTestService,
+            analyticsService: analyticsService,
           ),
         ),
       );
@@ -421,6 +433,7 @@ void main() {
               DailyTestSet(day: '2026-01-01', questions: [questions.first]),
           answers: const {},
           dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
         ),
       ));
       await tester.pumpAndSettle();
@@ -502,5 +515,163 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  group('analytics (docs/analytics-plan.md E1/E3)', () {
+    Future<void> pumpWith(
+      WidgetTester tester, {
+      required DailyTestSet set,
+      Map<String, String>? withAnswers,
+      bool isDay0 = false,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          scaffoldMessengerKey: AppMessenger.key,
+          home: DailyTestResultScreen(
+            dailyTestSet: set,
+            answers: withAnswers ?? answers,
+            dailyTestService: dailyTestService,
+            analyticsService: analyticsService,
+            isDay0: isDay0,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+        'a new completion reports daily_test_completed with exactly the '
+        'agreed keys, counts only', (tester) async {
+      await pumpWith(
+        tester,
+        set: DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+
+      final events = analyticsSink.named('daily_test_completed');
+      expect(events, hasLength(1));
+      expect(events.single.parameters, {
+        'correct_count': 1,
+        'wrong_count': 2,
+        'skipped_count': 1,
+        'step_earned': 1,
+        'day0': 0,
+      });
+    });
+
+    testWidgets('the Day-0 result screen reports day0 = 1', (tester) async {
+      await pumpWith(
+        tester,
+        set: DailyTestSet(day: '2026-01-01', questions: questions),
+        isDay0: true,
+      );
+
+      expect(
+        analyticsSink.named('daily_test_completed').single.parameters!['day0'],
+        1,
+      );
+    });
+
+    testWidgets('an all-skipped completion reports step_earned = 0',
+        (tester) async {
+      await pumpWith(
+        tester,
+        set: DailyTestSet(day: '2026-01-01', questions: [questions.first]),
+        withAnswers: const {},
+      );
+
+      expect(analyticsSink.named('daily_test_completed').single.parameters, {
+        'correct_count': 0,
+        'wrong_count': 0,
+        'skipped_count': 1,
+        'step_earned': 0,
+        'day0': 0,
+      });
+      expect(analyticsSink.named('welcome_badge_earned'), isEmpty);
+    });
+
+    testWidgets(
+        'a failed save reports nothing; the retry that succeeds reports '
+        'exactly once', (tester) async {
+      storageService.failCompletionWith = StateError('disk full');
+      await pumpWith(
+        tester,
+        set: DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+      expect(analyticsSink.events, isEmpty);
+
+      storageService.failCompletionWith = null;
+      await tester.tap(find.text('Try saving again'));
+      await tester.pumpAndSettle();
+
+      expect(analyticsSink.named('daily_test_completed'), hasLength(1));
+    });
+
+    testWidgets('reopening an already-completed result reports nothing',
+        (tester) async {
+      await pumpWith(
+        tester,
+        set: DailyTestSet(
+          day: '2026-01-01',
+          questions: questions,
+          completedAt: DateTime(2026, 1, 1, 9),
+          answers: answers,
+        ),
+      );
+
+      expect(storageService.completeDailyTestCalls, 0);
+      expect(analyticsSink.events, isEmpty);
+      expect(analyticsSink.userPropertyWrites, isEmpty);
+    });
+
+    testWidgets(
+        'a live Welcome earn reports welcome_badge_earned from the ledger '
+        'day and sets first_step_dom once', (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpWith(
+        tester,
+        set: DailyTestSet(day: '2026-02-19', questions: questions),
+      );
+
+      final events = analyticsSink.named('welcome_badge_earned');
+      expect(events, hasLength(1));
+      expect(events.single.parameters, {
+        'rule_version': 1,
+        'day_of_month': 19,
+        'days_in_month': 28,
+      });
+      expect(analyticsSink.userPropertyWrites, ['first_step_dom']);
+      expect(analyticsSink.userProperties['first_step_dom'], '19');
+    });
+
+    testWidgets(
+        'an ordinary completion never reports Welcome or sets the '
+        'user property', (tester) async {
+      storageService.welcomeBadgeJustEarned = false;
+      await pumpWith(
+        tester,
+        set: DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+
+      expect(analyticsSink.named('welcome_badge_earned'), isEmpty);
+      expect(analyticsSink.userPropertyWrites, isEmpty);
+    });
+
+    testWidgets(
+        'a retry after a failed first attempt earns and reports '
+        'Welcome exactly once', (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+      storageService.failCompletionWith = StateError('disk full');
+      await pumpWith(
+        tester,
+        set: DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+      storageService.failCompletionWith = null;
+      await tester.tap(find.text('Try saving again'));
+      await tester.pumpAndSettle();
+
+      expect(analyticsSink.named('welcome_badge_earned'), hasLength(1));
+      expect(analyticsSink.userPropertyWrites, ['first_step_dom']);
+    });
   });
 }

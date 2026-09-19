@@ -159,12 +159,67 @@ class AnalyticsService {
     return _logEvent('purchase_result', {'plan': plan, 'outcome': outcome});
   }
 
+  /// A Daily Test completion was durably saved — the action that earns (or,
+  /// when everything was skipped, does not earn) the day's climb step.
+  /// Fired once per genuine new completion, never for a retried failed save
+  /// that eventually succeeds twice, or for a reopened finished result.
+  /// Counts only; no question or answer text. Booleans go out as `0`/`1`
+  /// because Firebase parameters are strings or numbers.
+  Future<void> dailyTestCompleted({
+    required int correctCount,
+    required int wrongCount,
+    required int skippedCount,
+    required bool stepEarned,
+    required bool day0,
+  }) {
+    return _logEvent('daily_test_completed', {
+      'correct_count': correctCount,
+      'wrong_count': wrongCount,
+      'skipped_count': skippedCount,
+      'step_earned': stepEarned ? 1 : 0,
+      'day0': day0 ? 1 : 0,
+    });
+  }
+
+  /// The Welcome badge was earned live (docs/prd-gamification.md §M6.5) —
+  /// never for the v18 migration's backfill, which cannot happen on a
+  /// production device. [dayOfMonth]/[daysInMonth] describe the ledger day
+  /// of the first step, which is what lets the Welcome assumption be read
+  /// against mid-month starters.
+  Future<void> welcomeBadgeEarned({
+    required int ruleVersion,
+    required int dayOfMonth,
+    required int daysInMonth,
+  }) {
+    return _logEvent('welcome_badge_earned', {
+      'rule_version': ruleVersion,
+      'day_of_month': dayOfMonth,
+      'days_in_month': daysInMonth,
+    });
+  }
+
+  /// User property `first_step_dom`: the day of the month (1–31) of the
+  /// user's very first step. Call it exactly once, together with
+  /// [welcomeBadgeEarned] — user properties only apply to events logged
+  /// after they are set and cannot be reconstructed later.
+  Future<void> setFirstStepDayOfMonth(int dayOfMonth) {
+    return _setUserProperty('first_step_dom', dayOfMonth.toString());
+  }
+
   Future<void> _logEvent(String name, [Map<String, Object>? parameters]) async {
     try {
       await _sink.logEvent(name, parameters);
     } catch (_) {
       // No Firebase project connected yet, or a transient failure — never
       // let instrumentation take down the feature it's measuring.
+    }
+  }
+
+  Future<void> _setUserProperty(String name, String? value) async {
+    try {
+      await _sink.setUserProperty(name, value);
+    } catch (_) {
+      // Same best-effort rule as [_logEvent].
     }
   }
 }

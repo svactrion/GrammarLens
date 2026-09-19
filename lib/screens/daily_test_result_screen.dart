@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/daily_test_completion.dart';
 import '../models/daily_test_set.dart';
+import '../services/analytics_service.dart';
 import '../services/daily_test_service.dart';
+import '../services/welcome_badge_rules.dart';
 import '../theme.dart';
 import '../utils/answer_matching.dart';
 import '../utils/app_messenger.dart';
@@ -23,6 +27,11 @@ class DailyTestResultScreen extends StatefulWidget {
   final DailyTestSet dailyTestSet;
   final Map<String, String> answers;
   final DailyTestService dailyTestService;
+  final AnalyticsService analyticsService;
+
+  /// True only for the Day-0 first-launch flow's result screen; reported as
+  /// the `day0` parameter of `daily_test_completed`.
+  final bool isDay0;
 
   /// Day-0 owns its onboarding CTA. Other result routes get a Home action.
   final WidgetBuilder? bottomBuilder;
@@ -32,6 +41,8 @@ class DailyTestResultScreen extends StatefulWidget {
     required this.dailyTestSet,
     required this.answers,
     required this.dailyTestService,
+    required this.analyticsService,
+    this.isDay0 = false,
     this.onCompletionSaved,
     this.bottomBuilder,
   });
@@ -54,6 +65,12 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   /// save-aware CTA row: it doesn't gate, delay or replace "See your
   /// climb"/"Back to Home".
   bool _showWelcomeCelebration = false;
+
+  /// Guards `daily_test_completed`/Welcome analytics to at most once per
+  /// screen instance, on top of `_saveCompletion`'s own already-completed
+  /// early return — a reopened finished result never reports, and a failed
+  /// save that is retried reports only when a save actually succeeds.
+  bool _analyticsReported = false;
 
   @override
   void initState() {
@@ -79,6 +96,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         day: _completion.set.day,
         completedAt: _completion.completedAt,
       );
+      _reportCompletion(welcomeBadgeJustEarned);
       widget.onCompletionSaved?.call();
       if (welcomeBadgeJustEarned && mounted) {
         setState(() => _showWelcomeCelebration = true);
@@ -90,6 +108,34 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Analytics for a save that just succeeded (docs/analytics-plan.md E1/E3):
+  /// counts and the ledger day only, never question or answer text. The
+  /// Welcome events and the `first_step_dom` user property fire only on a
+  /// live earn, so they are set exactly once per user.
+  void _reportCompletion(bool welcomeBadgeJustEarned) {
+    if (_analyticsReported) return;
+    _analyticsReported = true;
+    final analytics = widget.analyticsService;
+    unawaited(analytics.dailyTestCompleted(
+      correctCount: _completion.correct,
+      wrongCount: _completion.wrong,
+      skippedCount: _completion.skipped,
+      stepEarned: _completion.step == 1,
+      day0: widget.isDay0,
+    ));
+    if (!welcomeBadgeJustEarned) return;
+    // The ledger day, not the wall clock: the same authority the step
+    // itself is attributed to across midnight and timezone changes.
+    final ledgerDay = DateTime.tryParse(_completion.set.day);
+    if (ledgerDay == null) return;
+    unawaited(analytics.welcomeBadgeEarned(
+      ruleVersion: WelcomeBadgeRules.ruleVersion,
+      dayOfMonth: ledgerDay.day,
+      daysInMonth: DateTime(ledgerDay.year, ledgerDay.month + 1, 0).day,
+    ));
+    unawaited(analytics.setFirstStepDayOfMonth(ledgerDay.day));
   }
 
   @override
