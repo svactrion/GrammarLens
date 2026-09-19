@@ -31,6 +31,12 @@ class _FakeStorageService extends StorageService {
   Object? failCompletionWith;
   Completer<void>? pendingCompletion;
 
+  /// Controls the return value a *successful* call reports — mirrors
+  /// `StorageService.completeDailyTest`'s real "did this call just earn
+  /// the Welcome badge" signal (docs/prd-gamification.md §M6.5). Defaults
+  /// to false; tests that care about the celebration set it explicitly.
+  bool welcomeBadgeJustEarned = false;
+
   @override
   Future<bool> completeDailyTest(
     Map<String, String> answers,
@@ -44,7 +50,7 @@ class _FakeStorageService extends StorageService {
     }
     completeDailyTestCalls++;
     insertedErrors.addAll(errorEntries);
-    return false;
+    return welcomeBadgeJustEarned;
   }
 }
 
@@ -361,6 +367,88 @@ void main() {
       expect(
         find.textContaining('Could not save your Daily Test results'),
         findsOneWidget,
+      );
+    });
+  });
+
+  group('Welcome badge celebration (docs/prd-gamification.md §M6.5)', () {
+    testWidgets(
+        'a completion that just earned the badge shows the one-time '
+        'celebration, exactly once', (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+    });
+
+    testWidgets('an ordinary completion (not the first ever) shows nothing',
+        (tester) async {
+      storageService.welcomeBadgeJustEarned = false;
+
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+
+      expect(find.text('Welcome to the climb'), findsNothing);
+    });
+
+    testWidgets(
+        'reopening an already-completed set never shows it, even if the '
+        'fake were told to earn it — the save path never runs at all',
+        (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+      final completedSet = DailyTestSet(
+        day: '2026-01-01',
+        questions: questions,
+        completedAt: DateTime(2026, 1, 1),
+        answers: answers,
+      );
+
+      await pumpResult(tester, completedSet);
+
+      expect(storageService.completeDailyTestCalls, 0);
+      expect(find.text('Welcome to the climb'), findsNothing);
+    });
+
+    testWidgets(
+        'a failed first attempt shows no celebration; the retry that '
+        'actually earns it shows exactly one, not two', (tester) async {
+      storageService.failCompletionWith = StateError('disk full');
+      storageService.welcomeBadgeJustEarned = true;
+
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+      expect(find.text('Welcome to the climb'), findsNothing);
+
+      storageService.failCompletionWith = null;
+      await tester.tap(find.text('Try saving again'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+    });
+
+    testWidgets(
+        'does not gate or delay the existing "See your climb" CTA',
+        (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('See your climb'), 300);
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNotNull,
       );
     });
   });

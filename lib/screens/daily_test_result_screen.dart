@@ -46,6 +46,15 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   bool _saving = false;
   bool _saveFailed = false;
 
+  /// Set at most once per screen instance, only on a genuine live earn
+  /// (docs/prd-gamification.md §M6.5) — never re-derived from storage, so
+  /// a reopened already-completed set (whose `_saveCompletion` never even
+  /// runs, see `initState` below) or a backfilled badge (which this screen
+  /// never earns) cannot show it. Purely additive to the existing
+  /// save-aware CTA row: it doesn't gate, delay or replace "See your
+  /// climb"/"Back to Home".
+  bool _showWelcomeCelebration = false;
+
   @override
   void initState() {
     super.initState();
@@ -63,13 +72,17 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       _saveFailed = false;
     });
     try {
-      await widget.dailyTestService.completeDailyTest(
+      final welcomeBadgeJustEarned =
+          await widget.dailyTestService.completeDailyTest(
         _completion.answers,
         _completion.errors,
         day: _completion.set.day,
         completedAt: _completion.completedAt,
       );
       widget.onCompletionSaved?.call();
+      if (welcomeBadgeJustEarned && mounted) {
+        setState(() => _showWelcomeCelebration = true);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _saveFailed = true);
@@ -96,6 +109,10 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       bandBottom: ResultScoreBand(text: scoreText),
       children: [
         if (_saving) const LinearProgressIndicator(),
+        if (_showWelcomeCelebration) ...[
+          const _WelcomeCelebrationBanner(),
+          const SizedBox(height: 14),
+        ],
         if (_saveFailed) ...[
           const Text('Your result could not be saved. Please try again.'),
           TextButton(
@@ -130,6 +147,64 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// The one-time Welcome badge win moment (docs/prd-gamification.md §M6.5).
+/// Copy is deliberately audience-neutral — no "first test" language — since
+/// the same badge, and the same wording, is earned identically by a brand
+/// new user and by a pre-existing v2 user completing their first Daily
+/// Test after updating. Visual is a temporary placeholder; real artwork
+/// lands with the rest of the medal collection's own design pass later.
+class _WelcomeCelebrationBanner extends StatelessWidget {
+  const _WelcomeCelebrationBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Semantics(
+      liveRegion: true,
+      child: Card(
+        color: colorScheme.secondaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.celebration_rounded,
+                color: colorScheme.onSecondaryContainer,
+                size: 28,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome to the climb',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Every completed Daily Test moves you forward on "
+                      "this month's mountain.",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
