@@ -752,14 +752,17 @@ class StorageService {
   ///
   /// Returns whether *this* call is the one that just earned the Welcome
   /// badge (docs/prd-gamification.md §M6.5) — true only when this
-  /// completion writes the very first row `climb_daily_entries` has ever
-  /// had. That check, and the badge insert itself, happen inside this same
-  /// transaction: a failed write rolls back the badge along with
-  /// everything else, and the caller never needs a second read to find
-  /// out, which would risk exactly the kind of stale-read race Batch 1's
-  /// `SettingsScreen` fix avoided elsewhere in this codebase. Always false
-  /// for a no-op call (missing/already-completed set) or any later
-  /// completion once the ledger already has history.
+  /// completion writes a `step = 1` row (at least one answered question)
+  /// and `climb_daily_entries` had no `step = 1` row before it. An
+  /// all-skipped (`step = 0`) completion writes its ledger row but earns
+  /// nothing, and does not use the badge up: the first later completion
+  /// with an answer still earns it. That check, and the badge insert
+  /// itself, happen inside this same transaction: a failed write rolls
+  /// back the badge along with everything else, and the caller never
+  /// needs a second read to find out, which would risk exactly the kind
+  /// of stale-read race Batch 1's `SettingsScreen` fix avoided elsewhere
+  /// in this codebase. Always false for a no-op call (missing/already-
+  /// completed set) or any completion once a `step = 1` row exists.
   Future<bool> completeDailyTest(
     Map<String, String> answers,
     List<ErrorEntry> errorEntries, {
@@ -793,8 +796,10 @@ class StorageService {
       }
       await batch.commit(noResult: true);
 
-      final priorEntryCount = Sqflite.firstIntValue(
-            await txn.rawQuery('SELECT COUNT(*) FROM climb_daily_entries'),
+      final priorStepEntryCount = Sqflite.firstIntValue(
+            await txn.rawQuery(
+              'SELECT COUNT(*) FROM climb_daily_entries WHERE step = 1',
+            ),
           ) ??
           0;
 
@@ -808,15 +813,18 @@ class StorageService {
         'rule_version': DailyTestCompletion.ruleVersion,
       });
 
-      if (priorEntryCount > 0) return false;
+      // Only a row that moves the avatar (`step = 1`) can earn the badge,
+      // and only the first such row ever.
+      if (completion.step != 1 || priorStepEntryCount > 0) return false;
 
-      // The very first ledger row of all time, in this same transaction —
-      // `priorEntryCount == 0`, computed atomically above, is the actual
-      // source of truth for "just earned it" and is what this method
-      // returns below. `ConflictAlgorithm.ignore` here is defensive only
-      // (the only other writer is the v18 migration's one-time backfill,
-      // which only ever fires when the ledger already has history, so
-      // this table should always still be empty at this point too) —
+      // The first `step = 1` ledger row of all time, in this same
+      // transaction — `priorStepEntryCount == 0`, computed atomically
+      // above, is the actual source of truth for "just earned it" and is
+      // what this method returns below. `ConflictAlgorithm.ignore` here
+      // is defensive only (the only other writer is the v18 migration's
+      // one-time backfill, which only ever fires when the ledger already
+      // has a `step = 1` row, so this table should always still be empty
+      // at this point too) —
       // deliberately NOT inspecting the insert's own returned rowid to
       // decide success: this row's `id` is hardcoded to 0, which is
       // indistinguishable from sqflite's "insert was ignored" sentinel.

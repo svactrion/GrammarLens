@@ -267,7 +267,7 @@ void main() {
 
   group('Welcome badge earned via completeDailyTest', () {
     test(
-        'the very first ledger entry ever written earns it, live (not '
+        'the first step = 1 ledger entry ever written earns it, live (not '
         'backfilled)', () async {
       final set = await storage.saveDailyTestSet(questions);
       final justEarned =
@@ -280,6 +280,51 @@ void main() {
       expect(badge.earnedAt, DateTime(2026, 10, 1, 0, 3));
     });
 
+    test(
+        'an all-skipped first test earns nothing but still writes its ledger '
+        'row; the next test with an answer earns it, and only once', () async {
+      final skippedSet = await storage.saveDailyTestSet(questions);
+      final skippedEarned = await saveCompletionReturning(
+          completion(skippedSet, {'q0': '   ', 'q1': ''}));
+
+      expect(skippedEarned, isFalse);
+      expect(await storage.getWelcomeBadge(), isNull);
+      // The all-skipped row is still recorded (completes, no step).
+      expect(await storage.getClimbProgress(2026, 9),
+          (steps: 0, correct: 0, wrong: 0, skipped: 5));
+
+      StorageService.clockForTesting = () => DateTime(2026, 10, 1);
+      final answeredSet = await storage.saveDailyTestSet(questions);
+      final answeredEarned = await saveCompletionReturning(
+          completion(answeredSet, {'q0': 'cooking'}));
+
+      expect(answeredEarned, isTrue);
+      final badge = await storage.getWelcomeBadge();
+      expect(badge, isNotNull);
+      expect(badge!.backfilled, isFalse);
+
+      StorageService.clockForTesting = () => DateTime(2026, 10, 2);
+      final laterSet = await storage.saveDailyTestSet(questions);
+      final laterEarned = await saveCompletionReturning(
+          completion(laterSet, {'q0': 'cooking'}));
+      expect(laterEarned, isFalse, reason: 'already earned — never twice');
+    });
+
+    test(
+        'an all-skipped test after the badge is earned neither re-earns nor '
+        'disturbs it', () async {
+      final first = await storage.saveDailyTestSet(questions);
+      expect(await saveCompletionReturning(completion(first, {'q0': 'a'})),
+          isTrue);
+      final earnedAt = (await storage.getWelcomeBadge())!.earnedAt;
+
+      StorageService.clockForTesting = () => DateTime(2026, 10, 1);
+      final second = await storage.saveDailyTestSet(questions);
+      expect(await saveCompletionReturning(completion(second, {'q0': ''})),
+          isFalse);
+      expect((await storage.getWelcomeBadge())!.earnedAt, earnedAt);
+    });
+
     test('a second, later completion does not re-earn it', () async {
       final first = await storage.saveDailyTestSet(questions);
       expect(await saveCompletionReturning(completion(first, {'q0': 'a'})),
@@ -287,8 +332,8 @@ void main() {
 
       StorageService.clockForTesting = () => DateTime(2026, 10, 1);
       final second = await storage.saveDailyTestSet(questions);
-      final justEarnedAgain = await saveCompletionReturning(
-          completion(second, {'q0': 'cooking'}));
+      final justEarnedAgain =
+          await saveCompletionReturning(completion(second, {'q0': 'cooking'}));
 
       expect(justEarnedAgain, isFalse);
       final badge = await storage.getWelcomeBadge();
@@ -338,8 +383,8 @@ void main() {
         'reopening an already-completed set never re-earns it (idempotent '
         'no-op, not a fresh completion)', () async {
       final set = await storage.saveDailyTestSet(questions);
-      expect(await saveCompletionReturning(completion(set, {'q0': 'a'})),
-          isTrue);
+      expect(
+          await saveCompletionReturning(completion(set, {'q0': 'a'})), isTrue);
 
       final reopened =
           await saveCompletionReturning(completion(set, {'q0': 'a'}));

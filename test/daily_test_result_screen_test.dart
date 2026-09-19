@@ -398,6 +398,28 @@ void main() {
     });
 
     testWidgets(
+        'an all-skipped result shows no celebration — storage reports '
+        'false for it (a step = 0 row never earns the badge)', (tester) async {
+      // Mirrors what the real StorageService returns for an all-skipped
+      // first test; the earning rule itself is covered in
+      // storage_service_climb_test.dart.
+      storageService.welcomeBadgeJustEarned = false;
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: DailyTestResultScreen(
+          dailyTestSet:
+              DailyTestSet(day: '2026-01-01', questions: [questions.first]),
+          answers: const {},
+          dailyTestService: dailyTestService,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(storageService.completeDailyTestCalls, 1);
+      expect(find.text('Welcome to the climb'), findsNothing);
+    });
+
+    testWidgets(
         'reopening an already-completed set never shows it, even if the '
         'fake were told to earn it — the save path never runs at all',
         (tester) async {
@@ -434,8 +456,7 @@ void main() {
       expect(find.text('Welcome to the climb'), findsOneWidget);
     });
 
-    testWidgets(
-        'does not gate or delay the existing "See your climb" CTA',
+    testWidgets('does not gate or delay the existing "See your climb" CTA',
         (tester) async {
       storageService.welcomeBadgeJustEarned = true;
 
