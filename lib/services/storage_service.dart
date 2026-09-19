@@ -245,9 +245,9 @@ class StorageService {
   // row existing (always `id = 0`) means earned, the same "presence is the
   // boolean" pattern `user_profile` already uses for onboarding-complete.
   // `backfilled` distinguishes a v18-migration retroactive award (an
-  // existing user with prior ledger history) from one earned live through
-  // `completeDailyTest` — not surfaced differently in the UI today, kept
-  // for future use. See docs/prd-gamification.md §M6.5.
+  // existing user who already had a `step = 1` ledger row) from one earned
+  // live through `completeDailyTest` — not surfaced differently in the UI
+  // today, kept for future use. See docs/prd-gamification.md §M6.5.
   static const _createWelcomeBadgeTable = '''
     CREATE TABLE IF NOT EXISTS welcome_badge (
       id INTEGER PRIMARY KEY CHECK (id = 0),
@@ -391,21 +391,26 @@ class StorageService {
         // from before this badge existed — by the time this line runs,
         // the `oldVersion < 15` step above has already created that table
         // even on a device upgrading from well before v15, so it's always
-        // safe to read here regardless of the starting version. If it has
-        // at least one row, this device earns the badge now, dated to its
-        // *earliest* entry and marked `backfilled` — never a fresh
+        // safe to read here regardless of the starting version. The badge
+        // rewards a real action — a ledger row with `step = 1`, i.e. at
+        // least one answered question, the same rule that moves the
+        // avatar — so only such a row counts here: an all-skipped
+        // (`step = 0`) row is ignored. If the device has at least one
+        // `step = 1` row, it earns the badge now, dated to the *earliest*
+        // such row and marked `backfilled` — never a fresh
         // `completeDailyTest` call's job for a device that already has
-        // history. `ConflictAlgorithm.ignore` makes this safe to run
+        // that history. `ConflictAlgorithm.ignore` makes this safe to run
         // again on the downgrade-then-upgrade sequence this whole method's
         // own doc comment describes: a second pass here must never
         // overwrite an award (backfilled or, in principle, a real one)
         // that already exists. There is deliberately no other backfill
         // path anywhere else in this codebase — a device that already
-        // has ledger rows earns it here, once, or never at all.
+        // has a `step = 1` row earns it here, once, or never at all.
         if (oldVersion < 18) {
           await db.execute(_createWelcomeBadgeTable);
           final earliest = await db.rawQuery(
-            'SELECT MIN(day) AS earliest FROM climb_daily_entries',
+            'SELECT MIN(day) AS earliest FROM climb_daily_entries '
+            'WHERE step = 1',
           );
           final earliestDay = earliest.single['earliest'] as String?;
           if (earliestDay != null) {

@@ -8,8 +8,8 @@ import 'package:grammar_lens/services/welcome_badge_rules.dart';
 /// Covers the v18 migration's one-time retroactive Welcome badge award
 /// (docs/prd-gamification.md §M6.5) — separate from
 /// storage_service_migration_test.dart's general schema-survival coverage,
-/// since this feature has its own specific "only when ledger history
-/// already exists, exactly once" contract worth testing on its own.
+/// since this feature has its own specific "only when a `step = 1` ledger
+/// row already exists, exactly once" contract worth testing on its own.
 void main() {
   setUpAll(() {
     sqfliteFfiInit();
@@ -56,13 +56,15 @@ void main() {
   });
 
   test(
-      'upgrading a device with existing ledger history backfills the badge, '
-      'dated to the earliest entry, marked backfilled', () async {
+      'upgrading a device with existing step = 1 ledger history backfills '
+      'the badge, dated to the earliest step = 1 row, marked backfilled',
+      () async {
     final oldDb = await databaseFactory.openDatabase(path);
     await oldDb.execute(climbEntriesTableSql);
-    // Deliberately inserted out of chronological order, and including a
-    // zero-step (all-skipped) day — the badge must still key off the
-    // earliest *day*, not insertion order or step value.
+    // Deliberately inserted out of chronological order, and including an
+    // *earlier* zero-step (all-skipped) day — the badge must key off the
+    // earliest `step = 1` *day* (08-20), ignoring both insertion order and
+    // the earlier all-skipped row (08-15).
     await seedLedgerRow(oldDb, '2026-08-20');
     await seedLedgerRow(oldDb, '2026-08-15', step: 0);
     await seedLedgerRow(oldDb, '2026-09-01');
@@ -73,9 +75,28 @@ void main() {
     final badge = await storage.getWelcomeBadge();
 
     expect(badge, isNotNull);
-    expect(badge!.earnedAt, DateTime.parse('2026-08-15'));
+    expect(badge!.earnedAt, DateTime.parse('2026-08-20'));
     expect(badge.ruleVersion, WelcomeBadgeRules.ruleVersion);
     expect(badge.backfilled, isTrue);
+  });
+
+  test(
+      'a ledger holding only all-skipped (step = 0) rows is ignored — no '
+      'backfill', () async {
+    final oldDb = await databaseFactory.openDatabase(path);
+    await oldDb.execute(climbEntriesTableSql);
+    await seedLedgerRow(oldDb, '2026-08-15', step: 0);
+    await seedLedgerRow(oldDb, '2026-08-16', step: 0);
+    await oldDb.setVersion(17);
+    await oldDb.close();
+
+    final storage = StorageService(dbName: path);
+    expect(await storage.getWelcomeBadge(), isNull);
+
+    // The rows themselves are untouched — only the badge is withheld.
+    final db = await databaseFactory.openDatabase(path);
+    expect(await db.query('climb_daily_entries'), hasLength(2));
+    await db.close();
   });
 
   test(
