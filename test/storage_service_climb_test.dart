@@ -53,6 +53,13 @@ void main() {
       storage.completeDailyTest(result.answers, result.errors,
           day: result.set.day, completedAt: result.completedAt);
 
+  // Same call, but keeping the Welcome-badge return value — used by the
+  // tests below that specifically care whether a given completion is the
+  // one that earned it.
+  Future<bool> saveCompletionReturning(DailyTestCompletion result) =>
+      storage.completeDailyTest(result.answers, result.errors,
+          day: result.set.day, completedAt: result.completedAt);
+
   test(
       'v14 upgrade preserves every table row and never backfills old completions',
       () async {
@@ -256,5 +263,87 @@ void main() {
     await saveCompletion(completion(set, {'q0': 'wrong'}));
     expect((await storage.getClimbProgress(2026, 9)).steps, 1);
     await inspect();
+  });
+
+  group('Welcome badge earned via completeDailyTest', () {
+    test(
+        'the very first ledger entry ever written earns it, live (not '
+        'backfilled)', () async {
+      final set = await storage.saveDailyTestSet(questions);
+      final justEarned =
+          await saveCompletionReturning(completion(set, {'q0': 'cooking'}));
+
+      expect(justEarned, isTrue);
+      final badge = await storage.getWelcomeBadge();
+      expect(badge, isNotNull);
+      expect(badge!.backfilled, isFalse);
+      expect(badge.earnedAt, DateTime(2026, 10, 1, 0, 3));
+    });
+
+    test('a second, later completion does not re-earn it', () async {
+      final first = await storage.saveDailyTestSet(questions);
+      expect(await saveCompletionReturning(completion(first, {'q0': 'a'})),
+          isTrue);
+
+      StorageService.clockForTesting = () => DateTime(2026, 10, 1);
+      final second = await storage.saveDailyTestSet(questions);
+      final justEarnedAgain = await saveCompletionReturning(
+          completion(second, {'q0': 'cooking'}));
+
+      expect(justEarnedAgain, isFalse);
+      final badge = await storage.getWelcomeBadge();
+      // Still dated to the first completion, not overwritten by the second.
+      expect(badge!.earnedAt, DateTime(2026, 10, 1, 0, 3));
+    });
+
+    test(
+        'a rolled-back completion (simulated write failure) earns nothing; '
+        'the retry that actually succeeds earns it', () async {
+      final set = await storage.saveDailyTestSet(questions);
+      final db = await inspect();
+      await db.execute(
+          "CREATE TRIGGER fail_climb BEFORE INSERT ON climb_daily_entries "
+          "BEGIN SELECT RAISE(ABORT, 'simulated write failure'); END");
+
+      await expectLater(
+        saveCompletionReturning(completion(set, {'q0': 'wrong'})),
+        throwsA(isA<DatabaseException>()),
+      );
+      expect(await storage.getWelcomeBadge(), isNull);
+
+      await db.execute('DROP TRIGGER fail_climb');
+      final justEarned =
+          await saveCompletionReturning(completion(set, {'q0': 'wrong'}));
+      expect(justEarned, isTrue);
+      expect(await storage.getWelcomeBadge(), isNotNull);
+    });
+
+    test(
+        'concurrent duplicate completions of the same day earn it exactly '
+        'once, never twice', () async {
+      final set = await storage.saveDailyTestSet(questions);
+      final result = completion(set, {'q0': 'wrong'});
+      final outcomes = await Future.wait(
+          [saveCompletionReturning(result), saveCompletionReturning(result)]);
+
+      // Exactly one of the two concurrent calls is the one that actually
+      // wrote the (unique, day-keyed) ledger row and earned the badge —
+      // the other is the no-op branch for an already-completed set.
+      expect(outcomes.where((earned) => earned), hasLength(1));
+      final db = await inspect();
+      expect(await db.query('welcome_badge'), hasLength(1));
+    });
+
+    test(
+        'reopening an already-completed set never re-earns it (idempotent '
+        'no-op, not a fresh completion)', () async {
+      final set = await storage.saveDailyTestSet(questions);
+      expect(await saveCompletionReturning(completion(set, {'q0': 'a'})),
+          isTrue);
+
+      final reopened =
+          await saveCompletionReturning(completion(set, {'q0': 'a'}));
+      expect(reopened, isFalse);
+    });
   });
 }

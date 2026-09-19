@@ -32,7 +32,7 @@ class _FakeStorageService extends StorageService {
   Completer<void>? pendingCompletion;
 
   @override
-  Future<void> completeDailyTest(
+  Future<bool> completeDailyTest(
     Map<String, String> answers,
     List<ErrorEntry> errorEntries, {
     String? day,
@@ -44,6 +44,7 @@ class _FakeStorageService extends StorageService {
     }
     completeDailyTestCalls++;
     insertedErrors.addAll(errorEntries);
+    return false;
   }
 }
 

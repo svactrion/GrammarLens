@@ -744,7 +744,18 @@ class StorageService {
   /// changes; callers without it retain the existing current-day behavior.
   /// Missing cached sets are a harmless no-op. Already-completed sets are
   /// also ignored, preventing duplicate mistakes and retroactive climb credit.
-  Future<void> completeDailyTest(
+  ///
+  /// Returns whether *this* call is the one that just earned the Welcome
+  /// badge (docs/prd-gamification.md §M6.5) — true only when this
+  /// completion writes the very first row `climb_daily_entries` has ever
+  /// had. That check, and the badge insert itself, happen inside this same
+  /// transaction: a failed write rolls back the badge along with
+  /// everything else, and the caller never needs a second read to find
+  /// out, which would risk exactly the kind of stale-read race Batch 1's
+  /// `SettingsScreen` fix avoided elsewhere in this codebase. Always false
+  /// for a no-op call (missing/already-completed set) or any later
+  /// completion once the ledger already has history.
+  Future<bool> completeDailyTest(
     Map<String, String> answers,
     List<ErrorEntry> errorEntries, {
     String? day,
@@ -753,10 +764,10 @@ class StorageService {
     final db = await _database;
     final setDay = day ?? _todayKey();
     final timestamp = completedAt ?? DateTime.now();
-    await db.transaction((txn) async {
+    return db.transaction((txn) async {
       final rows = await txn
           .query('daily_test_sets', where: 'day = ?', whereArgs: [setDay]);
-      if (rows.isEmpty || rows.single['completed_at'] != null) return;
+      if (rows.isEmpty || rows.single['completed_at'] != null) return false;
       // Evaluate the persisted answer key, rather than trusting caller counts.
       final completion = DailyTestCompletion(
           set: _dailyTestSetFromRow(rows.single),
@@ -776,6 +787,12 @@ class StorageService {
         batch.insert('error_entries', entry.toMap());
       }
       await batch.commit(noResult: true);
+
+      final priorEntryCount = Sqflite.firstIntValue(
+            await txn.rawQuery('SELECT COUNT(*) FROM climb_daily_entries'),
+          ) ??
+          0;
+
       await txn.insert('climb_daily_entries', {
         'day': setDay,
         'completed_at': timestamp.toIso8601String(),
@@ -785,6 +802,30 @@ class StorageService {
         'skipped_count': completion.skipped,
         'rule_version': DailyTestCompletion.ruleVersion,
       });
+
+      if (priorEntryCount > 0) return false;
+
+      // The very first ledger row of all time, in this same transaction —
+      // `priorEntryCount == 0`, computed atomically above, is the actual
+      // source of truth for "just earned it" and is what this method
+      // returns below. `ConflictAlgorithm.ignore` here is defensive only
+      // (the only other writer is the v18 migration's one-time backfill,
+      // which only ever fires when the ledger already has history, so
+      // this table should always still be empty at this point too) —
+      // deliberately NOT inspecting the insert's own returned rowid to
+      // decide success: this row's `id` is hardcoded to 0, which is
+      // indistinguishable from sqflite's "insert was ignored" sentinel.
+      await txn.insert(
+        'welcome_badge',
+        {
+          'id': 0,
+          'earned_at': timestamp.toIso8601String(),
+          'rule_version': WelcomeBadgeRules.ruleVersion,
+          'backfilled': 0,
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+      return true;
     });
   }
 

@@ -55,7 +55,10 @@ class DailyTestService {
   /// with the climb entry in one atomic write. See `StorageService.completeDailyTest`'s own doc
   /// comment for why these two used to be, and no longer are, independent
   /// calls.
-  Future<void> completeDailyTest(
+  ///
+  /// Returns whether this call just earned the Welcome badge — see
+  /// `StorageService.completeDailyTest`'s own doc comment.
+  Future<bool> completeDailyTest(
     Map<String, String> answers,
     List<ErrorEntry> errorEntries, {
     String? day,

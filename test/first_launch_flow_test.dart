@@ -99,7 +99,7 @@ class _FakeStorageService extends StorageService {
   }
 
   @override
-  Future<void> completeDailyTest(
+  Future<bool> completeDailyTest(
     Map<String, String> answers,
     List<ErrorEntry> errorEntries, {
     String? day,
@@ -110,6 +110,7 @@ class _FakeStorageService extends StorageService {
       _todaysSet = current.copyWith(
           completedAt: completedAt ?? DateTime.now(), answers: answers);
     }
+    return false;
   }
 
   @override

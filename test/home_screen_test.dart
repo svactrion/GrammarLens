@@ -130,7 +130,7 @@ class _FakeStorageService extends StorageService {
   Future<DailyTestSet?> getDailyTestSetForToday() async => todaysDailyTest;
 
   @override
-  Future<void> completeDailyTest(
+  Future<bool> completeDailyTest(
       Map<String, String> answers, List<ErrorEntry> errors,
       {String? day, DateTime? completedAt}) async {
     completionCalls++;
@@ -142,6 +142,7 @@ class _FakeStorageService extends StorageService {
         answers: answers,
         completedAt: completedAt ?? DateTime.now());
     if (answers.values.any((answer) => answer.trim().isNotEmpty)) steps++;
+    return false;
   }
 
   @override
