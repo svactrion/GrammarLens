@@ -43,9 +43,10 @@ now displays persisted monthly progress and the selected avatar on Home, with
 local refresh on completion/return/resume and explicit progress-read retry.
 Main's storage, migration and atomic Daily Test completion remain the base.
 Home device acceptance, the remaining Home redesign/access decisions, medals,
-Profile and rollout are pending. This branch ships after launch; no main merge
-or PR. Older statements below that no gamification exists describe the earlier
-v2 checkpoint. See `prd-gamification.md` M1–M5 for the active monthly direction.
+Profile and rollout are pending. As of 2026-09-19 this is the launch branch: it
+merges to `main` (on the owner's approval) and ships as the first App Store
+release; see "Launch scope" above. Older statements below that no gamification
+exists describe the earlier v2 checkpoint. See `prd-gamification.md` M1–M5 for the active monthly direction.
 
 **Device-feedback package 1 — 2026-09-18:** Results now end with a save-aware
 `See your climb` / `Back to Home` action. Persisted progress waits for Home to
@@ -1836,8 +1837,12 @@ building it.
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.
 
-**v3 — planned, status draft, not scoped or built (updated 2026-09-16).**
-Two directions, neither has code in this repo:
+**v3 — superseded 2026-09-19 (was: planned, status draft, not scoped or built).**
+The gamification layer below is no longer post-launch: Monthly Climb is in
+launch scope (see "Launch scope" at the top of this file) and has code on
+`monthly-climb-v2`. The Home redesign remains post-launch, unscoped. The
+paragraph that follows is the 2026-09-16 record, kept for history and out of
+date on "no gamification code" and the weekly/`codex/monthly-climb` state.
 - **Gamification layer.** `docs/prd-gamification.md` (committed
   2026-09-15) is a weekly-cycle draft ("Weekly Climb"), status Taslak
   (draft), with six open decisions in its own §10 and never approved or
