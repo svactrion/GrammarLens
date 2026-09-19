@@ -281,6 +281,86 @@ void main() {
       });
     });
 
+    test(
+        'every event and user property respects Firebase limits and the '
+        'privacy rule (docs/analytics-plan.md §4)', () async {
+      await service.onboardingCompleted();
+      await service.modeSelected(AnalyticsService.modeDailyTest);
+      await service.practiceCompleted(topicId: 'articles', questionCount: 5);
+      await service.freePracticeUsed();
+      await service.freePracticeQuotaExhausted();
+      await service.paywallViewed(AnalyticsService.paywallSourceHome);
+      await service.paywallDismissed(
+        source: AnalyticsService.paywallSourceHome,
+        method: AnalyticsService.paywallDismissCloseButton,
+      );
+      await service.purchaseStarted(AnalyticsService.planAnnual);
+      await service.purchaseResult(
+        plan: AnalyticsService.planAnnual,
+        outcome: 'success',
+      );
+      await service.dailyTestCompleted(
+        correctCount: 5,
+        wrongCount: 0,
+        skippedCount: 0,
+        stepEarned: true,
+        day0: true,
+      );
+      await service.welcomeBadgeEarned(
+        ruleVersion: 1,
+        dayOfMonth: 31,
+        daysInMonth: 31,
+      );
+      await service.medalMonthFinalized(
+        tier: MedalTier.gold,
+        scorePct: 100,
+        activeDays: 31,
+        daysInMonth: 31,
+        ruleVersion: 1,
+        monthsAgo: 1,
+      );
+      await service.profileMedalsViewed(
+        finalizedMonths: 1,
+        medalsEarned: 1,
+        welcomeEarned: true,
+      );
+      await service.textSizeChanged(
+        size: AppTextSize.large,
+        previous: AppTextSize.small,
+      );
+      await service.setTextSizeProperty(AppTextSize.large);
+      await service.setFirstStepDayOfMonth(31);
+
+      final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
+      final reserved = RegExp(r'^(firebase_|google_|ga_|_)');
+      expect(sink.events, hasLength(14));
+      for (final event in sink.events) {
+        expect(event.name.length, lessThanOrEqualTo(40), reason: event.name);
+        expect(nameRule.hasMatch(event.name), isTrue, reason: event.name);
+        expect(reserved.hasMatch(event.name), isFalse, reason: event.name);
+        final params = event.parameters ?? const <String, Object>{};
+        expect(params.length, lessThanOrEqualTo(25), reason: event.name);
+        params.forEach((key, value) {
+          expect(key.length, lessThanOrEqualTo(40), reason: key);
+          expect(nameRule.hasMatch(key), isTrue, reason: key);
+          expect(reserved.hasMatch(key), isFalse, reason: key);
+          // Booleans are not a supported Firebase value type; free text is
+          // never sent, only ints and short closed-vocabulary strings.
+          expect(value is int || value is String, isTrue,
+              reason: '${event.name}.$key is ${value.runtimeType}');
+          if (value is String) {
+            expect(value.length, lessThanOrEqualTo(100), reason: key);
+          }
+        });
+      }
+      expect(sink.userProperties.length, lessThanOrEqualTo(25));
+      sink.userProperties.forEach((name, value) {
+        expect(name.length, lessThanOrEqualTo(24), reason: name);
+        expect(nameRule.hasMatch(name), isTrue, reason: name);
+        expect(value!.length, lessThanOrEqualTo(36), reason: name);
+      });
+    });
+
     test('a failing sink never throws out of the wrapper', () async {
       final failing = AnalyticsService(sink: _ThrowingSink());
       await failing.onboardingCompleted();
