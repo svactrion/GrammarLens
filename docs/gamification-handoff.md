@@ -411,3 +411,192 @@ and the storage schema were not touched.
 `flutter test` — **442 passing** (436 baseline + 5 new in
 `monthly_medal_preview_test.dart` + 1 new regression test in
 `settings_screen_test.dart`), 0 failing.
+
+## 12. Batch 2 — Welcome plan
+
+Plan only, per the task that requested this — **no Welcome code exists and
+none should be written from this plan without separate, explicit
+approval.** The spec itself (a one-time badge on the user's first
+completed Daily Test, independent of monthly medals, versioned, backfilled
+for existing users) is recorded as an assumption in
+`docs/prd-gamification.md` §M6.5; this section is the engineering plan for
+building it, once approved.
+
+Batch 2 also implemented one piece of groundwork this plan assumes:
+`MonthlyMedalCollection` now unlocks lower tiers under a month's highest
+finalized one (§M6.2, `docs/prd-gamification.md`) — Welcome's own
+placement below (§12.4) treats that collection as already working this
+way.
+
+### 12.1 Storage: new table, not a new column
+
+**Recommendation: a new single-row table, `welcome_badge`**, in the same
+family as `debug_settings`/`theme_settings`/`text_size_settings` — a small,
+one-purpose table holding one fact — rather than new columns on
+`user_profile`:
+
+```sql
+CREATE TABLE IF NOT EXISTS welcome_badge (
+  id INTEGER PRIMARY KEY CHECK (id = 0),
+  earned_at TEXT NOT NULL,
+  rule_version INTEGER NOT NULL
+)
+```
+
+A row existing (`id = 0`) means earned; no row means not yet. `rule_version`
+mirrors `monthly_medal_results.rule_version` — read via a new
+`WelcomeBadgeRules.ruleVersion` constant (its own tiny rules file, mirroring
+`monthly_medal_rules.dart`), so a future change to the earning criteria
+never silently reinterprets an already-earned badge.
+
+**Why a new table, not `user_profile` columns:** `user_profile` holds
+*identity* (name, goal, age, occupation, avatar) — Welcome is an
+*achievement fact*, the same category as `climb_daily_entries`/
+`monthly_medal_results`, which are already kept out of `user_profile` for
+that reason. Reusing that existing boundary is simpler to reason about than
+adding two more nullable columns to a table that already has several, and
+keeps `resetProgressData()`/`resetOnboarding()` (which act on different,
+already-distinct scopes today) from needing to learn a new special case
+inside `user_profile` specifically.
+
+**Migration stays additive/idempotent the same way v15–v17 already do:**
+bump `_dbVersion` to 18, add `_createWelcomeBadgeTable` to `onCreate`
+unconditionally, and add exactly one line to `onUpgrade`:
+`if (oldVersion < 18) await db.execute(_createWelcomeBadgeTable);` — a bare
+`CREATE TABLE IF NOT EXISTS`, no `ALTER TABLE`, no data touched in any
+other table. Same reasoning `storage_service.dart`'s own `onUpgrade` doc
+comment already gives for why this shape is safe on a downgrade-then-
+upgrade device: the step is safe to run again if it ever legitimately re-runs.
+
+### 12.2 Backfill: lazy, from the same call site as month finalization; no celebration
+
+**When/where:** add `StorageService.backfillWelcomeBadgeIfEligible()` —
+inserts the `welcome_badge` row (if none exists) for any user with at
+least one `climb_daily_entries` row — and call it from
+`SettingsScreen._loadMedals`, right alongside the existing
+`finalizePastMedalMonths()` call. This reuses an already-reviewed,
+already-working trigger (Profile mount + tab re-entry, per
+`didUpdateWidget`, now generation-token-guarded per Batch 1) instead of
+inventing a second lazy-init path in `app.dart`/`main.dart`.
+
+**No celebration on backfill.** The spec's one-time win moment is scoped to
+"the result screen of that first completed Daily Test" — a specific screen
+instance at a specific real moment. A backfilled badge has no such moment
+to attach a celebration to; showing one during a routine Profile visit
+would misrepresent something that (from the user's perspective) already
+happened, and — since Profile mount recurs every tab visit — risks
+re-showing it if the "already celebrated" state were ever tracked
+incorrectly. This also matches existing precedent: Profile's own lazy
+month finalization (§5 of this document) shows no celebratory toast either
+when it finalizes a past month on mount.
+
+**Why not fold backfill into `completeDailyTest` alone:** see §12.3 below
+— `completeDailyTest` already opportunistically earns the badge for anyone
+who completes a *new* Daily Test while it's still unearned, which covers a
+true first-timer and doubles as an implicit backfill for anyone who
+happens to complete another test later. But the explicit spec requirement
+is that existing users get the badge "without needing to complete a new
+one" — someone with old ledger rows who simply reopens the app and looks
+at Profile, without doing today's Daily Test, still needs to see it. Only
+a Profile-side lazy backfill covers that cohort.
+
+### 12.3 Result-screen win moment: same transaction, no re-derivation, no double-show
+
+**Mechanism:** extend `StorageService.completeDailyTest` (already one
+atomic transaction — answers, mistakes, and the climb entry) to also
+check-and-insert the `welcome_badge` row *inside that same transaction*,
+conditioned on the table currently being empty. Change its return type
+from `void` to a small result (or add a second out-value) that reports
+whether *this* call is the one that just earned it —
+`welcomeBadgeJustEarned: bool`. The transaction already knows this
+synchronously (it just performed the conditional insert), so the caller
+never needs a second read to find out, which avoids reintroducing the
+kind of stale-read race Batch 1 just fixed elsewhere in this file.
+
+**In `DailyTestResultScreen`:** after a successful `completeDailyTest` call
+returns `welcomeBadgeJustEarned == true`, set a local, non-persisted
+`_showWelcomeCelebration` flag and render the one-time win moment inline
+on *that* result-screen instance — never written to storage as "pending to
+show," never re-derived by reading `welcome_badge` back afterward.
+
+**Interaction with save failure:** `completeDailyTest` throwing (already
+handled today by the result screen's existing retry UI — this is the
+`Done`-list "atomic Daily Test completion" work) means the whole
+transaction rolled back, so the `welcome_badge` insert never happened
+either — nothing was recorded, and the local flag is never set. The user's
+retry either succeeds (exactly one earn, exactly one celebration) or fails
+again (still nothing recorded) — no path double-awards or double-shows.
+
+**Interaction with reopening an already-completed result:** `completeDailyTest`
+already early-returns as a no-op when the target set is already completed
+(existing idempotency guarantee, documented on the method today) — so on a
+reopen, the write path (and therefore `welcomeBadgeJustEarned`) is simply
+never reached, and the celebration cannot re-show. No new idempotency
+mechanism needed; this rides entirely on the guarantee that already exists.
+
+**Interaction with "See your climb"/"Back to Home":** the celebration is an
+additive inline element on the same screen, shown once the completion
+call resolves successfully — it does not gate, delay, or replace the
+existing save-aware CTA row (device-feedback package 1, already confirmed
+working on a physical device). If the app is killed between a successful
+save and the celebration rendering, the badge itself is durably earned
+(already committed) but that specific celebration is lost — an accepted
+tradeoff, the same posture already taken for the Home avatar's one-step
+animation (durable state is authoritative; the animation is a best-effort
+visual bonus, never re-derived from storage after the fact).
+
+### 12.4 Placement in the Profile collection: above the tier row, not folded into it
+
+**Recommendation:** a separate, visually distinct element *above* the
+Bronze/Silver/Gold row inside `MonthlyMedalCollection` (a new optional
+`welcomeBadgeEarnedAt: DateTime?` constructor parameter, rendered as its
+own small row/card when non-null) — not a fourth specimen alongside the
+three tiers.
+
+**Why not a fourth specimen:** the three tier specimens are a family —
+same visual language, same recurring-monthly nature, and (per §M6.2) a
+strict ladder relationship with each other. Welcome is categorically
+different: one-time, permanent, never re-earned, and unrelated to any
+month's score. Placing it in the same row risks reading as "a fourth tier
+you need to re-earn monthly" or prompting "why is this one always unlocked
+already?" — exactly the kind of confusion a clearly separate element
+avoids. Above the tier row also matches the screen's existing top-to-bottom
+reading order (a permanent fact about the user, then their recurring
+monthly progress below), consistent with how Profile already separates
+concerns into its own labeled sections.
+
+### 12.5 Medal preview scenarios
+
+**Recommendation:** add one orthogonal `Welcome badge earned` switch to
+`lib/preview/monthly_medal_preview.dart`, independent of the existing
+6-item scenario dropdown, rather than doubling it to 12 scenarios. Any of
+the six existing states (In progress, Bronze/Silver/Gold finalized, No
+medal, Multiple months) can realistically occur with or without the
+Welcome badge already earned — a mid-month starter with no medal history
+yet and Welcome already earned is exactly the population the whole
+hypothesis in §M6.5 is about, and a returning user with real medal
+history and Welcome earned is the eventual steady state. An orthogonal
+toggle covers every realistic combination with one small addition instead
+of six new dropdown entries that would each need to be kept in sync with
+the existing ones by hand.
+
+**Deliberately out of scope for this preview:** the one-time win-moment
+animation itself (§12.3) lives on `DailyTestResultScreen`, not
+`MonthlyMedalCollection` — this preview only shows the *static, already-
+earned* Profile state, the same way it already only shows finalized medal
+states rather than reproducing Daily Test's own live completion flow. A
+result-screen preview for the win moment, if wanted, would be a separate,
+later addition and is not part of this plan.
+
+### 12.6 Files this would touch (once approved — not written now)
+
+`lib/services/storage_service.dart` (schema v18, `welcome_badge` table,
+`backfillWelcomeBadgeIfEligible`, `completeDailyTest`'s new return value),
+a new `lib/models/welcome_badge.dart`, a new
+`lib/services/welcome_badge_rules.dart`, `lib/screens/daily_test_result_screen.dart`
+(the win moment), `lib/screens/settings_screen.dart` (call the backfill,
+pass the new param through), `lib/widgets/monthly_medal_collection.dart`
+(the new optional param and row), and `lib/preview/monthly_medal_preview.dart`
+(the new toggle) — plus test coverage in each corresponding test file.
+Medal scoring rules and the existing storage schema (v1–v17) are untouched
+by this plan.
