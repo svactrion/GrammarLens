@@ -888,11 +888,20 @@ class StorageService {
   /// Freezes every past month that has at least one Daily Test result. A row
   /// is written even below Bronze, so later rule changes cannot retroactively
   /// award it. INSERT OR IGNORE makes repeated app opens harmless.
-  Future<void> finalizePastMedalMonths() async {
+  ///
+  /// Returns the months *this call* newly finalized, oldest first (empty when
+  /// there was nothing to do). It is called at app launch, on resume and from
+  /// Profile, so it must stay idempotent: the "not yet finalized" query and
+  /// the inserts share one transaction, sqflite serializes transactions, and
+  /// a concurrent second call therefore finds the month already frozen and
+  /// returns nothing. Each month is reported by exactly one caller, which is
+  /// what lets `medal_month_finalized` fire once per month.
+  Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async {
     final now = clockForTesting();
     final currentMonth = _monthKey(now.year, now.month);
     final db = await _database;
-    await db.transaction((txn) async {
+    return db.transaction((txn) async {
+      final finalized = <MonthlyMedalResult>[];
       final months = await txn.rawQuery('''
         SELECT DISTINCT substr(day, 1, 7) AS month
         FROM climb_daily_entries
@@ -929,7 +938,21 @@ class StorageService {
           },
           conflictAlgorithm: ConflictAlgorithm.ignore,
         );
+        finalized.add(MonthlyMedalResult(
+          year: year,
+          month: month,
+          score: progress.score,
+          maxScore: progress.maxScore,
+          activeDays: progress.activeDays,
+          correct: progress.correct,
+          wrong: progress.wrong,
+          skipped: progress.skipped,
+          tier: tier,
+          ruleVersion: MonthlyMedalRules.ruleVersion,
+          finalizedAt: now,
+        ));
       }
+      return finalized;
     });
   }
 

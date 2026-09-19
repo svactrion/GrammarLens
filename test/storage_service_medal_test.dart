@@ -62,6 +62,45 @@ void main() {
         reason: 'finalized history must never be silently recalculated');
   });
 
+  test('returns only the months this call newly finalized, oldest first',
+      () async {
+    await _insertEntry(db, '2026-08-12', wrong: 1);
+    await _insertEntry(db, '2026-09-03', correct: 5);
+
+    final first = await storage.finalizePastMedalMonths();
+    expect(first.map((r) => r.month), [8, 9]);
+    expect(first[0].tier, isNull);
+    expect(first[0].score, 1);
+    expect(first[1].score, 10);
+    expect(first[1].ruleVersion, 1);
+    expect(first[1].finalizedAt, DateTime(2026, 10, 5, 12));
+
+    expect(await storage.finalizePastMedalMonths(), isEmpty,
+        reason: 'already frozen months are never reported again');
+
+    await _insertEntry(db, '2026-07-04', correct: 1);
+    final late = await storage.finalizePastMedalMonths();
+    expect(late.map((r) => r.month), [7]);
+  });
+
+  test('concurrent finalizations freeze and report each month exactly once',
+      () async {
+    await _insertEntry(db, '2026-07-04', correct: 2);
+    await _insertEntry(db, '2026-08-12', wrong: 1);
+    await _insertEntry(db, '2026-09-03', correct: 5);
+
+    final results = await Future.wait([
+      storage.finalizePastMedalMonths(),
+      storage.finalizePastMedalMonths(),
+      storage.finalizePastMedalMonths(),
+    ]);
+
+    final reported = results.expand((r) => r).map((r) => r.month).toList()
+      ..sort();
+    expect(reported, [7, 8, 9], reason: 'no month reported twice or lost');
+    expect(await storage.getMonthlyMedalResults(), hasLength(3));
+  });
+
   test('does not create empty months or finalize the current month', () async {
     await _insertEntry(db, '2026-10-01', correct: 5);
     await storage.finalizePastMedalMonths();

@@ -1,5 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
+import '../models/medal_tier.dart';
+
 /// Where [AnalyticsService] hands finished events. `FirebaseAnalytics.instance`
 /// is a static, so without this seam a test could only prove that a call does
 /// not throw — never which event name or parameter keys it produced. Feature
@@ -195,6 +197,29 @@ class AnalyticsService {
       'rule_version': ruleVersion,
       'day_of_month': dayOfMonth,
       'days_in_month': daysInMonth,
+    });
+  }
+
+  /// A past month's medal result was frozen (docs/analytics-plan.md E4).
+  /// [tier] is `none` below Bronze. [scorePct] is the score as a whole
+  /// percentage of the month's maximum; [monthsAgo] is how many months
+  /// before finalization the finalized month was, so late finalizations
+  /// (a user who did not open the app for a while) stay distinguishable.
+  Future<void> medalMonthFinalized({
+    required MedalTier? tier,
+    required int scorePct,
+    required int activeDays,
+    required int daysInMonth,
+    required int ruleVersion,
+    required int monthsAgo,
+  }) {
+    return _logEvent('medal_month_finalized', {
+      'tier': tier?.name ?? 'none',
+      'score_pct': scorePct,
+      'active_days': activeDays,
+      'days_in_month': daysInMonth,
+      'rule_version': ruleVersion,
+      'months_ago': monthsAgo,
     });
   }
 

@@ -9,6 +9,8 @@ import '../models/avatar.dart';
 import '../models/monthly_medal.dart';
 import '../models/user_profile.dart';
 import '../models/welcome_badge.dart';
+import '../services/analytics_service.dart';
+import '../services/medal_finalization.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
@@ -56,6 +58,7 @@ class SettingsScreen extends StatefulWidget {
   final StorageService storageService;
   final ValueChanged<UserProfile> onProfileUpdated;
   final SubscriptionService subscriptionService;
+  final AnalyticsService analyticsService;
 
   /// Debug-only: called after the profile is cleared in storage, so the
   /// app can drop back to the Welcome/Onboarding flow (app.dart sets its
@@ -75,7 +78,9 @@ class SettingsScreen extends StatefulWidget {
     required this.onProfileUpdated,
     required this.onResetOnboarding,
     SubscriptionService? subscriptionService,
-  }) : subscriptionService = subscriptionService ?? SubscriptionService();
+    AnalyticsService? analyticsService,
+  })  : subscriptionService = subscriptionService ?? SubscriptionService(),
+        analyticsService = analyticsService ?? AnalyticsService();
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -148,7 +153,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     }
     try {
-      await widget.storageService.finalizePastMedalMonths();
+      await finalizePastMedalMonthsAndReport(
+        storageService: widget.storageService,
+        analyticsService: widget.analyticsService,
+      );
       // No lazy backfill call here for the Welcome badge, deliberately —
       // its one and only retroactive award happens once, inside the v18
       // migration (docs/prd-gamification.md §M6.5). This is a plain read

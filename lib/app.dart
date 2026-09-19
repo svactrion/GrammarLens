@@ -14,6 +14,7 @@ import 'screens/review_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/analytics_service.dart';
 import 'services/claude_service.dart';
+import 'services/medal_finalization.dart';
 import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
 import 'theme.dart';
@@ -22,16 +23,24 @@ import 'utils/loading_view.dart';
 import 'widgets/floating_nav_shell.dart';
 
 class GrammarLensApp extends StatefulWidget {
-  const GrammarLensApp({super.key});
+  /// Optional overrides exist so tests can observe launch/resume behavior
+  /// without a real database or Firebase; production passes neither.
+  final StorageService? storageService;
+  final AnalyticsService? analyticsService;
+
+  const GrammarLensApp({super.key, this.storageService, this.analyticsService});
 
   @override
   State<GrammarLensApp> createState() => _GrammarLensAppState();
 }
 
-class _GrammarLensAppState extends State<GrammarLensApp> {
+class _GrammarLensAppState extends State<GrammarLensApp>
+    with WidgetsBindingObserver {
   final ClaudeService _claudeService = ClaudeService();
-  final StorageService _storageService = StorageService();
-  final AnalyticsService _analyticsService = AnalyticsService();
+  late final StorageService _storageService =
+      widget.storageService ?? StorageService();
+  late final AnalyticsService _analyticsService =
+      widget.analyticsService ?? AnalyticsService();
   // Shared explicitly with both HomeScreen and ReviewScreen (rather than
   // each defaulting to its own `SubscriptionService()`) so both go through
   // one instance at this level, matching how the other three services
@@ -53,10 +62,39 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _finalizeMedalMonths();
     _loadThemeMode();
     _loadTextSize();
     _loadProfile();
     if (kDebugMode) _loadDebugAccessOverride();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _finalizeMedalMonths();
+  }
+
+  /// Freezes past medal months at launch and on every resume, not only when
+  /// Profile is opened, so `medal_month_finalized` also counts users who
+  /// never visit Profile. Idempotent by construction (see
+  /// `finalizePastMedalMonthsAndReport`): a month frozen by one trigger is
+  /// not finalized or reported again by another.
+  Future<void> _finalizeMedalMonths() async {
+    try {
+      await finalizePastMedalMonthsAndReport(
+        storageService: _storageService,
+        analyticsService: _analyticsService,
+      );
+    } catch (_) {
+      // Storage unavailable — Profile retries when it is opened.
+    }
   }
 
   Future<void> _loadThemeMode() async {
@@ -259,6 +297,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               onSelectTextSize: _setTextSize,
               profile: _profile!,
               storageService: _storageService,
+              analyticsService: _analyticsService,
               onProfileUpdated: (profile) => setState(() => _profile = profile),
               // Debug-only action inside SettingsScreen's own
               // `if (kDebugMode)`-gated "Developer" section — this

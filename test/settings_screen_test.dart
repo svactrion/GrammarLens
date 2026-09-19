@@ -30,7 +30,7 @@ class _FakeStorageService extends StorageService {
   bool throwOnResetOnboarding = false;
 
   @override
-  Future<void> finalizePastMedalMonths() async {}
+  Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async => const [];
 
   @override
   Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() async =>
@@ -81,7 +81,7 @@ class _RaceStorageService extends StorageService {
   final List<Completer<List<MonthlyMedalResult>>> resultsCompleters = [];
 
   @override
-  Future<void> finalizePastMedalMonths() async {}
+  Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async => const [];
 
   @override
   Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() {

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 
 import 'support/recording_analytics_sink.dart';
@@ -138,6 +139,75 @@ void main() {
         'plan': 'monthly',
         'outcome': 'cancelled',
       });
+    });
+
+    test('daily_test_completed carries only counts and two 0/1 flags',
+        () async {
+      await service.dailyTestCompleted(
+        correctCount: 3,
+        wrongCount: 1,
+        skippedCount: 1,
+        stepEarned: true,
+        day0: false,
+      );
+      expectOnly('daily_test_completed', {
+        'correct_count': 3,
+        'wrong_count': 1,
+        'skipped_count': 1,
+        'step_earned': 1,
+        'day0': 0,
+      });
+    });
+
+    test('welcome_badge_earned carries only rule and calendar numbers',
+        () async {
+      await service.welcomeBadgeEarned(
+        ruleVersion: 1,
+        dayOfMonth: 20,
+        daysInMonth: 30,
+      );
+      expectOnly('welcome_badge_earned', {
+        'rule_version': 1,
+        'day_of_month': 20,
+        'days_in_month': 30,
+      });
+    });
+
+    test('medal_month_finalized carries only tier and numbers', () async {
+      await service.medalMonthFinalized(
+        tier: MedalTier.silver,
+        scorePct: 61,
+        activeDays: 20,
+        daysInMonth: 31,
+        ruleVersion: 1,
+        monthsAgo: 1,
+      );
+      expectOnly('medal_month_finalized', {
+        'tier': 'silver',
+        'score_pct': 61,
+        'active_days': 20,
+        'days_in_month': 31,
+        'rule_version': 1,
+        'months_ago': 1,
+      });
+    });
+
+    test('a month below Bronze reports the tier "none"', () async {
+      await service.medalMonthFinalized(
+        tier: null,
+        scorePct: 4,
+        activeDays: 1,
+        daysInMonth: 28,
+        ruleVersion: 1,
+        monthsAgo: 3,
+      );
+      expect(sink.events.single.parameters!['tier'], 'none');
+    });
+
+    test('first_step_dom is a user property, stored as a string', () async {
+      await service.setFirstStepDayOfMonth(24);
+      expect(sink.events, isEmpty);
+      expect(sink.userProperties, {'first_step_dom': '24'});
     });
 
     test('a failing sink never throws out of the wrapper', () async {
