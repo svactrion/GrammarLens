@@ -600,3 +600,84 @@ pass the new param through), `lib/widgets/monthly_medal_collection.dart`
 (the new toggle) — plus test coverage in each corresponding test file.
 Medal scoring rules and the existing storage schema (v1–v17) are untouched
 by this plan.
+
+## 13. Batch 3 — Welcome badge implemented
+
+The plan in §12 was approved and implemented, in five small commits.
+Medal scoring rules and the pre-existing storage schema (v1–v17) were not
+touched.
+
+**Pre-check (required before starting):** confirmed in code that v15
+never migrated historical Daily Test completions into
+`climb_daily_entries` — that migration step is a bare
+`CREATE TABLE IF NOT EXISTS`, no `INSERT`, and this was already
+documented in `docs/prd-gamification.md` M3.1 and this document's own §5
+("old v2 completions don't get retroactive step/score credit"). This
+means a v2 user upgrading to this branch has zero ledger rows and earns
+the Welcome badge live, on their first post-upgrade Daily Test — not via
+the v18 migration's backfill path. No conflict with the approved rule, so
+implementation proceeded without stopping to ask.
+
+1. **Migration + storage** — new single-row `welcome_badge` table (v18,
+   additive/idempotent, same `CREATE TABLE IF NOT EXISTS` shape as v15–v17).
+   Its one and only retroactive backfill lives entirely inside the v18
+   `onUpgrade` step: only when `climb_daily_entries` already has at least
+   one row at upgrade time, dated to the *earliest* entry (by day, not
+   insertion order), marked `backfilled`. New
+   `test/storage_service_welcome_badge_test.dart` covers a fresh install
+   (no badge), a device with existing history (backfilled, correct date),
+   an empty ledger (no backfill), a v1 device (no crash, no badge), and
+   idempotency (re-running `onUpgrade` doesn't duplicate or overwrite it).
+2. **Transaction + return value** — `StorageService.completeDailyTest` now
+   returns `Future<bool>`: true only when its own call writes the very
+   first row `climb_daily_entries` has ever had, computed from a
+   `COUNT(*)` taken inside the same transaction before that insert. A
+   real bug was caught and fixed here before landing: the first
+   implementation instead inspected the `welcome_badge` insert's own
+   returned rowid, which is always `0` for this single-row table (its
+   `id` is hardcoded to `0`) — indistinguishable from sqflite's
+   "insert was ignored" sentinel, so the very first real award always
+   incorrectly reported `false`. New tests in
+   `test/storage_service_climb_test.dart` cover the first-entry award, a
+   later completion not re-earning it, a rolled-back write earning
+   nothing followed by a successful retry that does, concurrent duplicate
+   completions earning it exactly once, and a reopened already-completed
+   set never re-earning it.
+3. **Result-screen win moment** — `DailyTestResultScreen` shows a
+   one-time `_WelcomeCelebrationBanner` when `completeDailyTest` reports a
+   genuine live earn; copy is audience-neutral ("Welcome to the climb",
+   no "first test" language) since a new user and a pre-existing v2 user
+   earn the identical badge identically. The flag is local, non-persisted
+   `State`, set only from the return value — never re-derived from
+   storage — which is what makes double-celebration structurally
+   impossible: a reopened set never reaches the write path at all, and a
+   failed attempt throws before the return statement. New tests cover a
+   genuine earn showing the banner, an ordinary completion showing
+   nothing, a reopened set never showing it even if the fake were told
+   to, a failed-then-successful retry showing it exactly once, and the
+   existing "See your climb" CTA staying unaffected by its presence.
+4. **Profile** — `MonthlyMedalCollection` gained an optional
+   `welcomeBadge` param, rendered as its own row above the Bronze/Silver/
+   Gold specimens (not a fourth tier), locked/"Not earned" when null.
+   `SettingsScreen._loadMedals` reads `getWelcomeBadge()` alongside the
+   existing medal reads — a plain read, no lazy backfill call added, per
+   the approved plan. A real test-only bug was found and fixed while
+   updating the generation-token race test (Batch 1): its manual
+   scroll-based `reveal()` helper could leave the scroll offset stuck past
+   the medals section after it transiently shrinks to a loading spinner
+   and grows back, throwing a `RenderViewport` "exceeded its maximum
+   number of layout cycles" exception; replaced with a viewport tall
+   enough that no scrolling is needed at all, which is more robust and
+   unrelated to what that test actually covers.
+5. **Preview** — `lib/preview/monthly_medal_preview.dart` gained one
+   orthogonal "Welcome badge earned" switch, independent of the existing
+   six-scenario dropdown, per §12.5's own recommendation.
+
+**Final verification for this batch:** `flutter analyze` — no issues.
+`flutter test` — **465 passing**, 0 failing (446 baseline from Batch 1/2 +
+5 in `storage_service_welcome_badge_test.dart` + 5 in
+`storage_service_climb_test.dart` + 5 in `daily_test_result_screen_test.dart`
++ 3 new in `monthly_medal_collection_test.dart` + 1 new in
+`monthly_medal_preview_test.dart`, plus updated assertions with no test-count
+change in `settings_screen_test.dart` and elsewhere in
+`monthly_medal_collection_test.dart`/`monthly_medal_preview_test.dart`).
