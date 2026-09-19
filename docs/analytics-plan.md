@@ -1,11 +1,12 @@
 # Analytics plan — Monthly Climb launch
 
-**Status: owner decisions recorded 2026-09-19; implementation follows in
-separate commits.** This file was first written the same day as a plan only.
-The owner's decisions are folded in below ("Decisions" at the end lists
-them). Until the implementation commits land, no analytics code exists for
-the new events. Branch: `monthly-climb-v2`, the launch branch (see "Launch
-scope" in `docs/roadmap.md`).
+**Status: implemented 2026-09-19 (events E1, E3–E6, the two user properties
+and the `practice_completed` rename); not yet verified on a physical device.**
+This file was first written the same day as a plan only; the owner's
+decisions are folded in ("Decisions" lists them), §8 records what was built,
+and §9 lists the custom dimensions the owner still has to register by hand.
+Branch: `monthly-climb-v2`, the launch branch (see "Launch scope" in
+`docs/roadmap.md`).
 
 Why this file exists: the app ships to the App Store for the first time with
 gamification in it, so there is no pre-gamification baseline. Whatever is not
@@ -14,7 +15,10 @@ server-side record of what users did, only a local sqlite ledger.
 
 ---
 
-## 1. Current state (verified against the code, 2026-09-19)
+## 1. Current state (verified against the code at the start of this batch, 2026-09-19)
+
+This section describes the code **before** implementation; §8 lists what
+changed. Line numbers below are from that starting point.
 
 ### Wrapper and initialization
 
@@ -43,7 +47,7 @@ server-side record of what users did, only a local sqlite ledger.
 |---|---|---|
 | `onboarding_completed` | none | `lib/screens/first_launch_flow.dart:71` |
 | `mode_selected` | `mode` = `daily_test` / `topic` / `premium` | `lib/screens/home_screen.dart:285`, `:356`, `:405` |
-| `session_completed` | `topic_id`, `question_count` | `lib/screens/results_screen.dart:45` (**Topic Practice only**) |
+| `session_completed` (renamed `practice_completed`, §8) | `topic_id`, `question_count` | `lib/screens/results_screen.dart:45` (**Topic Practice only**) |
 | `free_practice_used` | none | `lib/screens/practice_launch.dart:147` |
 | `free_practice_quota_exhausted` | none | `lib/screens/practice_launch.dart:73`, `lib/screens/weak_spot_detail_screen.dart:127` |
 | `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `practice_launch` / `onboarding` | `lib/screens/premium_screen.dart:128` |
@@ -61,7 +65,7 @@ server-side record of what users did, only a local sqlite ledger.
    first-launch flow starts its Daily Test without a `mode_selected`, so
    there is no "started" signal for it; `onboarding_completed` is the nearest
    proxy.
-3. **Only "does not throw" is tested.** `test/analytics_service_test.dart`
+3. **(Resolved, §8.)** **Only "does not throw" was tested.** `test/analytics_service_test.dart`
    asserts each method completes without a Firebase project; nothing checks
    event names or parameters, because `FirebaseAnalytics.instance` is a
    static and cannot be substituted. Adding events without a test seam means
@@ -81,7 +85,11 @@ server-side record of what users did, only a local sqlite ledger.
 
 ---
 
-## 2. Event contract proposal
+## 2. Event contract (approved; E2 dropped)
+
+**Implementation status:** E1, E3, E4, E5 and E6 are implemented (§8). Each
+section below is the agreed contract; where the first draft said "would",
+read "does".
 
 Conventions (match the existing nine): `snake_case`, no prefix, one wrapper
 method per event on `AnalyticsService`, values are strings or integers only.
@@ -165,7 +173,7 @@ who never open Profile. That is now addressed:
 | | |
 |---|---|
 | Params | `finalized_months` (int), `medals_earned` (int: finalized months with tier ≠ `none`), `welcome_earned` (0/1) |
-| Fired | When Profile's medal data finishes loading successfully (`settings_screen.dart:130`, `:138`), **at most once per app session**. Profile loads on mount *and* on every tab re-entry, so an unguarded event would count tab bouncing, not interest. |
+| Fired | When Profile's medal data finishes loading successfully **while the Profile tab is showing**, at most once per session. Profile is built at launch inside the tab stack and reloads on every tab re-entry, so an unguarded event would count a hidden load and tab bouncing, not interest. "Session" = a foreground stretch; it resets after 30 minutes in the background, matching Firebase's default. |
 | Answers | Do users look at the collection, and is looking associated with retention? |
 
 Caveat: with `finalized_months = 0` (every user in their first month) this
@@ -468,6 +476,29 @@ this step creates.
 
 ---
 
+## 8. Implementation status (2026-09-19)
+
+Built in separate commits on `monthly-climb-v2`:
+
+| Item | State |
+|---|---|
+| Test seam: `AnalyticsSink` (default Firebase), `AnalyticsService(sink:, clock:)`; `test/support/recording_analytics_sink.dart` | Done. Every event has a test for its exact name and parameter key set; one test checks all 14 events and both user properties against the Firebase limits in §4 and that values are only ints/short strings. |
+| `session_completed` → `practice_completed` | Done (`AnalyticsService.practiceCompleted`). |
+| E1 `daily_test_completed`, E3 `welcome_badge_earned`, user property `first_step_dom` | Done, in `DailyTestResultScreen._reportCompletion`: once per screen instance, after a durable save; never for a reopened finished result; the Welcome pair and the property fire only when `completeDailyTest` reports a live earn, using the ledger day of the set. `isDay0` is passed by the first-launch flow. |
+| E4 `medal_month_finalized` and the finalize timing | Done. `finalizePastMedalMonths` returns the months it newly froze; `finalizePastMedalMonthsAndReport` (`lib/services/medal_finalization.dart`) reports each; it runs at launch and on resume (`lib/app.dart`) and from Profile. Concurrency test: three simultaneous calls freeze and report each month once. |
+| E5 `profile_medals_viewed` | Done, once per session, only when the Profile tab is showing (`AnalyticsService.appPaused`/`appResumed` drive the 30-minute reset). |
+| E6 `text_size_changed`, user property `text_size` | Done in `lib/app.dart`: reported only on a real change; the property is set from the stored value at startup and on change. |
+| E2 `results_cta_tapped` | Dropped by decision. |
+
+**Not done / still open**
+
+- No physical-device DebugView run has happened for the new events (§6).
+- The custom dimensions and metrics in §9 are not registered; the owner
+  registers them by hand.
+- Proxy usage logging (cost signal) is deferred until after launch (§5).
+- If Profile is showing when a resume finalizes a month, its list catches up
+  on the next tab entry, not immediately (unchanged behavior for Profile).
+
 ## Decisions (owner, 2026-09-19)
 
 1. **Events approved:** E1 `daily_test_completed`, E3 `welcome_badge_earned`,
@@ -489,5 +520,68 @@ this step creates.
    (§2, E4).
 8. **Device commands corrected** to `config/prod.json` (§6).
 
-Implementation status is tracked in the next batch of commits on this branch;
-this section is updated when it lands.
+Implementation of these decisions: §8.
+
+---
+
+## 9. Custom dimensions and metrics to register (owner, by hand)
+
+Firebase/GA4 reports show an event parameter or user property only after it
+is registered as a custom dimension (categorical/segmenting) or custom metric
+(numeric, aggregated). Registration is **not retroactive** — it starts
+collecting from the moment it is registered, so register these **before the
+launch build ships**. Names must match exactly (case-sensitive). In the
+console: Admin → Custom definitions → Create custom dimension / metric.
+DebugView and BigQuery export show every parameter without registration.
+
+Limits for a standard property were not verified from Google's help pages
+here (the fetched page did not cover them); I believe they are 50 event-scoped
+dimensions, 25 user-scoped dimensions and 50 custom metrics, and this list
+uses 16, 2 and 8. Check the console's counter as you create them.
+
+### User-scoped custom dimensions
+
+| Dimension name (suggested) | User property | Scope | Values |
+|---|---|---|---|
+| First step day of month | `first_step_dom` | User | `1`–`31` |
+| Text size | `text_size` | User | `small` / `medium` / `large` |
+
+### Event-scoped custom dimensions
+
+| Dimension name (suggested) | Event parameter | Scope | Sent by |
+|---|---|---|---|
+| Step earned | `step_earned` | Event | `daily_test_completed` (0/1) |
+| Day 0 | `day0` | Event | `daily_test_completed` (0/1) |
+| Rule version | `rule_version` | Event | `welcome_badge_earned`, `medal_month_finalized` |
+| Day of month | `day_of_month` | Event | `welcome_badge_earned` |
+| Days in month | `days_in_month` | Event | `welcome_badge_earned`, `medal_month_finalized` |
+| Medal tier | `tier` | Event | `medal_month_finalized` (`none`/`bronze`/`silver`/`gold`) |
+| Months ago | `months_ago` | Event | `medal_month_finalized` |
+| Welcome earned | `welcome_earned` | Event | `profile_medals_viewed` (0/1) |
+| Text size | `size` | Event | `text_size_changed` |
+| Previous text size | `previous` | Event | `text_size_changed` |
+| Mode | `mode` | Event | `mode_selected` (existing) |
+| Topic | `topic_id` | Event | `practice_completed` (existing) |
+| Paywall source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing) |
+| Paywall dismiss method | `method` | Event | `paywall_dismissed` (existing) |
+| Plan | `plan` | Event | `purchase_started`, `purchase_result` (existing) |
+| Purchase outcome | `outcome` | Event | `purchase_result` (existing) |
+
+### Event-scoped custom metrics
+
+| Metric name (suggested) | Event parameter | Scope | Unit | Sent by |
+|---|---|---|---|---|
+| Correct answers | `correct_count` | Event | Standard | `daily_test_completed` |
+| Wrong answers | `wrong_count` | Event | Standard | `daily_test_completed` |
+| Skipped answers | `skipped_count` | Event | Standard | `daily_test_completed` |
+| Month score percent | `score_pct` | Event | Standard | `medal_month_finalized` |
+| Active days | `active_days` | Event | Standard | `medal_month_finalized` |
+| Finalized months | `finalized_months` | Event | Standard | `profile_medals_viewed` |
+| Medals earned | `medals_earned` | Event | Standard | `profile_medals_viewed` |
+| Question count | `question_count` | Event | Standard | `practice_completed` (existing) |
+
+Events themselves (`daily_test_completed`, `welcome_badge_earned`,
+`medal_month_finalized`, `profile_medals_viewed`, `text_size_changed`,
+`practice_completed`) need no registration; they appear in Events reports on
+their own. Optionally mark `purchase_result` with `outcome = success` as a
+key event in the console for the paywall guardrail.

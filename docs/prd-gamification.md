@@ -118,7 +118,9 @@ Mevcut storage/migration/transaction implementasyonları değiştirilmedi.
 Home'un mevcut Daily Test, Topic Practice, weak-spot/paywall ve avatar Hero
 yolları korunur; hata önizleme erişim kararı ve Profile/madalya işi hâlâ açıktır.
 Bu dilim tam Home yeniden tasarımının veya Aşama 3 cihaz kabulünün tamamlandığı
-anlamına gelmez. Çalışma `monthly-climb-v2` branch'indedir; yayın launch sonrasıdır.
+anlamına gelmez. Çalışma `monthly-climb-v2` branch'indedir. (Updated 2026-09-19: this is now the
+launch branch — it merges to `main` on the owner's explicit approval and ships
+as the first App Store release; see `roadmap.md`, "Launch scope".)
 
 2026-09-18 cihaz geri bildirimi paket 1: Sonuç sonunda kayda bağlı
 `See your climb` / `Back to Home` butonu uygulanmıştır. Kalıcı yazım bekletilmez;
@@ -142,7 +144,7 @@ katılım şeridi eklenmemiştir; standalone önizleme rotası hâlâ gezilebili
 | Temalar — kısmen karara bağlandı 2026-09-17 | İlk önizleme Green Slope light/dark; aylık sıra ve diğer temalar açık, volkan onaylı değil | Sonraki tema aşaması |
 | Home hata önizlemesi | Review'a serbest inceleme bağlantısı mevcut paywall yolunu değiştirir mi? | 3 |
 | Streak Mode | Monthly Climb eski backlog maddesinin yerine geçer mi? | Roadmap kararı |
-| Yayın ve ölçüm | v2/v3 yayın sırası, baseline süresi, rollout ve başarı ölçütü | 5 öncesi |
+| Yayın ve ölçüm — decided 2026-09-19 | Ships with the first release; no baseline, so at least 4 weeks of observation (and a week past the first month-end), thresholds set afterwards. See `docs/analytics-plan.md` §5 | 5 |
 
 İzole worktree/branch seçimi kullanıcı tarafından kesinleştirilmiştir;
 merge/yayın tarihi bundan türetilmez. Açık kararlar teknik varsayımla kapatılmaz.
@@ -172,7 +174,10 @@ Analytics hatası kullanıcı akışını durdurmamalı; cevap metni/PII gönder
 
 Ölçüm mevcut Firebase üzerine kurulacak. D1/D7, Daily Test tamamlama,
 ay içi katılım ve madalya dağılımı aday ölçütlerdir; event adları, paydalar,
-baseline ve başarı eşiği henüz kesin değildir. Home redesign ve gamification
+baseline ve başarı eşiği henüz kesin değildir. (Updated 2026-09-19: event names
+and parameters are now fixed in `docs/analytics-plan.md` and implemented; there
+is no baseline, and thresholds are deliberately set only after the observation
+window.) Home redesign ve gamification
 birlikte açılırsa etki yalnız gamification'a atfedilemez. Eski haftalık rozet
 metrikleri ve analytics sağlayıcı seçimi aktif gereksinim değildir.
 
@@ -712,6 +717,11 @@ buradaki faz mantığının tamamı çöker.
 public launch" zamanına koymuştu; tırmanış onu zorunlu hale getiriyor.
 
 ### 9.2 Baseline
+
+> **Superseded 2026-09-19.** This weekly-era appendix assumed the climb ships
+> after launch, so a baseline would exist. The plan changed: the climb ships
+> with the first release and there is no baseline; see `docs/analytics-plan.md`
+> §5. The original text follows unchanged.
 
 Lansmandan sonra, tırmanış devreye girmeden önceki dönemin D1/D7'si. Özellik
 lansmanla aynı anda çıkarsa baseline oluşmaz — bu yüzden tırmanış lansmanın

@@ -3,7 +3,9 @@
 2026-09-18. Kullanıcının cihaz gözlemleri; görseller konu bazında gelecek.
 Bu belge konu bazlı revizyon sırasıdır. İlk paket uygulandı; aşağıdaki kabul
 durumu otomatik/görsel kontrolleri cihazda kullanıcı kabulünden ayırır.
-Branch: `monthly-climb-v2`. Main'e merge/PR yok, yayın launch sonrası.
+Branch: `monthly-climb-v2`, the launch branch as of 2026-09-19: it merges to
+`main` only on the owner's explicit approval and ships as the first App Store
+release (see `roadmap.md`, "Launch scope"). No merge or PR has been made.
 Storage, migration ve atomik Daily Test completion temeli korunacak.
 
 ## Kullanım ve çalışma biçimi

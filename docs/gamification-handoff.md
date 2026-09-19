@@ -60,7 +60,7 @@
 3. Add the optional Home avatar-adjacent medal entry that navigates to Profile/collection, if still desired.
 4. Redesign mountain path geometry and landmark placement; verify 28/29/30/31 days, light/dark, Small/Medium/Large, and reduced motion.
 5. Decide and implement the additional monthly mountain themes and their calendar rotation.
-6. Analytics contract, baseline measurement, rollout gating, and launch work. This branch remains post-launch work and must not be merged to main or opened as a PR without new explicit instruction.
+6. Remaining launch work (updated 2026-09-19): physical-device DebugView verification of the analytics events, the owner's custom-dimension registration (`docs/analytics-plan.md` §9), and the merge itself. This is now the launch branch: it merges to `main` only on the owner's explicit approval, and no merge or PR has been made. The analytics contract itself is implemented (§15).
 
 ## 5. Deviations & shortcuts
 
@@ -96,13 +96,13 @@
 - Whether empty months should appear as `No medal`. Supporting this correctly would require a trustworthy profile/install start date migration.
 - Whether reset actions should ever offer a separate destructive “reset climb and medals” option.
 - Whether the known Premium 320 px / 2x comparison-table issue should be solved by horizontal scrolling, a stacked layout, or reduced column content.
-- Release measurement remains undecided: analytics event names/properties, baseline window, D1/D7 success thresholds, rollout percentage, and rollback criteria.
+- Release measurement (updated 2026-09-19): event names/properties are decided and implemented, and the measurement plan is approved with no baseline (`docs/analytics-plan.md` §5). D1/D7 success thresholds and rollback criteria stay deliberately unset until the observation window (at least 4 weeks and a week past the first month-end) has produced data.
 
 ## 8. Analytics
 
-- No new analytics events were added for Monthly Climb, result CTA, mountain movement, text-size selection, Profile, medal progress, medal finalization, or medal-history viewing.
-- Existing analytics calls elsewhere were preserved. No live Firebase event validation was performed.
-- Before rollout, define a privacy-safe contract using counts/tier/rule version only; do not send question text, answers, profile fields, or other PII.
+- *(Superseded by §15, 2026-09-19.)* This section originally recorded that no Monthly Climb events existed. They now do; see §15 and `docs/analytics-plan.md`.
+- Still true: no live Firebase/DebugView validation has been performed on a device for the new events.
+- The privacy rule stands: counts, tiers and rule versions only; never question text, answers, profile fields, or other PII.
 
 ## 9. Next step
 
@@ -725,3 +725,42 @@ table are untouched.
 
 **Verification:** `flutter analyze` — no issues. `flutter test` — **469
 passing**, 0 failing.
+
+## 15. Analytics implementation — 2026-09-19
+
+Owner decisions are recorded in `docs/analytics-plan.md` ("Decisions"); this
+section is the short summary of what was built. Contract and privacy rules:
+that document, §2–§4.
+
+- **Test seam.** `AnalyticsService` takes an injectable `AnalyticsSink`
+  (default: Firebase). Tests use `test/support/recording_analytics_sink.dart`
+  and assert the exact parameter key set of every event, the Firebase limits,
+  and that only ints and short strings are sent. The wrapper accepts typed
+  arguments only; no caller passes a `Map`.
+- **Rename.** `session_completed` is now `practice_completed`
+  (Topic Practice only). Nothing had shipped.
+- **Daily Test.** `daily_test_completed` (E1) fires once after a durable save
+  of a new completion. `welcome_badge_earned` (E3) and the `first_step_dom`
+  user property fire only on the live earn, from the ledger day, once.
+  `DailyTestResultScreen` and `DailyTestScreen` now take an
+  `AnalyticsService`; `isDay0` marks the first-launch flow.
+- **Medal finalization.** `finalizePastMedalMonths` returns the months it newly
+  finalized. It runs at app launch and on resume as well as from Profile
+  (`lib/services/medal_finalization.dart`, `lib/app.dart`), and emits
+  `medal_month_finalized` (E4) per new month. Idempotent: check and inserts
+  share one transaction, so a month is frozen and reported once (covered by a
+  concurrency test). Known gap: if Profile is showing while a resume
+  finalizes a month, its list refreshes on the next tab entry, as before.
+- **Profile and text size.** `profile_medals_viewed` (E5) fires when the
+  collection loads while the Profile tab is showing, at most once per session
+  (30-minute background timeout). `text_size_changed` (E6) fires only on a
+  real change; the `text_size` user property is set at startup and on change.
+  `GrammarLensApp` accepts optional storage/analytics overrides for tests.
+- **Dropped.** E2 `results_cta_tapped` (one state-driven button).
+- **Not done.** No on-device DebugView check yet; the custom dimensions and
+  metrics must be registered by the owner before launch
+  (`docs/analytics-plan.md` §9); the proxy still logs no usage (deferred).
+
+**Verification:** `flutter analyze` — no issues. `flutter test` — **511
+passing**, 0 failing (469 before this batch). Not verified on a device.
+
