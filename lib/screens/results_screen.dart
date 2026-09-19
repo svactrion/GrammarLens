@@ -42,7 +42,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     super.initState();
     _saveErrors();
     _recordCompletion();
-    widget.analyticsService.sessionCompleted(
+    widget.analyticsService.practiceCompleted(
       topicId: widget.topic.id.name,
       questionCount: widget.result.totalCount,
     );

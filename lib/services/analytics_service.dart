@@ -61,11 +61,15 @@ class AnalyticsService {
     return _logEvent('mode_selected', {'mode': mode});
   }
 
-  Future<void> sessionCompleted({
+  /// A Topic Practice session reached its results screen. Named
+  /// `practice_completed` (formerly `session_completed`) so it can't be
+  /// confused with [dailyTestCompleted]'s Daily Test event; renamed before
+  /// launch, so no historical data carries the old name.
+  Future<void> practiceCompleted({
     required String topicId,
     required int questionCount,
   }) {
-    return _logEvent('session_completed', {
+    return _logEvent('practice_completed', {
       'topic_id': topicId,
       'question_count': questionCount,
     });

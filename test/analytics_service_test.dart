@@ -23,8 +23,8 @@ void main() {
     await analyticsService.modeSelected(AnalyticsService.modeTopic);
   });
 
-  test('sessionCompleted does not throw without a Firebase project', () async {
-    await analyticsService.sessionCompleted(
+  test('practiceCompleted does not throw without a Firebase project', () async {
+    await analyticsService.practiceCompleted(
       topicId: 'articles',
       questionCount: 5,
     );
@@ -89,10 +89,10 @@ void main() {
       expectOnly('mode_selected', {'mode': 'daily_test'});
     });
 
-    test('session_completed carries only topic_id and question_count',
+    test('practice_completed carries only topic_id and question_count',
         () async {
-      await service.sessionCompleted(topicId: 'articles', questionCount: 5);
-      expectOnly('session_completed', {
+      await service.practiceCompleted(topicId: 'articles', questionCount: 5);
+      expectOnly('practice_completed', {
         'topic_id': 'articles',
         'question_count': 5,
       });
