@@ -1,5 +1,42 @@
 # GrammarLens — Roadmap & Status
 
+## Launch scope — 2026-09-19
+
+**Plan change:** `monthly-climb-v2` will be merged to `main`, and the app goes
+to the App Store for the **first time** with this branch's content. `main` was
+never shipped, so gamification is part of launch, not a post-launch add-on.
+This branch is the launch branch. The merge (or PR) still happens only on the
+owner's explicit approval; nothing here authorises it.
+
+Status words below are literal: "implemented" means code and automated tests
+exist; "device-confirmed" means the owner confirmed it on a physical phone.
+Nothing is marked complete unless the record says so.
+
+### In scope (launch)
+
+| Item | Why it is in | Status |
+|---|---|---|
+| Monthly Climb: ledger, Home mountain, Results `See your climb` / `Back to Home` CTA | It is the whole engagement layer; without it the release has no gamification, and the ledger is the data every other item reads. | Implemented. CTA (package 1) and Home scrolling (package 2) device-confirmed; a full launch acceptance pass is still open. |
+| Monthly medals + Profile collection (rule v1, frozen history) | Gives a month a payoff and the collection a reason to exist; rule v1 is already approved and versioned. | Implemented. Locked-shell device-confirmed; `In progress` card, finalized history and the v17 migration are **not** device-confirmed. |
+| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. |
+| Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
+| Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. **Open:** the comparison-table overflow at 320 px / 2× text is not fixed and its fix (scroll vs. stack vs. fewer columns) is an undecided item. |
+| Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | **Not started.** Plan only: `docs/analytics-plan.md`, awaiting approval. No analytics code exists for any of these events. |
+
+### Out of scope (after launch, on a separate design branch)
+
+| Item | Why it waits |
+|---|---|
+| Mountain geometry redesign (broad-to-narrow, steeper summit, landmark placement, viewpoint contrast) | Current route and landmarks work; this is a visual improvement and needs its own 28/29/30/31-day, theme and text-size verification. |
+| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. |
+| Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
+| Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
+| v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. |
+
+Launch blockers unrelated to gamification (false onboarding privacy note,
+App Review assets for the subscription products, expiry/restore and non-USD
+checks) stay in "What's next" §1, Pre-launch checklist.
+
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
 now displays persisted monthly progress and the selected avatar on Home, with
