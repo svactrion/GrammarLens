@@ -110,7 +110,7 @@ void main() {
     await old.close();
     expect((await storage.getClimbProgress(2026, 9)).steps, 0);
     final db = await inspect();
-    expect(await db.getVersion(), 17);
+    expect(await db.getVersion(), 18);
     for (final table in rows.keys) {
       expect(await db.query(table), before[table], reason: table);
     }
@@ -158,7 +158,7 @@ void main() {
     expect(row['id'], 9);
     expect(row['source'], 'topic_practice');
     expect((await storage.getWeakSpots()).single.frequency, 1);
-    expect(await db.getVersion(), 17);
+    expect(await db.getVersion(), 18);
   });
 
   test('concurrent and stale retries persist one completion, gain and mistake',

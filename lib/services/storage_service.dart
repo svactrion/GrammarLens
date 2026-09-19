@@ -17,13 +17,15 @@ import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
 import '../models/topic_stats.dart';
 import '../models/user_profile.dart';
+import '../models/welcome_badge.dart';
 import 'monthly_medal_rules.dart';
+import 'welcome_badge_rules.dart';
 
 /// Local SQLite-backed error profile (PRD §5: "on-device storage; no
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 17;
+  static const _dbVersion = 18;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -239,6 +241,22 @@ class StorageService {
     )
   ''';
 
+  // One-time achievement, not recurring like the monthly medals above — a
+  // row existing (always `id = 0`) means earned, the same "presence is the
+  // boolean" pattern `user_profile` already uses for onboarding-complete.
+  // `backfilled` distinguishes a v18-migration retroactive award (an
+  // existing user with prior ledger history) from one earned live through
+  // `completeDailyTest` — not surfaced differently in the UI today, kept
+  // for future use. See docs/prd-gamification.md §M6.5.
+  static const _createWelcomeBadgeTable = '''
+    CREATE TABLE IF NOT EXISTS welcome_badge (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      earned_at TEXT NOT NULL,
+      rule_version INTEGER NOT NULL,
+      backfilled INTEGER NOT NULL CHECK (backfilled IN (0, 1))
+    )
+  ''';
+
   Database? _db;
 
   Future<Database> get _database async {
@@ -266,6 +284,7 @@ class StorageService {
         await db.execute(_createDeviceIdentityTable);
         await db.execute(_createClimbEntriesTable);
         await db.execute(_createMonthlyMedalResultsTable);
+        await db.execute(_createWelcomeBadgeTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -366,6 +385,42 @@ class StorageService {
         if (oldVersion < 15) await db.execute(_createClimbEntriesTable);
         if (oldVersion < 16) await db.execute(_createTextSizeSettingsTable);
         if (oldVersion < 17) await db.execute(_createMonthlyMedalResultsTable);
+        // v17 -> v18: welcome_badge, plus its one and only retroactive
+        // award (docs/prd-gamification.md §M6.5). An existing install
+        // already has every `climb_daily_entries` row it will ever have
+        // from before this badge existed — by the time this line runs,
+        // the `oldVersion < 15` step above has already created that table
+        // even on a device upgrading from well before v15, so it's always
+        // safe to read here regardless of the starting version. If it has
+        // at least one row, this device earns the badge now, dated to its
+        // *earliest* entry and marked `backfilled` — never a fresh
+        // `completeDailyTest` call's job for a device that already has
+        // history. `ConflictAlgorithm.ignore` makes this safe to run
+        // again on the downgrade-then-upgrade sequence this whole method's
+        // own doc comment describes: a second pass here must never
+        // overwrite an award (backfilled or, in principle, a real one)
+        // that already exists. There is deliberately no other backfill
+        // path anywhere else in this codebase — a device that already
+        // has ledger rows earns it here, once, or never at all.
+        if (oldVersion < 18) {
+          await db.execute(_createWelcomeBadgeTable);
+          final earliest = await db.rawQuery(
+            'SELECT MIN(day) AS earliest FROM climb_daily_entries',
+          );
+          final earliestDay = earliest.single['earliest'] as String?;
+          if (earliestDay != null) {
+            await db.insert(
+              'welcome_badge',
+              {
+                'id': 0,
+                'earned_at': DateTime.parse(earliestDay).toIso8601String(),
+                'rule_version': WelcomeBadgeRules.ruleVersion,
+                'backfilled': 1,
+              },
+              conflictAlgorithm: ConflictAlgorithm.ignore,
+            );
+          }
+        }
       },
     );
   }
@@ -831,6 +886,22 @@ class StorageService {
       orderBy: 'month DESC',
     );
     return rows.map(_monthlyMedalResultFromRow).toList(growable: false);
+  }
+
+  /// Null until earned — either live, inside [completeDailyTest]'s own
+  /// transaction, or (for a device that already had ledger history)
+  /// retroactively by the v18 migration. There is no lazy backfill call
+  /// anywhere else; a caller just reads whatever is already on record.
+  Future<WelcomeBadge?> getWelcomeBadge() async {
+    final db = await _database;
+    final rows = await db.query('welcome_badge', limit: 1);
+    if (rows.isEmpty) return null;
+    final row = rows.single;
+    return WelcomeBadge(
+      earnedAt: DateTime.parse(row['earned_at'] as String),
+      ruleVersion: row['rule_version'] as int,
+      backfilled: (row['backfilled'] as int) == 1,
+    );
   }
 
   Future<MonthlyMedalProgress> _readMonthlyMedalProgress(
