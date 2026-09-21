@@ -10,11 +10,11 @@ import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/user_profile.dart';
-import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 import 'support/recording_analytics_sink.dart';
@@ -89,8 +89,10 @@ class _Day0Storage extends StorageService {
       completedAt: completedAt ?? DateTime.now(),
       source: set.source,
     );
-    if (answers.values.any((a) => a.trim().isNotEmpty)) steps++;
-    return false;
+    final answered = answers.values.any((a) => a.trim().isNotEmpty);
+    if (answered) steps++;
+    // The first step ever is what earns the Welcome badge.
+    return answered && steps == 1;
   }
 
   @override
@@ -164,12 +166,8 @@ void main() {
     }
   }
 
-  Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
-    await tester.scrollUntilVisible(finder, 300);
-    await tester.ensureVisible(finder);
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-  }
+  final burst = find.byType(ConfettiBurst);
+  final resultsTitle = find.text('Daily Test Results');
 
   final mountain = find.byType(MonthlyMountain, skipOffstage: false);
 
@@ -205,8 +203,9 @@ void main() {
 
   group('Day-0 climb', () {
     testWidgets(
-        'Maybe later: Home mounts the mountain before the step, then the pawn '
-        'climbs to it', (tester) async {
+        'Start my climb: the confetti plays on the results for its whole '
+        'run, then Home mounts before the step and the pawn climbs to it',
+        (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
@@ -214,11 +213,22 @@ void main() {
 
       setReduceMotion(tester, false);
       await tester.pump();
-      await scrollAndTap(tester, find.text('Maybe later'));
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      // Nothing overlaps: the burst is on the results, Home is not built yet.
+      expect(burst, findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(burst, findsOneWidget);
+      expect(resultsTitle, findsOneWidget);
+      expect(mountain, findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 900));
       final seen = await observeHome(tester);
       await tester.pumpAndSettle();
       final finalTop = pawnTop(tester);
 
+      expect(burst, findsNothing);
+      expect(resultsTitle, findsNothing);
       // The first thing Home ever drew was the position before the step...
       expect(seen.steps, [0, 1]);
       // ...and the pawn travelled between the two positions (start, at least
@@ -231,36 +241,16 @@ void main() {
     });
 
     testWidgets(
-        'Start free trial: Home is built as Premium closes and animates on '
-        'the visible Home', (tester) async {
-      await pumpApp(tester);
-      await completeOnboarding(tester);
-      await takeDailyTest(tester, answerFirst: true);
-
-      setReduceMotion(tester, false);
-      await tester.pump();
-      await scrollAndTap(tester, find.text('Start free trial'));
-      await tester.pumpAndSettle();
-      expect(find.byType(PremiumScreen), findsOneWidget);
-
-      await tester.tap(find.text('Maybe later'));
-      final seen = await observeHome(tester);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(PremiumScreen), findsNothing);
-      expect(seen.steps, [0, 1]);
-      expect(seen.tops.length, greaterThan(2));
-      expect(find.text('1 / 31 steps'), findsOneWidget);
-    });
-
-    testWidgets(
-        'reduce motion: still mounts before the step, then jumps with no '
+        'reduce motion: no confetti, Start my climb goes straight to Home, '
+        'which still mounts before the step and then jumps with no '
         'in-between frames', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
 
-      await scrollAndTap(tester, find.text('Maybe later'));
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      expect(burst, findsNothing);
       final seen = await observeHome(tester);
       await tester.pumpAndSettle();
 
@@ -270,16 +260,19 @@ void main() {
     });
 
     testWidgets(
-        'all questions skipped (no step earned): nothing is pending and the '
-        'pawn never moves', (tester) async {
+        'all questions skipped (no step, no badge): Continue goes straight to '
+        'Home, nothing is pending and the pawn never moves', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: false);
       expect(storage.steps, 0);
+      expect(find.text('Start my climb'), findsNothing);
 
       setReduceMotion(tester, false);
       await tester.pump();
-      await scrollAndTap(tester, find.text('Maybe later'));
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      expect(burst, findsNothing);
       final seen = await observeHome(tester, frames: 60);
 
       expect(seen.steps, [0]);
@@ -288,8 +281,9 @@ void main() {
     });
 
     testWidgets(
-        'a slow save keeps both ways out disabled until it lands, then Home '
-        'shows the saved step', (tester) async {
+        'a slow save keeps the way out disabled until it lands, then Start '
+        'my climb plays the confetti and Home shows the saved step',
+        (tester) async {
       storage.saveGate = Completer<void>();
       await pumpApp(tester);
       await completeOnboarding(tester);
@@ -306,28 +300,31 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
         await tester.pump(const Duration(milliseconds: 300));
       }
-      expect(find.text('Daily Test Results'), findsOneWidget);
+      expect(resultsTitle, findsOneWidget);
       expect(storage.completionCalls, 1);
 
-      final maybeLater = find.widgetWithText(TextButton, 'Maybe later');
-      final startTrial = find.widgetWithText(FilledButton, 'Start free trial');
-      await tester.scrollUntilVisible(maybeLater, 300);
-      expect(tester.widget<TextButton>(maybeLater).onPressed, isNull);
-      expect(tester.widget<FilledButton>(startTrial).onPressed, isNull);
-      await tester.tap(maybeLater, warnIfMissed: false);
+      // While saving the one button reads "Saving your results…" and is off.
+      final saving = find.widgetWithText(FilledButton, 'Saving your results…');
+      expect(tester.widget<FilledButton>(saving).onPressed, isNull);
+      await tester.tap(saving, warnIfMissed: false);
       await tester.pump(const Duration(milliseconds: 200));
-      expect(find.text('Daily Test Results'), findsOneWidget);
+      expect(resultsTitle, findsOneWidget);
       expect(mountain, findsNothing);
+      expect(burst, findsNothing);
 
       storage.saveGate!.complete();
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
-      expect(tester.widget<TextButton>(maybeLater).onPressed, isNotNull);
-      expect(tester.widget<FilledButton>(startTrial).onPressed, isNotNull);
+      final climb = find.widgetWithText(FilledButton, 'Start my climb');
+      expect(tester.widget<FilledButton>(climb).onPressed, isNotNull);
 
       setReduceMotion(tester, false);
-      await tester.tap(maybeLater);
-      final seen = await observeHome(tester);
+      await tester.pump();
+      await tester.tap(climb);
+      await tester.pump();
+      expect(burst, findsOneWidget);
+      expect(mountain, findsNothing);
+      final seen = await observeHome(tester, frames: 200);
       await tester.pumpAndSettle();
 
       expect(seen.steps, [0, 1]);

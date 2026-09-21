@@ -18,7 +18,7 @@ Nothing is marked complete unless the record says so.
 |---|---|---|
 | Monthly Climb: ledger, Home mountain, Results `See your climb` / `Back to Home` CTA | It is the whole engagement layer; without it the release has no gamification, and the ledger is the data every other item reads. | Implemented. CTA (package 1) and Home scrolling (package 2) device-confirmed; a full launch acceptance pass is still open. |
 | Monthly medals + Profile collection (rule v1, frozen history) | Gives a month a payoff and the collection a reason to exist; rule v1 is already approved and versioned. | Implemented. Locked-shell device-confirmed; `In progress` card, finalized history and the v17 migration are **not** device-confirmed. |
-| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. Since 2026-09-22 the celebration has a one-time confetti burst and an eased-in banner (automated tests only, not device-confirmed). |
+| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. Since 2026-09-22 the celebration is a large card under the results, and the confetti plays when the user taps "Start my climb" (automated tests only, not device-confirmed). |
 | Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
 | Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. Comparison-table overflow at 320 px / 2× text: fixed 2026-09-21 with a stacked layout (see the launch-checklist note below); automated tests only, **not device-confirmed**. |
 | Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | **Not started.** Plan only: `docs/analytics-plan.md`, awaiting approval. No analytics code exists for any of these events. |
@@ -205,8 +205,9 @@ as each one lands, with literal status words (see above):
   pending.** The first-launch Daily Test now ends on a Home that mounts the
   pawn at its earlier position and animates the step, like the normal flow.
   `FirstLaunchFlow` hands `pendingClimb: (day, step)` to `app.dart`, which gives
-  it once to the new Home; the two Day-0 buttons are disabled until the result
-  is saved (this also closes a stale-Home race). Covered end to end through the
+  it once to the new Home; the result screen's one button is disabled until the
+  result is saved (this also closes a stale-Home race; it was two buttons until
+  2026-09-22). Covered end to end through the
   real app (`test/first_launch_climb_test.dart`). Not device-confirmed.
 
 - **Daily Test sends no weak spots — implemented and tested (Flutter and
@@ -254,10 +255,25 @@ as each one lands, with literal status words (see above):
   no-correction flags. The content's difficulty is a hypothesis to read from data.
 
 - **Welcome celebration confetti — implemented, automated tests only; device
-  check pending.** A package-free `CustomPainter` burst (about 1.8 s, the theme's
-  colors) from the banner into an overlay, played once when the badge is earned,
-  never under reduced motion, removed if the user leaves; the banner eases in
-  instead of jumping. Not device-confirmed (frame rate and look on a phone).
+  check pending; reworked 2026-09-22 (see below).** A package-free
+  `CustomPainter` burst (about 1.8 s, the theme's colors) into an overlay, never
+  under reduced motion, removed if the user leaves. It no longer fires when the
+  badge is earned: it plays when the user taps "Start my climb" (next item).
+
+- **Result screen: one fixed button, badge card below, confetti on tap —
+  implemented, automated tests only; device check pending.** The Daily Test result
+  screen has one primary button in a fixed footer (`BrandScaffold.bottomBar`, so a
+  SnackBar floats above it): "Saving your results…", a retry after a failed save,
+  "Start my climb" (with a small badge icon) when the Welcome badge was just earned,
+  otherwise "Continue" (Day-0) or "See your climb" / "Back to Home" (from Home). The
+  large Welcome card is the last item under the results and moves nothing when it
+  arrives. Tapping "Start my climb" disables the button, plays the confetti on the
+  results for its whole run and only then goes on to Home (a 2.5 s timer goes on
+  anyway; no confetti under reduced motion). The same holds for a badge earned from a
+  test opened on Home. The Day-0 paywall card is removed; the paywall moves to Home
+  (next item), so **until that lands a new user sees no paywall on Day 0**. Not
+  device-confirmed: how the burst reads from the button on a phone, and the 2.5 s
+  ceiling.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice

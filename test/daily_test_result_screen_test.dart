@@ -121,8 +121,8 @@ void main() {
 
   for (final brightness in Brightness.values) {
     testWidgets(
-        'result footer waits for saving, retries failure, and fits large text in $brightness',
-        (tester) async {
+        'the fixed footer waits for saving, retries a failure, and stays '
+        'in view at large text in $brightness', (tester) async {
       tester.view.physicalSize = const Size(320, 568);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -145,26 +145,34 @@ void main() {
         ),
       ));
       await tester.pump();
-      final scroll =
-          tester.state<ScrollableState>(find.byType(Scrollable).first).position;
-      scroll.jumpTo(scroll.maxScrollExtent);
-      await tester.pump();
+
+      // Nothing has been scrolled: the button is in view and disabled.
+      void expectButtonInView() {
+        final rect = tester.getRect(find.byType(FilledButton));
+        expect(rect.bottom, lessThanOrEqualTo(568));
+        expect(rect.top, greaterThanOrEqualTo(0));
+      }
+
       expect(find.text('Saving your results…'), findsOneWidget);
       expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
           isNull);
+      expectButtonInView();
+
       pending.complete();
       await tester.pumpAndSettle();
-      scroll.jumpTo(scroll.maxScrollExtent);
-      await tester.pump();
       expect(find.text('See your climb'), findsNothing);
+      expect(find.text('Try saving again'), findsOneWidget);
       expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-          isNull);
+          isNotNull);
+      expectButtonInView();
+
       storageService.failCompletionWith = null;
-      await tester.tap(find.text('Retry saving'));
+      await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
       expect(find.text('See your climb'), findsOneWidget);
       expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
           isNotNull);
+      expectButtonInView();
       expect(storageService.completeDailyTestCalls, 1);
       expect(tester.takeException(), isNull);
     });
@@ -182,12 +190,17 @@ void main() {
           analyticsService: analyticsService,
         )));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Back to Home'), 200);
+    expect(find.text('Back to Home'), findsOneWidget);
     expect(find.text('See your climb'), findsNothing);
     expect(storageService.completeDailyTestCalls, 1);
   });
 
-  Future<void> pumpResult(WidgetTester tester, DailyTestSet set) async {
+  Future<void> pumpResult(
+    WidgetTester tester,
+    DailyTestSet set, {
+    bool isDay0 = false,
+    VoidCallback? onDone,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         // Reads SemanticColors off the theme.
@@ -200,6 +213,8 @@ void main() {
           answers: answers,
           dailyTestService: dailyTestService,
           analyticsService: analyticsService,
+          isDay0: isDay0,
+          onDone: onDone,
         ),
       ),
     );
@@ -385,9 +400,19 @@ void main() {
   });
 
   group('Welcome badge celebration (docs/prd-gamification.md §M6.5)', () {
+    /// Tall enough that the whole list is built and in view, so the card
+    /// below the results can be found without scrolling.
+    void tallView(WidgetTester tester) {
+      tester.view.physicalSize = const Size(400, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+    }
+
     testWidgets(
         'a completion that just earned the badge shows the one-time '
         'celebration, exactly once', (tester) async {
+      tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
 
       await pumpResult(
@@ -408,6 +433,72 @@ void main() {
       expect(find.textContaining('Every completed Daily Test'), findsNothing);
     });
 
+    testWidgets(
+        'the button becomes "Start my climb", with a small badge icon, in '
+        'place of the plain one', (tester) async {
+      tallView(tester);
+      storageService.welcomeBadgeJustEarned = true;
+
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: questions),
+      );
+
+      expect(find.text('Start my climb'), findsOneWidget);
+      expect(find.text('See your climb'), findsNothing);
+      expect(find.text('Back to Home'), findsNothing);
+      expect(find.text('Continue'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(FilledButton),
+          matching: find.byIcon(Icons.emoji_events_rounded),
+        ),
+        findsNWidgets(1),
+      );
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets(
+        'the card sits under the results, and its arrival moves nothing '
+        'above it', (tester) async {
+      tallView(tester);
+      storageService.welcomeBadgeJustEarned = true;
+      final pending = Completer<void>();
+      storageService.pendingCompletion = pending;
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: DailyTestResultScreen(
+          dailyTestSet: DailyTestSet(day: '2026-01-01', questions: questions),
+          answers: answers,
+          dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
+        ),
+      ));
+      await tester.pump();
+      final resultCards = find.byType(Card);
+      expect(resultCards, findsNWidgets(4));
+      final before = [
+        for (final e in resultCards.evaluate())
+          tester.getTopLeft(find.byWidget(e.widget))
+      ];
+
+      pending.complete();
+      await tester.pumpAndSettle();
+
+      final all = find.byType(Card);
+      expect(all, findsNWidgets(5));
+      final after = [
+        for (var i = 0; i < 4; i++) tester.getTopLeft(all.at(i))
+      ];
+      expect(after, before);
+      expect(tester.getTopLeft(all.at(4)).dy,
+          greaterThanOrEqualTo(tester.getRect(all.at(3)).bottom));
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+    });
+
     testWidgets('an ordinary completion (not the first ever) shows nothing',
         (tester) async {
       storageService.welcomeBadgeJustEarned = false;
@@ -418,6 +509,8 @@ void main() {
       );
 
       expect(find.text('Welcome to the climb'), findsNothing);
+      expect(find.text('Start my climb'), findsNothing);
+      expect(find.text('See your climb'), findsOneWidget);
     });
 
     testWidgets(
@@ -441,6 +534,7 @@ void main() {
 
       expect(storageService.completeDailyTestCalls, 1);
       expect(find.text('Welcome to the climb'), findsNothing);
+      expect(find.text('Back to Home'), findsOneWidget);
     });
 
     testWidgets(
@@ -459,11 +553,13 @@ void main() {
 
       expect(storageService.completeDailyTestCalls, 0);
       expect(find.text('Welcome to the climb'), findsNothing);
+      expect(find.text('Back to Home'), findsOneWidget);
     });
 
     testWidgets(
         'a failed first attempt shows no celebration; the retry that '
         'actually earns it shows exactly one, not two', (tester) async {
+      tallView(tester);
       storageService.failCompletionWith = StateError('disk full');
       storageService.welcomeBadgeJustEarned = true;
 
@@ -472,16 +568,19 @@ void main() {
         DailyTestSet(day: '2026-01-01', questions: questions),
       );
       expect(find.text('Welcome to the climb'), findsNothing);
+      expect(find.text('Start my climb'), findsNothing);
 
       storageService.failCompletionWith = null;
       await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
 
       expect(find.text('Welcome to the climb'), findsOneWidget);
+      expect(find.text('Start my climb'), findsOneWidget);
     });
 
-    testWidgets('does not gate or delay the existing "See your climb" CTA',
+    testWidgets('does not gate or delay the way out once saved',
         (tester) async {
+      tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
 
       await pumpResult(
@@ -490,11 +589,32 @@ void main() {
       );
 
       expect(find.text('Welcome to the climb'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('See your climb'), 300);
       expect(
         tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
         isNotNull,
       );
+    });
+
+    testWidgets(
+        'Day-0 without a badge reads "Continue" and leaves through onDone '
+        'at once', (tester) async {
+      var left = 0;
+      storageService.welcomeBadgeJustEarned = false;
+
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: questions),
+        isDay0: true,
+        onDone: () => left++,
+      );
+
+      expect(find.text('Continue'), findsOneWidget);
+      expect(find.text('See your climb'), findsNothing);
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      expect(left, 1);
+      expect(find.byType(ConfettiBurst), findsNothing);
     });
   });
 
@@ -700,35 +820,40 @@ void main() {
     });
   });
 
-  group('Welcome confetti (one-time, overlay, no package)', () {
-    final burst = find.byType(ConfettiBurst);
+  testWidgets(
+      'a double tap on Continue leaves once, not twice', (tester) async {
+    var left = 0;
+    storageService.welcomeBadgeJustEarned = false;
+    await pumpResult(
+      tester,
+      DailyTestSet(day: '2026-01-01', questions: questions),
+      isDay0: true,
+      onDone: () => left++,
+    );
 
-    /// Pumps without settling, so the confetti can be observed while it plays.
-    Future<void> pumpUnsettled(
-      WidgetTester tester,
-      DailyTestSet set, {
-      Brightness brightness = Brightness.light,
-    }) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildAppTheme(brightness),
-          scaffoldMessengerKey: AppMessenger.key,
-          home: DailyTestResultScreen(
-            dailyTestSet: set,
-            answers: answers,
-            dailyTestService: dailyTestService,
-            analyticsService: analyticsService,
-          ),
-        ),
-      );
-      // The save runs from initState; one frame lets it land and the
-      // post-frame callback that starts the confetti run.
-      await tester.pump();
-      await tester.pump();
-    }
+    await tester.tap(find.text('Continue'));
+    await tester.tap(find.text('Continue'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(left, 1);
+  });
+
+  group('Welcome confetti (on the button tap, overlay, no package)', () {
+    final burst = find.byType(ConfettiBurst);
+    final button = find.byType(FilledButton);
+    var left = 0;
+
+    setUp(() => left = 0);
 
     DailyTestSet freshSet() =>
         DailyTestSet(day: '2026-01-01', questions: questions);
+
+    void tallView(WidgetTester tester) {
+      tester.view.physicalSize = const Size(400, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+    }
 
     void reduceMotion(WidgetTester tester, bool value) {
       tester.platformDispatcher.accessibilityFeaturesTestValue =
@@ -737,117 +862,219 @@ void main() {
           tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     }
 
-    testWidgets(
-        'earning the badge throws one burst from the banner, about 1.8 s, '
-        'and then it is gone', (tester) async {
+    /// Pumps a Day-0 style result screen (left through [onDone]) whose save
+    /// earns the badge, and lets everything settle: nothing plays until the
+    /// button is tapped, so settling cannot hide a burst.
+    Future<void> pumpEarned(
+      WidgetTester tester, {
+      Brightness brightness = Brightness.light,
+      bool muteTickers = false,
+      DailyTestSet? set,
+    }) async {
       storageService.welcomeBadgeJustEarned = true;
-      await pumpUnsettled(tester, freshSet());
+      Widget app = MaterialApp(
+        theme: buildAppTheme(brightness),
+        scaffoldMessengerKey: AppMessenger.key,
+        home: DailyTestResultScreen(
+          dailyTestSet: set ?? freshSet(),
+          answers: answers,
+          dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
+          isDay0: true,
+          onDone: () => left++,
+        ),
+      );
+      if (muteTickers) app = TickerMode(enabled: false, child: app);
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+    }
 
-      expect(burst, findsOneWidget);
-      // (An item with no height yet counts as offstage to finders, so give the
-      // banner a moment to take its first bit of space.)
-      await tester.pump(const Duration(milliseconds: 50));
+    testWidgets(
+        'earning the badge plays nothing by itself, however long the user '
+        'stays', (tester) async {
+      tallView(tester);
+      await pumpEarned(tester);
+
       expect(find.text('Welcome to the climb'), findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 950));
-      expect(burst, findsOneWidget, reason: 'still playing at 1.0 s');
-      await tester.pump(const Duration(milliseconds: 900));
-      expect(burst, findsNothing, reason: 'finished by 1.9 s');
-      expect(ConfettiBurst.duration, const Duration(milliseconds: 1800));
-      // The banner itself stays.
-      expect(find.text('Welcome to the climb'), findsOneWidget);
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(burst, findsNothing);
+      }
+      expect(left, 0);
     });
 
-    testWidgets('it starts from the banner, not from a corner', (tester) async {
-      storageService.welcomeBadgeJustEarned = true;
-      await pumpUnsettled(tester, freshSet());
-      await tester.pump(const Duration(milliseconds: 400));
+    testWidgets(
+        'tapping "Start my climb" throws one burst from the top of the '
+        'button, plays it for its whole 1.8 s, and only then leaves',
+        (tester) async {
+      tallView(tester);
+      await pumpEarned(tester);
 
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      expect(burst, findsOneWidget);
+      expect(ConfettiBurst.duration, const Duration(milliseconds: 1800));
       final origin = tester.widget<ConfettiBurst>(burst).origin;
-      final banner = tester.getRect(find.byType(Card).first);
-      expect(origin.dx, closeTo(banner.center.dx, 1));
-      expect(origin.dy, greaterThan(banner.top - 1));
-      expect(origin.dy, lessThan(banner.bottom + 1));
+      final rect = tester.getRect(button);
+      expect(origin.dx, closeTo(rect.center.dx, 1));
+      expect(origin.dy, closeTo(rect.top, 1));
+
+      await tester.pump(const Duration(milliseconds: 950));
+      expect(burst, findsOneWidget, reason: 'still playing at 1.0 s');
+      expect(left, 0, reason: 'the screen stays for the whole burst');
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(burst, findsNothing, reason: 'finished by 1.9 s');
+      expect(left, 1);
+    });
+
+    testWidgets(
+        'the button is disabled once tapped: a second tap neither plays a '
+        'second burst nor leaves twice', (tester) async {
+      tallView(tester);
+      await pumpEarned(tester);
+
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      expect(tester.widget<FilledButton>(button).onPressed, isNull);
+      await tester.tap(button, warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(button, warnIfMissed: false);
+      await tester.pump();
+      expect(burst, findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+      expect(burst, findsNothing);
+      expect(left, 1);
+    });
+
+    testWidgets(
+        'a burst that never finishes cannot trap the user: about 2.5 s '
+        'after the tap the screen leaves anyway', (tester) async {
+      tallView(tester);
+      // Tickers muted: the burst's animation never advances, only the timer.
+      await pumpEarned(tester, muteTickers: true);
+
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      expect(burst, findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 2400));
+      expect(burst, findsOneWidget);
+      expect(left, 0);
+
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(left, 1);
+      expect(burst, findsNothing);
+    });
+
+    testWidgets(
+        'a finished burst and the fallback timer together leave only once',
+        (tester) async {
+      tallView(tester);
+      await pumpEarned(tester);
+
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1900));
+      expect(left, 1);
+      await tester.pump(const Duration(seconds: 3));
+      expect(left, 1);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets("it uses the theme's own colors, light and dark",
         (tester) async {
+      tallView(tester);
       for (final brightness in Brightness.values) {
-        storageService.welcomeBadgeJustEarned = true;
-        await pumpUnsettled(tester, freshSet(), brightness: brightness);
+        await pumpEarned(tester, brightness: brightness);
+        await tester.tap(find.text('Start my climb'));
+        await tester.pump();
         final scheme = buildAppTheme(brightness).colorScheme;
 
         expect(tester.widget<ConfettiBurst>(burst).colors,
             [scheme.primary, scheme.secondary, scheme.tertiary]);
         await tester.pumpWidget(const SizedBox());
-        await tester.pump();
+        await tester.pump(const Duration(seconds: 3));
       }
     });
 
-    for (final scenario in [
-      (
-        name: 'an ordinary completion',
-        earned: false,
-        set: () => DailyTestSet(day: '2026-01-01', questions: questions),
-      ),
-      (
-        name: 'reopening an already-completed set',
-        earned: true,
-        set: () => DailyTestSet(
-              day: '2026-01-01',
-              questions: questions,
-              completedAt: DateTime(2026, 1, 1),
-              answers: answers,
-            ),
-      ),
-    ]) {
-      testWidgets('no confetti for ${scenario.name}', (tester) async {
-        storageService.welcomeBadgeJustEarned = scenario.earned;
-        await pumpUnsettled(tester, scenario.set());
-        for (var i = 0; i < 4; i++) {
-          await tester.pump(const Duration(milliseconds: 100));
-          expect(burst, findsNothing);
-        }
-        expect(find.text('Welcome to the climb'), findsNothing);
-      });
-    }
-
     testWidgets(
-        'a failed first attempt throws nothing; the retry that earns it '
-        'throws exactly one', (tester) async {
-      storageService.failCompletionWith = StateError('disk full');
-      storageService.welcomeBadgeJustEarned = true;
-      await pumpUnsettled(tester, freshSet());
-      expect(burst, findsNothing);
-
-      storageService.failCompletionWith = null;
-      await tester.tap(find.text('Try saving again'));
-      await tester.pump();
-      await tester.pump();
-      await tester.pump();
-
-      expect(burst, findsOneWidget);
-    });
-
-    testWidgets(
-        'reduced motion: no confetti at all, and the banner simply appears',
-        (tester) async {
+        'reduced motion: no confetti at all, the card simply appears, and '
+        'the button leaves at once', (tester) async {
+      tallView(tester);
       reduceMotion(tester, true);
-      storageService.welcomeBadgeJustEarned = true;
-      await pumpUnsettled(tester, freshSet());
+      await pumpEarned(tester);
 
-      expect(burst, findsNothing);
       // At once, in one frame: no size or fade animation to wait for.
       expect(find.text('Welcome to the climb'), findsOneWidget);
       expect(find.byType(AnimatedSize), findsNothing);
       expect(find.byType(AnimatedOpacity), findsNothing);
-      await tester.pump(const Duration(milliseconds: 500));
+
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+
       expect(burst, findsNothing);
+      expect(left, 1);
     });
 
-    testWidgets('the banner eases in (fade and size) instead of jumping',
+    testWidgets(
+        'no badge, no confetti: an ordinary Day-0 result leaves at once from '
+        '"Continue"', (tester) async {
+      storageService.welcomeBadgeJustEarned = false;
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: DailyTestResultScreen(
+          dailyTestSet: freshSet(),
+          answers: answers,
+          dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
+          isDay0: true,
+          onDone: () => left++,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+
+      expect(burst, findsNothing);
+      expect(left, 1);
+    });
+
+    testWidgets(
+        'a failed first attempt plays nothing; the retry that earns it shows '
+        'the button, and the burst still waits for the tap', (tester) async {
+      tallView(tester);
+      storageService.failCompletionWith = StateError('disk full');
+      await pumpEarned(tester);
+      expect(burst, findsNothing);
+      expect(find.text('Start my climb'), findsNothing);
+
+      storageService.failCompletionWith = null;
+      await tester.tap(find.text('Try saving again'));
+      await tester.pumpAndSettle();
+      expect(burst, findsNothing);
+      expect(find.text('Start my climb'), findsOneWidget);
+
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      expect(burst, findsOneWidget);
+    });
+
+    testWidgets('the card eases in (fade and size) instead of jumping',
         (tester) async {
+      tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
-      await pumpUnsettled(tester, freshSet());
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: DailyTestResultScreen(
+          dailyTestSet: freshSet(),
+          answers: answers,
+          dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
+        ),
+      ));
+      await tester.pump();
+      await tester.pump();
 
       final fadeFinder = find.descendant(
           of: find.byType(AnimatedOpacity, skipOffstage: false),
@@ -862,22 +1089,53 @@ void main() {
     });
 
     testWidgets(
-        'scrolling away and back never replays it: the banner comes back '
-        'already in place, with no new burst', (tester) async {
+        'the card eases in after a failed first save and a retry too, even '
+        'though the failure text above it comes and goes', (tester) async {
+      tallView(tester);
+      storageService.failCompletionWith = StateError('disk full');
+      storageService.welcomeBadgeJustEarned = true;
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        scaffoldMessengerKey: AppMessenger.key,
+        home: DailyTestResultScreen(
+          dailyTestSet: freshSet(),
+          answers: answers,
+          dailyTestService: dailyTestService,
+          analyticsService: analyticsService,
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Try saving again'), findsOneWidget);
+
+      storageService.failCompletionWith = null;
+      await tester.tap(find.text('Try saving again'));
+      await tester.pump();
+      await tester.pump();
+
+      final fade = tester.widget<FadeTransition>(find.descendant(
+          of: find.byType(AnimatedOpacity, skipOffstage: false),
+          matching: find.byType(FadeTransition, skipOffstage: false)));
+      expect(fade.opacity.value, lessThan(1));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(fade.opacity.value, 1);
+    });
+
+    testWidgets(
+        'scrolling away and back never replays it: the card comes back '
+        'already in place, with no burst', (tester) async {
       tester.view.physicalSize = const Size(320, 568);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      storageService.welcomeBadgeJustEarned = true;
-      await pumpUnsettled(tester, freshSet());
-      await tester.pump(const Duration(milliseconds: 2000));
-      expect(burst, findsNothing);
+      await pumpEarned(tester);
 
       final scroll =
           tester.state<ScrollableState>(find.byType(Scrollable).first).position;
       scroll.jumpTo(scroll.maxScrollExtent);
       await tester.pump();
       scroll.jumpTo(0);
+      await tester.pump();
+      scroll.jumpTo(scroll.maxScrollExtent);
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
         expect(burst, findsNothing);
@@ -890,10 +1148,11 @@ void main() {
     });
 
     testWidgets(
-        'leaving the screen mid-burst removes it at once, with nothing left '
-        'running and no error', (tester) async {
-      storageService.welcomeBadgeJustEarned = true;
-      await pumpUnsettled(tester, freshSet());
+        'leaving the screen mid-burst removes it at once, cancels the '
+        'fallback, and never calls onDone', (tester) async {
+      tallView(tester);
+      await pumpEarned(tester);
+      await tester.tap(find.text('Start my climb'));
       await tester.pump(const Duration(milliseconds: 500));
       expect(burst, findsOneWidget);
 
@@ -902,6 +1161,47 @@ void main() {
       expect(burst, findsNothing);
       await tester.pump(const Duration(seconds: 3));
       expect(tester.takeException(), isNull);
+      expect(left, 0);
+    });
+
+    testWidgets(
+        'from Home: the route is popped only after the burst, and an '
+        'ordinary result pops at once', (tester) async {
+      tallView(tester);
+      storageService.welcomeBadgeJustEarned = true;
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => DailyTestResultScreen(
+                  dailyTestSet: freshSet(),
+                  answers: answers,
+                  dailyTestService: dailyTestService,
+                  analyticsService: analyticsService,
+                ),
+              )),
+              child: const Text('open results'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open results'));
+      await tester.pumpAndSettle();
+      expect(find.text('Daily Test Results'), findsOneWidget);
+
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(find.text('Daily Test Results'), findsOneWidget);
+      expect(burst, findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 900));
+      await tester.pumpAndSettle();
+      expect(find.text('open results'), findsOneWidget);
+      expect(find.text('Daily Test Results'), findsNothing);
+      expect(burst, findsNothing);
     });
   });
 

@@ -4549,3 +4549,69 @@ unnoticed.
   with `set_source = bundled` and `day0 = 1`. All five are stored with the same
   set for every user by design, so a user who resets onboarding in a debug build
   sees the same test again.
+
+## 2026-09-22 (results: one fixed button, the badge card below, confetti on tap)
+
+- **[Problem]** Three things on the Daily Test result screen worked against each
+  other. The Welcome banner arrived at the top when the save landed and shoved the
+  results down; the confetti fired by itself at that moment, over results the user
+  was still reading; and the Day-0 screen ended in a paywall card plus "Maybe
+  later", so the first thing after the user's first win was a sales pitch. Its
+  buttons also lived at the end of the scrolling list.
+- **[Product]** Owner decisions: the result screen has one primary button in a fixed
+  footer (like Premium's), whose text follows the screen's state: "Saving your
+  results…" (disabled), a retry after a failed save, "Start my climb" with a small
+  badge icon when the Welcome badge was just earned, otherwise "Continue" (Day-0)
+  or the existing "See your climb" / "Back to Home" (Home). The large badge card is
+  the last item under the results. The confetti belongs to the tap: "Start my
+  climb" disables the button, plays the burst on the results for its whole 1.8 s,
+  and only then moves on, so the confetti and the next screen never overlap.
+  Reduced motion: no confetti, straight through. A badge earned from a test opened
+  on Home uses the same button and the same order (confetti, then Home animates the
+  step). The Day-0 paywall card is gone; the paywall moves to Home (next batch), so
+  until that lands a new user is not shown a paywall on Day 0.
+- **[Engineering]** `DailyTestResultScreen` loses `bottomBuilder` and gets `onDone`
+  (null pops the route, as before; the Day-0 flow, which is not a route, passes the
+  callback that ends it). `_startClimb` sets the `_climbStarted` flag, throws the
+  burst from the top of the button into the navigator's overlay and leaves when it
+  finishes (`ConfettiBurst.onFinished`); a 2.5 s timer leaves anyway if the animation
+  never completes (a paused ticker), and `_left` makes leaving happen once whatever
+  gets there first. The post-save auto-trigger is removed. `FirstLaunchFlow` drops
+  `_DayZeroPaywallCta` and its own "result saved" flag: the screen keeps its
+  button disabled while saving, so the old guard against building Home ahead of the
+  write (and the retry) now lives in the one button.
+- **[Engineering]** The footer is `BrandScaffold.bottomBar`, a new slot mapped to
+  `Scaffold.bottomNavigationBar`, not the end of a body column. Found by a test:
+  the "could not save" SnackBar sat exactly over a footer that is part of the body
+  and hid the retry button for its whole life; in the Scaffold's own bottom slot a
+  SnackBar floats above it. (Premium's footer is built the older way and was not
+  touched.) The list's own bottom padding shrinks to 16 when a bar is present, as the
+  bar handles the safe area.
+- **[Engineering]** Also found by a test: the saving bar disappearing when the save
+  lands moved every card up 4 px, and it shifted the list's indices so the card
+  (which had no key) was rebuilt already in its final state, skipping its ease-in.
+  The bar now has a fixed 4 px slot and the card keeps a `GlobalKey`.
+- **[Validation]** Result screen: the fixed footer stays in view, disabled while
+  saving and as a retry after a failure, at 320x568 with 2x text in light and dark;
+  the card sits below every result card and its arrival moves nothing above it;
+  "Start my climb" with its icon replaces the plain button; Day-0 without a badge
+  reads "Continue" and a double tap leaves once; nothing plays until the tap; one
+  burst from the top of the button, 1.0 s in it is still playing and the screen is
+  still there, and it leaves only after 1.8 s; the button is disabled after the tap;
+  a burst that never finishes (tickers muted) still lets the user go at about 2.5 s;
+  finished burst plus timer leave once; theme colors; reduced motion (no burst, no
+  animation widgets, leaves at once); a failed first save then a retry shows the
+  button, still no burst until the tap, and the card still eases in; scrolling away
+  and back replays nothing; leaving mid-burst removes it, cancels the timer and
+  never calls `onDone`; from a pushed route the pop comes only after the burst.
+  Day-0 through the real app: confetti on the results with Home not yet built, then
+  Home mounts before the step and the pawn climbs; reduced motion goes straight
+  through; all-skipped ends on "Continue" with the pawn unmoved; a slow save keeps
+  the button disabled until it lands. Home: a badge earned from a test opened on Home
+  plays the confetti, then the mountain animates. Mutations that turn tests red:
+  leaving at once instead of after the burst, ignoring reduced motion, an enabled
+  button after the tap, no fallback timer, no once-only guard, a timer or burst left
+  behind on dispose, no card key, `onDone` ignored, the badge state never shown.
+- **[Known limit]** How the burst looks from the button on a phone (a throw from
+  the bottom edge rises about 160 px at most, over the last result cards), and
+  whether 2.5 s is the right ceiling on a slow device, are not device-confirmed.

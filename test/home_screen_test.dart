@@ -21,6 +21,7 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 /// The bottom "Premium" upsell row's own label — disambiguated from
@@ -111,6 +112,10 @@ class _FakeStorageService extends StorageService {
   int steps = 0;
   int completionCalls = 0;
   Completer<void>? pendingCompletion;
+
+  /// What a successful completion reports: whether it just earned the Welcome
+  /// badge (a user who had never earned a step before).
+  bool welcomeBadge = false;
   bool failProgress = false;
   final monthsRead = <(int, int)>[];
   Completer<({int steps, int correct, int wrong, int skipped})>?
@@ -141,7 +146,7 @@ class _FakeStorageService extends StorageService {
         answers: answers,
         completedAt: completedAt ?? DateTime.now());
     if (answers.values.any((answer) => answer.trim().isNotEmpty)) steps++;
-    return false;
+    return welcomeBadge;
   }
 
   @override
@@ -504,6 +509,69 @@ void main() {
       });
     }
   }
+
+  testWidgets(
+      'a badge earned from Home: Start my climb plays the confetti on the '
+      'results, and only then does Home animate the step', (tester) async {
+    final storage = _FakeStorageService()
+      ..steps = 8
+      ..welcomeBadge = true
+      ..todaysDailyTest = DailyTestSet(
+          day: '2026-01-01',
+          questions: _completedDailyTestSet(correct: 0, total: 1).questions);
+    await pumpHome(tester, storageService: storage);
+    final mountain = find.byType(MonthlyMountain, skipOffstage: false);
+    double pawnTop() => tester
+        .widget<Positioned>(find
+            .descendant(
+                of: mountain,
+                matching: find.byWidgetPredicate(
+                    (w) => w is Positioned && w.child is AvatarTile,
+                    skipOffstage: false))
+            .last)
+        .top!;
+    final oldTop = pawnTop();
+    await tester.tap(find.text('Daily Test'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'wrong');
+    await tester.pump();
+    await tester.tap(find.text('Finish'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 2));
+    expect(storage.steps, 9);
+    expect(find.text('Start my climb'), findsOneWidget);
+    expect(find.text('See your climb'), findsNothing);
+
+    await tester.tap(find.text('Start my climb'));
+    await tester.pump();
+    expect(find.byType(ConfettiBurst), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1000));
+    // Still on the results, with the mountain not yet moved.
+    expect(find.byType(DailyTestResultScreen), findsOneWidget);
+    expect(find.byType(ConfettiBurst), findsOneWidget);
+    expect(tester.widget<MonthlyMountain>(mountain).completedDays, 8);
+    expect(pawnTop(), oldTop);
+
+    await tester.pump(const Duration(milliseconds: 900));
+    for (var i = 0;
+        i < 60 && tester.widget<MonthlyMountain>(mountain).completedDays == 8;
+        i++) {
+      await tester.pump(const Duration(milliseconds: 25));
+    }
+    expect(find.byType(ConfettiBurst), findsNothing);
+    expect(find.byType(DailyTestResultScreen), findsNothing);
+    expect(tester.widget<MonthlyMountain>(mountain).completedDays, 9);
+    final startTop = pawnTop();
+    expect(startTop, closeTo(oldTop, 0.1));
+    await tester.pump(const Duration(milliseconds: 425));
+    final middleTop = pawnTop();
+    await tester.pumpAndSettle();
+    final endTop = pawnTop();
+    expect(endTop, lessThan(oldTop));
+    expect(middleTop, lessThan(startTop));
+    expect(middleTop, greaterThan(endTop));
+    expect(storage.completionCalls, 1);
+  });
 
   testWidgets(
       'month rollover replaces the old mountain, including equal-length months',

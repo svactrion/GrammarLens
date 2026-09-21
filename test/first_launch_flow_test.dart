@@ -98,6 +98,10 @@ class _FakeStorageService extends StorageService {
   /// Makes writing the bundled set fail, to prove onboarding survives it.
   bool failSeed = false;
 
+  /// What a successful `completeDailyTest` reports: whether it just earned the
+  /// Welcome badge.
+  bool welcomeBadge = false;
+
   DailyTestSet? get todaysSet => _todaysSet;
   void setTodaysSet(DailyTestSet set) => _todaysSet = set;
 
@@ -154,7 +158,7 @@ class _FakeStorageService extends StorageService {
       _todaysSet = current.copyWith(
           completedAt: completedAt ?? DateTime.now(), answers: answers);
     }
-    return false;
+    return welcomeBadge;
   }
 
   @override
@@ -233,11 +237,9 @@ void main() {
     }
   }
 
-  Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
-    await tester.scrollUntilVisible(finder, 300);
-    await tester.ensureVisible(finder);
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
+  /// The result screen's one button, always in view in its fixed footer.
+  Future<void> tapResultButton(WidgetTester tester, String label) async {
+    await tester.tap(find.widgetWithText(FilledButton, label));
     await tester.pumpAndSettle();
   }
 
@@ -255,8 +257,8 @@ void main() {
   });
 
   testWidgets(
-      "the result screen's paywall CTA is shown instead of a plain finish, "
-      'and tapping "Maybe later" there completes onboarding with the right '
+      'the result screen ends with its one Continue button, no paywall pitch '
+      'in the flow, and tapping it completes onboarding with the right '
       'profile', (tester) async {
     UserProfile? completed;
     await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
@@ -264,36 +266,49 @@ void main() {
     await answerThroughDailyTest(tester);
 
     expect(find.text('Daily Test Results'), findsOneWidget);
-    final ctaHeadline = find.text('Like the personalized feedback?');
-    await tester.scrollUntilVisible(ctaHeadline, 300);
-    expect(ctaHeadline, findsOneWidget);
+    expect(find.text('Like the personalized feedback?'), findsNothing);
+    expect(find.text('Start free trial'), findsNothing);
+    expect(find.text('Maybe later'), findsNothing);
+    expect(find.byType(PremiumScreen), findsNothing);
+    expect(find.byType(FilledButton), findsOneWidget);
     expect(completed, isNull);
 
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tapResultButton(tester, 'Continue');
 
     expect(completed, isNotNull);
     expect(completed!.name, 'Ada');
     expect(completed!.learningGoal, LearningGoal.examPrep);
+    expect(find.byType(PremiumScreen), findsNothing);
   });
 
   testWidgets(
-      'tapping "Start free trial" on the result CTA opens the real '
-      'PremiumScreen, and its own "Maybe later" also completes onboarding',
-      (tester) async {
+      'a Day-0 test that earns the badge ends on "Start my climb" instead, '
+      'and tapping it completes onboarding', (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
+    PendingClimb? pending;
+    storageService.welcomeBadge = true;
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+      completed = p;
+      pending = pendingClimb;
+    });
     await completeOnboardingForm(tester);
-    await answerThroughDailyTest(tester);
+    await tester.enterText(find.byType(TextField).first, 'eating');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+    await tester.pumpAndSettle();
+    for (var i = 1; i < DailyTestService.questionCount; i++) {
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+      await tester.pumpAndSettle();
+    }
 
-    await scrollAndTap(tester, find.text('Start free trial'));
-
-    expect(find.byType(PremiumScreen), findsOneWidget);
+    expect(find.text('Start my climb'), findsOneWidget);
+    expect(find.text('Continue'), findsNothing);
     expect(completed, isNull);
+    // Reduced motion (the flow tests' setting): no confetti to wait for.
+    await tapResultButton(tester, 'Start my climb');
 
-    await scrollAndTap(tester, find.text('Maybe later'));
-
-    expect(completed, isNotNull);
-    expect(find.byType(PremiumScreen), findsNothing);
+    expect(completed?.name, 'Ada');
+    expect(pending, (day: '2026-01-01', step: 1));
   });
 
   testWidgets(
@@ -322,7 +337,7 @@ void main() {
     await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tapResultButton(tester, 'Continue');
 
     expect(completed, isNotNull);
     expect(storageService.aiConsentRead, isFalse);
@@ -349,7 +364,7 @@ void main() {
       await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
       await tester.pumpAndSettle();
     }
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tapResultButton(tester, 'Continue');
 
     expect(completed, isNotNull);
     expect(pending, (day: '2026-01-01', step: 1));
@@ -363,7 +378,7 @@ void main() {
     });
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
-    await scrollAndTap(tester, find.text('Maybe later'));
+    await tapResultButton(tester, 'Continue');
 
     expect(pending, isNull);
   });
