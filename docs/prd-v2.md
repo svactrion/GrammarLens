@@ -341,6 +341,8 @@ fully resolved earlier in this document.
 - **Privacy note** — onboarding collects name and learning goal. Even stored
   locally, a one-line notice is cheap and builds trust with strangers in a
   way it didn't need to with in-person testers.
+  *(Corrected 2026-09-21, §13.9: the wording that shipped, "never sent to a
+  server", was false once the proxy and Firebase existed.)*
 
 ---
 
@@ -731,6 +733,18 @@ proxy's generic per-device wall. The cap is a cost guardrail, not a product
 promise: no user-facing copy states it except the "That's all for today"
 dialog, and nothing anywhere says "unlimited". This resolves §7.2's open
 cap number for launch only; revisit with the token-log data (§13.9).
+
+### 13.9 Onboarding privacy note corrected (2026-09-21)
+
+The onboarding line "Stored only on this device — never sent to a server"
+(§10.1) was false: practice answers go through the proxy to Anthropic, and
+Firebase receives usage and crash data. It is replaced with: "Your name and
+goal stay on this device. Practice answers are sent to our AI provider to give
+you feedback, and usage and crash data is collected." This is what the code
+does (name and goal are sent to neither the proxy nor analytics) and agrees
+with the published privacy policy. Any future in-app privacy claim should be
+checked against that policy and against the App Store privacy label, not
+written from memory of an earlier architecture.
 
 ---
 

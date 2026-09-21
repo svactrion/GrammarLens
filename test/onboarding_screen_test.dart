@@ -37,6 +37,24 @@ void main() {
   }
 
   testWidgets(
+    'the privacy note no longer claims data never leaves the device — it '
+    'names the AI provider and usage/crash data honestly',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: OnboardingScreen(onComplete: (_) {})),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text(onboardingPrivacyNote));
+      expect(find.text(onboardingPrivacyNote), findsOneWidget);
+      expect(find.textContaining('never sent'), findsNothing);
+      expect(find.textContaining('Stored only'), findsNothing);
+      expect(onboardingPrivacyNote, contains('AI provider'));
+      expect(onboardingPrivacyNote, contains('usage and crash data'));
+    },
+  );
+
+  testWidgets(
     'completing onboarding without ever touching the avatar carousel '
     'still assigns a real avatar — no empty state (PRD v2 §13.5)',
     (tester) async {

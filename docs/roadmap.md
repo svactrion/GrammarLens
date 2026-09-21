@@ -51,6 +51,21 @@ as each one lands, with literal status words (see above):
   in `lib/` says "unlimited" (a test asserts this on the Premium screen).
   The App Store Connect subscription descriptions are outside this repo and
   were not re-checked here.
+- **Onboarding privacy note — corrected, automated tests only.** The old
+  line ("Stored only on this device — never sent to a server") was false.
+  It now reads: "Your name and goal stay on this device. Practice answers
+  are sent to our AI provider to give you feedback, and usage and crash data
+  is collected." Checked against the code: name and goal are sent neither to
+  the proxy nor to analytics; answers go via the proxy to Anthropic;
+  Firebase gets usage and crash data. It agrees with the published policy
+  (https://ahmettayfur.com/products/grammarlens/privacy/), which also lists
+  the anonymous device ID (usage limits only), RevenueCat and Cloudflare.
+  The note carries no link, so the policy's other recipients are not named
+  in the app text. No other claim of this kind exists in `lib/` (searched
+  for on-device / never sent / stored only / no server wording); the
+  Premium screen links the policy itself. Still open before submission: the
+  App Store privacy nutrition label must match the same facts (outside this
+  repo).
 - **Premium comparison-table overflow — implemented (stacked layout),
   automated tests only; not device-confirmed.** Decision: when the three
   columns do not fit, rows stack (label on top, Free and Premium chips
@@ -400,10 +415,11 @@ actually wired today.** Checked against the filesystem, not from memory.
   `/products/grammarlens/privacy/`, `/terms/` and `/support/` on
   ahmettayfur.com.
 
-**Open consequence:** the onboarding privacy note — "data stays on-device,
-never sent to a server" — is now wrong twice over: answers go through the
-proxy *and* telemetry goes to Firebase. A false privacy claim is a real App
-Review rejection reason. Submission blocker, not yet fixed.
+**Open consequence (fixed 2026-09-21 — see "Launch scope"):** the onboarding
+privacy note — "data stays on-device, never sent to a server" — was wrong
+twice over: answers go through the proxy *and* telemetry goes to Firebase. A
+false privacy claim is a real App Review rejection reason. The note now
+matches the privacy policy; automated tests only.
 
 ### Shipped
 
@@ -515,7 +531,8 @@ avatar picker** (`docs/prd-v2.md` §10.1, §11), five independent commits:
   session only counts once generation actually succeeds; both the check and
   the write fail open on a storage error
 - **Onboarding privacy note.** One line under the goal options: data stays
-  on-device, never sent to a server (§10.1's privacy-note item, closed)
+  on-device, never sent to a server (§10.1's privacy-note item, closed —
+  the claim was false and was replaced on 2026-09-21, see PRD v2 §13.9)
 - **Firebase Analytics + Crashlytics — code scaffold only, no project
   connected.** `AnalyticsService` wraps three custom events
   (`onboarding_completed`, `mode_selected`, `session_completed`) plus
