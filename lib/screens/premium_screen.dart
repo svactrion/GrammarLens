@@ -748,9 +748,16 @@ List<_ComparisonRow> _buildComparisonRows(String weakSpotFreeLabel) => [
 /// net (the previous design's actual bug: a fixed-pixel column didn't fit
 /// its own header word at the *default* text scale, let alone a larger
 /// one).
+///
+/// Measured in the style the text is *drawn* in — [style] merged over the
+/// ambient [DefaultTextStyle], which carries the app font — not in the
+/// platform default font, which is narrower and shorter than Nunito Sans.
 double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   final painter = TextPainter(
-    text: TextSpan(text: text, style: style),
+    text: TextSpan(
+      text: text,
+      style: DefaultTextStyle.of(context).style.merge(style),
+    ),
     textDirection: TextDirection.ltr,
     textScaler: MediaQuery.textScalerOf(context),
   )..layout();
@@ -870,11 +877,27 @@ class _ComparisonTable extends StatelessWidget {
 
         var freeText = longFreeText;
         var freeColumnWidth = columnWidthFor(longFreeWidth);
-        final availableForLabel =
+        var availableForLabel =
             constraints.maxWidth - premiumWidth - freeColumnWidth;
         if (availableForLabel < minLabelWidth) {
           freeText = shortFreeText;
           freeColumnWidth = columnWidthFor(shortFreeWidth);
+          availableForLabel =
+              constraints.maxWidth - premiumWidth - freeColumnWidth;
+        }
+
+        // Even the shortest phrasing leaves the label less than
+        // [minLabelWidth]: three columns no longer fit (a narrow screen at a
+        // large text size). Rather than squeeze, clip or scroll, stack each
+        // row: label on top at full width, its Free and Premium values on one
+        // line below. No content is dropped and nothing scrolls sideways.
+        if (availableForLabel < minLabelWidth) {
+          return _StackedComparison(
+            key: const Key('comparisonStacked'),
+            rows: _buildComparisonRows(longFreeText),
+            theme: theme,
+            colorScheme: colorScheme,
+          );
         }
 
         final rows = _buildComparisonRows(freeText);
@@ -884,6 +907,7 @@ class _ComparisonTable extends StatelessWidget {
         final dataRowHeight = _measuredHeight(context, labelStyle, 2);
 
         return Container(
+          key: const Key('comparisonTable'),
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerLow,
@@ -924,6 +948,145 @@ class _ComparisonTable extends StatelessWidget {
 
 const TextStyle _headerStyle =
     TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+
+/// The comparison table's fallback when its three columns do not fit (see
+/// [_ComparisonTable]): the same four rows, the same Free/Premium facts, laid
+/// out top to bottom. Each row is a label with its full width and natural
+/// height (no ellipsis, no fixed height), then a [Wrap] of two tier chips so
+/// they fall onto separate lines instead of overflowing at the largest text
+/// sizes. The Premium chip keeps the table's Premium-strip colors, so the
+/// two layouts read as one visual language.
+class _StackedComparison extends StatelessWidget {
+  final List<_ComparisonRow> rows;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+
+  const _StackedComparison({
+    super.key,
+    required this.rows,
+    required this.theme,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++)
+            Container(
+              key: ValueKey('comparisonRow_${rows[i].label}'),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                border: i == rows.length - 1
+                    ? null
+                    : Border(bottom: BorderSide(color: dividerColor)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rows[i].label,
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _StackedTierChip(
+                        tier: 'Free',
+                        included: rows[i].free,
+                        valueLabel: rows[i].freeLabel,
+                        fill: colorScheme.surfaceContainerHighest,
+                        foreground: colorScheme.onSurfaceVariant,
+                        dashColor: colorScheme.outline,
+                      ),
+                      _StackedTierChip(
+                        tier: 'Premium',
+                        included: rows[i].premium,
+                        fill: colorScheme.brightness == Brightness.dark
+                            ? colorScheme.surfaceContainerHighest
+                            : colorScheme.secondaryContainer,
+                        foreground: colorScheme.onSecondaryContainer,
+                        dashColor: colorScheme.onSecondaryContainer,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One "Free" or "Premium" value in [_StackedComparison]: the tier name in
+/// the header style, then the same glyph the table uses (or [valueLabel]
+/// when the row has a specific free quota such as "1 a day").
+class _StackedTierChip extends StatelessWidget {
+  final String tier;
+  final bool included;
+  final String? valueLabel;
+  final Color fill;
+  final Color foreground;
+  final Color dashColor;
+
+  const _StackedTierChip({
+    required this.tier,
+    required this.included,
+    this.valueLabel,
+    required this.fill,
+    required this.foreground,
+    required this.dashColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      // A Wrap, not a Row: at the largest text sizes the tier name and its
+      // value must be free to fall onto two lines inside the chip rather
+      // than overflow it.
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            tier.toUpperCase(),
+            style: _headerStyle.copyWith(color: foreground),
+          ),
+          if (valueLabel != null)
+            // The quota is part of the visible text; screen readers get the
+            // whole phrase from it, so it needs no separate semantics label.
+            Text(
+              valueLabel!,
+              style: _freeValueStyle.copyWith(color: foreground),
+            )
+          else
+            _ComparisonCell(
+              included: included,
+              includedColor: foreground,
+              dashColor: dashColor,
+              tier: tier,
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 class _ComparisonHeaderRow extends StatelessWidget {
   final ColorScheme colorScheme;
@@ -1501,27 +1664,77 @@ class _UnavailableCard extends StatelessWidget {
     required this.onRetry,
   });
 
+  static const _message = "Trial pricing isn't available right now";
+
+  /// A TextButton's own horizontal padding is 12 on each side and its
+  /// minimum width 64; the label is measured, not guessed, so this follows
+  /// Dynamic Type.
+  double _retryButtonWidth(BuildContext context) {
+    final label = _measureTextWidth(
+      context,
+      'Try again',
+      theme.textTheme.labelLarge ?? const TextStyle(fontSize: 14),
+    );
+    return (label + 24).clamp(64, double.infinity);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final icon =
+        Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 20);
+    final message = Text(_message, style: theme.textTheme.bodyMedium);
+    final retry =
+        TextButton(onPressed: onRetry, child: const Text('Try again'));
+
     return Container(
+      key: const Key('pricingUnavailableCard'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              "Trial pricing isn't available right now",
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(onPressed: onRetry, child: const Text('Try again')),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Room the sentence gets on the one-row layout: what is left after
+          // the icon, its gap, the gap before the button, and the button.
+          final roomForMessage =
+              constraints.maxWidth - 20 - 10 - 8 - _retryButtonWidth(context);
+          final painter = TextPainter(
+            text: TextSpan(text: _message, style: theme.textTheme.bodyMedium),
+            textDirection: TextDirection.ltr,
+            textScaler: MediaQuery.textScalerOf(context),
+            maxLines: 2,
+          )..layout(maxWidth: roomForMessage > 0 ? roomForMessage : 0);
+          final fitsOnOneRow = roomForMessage > 0 && !painter.didExceedMaxLines;
+
+          if (fitsOnOneRow) {
+            return Row(
+              children: [
+                icon,
+                const SizedBox(width: 10),
+                Expanded(child: message),
+                const SizedBox(width: 8),
+                retry,
+              ],
+            );
+          }
+          // Too big for one row (a narrow screen at a large text size): the
+          // sentence keeps the full width and the retry drops below it.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  icon,
+                  const SizedBox(width: 10),
+                  Expanded(child: message),
+                ],
+              ),
+              Align(alignment: Alignment.centerRight, child: retry),
+            ],
+          );
+        },
       ),
     );
   }

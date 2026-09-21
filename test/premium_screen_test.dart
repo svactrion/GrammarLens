@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -1105,7 +1106,12 @@ void main() {
           textScale: scale,
           service: _FakeSubscriptionService(offering: null),
         );
-        await tester.scrollUntilVisible(find.text('PREMIUM'), 300);
+        // At large scales the table falls back to the stacked layout (see
+        // the "stacked comparison" group); either way nothing may overflow.
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('comparisonRow_Practice your weak spots')),
+          300,
+        );
         expect(tester.takeException(), isNull,
             reason: 'overflow at ${scale}x text scale');
       }
@@ -1911,6 +1917,204 @@ void main() {
           tester.view.physicalSize.height / tester.view.devicePixelRatio;
       expect(ctaRect.bottom, lessThanOrEqualTo(viewportHeight));
     });
+  });
+
+  group(
+      'stacked comparison layout (launch checklist item 3): when the three '
+      'table columns do not fit, rows stack — no horizontal scroll, no '
+      'dropped content, no overflow', () {
+    // `flutter test` renders every family in the test font (Ahem, one em
+    // wide per glyph), which is ~2x wider than the real typeface and would
+    // make every layout decision below pessimistic. Load the bundled Nunito
+    // Sans so geometry here matches a phone (the table measures its columns
+    // in the same font it draws them in).
+    setUpAll(() async {
+      final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
+      await (FontLoader('NunitoSans')..addFont(bytes)).load();
+    });
+
+    Future<void> pumpAt(
+      WidgetTester tester, {
+      required Size size,
+      required double textScale,
+      required Brightness brightness,
+      required bool pricingLoaded,
+    }) async {
+      tester.view.physicalSize = size * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(brightness),
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService: _FakeSubscriptionService(
+              offering: pricingLoaded ? _offeringWithBothPlans() : null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    const labels = [
+      'Daily Test, refreshed every day',
+      'Topic Practice, all five topics',
+      'Practice your weak spots',
+      'Sessions of 3, 5 or 10 questions',
+    ];
+
+    // The two launch-checklist targets: 320x667 at 2x text and 375x667 at 3x.
+    for (final target in [
+      (size: const Size(320, 667), scale: 2.0),
+      (size: const Size(375, 667), scale: 3.0),
+    ]) {
+      for (final brightness in Brightness.values) {
+        for (final pricingLoaded in [true, false]) {
+          testWidgets(
+              'stacks cleanly at ${target.size.width.toInt()}x'
+              '${target.size.height.toInt()} @${target.scale}x text, '
+              '$brightness, pricing ${pricingLoaded ? 'loaded' : 'unavailable'}',
+              (tester) async {
+            await pumpAt(
+              tester,
+              size: target.size,
+              textScale: target.scale,
+              brightness: brightness,
+              pricingLoaded: pricingLoaded,
+            );
+            final stacked = find.byKey(const Key('comparisonStacked'));
+            await tester.scrollUntilVisible(stacked, 300);
+            await tester.pumpAndSettle();
+
+            expect(tester.takeException(), isNull,
+                reason: 'no overflow anywhere on the screen');
+            expect(find.byKey(const Key('comparisonTable')), findsNothing);
+
+            // Never a sideways scroller inside the comparison.
+            expect(
+              find.descendant(
+                of: stacked,
+                matching: find.byWidgetPredicate((w) =>
+                    w is SingleChildScrollView &&
+                    w.scrollDirection == Axis.horizontal),
+              ),
+              findsNothing,
+            );
+
+            // Nothing dropped: every label is present in full (no maxLines /
+            // ellipsis on a stacked label), plus the free quota phrase.
+            for (final label in labels) {
+              final text =
+                  find.descendant(of: stacked, matching: find.text(label));
+              expect(text, findsOneWidget, reason: label);
+              expect(tester.widget<Text>(text).maxLines, isNull);
+              expect(tester.widget<Text>(text).overflow, isNull);
+            }
+            expect(find.descendant(of: stacked, matching: find.text('1 a day')),
+                findsOneWidget);
+
+            // Every row and everything in it stays inside the screen width.
+            final screenWidth = target.size.width;
+            for (final label in labels) {
+              final row = find.byKey(ValueKey('comparisonRow_$label'));
+              final rowRect = tester.getRect(row);
+              expect(rowRect.left, greaterThanOrEqualTo(0));
+              expect(rowRect.right, lessThanOrEqualTo(screenWidth));
+              for (final tier in ['FREE', 'PREMIUM']) {
+                final chip =
+                    find.descendant(of: row, matching: find.text(tier));
+                final chipRect = tester.getRect(chip);
+                expect(chipRect.left, greaterThanOrEqualTo(rowRect.left));
+                expect(chipRect.right, lessThanOrEqualTo(rowRect.right),
+                    reason: '$tier chip inside its row');
+              }
+            }
+
+            // Screen readers still get one explicit sentence per cell.
+            expect(
+                find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
+            expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
+            expect(find.bySemanticsLabel('Not included in Free'),
+                findsNWidgets(2));
+          });
+        }
+      }
+    }
+
+    // The pricing-unavailable card has its own icon + sentence + retry row.
+    // It keeps that row on normal screens and drops the retry below the
+    // sentence only when the row cannot fit.
+    for (final config in [
+      (size: const Size(393, 852), scale: 1.0, stacked: false),
+      (size: const Size(375, 667), scale: 1.0, stacked: false),
+      (size: const Size(320, 667), scale: 2.0, stacked: true),
+      (size: const Size(375, 667), scale: 3.0, stacked: true),
+    ]) {
+      testWidgets(
+          'the unavailable card ${config.stacked ? 'stacks its retry' : 'stays one row'} '
+          'at ${config.size.width.toInt()}x${config.size.height.toInt()} '
+          '@${config.scale}x text', (tester) async {
+        await pumpAt(
+          tester,
+          size: config.size,
+          textScale: config.scale,
+          brightness: Brightness.light,
+          pricingLoaded: false,
+        );
+        final card = find.byKey(const Key('pricingUnavailableCard'));
+        await tester.scrollUntilVisible(card, 300);
+        final message = find.descendant(
+            of: card, matching: find.textContaining("Trial pricing"));
+        final retry =
+            find.descendant(of: card, matching: find.text('Try again'));
+        expect(tester.takeException(), isNull);
+        final cardRect = tester.getRect(card);
+        expect(tester.getRect(retry).right, lessThanOrEqualTo(cardRect.right));
+        expect(
+            tester.getRect(message).right, lessThanOrEqualTo(cardRect.right));
+        if (config.stacked) {
+          expect(tester.getRect(retry).top,
+              greaterThanOrEqualTo(tester.getRect(message).bottom));
+        } else {
+          expect(tester.getRect(retry).left,
+              greaterThanOrEqualTo(tester.getRect(message).right));
+        }
+      });
+    }
+
+    // Normal screens keep the existing table, byte for byte in behavior.
+    for (final config in [
+      (size: const Size(393, 852), scale: 1.0),
+      (size: const Size(393, 852), scale: 1.3),
+      (size: const Size(375, 667), scale: 1.0),
+      (size: const Size(375, 667), scale: 1.3),
+    ]) {
+      for (final pricingLoaded in [true, false]) {
+        testWidgets(
+            'keeps the three-column table at ${config.size.width.toInt()}x'
+            '${config.size.height.toInt()} @${config.scale}x text, pricing '
+            '${pricingLoaded ? 'loaded' : 'unavailable'}', (tester) async {
+          await pumpAt(
+            tester,
+            size: config.size,
+            textScale: config.scale,
+            brightness: Brightness.light,
+            pricingLoaded: pricingLoaded,
+          );
+          await tester.scrollUntilVisible(
+              find.byKey(const Key('comparisonTable')), 300);
+          expect(find.byKey(const Key('comparisonStacked')), findsNothing);
+          expect(find.byKey(const Key('premiumStripHeader')), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 }
 

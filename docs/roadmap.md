@@ -20,7 +20,7 @@ Nothing is marked complete unless the record says so.
 | Monthly medals + Profile collection (rule v1, frozen history) | Gives a month a payoff and the collection a reason to exist; rule v1 is already approved and versioned. | Implemented. Locked-shell device-confirmed; `In progress` card, finalized history and the v17 migration are **not** device-confirmed. |
 | Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. |
 | Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
-| Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. **Open:** the comparison-table overflow at 320 px / 2× text is not fixed and its fix (scroll vs. stack vs. fewer columns) is an undecided item. |
+| Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. Comparison-table overflow at 320 px / 2× text: fixed 2026-09-21 with a stacked layout (see the launch-checklist note below); automated tests only, **not device-confirmed**. |
 | Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | **Not started.** Plan only: `docs/analytics-plan.md`, awaiting approval. No analytics code exists for any of these events. |
 
 ### Out of scope (after launch, on a separate design branch)
@@ -51,6 +51,25 @@ as each one lands, with literal status words (see above):
   in `lib/` says "unlimited" (a test asserts this on the Premium screen).
   The App Store Connect subscription descriptions are outside this repo and
   were not re-checked here.
+- **Premium comparison-table overflow — implemented (stacked layout),
+  automated tests only; not device-confirmed.** Decision: when the three
+  columns do not fit, rows stack (label on top, Free and Premium chips
+  below); no horizontal scroll and no content removed. The table falls back
+  when its label column would drop under the existing 96 pt minimum even
+  with the short "1/day" phrasing. Measured with the bundled Nunito Sans:
+  320x667 @2x and 375x667 @3x text stack cleanly with no overflow (light,
+  dark, pricing loaded and unavailable); 320-430 pt wide at up to 1.3x text
+  keep the three-column table unchanged. The "pricing unavailable" card had
+  its own overflow (icon + sentence + retry in one row) and now drops the
+  retry below the sentence when the row cannot fit. Two side effects to
+  know: the table's width measurements now use the app font it is drawn in
+  (they used the platform default font, a latent mismatch since the
+  Nunito Sans change), so column widths can differ from before by a few
+  points; and tests load the real font, since `flutter test` otherwise
+  measures in a font about twice as wide. **Open, not changed here:** at some
+  normal sizes the existing table already cuts a label to two lines with an
+  ellipsis (measured at 320 pt @1x and 393 pt @1.3x); the brief said
+  normal screens must not change, so this is left for a product decision.
 - **Resume refresh (day rollover, greeting) — already implemented; now covered
   end to end.** The premise that no `AppLifecycleState` hook exists was stale
   (see the closed entry under "What's next"). No third hook was added. Two
