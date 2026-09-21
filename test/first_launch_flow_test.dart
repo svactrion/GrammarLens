@@ -20,6 +20,8 @@ import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 
+import 'support/recording_analytics_sink.dart';
+
 /// A working (not network-backed) Daily Test generator, so the Day-0 flow
 /// (PRD v2 §12.3) can be driven all the way through question → result
 /// rather than relying on the real ClaudeService's network call failing —
@@ -90,8 +92,18 @@ class _FakeStorageService extends StorageService {
     return null;
   }
 
+  /// What was written, in order: `seed` for a bundled set, `profile`.
+  final List<String> events = [];
+
+  /// Makes writing the bundled set fail, to prove onboarding survives it.
+  bool failSeed = false;
+
+  DailyTestSet? get todaysSet => _todaysSet;
+  void setTodaysSet(DailyTestSet set) => _todaysSet = set;
+
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
+    events.add('profile');
     savedProfile = profile;
   }
 
@@ -119,8 +131,13 @@ class _FakeStorageService extends StorageService {
 
   @override
   Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
-      {String? day}) async {
-    final set = DailyTestSet(day: '2026-01-01', questions: questions);
+      {String? day, DailyTestSource source = DailyTestSource.generated}) async {
+    if (source == DailyTestSource.bundled) {
+      if (failSeed) throw StateError('disk full');
+      events.add('seed');
+    }
+    final set =
+        DailyTestSet(day: '2026-01-01', questions: questions, source: source);
     _todaysSet = set;
     return set;
   }
@@ -157,6 +174,7 @@ void main() {
     WidgetTester tester, {
     required void Function(UserProfile, {PendingClimb? pendingClimb})
         onComplete,
+    AnalyticsService? analytics,
   }) async {
     // Tall enough that every button in the flow (including PremiumScreen's
     // trailing actions) is reachable without a per-screen scroll dance.
@@ -184,7 +202,7 @@ void main() {
         home: FirstLaunchFlow(
           claudeService: claudeService,
           storageService: storageService,
-          analyticsService: AnalyticsService(),
+          analyticsService: analytics ?? AnalyticsService(),
           onComplete: onComplete,
         ),
       ),
@@ -232,7 +250,7 @@ void main() {
 
     expect(completed, isNull);
     expect(find.text('Daily Test'), findsOneWidget); // the app-bar title
-    expect(find.text('Question 0'), findsOneWidget);
+    expect(find.text('You should avoid ___ too much sugar.'), findsOneWidget);
     expect(storageService.savedProfile?.name, 'Ada');
   });
 
@@ -365,106 +383,124 @@ void main() {
     expect(pending, isNull);
   });
 
-  group('Daily Test preload', () {
-    testWidgets('nothing is requested while Welcome is open', (tester) async {
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+  group('the fixed first Daily Test', () {
+    Future<void> tapThroughToDailyTest(WidgetTester tester) async {
+      await completeOnboardingForm(tester);
+    }
 
+    testWidgets(
+        'nothing is generated or written while Welcome and the form are open',
+        (tester) async {
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
       expect(find.text('Get started'), findsOneWidget);
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+
+      expect(claudeService.generateCalls, 0);
+      expect(storageService.events, isEmpty);
+    });
+
+    testWidgets(
+        'the Daily Test opens on the bundled set: the five fixed questions, '
+        'no generation request', (tester) async {
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await tapThroughToDailyTest(tester);
+
+      expect(find.text('You should avoid ___ too much sugar.'), findsOneWidget);
+      expect(find.text('Question 0'), findsNothing);
+      expect(claudeService.generateCalls, 0);
+      expect(storageService.todaysSet!.source, DailyTestSource.bundled);
+      expect(storageService.todaysSet!.questions.map((q) => q.item.id),
+          ['day0_1', 'day0_2', 'day0_3', 'day0_4', 'day0_5']);
+    });
+
+    testWidgets(
+        'the set is written before the profile, so a user who exists always '
+        'has today\'s set on disk', (tester) async {
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await tapThroughToDailyTest(tester);
+
+      expect(storageService.events, ['seed', 'profile']);
+    });
+
+    testWidgets(
+        'leaving the test and opening it again gets the same fixed set, from '
+        'the store', (tester) async {
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await tapThroughToDailyTest(tester);
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Leave'));
+      await tester.pumpAndSettle();
+
+      // What Home does afterwards: a fresh service asks for today's set.
+      final home = DailyTestService(
+        claudeService: claudeService,
+        storageService: storageService,
+      );
+      final set = await tester.runAsync(home.getTodaysSet);
+
+      expect(set!.source, DailyTestSource.bundled);
+      expect(set.questions.first.item.id, 'day0_1');
       expect(claudeService.generateCalls, 0);
     });
 
-    testWidgets(
-        'tapping Get started starts generating at once, and the Daily Test '
-        'then uses that result instead of asking again', (tester) async {
+    testWidgets('a day that already has a set is left alone', (tester) async {
+      storageService.setTodaysSet(DailyTestSet(
+        day: '2026-01-01',
+        questions: [
+          DailyTestQuestion(
+            item: const PracticeItem(
+              id: 'q0',
+              type: PracticeItemType.fillInBlank,
+              instruction: 'Existing question',
+            ),
+            topicId: 'tenseSelection',
+            correctAnswer: 'x',
+            commonWrongAnswers: const [],
+          ),
+        ],
+      ));
       await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await tapThroughToDailyTest(tester);
 
-      await tester.tap(find.text('Get started'));
-      await tester.pumpAndSettle();
-      // Still on the onboarding form: the request is already done.
-      expect(find.byType(TextField), findsOneWidget);
-      expect(claudeService.generateCalls, 1);
+      expect(find.text('Existing question'), findsOneWidget);
+      expect(storageService.events, ['profile']);
+    });
 
-      await tester.enterText(find.byType(TextField), 'Ada');
-      await tester.tap(find.text('Exam prep'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
-      await tester.pumpAndSettle();
+    testWidgets(
+        'if writing the set fails, onboarding still finishes and the Daily '
+        'Test screen generates one as before', (tester) async {
+      storageService.failSeed = true;
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await tapThroughToDailyTest(tester);
 
+      expect(storageService.savedProfile?.name, 'Ada');
       expect(find.text('Question 0'), findsOneWidget);
       expect(claudeService.generateCalls, 1);
     });
 
     testWidgets(
-        'a request still running when the Daily Test opens is joined: one '
-        'request in total, and the questions appear when it finishes',
-        (tester) async {
-      claudeService.gate = Completer<void>();
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
-
-      await tester.tap(find.text('Get started'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Ada');
-      await tester.tap(find.text('Exam prep'));
+        'finishing the Day-0 test reports daily_test_completed with '
+        'set_source = bundled and day0 = 1', (tester) async {
+      final sink = RecordingAnalyticsSink();
+      await pumpFlow(tester,
+          analytics: AnalyticsService(sink: sink),
+          onComplete: (p, {pendingClimb}) {});
+      await tapThroughToDailyTest(tester);
+      await tester.enterText(find.byType(TextField).first, 'eating');
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
-      // The loading spinner never settles, so plain pumps.
-      for (var i = 0; i < 5; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+      await tester.pumpAndSettle();
+      for (var i = 1; i < DailyTestService.questionCount; i++) {
+        await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+        await tester.pumpAndSettle();
       }
-      expect(find.text('Question 0'), findsNothing);
-      expect(claudeService.generateCalls, 1);
 
-      claudeService.gate!.complete();
-      await tester.pumpAndSettle();
-
-      expect(find.text('Question 0'), findsOneWidget);
-      expect(claudeService.generateCalls, 1);
-    });
-
-    testWidgets(
-        'a failed preload is silent, and the Daily Test screen makes its own '
-        'attempt', (tester) async {
-      claudeService.failuresLeft = 1;
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
-
-      await tester.tap(find.text('Get started'));
-      await tester.pumpAndSettle();
-      expect(claudeService.generateCalls, 1);
-      // No error shown, nothing thrown at the onboarding form.
-      expect(tester.takeException(), isNull);
-      expect(find.byType(TextField), findsOneWidget);
-
-      await tester.enterText(find.byType(TextField), 'Ada');
-      await tester.tap(find.text('Exam prep'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
-      await tester.pumpAndSettle();
-
-      expect(claudeService.generateCalls, 2);
-      expect(find.text('Question 0'), findsOneWidget);
-    });
-
-    testWidgets(
-        'if the preload and the retry both fail, the Daily Test screen shows '
-        'its own error with Try again', (tester) async {
-      claudeService.failuresLeft = 2;
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
-
-      await tester.tap(find.text('Get started'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Ada');
-      await tester.tap(find.text('Exam prep'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Question 0'), findsNothing);
-      expect(find.text('Try again'), findsOneWidget);
-
-      await tester.tap(find.text('Try again'));
-      await tester.pumpAndSettle();
-      expect(claudeService.generateCalls, 3);
-      expect(find.text('Question 0'), findsOneWidget);
+      final event = sink.named('daily_test_completed').single;
+      expect(event.parameters!['set_source'], 'bundled');
+      expect(event.parameters!['day0'], 1);
+      expect(event.parameters!['correct_count'], 1);
     });
   });
 }

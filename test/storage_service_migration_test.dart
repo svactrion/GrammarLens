@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:grammar_lens/models/app_theme_mode.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
@@ -514,6 +515,122 @@ void main() {
       expect(await storage.getAiConsent(), isNull);
       await storage.setAiConsent(granted: false);
       expect((await storage.getAiConsent())!.granted, isFalse);
+    });
+  });
+
+  group('v21: the Daily Test set source', () {
+    const dbName = 'test_migration_v21.db';
+    late String path;
+
+    setUp(() async {
+      path = join(await getDatabasesPath(), dbName);
+      await databaseFactory.deleteDatabase(path);
+    });
+
+    const questionsJson = '[{"id":"q1","type":"fill_in_blank",'
+        '"instruction":"Fill in.","topicId":"tenseSelection",'
+        '"correctAnswer":"goes","commonWrongAnswers":[]}]';
+
+    /// A v20-shaped daily_test_sets table (no `source`) with a pending set
+    /// and a completed one.
+    Future<void> seedV20() async {
+      final db = await databaseFactory.openDatabase(path);
+      await db.execute('''
+        CREATE TABLE daily_test_sets (
+          day TEXT PRIMARY KEY,
+          questions_json TEXT NOT NULL,
+          completed_at TEXT,
+          answers_json TEXT
+        )
+      ''');
+      await db.insert('daily_test_sets', {
+        'day': '2026-09-20',
+        'questions_json': questionsJson,
+        'completed_at': '2026-09-20T09:00:00.000',
+        'answers_json': '{"q1":"goes"}',
+      });
+      await db.insert('daily_test_sets', {
+        'day': '2026-09-21',
+        'questions_json': questionsJson,
+      });
+      await db.setVersion(20);
+      await db.close();
+    }
+
+    Future<List<Map<String, Object?>>> rows() async {
+      final db = await databaseFactory.openDatabase(path);
+      final result = await db.query('daily_test_sets', orderBy: 'day ASC');
+      await db.close();
+      return result;
+    }
+
+    test('existing sets become generated and keep their answers and dates',
+        () async {
+      await seedV20();
+      // Any read opens the database and runs the upgrade.
+      await StorageService(dbName: dbName).getDailyTestSetForToday();
+
+      final stored = await rows();
+      expect(stored.map((r) => r['source']), ['generated', 'generated']);
+      expect(stored.first['completed_at'], '2026-09-20T09:00:00.000');
+      expect(stored.first['answers_json'], '{"q1":"goes"}');
+      expect(stored.last['completed_at'], isNull);
+    });
+
+    test('the column is NOT NULL with a generated default', () async {
+      await seedV20();
+      await StorageService(dbName: dbName).getDailyTestSetForToday();
+
+      final db = await databaseFactory.openDatabase(path);
+      final column = (await db.rawQuery('PRAGMA table_info(daily_test_sets)'))
+          .singleWhere((r) => r['name'] == 'source');
+      // A row inserted without the column falls back to the default.
+      await db.insert('daily_test_sets',
+          {'day': '2026-09-22', 'questions_json': questionsJson});
+      final inserted = await db.query('daily_test_sets',
+          where: 'day = ?', whereArgs: ['2026-09-22']);
+      await db.close();
+
+      expect(column['notnull'], 1);
+      expect(inserted.single['source'], 'generated');
+    });
+
+    test('a migrated set reads as generated through the service', () async {
+      await seedV20();
+      final storage = StorageService(dbName: dbName);
+      StorageService.clockForTesting = () => DateTime(2026, 9, 21, 12);
+      addTearDown(() => StorageService.clockForTesting = DateTime.now);
+
+      final set = await storage.getDailyTestSetForToday();
+
+      expect(set!.source, DailyTestSource.generated);
+    });
+
+    test('a replayed migration (downgrade, then upgrade) keeps a bundled set',
+        () async {
+      await seedV20();
+      final storage = StorageService(dbName: dbName);
+      StorageService.clockForTesting = () => DateTime(2026, 9, 23, 12);
+      addTearDown(() => StorageService.clockForTesting = DateTime.now);
+      await storage.saveDailyTestSet(const [], source: DailyTestSource.bundled);
+
+      final db = await databaseFactory.openDatabase(path);
+      await db.setVersion(20);
+      await db.close();
+
+      final set =
+          await StorageService(dbName: dbName).getDailyTestSetForToday();
+      expect(set!.source, DailyTestSource.bundled);
+      expect((await rows()).map((r) => r['source']),
+          ['generated', 'generated', 'bundled']);
+    });
+
+    test('a fresh install creates the column', () async {
+      final storage = StorageService(dbName: dbName);
+      await storage.saveDailyTestSet(const [], source: DailyTestSource.bundled);
+
+      expect((await storage.getDailyTestSetForToday())!.source,
+          DailyTestSource.bundled);
     });
   });
 }

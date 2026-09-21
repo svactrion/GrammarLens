@@ -88,8 +88,9 @@ class _FakeStorageService extends StorageService {
 
   @override
   Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
-      {String? day}) async {
-    final set = DailyTestSet(day: '2026-01-01', questions: questions);
+      {String? day, DailyTestSource source = DailyTestSource.generated}) async {
+    final set =
+        DailyTestSet(day: '2026-01-01', questions: questions, source: source);
     todaysSet = set;
     return set;
   }

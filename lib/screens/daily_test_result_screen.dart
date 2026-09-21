@@ -179,6 +179,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       skippedCount: _completion.skipped,
       stepEarned: _completion.step == 1,
       day0: widget.isDay0,
+      setSource: widget.dailyTestSet.source.name,
     ));
     if (!welcomeBadgeJustEarned) return;
     // The ledger day, not the wall clock: the same authority the step

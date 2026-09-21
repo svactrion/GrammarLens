@@ -80,6 +80,14 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   Future<void> _completeOnboarding(UserProfile profile) async {
     setState(() => _saving = true);
     try {
+      // The first Daily Test is the fixed set that ships with the app, written
+      // before the profile so that anything that can happen once the profile
+      // exists (the user closes the app mid-test and opens the test from Home)
+      // finds it already on disk. A failure here is not fatal: with no set
+      // stored, the Daily Test screen generates one as it always did.
+      try {
+        await _dailyTestService.seedDayZeroSet();
+      } catch (_) {}
       await widget.storageService.saveUserProfile(profile);
       unawaited(widget.analyticsService.onboardingCompleted());
       if (!mounted) return;
@@ -142,15 +150,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
     switch (_step) {
       case _Step.welcome:
         return WelcomeScreen(
-          onGetStarted: () {
-            // The onboarding form takes long enough to hide most of the first
-            // Daily Test's generation time. Started here, on the tap, not when
-            // Welcome opens, so someone who leaves at the first screen never
-            // costs a generation. The Daily Test screen joins this request if
-            // it is still running (see `DailyTestService.getTodaysSet`).
-            _dailyTestService.preloadTodaysSet();
-            setState(() => _step = _Step.onboarding);
-          },
+          onGetStarted: () => setState(() => _step = _Step.onboarding),
         );
       case _Step.onboarding:
         return OnboardingScreen(onComplete: _completeOnboarding);

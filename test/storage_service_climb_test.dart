@@ -117,18 +117,23 @@ void main() {
     await old.close();
     expect((await storage.getClimbProgress(2026, 9)).steps, 0);
     final db = await inspect();
-    expect(await db.getVersion(), 20);
+    expect(await db.getVersion(), 21);
     for (final table in rows.keys) {
-      // v19 removed age and occupation from user_profile; every other column
-      // of every table must come through untouched.
-      final expected = table == 'user_profile'
-          ? [
-              for (final row in before[table]!)
-                {...row}
-                  ..remove('age')
-                  ..remove('occupation')
-            ]
-          : before[table];
+      // v19 removed age and occupation from user_profile and v21 added the
+      // daily_test_sets source (every old set was generated); every other
+      // column of every table must come through untouched.
+      final expected = switch (table) {
+        'user_profile' => [
+            for (final row in before[table]!)
+              {...row}
+                ..remove('age')
+                ..remove('occupation')
+          ],
+        'daily_test_sets' => [
+            for (final row in before[table]!) {...row, 'source': 'generated'}
+          ],
+        _ => before[table],
+      };
       expect(await db.query(table), expected, reason: table);
     }
     final saved = (await storage.getDailyTestSetForToday())!;
@@ -175,7 +180,7 @@ void main() {
     expect(row['id'], 9);
     expect(row['source'], 'topic_practice');
     expect((await storage.getWeakSpots()).single.frequency, 1);
-    expect(await db.getVersion(), 20);
+    expect(await db.getVersion(), 21);
   });
 
   test('concurrent and stale retries persist one completion, gain and mistake',

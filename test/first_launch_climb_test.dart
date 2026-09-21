@@ -66,8 +66,9 @@ class _Day0Storage extends StorageService {
 
   @override
   Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
-      {String? day}) async {
-    todaysSet = DailyTestSet(day: '2026-01-01', questions: questions);
+      {String? day, DailyTestSource source = DailyTestSource.generated}) async {
+    todaysSet =
+        DailyTestSet(day: '2026-01-01', questions: questions, source: source);
     return todaysSet!;
   }
 
@@ -86,6 +87,7 @@ class _Day0Storage extends StorageService {
       questions: set.questions,
       answers: answers,
       completedAt: completedAt ?? DateTime.now(),
+      source: set.source,
     );
     if (answers.values.any((a) => a.trim().isNotEmpty)) steps++;
     return false;

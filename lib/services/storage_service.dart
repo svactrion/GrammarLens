@@ -27,7 +27,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 20;
+  static const _dbVersion = 21;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -189,13 +189,15 @@ class StorageService {
   // a score and let the user view the result again without re-deriving
   // either from nothing: the score was never persisted anywhere before
   // this, only computed transiently in DailyTestResultScreen from an
-  // in-memory answers map.
+  // in-memory answers map. `source` (added schema v21) says whether the day's
+  // set was generated or is the fixed first-day set bundled with the app.
   static const _createDailyTestSetsTable = '''
     CREATE TABLE IF NOT EXISTS daily_test_sets (
       day TEXT PRIMARY KEY,
       questions_json TEXT NOT NULL,
       completed_at TEXT,
-      answers_json TEXT
+      answers_json TEXT,
+      source TEXT NOT NULL DEFAULT 'generated'
     )
   ''';
 
@@ -461,6 +463,16 @@ class StorageService {
         // existing user has never been asked, so no row is the right start.
         if (oldVersion < 20) {
           await db.execute(_createAiConsentTable);
+        }
+
+        // v20 -> v21: daily_test_sets.source. Every set stored before this
+        // was generated, which is exactly what the default backfills.
+        if (oldVersion < 21) {
+          // The table first, so a database that never had it (only a partial
+          // one, in tests) gets the current shape instead of failing here.
+          await db.execute(_createDailyTestSetsTable);
+          await _addColumnIfMissing(db, 'daily_test_sets', 'source',
+              "TEXT NOT NULL DEFAULT 'generated'");
         }
       },
     );
@@ -817,7 +829,7 @@ class StorageService {
   /// main's replacement behavior; completed sets cannot be reset by a stale
   /// generation request, which would allow duplicate completion writes.
   Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
-      {String? day}) async {
+      {String? day, DailyTestSource source = DailyTestSource.generated}) async {
     final db = await _database;
     final setDay = day ?? _todayKey();
     return db.transaction((txn) async {
@@ -834,6 +846,7 @@ class StorageService {
                 jsonEncode(questions.map((q) => q.toJson()).toList()),
             'completed_at': null,
             'answers_json': null,
+            'source': source.name,
           },
           conflictAlgorithm: ConflictAlgorithm.replace);
       final rows = await txn
@@ -1144,6 +1157,8 @@ class StorageService {
     final completedAt = row['completed_at'] as String?;
     final answersJson = row['answers_json'] as String?;
     return DailyTestSet(
+      source: DailyTestSource.values.asNameMap()[row['source']] ??
+          DailyTestSource.generated,
       day: row['day'] as String,
       questions: questions,
       completedAt: completedAt == null ? null : DateTime.parse(completedAt),

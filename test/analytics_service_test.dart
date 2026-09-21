@@ -142,7 +142,8 @@ void main() {
       });
     });
 
-    test('daily_test_completed carries only counts and two 0/1 flags',
+    test(
+        'daily_test_completed carries counts, two 0/1 flags and the set source',
         () async {
       await service.dailyTestCompleted(
         correctCount: 3,
@@ -150,6 +151,7 @@ void main() {
         skippedCount: 1,
         stepEarned: true,
         day0: false,
+        setSource: 'generated',
       );
       expectOnly('daily_test_completed', {
         'correct_count': 3,
@@ -157,6 +159,7 @@ void main() {
         'skipped_count': 1,
         'step_earned': 1,
         'day0': 0,
+        'set_source': 'generated',
       });
     });
 
@@ -327,6 +330,7 @@ void main() {
         skippedCount: 0,
         stepEarned: true,
         day0: true,
+        setSource: 'bundled',
       );
       await service.welcomeBadgeEarned(
         ruleVersion: 1,

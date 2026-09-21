@@ -557,7 +557,30 @@ void main() {
         'skipped_count': 1,
         'step_earned': 1,
         'day0': 0,
+        'set_source': 'generated',
       });
+    });
+
+    testWidgets(
+        'a bundled set reports set_source = bundled, a generated one '
+        'generated', (tester) async {
+      await pumpWith(
+        tester,
+        set: DailyTestSet(
+          day: '2026-01-01',
+          questions: questions,
+          source: DailyTestSource.bundled,
+        ),
+        isDay0: true,
+      );
+
+      expect(
+        analyticsSink
+            .named('daily_test_completed')
+            .single
+            .parameters!['set_source'],
+        'bundled',
+      );
     });
 
     testWidgets('the Day-0 result screen reports day0 = 1', (tester) async {
@@ -587,6 +610,7 @@ void main() {
         'skipped_count': 1,
         'step_earned': 0,
         'day0': 0,
+        'set_source': 'generated',
       });
       expect(analyticsSink.named('welcome_badge_earned'), isEmpty);
     });

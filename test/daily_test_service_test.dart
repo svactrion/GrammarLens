@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -342,47 +343,6 @@ void main() {
       expect(claudeService.generateCallCount, 1);
     });
 
-    test('a preload that is still running is joined, not repeated', () async {
-      claudeService.gate = Completer<void>();
-
-      dailyTestService.preloadTodaysSet();
-      await Future<void>.delayed(const Duration(milliseconds: 20));
-      final screen = dailyTestService.getTodaysSet(); // the Daily Test opens
-      claudeService.gate!.complete();
-      final set = await screen;
-
-      expect(claudeService.generateCallCount, 1);
-      expect(set.questions, hasLength(DailyTestService.questionCount));
-    });
-
-    test('a preload that already finished is served from the cache', () async {
-      dailyTestService.preloadTodaysSet();
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-
-      final set = await dailyTestService.getTodaysSet();
-
-      expect(claudeService.generateCallCount, 1);
-      expect(set.isCompleted, isFalse);
-    });
-
-    test(
-        'a failed preload is silent (no uncaught error) and the real call '
-        'then makes its own attempt', () async {
-      claudeService.failuresLeft = 1;
-      final uncaught = <Object>[];
-      late DailyTestSet set;
-
-      await runZonedGuarded(() async {
-        dailyTestService.preloadTodaysSet();
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-        set = await dailyTestService.getTodaysSet();
-      }, (error, _) => uncaught.add(error));
-
-      expect(uncaught, isEmpty);
-      expect(claudeService.generateCallCount, 2);
-      expect(set.questions, hasLength(DailyTestService.questionCount));
-    });
-
     test(
         'everyone who joined a failing request sees its error, and the next '
         'call is a fresh attempt', () async {
@@ -422,6 +382,74 @@ void main() {
       expect(claudeService.generateCallCount, 2);
       expect(sets[0].day, '2026-09-30');
       expect(sets[1].day, '2026-10-01');
+    });
+  });
+
+  group('seedDayZeroSet', () {
+    test('writes the fixed set as today\'s set, marked bundled', () async {
+      await dailyTestService.seedDayZeroSet();
+
+      final set = await storageService.getDailyTestSetForToday();
+      expect(set, isNotNull);
+      expect(set!.source, DailyTestSource.bundled);
+      expect(set.isCompleted, isFalse);
+      expect(set.day, storageService.currentDayKey);
+      expect(set.questions.map((q) => q.item.id),
+          kDayZeroQuestions.map((q) => q.item.id));
+      expect(set.questions.map((q) => q.correctAnswer),
+          kDayZeroQuestions.map((q) => q.correctAnswer));
+    });
+
+    test('the Daily Test then opens on it with no generation at all', () async {
+      await dailyTestService.seedDayZeroSet();
+
+      final set = await dailyTestService.getTodaysSet();
+
+      expect(claudeService.generateCallCount, 0);
+      expect(set.source, DailyTestSource.bundled);
+      expect(set.questions, hasLength(5));
+    });
+
+    test('does nothing when today already has a generated set', () async {
+      final generated = await dailyTestService.getTodaysSet();
+      expect(generated.source, DailyTestSource.generated);
+
+      await dailyTestService.seedDayZeroSet();
+
+      final after = await storageService.getDailyTestSetForToday();
+      expect(after!.source, DailyTestSource.generated);
+      expect(after.questions.map((q) => q.item.id),
+          generated.questions.map((q) => q.item.id));
+    });
+
+    test('does nothing when today\'s set is already completed', () async {
+      await dailyTestService.seedDayZeroSet();
+      await dailyTestService.completeDailyTest({'day0_1': 'eating'}, []);
+
+      await dailyTestService.seedDayZeroSet();
+
+      final after = await storageService.getDailyTestSetForToday();
+      expect(after!.isCompleted, isTrue);
+      expect(after.answers, {'day0_1': 'eating'});
+    });
+
+    test('seeding twice leaves one set and does not reset it', () async {
+      await dailyTestService.seedDayZeroSet();
+      await dailyTestService.seedDayZeroSet();
+
+      final set = await storageService.getDailyTestSetForToday();
+      expect(set!.questions, hasLength(5));
+      expect(claudeService.generateCallCount, 0);
+    });
+
+    test(
+        'a generated set is marked generated, and the marker survives a '
+        'reopen of the store', () async {
+      await dailyTestService.getTodaysSet();
+
+      final reopened = StorageService(dbName: dbName);
+      expect((await reopened.getDailyTestSetForToday())!.source,
+          DailyTestSource.generated);
     });
   });
 }

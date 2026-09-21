@@ -234,13 +234,24 @@ as each one lands, with literal status words (see above):
   first session). No claim about the provider's retention or training is made
   anywhere in the app. PRD v2 §13.13.
 
-- **First Daily Test preload — implemented, automated tests only; device check
-  pending.** Generation starts on the "Get started" tap; the Daily Test screen
-  joins the running request (single-flight per day in `DailyTestService`), a
-  failed preload is silent and retried by the screen. Every proxy request now has a
-  40 s timeout. A latent race in `getOrCreateDeviceId` (overlapping first calls)
-  was fixed. The benefit is unmeasured until the proxy's `duration_ms` is
-  deployed and read, and the 40 s value should be checked against it.
+- **First Daily Test preload — superseded 2026-09-22 (see the fixed first-day
+  test below).** The "Get started" preload is removed (an AI set would have
+  replaced the fixed one). What stays: single-flight per day in `DailyTestService`,
+  the 40 s proxy request timeout (check it against the proxy's `duration_ms` once
+  deployed), and the `getOrCreateDeviceId` race fix.
+
+- **Fixed first-day Daily Test — implemented, automated tests only; device check
+  pending.** New users get the same five hand-written questions
+  (`kDayZeroQuestions`, a Dart constant), seeded into today's set before the
+  profile is saved, so the test opens at once, offline and free of generation
+  cost, and also when the user closes the app mid-test and opens it from Home.
+  Later days are unchanged. Schema v21 adds `daily_test_sets.source`, and
+  `daily_test_completed` reports `set_source` (`bundled` / `generated`; register it
+  as a custom dimension, analytics plan §9). Curly quotes and apostrophes now match
+  in answers, and the Daily Test and Topic Practice answer fields turn off
+  autocorrect, suggestions and smart punctuation. Not device-confirmed: how the five
+  questions read and feel on a phone, and what a real iOS keyboard does with the
+  no-correction flags. The content's difficulty is a hypothesis to read from data.
 
 - **Welcome celebration confetti — implemented, automated tests only; device
   check pending.** A package-free `CustomPainter` burst (about 1.8 s, the theme's

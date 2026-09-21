@@ -102,9 +102,9 @@ value.
 
 | | |
 |---|---|
-| Params | `correct_count`, `wrong_count`, `skipped_count` (ints; sum is 5 today, computed rather than assumed), `step_earned` (0/1: at least one non-blank answer), `day0` (0/1: completed inside the first-launch flow) |
+| Params | `correct_count`, `wrong_count`, `skipped_count` (ints; sum is 5 today, computed rather than assumed), `step_earned` (0/1: at least one non-blank answer), `day0` (0/1: completed inside the first-launch flow), `set_source` (`bundled` = the fixed first-day set shipped with the app, `generated` = model-written; added 2026-09-22) |
 | Fired | In `DailyTestResultScreen._saveCompletion` (`lib/screens/daily_test_result_screen.dart:67-90`), **after** `completeDailyTest` succeeds, and only when the set was not already completed. A failed save that is retried yields one event; reopening a finished result yields none. |
-| Answers | Is the daily habit forming (events/user/week)? What share of tests earn no step (all-skipped)? Does a first-ever (Day-0) test behave differently from later ones? Is scoring "favoring habit over accuracy" (`prd-gamification.md` §M6.1) showing up as a real accuracy spread? |
+| Answers | Is the daily habit forming (events/user/week)? What share of tests earn no step (all-skipped)? Does a first-ever (Day-0) test behave differently from later ones, and does the fixed first-day set (`set_source = bundled`) score differently from generated ones? Is scoring "favoring habit over accuracy" (`prd-gamification.md` §M6.1) showing up as a real accuracy spread? |
 
 ### E2 — `results_cta_tapped` — DROPPED (owner decision, 2026-09-19)
 
@@ -443,8 +443,9 @@ flutter run --dart-define-from-file=config/prod.json -d <DEVICE>
 **Step 4 — watch events.** Firebase console → Analytics → DebugView, pick the
 device in the top-left selector. Events appear within seconds, with
 parameters expanded. Walk the checklist: complete a Daily Test (E1; also check
-a fresh-install first test for `day0 = 1` and E3 + the `first_step_dom` user
-property), open Profile (E5), change text size (E6; also the `text_size`
+a fresh-install first test for `day0 = 1`, `set_source = bundled` (the
+fixed first-day set; a later day should show `generated`) and E3 + the
+`first_step_dom` user property), open Profile (E5), change text size (E6; also the `text_size`
 user property). Launch and resume the app to see E4 trigger (below). E4 needs a past month in the ledger; use a seeded/controlled-clock
 database, since a real month rollover is impractical. Confirm it fires once
 per month across a launch followed by a resume.
@@ -498,7 +499,7 @@ Built in separate commits on `monthly-climb-v2`:
 |---|---|
 | Test seam: `AnalyticsSink` (default Firebase), `AnalyticsService(sink:, clock:)`; `test/support/recording_analytics_sink.dart` | Done. Every event has a test for its exact name and parameter key set; one test checks all 14 events and both user properties against the Firebase limits in §4 and that values are only ints/short strings. |
 | `session_completed` → `practice_completed` | Done (`AnalyticsService.practiceCompleted`). |
-| E1 `daily_test_completed`, E3 `welcome_badge_earned`, user property `first_step_dom` | Done, in `DailyTestResultScreen._reportCompletion`: once per screen instance, after a durable save; never for a reopened finished result; the Welcome pair and the property fire only when `completeDailyTest` reports a live earn, using the ledger day of the set. `isDay0` is passed by the first-launch flow. |
+| E1 `daily_test_completed`, E3 `welcome_badge_earned`, user property `first_step_dom` | Done (E1 gained `set_source` on 2026-09-22), in `DailyTestResultScreen._reportCompletion`: once per screen instance, after a durable save; never for a reopened finished result; the Welcome pair and the property fire only when `completeDailyTest` reports a live earn, using the ledger day of the set. `isDay0` is passed by the first-launch flow. |
 | E4 `medal_month_finalized` and the finalize timing | Done. `finalizePastMedalMonths` returns the months it newly froze; `finalizePastMedalMonthsAndReport` (`lib/services/medal_finalization.dart`) reports each; it runs at launch and on resume (`lib/app.dart`) and from Profile. Concurrency test: three simultaneous calls freeze and report each month once. |
 | E5 `profile_medals_viewed` | Done, once per session, only when the Profile tab is showing (`AnalyticsService.appPaused`/`appResumed` drive the 30-minute reset). |
 | E6 `text_size_changed`, user property `text_size` | Done in `lib/app.dart`: reported only on a real change; the property is set from the stored value at startup and on change. |
@@ -552,7 +553,7 @@ DebugView and BigQuery export show every parameter without registration.
 Limits for a standard property were not verified from Google's help pages
 here (the fetched page did not cover them); I believe they are 50 event-scoped
 dimensions, 25 user-scoped dimensions and 50 custom metrics, and this list
-uses 16, 2 and 8. Check the console's counter as you create them.
+uses 18, 2 and 8. Check the console's counter as you create them.
 
 ### User-scoped custom dimensions
 
@@ -567,6 +568,7 @@ uses 16, 2 and 8. Check the console's counter as you create them.
 |---|---|---|---|
 | Step earned | `step_earned` | Event | `daily_test_completed` (0/1) |
 | Day 0 | `day0` | Event | `daily_test_completed` (0/1) |
+| Set source | `set_source` | Event | `daily_test_completed` (`bundled` / `generated`; added 2026-09-22) |
 | Rule version | `rule_version` | Event | `welcome_badge_earned`, `medal_month_finalized` |
 | Day of month | `day_of_month` | Event | `welcome_badge_earned` |
 | Days in month | `days_in_month` | Event | `welcome_badge_earned`, `medal_month_finalized` |

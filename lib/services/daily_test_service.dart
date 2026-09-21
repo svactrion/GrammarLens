@@ -1,3 +1,4 @@
+import '../data/day_zero_daily_test.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
 import 'claude_service.dart';
@@ -31,13 +32,12 @@ class DailyTestService {
   ///
   /// Single-flight per day: while a call for a day is still running, every
   /// other call for the same day gets that same [Future] instead of starting a
-  /// second request. This is what lets the first-launch flow start generating
-  /// early ([preloadTodaysSet]) and have the Daily Test screen simply wait for
-  /// it. The in-flight slot is cleared as soon as the call finishes, success or
-  /// failure, so a failure is never remembered: the next call is a real new
-  /// attempt (and everyone who joined a failing call sees its error). A call
-  /// for a different day (the clock crossed midnight while one was running)
-  /// does not join it.
+  /// second request, so a screen opened while another caller is already
+  /// generating simply waits for that result. The in-flight slot is cleared as
+  /// soon as the call finishes, success or failure, so a failure is never
+  /// remembered: the next call is a real new attempt (and everyone who joined a
+  /// failing call sees its error). A call for a different day (the clock
+  /// crossed midnight while one was running) does not join it.
   Future<DailyTestSet> getTodaysSet() {
     final day = storageService.currentDayKey;
     final running = _inFlight;
@@ -60,12 +60,21 @@ class DailyTestService {
     return future;
   }
 
-  /// Starts [getTodaysSet] without waiting for it, for a caller that expects
-  /// to need the set soon. Any failure is dropped here on purpose: nothing has
-  /// asked for the result yet, so there is nobody to tell, and the screen that
-  /// eventually needs the set makes its own attempt and shows its own error.
-  void preloadTodaysSet() {
-    getTodaysSet().then((_) {}, onError: (Object _) {});
+  /// Writes the fixed first-day set ([kDayZeroQuestions]) as today's set, unless
+  /// today already has one, in which case nothing changes. Called by the
+  /// first-launch flow before the profile is saved, so the Daily Test opens on
+  /// a set that is already on disk: no generation, no wait, and the same
+  /// questions whether the user goes on from onboarding or closes the app
+  /// during the test and opens it from Home. It only ever fills an empty day,
+  /// so it can never replace a generated or a completed set.
+  Future<void> seedDayZeroSet() async {
+    final day = storageService.currentDayKey;
+    if (await storageService.getDailyTestSetForToday() != null) return;
+    await storageService.saveDailyTestSet(
+      kDayZeroQuestions,
+      day: day,
+      source: DailyTestSource.bundled,
+    );
   }
 
   /// Deliberately generate-then-save, not save-as-you-go: `await` on

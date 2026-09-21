@@ -1,5 +1,10 @@
 import 'daily_test_question.dart';
 
+/// Where a day's set came from: written by the model ([generated]) or the
+/// fixed first-day set that ships inside the app ([bundled]). Stored as the
+/// enum's name and reported as `set_source` on `daily_test_completed`.
+enum DailyTestSource { generated, bundled }
+
 /// One calendar day's Daily Test — generated at most once per device per
 /// day (PRD v2 §12.8) and cached locally, so re-opening the app the same
 /// day reuses this instead of generating (and paying for) a new one.
@@ -22,11 +27,14 @@ class DailyTestSet {
   /// reconstructed once the live session that computed them is gone.
   final Map<String, String>? answers;
 
+  final DailyTestSource source;
+
   const DailyTestSet({
     required this.day,
     required this.questions,
     this.completedAt,
     this.answers,
+    this.source = DailyTestSource.generated,
   });
 
   bool get isCompleted => completedAt != null;
@@ -40,5 +48,6 @@ class DailyTestSet {
         questions: questions,
         completedAt: completedAt ?? this.completedAt,
         answers: answers ?? this.answers,
+        source: source,
       );
 }

@@ -4485,3 +4485,67 @@ unnoticed.
   the matching tests red. Not covered: what a real iOS keyboard does with these
   flags, which needs a device (the flags are the documented Flutter switches for
   it).
+
+## 2026-09-22 (a fixed first Daily Test, bundled with the app)
+
+- **[Problem]** The first thing a new user does after onboarding is the Daily
+  Test, and it was generated: a wait in front of a spinner (or a preload started
+  on "Get started" to hide it), a proxy call and its cost for every install, and
+  an answer key nobody had read. It is also the one test every new user sees, so
+  an odd question or a wrong key there costs the most.
+- **[Product]** Owner decision: the first day's test is a fixed set of five
+  hand-written questions, the same for everybody, shipped as a Dart constant
+  (`kDayZeroQuestions` in `lib/data/day_zero_daily_test.dart`, not an asset:
+  nothing to load or lose). Three fill-in-the-blank and two error-correction, one
+  per topic (gerund vs. infinitive, articles, modal verbs, modal past forms, tense
+  selection), each with the predicted wrong answers and the comment for it, and for
+  error correction the "unchanged sentence" wrong answer too. Ids are `day0_1` to
+  `day0_5`. Later days are unchanged: generated, one per day.
+- **[Engineering]** `DailyTestService.seedDayZeroSet()` writes the set as today's
+  set only when today has none, so it can never replace a generated or a
+  completed set. `FirstLaunchFlow._completeOnboarding` calls it *before* saving
+  the profile: the profile row is what "onboarding done" means, so once it exists
+  the set is already on disk, and a user who closes the app during the test and
+  opens the Daily Test from Home gets the same fixed set. A failed write is not
+  fatal: onboarding continues and the Daily Test screen generates a set as it did
+  before. Because an AI set written by a preload would replace the fixed one
+  (`saveDailyTestSet` replaces an unfinished day), the "Get started" preload is
+  removed, and with it `preloadTodaysSet`, which nothing else called. Single-flight
+  in `getTodaysSet` and the 40 s request timeout stay (they still serve Home and
+  the Daily Test screen's retry).
+- **[Engineering]** Schema v21: `daily_test_sets.source TEXT NOT NULL DEFAULT
+  'generated'`. Every set stored before this was generated, which is exactly what
+  the default backfills; the step is idempotent and creates the table first if a
+  database somehow lacks it. `saveDailyTestSet` takes a `DailyTestSource`
+  (`generated`, the default, or `bundled`) and `DailyTestSet.source` carries it
+  back. A value the code does not know reads as `generated`.
+- **[Analytics]** `daily_test_completed` gains `set_source` (`bundled` /
+  `generated`), so the first test can be compared with the generated ones
+  (analytics plan E1, §9 and §6).
+- **[Validation]** `test/day_zero_daily_test_test.dart` reads the set the way a
+  learner would: five unique ids in order; three fill-in and two error-correction;
+  five different topics all in the catalog; every correct answer graded correct
+  (also with case and a full stop); every predicted wrong answer graded
+  `commonWrong` with its own comment; the guessable wrong answers written out
+  again in the test from the decision (so removing one from the data turns it red);
+  the unchanged sentence with and without its full stop; an unpredicted answer
+  falls back; `toJson`/`fromJson`. Service tests: the seed writes a bundled set,
+  the Daily Test then opens on it with no generation, and it never touches a
+  generated or completed day or resets itself when run twice. Flow tests (rewritten
+  for the fixed set): nothing generated or written before onboarding ends; the five
+  questions are shown with no request; the seed lands before the profile; leaving
+  the test and asking again from Home gets the same set; a day that already has a
+  set is left alone; a failed seed does not stop onboarding; `set_source =
+  bundled` and `day0 = 1` end to end. Migration tests: v20 to v21 keeps rows and
+  backfills `generated`, the column is NOT NULL with that default, a replayed
+  migration keeps a bundled set, and a fresh install has the column. The frozen v14
+  upgrade test now expects the extra column. Mutations that turn tests red: no seed
+  call, seed after the profile, a fatal seed failure, a seed that overwrites, no
+  `set_source`, no v21 step, a wrong answer key, a predicted wrong answer removed,
+  the source not stored.
+- **[Known limit]** The content was written from the decision text, not
+  play-tested: whether these five questions are the right difficulty for a
+  first-time user is a hypothesis to read from `daily_test_completed`'s counts
+  with `set_source = bundled` and `day0 = 1`. All five are stored with the same
+  set for every user by design, so a user who resets onboarding in a debug build
+  sees the same test again.

@@ -207,13 +207,16 @@ class AnalyticsService {
   /// Fired once per genuine new completion, never for a retried failed save
   /// that eventually succeeds twice, or for a reopened finished result.
   /// Counts only; no question or answer text. Booleans go out as `0`/`1`
-  /// because Firebase parameters are strings or numbers.
+  /// because Firebase parameters are strings or numbers. [setSource] is
+  /// `bundled` for the fixed first-day set and `generated` for a model-written
+  /// one (`DailyTestSource.name`), so completion can be read per source.
   Future<void> dailyTestCompleted({
     required int correctCount,
     required int wrongCount,
     required int skippedCount,
     required bool stepEarned,
     required bool day0,
+    required String setSource,
   }) {
     return _logEvent('daily_test_completed', {
       'correct_count': correctCount,
@@ -221,6 +224,7 @@ class AnalyticsService {
       'skipped_count': skippedCount,
       'step_earned': stepEarned ? 1 : 0,
       'day0': day0 ? 1 : 0,
+      'set_source': setSource,
     });
   }
 

@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:grammar_lens/models/daily_test_question.dart';
+import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 
@@ -63,6 +64,31 @@ void main() {
     expect(fetched.questions.single.item.instruction,
         'Fill in the blank: She ___ to work every day.');
     expect(fetched.questions.single.commonWrongAnswers.single.answer, 'go');
+  });
+
+  test(
+      'a set is generated unless saved as bundled, and the source survives a '
+      'reopen', () async {
+    final generated = await storageService.saveDailyTestSet(sampleQuestions());
+    expect(generated.source, DailyTestSource.generated);
+
+    await storageService.saveDailyTestSet(sampleQuestions(),
+        source: DailyTestSource.bundled);
+    final reopened = StorageService(dbName: dbName);
+    expect((await reopened.getDailyTestSetForToday())!.source,
+        DailyTestSource.bundled);
+  });
+
+  test('a completed set keeps its source, and a stale save cannot change it',
+      () async {
+    await storageService.saveDailyTestSet(sampleQuestions(),
+        source: DailyTestSource.bundled);
+    await storageService.completeDailyTest({'q1': 'goes'}, []);
+
+    final again = await storageService.saveDailyTestSet(sampleQuestions());
+
+    expect(again.isCompleted, isTrue);
+    expect(again.source, DailyTestSource.bundled);
   });
 
   test('saving again for the same day replaces rather than duplicating',
