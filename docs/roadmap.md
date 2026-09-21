@@ -185,6 +185,14 @@ as each one lands, with literal status words (see above):
   dependency); tests assert the buttons exist with live https URLs. Age and
   occupation stay removed.
 
+- **Day-0 climb animation — implemented, automated tests only; device check
+  pending.** The first-launch Daily Test now ends on a Home that mounts the
+  pawn at its earlier position and animates the step, like the normal flow.
+  `FirstLaunchFlow` hands `pendingClimb: (day, step)` to `app.dart`, which gives
+  it once to the new Home; the two Day-0 buttons are disabled until the result
+  is saved (this also closes a stale-Home race). Covered end to end through the
+  real app (`test/first_launch_climb_test.dart`). Not device-confirmed.
+
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
 now displays persisted monthly progress and the selected avatar on Home, with

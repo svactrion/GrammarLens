@@ -4,6 +4,7 @@ import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
+import '../models/pending_climb.dart';
 import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
@@ -50,6 +51,15 @@ class HomeScreen extends StatefulWidget {
   // happens to run at. No caller outside a test ever overrides this.
   final DateTime Function() clock;
 
+  /// A Daily Test completion that finished before this Home existed (the
+  /// first-launch flow's Day-0 test). Read once in `initState`; Home mounts
+  /// the mountain at the position before that step and then animates it.
+  final PendingClimb? initialPendingClimb;
+
+  /// Called from `initState` once [initialPendingClimb] has been taken, so the
+  /// owner can drop it and never hand the same completion to a later Home.
+  final VoidCallback? onInitialPendingClimbTaken;
+
   HomeScreen({
     super.key,
     this.active = true,
@@ -60,6 +70,8 @@ class HomeScreen extends StatefulWidget {
     required this.analyticsService,
     SubscriptionService? subscriptionService,
     this.onAvatarTap,
+    this.initialPendingClimb,
+    this.onInitialPendingClimbTaken,
     DateTime Function()? clock,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
         clock = clock ?? DateTime.now;
@@ -89,6 +101,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _dailyFlowActive = false;
   String? _pendingClimbDay;
 
+  /// Steps the pending completion earned, known only when it arrived through
+  /// [HomeScreen.initialPendingClimb]. It lets the first load derive the
+  /// position to mount at (`progress.steps - step`) because, unlike a Home
+  /// that was already showing the mountain, there is no earlier value to
+  /// compare against.
+  int _pendingClimbStep = 0;
+
   bool get _homeVisible =>
       widget.active &&
       !_dailyFlowActive &&
@@ -103,6 +122,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final initialClimb = widget.initialPendingClimb;
+    if (initialClimb != null && initialClimb.step > 0) {
+      _pendingClimbDay = initialClimb.day;
+      _pendingClimbStep = initialClimb.step;
+    }
+    widget.onInitialPendingClimbTaken?.call();
     _checkAccess();
     // Live updates (PRD v2 §12.3/§12.6): a trial starting or expiring
     // should re-gate Topic Practice and the weak-spot rows without
@@ -179,6 +204,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final pendingThisMonth = _pendingClimbDay != null &&
           _pendingClimbDay!.startsWith(
               '${month.year}-${month.month.toString().padLeft(2, '0')}-');
+      if (pendingThisMonth && _climbSteps == null && _pendingClimbStep > 0) {
+        // First load of a Home that never showed the mountain: mount it where
+        // it stood before the pending step, so the step below has something
+        // to animate from.
+        final baseline =
+            (progress.steps - _pendingClimbStep).clamp(0, progress.steps);
+        if (progress.steps > baseline) {
+          setState(() => _climbSteps = baseline);
+        }
+      }
       final showStep = pendingThisMonth &&
           _climbSteps != null &&
           progress.steps > _climbSteps!;
@@ -208,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _climbSteps = progress.steps;
         _loadingClimb = false;
         _pendingClimbDay = null;
+        _pendingClimbStep = 0;
       });
     } catch (_) {
       if (!mounted || generation != _climbLoadGeneration) return;

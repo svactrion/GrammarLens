@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../models/daily_test_completion.dart';
 import '../models/daily_test_set.dart';
+import '../models/pending_climb.dart';
 import '../models/user_profile.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
@@ -36,7 +38,12 @@ class FirstLaunchFlow extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final AnalyticsService analyticsService;
-  final ValueChanged<UserProfile> onComplete;
+
+  /// Called once when the flow ends. [pendingClimb] is non-null only when the
+  /// Day-0 Daily Test was saved and earned a step, so the Home that replaces
+  /// this flow can animate that step instead of mounting already advanced.
+  final void Function(UserProfile profile, {PendingClimb? pendingClimb})
+      onComplete;
 
   const FirstLaunchFlow({
     super.key,
@@ -58,6 +65,12 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   UserProfile? _profile;
   DailyTestSet? _dailyTestSet;
   Map<String, String> _dailyTestAnswers = const {};
+
+  /// Whether the Day-0 result is safely on disk. The result screen saves in
+  /// the background; until it has, the way out of the flow stays disabled so
+  /// Home cannot be built (and read the ledger) ahead of the write.
+  bool _resultSaved = false;
+  PendingClimb? _pendingClimb;
 
   late final DailyTestService _dailyTestService = DailyTestService(
     claudeService: widget.claudeService,
@@ -86,7 +99,27 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
     setState(() {
       _dailyTestSet = set;
       _dailyTestAnswers = answers;
+      // A set that was already completed (a debug onboarding reset can land
+      // on one) is never saved again, so there is nothing to wait for.
+      _resultSaved = set.isCompleted;
+      _pendingClimb = null;
       _step = _Step.dailyTestResult;
+    });
+  }
+
+  /// The result screen's save finished. Records what Home has to animate; the
+  /// step comes from the same completion rule the ledger write used.
+  void _onResultSaved() {
+    if (!mounted) return;
+    final set = _dailyTestSet!;
+    final step = DailyTestCompletion(
+      set: set,
+      answers: _dailyTestAnswers,
+      completedAt: DateTime.now(),
+    ).step;
+    setState(() {
+      _resultSaved = true;
+      _pendingClimb = step > 0 ? (day: set.day, step: step) : null;
     });
   }
 
@@ -98,7 +131,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   /// pitch, or dismissing the real [PremiumScreen] (whether that's via its
   /// own "Maybe later" or after a trial actually started).
   void _finish() {
-    widget.onComplete(_profile!);
+    widget.onComplete(_profile!, pendingClimb: _pendingClimb);
   }
 
   @override
@@ -131,7 +164,9 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
           dailyTestService: _dailyTestService,
           analyticsService: widget.analyticsService,
           isDay0: true,
+          onCompletionSaved: _onResultSaved,
           bottomBuilder: (context) => _DayZeroPaywallCta(
+            enabled: _resultSaved,
             storageService: widget.storageService,
             analyticsService: widget.analyticsService,
             onDone: _finish,
@@ -155,10 +190,15 @@ class _DayZeroPaywallCta extends StatelessWidget {
   // taps "Continue" there — all three are "done here" moments (PRD v2
   // §12.3: whichever path, it ends on Home).
   final VoidCallback onDone;
+
+  /// False while the result is still being saved: both ways out stay
+  /// disabled, as the Home-reached result screen's own button does.
+  final bool enabled;
   final StorageService storageService;
   final AnalyticsService analyticsService;
 
   const _DayZeroPaywallCta({
+    required this.enabled,
     required this.storageService,
     required this.analyticsService,
     required this.onDone,
@@ -189,18 +229,21 @@ class _DayZeroPaywallCta extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => PremiumScreen(
-                      storageService: storageService,
-                      analyticsService: analyticsService,
-                      analyticsSource: AnalyticsService.paywallSourceOnboarding,
-                      onDone: onDone,
-                    ),
-                  ),
-                );
-              },
+              onPressed: !enabled
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => PremiumScreen(
+                            storageService: storageService,
+                            analyticsService: analyticsService,
+                            analyticsSource:
+                                AnalyticsService.paywallSourceOnboarding,
+                            onDone: onDone,
+                          ),
+                        ),
+                      );
+                    },
               child: const Text('Start free trial'),
             ),
             const SizedBox(height: 4),
@@ -208,7 +251,7 @@ class _DayZeroPaywallCta extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: colorScheme.onSurfaceVariant,
               ),
-              onPressed: onDone,
+              onPressed: enabled ? onDone : null,
               child: const Text('Maybe later'),
             ),
           ],

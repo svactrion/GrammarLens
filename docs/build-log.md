@@ -4164,3 +4164,47 @@ unnoticed.
   updated.
 
 - **[Engineering]** Cancel in `DestructiveDialogActions` is now an outlined button (`onSurface` label, `onSurfaceVariant` border: 7.42:1 light / 8.39:1 dark against the dialog surface; `outline` was rejected at 2.72:1 in light) because the borderless text button did not read as a button beside the filled red one; size, order and behavior are unchanged.
+
+## 2026-09-21 (launch checklist: Day-0 climb animation)
+
+- **[Problem]** Found on device: after a normal Daily Test the pawn climbs on
+  Home, but after the first-launch Daily Test (Welcome → Onboarding → Daily
+  Test → Home) Home opened with the pawn already advanced.
+- **[Engineering]** Root cause, from reading the code (three independent
+  facts): `MonthlyMountain` animates only when `completedDays` changes on an
+  already-mounted widget; Home animates only when it has a pending day, an
+  earlier position (`_climbSteps != null`) and a larger saved value; and the
+  pending day was set only by `HomeScreen._openDailyTest`'s result route. The
+  Day-0 flow ends before any Home exists, never bound `onCompletionSaved`, and
+  a fresh Home has no earlier position, so the mountain mounted straight at
+  the new value. Rival explanations checked and rejected: reduce motion or a
+  disabled ticker (the normal flow animates on the same device), a route
+  transition hiding the animation (Home is built as Premium pops, and the
+  existing visibility wait already covers that), and a `ValueKey` reset.
+  One real second bug was found on the way: the Day-0 CTA buttons were
+  enabled while the result was still being saved, so a fast tap could build
+  Home before the write and leave it stale until the next resume.
+- **[Engineering]** Fix: `FirstLaunchFlow` binds `onCompletionSaved` and
+  passes `onComplete(profile, pendingClimb: (day, step))` (only when the save
+  earned a step; the step comes from `DailyTestCompletion.step`, the rule the
+  ledger write used). `app.dart` holds it as `initialPendingClimb` for the Home
+  it swaps in and clears it as soon as Home has taken it, so it can only
+  animate once. Home derives the mount position as `progress.steps - step`
+  (not a constant 0: the debug onboarding reset deletes the profile but not the
+  ledger), mounts the mountain there, then the existing pending-step path scrolls
+  it into view and animates. Both Day-0 buttons ("Start free trial", "Maybe
+  later") are disabled until the save lands; a set that was already completed
+  (debug reset) is never saved again, so it does not wait.
+- **[Engineering]** `GrammarLensApp` gained a `claudeService` seam, like its
+  storage, analytics and clock seams, so the whole flow can be driven through
+  the real app.
+- **[Validation]** New `test/first_launch_climb_test.dart` runs the real app:
+  Maybe later, Start free trial then Premium's Maybe later, reduce motion, all
+  questions skipped, a slow save (buttons disabled, then Home shows the saved
+  step) and leaving the first Daily Test. Each records the step counts the
+  mountain was given and the pawn heights it was drawn at frame by frame
+  (`pumpAndSettle` would hide a consumed animation). With the baseline mount
+  disabled, four of the six fail (the two "nothing to animate" cases still
+  pass, as they should). `first_launch_flow_test.dart` also asserts the
+  `pendingClimb` handed over (answered / all skipped / abandoned). The existing
+  Home return tests pass unchanged.

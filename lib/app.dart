@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'models/app_theme_mode.dart';
 import 'models/app_text_size.dart';
 import 'models/avatar.dart';
+import 'models/pending_climb.dart';
 import 'models/user_profile.dart';
 import 'screens/avatar_picker_screen.dart';
 import 'screens/first_launch_flow.dart';
@@ -28,6 +29,7 @@ class GrammarLensApp extends StatefulWidget {
   /// without a real database or Firebase; production passes neither.
   final StorageService? storageService;
   final AnalyticsService? analyticsService;
+  final ClaudeService? claudeService;
 
   /// Test-only clock forwarded to [HomeScreen] so a day rollover can be
   /// driven end to end through the app's lifecycle handling.
@@ -37,6 +39,7 @@ class GrammarLensApp extends StatefulWidget {
     super.key,
     this.storageService,
     this.analyticsService,
+    this.claudeService,
     this.clock,
   });
 
@@ -46,7 +49,8 @@ class GrammarLensApp extends StatefulWidget {
 
 class _GrammarLensAppState extends State<GrammarLensApp>
     with WidgetsBindingObserver {
-  final ClaudeService _claudeService = ClaudeService();
+  late final ClaudeService _claudeService =
+      widget.claudeService ?? ClaudeService();
   late final StorageService _storageService =
       widget.storageService ?? StorageService();
   late final AnalyticsService _analyticsService =
@@ -68,6 +72,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   // of the onboarding flow before the local sqlite read resolves.
   UserProfile? _profile;
   bool _profileLoading = true;
+
+  // The first-launch flow's saved-but-not-yet-shown climb step, handed to the
+  // Home that replaces it. Home takes it in `initState` and clears it here, so
+  // it can only ever animate once.
+  PendingClimb? _initialPendingClimb;
 
   @override
   void initState() {
@@ -286,7 +295,10 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
-              onComplete: (profile) => setState(() => _profile = profile),
+              onComplete: (profile, {pendingClimb}) => setState(() {
+                _profile = profile;
+                _initialPendingClimb = pendingClimb;
+              }),
             );
           }
 
@@ -300,6 +312,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               analyticsService: _analyticsService,
               subscriptionService: _subscriptionService,
               clock: widget.clock,
+              initialPendingClimb: _initialPendingClimb,
+              onInitialPendingClimbTaken: () => _initialPendingClimb = null,
               onAvatarTap: () => _openAvatarPickerFromHome(context),
             ),
             ReviewScreen(

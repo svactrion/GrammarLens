@@ -5,6 +5,7 @@ import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
+import 'package:grammar_lens/models/pending_climb.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/user_profile.dart';
@@ -126,7 +127,8 @@ void main() {
 
   Future<void> pumpFlow(
     WidgetTester tester, {
-    required ValueChanged<UserProfile> onComplete,
+    required void Function(UserProfile, {PendingClimb? pendingClimb})
+        onComplete,
   }) async {
     // Tall enough that every button in the flow (including PremiumScreen's
     // trailing actions) is reachable without a per-screen scroll dance.
@@ -197,7 +199,7 @@ void main() {
       'completing onboarding for the first time goes to Daily Test, not '
       "straight to Home — onComplete doesn't fire yet", (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p) => completed = p);
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
     await completeOnboardingForm(tester);
 
     expect(completed, isNull);
@@ -211,7 +213,7 @@ void main() {
       'and tapping "Maybe later" there completes onboarding with the right '
       'profile', (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p) => completed = p);
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
 
@@ -233,7 +235,7 @@ void main() {
       'PremiumScreen, and its own "Maybe later" also completes onboarding',
       (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p) => completed = p);
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
 
@@ -253,7 +255,7 @@ void main() {
       'completes onboarding rather than leaving the user stuck',
       (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p) => completed = p);
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
     await completeOnboardingForm(tester);
 
     await tester.tap(find.byIcon(Icons.close_rounded));
@@ -271,7 +273,7 @@ void main() {
       'practice session available (decision 7: the two counters are '
       'independent)', (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p) => completed = p);
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
     await scrollAndTap(tester, find.text('Maybe later'));
@@ -280,5 +282,57 @@ void main() {
     expect(storageService.freePracticeCountRead, isFalse);
     expect(storageService.freePracticeStartedRecorded, isFalse);
     expect(storageService.freePracticeCount, 0);
+  });
+
+  testWidgets(
+      'an answered Day-0 test hands Home a pending climb (the ledger day and '
+      'one step) with the profile', (tester) async {
+    UserProfile? completed;
+    PendingClimb? pending;
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+      completed = p;
+      pending = pendingClimb;
+    });
+    await completeOnboardingForm(tester);
+    await tester.enterText(find.byType(TextField).first, 'wrong');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+    await tester.pumpAndSettle();
+    for (var i = 1; i < DailyTestService.questionCount; i++) {
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+      await tester.pumpAndSettle();
+    }
+    await scrollAndTap(tester, find.text('Maybe later'));
+
+    expect(completed, isNotNull);
+    expect(pending, (day: '2026-01-01', step: 1));
+  });
+
+  testWidgets('a Day-0 test with every question skipped earns no pending climb',
+      (tester) async {
+    PendingClimb? pending = (day: 'sentinel', step: 9);
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+      pending = pendingClimb;
+    });
+    await completeOnboardingForm(tester);
+    await answerThroughDailyTest(tester);
+    await scrollAndTap(tester, find.text('Maybe later'));
+
+    expect(pending, isNull);
+  });
+
+  testWidgets('abandoning the Day-0 Daily Test carries no pending climb',
+      (tester) async {
+    PendingClimb? pending = (day: 'sentinel', step: 9);
+    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+      pending = pendingClimb;
+    });
+    await completeOnboardingForm(tester);
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Leave'));
+    await tester.pumpAndSettle();
+
+    expect(pending, isNull);
   });
 }
