@@ -45,8 +45,8 @@ enum _DebugAccessChoice {
       };
 }
 
-/// PRD v2 §4 — theme, text size, name edit, avatar, monthly medals and data
-/// reset. Learning goal isn't editable here: nothing in scope needs it to
+/// PRD v2 §4 — avatar, name edit, monthly medals, theme, text size and data
+/// reset, in that order. Learning goal isn't editable here: nothing in scope needs it to
 /// change, and adding a second place to set it risks drifting from
 /// onboarding's copy.
 class SettingsScreen extends StatefulWidget {
@@ -369,52 +369,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const PageTitle('Profile'),
         isTabRoot: true,
         children: [
-          const _SectionLabel('Appearance'),
-          const SizedBox(height: 8),
-          AppSegmentedButton<AppThemeMode>(
-            segments: const [
-              ButtonSegment(
-                value: AppThemeMode.system,
-                label: Text('System'),
-                icon: Icon(Icons.brightness_auto_rounded),
-              ),
-              ButtonSegment(
-                value: AppThemeMode.light,
-                label: Text('Light'),
-                icon: Icon(Icons.light_mode_rounded),
-              ),
-              ButtonSegment(
-                value: AppThemeMode.dark,
-                label: Text('Dark'),
-                icon: Icon(Icons.dark_mode_rounded),
-              ),
-            ],
-            selected: {widget.themeMode},
-            onSelectionChanged: (selection) =>
-                widget.onSelectThemeMode(selection.first),
-          ),
-          const SizedBox(height: 20),
-          Text('Text size', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          AppSegmentedButton<AppTextSize>(
-            segments: const [
-              ButtonSegment(value: AppTextSize.small, label: Text('Small')),
-              ButtonSegment(value: AppTextSize.medium, label: Text('Medium')),
-              ButtonSegment(value: AppTextSize.large, label: Text('Large')),
-            ],
-            selected: {widget.textSize},
-            onSelectionChanged: (selection) =>
-                widget.onSelectTextSize(selection.first),
-          ),
-          const SizedBox(height: 32),
           const _SectionLabel('Profile'),
           const SizedBox(height: 8),
           // No Card wrap (docs/design-audit.md, Batch 0 item 8): this
           // isn't a single tappable target the way Home's cards are, so
           // giving it the same card treatment implied a tap that does
-          // nothing. Matches the flush layout Appearance above already
-          // uses — the section label plus this file's existing 32px
-          // section gap carries the grouping instead of a container.
+          // nothing. Flush layout, like every other section here — the
+          // section label plus this file's 32px section gap carries the
+          // grouping instead of a container.
           Text('Avatar', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
           // Local stock avatars only (PRD v2 §11) — no upload. Picking one
@@ -424,34 +386,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // ties this tile to the picker's own centered avatar so leaving
           // that screen visibly flies the choice back here rather than
           // just popping.
-          InkWell(
-            borderRadius: BorderRadius.circular(16),
+          _NavRow(
             onTap: _openAvatarPicker,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Hero(
-                    tag: avatarHeroTag,
-                    child: AvatarTile(
-                      avatar: widget.profile.avatar ?? _fallbackAvatar,
-                      radius: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      'Change avatar',
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
+            leading: Hero(
+              tag: avatarHeroTag,
+              child: AvatarTile(
+                avatar: widget.profile.avatar ?? _fallbackAvatar,
+                radius: 26,
               ),
             ),
+            label: 'Change avatar',
           ),
           const SizedBox(height: 20),
           Text('Name', style: theme.textTheme.labelLarge),
@@ -491,6 +435,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
               currentProgress: _medalProgress,
               results: _medalResults,
             ),
+          const SizedBox(height: 32),
+          const _SectionLabel('Appearance'),
+          const SizedBox(height: 8),
+          AppSegmentedButton<AppThemeMode>(
+            segments: const [
+              ButtonSegment(
+                value: AppThemeMode.system,
+                label: Text('System'),
+                icon: Icon(Icons.brightness_auto_rounded),
+              ),
+              ButtonSegment(
+                value: AppThemeMode.light,
+                label: Text('Light'),
+                icon: Icon(Icons.light_mode_rounded),
+              ),
+              ButtonSegment(
+                value: AppThemeMode.dark,
+                label: Text('Dark'),
+                icon: Icon(Icons.dark_mode_rounded),
+              ),
+            ],
+            selected: {widget.themeMode},
+            onSelectionChanged: (selection) =>
+                widget.onSelectThemeMode(selection.first),
+          ),
+          const SizedBox(height: 20),
+          Text('Text size', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 8),
+          AppSegmentedButton<AppTextSize>(
+            segments: const [
+              ButtonSegment(value: AppTextSize.small, label: Text('Small')),
+              ButtonSegment(value: AppTextSize.medium, label: Text('Medium')),
+              ButtonSegment(value: AppTextSize.large, label: Text('Large')),
+            ],
+            selected: {widget.textSize},
+            onSelectionChanged: (selection) =>
+                widget.onSelectTextSize(selection.first),
+          ),
           const SizedBox(height: 32),
           const _SectionLabel('Data'),
           const SizedBox(height: 8),
@@ -691,6 +673,44 @@ class _SectionLabel extends StatelessWidget {
       style: theme.textTheme.labelLarge?.copyWith(
         color: theme.colorScheme.secondary,
         fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+/// A tappable row that opens another screen: [leading], a label and a
+/// trailing chevron. The look of the avatar row above, shared with the other
+/// rows here that open a screen of their own.
+class _NavRow extends StatelessWidget {
+  final Widget leading;
+  final String label;
+  final VoidCallback onTap;
+
+  const _NavRow({
+    required this.leading,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            leading,
+            const SizedBox(width: 16),
+            Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
     );
   }

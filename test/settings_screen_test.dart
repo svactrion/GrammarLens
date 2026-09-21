@@ -185,6 +185,7 @@ void main() {
     await pumpSettings(tester);
 
     expect(find.text('Profile'), findsWidgets);
+    await reveal(tester, find.text('Text size'));
     expect(find.text('Text size'), findsOneWidget);
     expect(find.text('Small'), findsOneWidget);
     expect(find.text('Medium'), findsOneWidget);
@@ -209,6 +210,7 @@ void main() {
       onSelectTextSize: (value) => selected = value,
     );
 
+    await reveal(tester, find.text('Large'));
     await tester.tap(find.text('Large'));
     await tester.pump();
     expect(selected, AppTextSize.large);
@@ -433,6 +435,31 @@ void main() {
     expect(tile.avatar, saved!.avatar);
   });
 
+  testWidgets(
+      'sections appear in order: avatar, name, medals, appearance, data, '
+      'developer', (tester) async {
+    await pumpSettings(tester);
+    // Tall enough that the lazy list builds every section at once, so their
+    // positions can be compared in one frame.
+    tester.view.physicalSize = const Size(390, 3000) * 3.0;
+    await tester.pumpAndSettle();
+
+    double top(Finder finder) {
+      expect(finder, findsOneWidget);
+      return tester.getTopLeft(finder).dy;
+    }
+
+    final ordered = [
+      top(find.text('Change avatar')),
+      top(find.text('Name')),
+      top(find.text('Monthly medals')),
+      top(find.text('Appearance')),
+      top(find.text('Data')),
+      top(find.text('Developer')),
+    ];
+    expect(ordered, orderedEquals([...ordered]..sort()));
+  });
+
   testWidgets('picking a theme segment calls onSelectThemeMode',
       (tester) async {
     AppThemeMode? selected;
@@ -441,6 +468,7 @@ void main() {
       onSelectThemeMode: (mode) => selected = mode,
     );
 
+    await reveal(tester, find.text('Dark'));
     await tester.tap(find.text('Dark'));
     await tester.pump();
 
@@ -636,7 +664,7 @@ void main() {
       await pumpSettings(tester);
       // Everything sits below the user-facing sections, so scroll to the
       // very bottom before asserting anything is absent.
-      await reveal(tester, find.text('Reset progress data'));
+      await reveal(tester, find.text('Data'));
       await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
       await tester.pumpAndSettle();
 
@@ -651,13 +679,14 @@ void main() {
       DebugTools.enabledForTesting = false;
       await pumpSettings(tester);
 
+      await reveal(tester, find.text('Text size'));
       expect(find.text('Text size'), findsOneWidget);
       expect(find.text('Small'), findsOneWidget);
       expect(find.text('Medium'), findsOneWidget);
       expect(find.text('Large'), findsOneWidget);
       // Real user features stay too.
-      await reveal(tester, find.text('Reset progress data'));
-      expect(find.text('Reset progress data'), findsOneWidget);
+      await reveal(tester, find.text('Data'));
+      expect(find.text('Data'), findsOneWidget);
     });
 
     testWidgets('a debug build still shows every developer entry',
