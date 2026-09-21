@@ -4163,3 +4163,4 @@ unnoticed.
   `BandColors` doc comment that described orange dialog Cancel buttons was
   updated.
 
+- **[Engineering]** Cancel in `DestructiveDialogActions` is now an outlined button (`onSurface` label, `onSurfaceVariant` border: 7.42:1 light / 8.39:1 dark against the dialog surface; `outline` was rejected at 2.72:1 in light) because the borderless text button did not read as a button beside the filled red one; size, order and behavior are unchanged.

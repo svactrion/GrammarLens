@@ -33,6 +33,7 @@ void main() {
       b.style?.backgroundColor?.resolve(const {});
   Color? label(ButtonStyleButton b) =>
       b.style?.foregroundColor?.resolve(const {});
+  Color? border(ButtonStyleButton b) => b.style?.side?.resolve(const {})?.color;
 
   for (final brightness in Brightness.values) {
     group('"Leave practice?" dialog ($brightness)', () {
@@ -71,10 +72,12 @@ void main() {
         expect(fill(leave), scheme.destructive);
         expect(label(leave), scheme.onDestructive);
 
-        final cancel = tester
-            .widget<TextButton>(find.widgetWithText(TextButton, 'Cancel'));
+        final cancel = tester.widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Cancel'));
         expect(label(cancel), scheme.onSurface);
         expect(label(cancel), isNot(scheme.primary));
+        expect(border(cancel), scheme.onSurfaceVariant);
+        expect(border(cancel), isNot(scheme.primary));
         expect(fill(cancel), isNull);
       });
 

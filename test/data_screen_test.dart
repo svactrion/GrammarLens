@@ -85,6 +85,8 @@ void main() {
           b.style?.backgroundColor?.resolve(const {});
       Color? label(ButtonStyleButton b) =>
           b.style?.foregroundColor?.resolve(const {});
+      Color? border(ButtonStyleButton b) =>
+          b.style?.side?.resolve(const {})?.color;
 
       testWidgets('the Reset progress data button uses the destructive role',
           (tester) async {
@@ -111,10 +113,12 @@ void main() {
         expect(fill(reset), scheme.destructive);
         expect(label(reset), scheme.onDestructive);
 
-        final cancel = tester
-            .widget<TextButton>(find.widgetWithText(TextButton, 'Cancel'));
+        final cancel = tester.widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Cancel'));
         expect(label(cancel), scheme.onSurface);
         expect(label(cancel), isNot(scheme.primary));
+        expect(border(cancel), scheme.onSurfaceVariant);
+        expect(border(cancel), isNot(scheme.primary));
         expect(fill(cancel), isNull);
         // Nothing else in the dialog is a filled button but Reset.
         expect(
@@ -131,7 +135,7 @@ void main() {
         await tester.pumpAndSettle();
 
         final cancel =
-            tester.getRect(find.widgetWithText(TextButton, 'Cancel'));
+            tester.getRect(find.widgetWithText(OutlinedButton, 'Cancel'));
         final reset =
             tester.getRect(find.widgetWithText(FilledButton, 'Reset'));
         expect(cancel.bottom, lessThan(reset.top));
