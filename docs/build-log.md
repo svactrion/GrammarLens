@@ -3990,3 +3990,45 @@ unnoticed.
   below-Bronze persistence, frozen history, migration/data survival, semantics,
   and populated 320pt light/dark layouts at all three app text sizes.
 - **[Delivery]** No device install, commit, push, main merge or PR.
+
+## 2026-09-21 (launch checklist: code items)
+
+- **[Product]** Session cap 10 → 5, a margin decision: at an estimated
+  ~$0.034/session, 10 sessions/day is ~$10.20/month against ~$3.54/month of
+  net annual-plan revenue. 5 sessions = 10 proxy units + 1 Daily Test unit,
+  inside `DEVICE_DAILY_LIMIT` = 15, so the proxy limit stays and the
+  2026-09-15 headroom question is closed. Premium's "3, 5 or 10" is question
+  counts, not the quota; nothing in `lib/` says "unlimited". PRD v2 §13.8.
+- **[Engineering]** The brief said no `AppLifecycleState` hook existed. It does:
+  `HomeScreen` (Daily Test day, greeting, climb month, weak spots) and
+  `GrammarLensApp` (analytics, medal finalization) each observe resume, with
+  disjoint jobs. No third hook was added; a test-only `GrammarLensApp.clock`
+  and `test/app_resume_test.dart` prove the overnight scenario end to end and
+  that one resume runs each job once (launch itself finalizes twice, from the
+  app and from Profile's mount; idempotent). The roadmap's stale open bug was
+  closed with that explanation.
+- **[Engineering]** Premium comparison table: reproduced the overflow (the
+  header/data `Row` overflowed by 52 px at 320 wide @2x text, 126 px at 393
+  @3x). Fix: when the label column would fall under 96 pt even with "1/day",
+  rows stack (label, then Free/Premium chips), no scrolling, nothing removed.
+  The pricing-unavailable card overflowed too and now drops its retry below the
+  sentence. Table width measurement now uses the drawn font (it used the
+  platform default, a mismatch since the Nunito change); row-height measurement
+  was left alone because changing it moved normal layouts. Tests load the real
+  font, since `flutter test` otherwise measures ~2x too wide. Open: at 320
+  @1x and 393 @1.3x the existing table already ellipsizes a label to two lines;
+  left as is on the "normal screens unchanged" rule.
+- **[Product]** Onboarding privacy note rewritten to match the code and the
+  privacy policy (name/goal stay on device; answers go to the AI provider;
+  usage and crash data is collected). PRD v2 §13.9.
+- **[Product]** Trial wording: annual = 7 days, monthly = 3 days, read from
+  RevenueCat, never written into app copy. README and current-state doc text
+  fixed; dated historical entries kept.
+- **[Engineering]** Proxy token logging (`proxy/src/usage_log.ts`): one
+  `console.log` line per successful Anthropic call with kind, operation,
+  question count and input/output tokens; nothing user-related, tested with
+  planted secrets. Not deployed. Storage options in PRD v2 §13.10, none built.
+- **[Product]** Shared Daily Test recorded as a post-launch item in the
+  roadmap's Launch scope, with trade-offs and why it waits.
+- **[Delivery]** Automated tests only for all of the above; no device
+  confirmation, no deploy, no main merge or PR.
