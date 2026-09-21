@@ -574,7 +574,8 @@ rewritten, per this document's own rule.
 
 $9.99/month, $89.99/year. The annual plan is presented as its per-month
 equivalent ($7.49/month, billed annually at $89.99) with a "Save 25%" marker;
-annual is preselected. The 7-day trial applies to both plans.
+annual is preselected. The 7-day trial applies to both plans. *(Superseded
+2026-09-17: 3 days monthly, 7 days annual — see §13.2.)*
 
 **Superseded 2026-09-07 — final pricing: $5.99/month, $49.99/year.** The
 annual plan is presented as $4.17/month, billed annually at $49.99, with a
@@ -657,8 +658,8 @@ The real problem is that Home has data and shows none of it. New structure:
 ### 13.6 Evidence status of the above
 
 All of §13 is a **bet**, not a finding. No user has seen any of it. In
-particular, one tension is recorded rather than resolved: a 7-day trial
-requires a card, and the Day-0 flow asks for it roughly two minutes into first
+particular, one tension is recorded rather than resolved: a free trial (7
+days on annual, 3 on monthly since 2026-09-17, §13.2) requires a card, and the Day-0 flow asks for it roughly two minutes into first
 launch, before the user has ever used Topic Practice. That may convert poorly
 and may read as pressure, which sits badly with the calm, no-pressure
 positioning this product is built on. The alternative — surfacing the offer at

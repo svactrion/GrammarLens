@@ -7,9 +7,9 @@
 > trial/paid pivot with a new daily mode — is functionally built and
 > visually polished** (see [`docs/design-audit.md`](docs/design-audit.md));
 > one known debt remains, the paywall's density on the smallest supported
-> screen width. **Pre-launch**: not on the App Store, no TestFlight build
-> yet, and the subscription products themselves don't exist in App Store
-> Connect yet (see [`docs/roadmap.md`](docs/roadmap.md) for current
+> screen width. **Pre-launch**: not on the App Store, and the subscription
+> products exist in App Store Connect but are not yet submitted for review
+> (see [`docs/roadmap.md`](docs/roadmap.md) for current
 > wiring). **v3 is planned but not scoped or built** — a gamification layer
 > and a Home redesign. See [Product Evolution](#product-evolution) below.
 
@@ -40,11 +40,15 @@ with two entry points:
   why, with the grammar rule kept as secondary detail, not the headline.
   Free to try (a payment method is required up front, per standard App
   Store subscription mechanics — it auto-renews unless cancelled), then a
-  subscription. Free-tier users (trial declined or
+  subscription. The trial length differs by plan — a longer one on the annual
+  plan than on the monthly plan — and is configured in App Store Connect and
+  read live from RevenueCat, so the app never hard-codes a number of days.
+  Free-tier users (trial declined or
   expired) still get one Topic Practice session per day at no cost,
   reachable from a weak spot in Review. The purchase flow is built on
-  RevenueCat and functional end-to-end, but no live App Store Connect
-  product is connected yet, so no real subscription can complete today.
+  RevenueCat and works end to end against the App Store sandbox; the
+  subscription products exist in App Store Connect but have not been
+  submitted for review, so the public cannot buy one yet.
 
 Mistakes from either mode feed a personal **error profile**; **Review**
 resurfaces weak spots later with freshly generated practice — not the same

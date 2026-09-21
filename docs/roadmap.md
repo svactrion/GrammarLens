@@ -66,6 +66,13 @@ as each one lands, with literal status words (see above):
   Premium screen links the policy itself. Still open before submission: the
   App Store privacy nutrition label must match the same facts (outside this
   repo).
+- **Trial-length wording — corrected in current-state text.** Truth: annual
+  = 7 days, monthly = 3 days; both are set in App Store Connect and read live
+  from RevenueCat, and no day count is written in `lib/` app copy (checked).
+  README no longer implies a single trial length (its old sentence named no
+  duration, and also wrongly said no App Store Connect product was connected;
+  both fixed). Older dated entries in this file and in the build log keep
+  their original wording as history, with pointers where they would mislead.
 - **Premium comparison-table overflow — implemented (stacked layout),
   automated tests only; not device-confirmed.** Decision: when the three
   columns do not fit, rows stack (label on top, Free and Premium chips
@@ -1382,7 +1389,8 @@ measurement below: `docs/build-log.md`, same date.
   `SubscriptionService.getOfferings()` now checks a `debugFixtureOffering`
   first, the same `kDebugMode`-gated/tree-shaken-in-release shape as the
   existing entitlement override. `buildDebugFixtureOffering()` builds PRD
-  v2 §13.2's stated prices ($5.99/month, $49.99/year, 7-day trial) with
+  v2 §13.2's stated prices ($5.99/month, $49.99/year, 7-day trial — the fixture
+  models the annual offer) with
   only the raw numbers fixed — the annual plan's per-month figure is a
   real `49.99 / 12` computed in code, so `PremiumScreen`'s existing
   "Save %" math actually runs against it. Settings > Developer gained a
@@ -1626,8 +1634,10 @@ actually exists):
   `grammarlens_premium_monthly` and `grammarlens_premium_annual`, all three in
   `lib/services/subscription_service.dart`. One subscription group holds both
   products, so Apple's one-introductory-offer-per-group-per-customer rule
-  means a user who takes the 7-day trial on monthly cannot take a second one
-  on annual — intended, but the paywall copy is written knowing it.
+  means a user who takes the monthly trial cannot take a second one on
+  annual — intended, but the paywall copy is written knowing it. (Written
+  when both trials were 7 days; since 2026-09-17 the annual plan's trial is
+  7 days and the monthly plan's is 3 — read live, never hard-coded.)
 
 - **Apple Small Business Program: enroll.** 15% commission instead of 30%,
   which roughly doubles net revenue at this scale and is what every margin
@@ -1724,7 +1734,9 @@ change is wasted work) — **all shipped**, see "Where we are now" above:
 - [x] Merge Early Access and Paywall into one Premium screen; retire the "Early
   Access" name
 - [x] Replace the 3-day trial with the 7-day card-up-front model everywhere; trial
-  length and prices from a single source, never hardcoded copy
+  length and prices from a single source, never hardcoded copy *(superseded
+  2026-09-17: annual 7 days, monthly 3 days, both read from RevenueCat; no day
+  count is written in app copy)*
 - [x] Add the required App Store disclosure block to the purchase point
 - [x] Remove unbuilt features from the purchase surface
 - [x] Rebuild Home as a "today" screen (Daily Test state, Topic Practice, weak
