@@ -378,7 +378,8 @@ void main() {
       await db.close();
     }
 
-    test('the columns and every stored value are gone; the rest of the '
+    test(
+        'the columns and every stored value are gone; the rest of the '
         'profile survives', () async {
       await seedV18Profile();
       final storage = StorageService(dbName: dbName);
@@ -389,8 +390,7 @@ void main() {
       expect(profile.learningGoal, LearningGoal.work);
       expect(profile.avatar, Avatar.values[2]);
 
-      expect(await profileColumns(),
-          ['id', 'name', 'learning_goal', 'avatar']);
+      expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
       // Nothing of the old values remains anywhere in the row.
       final db = await databaseFactory.openDatabase(path);
       final raw = (await db.query('user_profile')).single;
@@ -422,8 +422,7 @@ void main() {
       await db.close();
 
       expect(await StorageService(dbName: dbName).getUserProfile(), isNull);
-      expect(await profileColumns(),
-          ['id', 'name', 'learning_goal', 'avatar']);
+      expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
     });
 
     test('saving a profile works on the migrated table', () async {
@@ -450,14 +449,71 @@ void main() {
       final profile = await StorageService(dbName: dbName).getUserProfile();
       expect(profile!.name, 'Ada');
       expect(profile.avatar, Avatar.values[2]);
-      expect(await profileColumns(),
-          ['id', 'name', 'learning_goal', 'avatar']);
+      expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
     });
 
     test('a fresh install never creates the columns', () async {
       await StorageService(dbName: dbName).getUserProfile();
-      expect(await profileColumns(),
-          ['id', 'name', 'learning_goal', 'avatar']);
+      expect(await profileColumns(), ['id', 'name', 'learning_goal', 'avatar']);
+    });
+  });
+
+  group('v20: the AI permission table', () {
+    const dbName = 'test_migration_v20.db';
+    late String path;
+
+    setUp(() async {
+      path = join(await getDatabasesPath(), dbName);
+      await databaseFactory.deleteDatabase(path);
+    });
+
+    /// A v19-shaped database: everything but ai_consent, holding a profile.
+    Future<void> seedV19() async {
+      final db = await databaseFactory.openDatabase(path);
+      await db.execute('''
+        CREATE TABLE user_profile (
+          id INTEGER PRIMARY KEY CHECK (id = 0),
+          name TEXT NOT NULL,
+          learning_goal TEXT NOT NULL,
+          avatar TEXT
+        )
+      ''');
+      await db.insert('user_profile',
+          {'id': 0, 'name': 'Ada', 'learning_goal': 'work', 'avatar': null});
+      await db.setVersion(19);
+      await db.close();
+    }
+
+    test(
+        'an existing user gets the table with no row: never asked, existing '
+        'data untouched', () async {
+      await seedV19();
+      final storage = StorageService(dbName: dbName);
+
+      expect(await storage.getAiConsent(), isNull);
+      expect((await storage.getUserProfile())!.name, 'Ada');
+      await storage.setAiConsent(granted: true);
+      expect((await storage.getAiConsent())!.allowsSending, isTrue);
+    });
+
+    test('a replayed migration (downgrade, then upgrade) keeps the decision',
+        () async {
+      await seedV19();
+      await StorageService(dbName: dbName).setAiConsent(granted: true);
+
+      final db = await databaseFactory.openDatabase(path);
+      await db.setVersion(19);
+      await db.close();
+
+      final consent = await StorageService(dbName: dbName).getAiConsent();
+      expect(consent!.allowsSending, isTrue);
+    });
+
+    test('a fresh install creates the table too', () async {
+      final storage = StorageService(dbName: dbName);
+      expect(await storage.getAiConsent(), isNull);
+      await storage.setAiConsent(granted: false);
+      expect((await storage.getAiConsent())!.granted, isFalse);
     });
   });
 }

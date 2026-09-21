@@ -202,6 +202,19 @@ as each one lands, with literal status words (see above):
   general-mix instruction. Personalization moves to Premium features later.
   PRD v2 §13.12. Deploy the proxy and ship the app together.
 
+- **AI permission before Topic Practice, part 1 — implemented, automated tests
+  only; device check pending.** A full-screen permission screen ("Feedback on
+  your answers") appears inside `launchPracticeSet` before the length picker,
+  until the user agrees. Stored in a new single-row `ai_consent` table (schema
+  v20, versioned, fails closed, survives "Reset progress"). Declining costs
+  nothing and the Daily Test is unaffected. Part 2 (Data toggle, onboarding
+  wording, analytics) follows. Outside this repo and still open before
+  submission: the privacy policy must name Anthropic and this flow, the App
+  Store privacy label must list user content shared with a third party, and the
+  App Review notes should say how to reach the screen (Topic Practice, first
+  session). No claim about the provider's retention or training is made
+  anywhere in the app.
+
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
 now displays persisted monthly progress and the selected avatar on Home, with

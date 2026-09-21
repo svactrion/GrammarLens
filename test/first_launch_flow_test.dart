@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -62,6 +63,16 @@ class _FakeStorageService extends StorageService {
   bool freePracticeCountRead = false;
   bool freePracticeStartedRecorded = false;
   int freePracticeCount = 0;
+
+  // The Daily Test sends nothing to the AI provider's feedback path, so it
+  // must never ask for, or depend on, the permission to do so.
+  bool aiConsentRead = false;
+
+  @override
+  Future<AiConsent?> getAiConsent() async {
+    aiConsentRead = true;
+    return null;
+  }
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
@@ -278,6 +289,7 @@ void main() {
     await scrollAndTap(tester, find.text('Maybe later'));
 
     expect(completed, isNotNull);
+    expect(storageService.aiConsentRead, isFalse);
     expect(storageService.freePracticeCountRead, isFalse);
     expect(storageService.freePracticeStartedRecorded, isFalse);
     expect(storageService.freePracticeCount, 0);

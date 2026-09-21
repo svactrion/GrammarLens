@@ -4233,3 +4233,49 @@ unnoticed.
   `home_screen_*` and `daily_test_*` fakes were updated for the new signature.
   Proxy not deployed: it and the app must ship together, since an app that
   still sent `weakSpots` would now get a 400.
+
+## 2026-09-22 (AI permission before Topic Practice, part 1: storage, screen, gate)
+
+- **[Problem]** App Review guideline 5.1.2(i) requires clear disclosure and
+  explicit permission before personal data is shared with a third-party AI.
+  Topic Practice sends the user's typed answers and the question text to
+  Anthropic (Claude) through the proxy, with no permission step.
+- **[Engineering]** What leaves the device, checked in code: only
+  `score_answers` carries user text (`items[].prompt` and `userAnswer`);
+  `generate_practice_set` sends a topic id and a count; the proxy never
+  forwards the anonymous device id to Anthropic; the Daily Test sends nothing
+  about the user (previous entry) and is graded on the device. `PracticeScreen`
+  is constructed only inside `launchPracticeSet`, so that function is the one
+  place a session, and therefore any answer, can begin.
+- **[Product]** The check lives inside `launchPracticeSet`, after the
+  entitlement, free-quota and session-cap checks and before the length picker
+  (a user who says no is not first asked to choose a length). It reads the
+  stored decision itself; there is no parameter a caller can pass to skip it,
+  the same rule as the free-tier gate. Declining generates nothing, records no
+  session and spends none of the free tier's daily practice. The screen returns
+  on the next attempt; the Daily Test never asks.
+- **[Engineering]** Schema v20: single-row `ai_consent` table (`granted`,
+  `decided_at`, `consent_version`), created by the migration with no row (an
+  existing user was never asked). `AiConsent.currentVersion` is 1; a grant given
+  for a lower version does not allow sending, so a later change of provider or
+  data re-asks. "Reset progress" does not touch it (permission is a setting,
+  not progress; a test pins this). The read fails closed (an unreadable decision
+  means asking again), unlike the quota checks around it, which fail open. If
+  saving a yes fails, that launch proceeds (the user did agree) and the next
+  one asks again. A second tap while a check is in progress is ignored
+  (`ensureAiConsent`'s guard), so two screens, or two launches, cannot stack.
+- **[Product]** `AiConsentScreen`: full screen, text scrolls, "Agree and
+  continue" and "Not now" pinned in a footer; back arrow or system back counts as
+  a decline. Wording is the approved draft. It says nothing about how the
+  provider stores or uses data, on purpose (a test scans the screen for such
+  claims); that belongs to the provider and the privacy policy.
+- **[Validation]** `practice_launch_consent_test.dart` drives both real callers
+  (`TopicPracticeScreen`, `WeakSpotDetailScreen`): first ask, agree, not now
+  (nothing generated or counted, asked again), back arrow, existing grant, stale
+  version, unreadable decision, failed save, permission before the length
+  picker, and the double tap. Mutation checks: ignoring the gate's result, removing the
+  guard and failing open each turn tests red. `ai_consent_screen_test.dart`
+  pins the wording and the layout at 375x667 and 320x568, Large text, system
+  scale up to 2x, both themes. The two existing launch tests grant permission in
+  their fakes, since they are about the quota gates; the Day-0 test asserts the
+  Daily Test never reads it. Migration tests cover v19 to v20 and a replay.

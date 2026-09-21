@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../models/ai_consent.dart';
 import '../models/app_theme_mode.dart';
 import '../models/app_text_size.dart';
 import '../models/daily_test_question.dart';
@@ -26,7 +27,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 19;
+  static const _dbVersion = 20;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -106,6 +107,19 @@ class StorageService {
     CREATE TABLE IF NOT EXISTS text_size_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       size TEXT NOT NULL
+    )
+  ''';
+
+  /// The single latest decision about sending practice answers to the AI
+  /// provider (see `AiConsent`). No row means the user was never asked. The
+  /// table is deliberately outside `resetProgressData`: permission is a setting,
+  /// not progress.
+  static const _createAiConsentTable = '''
+    CREATE TABLE IF NOT EXISTS ai_consent (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      granted INTEGER NOT NULL CHECK (granted IN (0, 1)),
+      decided_at TEXT NOT NULL,
+      consent_version INTEGER NOT NULL
     )
   ''';
 
@@ -287,6 +301,7 @@ class StorageService {
         await db.execute(_createClimbEntriesTable);
         await db.execute(_createMonthlyMedalResultsTable);
         await db.execute(_createWelcomeBadgeTable);
+        await db.execute(_createAiConsentTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -439,6 +454,13 @@ class StorageService {
         // over an already-rebuilt table.
         if (oldVersion < 19) {
           await _dropProfileAgeAndOccupation(db);
+        }
+
+        // v19 -> v20: ai_consent, the user's permission to send Topic
+        // Practice answers to the AI provider. Nothing is backfilled: an
+        // existing user has never been asked, so no row is the right start.
+        if (oldVersion < 20) {
+          await db.execute(_createAiConsentTable);
         }
       },
     );
@@ -613,6 +635,37 @@ class StorageService {
     await db.insert(
       'text_size_settings',
       {'id': 0, 'size': size.toJson()},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// The latest AI-provider permission decision, or null if the user has never
+  /// been asked.
+  Future<AiConsent?> getAiConsent() async {
+    final db = await _database;
+    final rows = await db.query('ai_consent', limit: 1);
+    if (rows.isEmpty) return null;
+    final row = rows.first;
+    return AiConsent(
+      granted: row['granted'] == 1,
+      decidedAt: DateTime.parse(row['decided_at'] as String),
+      version: row['consent_version'] as int,
+    );
+  }
+
+  /// Records a decision, stamped with [AiConsent.currentVersion], replacing
+  /// the previous one.
+  Future<void> setAiConsent(
+      {required bool granted, DateTime? decidedAt}) async {
+    final db = await _database;
+    await db.insert(
+      'ai_consent',
+      {
+        'id': 0,
+        'granted': granted ? 1 : 0,
+        'decided_at': (decidedAt ?? DateTime.now()).toIso8601String(),
+        'consent_version': AiConsent.currentVersion,
+      },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

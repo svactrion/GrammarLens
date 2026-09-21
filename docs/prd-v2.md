@@ -813,6 +813,20 @@ Daily Test no longer leans toward their own weak spots. The local error profile
 is still written by the Daily Test and still feeds Home and Review; it just no
 longer feeds generation.
 
+### 13.13 Permission before answers go to the AI provider (2026-09-22)
+
+Only one thing the app does sends what the user wrote to a third party: Topic
+Practice scoring (`score_answers`: the question text and the typed answer, to
+Anthropic's Claude through the proxy). App Review guideline 5.1.2(i) requires
+that to be disclosed and explicitly permitted first. The permission is asked
+once, on the first Topic Practice launch, inside `launchPracticeSet`
+(the single choke point, no caller-supplied flag), before the length picker and
+before anything is generated or counted. It is versioned, stored locally,
+fails closed, and is revocable from Profile → Data (part 2). Declining keeps
+the Daily Test fully working, since it sends nothing about the user (§13.12).
+The screen states what is sent, to whom, why and what never leaves, and
+deliberately makes no claim about the provider's own handling of the data.
+
 ---
 
 *Living document. Open decisions in §7 get resolved in place, with the

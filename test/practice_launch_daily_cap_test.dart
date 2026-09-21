@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
@@ -22,6 +23,16 @@ class _FakeStorageService extends StorageService {
   int sessionCount;
 
   _FakeStorageService({this.sessionCount = 0});
+
+  // These tests are about the quota gates, so the user has already agreed to
+  // send answers to the AI provider; the permission gate has its own file
+  // (practice_launch_consent_test.dart).
+  @override
+  Future<AiConsent?> getAiConsent() async => AiConsent(
+        granted: true,
+        decidedAt: DateTime(2026, 1, 1),
+        version: AiConsent.currentVersion,
+      );
 
   @override
   Future<Map<String, TopicStats>> getTopicStats() async => const {};
