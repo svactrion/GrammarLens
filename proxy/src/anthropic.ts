@@ -1,7 +1,7 @@
 import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
 import { logUpstreamFailure, upstreamErrorType } from './error_log';
-import { logUsage } from './usage_log';
+import { elapsedMs, logUsage } from './usage_log';
 import type {
   GenerateDailyTestRequest,
   GeneratePracticeSetRequest,
@@ -313,6 +313,10 @@ function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
 export async function callAnthropic(env: Env, operation: AnthropicOperation): Promise<unknown> {
   const body = buildBody(operation);
 
+  // Timing covers only the wait on Anthropic (not validation or the quota
+  // check), which is the part whose duration the Daily Test's load time
+  // depends on. See `logUsage` for what may be logged.
+  const startedAt = Date.now();
   let response: Response;
   try {
     response = await fetch(ENDPOINT, {
@@ -326,7 +330,7 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
     });
   } catch {
     // No exception object is logged: its message can carry request text.
-    logUpstreamFailure(operation, 'network_error');
+    logUpstreamFailure(operation, 'network_error', { durationMs: elapsedMs(startedAt) });
     throw new ProxyError('upstream_error', 502, 'Could not reach the upstream service.');
   }
 
@@ -341,7 +345,11 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
     } catch {
       // Body unreadable: the status alone is logged.
     }
-    logUpstreamFailure(operation, 'http_error', { httpStatus: response.status, errorType });
+    logUpstreamFailure(operation, 'http_error', {
+      httpStatus: response.status,
+      errorType,
+      durationMs: elapsedMs(startedAt),
+    });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an error.');
   }
 
@@ -349,15 +357,21 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
   try {
     decoded = (await response.json()) as typeof decoded;
   } catch {
-    logUpstreamFailure(operation, 'unreadable_body', { httpStatus: response.status });
+    logUpstreamFailure(operation, 'unreadable_body', {
+      httpStatus: response.status,
+      durationMs: elapsedMs(startedAt),
+    });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
   // Logged before the content is checked: a response that later fails to
   // parse was still billed, and that cost belongs in the measurement.
-  logUsage(operation, decoded.usage);
+  logUsage(operation, decoded.usage, elapsedMs(startedAt));
   const textBlock = decoded.content?.find((block) => block.type === 'text');
   if (!textBlock?.text) {
-    logUpstreamFailure(operation, 'no_text_block', { httpStatus: response.status });
+    logUpstreamFailure(operation, 'no_text_block', {
+      httpStatus: response.status,
+      durationMs: elapsedMs(startedAt),
+    });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
 
@@ -366,7 +380,10 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
   } catch {
     // The parse exception's message quotes the start of the model's text
     // (which can contain the user's own words), so it is not logged.
-    logUpstreamFailure(operation, 'invalid_json_content', { httpStatus: response.status });
+    logUpstreamFailure(operation, 'invalid_json_content', {
+      httpStatus: response.status,
+      durationMs: elapsedMs(startedAt),
+    });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
 }

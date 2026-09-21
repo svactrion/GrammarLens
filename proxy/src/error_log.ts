@@ -1,5 +1,5 @@
 import type { AnthropicOperation } from './anthropic';
-import { usageKind } from './usage_log';
+import { durationField, usageKind } from './usage_log';
 
 /** What went wrong with an upstream (Anthropic) call, as a fixed vocabulary. */
 export type UpstreamFailure =
@@ -45,15 +45,16 @@ export function upstreamErrorType(bodyText: string): string {
  * Writes one line to the Workers log stream for a failed Anthropic call.
  *
  * PRIVACY CONTRACT — only the fields built below are ever logged: the
- * operation, its kind, the failure category, the HTTP status and a whitelisted
- * Anthropic error type. Never the upstream response body or any exception
+ * operation, its kind, the failure category, the HTTP status, a whitelisted
+ * Anthropic error type and how long the call had been running (`duration_ms`,
+ * a number, so a hang or a slow timeout shows up next to the successes). Never the upstream response body or any exception
  * object/message (both can carry text from the request or the response), and
  * never anything from the request. Do not add fields without keeping that true.
  */
 export function logUpstreamFailure(
   operation: AnthropicOperation,
   failure: UpstreamFailure,
-  details: { httpStatus?: number; errorType?: string } = {},
+  details: { httpStatus?: number; errorType?: string; durationMs?: number } = {},
 ): void {
   console.error(
     JSON.stringify({
@@ -63,6 +64,7 @@ export function logUpstreamFailure(
       failure,
       http_status: details.httpStatus ?? null,
       upstream_error_type: details.errorType ?? null,
+      duration_ms: durationField(details.durationMs),
     }),
   );
 }

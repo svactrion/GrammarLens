@@ -68,7 +68,7 @@ Every successful Anthropic call writes one JSON line with `console.log`
 in `wrangler.jsonc`) and `wrangler tail` shows live:
 
 ```json
-{"event":"anthropic_usage","kind":"topic_practice","operation":"score_answers","item_count":5,"input_tokens":1100,"output_tokens":400}
+{"event":"anthropic_usage","kind":"topic_practice","operation":"score_answers","item_count":5,"input_tokens":1100,"output_tokens":400,"duration_ms":6200}
 ```
 
 - `kind` is `daily_test` or `topic_practice`; a practice session is two lines
@@ -77,8 +77,15 @@ in `wrangler.jsonc`) and `wrangler tail` shows live:
 - Token counts come from the `usage` object Anthropic returns; a missing or
   non-numeric value is logged as `null`. Logged even if the content later
   fails to parse, because the call was still billed.
+- `duration_ms` is the wall time of the call to Anthropic, from just before
+  the request until its body was read (not validation or the quota check); in
+  Workers the clock advances across I/O, which is what is being measured. It
+  is what tells you how long a Daily Test really takes to generate (compare it
+  with `output_tokens`: generation time is mostly output-token bound). It is
+  also on the failure line below, so a hang or a slow timeout shows up next to
+  the successes.
 - **Nothing user-related is ever logged by this line** — no device id, prompt,
-  question, answer, weak spot or generated text. The line is built field by
+  question, answer or generated text. The line is built field by
   field, and `test/usage_log.test.ts` checks every console channel for
   planted secrets. Do not add fields without keeping that true.
 - Measuring: filter Workers Logs on `event = anthropic_usage`, average
@@ -91,7 +98,7 @@ in `wrangler.jsonc`) and `wrangler tail` shows live:
 A failed Anthropic call writes one `console.error` JSON line (`src/error_log.ts`):
 
 ```json
-{"event":"anthropic_failure","kind":"topic_practice","operation":"score_answers","failure":"http_error","http_status":429,"upstream_error_type":"rate_limit_error"}
+{"event":"anthropic_failure","kind":"topic_practice","operation":"score_answers","failure":"http_error","http_status":429,"upstream_error_type":"rate_limit_error","duration_ms":31000}
 ```
 
 `failure` is one of `network_error`, `http_error`, `unreadable_body`,

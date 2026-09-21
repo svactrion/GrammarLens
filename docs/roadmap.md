@@ -114,6 +114,10 @@ as each one lands, with literal status words (see above):
   error body on a non-200, and the JSON parse exception on unusable
   content) could echo response text; **fixed 2026-09-21** (see the failure-log
   entry below).
+- **Proxy `duration_ms` — implemented and tested; not deployed, no data yet.**
+  Usage and failure log lines carry the wall time of the call to Anthropic, so
+  the real generation time of a Daily Test (and any hang) can be read from
+  Workers Logs. Numbers only; the privacy contract is unchanged.
 - **Proxy failure logging — content-free, implemented and tested, not
   deployed.** A failed Anthropic call now logs one JSON line: operation, kind
   (daily_test / topic_practice), failure category, HTTP status and Anthropic's

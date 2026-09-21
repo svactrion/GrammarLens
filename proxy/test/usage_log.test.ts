@@ -65,6 +65,7 @@ describe('token usage logging', () => {
         item_count: 5,
         input_tokens: 1234,
         output_tokens: 567,
+        duration_ms: expect.any(Number),
       },
     ]);
   });
@@ -90,6 +91,7 @@ describe('token usage logging', () => {
         item_count: 3,
         input_tokens: 900,
         output_tokens: 1700,
+        duration_ms: expect.any(Number),
       },
       {
         event: 'anthropic_usage',
@@ -98,6 +100,7 @@ describe('token usage logging', () => {
         item_count: 2,
         input_tokens: 1100,
         output_tokens: 400,
+        duration_ms: expect.any(Number),
       },
     ]);
   });
@@ -129,7 +132,7 @@ describe('token usage logging', () => {
     // The usage line has exactly the allowed fields and nothing else.
     for (const line of usageLines()) {
       expect(Object.keys(line).sort()).toEqual(
-        ['event', 'input_tokens', 'item_count', 'kind', 'operation', 'output_tokens'].sort(),
+        ['duration_ms', 'event', 'input_tokens', 'item_count', 'kind', 'operation', 'output_tokens'].sort(),
       );
     }
   });
@@ -148,6 +151,7 @@ describe('token usage logging', () => {
         item_count: 5,
         input_tokens: null,
         output_tokens: null,
+        duration_ms: expect.any(Number),
       },
     ]);
   });
@@ -168,5 +172,82 @@ describe('token usage logging', () => {
     expect(response.status).toBe(502);
     expect(usageLines()).toHaveLength(1);
     expect(usageLines()[0]).toMatchObject({ input_tokens: 50, output_tokens: 60 });
+  });
+
+  describe('duration_ms', () => {
+    const realNow = Date.now;
+    let clock = 1_000_000;
+
+    beforeEach(() => {
+      clock = 1_000_000;
+      Date.now = () => clock;
+    });
+    afterEach(() => {
+      Date.now = realNow;
+    });
+
+    /** Anthropic answers after [ms] of (fake) wall time. */
+    function anthropicTakes(ms: number, payload: unknown, usage?: unknown) {
+      globalThis.fetch = (async () => {
+        clock += ms;
+        return new Response(
+          JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(payload) }], usage }),
+          { status: 200 },
+        );
+      }) as typeof fetch;
+    }
+
+    it('logs how long the call to Anthropic took, in whole milliseconds', async () => {
+      anthropicTakes(12_345, { questions: [] }, { input_tokens: 10, output_tokens: 20 });
+
+      await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+
+      expect(usageLines()).toEqual([
+        {
+          event: 'anthropic_usage',
+          kind: 'daily_test',
+          operation: 'generate_daily_test',
+          item_count: 5,
+          input_tokens: 10,
+          output_tokens: 20,
+          duration_ms: 12_345,
+        },
+      ]);
+    });
+
+    it('times each call on its own', async () => {
+      anthropicTakes(800, { items: [] });
+      await post('/v1/generate-practice-set', { deviceId: 'd1', topicId: 'articles', count: 3 });
+      anthropicTakes(4_000, { feedback: [] });
+      await post('/v1/score-answers', {
+        deviceId: 'd1',
+        items: [{ id: 'q1', type: 'fill_in_blank', prompt: 'p', userAnswer: 'a' }],
+      });
+
+      expect(usageLines().map((l) => l.duration_ms)).toEqual([800, 4_000]);
+    });
+
+    it('is a plain number and never anything else (no text, no id)', async () => {
+      anthropicTakes(5, { questions: [] });
+
+      await post('/v1/generate-daily-test', { deviceId: 'DEVICE-SECRET-1', count: 5 });
+
+      const line = usageLines()[0];
+      expect(typeof line?.duration_ms).toBe('number');
+      expect(logged.join('\n')).not.toContain('DEVICE-SECRET-1');
+    });
+
+    it('still records the duration of a billed call whose content turns out unusable', async () => {
+      // A 200 whose text block is not valid JSON.
+      globalThis.fetch = (async () => {
+        clock += 7_000;
+        return new Response(JSON.stringify({ content: [{ type: 'text', text: 'not json' }] }), { status: 200 });
+      }) as typeof fetch;
+
+      const response = await post('/v1/generate-practice-set', { deviceId: 'd1', topicId: 'articles', count: 5 });
+
+      expect(response.status).toBe(502);
+      expect(usageLines()[0]).toMatchObject({ duration_ms: 7_000 });
+    });
   });
 });

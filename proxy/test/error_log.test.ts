@@ -72,6 +72,7 @@ describe('upstream failure logging', () => {
         failure: 'http_error',
         http_status: 429,
         upstream_error_type: 'rate_limit_error',
+        duration_ms: expect.any(Number),
       },
     ]);
     expect(logged.join('\n')).not.toContain(SECRET);
@@ -132,6 +133,7 @@ describe('upstream failure logging', () => {
         failure: 'invalid_json_content',
         http_status: 200,
         upstream_error_type: null,
+        duration_ms: expect.any(Number),
       },
     ]);
     expect(logged.join('\n')).not.toContain(SECRET);
@@ -166,12 +168,47 @@ describe('upstream failure logging', () => {
     expect(logged.join('\n')).not.toContain(SECRET);
   });
 
+  describe('duration_ms on failures', () => {
+    const realNow = Date.now;
+    let clock = 5_000_000;
+    beforeEach(() => {
+      clock = 5_000_000;
+      Date.now = () => clock;
+    });
+    afterEach(() => {
+      Date.now = realNow;
+    });
+
+    it('records how long a non-200 took to arrive', async () => {
+      upstreamReturns(() => {
+        clock += 30_000;
+        return new Response('{}', { status: 529 });
+      });
+
+      await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+
+      expect(failureLines()[0]).toMatchObject({ failure: 'http_error', http_status: 529, duration_ms: 30_000 });
+    });
+
+    it('records how long a network failure took to fail', async () => {
+      globalThis.fetch = (async () => {
+        clock += 45_000;
+        throw new Error(`timed out near ${SECRET}`);
+      }) as typeof fetch;
+
+      await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+
+      expect(failureLines()[0]).toMatchObject({ failure: 'network_error', duration_ms: 45_000 });
+      expect(logged.join('\n')).not.toContain(SECRET);
+    });
+  });
+
   it('logs only the allowed fields on every failure line', async () => {
     upstreamReturns(() => new Response('{}', { status: 500 }));
     await post('/v1/generate-practice-set', practiceRequest);
 
     expect(Object.keys(failureLines()[0] ?? {}).sort()).toEqual(
-      ['event', 'failure', 'http_status', 'kind', 'operation', 'upstream_error_type'].sort(),
+      ['duration_ms', 'event', 'failure', 'http_status', 'kind', 'operation', 'upstream_error_type'].sort(),
     );
   });
 });

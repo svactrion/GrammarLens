@@ -4308,3 +4308,24 @@ unnoticed.
   leaving it alone, the analytics parameters, and the smallest screen at 2x text.
   `practice_launch_consent_test.dart` asserts the launch-side events, and that an
   existing grant reports nothing. The onboarding test pins the exact sentence.
+
+## 2026-09-22 (proxy: duration_ms on usage and failure logs)
+
+- **[Problem]** The first Daily Test's load time was a guess: the proxy logged
+  tokens but not how long Anthropic took, so the benefit of preloading (next
+  batches) could not be judged.
+- **[Engineering]** `anthropic_usage` and `anthropic_failure` lines gain
+  `duration_ms`: wall time from just before the request to Anthropic until its
+  body was read (failure lines: until the failure was known). It excludes
+  validation and the quota check, so it is the upstream wait alone. In Workers
+  the clock advances across I/O, which is exactly what is measured. It is a
+  plain number (a missing or invalid value is `null`), so the privacy contract
+  in `usage_log.ts` still holds and its comment now lists the field. A billed call
+  whose content turns out unusable keeps its duration.
+- **[Validation]** Tests use a controlled `Date.now` and a fetch mock that
+  advances it: the logged value equals the simulated wait (usage, each call
+  timed on its own, an unusable-content call, a non-200, a network failure), and
+  the exact key sets of both lines include `duration_ms`. The planted-secret
+  tests still pass. Not deployed: the owner deploys the proxy. After deploying,
+  compare `duration_ms` with `output_tokens` for `generate_daily_test` in
+  Workers Logs.
