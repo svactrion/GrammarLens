@@ -6,8 +6,19 @@ import '../models/daily_test_question.dart';
 /// (`.`/`!`/`?`) so "He goes." and "he goes" match but internal punctuation
 /// (which can be part of the actual answer, e.g. a contraction) is left
 /// alone.
+///
+/// Curly quotes and apostrophes (’ ‘ “ ”) become their straight
+/// counterparts first: a phone keyboard's smart punctuation types "isn’t"
+/// where the answer key says "isn't", and that is the same answer, not a
+/// mistake.
 String normalizeAnswer(String raw) {
-  final collapsed = raw.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+  final straightened = raw
+      .replaceAll('\u2019', "'")
+      .replaceAll('\u2018', "'")
+      .replaceAll('\u201C', '"')
+      .replaceAll('\u201D', '"');
+  final collapsed =
+      straightened.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
   return collapsed.replaceFirst(RegExp(r'[.!?]$'), '');
 }
 

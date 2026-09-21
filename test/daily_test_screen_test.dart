@@ -122,6 +122,24 @@ void main() {
   }
 
   testWidgets(
+    'the answer field turns off autocorrect, suggestions and smart '
+    'punctuation, so the keyboard cannot fix the learner\'s mistake',
+    (tester) async {
+      final service = DailyTestService(
+        claudeService: _FlakyClaudeService(failCount: 0),
+        storageService: storageService,
+      );
+      await pumpScreen(tester, service);
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.autocorrect, isFalse);
+      expect(field.enableSuggestions, isFalse);
+      expect(field.smartQuotesType, SmartQuotesType.disabled);
+      expect(field.smartDashesType, SmartDashesType.disabled);
+    },
+  );
+
+  testWidgets(
     'a load failure shows an in-screen error with a human sentence and a '
     'Try again action, not a SnackBar',
     (tester) async {

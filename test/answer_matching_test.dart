@@ -246,6 +246,59 @@ void main() {
     test('leaves internal punctuation alone', () {
       expect(normalizeAnswer("She isn't ready."), "she isn't ready");
     });
+
+    test('turns curly apostrophes and quotes into straight ones', () {
+      expect(normalizeAnswer('She isn\u2019t ready'), "she isn't ready");
+      expect(normalizeAnswer('\u2018tis'), "'tis");
+      expect(normalizeAnswer('\u201CGo\u201D'), '"go"');
+    });
+  });
+
+  group('curly punctuation in a checked answer', () {
+    DailyTestQuestion contraction() => DailyTestQuestion(
+          item: const PracticeItem(
+            id: 'q1',
+            type: PracticeItemType.errorCorrection,
+            context: 'She not ready.',
+            instruction: 'Rewrite the sentence.',
+          ),
+          topicId: 'tenseSelection',
+          correctAnswer: "She isn't ready",
+          commonWrongAnswers: const [
+            CommonWrongAnswer(
+              answer: "She don't ready",
+              comment: "Use 'isn't' with 'ready'.",
+            ),
+          ],
+        );
+
+    test('a curly apostrophe still matches the correct answer', () {
+      final result =
+          checkDailyTestAnswer(contraction(), 'She isn\u2019t ready.');
+      expect(result.kind, AnswerMatchKind.correct);
+    });
+
+    test('a curly apostrophe still matches a predicted wrong answer', () {
+      final result =
+          checkDailyTestAnswer(contraction(), 'She don\u2019t ready');
+      expect(result.kind, AnswerMatchKind.commonWrong);
+      expect(result.comment, "Use 'isn't' with 'ready'.");
+    });
+
+    test('a curly apostrophe in the answer key matches a straight one', () {
+      final question = DailyTestQuestion(
+        item: const PracticeItem(
+          id: 'q1',
+          type: PracticeItemType.fillInBlank,
+          instruction: 'Fill in.',
+        ),
+        topicId: 'tenseSelection',
+        correctAnswer: 'isn\u2019t',
+        commonWrongAnswers: const [],
+      );
+      expect(checkDailyTestAnswer(question, "isn't").kind,
+          AnswerMatchKind.correct);
+    });
   });
 
   group('computeDailyTestScore', () {

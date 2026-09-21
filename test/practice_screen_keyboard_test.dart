@@ -107,6 +107,24 @@ void main() {
     );
   }
 
+  testWidgets(
+    'the answer field turns off autocorrect, suggestions and smart '
+    'punctuation, so the keyboard cannot fix the learner\'s mistake',
+    (tester) async {
+      await pumpScreen(
+        tester,
+        logicalSize: devices.values.first.size,
+        devicePixelRatio: devices.values.first.dpr,
+      );
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.autocorrect, isFalse);
+      expect(field.enableSuggestions, isFalse);
+      expect(field.smartQuotesType, SmartQuotesType.disabled);
+      expect(field.smartDashesType, SmartDashesType.disabled);
+    },
+  );
+
   for (final MapEntry(key: deviceName, value: device) in devices.entries) {
     group(deviceName, () {
       testWidgets('short fill-in-blank: button stays visible above keyboard',

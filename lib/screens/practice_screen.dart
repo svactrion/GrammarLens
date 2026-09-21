@@ -250,6 +250,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         controller: _controllers[item.id],
                         decoration:
                             const InputDecoration(hintText: 'Your answer'),
+                        // The keyboard must not fix the learner's mistake: a
+                        // corrected answer would measure the keyboard, not
+                        // the learner.
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        smartQuotesType: SmartQuotesType.disabled,
+                        smartDashesType: SmartDashesType.disabled,
                         onChanged: (value) =>
                             setState(() => _answers[item.id] = value),
                       ),

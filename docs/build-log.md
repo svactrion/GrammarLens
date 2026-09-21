@@ -4462,3 +4462,26 @@ unnoticed.
   direction, gravity and fade. Ignoring reduced motion, or not removing the entry
   on leave, turns tests red. The existing Welcome, analytics and Day-0 tests pass
   unchanged.
+
+## 2026-09-22 (answers: curly quotes, and no keyboard correction)
+
+- **[Problem]** A phone keyboard can change what the learner typed before the app
+  sees it, in two ways that spoil a measurement. Smart punctuation types "isn’t"
+  with a curly apostrophe, which an exact comparison against "isn't" calls wrong.
+  Autocorrect and suggestions can silently repair the very mistake the test is
+  looking for ("She can speaks" becomes "She can speak").
+- **[Engineering]** `normalizeAnswer` turns ’ ‘ into `'` and “ ” into `"` before
+  the rest of the normalization, and it does this on both sides of the
+  comparison (the answer key and each predicted wrong answer go through the same
+  function), so a curly character in generated content matches too. The Daily Test
+  and Topic Practice answer fields turn off autocorrect, suggestions, smart quotes
+  and smart dashes. Practice answers are graded by the model, not compared, so
+  only the keyboard half matters there: the model should see what the learner
+  actually wrote. Nothing else about matching changed.
+- **[Validation]** Tests: the normalization of each of the four characters; a
+  curly apostrophe still gives `correct` and `commonWrong` with the right
+  comment; a curly apostrophe in the key matches a straight one; both fields
+  carry the four settings. Removing the ’ replacement or flipping a setting turns
+  the matching tests red. Not covered: what a real iOS keyboard does with these
+  flags, which needs a device (the flags are the documented Flutter switches for
+  it).
