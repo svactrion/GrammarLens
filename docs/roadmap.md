@@ -51,6 +51,13 @@ as each one lands, with literal status words (see above):
   in `lib/` says "unlimited" (a test asserts this on the Premium screen).
   The App Store Connect subscription descriptions are outside this repo and
   were not re-checked here.
+- **Resume refresh (day rollover, greeting) — already implemented; now covered
+  end to end.** The premise that no `AppLifecycleState` hook exists was stale
+  (see the closed entry under "What's next"). No third hook was added. Two
+  observers exist with disjoint jobs: the app-level one (analytics, medal
+  finalization) and Home's (Daily Test day, greeting, climb month, weak
+  spots). `test/app_resume_test.dart` drives an overnight background through
+  the real app with an injected clock. Automated tests only.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
@@ -1630,7 +1637,20 @@ actually exists):
   **Resolved 2026-09-21:** `dailySessionLimit` lowered to 5 (a margin
   decision, PRD v2 §13.8); 5 sessions = 10 proxy units + 1 Daily Test unit,
   inside `DEVICE_DAILY_LIMIT` = 15, which is unchanged.
-- **Open bug, found 2026-09-15, not yet fixed: Home doesn't refresh Daily
+- **Closed (recorded 2026-09-21; the bug text below is the 2026-09-15
+  original, kept as history): Home didn't refresh Daily Test's day-rollover
+  (or its own greeting) on resume, because nothing in this app hooked
+  `AppLifecycleState` at all.** Found stale during the launch-checklist pass:
+  `HomeScreen` has had a resume observer since the Monthly Climb preview
+  commit `0cf7eaa` (refreshes the Daily Test day, greeting, climb month and
+  weak spots, with a Home-level midnight test), and `GrammarLensApp` has one
+  for analytics and medal finalization (`60b799b`). Two observers, disjoint
+  jobs, no shared work. New `test/app_resume_test.dart` proves the whole
+  overnight scenario through the real app with an injected clock (new
+  test-only `GrammarLensApp.clock`): after resume the new day and greeting
+  show, and one resume triggers finalization, Daily Test read and climb read
+  exactly once each. Automated tests only; no device confirmation recorded.
+  Original entry: **Home doesn't refresh Daily
   Test's day-rollover (or its own greeting) on resume, because nothing in
   this app hooks `AppLifecycleState` at all.** `HomeScreen._loadTodaysDailyTest`
   only runs from `initState`; a device left open across local midnight

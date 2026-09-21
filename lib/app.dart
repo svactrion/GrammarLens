@@ -28,7 +28,16 @@ class GrammarLensApp extends StatefulWidget {
   final StorageService? storageService;
   final AnalyticsService? analyticsService;
 
-  const GrammarLensApp({super.key, this.storageService, this.analyticsService});
+  /// Test-only clock forwarded to [HomeScreen] so a day rollover can be
+  /// driven end to end through the app's lifecycle handling.
+  final DateTime Function()? clock;
+
+  const GrammarLensApp({
+    super.key,
+    this.storageService,
+    this.analyticsService,
+    this.clock,
+  });
 
   @override
   State<GrammarLensApp> createState() => _GrammarLensAppState();
@@ -76,6 +85,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     super.dispose();
   }
 
+  // Resume work is split by owner, never duplicated: this observer runs the
+  // app-wide jobs (analytics, medal finalization) that must happen even
+  // before Home exists; `HomeScreen`'s own observer refreshes what only Home
+  // shows (Daily Test day, greeting, climb month, weak spots). One resume
+  // triggers each job exactly once — see test/app_resume_test.dart.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) _analyticsService.appPaused();
@@ -284,6 +298,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               storageService: _storageService,
               analyticsService: _analyticsService,
               subscriptionService: _subscriptionService,
+              clock: widget.clock,
               onAvatarTap: () => _openAvatarPickerFromHome(context),
             ),
             ReviewScreen(
