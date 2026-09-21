@@ -11,4 +11,9 @@ class AppLinks {
       'https://ahmettayfur.com/products/grammarlens/terms/';
   static const String supportUrl =
       'https://ahmettayfur.com/products/grammarlens/support/';
+
+  /// Third-party pages named in the Credits screen's avatar attribution.
+  static const String avatarSetUrl =
+      'https://www.figma.com/community/file/1514963172455082116/cute-animal-3d-icons';
+  static const String ccBy4Url = 'https://creativecommons.org/licenses/by/4.0/';
 }

@@ -21,6 +21,7 @@ import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
+import 'credits_screen.dart';
 import 'data_screen.dart';
 import 'theme_preview_screen.dart';
 
@@ -300,6 +301,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // assigning one automatically ever hit this at all.
   late final Avatar _fallbackAvatar = Avatar.random();
 
+  void _openCredits() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CreditsScreen()),
+    );
+  }
+
   void _openData() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -429,6 +436,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.storage_rounded,
             label: 'Data',
             onTap: _openData,
+          ),
+          _NavRow.icon(
+            icon: Icons.info_outline_rounded,
+            label: 'Credits',
+            onTap: _openCredits,
           ),
           if (kDebugMode && DebugTools.enabledForTesting) ...[
             const SizedBox(height: 32),

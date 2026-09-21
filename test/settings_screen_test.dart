@@ -11,6 +11,7 @@ import 'package:grammar_lens/models/monthly_medal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
+import 'package:grammar_lens/screens/credits_screen.dart';
 import 'package:grammar_lens/screens/data_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
@@ -438,7 +439,7 @@ void main() {
 
   testWidgets(
       'sections appear in order: avatar, name, medals, appearance, data, '
-      'developer', (tester) async {
+      'credits, developer', (tester) async {
     await pumpSettings(tester);
     // Tall enough that the lazy list builds every section at once, so their
     // positions can be compared in one frame.
@@ -456,6 +457,7 @@ void main() {
       top(find.text('Monthly medals')),
       top(find.text('Appearance')),
       top(find.text('Data')),
+      top(find.text('Credits')),
       top(find.text('Developer')),
     ];
     expect(ordered, orderedEquals([...ordered]..sort()));
@@ -492,6 +494,17 @@ void main() {
 
     expect(find.byType(DataScreen), findsOneWidget);
     expect(find.text('Reset progress data'), findsOneWidget);
+  });
+
+  testWidgets('the Credits row opens the Credits screen', (tester) async {
+    await pumpSettings(tester);
+
+    await reveal(tester, find.text('Credits'));
+    await tester.tap(find.text('Credits'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreditsScreen), findsOneWidget);
+    expect(find.textContaining('Tran Mau Tri Tam'), findsOneWidget);
   });
 
   group('Developer section (debug-only entitlement override)', () {
@@ -688,6 +701,7 @@ void main() {
       // Real user features stay too.
       await reveal(tester, find.text('Data'));
       expect(find.text('Data'), findsOneWidget);
+      expect(find.text('Credits'), findsOneWidget);
     });
 
     testWidgets('a debug build still shows every developer entry',

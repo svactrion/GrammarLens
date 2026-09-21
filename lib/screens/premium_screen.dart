@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/avatar.dart';
 import '../models/practice_length.dart';
@@ -9,10 +8,10 @@ import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
-import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/legal_link.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
 
@@ -375,11 +374,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       child: Wrap(
                         alignment: WrapAlignment.center,
                         children: [
-                          _LegalLink(
+                          LegalLink(
                             label: 'Privacy Policy',
                             url: AppLinks.privacyPolicyUrl,
                           ),
-                          _LegalLink(
+                          LegalLink(
                             label: 'Terms of Service',
                             url: AppLinks.termsUrl,
                           ),
@@ -1636,41 +1635,6 @@ _PlanPricing _planPricing(
     smallDetail: 'Billed ${annualProduct.priceString} annually.',
     savingsLabel: savingsLabel,
   );
-}
-
-/// A small text link to a legal page, disabled (greyed out, non-
-/// interactive) rather than shown as live and then failing silently or
-/// erroring, whenever [url] is still the empty placeholder from
-/// app_links.dart — see that file's doc comment. Once a real URL is set
-/// (as of the custom-domain batch, both are), tapping opens it in the
-/// system browser via `url_launcher`.
-class _LegalLink extends StatelessWidget {
-  final String label;
-  final String url;
-
-  const _LegalLink({required this.label, required this.url});
-
-  Future<void> _open() async {
-    final uri = Uri.parse(url);
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      AppMessenger.show('Could not open $label.');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      // Explicit color for the same reason Restore Purchases' button
-      // needs one — see that TextButton's comment — even though this one
-      // is disabled today; it stays correct once a real URL lands.
-      style: TextButton.styleFrom(
-        foregroundColor: Theme.of(context).colorScheme.secondary,
-      ),
-      onPressed: url.isEmpty ? null : _open,
-      child: Text(label),
-    );
-  }
 }
 
 /// Shown when [SubscriptionService.getOfferings] comes back empty — no

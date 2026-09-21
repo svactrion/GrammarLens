@@ -4103,3 +4103,31 @@ unnoticed.
   Trade-off: real bugs now appear as a category and need a reproduction to
   diagnose. Not deployed.
 
+## 2026-09-21 (Profile layout rework, Data screen, avatar credits)
+
+- **[Product]** Order decided: Avatar, Name (+ Save), Monthly medals,
+  Appearance, Data, Credits, Developer (debug only, last). The "Change avatar"
+  row stays a row that opens the picker screen; an inline carousel was
+  considered and rejected (a horizontal `PageView` inside the page's vertical
+  list, and the picker's autosave, slot geometry and `Hero` all live in the
+  pushed screen).
+- **[Product]** "Reset progress data" moved off Profile onto a Data screen so
+  the destructive option is not visible on the page itself; the existing
+  confirmation dialog is the second layer. Text, buttons and messages moved
+  verbatim.
+- **[Product]** Attribution is required by the avatar set's CC BY 4.0 licence.
+  Credits is a screen, not a dialog (long text, two URLs, must fit at large
+  text sizes). The sentence is plain text, with two link buttons under it
+  instead of inline tappable spans (larger touch targets, same pattern as the
+  Premium legal links).
+- **[Engineering]** Three commits: layout plus a private `_NavRow` (the avatar
+  row's markup, reused by Data and Credits); `DataScreen`; `LegalLink` extracted
+  from Premium plus `CreditsScreen`. Premium tests passed unchanged.
+  Tests that tapped Appearance controls now scroll to them first (Appearance is
+  below the medals), and the "release" tests anchor on the Data row instead of
+  the reset button. The section-order test compares vertical positions on a
+  tall surface; it fails on the old order (checked by reverting the layout).
+  Link taps are not tested: no `url_launcher` fake and no new dependency.
+- **[Idea, not planned]** Theme choice as one toggle button; recorded in the
+  roadmap's out-of-scope table only.
+

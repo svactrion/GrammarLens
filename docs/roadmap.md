@@ -33,6 +33,7 @@ Nothing is marked complete unless the record says so.
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
 | v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. |
 | Shared Daily Test: the daily question set is generated once per day and shown identically to every user, instead of once per user | **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: today's Daily Test is biased toward the device's own weak spots (PRD v2 §12.8) and a shared set cannot be chosen by an error profile; (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs. |
+| Theme setting as a single toggle button (instead of the System / Light / Dark segmented control) | Not planned, idea only (recorded 2026-09-21). The three-way control is shipped, tested and device-reviewed; a toggle would drop the explicit "System" choice or need a long-press or cycle to keep it, which is a product decision, not a polish item. Nothing is scheduled. |
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD
@@ -165,6 +166,24 @@ as each one lands, with literal status words (see above):
   finalization) and Home's (Daily Test day, greeting, climb month, weak
   spots). `test/app_resume_test.dart` drives an overnight background through
   the real app with an injected clock. Automated tests only.
+- **Avatar attribution (CC BY 4.0) + Profile layout rework — implemented,
+  automated tests only; device check pending.** The avatar set is adapted from
+  "Cute Animal 3D Icons" by Tran Mau Tri Tam (Figma Community), CC BY 4.0; the
+  owner confirmed all twelve avatars, Crab (`avatar_07`) included, come from
+  that set. No separate licence item existed in this file, so this entry is the
+  record and closes it: Profile has a Credits row that opens a Credits screen
+  with the attribution sentence word for word and two link buttons (the Figma
+  file, the licence). The links open exactly as the Premium legal links do:
+  `_LegalLink` was made the public `LegalLink` widget (external browser, the
+  same "Could not open …" message), with no behaviour change. Profile now reads
+  Avatar, Name (+ Save), Monthly medals, Appearance (theme, text size), Data,
+  Credits, and the debug-only Developer section last (still gated by
+  `DebugTools`). The avatar row is unchanged, only moved. "Reset progress data"
+  left Profile: a Data row opens a Data screen holding the explanation, the
+  button and the unchanged confirmation dialog, so the destructive option
+  needs two taps. Link taps are not tested (no `url_launcher` fake, no new
+  dependency); tests assert the buttons exist with live https URLs. Age and
+  occupation stay removed.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
