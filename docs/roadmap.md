@@ -122,10 +122,17 @@ as each one lands, with literal status words (see above):
   (they used the platform default font, a latent mismatch since the
   Nunito Sans change), so column widths can differ from before by a few
   points; and tests load the real font, since `flutter test` otherwise
-  measures in a font about twice as wide. **Open, not changed here:** at some
-  normal sizes the existing table already cuts a label to two lines with an
-  ellipsis (measured at 320 pt @1x and 393 pt @1.3x); the brief said
-  normal screens must not change, so this is left for a product decision.
+  measures in a font about twice as wide. **Update 2026-09-21 (owner
+  decision):** a sales table must not clip, so the table now also stacks
+  whenever any label would not fit in its two lines (measured as drawn: same
+  style, text scale and label-cell width). Sizes where nothing was clipped keep
+  the three-column table unchanged. With the real font: table at 360-430 pt
+  wide at 1x and 1.1x, 375-430 pt at 1.15x, 414-430 pt at 1.3x; stacked at
+  320 pt from 1x up, and at 393 pt from 1.3x up (the previously reported
+  cases), and everywhere at 1.5x and above. Every size that was already
+  unclipped kept its table; every size that changed had a clipped label
+  before (checked by running old and new logic over a width x scale grid).
+  Automated tests only; not device-confirmed.
 - **Resume refresh (day rollover, greeting) — already implemented; now covered
   end to end.** The premise that no `AppLifecycleState` hook exists was stale
   (see the closed entry under "What's next"). No third hook was added. Two

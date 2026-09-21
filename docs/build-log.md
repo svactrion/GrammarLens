@@ -4051,3 +4051,18 @@ unnoticed.
   web build was identical before and after and contains none of the tool
   strings. The iOS release build could not be run here (Xcode 27 `lipo`
   issue), so the AOT binary was not inspected. Debug builds unchanged.
+
+## 2026-09-21 (launch checklist: Premium table never clips)
+
+- **[Product]** Owner decision reversing the earlier "normal screens must not
+  change" constraint: a sales table must not cut a label off with an ellipsis.
+- **[Engineering]** The comparison table now also falls back to the stacked
+  layout when any label does not fit in two lines, measured with the same
+  style, text scale and label-cell width it is drawn with; the existing 96 pt
+  minimum still applies. Old and new logic were compared over widths 320-430
+  and text scales 1-3: every size that changed had a clipped label under the
+  old table, and every unclipped size kept its table. Tests now assert that
+  grid, plus that no label is clipped in either layout. Tests that expect the
+  table load the real Nunito Sans and use the app theme (under the default
+  test font almost every size would stack).
+

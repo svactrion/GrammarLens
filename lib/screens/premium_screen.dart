@@ -886,12 +886,38 @@ class _ComparisonTable extends StatelessWidget {
               constraints.maxWidth - premiumWidth - freeColumnWidth;
         }
 
+        // The table only counts as fitting if every label reads in full in
+        // the two lines a row is sized for. A label that needs a third line
+        // would be cut off with an ellipsis, and a sales table must not clip
+        // what it sells. Measured exactly as drawn: same style, same text
+        // scale, and the label cell's width minus its own padding.
+        final labelStyle =
+            theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
+        bool everyLabelFitsInTwoLines() {
+          final textWidth = availableForLabel - _labelCellHorizontalPadding;
+          if (textWidth <= 0) return false;
+          for (final row in _buildComparisonRows(freeText)) {
+            final painter = TextPainter(
+              text: TextSpan(
+                text: row.label,
+                style: DefaultTextStyle.of(context).style.merge(labelStyle),
+              ),
+              textDirection: TextDirection.ltr,
+              textScaler: MediaQuery.textScalerOf(context),
+              maxLines: 2,
+            )..layout(maxWidth: textWidth);
+            if (painter.didExceedMaxLines) return false;
+          }
+          return true;
+        }
+
         // Even the shortest phrasing leaves the label less than
-        // [minLabelWidth]: three columns no longer fit (a narrow screen at a
-        // large text size). Rather than squeeze, clip or scroll, stack each
-        // row: label on top at full width, its Free and Premium values on one
-        // line below. No content is dropped and nothing scrolls sideways.
-        if (availableForLabel < minLabelWidth) {
+        // [minLabelWidth], or a label would be clipped: three columns no
+        // longer fit (a narrow screen or a large text size). Rather than
+        // squeeze, clip or scroll, stack each row: label on top at full
+        // width, its Free and Premium values on one line below. No content
+        // is dropped and nothing scrolls sideways.
+        if (availableForLabel < minLabelWidth || !everyLabelFitsInTwoLines()) {
           return _StackedComparison(
             key: const Key('comparisonStacked'),
             rows: _buildComparisonRows(longFreeText),
@@ -901,8 +927,6 @@ class _ComparisonTable extends StatelessWidget {
         }
 
         final rows = _buildComparisonRows(freeText);
-        final labelStyle =
-            theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
         final headerHeight = _measuredHeight(context, _headerStyle, 1);
         final dataRowHeight = _measuredHeight(context, labelStyle, 2);
 
@@ -945,6 +969,13 @@ class _ComparisonTable extends StatelessWidget {
     );
   }
 }
+
+/// The label cell's own horizontal padding in [_ComparisonRowLine]; the
+/// table's fit check subtracts it from the label column to get the text width.
+const double _labelCellLeftPadding = 20;
+const double _labelCellRightPadding = 8;
+const double _labelCellHorizontalPadding =
+    _labelCellLeftPadding + _labelCellRightPadding;
 
 const TextStyle _headerStyle =
     TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
@@ -1200,7 +1231,8 @@ class _ComparisonRowLine extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(border: divider),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 5, 8, 5),
+                padding: const EdgeInsets.fromLTRB(
+                    _labelCellLeftPadding, 5, _labelCellRightPadding, 5),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -194,6 +195,17 @@ Package _fakeAnnualPackage() {
 }
 
 void main() {
+  // `flutter test` renders every family in the test font (Ahem, one em wide
+  // per glyph), roughly twice as wide as the real typeface. The comparison
+  // table decides between its table and stacked layouts by measuring its
+  // labels, so tests that expect a particular layout must measure in the real
+  // font: load the bundled Nunito Sans once for the whole file and give those
+  // tests the app theme, which selects it.
+  setUpAll(() async {
+    final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
+    await (FontLoader('NunitoSans')..addFont(bytes)).load();
+  });
+
   Future<void> pumpPremium(
     WidgetTester tester,
     SubscriptionService service, {
@@ -212,6 +224,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: buildAppTheme(Brightness.light),
         home: PremiumScreen(
           storageService: _FakeStorageServiceForAvatar(),
           analyticsService: analyticsService ?? _FakeAnalyticsService(),
@@ -1793,7 +1806,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(
         MaterialApp(
-          theme: brightness == null ? null : buildAppTheme(brightness),
+          theme: buildAppTheme(brightness ?? Brightness.light),
           home: PremiumScreen(
             sourceContext: sourceContext,
             storageService: _FakeStorageServiceForAvatar(),
@@ -1923,16 +1936,6 @@ void main() {
       'stacked comparison layout (launch checklist item 3): when the three '
       'table columns do not fit, rows stack — no horizontal scroll, no '
       'dropped content, no overflow', () {
-    // `flutter test` renders every family in the test font (Ahem, one em
-    // wide per glyph), which is ~2x wider than the real typeface and would
-    // make every layout decision below pessimistic. Load the bundled Nunito
-    // Sans so geometry here matches a phone (the table measures its columns
-    // in the same font it draws them in).
-    setUpAll(() async {
-      final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
-      await (FontLoader('NunitoSans')..addFont(bytes)).load();
-    });
-
     Future<void> pumpAt(
       WidgetTester tester, {
       required Size size,
@@ -2088,30 +2091,96 @@ void main() {
       });
     }
 
-    // Normal screens keep the existing table, byte for byte in behavior.
-    for (final config in [
-      (size: const Size(393, 852), scale: 1.0),
-      (size: const Size(393, 852), scale: 1.3),
-      (size: const Size(375, 667), scale: 1.0),
-      (size: const Size(375, 667), scale: 1.3),
+    // Which layout each size gets, measured in the real font. The rule: the
+    // three-column table only where every label reads in full in its two
+    // lines; anywhere a label would be cut off with an ellipsis, stacked.
+    // Sizes with no clipping keep the existing table unchanged.
+    const keepTable = <(double, double)>[
+      (360, 1.0),
+      (375, 1.0),
+      (390, 1.0),
+      (393, 1.0),
+      (414, 1.0),
+      (430, 1.0),
+      (360, 1.1),
+      (375, 1.1),
+      (390, 1.1),
+      (393, 1.1),
+      (414, 1.1),
+      (430, 1.1),
+      (375, 1.15),
+      (390, 1.15),
+      (393, 1.15),
+      (414, 1.15),
+      (430, 1.15),
+      (414, 1.3),
+      (430, 1.3),
+    ];
+    // Sizes where the previous table cut a label to two lines with an
+    // ellipsis (320 @1x and 393 @1.3x among them) plus every size beyond.
+    const nowStacked = <(double, double)>[
+      (320, 1.0),
+      (320, 1.1),
+      (320, 1.15),
+      (360, 1.15),
+      (320, 1.3),
+      (360, 1.3),
+      (375, 1.3),
+      (390, 1.3),
+      (393, 1.3),
+      (375, 1.5),
+      (393, 1.5),
+      (430, 1.5),
+      (320, 2.0),
+      (375, 2.0),
+      (430, 2.0),
+      (320, 3.0),
+      (375, 3.0),
+      (430, 3.0),
+    ];
+
+    for (final entry in [
+      ...keepTable.map((c) => (c, true)),
+      ...nowStacked.map((c) => (c, false)),
     ]) {
+      final (size, scale) = entry.$1;
+      final expectTable = entry.$2;
       for (final pricingLoaded in [true, false]) {
         testWidgets(
-            'keeps the three-column table at ${config.size.width.toInt()}x'
-            '${config.size.height.toInt()} @${config.scale}x text, pricing '
+            '${expectTable ? 'keeps the table' : 'stacks'} at '
+            '${size.toInt()}x667 @${scale}x text, pricing '
             '${pricingLoaded ? 'loaded' : 'unavailable'}', (tester) async {
           await pumpAt(
             tester,
-            size: config.size,
-            textScale: config.scale,
+            size: Size(size, 667),
+            textScale: scale,
             brightness: Brightness.light,
             pricingLoaded: pricingLoaded,
           );
-          await tester.scrollUntilVisible(
-              find.byKey(const Key('comparisonTable')), 300);
-          expect(find.byKey(const Key('comparisonStacked')), findsNothing);
-          expect(find.byKey(const Key('premiumStripHeader')), findsOneWidget);
+          final layout = find.byKey(
+              Key(expectTable ? 'comparisonTable' : 'comparisonStacked'));
+          await tester.scrollUntilVisible(layout, 300);
           expect(tester.takeException(), isNull);
+          expect(
+            find.byKey(
+                Key(expectTable ? 'comparisonStacked' : 'comparisonTable')),
+            findsNothing,
+          );
+
+          // The invariant behind the rule: whichever layout is on screen,
+          // no label is cut off.
+          for (final label in labels) {
+            final text = find.descendant(
+              of: find.byKey(ValueKey('comparisonRow_$label')),
+              matching: find.text(label),
+            );
+            expect(tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
+                isFalse,
+                reason: '"$label" is clipped at ${size.toInt()} @${scale}x');
+          }
+          if (expectTable) {
+            expect(find.byKey(const Key('premiumStripHeader')), findsOneWidget);
+          }
         });
       }
     }
