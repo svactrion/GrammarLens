@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
 import '../models/daily_test_question.dart';
-import '../models/error_entry.dart';
 import '../models/item_feedback.dart';
 import '../models/practice_item.dart';
 import '../models/practice_set.dart';
@@ -19,12 +18,14 @@ enum ClaudeApiErrorKind {
   /// AppConfig.isConfigured is false — a local dev-setup problem, not a
   /// runtime one.
   notConfigured,
+
   /// The HTTP request to the proxy itself failed (no connectivity, DNS,
   /// timeout, ...) — never reached the proxy's own error handling.
   network,
   unauthorized,
   invalidRequest,
   quotaExceeded,
+
   /// Anthropic (or the proxy itself) failed for any other reason. The
   /// proxy's own raw error detail never reaches here by design — see
   /// proxy/src/anthropic.ts.
@@ -34,7 +35,8 @@ enum ClaudeApiErrorKind {
 class ClaudeApiException implements Exception {
   final String message;
   final ClaudeApiErrorKind kind;
-  const ClaudeApiException(this.message, {this.kind = ClaudeApiErrorKind.upstream});
+  const ClaudeApiException(this.message,
+      {this.kind = ClaudeApiErrorKind.upstream});
 
   @override
   String toString() => 'ClaudeApiException: $message';
@@ -91,23 +93,17 @@ class ClaudeService {
     return PracticeSet(topicId: topic.id.name, items: items);
   }
 
-  /// [weakSpots] is the device's local error profile
-  /// (`StorageService.getWeakSpots`); only `topicId`/`frequency` travel to
-  /// the proxy — the ranking-to-prompt-text logic (previously
-  /// `_dailyTestUserPrompt` here) now lives server-side, same as every
-  /// other piece of prompt text.
+  /// The Daily Test request carries no user data: just the anonymous quota
+  /// [deviceId] (used by the proxy, never forwarded to Anthropic) and the
+  /// question count. The prompt is the same for every user, so the set is a
+  /// general mix, not a personalized one (docs/build-log.md, 2026-09-21).
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     final json = await _post('/v1/generate-daily-test', {
       'deviceId': deviceId,
       'count': count,
-      'weakSpots': [
-        for (final spot in weakSpots)
-          {'topicId': spot.topicId, 'frequency': spot.frequency},
-      ],
     });
     return (json['questions'] as List)
         .map((e) => DailyTestQuestion.fromJson(e as Map<String, dynamic>))
@@ -141,7 +137,8 @@ class ClaudeService {
     return ScoringResult(topicId: practiceSet.topicId, feedback: feedback);
   }
 
-  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> _post(
+      String path, Map<String, dynamic> body) async {
     if (!_isConfigured) {
       throw const ClaudeApiException(
         'The practice service is not configured. Copy '
@@ -154,7 +151,8 @@ class ClaudeService {
 
     http.Response response;
     try {
-      response = await _client.post(_uri(path), headers: _headers, body: jsonEncode(body));
+      response = await _client.post(_uri(path),
+          headers: _headers, body: jsonEncode(body));
     } catch (_) {
       throw const ClaudeApiException(
         "Couldn't reach the practice service. Check your connection and "

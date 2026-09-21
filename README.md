@@ -30,8 +30,9 @@ A mobile app (Flutter, iOS) that teaches grammar from **your own answers**,
 with two entry points:
 
 - **Daily Test** — free, forever, for everyone: a 5-question daily warm-up,
-  the same set for every user, graded instantly with no AI call per
-  answer. The always-free hook into the product.
+  a general mix generated the same way for every user (no personalization, no
+  user data sent), graded instantly with no AI call per answer. The
+  always-free hook into the product.
 - **Topic Practice** — the AI-personalized core loop, and the part that
   actually costs money to run: pick a topic and a session length
   (Quick · 3, Standard · 5, Extended · 10), answer a mixed set (sentence

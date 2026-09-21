@@ -61,7 +61,6 @@ class _CountingClaudeService extends ClaudeService {
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     generationCalls++;
     throw StateError('Cached Home flow must not generate questions');

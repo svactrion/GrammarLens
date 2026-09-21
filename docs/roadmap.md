@@ -32,7 +32,7 @@ Nothing is marked complete unless the record says so.
 | Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
 | v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. |
-| Shared Daily Test: the daily question set is generated once per day and shown identically to every user, instead of once per user | **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: today's Daily Test is biased toward the device's own weak spots (PRD v2 §12.8) and a shared set cannot be chosen by an error profile; (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs. |
+| Shared Daily Test: the daily question set is generated once per day and shown identically to every user, instead of once per user | **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: a shared set cannot be chosen by an error profile (the per-device set was biased toward the device's own weak spots, PRD v2 §12.8, until 2026-09-21, when that was removed ahead of this change, §13.12); (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs. |
 | Theme setting as a single toggle button (instead of the System / Light / Dark segmented control) | Not planned, idea only (recorded 2026-09-21). The three-way control is shipped, tested and device-reviewed; a toggle would drop the explicit "System" choice or need a long-press or cycle to keep it, which is a product decision, not a polish item. Nothing is scheduled. |
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
@@ -192,6 +192,15 @@ as each one lands, with literal status words (see above):
   it once to the new Home; the two Day-0 buttons are disabled until the result
   is saved (this also closes a stale-Home race). Covered end to end through the
   real app (`test/first_launch_climb_test.dart`). Not device-confirmed.
+
+- **Daily Test sends no weak spots — implemented and tested (Flutter and
+  proxy); proxy not deployed.** `generate_daily_test` no longer receives the
+  error profile: client (`DailyTestService`, `ClaudeService`) and proxy
+  (`validateGenerateDailyTest`, the prompt's bias branch) drop `weakSpots`, and
+  the proxy rejects the field with a 400, so the Daily Test sends no user data
+  to Anthropic. The "no practice history yet" prompt sentence became a plain
+  general-mix instruction. Personalization moves to Premium features later.
+  PRD v2 §13.12. Deploy the proxy and ship the app together.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice

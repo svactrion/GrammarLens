@@ -4208,3 +4208,28 @@ unnoticed.
   pass, as they should). `first_launch_flow_test.dart` also asserts the
   `pendingClimb` handed over (answered / all skipped / abandoned). The existing
   Home return tests pass unchanged.
+
+## 2026-09-21 (Daily Test: weak spots no longer sent)
+
+- **[Product]** `generate_daily_test` stops sending `weakSpots`. Reasons: after
+  launch the Daily Test moves to one shared set, personalization is reserved
+  for Premium, and with this change the Daily Test sends no user data to
+  Anthropic. Only Topic Practice answers leave the device (permission comes in
+  a later batch).
+- **[Engineering]** Client: `ClaudeService.generateDailyTestQuestions` takes
+  only `deviceId` and `count`; `DailyTestService.getTodaysSet` no longer reads
+  the error profile. Proxy: `validateGenerateDailyTest` accepts only `deviceId`
+  and `count`, `WeakSpotInput` and the prompt's bias branch are gone, and the
+  prompt is one fixed sentence (a varied general mix across all topics). The
+  old "This user has no practice history yet" wording, which is false as a
+  general statement, is replaced. The field is removed, not accepted and
+  ignored: the proxy's existing unknown-field rejection now enforces it, and
+  the app has never shipped, so no older client needs it.
+- **[Validation]** Client tests: the request body is exactly
+  `{deviceId, count}`, and generation never reads the error profile (a counting
+  store proves it). Proxy tests: `weakSpots` (empty or not) and any other extra
+  field give a 400 and never reach Anthropic, and two different devices produce
+  byte-identical Anthropic bodies with no device id in them. `first_launch_*`,
+  `home_screen_*` and `daily_test_*` fakes were updated for the new signature.
+  Proxy not deployed: it and the app must ship together, since an app that
+  still sent `weakSpots` would now get a 400.

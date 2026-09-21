@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
@@ -15,17 +16,14 @@ import 'package:grammar_lens/services/storage_service.dart';
 class _FakeClaudeService extends ClaudeService {
   int generateCallCount = 0;
   void Function()? onGenerate;
-  List<WeakSpot>? lastWeakSpots;
 
   @override
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     generateCallCount++;
     onGenerate?.call();
-    lastWeakSpots = weakSpots;
     return List.generate(
       count,
       (i) => DailyTestQuestion(
@@ -51,9 +49,25 @@ class _FailingClaudeService extends ClaudeService {
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     throw const FormatException('simulated parse failure');
+  }
+}
+
+/// A real, ffi-backed store that counts reads of the error profile, so a test
+/// can prove the Daily Test never touches it.
+class _RecordingStorage extends StorageService {
+  int weakSpotReads = 0;
+
+  _RecordingStorage({required super.dbName});
+
+  @override
+  Future<List<WeakSpot>> getWeakSpots({
+    int limit = 10,
+    ReviewSortOrder sortOrder = ReviewSortOrder.recent,
+  }) {
+    weakSpotReads++;
+    return super.getWeakSpots(limit: limit, sortOrder: sortOrder);
   }
 }
 
@@ -119,13 +133,8 @@ void main() {
   });
 
   test(
-      'a new user with no error profile generates with an empty weak-spot '
-      'list', () async {
-    await dailyTestService.getTodaysSet();
-    expect(claudeService.lastWeakSpots, isEmpty);
-  });
-
-  test('an existing error profile is passed through to generation', () async {
+      'generation never reads the local error profile: an existing weak '
+      'spot changes nothing about the request', () async {
     await storageService.insertErrors([
       ErrorEntry(
         topicId: 'articles',
@@ -134,11 +143,16 @@ void main() {
         source: ErrorSource.topicPractice,
       ),
     ]);
+    final recording = _RecordingStorage(dbName: dbName);
+    final service = DailyTestService(
+      claudeService: claudeService,
+      storageService: recording,
+    );
 
-    await dailyTestService.getTodaysSet();
+    await service.getTodaysSet();
 
-    expect(claudeService.lastWeakSpots, isNotEmpty);
-    expect(claudeService.lastWeakSpots!.single.topicId, 'articles');
+    expect(claudeService.generateCallCount, 1);
+    expect(recording.weakSpotReads, 0);
   });
 
   test(

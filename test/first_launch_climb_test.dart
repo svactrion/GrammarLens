@@ -29,7 +29,6 @@ class _FakeClaudeService extends ClaudeService {
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async =>
       List.generate(
         count,

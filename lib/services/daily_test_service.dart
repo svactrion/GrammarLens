@@ -4,9 +4,9 @@ import 'claude_service.dart';
 import 'storage_service.dart';
 
 /// Orchestrates the free-tier Daily Test (PRD v2 §12.2, §12.5, §12.8): get
-/// today's cached set if one exists, otherwise generate exactly one —
-/// personalized from the device's local error profile when it has one —
-/// and cache it. Used by both Home and the Day-0 onboarding test.
+/// today's cached set if one exists, otherwise generate exactly one — a
+/// general mix, the same request for every user — and cache it. Used by both
+/// Home and the Day-0 onboarding test.
 class DailyTestService {
   /// 5 questions — enough to feel like a real test, short enough to finish
   /// in one sitting; matches the existing "Standard" Topic Practice length.
@@ -35,15 +35,10 @@ class DailyTestService {
     final cached = await storageService.getDailyTestSetForToday();
     if (cached != null) return cached;
 
-    // An empty profile (new user, nothing practiced yet) is exactly what
-    // asks ClaudeService for a general/varied mix instead of a biased one
-    // — see generateDailyTestQuestions' doc comment.
-    final weakSpots = await storageService.getWeakSpots(limit: questionCount);
     final deviceId = await storageService.getOrCreateDeviceId();
     final questions = await claudeService.generateDailyTestQuestions(
       deviceId: deviceId,
       count: questionCount,
-      weakSpots: weakSpots,
     );
     return storageService.saveDailyTestSet(questions, day: day);
   }

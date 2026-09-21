@@ -30,7 +30,6 @@ class _FlakyClaudeService extends ClaudeService {
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     callCount++;
     if (callCount <= failCount) {
@@ -59,7 +58,6 @@ class _QuotaExceededClaudeService extends ClaudeService {
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     throw const ClaudeApiException(
       "You've reached today's practice limit on this device. Please try "

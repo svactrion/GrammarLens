@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'package:grammar_lens/data/topics.dart';
-import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/practice_set.dart';
 import 'package:grammar_lens/services/claude_service.dart';
@@ -42,9 +41,11 @@ void main() {
       final result = await serviceWith(client)
           .generatePracticeSet(kTopics.first, deviceId: 'device-1', count: 5);
 
-      expect(captured!.url.toString(), 'https://proxy.test/v1/generate-practice-set');
+      expect(captured!.url.toString(),
+          'https://proxy.test/v1/generate-practice-set');
       expect(captured!.headers['x-grammarlens-token'], 'test-token');
-      final sentBody = jsonDecode((captured! as http.Request).body) as Map<String, dynamic>;
+      final sentBody =
+          jsonDecode((captured! as http.Request).body) as Map<String, dynamic>;
       expect(sentBody, {
         'deviceId': 'device-1',
         'topicId': kTopics.first.id.name,
@@ -58,7 +59,8 @@ void main() {
   });
 
   group('generateDailyTestQuestions', () {
-    test('sends only topicId/frequency for each weak spot', () async {
+    test('sends only the quota device id and the count, nothing about the user',
+        () async {
       http.BaseRequest? captured;
       final client = MockClient((request) async {
         captured = request;
@@ -82,20 +84,11 @@ void main() {
       final result = await serviceWith(client).generateDailyTestQuestions(
         deviceId: 'device-1',
         count: 5,
-        weakSpots: [
-          WeakSpot(
-            topicId: 'articles',
-            errorType: 'missing_article',
-            frequency: 3,
-            lastSeen: DateTime(2026, 1, 1),
-          ),
-        ],
       );
 
-      final sentBody = jsonDecode((captured! as http.Request).body) as Map<String, dynamic>;
-      expect(sentBody['weakSpots'], [
-        {'topicId': 'articles', 'frequency': 3},
-      ]);
+      final sentBody =
+          jsonDecode((captured! as http.Request).body) as Map<String, dynamic>;
+      expect(sentBody, {'deviceId': 'device-1', 'count': 5});
       expect(result, hasLength(1));
     });
   });
@@ -138,9 +131,15 @@ void main() {
         answers: {'q1': 'the'},
       );
 
-      final sentBody = jsonDecode((captured! as http.Request).body) as Map<String, dynamic>;
+      final sentBody =
+          jsonDecode((captured! as http.Request).body) as Map<String, dynamic>;
       expect(sentBody['items'], [
-        {'id': 'q1', 'type': 'fill_in_blank', 'prompt': 'I saw ___ cat.', 'userAnswer': 'the'},
+        {
+          'id': 'q1',
+          'type': 'fill_in_blank',
+          'prompt': 'I saw ___ cat.',
+          'userAnswer': 'the'
+        },
       ]);
       expect(result.feedback.single.isCorrect, isTrue);
       expect(result.topicId, 'articles');
@@ -153,7 +152,8 @@ void main() {
       required Map<String, dynamic> body,
       required ClaudeApiErrorKind kind,
     }) async {
-      final client = MockClient((request) async => http.Response(jsonEncode(body), status));
+      final client = MockClient(
+          (request) async => http.Response(jsonEncode(body), status));
       await expectLater(
         serviceWith(client).generatePracticeSet(kTopics.first, deviceId: 'd1'),
         throwsA(isA<ClaudeApiException>().having((e) => e.kind, 'kind', kind)),
@@ -176,14 +176,16 @@ void main() {
       );
     });
 
-    test('429 quota_exceeded maps to ClaudeApiErrorKind.quotaExceeded, using '
+    test(
+        '429 quota_exceeded maps to ClaudeApiErrorKind.quotaExceeded, using '
         "the proxy's own message text", () async {
       final client = MockClient(
         (request) async => http.Response(
           jsonEncode({
             'error': 'quota_exceeded',
             'scope': 'device',
-            'message': "You've reached today's practice limit on this device. Please try again tomorrow.",
+            'message':
+                "You've reached today's practice limit on this device. Please try again tomorrow.",
           }),
           429,
         ),
@@ -194,36 +196,45 @@ void main() {
         throwsA(
           isA<ClaudeApiException>()
               .having((e) => e.kind, 'kind', ClaudeApiErrorKind.quotaExceeded)
-              .having((e) => e.message, 'message', contains('try again tomorrow')),
+              .having(
+                  (e) => e.message, 'message', contains('try again tomorrow')),
         ),
       );
     });
 
-    test('502 upstream_error maps to ClaudeApiErrorKind.upstream, never '
-        "leaking Anthropic's own detail (the proxy already stripped it)",
-        () {
+    test(
+        '502 upstream_error maps to ClaudeApiErrorKind.upstream, never '
+        "leaking Anthropic's own detail (the proxy already stripped it)", () {
       return expectMapped(
         status: 502,
-        body: {'error': 'upstream_error', 'message': 'The upstream service returned an error.'},
+        body: {
+          'error': 'upstream_error',
+          'message': 'The upstream service returned an error.'
+        },
         kind: ClaudeApiErrorKind.upstream,
       );
     });
 
     test('a malformed (non-JSON) error body still produces a usable exception',
         () async {
-      final client = MockClient((request) async => http.Response('not json', 500));
+      final client =
+          MockClient((request) async => http.Response('not json', 500));
       await expectLater(
         serviceWith(client).generatePracticeSet(kTopics.first, deviceId: 'd1'),
-        throwsA(isA<ClaudeApiException>().having((e) => e.kind, 'kind', ClaudeApiErrorKind.upstream)),
+        throwsA(isA<ClaudeApiException>()
+            .having((e) => e.kind, 'kind', ClaudeApiErrorKind.upstream)),
       );
     });
 
-    test('a transport failure (e.g. no connectivity) maps to '
+    test(
+        'a transport failure (e.g. no connectivity) maps to '
         'ClaudeApiErrorKind.network, not upstream', () async {
-      final client = MockClient((request) async => throw Exception('socket error'));
+      final client =
+          MockClient((request) async => throw Exception('socket error'));
       await expectLater(
         serviceWith(client).generatePracticeSet(kTopics.first, deviceId: 'd1'),
-        throwsA(isA<ClaudeApiException>().having((e) => e.kind, 'kind', ClaudeApiErrorKind.network)),
+        throwsA(isA<ClaudeApiException>()
+            .having((e) => e.kind, 'kind', ClaudeApiErrorKind.network)),
       );
     });
   });

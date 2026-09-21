@@ -479,6 +479,10 @@ kesildi" hissetmesini engelleyen ucuz bir güven adımı. Zorunlu değil, öneri
 
 ### 12.8 Günlük Test soru havuzu — rastgele mi, profile göre mi, maliyet farkı
 
+> **Superseded 2026-09-21 — see §13.12.** The Daily Test is no longer built
+> from the local error profile; every request is the same general mix. The
+> reasoning below is kept as history.
+
 Fark şurada: tamamen paylaşımlı (mevcut plan) günde **1** üretim çağrısı demek —
 kaç free kullanıcı olursa olsun sabit, neredeyse sıfır maliyet. Kullanıcı başına
 tam kişiselleştirme ise günde **kullanıcı sayısı kadar** üretim çağrısı demek —
@@ -786,6 +790,28 @@ policy has to describe. The policy page never mentioned age or occupation as
 collected data (its only age wording is the 13+ audience statement, which
 stays). If a real use appears later, ask for it at the moment it pays off, not
 in a settings form.
+
+### 13.12 Daily Test no longer sends weak spots (2026-09-21)
+
+`generate_daily_test` used to send the device's most frequent error topics
+(`topicId` and `frequency`, derived from what the user got wrong) so the prompt
+could bias the set. That is removed: the client sends only the anonymous quota
+`deviceId` (used by the proxy, never forwarded to Anthropic) and the question
+count, and the prompt is a fixed general mix. Reasons: after launch the Daily
+Test moves to one shared set for everyone (roadmap, out of scope for launch),
+personalization is kept for Premium, and with this change the Daily Test sends
+no user data to Anthropic at all, which keeps the privacy story to one
+sentence (only Topic Practice answers leave the device, and only with the
+user's permission, §13.13).
+
+The proxy removes the field entirely rather than accepting and ignoring it. It
+already rejects unknown fields, so a request that carries `weakSpots` now gets
+a 400 and never reaches Anthropic; the guarantee is enforced and tested
+server-side, not just by what today's client happens to send. The app has never
+shipped, so no older client depends on the field. What is lost: a user's
+Daily Test no longer leans toward their own weak spots. The local error profile
+is still written by the Daily Test and still feeds Home and Review; it just no
+longer feeds generation.
 
 ---
 
