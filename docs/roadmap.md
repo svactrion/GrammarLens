@@ -37,6 +37,21 @@ Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD
 checks) stay in "What's next" §1, Pre-launch checklist.
 
+**Launch checklist, code items — 2026-09-21.** Progress is recorded per item
+as each one lands, with literal status words (see above):
+
+- **Session cap 10 → 5 — implemented, automated tests only.**
+  `StorageService.dailySessionLimit` is 5. This is a margin decision: at
+  ~$0.034/session (an unmeasured estimate, PRD v2 §13.7), 10 sessions/day is
+  ~$10.20/month against ~$3.54/month of net annual-plan revenue. It also
+  closes the proxy-headroom conflict: 5 sessions = 10 proxy units + 1 Daily
+  Test unit, inside `DEVICE_DAILY_LIMIT` = 15, which is unchanged. The only
+  user-facing quota text is the "That's all for today" dialog, which reads the
+  constant. Premium's comparison table states no session quota, and no string
+  in `lib/` says "unlimited" (a test asserts this on the Premium screen).
+  The App Store Connect subscription descriptions are outside this repo and
+  were not re-checked here.
+
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
 now displays persisted monthly progress and the selected avatar on Home, with
@@ -308,8 +323,8 @@ actually wired today.** Checked against the filesystem, not from memory.
   **ASC metadata:** subscription group display name "GrammarLens Premium";
   product description "Daily topic practice with personalized feedback" —
   replaced an earlier "Unlimited topic practice…" description, which was
-  false: premium is capped at `dailySessionLimit` (10 sessions/day), never
-  unlimited.
+  false: premium is capped at `dailySessionLimit` (5 sessions/day since
+  2026-09-21; it was 10 when this was written), never unlimited.
   **Review assets are placeholders, not launch-ready.** Both products'
   App Review screenshot is a simulator capture of the debug fixture
   offering, not a real device/real price screenshot, and their review
@@ -469,7 +484,8 @@ avatar picker** (`docs/prd-v2.md` §10.1, §11), five independent commits:
   tracks practice sessions started per local calendar day (schema v7);
   `launchPracticeSet` checks it before even opening the length picker and
   shows a "That's all for today" dialog instead of triggering generation
-  once the limit (10/day, a placeholder default — see §7.2) is reached. A
+  once the limit (10/day at the time, a placeholder default — see §7.2;
+  lowered to 5 on 2026-09-21, see PRD v2 §13.8) is reached. A
   session only counts once generation actually succeeds; both the check and
   the write fail open on a storage error
 - **Onboarding privacy note.** One line under the goal options: data stays
@@ -957,8 +973,8 @@ generation with no gate at all — already noted and deferred in this file's
 - **Checked, not found:** no existing UI copy (`PremiumScreen`/paywall
   included) claims "unlimited" anywhere — grepped across `lib/` to confirm
   before writing this batch's own copy, which also avoids the word, since
-  premium is actually bounded by `dailySessionLimit` (10/day), not
-  unlimited.
+  premium is actually bounded by `dailySessionLimit` (10/day then, 5/day
+  since 2026-09-21), not unlimited.
 - **Analytics:** two new events, `free_practice_used` and
   `free_practice_quota_exhausted`, so post-launch data can actually say
   whether `freeDailyPracticeLimit = 1` is the right number, not just
@@ -978,6 +994,9 @@ proxy's per-device wall (a generic "come back tomorrow" message, not
 anything premium-aware) before ever reaching their own local cap. Needs a
 decision before launch: raise `DEVICE_DAILY_LIMIT` to ~25, or lower
 `dailySessionLimit` to 7. Not resolved here — recorded so it isn't lost.
+**Resolved 2026-09-21:** `dailySessionLimit` is now 5 and
+`DEVICE_DAILY_LIMIT` stays 15 — see the 2026-09-21 launch-checklist note in
+"Launch scope" above.
 
 **2026-09-15 — Avatar carousel: fixed the layout bug, replaced the picker
 and the avatar set.** Diagnosed first, confirmed, then fixed
@@ -1608,6 +1627,9 @@ actually exists):
   local cap ever kicks in. Needs a decision before launch: raise
   `DEVICE_DAILY_LIMIT` to ~25, or lower `dailySessionLimit` to 7. See the
   2026-09-15 "Free tier practice quota" entry above for how this was found.
+  **Resolved 2026-09-21:** `dailySessionLimit` lowered to 5 (a margin
+  decision, PRD v2 §13.8); 5 sessions = 10 proxy units + 1 Daily Test unit,
+  inside `DEVICE_DAILY_LIMIT` = 15, which is unchanged.
 - **Open bug, found 2026-09-15, not yet fixed: Home doesn't refresh Daily
   Test's day-rollover (or its own greeting) on resume, because nothing in
   this app hooks `AppLifecycleState` at all.** `HomeScreen._loadTodaysDailyTest`

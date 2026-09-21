@@ -97,6 +97,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text("That's all for today"), findsOneWidget);
+    // The dialog must show the real cap: 5 since 2026-09-21 (PRD v2 §13.8),
+    // pinned literally so a silent change of the constant fails here.
+    expect(StorageService.dailySessionLimit, 5);
+    expect(find.textContaining('all 5 practice sessions'), findsOneWidget);
     // Never got as far as asking how many questions — the cap is checked
     // before generation is even requested, per practice_launch.dart.
     expect(find.text('How many questions?'), findsNothing);

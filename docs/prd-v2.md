@@ -716,6 +716,22 @@ per operation closes §7.1's instrumentation prerequisite and replaces this
 whole section with data. Do that before the numbers here are used for any
 further decision.
 
+### 13.8 Daily session cap lowered 10 → 5 (2026-09-21)
+
+`StorageService.dailySessionLimit` goes from 10 to 5. This is a margin
+decision, made on the §13.7 estimates (which remain unmeasured): at ~$0.034
+per Topic Practice session, 10 sessions/day would cost ~$10.20/month for one
+device, while the annual plan nets ~$3.54/month. At 5 the worst case is ~$5.10.
+
+It also closes the proxy-headroom conflict recorded in `docs/roadmap.md`
+(2026-09-15): a session is 2 proxy units (generate + score), so 5 sessions are
+10 units, plus 1 for the Daily Test — inside `DEVICE_DAILY_LIMIT` = 15, which
+is deliberately **not** changed. The local cap now always binds before the
+proxy's generic per-device wall. The cap is a cost guardrail, not a product
+promise: no user-facing copy states it except the "That's all for today"
+dialog, and nothing anywhere says "unlimited". This resolves §7.2's open
+cap number for launch only; revisit with the token-log data (§13.9).
+
 ---
 
 *Living document. Open decisions in §7 get resolved in place, with the

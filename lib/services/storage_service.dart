@@ -37,9 +37,12 @@ class StorageService {
 
   // Pre-launch checklist (PRD v2 §10.1) — a client-side daily cap bounds
   // Anthropic API spend per device without needing a server-side gate.
-  // "10" is a placeholder reasonable default, not a measured number (§7.2
-  // defers the real free-tier cap to post-launch cost data).
-  static const int dailySessionLimit = 10;
+  // 5 is a margin decision (PRD v2 §13): at an estimated ~$0.034/session,
+  // 10 sessions cost ~$10.20/month against ~$3.54/month of net annual-plan
+  // revenue. Still an unmeasured cost estimate, not measured data. Also keeps
+  // a full day (5 sessions x 2 proxy units + Daily Test) inside the proxy's
+  // DEVICE_DAILY_LIMIT of 15, so the local cap always binds first.
+  static const int dailySessionLimit = 5;
 
   // Free tier's own daily cap on "Practice this" — the one real,
   // Claude-generated practice session a free (non-`hasFullAccess`) user gets
