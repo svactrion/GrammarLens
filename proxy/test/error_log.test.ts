@@ -175,3 +175,72 @@ describe('upstream failure logging', () => {
     );
   });
 });
+
+describe('unhandled error logging', () => {
+  /** A fetch result whose `status` getter throws, so the failure happens
+   * outside every handled Anthropic path and reaches the catch-all. */
+  function upstreamBreaksUnexpectedly(thrown: unknown) {
+    globalThis.fetch = (async () => ({
+      get status(): number {
+        throw thrown;
+      },
+    })) as unknown as typeof fetch;
+  }
+
+  function unhandledLines(): Record<string, unknown>[] {
+    return logged
+      .filter((line) => line.includes('unhandled_error'))
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+  }
+
+  it('logs only the error category and the operation, never the message or stack', async () => {
+    upstreamBreaksUnexpectedly(new TypeError(`bad thing with ${SECRET}`));
+
+    const response = await post('/v1/generate-practice-set', { ...practiceRequest, deviceId: `${SECRET}-device` });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ error: 'internal_error' });
+    expect(unhandledLines()).toEqual([
+      {
+        event: 'unhandled_error',
+        kind: 'topic_practice',
+        operation: 'generate_practice_set',
+        error: 'TypeError',
+      },
+    ]);
+    expect(logged.join('\n')).not.toContain(SECRET);
+  });
+
+  it('classifies the operation for a daily test', async () => {
+    upstreamBreaksUnexpectedly(new Error('x'));
+    await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5, weakSpots: [] });
+
+    expect(unhandledLines()[0]).toMatchObject({ kind: 'daily_test', operation: 'generate_daily_test', error: 'Error' });
+  });
+
+  it('never echoes a custom error name or a thrown string', async () => {
+    const custom = new Error('m');
+    custom.name = `Custom${SECRET}`;
+    upstreamBreaksUnexpectedly(custom);
+    await post('/v1/generate-practice-set', practiceRequest);
+    upstreamBreaksUnexpectedly(`thrown text ${SECRET}`);
+    await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(unhandledLines().map((l) => l.error)).toEqual(['other_error', 'non_error']);
+    expect(logged.join('\n')).not.toContain(SECRET);
+  });
+
+  it('logs only the allowed fields', async () => {
+    upstreamBreaksUnexpectedly(new RangeError('r'));
+    await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(Object.keys(unhandledLines()[0] ?? {}).sort()).toEqual(['error', 'event', 'kind', 'operation']);
+  });
+
+  it('a handled ProxyError still answers as before and logs no unhandled line', async () => {
+    const response = await post('/v1/generate-practice-set', { deviceId: '', topicId: 'articles', count: 5 });
+
+    expect(response.status).toBe(400);
+    expect(unhandledLines()).toEqual([]);
+  });
+});

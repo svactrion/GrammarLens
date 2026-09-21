@@ -4092,3 +4092,14 @@ unnoticed.
   replay and a fresh install. Docs and comments that described the fields were
   updated; dated history was kept with pointers.
 
+## 2026-09-21 (proxy: catch-all error log narrowed)
+
+- **[Engineering]** The catch-all `Unhandled error` log in `proxy/src/index.ts`
+  wrote the whole exception. It now logs `unhandled_error` with the operation,
+  its kind and an error category only (a built-in error name, `other_error`,
+  or `non_error`); no message, stack or cause, and a custom error name is never
+  echoed. Tested by forcing an unexpected error outside every handled path
+  with secrets planted in the message, the request and a thrown string.
+  Trade-off: real bugs now appear as a category and need a reproduction to
+  diagnose. Not deployed.
+

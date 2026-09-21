@@ -1,5 +1,6 @@
 import { requireAppToken } from './auth';
 import { callAnthropic } from './anthropic';
+import { logUnhandledError } from './error_log';
 import { reserveQuota } from './quota';
 import { ProxyError, type Env } from './types';
 import {
@@ -93,7 +94,8 @@ export default {
       return await handleOperation(request, env, op);
     } catch (e) {
       if (e instanceof ProxyError) return e.toResponse();
-      console.error('Unhandled error', e);
+      // Category only: an unexpected error's message can quote request text.
+      logUnhandledError(op, e);
       return new ProxyError('internal_error', 500, 'Something went wrong.').toResponse();
     }
   },

@@ -66,3 +66,41 @@ export function logUpstreamFailure(
     }),
   );
 }
+
+/** Built-in error class names that are safe to log as-is. Anything else (a
+ * custom class, a thrown string or object) is categorized, never echoed. */
+const KNOWN_ERROR_NAMES: ReadonlySet<string> = new Set([
+  'Error',
+  'TypeError',
+  'RangeError',
+  'SyntaxError',
+  'ReferenceError',
+  'EvalError',
+  'URIError',
+]);
+
+/** Category of an unexpected error: a built-in error name, `other_error` for
+ * any other Error, or `non_error` for something that was not an Error at all. */
+export function errorCategory(e: unknown): string {
+  if (!(e instanceof Error)) return 'non_error';
+  return KNOWN_ERROR_NAMES.has(e.name) ? e.name : 'other_error';
+}
+
+/**
+ * Writes one line for an error nothing else handled (the catch-all in
+ * `index.ts`): the operation, its kind and the error's category.
+ *
+ * PRIVACY CONTRACT — never the error's message, stack or cause, and never
+ * anything from the request: an unexpected error's message can quote request
+ * or response text. Only the fields built below are logged.
+ */
+export function logUnhandledError(op: AnthropicOperation['op'], e: unknown): void {
+  console.error(
+    JSON.stringify({
+      event: 'unhandled_error',
+      kind: usageKind(op),
+      operation: op,
+      error: errorCategory(e),
+    }),
+  );
+}

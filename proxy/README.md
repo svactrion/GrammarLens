@@ -99,8 +99,13 @@ A failed Anthropic call writes one `console.error` JSON line (`src/error_log.ts`
 error `type` only if it is one of its documented values, otherwise `unknown`.
 The upstream response body and exception messages are never logged, since
 both can contain request or response text; `test/error_log.test.ts` plants
-secrets in each place and checks all console output. The catch-all
-`Unhandled error` log in `src/index.ts` is separate and still logs the error.
+secrets in each place and checks all console output. The catch-all in
+`src/index.ts` logs an unexpected error the same way, as
+`{"event":"unhandled_error","kind":...,"operation":...,"error":"TypeError"}`:
+only a category (a built-in error name, `other_error` or `non_error`), never
+the message or stack. Every `console` call in `src/` now writes one of these
+three fixed-field lines (`anthropic_usage`, `anthropic_failure`,
+`unhandled_error`).
 
 Not yet deployed by this change; `npm run deploy` is the owner's step.
 

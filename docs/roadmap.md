@@ -118,10 +118,13 @@ as each one lands, with literal status words (see above):
   `unknown`). The upstream error body and every exception message are no
   longer logged, and a body that is not JSON is now handled instead of
   reaching the catch-all. Tests plant secrets in the body, the model text and
-  the network error. One log line is deliberately unchanged: the catch-all
-  `Unhandled error` in `proxy/src/index.ts` still logs the exception, kept for
-  debugging real bugs; nothing on the Anthropic path reaches it now, but a
-  future unexpected error message could in principle carry request text.
+  the network error. *(Update 2026-09-21, later: the catch-all `Unhandled error` in
+  `proxy/src/index.ts`, first left as is, was narrowed too. It now logs only
+  the operation, kind and an error category, never the message or stack.
+  Every `console` call in `proxy/src/` writes a fixed-field line with no user
+  content; tests plant secrets to prove it. Not deployed. The trade-off: an
+  unexpected bug now shows up as a category, so diagnosing it needs a
+  reproduction rather than a stack trace.)*
 - **Trial-length wording — corrected in current-state text.** Truth: annual
   = 7 days, monthly = 3 days; both are set in App Store Connect and read live
   from RevenueCat, and no day count is written in `lib/` app copy (checked).
