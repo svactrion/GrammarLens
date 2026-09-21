@@ -39,6 +39,19 @@ class FirebaseAnalyticsSink implements AnalyticsSink {
 /// Every method here is a best-effort no-op when Firebase is unavailable —
 /// analytics is a nice-to-have signal, not something that should ever be able
 /// to crash or block the app it's instrumenting.
+/// What the user decided about sending Topic Practice answers to the AI
+/// provider. The names are the event's `outcome` values.
+enum AiConsentOutcome { granted, declined, revoked }
+
+/// Where the decision was made.
+enum AiConsentSource {
+  practiceLaunch('practice_launch'),
+  dataSettings('data_settings');
+
+  final String wireName;
+  const AiConsentSource(this.wireName);
+}
+
 class AnalyticsService {
   AnalyticsService({
     AnalyticsSink sink = const FirebaseAnalyticsSink(),
@@ -280,6 +293,22 @@ class AnalyticsService {
     return _logEvent('text_size_changed', {
       'size': size.name,
       'previous': previous.name,
+    });
+  }
+
+  /// The user's answer to the AI-provider permission (docs/analytics-plan.md
+  /// E7): granted, declined (Not now or back), or revoked (switched off in
+  /// Profile → Data). Outcome, where it happened and the wording version only;
+  /// nothing the user wrote.
+  Future<void> aiConsentResult({
+    required AiConsentOutcome outcome,
+    required AiConsentSource source,
+    required int consentVersion,
+  }) {
+    return _logEvent('ai_consent_result', {
+      'outcome': outcome.name,
+      'source': source.wireName,
+      'consent_version': consentVersion,
     });
   }
 

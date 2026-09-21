@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/ai_consent.dart';
+import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../utils/app_links.dart';
 import '../utils/page_title.dart';
@@ -211,6 +214,7 @@ void resetAiConsentPromptGuard() => _promptInProgress = false;
 Future<bool> ensureAiConsent({
   required BuildContext context,
   required StorageService storageService,
+  required AnalyticsService analyticsService,
 }) async {
   if (_promptInProgress) return false;
   _promptInProgress = true;
@@ -223,18 +227,56 @@ Future<bool> ensureAiConsent({
     }
     if (current?.allowsSending ?? false) return true;
     if (!context.mounted) return false;
-
-    final agreed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AiConsentScreen()),
+    return await _askAndRecord(
+      context,
+      storageService,
+      analyticsService,
+      AiConsentSource.practiceLaunch,
     );
-    final granted = agreed == true;
-    try {
-      await storageService.setAiConsent(granted: granted);
-    } catch (_) {
-      // Best effort: see the doc comment above.
-    }
-    return granted;
   } finally {
     _promptInProgress = false;
   }
+}
+
+/// Shows the permission screen regardless of any stored decision: Profile →
+/// Data uses it when the user switches the permission back on, so turning it
+/// on always goes through the same wording. Same result and guard rules as
+/// [ensureAiConsent].
+Future<bool> requestAiConsent({
+  required BuildContext context,
+  required StorageService storageService,
+  required AnalyticsService analyticsService,
+  required AiConsentSource source,
+}) async {
+  if (_promptInProgress) return false;
+  _promptInProgress = true;
+  try {
+    return await _askAndRecord(
+        context, storageService, analyticsService, source);
+  } finally {
+    _promptInProgress = false;
+  }
+}
+
+Future<bool> _askAndRecord(
+  BuildContext context,
+  StorageService storageService,
+  AnalyticsService analyticsService,
+  AiConsentSource source,
+) async {
+  final agreed = await Navigator.of(context).push<bool>(
+    MaterialPageRoute(builder: (_) => const AiConsentScreen()),
+  );
+  final granted = agreed == true;
+  unawaited(analyticsService.aiConsentResult(
+    outcome: granted ? AiConsentOutcome.granted : AiConsentOutcome.declined,
+    source: source,
+    consentVersion: AiConsent.currentVersion,
+  ));
+  try {
+    await storageService.setAiConsent(granted: granted);
+  } catch (_) {
+    // Best effort: see [ensureAiConsent].
+  }
+  return granted;
 }

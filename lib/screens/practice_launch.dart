@@ -118,6 +118,7 @@ Future<void> launchPracticeSet({
   final mayUseAi = await ensureAiConsent(
     context: context,
     storageService: storageService,
+    analyticsService: analyticsService,
   );
   if (!mayUseAi || !context.mounted) return;
 
@@ -209,4 +210,3 @@ Future<void> _showDailyLimitReachedDialog(BuildContext context) {
     ),
   );
 }
-

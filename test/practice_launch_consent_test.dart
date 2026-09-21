@@ -21,6 +21,8 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 
+import 'support/recording_analytics_sink.dart';
+
 /// `launchPracticeSet` is the one function every Topic Practice generation
 /// goes through, so the permission to send answers to the AI provider is
 /// proved here from BOTH of its callers against the same fakes, and against
@@ -342,6 +344,8 @@ void main() {
     expect(find.text('How many questions?'), findsOneWidget);
   });
 
+  _analyticsTests();
+
   testWidgets(
       'a second tap while the permission check is in progress does not stack '
       'a second screen or start a second launch', (tester) async {
@@ -365,6 +369,61 @@ void main() {
     await tester.pumpAndSettle();
     expect(claude.generateCalls, 1);
     expect(storage.sessionCount, 1);
+  });
+}
+
+/// Everything here reports outcome and place only, never anything written.
+void _analyticsTests() {
+  for (final decision in ['Agree and continue', 'Not now']) {
+    testWidgets('reports "$decision" once, from practice_launch',
+        (tester) async {
+      final sink = RecordingAnalyticsSink();
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: TopicPracticeScreen(
+          claudeService: _Claude(),
+          storageService: _Storage(),
+          analyticsService: AnalyticsService(sink: sink),
+          subscriptionService: _Subscription(hasAccess: false),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(InkWell).first);
+      await tester.pumpAndSettle();
+      expect(sink.named('ai_consent_result'), isEmpty,
+          reason: 'nothing is reported until the user decides');
+      await tester.tap(find.text(decision));
+      await tester.pumpAndSettle();
+
+      expect(sink.named('ai_consent_result').single.parameters, {
+        'outcome': decision == 'Not now' ? 'declined' : 'granted',
+        'source': 'practice_launch',
+        'consent_version': AiConsent.currentVersion,
+      });
+    });
+  }
+
+  testWidgets('an existing grant reports nothing', (tester) async {
+    final sink = RecordingAnalyticsSink();
+    await tester.pumpWidget(MaterialApp(
+      theme: buildAppTheme(Brightness.light),
+      home: TopicPracticeScreen(
+        claudeService: _Claude(),
+        storageService: _Storage(consent: _grant()),
+        analyticsService: AnalyticsService(sink: sink),
+        subscriptionService: _Subscription(hasAccess: false),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(InkWell).first);
+    await tester.pumpAndSettle();
+
+    expect(sink.named('ai_consent_result'), isEmpty);
   });
 }
 

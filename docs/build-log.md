@@ -4279,3 +4279,32 @@ unnoticed.
   scale up to 2x, both themes. The two existing launch tests grant permission in
   their fakes, since they are about the quota gates; the Day-0 test asserts the
   Daily Test never reads it. Migration tests cover v19 to v20 and a replay.
+
+## 2026-09-22 (AI permission before Topic Practice, part 2: Data switch, onboarding wording, analytics)
+
+- **[Product]** Profile → Data gets an "AI feedback" section above Reset: a
+  switch, "Send my practice answers to Anthropic (Claude)", with one sentence
+  saying what it controls and that the Daily Test is not involved. Switching on
+  never flips silently: it opens the same permission screen (`requestAiConsent`),
+  so the wording is always seen; Not now leaves it off. Switching off is
+  immediate, with "Topic Practice will ask again." An unreadable decision shows
+  off (fails closed); a failed save on switch-off keeps it on and says so. Reset
+  progress leaves it alone.
+- **[Product]** The onboarding privacy note now names the provider and says it
+  asks: "Your name and goal stay on this device. If you use Topic Practice, your
+  answers are sent to Anthropic (Claude) to give you feedback, and we ask first.
+  Usage and crash data is collected." Every sentence checked against the code;
+  "we ask first" is true because of part 1.
+- **[Engineering]** `ai_consent_result` (docs/analytics-plan.md E7): `outcome`
+  (granted / declined / revoked), `source` (practice_launch / data_settings) and
+  `consent_version`, from closed enums, so nothing written by the user can reach
+  it. Fired when the user decides, not when a stored grant lets a launch through.
+  `outcome` and `source` reuse the paywall events' parameter names; the analytics
+  plan tells the owner to slice them by event name and adds `consent_version` to
+  the custom dimensions to register. `DataScreen` takes the analytics service
+  (default like the other screens).
+- **[Validation]** `data_screen_test.dart` covers the switch states, on via the
+  screen (Agree and Not now), off, failed save, unreadable decision, Reset
+  leaving it alone, the analytics parameters, and the smallest screen at 2x text.
+  `practice_launch_consent_test.dart` asserts the launch-side events, and that an
+  existing grant reports nothing. The onboarding test pins the exact sentence.

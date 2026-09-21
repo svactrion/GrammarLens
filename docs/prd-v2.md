@@ -827,6 +827,11 @@ the Daily Test fully working, since it sends nothing about the user (§13.12).
 The screen states what is sent, to whom, why and what never leaves, and
 deliberately makes no claim about the provider's own handling of the data.
 
+Part 2: Profile → Data has the switch (on re-shows the screen, off is
+immediate), the onboarding note (§13.9) now names "Anthropic (Claude)" and says
+the user is asked first, and `ai_consent_result` (analytics plan E7) reports
+granted, declined and revoked with the place and wording version, no content.
+
 ---
 
 *Living document. Open decisions in §7 get resolved in place, with the

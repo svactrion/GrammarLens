@@ -84,7 +84,9 @@ as each one lands, with literal status words (see above):
   for them, its privacy note does not mention them, and the published privacy
   policy never listed them (its only age wording is the 13+ audience
   statement). PRD v2 §13.11.
-- **Onboarding privacy note — corrected, automated tests only.** The old
+- **Onboarding privacy note — corrected, automated tests only.** *(Reworded
+  2026-09-22 to name "Anthropic (Claude)" and say the user is asked first; see
+  the AI permission item below. The text quoted here is the earlier version.)* The old
   line ("Stored only on this device — never sent to a server") was false.
   It now reads: "Your name and goal stay on this device. Practice answers
   are sent to our AI provider to give you feedback, and usage and crash data
@@ -202,18 +204,21 @@ as each one lands, with literal status words (see above):
   general-mix instruction. Personalization moves to Premium features later.
   PRD v2 §13.12. Deploy the proxy and ship the app together.
 
-- **AI permission before Topic Practice, part 1 — implemented, automated tests
-  only; device check pending.** A full-screen permission screen ("Feedback on
-  your answers") appears inside `launchPracticeSet` before the length picker,
-  until the user agrees. Stored in a new single-row `ai_consent` table (schema
-  v20, versioned, fails closed, survives "Reset progress"). Declining costs
-  nothing and the Daily Test is unaffected. Part 2 (Data toggle, onboarding
-  wording, analytics) follows. Outside this repo and still open before
-  submission: the privacy policy must name Anthropic and this flow, the App
-  Store privacy label must list user content shared with a third party, and the
-  App Review notes should say how to reach the screen (Topic Practice, first
-  session). No claim about the provider's retention or training is made
-  anywhere in the app.
+- **AI permission before Topic Practice — implemented, automated tests only;
+  device check pending.** A full-screen permission screen ("Feedback on your
+  answers") appears inside `launchPracticeSet` before the length picker, until
+  the user agrees. Stored in a new single-row `ai_consent` table (schema v20,
+  versioned, fails closed, survives "Reset progress"). Declining costs nothing
+  and the Daily Test is unaffected. Profile → Data has an "AI feedback" switch
+  (switching on re-shows the screen, switching off is immediate), the onboarding
+  note now names "Anthropic (Claude)" and says we ask first, and
+  `ai_consent_result` reports granted / declined / revoked (analytics plan E7;
+  register `consent_version` as a custom dimension). Outside this repo and still
+  open before submission: the privacy policy must name Anthropic and this flow,
+  the App Store privacy label must list user content shared with a third party,
+  and the App Review notes should say how to reach the screen (Topic Practice,
+  first session). No claim about the provider's retention or training is made
+  anywhere in the app. PRD v2 §13.13.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice

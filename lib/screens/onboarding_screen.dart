@@ -10,8 +10,9 @@ import '../widgets/brand_scaffold.dart';
 /// The one-line privacy statement under the goal options. Public so a test
 /// can pin the wording to what the app actually does.
 const String onboardingPrivacyNote =
-    'Your name and goal stay on this device. Practice answers are sent to our '
-    'AI provider to give you feedback, and usage and crash data is collected.';
+    'Your name and goal stay on this device. If you use Topic Practice, your '
+    'answers are sent to Anthropic (Claude) to give you feedback, and we ask '
+    'first. Usage and crash data is collected.';
 
 /// "Face + name" as one identity step, plus learning goal (PRD v2 §4). Nothing
 /// else is asked: every field asked before the user has experienced any value

@@ -232,6 +232,28 @@ void main() {
       expectOnly('text_size_changed', {'size': 'large', 'previous': 'medium'});
     });
 
+    test('ai_consent_result carries only outcome, source and version',
+        () async {
+      await service.aiConsentResult(
+        outcome: AiConsentOutcome.declined,
+        source: AiConsentSource.practiceLaunch,
+        consentVersion: 1,
+      );
+      expectOnly('ai_consent_result', {
+        'outcome': 'declined',
+        'source': 'practice_launch',
+        'consent_version': 1,
+      });
+    });
+
+    test('ai_consent_result vocabulary is closed: three outcomes, two sources',
+        () {
+      expect(AiConsentOutcome.values.map((o) => o.name),
+          ['granted', 'declined', 'revoked']);
+      expect(AiConsentSource.values.map((s) => s.wireName),
+          ['practice_launch', 'data_settings']);
+    });
+
     test('text_size is a user property carrying the size name', () async {
       await service.setTextSizeProperty(AppTextSize.small);
       expect(sink.events, isEmpty);
@@ -328,12 +350,17 @@ void main() {
         size: AppTextSize.large,
         previous: AppTextSize.small,
       );
+      await service.aiConsentResult(
+        outcome: AiConsentOutcome.revoked,
+        source: AiConsentSource.dataSettings,
+        consentVersion: 1,
+      );
       await service.setTextSizeProperty(AppTextSize.large);
       await service.setFirstStepDayOfMonth(31);
 
       final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
       final reserved = RegExp(r'^(firebase_|google_|ga_|_)');
-      expect(sink.events, hasLength(14));
+      expect(sink.events, hasLength(15));
       for (final event in sink.events) {
         expect(event.name.length, lessThanOrEqualTo(40), reason: event.name);
         expect(nameRule.hasMatch(event.name), isTrue, reason: event.name);

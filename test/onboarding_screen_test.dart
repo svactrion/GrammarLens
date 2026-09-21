@@ -38,7 +38,8 @@ void main() {
 
   testWidgets(
     'the privacy note no longer claims data never leaves the device — it '
-    'names the AI provider and usage/crash data honestly',
+    'names the AI provider (Anthropic, Claude), says it asks first, and '
+    'mentions usage/crash data honestly',
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(home: OnboardingScreen(onComplete: (_) {})),
@@ -49,8 +50,12 @@ void main() {
       expect(find.text(onboardingPrivacyNote), findsOneWidget);
       expect(find.textContaining('never sent'), findsNothing);
       expect(find.textContaining('Stored only'), findsNothing);
-      expect(onboardingPrivacyNote, contains('AI provider'));
-      expect(onboardingPrivacyNote, contains('usage and crash data'));
+      expect(
+        onboardingPrivacyNote,
+        'Your name and goal stay on this device. If you use Topic Practice, '
+        'your answers are sent to Anthropic (Claude) to give you feedback, and '
+        'we ask first. Usage and crash data is collected.',
+      );
     },
   );
 

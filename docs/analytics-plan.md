@@ -187,6 +187,20 @@ event only says "opened Profile". Its value grows after the first month-end.
 | Fired | `_setTextSize` in `lib/app.dart:118`, only when the value actually changes. |
 | Answers | Is Medium (1.10×) the right default? The direction of change is the signal: many Medium→Large means the default is too small; many Medium→Small means it is too big. |
 
+### E7 — `ai_consent_result` (priority: must have, compliance; added 2026-09-22)
+
+| | |
+|---|---|
+| Params | `outcome` = `granted` / `declined` / `revoked`, `source` = `practice_launch` / `data_settings`, `consent_version` (int, `AiConsent.currentVersion`) |
+| Fired | When the user decides on the permission to send Topic Practice answers to the AI provider: `granted` or `declined` (Not now, back arrow or system back) from the permission screen, whether it opened at the first Topic Practice launch (`practice_launch`) or from the switch in Profile → Data (`data_settings`); `revoked` when the switch in Profile → Data is turned off. Not fired when an existing grant simply lets a launch through. |
+| Answers | How many users agree when asked, how many decline and come back, and whether revoking is used. Read the decline rate against Topic Practice starts: a high rate is a wording or timing problem, not a growth problem. |
+
+Privacy: no content of any kind, only the outcome, where it happened and the
+wording version. Two names are shared with existing events (`outcome` with
+`purchase_result`, `source` with the paywall events). The value
+`practice_launch` also exists as a paywall source, so always slice these
+parameters by event name.
+
 ### Events considered and not proposed
 
 - **`climb_step_earned`** — redundant with E1's `step_earned`.
@@ -489,6 +503,7 @@ Built in separate commits on `monthly-climb-v2`:
 | E5 `profile_medals_viewed` | Done, once per session, only when the Profile tab is showing (`AnalyticsService.appPaused`/`appResumed` drive the 30-minute reset). |
 | E6 `text_size_changed`, user property `text_size` | Done in `lib/app.dart`: reported only on a real change; the property is set from the stored value at startup and on change. |
 | E2 `results_cta_tapped` | Dropped by decision. |
+| E7 `ai_consent_result` (2026-09-22) | Done in `ensureAiConsent` / `requestAiConsent` (`lib/screens/ai_consent_screen.dart`) and Profile → Data's switch-off. One test asserts its exact parameter keys and values; the all-events limits test now covers 15 events. |
 
 **Not done / still open**
 
@@ -558,14 +573,15 @@ uses 16, 2 and 8. Check the console's counter as you create them.
 | Medal tier | `tier` | Event | `medal_month_finalized` (`none`/`bronze`/`silver`/`gold`) |
 | Months ago | `months_ago` | Event | `medal_month_finalized` |
 | Welcome earned | `welcome_earned` | Event | `profile_medals_viewed` (0/1) |
+| Consent version | `consent_version` | Event | `ai_consent_result` (int) |
 | Text size | `size` | Event | `text_size_changed` |
 | Previous text size | `previous` | Event | `text_size_changed` |
 | Mode | `mode` | Event | `mode_selected` (existing) |
 | Topic | `topic_id` | Event | `practice_completed` (existing) |
-| Paywall source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing) |
+| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing), `ai_consent_result` (`practice_launch` / `data_settings`) |
 | Paywall dismiss method | `method` | Event | `paywall_dismissed` (existing) |
 | Plan | `plan` | Event | `purchase_started`, `purchase_result` (existing) |
-| Purchase outcome | `outcome` | Event | `purchase_result` (existing) |
+| Purchase / consent outcome | `outcome` | Event | `purchase_result` (existing), `ai_consent_result` (`granted` / `declined` / `revoked`) |
 
 ### Event-scoped custom metrics
 

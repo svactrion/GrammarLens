@@ -310,7 +310,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _openData() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => DataScreen(storageService: widget.storageService),
+        builder: (_) => DataScreen(
+          storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+        ),
       ),
     );
   }
