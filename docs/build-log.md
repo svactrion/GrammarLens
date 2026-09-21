@@ -4739,3 +4739,7 @@ unnoticed.
   construction. A skipped day leaves one unused stored set. Not device-confirmed: that
   the next morning's Daily Test really opens without a wait (it needs a day to pass, or
   a device clock change).
+
+## 2026-09-22 (Premium footer: tighter vertical spacing)
+
+- **[Product/Engineering]** Device feedback: too much air between "Start free trial", the Terms/Privacy row and "Maybe later". The footer's text buttons now have a 44 pt target that is also the drawn button (shrink-wrapped, was a 40 pt button in a 48 pt padded target), the padding is 8 above and 4 below (was 12 and 8), the button-to-disclosure gap is 6 (was 8) and the gap under the disclosure is gone (was 4); nothing that is tapped got smaller than 44 pt. At 375x667 the footer is 196 pt at Medium (was 218), 200 at Large (222) and 295 at 1.6x system text (321), and the scrolling area above it grows by the same 22, 22 and 26 pt (373 to 395 at Medium); links stay in the footer by the same rule, the disclosure is still never truncated, and the measurement tests were updated to these values.

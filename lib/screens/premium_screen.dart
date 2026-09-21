@@ -537,18 +537,37 @@ const double _shortScreenHeight = 700;
 /// system text scale is at least this many points (see the screen's `build`).
 const double _minHeightPerTextScale = 400;
 
+/// The height of every text-button target in the footer (the legal links and
+/// "Maybe later"). 44 pt is the smallest target Apple recommends. The default
+/// text button is 40 pt tall inside a 48 pt padded target; shrink-wrapping a 44 pt
+/// minimum makes the target and the drawn button the same 44 pt, so the footer
+/// gets its space back from the gaps around the buttons, not from a target
+/// smaller than 44.
+const double _footerTargetHeight = 44;
+
+/// A text button whose target is exactly [_footerTargetHeight] tall.
+final ButtonStyle _footerTextButtonStyle = TextButton.styleFrom(
+  minimumSize: const Size(64, _footerTargetHeight),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+);
+
 /// Privacy Policy and Terms of Service, side by side (wrapping when narrow).
 class _LegalLinks extends StatelessWidget {
   const _LegalLinks();
 
   @override
   Widget build(BuildContext context) {
-    return const Wrap(
-      alignment: WrapAlignment.center,
-      children: [
-        LegalLink(label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
-        LegalLink(label: 'Terms of Service', url: AppLinks.termsUrl),
-      ],
+    // The links keep their own colour (`LegalLink` sets it); only the target
+    // size comes from here.
+    return TextButtonTheme(
+      data: TextButtonThemeData(style: _footerTextButtonStyle),
+      child: const Wrap(
+        alignment: WrapAlignment.center,
+        children: [
+          LegalLink(label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
+          LegalLink(label: 'Terms of Service', url: AppLinks.termsUrl),
+        ],
+      ),
     );
   }
 }
@@ -620,11 +639,14 @@ class _PremiumFooter extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
+          // Tight on purpose: every button below already has a 44 pt target
+          // of its own, so extra space around the stack would only push the
+          // buttons apart.
           padding: EdgeInsets.fromLTRB(
             horizontalPadding,
-            12,
-            horizontalPadding,
             8,
+            horizontalPadding,
+            4,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -641,7 +663,7 @@ class _PremiumFooter extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
               ] else if (showCta) ...[
                 _PurchaseStatusBanner(
                   state: purchaseState,
@@ -672,7 +694,8 @@ class _PremiumFooter extends StatelessWidget {
                             : 'Start free trial'),
                   ),
                 ),
-                const SizedBox(height: 8),
+                // Close to the button it describes.
+                const SizedBox(height: 6),
                 Text(
                   // Never truncated: the price, period and auto-renewal
                   // sentence is a required disclosure, so at large text sizes
@@ -682,7 +705,6 @@ class _PremiumFooter extends StatelessWidget {
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
-                const SizedBox(height: 4),
               ],
               // Required wherever a subscription is sold, so seen without
               // scrolling, in every state (loading, priced, pricing
@@ -690,8 +712,9 @@ class _PremiumFooter extends StatelessWidget {
               if (showLegalLinks) const _LegalLinks(),
               if (showMaybeLater)
                 TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: colorScheme.onSurfaceVariant,
+                  style: _footerTextButtonStyle.copyWith(
+                    foregroundColor:
+                        WidgetStatePropertyAll(colorScheme.onSurfaceVariant),
                   ),
                   onPressed: onMaybeLater,
                   child: const Text('Maybe later'),

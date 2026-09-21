@@ -1972,9 +1972,16 @@ void main() {
           Rect privacy,
           Rect terms,
           Rect maybeLater,
+          Rect privacyTarget,
+          Rect termsTarget,
+          Rect maybeLaterTarget,
           bool disclosureTruncated,
         })> measure(WidgetTester tester) async {
       final disclosureFinder = find.textContaining('auto-renews');
+      // A text button's tappable area is the ink well inside it.
+      Rect target(String label) => tester.getRect(find.descendant(
+          of: find.widgetWithText(TextButton, label),
+          matching: find.byType(InkWell)));
       return (
         footer: tester.getRect(find.byKey(const Key('premiumFooter'))),
         scrollRegion: tester.getRect(find.ancestor(
@@ -1986,6 +1993,9 @@ void main() {
         privacy: tester.getRect(find.text('Privacy Policy')),
         terms: tester.getRect(find.text('Terms of Service')),
         maybeLater: tester.getRect(find.text('Maybe later')),
+        privacyTarget: target('Privacy Policy'),
+        termsTarget: target('Terms of Service'),
+        maybeLaterTarget: target('Maybe later'),
         disclosureTruncated: tester
             .renderObject<RenderParagraph>(disclosureFinder)
             .didExceedMaxLines,
@@ -2010,6 +2020,20 @@ void main() {
       expect(m.terms.top, greaterThanOrEqualTo(m.footer.top));
       expect(m.disclosureTruncated, isFalse,
           reason: 'the disclosure sentence is never cut off');
+      // The footer was tightened without shrinking any target: the legal links
+      // and "Maybe later" are at least 44 pt tall, and the purchase button
+      // keeps its 52.
+      for (final entry in {
+        'the Privacy Policy link': m.privacyTarget as Rect,
+        'the Terms of Service link': m.termsTarget as Rect,
+        'Maybe later': m.maybeLaterTarget as Rect,
+      }.entries) {
+        expect(entry.value.height, greaterThanOrEqualTo(44),
+            reason: '${entry.key} keeps a 44 pt target');
+        expect(entry.value.width, greaterThanOrEqualTo(44),
+            reason: '${entry.key} is at least 44 pt wide');
+      }
+      expect((m.cta as Rect).height, greaterThanOrEqualTo(52));
     }
 
     // The two sizes the owner asked for, at the sizes the app offers: on an
@@ -2025,9 +2049,11 @@ void main() {
         final m = await measure(tester);
 
         expectOnFirstScreen(m, 667);
-        expect(m.footer.height / 667, lessThan(0.36));
-        // The text above it keeps a usable area even so.
-        expect(m.scrollRegion.height, greaterThan(360));
+        // 196 pt at Medium and 200 pt at Large (218 and 222 before the
+        // 2026-09-22 spacing pass): under a third of the screen.
+        expect(m.footer.height / 667, lessThan(0.31));
+        // The text above it keeps more room than before (373 and 369 pt).
+        expect(m.scrollRegion.height, greaterThan(385));
         // The avatar hero is dropped on a screen this short...
         expect(find.byType(AvatarTile), findsNothing);
         // ...which lifts the content: the whole comparison table is in view
@@ -2054,10 +2080,35 @@ void main() {
         final m = await measure(tester);
 
         expectOnFirstScreen(m, 667);
-        expect(m.footer.height / 667, lessThan(0.52));
-        expect(m.scrollRegion.height, greaterThan(250));
+        // About 295 pt (321 before the spacing pass).
+        expect(m.footer.height / 667, lessThan(0.46));
+        expect(m.scrollRegion.height, greaterThan(285));
       });
     }
+
+    testWidgets(
+        '375x667 Medium: the footer stack is tight: the disclosure sits close '
+        'under the button, the links directly under the disclosure, and '
+        '"Maybe later" directly under the links, each a 44 pt target',
+        (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(375, 667), textSize: AppTextSize.medium);
+      final m = await measure(tester);
+
+      // Button to disclosure: a small gap, never more than 6 pt.
+      expect(m.disclosure.top - m.cta.bottom, inInclusiveRange(0, 6));
+      // Disclosure to the links row, and the links row to "Maybe later":
+      // the targets are stacked with no space between them.
+      final linksTop = m.privacyTarget.top;
+      expect(linksTop - m.disclosure.bottom, inInclusiveRange(0, 1));
+      expect(m.maybeLaterTarget.top - m.privacyTarget.bottom,
+          inInclusiveRange(0, 1));
+      // Padding above the button and under "Maybe later".
+      expect(m.cta.top - m.footer.top, lessThanOrEqualTo(8));
+      expect(m.footer.bottom - m.maybeLaterTarget.bottom, lessThanOrEqualTo(4));
+      // The whole footer, 375x667 Medium: 196 pt (218 before).
+      expect(m.footer.height, lessThanOrEqualTo(196));
+    });
 
     testWidgets(
         'beyond what the screen can hold (375x667 at 3x text) the links go '
