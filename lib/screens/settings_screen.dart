@@ -14,6 +14,7 @@ import '../services/medal_finalization.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
+import '../utils/debug_tools.dart';
 import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
@@ -547,7 +548,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(_resetting ? 'Resetting…' : 'Reset progress data'),
             ),
           ),
-          if (kDebugMode) ...[
+          if (kDebugMode && DebugTools.enabledForTesting) ...[
             const SizedBox(height: 32),
             const _SectionLabel('Developer'),
             const SizedBox(height: 8),

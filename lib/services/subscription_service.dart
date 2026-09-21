@@ -3,6 +3,7 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../config/app_config.dart';
+import '../utils/debug_tools.dart';
 
 /// Outcome of a purchase attempt, for a future paywall screen to react to
 /// without needing to know RevenueCat's own exception/error-code shape.
@@ -200,16 +201,20 @@ class SubscriptionService {
   // without a real RevenueCat subscription — see docs/build-log.md for why
   // this exists and why it's shaped this way.
 
-  /// Always [kDebugMode] in a real build — that's the only thing every
-  /// method below actually checks, so the whole override is a structural
-  /// no-op in release (Dart folds `if (false)` away at compile time, this
-  /// isn't just a UI-layer hide). Exposed as a mutable `@visibleForTesting`
-  /// static purely so a test can simulate "as if this were a release
-  /// build": `flutter test` itself always runs in a debug-like mode, so
-  /// [kDebugMode] can never actually read `false` from inside a test.
-  /// Nothing outside a test ever assigns this.
+  /// Whether the debug overrides below are live. In a release build
+  /// [kDebugMode] is the compile-time constant `false`, so this folds to
+  /// `false` and every override branch below is removed, not just skipped.
+  /// The setter exists purely so a test can simulate "as if this were a
+  /// release build" (`flutter test` always has `kDebugMode == true`); it
+  /// drives the shared [DebugTools.enabledForTesting] switch, so one flag
+  /// turns every debug tool in the app off. Nothing outside a test assigns it.
   @visibleForTesting
-  static bool debugModeForTesting = kDebugMode;
+  static bool get debugModeForTesting =>
+      kDebugMode && DebugTools.enabledForTesting;
+
+  @visibleForTesting
+  static set debugModeForTesting(bool value) =>
+      DebugTools.enabledForTesting = value;
 
   static bool? _debugAccessOverride;
 

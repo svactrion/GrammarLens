@@ -4032,3 +4032,22 @@ unnoticed.
   roadmap's Launch scope, with trade-offs and why it waits.
 - **[Delivery]** Automated tests only for all of the above; no device
   confirmation, no deploy, no main merge or PR.
+
+## 2026-09-21 (launch checklist: debug tools out of release)
+
+- **[Engineering]** Scanned the app for developer tooling. Found: Settings'
+  "Developer" section (entitlement override, first-launch reset, pricing
+  fixture, theme preview), raw error text on Daily Test's failure screen, the
+  launch-time override load, and two `lib/preview` entry points. All UI was
+  already behind `kDebugMode`, and the previews are imported by nothing.
+  Gaps: `SubscriptionService`'s gate was a mutable static, and
+  `resetOnboarding()` (deletes the profile) and the override read/write were
+  unguarded methods. Added `DebugTools.enabledForTesting` and gated every site
+  with `kDebugMode && DebugTools.enabledForTesting`; `SubscriptionService.debugModeForTesting`
+  now drives the same switch. Text size untouched.
+- **[Validation]** New release-simulation tests (Settings, Daily Test error,
+  storage, app launch, subscription service) plus source-structure checks; a
+  mutation that removed the Settings gate turned two of them red. A release
+  web build was identical before and after and contains none of the tool
+  strings. The iOS release build could not be run here (Xcode 27 `lipo`
+  issue), so the AOT binary was not inspected. Debug builds unchanged.

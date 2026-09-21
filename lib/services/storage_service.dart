@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -18,6 +18,7 @@ import '../models/review_sort_order.dart';
 import '../models/topic_stats.dart';
 import '../models/user_profile.dart';
 import '../models/welcome_badge.dart';
+import '../utils/debug_tools.dart';
 import 'monthly_medal_rules.dart';
 import 'welcome_badge_rules.dart';
 
@@ -1060,10 +1061,10 @@ class StorageService {
   /// The developer's persisted debug entitlement override (see
   /// `SubscriptionService.debugAccessOverride`) — `true`/`false` forces
   /// [SubscriptionService.hasFullAccess], `null` means no override is set,
-  /// use the real status. Reading this in a release build is harmless
-  /// (plain inert data); the actual release-safety guarantee lives in
-  /// SubscriptionService's own `kDebugMode` check, not here.
+  /// use the real status. Always `null` outside a debug build, so a release
+  /// build never reads a stored override even if one somehow existed.
   Future<bool?> getDebugAccessOverride() async {
+    if (!(kDebugMode && DebugTools.enabledForTesting)) return null;
     final db = await _database;
     final rows = await db.query('debug_settings', limit: 1);
     if (rows.isEmpty) return null;
@@ -1074,8 +1075,10 @@ class StorageService {
 
   /// Persists the developer's debug entitlement override so it survives an
   /// app restart, same single-row-table convention as [setThemeMode].
-  /// `null` clears it (back to "use the real status").
+  /// `null` clears it (back to "use the real status"). A no-op outside a
+  /// debug build.
   Future<void> setDebugAccessOverride(bool? hasFullAccess) async {
+    if (!(kDebugMode && DebugTools.enabledForTesting)) return;
     final db = await _database;
     await db.insert(
       'debug_settings',
@@ -1158,8 +1161,10 @@ class StorageService {
   /// the opposite scope of [resetProgressData]: that one keeps identity/
   /// settings and clears history; this one clears only the identity gate,
   /// nothing else — practice history, theme, and daily caches are
-  /// untouched.
+  /// untouched. A no-op outside a debug build: it deletes the user's
+  /// profile, so a release build must never be able to run it.
   Future<void> resetOnboarding() async {
+    if (!(kDebugMode && DebugTools.enabledForTesting)) return;
     final db = await _database;
     await db.delete('user_profile');
   }

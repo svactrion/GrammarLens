@@ -19,6 +19,7 @@ import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
 import 'theme.dart';
 import 'utils/app_messenger.dart';
+import 'utils/debug_tools.dart';
 import 'utils/loading_view.dart';
 import 'widgets/floating_nav_shell.dart';
 
@@ -76,7 +77,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     _loadThemeMode();
     _loadTextSize();
     _loadProfile();
-    if (kDebugMode) _loadDebugAccessOverride();
+    if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
   }
 
   @override

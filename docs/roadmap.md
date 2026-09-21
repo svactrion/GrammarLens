@@ -52,6 +52,26 @@ as each one lands, with literal status words (see above):
   in `lib/` says "unlimited" (a test asserts this on the Premium screen).
   The App Store Connect subscription descriptions are outside this repo and
   were not re-checked here.
+- **Developer/debug tools out of release builds — implemented, automated
+  tests plus a release web-build check; not verified on an iOS release
+  build.** Scan result: four tools in Settings' "Developer" section
+  (entitlement override, first-launch reset, pricing fixture toggle, theme
+  preview), the raw error text on Daily Test's load-failure screen, the
+  launch-time load of the stored override in `app.dart`, and two standalone
+  preview entry points in `lib/preview/` (Monthly Climb, medals; run only with
+  `flutter run -t`, imported by no app code, each throws outside debug).
+  All UI was already behind `kDebugMode`. Gaps closed: the subscription
+  service's gate was a mutable static, not a compile-time constant; and
+  `StorageService.resetOnboarding()` (deletes the profile) plus the override
+  read/write had no guard of their own. Everything now goes through one
+  switch, `DebugTools` (`kDebugMode && DebugTools.enabledForTesting` at each
+  gate, so a release build folds it to `false`); tests simulate release with
+  it, and one flag turns every tool off. Text size is a real feature and was
+  not touched. Checked by building `flutter build web --release`: none of the
+  tool strings appear in the compiled output. Not removable without a schema
+  change: the empty `debug_settings` table is still created (nothing reads it
+  in release). The iOS release build is broken on this machine by the Xcode
+  27 `lipo` issue, so the AOT binary itself was not inspected.
 - **Onboarding privacy note — corrected, automated tests only.** The old
   line ("Stored only on this device — never sent to a server") was false.
   It now reads: "Your name and goal stay on this device. Practice answers

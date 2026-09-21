@@ -12,6 +12,7 @@ import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
+import '../utils/debug_tools.dart';
 import 'daily_test_result_screen.dart';
 
 /// One-question-at-a-time flow over today's cached Daily Test set (PRD v2
@@ -309,7 +310,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                     ctaLabel: 'Try again',
                     onCta: _load,
                   ),
-            if (kDebugMode) ...[
+            if (kDebugMode && DebugTools.enabledForTesting) ...[
               const SizedBox(height: 12),
               Text(
                 '$_error',

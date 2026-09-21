@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/utils/debug_tools.dart';
 
 /// resetOnboarding (debug-only, see SettingsScreen's "Developer" section)
 /// needs real persistence to mean anything — see
@@ -55,5 +56,35 @@ void main() {
 
     expect(await storageService.getUserProfile(), isNull);
     expect(await storageService.getSessionCountForToday(), 1);
+  });
+
+  group('release build (launch checklist 8): debug storage paths are inert',
+      () {
+    tearDown(() => DebugTools.enabledForTesting = true);
+
+    test('resetOnboarding does not delete the profile', () async {
+      const profile = UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
+      await storageService.saveUserProfile(profile);
+      DebugTools.enabledForTesting = false;
+
+      await storageService.resetOnboarding();
+
+      expect(await storageService.getUserProfile(), isNotNull);
+    });
+
+    test('the debug entitlement override cannot be written or read', () async {
+      DebugTools.enabledForTesting = false;
+      await storageService.setDebugAccessOverride(true);
+      expect(await storageService.getDebugAccessOverride(), isNull);
+
+      // And nothing was persisted behind the gate either.
+      DebugTools.enabledForTesting = true;
+      expect(await storageService.getDebugAccessOverride(), isNull);
+    });
+
+    test('in a debug build both still work', () async {
+      await storageService.setDebugAccessOverride(true);
+      expect(await storageService.getDebugAccessOverride(), isTrue);
+    });
   });
 }

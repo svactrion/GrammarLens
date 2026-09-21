@@ -16,6 +16,7 @@ import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 import 'support/recording_analytics_sink.dart';
@@ -598,6 +599,74 @@ void main() {
         );
       },
     );
+  });
+
+  group('release build: no developer tools are shown (launch checklist 8)', () {
+    // `flutter test` always has kDebugMode == true, so a release build is
+    // simulated by turning off the one shared debug switch; the gates read
+    // `kDebugMode && DebugTools.enabledForTesting`, which is exactly what a
+    // release build's constant `false` makes of them.
+    const developerEntries = [
+      'Developer',
+      'Entitlement override',
+      'Full access',
+      'First-launch flow',
+      'Reset first-launch state',
+      'Preview paywall pricing',
+      'Preview pricing',
+      'Theme preview',
+      'Open theme preview',
+    ];
+
+    tearDown(() => DebugTools.enabledForTesting = true);
+
+    testWidgets('a release build shows none of the developer entries',
+        (tester) async {
+      DebugTools.enabledForTesting = false;
+      await pumpSettings(tester);
+      // Everything sits below the user-facing sections, so scroll to the
+      // very bottom before asserting anything is absent.
+      await reveal(tester, find.text('Reset progress data'));
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+
+      for (final entry in developerEntries) {
+        expect(find.text(entry), findsNothing, reason: '"$entry" in release');
+      }
+      expect(find.byType(SwitchListTile), findsNothing);
+    });
+
+    testWidgets('the text size setting is a real feature and stays in release',
+        (tester) async {
+      DebugTools.enabledForTesting = false;
+      await pumpSettings(tester);
+
+      expect(find.text('Text size'), findsOneWidget);
+      expect(find.text('Small'), findsOneWidget);
+      expect(find.text('Medium'), findsOneWidget);
+      expect(find.text('Large'), findsOneWidget);
+      // Real user features stay too.
+      await reveal(tester, find.text('Reset progress data'));
+      expect(find.text('Reset progress data'), findsOneWidget);
+    });
+
+    testWidgets('a debug build still shows every developer entry',
+        (tester) async {
+      await pumpSettings(tester);
+
+      // In page order, so scrolling downward reaches each one in turn.
+      for (final entry in [
+        'Developer',
+        'Entitlement override',
+        'Reset first-launch state',
+        'Preview paywall pricing',
+        'Theme preview',
+        'Open theme preview',
+      ]) {
+        await reveal(tester, find.text(entry));
+        expect(find.text(entry), findsOneWidget, reason: '"$entry" in debug');
+      }
+    });
   });
 
   group('Developer section (debug-only paywall pricing preview)', () {

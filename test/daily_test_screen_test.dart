@@ -11,6 +11,7 @@ import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/utils/debug_tools.dart';
 
 import 'support/recording_analytics_sink.dart';
 
@@ -206,6 +207,23 @@ void main() {
     await pumpScreen(tester, service);
 
     expect(find.textContaining('simulated generation failure'), findsOneWidget);
+  });
+
+  testWidgets('a release build never shows the technical error detail',
+      (tester) async {
+    DebugTools.enabledForTesting = false;
+    addTearDown(() => DebugTools.enabledForTesting = true);
+    final service = DailyTestService(
+      claudeService: _FlakyClaudeService(failCount: 5),
+      storageService: storageService,
+    );
+
+    await pumpScreen(tester, service);
+
+    // The human message and retry stay; the raw exception text does not.
+    expect(find.text("Couldn't load today's test"), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.textContaining('simulated generation failure'), findsNothing);
   });
 
   group('Skip is never the primary action (docs/design-audit.md D3)', () {
