@@ -249,7 +249,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final annual = _annualPackage;
     final offeringsReady =
         _offeringsAvailable && monthly != null && annual != null;
-    final width = MediaQuery.sizeOf(context).width;
+    final size = MediaQuery.sizeOf(context);
+    final width = size.width;
+    final shortScreen = size.height < _shortScreenHeight;
+    // The legal links belong in the fixed footer, but the footer grows with
+    // text size, and past a point it would take over the screen. Measured: it
+    // is about 46 pt plus 172 pt per unit of system text scale, so it stays
+    // near or under half the screen exactly while height / scale >= 400
+    // (an iPhone SE at Large text holds up to 1.6x; a 320x568 screen up to
+    // about 1.4x). Beyond that the links go back to the end of the scrolling
+    // body, as before this rule existed.
+    final textScale = MediaQuery.textScalerOf(context).scale(10) / 10;
+    final linksInFooter = size.height / textScale >= _minHeightPerTextScale;
     // Matches BrandScaffold's own responsive horizontal padding formula
     // (`body:` bypasses it — see that widget's doc comment — so this
     // screen owns its own padding, same as AvatarPickerScreen already
@@ -292,8 +303,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   key: const Key('premiumBody'),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _AvatarHero(centerAvatar: _userAvatar),
-                    const SizedBox(height: 4),
+                    // Decorative, and 94 pt of a screen that has none to
+                    // spare: dropped where the height is under 700 pt (an
+                    // iPhone SE), so the comparison table and plan cards sit
+                    // that much higher above the fixed footer.
+                    if (!shortScreen) ...[
+                      _AvatarHero(centerAvatar: _userAvatar),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
                       'Unlock personalized feedback',
                       textAlign: TextAlign.center,
@@ -369,22 +386,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 8),
-                    const Center(
-                      child: Wrap(
-                        alignment: WrapAlignment.center,
-                        children: [
-                          LegalLink(
-                            label: 'Privacy Policy',
-                            url: AppLinks.privacyPolicyUrl,
-                          ),
-                          LegalLink(
-                            label: 'Terms of Service',
-                            url: AppLinks.termsUrl,
-                          ),
-                        ],
-                      ),
-                    ),
+                    if (!linksInFooter) ...[
+                      const SizedBox(height: 8),
+                      const Center(child: _LegalLinks()),
+                    ],
                   ],
                 ),
               ),
@@ -396,6 +401,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               purchaseState: _purchaseState,
               disclosureText:
                   offeringsReady ? _disclosureText(_selectedPackage!) : null,
+              showLegalLinks: linksInFooter,
               onStartTrial: _startTrial,
               onContinue: _dismiss,
               onMaybeLater: () => _dismiss(
@@ -524,6 +530,29 @@ String _disclosureText(Package package) {
   return '$trialPart, then $priceStr, auto-renews unless cancelled.';
 }
 
+/// Below this screen height the decorative avatar hero is dropped.
+const double _shortScreenHeight = 700;
+
+/// The legal links go in the fixed footer while screen height divided by the
+/// system text scale is at least this many points (see the screen's `build`).
+const double _minHeightPerTextScale = 400;
+
+/// Privacy Policy and Terms of Service, side by side (wrapping when narrow).
+class _LegalLinks extends StatelessWidget {
+  const _LegalLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Wrap(
+      alignment: WrapAlignment.center,
+      children: [
+        LegalLink(label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
+        LegalLink(label: 'Terms of Service', url: AppLinks.termsUrl),
+      ],
+    );
+  }
+}
+
 /// The screen's fixed bottom area — never scrolls away, unlike the
 /// previous single-`ListView` layout. Content varies by state rather than
 /// always showing the same three things:
@@ -536,15 +565,22 @@ String _disclosureText(Package package) {
 ///   and "Maybe later" — hidden once a trial has actually started, since
 ///   the CTA itself becomes "Continue" then and a second identical exit
 ///   would be redundant.
-/// - **pricing unavailable**: *only* "Maybe later" — no CTA, no
-///   disclosure, since neither means anything without a real price. The
-///   retry affordance itself stays in the scrollable body
-///   ([_UnavailableCard]), not duplicated here.
+/// - **pricing unavailable**: no CTA and no disclosure, since neither means
+///   anything without a real price, so just "Maybe later" (and the legal
+///   links, when they are in the footer). The retry affordance itself stays
+///   in the scrollable body ([_UnavailableCard]), not duplicated here.
+///
+/// The Privacy Policy and Terms links sit above "Maybe later" whenever the
+/// screen has room for that (see `linksInFooter` in the screen's `build`).
 class _PremiumFooter extends StatelessWidget {
   final bool loading;
   final bool offeringsReady;
   final _PurchaseState purchaseState;
   final String? disclosureText;
+
+  /// Whether the Privacy Policy and Terms links are shown here, above "Maybe
+  /// later", instead of at the end of the scrolling body.
+  final bool showLegalLinks;
   final VoidCallback onStartTrial;
   final VoidCallback onContinue;
   final VoidCallback onMaybeLater;
@@ -558,6 +594,7 @@ class _PremiumFooter extends StatelessWidget {
     required this.offeringsReady,
     required this.purchaseState,
     required this.disclosureText,
+    required this.showLegalLinks,
     required this.onStartTrial,
     required this.onContinue,
     required this.onMaybeLater,
@@ -570,16 +607,6 @@ class _PremiumFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final showCta = offeringsReady;
     final showMaybeLater = purchaseState != _PurchaseState.success;
-    // The hard-edge separator below only earns its keep when there's
-    // actual footer content above "Maybe later" for it to separate from
-    // the scrollable body (the loading spinner or the loaded CTA). In the
-    // pricing-unavailable state the footer is just "Maybe later" alone,
-    // and the same line reads as a stray, orphaned rule sitting directly
-    // above it rather than a section boundary — dropped for that state
-    // only; the retry affordance itself already lives in the scrollable
-    // body ([_UnavailableCard]), not duplicated here.
-    final showTopBorder = loading || showCta;
-
     return DecoratedBox(
       // A hard edge (not a shadow/blur) between the scrollable content and
       // the fixed footer — the same "permanent, not scroll-triggered"
@@ -588,9 +615,7 @@ class _PremiumFooter extends StatelessWidget {
       // reads as a bug (looks fine at rest, gains an edge mid-scroll).
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        border: showTopBorder
-            ? Border(top: BorderSide(color: colorScheme.outlineVariant))
-            : null,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: SafeArea(
         top: false,
@@ -649,15 +674,20 @@ class _PremiumFooter extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
+                  // Never truncated: the price, period and auto-renewal
+                  // sentence is a required disclosure, so at large text sizes
+                  // it wraps onto more lines and the footer grows instead.
                   disclosureText!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 4),
               ],
+              // Required wherever a subscription is sold, so seen without
+              // scrolling, in every state (loading, priced, pricing
+              // unavailable).
+              if (showLegalLinks) const _LegalLinks(),
               if (showMaybeLater)
                 TextButton(
                   style: TextButton.styleFrom(

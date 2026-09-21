@@ -4376,3 +4376,52 @@ unnoticed.
   choice: an app kill during a preload (the request is lost, the next launch
   starts again), and `saveDailyTestSet`'s replace-on-conflict, which single-flight
   makes unreachable within one service instance.
+
+## 2026-09-22 (Premium: legal links in the fixed footer, hero dropped on short screens)
+
+- **[Problem]** On device, at Medium and Large text the Terms and Privacy
+  links were only reachable by scrolling. Measured at 375x667 (iPhone SE, real
+  font, 20 pt status bar) before the change: the purchase button and the
+  disclosure sentence were already in the fixed footer and visible, but the links
+  were 236 pt (Medium) / 291 pt (Large) below the fold, Restore Purchases 180 /
+  235 pt, and the plan cards were at most a 10 pt sliver at Medium. The
+  disclosure sentence also had `maxLines: 2` with an ellipsis: at Large text and a
+  system scale of 1.6x it was cut off.
+- **[Product]** Owner decisions: the Terms/Privacy row goes into the fixed
+  footer (above "Maybe later", which stays); on screens under 700 pt tall the
+  decorative avatar hero is dropped (94 pt back for the table and plan cards);
+  the disclosure sentence is never truncated (it wraps and the footer grows).
+  Restore Purchases stays at the end of the scrolling body. Spacing tightening
+  alone was rejected: the most it could recover (about 50 pt, about 100 with the
+  hero) is far short of the 236-291 pt needed.
+- **[Engineering]** Measured after: 375x667 Medium / Large: footer 218 / 222 pt
+  (33% of the screen), text area 373 / 369 pt, button, two-line disclosure, both
+  links and Maybe later all on the first screen. With the system text scale at
+  1.6x: footer 321 / 327 pt (48-49%), disclosure three lines, links on two rows,
+  text area 270 / 264 pt, still everything visible.
+- **[Engineering]** A footer that grows with text size needs a limit. A first
+  version capped it and scrolled inside itself; that made every Premium test's
+  unqualified `scrollUntilVisible` ambiguous (two scrollables) and a second scroll
+  area in a paywall is worse UX anyway. Instead the links stay in the footer only
+  while `screen height / system text scale >= 400`, a rule fitted to the
+  measurements (the footer is about 46 pt + 172 pt per unit of scale, so this
+  keeps it at or under about half the screen). Past that (375x667 at 2x and above,
+  320x568 above about 1.4x) the links go back to the end of the scrolling body,
+  the layout from before, which fits (the existing 2x and 3x tests still pass).
+  The footer's top border now shows in every state: the "stray divider above
+  Maybe later" it used to be dropped for no longer applies, because the links sit
+  between it and the body; that test was inverted.
+- **[Validation]** Measurement-based tests in the real font and app theme, at
+  375x667: Medium and Large, and each with a 1.6x system scale, assert the button,
+  disclosure, both links and Maybe later end inside the screen with no scrolling,
+  the links are in the footer, the disclosure is not truncated, the footer share
+  and the text area height stay in bounds, the hero is absent and Restore is
+  reachable; 320x568 in both themes; pricing unavailable; the 3x fallback with the
+  links reachable at the body's end; the 699/700 pt hero boundary. Disabling the
+  footer links, or restoring the truncation, turns them red. The old "footer at most
+  40% at 320x568 @1.3x" guard was measured in the test font (about twice as wide
+  as the real one) and is replaced by these; hero tests now use a phone-sized
+  surface.
+- **[Known limit]** On a 320x568 screen with a system scale of 1.3-1.4x the text
+  area above the footer is about 220 pt; that size is outside the 375x667 target
+  and was only checked for fit, not for comfort.

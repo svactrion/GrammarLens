@@ -139,6 +139,16 @@ as each one lands, with literal status words (see above):
   duration, and also wrongly said no App Store Connect product was connected;
   both fixed). Older dated entries in this file and in the build log keep
   their original wording as history, with pointers where they would mislead.
+- **Premium legal links in the fixed footer — implemented, automated tests
+  only; not device-confirmed.** Terms and Privacy now sit in the footer above
+  "Maybe later" (33% of a 375x667 screen at Medium/Large), the avatar hero is
+  dropped on screens under 700 pt, and the disclosure sentence is never
+  truncated (it was cut at Large text with a 1.6x system scale). Above about 1.6x
+  (375x667) the links fall back to the end of the scrolling body so the footer
+  cannot take over the screen. Restore Purchases stays in the body. On an
+  iPhone SE the comparison table is now fully in view and the top of the plan
+  cards shows above the footer (about 56 pt at Medium, 11 pt at Large; before,
+  10 pt and none).
 - **Premium comparison-table overflow — implemented (stacked layout),
   automated tests only; not device-confirmed.** Decision: when the three
   columns do not fit, rows stack (label on top, Free and Premium chips

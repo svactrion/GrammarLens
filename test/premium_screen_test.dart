@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
@@ -1071,42 +1072,12 @@ void main() {
           reason: 'the CTA must allow retrying directly after an error');
     });
 
-    // Batch 2 item 3: measure the footer's own height at both target
-    // widths/heights and both text scales, and stop if the worst case
-    // (320x568 @1.3) would exceed 40% of the viewport — reported via the
-    // build-log entry for this batch, not asserted as a hard failure here
-    // unless that threshold is actually crossed.
-    for (final size in [const Size(320, 568), const Size(375, 667)]) {
-      for (final scale in [1.0, 1.3]) {
-        testWidgets(
-            'footer height at ${size.width.toInt()}x${size.height.toInt()} '
-            '@${scale}x textScale', (tester) async {
-          await pumpAt(
-            tester,
-            size: size,
-            textScale: scale,
-            service:
-                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
-          );
-
-          final footerHeight =
-              tester.getSize(find.byKey(const Key('premiumFooter'))).height;
-          final fraction = footerHeight / size.height;
-          // ignore: avoid_print
-          print('footer height @ ${size.width.toInt()}x${size.height.toInt()} '
-              '@${scale}x = ${footerHeight.toStringAsFixed(1)}pt '
-              '(${(fraction * 100).toStringAsFixed(1)}% of viewport height)');
-
-          if (size == const Size(320, 568) && scale == 1.3) {
-            expect(fraction, lessThanOrEqualTo(0.40),
-                reason: 'the footer would take up '
-                    '${(fraction * 100).toStringAsFixed(1)}% of a 320x568 '
-                    'viewport at 1.3x text scale — stop-and-report threshold '
-                    'from this batch\'s own brief');
-          }
-        });
-      }
-    }
+    // The footer's measured height at the small sizes lives in the "fixed
+    // footer on the smallest supported screens" group below. The old 40%
+    // stop-and-report guard for 320x568 at 1.3x was measured in the test font
+    // (about twice as wide as the real one) and predates the legal links
+    // moving into the footer (2026-09-22, owner decision); it is replaced by
+    // real-font assertions.
 
     testWidgets(
         "the PREMIUM header doesn't overflow at 1.3x or 2.0x text scale "
@@ -1238,6 +1209,15 @@ void main() {
     // (see _AvatarHero's own doc comment: the other four are decorative,
     // not individually meaningful to a screen reader), so which avatars
     // are actually shown is only observable at the widget level now.
+    // The hero is dropped on screens under 700 pt tall (an iPhone SE), and the
+    // default test surface is 800x600, so these tests use a phone-sized one.
+    void useTallScreen(WidgetTester tester) {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+    }
+
     List<Avatar?> avatarsShown(WidgetTester tester) => tester
         .widgetList<AvatarTile>(find.byType(AvatarTile))
         .map((tile) => tile.avatar)
@@ -1246,6 +1226,7 @@ void main() {
     testWidgets(
         'shows exactly five avatars, the center one matching the '
         "real profile's avatar", (tester) async {
+      useTallScreen(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: PremiumScreen(
@@ -1267,6 +1248,7 @@ void main() {
         'the four other avatars are distinct from the center and from '
         'each other, and are the same every time (deterministic, not '
         'Avatar.random)', (tester) async {
+      useTallScreen(tester);
       Future<List<Avatar?>> pumpAndRead() async {
         await tester.pumpWidget(
           MaterialApp(
@@ -1297,6 +1279,7 @@ void main() {
     testWidgets(
         'a null avatar (legacy profile) never shows the generic '
         'placeholder — five real avatars are shown instead', (tester) async {
+      useTallScreen(tester);
       const legacyProfile =
           UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
       await tester.pumpWidget(
@@ -1341,7 +1324,7 @@ void main() {
     testWidgets(
         'three avatars fit within a 320pt-wide viewport, no '
         'overflow', (tester) async {
-      tester.view.physicalSize = const Size(320, 568) * 2.0;
+      tester.view.physicalSize = const Size(320, 740) * 2.0;
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -1364,7 +1347,8 @@ void main() {
 
     for (final width in [320.0, 390.0]) {
       for (final dark in [false, true]) {
-        testWidgets('opaque, separated and centered avatars at $width dark=$dark',
+        testWidgets(
+            'opaque, separated and centered avatars at $width dark=$dark',
             (tester) async {
           tester.view.physicalSize = Size(width, 852);
           tester.view.devicePixelRatio = 1;
@@ -1384,7 +1368,8 @@ void main() {
           final count = width == 320 ? 3 : 5;
           expect(tiles, findsNWidgets(count));
           expect(avatarsShown(tester)[count ~/ 2], profile.avatar);
-          final rects = List.generate(count, (i) => tester.getRect(tiles.at(i)));
+          final rects =
+              List.generate(count, (i) => tester.getRect(tiles.at(i)));
           final center = rects[count ~/ 2];
           expect(center.center.dx, closeTo(width / 2, 0.01));
           for (var i = 0; i < count; i++) {
@@ -1392,7 +1377,8 @@ void main() {
             expect(rects[i].right, lessThanOrEqualTo(width));
             if (i != count ~/ 2) expect(rects[i].width, lessThan(center.width));
             if (i > 0) {
-              expect(rects[i].left - rects[i - 1].right, greaterThanOrEqualTo(8));
+              expect(
+                  rects[i].left - rects[i - 1].right, greaterThanOrEqualTo(8));
             }
           }
           expect(find.ancestor(of: tiles, matching: find.byType(Opacity)),
@@ -1752,9 +1738,9 @@ void main() {
   });
 
   group(
-      'the pricing-unavailable footer no longer has a stray divider '
-      'directly above "Maybe later"', () {
-    testWidgets('no top border in the footer when only "Maybe later" shows',
+      'the footer keeps its top border in every state: the legal links now sit '
+      'above "Maybe later", so the rule separates them from the body', () {
+    testWidgets('pricing unavailable: links and "Maybe later" under a border',
         (tester) async {
       await pumpPremium(tester, _FakeSubscriptionService(offering: null));
 
@@ -1767,10 +1753,12 @@ void main() {
             .first,
       );
       final decoration = footer.decoration as BoxDecoration;
-      expect(decoration.border, isNull,
-          reason: 'the loaded/loading states\' top border is a real '
-              'section separator; with only "Maybe later" in the footer '
-              'it read as an orphaned line sitting right above it instead');
+      expect(decoration.border, isNotNull);
+      expect(
+          find.descendant(
+              of: find.byKey(const Key('premiumFooter')),
+              matching: find.text('Privacy Policy')),
+          findsOneWidget);
     });
 
     testWidgets('the top border is still there once pricing has loaded',
@@ -1929,6 +1917,214 @@ void main() {
       final viewportHeight =
           tester.view.physicalSize.height / tester.view.devicePixelRatio;
       expect(ctaRect.bottom, lessThanOrEqualTo(viewportHeight));
+    });
+  });
+
+  group(
+      'fixed footer on the smallest supported screens: the button, the '
+      'disclosure sentence and the legal links are on the first screen, '
+      'measured in the real font', () {
+    Future<void> pumpMeasured(
+      WidgetTester tester, {
+      required Size size,
+      required AppTextSize textSize,
+      double systemScale = 1,
+      Brightness brightness = Brightness.light,
+      bool pricingLoaded = true,
+    }) async {
+      tester.view.physicalSize = size * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      // An iPhone SE has a 20 pt status bar and no home-indicator inset.
+      tester.view.padding = const FakeViewPadding(top: 40);
+      tester.view.viewPadding = const FakeViewPadding(top: 40);
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.textScaleFactorTestValue = systemScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(brightness, textSize: textSize),
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService: _FakeSubscriptionService(
+              offering: pricingLoaded ? _offeringWithBothPlans() : null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // The scrolling body's own scrollable (the footer does not scroll).
+    final bodyScrollable = find.ancestor(
+        of: find.byKey(const Key('premiumBody')),
+        matching: find.byType(Scrollable));
+
+    /// Every rectangle is in screen coordinates, so "on the first screen"
+    /// simply means inside the viewport, with nothing scrolled.
+    Future<
+        ({
+          Rect footer,
+          Rect scrollRegion,
+          Rect cta,
+          Rect disclosure,
+          Rect privacy,
+          Rect terms,
+          Rect maybeLater,
+          bool disclosureTruncated,
+        })> measure(WidgetTester tester) async {
+      final disclosureFinder = find.textContaining('auto-renews');
+      return (
+        footer: tester.getRect(find.byKey(const Key('premiumFooter'))),
+        scrollRegion: tester.getRect(find.ancestor(
+            of: find.byKey(const Key('premiumBody')),
+            matching: find.byType(SingleChildScrollView))),
+        cta: tester
+            .getRect(find.widgetWithText(FilledButton, 'Start free trial')),
+        disclosure: tester.getRect(disclosureFinder),
+        privacy: tester.getRect(find.text('Privacy Policy')),
+        terms: tester.getRect(find.text('Terms of Service')),
+        maybeLater: tester.getRect(find.text('Maybe later')),
+        disclosureTruncated: tester
+            .renderObject<RenderParagraph>(disclosureFinder)
+            .didExceedMaxLines,
+      );
+    }
+
+    void expectOnFirstScreen(dynamic m, double screenHeight) {
+      for (final entry in {
+        'the purchase button': m.cta as Rect,
+        'the disclosure sentence': m.disclosure as Rect,
+        'the Privacy Policy link': m.privacy as Rect,
+        'the Terms of Service link': m.terms as Rect,
+        'Maybe later': m.maybeLater as Rect,
+      }.entries) {
+        expect(entry.value.top, greaterThanOrEqualTo(m.scrollRegion.top),
+            reason: '${entry.key} starts inside the screen');
+        expect(entry.value.bottom, lessThanOrEqualTo(screenHeight),
+            reason: '${entry.key} ends inside the screen (no scrolling)');
+      }
+      // The links are in the fixed footer, below the scrolling region.
+      expect(m.privacy.top, greaterThanOrEqualTo(m.footer.top));
+      expect(m.terms.top, greaterThanOrEqualTo(m.footer.top));
+      expect(m.disclosureTruncated, isFalse,
+          reason: 'the disclosure sentence is never cut off');
+    }
+
+    // The two sizes the owner asked for, at the sizes the app offers: on an
+    // iPhone SE (375x667), Medium (the default) and Large, and also with the
+    // system text scale at 1.6x.
+    for (final textSize in [AppTextSize.medium, AppTextSize.large]) {
+      testWidgets(
+          '375x667, ${textSize.name}: button, disclosure and both legal '
+          'links are on the first screen, and the footer stays a third of it',
+          (tester) async {
+        await pumpMeasured(tester,
+            size: const Size(375, 667), textSize: textSize);
+        final m = await measure(tester);
+
+        expectOnFirstScreen(m, 667);
+        expect(m.footer.height / 667, lessThan(0.36));
+        // The text above it keeps a usable area even so.
+        expect(m.scrollRegion.height, greaterThan(360));
+        // The avatar hero is dropped on a screen this short...
+        expect(find.byType(AvatarTile), findsNothing);
+        // ...which lifts the content: the whole comparison table is in view
+        // and the top of the plan cards shows above the footer (about 56 pt
+        // of them at Medium, 11 pt at Large; they were not visible at all
+        // before).
+        final annual =
+            tester.getRect(find.byKey(const ValueKey('planCard_Annual')));
+        final lastRow = tester.getRect(find.textContaining('Sessions of'));
+        expect(lastRow.bottom, lessThan(m.scrollRegion.bottom));
+        expect(annual.top, lessThan(m.scrollRegion.bottom - 8));
+        // Restore Purchases is still in the scrolling body, reachable.
+        await tester.scrollUntilVisible(find.text('Restore Purchases'), 200,
+            scrollable: bodyScrollable);
+        expect(find.text('Restore Purchases'), findsOneWidget);
+      });
+
+      testWidgets(
+          '375x667, ${textSize.name}, system text 1.6x: still all on the first '
+          'screen, the disclosure wraps to more lines instead of being cut, '
+          'and the text area keeps a usable height', (tester) async {
+        await pumpMeasured(tester,
+            size: const Size(375, 667), textSize: textSize, systemScale: 1.6);
+        final m = await measure(tester);
+
+        expectOnFirstScreen(m, 667);
+        expect(m.footer.height / 667, lessThan(0.52));
+        expect(m.scrollRegion.height, greaterThan(250));
+      });
+    }
+
+    testWidgets(
+        'beyond what the screen can hold (375x667 at 3x text) the links go '
+        'back to the end of the scrolling body, so the footer never takes '
+        'over the screen', (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(375, 667),
+          textSize: AppTextSize.medium,
+          systemScale: 3);
+      final footer = find.byKey(const Key('premiumFooter'));
+
+      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+          findsNothing);
+      expect(tester.takeException(), isNull);
+      // Still there, at the end of the body.
+      await tester.scrollUntilVisible(find.text('Privacy Policy'), 300,
+          scrollable: bodyScrollable);
+      expect(find.text('Privacy Policy'), findsOneWidget);
+      expect(find.text('Terms of Service'), findsOneWidget);
+    });
+
+    testWidgets(
+        '320x568 at the default size also fits everything, in both '
+        'themes, with links in the footer', (tester) async {
+      for (final brightness in Brightness.values) {
+        await pumpMeasured(tester,
+            size: const Size(320, 568),
+            textSize: AppTextSize.medium,
+            brightness: brightness);
+        final m = await measure(tester);
+        expectOnFirstScreen(m, 568);
+        expect(m.scrollRegion.height, greaterThan(250));
+      }
+    });
+
+    testWidgets(
+        'the pricing-unavailable state also has the links in the footer, '
+        'never gated on pricing loading', (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(375, 667),
+          textSize: AppTextSize.large,
+          pricingLoaded: false);
+      final footer = find.byKey(const Key('premiumFooter'));
+
+      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+          findsOneWidget);
+      expect(
+          find.descendant(of: footer, matching: find.text('Terms of Service')),
+          findsOneWidget);
+      expect(tester.getRect(find.text('Terms of Service')).bottom,
+          lessThanOrEqualTo(667));
+    });
+
+    testWidgets(
+        'the avatar hero shows on a tall screen and is dropped under 700 pt',
+        (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(390, 844), textSize: AppTextSize.medium);
+      expect(find.byType(AvatarTile), findsWidgets);
+
+      await pumpMeasured(tester,
+          size: const Size(390, 699), textSize: AppTextSize.medium);
+      expect(find.byType(AvatarTile), findsNothing);
+
+      await pumpMeasured(tester,
+          size: const Size(390, 700), textSize: AppTextSize.medium);
+      expect(find.byType(AvatarTile), findsWidgets);
     });
   });
 
