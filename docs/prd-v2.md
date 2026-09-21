@@ -733,7 +733,7 @@ is deliberately **not** changed. The local cap now always binds before the
 proxy's generic per-device wall. The cap is a cost guardrail, not a product
 promise: no user-facing copy states it except the "That's all for today"
 dialog, and nothing anywhere says "unlimited". This resolves §7.2's open
-cap number for launch only; revisit with the token-log data (§13.9).
+cap number for launch only; revisit with the token-log data (§13.10).
 
 ### 13.9 Onboarding privacy note corrected (2026-09-21)
 
@@ -746,6 +746,28 @@ does (name and goal are sent to neither the proxy nor analytics) and agrees
 with the published privacy policy. Any future in-app privacy claim should be
 checked against that policy and against the App Store privacy label, not
 written from memory of an earlier architecture.
+
+### 13.10 Token logging in the proxy (2026-09-21)
+
+§13.7's unit economics are estimates: prompt and completion sizes were
+modelled, and the proxy threw away Anthropic's `usage` object. The proxy now
+logs, per successful Anthropic call, the operation kind (`daily_test` /
+`topic_practice`), the exact operation, the question count and the real input
+and output token counts, via `console.log` into Workers Logs. It logs nothing
+user-related (no device id, prompts, questions, answers or generated text);
+a test plants secrets in every request and response field and asserts none
+reaches any console channel. See `proxy/README.md`.
+
+Status: implemented and tested; **not deployed**, so no data exists yet. Until
+a few weeks of real traffic are measured, every figure in §13.7, the session
+cap (§13.8) and the unit economics above stay estimates. Options if the data
+must outlive Workers Logs' short retention, **not built**: (1) Workers
+Analytics Engine — one data point per call, SQL queryable, months of
+retention, the smallest change from today's `console.log` and the
+recommended next step; (2) Logpush of Workers Logs to R2 — keeps raw lines,
+needs a paid plan and a query tool; (3) a daily aggregate in KV or D1 —
+smallest storage but needs new counter code and loses raw per-call detail.
+Any of these would only ever hold the same non-personal fields.
 
 ---
 

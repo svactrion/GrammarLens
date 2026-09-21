@@ -61,6 +61,33 @@ transform doesn't typecheck.
    detail and validation-rejection reasons are visible (never sent to the
    client).
 
+## Token usage log
+
+Every successful Anthropic call writes one JSON line with `console.log`
+(`src/usage_log.ts`), which Workers Logs collects (`observability` is enabled
+in `wrangler.jsonc`) and `wrangler tail` shows live:
+
+```json
+{"event":"anthropic_usage","kind":"topic_practice","operation":"score_answers","item_count":5,"input_tokens":1100,"output_tokens":400}
+```
+
+- `kind` is `daily_test` or `topic_practice`; a practice session is two lines
+  (`generate_practice_set` + `score_answers`), so per-session cost is the sum of
+  the two averages. `item_count` is the number of questions the call covered.
+- Token counts come from the `usage` object Anthropic returns; a missing or
+  non-numeric value is logged as `null`. Logged even if the content later
+  fails to parse, because the call was still billed.
+- **Nothing user-related is ever logged by this line** — no device id, prompt,
+  question, answer, weak spot or generated text. The line is built field by
+  field, and `test/usage_log.test.ts` checks every console channel for
+  planted secrets. Do not add fields without keeping that true.
+- Measuring: filter Workers Logs on `event = anthropic_usage`, average
+  `input_tokens`/`output_tokens` per `operation`, multiply by the model's
+  per-token prices. Workers Logs keeps data for a short, plan-dependent window
+  (check the current Cloudflare limits), so export what matters.
+
+Not yet deployed by this change; `npm run deploy` is the owner's step.
+
 `DEVICE_DAILY_LIMIT`/`GLOBAL_DAILY_LIMIT` (plain vars in `wrangler.jsonc`,
 not secret) are conservative placeholder defaults, not measured numbers —
 same status as `StorageService.dailySessionLimit` on the client side (see

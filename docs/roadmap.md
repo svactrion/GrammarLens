@@ -66,6 +66,19 @@ as each one lands, with literal status words (see above):
   Premium screen links the policy itself. Still open before submission: the
   App Store privacy nutrition label must match the same facts (outside this
   repo).
+- **Proxy token logging — implemented and tested; not deployed, no data
+  yet.** Each successful Anthropic call logs `kind` (daily_test /
+  topic_practice), operation, question count and real input/output tokens
+  with `console.log` (Workers Logs). Nothing user-related is logged; a test
+  plants secrets to prove it. Purpose: after a few weeks of traffic, measure
+  the real cost of a Daily Test and of a practice session — all unit
+  economics (PRD v2 §13.7, the session cap, the margin numbers above) are
+  still unmeasured estimates until then. Persistent-storage options are
+  proposed in PRD v2 §13.10 (recommended: Workers Analytics Engine) and none
+  is built. Two pre-existing proxy `console.error` calls (Anthropic's raw
+  error body on a non-200, and the JSON parse exception on unusable
+  content) can in principle echo response text and were **not changed** here;
+  worth a decision.
 - **Trial-length wording — corrected in current-state text.** Truth: annual
   = 7 days, monthly = 3 days; both are set in App Store Connect and read live
   from RevenueCat, and no day count is written in `lib/` app copy (checked).

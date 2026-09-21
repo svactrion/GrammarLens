@@ -1,5 +1,6 @@
 import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
+import { logUsage } from './usage_log';
 import type {
   GenerateDailyTestRequest,
   GeneratePracticeSetRequest,
@@ -342,7 +343,13 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an error.');
   }
 
-  const decoded = (await response.json()) as { content?: { type: string; text?: string }[] };
+  const decoded = (await response.json()) as {
+    content?: { type: string; text?: string }[];
+    usage?: unknown;
+  };
+  // Logged before the content is checked: a response that later fails to
+  // parse was still billed, and that cost belongs in the measurement.
+  logUsage(operation, decoded.usage);
   const textBlock = decoded.content?.find((block) => block.type === 'text');
   if (!textBlock?.text) {
     console.error('Anthropic response had no text content block');
