@@ -224,6 +224,14 @@ as each one lands, with literal status words (see above):
   first session). No claim about the provider's retention or training is made
   anywhere in the app. PRD v2 §13.13.
 
+- **First Daily Test preload — implemented, automated tests only; device check
+  pending.** Generation starts on the "Get started" tap; the Daily Test screen
+  joins the running request (single-flight per day in `DailyTestService`), a
+  failed preload is silent and retried by the screen. Every proxy request now has a
+  40 s timeout. A latent race in `getOrCreateDeviceId` (overlapping first calls)
+  was fixed. The benefit is unmeasured until the proxy's `duration_ms` is
+  deployed and read, and the 40 s value should be checked against it.
+
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
 now displays persisted monthly progress and the selected avatar on Home, with

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,11 +25,25 @@ import 'package:grammar_lens/theme.dart';
 /// rather than relying on the real ClaudeService's network call failing —
 /// same fake shape as daily_test_service_test.dart's own.
 class _FakeClaudeService extends ClaudeService {
+  int generateCalls = 0;
+
+  /// When set, generation waits for it: a request that is still running.
+  Completer<void>? gate;
+
+  /// Generations that fail before one succeeds.
+  int failuresLeft = 0;
+
   @override
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
   }) async {
+    generateCalls++;
+    if (gate != null) await gate!.future;
+    if (failuresLeft > 0) {
+      failuresLeft--;
+      throw const ClaudeApiException('simulated failure');
+    }
     return List.generate(
       count,
       (i) => DailyTestQuestion(
@@ -130,9 +146,11 @@ class _FakeStorageService extends StorageService {
 
 void main() {
   late _FakeStorageService storageService;
+  late _FakeClaudeService claudeService;
 
   setUp(() {
     storageService = _FakeStorageService();
+    claudeService = _FakeClaudeService();
   });
 
   Future<void> pumpFlow(
@@ -164,7 +182,7 @@ void main() {
         // it, the MaterialApp default doesn't.
         theme: buildAppTheme(Brightness.light),
         home: FirstLaunchFlow(
-          claudeService: _FakeClaudeService(),
+          claudeService: claudeService,
           storageService: storageService,
           analyticsService: AnalyticsService(),
           onComplete: onComplete,
@@ -345,5 +363,108 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pending, isNull);
+  });
+
+  group('Daily Test preload', () {
+    testWidgets('nothing is requested while Welcome is open', (tester) async {
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+
+      expect(find.text('Get started'), findsOneWidget);
+      expect(claudeService.generateCalls, 0);
+    });
+
+    testWidgets(
+        'tapping Get started starts generating at once, and the Daily Test '
+        'then uses that result instead of asking again', (tester) async {
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      // Still on the onboarding form: the request is already done.
+      expect(find.byType(TextField), findsOneWidget);
+      expect(claudeService.generateCalls, 1);
+
+      await tester.enterText(find.byType(TextField), 'Ada');
+      await tester.tap(find.text('Exam prep'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Question 0'), findsOneWidget);
+      expect(claudeService.generateCalls, 1);
+    });
+
+    testWidgets(
+        'a request still running when the Daily Test opens is joined: one '
+        'request in total, and the questions appear when it finishes',
+        (tester) async {
+      claudeService.gate = Completer<void>();
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Ada');
+      await tester.tap(find.text('Exam prep'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      // The loading spinner never settles, so plain pumps.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.text('Question 0'), findsNothing);
+      expect(claudeService.generateCalls, 1);
+
+      claudeService.gate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Question 0'), findsOneWidget);
+      expect(claudeService.generateCalls, 1);
+    });
+
+    testWidgets(
+        'a failed preload is silent, and the Daily Test screen makes its own '
+        'attempt', (tester) async {
+      claudeService.failuresLeft = 1;
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      expect(claudeService.generateCalls, 1);
+      // No error shown, nothing thrown at the onboarding form.
+      expect(tester.takeException(), isNull);
+      expect(find.byType(TextField), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'Ada');
+      await tester.tap(find.text('Exam prep'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+
+      expect(claudeService.generateCalls, 2);
+      expect(find.text('Question 0'), findsOneWidget);
+    });
+
+    testWidgets(
+        'if the preload and the retry both fail, the Daily Test screen shows '
+        'its own error with Try again', (tester) async {
+      claudeService.failuresLeft = 2;
+      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Ada');
+      await tester.tap(find.text('Exam prep'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Question 0'), findsNothing);
+      expect(find.text('Try again'), findsOneWidget);
+
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+      expect(claudeService.generateCalls, 3);
+      expect(find.text('Question 0'), findsOneWidget);
+    });
   });
 }

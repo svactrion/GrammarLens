@@ -679,9 +679,17 @@ class StorageService {
     final rows = await db.query('device_identity', limit: 1);
     if (rows.isNotEmpty) return rows.first['device_id'] as String;
 
-    final id = _generateDeviceId();
-    await db.insert('device_identity', {'id': 0, 'device_id': id});
-    return id;
+    // Two callers can both find no row (an early Daily Test request and
+    // another read of the id can overlap), so the insert must not fail for the
+    // loser and both must end up with the one id that was stored: ignore the
+    // conflict, then read back what is really there.
+    await db.insert(
+      'device_identity',
+      {'id': 0, 'device_id': _generateDeviceId()},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+    final stored = await db.query('device_identity', limit: 1);
+    return stored.first['device_id'] as String;
   }
 
   static String _generateDeviceId() {

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:grammar_lens/models/daily_test_question.dart';
+import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
@@ -17,6 +20,12 @@ class _FakeClaudeService extends ClaudeService {
   int generateCallCount = 0;
   void Function()? onGenerate;
 
+  /// When set, generation waits for it: a request that is still running.
+  Completer<void>? gate;
+
+  /// Generations that fail before one succeeds.
+  int failuresLeft = 0;
+
   @override
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
@@ -24,6 +33,11 @@ class _FakeClaudeService extends ClaudeService {
   }) async {
     generateCallCount++;
     onGenerate?.call();
+    if (gate != null) await gate!.future;
+    if (failuresLeft > 0) {
+      failuresLeft--;
+      throw const FormatException('simulated failure');
+    }
     return List.generate(
       count,
       (i) => DailyTestQuestion(
@@ -306,5 +320,108 @@ void main() {
     final mistakes = await storageService.getRecentMistakes(
         'tenseSelection', 'tenseSelection');
     expect(mistakes, hasLength(1));
+  });
+
+  group('single-flight generation', () {
+    test('two calls while one is running share one request and one set',
+        () async {
+      claudeService.gate = Completer<void>();
+
+      final first = dailyTestService.getTodaysSet();
+      final second = dailyTestService.getTodaysSet();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      claudeService.gate!.complete();
+      final sets = await Future.wait([first, second]);
+
+      expect(claudeService.generateCallCount, 1);
+      expect(sets[0].day, sets[1].day);
+      expect(sets[0].questions.map((q) => q.item.id),
+          sets[1].questions.map((q) => q.item.id));
+      // And it was cached once: a later call reads it, generating nothing.
+      await dailyTestService.getTodaysSet();
+      expect(claudeService.generateCallCount, 1);
+    });
+
+    test('a preload that is still running is joined, not repeated', () async {
+      claudeService.gate = Completer<void>();
+
+      dailyTestService.preloadTodaysSet();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      final screen = dailyTestService.getTodaysSet(); // the Daily Test opens
+      claudeService.gate!.complete();
+      final set = await screen;
+
+      expect(claudeService.generateCallCount, 1);
+      expect(set.questions, hasLength(DailyTestService.questionCount));
+    });
+
+    test('a preload that already finished is served from the cache', () async {
+      dailyTestService.preloadTodaysSet();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      final set = await dailyTestService.getTodaysSet();
+
+      expect(claudeService.generateCallCount, 1);
+      expect(set.isCompleted, isFalse);
+    });
+
+    test(
+        'a failed preload is silent (no uncaught error) and the real call '
+        'then makes its own attempt', () async {
+      claudeService.failuresLeft = 1;
+      final uncaught = <Object>[];
+      late DailyTestSet set;
+
+      await runZonedGuarded(() async {
+        dailyTestService.preloadTodaysSet();
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        set = await dailyTestService.getTodaysSet();
+      }, (error, _) => uncaught.add(error));
+
+      expect(uncaught, isEmpty);
+      expect(claudeService.generateCallCount, 2);
+      expect(set.questions, hasLength(DailyTestService.questionCount));
+    });
+
+    test(
+        'everyone who joined a failing request sees its error, and the next '
+        'call is a fresh attempt', () async {
+      claudeService
+        ..gate = Completer<void>()
+        ..failuresLeft = 1;
+
+      final first = dailyTestService.getTodaysSet();
+      final second = dailyTestService.getTodaysSet();
+      final failures = [
+        expectLater(first, throwsA(isA<FormatException>())),
+        expectLater(second, throwsA(isA<FormatException>())),
+      ];
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      claudeService.gate!.complete();
+      await Future.wait(failures);
+      expect(claudeService.generateCallCount, 1);
+
+      // Nothing was cached and nothing is remembered as in flight.
+      expect(await storageService.getDailyTestSetForToday(), isNull);
+      final retry = await dailyTestService.getTodaysSet();
+      expect(claudeService.generateCallCount, 2);
+      expect(retry.questions, hasLength(DailyTestService.questionCount));
+    });
+
+    test('a call for another day does not join a request for the first',
+        () async {
+      StorageService.clockForTesting = () => DateTime(2026, 9, 30, 23, 59);
+      claudeService.gate = Completer<void>();
+      final evening = dailyTestService.getTodaysSet();
+
+      StorageService.clockForTesting = () => DateTime(2026, 10, 1, 0, 1);
+      final morning = dailyTestService.getTodaysSet();
+      claudeService.gate!.complete();
+      final sets = await Future.wait([evening, morning]);
+
+      expect(claudeService.generateCallCount, 2);
+      expect(sets[0].day, '2026-09-30');
+      expect(sets[1].day, '2026-10-01');
+    });
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -58,11 +59,24 @@ class ClaudeService {
   // AppConfig defaults; only tests pass these explicitly.
   final String _proxyBaseUrl;
   final String _appToken;
+  final Duration _requestTimeout;
 
-  ClaudeService({http.Client? client, String? proxyBaseUrl, String? appToken})
-      : _client = client ?? http.Client(),
+  /// How long one request to the proxy may take before it is given up as
+  /// failed. Without a limit a request that never answers would leave a
+  /// screen loading forever (the Daily Test's first load included). Generation
+  /// is the slow call; the proxy's `duration_ms` log is what shows whether this
+  /// leaves enough room for a 10-question session.
+  static const Duration defaultRequestTimeout = Duration(seconds: 40);
+
+  ClaudeService({
+    http.Client? client,
+    String? proxyBaseUrl,
+    String? appToken,
+    Duration? requestTimeout,
+  })  : _client = client ?? http.Client(),
         _proxyBaseUrl = proxyBaseUrl ?? AppConfig.proxyBaseUrl,
-        _appToken = appToken ?? AppConfig.appToken;
+        _appToken = appToken ?? AppConfig.appToken,
+        _requestTimeout = requestTimeout ?? defaultRequestTimeout;
 
   bool get _isConfigured => _proxyBaseUrl.isNotEmpty && _appToken.isNotEmpty;
 
@@ -151,8 +165,14 @@ class ClaudeService {
 
     http.Response response;
     try {
-      response = await _client.post(_uri(path),
-          headers: _headers, body: jsonEncode(body));
+      response = await _client
+          .post(_uri(path), headers: _headers, body: jsonEncode(body))
+          .timeout(_requestTimeout);
+    } on TimeoutException {
+      throw const ClaudeApiException(
+        'The practice service took too long to respond. Please try again.',
+        kind: ClaudeApiErrorKind.network,
+      );
     } catch (_) {
       throw const ClaudeApiException(
         "Couldn't reach the practice service. Check your connection and "

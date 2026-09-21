@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -236,6 +237,46 @@ void main() {
         throwsA(isA<ClaudeApiException>()
             .having((e) => e.kind, 'kind', ClaudeApiErrorKind.network)),
       );
+    });
+  });
+
+  group('request timeout', () {
+    ClaudeService withTimeout(http.Client client, Duration timeout) =>
+        ClaudeService(
+          client: client,
+          proxyBaseUrl: 'https://proxy.test',
+          appToken: 'test-token',
+          requestTimeout: timeout,
+        );
+
+    test('the default is 40 seconds', () {
+      expect(ClaudeService.defaultRequestTimeout, const Duration(seconds: 40));
+    });
+
+    test('a request that never answers fails as a network error, not a hang',
+        () async {
+      final neverAnswers = Completer<http.Response>();
+      final client = MockClient((_) => neverAnswers.future);
+
+      await expectLater(
+        withTimeout(client, const Duration(milliseconds: 50))
+            .generateDailyTestQuestions(deviceId: 'device-1', count: 5),
+        throwsA(isA<ClaudeApiException>()
+            .having((e) => e.kind, 'kind', ClaudeApiErrorKind.network)
+            .having((e) => e.message, 'message', contains('too long'))),
+      );
+    });
+
+    test('a request that answers in time is unaffected', () async {
+      final client = MockClient((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return http.Response(jsonEncode({'questions': []}), 200);
+      });
+
+      final result = await withTimeout(client, const Duration(seconds: 5))
+          .generateDailyTestQuestions(deviceId: 'device-1', count: 5);
+
+      expect(result, isEmpty);
     });
   });
 }

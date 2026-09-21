@@ -4329,3 +4329,50 @@ unnoticed.
   tests still pass. Not deployed: the owner deploys the proxy. After deploying,
   compare `duration_ms` with `output_tokens` for `generate_daily_test` in
   Workers Logs.
+
+## 2026-09-22 (first Daily Test: preload, single-flight, request timeout)
+
+- **[Problem]** The first Daily Test generated only after the user reached the
+  Daily Test screen, so they waited in front of a spinner for the whole
+  generation.
+- **[Product]** Generation now starts on the "Get started" tap on Welcome, not
+  when Welcome opens: the name/goal form takes long enough to hide most of the
+  wait, and someone who leaves at the first screen never costs a generation.
+  Nothing is requested while Welcome is open. The request carries no user data
+  (previous entries).
+- **[Engineering]** `DailyTestService.getTodaysSet` is single-flight per day:
+  while a call for a day runs, other calls for that day get the same `Future`,
+  so the Daily Test screen simply waits for the preload and no second request
+  is made. The slot is cleared as soon as the call ends, success or failure, so
+  a failure is never remembered and the next call is a real new attempt;
+  everyone who joined a failing call sees its error. A call for another day (the
+  clock crossed midnight) does not join. `preloadTodaysSet()` starts it and
+  drops any failure on purpose: nothing has asked for the result yet, so it
+  neither reaches Crashlytics' global error hook nor shows an error; the Daily
+  Test screen makes its own attempt and shows its own error with Try again, as
+  before.
+- **[Engineering]** `ClaudeService` gives every request to the proxy a 40 s
+  timeout (`ClaudeService.defaultRequestTimeout`, overridable for tests). It
+  fails as a network error with "The practice service took too long to
+  respond. Please try again.". Before, a request that never answered left a
+  screen loading forever. 40 s is a starting value: check it against the
+  proxy's new `duration_ms` (especially a 10-question Topic Practice
+  generation) after the proxy is deployed.
+- **[Engineering]** Found by the new tests: `StorageService.getOrCreateDeviceId`
+  was check-then-insert, so two overlapping first calls made the second fail with
+  a UNIQUE error. It now ignores the conflict and reads back the stored id, so
+  overlapping callers agree on one id. (A preload widens the chance of overlap,
+  which is how it surfaced.) A test starts six overlapping calls; it fails on
+  the old code.
+- **[Validation]** Service tests: two calls share one request and one set; a
+  running preload is joined; a finished preload is served from the cache; a failed
+  preload leaves no uncaught error and the real call retries; joiners of a
+  failing call all see the error and the next call is fresh; another day does
+  not join. Flow tests: no request while Welcome is open, one request on Get
+  started and none more when the Daily Test opens, a request still running is
+  joined, a failed preload is silent and retried by the screen, and two failures
+  end on the screen's own error with Try again. Timeout tests use a client that
+  never answers. Turning off the join makes six of them fail. Not covered, by
+  choice: an app kill during a preload (the request is lost, the next launch
+  starts again), and `saveDailyTestSet`'s replace-on-conflict, which single-flight
+  makes unreachable within one service instance.

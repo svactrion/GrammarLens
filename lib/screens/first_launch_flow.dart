@@ -142,7 +142,15 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
     switch (_step) {
       case _Step.welcome:
         return WelcomeScreen(
-          onGetStarted: () => setState(() => _step = _Step.onboarding),
+          onGetStarted: () {
+            // The onboarding form takes long enough to hide most of the first
+            // Daily Test's generation time. Started here, on the tap, not when
+            // Welcome opens, so someone who leaves at the first screen never
+            // costs a generation. The Daily Test screen joins this request if
+            // it is still running (see `DailyTestService.getTodaysSet`).
+            _dailyTestService.preloadTodaysSet();
+            setState(() => _step = _Step.onboarding);
+          },
         );
       case _Step.onboarding:
         return OnboardingScreen(onComplete: _completeOnboarding);
