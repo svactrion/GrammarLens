@@ -21,6 +21,7 @@ import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
+import 'data_screen.dart';
 import 'theme_preview_screen.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
@@ -90,7 +91,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
   bool _savingProfile = false;
-  bool _resetting = false;
   bool _resettingOnboarding = false;
   late _DebugAccessChoice _debugAccessChoice;
   late bool _previewPaywallPricing;
@@ -300,61 +300,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // assigning one automatically ever hit this at all.
   late final Avatar _fallbackAvatar = Avatar.random();
 
-  Future<void> _confirmResetData() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Reset progress?'),
-        content: const Text(
-          'This clears your practice history and weak spots. Your name, '
-          'goal, and theme are kept. This can\'t be undone.',
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(dialogContext).colorScheme.primary,
-                    foregroundColor:
-                        Theme.of(dialogContext).colorScheme.onPrimary,
-                  ),
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(dialogContext).colorScheme.error,
-                    foregroundColor:
-                        Theme.of(dialogContext).colorScheme.onError,
-                  ),
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: const Text('Reset'),
-                ),
-              ],
-            ),
-          ),
-        ],
+  void _openData() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DataScreen(storageService: widget.storageService),
       ),
     );
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _resetting = true);
-    try {
-      await widget.storageService.resetProgressData();
-      if (!mounted) return;
-      AppMessenger.show('Progress reset.');
-    } catch (e) {
-      if (!mounted) return;
-      AppMessenger.show('Could not reset progress: $e');
-    } finally {
-      if (mounted) setState(() => _resetting = false);
-    }
   }
 
   @override
@@ -474,31 +425,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 widget.onSelectTextSize(selection.first),
           ),
           const SizedBox(height: 32),
-          const _SectionLabel('Data'),
-          const SizedBox(height: 8),
-          Text(
-            'Reset progress',
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Clears practice history and weak spots. Your name, goal, and '
-            'theme stay as they are.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: colorScheme.error,
-                side: BorderSide(color: colorScheme.error),
-              ),
-              onPressed: _resetting ? null : _confirmResetData,
-              child: Text(_resetting ? 'Resetting…' : 'Reset progress data'),
-            ),
+          _NavRow.icon(
+            icon: Icons.storage_rounded,
+            label: 'Data',
+            onTap: _openData,
           ),
           if (kDebugMode && DebugTools.enabledForTesting) ...[
             const SizedBox(height: 32),
@@ -691,6 +621,18 @@ class _NavRow extends StatelessWidget {
     required this.label,
     required this.onTap,
   });
+
+  /// A row led by an [icon], centered in the same 52 pt box the avatar row's
+  /// tile occupies so every label starts at the same x.
+  _NavRow.icon({
+    required IconData icon,
+    required this.label,
+    required this.onTap,
+  }) : leading = SizedBox(
+          width: 52,
+          height: 52,
+          child: Icon(icon, size: 28),
+        );
 
   @override
   Widget build(BuildContext context) {

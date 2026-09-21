@@ -11,6 +11,7 @@ import 'package:grammar_lens/models/monthly_medal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
+import 'package:grammar_lens/screens/data_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
@@ -475,22 +476,22 @@ void main() {
     expect(selected, AppThemeMode.dark);
   });
 
-  testWidgets('reset progress asks for confirmation before doing anything',
+  testWidgets('Reset progress is not on Profile; the Data row opens it',
       (tester) async {
     await pumpSettings(tester);
 
-    await reveal(tester, find.text('Reset progress data'));
-    await tester.tap(find.text('Reset progress data'));
-    await tester.pumpAndSettle();
-    expect(find.text('Reset progress?'), findsOneWidget);
+    // Profile carries only the way in: the destructive option and its
+    // explanation live one screen away.
+    await reveal(tester, find.text('Data'));
+    expect(find.text('Reset progress data'), findsNothing);
+    expect(find.text('Reset progress'), findsNothing);
+    expect(find.byType(DataScreen), findsNothing);
 
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text('Data'));
     await tester.pumpAndSettle();
-    expect(find.text('Reset progress?'), findsNothing);
-    // sqflite has no platform channel in this test environment, so a real
-    // reset call would surface as an error snackbar — its absence here
-    // confirms Cancel never triggered one.
-    expect(find.textContaining('Could not reset'), findsNothing);
+
+    expect(find.byType(DataScreen), findsOneWidget);
+    expect(find.text('Reset progress data'), findsOneWidget);
   });
 
   group('Developer section (debug-only entitlement override)', () {
