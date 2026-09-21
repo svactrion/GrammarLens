@@ -4131,3 +4131,35 @@ unnoticed.
 - **[Idea, not planned]** Theme choice as one toggle button; recorded in the
   roadmap's out-of-scope table only.
 
+## 2026-09-21 (destructive action colors)
+
+- **[Problem]** Found on device: the Reset progress dialog had an orange
+  Cancel and a Reset in `error`, which is dark red in light mode and pale pink
+  (`#FFB4AB`) in dark mode. Emphasis on the wrong button, and a weak fill for
+  an irreversible action.
+- **[Engineering]** Measured before choosing (WCAG luminance, real theme
+  values): the M3 `errorContainer` pair suggested for dark fails as a fill
+  (`#93000A` is 1.52:1 against the dark dialog surface, `#FFDAD6` text is
+  fine), and in light `errorContainer` is 1.03:1 against the dialog. A search
+  over reds found one hex that passes in both themes: `#DC3232` with white
+  text, 4.62:1 text, 3.67:1 (light) and 3.08:1 (dark) against the dialog
+  surface, 4.20:1 / 3.71:1 against the page body. The margin is narrow both
+  ways, so the constant's comment says to re-measure if it changes.
+- **[Engineering]** `DestructiveColors` on `ColorScheme` (`destructive`,
+  `onDestructive`), the same two constants in both themes, next to
+  `BandColors`; swatches added to the debug theme preview. `error` stays the
+  meaning-of-failure color (Premium and Review error text and icons) and
+  `SemanticColors` is untouched.
+- **[Product]** Used by every destructive confirm: Reset progress (dialog and
+  the Data screen button, now filled instead of outlined, since a red outlined
+  label cannot pass 4.5:1 on the dark body with this same hex), "Leave
+  practice?" and "Leave Daily Test?" (Leave used to be the default blue).
+  Cancel is a neutral `onSurface` text button in all three (11.06:1 dark,
+  13.64:1 light on the dialog). A shared `DestructiveDialogActions` keeps the
+  stacked order and the 52 pt full-width layout. Untouched by decision: the
+  "That's all for today" dialog and the length-picker bottom sheet.
+- **[Engineering]** Tests use `buildAppTheme` in both themes and check the
+  role on each button, that Cancel is not `primary`, and the layout order. The
+  `BandColors` doc comment that described orange dialog Cancel buttons was
+  updated.
+

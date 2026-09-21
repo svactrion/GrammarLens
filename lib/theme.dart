@@ -170,18 +170,10 @@ double avatarGroundShadowOpacity(Brightness brightness) =>
 /// not a per-call-site sweep, but it is a code change, not a single
 /// token/value swap, since the band was never one role to begin with.
 ///
-/// Accepted, deliberate coupling from reading `primary`/`onPrimary` in
-/// light mode: a handful of dialog "Cancel" buttons across the app
-/// (`practice_screen.dart`, `settings_screen.dart`, `daily_test_screen.dart`)
-/// already override `FilledButton` to `colorScheme.primary`/`onPrimary`
-/// explicitly, for the same "read as the least-committal action" reason a
-/// plain-orange button reads that way today. Because the band reads from
-/// the same role, the band's orange and those buttons' orange are — and
-/// will stay — bit-for-bit identical. Before D1 this was invisible (the
-/// whole screen was that color, so there was nothing to compare against);
-/// once the band is a distinct region, this is a real, visible
-/// consequence of the role choice, not a new bug — accepted rather than
-/// worked around with a second orange.
+/// No button shares the band's orange any more: dialog "Cancel" buttons used
+/// to be filled `primary`/`onPrimary` (bit-for-bit the band's orange in light
+/// mode), and are neutral `onSurface` text buttons now — see
+/// `DestructiveDialogActions`.
 extension BandColors on ColorScheme {
   /// The header band's background — orange (`primary`) in light mode, the
   /// neutral `surface` in dark mode. Dark mode never uses orange as a

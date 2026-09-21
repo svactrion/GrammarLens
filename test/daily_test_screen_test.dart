@@ -11,6 +11,7 @@ import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
 
 import 'support/recording_analytics_sink.dart';
@@ -108,14 +109,16 @@ void main() {
 
   Future<void> pumpScreen(
     WidgetTester tester,
-    DailyTestService service,
-  ) async {
+    DailyTestService service, {
+    ThemeData? theme,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
+          theme: theme,
           home: DailyTestScreen(
-        dailyTestService: service,
-        analyticsService: AnalyticsService(sink: RecordingAnalyticsSink()),
-      )),
+            dailyTestService: service,
+            analyticsService: AnalyticsService(sink: RecordingAnalyticsSink()),
+          )),
     );
     await tester.pumpAndSettle();
   }
@@ -308,4 +311,51 @@ void main() {
       expect(find.text('Try again'), findsNothing);
     });
   });
+
+  for (final brightness in Brightness.values) {
+    group('"Leave Daily Test?" dialog ($brightness)', () {
+      Color? fill(ButtonStyleButton b) =>
+          b.style?.backgroundColor?.resolve(const {});
+      Color? label(ButtonStyleButton b) =>
+          b.style?.foregroundColor?.resolve(const {});
+
+      Future<void> openDialog(WidgetTester tester) async {
+        final service = DailyTestService(
+          claudeService: _FlakyClaudeService(failCount: 0),
+          storageService: storageService,
+        );
+        await pumpScreen(tester, service, theme: buildAppTheme(brightness));
+        await tester.tap(find.byIcon(Icons.close_rounded));
+        await tester.pumpAndSettle();
+        expect(find.text('Leave Daily Test?'), findsOneWidget);
+        expect(find.text('Your progress will be lost.'), findsOneWidget);
+      }
+
+      testWidgets('Leave is destructive, Cancel is neutral and not primary',
+          (tester) async {
+        await openDialog(tester);
+        final scheme = buildAppTheme(brightness).colorScheme;
+
+        final leave = tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Leave'));
+        expect(fill(leave), scheme.destructive);
+        expect(label(leave), scheme.onDestructive);
+
+        final cancel = tester
+            .widget<TextButton>(find.widgetWithText(TextButton, 'Cancel'));
+        expect(label(cancel), scheme.onSurface);
+        expect(label(cancel), isNot(scheme.primary));
+        expect(fill(cancel), isNull);
+      });
+
+      testWidgets('Cancel keeps the test open', (tester) async {
+        await openDialog(tester);
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Leave Daily Test?'), findsNothing);
+        expect(find.byType(DailyTestScreen), findsOneWidget);
+      });
+    });
+  }
 }
