@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../services/storage_service.dart';
 import '../utils/app_messenger.dart';
+import '../theme.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/destructive_dialog_actions.dart';
 
 /// Profile → Data. Holds "Reset progress data" one screen away from Profile,
 /// so the destructive option is never sitting directly on the page the user
@@ -31,33 +33,11 @@ class _DataScreenState extends State<DataScreen> {
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(dialogContext).colorScheme.primary,
-                    foregroundColor:
-                        Theme.of(dialogContext).colorScheme.onPrimary,
-                  ),
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(dialogContext).colorScheme.error,
-                    foregroundColor:
-                        Theme.of(dialogContext).colorScheme.onError,
-                  ),
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: const Text('Reset'),
-                ),
-              ],
-            ),
+          DestructiveDialogActions(
+            cancelLabel: 'Cancel',
+            confirmLabel: 'Reset',
+            onCancel: () => Navigator.of(dialogContext).pop(false),
+            onConfirm: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
       ),
@@ -100,10 +80,10 @@ class _DataScreenState extends State<DataScreen> {
         const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: colorScheme.error,
-              side: BorderSide(color: colorScheme.error),
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.destructive,
+              foregroundColor: colorScheme.onDestructive,
             ),
             onPressed: _resetting ? null : _confirmResetData,
             child: Text(_resetting ? 'Resetting…' : 'Reset progress data'),
