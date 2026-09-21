@@ -50,6 +50,11 @@ const Color _lightOnError = Color(0xFFFFFFFF);
 const Color _lightErrorContainer = Color(0xFFFFDAD6);
 const Color _lightOnErrorContainer = Color(0xFF410002);
 
+// Destructive actions — one red for both themes (see DestructiveColors below
+// for the measured contrast this hex is tuned to).
+const Color _destructive = Color(0xFFDC3232);
+const Color _onDestructive = Color(0xFFFFFFFF);
+
 // Neutrals — warm-tinted "paper" family for cards/inputs, kept far enough
 // from white that it visibly separates from a pure-white nav bar, and far
 // enough from the orange page that text stays dark-on-light throughout.
@@ -189,6 +194,29 @@ extension BandColors on ColorScheme {
   /// luminance), comfortably clearing AA for either text or UI components.
   Color get bandForeground =>
       brightness == Brightness.dark ? onSurface : onPrimary;
+}
+
+/// The one place a destructive action's colors live (Reset progress, Leave):
+/// a filled button in [destructive] with [onDestructive] text. Not a
+/// [ColorScheme] role and not brightness-branched: the same two constants in
+/// both themes, so a destructive button reads as the same strong red
+/// everywhere. `error`/`onError` stay reserved for meaning "something went
+/// wrong" (Premium and Review error text and icons), where a pale pink in
+/// dark mode is right; as a button fill it is too weak.
+///
+/// Measured (WCAG relative luminance): [onDestructive] text on [destructive]
+/// is 4.62:1; the fill against a dialog surface (`surfaceContainerHigh`) is
+/// 3.67:1 in light and 3.08:1 in dark; against the page body
+/// (`surfaceContainerLow`) 4.20:1 and 3.71:1. The text margin is narrow:
+/// making this hex any lighter drops white text under 4.5:1, and making it
+/// any darker drops the fill under 3:1 against the dark dialog. If you change
+/// it, measure both again.
+extension DestructiveColors on ColorScheme {
+  /// Fill of a destructive button.
+  Color get destructive => _destructive;
+
+  /// Label of a destructive button, paired with [destructive].
+  Color get onDestructive => _onDestructive;
 }
 
 /// Semantic feedback colors for the results screen, kept out of

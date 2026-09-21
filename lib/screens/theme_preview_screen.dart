@@ -158,6 +158,8 @@ class _ColorRoleGrid extends StatelessWidget {
         ('onError', colorScheme.onError),
         ('errorContainer', colorScheme.errorContainer),
         ('onErrorContainer', colorScheme.onErrorContainer),
+        ('destructive', colorScheme.destructive),
+        ('onDestructive', colorScheme.onDestructive),
         ('surface', colorScheme.surface),
         ('onSurface', colorScheme.onSurface),
         ('onSurfaceVariant', colorScheme.onSurfaceVariant),
