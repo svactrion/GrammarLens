@@ -1,6 +1,6 @@
 /// Why the user is learning English, captured once during onboarding
 /// (PRD v2 §4). Feeds topic suggestions later — see the onboarding rationale
-/// for why this earns its place while age/occupation don't yet.
+/// for why it is the one profile question worth asking up front.
 enum LearningGoal { examPrep, work, general }
 
 extension LearningGoalInfo on LearningGoal {

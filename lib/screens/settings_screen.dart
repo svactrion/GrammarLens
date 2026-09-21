@@ -45,10 +45,10 @@ enum _DebugAccessChoice {
       };
 }
 
-/// PRD v2 §4 — theme, name edit, data reset, and optional profile fields
-/// (age, occupation) that onboarding deliberately left out. Learning goal
-/// isn't editable here: nothing in scope needs it to change, and adding a
-/// second place to set it risks drifting from onboarding's copy.
+/// PRD v2 §4 — theme, text size, name edit, avatar, monthly medals and data
+/// reset. Learning goal isn't editable here: nothing in scope needs it to
+/// change, and adding a second place to set it risks drifting from
+/// onboarding's copy.
 class SettingsScreen extends StatefulWidget {
   final bool active;
   final AppThemeMode themeMode;
@@ -89,8 +89,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _ageController;
-  late final TextEditingController _occupationController;
   bool _savingProfile = false;
   bool _resetting = false;
   bool _resettingOnboarding = false;
@@ -115,10 +113,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.name);
-    _ageController =
-        TextEditingController(text: widget.profile.age?.toString() ?? '');
-    _occupationController =
-        TextEditingController(text: widget.profile.occupation ?? '');
     // Reads the already-loaded in-memory override (app.dart applies
     // whatever was persisted at app startup — see its own
     // _loadDebugAccessOverride) rather than re-reading storage here, so
@@ -242,8 +236,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
-    _occupationController.dispose();
     super.dispose();
   }
 
@@ -251,17 +243,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _saveProfile() async {
     if (!_canSaveProfile) return;
-    final ageText = _ageController.text.trim();
-    final occupation = _occupationController.text.trim();
     // Avatar is deliberately not part of this form any more — the
     // carousel picker autosaves on its own (see _changeAvatar below), so
     // this Save button only ever touches the fields still shown above it.
     final updated = widget.profile.copyWith(
       name: _nameController.text.trim(),
-      age: int.tryParse(ageText),
-      clearAge: ageText.isEmpty,
-      occupation: occupation,
-      clearOccupation: occupation.isEmpty,
     );
 
     setState(() => _savingProfile = true);
@@ -475,22 +461,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(hintText: 'Your name'),
             onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 16),
-          Text('Age (optional)', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _ageController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: 'Age'),
-          ),
-          const SizedBox(height: 16),
-          Text('Occupation (optional)', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _occupationController,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(hintText: 'Occupation'),
           ),
           const SizedBox(height: 20),
           SizedBox(

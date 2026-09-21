@@ -13,11 +13,10 @@ const String onboardingPrivacyNote =
     'Your name and goal stay on this device. Practice answers are sent to our '
     'AI provider to give you feedback, and usage and crash data is collected.';
 
-/// "Face + name" as one identity step, plus learning goal (PRD v2 §4). Age
-/// and occupation are deliberately left out here: every field asked before
-/// the user has experienced any value costs completions on an app with no
-/// brand recognition, and those two are marketing data with no in-product
-/// use yet. They're available later, optionally, from Settings.
+/// "Face + name" as one identity step, plus learning goal (PRD v2 §4). Nothing
+/// else is asked: every field asked before the user has experienced any value
+/// costs completions on an app with no brand recognition. (Age and occupation
+/// were once optional Profile fields with no use anywhere; removed 2026-09-21.)
 class OnboardingScreen extends StatefulWidget {
   final ValueChanged<UserProfile> onComplete;
 

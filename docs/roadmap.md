@@ -72,6 +72,17 @@ as each one lands, with literal status words (see above):
   change: the empty `debug_settings` table is still created (nothing reads it
   in release). The iOS release build is broken on this machine by the Xcode
   27 `lipo` issue, so the AOT binary itself was not inspected.
+- **Profile: age and occupation removed — implemented, automated tests
+  only.** Scan before removal: the two fields were used only by the Profile
+  form, `UserProfile` and the `user_profile` table; not by prompt generation,
+  any request body to the proxy, analytics, Home or Premium, so no
+  personalization was lost. Removed from UI, model, storage and tests. Schema
+  v19 rebuilds `user_profile` without the columns (not `DROP COLUMN`, which
+  needs SQLite 3.35+) and deletes every stored value; name, learning goal and
+  avatar survive, and a replayed migration is a no-op. Onboarding never asked
+  for them, its privacy note does not mention them, and the published privacy
+  policy never listed them (its only age wording is the 13+ audience
+  statement). PRD v2 §13.11.
 - **Onboarding privacy note — corrected, automated tests only.** The old
   line ("Stored only on this device — never sent to a server") was false.
   It now reads: "Your name and goal stay on this device. Practice answers
@@ -546,7 +557,8 @@ matches the privacy policy; automated tests only.
   Streak Mode and AI Practice Partner (not built yet; tapping either is
   informative rather than a dead disabled card)
 - Settings screen, new: theme (proper light/dark/system, replacing the old
-  quick toggle), name edit, optional age/occupation fields, and a "reset
+  quick toggle), name edit, optional age/occupation fields (removed
+  2026-09-21), and a "reset
   progress" action — scoped to practice history only, keeps the guest
   identity intact
 - Bottom nav: three tabs now (Home / Review / Settings)

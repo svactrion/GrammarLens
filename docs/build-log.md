@@ -4077,3 +4077,18 @@ unnoticed.
   handled and categorized. Tests cover each failure with planted secrets.
   Not deployed. The catch-all `Unhandled error` log in `index.ts` is unchanged.
 
+## 2026-09-21 (Profile: age and occupation removed)
+
+- **[Engineering]** Scanned all uses first: the two optional Profile fields
+  appeared only in the Profile form, `UserProfile` and the `user_profile`
+  table. Nothing in prompt generation, no proxy request body (the proxy
+  rejects unknown fields), no analytics event, Home or Premium read them, so
+  the removal loses no personalization.
+- **[Engineering]** Removed from UI, model, storage and tests. Schema v19
+  rebuilds `user_profile` (create new, copy id/name/goal/avatar, drop, rename)
+  instead of `DROP COLUMN`, which needs SQLite 3.35+; guarded by a column check
+  so the downgrade-then-upgrade replay is a no-op. Tests cover a seeded v18
+  database with real values, no avatar, no profile row, saving afterwards, the
+  replay and a fresh install. Docs and comments that described the fields were
+  updated; dated history was kept with pointers.
+

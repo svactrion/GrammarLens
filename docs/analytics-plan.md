@@ -247,7 +247,7 @@ first four weeks.
 ## 4. Privacy rules
 
 **Never sent, in any event or user property:** question text, answer text,
-correct answers, the user's name, learning goal, age, occupation, avatar,
+correct answers, the user's name, learning goal, avatar,
 any device identifier of our own (`getOrCreateDeviceId` is the proxy's
 quota key and stays out of Firebase), and free text of any kind.
 

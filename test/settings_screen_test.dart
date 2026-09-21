@@ -191,6 +191,16 @@ void main() {
     expect(find.text('Large'), findsOneWidget);
   });
 
+  testWidgets('Profile no longer asks for age or occupation', (tester) async {
+    await pumpSettings(tester);
+
+    expect(find.textContaining('Age'), findsNothing);
+    expect(find.textContaining('Occupation'), findsNothing);
+    // The one editable field left in the form is the name.
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Ada'), findsOneWidget);
+  });
+
   testWidgets('selecting Large reports the new text-size preference',
       (tester) async {
     AppTextSize? selected;

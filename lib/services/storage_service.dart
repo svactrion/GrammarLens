@@ -26,7 +26,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 18;
+  static const _dbVersion = 19;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -135,8 +135,6 @@ class StorageService {
       id INTEGER PRIMARY KEY CHECK (id = 0),
       name TEXT NOT NULL,
       learning_goal TEXT NOT NULL,
-      age INTEGER,
-      occupation TEXT,
       avatar TEXT
     )
   ''';
@@ -430,8 +428,44 @@ class StorageService {
             );
           }
         }
+
+        // v18 -> v19: age and occupation are gone from the profile. Nothing
+        // ever read them (not the prompts, not the proxy, not analytics), so
+        // the columns and every stored value are deleted, not just hidden.
+        // The table is rebuilt rather than `ALTER TABLE ... DROP COLUMN`,
+        // which needs SQLite 3.35+ and is not available on every device
+        // this app supports. Guarded by a column check so the
+        // downgrade-then-upgrade replay described above cannot re-run it
+        // over an already-rebuilt table.
+        if (oldVersion < 19) {
+          await _dropProfileAgeAndOccupation(db);
+        }
       },
     );
+  }
+
+  /// Rebuilds `user_profile` without its `age` and `occupation` columns,
+  /// keeping the row's name, learning goal and avatar. A no-op when neither
+  /// column exists.
+  static Future<void> _dropProfileAgeAndOccupation(DatabaseExecutor db) async {
+    final hasAge = await _hasColumn(db, 'user_profile', 'age');
+    final hasOccupation = await _hasColumn(db, 'user_profile', 'occupation');
+    if (!hasAge && !hasOccupation) return;
+    await db.execute('DROP TABLE IF EXISTS user_profile_rebuild');
+    await db.execute('''
+      CREATE TABLE user_profile_rebuild (
+        id INTEGER PRIMARY KEY CHECK (id = 0),
+        name TEXT NOT NULL,
+        learning_goal TEXT NOT NULL,
+        avatar TEXT
+      )
+    ''');
+    await db.execute('''
+      INSERT INTO user_profile_rebuild (id, name, learning_goal, avatar)
+      SELECT id, name, learning_goal, avatar FROM user_profile
+    ''');
+    await db.execute('DROP TABLE user_profile');
+    await db.execute('ALTER TABLE user_profile_rebuild RENAME TO user_profile');
   }
 
   /// True if [table] already has a column named [column] — the guard every

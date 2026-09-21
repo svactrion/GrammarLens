@@ -14,8 +14,6 @@ void main() {
     final map = {
       'name': 'Ada',
       'learning_goal': LearningGoal.work.toJson(),
-      'age': null,
-      'occupation': null,
       'avatar': 'fox', // previous, now-replaced avatar set's id
     };
 
@@ -30,8 +28,6 @@ void main() {
     final map = {
       'name': 'Ada',
       'learning_goal': LearningGoal.work.toJson(),
-      'age': null,
-      'occupation': null,
       'avatar': avatar.toJson(),
     };
 
@@ -45,5 +41,13 @@ void main() {
     final restored = UserProfile.fromMap(withAvatar.toMap());
 
     expect(restored.avatar, Avatar.values[5]);
+  });
+
+  test('the stored profile carries only name, goal and avatar — no age or '
+      'occupation', () {
+    const profile = UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
+
+    expect(profile.toMap().keys.toSet(),
+        {'id', 'name', 'learning_goal', 'avatar'});
   });
 }

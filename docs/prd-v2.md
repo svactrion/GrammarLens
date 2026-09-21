@@ -124,6 +124,8 @@ progress stats move into topic mode's own screen rather than the top level.
 ### Onboarding
 Two fields only: **name** and **learning goal** (exam prep / work / general).
 Age and occupation are deliberately deferred to Settings or a later prompt.
+*(Removed 2026-09-21, §13.11: the two optional Profile fields were dropped
+entirely; nothing ever read them.)*
 
 *Rationale:* every field asked before the user has experienced value costs
 completions, and this is an unknown app. Name earns its place by powering
@@ -135,7 +137,8 @@ justify their friction yet.
 ### Settings
 Does not exist today. Minimum: theme (light/dark/system), name edit, data
 reset (currently only possible by deleting the app), and optional profile
-fields (age, occupation) for users who want to fill them in.
+fields (age, occupation) for users who want to fill them in. *(The optional
+fields were removed 2026-09-21, §13.11.)*
 
 ### Premium / early-access screen
 Shows what premium will include and states clearly that it's free right now.
@@ -768,6 +771,21 @@ recommended next step; (2) Logpush of Workers Logs to R2 — keeps raw lines,
 needs a paid plan and a query tool; (3) a daily aggregate in KV or D1 —
 smallest storage but needs new counter code and loses raw per-call detail.
 Any of these would only ever hold the same non-personal fields.
+
+### 13.11 Age and occupation removed from the profile (2026-09-21)
+
+The optional Age and Occupation fields on Profile are removed: UI, model and
+storage. Before removing them, every use in the code was checked: they were
+read by nothing — not prompt generation, not any request body to the proxy
+(which rejects unknown fields anyway), not analytics, not Home or Premium.
+They were stored and shown back, nothing more, so removing them loses no
+personalization. Schema v19 rebuilds `user_profile` without the two columns
+and deletes every stored value; name, learning goal and avatar are kept. Data
+that is never used should not be collected: this also shrinks what the privacy
+policy has to describe. The policy page never mentioned age or occupation as
+collected data (its only age wording is the 13+ audience statement, which
+stays). If a real use appears later, ask for it at the moment it pays off, not
+in a settings form.
 
 ---
 

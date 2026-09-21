@@ -450,7 +450,7 @@ mirrors `monthly_medal_results.rule_version` — read via a new
 never silently reinterprets an already-earned badge.
 
 **Why a new table, not `user_profile` columns:** `user_profile` holds
-*identity* (name, goal, age, occupation, avatar) — Welcome is an
+*identity* (name, goal, avatar; age and occupation were removed 2026-09-21) — Welcome is an
 *achievement fact*, the same category as `climb_daily_entries`/
 `monthly_medal_results`, which are already kept out of `user_profile` for
 that reason. Reusing that existing boundary is simpler to reason about than
