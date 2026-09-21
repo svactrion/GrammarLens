@@ -1,5 +1,6 @@
 import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
+import { logUpstreamFailure, upstreamErrorType } from './error_log';
 import { logUsage } from './usage_log';
 import type {
   GenerateDailyTestRequest,
@@ -331,35 +332,49 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
       },
       body: JSON.stringify(body),
     });
-  } catch (e) {
-    console.error('Anthropic request failed to send', e);
+  } catch {
+    // No exception object is logged: its message can carry request text.
+    logUpstreamFailure(operation, 'network_error');
     throw new ProxyError('upstream_error', 502, 'Could not reach the upstream service.');
   }
 
   if (response.status !== 200) {
-    // Logged server-side only (visible via `wrangler tail`) — never
-    // forwarded to the client.
-    console.error('Anthropic returned', response.status, await response.text());
+    // Logged server-side only (visible via `wrangler tail`) and never
+    // forwarded to the client. Only the status and Anthropic's error type are
+    // kept; the body itself can echo request or response text, so it is read
+    // for that one whitelisted field and then dropped.
+    let errorType = 'unknown';
+    try {
+      errorType = upstreamErrorType(await response.text());
+    } catch {
+      // Body unreadable: the status alone is logged.
+    }
+    logUpstreamFailure(operation, 'http_error', { httpStatus: response.status, errorType });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an error.');
   }
 
-  const decoded = (await response.json()) as {
-    content?: { type: string; text?: string }[];
-    usage?: unknown;
-  };
+  let decoded: { content?: { type: string; text?: string }[]; usage?: unknown };
+  try {
+    decoded = (await response.json()) as typeof decoded;
+  } catch {
+    logUpstreamFailure(operation, 'unreadable_body', { httpStatus: response.status });
+    throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
+  }
   // Logged before the content is checked: a response that later fails to
   // parse was still billed, and that cost belongs in the measurement.
   logUsage(operation, decoded.usage);
   const textBlock = decoded.content?.find((block) => block.type === 'text');
   if (!textBlock?.text) {
-    console.error('Anthropic response had no text content block');
+    logUpstreamFailure(operation, 'no_text_block', { httpStatus: response.status });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
 
   try {
     return JSON.parse(textBlock.text);
-  } catch (e) {
-    console.error('Anthropic text content was not valid JSON', e);
+  } catch {
+    // The parse exception's message quotes the start of the model's text
+    // (which can contain the user's own words), so it is not logged.
+    logUpstreamFailure(operation, 'invalid_json_content', { httpStatus: response.status });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
 }

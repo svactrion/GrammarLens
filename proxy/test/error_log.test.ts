@@ -1,0 +1,177 @@
+import { env, SELF } from 'cloudflare:test';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+const TOKEN = 'test-app-token'; // matches vitest.config.ts's miniflare.bindings
+const SECRET = 'USER-TEXT-SECRET-4417';
+
+function post(path: string, body: unknown) {
+  return SELF.fetch(`https://proxy.example${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-grammarlens-token': TOKEN },
+    body: JSON.stringify(body),
+  });
+}
+
+const originalFetch = globalThis.fetch;
+const originalConsole = { log: console.log, info: console.info, warn: console.warn, error: console.error };
+let logged: string[] = [];
+
+function upstreamReturns(response: () => Response) {
+  globalThis.fetch = (async () => response()) as typeof fetch;
+}
+
+function upstreamThrows(error: Error) {
+  globalThis.fetch = (async () => {
+    throw error;
+  }) as typeof fetch;
+}
+
+function failureLines(): Record<string, unknown>[] {
+  return logged
+    .filter((line) => line.includes('anthropic_failure'))
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
+}
+
+const practiceRequest = { deviceId: 'd1', topicId: 'articles', count: 5 };
+
+beforeEach(async () => {
+  const list = await env.QUOTA_KV.list();
+  await Promise.all(list.keys.map((k) => env.QUOTA_KV.delete(k.name)));
+  logged = [];
+  for (const level of ['log', 'info', 'warn', 'error'] as const) {
+    console[level] = (...args: unknown[]) => {
+      logged.push(args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '));
+    };
+  }
+});
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+  Object.assign(console, originalConsole);
+});
+
+describe('upstream failure logging', () => {
+  it('logs status, Anthropic error type and operation for a non-200, never the body', async () => {
+    upstreamReturns(
+      () =>
+        new Response(
+          JSON.stringify({ type: 'error', error: { type: 'rate_limit_error', message: `echoed: ${SECRET}` } }),
+          { status: 429 },
+        ),
+    );
+
+    const response = await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(response.status).toBe(502);
+    expect(JSON.stringify(await response.json())).not.toContain(SECRET);
+    expect(failureLines()).toEqual([
+      {
+        event: 'anthropic_failure',
+        kind: 'topic_practice',
+        operation: 'generate_practice_set',
+        failure: 'http_error',
+        http_status: 429,
+        upstream_error_type: 'rate_limit_error',
+      },
+    ]);
+    expect(logged.join('\n')).not.toContain(SECRET);
+  });
+
+  it('classifies each operation: daily_test versus topic_practice', async () => {
+    upstreamReturns(() => new Response('{}', { status: 500 }));
+    await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5, weakSpots: [] });
+    await post('/v1/score-answers', {
+      deviceId: 'd1',
+      items: [{ id: 'q1', type: 'fill_in_blank', prompt: 'p', userAnswer: 'a' }],
+    });
+
+    expect(failureLines().map((l) => [l.operation, l.kind, l.http_status])).toEqual([
+      ['generate_daily_test', 'daily_test', 500],
+      ['score_answers', 'topic_practice', 500],
+    ]);
+  });
+
+  it('only ever logs an error type from the known list', async () => {
+    upstreamReturns(
+      () => new Response(JSON.stringify({ error: { type: `made_up_${SECRET}`, message: SECRET } }), { status: 400 }),
+    );
+    await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(failureLines()[0]).toMatchObject({ http_status: 400, upstream_error_type: 'unknown' });
+    expect(logged.join('\n')).not.toContain(SECRET);
+  });
+
+  it('logs unknown for a non-JSON error body, without the body', async () => {
+    upstreamReturns(() => new Response(`<html>${SECRET}</html>`, { status: 503 }));
+    await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(failureLines()[0]).toMatchObject({ http_status: 503, upstream_error_type: 'unknown' });
+    expect(logged.join('\n')).not.toContain(SECRET);
+  });
+
+  it('logs invalid_json_content without the parse exception that quotes the text', async () => {
+    upstreamReturns(
+      () =>
+        new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: `not json ${SECRET}` }],
+            usage: { input_tokens: 5, output_tokens: 6 },
+          }),
+          { status: 200 },
+        ),
+    );
+
+    const response = await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(response.status).toBe(502);
+    expect(failureLines()).toEqual([
+      {
+        event: 'anthropic_failure',
+        kind: 'topic_practice',
+        operation: 'generate_practice_set',
+        failure: 'invalid_json_content',
+        http_status: 200,
+        upstream_error_type: null,
+      },
+    ]);
+    expect(logged.join('\n')).not.toContain(SECRET);
+    // The billed call is still measured.
+    expect(logged.some((line) => line.includes('anthropic_usage'))).toBe(true);
+  });
+
+  it('logs no_text_block for a 200 without text content', async () => {
+    upstreamReturns(() => new Response(JSON.stringify({ content: [] }), { status: 200 }));
+    await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(failureLines()[0]).toMatchObject({ failure: 'no_text_block', http_status: 200 });
+  });
+
+  it('logs unreadable_body for a 200 that is not JSON, without the body', async () => {
+    upstreamReturns(() => new Response(`garbage ${SECRET}`, { status: 200 }));
+
+    const response = await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(response.status).toBe(502);
+    expect(failureLines()[0]).toMatchObject({ failure: 'unreadable_body', http_status: 200 });
+    expect(logged.join('\n')).not.toContain(SECRET);
+  });
+
+  it('logs network_error without the exception message', async () => {
+    upstreamThrows(new Error(`connect failed near ${SECRET}`));
+
+    const response = await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(response.status).toBe(502);
+    expect(failureLines()[0]).toMatchObject({ failure: 'network_error', http_status: null });
+    expect(logged.join('\n')).not.toContain(SECRET);
+  });
+
+  it('logs only the allowed fields on every failure line', async () => {
+    upstreamReturns(() => new Response('{}', { status: 500 }));
+    await post('/v1/generate-practice-set', practiceRequest);
+
+    expect(Object.keys(failureLines()[0] ?? {}).sort()).toEqual(
+      ['event', 'failure', 'http_status', 'kind', 'operation', 'upstream_error_type'].sort(),
+    );
+  });
+});

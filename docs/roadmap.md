@@ -98,8 +98,19 @@ as each one lands, with literal status words (see above):
   proposed in PRD v2 §13.10 (recommended: Workers Analytics Engine) and none
   is built. Two pre-existing proxy `console.error` calls (Anthropic's raw
   error body on a non-200, and the JSON parse exception on unusable
-  content) can in principle echo response text and were **not changed** here;
-  worth a decision.
+  content) could echo response text; **fixed 2026-09-21** (see the failure-log
+  entry below).
+- **Proxy failure logging — content-free, implemented and tested, not
+  deployed.** A failed Anthropic call now logs one JSON line: operation, kind
+  (daily_test / topic_practice), failure category, HTTP status and Anthropic's
+  error `type` restricted to its documented values (anything else is
+  `unknown`). The upstream error body and every exception message are no
+  longer logged, and a body that is not JSON is now handled instead of
+  reaching the catch-all. Tests plant secrets in the body, the model text and
+  the network error. One log line is deliberately unchanged: the catch-all
+  `Unhandled error` in `proxy/src/index.ts` still logs the exception, kept for
+  debugging real bugs; nothing on the Anthropic path reaches it now, but a
+  future unexpected error message could in principle carry request text.
 - **Trial-length wording — corrected in current-state text.** Truth: annual
   = 7 days, monthly = 3 days; both are set in App Store Connect and read live
   from RevenueCat, and no day count is written in `lib/` app copy (checked).

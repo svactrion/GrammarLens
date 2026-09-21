@@ -4066,3 +4066,14 @@ unnoticed.
   table load the real Nunito Sans and use the app theme (under the default
   test font almost every size would stack).
 
+## 2026-09-21 (launch checklist: proxy failure logs without content)
+
+- **[Engineering]** The proxy logged Anthropic's raw error body on a non-200
+  and the JSON parse exception on unusable content; either can quote request
+  or model text. Both, and the two other Anthropic-path error logs, now go
+  through `logUpstreamFailure`: operation, kind, failure category, HTTP status
+  and a whitelisted Anthropic error type; no body and no exception message.
+  A 200 whose body is not JSON used to throw into the catch-all and is now
+  handled and categorized. Tests cover each failure with planted secrets.
+  Not deployed. The catch-all `Unhandled error` log in `index.ts` is unchanged.
+

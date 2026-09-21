@@ -86,6 +86,22 @@ in `wrangler.jsonc`) and `wrangler tail` shows live:
   per-token prices. Workers Logs keeps data for a short, plan-dependent window
   (check the current Cloudflare limits), so export what matters.
 
+### Failure log
+
+A failed Anthropic call writes one `console.error` JSON line (`src/error_log.ts`):
+
+```json
+{"event":"anthropic_failure","kind":"topic_practice","operation":"score_answers","failure":"http_error","http_status":429,"upstream_error_type":"rate_limit_error"}
+```
+
+`failure` is one of `network_error`, `http_error`, `unreadable_body`,
+`no_text_block`, `invalid_json_content`. `upstream_error_type` is Anthropic's
+error `type` only if it is one of its documented values, otherwise `unknown`.
+The upstream response body and exception messages are never logged, since
+both can contain request or response text; `test/error_log.test.ts` plants
+secrets in each place and checks all console output. The catch-all
+`Unhandled error` log in `src/index.ts` is separate and still logs the error.
+
 Not yet deployed by this change; `npm run deploy` is the owner's step.
 
 `DEVICE_DAILY_LIMIT`/`GLOBAL_DAILY_LIMIT` (plain vars in `wrangler.jsonc`,
