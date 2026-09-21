@@ -27,22 +27,14 @@ function itemMix(count: number): string {
   return `${sentenceWriting} sentence_writing, ${errorCorrection} error_correction, and ${fillInBlank} fill_in_blank`;
 }
 
-/** Ranked by summed frequency per topic, most frequent first; empty input asks for general variety. */
-function dailyTestUserPrompt(count: number, weakSpots: GenerateDailyTestRequest['weakSpots']): string {
-  if (weakSpots.length === 0) {
-    const allTitles = TOPICS.map((t) => t.title).join(', ');
-    return `Generate exactly ${count} Daily Test questions. This user has no practice history yet, so cover a varied general mix across these topics: ${allTitles}.`;
-  }
-
-  const frequencyByTopic = new Map<string, number>();
-  for (const spot of weakSpots) {
-    frequencyByTopic.set(spot.topicId, (frequencyByTopic.get(spot.topicId) ?? 0) + spot.frequency);
-  }
-  const rankedTitles = [...frequencyByTopic.keys()]
-    .sort((a, b) => (frequencyByTopic.get(b) ?? 0) - (frequencyByTopic.get(a) ?? 0))
-    .map((id) => topicById(id)?.title ?? id);
-
-  return `Generate exactly ${count} Daily Test questions. Bias topic selection toward this user's most frequent error categories, most frequent first: ${rankedTitles.join(', ')}. Still include some variety rather than every question targeting the same topic.`;
+/**
+ * The same for every user: a varied general mix across all topics. Nothing
+ * about the device or its history goes into the prompt, so the Daily Test
+ * sends no user data to Anthropic.
+ */
+function dailyTestUserPrompt(count: number): string {
+  const allTitles = TOPICS.map((t) => t.title).join(', ');
+  return `Generate exactly ${count} Daily Test questions. Cover a varied general mix across these topics: ${allTitles}.`;
 }
 
 const GENERATION_SYSTEM_PROMPT = `
@@ -249,7 +241,7 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
     max_tokens: maxTokensFor(req.count),
     system: DAILY_TEST_SYSTEM_PROMPT,
     output_config: { format: { type: 'json_schema', schema } },
-    messages: [{ role: 'user', content: dailyTestUserPrompt(req.count, req.weakSpots) }],
+    messages: [{ role: 'user', content: dailyTestUserPrompt(req.count) }],
   };
 }
 

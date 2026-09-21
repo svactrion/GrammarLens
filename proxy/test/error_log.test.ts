@@ -79,7 +79,7 @@ describe('upstream failure logging', () => {
 
   it('classifies each operation: daily_test versus topic_practice', async () => {
     upstreamReturns(() => new Response('{}', { status: 500 }));
-    await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5, weakSpots: [] });
+    await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
     await post('/v1/score-answers', {
       deviceId: 'd1',
       items: [{ id: 'q1', type: 'fill_in_blank', prompt: 'p', userAnswer: 'a' }],
@@ -213,7 +213,7 @@ describe('unhandled error logging', () => {
 
   it('classifies the operation for a daily test', async () => {
     upstreamBreaksUnexpectedly(new Error('x'));
-    await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5, weakSpots: [] });
+    await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
 
     expect(unhandledLines()[0]).toMatchObject({ kind: 'daily_test', operation: 'generate_daily_test', error: 'Error' });
   });

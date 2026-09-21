@@ -54,7 +54,7 @@ describe('token usage logging', () => {
   it('logs a daily_test call with its real input/output tokens', async () => {
     anthropicResponds({ questions: [] }, { input_tokens: 1234, output_tokens: 567 });
 
-    const response = await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5, weakSpots: [] });
+    const response = await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
 
     expect(response.status).toBe(200);
     expect(usageLines()).toEqual([
@@ -108,7 +108,6 @@ describe('token usage logging', () => {
       'USER-ANSWER-SECRET-5520',
       'PROMPT-SECRET-3307',
       'GENERATED-SECRET-7712',
-      'WEAKSPOT-SECRET',
     ];
     anthropicResponds({ feedback: [{ explanation: secrets[3] }] }, { input_tokens: 10, output_tokens: 20 });
     const scored = await post('/v1/score-answers', {
@@ -119,7 +118,6 @@ describe('token usage logging', () => {
     const daily = await post('/v1/generate-daily-test', {
       deviceId: secrets[0],
       count: 5,
-      weakSpots: [{ topicId: 'articles', frequency: 2 }],
     });
 
     expect(scored.status).toBe(200);
