@@ -18,7 +18,7 @@ Nothing is marked complete unless the record says so.
 |---|---|---|
 | Monthly Climb: ledger, Home mountain, Results `See your climb` / `Back to Home` CTA | It is the whole engagement layer; without it the release has no gamification, and the ledger is the data every other item reads. | Implemented. CTA (package 1) and Home scrolling (package 2) device-confirmed; a full launch acceptance pass is still open. |
 | Monthly medals + Profile collection (rule v1, frozen history) | Gives a month a payoff and the collection a reason to exist; rule v1 is already approved and versioned. | Implemented. Locked-shell device-confirmed; `In progress` card, finalized history and the v17 migration are **not** device-confirmed. |
-| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. |
+| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. Since 2026-09-22 the celebration has a one-time confetti burst and an eased-in banner (automated tests only, not device-confirmed). |
 | Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
 | Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. Comparison-table overflow at 320 px / 2× text: fixed 2026-09-21 with a stacked layout (see the launch-checklist note below); automated tests only, **not device-confirmed**. |
 | Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | **Not started.** Plan only: `docs/analytics-plan.md`, awaiting approval. No analytics code exists for any of these events. |
@@ -241,6 +241,12 @@ as each one lands, with literal status words (see above):
   40 s timeout. A latent race in `getOrCreateDeviceId` (overlapping first calls)
   was fixed. The benefit is unmeasured until the proxy's `duration_ms` is
   deployed and read, and the 40 s value should be checked against it.
+
+- **Welcome celebration confetti — implemented, automated tests only; device
+  check pending.** A package-free `CustomPainter` burst (about 1.8 s, the theme's
+  colors) from the banner into an overlay, played once when the badge is earned,
+  never under reduced motion, removed if the user leaves; the banner eases in
+  instead of jumping. Not device-confirmed (frame rate and look on a phone).
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice

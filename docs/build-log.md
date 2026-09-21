@@ -4425,3 +4425,40 @@ unnoticed.
 - **[Known limit]** On a 320x568 screen with a system scale of 1.3-1.4x the text
   area above the footer is about 220 pt; that size is outside the 375x667 target
   and was only checked for fit, not for comfort.
+
+## 2026-09-22 (Welcome badge: one-time confetti)
+
+- **[Product]** The Welcome badge celebration was a static card ("Welcome to the
+  climb") that appeared at the top of the result list when the save landed, shoving
+  the results down. It now gets a short confetti burst and eases in. Owner
+  decisions: no package, a `CustomPainter`, an `OverlayEntry`, about 1.8 s,
+  the theme's colors, once, never under reduced motion.
+- **[Engineering]** `lib/widgets/confetti_burst.dart`: `buildConfettiParticles`
+  (a seeded fan of 40 pieces thrown up and outward, so a burst is fully
+  determined by its seed), `ConfettiPainter` (position under gravity, fade over the
+  last 40%; repaints from one `AnimationController`) and `ConfettiBurst`
+  (pointer-transparent, hidden from screen readers, one controller, `onFinished`
+  when done). No dependency added: it is about 150 lines, deterministic and theme
+  aware. The result screen throws it from the banner's own position into the
+  navigator's overlay on the false to true flip of `_showWelcomeCelebration`,
+  guarded by a separate `_confettiDecided` flag so it can run once per screen
+  instance whatever rebuilds, scrolls or retries follow; leaving the screen removes
+  and disposes the entry at once. The overlay (not a child of the list item) is
+  what keeps a scrolled-away-and-back banner from replaying it and lets the pieces
+  fall over the cards instead of behind them. Colors are the theme's primary,
+  secondary and tertiary.
+- **[Engineering]** The banner eases in with `AnimatedSize` and `AnimatedOpacity`
+  (350 ms). Under reduced motion it renders plainly, with no `AnimatedSize` at all:
+  a zero-duration `AnimatedSize` mutates its own layout and asserts in debug, which the
+  reduced-motion test caught before it shipped. An item that is rebuilt later is
+  created already in its final state, so the ease does not replay either.
+- **[Validation]** Tests (`daily_test_result_screen_test.dart`): one burst on a
+  live earn, present at 1.0 s and gone by 1.9 s, banner stays; it starts from the
+  banner; the theme's colors in light and dark; none for an ordinary completion or
+  a reopened completed set; a failed first attempt throws nothing and the retry that
+  earns it throws exactly one; none under reduced motion (and no size or fade
+  animation); the banner eases in; scrolling away and back replays nothing;
+  leaving mid-burst removes it with no error; the painter's determinism, launch
+  direction, gravity and fade. Ignoring reduced motion, or not removing the entry
+  on leave, turns tests red. The existing Welcome, analytics and Day-0 tests pass
+  unchanged.

@@ -12,6 +12,7 @@ import '../utils/answer_matching.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/confetti_burst.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
 
@@ -51,6 +52,9 @@ class DailyTestResultScreen extends StatefulWidget {
   State<DailyTestResultScreen> createState() => _DailyTestResultScreenState();
 }
 
+/// How long the Welcome banner takes to ease in.
+const Duration _bannerDuration = Duration(milliseconds: 350);
+
 class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   late final DailyTestCompletion _completion;
   List<DailyTestAnswerResult> get _results => _completion.results;
@@ -65,6 +69,14 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   /// save-aware CTA row: it doesn't gate, delay or replace "See your
   /// climb"/"Back to Home".
   bool _showWelcomeCelebration = false;
+
+  /// Set the moment the confetti is decided (played or skipped), so it can run
+  /// at most once per screen instance whatever rebuilds, scrolls or retries
+  /// happen afterwards. Separate from [_showWelcomeCelebration]: the banner
+  /// stays for the life of the screen, the confetti is a one-off.
+  bool _confettiDecided = false;
+  OverlayEntry? _confettiEntry;
+  final _celebrationKey = GlobalKey();
 
   /// Guards `daily_test_completed`/Welcome analytics to at most once per
   /// screen instance, on top of `_saveCompletion`'s own already-completed
@@ -100,6 +112,8 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       widget.onCompletionSaved?.call();
       if (welcomeBadgeJustEarned && mounted) {
         setState(() => _showWelcomeCelebration = true);
+        // After this frame, when the banner has a position to throw from.
+        WidgetsBinding.instance.addPostFrameCallback((_) => _playConfetti());
       }
     } catch (e) {
       if (!mounted) return;
@@ -108,6 +122,47 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// The one-time confetti for the Welcome badge: thrown from the banner into
+  /// an overlay above the screen, about 1.8 s, in the theme's colors. Never
+  /// under reduced motion (the banner alone is the celebration then), and never
+  /// twice: see [_confettiDecided]. Leaving the screen ends it at once.
+  void _playConfetti() {
+    if (_confettiDecided || !mounted) return;
+    _confettiDecided = true;
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    final overlay = Overlay.maybeOf(context);
+    final banner = _celebrationKey.currentContext?.findRenderObject();
+    if (overlay == null || banner is! RenderBox || !banner.hasSize) return;
+    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+    final origin = overlayBox.globalToLocal(
+      banner.localToGlobal(Offset(banner.size.width / 2, 48)),
+    );
+    final colors = Theme.of(context).colorScheme;
+    final entry = OverlayEntry(
+      builder: (_) => ConfettiBurst(
+        origin: origin,
+        colors: [colors.primary, colors.secondary, colors.tertiary],
+        onFinished: _removeConfetti,
+      ),
+    );
+    _confettiEntry = entry;
+    overlay.insert(entry);
+  }
+
+  void _removeConfetti() {
+    final entry = _confettiEntry;
+    if (entry == null) return;
+    _confettiEntry = null;
+    entry.remove();
+    entry.dispose();
+  }
+
+  @override
+  void dispose() {
+    _removeConfetti();
+    super.dispose();
   }
 
   /// Analytics for a save that just succeeded (docs/analytics-plan.md E1/E3):
@@ -142,6 +197,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final semantic = theme.extension<SemanticColors>()!;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     final correctCount = _results.where((r) => r.isCorrect).length;
     final skippedCount = _results.where((r) => r.isSkipped).length;
@@ -155,10 +211,30 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       bandBottom: ResultScoreBand(text: scoreText),
       children: [
         if (_saving) const LinearProgressIndicator(),
-        if (_showWelcomeCelebration) ...[
-          const _WelcomeCelebrationBanner(),
-          const SizedBox(height: 14),
-        ],
+        // Eases in (size and fade) instead of shoving the results down when the
+        // save lands. Under reduced motion it simply appears, and without an
+        // AnimatedSize at all (a zero-duration one mutates its own layout).
+        // If the list rebuilds this item later (scrolled away and back) it is
+        // created already in its final state, so nothing replays.
+        KeyedSubtree(
+          key: _celebrationKey,
+          child: reduceMotion
+              ? (_showWelcomeCelebration
+                  ? const _WelcomeCelebration()
+                  : const SizedBox.shrink())
+              : AnimatedSize(
+                  duration: _bannerDuration,
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: AnimatedOpacity(
+                    duration: _bannerDuration,
+                    opacity: _showWelcomeCelebration ? 1 : 0,
+                    child: _showWelcomeCelebration
+                        ? const _WelcomeCelebration()
+                        : const SizedBox(width: double.infinity),
+                  ),
+                ),
+        ),
         if (_saveFailed) ...[
           const Text('Your result could not be saved. Please try again.'),
           TextButton(
@@ -192,6 +268,21 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
                         : 'Back to Home'),
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// The banner and the gap under it, as one block for the animation above.
+class _WelcomeCelebration extends StatelessWidget {
+  const _WelcomeCelebration();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        _WelcomeCelebrationBanner(),
+        SizedBox(height: 14),
       ],
     );
   }

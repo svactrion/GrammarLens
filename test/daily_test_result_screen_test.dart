@@ -13,6 +13,7 @@ import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
+import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
 
 import 'support/recording_analytics_sink.dart';
@@ -672,6 +673,247 @@ void main() {
 
       expect(analyticsSink.named('welcome_badge_earned'), hasLength(1));
       expect(analyticsSink.userPropertyWrites, ['first_step_dom']);
+    });
+  });
+
+  group('Welcome confetti (one-time, overlay, no package)', () {
+    final burst = find.byType(ConfettiBurst);
+
+    /// Pumps without settling, so the confetti can be observed while it plays.
+    Future<void> pumpUnsettled(
+      WidgetTester tester,
+      DailyTestSet set, {
+      Brightness brightness = Brightness.light,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(brightness),
+          scaffoldMessengerKey: AppMessenger.key,
+          home: DailyTestResultScreen(
+            dailyTestSet: set,
+            answers: answers,
+            dailyTestService: dailyTestService,
+            analyticsService: analyticsService,
+          ),
+        ),
+      );
+      // The save runs from initState; one frame lets it land and the
+      // post-frame callback that starts the confetti run.
+      await tester.pump();
+      await tester.pump();
+    }
+
+    DailyTestSet freshSet() =>
+        DailyTestSet(day: '2026-01-01', questions: questions);
+
+    void reduceMotion(WidgetTester tester, bool value) {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          FakeAccessibilityFeatures(disableAnimations: value);
+      addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    }
+
+    testWidgets(
+        'earning the badge throws one burst from the banner, about 1.8 s, '
+        'and then it is gone', (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpUnsettled(tester, freshSet());
+
+      expect(burst, findsOneWidget);
+      // (An item with no height yet counts as offstage to finders, so give the
+      // banner a moment to take its first bit of space.)
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 950));
+      expect(burst, findsOneWidget, reason: 'still playing at 1.0 s');
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(burst, findsNothing, reason: 'finished by 1.9 s');
+      expect(ConfettiBurst.duration, const Duration(milliseconds: 1800));
+      // The banner itself stays.
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+    });
+
+    testWidgets('it starts from the banner, not from a corner', (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpUnsettled(tester, freshSet());
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final origin = tester.widget<ConfettiBurst>(burst).origin;
+      final banner = tester.getRect(find.byType(Card).first);
+      expect(origin.dx, closeTo(banner.center.dx, 1));
+      expect(origin.dy, greaterThan(banner.top - 1));
+      expect(origin.dy, lessThan(banner.bottom + 1));
+    });
+
+    testWidgets("it uses the theme's own colors, light and dark",
+        (tester) async {
+      for (final brightness in Brightness.values) {
+        storageService.welcomeBadgeJustEarned = true;
+        await pumpUnsettled(tester, freshSet(), brightness: brightness);
+        final scheme = buildAppTheme(brightness).colorScheme;
+
+        expect(tester.widget<ConfettiBurst>(burst).colors,
+            [scheme.primary, scheme.secondary, scheme.tertiary]);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump();
+      }
+    });
+
+    for (final scenario in [
+      (
+        name: 'an ordinary completion',
+        earned: false,
+        set: () => DailyTestSet(day: '2026-01-01', questions: questions),
+      ),
+      (
+        name: 'reopening an already-completed set',
+        earned: true,
+        set: () => DailyTestSet(
+              day: '2026-01-01',
+              questions: questions,
+              completedAt: DateTime(2026, 1, 1),
+              answers: answers,
+            ),
+      ),
+    ]) {
+      testWidgets('no confetti for ${scenario.name}', (tester) async {
+        storageService.welcomeBadgeJustEarned = scenario.earned;
+        await pumpUnsettled(tester, scenario.set());
+        for (var i = 0; i < 4; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+          expect(burst, findsNothing);
+        }
+        expect(find.text('Welcome to the climb'), findsNothing);
+      });
+    }
+
+    testWidgets(
+        'a failed first attempt throws nothing; the retry that earns it '
+        'throws exactly one', (tester) async {
+      storageService.failCompletionWith = StateError('disk full');
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpUnsettled(tester, freshSet());
+      expect(burst, findsNothing);
+
+      storageService.failCompletionWith = null;
+      await tester.tap(find.text('Try saving again'));
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+
+      expect(burst, findsOneWidget);
+    });
+
+    testWidgets(
+        'reduced motion: no confetti at all, and the banner simply appears',
+        (tester) async {
+      reduceMotion(tester, true);
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpUnsettled(tester, freshSet());
+
+      expect(burst, findsNothing);
+      // At once, in one frame: no size or fade animation to wait for.
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+      expect(find.byType(AnimatedSize), findsNothing);
+      expect(find.byType(AnimatedOpacity), findsNothing);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(burst, findsNothing);
+    });
+
+    testWidgets('the banner eases in (fade and size) instead of jumping',
+        (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpUnsettled(tester, freshSet());
+
+      final fadeFinder = find.descendant(
+          of: find.byType(AnimatedOpacity, skipOffstage: false),
+          matching: find.byType(FadeTransition, skipOffstage: false));
+      final size = find.byType(AnimatedSize, skipOffstage: false);
+      final fade = tester.widget<FadeTransition>(fadeFinder);
+      expect(fade.opacity.value, lessThan(1));
+      final earlyHeight = tester.getSize(size).height;
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(fade.opacity.value, 1);
+      expect(tester.getSize(size).height, greaterThan(earlyHeight));
+    });
+
+    testWidgets(
+        'scrolling away and back never replays it: the banner comes back '
+        'already in place, with no new burst', (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpUnsettled(tester, freshSet());
+      await tester.pump(const Duration(milliseconds: 2000));
+      expect(burst, findsNothing);
+
+      final scroll =
+          tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+      scroll.jumpTo(scroll.maxScrollExtent);
+      await tester.pump();
+      scroll.jumpTo(0);
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(burst, findsNothing);
+      }
+      expect(find.text('Welcome to the climb'), findsOneWidget);
+      final fade = tester.widget<FadeTransition>(find.descendant(
+          of: find.byType(AnimatedOpacity),
+          matching: find.byType(FadeTransition)));
+      expect(fade.opacity.value, 1);
+    });
+
+    testWidgets(
+        'leaving the screen mid-burst removes it at once, with nothing left '
+        'running and no error', (tester) async {
+      storageService.welcomeBadgeJustEarned = true;
+      await pumpUnsettled(tester, freshSet());
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(burst, findsOneWidget);
+
+      await tester.pumpWidget(MaterialApp(home: Container()));
+      await tester.pump();
+      expect(burst, findsNothing);
+      await tester.pump(const Duration(seconds: 3));
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('the confetti itself', () {
+    test('the same seed always gives the same fan, another seed another', () {
+      final a = buildConfettiParticles(seed: 5);
+      final b = buildConfettiParticles(seed: 5);
+      final c = buildConfettiParticles(seed: 6);
+
+      expect(a, hasLength(40));
+      for (var i = 0; i < a.length; i++) {
+        expect(a[i].angle, b[i].angle);
+        expect(a[i].speed, b[i].speed);
+        expect(a[i].size, b[i].size);
+      }
+      expect(a.map((p) => p.angle), isNot(c.map((p) => p.angle)));
+    });
+
+    test('every piece starts at the origin and is thrown upward first', () {
+      const origin = Offset(100, 200);
+      for (final p in buildConfettiParticles()) {
+        expect(ConfettiPainter.positionAt(p, origin, 0), origin);
+        final early = ConfettiPainter.positionAt(p, origin, 0.1);
+        expect(early.dy, lessThan(origin.dy));
+        expect(early.dx.isFinite && early.dy.isFinite, isTrue);
+        // Gravity wins in the end: it is below where it started.
+        expect(ConfettiPainter.positionAt(p, origin, 1.8).dy,
+            greaterThan(origin.dy));
+      }
+    });
+
+    test('fully visible for the first 60%, then fades to nothing', () {
+      expect(ConfettiPainter.opacityAt(0), 1);
+      expect(ConfettiPainter.opacityAt(0.6), 1);
+      expect(ConfettiPainter.opacityAt(0.8), closeTo(0.5, 1e-9));
+      expect(ConfettiPainter.opacityAt(1), 0);
     });
   });
 }
