@@ -50,7 +50,7 @@ changed. Line numbers below are from that starting point.
 | `session_completed` (renamed `practice_completed`, §8) | `topic_id`, `question_count` | `lib/screens/results_screen.dart:45` (**Topic Practice only**) |
 | `free_practice_used` | none | `lib/screens/practice_launch.dart:147` |
 | `free_practice_quota_exhausted` | none | `lib/screens/practice_launch.dart:73`, `lib/screens/weak_spot_detail_screen.dart:127` |
-| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `practice_launch` / `onboarding` | `lib/screens/premium_screen.dart:128` |
+| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8) | `lib/screens/premium_screen.dart:128` |
 | `paywall_dismissed` | `source`, `method` = `close_button` / `maybe_later` / `system_back` | `premium_screen.dart:229`, `:270` |
 | `purchase_started` | `plan` = `monthly` / `annual` | `premium_screen.dart:176` |
 | `purchase_result` | `plan`, `outcome` = `success` / `cancelled` / `error` | `premium_screen.dart:197` |
@@ -446,7 +446,7 @@ parameters expanded. Walk the checklist: complete a Daily Test (E1; also check
 a fresh-install first test for `day0 = 1`, `set_source = bundled` (the
 fixed first-day set; a later day should show `generated`) and E3 + the
 `first_step_dom` user property), open Profile (E5), change text size (E6; also the `text_size`
-user property). Launch and resume the app to see E4 trigger (below). E4 needs a past month in the ledger; use a seeded/controlled-clock
+user property). After the first test's "Start my climb" (or "Continue"), Home climbs and about 600 ms later opens Premium by itself: check `paywall_viewed` with `source = day0_after_climb` and **no** `mode_selected` in between, then `paywall_dismissed` with the same source. It opens once per install; to see it again use Profile → Developer → reset onboarding (debug builds only), which also clears the one-time flag. Launch and resume the app to see E4 trigger (below). E4 needs a past month in the ledger; use a seeded/controlled-clock
 database, since a real month rollover is impractical. Confirm it fires once
 per month across a launch followed by a resume.
 
@@ -505,6 +505,7 @@ Built in separate commits on `monthly-climb-v2`:
 | E6 `text_size_changed`, user property `text_size` | Done in `lib/app.dart`: reported only on a real change; the property is set from the stored value at startup and on change. |
 | E2 `results_cta_tapped` | Dropped by decision. |
 | E7 `ai_consent_result` (2026-09-22) | Done in `ensureAiConsent` / `requestAiConsent` (`lib/screens/ai_consent_screen.dart`) and Profile → Data's switch-off. One test asserts its exact parameter keys and values; the all-events limits test now covers 15 events. |
+| First-day paywall source `day0_after_climb` (2026-09-22) | Done. Home opens the Premium screen by itself once, after the Day-0 climb, so `paywall_viewed` (and its `paywall_dismissed`) carry `source = day0_after_climb`; the old `onboarding` source no longer exists (the Day-0 result screen has no paywall card). An automatic opening sends **no** `mode_selected`, so `mode_selected(premium)` still means "the user tapped Premium". |
 
 **Not done / still open**
 
@@ -580,7 +581,7 @@ uses 18, 2 and 8. Check the console's counter as you create them.
 | Previous text size | `previous` | Event | `text_size_changed` |
 | Mode | `mode` | Event | `mode_selected` (existing) |
 | Topic | `topic_id` | Event | `practice_completed` (existing) |
-| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing), `ai_consent_result` (`practice_launch` / `data_settings`) |
+| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing; `home` / `weak_spot_quota` / `practice_launch` / `day0_after_climb`, the last added 2026-09-22 and replacing the old `onboarding`), `ai_consent_result` (`practice_launch` / `data_settings`) |
 | Paywall dismiss method | `method` | Event | `paywall_dismissed` (existing) |
 | Plan | `plan` | Event | `purchase_started`, `purchase_result` (existing) |
 | Purchase / consent outcome | `outcome` | Event | `purchase_result` (existing), `ai_consent_result` (`granted` / `declined` / `revoked`) |

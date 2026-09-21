@@ -78,6 +78,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   // it can only ever animate once.
   PendingClimb? _initialPendingClimb;
 
+  // Whether Home should offer the first-day paywall: true only when the user
+  // finished the Day-0 Daily Test. Given to the Home that replaces the flow and
+  // cleared by it in `initState`, like [_initialPendingClimb].
+  bool _offerDay0Paywall = false;
+
   @override
   void initState() {
     super.initState();
@@ -295,9 +300,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
-              onComplete: (profile, {pendingClimb}) => setState(() {
+              onComplete: (profile, {pendingClimb, dayZeroCompleted = false}) =>
+                  setState(() {
                 _profile = profile;
                 _initialPendingClimb = pendingClimb;
+                _offerDay0Paywall = dayZeroCompleted;
               }),
             );
           }
@@ -314,6 +321,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               clock: widget.clock,
               initialPendingClimb: _initialPendingClimb,
               onInitialPendingClimbTaken: () => _initialPendingClimb = null,
+              offerDay0Paywall: _offerDay0Paywall,
+              onOfferDay0PaywallTaken: () => _offerDay0Paywall = false,
               onAvatarTap: () => _openAvatarPickerFromHome(context),
             ),
             ReviewScreen(

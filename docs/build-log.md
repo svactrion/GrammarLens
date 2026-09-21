@@ -4615,3 +4615,69 @@ unnoticed.
 - **[Known limit]** How the burst looks from the button on a phone (a throw from
   the bottom edge rises about 160 px at most, over the last result cards), and
   whether 2.5 s is the right ceiling on a slow device, are not device-confirmed.
+
+## 2026-09-22 (the first-day paywall moves to Home, once, after the climb)
+
+- **[Problem]** The Day-0 result screen ended in a paywall card, right after the user's
+  first win and before they had seen the mountain move.
+- **[Product]** Owner decision: the pitch comes after the payoff. Home opens the Premium
+  screen by itself, once per install, about 600 ms after the pawn finishes climbing;
+  when there is no step to climb (all questions skipped, or a step that belongs to
+  another month) as soon as Home has loaded. Only for a user who finished the Day-0
+  test (leaving it half-done, which lands on Home, gets no paywall), never for a
+  user who already has full access, and never twice.
+- **[Engineering]** `FirstLaunchFlow.onComplete` gains `dayZeroCompleted` (true only
+  when the user left through the result screen's button, false for the exit from the
+  test itself). `app.dart` holds it and gives it to the new Home once, the way it already
+  gives the pending climb (Home takes it in `initState`, the owner clears it).
+  `MonthlyMountain.onMotionEnd` reports the end of a move: after the animation, after
+  the frame when there is none (reduced motion, a new month length), and not for a
+  move another one interrupts or for the mount position. Home arms the paywall from
+  it (600 ms) or, with nothing to climb, from a finished climb load; a reload while the
+  pawn is still moving does not arm it early.
+- **[Engineering]** It opens only when Home is visible: while another route or tab
+  covers it, or the app is in the background, it waits and is retried when Home is
+  visible again (route uncovered, tab active, app resumed). The entitlement is read
+  fresh just before (`hasFullAccess` fails closed, and full access drops the offer for
+  good). Then the flag is claimed and the screen pushed: schema v22 adds
+  `one_time_flags(key TEXT PRIMARY KEY, set_at TEXT NOT NULL)`, and
+  `claimOneTimeFlag(key)` is `INSERT OR IGNORE` followed by `changes()` in one
+  transaction, true only for the first caller, so overlapping callers cannot both
+  win. The flag is claimed right before the push, so an app closed on the paywall still
+  counts as shown; if the flag cannot be read, the paywall is not shown and not
+  retried (one that might show twice is worse than one that does not show).
+  `resetOnboarding` (debug only) deletes the flag with the profile.
+- **[Analytics]** `paywall_viewed` / `paywall_dismissed` carry a new source
+  `day0_after_climb`; the old `onboarding` source is removed (its only user, the Day-0
+  card, is gone). The automatic opening sends no `mode_selected`: `_openPremium` (a
+  user tap) still logs it and uses source `home`, and both go through one
+  `_pushPremium`. Analytics plan §6, §8 and §9 updated (the `source` dimension needs
+  no new registration, only a new value).
+- **[Validation]** `home_day0_paywall_test.dart` (a Home with fake storage and
+  subscription): 600 ms after the animation ends (1450 to 1600 ms after the step
+  appears, measured with frame pumps), 600 ms after the step under reduced motion,
+  no early opening on a resume mid-climb, waits while covered and opens on uncover,
+  waits on an inactive tab; no step, and a step from another month, opens once loaded;
+  never when not offered, when the user has full access (flag untouched), when the flag
+  was already claimed, or when it is unreadable (no retry, no exception); the flag is
+  claimed before the route is pushed; dismissing returns to Home and nothing brings it
+  back (a resume, more time); a second Home finds the flag claimed; analytics sources
+  and no `mode_selected`, and a user tap on Premium still reports `home` and
+  `mode_selected`. Through the real app (`first_launch_climb_test.dart`): confetti,
+  climb, then paywall in that order and once; dismissed stays dismissed; all skipped;
+  reduced motion; leaving the test unfinished shows nothing for 5 s. Also flow tests for
+  `dayZeroCompleted`, the mountain's `onMotionEnd` (seven cases), the flag (first wins,
+  independence, survives a restart, eight overlapping claims give one winner, reset), and
+  the v22 migration (empty table, columns and primary key, replay keeps a claim, fresh
+  install). Mutations that turn tests red: no 600 ms pause, no in-flight guard, ignoring
+  full access, pushing before claiming, showing on an unreadable flag, no visibility
+  deferral, always pending, `mode_selected` on the automatic opening, no retry on
+  uncover, no zero-arm when loaded, an abandoned test counted as completed, the offer
+  dropped in `app.dart`, `onMotionEnd` never called, no v22 step, a claim that is always
+  true, a reset that keeps the flag.
+- **[Known limit]** An app killed between the flag claim and the paywall showing costs
+  that user their one paywall, by design (see above). A mountain replaced mid-climb (a
+  month rollover during the animation) loses the callback, so that session has no
+  first-day paywall; the Day-0 climb is seconds long, so this is theoretical. Not
+  device-confirmed: how 600 ms feels after the pawn stops, and the Premium route's
+  entrance over a Home that has just finished animating.

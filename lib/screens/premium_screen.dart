@@ -65,10 +65,10 @@ class PremiumScreen extends StatefulWidget {
 
   /// Called when the user is done here — either they dismissed via "Maybe
   /// later," or a trial just started and they tapped "Continue" — right
-  /// before this screen pops itself. Null (the default, for every entry
-  /// point except the Day-0 flow) means there's nothing extra to do beyond
-  /// the pop itself: Home's locked-card tap and its own Premium-row tap
-  /// both just want to return to whatever pushed this screen.
+  /// before this screen pops itself. Null (the default, and what every entry
+  /// point passes today; the Day-0 flow used to) means there's nothing extra to
+  /// do beyond the pop itself: Home's locked-card tap, its Premium row and the
+  /// first-day paywall all just want to return to whatever pushed this screen.
   final VoidCallback? onDone;
 
   /// The weak spot that prompted this screen. It replaces the supporting

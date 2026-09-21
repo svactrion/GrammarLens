@@ -13,12 +13,19 @@ class MonthlyMountain extends StatefulWidget {
   /// Home lets vertical drags reach the page; the standalone preview can
   /// still explore the full trail. Programmatic pawn tracking works in both.
   final bool allowUserScroll;
+
+  /// Called when the pawn has finished moving to a new position: at the end of
+  /// the animation, or right after the frame when there is none (reduced
+  /// motion, a changed month length). Not called for the position the mountain
+  /// mounts at, and not for a move that another move interrupts.
+  final VoidCallback? onMotionEnd;
   const MonthlyMountain(
       {super.key,
       required this.days,
       required this.completedDays,
       required this.avatar,
-      this.allowUserScroll = true});
+      this.allowUserScroll = true,
+      this.onMotionEnd});
 
   @override
   State<MonthlyMountain> createState() => _MonthlyMountainState();
@@ -49,7 +56,11 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _reduceMotion = MediaQuery.disableAnimationsOf(context);
-    if (_reduceMotion && _motion.isAnimating) _motion.value = 1;
+    if (_reduceMotion && _motion.isAnimating) {
+      // Cutting the animation short cancels its future, so report the end here.
+      _motion.value = 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _motionEnded());
+    }
   }
 
   @override
@@ -63,11 +74,18 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       if (_reduceMotion || oldWidget.days != widget.days) {
         _from = _to;
         _motion.value = 1;
+        WidgetsBinding.instance.addPostFrameCallback((_) => _motionEnded());
       } else {
-        _motion.forward(from: 0);
+        // Completes only if this animation runs to its end: a newer one that
+        // restarts the controller cancels it, and so does dispose.
+        _motion.forward(from: 0).then((_) => _motionEnded());
       }
       WidgetsBinding.instance.addPostFrameCallback((_) => _follow());
     }
+  }
+
+  void _motionEnded() {
+    if (mounted) widget.onMotionEnd?.call();
   }
 
   void _follow() {

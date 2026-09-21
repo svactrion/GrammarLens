@@ -633,4 +633,85 @@ void main() {
           DailyTestSource.bundled);
     });
   });
+
+  group('v22: the one-time flags table', () {
+    const dbName = 'test_migration_v22.db';
+    late String path;
+
+    setUp(() async {
+      path = join(await getDatabasesPath(), dbName);
+      await databaseFactory.deleteDatabase(path);
+    });
+
+    /// A v21-shaped database: a profile and a daily test set, no flags table.
+    Future<void> seedV21() async {
+      final db = await databaseFactory.openDatabase(path);
+      await db.execute('''
+        CREATE TABLE user_profile (
+          id INTEGER PRIMARY KEY CHECK (id = 0),
+          name TEXT NOT NULL,
+          learning_goal TEXT NOT NULL,
+          avatar TEXT
+        )
+      ''');
+      await db.insert('user_profile',
+          {'id': 0, 'name': 'Ada', 'learning_goal': 'work', 'avatar': null});
+      await db.setVersion(21);
+      await db.close();
+    }
+
+    Future<List<Map<String, Object?>>> flagRows() async {
+      final db = await databaseFactory.openDatabase(path);
+      final rows = await db.query('one_time_flags');
+      await db.close();
+      return rows;
+    }
+
+    test('an existing user gets the empty table; nothing else changes',
+        () async {
+      await seedV21();
+      final storage = StorageService(dbName: dbName);
+
+      expect((await storage.getUserProfile())!.name, 'Ada');
+      expect(await flagRows(), isEmpty);
+      // Nothing was claimed by the upgrade: the first claim still wins. (A new
+      // service, as flagRows() closed the shared connection.)
+      expect(await StorageService(dbName: dbName).claimOneTimeFlag('day0_paywall'),
+          isTrue);
+    });
+
+    test('the table has exactly the key and set_at columns, key as the primary '
+        'key', () async {
+      await seedV21();
+      await StorageService(dbName: dbName).getUserProfile();
+
+      final db = await databaseFactory.openDatabase(path);
+      final info = await db.rawQuery('PRAGMA table_info(one_time_flags)');
+      await db.close();
+      expect(info.map((r) => r['name']), ['key', 'set_at']);
+      expect(info.singleWhere((r) => r['name'] == 'key')['pk'], 1);
+      expect(info.singleWhere((r) => r['name'] == 'set_at')['notnull'], 1);
+    });
+
+    test('a replayed migration (downgrade, then upgrade) keeps a claimed flag',
+        () async {
+      await seedV21();
+      final storage = StorageService(dbName: dbName);
+      expect(await storage.claimOneTimeFlag('day0_paywall'), isTrue);
+
+      final db = await databaseFactory.openDatabase(path);
+      await db.setVersion(21);
+      await db.close();
+
+      final reopened = StorageService(dbName: dbName);
+      expect(await reopened.claimOneTimeFlag('day0_paywall'), isFalse);
+      expect(await flagRows(), hasLength(1));
+    });
+
+    test('a fresh install creates the table too', () async {
+      final storage = StorageService(dbName: dbName);
+      expect(await storage.claimOneTimeFlag('day0_paywall'), isTrue);
+      expect(await flagRows(), hasLength(1));
+    });
+  });
 }

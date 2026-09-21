@@ -142,11 +142,14 @@ class AnalyticsService {
   /// locked-Topic-Practice-card taps (both funnel through the same push),
   /// the weak-spot detail screen's quota-exhausted redirect,
   /// `launchPracticeSet`'s own backstop version of that same check, and
-  /// the Day-0 onboarding pitch.
+  /// the paywall Home opens by itself once, after the first climb.
   static const String paywallSourceHome = 'home';
   static const String paywallSourceWeakSpotQuota = 'weak_spot_quota';
   static const String paywallSourcePracticeLaunch = 'practice_launch';
-  static const String paywallSourceOnboarding = 'onboarding';
+
+  /// Shown by Home on its own, once, after the Day-0 climb animation (not a
+  /// user tap, so it sends no `mode_selected`).
+  static const String paywallSourceDay0AfterClimb = 'day0_after_climb';
 
   /// `PremiumScreen`'s dismissal methods (`paywall_dismissed`) — the X in
   /// the band, the footer's "Maybe later", or a system back gesture/

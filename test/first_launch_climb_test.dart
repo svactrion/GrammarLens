@@ -10,6 +10,7 @@ import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/user_profile.dart';
+import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
@@ -54,6 +55,12 @@ class _Day0Storage extends StorageService {
 
   /// When set, `completeDailyTest` waits for it: the "save is slow" case.
   Completer<void>? saveGate;
+
+  /// One-time flags already claimed, like the stored table.
+  final Set<String> claimedFlags = {};
+
+  @override
+  Future<bool> claimOneTimeFlag(String key) async => claimedFlags.add(key);
 
   @override
   Future<UserProfile?> getUserProfile() async => profile;
@@ -113,8 +120,12 @@ class _Day0Storage extends StorageService {
 
 void main() {
   late _Day0Storage storage;
+  late RecordingAnalyticsSink sink;
 
-  setUp(() => storage = _Day0Storage());
+  setUp(() {
+    storage = _Day0Storage();
+    sink = RecordingAnalyticsSink();
+  });
 
   void setReduceMotion(WidgetTester tester, bool value) {
     tester.platformDispatcher.accessibilityFeaturesTestValue =
@@ -134,7 +145,7 @@ void main() {
 
     await tester.pumpWidget(GrammarLensApp(
       storageService: storage,
-      analyticsService: AnalyticsService(sink: RecordingAnalyticsSink()),
+      analyticsService: AnalyticsService(sink: sink),
       claudeService: _FakeClaudeService(),
       clock: () => DateTime(2026, 1, 1, 9),
     ));
@@ -237,7 +248,8 @@ void main() {
       expect(seen.tops.length, greaterThan(2));
       expect(seen.tops.first, greaterThan(seen.tops[1]));
       expect(seen.tops.last, closeTo(finalTop, 0.01));
-      expect(find.text('1 / 31 steps'), findsOneWidget);
+      // Home may already be under the first-day paywall.
+      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -277,7 +289,8 @@ void main() {
 
       expect(seen.steps, [0]);
       expect(seen.tops, hasLength(1));
-      expect(find.text('0 / 31 steps'), findsOneWidget);
+      // Home may already be under the first-day paywall.
+      expect(find.text('0 / 31 steps', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -328,7 +341,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(seen.steps, [0, 1]);
-      expect(find.text('1 / 31 steps'), findsOneWidget);
+      // Home may already be under the first-day paywall.
+      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -346,6 +360,133 @@ void main() {
       expect(storage.completionCalls, 0);
       expect(seen.steps, [0]);
       expect(seen.tops, hasLength(1));
+    });
+  });
+
+  group('first-day paywall on Home', () {
+    final premium = find.byType(PremiumScreen);
+
+    /// Pumps 25 ms frames until [done]; fails after [limit].
+    Future<Duration> pumpUntil(
+      WidgetTester tester,
+      bool Function() done, {
+      Duration limit = const Duration(seconds: 10),
+    }) async {
+      var elapsed = Duration.zero;
+      while (!done()) {
+        if (elapsed >= limit) fail('did not happen within $limit');
+        await tester.pump(const Duration(milliseconds: 25));
+        elapsed += const Duration(milliseconds: 25);
+      }
+      return elapsed;
+    }
+
+    testWidgets(
+        'answered test: the confetti, then the climb, and only then the '
+        'paywall, once, with its own source and no mode_selected',
+        (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      setReduceMotion(tester, false);
+      await tester.pump();
+
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      // Not over the results, not over the confetti.
+      await tester.pump(const Duration(milliseconds: 1500));
+      expect(premium, findsNothing);
+
+      await pumpUntil(tester, () => mountain.evaluate().isNotEmpty);
+      expect(premium, findsNothing);
+      await pumpUntil(tester, () => premium.evaluate().isNotEmpty);
+      await tester.pumpAndSettle();
+
+      // Home is under it, with the step already climbed.
+      expect(mountain, findsOneWidget);
+      expect(tester.widget<MonthlyMountain>(mountain).completedDays, 1);
+      expect(sink.named('paywall_viewed').single.parameters,
+          {'source': 'day0_after_climb'});
+      expect(sink.named('mode_selected'), isEmpty);
+      expect(storage.claimedFlags, {StorageService.day0PaywallFlag});
+    });
+
+    testWidgets(
+        'dismissed, Home stays: no second paywall, and the dismissal carries '
+        'the same source', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      await tester.tap(find.text('Start my climb'));
+      await pumpUntil(tester, () => premium.evaluate().isNotEmpty);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Maybe later'));
+      await tester.pumpAndSettle();
+      expect(premium, findsNothing);
+      // Home may already be under the first-day paywall.
+      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      for (var i = 0; i < 120; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        expect(premium, findsNothing);
+      }
+      expect(sink.named('paywall_viewed'), hasLength(1));
+      expect(sink.named('paywall_dismissed').single.parameters,
+          {'source': 'day0_after_climb', 'method': 'maybe_later'});
+    });
+
+    testWidgets(
+        'all skipped (no step): the paywall opens when Home has loaded, '
+        'with the pawn where it was', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: false);
+      await tester.tap(find.text('Continue'));
+
+      await pumpUntil(tester, () => premium.evaluate().isNotEmpty,
+          limit: const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<MonthlyMountain>(mountain).completedDays, 0);
+      expect(sink.named('paywall_viewed').single.parameters,
+          {'source': 'day0_after_climb'});
+    });
+
+    testWidgets(
+        'reduced motion: no confetti, no animation, and still the paywall '
+        'about 600 ms after the step', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+
+      await tester.tap(find.text('Start my climb'));
+      await pumpUntil(tester, () => premium.evaluate().isNotEmpty,
+          limit: const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<MonthlyMountain>(mountain).completedDays, 1);
+    });
+
+    testWidgets(
+        'leaving the Day-0 test unfinished: Home opens with no paywall, now '
+        'or later', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Leave'));
+      setReduceMotion(tester, false);
+      for (var i = 0; i < 200; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        expect(premium, findsNothing);
+      }
+
+      expect(mountain, findsOneWidget);
+      expect(storage.claimedFlags, isEmpty);
+      expect(sink.named('paywall_viewed'), isEmpty);
     });
   });
 }

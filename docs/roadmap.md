@@ -271,9 +271,20 @@ as each one lands, with literal status words (see above):
   results for its whole run and only then goes on to Home (a 2.5 s timer goes on
   anyway; no confetti under reduced motion). The same holds for a badge earned from a
   test opened on Home. The Day-0 paywall card is removed; the paywall moves to Home
-  (next item), so **until that lands a new user sees no paywall on Day 0**. Not
-  device-confirmed: how the burst reads from the button on a phone, and the 2.5 s
-  ceiling.
+  (next item). Not device-confirmed: how the burst reads from the button on a
+  phone, and the 2.5 s ceiling.
+
+- **First-day paywall on Home — implemented, automated tests only; device check
+  pending.** Home opens the Premium screen by itself, once per install, about 600 ms
+  after the pawn finishes its first climb (or as soon as Home loads, with no step
+  to climb), only for a user who finished the Day-0 test, never with full access,
+  never while Home is covered or in the background (it waits). One-time via a stored
+  flag (schema v22, `one_time_flags`; claimed just before the push, so a paywall the
+  app was closed on counts as shown; an unreadable flag means no paywall).
+  `paywall_viewed` / `paywall_dismissed` use the source `day0_after_climb` (the old
+  `onboarding` source is gone) and the automatic opening sends no `mode_selected`.
+  Debug "reset onboarding" clears the flag. Not device-confirmed: the 600 ms pause
+  and how the Premium screen arrives over the just-finished climb.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice

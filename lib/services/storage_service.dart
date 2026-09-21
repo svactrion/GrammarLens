@@ -27,7 +27,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 21;
+  static const _dbVersion = 22;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -122,6 +122,18 @@ class StorageService {
       consent_version INTEGER NOT NULL
     )
   ''';
+
+  /// Things that may happen at most once per install (see
+  /// [claimOneTimeFlag]). A row means the thing was claimed; `set_at` is when.
+  static const _createOneTimeFlagsTable = '''
+    CREATE TABLE IF NOT EXISTS one_time_flags (
+      key TEXT PRIMARY KEY,
+      set_at TEXT NOT NULL
+    )
+  ''';
+
+  /// The key for the paywall shown once, on Home, after the first climb.
+  static const String day0PaywallFlag = 'day0_paywall';
 
   static const _createPracticeSettingsTable = '''
     CREATE TABLE IF NOT EXISTS practice_settings (
@@ -304,6 +316,7 @@ class StorageService {
         await db.execute(_createMonthlyMedalResultsTable);
         await db.execute(_createWelcomeBadgeTable);
         await db.execute(_createAiConsentTable);
+        await db.execute(_createOneTimeFlagsTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -473,6 +486,12 @@ class StorageService {
           await db.execute(_createDailyTestSetsTable);
           await _addColumnIfMissing(db, 'daily_test_sets', 'source',
               "TEXT NOT NULL DEFAULT 'generated'");
+        }
+
+        // v21 -> v22: one_time_flags, empty. Nothing to backfill: no flag
+        // could have been claimed before this table existed.
+        if (oldVersion < 22) {
+          await db.execute(_createOneTimeFlagsTable);
         }
       },
     );
@@ -1251,6 +1270,22 @@ class StorageService {
     );
   }
 
+  /// Claims [key]: true for the first caller ever, false for every later one.
+  /// The write is `INSERT OR IGNORE` and the answer is whether that insert
+  /// changed a row (`changes()`, on the same connection in one transaction), so
+  /// two overlapping callers cannot both win. Throws if the database cannot be
+  /// read or written; a caller that must not act on a guess treats that as "no".
+  Future<bool> claimOneTimeFlag(String key) async {
+    final db = await _database;
+    return db.transaction((txn) async {
+      await txn.rawInsert(
+        'INSERT OR IGNORE INTO one_time_flags (key, set_at) VALUES (?, ?)',
+        [key, clockForTesting().toIso8601String()],
+      );
+      return Sqflite.firstIntValue(await txn.rawQuery('SELECT changes()')) == 1;
+    });
+  }
+
   /// Settings' "reset data" (PRD v2 §4) — clears practice history (logged
   /// mistakes and per-topic counts) so the app reads like a fresh install
   /// without actually losing the guest identity: name, learning goal, and
@@ -1269,13 +1304,16 @@ class StorageService {
   /// build — a profile row existing is the *only* thing that gates that
   /// (see [getUserProfile]'s doc comment, no separate flag). Deliberately
   /// the opposite scope of [resetProgressData]: that one keeps identity/
-  /// settings and clears history; this one clears only the identity gate,
-  /// nothing else — practice history, theme, and daily caches are
-  /// untouched. A no-op outside a debug build: it deletes the user's
+  /// settings and clears history; this one clears only the identity gate and
+  /// the one-time first-day paywall flag that goes with it, nothing else —
+  /// practice history, theme, and daily caches are untouched. A no-op outside a debug build: it deletes the user's
   /// profile, so a release build must never be able to run it.
   Future<void> resetOnboarding() async {
     if (!(kDebugMode && DebugTools.enabledForTesting)) return;
     final db = await _database;
     await db.delete('user_profile');
+    // The first-day paywall is part of onboarding: a reset brings it back.
+    await db.delete('one_time_flags',
+        where: 'key = ?', whereArgs: [day0PaywallFlag]);
   }
 }

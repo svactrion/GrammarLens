@@ -111,8 +111,8 @@ void main() {
     });
 
     test('paywall_viewed carries only source', () async {
-      await service.paywallViewed(AnalyticsService.paywallSourceOnboarding);
-      expectOnly('paywall_viewed', {'source': 'onboarding'});
+      await service.paywallViewed(AnalyticsService.paywallSourceDay0AfterClimb);
+      expectOnly('paywall_viewed', {'source': 'day0_after_climb'});
     });
 
     test('paywall_dismissed carries only source and method', () async {

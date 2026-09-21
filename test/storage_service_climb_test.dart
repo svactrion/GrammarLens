@@ -117,7 +117,7 @@ void main() {
     await old.close();
     expect((await storage.getClimbProgress(2026, 9)).steps, 0);
     final db = await inspect();
-    expect(await db.getVersion(), 21);
+    expect(await db.getVersion(), 22);
     for (final table in rows.keys) {
       // v19 removed age and occupation from user_profile and v21 added the
       // daily_test_sets source (every old set was generated); every other
@@ -180,7 +180,7 @@ void main() {
     expect(row['id'], 9);
     expect(row['source'], 'topic_practice');
     expect((await storage.getWeakSpots()).single.frequency, 1);
-    expect(await db.getVersion(), 21);
+    expect(await db.getVersion(), 22);
   });
 
   test('concurrent and stale retries persist one completion, gain and mistake',

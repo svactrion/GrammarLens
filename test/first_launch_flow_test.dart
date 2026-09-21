@@ -176,8 +176,11 @@ void main() {
 
   Future<void> pumpFlow(
     WidgetTester tester, {
-    required void Function(UserProfile, {PendingClimb? pendingClimb})
-        onComplete,
+    required void Function(
+      UserProfile, {
+      PendingClimb? pendingClimb,
+      bool dayZeroCompleted,
+    }) onComplete,
     AnalyticsService? analytics,
   }) async {
     // Tall enough that every button in the flow (including PremiumScreen's
@@ -247,7 +250,9 @@ void main() {
       'completing onboarding for the first time goes to Daily Test, not '
       "straight to Home — onComplete doesn't fire yet", (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+            completed = p);
     await completeOnboardingForm(tester);
 
     expect(completed, isNull);
@@ -261,7 +266,9 @@ void main() {
       'in the flow, and tapping it completes onboarding with the right '
       'profile', (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+            completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
 
@@ -287,7 +294,8 @@ void main() {
     UserProfile? completed;
     PendingClimb? pending;
     storageService.welcomeBadge = true;
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
       completed = p;
       pending = pendingClimb;
     });
@@ -312,11 +320,45 @@ void main() {
   });
 
   testWidgets(
+      'finishing through the result button reports the Day-0 test as '
+      'completed, so Home offers the first-day paywall', (tester) async {
+    bool? reported;
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+      reported = dayZeroCompleted;
+    });
+    await completeOnboardingForm(tester);
+    await answerThroughDailyTest(tester);
+    await tapResultButton(tester, 'Continue');
+
+    expect(reported, isTrue);
+  });
+
+  testWidgets(
+      'leaving the Day-0 test unfinished reports it as not completed: no '
+      'paywall offer', (tester) async {
+    bool? reported;
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
+      reported = dayZeroCompleted;
+    });
+    await completeOnboardingForm(tester);
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Leave'));
+    await tester.pumpAndSettle();
+
+    expect(reported, isFalse);
+  });
+
+  testWidgets(
       'abandoning Daily Test itself (the "leave" confirm dialog) also '
       'completes onboarding rather than leaving the user stuck',
       (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+            completed = p);
     await completeOnboardingForm(tester);
 
     await tester.tap(find.byIcon(Icons.close_rounded));
@@ -334,7 +376,9 @@ void main() {
       'practice session available (decision 7: the two counters are '
       'independent)', (tester) async {
     UserProfile? completed;
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) => completed = p);
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+            completed = p);
     await completeOnboardingForm(tester);
     await answerThroughDailyTest(tester);
     await tapResultButton(tester, 'Continue');
@@ -351,7 +395,8 @@ void main() {
       'one step) with the profile', (tester) async {
     UserProfile? completed;
     PendingClimb? pending;
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
       completed = p;
       pending = pendingClimb;
     });
@@ -373,7 +418,8 @@ void main() {
   testWidgets('a Day-0 test with every question skipped earns no pending climb',
       (tester) async {
     PendingClimb? pending = (day: 'sentinel', step: 9);
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
       pending = pendingClimb;
     });
     await completeOnboardingForm(tester);
@@ -386,7 +432,8 @@ void main() {
   testWidgets('abandoning the Day-0 Daily Test carries no pending climb',
       (tester) async {
     PendingClimb? pending = (day: 'sentinel', step: 9);
-    await pumpFlow(tester, onComplete: (p, {pendingClimb}) {
+    await pumpFlow(tester,
+        onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {
       pending = pendingClimb;
     });
     await completeOnboardingForm(tester);
@@ -406,7 +453,8 @@ void main() {
     testWidgets(
         'nothing is generated or written while Welcome and the form are open',
         (tester) async {
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       expect(find.text('Get started'), findsOneWidget);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
@@ -418,7 +466,8 @@ void main() {
     testWidgets(
         'the Daily Test opens on the bundled set: the five fixed questions, '
         'no generation request', (tester) async {
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(find.text('You should avoid ___ too much sugar.'), findsOneWidget);
@@ -432,7 +481,8 @@ void main() {
     testWidgets(
         'the set is written before the profile, so a user who exists always '
         'has today\'s set on disk', (tester) async {
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(storageService.events, ['seed', 'profile']);
@@ -441,7 +491,8 @@ void main() {
     testWidgets(
         'leaving the test and opening it again gets the same fixed set, from '
         'the store', (tester) async {
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
       await tester.tap(find.byIcon(Icons.close_rounded));
       await tester.pumpAndSettle();
@@ -476,7 +527,8 @@ void main() {
           ),
         ],
       ));
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(find.text('Existing question'), findsOneWidget);
@@ -487,7 +539,8 @@ void main() {
         'if writing the set fails, onboarding still finishes and the Daily '
         'Test screen generates one as before', (tester) async {
       storageService.failSeed = true;
-      await pumpFlow(tester, onComplete: (p, {pendingClimb}) {});
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(storageService.savedProfile?.name, 'Ada');
@@ -501,7 +554,7 @@ void main() {
       final sink = RecordingAnalyticsSink();
       await pumpFlow(tester,
           analytics: AnalyticsService(sink: sink),
-          onComplete: (p, {pendingClimb}) {});
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
       await tester.enterText(find.byType(TextField).first, 'eating');
       await tester.pump();

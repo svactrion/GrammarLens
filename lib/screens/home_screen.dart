@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
@@ -60,6 +62,16 @@ class HomeScreen extends StatefulWidget {
   /// owner can drop it and never hand the same completion to a later Home.
   final VoidCallback? onInitialPendingClimbTaken;
 
+  /// True when this Home replaces a first-launch flow whose Day-0 Daily Test
+  /// the user finished: Home then opens the Premium screen by itself, once,
+  /// after the climb (see [_HomeScreenState._offerDay0Paywall]). Read once in
+  /// `initState`, like [initialPendingClimb].
+  final bool offerDay0Paywall;
+
+  /// Called from `initState` once [offerDay0Paywall] has been taken, so the
+  /// owner can drop it and never hand it to a later Home.
+  final VoidCallback? onOfferDay0PaywallTaken;
+
   HomeScreen({
     super.key,
     this.active = true,
@@ -72,6 +84,8 @@ class HomeScreen extends StatefulWidget {
     this.onAvatarTap,
     this.initialPendingClimb,
     this.onInitialPendingClimbTaken,
+    this.offerDay0Paywall = false,
+    this.onOfferDay0PaywallTaken,
     DateTime Function()? clock,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
         clock = clock ?? DateTime.now;
@@ -108,6 +122,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// compare against.
   int _pendingClimbStep = 0;
 
+  // The first-day paywall ([HomeScreen.offerDay0Paywall]). Pending until it is
+  // shown or ruled out (premium, already claimed, unreadable storage); ready
+  // once the climb has landed; and shown at most once per install through a
+  // stored flag.
+  bool _day0PaywallPending = false;
+  bool _day0PaywallReady = false;
+  bool _day0PaywallChecking = false;
+  Timer? _day0PaywallTimer;
+
+  /// Whether the pawn is still moving to a step this Home animates. While it
+  /// is, a finished load must not open the paywall over the animation.
+  bool _climbAnimating = false;
+
+  /// How long the pawn stands on its new step before the paywall opens.
+  static const Duration _day0PaywallDelay = Duration(milliseconds: 600);
+
   bool get _homeVisible =>
       widget.active &&
       !_dailyFlowActive &&
@@ -128,6 +158,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _pendingClimbStep = initialClimb.step;
     }
     widget.onInitialPendingClimbTaken?.call();
+    _day0PaywallPending = widget.offerDay0Paywall;
+    widget.onOfferDay0PaywallTaken?.call();
     _checkAccess();
     // Live updates (PRD v2 §12.3/§12.6): a trial starting or expiring
     // should re-gate Topic Practice and the weak-spot rows without
@@ -144,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
+    _day0PaywallTimer?.cancel();
     super.dispose();
   }
 
@@ -156,6 +189,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (mounted && _homeVisible) _loadClimb();
       });
     }
+    // Home may just have become visible again (a route above it closed).
+    if (_day0PaywallPending && _day0PaywallReady) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showDay0Paywall();
+      });
+    }
   }
 
   @override
@@ -164,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (!oldWidget.active && widget.active && _pendingClimbDay != null) {
       _loadClimb();
     }
+    if (!oldWidget.active && widget.active) _showDay0Paywall();
   }
 
   @override
@@ -175,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _loadTodaysDailyTest();
       _loadClimb();
       _loadWeakSpots();
+      _showDay0Paywall();
     }
   }
 
@@ -245,12 +286,72 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _pendingClimbDay = null;
         _pendingClimbStep = 0;
       });
+      // A step is now animating and its end opens the paywall; with none (an
+      // all-skipped test, or a step that belongs to another month) Home is
+      // simply loaded.
+      if (showStep) {
+        _climbAnimating = true;
+      } else if (!_climbAnimating) {
+        _armDay0Paywall(Duration.zero);
+      }
     } catch (_) {
       if (!mounted || generation != _climbLoadGeneration) return;
       setState(() {
         _loadingClimb = false;
         _climbLoadFailed = true;
       });
+      if (!_climbAnimating) _armDay0Paywall(Duration.zero);
+    }
+  }
+
+  void _onMountainMotionEnd() {
+    _climbAnimating = false;
+    _armDay0Paywall(_day0PaywallDelay);
+  }
+
+  /// The climb has landed, or there is none to wait for: opens the paywall
+  /// after [delay] (or as soon as Home is visible, if it is not now).
+  void _armDay0Paywall(Duration delay) {
+    if (!_day0PaywallPending || _day0PaywallReady) return;
+    _day0PaywallTimer?.cancel();
+    _day0PaywallTimer = Timer(delay, () {
+      _day0PaywallReady = true;
+      _showDay0Paywall();
+    });
+  }
+
+  /// Opens the Premium screen by itself, once, after the first climb. It waits
+  /// (returns, to be tried again when Home is visible again) while another route
+  /// or tab covers Home or the app is in the background, and it is dropped for
+  /// good when the user already has full access, the flag was already claimed,
+  /// or the flag cannot be read: a paywall that might show twice is worse than
+  /// one that does not show. The flag is claimed right before the push, so an app
+  /// closed on the paywall still counts as having seen it.
+  Future<void> _showDay0Paywall() async {
+    if (!_day0PaywallPending || !_day0PaywallReady || _day0PaywallChecking) {
+      return;
+    }
+    _day0PaywallChecking = true;
+    try {
+      final hasAccess = await widget.subscriptionService.hasFullAccess;
+      if (!mounted) return;
+      if (hasAccess) {
+        _day0PaywallPending = false;
+        return;
+      }
+      // Covered now (or while the entitlement was being read): try again when
+      // Home is visible again.
+      if (!_homeVisible) return;
+      final claimed = await widget.storageService
+          .claimOneTimeFlag(StorageService.day0PaywallFlag);
+      _day0PaywallPending = false;
+      if (!claimed || !mounted) return;
+      _pushPremium(context,
+          source: AnalyticsService.paywallSourceDay0AfterClimb);
+    } catch (_) {
+      _day0PaywallPending = false;
+    } finally {
+      _day0PaywallChecking = false;
     }
   }
 
@@ -442,12 +543,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// every time now that all three land on the same screen.
   void _openPremium(BuildContext context, {String? sourceContext}) {
     widget.analyticsService.modeSelected(AnalyticsService.modePremium);
+    _pushPremium(
+      context,
+      source: AnalyticsService.paywallSourceHome,
+      sourceContext: sourceContext,
+    );
+  }
+
+  /// The push itself, shared with the paywall Home opens on its own, which is
+  /// not a user's choice of mode and so logs no `mode_selected`.
+  void _pushPremium(
+    BuildContext context, {
+    required String source,
+    String? sourceContext,
+  }) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PremiumScreen(
           storageService: widget.storageService,
           analyticsService: widget.analyticsService,
-          analyticsSource: AnalyticsService.paywallSourceHome,
+          analyticsSource: source,
           subscriptionService: widget.subscriptionService,
           sourceContext: sourceContext,
         ),
@@ -656,6 +771,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               completedDays: _climbSteps!,
               avatar: widget.avatar ?? Avatar.values.first,
               allowUserScroll: false,
+              onMotionEnd: _onMountainMotionEnd,
             ),
           ),
         ],

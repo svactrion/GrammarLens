@@ -832,6 +832,32 @@ immediate), the onboarding note (§13.9) now names "Anthropic (Claude)" and says
 the user is asked first, and `ai_consent_result` (analytics plan E7) reports
 granted, declined and revoked with the place and wording version, no content.
 
+### 13.14 The first day, revised (2026-09-22)
+
+Three decisions change §12.3's first-launch sequence, in this order of the
+user's day: **Welcome → Onboarding → a fixed Daily Test → results → Home climbs →
+Premium**.
+
+1. *The first test is fixed, not generated.* Five hand-written questions ship
+   with the app (three fill-in-the-blank, two error-correction, one per topic,
+   with predicted wrong answers and their comments). It opens at once, offline
+   and with no generation cost, and the answer key was read by a person before
+   any user sees it. Later days are unchanged (§12.8). `daily_test_completed`
+   reports `set_source` (`bundled` / `generated`), so the two can be compared.
+2. *The result screen has one button and the win comes first.* The Welcome badge
+   card sits under the results; the confetti plays on the user's tap ("Start my
+   climb"), for its whole run, and only then does Home appear. The paywall card
+   that used to end this screen is gone.
+3. *The paywall comes after the payoff, once.* Home opens the Premium screen by
+   itself about 600 ms after the pawn finishes the first climb (or when Home has
+   loaded, if no step was earned), once per install, only for a user who finished
+   the test and does not already have full access. The step in §12.3's diagram,
+   "Result → paywall offer", is replaced by this. Hypothesis to read from data:
+   the moment right after a visible win converts better than the moment right after
+   a result list; the sources `day0_after_climb` (this) against `home` and the
+   others in `paywall_viewed` / `purchase_result` will show it, but not before
+   there are users.
+
 ---
 
 *Living document. Open decisions in §7 get resolved in place, with the

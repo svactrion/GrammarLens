@@ -39,8 +39,14 @@ class FirstLaunchFlow extends StatefulWidget {
   /// Called once when the flow ends. [pendingClimb] is non-null only when the
   /// Day-0 Daily Test was saved and earned a step, so the Home that replaces
   /// this flow can animate that step instead of mounting already advanced.
-  final void Function(UserProfile profile, {PendingClimb? pendingClimb})
-      onComplete;
+  /// [dayZeroCompleted] is true only when the user finished the test and left
+  /// through the result screen's button; leaving the test unfinished is false.
+  /// It is what makes Home offer the first-day paywall.
+  final void Function(
+    UserProfile profile, {
+    PendingClimb? pendingClimb,
+    bool dayZeroCompleted,
+  }) onComplete;
 
   const FirstLaunchFlow({
     super.key,
@@ -128,9 +134,13 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   /// onComplete] so app.dart swaps in the tabbed Home shell. Reached from two
   /// places, both equally valid endings (PRD v2 §12.3): abandoning Daily Test
   /// itself, or the result screen's one button ("Start my climb" after the
-  /// confetti, or "Continue").
-  void _finish() {
-    widget.onComplete(_profile!, pendingClimb: _pendingClimb);
+  /// confetti, or "Continue"): only the second counts as [completed].
+  void _finish({bool completed = false}) {
+    widget.onComplete(
+      _profile!,
+      pendingClimb: _pendingClimb,
+      dayZeroCompleted: completed,
+    );
   }
 
   @override
@@ -164,7 +174,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
           analyticsService: widget.analyticsService,
           isDay0: true,
           onCompletionSaved: _onResultSaved,
-          onDone: _finish,
+          onDone: () => _finish(completed: true),
         );
     }
   }
