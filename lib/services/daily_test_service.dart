@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../data/day_zero_daily_test.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
@@ -21,10 +23,9 @@ class DailyTestService {
     required this.storageService,
   });
 
-  /// The generation (or cache read) currently running, and the day it is for.
-  /// See [getTodaysSet].
-  Future<DailyTestSet>? _inFlight;
-  String? _inFlightDay;
+  /// The generation (or cache read) currently running for each day. See
+  /// [getTodaysSet].
+  final Map<String, Future<DailyTestSet>> _inFlight = {};
 
   /// Returns today's Daily Test set, generating and caching one first if
   /// today's device hasn't already gotten one — so a repeat open the same
@@ -38,26 +39,35 @@ class DailyTestService {
   /// remembered: the next call is a real new attempt (and everyone who joined a
   /// failing call sees its error). A call for a different day (the clock
   /// crossed midnight while one was running) does not join it.
-  Future<DailyTestSet> getTodaysSet() {
-    final day = storageService.currentDayKey;
-    final running = _inFlight;
-    if (running != null && _inFlightDay == day) return running;
+  Future<DailyTestSet> getTodaysSet() => _getSet(storageService.currentDayKey);
+
+  Future<DailyTestSet> _getSet(String day) {
+    final running = _inFlight[day];
+    if (running != null) return running;
 
     final future = _loadOrGenerate(day);
-    _inFlight = future;
-    _inFlightDay = day;
+    _inFlight[day] = future;
     // Registered before any caller's own listener, so by the time a caller
     // sees the result the slot is already free. Handles both outcomes, so it
     // never leaves an unhandled error behind.
     void release(Object? _, [StackTrace? __]) {
-      if (identical(_inFlight, future)) {
-        _inFlight = null;
-        _inFlightDay = null;
-      }
+      if (identical(_inFlight[day], future)) _inFlight.remove(day);
     }
 
     future.then(release, onError: release);
     return future;
+  }
+
+  /// Makes sure [day]'s set exists, generating and caching it if it does not,
+  /// and never reports a failure: nothing is waiting for the result, so there is
+  /// nobody to tell, and the day's own first open simply generates as it always
+  /// did. A day that already has a set (cached, or a generation already in
+  /// flight) costs no request. Meant for the next day, right after the day's
+  /// test is completed.
+  Future<void> prefetchSet(String day) async {
+    try {
+      await _getSet(day);
+    } catch (_) {}
   }
 
   /// Writes the fixed first-day set ([kDayZeroQuestions]) as today's set, unless
@@ -84,7 +94,7 @@ class DailyTestService {
   /// "today's test" — a retry always gets a real attempt, not a
   /// permanently broken cached row for the day.
   Future<DailyTestSet> _loadOrGenerate(String day) async {
-    final cached = await storageService.getDailyTestSetForToday();
+    final cached = await storageService.getDailyTestSet(day);
     if (cached != null) return cached;
 
     final deviceId = await storageService.getOrCreateDeviceId();
@@ -105,12 +115,25 @@ class DailyTestService {
   ///
   /// Returns whether this call just earned the Welcome badge — see
   /// `StorageService.completeDailyTest`'s own doc comment.
+  ///
+  /// Once the completion is saved, the next day's set is prepared in the
+  /// background ([prefetchSet]), so that day's test opens from the cache with no
+  /// wait. That includes the day of the fixed first test. It is started only after
+  /// a successful save (a failed one throws before this point), never delays the
+  /// result, and its own failure is silent. A completion repeated for the same day
+  /// finds the next day's set already there, or already being generated, and asks
+  /// for nothing more.
   Future<bool> completeDailyTest(
     Map<String, String> answers,
     List<ErrorEntry> errorEntries, {
     String? day,
     DateTime? completedAt,
-  }) =>
-      storageService.completeDailyTest(answers, errorEntries,
-          day: day, completedAt: completedAt);
+  }) async {
+    final setDay = day ?? storageService.currentDayKey;
+    final earned = await storageService.completeDailyTest(
+        answers, errorEntries,
+        day: setDay, completedAt: completedAt);
+    unawaited(prefetchSet(StorageService.dayKeyAfter(setDay)));
+    return earned;
+  }
 }

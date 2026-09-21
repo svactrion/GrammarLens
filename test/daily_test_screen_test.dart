@@ -80,6 +80,10 @@ class _FakeStorageService extends StorageService {
   Future<DailyTestSet?> getDailyTestSetForToday() async => todaysSet;
 
   @override
+  Future<DailyTestSet?> getDailyTestSet(String day) =>
+      getDailyTestSetForToday();
+
+  @override
   Future<List<WeakSpot>> getWeakSpots({
     int limit = 10,
     ReviewSortOrder sortOrder = ReviewSortOrder.recent,

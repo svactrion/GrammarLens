@@ -4681,3 +4681,61 @@ unnoticed.
   first-day paywall; the Day-0 climb is seconds long, so this is theoretical. Not
   device-confirmed: how 600 ms feels after the pawn stops, and the Premium route's
   entrance over a Home that has just finished animating.
+
+## 2026-09-22 (tomorrow's Daily Test, prepared in the background)
+
+- **[Problem]** From the second day on, the Daily Test is generated when the user
+  opens it: a spinner for the whole generation, every day. The user has just finished
+  a test, so that is the moment the app can prepare the next one for free of waiting.
+- **[Product]** Owner decision (P2): when a day's Daily Test is completed, the next
+  day's set is generated in the background and stored under the next day's key
+  (source `generated`). It also applies to the day of the fixed first test. It never
+  delays the result, and any failure is silent: the next day then generates on open,
+  exactly as before. A next day that already has a set, or one already being
+  generated, costs no request.
+- **[Engineering]** `StorageService.getDailyTestSet(day)` reads any day's set
+  (`getDailyTestSetForToday` is now that with today's key) and `dayKeyAfter(day)`
+  builds the next key from calendar fields (month and year ends, leap days,
+  daylight saving). `DailyTestService.prefetchSet(day)` runs the same cache-or-generate
+  path as opening a day and swallows every error. Single-flight became per day (a map,
+  not one slot), so a preparation for tomorrow, today's open and a repeat all share
+  requests by day; a call for another day still never joins. `completeDailyTest` starts
+  the preparation for the day after the set's own day only after the completion is
+  saved (a failed save throws first), without awaiting it. The day after the *set's* day,
+  not after the wall clock, so a test finished just after midnight still prepares the
+  right day. Nothing else reads `daily_test_sets` without a day, so a stored future set
+  cannot be mistaken for today's.
+- **[Engineering]** Home used to build a `DailyTestService` at three places (opening
+  the test, its result, viewing a finished result); it now owns one, because
+  single-flight and the preparation only work when they share an instance.
+  Test doubles that override `getDailyTestSetForToday` also override
+  `getDailyTestSet` (the service reads by day now).
+- **[Cost]** One extra `generate_daily_test` per active day, moved from tomorrow's open
+  to today's completion; the number of generations per user per day is unchanged
+  unless a day is skipped (a prepared set is then simply used later, or replaced by
+  nothing: it stays stored under its date and is not read again, so a skipped day
+  wastes one generation). The proxy counts per device per UTC day: a full day of five
+  sessions (10 units) plus today's test (1) plus this preparation (1) is 12 of 15, and a
+  device at its limit just gets a silent failure here. The proxy was not touched.
+- **[Validation]** Real-SQLite service tests: completing today's test costs exactly
+  one more request, stored under tomorrow's day, generated and not completed, with
+  today's set untouched; the next day opens from the cache (no request, same
+  questions, not completed); a failed generation is silent (no uncaught error), leaves
+  no set, still saves the completion, and the next day generates as before; completing
+  again (immediately, and after it finished) asks for nothing more; a next day with a
+  set already costs nothing; the fixed first-test day prepares tomorrow and stays
+  bundled; opening the new day while it is still being prepared joins the request; a
+  completion that fails to save starts nothing; `dayKeyAfter` across month, year, leap
+  and (in a zone that has it) daylight-saving days; the storage read by day. Through
+  Home (fakes): reopening the Daily Test while generation runs joins it (one request,
+  not one per opening), finishing from Home stores tomorrow's set with one more request,
+  and viewing the finished result again asks for nothing. Mutations that turn tests red:
+  no preparation, preparing today instead of tomorrow, a preparation that throws, a
+  preparation started before the save, no single-flight, a cache read that ignores the
+  day, and a separate service for the test screen.
+- **[Known limit]** The daylight-saving cases of `dayKeyAfter` are asserted but this
+  machine's zone (Türkiye, no daylight saving) cannot tell the correct code from a
+  24-hour-addition bug, so they are not proof by themselves; the code is correct by
+  construction. A skipped day leaves one unused stored set. Not device-confirmed: that
+  the next morning's Daily Test really opens without a wait (it needs a day to pass, or
+  a device clock change).

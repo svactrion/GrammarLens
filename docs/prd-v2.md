@@ -834,9 +834,9 @@ granted, declined and revoked with the place and wording version, no content.
 
 ### 13.14 The first day, revised (2026-09-22)
 
-Three decisions change §12.3's first-launch sequence, in this order of the
-user's day: **Welcome → Onboarding → a fixed Daily Test → results → Home climbs →
-Premium**.
+Four decisions change §12.3's first-launch sequence and the days after it.
+The first day now runs **Welcome → Onboarding → a fixed Daily Test → results →
+Home climbs → Premium**.
 
 1. *The first test is fixed, not generated.* Five hand-written questions ship
    with the app (three fill-in-the-blank, two error-correction, one per topic,
@@ -857,6 +857,11 @@ Premium**.
    a result list; the sources `day0_after_climb` (this) against `home` and the
    others in `paywall_viewed` / `purchase_result` will show it, but not before
    there are users.
+4. *Tomorrow's test is prepared when today's is completed.* The next day's set is
+   generated in the background at that moment and cached under its date, so the
+   Daily Test opens with no wait from the second day on (§12.8's once-per-day
+   generation is unchanged; it just happens a day earlier, in the background). A
+   failure is silent and falls back to generating on open. The proxy was not changed.
 
 ---
 

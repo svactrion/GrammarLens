@@ -86,6 +86,21 @@ class _RecordingStorage extends StorageService {
   }
 }
 
+/// A real store whose completion write fails, to prove nothing is prepared
+/// for a completion that was not saved.
+class _FailingCompletionStorage extends StorageService {
+  _FailingCompletionStorage({required super.dbName});
+
+  @override
+  Future<bool> completeDailyTest(
+    Map<String, String> answers,
+    List<ErrorEntry> errorEntries, {
+    String? day,
+    DateTime? completedAt,
+  }) async =>
+      throw StateError('disk full');
+}
+
 void main() {
   setUpAll(() {
     sqfliteFfiInit();
@@ -450,6 +465,203 @@ void main() {
       final reopened = StorageService(dbName: dbName);
       expect((await reopened.getDailyTestSetForToday())!.source,
           DailyTestSource.generated);
+    });
+  });
+
+  group('the next day\'s set, prepared in the background', () {
+    /// Polls until [check] holds: the preparation is background work, so a test
+    /// cannot await it directly.
+    Future<void> eventually(Future<bool> Function() check) async {
+      for (var i = 0; i < 200; i++) {
+        if (await check()) return;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      fail('did not happen in time');
+    }
+
+    Future<bool> tomorrowExists() async =>
+        await storageService.getDailyTestSet('2026-09-23') != null;
+
+    /// Today (2026-09-22) has its set, generated with one request.
+    Future<void> openToday() async {
+      StorageService.clockForTesting = () => DateTime(2026, 9, 22, 10);
+      await dailyTestService.getTodaysSet();
+      expect(claudeService.generateCallCount, 1);
+    }
+
+    test(
+        'completing today\'s test asks for exactly one more set, stored under '
+        'tomorrow\'s day, generated and not completed', () async {
+      await openToday();
+
+      await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+      await eventually(tomorrowExists);
+
+      expect(claudeService.generateCallCount, 2);
+      final tomorrow = (await storageService.getDailyTestSet('2026-09-23'))!;
+      expect(tomorrow.day, '2026-09-23');
+      expect(tomorrow.source, DailyTestSource.generated);
+      expect(tomorrow.isCompleted, isFalse);
+      expect(tomorrow.questions, hasLength(DailyTestService.questionCount));
+      // Today's own set is untouched: completed, with its answers.
+      final today = (await storageService.getDailyTestSetForToday())!;
+      expect(today.day, '2026-09-22');
+      expect(today.isCompleted, isTrue);
+      expect(today.answers, {'q0': 'x'});
+    });
+
+    test('the next day opens from the cache: no request, same questions',
+        () async {
+      await openToday();
+      await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+      await eventually(tomorrowExists);
+      final prepared = await storageService.getDailyTestSet('2026-09-23');
+
+      StorageService.clockForTesting = () => DateTime(2026, 9, 23, 8);
+      final set = await dailyTestService.getTodaysSet();
+
+      expect(claudeService.generateCallCount, 2);
+      expect(set.day, '2026-09-23');
+      expect(set.isCompleted, isFalse);
+      expect(set.questions.map((q) => q.item.id),
+          prepared!.questions.map((q) => q.item.id));
+    });
+
+    test(
+        'a failed background generation is silent, leaves nothing behind, and '
+        'the next day generates as before', () async {
+      await openToday();
+      claudeService.failuresLeft = 1;
+      final uncaught = <Object>[];
+      late bool earned;
+
+      await runZonedGuarded(() async {
+        earned = await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }, (error, _) => uncaught.add(error));
+
+      expect(uncaught, isEmpty);
+      // The completion itself succeeded and returned its own result (this first
+      // answered test earns the Welcome badge).
+      expect(earned, isTrue);
+      expect(claudeService.generateCallCount, 2);
+      expect(await tomorrowExists(), isFalse);
+      // Today's completion itself is saved regardless.
+      expect((await storageService.getDailyTestSetForToday())!.isCompleted,
+          isTrue);
+
+      StorageService.clockForTesting = () => DateTime(2026, 9, 23, 8);
+      final set = await dailyTestService.getTodaysSet();
+      expect(claudeService.generateCallCount, 3);
+      expect(set.questions, hasLength(DailyTestService.questionCount));
+    });
+
+    test('completing again does not ask a second time', () async {
+      await openToday();
+
+      await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+      await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+      await eventually(tomorrowExists);
+      await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      // One for today, one for tomorrow: the repeats joined it, then found it.
+      expect(claudeService.generateCallCount, 2);
+    });
+
+    test('a next day that already has a set costs no request', () async {
+      await openToday();
+      await storageService.saveDailyTestSet([
+        DailyTestQuestion(
+          item: const PracticeItem(
+            id: 'kept',
+            type: PracticeItemType.fillInBlank,
+            instruction: 'Already here',
+          ),
+          topicId: 'tenseSelection',
+          correctAnswer: 'x',
+          commonWrongAnswers: const [],
+        ),
+      ], day: '2026-09-23');
+
+      await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+
+      expect(claudeService.generateCallCount, 1);
+      final tomorrow = (await storageService.getDailyTestSet('2026-09-23'))!;
+      expect(tomorrow.questions.single.item.id, 'kept');
+    });
+
+    test('the day of the fixed first test prepares tomorrow too', () async {
+      StorageService.clockForTesting = () => DateTime(2026, 9, 22, 10);
+      await dailyTestService.seedDayZeroSet();
+      expect(claudeService.generateCallCount, 0);
+
+      await dailyTestService.completeDailyTest({'day0_1': 'eating'}, []);
+      await eventually(tomorrowExists);
+
+      expect(claudeService.generateCallCount, 1);
+      final today = (await storageService.getDailyTestSetForToday())!;
+      expect(today.source, DailyTestSource.bundled);
+      expect(today.isCompleted, isTrue);
+      expect((await storageService.getDailyTestSet('2026-09-23'))!.source,
+          DailyTestSource.generated);
+    });
+
+    test(
+        'a day opened while its set is still being prepared joins the request '
+        'instead of asking again', () async {
+      await openToday();
+      claudeService.gate = Completer<void>();
+
+      await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      StorageService.clockForTesting = () => DateTime(2026, 9, 23, 0, 5);
+      final opened = dailyTestService.getTodaysSet();
+      claudeService.gate!.complete();
+      final set = await opened;
+
+      expect(claudeService.generateCallCount, 2);
+      expect(set.day, '2026-09-23');
+    });
+
+    test('a completion that fails to save starts no preparation', () async {
+      await openToday();
+      final failing = DailyTestService(
+        claudeService: claudeService,
+        storageService: _FailingCompletionStorage(dbName: dbName),
+      );
+
+      await expectLater(
+          failing.completeDailyTest({'q0': 'x'}, []), throwsStateError);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(claudeService.generateCallCount, 1);
+      expect(await tomorrowExists(), isFalse);
+    });
+  });
+
+  group('StorageService.dayKeyAfter', () {
+    test('goes to the next calendar day, across month, year and leap ends',
+        () {
+      expect(StorageService.dayKeyAfter('2026-09-22'), '2026-09-23');
+      expect(StorageService.dayKeyAfter('2026-09-30'), '2026-10-01');
+      expect(StorageService.dayKeyAfter('2026-12-31'), '2027-01-01');
+      expect(StorageService.dayKeyAfter('2026-02-28'), '2026-03-01');
+      expect(StorageService.dayKeyAfter('2028-02-28'), '2028-02-29');
+      expect(StorageService.dayKeyAfter('2028-02-29'), '2028-03-01');
+    });
+
+    // Correct by construction (the key is built from calendar fields, not by
+    // adding 24 hours). A machine in a zone without daylight saving, like the one
+    // this was written on, cannot tell the two apart, so this only guards a run
+    // in a zone that has it.
+    test('daylight-saving change days still give the next calendar day', () {
+      expect(StorageService.dayKeyAfter('2026-03-08'), '2026-03-09');
+      expect(StorageService.dayKeyAfter('2026-03-28'), '2026-03-29');
+      expect(StorageService.dayKeyAfter('2026-10-24'), '2026-10-25');
+      expect(StorageService.dayKeyAfter('2026-10-25'), '2026-10-26');
+      expect(StorageService.dayKeyAfter('2026-11-01'), '2026-11-02');
     });
   });
 }

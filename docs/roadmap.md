@@ -241,6 +241,17 @@ as each one lands, with literal status words (see above):
   the 40 s proxy request timeout (check it against the proxy's `duration_ms` once
   deployed), and the `getOrCreateDeviceId` race fix.
 
+- **Tomorrow's Daily Test prepared in the background — implemented, automated
+  tests only; device check pending.** Completing a day's Daily Test (the fixed first
+  test's day included) generates the next day's set in the background and stores it
+  under the next day's key, so that day's test opens from the cache with no wait. Silent
+  on failure (the next day then generates on open as before), free when the set already
+  exists or is already being generated. Home now shares one `DailyTestService`. Cost:
+  one generation per active day, moved earlier, one wasted for a skipped day; the
+  proxy's per-device daily unit count stays within 15 (12 in a full day) and the proxy
+  was not touched. Not device-confirmed: needs a day to pass (or a device clock change)
+  to see the next morning open with no wait.
+
 - **Fixed first-day Daily Test — implemented, automated tests only; device check
   pending.** New users get the same five hand-written questions
   (`kDayZeroQuestions`, a Dart constant), seeded into today's set before the

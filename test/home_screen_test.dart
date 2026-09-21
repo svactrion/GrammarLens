@@ -134,6 +134,10 @@ class _FakeStorageService extends StorageService {
   Future<DailyTestSet?> getDailyTestSetForToday() async => todaysDailyTest;
 
   @override
+  Future<DailyTestSet?> getDailyTestSet(String day) =>
+      getDailyTestSetForToday();
+
+  @override
   Future<bool> completeDailyTest(
       Map<String, String> answers, List<ErrorEntry> errors,
       {String? day, DateTime? completedAt}) async {

@@ -72,6 +72,10 @@ class _Day0Storage extends StorageService {
   Future<DailyTestSet?> getDailyTestSetForToday() async => todaysSet;
 
   @override
+  Future<DailyTestSet?> getDailyTestSet(String day) =>
+      getDailyTestSetForToday();
+
+  @override
   Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
       {String? day, DailyTestSource source = DailyTestSource.generated}) async {
     todaysSet =

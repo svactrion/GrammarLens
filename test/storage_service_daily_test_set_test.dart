@@ -46,6 +46,22 @@ void main() {
         ),
       ];
 
+  test('a set is read by its day, and another day\'s set is not today\'s',
+      () async {
+    StorageService.clockForTesting = () => DateTime(2026, 9, 22, 10);
+    addTearDown(() => StorageService.clockForTesting = DateTime.now);
+    await storageService.saveDailyTestSet(sampleQuestions(), day: '2026-09-23');
+
+    expect(await storageService.getDailyTestSet('2026-09-22'), isNull);
+    expect(await storageService.getDailyTestSetForToday(), isNull);
+    final tomorrow = await storageService.getDailyTestSet('2026-09-23');
+    expect(tomorrow!.day, '2026-09-23');
+    expect(tomorrow.questions.single.correctAnswer, 'goes');
+
+    StorageService.clockForTesting = () => DateTime(2026, 9, 23, 0, 1);
+    expect((await storageService.getDailyTestSetForToday())!.day, '2026-09-23');
+  });
+
   test('a fresh day has no cached set yet', () async {
     expect(await storageService.getDailyTestSetForToday(), isNull);
   });

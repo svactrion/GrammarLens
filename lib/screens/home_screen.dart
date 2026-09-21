@@ -102,6 +102,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // is still in flight).
   bool _hasFullAccess = false;
 
+  // One service for everything Daily Test on this Home (opening the test, its
+  // result, the completion): its single-flight generation and the next day's
+  // preparation only work when they share an instance.
+  late final DailyTestService _dailyTestService = DailyTestService(
+    claudeService: widget.claudeService,
+    storageService: widget.storageService,
+  );
+
   int _dailyLoadGeneration = 0;
   bool _loadingToday = true;
   DailyTestSet? _todaysDailyTest;
@@ -426,10 +434,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         builder: (_) => DailyTestScreen(
           analyticsService: widget.analyticsService,
           onFinished: (set, answers) => navigator.pop((set, answers)),
-          dailyTestService: DailyTestService(
-            claudeService: widget.claudeService,
-            storageService: widget.storageService,
-          ),
+          dailyTestService: _dailyTestService,
         ),
       ),
     );
@@ -445,10 +450,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _pendingClimbDay = result.$1.day;
             _refreshAfterDailyTest();
           },
-          dailyTestService: DailyTestService(
-            claudeService: widget.claudeService,
-            storageService: widget.storageService,
-          ),
+          dailyTestService: _dailyTestService,
         ),
       );
       await navigator.push(resultRoute);
@@ -473,10 +475,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               dailyTestSet: set,
               answers: set.answers ?? const {},
               analyticsService: widget.analyticsService,
-              dailyTestService: DailyTestService(
-                claudeService: widget.claudeService,
-                storageService: widget.storageService,
-              ),
+              dailyTestService: _dailyTestService,
             ),
           ),
         )

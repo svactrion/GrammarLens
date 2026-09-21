@@ -832,16 +832,32 @@ class StorageService {
   /// Today's cached Daily Test set, if one has already been generated —
   /// null means none exists yet for the local calendar day, which is the
   /// caller's signal to generate one.
-  Future<DailyTestSet?> getDailyTestSetForToday() async {
+  Future<DailyTestSet?> getDailyTestSetForToday() =>
+      getDailyTestSet(_todayKey());
+
+  /// The cached Daily Test set for [day] (`YYYY-MM-DD`), or null when that day
+  /// has none. Tomorrow's set can exist before tomorrow, written ahead of time
+  /// (see `DailyTestService.prefetchSet`).
+  Future<DailyTestSet?> getDailyTestSet(String day) async {
     final db = await _database;
     final rows = await db.query(
       'daily_test_sets',
       where: 'day = ?',
-      whereArgs: [_todayKey()],
+      whereArgs: [day],
       limit: 1,
     );
     if (rows.isEmpty) return null;
     return _dailyTestSetFromRow(rows.first);
+  }
+
+  /// The day key that follows [day], for a set written a day ahead. Built from
+  /// the calendar fields, so it is right across month ends, leap days and
+  /// daylight-saving changes.
+  static String dayKeyAfter(String day) {
+    final date = DateTime.parse(day);
+    return DateTime(date.year, date.month, date.day + 1)
+        .toIso8601String()
+        .split('T')[0];
   }
 
   /// Cache the generated set for its original day. Unfinished sets retain
