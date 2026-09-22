@@ -4942,3 +4942,33 @@ unnoticed.
   320 pt, Large text, 2.0 system scale: no overflow, benefits stacked, all
   text inside the card; at 430 pt, Medium: benefits side by side. 858 tests
   pass (855 before, 3 new); `flutter analyze` clean.
+
+## 2026-09-23 (Premium comparison table: the daily session difference)
+
+- **[Problem]** The practice results offer card promises "more daily
+  sessions", but the Premium screen's comparison table never showed a session
+  count, so the claim could not be checked where the user decides.
+- **[Product]** New row "Practice sessions", between "Practice your weak
+  spots" and "Sessions of 3, 5 or 10 questions": Free "1 a day"
+  (`StorageService.freeDailyPracticeLimit`), Premium "5 a day"
+  (`StorageService.dailySessionLimit`), both read from the constants. Premium
+  is a number, never "unlimited" (the existing "no unlimited on the table"
+  test still holds).
+- **[Engineering]** `_ComparisonRow` gains `premiumLabel`, drawn in the
+  Premium strip the way `freeLabel` is drawn in the Free column, and in the
+  stacked layout's Premium chip. One helper, `_dailyQuotaLabel`, builds every
+  quota ("N a day", or "N/day" in the same narrow case the weak-spot row
+  already switched for), so both columns switch together;
+  `_buildComparisonRows` now takes `shortQuota` instead of a prebuilt string.
+  The Premium column width also measures the Premium quota, in case it is
+  ever wider than the "PREMIUM" header (it is not today).
+- **[Trade-off]** One more row makes the table taller. At 375×667 the whole
+  table is still in view, but less of the plan cards shows above the fixed
+  footer: about 30 pt at Medium (was 78) and none at Large (was 33; they
+  start about 15 pt below it). The footer-clearance test now asserts those
+  measured facts instead of the old ones; the item stays open on the
+  TestFlight checklist.
+- **[Validation]** `premium_screen_test.dart`: the row, both quotas and the
+  unchanged semantics counts; the stacked layout at 320×667 @2x and 375×667
+  @3x keeps every label (now five) whole, with "1 a day" twice and "5 a day"
+  once; the width × scale grid still finds no clipped label in either layout.

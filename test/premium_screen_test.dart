@@ -353,8 +353,16 @@ void main() {
     expect(find.text('Questions from your own mistakes'), findsNothing);
     expect(find.text('Targeted weak-spot practice'), findsNothing);
     expect(find.text('Practice your weak spots'), findsOneWidget);
+    // The free quota shows twice: on the weak-spot row and on the
+    // "Practice sessions" row, which also shows Premium's daily session
+    // limit as a number, read from the constant.
     expect(
       find.text('${StorageService.freeDailyPracticeLimit} a day'),
+      findsNWidgets(2),
+    );
+    expect(find.text('Practice sessions'), findsOneWidget);
+    expect(
+      find.text('${StorageService.dailySessionLimit} a day'),
       findsOneWidget,
     );
     // Session lengths read off PracticeLength, not hardcoded — see
@@ -365,9 +373,9 @@ void main() {
     expect(find.textContaining('unlimited'), findsNothing);
 
     // Daily Test is free (checkmark); Topic Practice and Sessions are not
-    // (dash); the merged weak-spot row uses its own text value instead of
-    // either glyph, so it contributes to neither count. Premium includes
-    // all four rows.
+    // (dash); the merged weak-spot row and "Practice sessions" use their own
+    // text values instead of a glyph, so they add to no Free count, and
+    // "Practice sessions" adds to no Premium count either.
     expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
     expect(find.bySemanticsLabel('Not included in Free'), findsNWidgets(2));
     expect(find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
@@ -2056,15 +2064,21 @@ void main() {
         expect(m.scrollRegion.height, greaterThan(385));
         // The avatar hero is dropped on a screen this short...
         expect(find.byType(AvatarTile), findsNothing);
-        // ...which lifts the content: the whole comparison table is in view
-        // and the top of the plan cards shows above the footer (about 56 pt
-        // of them at Medium, 11 pt at Large; they were not visible at all
-        // before).
+        // ...which lifts the content: the whole comparison table is in view.
         final annual =
             tester.getRect(find.byKey(const ValueKey('planCard_Annual')));
         final lastRow = tester.getRect(find.textContaining('Sessions of'));
         expect(lastRow.bottom, lessThan(m.scrollRegion.bottom));
-        expect(annual.top, lessThan(m.scrollRegion.bottom - 8));
+        // The plan cards: since the "Practice sessions" row (2026-09-23)
+        // made the table one row taller, about 30 pt of them shows above
+        // the footer at Medium (78 pt before), and at Large they start just
+        // below it (33 pt showed before). A known trade-off, open on the
+        // TestFlight checklist (docs/roadmap.md).
+        if (textSize == AppTextSize.medium) {
+          expect(annual.top, lessThan(m.scrollRegion.bottom - 8));
+        } else {
+          expect(annual.top, lessThan(m.scrollRegion.bottom + 40));
+        }
         // Restore Purchases is still in the scrolling body, reachable.
         await tester.scrollUntilVisible(find.text('Restore Purchases'), 200,
             scrollable: bodyScrollable);
@@ -2216,6 +2230,7 @@ void main() {
       'Daily Test, refreshed every day',
       'Topic Practice, all five topics',
       'Practice your weak spots',
+      'Practice sessions',
       'Sessions of 3, 5 or 10 questions',
     ];
 
@@ -2267,6 +2282,8 @@ void main() {
               expect(tester.widget<Text>(text).overflow, isNull);
             }
             expect(find.descendant(of: stacked, matching: find.text('1 a day')),
+                findsNWidgets(2));
+            expect(find.descendant(of: stacked, matching: find.text('5 a day')),
                 findsOneWidget);
 
             // Every row and everything in it stays inside the screen width.

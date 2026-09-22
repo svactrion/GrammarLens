@@ -727,23 +727,30 @@ class _PremiumFooter extends StatelessWidget {
   }
 }
 
-/// One row of the Free/Premium comparison table. [freeLabel] overrides the
-/// usual checkmark/dash with specific text (today, only "1 a day" for the
-/// merged weak-spot row) — null everywhere else, meaning [free] alone
+/// One row of the Free/Premium comparison table. [freeLabel] and
+/// [premiumLabel] override the usual checkmark/dash with specific text (a
+/// daily quota such as "1 a day"); null means [free] / [premium] alone
 /// decides the glyph.
 class _ComparisonRow {
   final String label;
   final bool free;
   final String? freeLabel;
   final bool premium;
+  final String? premiumLabel;
 
   const _ComparisonRow({
     required this.label,
     required this.free,
     this.freeLabel,
     required this.premium,
+    this.premiumLabel,
   });
 }
+
+/// A daily quota as the table shows it: "N a day", or "N/day" when
+/// [short] (see [_ComparisonTable] on when the short form is used).
+String _dailyQuotaLabel(int count, {required bool short}) =>
+    short ? '$count/day' : '$count a day';
 
 /// Row 4's question counts, joined the way a sentence would ("3, 5 or 10"
 /// — no Oxford comma) rather than a plain comma list, and read off
@@ -754,20 +761,26 @@ String _joinWithOr(List<String> items) {
   return '${items.sublist(0, items.length - 1).join(', ')} or ${items.last}';
 }
 
-/// Four rows (down from five): "Questions from your own mistakes" and
-/// "Targeted weak-spot practice" used to describe the same underlying
+/// Five rows. "Practice your weak spots" merges two earlier rows:
+/// "Questions from your own mistakes" and "Targeted weak-spot practice" used to describe the same underlying
 /// capability twice, both showing free as "—" — which was also wrong.
 /// `launchPracticeSet` (practice_launch.dart) genuinely grants a free user
 /// [StorageService.freeDailyPracticeLimit] such sessions per day; merged
 /// into one row with that real value, read from the constant rather than
 /// retyped, so it can't drift from the actual quota again.
 ///
-/// [weakSpotFreeLabel] is the only piece [_ComparisonTable] varies at
-/// build time — it picks between the full "N a day" phrasing and an
-/// abbreviated "N/day" once it's measured whether the full phrase fits
-/// the free-value column on one line at the current width (see that
-/// class's own doc comment on the overlap this replaced).
-List<_ComparisonRow> _buildComparisonRows(String weakSpotFreeLabel) => [
+/// "Practice sessions" (added 2026-09-23) shows the daily session difference
+/// the practice results offer card promises ("more daily sessions"): a free
+/// user's [StorageService.freeDailyPracticeLimit] against Premium's
+/// [StorageService.dailySessionLimit], both read from the constants. Premium
+/// is a number, never "unlimited".
+///
+/// [shortQuota] is the only thing [_ComparisonTable] varies at build time —
+/// it picks between the full "N a day" phrasing and an abbreviated "N/day"
+/// once it's measured whether the full phrase fits the free-value column on
+/// one line at the current width (see that class's own doc comment on the
+/// overlap this replaced).
+List<_ComparisonRow> _buildComparisonRows({required bool shortQuota}) => [
       const _ComparisonRow(
         label: 'Daily Test, refreshed every day',
         free: true,
@@ -781,8 +794,18 @@ List<_ComparisonRow> _buildComparisonRows(String weakSpotFreeLabel) => [
       _ComparisonRow(
         label: 'Practice your weak spots',
         free: false,
-        freeLabel: weakSpotFreeLabel,
+        freeLabel: _dailyQuotaLabel(StorageService.freeDailyPracticeLimit,
+            short: shortQuota),
         premium: true,
+      ),
+      _ComparisonRow(
+        label: 'Practice sessions',
+        free: true,
+        freeLabel: _dailyQuotaLabel(StorageService.freeDailyPracticeLimit,
+            short: shortQuota),
+        premium: true,
+        premiumLabel: _dailyQuotaLabel(StorageService.dailySessionLimit,
+            short: shortQuota),
       ),
       _ComparisonRow(
         label: 'Sessions of '
@@ -849,7 +872,16 @@ class _ComparisonTable extends StatelessWidget {
   /// text scale, measured directly via [_measureTextWidth] rather than a
   /// fixed constant, so this is correct at any Dynamic Type setting.
   double _premiumColumnWidth(BuildContext context) {
-    final width = _measureTextWidth(context, 'PREMIUM', _headerStyle);
+    // Also as wide as the Premium session quota ("5 a day"), should that
+    // ever measure wider than the header.
+    final width = [
+      _measureTextWidth(context, 'PREMIUM', _headerStyle),
+      _measureTextWidth(
+        context,
+        _dailyQuotaLabel(StorageService.dailySessionLimit, short: false),
+        _freeValueStyle,
+      ),
+    ].reduce((a, b) => a > b ? a : b);
     // Horizontal padding inside the strip on each side, plus a floor so a
     // single small checkmark icon never makes the strip look pinched.
     return (width + 28).clamp(56, double.infinity);
@@ -915,8 +947,8 @@ class _ComparisonTable extends StatelessWidget {
         // the header/quota text ever gets shorter than that).
         const checkmarkWidth = 20.0;
         const limit = StorageService.freeDailyPracticeLimit;
-        const longFreeText = '$limit a day';
-        const shortFreeText = '$limit/day';
+        final longFreeText = _dailyQuotaLabel(limit, short: false);
+        final shortFreeText = _dailyQuotaLabel(limit, short: true);
         final longFreeWidth =
             _measureTextWidth(context, longFreeText, _freeValueStyle);
         final shortFreeWidth =
@@ -927,12 +959,12 @@ class _ComparisonTable extends StatelessWidget {
                 .reduce((a, b) => a > b ? a : b) +
             freeColumnHorizontalPadding;
 
-        var freeText = longFreeText;
+        var shortQuota = false;
         var freeColumnWidth = columnWidthFor(longFreeWidth);
         var availableForLabel =
             constraints.maxWidth - premiumWidth - freeColumnWidth;
         if (availableForLabel < minLabelWidth) {
-          freeText = shortFreeText;
+          shortQuota = true;
           freeColumnWidth = columnWidthFor(shortFreeWidth);
           availableForLabel =
               constraints.maxWidth - premiumWidth - freeColumnWidth;
@@ -948,7 +980,7 @@ class _ComparisonTable extends StatelessWidget {
         bool everyLabelFitsInTwoLines() {
           final textWidth = availableForLabel - _labelCellHorizontalPadding;
           if (textWidth <= 0) return false;
-          for (final row in _buildComparisonRows(freeText)) {
+          for (final row in _buildComparisonRows(shortQuota: shortQuota)) {
             final painter = TextPainter(
               text: TextSpan(
                 text: row.label,
@@ -972,13 +1004,13 @@ class _ComparisonTable extends StatelessWidget {
         if (availableForLabel < minLabelWidth || !everyLabelFitsInTwoLines()) {
           return _StackedComparison(
             key: const Key('comparisonStacked'),
-            rows: _buildComparisonRows(longFreeText),
+            rows: _buildComparisonRows(shortQuota: false),
             theme: theme,
             colorScheme: colorScheme,
           );
         }
 
-        final rows = _buildComparisonRows(freeText);
+        final rows = _buildComparisonRows(shortQuota: shortQuota);
         final headerHeight = _measuredHeight(context, _headerStyle, 1);
         final dataRowHeight = _measuredHeight(context, labelStyle, 2);
 
@@ -1033,7 +1065,7 @@ const TextStyle _headerStyle =
     TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
 
 /// The comparison table's fallback when its three columns do not fit (see
-/// [_ComparisonTable]): the same four rows, the same Free/Premium facts, laid
+/// [_ComparisonTable]): the same rows, the same Free/Premium facts, laid
 /// out top to bottom. Each row is a label with its full width and natural
 /// height (no ellipsis, no fixed height), then a [Wrap] of two tier chips so
 /// they fall onto separate lines instead of overflowing at the largest text
@@ -1094,6 +1126,7 @@ class _StackedComparison extends StatelessWidget {
                       _StackedTierChip(
                         tier: 'Premium',
                         included: rows[i].premium,
+                        valueLabel: rows[i].premiumLabel,
                         fill: colorScheme.brightness == Brightness.dark
                             ? colorScheme.surfaceContainerHighest
                             : colorScheme.secondaryContainer,
@@ -1332,12 +1365,24 @@ class _ComparisonRowLine extends StatelessWidget {
                     bottomRight: Radius.circular(20),
                   )
                 : null,
-            child: _ComparisonCell(
-              included: row.premium,
-              includedColor: colorScheme.onSecondaryContainer,
-              dashColor: colorScheme.onSecondaryContainer,
-              tier: 'Premium',
-            ),
+            child: row.premiumLabel != null
+                ? Text(
+                    row.premiumLabel!,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSecondaryContainer,
+                    ),
+                  )
+                : _ComparisonCell(
+                    included: row.premium,
+                    includedColor: colorScheme.onSecondaryContainer,
+                    dashColor: colorScheme.onSecondaryContainer,
+                    tier: 'Premium',
+                  ),
           ),
         ],
       ),
