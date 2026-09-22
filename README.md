@@ -10,8 +10,10 @@
 > screen width. **Pre-launch**: not on the App Store, and the subscription
 > products exist in App Store Connect but are not yet submitted for review
 > (see [`docs/roadmap.md`](docs/roadmap.md) for current
-> wiring). **v3 is planned but not scoped or built** — a gamification layer
-> and a Home redesign. See [Product Evolution](#product-evolution) below.
+> wiring). The first release also ships **Monthly Climb**, a gamification
+> layer on the Daily Test (monthly route, medals). A Home redesign is
+> planned for after launch, not scoped. See
+> [Product Evolution](#product-evolution) below.
 
 ## The Problem
 
@@ -64,7 +66,8 @@ app can't build a personalized curriculum from what you actually get wrong.
 |---|---|---|---|
 | **v1 — MVP** | Jul–Aug 2026 | [`screenshots/v1/`](screenshots/v1/) | The original topic-mode build: pick a topic, answer a mixed question set, get plain-language feedback, review weak spots. Tested with real users, closed. |
 | **v2** | Aug–Sep 2026 | [Screenshots (v2)](#screenshots-v2) below | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). This is the current build. |
-| **v3 — planned, not yet scoped** | — | — | Two directions under consideration, neither built: a gamification layer (a "Monthly Climb" progression mechanic, redesigned from an earlier weekly-cycle draft — see [`docs/prd-gamification.md`](docs/prd-gamification.md), status draft, design work happening outside this repo) and a Home screen redesign. No scope, no screens, no code in this repo yet. |
+| **Monthly Climb** | Sep 2026 | — | A gamification layer on the Daily Test: each answered test moves the avatar one step up a monthly mountain, and a month's score earns a Bronze/Silver/Gold medal in Profile. Built on branch `monthly-climb-v2` and part of the first App Store release. See [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb section at the top; the weekly draft below it is historical). |
+| **v3 — planned, not yet scoped** | — | — | A Home screen redesign, after launch. No scope, no screens, no code yet. |
 
 <details>
 <summary><strong>Screenshots (v1 / MVP)</strong></summary>
@@ -273,7 +276,7 @@ Flutter (iOS) · Anthropic API via a Cloudflare Workers proxy (Claude
 Sonnet, structured JSON outputs — see `proxy/`) · sqflite (local storage)
 · Firebase Analytics + Crashlytics (connected and collecting, iOS only —
 see `docs/roadmap.md` "Current wiring") · RevenueCat (subscriptions —
-built, no live product connected yet) · Material 3 · AI-assisted
+live, both App Store products attached) · Material 3 · AI-assisted
 development (Claude Code)
 
 ## About

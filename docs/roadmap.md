@@ -21,7 +21,7 @@ Nothing is marked complete unless the record says so.
 | Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. Since 2026-09-22 the celebration is a large card under the results, and the confetti plays when the user taps "Start my climb" (automated tests only, not device-confirmed). |
 | Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
 | Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. Comparison-table overflow at 320 px / 2× text: fixed 2026-09-21 with a stacked layout (see the launch-checklist note below); automated tests only, **not device-confirmed**. |
-| Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | **Not started.** Plan only: `docs/analytics-plan.md`, awaiting approval. No analytics code exists for any of these events. |
+| Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | Implemented (E1, E3–E8; E2 dropped by decision), automated tests only: `docs/analytics-plan.md` §8. Open: the physical-device DebugView run (moved to the TestFlight pre-submission checklist, "What's next" §1) and the owner's custom-dimension registration (§9). |
 
 ### Out of scope (after launch, on a separate design branch)
 
@@ -35,6 +35,13 @@ Nothing is marked complete unless the record says so.
 | Shared Daily Test: the daily question set is generated once per day and shown identically to every user, instead of once per user | **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: a shared set cannot be chosen by an error profile (the per-device set was biased toward the device's own weak spots, PRD v2 §12.8, until 2026-09-21, when that was removed ahead of this change, §13.12); (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs. |
 | Turkish UI copy (localization) | Recorded 2026-09-23 while adding the practice results Premium prompt, whose copy was wanted in both English and Turkish. The app has no localization setup (no `flutter_localizations`, `intl` or l10n files); every string is English in the widget code. Adding Turkish means setting that up and moving all copy into it, a separate project, not a string edit. Nothing is scheduled. |
 | Theme setting as a single toggle button (instead of the System / Light / Dark segmented control) | Not planned, idea only (recorded 2026-09-21). The three-way control is shipped, tested and device-reviewed; a toggle would drop the explicit "System" choice or need a long-press or cycle to keep it, which is a product decision, not a polish item. Nothing is scheduled. |
+
+### Post-launch tasks
+
+- **Delete `~/GrammarLens-backup.git` one week after launch.** It is the
+  full mirror taken before the 2026-09-17 history rewrite and still contains
+  personal data (it also holds the deleted `codex/monthly-climb`). Never push
+  it anywhere.
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD
@@ -72,8 +79,10 @@ as each one lands, with literal status words (see above):
   not touched. Checked by building `flutter build web --release`: none of the
   tool strings appear in the compiled output. Not removable without a schema
   change: the empty `debug_settings` table is still created (nothing reads it
-  in release). The iOS release build is broken on this machine by the Xcode
-  27 `lipo` issue, so the AOT binary itself was not inspected.
+  in release). The iOS release build was broken on this machine by the Xcode
+  27 `lipo` issue at the time, so the AOT binary itself was not inspected.
+  *(Update 2026-09-23: the `lipo` blocker is resolved and a release IPA now
+  builds; the AOT binary has still not been inspected for tool strings.)*
 - **Profile: age and occupation removed — implemented, automated tests
   only.** Scan before removal: the two fields were used only by the Profile
   form, `UserProfile` and the `user_profile` table; not by prompt generation,
@@ -102,8 +111,8 @@ as each one lands, with literal status words (see above):
   Premium screen links the policy itself. Still open before submission: the
   App Store privacy nutrition label must match the same facts (outside this
   repo).
-- **Proxy token logging — implemented and tested; not deployed, no data
-  yet.** Each successful Anthropic call logs `kind` (daily_test /
+- **Proxy token logging — implemented, tested and deployed; data is
+  accumulating in Workers Logs.** Each successful Anthropic call logs `kind` (daily_test /
   topic_practice), operation, question count and real input/output tokens
   with `console.log` (Workers Logs). Nothing user-related is logged; a test
   plants secrets to prove it. Purpose: after a few weeks of traffic, measure
@@ -115,11 +124,11 @@ as each one lands, with literal status words (see above):
   error body on a non-200, and the JSON parse exception on unusable
   content) could echo response text; **fixed 2026-09-21** (see the failure-log
   entry below).
-- **Proxy `duration_ms` — implemented and tested; not deployed, no data yet.**
+- **Proxy `duration_ms` — implemented, tested and deployed.**
   Usage and failure log lines carry the wall time of the call to Anthropic, so
   the real generation time of a Daily Test (and any hang) can be read from
   Workers Logs. Numbers only; the privacy contract is unchanged.
-- **Proxy failure logging — content-free, implemented and tested, not
+- **Proxy failure logging — content-free, implemented, tested and
   deployed.** A failed Anthropic call now logs one JSON line: operation, kind
   (daily_test / topic_practice), failure category, HTTP status and Anthropic's
   error `type` restricted to its documented values (anything else is
@@ -130,7 +139,7 @@ as each one lands, with literal status words (see above):
   `proxy/src/index.ts`, first left as is, was narrowed too. It now logs only
   the operation, kind and an error category, never the message or stack.
   Every `console` call in `proxy/src/` writes a fixed-field line with no user
-  content; tests plant secrets to prove it. Not deployed. The trade-off: an
+  content; tests plant secrets to prove it. Deployed. The trade-off: an
   unexpected bug now shows up as a category, so diagnosing it needs a
   reproduction rather than a stack trace.)*
 - **Trial-length wording — corrected in current-state text.** Truth: annual
@@ -212,13 +221,15 @@ as each one lands, with literal status words (see above):
   real app (`test/first_launch_climb_test.dart`). Not device-confirmed.
 
 - **Daily Test sends no weak spots — implemented and tested (Flutter and
-  proxy); proxy not deployed.** `generate_daily_test` no longer receives the
+  proxy); proxy deployed.** `generate_daily_test` no longer receives the
   error profile: client (`DailyTestService`, `ClaudeService`) and proxy
   (`validateGenerateDailyTest`, the prompt's bias branch) drop `weakSpots`, and
   the proxy rejects the field with a 400, so the Daily Test sends no user data
   to Anthropic. The "no practice history yet" prompt sentence became a plain
   general-mix instruction. Personalization moves to Premium features later.
-  PRD v2 §13.12. Deploy the proxy and ship the app together.
+  PRD v2 §13.12. The proxy side is deployed (it already returns 400 for a
+  request that still carries `weakSpots`), so the app must ship with the
+  client change.
 
 - **AI permission before Topic Practice — implemented, automated tests only;
   device check pending.** A full-screen permission screen ("Feedback on your
@@ -550,8 +561,10 @@ product continues.
 
 ## Where we are now
 
-**Status: MVP complete, tested with real users, closed. V2 in definition —
-see `docs/prd-v2.md`.**
+**Status: MVP complete, tested with real users, closed. V2 built; the launch
+branch `monthly-climb-v2` is pending its merge to `main` and the first App
+Store submission — see "Launch scope" at the top of this file and
+`docs/prd-v2.md`.**
 
 ### Current wiring — verified against the repo, 2026-09-14
 
@@ -622,8 +635,10 @@ actually wired today.** Checked against the filesystem, not from memory.
   pricing decision (PRD v2 §13.3) and `PremiumScreen`'s disclosure block doesn't
   support disclosing a commitment term. Left as a post-launch idea only,
   worth revisiting if annual conversion turns out low.
-- **EU DSA — In Review, resubmitted 2026-09-16** (Apple case 102955281512).
-  The first submission was rejected because the declared trader address was
+- **EU DSA — trader verification Active, 2026-09-22** (Apple case
+  102955281512). EU availability is no longer gated. The history below is
+  the 2026-09-16 record, kept as written: it was In Review then, resubmitted
+  2026-09-16. The first submission was rejected because the declared trader address was
   incomplete and misspelled, so it couldn't match the proof document — the
   translation was not the cause. The corrected address was resubmitted with
   the same invoice PDF (English translation included), now matching it
@@ -635,6 +650,13 @@ actually wired today.** Checked against the filesystem, not from memory.
 - **Legal pages — written and live**, no longer placeholder:
   `/products/grammarlens/privacy/`, `/terms/` and `/support/` on
   ahmettayfur.com.
+- **GDPR Art. 27 EU representative — not appointed. Deliberate, documented
+  gap.** Reasoning: sole developer established in Türkiye, no EU
+  establishment; the app does not target the EU as a primary market (initial
+  launch is aimed at Turkish speakers); processing is limited to pseudonymous
+  analytics and crash diagnostics with no special-category data. Revisit
+  trigger: appoint a representative if EU users become a material share of
+  the user base, or if EU-targeted marketing begins.
 
 **Open consequence (fixed 2026-09-21 — see "Launch scope"):** the onboarding
 privacy note — "data stays on-device, never sent to a server" — was wrong
@@ -1735,7 +1757,8 @@ Firebase project connected yet, needs an interactive `flutterfire
 configure` run against a real account", which is stale now), and now
 the full v2.1 free/trial/paid flow (previous section) — functionally
 complete, but not launch-ready. Still open: distribution channel
-decision, API key safety approach, device coverage, feedback channel —
+decision, device coverage, feedback channel (API key safety is closed, see
+below) —
 several of these are open decisions, not just tasks. **Blocker status, reconciled 2026-09-05** (previous
 entries here were partly stale and partly optimistic — corrected against what
 actually exists):
@@ -1773,7 +1796,8 @@ actually exists):
     still placeholders (a simulator capture of the debug fixture offering,
     and notes stating US prices) — replace or re-check both before the
     first submission that includes them.
-  - **EU DSA trader verification — In Review** (Apple case 102955281512). The
+  - *(Resolved: Active 2026-09-22, see "Current wiring".)*
+    **EU DSA trader verification — In Review** (Apple case 102955281512). The
     Turkish utility bill submitted as address proof was rejected **for
     language only**, not content: Apple's document review reads nine
     languages, Turkish not among them. A signed, self-certified English
@@ -1860,7 +1884,9 @@ actually exists):
   (done). Adjusted proceeds only take effect 15 days after the end of the
   fiscal month in which enrollment is approved, so enrolling early is worth
   real money. **Not yet done.**
-- **Privacy Policy / Terms: URLs are real, page content is not — updated
+- *(Superseded: the pages are written and live, see "Current wiring".
+  The text below is the 2026-09-08 record.)*
+  **Privacy Policy / Terms: URLs are real, page content is not — updated
   2026-09-08, corrected from a stale "still do not exist" note.** Checked
   directly against `lib/utils/app_links.dart`: `privacyPolicyUrl`, `termsUrl`,
   and `supportUrl` are no longer empty — all three point at permanent pages
@@ -1921,7 +1947,9 @@ actually exists):
   `AppLifecycleState.resumed` — real fix, not a `Timer`. Found while
   checking whether the greeting had something to attach a refresh to; see
   the 2026-09-15 "Home: time-of-day greeting + bigger avatar" entry above.
-- **Open blocker, found 2026-09-16, not project-caused: the local iOS
+- **Resolved 2026-09-23: a release IPA builds without problems.** The
+  entry below is the 2026-09-16 record, kept as written.
+  **Open blocker, found 2026-09-16, not project-caused: the local iOS
   simulator build is broken by an Xcode 27 / Flutter toolchain
   incompatibility.** This Xcode's `lipo -verify_arch` now rejects being
   passed more than one architecture at once, which breaks Flutter
@@ -1939,7 +1967,22 @@ actually exists):
   The density pass that fixed this at 393×852 didn't close the gap at
   the smaller iPhone SE size (measured: footer top at 507pt, cards'
   own bottom at ~706–710pt). See the 2026-09-16 "Premium screen: on-
-  device review fixes" entry above.
+  device review fixes" entry above. **Still open (2026-09-23):** the
+  2026-09-21 footer work shows the top of the plan cards above the footer
+  (about 56 pt at Medium), not the whole cards; to be checked on TestFlight
+  (checklist below).
+
+#### TestFlight pre-submission checklist
+
+Open items to run on a TestFlight build before submitting for review:
+
+- [ ] **Firebase DebugView on a physical device** for the launch analytics
+  events: not done yet. Procedure: `docs/analytics-plan.md` §6.
+- [ ] **Premium screen at 375×667 (iPhone SE):** do the plan cards clear the
+  fixed footer, or is scrolling acceptable? (Open debt above.)
+- [ ] **An explicit Restore Purchases tap** in a scenario that needs it (a
+  second device, or a signed-out/re-signed-in sandbox account). See
+  "Current wiring".
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.

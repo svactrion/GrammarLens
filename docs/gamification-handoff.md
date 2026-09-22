@@ -51,12 +51,12 @@
 - Mountain geometry/decor: the current route and landmarks work, but the requested broad-to-narrow/steeper summit redesign, consistent landmark placement, and viewpoint/snow contrast pass are unfinished in `lib/widgets/monthly_climb/monthly_mountain.dart`.
 - Home/Profile medal entry: Profile is reachable from bottom navigation, but the PRD idea of a medal icon beside the Home avatar that opens the collection is not implemented in `lib/screens/home_screen.dart`.
 - Profile is user-facing, but the implementation class/file remains `SettingsScreen` in `lib/screens/settings_screen.dart`; this is naming debt, not a user-visible bug.
-- Premium comparison table: a horizontal overflow at 320 px with 2x text was discovered but intentionally left outside fixes 4a–c. File: `lib/screens/premium_screen.dart`.
+- Premium comparison table: a horizontal overflow at 320 px with 2x text was discovered but intentionally left outside fixes 4a–c. File: `lib/screens/premium_screen.dart`. *(Fixed 2026-09-21 with a stacked layout; see `docs/roadmap.md`.)*
 
 ## 4. Not started
 
 1. Physical-device acceptance of the medal `In progress` and history states; use seeded/debug data or a controlled clock/database fixture because a real month rollover is impractical.
-2. Fix the known Premium comparison-table overflow at 320 px / 2x text without regressing the fixed footer or plan-card equality.
+2. Fix the known Premium comparison-table overflow at 320 px / 2x text without regressing the fixed footer or plan-card equality. *(Done 2026-09-21, stacked layout; see `docs/roadmap.md`.)*
 3. Add the optional Home avatar-adjacent medal entry that navigates to Profile/collection, if still desired.
 4. Redesign mountain path geometry and landmark placement; verify 28/29/30/31 days, light/dark, Small/Medium/Large, and reduced motion.
 5. Decide and implement the additional monthly mountain themes and their calendar rotation.
@@ -65,7 +65,7 @@
 ## 5. Deviations & shortcuts
 
 - Empty calendar months are omitted rather than frozen as `No medal`; there is no reliable local profile/install creation timestamp from which to synthesize legitimate empty months.
-- Medal finalization is lazy: it runs when Profile is constructed or re-entered, not in a background scheduler. The result is still deterministic and durable once Profile is opened.
+- Medal finalization is lazy: it runs when Profile is constructed or re-entered, not in a background scheduler. The result is still deterministic and durable once Profile is opened. *(Changed 2026-09-19: it now also runs at app launch and on resume from background; see `docs/analytics-plan.md` E4.)*
 - The three medal colors are hardcoded in `lib/widgets/monthly_medal_collection.dart` rather than defined as shared design tokens.
 - `MonthlyMedalCollection` marks a tier earned only if a finalized result has exactly that highest tier. A Gold result does not also visually unlock Bronze and Silver specimens.
 - The full Material 3 type scale is explicitly populated in `lib/theme.dart` before applying text-size factors because this Flutter version exposed null font sizes in some base styles. These numeric sizes are standard Material values but are now locally hardcoded.

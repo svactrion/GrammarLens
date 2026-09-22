@@ -3511,7 +3511,7 @@ changed.
   comparable units when the user toggles plans. Deliberately scoped to
   only the trial part: `_formatSubscriptionPeriod` (the separate renewal-
   period text) parses the product's own ISO subscription period, an
-  entirely different input, so this conversion cannot leak into it — 
+  entirely different input, so this conversion cannot leak into it —
   confirmed by reading both functions, not assumed. (3) the debug fixture
   split into two distinct `IntroductoryPrice` objects mirroring what
   StoreKit actually returns (monthly `P3D`/day/3, annual `P1W`/week/1).
@@ -4838,3 +4838,33 @@ unnoticed.
   if they also used the free practice earlier that day. Changing that would change
   `hasFullAccess`'s contract for every caller, so it is left as is. Not
   device-confirmed: spacing, and the prompt at Large text and 320 pt width.
+
+## 2026-09-23 (pre-merge cleanup: `main` merged in, docs brought in line with reality)
+
+- **[Engineering]** `main` merged into `monthly-climb-v2` (it was one commit
+  ahead, `77c8d60`). Conflicts only in `docs/roadmap.md` and this file; both
+  sides kept, except the 2026-09-16 v3 paragraph and the `codex/monthly-climb`
+  GUARD note that `77c8d60` removed on purpose. Checked line by line: no line
+  added on either side was lost. `codex/monthly-climb` has no common history
+  with `main` (different root commit) and survives only in the pre-rewrite
+  mirror backup, now scheduled for deletion a week after launch.
+- **[Product]** Owner-confirmed facts written into the current-state docs:
+  the proxy is deployed, so token logging, `duration_ms`, content-free failure
+  logging and the Daily Test's `weakSpots` removal are live (the last proxy
+  commit is `duration_ms`, and the worker deploys as a whole); EU DSA trader
+  verification is Active since 2026-09-22; RevenueCat has live products; the
+  Xcode 27 `lipo` blocker is resolved (a release IPA builds); PRD v2 is
+  "v2 shipped". The launch-scope analytics row said "Not started" while E1 and
+  E3–E8 are implemented; corrected. README no longer calls the gamification
+  layer unbuilt v3 work.
+- **[Product]** GDPR Art. 27 (EU representative) recorded in the roadmap as a
+  deliberate, documented gap, with the owner's reasoning and revisit trigger.
+- **[Product]** Still open, now collected in a TestFlight pre-submission
+  checklist in the roadmap: the device DebugView run, the Premium plan cards
+  at 375×667, and an explicit Restore Purchases tap. Apple Small Business
+  Program enrollment stays open.
+- **[Engineering]** `docs/analytics-plan.md` §6: the `devicectl` launch
+  commands were missing `--` before the `-FIR…` arguments, so devicectl would
+  have tried to read them as its own options. Fixed in both the enable and
+  disable commands. Older dated entries elsewhere were not rewritten; where
+  they would mislead, a short dated pointer was added.

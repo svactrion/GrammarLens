@@ -432,7 +432,7 @@ xcrun devicectl device install app --device <DEVICE> build/ios/iphoneos/Runner.a
 ```
 
 ```bash
-xcrun devicectl device process launch --device <DEVICE> --terminate-existing com.ahmettayfur.grammarlens -FIRAnalyticsDebugEnabled -FIRDebugEnabled
+xcrun devicectl device process launch --device <DEVICE> --terminate-existing com.ahmettayfur.grammarlens -- -FIRAnalyticsDebugEnabled -FIRDebugEnabled
 ```
 
 The two flags are both passed on purpose. The Firebase DebugView page as
@@ -470,7 +470,7 @@ per month across a launch followed by a resume.
 **Step 5 — turn debug mode off when finished.**
 
 ```bash
-xcrun devicectl device process launch --device <DEVICE> --terminate-existing com.ahmettayfur.grammarlens -FIRAnalyticsDebugDisabled -FIRDebugDisabled
+xcrun devicectl device process launch --device <DEVICE> --terminate-existing com.ahmettayfur.grammarlens -- -FIRAnalyticsDebugDisabled -FIRDebugDisabled
 ```
 
 Caveats: events sent in debug mode are included in the daily BigQuery export
@@ -528,6 +528,8 @@ Built in separate commits on `monthly-climb-v2`:
 **Not done / still open**
 
 - No physical-device DebugView run has happened for the new events (§6).
+  Moved to the TestFlight pre-submission checklist in `docs/roadmap.md`
+  ("What's next" §1).
 - The custom dimensions and metrics in §9 are not registered; the owner
   registers them by hand.
 - Proxy usage logging (cost signal) is deferred until after launch (§5).

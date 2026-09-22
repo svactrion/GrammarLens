@@ -3,7 +3,7 @@
 **Version:** 2.0 (draft)
 **Author:** Ahmet Emin Tayfur
 **Date:** August 2026
-**Status:** Draft — scope agreed, open decisions listed in §7
+**Status:** v2 shipped
 **Supersedes:** nothing. `prd.md` (v0.1 MVP) stays as the historical record of
 the MVP's problem definition, user research, and scope decisions. This
 document covers what comes after it.
@@ -765,7 +765,7 @@ user-related (no device id, prompts, questions, answers or generated text);
 a test plants secrets in every request and response field and asserts none
 reaches any console channel. See `proxy/README.md`.
 
-Status: implemented and tested; **not deployed**, so no data exists yet. Until
+Status: deployed; data is accumulating. Until
 a few weeks of real traffic are measured, every figure in §13.7, the session
 cap (§13.8) and the unit economics above stay estimates. Options if the data
 must outlive Workers Logs' short retention, **not built**: (1) Workers

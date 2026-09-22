@@ -114,7 +114,7 @@ the message or stack. Every `console` call in `src/` now writes one of these
 three fixed-field lines (`anthropic_usage`, `anthropic_failure`,
 `unhandled_error`).
 
-Not yet deployed by this change; `npm run deploy` is the owner's step.
+Deployed.
 
 `DEVICE_DAILY_LIMIT`/`GLOBAL_DAILY_LIMIT` (plain vars in `wrangler.jsonc`,
 not secret) are conservative placeholder defaults, not measured numbers —
