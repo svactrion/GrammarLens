@@ -42,6 +42,11 @@ Nothing is marked complete unless the record says so.
   full mirror taken before the 2026-09-17 history rewrite and still contains
   personal data (it also holds the deleted `codex/monthly-climb`). Never push
   it anywhere.
+- **Premium comparison table does not show the daily session limit
+  difference**, while the results-screen offer card promises "more daily
+  sessions". Adding a row pushes plan cards below the fold at 375x667
+  (measured 2026-09-23). Fix by shortening or restructuring the table, not by
+  appending a row.
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD

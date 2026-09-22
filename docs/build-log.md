@@ -4942,3 +4942,16 @@ unnoticed.
   320 pt, Large text, 2.0 system scale: no overflow, benefits stacked, all
   text inside the card; at 430 pt, Medium: benefits side by side. 858 tests
   pass (855 before, 3 new); `flutter analyze` clean.
+
+## 2026-09-23 (Premium comparison table: session row added, then reverted)
+
+- **[Product]** A "Practice sessions" row (Free 1 a day, Premium 5 a day, from
+  the constants) was added to the Premium screen's comparison table in
+  `1be6314`, so the results offer card's "more daily sessions" could be
+  checked on the paywall. Measured cost at 375x667: the plan cards' visible
+  part above the fixed footer fell from 78 to about 30 pt at Medium, and from
+  33 pt to none at Large. Owner decision: hiding the purchase cards is not
+  acceptable, so the commit was reverted (`git revert`, history kept).
+  Writing "5 a day" into an existing row's Premium cell was also rejected: it
+  would blur that row's meaning. The gap is a post-launch roadmap item: fix it
+  by shortening or restructuring the table, not by appending a row.
