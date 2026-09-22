@@ -4868,3 +4868,37 @@ unnoticed.
   have tried to read them as its own options. Fixed in both the enable and
   disable commands. Older dated entries elsewhere were not rewritten; where
   they would mislead, a short dated pointer was added.
+
+## 2026-09-23 (submission prep: version, export compliance, launch screen)
+
+- **[Product]** `pubspec.yaml` version `0.1.0` → `1.0.0+1` for the first App
+  Store build. `ITSAppUsesNonExemptEncryption = false` added to Info.plist, so
+  App Store Connect stops asking the export-compliance question per build.
+  Checked first: no encryption or crypto package in `lib/`; `crypto` is only
+  pulled in by build hooks (`hooks`, `sqlite3`); all traffic is HTTPS through
+  the OS.
+- **[Problem]** The launch screen was still Flutter's template: a hard-coded
+  white `backgroundColor` and a 1×1 transparent image. iOS draws it from the
+  system appearance, and Flutter keeps it up until the first frame, which also
+  waits for `Firebase.initializeApp` and RevenueCat's configure in `main()`.
+  A dark-mode user saw white first. The first Flutter frame itself (the
+  profile-loading view in `app.dart`) painted no background at all:
+  `LoadingView` deliberately leaves that to its host, and at that spot there
+  is no host.
+- **[Engineering]** New `LaunchBackground.colorset` (Any `#FAF3EC`, Dark
+  `#1C1B1F`, the theme's `surfaceContainerLow`); `LaunchScreen.storyboard`
+  refers to it as a named color. In `app.dart` the loading view now sits in a
+  `Material` painted `surfaceContainerLow`, so the first frame matches the
+  launch screen; `Material` also gives its text a real text style.
+  `LoadingView` itself is unchanged, since elsewhere it must not paint. The
+  storyboard compiles with `ibtool`, and `actool` compiles the catalog with
+  both colors at the expected sRGB values.
+- **[Validation]** `test/launch_background_test.dart`: the colorset's two
+  colors equal the light and dark themes' `surfaceContainerLow`; the
+  storyboard uses the named color; with the profile read held open, the first
+  frame is a full-screen `Material` in that color under light and dark system
+  appearance. Painting the view with `surface` instead turns the test red.
+- **[Known limit]** The launch screen can only follow the system appearance,
+  not the in-app theme setting (read from storage after launch), so a user who
+  chose Dark on a Light system still starts on the light color. Not
+  device-confirmed: the transition on a physical iPhone in both appearances.

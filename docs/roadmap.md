@@ -309,6 +309,20 @@ as each one lands, with literal status words (see above):
   Debug "reset onboarding" clears the flag. Not device-confirmed: the 600 ms pause
   and how the Premium screen arrives over the just-finished climb.
 
+- **Submission prep — implemented; launch screen not device-confirmed.**
+  `pubspec.yaml` version `1.0.0+1`. `ITSAppUsesNonExemptEncryption = false` in
+  Info.plist: the app uses no encryption beyond HTTPS and the OS's own (no
+  crypto package in `lib/`; the `crypto` package is only a build-hook
+  dependency). Launch screen: it was Flutter's template, a fixed white
+  background, so a dark-mode user saw white until the first frame (which also
+  waits for Firebase and RevenueCat to start). It now uses a
+  `LaunchBackground` color asset, `#FAF3EC` / dark `#1C1B1F` (the theme's
+  `surfaceContainerLow`), and the app's first frame, the profile-loading view,
+  paints that same color itself (it painted nothing before). A test keeps the
+  asset, the storyboard and the theme in sync. Known limit: the launch screen
+  follows the system appearance, so a user who chose Dark in the app on a
+  Light system still starts on the light color.
+
 - **Premium prompt on the practice results screen — implemented, automated tests
   only; device check pending.** Under `ResultsScreen`'s unchanged "Back to
   topics" button, a free user whose daily free practice is used up sees one line

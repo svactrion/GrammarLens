@@ -293,7 +293,15 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       home: Builder(
         builder: (context) {
           if (_profileLoading) {
-            return const LoadingView(message: 'Loading…');
+            // The app's first frame. Nothing else paints behind it, so it
+            // paints its own background, the same `surfaceContainerLow` the
+            // native launch screen uses (`LaunchBackground` in
+            // ios/Runner/Assets.xcassets), so there is no flash between the
+            // two. `Material` also gives the text a real text style.
+            return Material(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              child: const LoadingView(message: 'Loading…'),
+            );
           }
           if (_profile == null) {
             return FirstLaunchFlow(
