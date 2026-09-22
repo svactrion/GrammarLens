@@ -6,9 +6,11 @@ import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
 import '../utils/loading_view.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import 'results_screen.dart';
@@ -19,6 +21,7 @@ class PracticeScreen extends StatefulWidget {
   final ClaudeService claudeService;
   final StorageService storageService;
   final AnalyticsService analyticsService;
+  final SubscriptionService subscriptionService;
 
   const PracticeScreen({
     super.key,
@@ -27,6 +30,7 @@ class PracticeScreen extends StatefulWidget {
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
+    required this.subscriptionService,
   });
 
   @override
@@ -88,28 +92,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
         content: const Text('Your progress will be lost.'),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(dialogContext).colorScheme.primary,
-                    foregroundColor:
-                        Theme.of(dialogContext).colorScheme.onPrimary,
-                  ),
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: const Text('Leave'),
-                ),
-              ],
-            ),
+          DestructiveDialogActions(
+            cancelLabel: 'Cancel',
+            confirmLabel: 'Leave',
+            onCancel: () => Navigator.of(dialogContext).pop(false),
+            onConfirm: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
       ),
@@ -138,6 +125,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
             answers: Map.of(_answers),
             storageService: widget.storageService,
             analyticsService: widget.analyticsService,
+            subscriptionService: widget.subscriptionService,
           ),
         ),
       );
@@ -266,6 +254,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         controller: _controllers[item.id],
                         decoration:
                             const InputDecoration(hintText: 'Your answer'),
+                        // The keyboard must not fix the learner's mistake: a
+                        // corrected answer would measure the keyboard, not
+                        // the learner.
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        smartQuotesType: SmartQuotesType.disabled,
+                        smartDashesType: SmartDashesType.disabled,
                         onChanged: (value) =>
                             setState(() => _answers[item.id] = value),
                       ),

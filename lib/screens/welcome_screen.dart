@@ -84,8 +84,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final colorScheme = theme.colorScheme;
     final size = MediaQuery.sizeOf(context);
     final hPad = (size.width * 0.08).clamp(24.0, 40.0);
-    final appBarFg =
-        theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
     // The decorative artwork below (mark, rings, background blobs, twinkle
     // dots) is specified against a 390x844 reference canvas; scaling it by
@@ -107,8 +106,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final markBoxSize = 200.0 * elementScale;
     final ringSize = 116.0 * elementScale;
 
-    final titleProgress =
-        _titleProgress ?? const AlwaysStoppedAnimation(1.0);
+    final titleProgress = _titleProgress ?? const AlwaysStoppedAnimation(1.0);
     final subtitleProgress =
         _subtitleProgress ?? const AlwaysStoppedAnimation(1.0);
     final ctaProgress = _ctaProgress ?? const AlwaysStoppedAnimation(1.0);

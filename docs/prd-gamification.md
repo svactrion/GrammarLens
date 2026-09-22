@@ -1,3 +1,346 @@
+# PRD — Monthly Climb
+
+**Durum (2026-09-18):** Aşama 1 görsel önizleme kullanıcı tarafından incelendi;
+Aşama 2 veri bütünlüğü temeli uygulandı. Aşama 3'ün ilk diliminde üretim Home'a
+kalıcı aylık ilerleme ve seçili avatar bağlandı; cihazda Home incelemesi bekliyor.
+Profile/nav entegrasyonu ile kilitli boş madalya koleksiyonu uygulandı; madalya
+puanı, eşikleri ve kalıcı kazanım motoru kural v1 ile uygulanıp cihaz incelemesine
+hazırlandı. Onaylı yön, açık ürün kararları ve teknik
+öneriler aşağıda ayrıdır. Tarihsel Weekly Climb taslağı bu dosyanın sonunda
+aynen korunur; onun eşikleri ve varsayımları aktif şartname değildir.
+
+## M1. Kaynak ve amaç
+
+Amaç, mevcut Daily Test'e günlük dönüşü ve bağlılığı artırmaktır. Bu hâlâ
+kullanıcı araştırmasıyla doğrulanmamış bir ürün bahsidir; öğrenme kalitesi
+artışı iddia edilmez. Mevcut davranışın kaynağı kod, geliştirme durumunun
+kaynağı roadmap/build-log, aylık ürün yönünün kanonik kaydı bu bölümdür.
+
+Kaynaklar: 2026-09-16 `monthly-climb-development-handoff.md` ve
+`monthly-climb-approved-direction.html` (ChatGPT proje outputs alanı;
+tam konumlar `gamification-handoff.md` içinde). HTML bir tasarım referansıdır,
+Flutter uygulaması veya piksel ölçü şartnamesi değildir. 30 gün, 8→9 adım
+ve örnek madalyalar demo verisidir; madalya eşiklerini belirlemez.
+
+## M2. Onaylı ürün ve görsel yön
+
+- Daily Test ve dağ aynı deneyimdir: yeni mod, soru seti veya ek LLM çağrısı yok.
+- Tamamlanan günlük test bir adım ilerletir. Doğru sayısı patika hareketini
+  değiştirmez; doğru/yanlış sonuçları ayrı puan için saklanır. En az bir
+  boş olmayan cevap gerekir; tamamen atlanan test tamamlanır ama adım vermez.
+- Döngü takvim ayıdır; ayın gün sayısı kadar günlük adım (28–31), ay bazında
+  değişen dağ görünümü. Yanlış cevapta geri düşüş veya ceza animasyonu yok.
+- Aylık bronz/gümüş/altın madalya puana bağlıdır; formül henüz belirlenmedi.
+- Mevcut 12 hayvan avatarından seçili olan piyon olur; şeffaf zemin, hafif
+  gölge. Sabit patikada kesintisiz kısa hareket; fiziksel tırmanma animasyonu yok.
+- Geniş yamaçlar, sivri zirve ve bayrak. 7/14/21/28. adımlarda geniş dönüşler
+  ve sırasıyla kamp ateşi, çadır, dağ evi, seyir terası; uzun durak etiketleri yok.
+- Home: büyük GrammarLens başlığı, karşılama/avatar, avatar yanında yalnız
+  madalyon simgesi, Daily Test/dağ, gün göstergesi, hata önizlemesi,
+  Topic Practice ve uygun kullanıcıya Premium satırı.
+- Madalyon Profile koleksiyonunu açar; avatarın picker'a Hero geçişi korunur.
+  Navigasyon Home / Review / Profile olur. Review görevi ve Settings'in
+  mevcut işlevlerine erişim korunur; debug alanları release'e açılmaz.
+- Arayüz İngilizce; turuncu, parlament mavisi ve kırık beyaz kimlik.
+  Dark mode'da turuncu geniş yüzey olmaz.
+- Dağ vektör geometrisi, tema paleti ve küçük dekoratif katmanlarla kurulur;
+  raster sahne seti veya HTML WebView kullanılmaz.
+
+## M3. Teknik sınırlar ve koddan doğrulanan başlangıç
+
+2026-09-17, base `84deb915d6c812088b1c83f1e4031cfc209a3005`:
+
+- Mevcut StatefulWidget/setState ve constructor üzerinden servis aktarımı
+  korunur; yeni state-management mimarisi gerekmiyor.
+- Daily Test beş soru; `getTodaysSet` günlük cache'i kullanır, değerlendirme
+  `checkDailyTestAnswer` ile yereldir. Cevap eşleştirme kuralları değişmez.
+- `DailyTestSet.day` var; `markDailyTestCompleted` ise bitiş anındaki yerel
+  `_todayKey` ile yazar. Gece yarısı/ay sonu riski çözülmüş değildir.
+- Yarım cevaplar ekran belleğindedir. Kalıcı kaldığı yerden devam yoktur;
+  eski haftalık taslaktaki soru başına kalıcı kazanım uygulanmış değildir.
+- Sonuç ekranı hata yazımı ve tamamlanmayı ayrı çağrılarla başlatır.
+  Aylık kazanım için hata profili ikinci kez yazılmayacak.
+- StorageService v14 yükseltmesi tabloları silip yeniden kurar. Yeni geçiş
+  veri koruyan migration olmalı: profil, avatar, hata geçmişi, tema, cache,
+  günlük haklar ve cihaz kimliği korunmalı.
+- Günlük kazanım unique olmalı; yeniden açılan sonuç ikinci adım/puan
+  yaratmamalı. Mevcut tamamlama ve aylık kayıt transaction veya dayanıklı
+  reconciliation ile tutarlı olmalı. Kalıcı kayıt animasyondan bağımsızdır.
+- Puan, tema ve madalya kuralları sürümlenmeli; eşik değişimi geçmiş
+  madalyaları sessizce yeniden hesaplamamalı.
+- Home resume gün yenilemesi açık hatadır. BrandScaffold, FloatingNavShell
+  ve ölçülen NavBarClearance kullanılmalı; Home üst alanı yerel uyarlanmalı.
+- Firebase initialization ve analytics servisleri mevcut; canlı event
+  doğrulaması ayrı iştir. RevenueCat yapılandırılmış olarak kayıtlıdır,
+  ürün/offerings ve gerçek satın alma bu incelemede doğrulanmamıştır.
+- Free hedefli pratik günlük 1 haktır. Home weak-spot tıklaması free kullanıcıyı
+  paywall'a götürür; Review erişimi ve yeni pratik kotası birbirine karıştırılmaz.
+- İlk gün onboarding testi aynı kazanım yolunu kullanmalı; onboarding ve
+  paywall navigasyonu korunmalı. `proxy/`, `config/`, abonelik koşulları ve
+  soru formatları kapsam dışıdır. Yeni hesap/backend/liderlik tablosu yok.
+
+### M3.1 Uygulanan veri temeli — 2026-09-17
+
+Yukarıdaki base incelemesindeki tamamlama/migration/resume sorunları bu branch'te
+şu değişikliklerle ele alındı:
+
+- Climb tablosu şema v15'te eklendi; v14 → v15 yalnız `climb_daily_entries`
+  ekler. Şema v16 yalnız bağımsız `text_size_settings` tercihini ekler. Daha eski
+  şemalarda eksik tablo/sütunlar eklenir; kullanıcı tabloları silinmez.
+- `DailyTestCompletion` mevcut yerel eşleştirmeyi bir kez yapar; aynı sonuç
+  nesneleri hem ekranı hem hata kaydını besler. Doğru/yanlış/atlanan ayrımı ve
+  klavye varyantlarının doğru sayılması değişmez.
+- Tamamlanma, hata profili ve günlük kazanım tek SQLite transaction'ındadır.
+  DB içinde tamamlanmış gün kontrolü ve günlük primary key tekrarı engeller.
+  Yazma başarısız olursa sonuç ekranı açık hata ve yeniden kaydetme düğmesi gösterir.
+- Kayıt anahtarı setin özgün günüdür. Üretim çağrısından önce gün yakalanır;
+  gece yarısı süren üretim bunu değiştirmez. Aynı gün yeniden cache yazımı
+  ilk seti veya tamamlanmış sonucu ezmez.
+- Günlük tablo `day`, `completed_at`, `step`, doğru/yanlış/atlanan sayıları ve
+  `rule_version=1` tutar. Madalya puan ağırlıkları henüz yoktur.
+- Tamamlanmış eski v2 setleri geriye dönük kazanım almaz. Ay toplamları gün
+  kayıtlarından okunur; ay başında eski kayıtlar silinmez. Telafi testi yoktur.
+- Home resume'da cache ve selamlama yenilenir; ağ çağrısı yapılmaz. Aylık
+  ilerleme henüz Home'a bağlanmadı. Yarım cevapların kalıcı devamı eklenmedi.
+- Mevcut Settings "reset progress" kapsamı (hata/pratik geçmişi) genişletilmedi;
+  yeni aylık kayıtları silmez. Madalya koleksiyonu sıfırlama davranışı bu aşamanın işi değildir.
+
+## M4. Ürün kararları ve kalan kapılar
+
+### Aşama 3 ilk dilim — 2026-09-18
+
+Home mevcut `getClimbProgress` üzerinden takvim ayını okur; boş, yükleniyor,
+hata/yeniden deneme ve zirve durumlarını gösterir. Testten/sonuçtan dönüşte,
+kayıt tamamlandığında ve resume'da yerel veriler yenilenir. Kayıt sürerken
+sonuç ekranından çıkılması da tamamlanma bildirimiyle güncellenir. Ay anahtarı
+dağı yeniden kurar; eşit uzunluktaki aylar arasında geri iniş animasyonu olmaz.
+Mevcut storage/migration/transaction implementasyonları değiştirilmedi.
+Home'un mevcut Daily Test, Topic Practice, weak-spot/paywall ve avatar Hero
+yolları korunur; hata önizleme erişim kararı ve Profile/madalya işi hâlâ açıktır.
+Bu dilim tam Home yeniden tasarımının veya Aşama 3 cihaz kabulünün tamamlandığı
+anlamına gelmez. Çalışma `monthly-climb-v2` branch'indedir. (Updated 2026-09-19: this is now the
+launch branch — it merges to `main` on the owner's explicit approval and ships
+as the first App Store release; see `roadmap.md`, "Launch scope".)
+
+2026-09-18 cihaz geri bildirimi paket 1: Sonuç sonunda kayda bağlı
+`See your climb` / `Back to Home` butonu uygulanmıştır. Kalıcı yazım bekletilmez;
+yalnız piyonun görsel ilerlemesi sonuç rotası kapandıktan ve Home/dağ görünür
+olduktan sonra oynar. Tekrar açılan sonuç yeni hareket yaratmaz. İlk günün
+mevcut CTA'sı korunur; bu pakette yeni paywall yönlendirmesi yoktur.
+
+Paket 1 kullanıcı tarafından cihazda sorunsuz doğrulandı. Paket 2'de Home'un
+dağ alanı dikey kaydırmayı sayfaya bırakır; piyonun otomatik takibi korunur.
+Alt açıklama kaldırılmış, aylık sayaç başlık alanına taşınmıştır. Haftalık
+katılım şeridi eklenmemiştir; standalone önizleme rotası hâlâ gezilebilir.
+
+| Karar | Açık kapsam | Gerekli aşama |
+|---|---|---|
+| Madalya — onaylandı/uygulandı | Doğru +2, yanlış +1, atlanan +0; tam ay maksimumunun %25/%50/%75'i; ayrı minimum gün yok | 4 |
+| Tamamlanma — onaylandı | En az bir cevap gerekli; tümü atlanırsa tamamlanır ama adım yok | 2 uygulandı |
+| Kısmi ay — onaylandı/uygulandı | Telafi ve oranlama yok; tam ay eşiği korunur, kullanıcı ulaşabildiği seviyeyi alır | Madalya: 4 |
+| Gün/ay — onaylandı | Saat dilimi değişse/ay geçse de setin özgün günü sabit | 2 uygulandı |
+| Geriye dönük kazanım — onaylandı | Eski tamamlanmış v2 testlerine adım verilmez | 2 uygulandı |
+| Geometri — karara bağlandı 2026-09-17 | 28 günlük ayda seyir terası son adımda, bayrak aynı bitiş alanında | 1 |
+| Temalar — kısmen karara bağlandı 2026-09-17 | İlk önizleme Green Slope light/dark; aylık sıra ve diğer temalar açık, volkan onaylı değil | Sonraki tema aşaması |
+| Home hata önizlemesi | Review'a serbest inceleme bağlantısı mevcut paywall yolunu değiştirir mi? | 3 |
+| Streak Mode | Monthly Climb eski backlog maddesinin yerine geçer mi? | Roadmap kararı |
+| Yayın ve ölçüm — decided 2026-09-19 | Ships with the first release; no baseline, so at least 4 weeks of observation (and a week past the first month-end), thresholds set afterwards. See `docs/analytics-plan.md` §5 | 5 |
+
+İzole worktree/branch seçimi kullanıcı tarafından kesinleştirilmiştir;
+merge/yayın tarihi bundan türetilmez. Açık kararlar teknik varsayımla kapatılmaz.
+
+## M5. Aşamalar ve doğrulama
+
+0. İzole worktree/branch, kanonik belgeler, test/analyze ve simülatör başlangıç
+   kontrolü. Yeni özellik kodu yok; sonuçlar build-log'a yazılır.
+1. Üretim Home'a bağlanmayan Flutter görsel önizlemesi: ortak Path üzerinden
+   rota, avatar ve duraklar; 28–31 gün, light/dark, reduced motion.
+2. Veri koruyan migration, gün anahtarı, unique kazanım, ay rollover ve resume.
+   Bu aşama mevcut tamamlama davranışına dokunur; değişiklik kapsamı görünür
+   yazılır, cevap değerlendirmesi ve hata profili çıktısı korunur.
+3. Home entegrasyonu: gerçek test/cache/sonuç, tek adım, seçili avatar,
+   loading/empty/error/completed durumları, mevcut erişim kuralları.
+4. Formül kararından sonra madalya motoru, mevcut ay geçici seviyesi, ay sonu
+   kalıcı kazanım, Profile koleksiyonu ve geçmiş ay detayları.
+5. Ölçüm ve yayın: event sözleşmesi baştan planlanır, ilgili aşamalarda eklenir;
+   canlı doğrulama, cihaz regresyonu ve ayrı yayın kararı burada tamamlanır.
+
+Kabul kontrolleri: migration sonrası v2 verileri; aynı sonucun tekrar açılması;
+kill/restart; gece yarısı, ay/yıl ve saat dilimi geçişi; 28–31 gün; yarım/atlanan
+cevaplar; ek üretim çağrısı olmaması; free/trial/full erişim; Day-0, Review,
+Topic Practice, paywall ve avatar Hero; küçük/büyük ekran, büyük metin,
+ekran okuyucu, reduced motion, light/dark, iç/dış kaydırma ve nav clearance.
+Analytics hatası kullanıcı akışını durdurmamalı; cevap metni/PII gönderilmemeli.
+
+Ölçüm mevcut Firebase üzerine kurulacak. D1/D7, Daily Test tamamlama,
+ay içi katılım ve madalya dağılımı aday ölçütlerdir; event adları, paydalar,
+baseline ve başarı eşiği henüz kesin değildir. (Updated 2026-09-19: event names
+and parameters are now fixed in `docs/analytics-plan.md` and implemented; there
+is no baseline, and thresholds are deliberately set only after the observation
+window.) Home redesign ve gamification
+birlikte açılırsa etki yalnız gamification'a atfedilemez. Eski haftalık rozet
+metrikleri ve analytics sağlayıcı seçimi aktif gereksinim değildir.
+
+Her aşamada küçük kapsam → uygulama → uygun test → light/dark cihaz kontrolü
+→ kullanıcı incelemesi → kodla birlikte belge kaydı. Yapılmayan doğrulama
+geçmiş gibi yazılmaz; commit/push/merge ayrı bildirilir.
+
+## M6. Decisions (2026-09-19)
+
+Approved during a Claude Code review pass (`docs/gamification-handoff.md`
+§10–11, Batch 2). Written in English per that session's own instruction,
+even though the rest of this active section is Turkish — later entries in
+this section should follow the same convention unless told otherwise.
+
+### M6.1 Scoring deliberately favors habit over accuracy
+
+**Decision:** the approved rule v1 (`docs/gamification-handoff.md` §1:
+correct `+2`, wrong `+1`, skipped `+0`) means a user who shows up and
+writes *something* non-blank every day — even answers that are never
+actually correct — still reaches Silver. Concretely: a full month of
+always-wrong-but-answered days scores `1 × 5 questions × daysInMonth`,
+exactly 50% of `maxScore` (`daysInMonth × 10`), which meets the Silver
+threshold (`ceil(50%)`) on its own. **This is not a bug — it is a
+deliberate tradeoff, not an oversight to fix.**
+
+**Rationale:** Monthly Climb's stated purpose (§M1) is daily return and
+habit formation, not an accuracy measurement — accuracy is already
+measured elsewhere (the error profile and the Review tab), and Daily
+Test's own grading is unaffected by this. Rewarding mere participation
+over correctness is the same design stance the superseded Weekly Climb
+draft argued for explicitly (§3.1 of the historical appendix below:
+"the mountain is climbed as much by showing up as by knowing the
+answer") — carried forward into the monthly rule rather than re-argued
+from scratch. A scoring rule that let inconsistent-but-correct users
+out-climb consistent daily users would undermine the one thing this
+feature is actually for.
+
+### M6.2 A month's highest tier also unlocks the lower tiers in the collection
+
+**Decision:** a finalized month's highest tier visually unlocks every
+tier at or below it in `MonthlyMedalCollection` — a Gold month shows
+Bronze, Silver, *and* Gold as earned, not Gold alone. Supersedes the
+"deviation" noted in the original handoff (§5 of this doc's own
+predecessor, `docs/gamification-handoff.md` §5: "`MonthlyMedalCollection`
+marks a tier earned only if a finalized result has exactly that highest
+tier — a Gold result does not also visually unlock Bronze and Silver
+specimens"). Implemented in Batch 2 (see build-log/handoff for the
+commit).
+
+**Rationale:** a tiered scoring ladder (Bronze ⊂ Silver ⊂ Gold by
+threshold, `MonthlyMedalRules.tierFor`) is a strict ordering, not three
+independent achievements — reaching Gold already means the Bronze and
+Silver thresholds were also cleared that month. Showing Bronze/Silver as
+still-locked under a tier the user already exceeded reads as a bug or an
+insult ("why haven't I earned the easy one?"), not as a reward, and
+forces the user to do unnecessary mental math to realize they already
+have it. This also matches how tiered achievement collections
+conventionally work outside this app.
+
+### M6.3 Mountain theme rotation: undecided, draft only
+
+**Decision:** no mountain theme beyond Green Slope is approved or
+implemented. A future rotation (by calendar month, or otherwise) remains
+an open, undecided idea — formalizing what §M4's own table already
+listed as open ("Temalar — kısmen karara bağlandı … aylık sıra ve diğer
+temalar açık, volkan onaylı değil"). This decision changes nothing in
+code; it exists so this stays legible as a deliberate deferral, not a
+forgotten TODO.
+
+**Rationale:** committing to a specific rotation/sequence before any user
+has seen even the first theme on a device risks locking in an untested
+visual direction. Green Slope alone is sufficient to unblock every other
+Monthly Climb milestone (medal engine, Profile integration, device
+acceptance) — the theme rotation is decoupled work that can follow once
+there is real feedback to design against.
+
+### M6.4 Medal artwork is a temporary placeholder
+
+**Decision:** the current medal visuals (the tier-colored
+`Icons.landscape_rounded` circles in `MonthlyMedalCollection`) are
+functional placeholders, not the final design. Final medal illustration
+assets are expected to come from an external design source later.
+
+**Rationale:** the placeholder unblocks every non-visual milestone (the
+scoring engine, storage, Profile integration, accessibility/text-size
+coverage) without waiting on art that doesn't exist yet — the same
+posture this project already took with the app icon and avatar
+illustrations before their own final assets landed. Swapping the icon
+for real artwork later is expected to be a self-contained, low-risk
+change to `_MedalSpecimen`/`_MedalHistoryRow`, not a structural one.
+
+### M6.5 Welcome badge — ASSUMPTION, unmeasured; implemented (rule revised)
+
+**Decision:** a "Welcome" badge is part of the direction, on the following
+spec — but its value is an **assumption**, not a validated product
+decision (see the rationale below). It was implemented in Batch 3
+(`docs/gamification-handoff.md` §13); the earning rule was then revised
+(§14), and the spec below is the current one. The original wording —
+"earned on the first *completed* Daily Test" — and the plan in
+handoff §12 are superseded where they differ.
+
+**Spec:**
+- Earned exactly once, when a `climb_daily_entries` row with `step = 1`
+  is first written — i.e. the user's first Daily Test with at least one
+  non-blank answer, the same condition that moves the avatar one step
+  (§M2). Merely opening the app, or completing a test with every
+  question skipped, is not enough. An all-skipped test still completes
+  and still writes its ledger row, but it neither earns the badge nor
+  uses it up: the first later test with an answer earns it.
+- Independent of and does not replace the monthly medals; a user can
+  hold both a Welcome badge and any number of monthly medals
+  simultaneously.
+- A one-time win moment is shown on the result screen of the test that
+  earned it. A backfilled badge (below) gets no win moment.
+- Visible in the Profile medal collection, as its own item above the
+  Bronze/Silver/Gold row (not a fourth tier); locked and "Not earned"
+  until earned.
+- The award rule is versioned, the same convention `MonthlyMedalRules`
+  already uses (`ruleVersion`), so the earning criteria can change later
+  without silently reinterpreting a badge already on record.
+- Backfilled once, inside the v18 schema migration only, to existing
+  users who already have at least one ledger row with `step = 1`; the
+  badge is dated to the earliest such row and marked `backfilled`.
+  All-skipped (`step = 0`) rows are ignored. There is no other backfill
+  path.
+
+**Rationale for the `step = 1` rule (approved 2026-09-19, replacing "first
+ledger row of any kind"):** the badge should reward a real action.
+Under the first version, a user who opened the Daily Test and skipped
+every question — no engagement with the content at all — was greeted
+with "Welcome to the climb" and a permanent badge, while the avatar
+correctly did not move. That mismatch made the badge easy to earn
+without doing anything and contradicted the product's own definition of
+progress (§M2: at least one non-blank answer is required for a step; a
+fully skipped test completes but earns no step). Keying the badge to
+`step = 1` makes the two agree by construction — the badge is earned
+exactly when the user first makes the climb move — so there is one
+definition of "took part" across the avatar, the monthly score and the
+badge, rather than two that can disagree.
+
+**Rationale (why this is a hypothesis, not a confirmed decision):** there
+is no analytics instrumentation live yet (`docs/gamification-handoff.md`
+§8; `prd-gamification.md` §M5's own "Ölçüm" section states the same
+precondition for Monthly Climb itself) — this cannot be measured before
+it ships, only after. The hypothesis being tested: a badge earned on day
+one turns a mid-month starter's first partial month from "an
+unreachable goal" (no monthly medal is realistically reachable starting,
+say, the 20th of a 30-day month — see M2/M4's "no proration" decision)
+into "I already earned something," supporting early retention for
+exactly the population the no-proration monthly-medal design otherwise
+leaves with nothing to show for their first days. This must be verified
+against real D1/D7 data once analytics exists, the same "Faz 1 sayıyı
+kıpırdatmıyorsa" evidentiary standard §M5/§9 already applies to Monthly
+Climb itself — not assumed true because it sounds plausible.
+
+---
+
+# Tarihsel ek — Weekly Climb (superseded)
+
+Aşağıdaki özgün metin gerekçeleri korumak için değiştirilmeden saklanmıştır.
+"Bağlayıcı", "şu anda" ve açık karar ifadeleri yazıldığı döneme aittir;
+aktif aylık bölümle çelişirse M1–M5 geçerlidir.
+
 # PRD — Weekly Climb (Haftalık Tırmanış)
 
 > **Status note (2026-09-16, added during a docs sync, not part of the
@@ -374,6 +717,11 @@ buradaki faz mantığının tamamı çöker.
 public launch" zamanına koymuştu; tırmanış onu zorunlu hale getiriyor.
 
 ### 9.2 Baseline
+
+> **Superseded 2026-09-19.** This weekly-era appendix assumed the climb ships
+> after launch, so a baseline would exist. The plan changed: the climb ships
+> with the first release and there is no baseline; see `docs/analytics-plan.md`
+> §5. The original text follows unchanged.
 
 Lansmandan sonra, tırmanış devreye girmeden önceki dönemin D1/D7'si. Özellik
 lansmanla aynı anda çıkarsa baseline oluşmaz — bu yüzden tırmanış lansmanın

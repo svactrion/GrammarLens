@@ -7,11 +7,17 @@ import '../utils/page_title.dart';
 import '../widgets/avatar_carousel.dart';
 import '../widgets/brand_scaffold.dart';
 
-/// "Face + name" as one identity step, plus learning goal (PRD v2 §4). Age
-/// and occupation are deliberately left out here: every field asked before
-/// the user has experienced any value costs completions on an app with no
-/// brand recognition, and those two are marketing data with no in-product
-/// use yet. They're available later, optionally, from Settings.
+/// The one-line privacy statement under the goal options. Public so a test
+/// can pin the wording to what the app actually does.
+const String onboardingPrivacyNote =
+    'Your name and goal stay on this device. If you use Topic Practice, your '
+    'answers are sent to Anthropic (Claude) to give you feedback, and we ask '
+    'first. Usage and crash data is collected.';
+
+/// "Face + name" as one identity step, plus learning goal (PRD v2 §4). Nothing
+/// else is asked: every field asked before the user has experienced any value
+/// costs completions on an app with no brand recognition. (Age and occupation
+/// were once optional Profile fields with no use anywhere; removed 2026-09-21.)
 class OnboardingScreen extends StatefulWidget {
   final ValueChanged<UserProfile> onComplete;
 
@@ -124,8 +130,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     // place strangers (not the in-person testers earlier
                     // rounds had) hand over personal info before they've
                     // seen the app do anything, so it earns an explicit,
-                    // one-line reassurance rather than assuming a general
-                    // privacy policy will be found and read.
+                    // short statement rather than assuming a general
+                    // privacy policy will be found and read. It must stay
+                    // true to the published policy: name and goal never
+                    // leave the device, but practice answers go through
+                    // the proxy to Anthropic, and Firebase receives usage
+                    // and crash data (docs/roadmap.md, launch checklist).
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,8 +148,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            'Stored only on this device — never sent to a '
-                            'server.',
+                            onboardingPrivacyNote,
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,

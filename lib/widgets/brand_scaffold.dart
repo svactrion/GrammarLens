@@ -32,6 +32,7 @@ class BrandScaffold extends StatelessWidget {
     this.controller,
     this.children,
     this.body,
+    this.bottomBar,
   })  : assert(
           (children == null) != (body == null),
           'Provide exactly one of children or body',
@@ -106,15 +107,24 @@ class BrandScaffold extends StatelessWidget {
   /// still apply either way.
   final Widget? body;
 
+  /// A fixed area under the content, always in view (a results screen's one
+  /// primary button). It goes in the Scaffold's own bottom slot rather than at
+  /// the end of a [body] column, so a SnackBar floats above it instead of
+  /// covering it, and it is expected to look after the bottom safe area itself
+  /// (the content above then only reserves its own small gap).
+  final Widget? bottomBar;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final hPad = horizontalPadding ?? (width * 0.045).clamp(16.0, 28.0);
-    final bottomPadding = isTabRoot
-        ? NavBarClearance.of(context)
-        : MediaQuery.paddingOf(context).bottom + 16;
+    final bottomPadding = bottomBar != null
+        ? 16.0
+        : isTabRoot
+            ? NavBarClearance.of(context)
+            : MediaQuery.paddingOf(context).bottom + 16;
 
     return Scaffold(
       // The app bar below is left to inherit `bandBackground`/
@@ -150,6 +160,7 @@ class BrandScaffold extends StatelessWidget {
       // while migration was in progress is simply the app-wide default —
       // see `theme.dart`'s `cardTheme` for the current values and the
       // reasoning behind them.
+      bottomNavigationBar: bottomBar,
       body: body ??
           ListView(
             controller: controller,

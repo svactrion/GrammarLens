@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../models/practice_item.dart';
+import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../utils/loading_view.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
+import '../utils/debug_tools.dart';
 import 'daily_test_result_screen.dart';
 
 /// One-question-at-a-time flow over today's cached Daily Test set (PRD v2
@@ -25,6 +28,7 @@ import 'daily_test_result_screen.dart';
 /// ([checkDailyTestAnswer] in DailyTestResultScreen).
 class DailyTestScreen extends StatefulWidget {
   final DailyTestService dailyTestService;
+  final AnalyticsService analyticsService;
 
   /// Called with the finished set + answers instead of the default
   /// pushReplacement-to-results navigation, when non-null. Exists for the
@@ -46,6 +50,7 @@ class DailyTestScreen extends StatefulWidget {
   const DailyTestScreen({
     super.key,
     required this.dailyTestService,
+    required this.analyticsService,
     this.onFinished,
     this.onExit,
   });
@@ -148,6 +153,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
           dailyTestSet: _dailyTestSet!,
           answers: Map.of(_answers),
           dailyTestService: widget.dailyTestService,
+          analyticsService: widget.analyticsService,
         ),
       ),
     );
@@ -161,28 +167,11 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         content: const Text('Your progress will be lost.'),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(dialogContext).colorScheme.primary,
-                    foregroundColor:
-                        Theme.of(dialogContext).colorScheme.onPrimary,
-                  ),
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: const Text('Leave'),
-                ),
-              ],
-            ),
+          DestructiveDialogActions(
+            cancelLabel: 'Cancel',
+            confirmLabel: 'Leave',
+            onCancel: () => Navigator.of(dialogContext).pop(false),
+            onConfirm: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
       ),
@@ -305,7 +294,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                     ctaLabel: 'Try again',
                     onCta: _load,
                   ),
-            if (kDebugMode) ...[
+            if (kDebugMode && DebugTools.enabledForTesting) ...[
               const SizedBox(height: 12),
               Text(
                 '$_error',
@@ -387,6 +376,12 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
               key: ValueKey(item.id),
               controller: controller,
               decoration: const InputDecoration(hintText: 'Your answer'),
+              // The keyboard must not fix the learner's mistake: a corrected
+              // answer would measure the keyboard, not the learner.
+              autocorrect: false,
+              enableSuggestions: false,
+              smartQuotesType: SmartQuotesType.disabled,
+              smartDashesType: SmartDashesType.disabled,
               onChanged: (value) => setState(() => _answers[item.id] = value),
             ),
           ),

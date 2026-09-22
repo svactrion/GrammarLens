@@ -21,8 +21,7 @@ void main() {
       }
     });
 
-    test('asset paths are distinct and follow the avatar_NN.webp pattern',
-        () {
+    test('asset paths are distinct and follow the avatar_NN.webp pattern', () {
       final paths = Avatar.values.map((a) => a.assetPath).toSet();
       expect(paths.length, Avatar.count);
       expect(Avatar.values.first.assetPath, 'assets/avatars/avatar_01.webp');
@@ -55,7 +54,8 @@ void main() {
       expect(Avatar.values.last.toJson(), 'avatar_12');
     });
 
-    test('returns null for null, unrecognized, or out-of-range ids — never '
+    test(
+        'returns null for null, unrecognized, or out-of-range ids — never '
         'throws', () {
       expect(Avatar.fromJson(null), isNull);
       expect(Avatar.fromJson(''), isNull);
@@ -65,11 +65,20 @@ void main() {
       expect(Avatar.fromJson('not-an-avatar'), isNull);
     });
 
-    test('returns null for ids from the previous, now-replaced emoji-based '
+    test(
+        'returns null for ids from the previous, now-replaced emoji-based '
         'avatar set — the actual migration case this app can hit in the '
         'wild', () {
-      for (final legacyId in ['fox', 'cat', 'owl', 'panda', 'koala',
-          'penguin', 'lion', 'turtle']) {
+      for (final legacyId in [
+        'fox',
+        'cat',
+        'owl',
+        'panda',
+        'koala',
+        'penguin',
+        'lion',
+        'turtle'
+      ]) {
         expect(Avatar.fromJson(legacyId), isNull);
       }
     });

@@ -169,12 +169,53 @@ describe('POST /v1/generate-daily-test', () => {
     const response = await post('/v1/generate-daily-test', {
       deviceId: 'd1',
       count: 5,
-      weakSpots: [{ topicId: 'articles', frequency: 2 }],
     });
 
     expect(response.status).toBe(200);
     const json = (await response.json()) as { questions: unknown[] };
     expect(json.questions).toHaveLength(1);
+  });
+
+  it('rejects a weakSpots field with a 400 and never calls Anthropic', async () => {
+    let upstreamCalls = 0;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      upstreamCalls++;
+      return new Response('{}', { status: 200 });
+    }) as typeof fetch;
+    try {
+      const response = await post('/v1/generate-daily-test', {
+        deviceId: 'd1',
+        count: 5,
+        weakSpots: [{ topicId: 'articles', frequency: 2 }],
+      });
+      expect(response.status).toBe(400);
+      expect(upstreamCalls).toBe(0);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('sends the same prompt for every device, with nothing about the user in it', async () => {
+    const bodies: string[] = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (_url: unknown, init?: RequestInit) => {
+      bodies.push(String(init?.body));
+      return new Response(
+        JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ questions: [] }) }] }),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+    try {
+      await post('/v1/generate-daily-test', { deviceId: 'DEVICE-ONE-SECRET', count: 5 });
+      await post('/v1/generate-daily-test', { deviceId: 'DEVICE-TWO-SECRET', count: 5 });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0]).toBe(bodies[1]);
+    expect(bodies[0]).not.toContain('DEVICE-');
+    expect(bodies[0]).toContain('varied general mix');
   });
 });
 

@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import 'models/app_theme_mode.dart';
+import 'models/app_text_size.dart';
 import 'models/avatar.dart';
+import 'models/pending_climb.dart';
 import 'models/user_profile.dart';
 import 'screens/avatar_picker_screen.dart';
 import 'screens/first_launch_flow.dart';
@@ -13,24 +15,46 @@ import 'screens/review_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/analytics_service.dart';
 import 'services/claude_service.dart';
+import 'services/medal_finalization.dart';
 import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
 import 'theme.dart';
 import 'utils/app_messenger.dart';
+import 'utils/debug_tools.dart';
 import 'utils/loading_view.dart';
 import 'widgets/floating_nav_shell.dart';
 
 class GrammarLensApp extends StatefulWidget {
-  const GrammarLensApp({super.key});
+  /// Optional overrides exist so tests can observe launch/resume behavior
+  /// without a real database or Firebase; production passes neither.
+  final StorageService? storageService;
+  final AnalyticsService? analyticsService;
+  final ClaudeService? claudeService;
+
+  /// Test-only clock forwarded to [HomeScreen] so a day rollover can be
+  /// driven end to end through the app's lifecycle handling.
+  final DateTime Function()? clock;
+
+  const GrammarLensApp({
+    super.key,
+    this.storageService,
+    this.analyticsService,
+    this.claudeService,
+    this.clock,
+  });
 
   @override
   State<GrammarLensApp> createState() => _GrammarLensAppState();
 }
 
-class _GrammarLensAppState extends State<GrammarLensApp> {
-  final ClaudeService _claudeService = ClaudeService();
-  final StorageService _storageService = StorageService();
-  final AnalyticsService _analyticsService = AnalyticsService();
+class _GrammarLensAppState extends State<GrammarLensApp>
+    with WidgetsBindingObserver {
+  late final ClaudeService _claudeService =
+      widget.claudeService ?? ClaudeService();
+  late final StorageService _storageService =
+      widget.storageService ?? StorageService();
+  late final AnalyticsService _analyticsService =
+      widget.analyticsService ?? AnalyticsService();
   // Shared explicitly with both HomeScreen and ReviewScreen (rather than
   // each defaulting to its own `SubscriptionService()`) so both go through
   // one instance at this level, matching how the other three services
@@ -40,6 +64,7 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   final SubscriptionService _subscriptionService = SubscriptionService();
   int _tabIndex = 0;
   AppThemeMode _themeMode = AppThemeMode.system;
+  AppTextSize _textSize = AppTextSize.medium;
 
   // Null while loading and stays null until onboarding completes — that's
   // the app's whole "returning vs. first launch" signal (PRD v2 §4), no
@@ -48,12 +73,61 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   UserProfile? _profile;
   bool _profileLoading = true;
 
+  // The first-launch flow's saved-but-not-yet-shown climb step, handed to the
+  // Home that replaces it. Home takes it in `initState` and clears it here, so
+  // it can only ever animate once.
+  PendingClimb? _initialPendingClimb;
+
+  // Whether Home should offer the first-day paywall: true only when the user
+  // finished the Day-0 Daily Test. Given to the Home that replaces the flow and
+  // cleared by it in `initState`, like [_initialPendingClimb].
+  bool _offerDay0Paywall = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _finalizeMedalMonths();
     _loadThemeMode();
+    _loadTextSize();
     _loadProfile();
-    if (kDebugMode) _loadDebugAccessOverride();
+    if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Resume work is split by owner, never duplicated: this observer runs the
+  // app-wide jobs (analytics, medal finalization) that must happen even
+  // before Home exists; `HomeScreen`'s own observer refreshes what only Home
+  // shows (Daily Test day, greeting, climb month, weak spots). One resume
+  // triggers each job exactly once — see test/app_resume_test.dart.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) _analyticsService.appPaused();
+    if (state == AppLifecycleState.resumed) {
+      _analyticsService.appResumed();
+      _finalizeMedalMonths();
+    }
+  }
+
+  /// Freezes past medal months at launch and on every resume, not only when
+  /// Profile is opened, so `medal_month_finalized` also counts users who
+  /// never visit Profile. Idempotent by construction (see
+  /// `finalizePastMedalMonthsAndReport`): a month frozen by one trigger is
+  /// not finalized or reported again by another.
+  Future<void> _finalizeMedalMonths() async {
+    try {
+      await finalizePastMedalMonthsAndReport(
+        storageService: _storageService,
+        analyticsService: _analyticsService,
+      );
+    } catch (_) {
+      // Storage unavailable — Profile retries when it is opened.
+    }
   }
 
   Future<void> _loadThemeMode() async {
@@ -82,6 +156,16 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
     }
   }
 
+  Future<void> _loadTextSize() async {
+    try {
+      final size = await _storageService.getTextSize();
+      if (mounted) setState(() => _textSize = size);
+      unawaited(_analyticsService.setTextSizeProperty(size));
+    } catch (_) {
+      // Keep the readable medium default if storage is unavailable.
+    }
+  }
+
   /// Applies whatever debug entitlement override a developer set last
   /// session (Settings' "Developer" section) before any screen has a
   /// chance to check `SubscriptionService.hasFullAccess` — so Home's
@@ -101,6 +185,17 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
   void _setThemeMode(AppThemeMode mode) {
     setState(() => _themeMode = mode);
     unawaited(_storageService.setThemeMode(mode).catchError((_) {}));
+  }
+
+  void _setTextSize(AppTextSize size) {
+    final previous = _textSize;
+    setState(() => _textSize = size);
+    if (size != previous) {
+      unawaited(
+          _analyticsService.textSizeChanged(size: size, previous: previous));
+      unawaited(_analyticsService.setTextSizeProperty(size));
+    }
+    unawaited(_storageService.setTextSize(size).catchError((_) {}));
   }
 
   /// Every bottom-nav tab switch goes through this instead of setting
@@ -188,8 +283,8 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: AppMessenger.key,
       navigatorObservers: [AppMessenger.navigatorObserver],
-      theme: buildAppTheme(Brightness.light),
-      darkTheme: buildAppTheme(Brightness.dark),
+      theme: buildAppTheme(Brightness.light, textSize: _textSize),
+      darkTheme: buildAppTheme(Brightness.dark, textSize: _textSize),
       themeMode: _flutterThemeMode,
       // `Builder` gets a context nested under the `MaterialApp` above, so
       // `Theme.of` here resolves the light/dark scheme we just set via
@@ -198,25 +293,44 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
       home: Builder(
         builder: (context) {
           if (_profileLoading) {
-            return const LoadingView(message: 'Loading…');
+            // The app's first frame. Nothing else paints behind it, so it
+            // paints its own background, the same `surfaceContainerLow` the
+            // native launch screen uses (`LaunchBackground` in
+            // ios/Runner/Assets.xcassets), so there is no flash between the
+            // two. `Material` also gives the text a real text style.
+            return Material(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              child: const LoadingView(message: 'Loading…'),
+            );
           }
           if (_profile == null) {
             return FirstLaunchFlow(
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
-              onComplete: (profile) => setState(() => _profile = profile),
+              onComplete: (profile, {pendingClimb, dayZeroCompleted = false}) =>
+                  setState(() {
+                _profile = profile;
+                _initialPendingClimb = pendingClimb;
+                _offerDay0Paywall = dayZeroCompleted;
+              }),
             );
           }
 
           final screens = [
             HomeScreen(
+              active: _tabIndex == 0,
               userName: _profile!.name,
               avatar: _profile!.avatar,
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
               subscriptionService: _subscriptionService,
+              clock: widget.clock,
+              initialPendingClimb: _initialPendingClimb,
+              onInitialPendingClimbTaken: () => _initialPendingClimb = null,
+              offerDay0Paywall: _offerDay0Paywall,
+              onOfferDay0PaywallTaken: () => _offerDay0Paywall = false,
               onAvatarTap: () => _openAvatarPickerFromHome(context),
             ),
             ReviewScreen(
@@ -234,10 +348,14 @@ class _GrammarLensAppState extends State<GrammarLensApp> {
               onGoToPractice: () => _switchTab(0),
             ),
             SettingsScreen(
+              active: _tabIndex == 2,
               themeMode: _themeMode,
               onSelectThemeMode: _setThemeMode,
+              textSize: _textSize,
+              onSelectTextSize: _setTextSize,
               profile: _profile!,
               storageService: _storageService,
+              analyticsService: _analyticsService,
               onProfileUpdated: (profile) => setState(() => _profile = profile),
               // Debug-only action inside SettingsScreen's own
               // `if (kDebugMode)`-gated "Developer" section — this
@@ -273,8 +391,8 @@ const _navTabs = [
     label: 'Review',
   ),
   NavShellTab(
-    icon: Icons.settings_outlined,
-    activeIcon: Icons.settings,
-    label: 'Settings',
+    icon: Icons.person_outline_rounded,
+    activeIcon: Icons.person_rounded,
+    label: 'Profile',
   ),
 ];

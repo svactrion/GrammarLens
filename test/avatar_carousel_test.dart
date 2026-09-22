@@ -87,7 +87,8 @@ void main() {
     // enough to confirm the interpolation is actually wired, not a no-op.
     final builtNeighbors = Avatar.values
         .where((a) => a != Avatar.values[3])
-        .where((a) => find.bySemanticsLabel(a.semanticLabel).evaluate().isNotEmpty);
+        .where((a) =>
+            find.bySemanticsLabel(a.semanticLabel).evaluate().isNotEmpty);
     expect(builtNeighbors, isNotEmpty);
     for (final neighbor in builtNeighbors) {
       final opacity = (findOpacityAncestor(neighbor) as Opacity).opacity;
@@ -159,7 +160,7 @@ void main() {
   testWidgets('each page is reachable by its character name via Semantics',
       (tester) async {
     await pumpCarousel(tester, initial: Avatar.values[3], onSettled: (_) {});
-    expect(find.bySemanticsLabel(Avatar.values[3].semanticLabel),
-        findsOneWidget);
+    expect(
+        find.bySemanticsLabel(Avatar.values[3].semanticLabel), findsOneWidget);
   });
 }

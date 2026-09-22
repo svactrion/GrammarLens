@@ -62,37 +62,21 @@ export function validateGeneratePracticeSet(body: unknown): GeneratePracticeSetR
   };
 }
 
-export interface WeakSpotInput {
-  topicId: string;
-  frequency: number;
-}
-
 export interface GenerateDailyTestRequest {
   deviceId: string;
   count: number;
-  weakSpots: WeakSpotInput[];
 }
 
+/**
+ * The Daily Test prompt is fixed and carries nothing about the user, so the
+ * only accepted fields are the anonymous quota id and the question count.
+ * Anything else, including the old `weakSpots` list, is rejected: the
+ * "Daily Test sends no user data to Anthropic" guarantee is enforced here, not
+ * just by what the app happens to send.
+ */
 export function validateGenerateDailyTest(body: unknown): GenerateDailyTestRequest {
-  const obj = requireObjectWithOnlyKeys(body, ['deviceId', 'count', 'weakSpots']);
-  const deviceId = requireDeviceId(obj);
-  const count = requireCount(obj);
-
-  const rawWeakSpots = obj.weakSpots;
-  if (!Array.isArray(rawWeakSpots) || rawWeakSpots.length > MAX_ITEMS) {
-    fail(`"weakSpots" must be an array of at most ${MAX_ITEMS} items.`);
-  }
-  const weakSpots = rawWeakSpots.map((entry, index) => {
-    const spot = requireObjectWithOnlyKeys(entry, ['topicId', 'frequency']);
-    const topicId = requireTopicId(spot.topicId, `weakSpots[${index}].topicId`);
-    const frequency = spot.frequency;
-    if (typeof frequency !== 'number' || !Number.isInteger(frequency) || frequency < 0 || frequency > 100000) {
-      fail(`"weakSpots[${index}].frequency" must be a non-negative integer.`);
-    }
-    return { topicId, frequency };
-  });
-
-  return { deviceId, count, weakSpots };
+  const obj = requireObjectWithOnlyKeys(body, ['deviceId', 'count']);
+  return { deviceId: requireDeviceId(obj), count: requireCount(obj) };
 }
 
 const KNOWN_ITEM_TYPES = new Set(['fill_in_blank', 'error_correction', 'sentence_writing']);

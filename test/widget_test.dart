@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/app.dart';
+import 'package:grammar_lens/screens/onboarding_screen.dart';
 
 void main() {
   // Welcome's ambient decorations (breathing mark, scan rings, drifting
@@ -12,8 +13,8 @@ void main() {
   // around the hang some other way.
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized()
-        .platformDispatcher
-        .accessibilityFeaturesTestValue =
+            .platformDispatcher
+            .accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
   });
 
@@ -58,7 +59,7 @@ void main() {
   });
 
   testWidgets(
-      'onboarding states the collected info stays on-device (PRD v2 §10.1)',
+      'onboarding shows the accurate privacy note (PRD v2 §10.1, §13.9)',
       (tester) async {
     await tester.pumpWidget(const GrammarLensApp());
     await tester.pumpAndSettle();
@@ -66,9 +67,7 @@ void main() {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Stored only on this device — never sent to a server.'),
-      findsOneWidget,
-    );
+    expect(find.text(onboardingPrivacyNote), findsOneWidget);
+    expect(find.textContaining('never sent'), findsNothing);
   });
 }

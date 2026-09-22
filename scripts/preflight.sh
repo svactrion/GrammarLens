@@ -64,6 +64,20 @@ else
   check_release_config_value "APP_TOKEN"
 fi
 
+# Flutter bundles every file directly inside a registered asset folder
+# (assets/avatars/, assets/icons/), including the Finder metadata macOS drops
+# there. It is gitignored, so only a build taken on a Mac that has them
+# would ship them. Removed rather than just reported: nothing needs them.
+ds_store_files=$(find assets -name .DS_Store -type f -print)
+if [[ -n "$ds_store_files" ]]; then
+  while IFS= read -r file; do
+    rm -f -- "$file"
+    echo "✓ Removed $file (not shipped in the app bundle)"
+  done <<< "$ds_store_files"
+else
+  echo "✓ No .DS_Store files under assets/"
+fi
+
 if [[ "$failed" -ne 0 ]]; then
   echo
   echo "Preflight failed — fix the above before running flutter build ipa."

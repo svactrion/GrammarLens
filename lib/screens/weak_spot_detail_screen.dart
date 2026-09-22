@@ -8,6 +8,7 @@ import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/loading_view.dart';
 import '../utils/page_title.dart';
+import '../utils/premium_copy.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
@@ -391,8 +392,7 @@ class _LockedPracticeRow extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "You've used today's free practice. Premium unlocks "
-                      'Topic Practice and more sessions each day.',
+                      freePracticeUsedMessage,
                       style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
                   ],

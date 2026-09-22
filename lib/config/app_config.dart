@@ -16,5 +16,6 @@ class AppConfig {
   static const String revenueCatApiKey =
       String.fromEnvironment('REVENUECAT_API_KEY');
 
-  static bool get isConfigured => proxyBaseUrl.isNotEmpty && appToken.isNotEmpty;
+  static bool get isConfigured =>
+      proxyBaseUrl.isNotEmpty && appToken.isNotEmpty;
 }

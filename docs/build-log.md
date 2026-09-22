@@ -3511,7 +3511,7 @@ changed.
   comparable units when the user toggles plans. Deliberately scoped to
   only the trial part: `_formatSubscriptionPeriod` (the separate renewal-
   period text) parses the product's own ISO subscription period, an
-  entirely different input, so this conversion cannot leak into it — 
+  entirely different input, so this conversion cannot leak into it —
   confirmed by reading both functions, not assumed. (3) the debug fixture
   split into two distinct `IntroductoryPrice` objects mirroring what
   StoreKit actually returns (monthly `P3D`/day/3, annual `P1W`/week/1).
@@ -3808,3 +3808,1196 @@ unnoticed.
   (see above) — nothing was only in the old worktree. `~/GrammarLens-backup.git`
   still holds `codex/monthly-climb`'s full history if it's ever needed
   again.
+
+## 2026-09-18 (Monthly Climb Stage 3: first Home integration slice)
+
+- **[Product]** User approved connecting persisted monthly progress to Home
+  after verifying `monthly-climb-v2` at `0cf7eaa`, with only the two existing
+  untracked docs. This is post-launch work; no main merge or PR. Updated the
+  preview instructions to the current checkout `/Users/ahmet/GrammarLens`.
+- **[Engineering]** Home reads `getClimbProgress` for the current calendar
+  month and renders the existing `MonthlyMountain` with the selected avatar.
+  Added loading, empty, summit and read-error/retry states. Concurrent reads
+  cannot overwrite newer results; a month key recreates the mountain at
+  rollover, including transitions between equally long months. Resume and
+  Daily Test/result return refresh local data without generating questions.
+- **[Engineering]** Home uses DailyTestScreen's existing `onFinished` hook
+  to own the result route and await its return. Added an optional result-screen
+  callback after successful persistence so leaving during a pending write
+  still refreshes Home after commit. No storage, migration, answer-matching or
+  completion transaction implementation was changed. Day-0's existing hooks
+  and navigation remain. Existing Topic Practice/weak-spot paywall gates and
+  avatar Hero remain. At large text sizes, Home's locked Topic Practice card
+  uses a labelled lock icon in place of the wide Premium pill; the new 320px,
+  2× text tests exposed the pill's horizontal overflow.
+- **[Validation]** `flutter analyze --no-pub`: no issues. Full
+  `flutter test --no-pub`: **389 passed**. New Home coverage includes selected
+  avatar/month length, same-length month rollover, stale reads, error/retry,
+  delayed save after leaving results, all-skipped/answered completion, replay
+  without another completion write or generation call, and small-screen large
+  text/reduced motion in light/dark. Existing database atomicity/migration,
+  Daily Test, onboarding and avatar tests passed unchanged.
+- **[Visual/build]** Production entry point built and launched on the dedicated
+  Monthly Climb simulator (iPhone 17 / iOS 26.5). Its data was at onboarding;
+  no on-device Home/completion acceptance is claimed. Production Home widget
+  renders with controlled 8/30 progress were inspected in light/dark; temporary
+  render harness removed, images retained at `/tmp/climb-home-light.png` and
+  `/tmp/climb-home-dark.png`. These omit the app's bottom-nav shell and are
+  layout checks, not screenshots of the complete running app.
+- **[Remaining]** Device Home/completion review, remaining Home redesign and
+  error-preview access decision, medals/Profile and release measurements.
+  Stage 3 is not marked fully accepted. No commit, push, merge or PR in this
+  batch. Existing untracked docs were left untouched.
+
+## 2026-09-18 (Device feedback package 1: result CTA and visible climb movement)
+
+- **[Product]** User approved the first revision package after sharing
+  `IMG_6217.PNG`, which showed the result list ending without a next action.
+  No new paywall redirection in this package. Other planned revisions remain
+  separate; see `monthly-climb-revision-plan.md`.
+- **[Engineering]** Default Daily Test results now end with `See your climb`
+  after a saved answered test, or `Back to Home` for all-skipped/replayed
+  results. While saving, the footer action is disabled and says
+  `Saving your results…`; a failure shows a footer retry and blocks a success
+  CTA. Existing top error/retry and Day-0's custom `bottomBuilder` remain.
+- **[Engineering]** Fixed the animation cause rather than only adding a button:
+  the prior save callback updated Home while the result route still covered it.
+  Home now defers climb presentation during the Daily Test/result flow, waits
+  for the result route's reverse transition to complete, reveals the mountain,
+  then applies the persisted target to its existing animation. The short Home
+  content is kept in one mounted column so scrolling does not discard the
+  mountain's previous position. A pending completion day handles late writes;
+  `HomeScreen.active` is wired from the app's IndexedStack selection so a save
+  finishing on another tab waits for Home. Month keys still reset presentation
+  at rollover. Storage, migration, matching, service and atomic completion
+  implementations were not changed.
+- **[Validation]** `flutter analyze --no-pub`: clean. Targeted Home/result/
+  first-launch tests: **61 passed**; full suite: **397 passed**. New tests
+  compare the pawn's actual initial/intermediate/final positions for both
+  CTA and back navigation, with/without reduced motion. They assert that
+  persistence has completed while the covered Home still shows the old step,
+  that the mountain is onscreen when movement starts, and that replay does
+  not award or move again. Also covered delayed save on an inactive Home tab,
+  busy/error/retry footer states at 320px with 2× text in light/dark, and
+  all-skipped footer copy. Existing migration/transaction and Day-0 tests pass.
+- **[Visual]** Inspected production result-widget renders with five fixture
+  questions at 390×844 in light/dark. Output: `/tmp/climb-result-light.png`
+  and `/tmp/climb-result-dark.png`; the temporary rendering test was removed.
+  These are controlled widget renders, not physical-device screenshots.
+  The user's physical-device acceptance is the next check.
+- **[Delivery]** Changes remain on `monthly-climb-v2`, uncommitted. No push,
+  merge or PR. No new application run/install on the user's phone in this batch.
+
+## 2026-09-18 (Device feedback package 2: Home scrolling and compact progress)
+
+- **[Product]** User confirmed package 1 works correctly on their phone and
+  approved moving to package 2. No weekly participation strip or new mountain
+  detail route was added; the compact monthly counter is retained.
+- **[Engineering]** `MonthlyMountain.allowUserScroll` defaults to true for the
+  standalone preview. Home sets it to false: the inner viewport uses
+  `NeverScrollableScrollPhysics`, and its scrollbar does not respond to
+  notifications or input. Vertical gestures over the mountain now reach the
+  Home page. Programmatic scrolling still follows the pawn during the existing
+  step animation. The long caption below the scene was removed; a wrapping
+  heading holds the month and progress counter, with a live semantic label
+  including the summit state.
+- **[Validation]** Static analysis clean; full Flutter suite **399 passed**.
+  New light/dark tests drag from inside the mountain at 320×568, assert outer
+  page movement with unchanged inner trail position, reach Topic Practice,
+  and verify counter placement and its actual semantic-node label. Existing
+  small-screen/large-text, preview scrolling and package-1 initial/intermediate/
+  final animation-frame tests pass. No physical-device install or check in
+  this batch; package 2 awaits the user's device review.
+- **[Delivery]** `monthly-climb-v2`; no storage/migration/completion changes,
+  commit, push, merge or PR. Other revision packages remain pending.
+
+## 2026-09-18 (Premium 4a: equal Annual/Monthly plan cards)
+
+- **[Product]** User confirmed Home scrolling works and authorized proceeding
+  within the remaining usage window. Scoped this batch to 4a ahead of font
+  selection; the content-driven sizing also accommodates later typography.
+  The final test rerun was interrupted by an automatic approval-review usage
+  limit, then resumed after the user reported that usage had renewed.
+- **[Engineering]** An `IntrinsicHeight` around the two-card horizontal Row
+  stretches both frames to the taller natural content, including Annual's
+  savings badge. This row has no vertical flex or LayoutBuilder children.
+  Compensated card padding for 1px/2px border thickness so selection changes
+  do not shift content width or change height. No fixed height, pricing,
+  discount, purchase or analytics changes.
+- **[Validation]** Static analysis clean. All **67 Premium tests passed**.
+  New tests check equal width/height, aligned tops and stable sizes after
+  selecting Monthly, at 320px/1× and 375px/2× in actual light/dark app themes.
+  The full app suite was not rerun in this isolated pricing-layout batch.
+- **[Open finding]** Testing 320px/2× exposed horizontal overflow in the
+  separate comparison-table header/rows; left for the broader Premium layout
+  pass rather than expanding 4a. Device acceptance of 4a is pending.
+- **[Delivery]** Changes remain uncommitted on `monthly-climb-v2`; no push,
+  main merge or PR. No device installation in this batch.
+
+## 2026-09-18 (Premium 4b: contextual entry without a longer headline)
+
+- **[Product]** User confirmed 4a on their phone and authorized the next item.
+  Kept scope to weak-spot entry layout; avatar composition and typography remain
+  separate. The prior 320px/2× comparison-table overflow remains open.
+- **[Engineering]** Fixed `Unlock personalized feedback` as the shared heading.
+  `sourceContext` now replaces the supporting sentence with `Practice <topic>.`;
+  whitespace-only/absent context keeps the existing generic copy. No additional
+  content block, line clamp, font shrinking, pricing or navigation change.
+- **[Validation]** Static analysis clean; all **70 Premium tests passed**.
+  Actual light/dark themes at 393×852 compare normal entry with Modal past
+  forms, definite articles and blank context: body height, plan-card position,
+  footer position and scroll extent match. A long topic at 375×667 and 2× text
+  remains untruncated with the fixed footer accessible. This proves no extra
+  scroll for the reported examples, not zero scroll on every device. The full
+  app suite was not rerun for this local text/layout change.
+- **[Delivery]** User device acceptance pending. No device install, commit,
+  push, main merge or PR; work remains on `monthly-climb-v2`.
+
+## 2026-09-18 (Premium 4c: opaque, non-overlapping avatar group)
+
+- **[Product]** User confirmed 4b on device and authorized 4c.
+- **[Engineering]** Replaced faded, translated overlapping avatars with a
+  centered row: selected avatar larger, companions smaller and fully opaque,
+  8pt gaps. Available width selects three or five avatars. Hero stays 90pt tall;
+  deterministic identity, fallback and single semantic node remain unchanged.
+  No pricing, storage, migration or completion changes.
+- **[Validation]** Static analysis clean; all 74 Premium tests passed. Added
+  light/dark checks at 320/390pt for count, centered selection, bounds, gaps,
+  relative size and absence of opacity ancestors. Full suite not rerun for
+  this isolated UI change. Physical-device visual acceptance remains pending.
+- **[Delivery]** No install, commit, push, main merge or PR.
+- **[Device acceptance]** User confirmed the 4c layout on their phone.
+
+## 2026-09-18 (app typography: bundled Nunito Sans)
+
+- **[Product]** User approved Nunito Sans after comparing the friendly rounded
+  direction with a more neutral Manrope alternative.
+- **[Engineering]** Added the Google Fonts variable TTF and OFL license to the
+  repository and registered `NunitoSans` in `pubspec.yaml`. The shared theme
+  sets it at the base, covering text themes, app bars and themed controls in
+  light/dark without runtime downloads. Asset size is 571,240 bytes.
+- **[Validation]** Static analysis clean. New tests assert the family across
+  representative theme styles and render Turkish characters. All 120 focused
+  theme/Home/Premium tests and the full **412-test** suite passed. Device review
+  is still required for visual weight and line breaks on Home, Daily Results
+  and the three Premium entry paths.
+- **[Delivery]** No device install, commit, push, main merge or PR.
+
+## 2026-09-18 (Profile tab + persisted text sizing)
+
+- **[Product]** User accepted Nunito Sans but found its initial size small.
+  Preserved that exact size as Small; Medium (1.10×) is the default and Large
+  is 1.20×. Renamed the user-facing Settings tab/page to Profile with person
+  icon while keeping all existing profile, appearance, data and debug tools.
+- **[Storage]** Schema v16 adds only `text_size_settings` (`id=0`, `size`),
+  layered after main's v15 climb ledger. Missing/unknown values safely resolve
+  to Medium. No existing table, migration or atomic completion logic changed.
+- **[Engineering]** The shared Material type scale applies the chosen factor
+  before system MediaQuery accessibility scaling. Profile's Appearance section
+  exposes a three-way segmented choice and persists changes immediately.
+- **[Validation]** Static analysis clean; all **416 tests passed**. Coverage
+  includes ordered scales, Profile labels/callback, preference round trips,
+  oldest-schema migration, existing climb migration/data survival and the full
+  Home/Premium/Daily Test suite. Physical-device acceptance remains pending.
+- **[Delivery]** No device install, commit, push, main merge or PR.
+
+## 2026-09-18 (Profile monthly-medal empty collection)
+
+- **[Product]** User accepted Profile and text sizing on device, then authorized
+  the next medal step. Kept scoring, thresholds, minimum participation and
+  partial-month behavior open exactly as the PRD requires.
+- **[Engineering]** Added a reusable `MonthlyMedalCollection` and `MedalTier`
+  boundary. Profile renders Bronze/Silver/Gold specimens with subdued tier
+  color, mountain mark, lock badge, `Not earned` copy and one semantic label
+  per medal. Production passes no earned tiers; no award storage/migration or
+  score inference was introduced.
+- **[Validation]** Static analysis clean; all **424 tests passed**. Dedicated
+  coverage checks 320pt light/dark at Small/Medium/Large, no overflow, explicit
+  empty state and locked/earned semantics. Device visual acceptance pending.
+- **[Delivery]** No device install, commit, push, main merge or PR.
+- **[Device acceptance]** User confirmed the locked medal collection on phone.
+
+## 2026-09-18 (monthly medal rule v1 + frozen history)
+
+- **[Product]** User approved correct +2, wrong +1, skipped +0 and ceil
+  25/50/75% Bronze/Silver/Gold thresholds against the full month's maximum.
+  No separate minimum-day gate, partial-month proration or catch-up.
+- **[Storage]** Additive schema v17 creates `monthly_medal_results`; main's v15
+  climb ledger, v16 text preference and atomic Daily Test transaction remain
+  unchanged. Past months with ledger activity finalize once, including a null
+  tier below Bronze. Empty months are omitted because profile creation time is
+  not stored. INSERT OR IGNORE plus rule version 1 prevents recalculation.
+- **[Engineering]** Added pure `MonthlyMedalRules`, progress/result models and
+  Profile loading on mount and tab re-entry. Current month remains `In progress`;
+  history shows month, final tier or `No medal`, and frozen score/max.
+- **[Validation]** Static analysis clean; all **436 tests passed**. Tests cover
+  28–31-day ceiling thresholds, exact boundaries, current-month exclusion,
+  below-Bronze persistence, frozen history, migration/data survival, semantics,
+  and populated 320pt light/dark layouts at all three app text sizes.
+- **[Delivery]** No device install, commit, push, main merge or PR.
+
+## 2026-09-21 (launch checklist: code items)
+
+- **[Product]** Session cap 10 → 5, a margin decision: at an estimated
+  ~$0.034/session, 10 sessions/day is ~$10.20/month against ~$3.54/month of
+  net annual-plan revenue. 5 sessions = 10 proxy units + 1 Daily Test unit,
+  inside `DEVICE_DAILY_LIMIT` = 15, so the proxy limit stays and the
+  2026-09-15 headroom question is closed. Premium's "3, 5 or 10" is question
+  counts, not the quota; nothing in `lib/` says "unlimited". PRD v2 §13.8.
+- **[Engineering]** The brief said no `AppLifecycleState` hook existed. It does:
+  `HomeScreen` (Daily Test day, greeting, climb month, weak spots) and
+  `GrammarLensApp` (analytics, medal finalization) each observe resume, with
+  disjoint jobs. No third hook was added; a test-only `GrammarLensApp.clock`
+  and `test/app_resume_test.dart` prove the overnight scenario end to end and
+  that one resume runs each job once (launch itself finalizes twice, from the
+  app and from Profile's mount; idempotent). The roadmap's stale open bug was
+  closed with that explanation.
+- **[Engineering]** Premium comparison table: reproduced the overflow (the
+  header/data `Row` overflowed by 52 px at 320 wide @2x text, 126 px at 393
+  @3x). Fix: when the label column would fall under 96 pt even with "1/day",
+  rows stack (label, then Free/Premium chips), no scrolling, nothing removed.
+  The pricing-unavailable card overflowed too and now drops its retry below the
+  sentence. Table width measurement now uses the drawn font (it used the
+  platform default, a mismatch since the Nunito change); row-height measurement
+  was left alone because changing it moved normal layouts. Tests load the real
+  font, since `flutter test` otherwise measures ~2x too wide. Open: at 320
+  @1x and 393 @1.3x the existing table already ellipsizes a label to two lines;
+  left as is on the "normal screens unchanged" rule.
+- **[Product]** Onboarding privacy note rewritten to match the code and the
+  privacy policy (name/goal stay on device; answers go to the AI provider;
+  usage and crash data is collected). PRD v2 §13.9.
+- **[Product]** Trial wording: annual = 7 days, monthly = 3 days, read from
+  RevenueCat, never written into app copy. README and current-state doc text
+  fixed; dated historical entries kept.
+- **[Engineering]** Proxy token logging (`proxy/src/usage_log.ts`): one
+  `console.log` line per successful Anthropic call with kind, operation,
+  question count and input/output tokens; nothing user-related, tested with
+  planted secrets. Not deployed. Storage options in PRD v2 §13.10, none built.
+- **[Product]** Shared Daily Test recorded as a post-launch item in the
+  roadmap's Launch scope, with trade-offs and why it waits.
+- **[Delivery]** Automated tests only for all of the above; no device
+  confirmation, no deploy, no main merge or PR.
+
+## 2026-09-21 (launch checklist: debug tools out of release)
+
+- **[Engineering]** Scanned the app for developer tooling. Found: Settings'
+  "Developer" section (entitlement override, first-launch reset, pricing
+  fixture, theme preview), raw error text on Daily Test's failure screen, the
+  launch-time override load, and two `lib/preview` entry points. All UI was
+  already behind `kDebugMode`, and the previews are imported by nothing.
+  Gaps: `SubscriptionService`'s gate was a mutable static, and
+  `resetOnboarding()` (deletes the profile) and the override read/write were
+  unguarded methods. Added `DebugTools.enabledForTesting` and gated every site
+  with `kDebugMode && DebugTools.enabledForTesting`; `SubscriptionService.debugModeForTesting`
+  now drives the same switch. Text size untouched.
+- **[Validation]** New release-simulation tests (Settings, Daily Test error,
+  storage, app launch, subscription service) plus source-structure checks; a
+  mutation that removed the Settings gate turned two of them red. A release
+  web build was identical before and after and contains none of the tool
+  strings. The iOS release build could not be run here (Xcode 27 `lipo`
+  issue), so the AOT binary was not inspected. Debug builds unchanged.
+
+## 2026-09-21 (launch checklist: Premium table never clips)
+
+- **[Product]** Owner decision reversing the earlier "normal screens must not
+  change" constraint: a sales table must not cut a label off with an ellipsis.
+- **[Engineering]** The comparison table now also falls back to the stacked
+  layout when any label does not fit in two lines, measured with the same
+  style, text scale and label-cell width it is drawn with; the existing 96 pt
+  minimum still applies. Old and new logic were compared over widths 320-430
+  and text scales 1-3: every size that changed had a clipped label under the
+  old table, and every unclipped size kept its table. Tests now assert that
+  grid, plus that no label is clipped in either layout. Tests that expect the
+  table load the real Nunito Sans and use the app theme (under the default
+  test font almost every size would stack).
+
+## 2026-09-21 (launch checklist: proxy failure logs without content)
+
+- **[Engineering]** The proxy logged Anthropic's raw error body on a non-200
+  and the JSON parse exception on unusable content; either can quote request
+  or model text. Both, and the two other Anthropic-path error logs, now go
+  through `logUpstreamFailure`: operation, kind, failure category, HTTP status
+  and a whitelisted Anthropic error type; no body and no exception message.
+  A 200 whose body is not JSON used to throw into the catch-all and is now
+  handled and categorized. Tests cover each failure with planted secrets.
+  Not deployed. The catch-all `Unhandled error` log in `index.ts` is unchanged.
+
+## 2026-09-21 (Profile: age and occupation removed)
+
+- **[Engineering]** Scanned all uses first: the two optional Profile fields
+  appeared only in the Profile form, `UserProfile` and the `user_profile`
+  table. Nothing in prompt generation, no proxy request body (the proxy
+  rejects unknown fields), no analytics event, Home or Premium read them, so
+  the removal loses no personalization.
+- **[Engineering]** Removed from UI, model, storage and tests. Schema v19
+  rebuilds `user_profile` (create new, copy id/name/goal/avatar, drop, rename)
+  instead of `DROP COLUMN`, which needs SQLite 3.35+; guarded by a column check
+  so the downgrade-then-upgrade replay is a no-op. Tests cover a seeded v18
+  database with real values, no avatar, no profile row, saving afterwards, the
+  replay and a fresh install. Docs and comments that described the fields were
+  updated; dated history was kept with pointers.
+
+## 2026-09-21 (proxy: catch-all error log narrowed)
+
+- **[Engineering]** The catch-all `Unhandled error` log in `proxy/src/index.ts`
+  wrote the whole exception. It now logs `unhandled_error` with the operation,
+  its kind and an error category only (a built-in error name, `other_error`,
+  or `non_error`); no message, stack or cause, and a custom error name is never
+  echoed. Tested by forcing an unexpected error outside every handled path
+  with secrets planted in the message, the request and a thrown string.
+  Trade-off: real bugs now appear as a category and need a reproduction to
+  diagnose. Not deployed.
+
+## 2026-09-21 (Profile layout rework, Data screen, avatar credits)
+
+- **[Product]** Order decided: Avatar, Name (+ Save), Monthly medals,
+  Appearance, Data, Credits, Developer (debug only, last). The "Change avatar"
+  row stays a row that opens the picker screen; an inline carousel was
+  considered and rejected (a horizontal `PageView` inside the page's vertical
+  list, and the picker's autosave, slot geometry and `Hero` all live in the
+  pushed screen).
+- **[Product]** "Reset progress data" moved off Profile onto a Data screen so
+  the destructive option is not visible on the page itself; the existing
+  confirmation dialog is the second layer. Text, buttons and messages moved
+  verbatim.
+- **[Product]** Attribution is required by the avatar set's CC BY 4.0 licence.
+  Credits is a screen, not a dialog (long text, two URLs, must fit at large
+  text sizes). The sentence is plain text, with two link buttons under it
+  instead of inline tappable spans (larger touch targets, same pattern as the
+  Premium legal links).
+- **[Engineering]** Three commits: layout plus a private `_NavRow` (the avatar
+  row's markup, reused by Data and Credits); `DataScreen`; `LegalLink` extracted
+  from Premium plus `CreditsScreen`. Premium tests passed unchanged.
+  Tests that tapped Appearance controls now scroll to them first (Appearance is
+  below the medals), and the "release" tests anchor on the Data row instead of
+  the reset button. The section-order test compares vertical positions on a
+  tall surface; it fails on the old order (checked by reverting the layout).
+  Link taps are not tested: no `url_launcher` fake and no new dependency.
+- **[Idea, not planned]** Theme choice as one toggle button; recorded in the
+  roadmap's out-of-scope table only.
+
+## 2026-09-21 (destructive action colors)
+
+- **[Problem]** Found on device: the Reset progress dialog had an orange
+  Cancel and a Reset in `error`, which is dark red in light mode and pale pink
+  (`#FFB4AB`) in dark mode. Emphasis on the wrong button, and a weak fill for
+  an irreversible action.
+- **[Engineering]** Measured before choosing (WCAG luminance, real theme
+  values): the M3 `errorContainer` pair suggested for dark fails as a fill
+  (`#93000A` is 1.52:1 against the dark dialog surface, `#FFDAD6` text is
+  fine), and in light `errorContainer` is 1.03:1 against the dialog. A search
+  over reds found one hex that passes in both themes: `#DC3232` with white
+  text, 4.62:1 text, 3.67:1 (light) and 3.08:1 (dark) against the dialog
+  surface, 4.20:1 / 3.71:1 against the page body. The margin is narrow both
+  ways, so the constant's comment says to re-measure if it changes.
+- **[Engineering]** `DestructiveColors` on `ColorScheme` (`destructive`,
+  `onDestructive`), the same two constants in both themes, next to
+  `BandColors`; swatches added to the debug theme preview. `error` stays the
+  meaning-of-failure color (Premium and Review error text and icons) and
+  `SemanticColors` is untouched.
+- **[Product]** Used by every destructive confirm: Reset progress (dialog and
+  the Data screen button, now filled instead of outlined, since a red outlined
+  label cannot pass 4.5:1 on the dark body with this same hex), "Leave
+  practice?" and "Leave Daily Test?" (Leave used to be the default blue).
+  Cancel is a neutral `onSurface` text button in all three (11.06:1 dark,
+  13.64:1 light on the dialog). A shared `DestructiveDialogActions` keeps the
+  stacked order and the 52 pt full-width layout. Untouched by decision: the
+  "That's all for today" dialog and the length-picker bottom sheet.
+- **[Engineering]** Tests use `buildAppTheme` in both themes and check the
+  role on each button, that Cancel is not `primary`, and the layout order. The
+  `BandColors` doc comment that described orange dialog Cancel buttons was
+  updated.
+
+- **[Engineering]** Cancel in `DestructiveDialogActions` is now an outlined button (`onSurface` label, `onSurfaceVariant` border: 7.42:1 light / 8.39:1 dark against the dialog surface; `outline` was rejected at 2.72:1 in light) because the borderless text button did not read as a button beside the filled red one; size, order and behavior are unchanged.
+
+## 2026-09-21 (launch checklist: Day-0 climb animation)
+
+- **[Problem]** Found on device: after a normal Daily Test the pawn climbs on
+  Home, but after the first-launch Daily Test (Welcome → Onboarding → Daily
+  Test → Home) Home opened with the pawn already advanced.
+- **[Engineering]** Root cause, from reading the code (three independent
+  facts): `MonthlyMountain` animates only when `completedDays` changes on an
+  already-mounted widget; Home animates only when it has a pending day, an
+  earlier position (`_climbSteps != null`) and a larger saved value; and the
+  pending day was set only by `HomeScreen._openDailyTest`'s result route. The
+  Day-0 flow ends before any Home exists, never bound `onCompletionSaved`, and
+  a fresh Home has no earlier position, so the mountain mounted straight at
+  the new value. Rival explanations checked and rejected: reduce motion or a
+  disabled ticker (the normal flow animates on the same device), a route
+  transition hiding the animation (Home is built as Premium pops, and the
+  existing visibility wait already covers that), and a `ValueKey` reset.
+  One real second bug was found on the way: the Day-0 CTA buttons were
+  enabled while the result was still being saved, so a fast tap could build
+  Home before the write and leave it stale until the next resume.
+- **[Engineering]** Fix: `FirstLaunchFlow` binds `onCompletionSaved` and
+  passes `onComplete(profile, pendingClimb: (day, step))` (only when the save
+  earned a step; the step comes from `DailyTestCompletion.step`, the rule the
+  ledger write used). `app.dart` holds it as `initialPendingClimb` for the Home
+  it swaps in and clears it as soon as Home has taken it, so it can only
+  animate once. Home derives the mount position as `progress.steps - step`
+  (not a constant 0: the debug onboarding reset deletes the profile but not the
+  ledger), mounts the mountain there, then the existing pending-step path scrolls
+  it into view and animates. Both Day-0 buttons ("Start free trial", "Maybe
+  later") are disabled until the save lands; a set that was already completed
+  (debug reset) is never saved again, so it does not wait.
+- **[Engineering]** `GrammarLensApp` gained a `claudeService` seam, like its
+  storage, analytics and clock seams, so the whole flow can be driven through
+  the real app.
+- **[Validation]** New `test/first_launch_climb_test.dart` runs the real app:
+  Maybe later, Start free trial then Premium's Maybe later, reduce motion, all
+  questions skipped, a slow save (buttons disabled, then Home shows the saved
+  step) and leaving the first Daily Test. Each records the step counts the
+  mountain was given and the pawn heights it was drawn at frame by frame
+  (`pumpAndSettle` would hide a consumed animation). With the baseline mount
+  disabled, four of the six fail (the two "nothing to animate" cases still
+  pass, as they should). `first_launch_flow_test.dart` also asserts the
+  `pendingClimb` handed over (answered / all skipped / abandoned). The existing
+  Home return tests pass unchanged.
+
+## 2026-09-21 (Daily Test: weak spots no longer sent)
+
+- **[Product]** `generate_daily_test` stops sending `weakSpots`. Reasons: after
+  launch the Daily Test moves to one shared set, personalization is reserved
+  for Premium, and with this change the Daily Test sends no user data to
+  Anthropic. Only Topic Practice answers leave the device (permission comes in
+  a later batch).
+- **[Engineering]** Client: `ClaudeService.generateDailyTestQuestions` takes
+  only `deviceId` and `count`; `DailyTestService.getTodaysSet` no longer reads
+  the error profile. Proxy: `validateGenerateDailyTest` accepts only `deviceId`
+  and `count`, `WeakSpotInput` and the prompt's bias branch are gone, and the
+  prompt is one fixed sentence (a varied general mix across all topics). The
+  old "This user has no practice history yet" wording, which is false as a
+  general statement, is replaced. The field is removed, not accepted and
+  ignored: the proxy's existing unknown-field rejection now enforces it, and
+  the app has never shipped, so no older client needs it.
+- **[Validation]** Client tests: the request body is exactly
+  `{deviceId, count}`, and generation never reads the error profile (a counting
+  store proves it). Proxy tests: `weakSpots` (empty or not) and any other extra
+  field give a 400 and never reach Anthropic, and two different devices produce
+  byte-identical Anthropic bodies with no device id in them. `first_launch_*`,
+  `home_screen_*` and `daily_test_*` fakes were updated for the new signature.
+  Proxy not deployed: it and the app must ship together, since an app that
+  still sent `weakSpots` would now get a 400.
+
+## 2026-09-22 (AI permission before Topic Practice, part 1: storage, screen, gate)
+
+- **[Problem]** App Review guideline 5.1.2(i) requires clear disclosure and
+  explicit permission before personal data is shared with a third-party AI.
+  Topic Practice sends the user's typed answers and the question text to
+  Anthropic (Claude) through the proxy, with no permission step.
+- **[Engineering]** What leaves the device, checked in code: only
+  `score_answers` carries user text (`items[].prompt` and `userAnswer`);
+  `generate_practice_set` sends a topic id and a count; the proxy never
+  forwards the anonymous device id to Anthropic; the Daily Test sends nothing
+  about the user (previous entry) and is graded on the device. `PracticeScreen`
+  is constructed only inside `launchPracticeSet`, so that function is the one
+  place a session, and therefore any answer, can begin.
+- **[Product]** The check lives inside `launchPracticeSet`, after the
+  entitlement, free-quota and session-cap checks and before the length picker
+  (a user who says no is not first asked to choose a length). It reads the
+  stored decision itself; there is no parameter a caller can pass to skip it,
+  the same rule as the free-tier gate. Declining generates nothing, records no
+  session and spends none of the free tier's daily practice. The screen returns
+  on the next attempt; the Daily Test never asks.
+- **[Engineering]** Schema v20: single-row `ai_consent` table (`granted`,
+  `decided_at`, `consent_version`), created by the migration with no row (an
+  existing user was never asked). `AiConsent.currentVersion` is 1; a grant given
+  for a lower version does not allow sending, so a later change of provider or
+  data re-asks. "Reset progress" does not touch it (permission is a setting,
+  not progress; a test pins this). The read fails closed (an unreadable decision
+  means asking again), unlike the quota checks around it, which fail open. If
+  saving a yes fails, that launch proceeds (the user did agree) and the next
+  one asks again. A second tap while a check is in progress is ignored
+  (`ensureAiConsent`'s guard), so two screens, or two launches, cannot stack.
+- **[Product]** `AiConsentScreen`: full screen, text scrolls, "Agree and
+  continue" and "Not now" pinned in a footer; back arrow or system back counts as
+  a decline. Wording is the approved draft. It says nothing about how the
+  provider stores or uses data, on purpose (a test scans the screen for such
+  claims); that belongs to the provider and the privacy policy.
+- **[Validation]** `practice_launch_consent_test.dart` drives both real callers
+  (`TopicPracticeScreen`, `WeakSpotDetailScreen`): first ask, agree, not now
+  (nothing generated or counted, asked again), back arrow, existing grant, stale
+  version, unreadable decision, failed save, permission before the length
+  picker, and the double tap. Mutation checks: ignoring the gate's result, removing the
+  guard and failing open each turn tests red. `ai_consent_screen_test.dart`
+  pins the wording and the layout at 375x667 and 320x568, Large text, system
+  scale up to 2x, both themes. The two existing launch tests grant permission in
+  their fakes, since they are about the quota gates; the Day-0 test asserts the
+  Daily Test never reads it. Migration tests cover v19 to v20 and a replay.
+
+## 2026-09-22 (AI permission before Topic Practice, part 2: Data switch, onboarding wording, analytics)
+
+- **[Product]** Profile → Data gets an "AI feedback" section above Reset: a
+  switch, "Send my practice answers to Anthropic (Claude)", with one sentence
+  saying what it controls and that the Daily Test is not involved. Switching on
+  never flips silently: it opens the same permission screen (`requestAiConsent`),
+  so the wording is always seen; Not now leaves it off. Switching off is
+  immediate, with "Topic Practice will ask again." An unreadable decision shows
+  off (fails closed); a failed save on switch-off keeps it on and says so. Reset
+  progress leaves it alone.
+- **[Product]** The onboarding privacy note now names the provider and says it
+  asks: "Your name and goal stay on this device. If you use Topic Practice, your
+  answers are sent to Anthropic (Claude) to give you feedback, and we ask first.
+  Usage and crash data is collected." Every sentence checked against the code;
+  "we ask first" is true because of part 1.
+- **[Engineering]** `ai_consent_result` (docs/analytics-plan.md E7): `outcome`
+  (granted / declined / revoked), `source` (practice_launch / data_settings) and
+  `consent_version`, from closed enums, so nothing written by the user can reach
+  it. Fired when the user decides, not when a stored grant lets a launch through.
+  `outcome` and `source` reuse the paywall events' parameter names; the analytics
+  plan tells the owner to slice them by event name and adds `consent_version` to
+  the custom dimensions to register. `DataScreen` takes the analytics service
+  (default like the other screens).
+- **[Validation]** `data_screen_test.dart` covers the switch states, on via the
+  screen (Agree and Not now), off, failed save, unreadable decision, Reset
+  leaving it alone, the analytics parameters, and the smallest screen at 2x text.
+  `practice_launch_consent_test.dart` asserts the launch-side events, and that an
+  existing grant reports nothing. The onboarding test pins the exact sentence.
+
+## 2026-09-22 (proxy: duration_ms on usage and failure logs)
+
+- **[Problem]** The first Daily Test's load time was a guess: the proxy logged
+  tokens but not how long Anthropic took, so the benefit of preloading (next
+  batches) could not be judged.
+- **[Engineering]** `anthropic_usage` and `anthropic_failure` lines gain
+  `duration_ms`: wall time from just before the request to Anthropic until its
+  body was read (failure lines: until the failure was known). It excludes
+  validation and the quota check, so it is the upstream wait alone. In Workers
+  the clock advances across I/O, which is exactly what is measured. It is a
+  plain number (a missing or invalid value is `null`), so the privacy contract
+  in `usage_log.ts` still holds and its comment now lists the field. A billed call
+  whose content turns out unusable keeps its duration.
+- **[Validation]** Tests use a controlled `Date.now` and a fetch mock that
+  advances it: the logged value equals the simulated wait (usage, each call
+  timed on its own, an unusable-content call, a non-200, a network failure), and
+  the exact key sets of both lines include `duration_ms`. The planted-secret
+  tests still pass. Not deployed: the owner deploys the proxy. After deploying,
+  compare `duration_ms` with `output_tokens` for `generate_daily_test` in
+  Workers Logs.
+
+## 2026-09-22 (first Daily Test: preload, single-flight, request timeout)
+
+- **[Problem]** The first Daily Test generated only after the user reached the
+  Daily Test screen, so they waited in front of a spinner for the whole
+  generation.
+- **[Product]** Generation now starts on the "Get started" tap on Welcome, not
+  when Welcome opens: the name/goal form takes long enough to hide most of the
+  wait, and someone who leaves at the first screen never costs a generation.
+  Nothing is requested while Welcome is open. The request carries no user data
+  (previous entries).
+- **[Engineering]** `DailyTestService.getTodaysSet` is single-flight per day:
+  while a call for a day runs, other calls for that day get the same `Future`,
+  so the Daily Test screen simply waits for the preload and no second request
+  is made. The slot is cleared as soon as the call ends, success or failure, so
+  a failure is never remembered and the next call is a real new attempt;
+  everyone who joined a failing call sees its error. A call for another day (the
+  clock crossed midnight) does not join. `preloadTodaysSet()` starts it and
+  drops any failure on purpose: nothing has asked for the result yet, so it
+  neither reaches Crashlytics' global error hook nor shows an error; the Daily
+  Test screen makes its own attempt and shows its own error with Try again, as
+  before.
+- **[Engineering]** `ClaudeService` gives every request to the proxy a 40 s
+  timeout (`ClaudeService.defaultRequestTimeout`, overridable for tests). It
+  fails as a network error with "The practice service took too long to
+  respond. Please try again.". Before, a request that never answered left a
+  screen loading forever. 40 s is a starting value: check it against the
+  proxy's new `duration_ms` (especially a 10-question Topic Practice
+  generation) after the proxy is deployed.
+- **[Engineering]** Found by the new tests: `StorageService.getOrCreateDeviceId`
+  was check-then-insert, so two overlapping first calls made the second fail with
+  a UNIQUE error. It now ignores the conflict and reads back the stored id, so
+  overlapping callers agree on one id. (A preload widens the chance of overlap,
+  which is how it surfaced.) A test starts six overlapping calls; it fails on
+  the old code.
+- **[Validation]** Service tests: two calls share one request and one set; a
+  running preload is joined; a finished preload is served from the cache; a failed
+  preload leaves no uncaught error and the real call retries; joiners of a
+  failing call all see the error and the next call is fresh; another day does
+  not join. Flow tests: no request while Welcome is open, one request on Get
+  started and none more when the Daily Test opens, a request still running is
+  joined, a failed preload is silent and retried by the screen, and two failures
+  end on the screen's own error with Try again. Timeout tests use a client that
+  never answers. Turning off the join makes six of them fail. Not covered, by
+  choice: an app kill during a preload (the request is lost, the next launch
+  starts again), and `saveDailyTestSet`'s replace-on-conflict, which single-flight
+  makes unreachable within one service instance.
+
+## 2026-09-22 (Premium: legal links in the fixed footer, hero dropped on short screens)
+
+- **[Problem]** On device, at Medium and Large text the Terms and Privacy
+  links were only reachable by scrolling. Measured at 375x667 (iPhone SE, real
+  font, 20 pt status bar) before the change: the purchase button and the
+  disclosure sentence were already in the fixed footer and visible, but the links
+  were 236 pt (Medium) / 291 pt (Large) below the fold, Restore Purchases 180 /
+  235 pt, and the plan cards were at most a 10 pt sliver at Medium. The
+  disclosure sentence also had `maxLines: 2` with an ellipsis: at Large text and a
+  system scale of 1.6x it was cut off.
+- **[Product]** Owner decisions: the Terms/Privacy row goes into the fixed
+  footer (above "Maybe later", which stays); on screens under 700 pt tall the
+  decorative avatar hero is dropped (94 pt back for the table and plan cards);
+  the disclosure sentence is never truncated (it wraps and the footer grows).
+  Restore Purchases stays at the end of the scrolling body. Spacing tightening
+  alone was rejected: the most it could recover (about 50 pt, about 100 with the
+  hero) is far short of the 236-291 pt needed.
+- **[Engineering]** Measured after: 375x667 Medium / Large: footer 218 / 222 pt
+  (33% of the screen), text area 373 / 369 pt, button, two-line disclosure, both
+  links and Maybe later all on the first screen. With the system text scale at
+  1.6x: footer 321 / 327 pt (48-49%), disclosure three lines, links on two rows,
+  text area 270 / 264 pt, still everything visible.
+- **[Engineering]** A footer that grows with text size needs a limit. A first
+  version capped it and scrolled inside itself; that made every Premium test's
+  unqualified `scrollUntilVisible` ambiguous (two scrollables) and a second scroll
+  area in a paywall is worse UX anyway. Instead the links stay in the footer only
+  while `screen height / system text scale >= 400`, a rule fitted to the
+  measurements (the footer is about 46 pt + 172 pt per unit of scale, so this
+  keeps it at or under about half the screen). Past that (375x667 at 2x and above,
+  320x568 above about 1.4x) the links go back to the end of the scrolling body,
+  the layout from before, which fits (the existing 2x and 3x tests still pass).
+  The footer's top border now shows in every state: the "stray divider above
+  Maybe later" it used to be dropped for no longer applies, because the links sit
+  between it and the body; that test was inverted.
+- **[Validation]** Measurement-based tests in the real font and app theme, at
+  375x667: Medium and Large, and each with a 1.6x system scale, assert the button,
+  disclosure, both links and Maybe later end inside the screen with no scrolling,
+  the links are in the footer, the disclosure is not truncated, the footer share
+  and the text area height stay in bounds, the hero is absent and Restore is
+  reachable; 320x568 in both themes; pricing unavailable; the 3x fallback with the
+  links reachable at the body's end; the 699/700 pt hero boundary. Disabling the
+  footer links, or restoring the truncation, turns them red. The old "footer at most
+  40% at 320x568 @1.3x" guard was measured in the test font (about twice as wide
+  as the real one) and is replaced by these; hero tests now use a phone-sized
+  surface.
+- **[Known limit]** On a 320x568 screen with a system scale of 1.3-1.4x the text
+  area above the footer is about 220 pt; that size is outside the 375x667 target
+  and was only checked for fit, not for comfort.
+
+## 2026-09-22 (Welcome badge: one-time confetti)
+
+- **[Product]** The Welcome badge celebration was a static card ("Welcome to the
+  climb") that appeared at the top of the result list when the save landed, shoving
+  the results down. It now gets a short confetti burst and eases in. Owner
+  decisions: no package, a `CustomPainter`, an `OverlayEntry`, about 1.8 s,
+  the theme's colors, once, never under reduced motion.
+- **[Engineering]** `lib/widgets/confetti_burst.dart`: `buildConfettiParticles`
+  (a seeded fan of 40 pieces thrown up and outward, so a burst is fully
+  determined by its seed), `ConfettiPainter` (position under gravity, fade over the
+  last 40%; repaints from one `AnimationController`) and `ConfettiBurst`
+  (pointer-transparent, hidden from screen readers, one controller, `onFinished`
+  when done). No dependency added: it is about 150 lines, deterministic and theme
+  aware. The result screen throws it from the banner's own position into the
+  navigator's overlay on the false to true flip of `_showWelcomeCelebration`,
+  guarded by a separate `_confettiDecided` flag so it can run once per screen
+  instance whatever rebuilds, scrolls or retries follow; leaving the screen removes
+  and disposes the entry at once. The overlay (not a child of the list item) is
+  what keeps a scrolled-away-and-back banner from replaying it and lets the pieces
+  fall over the cards instead of behind them. Colors are the theme's primary,
+  secondary and tertiary.
+- **[Engineering]** The banner eases in with `AnimatedSize` and `AnimatedOpacity`
+  (350 ms). Under reduced motion it renders plainly, with no `AnimatedSize` at all:
+  a zero-duration `AnimatedSize` mutates its own layout and asserts in debug, which the
+  reduced-motion test caught before it shipped. An item that is rebuilt later is
+  created already in its final state, so the ease does not replay either.
+- **[Validation]** Tests (`daily_test_result_screen_test.dart`): one burst on a
+  live earn, present at 1.0 s and gone by 1.9 s, banner stays; it starts from the
+  banner; the theme's colors in light and dark; none for an ordinary completion or
+  a reopened completed set; a failed first attempt throws nothing and the retry that
+  earns it throws exactly one; none under reduced motion (and no size or fade
+  animation); the banner eases in; scrolling away and back replays nothing;
+  leaving mid-burst removes it with no error; the painter's determinism, launch
+  direction, gravity and fade. Ignoring reduced motion, or not removing the entry
+  on leave, turns tests red. The existing Welcome, analytics and Day-0 tests pass
+  unchanged.
+
+## 2026-09-22 (answers: curly quotes, and no keyboard correction)
+
+- **[Problem]** A phone keyboard can change what the learner typed before the app
+  sees it, in two ways that spoil a measurement. Smart punctuation types "isn’t"
+  with a curly apostrophe, which an exact comparison against "isn't" calls wrong.
+  Autocorrect and suggestions can silently repair the very mistake the test is
+  looking for ("She can speaks" becomes "She can speak").
+- **[Engineering]** `normalizeAnswer` turns ’ ‘ into `'` and “ ” into `"` before
+  the rest of the normalization, and it does this on both sides of the
+  comparison (the answer key and each predicted wrong answer go through the same
+  function), so a curly character in generated content matches too. The Daily Test
+  and Topic Practice answer fields turn off autocorrect, suggestions, smart quotes
+  and smart dashes. Practice answers are graded by the model, not compared, so
+  only the keyboard half matters there: the model should see what the learner
+  actually wrote. Nothing else about matching changed.
+- **[Validation]** Tests: the normalization of each of the four characters; a
+  curly apostrophe still gives `correct` and `commonWrong` with the right
+  comment; a curly apostrophe in the key matches a straight one; both fields
+  carry the four settings. Removing the ’ replacement or flipping a setting turns
+  the matching tests red. Not covered: what a real iOS keyboard does with these
+  flags, which needs a device (the flags are the documented Flutter switches for
+  it).
+
+## 2026-09-22 (a fixed first Daily Test, bundled with the app)
+
+- **[Problem]** The first thing a new user does after onboarding is the Daily
+  Test, and it was generated: a wait in front of a spinner (or a preload started
+  on "Get started" to hide it), a proxy call and its cost for every install, and
+  an answer key nobody had read. It is also the one test every new user sees, so
+  an odd question or a wrong key there costs the most.
+- **[Product]** Owner decision: the first day's test is a fixed set of five
+  hand-written questions, the same for everybody, shipped as a Dart constant
+  (`kDayZeroQuestions` in `lib/data/day_zero_daily_test.dart`, not an asset:
+  nothing to load or lose). Three fill-in-the-blank and two error-correction, one
+  per topic (gerund vs. infinitive, articles, modal verbs, modal past forms, tense
+  selection), each with the predicted wrong answers and the comment for it, and for
+  error correction the "unchanged sentence" wrong answer too. Ids are `day0_1` to
+  `day0_5`. Later days are unchanged: generated, one per day.
+- **[Engineering]** `DailyTestService.seedDayZeroSet()` writes the set as today's
+  set only when today has none, so it can never replace a generated or a
+  completed set. `FirstLaunchFlow._completeOnboarding` calls it *before* saving
+  the profile: the profile row is what "onboarding done" means, so once it exists
+  the set is already on disk, and a user who closes the app during the test and
+  opens the Daily Test from Home gets the same fixed set. A failed write is not
+  fatal: onboarding continues and the Daily Test screen generates a set as it did
+  before. Because an AI set written by a preload would replace the fixed one
+  (`saveDailyTestSet` replaces an unfinished day), the "Get started" preload is
+  removed, and with it `preloadTodaysSet`, which nothing else called. Single-flight
+  in `getTodaysSet` and the 40 s request timeout stay (they still serve Home and
+  the Daily Test screen's retry).
+- **[Engineering]** Schema v21: `daily_test_sets.source TEXT NOT NULL DEFAULT
+  'generated'`. Every set stored before this was generated, which is exactly what
+  the default backfills; the step is idempotent and creates the table first if a
+  database somehow lacks it. `saveDailyTestSet` takes a `DailyTestSource`
+  (`generated`, the default, or `bundled`) and `DailyTestSet.source` carries it
+  back. A value the code does not know reads as `generated`.
+- **[Analytics]** `daily_test_completed` gains `set_source` (`bundled` /
+  `generated`), so the first test can be compared with the generated ones
+  (analytics plan E1, §9 and §6).
+- **[Validation]** `test/day_zero_daily_test_test.dart` reads the set the way a
+  learner would: five unique ids in order; three fill-in and two error-correction;
+  five different topics all in the catalog; every correct answer graded correct
+  (also with case and a full stop); every predicted wrong answer graded
+  `commonWrong` with its own comment; the guessable wrong answers written out
+  again in the test from the decision (so removing one from the data turns it red);
+  the unchanged sentence with and without its full stop; an unpredicted answer
+  falls back; `toJson`/`fromJson`. Service tests: the seed writes a bundled set,
+  the Daily Test then opens on it with no generation, and it never touches a
+  generated or completed day or resets itself when run twice. Flow tests (rewritten
+  for the fixed set): nothing generated or written before onboarding ends; the five
+  questions are shown with no request; the seed lands before the profile; leaving
+  the test and asking again from Home gets the same set; a day that already has a
+  set is left alone; a failed seed does not stop onboarding; `set_source =
+  bundled` and `day0 = 1` end to end. Migration tests: v20 to v21 keeps rows and
+  backfills `generated`, the column is NOT NULL with that default, a replayed
+  migration keeps a bundled set, and a fresh install has the column. The frozen v14
+  upgrade test now expects the extra column. Mutations that turn tests red: no seed
+  call, seed after the profile, a fatal seed failure, a seed that overwrites, no
+  `set_source`, no v21 step, a wrong answer key, a predicted wrong answer removed,
+  the source not stored.
+- **[Known limit]** The content was written from the decision text, not
+  play-tested: whether these five questions are the right difficulty for a
+  first-time user is a hypothesis to read from `daily_test_completed`'s counts
+  with `set_source = bundled` and `day0 = 1`. All five are stored with the same
+  set for every user by design, so a user who resets onboarding in a debug build
+  sees the same test again.
+
+## 2026-09-22 (results: one fixed button, the badge card below, confetti on tap)
+
+- **[Problem]** Three things on the Daily Test result screen worked against each
+  other. The Welcome banner arrived at the top when the save landed and shoved the
+  results down; the confetti fired by itself at that moment, over results the user
+  was still reading; and the Day-0 screen ended in a paywall card plus "Maybe
+  later", so the first thing after the user's first win was a sales pitch. Its
+  buttons also lived at the end of the scrolling list.
+- **[Product]** Owner decisions: the result screen has one primary button in a fixed
+  footer (like Premium's), whose text follows the screen's state: "Saving your
+  results…" (disabled), a retry after a failed save, "Start my climb" with a small
+  badge icon when the Welcome badge was just earned, otherwise "Continue" (Day-0)
+  or the existing "See your climb" / "Back to Home" (Home). The large badge card is
+  the last item under the results. The confetti belongs to the tap: "Start my
+  climb" disables the button, plays the burst on the results for its whole 1.8 s,
+  and only then moves on, so the confetti and the next screen never overlap.
+  Reduced motion: no confetti, straight through. A badge earned from a test opened
+  on Home uses the same button and the same order (confetti, then Home animates the
+  step). The Day-0 paywall card is gone; the paywall moves to Home (next batch), so
+  until that lands a new user is not shown a paywall on Day 0.
+- **[Engineering]** `DailyTestResultScreen` loses `bottomBuilder` and gets `onDone`
+  (null pops the route, as before; the Day-0 flow, which is not a route, passes the
+  callback that ends it). `_startClimb` sets the `_climbStarted` flag, throws the
+  burst from the top of the button into the navigator's overlay and leaves when it
+  finishes (`ConfettiBurst.onFinished`); a 2.5 s timer leaves anyway if the animation
+  never completes (a paused ticker), and `_left` makes leaving happen once whatever
+  gets there first. The post-save auto-trigger is removed. `FirstLaunchFlow` drops
+  `_DayZeroPaywallCta` and its own "result saved" flag: the screen keeps its
+  button disabled while saving, so the old guard against building Home ahead of the
+  write (and the retry) now lives in the one button.
+- **[Engineering]** The footer is `BrandScaffold.bottomBar`, a new slot mapped to
+  `Scaffold.bottomNavigationBar`, not the end of a body column. Found by a test:
+  the "could not save" SnackBar sat exactly over a footer that is part of the body
+  and hid the retry button for its whole life; in the Scaffold's own bottom slot a
+  SnackBar floats above it. (Premium's footer is built the older way and was not
+  touched.) The list's own bottom padding shrinks to 16 when a bar is present, as the
+  bar handles the safe area.
+- **[Engineering]** Also found by a test: the saving bar disappearing when the save
+  lands moved every card up 4 px, and it shifted the list's indices so the card
+  (which had no key) was rebuilt already in its final state, skipping its ease-in.
+  The bar now has a fixed 4 px slot and the card keeps a `GlobalKey`.
+- **[Validation]** Result screen: the fixed footer stays in view, disabled while
+  saving and as a retry after a failure, at 320x568 with 2x text in light and dark;
+  the card sits below every result card and its arrival moves nothing above it;
+  "Start my climb" with its icon replaces the plain button; Day-0 without a badge
+  reads "Continue" and a double tap leaves once; nothing plays until the tap; one
+  burst from the top of the button, 1.0 s in it is still playing and the screen is
+  still there, and it leaves only after 1.8 s; the button is disabled after the tap;
+  a burst that never finishes (tickers muted) still lets the user go at about 2.5 s;
+  finished burst plus timer leave once; theme colors; reduced motion (no burst, no
+  animation widgets, leaves at once); a failed first save then a retry shows the
+  button, still no burst until the tap, and the card still eases in; scrolling away
+  and back replays nothing; leaving mid-burst removes it, cancels the timer and
+  never calls `onDone`; from a pushed route the pop comes only after the burst.
+  Day-0 through the real app: confetti on the results with Home not yet built, then
+  Home mounts before the step and the pawn climbs; reduced motion goes straight
+  through; all-skipped ends on "Continue" with the pawn unmoved; a slow save keeps
+  the button disabled until it lands. Home: a badge earned from a test opened on Home
+  plays the confetti, then the mountain animates. Mutations that turn tests red:
+  leaving at once instead of after the burst, ignoring reduced motion, an enabled
+  button after the tap, no fallback timer, no once-only guard, a timer or burst left
+  behind on dispose, no card key, `onDone` ignored, the badge state never shown.
+- **[Known limit]** How the burst looks from the button on a phone (a throw from
+  the bottom edge rises about 160 px at most, over the last result cards), and
+  whether 2.5 s is the right ceiling on a slow device, are not device-confirmed.
+
+## 2026-09-22 (the first-day paywall moves to Home, once, after the climb)
+
+- **[Problem]** The Day-0 result screen ended in a paywall card, right after the user's
+  first win and before they had seen the mountain move.
+- **[Product]** Owner decision: the pitch comes after the payoff. Home opens the Premium
+  screen by itself, once per install, about 600 ms after the pawn finishes climbing;
+  when there is no step to climb (all questions skipped, or a step that belongs to
+  another month) as soon as Home has loaded. Only for a user who finished the Day-0
+  test (leaving it half-done, which lands on Home, gets no paywall), never for a
+  user who already has full access, and never twice.
+- **[Engineering]** `FirstLaunchFlow.onComplete` gains `dayZeroCompleted` (true only
+  when the user left through the result screen's button, false for the exit from the
+  test itself). `app.dart` holds it and gives it to the new Home once, the way it already
+  gives the pending climb (Home takes it in `initState`, the owner clears it).
+  `MonthlyMountain.onMotionEnd` reports the end of a move: after the animation, after
+  the frame when there is none (reduced motion, a new month length), and not for a
+  move another one interrupts or for the mount position. Home arms the paywall from
+  it (600 ms) or, with nothing to climb, from a finished climb load; a reload while the
+  pawn is still moving does not arm it early.
+- **[Engineering]** It opens only when Home is visible: while another route or tab
+  covers it, or the app is in the background, it waits and is retried when Home is
+  visible again (route uncovered, tab active, app resumed). The entitlement is read
+  fresh just before (`hasFullAccess` fails closed, and full access drops the offer for
+  good). Then the flag is claimed and the screen pushed: schema v22 adds
+  `one_time_flags(key TEXT PRIMARY KEY, set_at TEXT NOT NULL)`, and
+  `claimOneTimeFlag(key)` is `INSERT OR IGNORE` followed by `changes()` in one
+  transaction, true only for the first caller, so overlapping callers cannot both
+  win. The flag is claimed right before the push, so an app closed on the paywall still
+  counts as shown; if the flag cannot be read, the paywall is not shown and not
+  retried (one that might show twice is worse than one that does not show).
+  `resetOnboarding` (debug only) deletes the flag with the profile.
+- **[Analytics]** `paywall_viewed` / `paywall_dismissed` carry a new source
+  `day0_after_climb`; the old `onboarding` source is removed (its only user, the Day-0
+  card, is gone). The automatic opening sends no `mode_selected`: `_openPremium` (a
+  user tap) still logs it and uses source `home`, and both go through one
+  `_pushPremium`. Analytics plan §6, §8 and §9 updated (the `source` dimension needs
+  no new registration, only a new value).
+- **[Validation]** `home_day0_paywall_test.dart` (a Home with fake storage and
+  subscription): 600 ms after the animation ends (1450 to 1600 ms after the step
+  appears, measured with frame pumps), 600 ms after the step under reduced motion,
+  no early opening on a resume mid-climb, waits while covered and opens on uncover,
+  waits on an inactive tab; no step, and a step from another month, opens once loaded;
+  never when not offered, when the user has full access (flag untouched), when the flag
+  was already claimed, or when it is unreadable (no retry, no exception); the flag is
+  claimed before the route is pushed; dismissing returns to Home and nothing brings it
+  back (a resume, more time); a second Home finds the flag claimed; analytics sources
+  and no `mode_selected`, and a user tap on Premium still reports `home` and
+  `mode_selected`. Through the real app (`first_launch_climb_test.dart`): confetti,
+  climb, then paywall in that order and once; dismissed stays dismissed; all skipped;
+  reduced motion; leaving the test unfinished shows nothing for 5 s. Also flow tests for
+  `dayZeroCompleted`, the mountain's `onMotionEnd` (seven cases), the flag (first wins,
+  independence, survives a restart, eight overlapping claims give one winner, reset), and
+  the v22 migration (empty table, columns and primary key, replay keeps a claim, fresh
+  install). Mutations that turn tests red: no 600 ms pause, no in-flight guard, ignoring
+  full access, pushing before claiming, showing on an unreadable flag, no visibility
+  deferral, always pending, `mode_selected` on the automatic opening, no retry on
+  uncover, no zero-arm when loaded, an abandoned test counted as completed, the offer
+  dropped in `app.dart`, `onMotionEnd` never called, no v22 step, a claim that is always
+  true, a reset that keeps the flag.
+- **[Known limit]** An app killed between the flag claim and the paywall showing costs
+  that user their one paywall, by design (see above). A mountain replaced mid-climb (a
+  month rollover during the animation) loses the callback, so that session has no
+  first-day paywall; the Day-0 climb is seconds long, so this is theoretical. Not
+  device-confirmed: how 600 ms feels after the pawn stops, and the Premium route's
+  entrance over a Home that has just finished animating.
+
+## 2026-09-22 (tomorrow's Daily Test, prepared in the background)
+
+- **[Problem]** From the second day on, the Daily Test is generated when the user
+  opens it: a spinner for the whole generation, every day. The user has just finished
+  a test, so that is the moment the app can prepare the next one for free of waiting.
+- **[Product]** Owner decision (P2): when a day's Daily Test is completed, the next
+  day's set is generated in the background and stored under the next day's key
+  (source `generated`). It also applies to the day of the fixed first test. It never
+  delays the result, and any failure is silent: the next day then generates on open,
+  exactly as before. A next day that already has a set, or one already being
+  generated, costs no request.
+- **[Engineering]** `StorageService.getDailyTestSet(day)` reads any day's set
+  (`getDailyTestSetForToday` is now that with today's key) and `dayKeyAfter(day)`
+  builds the next key from calendar fields (month and year ends, leap days,
+  daylight saving). `DailyTestService.prefetchSet(day)` runs the same cache-or-generate
+  path as opening a day and swallows every error. Single-flight became per day (a map,
+  not one slot), so a preparation for tomorrow, today's open and a repeat all share
+  requests by day; a call for another day still never joins. `completeDailyTest` starts
+  the preparation for the day after the set's own day only after the completion is
+  saved (a failed save throws first), without awaiting it. The day after the *set's* day,
+  not after the wall clock, so a test finished just after midnight still prepares the
+  right day. Nothing else reads `daily_test_sets` without a day, so a stored future set
+  cannot be mistaken for today's.
+- **[Engineering]** Home used to build a `DailyTestService` at three places (opening
+  the test, its result, viewing a finished result); it now owns one, because
+  single-flight and the preparation only work when they share an instance.
+  Test doubles that override `getDailyTestSetForToday` also override
+  `getDailyTestSet` (the service reads by day now).
+- **[Cost]** One extra `generate_daily_test` per active day, moved from tomorrow's open
+  to today's completion; the number of generations per user per day is unchanged
+  unless a day is skipped (a prepared set is then simply used later, or replaced by
+  nothing: it stays stored under its date and is not read again, so a skipped day
+  wastes one generation). The proxy counts per device per UTC day: a full day of five
+  sessions (10 units) plus today's test (1) plus this preparation (1) is 12 of 15, and a
+  device at its limit just gets a silent failure here. The proxy was not touched.
+- **[Validation]** Real-SQLite service tests: completing today's test costs exactly
+  one more request, stored under tomorrow's day, generated and not completed, with
+  today's set untouched; the next day opens from the cache (no request, same
+  questions, not completed); a failed generation is silent (no uncaught error), leaves
+  no set, still saves the completion, and the next day generates as before; completing
+  again (immediately, and after it finished) asks for nothing more; a next day with a
+  set already costs nothing; the fixed first-test day prepares tomorrow and stays
+  bundled; opening the new day while it is still being prepared joins the request; a
+  completion that fails to save starts nothing; `dayKeyAfter` across month, year, leap
+  and (in a zone that has it) daylight-saving days; the storage read by day. Through
+  Home (fakes): reopening the Daily Test while generation runs joins it (one request,
+  not one per opening), finishing from Home stores tomorrow's set with one more request,
+  and viewing the finished result again asks for nothing. Mutations that turn tests red:
+  no preparation, preparing today instead of tomorrow, a preparation that throws, a
+  preparation started before the save, no single-flight, a cache read that ignores the
+  day, and a separate service for the test screen.
+- **[Known limit]** The daylight-saving cases of `dayKeyAfter` are asserted but this
+  machine's zone (Türkiye, no daylight saving) cannot tell the correct code from a
+  24-hour-addition bug, so they are not proof by themselves; the code is correct by
+  construction. A skipped day leaves one unused stored set. Not device-confirmed: that
+  the next morning's Daily Test really opens without a wait (it needs a day to pass, or
+  a device clock change).
+
+## 2026-09-22 (Premium footer: tighter vertical spacing)
+
+- **[Product/Engineering]** Device feedback: too much air between "Start free trial", the Terms/Privacy row and "Maybe later". The footer's text buttons now have a 44 pt target that is also the drawn button (shrink-wrapped, was a 40 pt button in a 48 pt padded target), the padding is 8 above and 4 below (was 12 and 8), the button-to-disclosure gap is 6 (was 8) and the gap under the disclosure is gone (was 4); nothing that is tapped got smaller than 44 pt. At 375x667 the footer is 196 pt at Medium (was 218), 200 at Large (222) and 295 at 1.6x system text (321), and the scrolling area above it grows by the same 22, 22 and 26 pt (373 to 395 at Medium); links stay in the footer by the same rule, the disclosure is still never truncated, and the measurement tests were updated to these values.
+
+## 2026-09-23 (Premium prompt on the practice results screen)
+
+- **[Problem]** A free user who finishes their one daily "Practice this" session
+  (Review → weak spot → practice) lands on `ResultsScreen` with only "Back to
+  topics"; nothing there says what Premium would add, at the moment the day's free
+  practice has just been used.
+- **[Product]** Owner decisions after a read-only Batch 0: "Back to topics" stays
+  the primary `FilledButton`, unchanged in look and behavior. Under it, 12 pt, a
+  `bodySmall` / `onSurfaceVariant` line and a full-width `OutlinedButton` "See
+  Premium" to `PremiumScreen`. The line is exactly the weak-spot screen's locked-row
+  copy, from one shared constant. Shown only when `hasFullAccess` is false **and**
+  `getFreePracticeCountForToday() >= freeDailyPracticeLimit`; if either read throws,
+  it is not shown. English only: the app has no localization, and Turkish copy is
+  recorded as a post-launch roadmap item. No "unlimited", no new screen, nothing
+  modal.
+- **[Engineering]** `ResultsScreen` is shared by Topic Practice (premium only) and
+  "Practice this"; a free user can only reach it through "Practice this", so the
+  entitlement and quota check alone decides, with no origin flag. The
+  `SubscriptionService` is passed down `launchPracticeSet` → `PracticeScreen` →
+  `ResultsScreen` (required, no boolean from callers). The screen reads entitlement
+  first and the free count only for a free user, then shows the prompt and logs
+  `practice_result_upsell_viewed` once (from `initState`'s load, not from `build`).
+  "See Premium" logs `practice_result_upsell_tapped` and pushes `PremiumScreen` with
+  the new `AnalyticsService.paywallSourcePracticeResult` (`practice_result`) as its
+  analytics source. `sourceContext` is left empty: `PremiumScreen` shows it as
+  "Practice $source.", so it is display text, not an analytics tag. New
+  `lib/utils/premium_copy.dart` holds `freePracticeUsedMessage`, now used by both
+  `ResultsScreen` and `WeakSpotDetailScreen`'s locked row.
+- **[Analytics]** Two parameterless events, E8 in `docs/analytics-plan.md`, with
+  the note that `_viewed` is exposure (with a limit of 1 a day, spent at generation,
+  practically every finished free session shows the prompt) and tapped/viewed is
+  the metric. The `source` dimension gets a new value, no new registration.
+- **[Validation]** `results_screen_test.dart` (fake storage and subscription,
+  recording sink): premium user with a used-up count sees nothing and the count is
+  not read; a free user with practice left sees nothing; a free user with practice
+  used up sees the line and button below the primary button, one `_viewed` that a
+  rebuild does not repeat, then `_tapped`, `PremiumScreen` with source
+  `practice_result` and `paywall_viewed {source: practice_result}`; an entitlement
+  read that throws and a count read that throws each show nothing and log nothing;
+  "Back to topics" still pops to the first route with the prompt visible. Contract
+  tests for both events; the all-events Firebase-limits test now covers 17.
+  `flutter analyze` clean; 851 tests pass (843 before, 8 new).
+- **[Known limit]** `SubscriptionService.hasFullAccess` swallows a RevenueCat
+  failure and returns false, so the "read throws" rule does not cover that case: a
+  paying user during a RevenueCat failure reads as free. The prompt still needs a
+  used-up free count, which only builds up while a user is free, so they see it only
+  if they also used the free practice earlier that day. Changing that would change
+  `hasFullAccess`'s contract for every caller, so it is left as is. Not
+  device-confirmed: spacing, and the prompt at Large text and 320 pt width.
+
+## 2026-09-23 (pre-merge cleanup: `main` merged in, docs brought in line with reality)
+
+- **[Engineering]** `main` merged into `monthly-climb-v2` (it was one commit
+  ahead, `77c8d60`). Conflicts only in `docs/roadmap.md` and this file; both
+  sides kept, except the 2026-09-16 v3 paragraph and the `codex/monthly-climb`
+  GUARD note that `77c8d60` removed on purpose. Checked line by line: no line
+  added on either side was lost. `codex/monthly-climb` has no common history
+  with `main` (different root commit) and survives only in the pre-rewrite
+  mirror backup, now scheduled for deletion a week after launch.
+- **[Product]** Owner-confirmed facts written into the current-state docs:
+  the proxy is deployed, so token logging, `duration_ms`, content-free failure
+  logging and the Daily Test's `weakSpots` removal are live (the last proxy
+  commit is `duration_ms`, and the worker deploys as a whole); EU DSA trader
+  verification is Active since 2026-09-22; RevenueCat has live products; the
+  Xcode 27 `lipo` blocker is resolved (a release IPA builds); PRD v2 is
+  "v2 shipped". The launch-scope analytics row said "Not started" while E1 and
+  E3–E8 are implemented; corrected. README no longer calls the gamification
+  layer unbuilt v3 work.
+- **[Product]** GDPR Art. 27 (EU representative) recorded in the roadmap as a
+  deliberate, documented gap, with the owner's reasoning and revisit trigger.
+- **[Product]** Still open, now collected in a TestFlight pre-submission
+  checklist in the roadmap: the device DebugView run, the Premium plan cards
+  at 375×667, and an explicit Restore Purchases tap. Apple Small Business
+  Program enrollment stays open.
+- **[Engineering]** `docs/analytics-plan.md` §6: the `devicectl` launch
+  commands were missing `--` before the `-FIR…` arguments, so devicectl would
+  have tried to read them as its own options. Fixed in both the enable and
+  disable commands. Older dated entries elsewhere were not rewritten; where
+  they would mislead, a short dated pointer was added.
+
+## 2026-09-23 (submission prep: version, export compliance, launch screen)
+
+- **[Product]** `pubspec.yaml` version `0.1.0` → `1.0.0+1` for the first App
+  Store build. `ITSAppUsesNonExemptEncryption = false` added to Info.plist, so
+  App Store Connect stops asking the export-compliance question per build.
+  Checked first: no encryption or crypto package in `lib/`; `crypto` is only
+  pulled in by build hooks (`hooks`, `sqlite3`); all traffic is HTTPS through
+  the OS.
+- **[Problem]** The launch screen was still Flutter's template: a hard-coded
+  white `backgroundColor` and a 1×1 transparent image. iOS draws it from the
+  system appearance, and Flutter keeps it up until the first frame, which also
+  waits for `Firebase.initializeApp` and RevenueCat's configure in `main()`.
+  A dark-mode user saw white first. The first Flutter frame itself (the
+  profile-loading view in `app.dart`) painted no background at all:
+  `LoadingView` deliberately leaves that to its host, and at that spot there
+  is no host.
+- **[Engineering]** New `LaunchBackground.colorset` (Any `#FAF3EC`, Dark
+  `#1C1B1F`, the theme's `surfaceContainerLow`); `LaunchScreen.storyboard`
+  refers to it as a named color. In `app.dart` the loading view now sits in a
+  `Material` painted `surfaceContainerLow`, so the first frame matches the
+  launch screen; `Material` also gives its text a real text style.
+  `LoadingView` itself is unchanged, since elsewhere it must not paint. The
+  storyboard compiles with `ibtool`, and `actool` compiles the catalog with
+  both colors at the expected sRGB values.
+- **[Validation]** `test/launch_background_test.dart`: the colorset's two
+  colors equal the light and dark themes' `surfaceContainerLow`; the
+  storyboard uses the named color; with the profile read held open, the first
+  frame is a full-screen `Material` in that color under light and dark system
+  appearance. Painting the view with `surface` instead turns the test red.
+- **[Known limit]** The launch screen can only follow the system appearance,
+  not the in-app theme setting (read from storage after launch), so a user who
+  chose Dark on a Light system still starts on the light color. Not
+  device-confirmed: the transition on a physical iPhone in both appearances.
+
+## 2026-09-23 (practice results: the Premium prompt becomes an offer card)
+
+- **[Product]** Same content, better grouping, from an owner mockup used for
+  hierarchy only: chip, title, message, two benefits and the Premium button
+  now sit together in one card after the results, and "Back to topics" moves
+  under it. The mockup's blue surface, gradient, illustration and icon style
+  were not reproduced; the project's tokens decide color, radius and padding.
+- **[Product]** `freePracticeUsedMessage` now reads "You've used today's free
+  practice. Unlock Topic Practice and more daily sessions with Premium." The
+  weak-spot screen's locked row reads the same constant, so both change
+  together. Both benefits were checked against the code: Topic Practice is
+  locked for a free user, and "more daily sessions" is
+  `freeDailyPracticeLimit` (1) against `dailySessionLimit` (5), not unlimited.
+  The Premium screen's comparison table did not show that session difference;
+  fixed in the next commit.
+- **[Engineering]** New `PremiumOfferCard` (`lib/widgets/premium_offer_card.dart`):
+  a plain `Card` with the usual 18 pt padding, a "PREMIUM" chip on
+  `secondaryContainer`/`onSecondaryContainer` (not `LockedPremiumPill`, which
+  means "locked", and not the orange band color), chip above the title rather
+  than beside it, and a full-width FilledButton. The two benefits sit side by
+  side while each column keeps at least 120 unscaled points, otherwise they
+  stack; no fixed heights. Benefits are text only; each is one small tile
+  widget, so an icon later goes inside it without touching either layout.
+  `ResultsScreen` keeps `_loadUpsell`, `_openPremium` and the events exactly as
+  they were; only the build changed: card then an OutlinedButton "Back to
+  topics", or the old FilledButton when there is no card.
+- **[Engineering]** Found by the requested 320 pt / Large / 2.0 check, not
+  introduced by this change: each result card's header row (icon plus
+  "Correct", "Skipped" or "Needs work") overflowed by 12 px at that size. The
+  label is now `Flexible` and wraps.
+- **[Validation]** `results_screen_test.dart`: every piece of the offer is
+  inside the card, in order; the card follows the last result card with the
+  same left edge and width; "Back to topics" is outlined and outside, below
+  it; with no card it is filled and still pops to the first route; the
+  earlier cases (premium, practice left, either read throwing, one `_viewed`,
+  `_tapped` and `paywall_viewed {source: practice_result}`) still hold. At
+  320 pt, Large text, 2.0 system scale: no overflow, benefits stacked, all
+  text inside the card; at 430 pt, Medium: benefits side by side. 858 tests
+  pass (855 before, 3 new); `flutter analyze` clean.
+
+## 2026-09-23 (Premium comparison table: session row added, then reverted)
+
+- **[Product]** A "Practice sessions" row (Free 1 a day, Premium 5 a day, from
+  the constants) was added to the Premium screen's comparison table in
+  `1be6314`, so the results offer card's "more daily sessions" could be
+  checked on the paywall. Measured cost at 375x667: the plan cards' visible
+  part above the fixed footer fell from 78 to about 30 pt at Medium, and from
+  33 pt to none at Large. Owner decision: hiding the purchase cards is not
+  acceptable, so the commit was reverted (`git revert`, history kept).
+  Writing "5 a day" into an existing row's Premium cell was also rejected: it
+  would blur that row's meaning. The gap is a post-launch roadmap item: fix it
+  by shortening or restructuring the table, not by appending a row.
+
+## 2026-09-23 (Premium offer card: benefit icons)
+
+- **[Product]** The two benefits on the practice results offer card get their
+  icons (owner-supplied): `ic_topic_practice` and `ic_daily_sessions`, each in a
+  light and a dark variant, as PNGs at 24/48/72 px (1x, `2.0x/`, `3.0x/`).
+  Text, order and the side-by-side / stacked rule are unchanged.
+- **[Engineering]** `pubspec.yaml` registers `assets/icons/` as a folder, like
+  `assets/avatars/`. A folder entry takes the files directly in it plus
+  Flutter's resolution variants, not other subfolders, so the SVG sources in
+  `assets/icons/_source/` stay in the repo but out of the app; checked in the
+  built test bundle (`build/unit_test_assets`), which has the 12 PNGs and no
+  SVG. No new package (`Image.asset`, no `flutter_svg`).
+- **[Engineering]** `PremiumOfferCard.iconAsset(name, brightness)` is the one
+  place the variant is chosen (`_dark` for `Brightness.dark`, `_light`
+  otherwise); `_BenefitTile` reads `Theme.of(context).brightness` and puts a
+  fixed 24x24 `Image.asset(excludeFromSemantics: true)` before an `Expanded`
+  title/detail column, top-aligned, 10 pt apart. The icon's size is in logical
+  points and ignores text scale; the text wraps beside it.
+- **[Validation]** New `premium_offer_card_test.dart`: the light and dark
+  themes each load their own variant for both benefits, and every chosen file
+  loads from the bundle; the images are excluded from semantics and the
+  card's merged label still has each benefit line exactly once; at 320 pt,
+  Large text and a 2.0 system scale there is no overflow, the benefits stack,
+  both icons are 24x24 on one left edge, each top-aligned with its own title
+  with the text to its right and inside the card; on a 430 pt screen the two
+  sit side by side, still 24 pt.
+- **[Known limit]** Flutter bundles everything directly inside a registered
+  folder, including a macOS `.DS_Store` if one exists. It is gitignored, so a
+  clean checkout has none, but a release built on this machine would carry
+  `assets/icons/.DS_Store` (and `assets/avatars/.DS_Store`, which predates
+  this change). Delete them before building for release.
+
+## 2026-09-23 (preflight removes `.DS_Store` from assets)
+
+- **[Engineering]** Closes the known limit recorded with the benefit icons:
+  `scripts/preflight.sh` now finds every `.DS_Store` under `assets/`, deletes
+  it and prints each path it deleted (or that there were none). They are
+  gitignored, so this only matters for a build taken on a Mac that has them,
+  which is exactly where release builds are taken. Run once here: it removed
+  `assets/.DS_Store`, `assets/icons/.DS_Store` and `assets/avatars/.DS_Store`;
+  a second run reports none. The rest of the script is unchanged.
+- **[Product]** README "Local setup" step 5 already said to run preflight
+  before `flutter build ipa`; it now says before every TestFlight or App Store
+  build and describes the new step. The roadmap's TestFlight checklist points
+  to it.

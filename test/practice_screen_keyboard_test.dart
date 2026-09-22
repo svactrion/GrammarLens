@@ -8,6 +8,7 @@ import 'package:grammar_lens/screens/practice_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/services/subscription_service.dart';
 
 // Verifies the fix for docs/prd.md Theme 2 / roadmap "What's next #1": the
 // on-screen keyboard must not cover the primary Next/Submit button (or the
@@ -67,6 +68,7 @@ void main() {
           claudeService: ClaudeService(),
           storageService: StorageService(),
           analyticsService: AnalyticsService(),
+          subscriptionService: SubscriptionService(),
         ),
       ),
     );
@@ -106,6 +108,24 @@ void main() {
           'behind it.',
     );
   }
+
+  testWidgets(
+    'the answer field turns off autocorrect, suggestions and smart '
+    'punctuation, so the keyboard cannot fix the learner\'s mistake',
+    (tester) async {
+      await pumpScreen(
+        tester,
+        logicalSize: devices.values.first.size,
+        devicePixelRatio: devices.values.first.dpr,
+      );
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.autocorrect, isFalse);
+      expect(field.enableSuggestions, isFalse);
+      expect(field.smartQuotesType, SmartQuotesType.disabled);
+      expect(field.smartDashesType, SmartDashesType.disabled);
+    },
+  );
 
   for (final MapEntry(key: deviceName, value: device) in devices.entries) {
     group(deviceName, () {
@@ -196,8 +216,7 @@ void main() {
           logicalSize: device.size,
           devicePixelRatio: device.dpr,
         );
-        final instructionFinder =
-            find.text(practiceSet.items[0].instruction);
+        final instructionFinder = find.text(practiceSet.items[0].instruction);
         final rectBefore = tester.getRect(instructionFinder);
 
         await tester.tap(find.byType(TextField));

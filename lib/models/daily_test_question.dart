@@ -71,8 +71,7 @@ class DailyTestQuestion {
         topicId: requireJsonField<String>(json, 'topicId'),
         correctAnswer: requireJsonField<String>(json, 'correctAnswer'),
         commonWrongAnswers: requireJsonField<List>(json, 'commonWrongAnswers')
-            .map((e) =>
-                CommonWrongAnswer.fromJson(e as Map<String, dynamic>))
+            .map((e) => CommonWrongAnswer.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
 

@@ -61,7 +61,8 @@ Future<void> _pump(
         topic: kTopics.first,
         spot: _weakSpot(),
         claudeService: ClaudeService(),
-        storageService: _FakeStorageService(freePracticeCount: freePracticeCount),
+        storageService:
+            _FakeStorageService(freePracticeCount: freePracticeCount),
         analyticsService: AnalyticsService(),
         subscriptionService: _FakeSubscriptionService(hasAccess: hasAccess),
       ),
@@ -115,8 +116,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(PremiumScreen), findsOneWidget);
-    final premium =
-        tester.widget<PremiumScreen>(find.byType(PremiumScreen));
+    final premium = tester.widget<PremiumScreen>(find.byType(PremiumScreen));
     expect(premium.sourceContext, 'Missing Article');
   });
 

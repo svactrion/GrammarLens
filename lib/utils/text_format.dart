@@ -44,8 +44,7 @@ String formatFrequencyStat(int frequency, DateTime lastSeen, {DateTime? now}) {
 String formatTopicStatsLine(int practiced, int weakSpotCount) {
   final practicedLabel =
       practiced == 1 ? '1 practiced' : '$practiced practiced';
-  final weakSpotLabel = weakSpotCount == 1
-      ? '1 weak spot'
-      : '$weakSpotCount weak spots';
+  final weakSpotLabel =
+      weakSpotCount == 1 ? '1 weak spot' : '$weakSpotCount weak spots';
   return '$practicedLabel · $weakSpotLabel';
 }

@@ -24,7 +24,8 @@ void main() {
     storageService = StorageService(dbName: dbName);
   });
 
-  test('a Daily Test mistake round-trips through getRecentMistakes tagged '
+  test(
+      'a Daily Test mistake round-trips through getRecentMistakes tagged '
       'as such', () async {
     await storageService.insertErrors([
       ErrorEntry(
@@ -57,9 +58,9 @@ void main() {
     expect(mistakes.single.source, ErrorSource.topicPractice);
   });
 
-  test('both sources feed the same weak-spot aggregation — no parallel '
-      'path, they group together when topic and error type match',
-      () async {
+  test(
+      'both sources feed the same weak-spot aggregation — no parallel '
+      'path, they group together when topic and error type match', () async {
     await storageService.insertErrors([
       ErrorEntry(
         topicId: 'articles',

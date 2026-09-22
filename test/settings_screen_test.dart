@@ -1,15 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/app_theme_mode.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
+import 'package:grammar_lens/models/monthly_medal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
+import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
+import 'package:grammar_lens/screens/credits_screen.dart';
+import 'package:grammar_lens/screens/data_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
+import 'package:grammar_lens/models/medal_tier.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+
+import 'support/recording_analytics_sink.dart';
 
 /// sqflite has no platform channel in this test environment (see
 /// widget_test.dart's note), so a real `StorageService.saveUserProfile`
@@ -23,6 +35,28 @@ class _FakeStorageService extends StorageService {
   bool? debugAccessOverride;
   bool onboardingReset = false;
   bool throwOnResetOnboarding = false;
+
+  @override
+  Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async => const [];
+
+  @override
+  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() async =>
+      const MonthlyMedalProgress(
+        year: 2026,
+        month: 9,
+        score: 0,
+        maxScore: 300,
+        activeDays: 0,
+        correct: 0,
+        wrong: 0,
+        skipped: 0,
+      );
+
+  @override
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async => const [];
+
+  @override
+  Future<WelcomeBadge?> getWelcomeBadge() async => null;
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {}
@@ -44,6 +78,50 @@ class _FakeStorageService extends StorageService {
   }
 }
 
+/// Lets a test control exactly when each `_loadMedals` call's storage
+/// reads resolve, and in what order — every `getCurrentMonthlyMedalProgress`/
+/// `getMonthlyMedalResults` call returns a `Completer`-backed future that
+/// stays pending until the test completes it explicitly, appended to
+/// these lists in call order (index 0 is the first call made, etc).
+class _RaceStorageService extends StorageService {
+  final List<Completer<MonthlyMedalProgress>> progressCompleters = [];
+  final List<Completer<List<MonthlyMedalResult>>> resultsCompleters = [];
+
+  @override
+  Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async => const [];
+
+  @override
+  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() {
+    final completer = Completer<MonthlyMedalProgress>();
+    progressCompleters.add(completer);
+    return completer.future;
+  }
+
+  @override
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() {
+    final completer = Completer<List<MonthlyMedalResult>>();
+    resultsCompleters.add(completer);
+    return completer.future;
+  }
+
+  // Not part of the race this fake exists to reproduce — resolved
+  // immediately so `Future.wait` in `_loadMedals` only ever waits on the
+  // two completers above.
+  @override
+  Future<WelcomeBadge?> getWelcomeBadge() async => null;
+}
+
+MonthlyMedalProgress _raceProgress(int score) => MonthlyMedalProgress(
+      year: 2026,
+      month: 9,
+      score: score,
+      maxScore: 300,
+      activeDays: 0,
+      correct: 0,
+      wrong: 0,
+      skipped: 0,
+    );
+
 void main() {
   const profile = UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
 
@@ -51,11 +129,15 @@ void main() {
     WidgetTester tester, {
     AppThemeMode themeMode = AppThemeMode.system,
     ValueChanged<AppThemeMode>? onSelectThemeMode,
+    AppTextSize textSize = AppTextSize.medium,
+    ValueChanged<AppTextSize>? onSelectTextSize,
     ValueChanged<UserProfile>? onProfileUpdated,
     StorageService? storageService,
     SubscriptionService? subscriptionService,
     VoidCallback? onResetOnboarding,
     UserProfile? profileOverride,
+    AnalyticsService? analyticsService,
+    bool active = true,
   }) async {
     // A phone-realistic size (same convention as home_screen_test.dart) —
     // the default test surface is small enough that the avatar row's own
@@ -69,12 +151,16 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: SettingsScreen(
+          active: active,
           themeMode: themeMode,
           onSelectThemeMode: onSelectThemeMode ?? (_) {},
+          textSize: textSize,
+          onSelectTextSize: onSelectTextSize ?? (_) {},
           profile: profileOverride ?? profile,
-          storageService: storageService ?? StorageService(),
+          storageService: storageService ?? _FakeStorageService(),
           onProfileUpdated: onProfileUpdated ?? (_) {},
           subscriptionService: subscriptionService,
+          analyticsService: analyticsService,
           onResetOnboarding: onResetOnboarding ?? () {},
         ),
       ),
@@ -82,9 +168,166 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> reveal(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('pre-fills the current name from the profile', (tester) async {
     await pumpSettings(tester);
     expect(find.widgetWithText(TextField, 'Ada'), findsOneWidget);
+  });
+
+  testWidgets('is presented as Profile and exposes three text sizes',
+      (tester) async {
+    await pumpSettings(tester);
+
+    expect(find.text('Profile'), findsWidgets);
+    await reveal(tester, find.text('Text size'));
+    expect(find.text('Text size'), findsOneWidget);
+    expect(find.text('Small'), findsOneWidget);
+    expect(find.text('Medium'), findsOneWidget);
+    expect(find.text('Large'), findsOneWidget);
+  });
+
+  testWidgets('Profile no longer asks for age or occupation', (tester) async {
+    await pumpSettings(tester);
+
+    expect(find.textContaining('Age'), findsNothing);
+    expect(find.textContaining('Occupation'), findsNothing);
+    // The one editable field left in the form is the name.
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Ada'), findsOneWidget);
+  });
+
+  testWidgets('selecting Large reports the new text-size preference',
+      (tester) async {
+    AppTextSize? selected;
+    await pumpSettings(
+      tester,
+      onSelectTextSize: (value) => selected = value,
+    );
+
+    await reveal(tester, find.text('Large'));
+    await tester.tap(find.text('Large'));
+    await tester.pump();
+    expect(selected, AppTextSize.large);
+  });
+
+  testWidgets(
+      'Profile shows an explicitly empty monthly medal collection and a '
+      'locked Welcome badge', (tester) async {
+    await pumpSettings(tester);
+    await tester.scrollUntilVisible(
+      find.text('Monthly medals'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('Monthly medals'), findsOneWidget);
+    // The three tier specimens plus the Welcome badge row all share the
+    // same "Not earned" copy — see MonthlyMedalCollection's own Welcome
+    // row, deliberately worded to match. The semantics label below is
+    // what actually distinguishes the Welcome row from the tier specimens.
+    expect(find.text('Not earned'), findsNWidgets(4));
+    expect(find.text('Earned'), findsNothing);
+    expect(
+      find.bySemanticsLabel('Welcome badge, locked.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'a stale in-flight medal read cannot overwrite a newer one that '
+      'started later (generation token guards SettingsScreen._loadMedals)',
+      (tester) async {
+    final storage = _RaceStorageService();
+
+    // Deliberately much taller than a real device (unlike `pumpSettings`'
+    // own phone-realistic size): this test's medals section briefly
+    // shrinks to a single CircularProgressIndicator while a new
+    // `_loadMedals` call is in flight, then grows back once it resolves.
+    // A viewport tall enough to fit the whole screen with room to spare
+    // means every one of those shrink/grow cycles stays within the
+    // ListView's cache extent — no scrolling, and no scroll-position
+    // bookkeeping across a content-height change, needed at all. This
+    // test is about the generation-token race, not scroll mechanics.
+    tester.view.physicalSize = const Size(390, 3000) * 3.0;
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    Future<void> pump({required bool active}) => tester.pumpWidget(
+          MaterialApp(
+            home: SettingsScreen(
+              active: active,
+              themeMode: AppThemeMode.system,
+              onSelectThemeMode: (_) {},
+              textSize: AppTextSize.medium,
+              onSelectTextSize: (_) {},
+              profile: profile,
+              storageService: storage,
+              onProfileUpdated: (_) {},
+              onResetOnboarding: () {},
+            ),
+          ),
+        );
+
+    // No scrolling needed anywhere below — the viewport above is tall
+    // enough that "This month" is always already on screen.
+
+    // initState's own call (index 0, issued regardless of `active`).
+    // Resolved immediately with a baseline so the screen reaches a
+    // stable, non-loading state before the actual race begins below.
+    await pump(active: false);
+    storage.progressCompleters[0].complete(_raceProgress(10));
+    storage.resultsCompleters[0].complete(const []);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('10 / 300 points · 0 active days'), findsOneWidget);
+
+    // Tab re-entry #1 (`false` -> `true`, the only transition that
+    // triggers another load per `didUpdateWidget`): the older of the two
+    // overlapping reads. Deliberately left in flight.
+    await pump(active: true);
+    expect(storage.progressCompleters, hasLength(2));
+
+    // A second, genuinely new `false` -> `true` transition, started
+    // before read #1 above resolves — the real scenario this guards:
+    // a fast double tab re-entry. Also left in flight for now.
+    await pump(active: false);
+    await pump(active: true);
+    expect(storage.progressCompleters, hasLength(3));
+
+    // The *newer* read (#2) resolves first...
+    storage.progressCompleters[2].complete(_raceProgress(90));
+    storage.resultsCompleters[2].complete(const []);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('90 / 300 points · 0 active days'), findsOneWidget);
+
+    // ...then the older, now-stale read (#1) resolves after it. Without
+    // the generation token, this stale result would win simply by
+    // finishing last, silently reverting the UI to older data.
+    storage.progressCompleters[1].complete(_raceProgress(40));
+    storage.resultsCompleters[1].complete(const []);
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text('90 / 300 points · 0 active days'),
+      findsOneWidget,
+      reason: 'the more-recently-started read must still win',
+    );
+    expect(
+      find.text('40 / 300 points · 0 active days'),
+      findsNothing,
+      reason: 'a stale read finishing later must not overwrite a newer one',
+    );
   });
 
   testWidgets('Save is disabled once the name is cleared', (tester) async {
@@ -121,8 +364,7 @@ void main() {
     expect(tile.avatar, isNotNull);
   });
 
-  testWidgets('tapping the avatar row opens the avatar picker',
-      (tester) async {
+  testWidgets('tapping the avatar row opens the avatar picker', (tester) async {
     await pumpSettings(tester);
     await tester.tap(find.byType(AvatarTile));
     await tester.pumpAndSettle();
@@ -157,8 +399,11 @@ void main() {
       MaterialApp(
         home: StatefulBuilder(
           builder: (context, setState) => SettingsScreen(
+            active: true,
             themeMode: AppThemeMode.system,
             onSelectThemeMode: (_) {},
+            textSize: AppTextSize.medium,
+            onSelectTextSize: (_) {},
             profile: currentProfile,
             storageService: storage,
             onProfileUpdated: (p) {
@@ -192,6 +437,32 @@ void main() {
     expect(tile.avatar, saved!.avatar);
   });
 
+  testWidgets(
+      'sections appear in order: avatar, name, medals, appearance, data, '
+      'credits, developer', (tester) async {
+    await pumpSettings(tester);
+    // Tall enough that the lazy list builds every section at once, so their
+    // positions can be compared in one frame.
+    tester.view.physicalSize = const Size(390, 3000) * 3.0;
+    await tester.pumpAndSettle();
+
+    double top(Finder finder) {
+      expect(finder, findsOneWidget);
+      return tester.getTopLeft(finder).dy;
+    }
+
+    final ordered = [
+      top(find.text('Change avatar')),
+      top(find.text('Name')),
+      top(find.text('Monthly medals')),
+      top(find.text('Appearance')),
+      top(find.text('Data')),
+      top(find.text('Credits')),
+      top(find.text('Developer')),
+    ];
+    expect(ordered, orderedEquals([...ordered]..sort()));
+  });
+
   testWidgets('picking a theme segment calls onSelectThemeMode',
       (tester) async {
     AppThemeMode? selected;
@@ -200,36 +471,46 @@ void main() {
       onSelectThemeMode: (mode) => selected = mode,
     );
 
+    await reveal(tester, find.text('Dark'));
     await tester.tap(find.text('Dark'));
     await tester.pump();
 
     expect(selected, AppThemeMode.dark);
   });
 
-  testWidgets('reset progress asks for confirmation before doing anything',
+  testWidgets('Reset progress is not on Profile; the Data row opens it',
       (tester) async {
     await pumpSettings(tester);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Reset progress data'));
-    await tester.pumpAndSettle();
-    expect(find.text('Reset progress?'), findsOneWidget);
+    // Profile carries only the way in: the destructive option and its
+    // explanation live one screen away.
+    await reveal(tester, find.text('Data'));
+    expect(find.text('Reset progress data'), findsNothing);
+    expect(find.text('Reset progress'), findsNothing);
+    expect(find.byType(DataScreen), findsNothing);
 
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text('Data'));
     await tester.pumpAndSettle();
-    expect(find.text('Reset progress?'), findsNothing);
-    // sqflite has no platform channel in this test environment, so a real
-    // reset call would surface as an error snackbar — its absence here
-    // confirms Cancel never triggered one.
-    expect(find.textContaining('Could not reset'), findsNothing);
+
+    expect(find.byType(DataScreen), findsOneWidget);
+    expect(find.text('Reset progress data'), findsOneWidget);
+  });
+
+  testWidgets('the Credits row opens the Credits screen', (tester) async {
+    await pumpSettings(tester);
+
+    await reveal(tester, find.text('Credits'));
+    await tester.tap(find.text('Credits'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreditsScreen), findsOneWidget);
+    expect(find.textContaining('Tran Mau Tri Tam'), findsOneWidget);
   });
 
   group('Developer section (debug-only entitlement override)', () {
     testWidgets('shows the three override options', (tester) async {
       await pumpSettings(tester, storageService: _FakeStorageService());
-      await tester.drag(find.byType(ListView), const Offset(0, -800));
-      await tester.pumpAndSettle();
+      await reveal(tester, find.text('Developer'));
 
       expect(find.text('Developer'), findsOneWidget);
       expect(find.text('Real'), findsOneWidget);
@@ -249,8 +530,7 @@ void main() {
     // Reads the selection via `toString()`, which — unlike the enum's
     // `.name` getter — isn't stripped from this test build.
     String selectedDebugChoiceName(WidgetTester tester) {
-      final button =
-          tester.widget(debugSegmentedButtonFinder()) as dynamic;
+      final button = tester.widget(debugSegmentedButtonFinder()) as dynamic;
       return (button.selected.first as Object).toString().split('.').last;
     }
 
@@ -267,8 +547,7 @@ void main() {
           storageService: _FakeStorageService(),
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Developer'));
 
         expect(selectedDebugChoiceName(tester), 'full');
       },
@@ -286,8 +565,7 @@ void main() {
           storageService: storage,
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Full access'));
 
         await tester.tap(find.text('Full access'));
         await tester.pumpAndSettle();
@@ -309,8 +587,7 @@ void main() {
           storageService: storage,
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Free'));
 
         await tester.tap(find.text('Free'));
         await tester.pumpAndSettle();
@@ -335,8 +612,7 @@ void main() {
           storageService: storage,
           subscriptionService: subscriptionService,
         );
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Real'));
 
         await tester.tap(find.text('Real'));
         await tester.pumpAndSettle();
@@ -350,8 +626,7 @@ void main() {
       'the control is the same width no matter which option is selected',
       (tester) async {
         await pumpSettings(tester, storageService: _FakeStorageService());
-        await tester.drag(find.byType(ListView), const Offset(0, -800));
-        await tester.pumpAndSettle();
+        await reveal(tester, find.text('Free'));
 
         final realWidth = tester.getSize(debugSegmentedButtonFinder()).width;
 
@@ -359,6 +634,7 @@ void main() {
         await tester.pumpAndSettle();
         final freeWidth = tester.getSize(debugSegmentedButtonFinder()).width;
 
+        await reveal(tester, find.text('Full access'));
         await tester.tap(find.text('Full access'));
         await tester.pumpAndSettle();
         final fullWidth = tester.getSize(debugSegmentedButtonFinder()).width;
@@ -375,6 +651,76 @@ void main() {
         );
       },
     );
+  });
+
+  group('release build: no developer tools are shown (launch checklist 8)', () {
+    // `flutter test` always has kDebugMode == true, so a release build is
+    // simulated by turning off the one shared debug switch; the gates read
+    // `kDebugMode && DebugTools.enabledForTesting`, which is exactly what a
+    // release build's constant `false` makes of them.
+    const developerEntries = [
+      'Developer',
+      'Entitlement override',
+      'Full access',
+      'First-launch flow',
+      'Reset first-launch state',
+      'Preview paywall pricing',
+      'Preview pricing',
+      'Theme preview',
+      'Open theme preview',
+    ];
+
+    tearDown(() => DebugTools.enabledForTesting = true);
+
+    testWidgets('a release build shows none of the developer entries',
+        (tester) async {
+      DebugTools.enabledForTesting = false;
+      await pumpSettings(tester);
+      // Everything sits below the user-facing sections, so scroll to the
+      // very bottom before asserting anything is absent.
+      await reveal(tester, find.text('Data'));
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+
+      for (final entry in developerEntries) {
+        expect(find.text(entry), findsNothing, reason: '"$entry" in release');
+      }
+      expect(find.byType(SwitchListTile), findsNothing);
+    });
+
+    testWidgets('the text size setting is a real feature and stays in release',
+        (tester) async {
+      DebugTools.enabledForTesting = false;
+      await pumpSettings(tester);
+
+      await reveal(tester, find.text('Text size'));
+      expect(find.text('Text size'), findsOneWidget);
+      expect(find.text('Small'), findsOneWidget);
+      expect(find.text('Medium'), findsOneWidget);
+      expect(find.text('Large'), findsOneWidget);
+      // Real user features stay too.
+      await reveal(tester, find.text('Data'));
+      expect(find.text('Data'), findsOneWidget);
+      expect(find.text('Credits'), findsOneWidget);
+    });
+
+    testWidgets('a debug build still shows every developer entry',
+        (tester) async {
+      await pumpSettings(tester);
+
+      // In page order, so scrolling downward reaches each one in turn.
+      for (final entry in [
+        'Developer',
+        'Entitlement override',
+        'Reset first-launch state',
+        'Preview paywall pricing',
+        'Theme preview',
+        'Open theme preview',
+      ]) {
+        await reveal(tester, find.text(entry));
+        expect(find.text(entry), findsOneWidget, reason: '"$entry" in debug');
+      }
+    });
   });
 
   group('Developer section (debug-only paywall pricing preview)', () {
@@ -566,4 +912,106 @@ void main() {
       },
     );
   });
+
+  group('profile_medals_viewed (docs/analytics-plan.md E5)', () {
+    late RecordingAnalyticsSink sink;
+    late AnalyticsService analytics;
+
+    setUp(() {
+      sink = RecordingAnalyticsSink();
+      analytics = AnalyticsService(sink: sink);
+    });
+
+    testWidgets(
+        'reports the medal counts once the collection loads on the active '
+        'tab', (tester) async {
+      await pumpSettings(
+        tester,
+        storageService: _MedalsStorage(),
+        analyticsService: analytics,
+      );
+
+      expect(sink.named('profile_medals_viewed'), hasLength(1));
+      expect(sink.named('profile_medals_viewed').single.parameters, {
+        'finalized_months': 2,
+        'medals_earned': 1,
+        'welcome_earned': 1,
+      });
+    });
+
+    testWidgets(
+        'a Profile that is loaded but not showing (built inside the tab '
+        'stack) is not a view; entering the tab is', (tester) async {
+      final storage = _MedalsStorage();
+      await pumpSettings(
+        tester,
+        storageService: storage,
+        analyticsService: analytics,
+        active: false,
+      );
+      expect(sink.events, isEmpty);
+
+      await pumpSettings(
+        tester,
+        storageService: storage,
+        analyticsService: analytics,
+        active: true,
+      );
+      expect(sink.named('profile_medals_viewed'), hasLength(1));
+    });
+
+    testWidgets('bouncing in and out of the tab reports only once per session',
+        (tester) async {
+      final storage = _MedalsStorage();
+      for (final active in [true, false, true, false, true]) {
+        await pumpSettings(
+          tester,
+          storageService: storage,
+          analyticsService: analytics,
+          active: active,
+        );
+      }
+
+      expect(sink.named('profile_medals_viewed'), hasLength(1));
+    });
+  });
+}
+
+class _MedalsStorage extends _FakeStorageService {
+  @override
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async => [
+        MonthlyMedalResult(
+          year: 2026,
+          month: 9,
+          score: 230,
+          maxScore: 300,
+          activeDays: 23,
+          correct: 100,
+          wrong: 30,
+          skipped: 5,
+          tier: MedalTier.gold,
+          ruleVersion: 1,
+          finalizedAt: DateTime(2026, 10, 1),
+        ),
+        MonthlyMedalResult(
+          year: 2026,
+          month: 8,
+          score: 10,
+          maxScore: 310,
+          activeDays: 1,
+          correct: 5,
+          wrong: 0,
+          skipped: 0,
+          tier: null,
+          ruleVersion: 1,
+          finalizedAt: DateTime(2026, 9, 1),
+        ),
+      ];
+
+  @override
+  Future<WelcomeBadge?> getWelcomeBadge() async => WelcomeBadge(
+        earnedAt: DateTime(2026, 8, 12),
+        ruleVersion: 1,
+        backfilled: false,
+      );
 }

@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
+import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
@@ -193,6 +196,17 @@ Package _fakeAnnualPackage() {
 }
 
 void main() {
+  // `flutter test` renders every family in the test font (Ahem, one em wide
+  // per glyph), roughly twice as wide as the real typeface. The comparison
+  // table decides between its table and stacked layouts by measuring its
+  // labels, so tests that expect a particular layout must measure in the real
+  // font: load the bundled Nunito Sans once for the whole file and give those
+  // tests the app theme, which selects it.
+  setUpAll(() async {
+    final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
+    await (FontLoader('NunitoSans')..addFont(bytes)).load();
+  });
+
   Future<void> pumpPremium(
     WidgetTester tester,
     SubscriptionService service, {
@@ -211,6 +225,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: buildAppTheme(Brightness.light),
         home: PremiumScreen(
           storageService: _FakeStorageServiceForAvatar(),
           analyticsService: analyticsService ?? _FakeAnalyticsService(),
@@ -377,18 +392,19 @@ void main() {
   });
 
   testWidgets(
-      'names the given sourceContext in the pitch instead of the generic '
-      'headline', (tester) async {
+      'keeps the headline stable and names sourceContext in the supporting text',
+      (tester) async {
     await pumpPremium(
       tester,
       _FakeSubscriptionService(offering: null),
       sourceContext: 'definite articles',
     );
     expect(
-      find.text('Unlock personalized feedback on definite articles'),
+      find.text('Practice definite articles.'),
       findsOneWidget,
     );
-    expect(find.text('Unlock personalized feedback'), findsNothing);
+    expect(find.text('Unlock personalized feedback'), findsOneWidget);
+    expect(find.text('Practice the mistakes you actually make.'), findsNothing);
   });
 
   group('nothing unbuilt is sold (PRD v2 §13.4)', () {
@@ -433,7 +449,8 @@ void main() {
     expect(find.textContaining('\$'), findsNothing);
   });
 
-  group('the three pricing-area states (a paywall that can\'t fetch '
+  group(
+      'the three pricing-area states (a paywall that can\'t fetch '
       'products must not silently hide the whole price section)', () {
     testWidgets(
         'loading shows a skeleton shaped like the plan cards in the body '
@@ -895,6 +912,7 @@ void main() {
       required Size size,
       required double textScale,
       required SubscriptionService service,
+      Brightness? brightness,
     }) async {
       tester.view.physicalSize = size * 2.0;
       tester.view.devicePixelRatio = 2.0;
@@ -905,6 +923,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          theme: brightness == null ? null : buildAppTheme(brightness),
           home: PremiumScreen(
             storageService: _FakeStorageServiceForAvatar(),
             analyticsService: _FakeAnalyticsService(),
@@ -914,6 +933,32 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+    }
+
+    for (final brightness in Brightness.values) {
+      for (final scale in [1.0, 2.0]) {
+        testWidgets(
+            'plan cards share bounds and stay stable on selection at ${scale}x text in $brightness',
+            (tester) async {
+          await pumpAt(tester,
+              size: Size(scale == 1.0 ? 320 : 375, 667),
+              textScale: scale,
+              brightness: brightness,
+              service:
+                  _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+          final annual = find.byKey(const ValueKey('planCard_Annual'));
+          final monthly = find.byKey(const ValueKey('planCard_Monthly'));
+          await tester.scrollUntilVisible(annual, 250);
+          final beforeAnnual = tester.getSize(annual);
+          final beforeMonthly = tester.getSize(monthly);
+          expect(beforeAnnual, beforeMonthly);
+          expect(tester.getTopLeft(annual).dy, tester.getTopLeft(monthly).dy);
+          await scrollAndTap(tester, find.text('Monthly'));
+          expect(tester.getSize(annual), beforeAnnual);
+          expect(tester.getSize(monthly), beforeMonthly);
+          expect(tester.takeException(), isNull);
+        });
+      }
     }
 
     testWidgets(
@@ -1027,42 +1072,12 @@ void main() {
           reason: 'the CTA must allow retrying directly after an error');
     });
 
-    // Batch 2 item 3: measure the footer's own height at both target
-    // widths/heights and both text scales, and stop if the worst case
-    // (320x568 @1.3) would exceed 40% of the viewport — reported via the
-    // build-log entry for this batch, not asserted as a hard failure here
-    // unless that threshold is actually crossed.
-    for (final size in [const Size(320, 568), const Size(375, 667)]) {
-      for (final scale in [1.0, 1.3]) {
-        testWidgets(
-            'footer height at ${size.width.toInt()}x${size.height.toInt()} '
-            '@${scale}x textScale', (tester) async {
-          await pumpAt(
-            tester,
-            size: size,
-            textScale: scale,
-            service:
-                _FakeSubscriptionService(offering: _offeringWithBothPlans()),
-          );
-
-          final footerHeight =
-              tester.getSize(find.byKey(const Key('premiumFooter'))).height;
-          final fraction = footerHeight / size.height;
-          // ignore: avoid_print
-          print('footer height @ ${size.width.toInt()}x${size.height.toInt()} '
-              '@${scale}x = ${footerHeight.toStringAsFixed(1)}pt '
-              '(${(fraction * 100).toStringAsFixed(1)}% of viewport height)');
-
-          if (size == const Size(320, 568) && scale == 1.3) {
-            expect(fraction, lessThanOrEqualTo(0.40),
-                reason: 'the footer would take up '
-                    '${(fraction * 100).toStringAsFixed(1)}% of a 320x568 '
-                    'viewport at 1.3x text scale — stop-and-report threshold '
-                    'from this batch\'s own brief');
-          }
-        });
-      }
-    }
+    // The footer's measured height at the small sizes lives in the "fixed
+    // footer on the smallest supported screens" group below. The old 40%
+    // stop-and-report guard for 320x568 at 1.3x was measured in the test font
+    // (about twice as wide as the real one) and predates the legal links
+    // moving into the footer (2026-09-22, owner decision); it is replaced by
+    // real-font assertions.
 
     testWidgets(
         "the PREMIUM header doesn't overflow at 1.3x or 2.0x text scale "
@@ -1075,7 +1090,12 @@ void main() {
           textScale: scale,
           service: _FakeSubscriptionService(offering: null),
         );
-        await tester.scrollUntilVisible(find.text('PREMIUM'), 300);
+        // At large scales the table falls back to the stacked layout (see
+        // the "stacked comparison" group); either way nothing may overflow.
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('comparisonRow_Practice your weak spots')),
+          300,
+        );
         expect(tester.takeException(), isNull,
             reason: 'overflow at ${scale}x text scale');
       }
@@ -1189,13 +1209,24 @@ void main() {
     // (see _AvatarHero's own doc comment: the other four are decorative,
     // not individually meaningful to a screen reader), so which avatars
     // are actually shown is only observable at the widget level now.
+    // The hero is dropped on screens under 700 pt tall (an iPhone SE), and the
+    // default test surface is 800x600, so these tests use a phone-sized one.
+    void useTallScreen(WidgetTester tester) {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+    }
+
     List<Avatar?> avatarsShown(WidgetTester tester) => tester
         .widgetList<AvatarTile>(find.byType(AvatarTile))
         .map((tile) => tile.avatar)
         .toList();
 
-    testWidgets('shows exactly five avatars, the center one matching the '
+    testWidgets(
+        'shows exactly five avatars, the center one matching the '
         "real profile's avatar", (tester) async {
+      useTallScreen(tester);
       await tester.pumpWidget(
         MaterialApp(
           home: PremiumScreen(
@@ -1210,13 +1241,14 @@ void main() {
 
       final shown = avatarsShown(tester);
       expect(shown, hasLength(5));
-      expect(shown, contains(profile.avatar));
+      expect(shown[2], profile.avatar);
     });
 
     testWidgets(
         'the four other avatars are distinct from the center and from '
         'each other, and are the same every time (deterministic, not '
         'Avatar.random)', (tester) async {
+      useTallScreen(tester);
       Future<List<Avatar?>> pumpAndRead() async {
         await tester.pumpWidget(
           MaterialApp(
@@ -1247,6 +1279,7 @@ void main() {
     testWidgets(
         'a null avatar (legacy profile) never shows the generic '
         'placeholder — five real avatars are shown instead', (tester) async {
+      useTallScreen(tester);
       const legacyProfile =
           UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
       await tester.pumpWidget(
@@ -1262,14 +1295,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AvatarTile), findsNWidgets(5));
-      for (final tile in tester.widgetList<AvatarTile>(find.byType(AvatarTile))) {
+      for (final tile
+          in tester.widgetList<AvatarTile>(find.byType(AvatarTile))) {
         expect(tile.avatar, isNotNull,
             reason: 'no tile should fall back to the null/placeholder '
                 'branch in the hero');
       }
     });
 
-    testWidgets('no Hero wraps any hero avatar — nothing to collide with '
+    testWidgets(
+        'no Hero wraps any hero avatar — nothing to collide with '
         "Home's or Settings' own avatar Hero tags", (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -1286,9 +1321,10 @@ void main() {
       expect(find.byType(Hero), findsNothing);
     });
 
-    testWidgets('all five avatars fit within a 320pt-wide viewport, no '
+    testWidgets(
+        'three avatars fit within a 320pt-wide viewport, no '
         'overflow', (tester) async {
-      tester.view.physicalSize = const Size(320, 568) * 2.0;
+      tester.view.physicalSize = const Size(320, 740) * 2.0;
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -1306,8 +1342,51 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(AvatarTile), findsNWidgets(5));
+      expect(find.byType(AvatarTile), findsNWidgets(3));
     });
+
+    for (final width in [320.0, 390.0]) {
+      for (final dark in [false, true]) {
+        testWidgets(
+            'opaque, separated and centered avatars at $width dark=$dark',
+            (tester) async {
+          tester.view.physicalSize = Size(width, 852);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          await tester.pumpWidget(MaterialApp(
+            theme: buildAppTheme(dark ? Brightness.dark : Brightness.light),
+            home: PremiumScreen(
+              storageService: _FakeStorageServiceForAvatar(profile),
+              analyticsService: _FakeAnalyticsService(),
+              analyticsSource: AnalyticsService.paywallSourceHome,
+              subscriptionService: _FakeSubscriptionService(offering: null),
+            ),
+          ));
+          await tester.pumpAndSettle();
+          final tiles = find.byType(AvatarTile);
+          final count = width == 320 ? 3 : 5;
+          expect(tiles, findsNWidgets(count));
+          expect(avatarsShown(tester)[count ~/ 2], profile.avatar);
+          final rects =
+              List.generate(count, (i) => tester.getRect(tiles.at(i)));
+          final center = rects[count ~/ 2];
+          expect(center.center.dx, closeTo(width / 2, 0.01));
+          for (var i = 0; i < count; i++) {
+            expect(rects[i].left, greaterThanOrEqualTo(0));
+            expect(rects[i].right, lessThanOrEqualTo(width));
+            if (i != count ~/ 2) expect(rects[i].width, lessThan(center.width));
+            if (i > 0) {
+              expect(
+                  rects[i].left - rects[i - 1].right, greaterThanOrEqualTo(8));
+            }
+          }
+          expect(find.ancestor(of: tiles, matching: find.byType(Opacity)),
+              findsNothing);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
   });
 
   group('paywall analytics (Batch 4)', () {
@@ -1340,9 +1419,8 @@ void main() {
       await tester.tap(find.byTooltip('Close'));
       await tester.pumpAndSettle();
 
-      final dismissed = analytics.calls
-          .where((c) => c.name == 'paywall_dismissed')
-          .toList();
+      final dismissed =
+          analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
       expect(dismissed, hasLength(1));
       expect(dismissed.single.parameters['method'],
           AnalyticsService.paywallDismissCloseButton);
@@ -1362,9 +1440,8 @@ void main() {
 
       await scrollAndTap(tester, find.text('Maybe later'));
 
-      final dismissed = analytics.calls
-          .where((c) => c.name == 'paywall_dismissed')
-          .toList();
+      final dismissed =
+          analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
       expect(dismissed, hasLength(1));
       expect(dismissed.single.parameters['method'],
           AnalyticsService.paywallDismissMaybeLater);
@@ -1389,9 +1466,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PremiumScreen), findsNothing);
-      final dismissed = analytics.calls
-          .where((c) => c.name == 'paywall_dismissed')
-          .toList();
+      final dismissed =
+          analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
       expect(dismissed, hasLength(1));
       expect(dismissed.single.parameters['method'],
           AnalyticsService.paywallDismissSystemBack);
@@ -1468,7 +1544,8 @@ void main() {
     });
   });
 
-  group('the free-value column (bugfix batch: no longer shares a flex '
+  group(
+      'the free-value column (bugfix batch: no longer shares a flex '
       "factor with the row label, which used to squeeze the weak-spot "
       'row\'s "1 a day" into a narrow sliver that silently overflowed '
       "its row vertically — a failure mode ordinary overflow tests don't "
@@ -1580,7 +1657,8 @@ void main() {
             'edge');
   });
 
-  group('the Premium strip\'s fill color (visual-polish batch: dark mode '
+  group(
+      'the Premium strip\'s fill color (visual-polish batch: dark mode '
       'no longer uses the same saturated secondaryContainer as light '
       'mode)', () {
     testWidgets(
@@ -1652,16 +1730,17 @@ void main() {
         reason: 'the link must render below the comparison table, not '
             'above it as a section heading');
 
-    final screenWidth = tester.view.physicalSize.width /
-        tester.view.devicePixelRatio;
+    final screenWidth =
+        tester.view.physicalSize.width / tester.view.devicePixelRatio;
     final linkCenterX = linkRect.center.dx;
     expect((linkCenterX - screenWidth / 2).abs(), lessThan(1.0),
         reason: 'the link must be horizontally centered under the table');
   });
 
-  group('the pricing-unavailable footer no longer has a stray divider '
-      'directly above "Maybe later"', () {
-    testWidgets('no top border in the footer when only "Maybe later" shows',
+  group(
+      'the footer keeps its top border in every state: the legal links now sit '
+      'above "Maybe later", so the rule separates them from the body', () {
+    testWidgets('pricing unavailable: links and "Maybe later" under a border',
         (tester) async {
       await pumpPremium(tester, _FakeSubscriptionService(offering: null));
 
@@ -1674,10 +1753,12 @@ void main() {
             .first,
       );
       final decoration = footer.decoration as BoxDecoration;
-      expect(decoration.border, isNull,
-          reason: 'the loaded/loading states\' top border is a real '
-              'section separator; with only "Maybe later" in the footer '
-              'it read as an orphaned line sitting right above it instead');
+      expect(decoration.border, isNotNull);
+      expect(
+          find.descendant(
+              of: find.byKey(const Key('premiumFooter')),
+              matching: find.text('Privacy Policy')),
+          findsOneWidget);
     });
 
     testWidgets('the top border is still there once pricing has loaded',
@@ -1702,16 +1783,20 @@ void main() {
     });
   });
 
-  group('density pass (visual-polish batch): the loaded state fits above '
+  group(
+      'density pass (visual-polish batch): the loaded state fits above '
       'the fixed footer without scrolling at common device sizes', () {
-    Future<void> pumpAt(WidgetTester tester, Size size) async {
+    Future<void> pumpAt(WidgetTester tester, Size size,
+        {String? sourceContext, Brightness? brightness}) async {
       tester.view.physicalSize = size * 3.0;
       tester.view.devicePixelRatio = 3.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(
         MaterialApp(
+          theme: buildAppTheme(brightness ?? Brightness.light),
           home: PremiumScreen(
+            sourceContext: sourceContext,
             storageService: _FakeStorageServiceForAvatar(),
             analyticsService: _FakeAnalyticsService(),
             analyticsSource: AnalyticsService.paywallSourceHome,
@@ -1722,6 +1807,59 @@ void main() {
       );
       await tester.pumpAndSettle();
     }
+
+    for (final brightness in Brightness.values) {
+      testWidgets(
+          'weak-spot entry keeps normal paywall geometry in $brightness',
+          (tester) async {
+        await pumpAt(tester, const Size(393, 852), brightness: brightness);
+        final baselineHeight =
+            tester.getSize(find.byKey(const Key('premiumBody'))).height;
+        final baselineCards =
+            tester.getRect(find.byKey(const ValueKey('planCard_Annual')));
+        final baselineFooter =
+            tester.getRect(find.byKey(const Key('premiumFooter')));
+        final baselineScroll = tester
+            .state<ScrollableState>(find.byType(Scrollable).first)
+            .position
+            .maxScrollExtent;
+        for (final source in ['Modal past forms', 'definite articles', '   ']) {
+          await pumpAt(tester, const Size(393, 852),
+              sourceContext: source, brightness: brightness);
+          expect(find.text('Unlock personalized feedback'), findsOneWidget);
+          expect(tester.getSize(find.byKey(const Key('premiumBody'))).height,
+              baselineHeight);
+          expect(tester.getRect(find.byKey(const ValueKey('planCard_Annual'))),
+              baselineCards);
+          expect(tester.getRect(find.byKey(const Key('premiumFooter'))),
+              baselineFooter);
+          expect(
+              tester
+                  .state<ScrollableState>(find.byType(Scrollable).first)
+                  .position
+                  .maxScrollExtent,
+              baselineScroll);
+          expect(tester.takeException(), isNull);
+        }
+      });
+    }
+
+    testWidgets(
+        'long weak-spot context stays readable at large text with an accessible footer',
+        (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      const source = 'reported speech in questions and negative statements';
+      await pumpAt(tester, const Size(375, 667),
+          sourceContext: source, brightness: Brightness.dark);
+      final supportingText =
+          tester.widget<Text>(find.text('Practice $source.'));
+      expect(supportingText.maxLines, isNull);
+      expect(supportingText.overflow, isNot(TextOverflow.ellipsis));
+      expect(tester.getRect(find.byKey(const Key('premiumFooter'))).bottom,
+          lessThanOrEqualTo(667));
+      expect(tester.takeException(), isNull);
+    });
 
     for (final size in [const Size(393, 852), const Size(375, 667)]) {
       testWidgets(
@@ -1736,12 +1874,11 @@ void main() {
             tester.getSize(find.byKey(const Key('premiumFooter'))).height;
         final footerTop =
             tester.getTopLeft(find.byKey(const Key('premiumFooter'))).dy;
-        final annualCardBottom =
-            tester.getRect(find.byKey(const ValueKey('planCard_Annual')))
-                .bottom;
+        final annualCardBottom = tester
+            .getRect(find.byKey(const ValueKey('planCard_Annual')))
+            .bottom;
         // ignore: avoid_print
-        print(
-            'premium body content height @ ${size.width.toInt()}x'
+        print('premium body content height @ ${size.width.toInt()}x'
             '${size.height.toInt()} = ${bodyHeight.toStringAsFixed(1)}pt, '
             'maxScrollExtent = '
             '${scrollable.position.maxScrollExtent.toStringAsFixed(1)}pt, '
@@ -1762,11 +1899,9 @@ void main() {
       final footerTop =
           tester.getTopLeft(find.byKey(const Key('premiumFooter'))).dy;
       final annualBottom =
-          tester.getRect(find.byKey(const ValueKey('planCard_Annual')))
-              .bottom;
+          tester.getRect(find.byKey(const ValueKey('planCard_Annual'))).bottom;
       final monthlyBottom =
-          tester.getRect(find.byKey(const ValueKey('planCard_Monthly')))
-              .bottom;
+          tester.getRect(find.byKey(const ValueKey('planCard_Monthly'))).bottom;
 
       expect(annualBottom, lessThanOrEqualTo(footerTop),
           reason: 'the Annual plan card must be fully visible above the '
@@ -1783,6 +1918,519 @@ void main() {
           tester.view.physicalSize.height / tester.view.devicePixelRatio;
       expect(ctaRect.bottom, lessThanOrEqualTo(viewportHeight));
     });
+  });
+
+  group(
+      'fixed footer on the smallest supported screens: the button, the '
+      'disclosure sentence and the legal links are on the first screen, '
+      'measured in the real font', () {
+    Future<void> pumpMeasured(
+      WidgetTester tester, {
+      required Size size,
+      required AppTextSize textSize,
+      double systemScale = 1,
+      Brightness brightness = Brightness.light,
+      bool pricingLoaded = true,
+    }) async {
+      tester.view.physicalSize = size * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      // An iPhone SE has a 20 pt status bar and no home-indicator inset.
+      tester.view.padding = const FakeViewPadding(top: 40);
+      tester.view.viewPadding = const FakeViewPadding(top: 40);
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.textScaleFactorTestValue = systemScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(brightness, textSize: textSize),
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService: _FakeSubscriptionService(
+              offering: pricingLoaded ? _offeringWithBothPlans() : null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // The scrolling body's own scrollable (the footer does not scroll).
+    final bodyScrollable = find.ancestor(
+        of: find.byKey(const Key('premiumBody')),
+        matching: find.byType(Scrollable));
+
+    /// Every rectangle is in screen coordinates, so "on the first screen"
+    /// simply means inside the viewport, with nothing scrolled.
+    Future<
+        ({
+          Rect footer,
+          Rect scrollRegion,
+          Rect cta,
+          Rect disclosure,
+          Rect privacy,
+          Rect terms,
+          Rect maybeLater,
+          Rect privacyTarget,
+          Rect termsTarget,
+          Rect maybeLaterTarget,
+          bool disclosureTruncated,
+        })> measure(WidgetTester tester) async {
+      final disclosureFinder = find.textContaining('auto-renews');
+      // A text button's tappable area is the ink well inside it.
+      Rect target(String label) => tester.getRect(find.descendant(
+          of: find.widgetWithText(TextButton, label),
+          matching: find.byType(InkWell)));
+      return (
+        footer: tester.getRect(find.byKey(const Key('premiumFooter'))),
+        scrollRegion: tester.getRect(find.ancestor(
+            of: find.byKey(const Key('premiumBody')),
+            matching: find.byType(SingleChildScrollView))),
+        cta: tester
+            .getRect(find.widgetWithText(FilledButton, 'Start free trial')),
+        disclosure: tester.getRect(disclosureFinder),
+        privacy: tester.getRect(find.text('Privacy Policy')),
+        terms: tester.getRect(find.text('Terms of Service')),
+        maybeLater: tester.getRect(find.text('Maybe later')),
+        privacyTarget: target('Privacy Policy'),
+        termsTarget: target('Terms of Service'),
+        maybeLaterTarget: target('Maybe later'),
+        disclosureTruncated: tester
+            .renderObject<RenderParagraph>(disclosureFinder)
+            .didExceedMaxLines,
+      );
+    }
+
+    void expectOnFirstScreen(dynamic m, double screenHeight) {
+      for (final entry in {
+        'the purchase button': m.cta as Rect,
+        'the disclosure sentence': m.disclosure as Rect,
+        'the Privacy Policy link': m.privacy as Rect,
+        'the Terms of Service link': m.terms as Rect,
+        'Maybe later': m.maybeLater as Rect,
+      }.entries) {
+        expect(entry.value.top, greaterThanOrEqualTo(m.scrollRegion.top),
+            reason: '${entry.key} starts inside the screen');
+        expect(entry.value.bottom, lessThanOrEqualTo(screenHeight),
+            reason: '${entry.key} ends inside the screen (no scrolling)');
+      }
+      // The links are in the fixed footer, below the scrolling region.
+      expect(m.privacy.top, greaterThanOrEqualTo(m.footer.top));
+      expect(m.terms.top, greaterThanOrEqualTo(m.footer.top));
+      expect(m.disclosureTruncated, isFalse,
+          reason: 'the disclosure sentence is never cut off');
+      // The footer was tightened without shrinking any target: the legal links
+      // and "Maybe later" are at least 44 pt tall, and the purchase button
+      // keeps its 52.
+      for (final entry in {
+        'the Privacy Policy link': m.privacyTarget as Rect,
+        'the Terms of Service link': m.termsTarget as Rect,
+        'Maybe later': m.maybeLaterTarget as Rect,
+      }.entries) {
+        expect(entry.value.height, greaterThanOrEqualTo(44),
+            reason: '${entry.key} keeps a 44 pt target');
+        expect(entry.value.width, greaterThanOrEqualTo(44),
+            reason: '${entry.key} is at least 44 pt wide');
+      }
+      expect((m.cta as Rect).height, greaterThanOrEqualTo(52));
+    }
+
+    // The two sizes the owner asked for, at the sizes the app offers: on an
+    // iPhone SE (375x667), Medium (the default) and Large, and also with the
+    // system text scale at 1.6x.
+    for (final textSize in [AppTextSize.medium, AppTextSize.large]) {
+      testWidgets(
+          '375x667, ${textSize.name}: button, disclosure and both legal '
+          'links are on the first screen, and the footer stays a third of it',
+          (tester) async {
+        await pumpMeasured(tester,
+            size: const Size(375, 667), textSize: textSize);
+        final m = await measure(tester);
+
+        expectOnFirstScreen(m, 667);
+        // 196 pt at Medium and 200 pt at Large (218 and 222 before the
+        // 2026-09-22 spacing pass): under a third of the screen.
+        expect(m.footer.height / 667, lessThan(0.31));
+        // The text above it keeps more room than before (373 and 369 pt).
+        expect(m.scrollRegion.height, greaterThan(385));
+        // The avatar hero is dropped on a screen this short...
+        expect(find.byType(AvatarTile), findsNothing);
+        // ...which lifts the content: the whole comparison table is in view
+        // and the top of the plan cards shows above the footer (about 56 pt
+        // of them at Medium, 11 pt at Large; they were not visible at all
+        // before).
+        final annual =
+            tester.getRect(find.byKey(const ValueKey('planCard_Annual')));
+        final lastRow = tester.getRect(find.textContaining('Sessions of'));
+        expect(lastRow.bottom, lessThan(m.scrollRegion.bottom));
+        expect(annual.top, lessThan(m.scrollRegion.bottom - 8));
+        // Restore Purchases is still in the scrolling body, reachable.
+        await tester.scrollUntilVisible(find.text('Restore Purchases'), 200,
+            scrollable: bodyScrollable);
+        expect(find.text('Restore Purchases'), findsOneWidget);
+      });
+
+      testWidgets(
+          '375x667, ${textSize.name}, system text 1.6x: still all on the first '
+          'screen, the disclosure wraps to more lines instead of being cut, '
+          'and the text area keeps a usable height', (tester) async {
+        await pumpMeasured(tester,
+            size: const Size(375, 667), textSize: textSize, systemScale: 1.6);
+        final m = await measure(tester);
+
+        expectOnFirstScreen(m, 667);
+        // About 295 pt (321 before the spacing pass).
+        expect(m.footer.height / 667, lessThan(0.46));
+        expect(m.scrollRegion.height, greaterThan(285));
+      });
+    }
+
+    testWidgets(
+        '375x667 Medium: the footer stack is tight: the disclosure sits close '
+        'under the button, the links directly under the disclosure, and '
+        '"Maybe later" directly under the links, each a 44 pt target',
+        (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(375, 667), textSize: AppTextSize.medium);
+      final m = await measure(tester);
+
+      // Button to disclosure: a small gap, never more than 6 pt.
+      expect(m.disclosure.top - m.cta.bottom, inInclusiveRange(0, 6));
+      // Disclosure to the links row, and the links row to "Maybe later":
+      // the targets are stacked with no space between them.
+      final linksTop = m.privacyTarget.top;
+      expect(linksTop - m.disclosure.bottom, inInclusiveRange(0, 1));
+      expect(m.maybeLaterTarget.top - m.privacyTarget.bottom,
+          inInclusiveRange(0, 1));
+      // Padding above the button and under "Maybe later".
+      expect(m.cta.top - m.footer.top, lessThanOrEqualTo(8));
+      expect(m.footer.bottom - m.maybeLaterTarget.bottom, lessThanOrEqualTo(4));
+      // The whole footer, 375x667 Medium: 196 pt (218 before).
+      expect(m.footer.height, lessThanOrEqualTo(196));
+    });
+
+    testWidgets(
+        'beyond what the screen can hold (375x667 at 3x text) the links go '
+        'back to the end of the scrolling body, so the footer never takes '
+        'over the screen', (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(375, 667),
+          textSize: AppTextSize.medium,
+          systemScale: 3);
+      final footer = find.byKey(const Key('premiumFooter'));
+
+      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+          findsNothing);
+      expect(tester.takeException(), isNull);
+      // Still there, at the end of the body.
+      await tester.scrollUntilVisible(find.text('Privacy Policy'), 300,
+          scrollable: bodyScrollable);
+      expect(find.text('Privacy Policy'), findsOneWidget);
+      expect(find.text('Terms of Service'), findsOneWidget);
+    });
+
+    testWidgets(
+        '320x568 at the default size also fits everything, in both '
+        'themes, with links in the footer', (tester) async {
+      for (final brightness in Brightness.values) {
+        await pumpMeasured(tester,
+            size: const Size(320, 568),
+            textSize: AppTextSize.medium,
+            brightness: brightness);
+        final m = await measure(tester);
+        expectOnFirstScreen(m, 568);
+        expect(m.scrollRegion.height, greaterThan(250));
+      }
+    });
+
+    testWidgets(
+        'the pricing-unavailable state also has the links in the footer, '
+        'never gated on pricing loading', (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(375, 667),
+          textSize: AppTextSize.large,
+          pricingLoaded: false);
+      final footer = find.byKey(const Key('premiumFooter'));
+
+      expect(find.descendant(of: footer, matching: find.text('Privacy Policy')),
+          findsOneWidget);
+      expect(
+          find.descendant(of: footer, matching: find.text('Terms of Service')),
+          findsOneWidget);
+      expect(tester.getRect(find.text('Terms of Service')).bottom,
+          lessThanOrEqualTo(667));
+    });
+
+    testWidgets(
+        'the avatar hero shows on a tall screen and is dropped under 700 pt',
+        (tester) async {
+      await pumpMeasured(tester,
+          size: const Size(390, 844), textSize: AppTextSize.medium);
+      expect(find.byType(AvatarTile), findsWidgets);
+
+      await pumpMeasured(tester,
+          size: const Size(390, 699), textSize: AppTextSize.medium);
+      expect(find.byType(AvatarTile), findsNothing);
+
+      await pumpMeasured(tester,
+          size: const Size(390, 700), textSize: AppTextSize.medium);
+      expect(find.byType(AvatarTile), findsWidgets);
+    });
+  });
+
+  group(
+      'stacked comparison layout (launch checklist item 3): when the three '
+      'table columns do not fit, rows stack — no horizontal scroll, no '
+      'dropped content, no overflow', () {
+    Future<void> pumpAt(
+      WidgetTester tester, {
+      required Size size,
+      required double textScale,
+      required Brightness brightness,
+      required bool pricingLoaded,
+    }) async {
+      tester.view.physicalSize = size * 2.0;
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      tester.platformDispatcher.textScaleFactorTestValue = textScale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(brightness),
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService: _FakeSubscriptionService(
+              offering: pricingLoaded ? _offeringWithBothPlans() : null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    const labels = [
+      'Daily Test, refreshed every day',
+      'Topic Practice, all five topics',
+      'Practice your weak spots',
+      'Sessions of 3, 5 or 10 questions',
+    ];
+
+    // The two launch-checklist targets: 320x667 at 2x text and 375x667 at 3x.
+    for (final target in [
+      (size: const Size(320, 667), scale: 2.0),
+      (size: const Size(375, 667), scale: 3.0),
+    ]) {
+      for (final brightness in Brightness.values) {
+        for (final pricingLoaded in [true, false]) {
+          testWidgets(
+              'stacks cleanly at ${target.size.width.toInt()}x'
+              '${target.size.height.toInt()} @${target.scale}x text, '
+              '$brightness, pricing ${pricingLoaded ? 'loaded' : 'unavailable'}',
+              (tester) async {
+            await pumpAt(
+              tester,
+              size: target.size,
+              textScale: target.scale,
+              brightness: brightness,
+              pricingLoaded: pricingLoaded,
+            );
+            final stacked = find.byKey(const Key('comparisonStacked'));
+            await tester.scrollUntilVisible(stacked, 300);
+            await tester.pumpAndSettle();
+
+            expect(tester.takeException(), isNull,
+                reason: 'no overflow anywhere on the screen');
+            expect(find.byKey(const Key('comparisonTable')), findsNothing);
+
+            // Never a sideways scroller inside the comparison.
+            expect(
+              find.descendant(
+                of: stacked,
+                matching: find.byWidgetPredicate((w) =>
+                    w is SingleChildScrollView &&
+                    w.scrollDirection == Axis.horizontal),
+              ),
+              findsNothing,
+            );
+
+            // Nothing dropped: every label is present in full (no maxLines /
+            // ellipsis on a stacked label), plus the free quota phrase.
+            for (final label in labels) {
+              final text =
+                  find.descendant(of: stacked, matching: find.text(label));
+              expect(text, findsOneWidget, reason: label);
+              expect(tester.widget<Text>(text).maxLines, isNull);
+              expect(tester.widget<Text>(text).overflow, isNull);
+            }
+            expect(find.descendant(of: stacked, matching: find.text('1 a day')),
+                findsOneWidget);
+
+            // Every row and everything in it stays inside the screen width.
+            final screenWidth = target.size.width;
+            for (final label in labels) {
+              final row = find.byKey(ValueKey('comparisonRow_$label'));
+              final rowRect = tester.getRect(row);
+              expect(rowRect.left, greaterThanOrEqualTo(0));
+              expect(rowRect.right, lessThanOrEqualTo(screenWidth));
+              for (final tier in ['FREE', 'PREMIUM']) {
+                final chip =
+                    find.descendant(of: row, matching: find.text(tier));
+                final chipRect = tester.getRect(chip);
+                expect(chipRect.left, greaterThanOrEqualTo(rowRect.left));
+                expect(chipRect.right, lessThanOrEqualTo(rowRect.right),
+                    reason: '$tier chip inside its row');
+              }
+            }
+
+            // Screen readers still get one explicit sentence per cell.
+            expect(
+                find.bySemanticsLabel('Included in Premium'), findsNWidgets(4));
+            expect(find.bySemanticsLabel('Included in Free'), findsOneWidget);
+            expect(find.bySemanticsLabel('Not included in Free'),
+                findsNWidgets(2));
+          });
+        }
+      }
+    }
+
+    // The pricing-unavailable card has its own icon + sentence + retry row.
+    // It keeps that row on normal screens and drops the retry below the
+    // sentence only when the row cannot fit.
+    for (final config in [
+      (size: const Size(393, 852), scale: 1.0, stacked: false),
+      (size: const Size(375, 667), scale: 1.0, stacked: false),
+      (size: const Size(320, 667), scale: 2.0, stacked: true),
+      (size: const Size(375, 667), scale: 3.0, stacked: true),
+    ]) {
+      testWidgets(
+          'the unavailable card ${config.stacked ? 'stacks its retry' : 'stays one row'} '
+          'at ${config.size.width.toInt()}x${config.size.height.toInt()} '
+          '@${config.scale}x text', (tester) async {
+        await pumpAt(
+          tester,
+          size: config.size,
+          textScale: config.scale,
+          brightness: Brightness.light,
+          pricingLoaded: false,
+        );
+        final card = find.byKey(const Key('pricingUnavailableCard'));
+        await tester.scrollUntilVisible(card, 300);
+        final message = find.descendant(
+            of: card, matching: find.textContaining("Trial pricing"));
+        final retry =
+            find.descendant(of: card, matching: find.text('Try again'));
+        expect(tester.takeException(), isNull);
+        final cardRect = tester.getRect(card);
+        expect(tester.getRect(retry).right, lessThanOrEqualTo(cardRect.right));
+        expect(
+            tester.getRect(message).right, lessThanOrEqualTo(cardRect.right));
+        if (config.stacked) {
+          expect(tester.getRect(retry).top,
+              greaterThanOrEqualTo(tester.getRect(message).bottom));
+        } else {
+          expect(tester.getRect(retry).left,
+              greaterThanOrEqualTo(tester.getRect(message).right));
+        }
+      });
+    }
+
+    // Which layout each size gets, measured in the real font. The rule: the
+    // three-column table only where every label reads in full in its two
+    // lines; anywhere a label would be cut off with an ellipsis, stacked.
+    // Sizes with no clipping keep the existing table unchanged.
+    const keepTable = <(double, double)>[
+      (360, 1.0),
+      (375, 1.0),
+      (390, 1.0),
+      (393, 1.0),
+      (414, 1.0),
+      (430, 1.0),
+      (360, 1.1),
+      (375, 1.1),
+      (390, 1.1),
+      (393, 1.1),
+      (414, 1.1),
+      (430, 1.1),
+      (375, 1.15),
+      (390, 1.15),
+      (393, 1.15),
+      (414, 1.15),
+      (430, 1.15),
+      (414, 1.3),
+      (430, 1.3),
+    ];
+    // Sizes where the previous table cut a label to two lines with an
+    // ellipsis (320 @1x and 393 @1.3x among them) plus every size beyond.
+    const nowStacked = <(double, double)>[
+      (320, 1.0),
+      (320, 1.1),
+      (320, 1.15),
+      (360, 1.15),
+      (320, 1.3),
+      (360, 1.3),
+      (375, 1.3),
+      (390, 1.3),
+      (393, 1.3),
+      (375, 1.5),
+      (393, 1.5),
+      (430, 1.5),
+      (320, 2.0),
+      (375, 2.0),
+      (430, 2.0),
+      (320, 3.0),
+      (375, 3.0),
+      (430, 3.0),
+    ];
+
+    for (final entry in [
+      ...keepTable.map((c) => (c, true)),
+      ...nowStacked.map((c) => (c, false)),
+    ]) {
+      final (size, scale) = entry.$1;
+      final expectTable = entry.$2;
+      for (final pricingLoaded in [true, false]) {
+        testWidgets(
+            '${expectTable ? 'keeps the table' : 'stacks'} at '
+            '${size.toInt()}x667 @${scale}x text, pricing '
+            '${pricingLoaded ? 'loaded' : 'unavailable'}', (tester) async {
+          await pumpAt(
+            tester,
+            size: Size(size, 667),
+            textScale: scale,
+            brightness: Brightness.light,
+            pricingLoaded: pricingLoaded,
+          );
+          final layout = find.byKey(
+              Key(expectTable ? 'comparisonTable' : 'comparisonStacked'));
+          await tester.scrollUntilVisible(layout, 300);
+          expect(tester.takeException(), isNull);
+          expect(
+            find.byKey(
+                Key(expectTable ? 'comparisonStacked' : 'comparisonTable')),
+            findsNothing,
+          );
+
+          // The invariant behind the rule: whichever layout is on screen,
+          // no label is cut off.
+          for (final label in labels) {
+            final text = find.descendant(
+              of: find.byKey(ValueKey('comparisonRow_$label')),
+              matching: find.text(label),
+            );
+            expect(tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
+                isFalse,
+                reason: '"$label" is clipped at ${size.toInt()} @${scale}x');
+          }
+          if (expectTable) {
+            expect(find.byKey(const Key('premiumStripHeader')), findsOneWidget);
+          }
+        });
+      }
+    }
   });
 }
 

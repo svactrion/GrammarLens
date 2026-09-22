@@ -49,7 +49,8 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Skip'), findsOneWidget);
   });
 
-  testWidgets('Skip is clearly narrower than the primary button, never an '
+  testWidgets(
+      'Skip is clearly narrower than the primary button, never an '
       'equal-width alternative to it (D3)', (tester) async {
     await pump(tester);
     final skipWidth =
@@ -75,21 +76,25 @@ void main() {
   testWidgets('the primary button is disabled while primaryEnabled is false',
       (tester) async {
     var primaryTapped = false;
-    await pump(tester, primaryEnabled: false, onPrimary: () => primaryTapped = true);
+    await pump(tester,
+        primaryEnabled: false, onPrimary: () => primaryTapped = true);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
     expect(primaryTapped, isFalse);
   });
 
-  testWidgets('the primary button fires onPrimary once enabled', (tester) async {
+  testWidgets('the primary button fires onPrimary once enabled',
+      (tester) async {
     var primaryTapped = false;
-    await pump(tester, primaryEnabled: true, onPrimary: () => primaryTapped = true);
+    await pump(tester,
+        primaryEnabled: true, onPrimary: () => primaryTapped = true);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
     expect(primaryTapped, isTrue);
   });
 
-  testWidgets('tapping Skip advances even while the primary button is '
+  testWidgets(
+      'tapping Skip advances even while the primary button is '
       'disabled', (tester) async {
     var skipped = false;
     await pump(tester, primaryEnabled: false, onSkip: () => skipped = true);
@@ -104,10 +109,13 @@ void main() {
       "onboarding's disabled Continue nearly invisible", (tester) async {
     await pump(tester, primaryEnabled: false);
 
-    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Next'));
+    final button =
+        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Next'));
     final theme = buildAppTheme(Brightness.light);
-    final resolved = button.style!.backgroundColor!.resolve({WidgetState.disabled});
-    final resolvedFg = button.style!.foregroundColor!.resolve({WidgetState.disabled});
+    final resolved =
+        button.style!.backgroundColor!.resolve({WidgetState.disabled});
+    final resolvedFg =
+        button.style!.foregroundColor!.resolve({WidgetState.disabled});
 
     expect(resolved, theme.colorScheme.surfaceContainerHighest);
     expect(resolvedFg, theme.colorScheme.onSurfaceVariant);

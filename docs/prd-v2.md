@@ -3,7 +3,7 @@
 **Version:** 2.0 (draft)
 **Author:** Ahmet Emin Tayfur
 **Date:** August 2026
-**Status:** Draft — scope agreed, open decisions listed in §7
+**Status:** v2 shipped
 **Supersedes:** nothing. `prd.md` (v0.1 MVP) stays as the historical record of
 the MVP's problem definition, user research, and scope decisions. This
 document covers what comes after it.
@@ -124,6 +124,8 @@ progress stats move into topic mode's own screen rather than the top level.
 ### Onboarding
 Two fields only: **name** and **learning goal** (exam prep / work / general).
 Age and occupation are deliberately deferred to Settings or a later prompt.
+*(Removed 2026-09-21, §13.11: the two optional Profile fields were dropped
+entirely; nothing ever read them.)*
 
 *Rationale:* every field asked before the user has experienced value costs
 completions, and this is an unknown app. Name earns its place by powering
@@ -135,7 +137,8 @@ justify their friction yet.
 ### Settings
 Does not exist today. Minimum: theme (light/dark/system), name edit, data
 reset (currently only possible by deleting the app), and optional profile
-fields (age, occupation) for users who want to fill them in.
+fields (age, occupation) for users who want to fill them in. *(The optional
+fields were removed 2026-09-21, §13.11.)*
 
 ### Premium / early-access screen
 Shows what premium will include and states clearly that it's free right now.
@@ -341,6 +344,8 @@ fully resolved earlier in this document.
 - **Privacy note** — onboarding collects name and learning goal. Even stored
   locally, a one-line notice is cheap and builds trust with strangers in a
   way it didn't need to with in-person testers.
+  *(Corrected 2026-09-21, §13.9: the wording that shipped, "never sent to a
+  server", was false once the proxy and Firebase existed.)*
 
 ---
 
@@ -474,6 +479,10 @@ kesildi" hissetmesini engelleyen ucuz bir güven adımı. Zorunlu değil, öneri
 
 ### 12.8 Günlük Test soru havuzu — rastgele mi, profile göre mi, maliyet farkı
 
+> **Superseded 2026-09-21 — see §13.12.** The Daily Test is no longer built
+> from the local error profile; every request is the same general mix. The
+> reasoning below is kept as history.
+
 Fark şurada: tamamen paylaşımlı (mevcut plan) günde **1** üretim çağrısı demek —
 kaç free kullanıcı olursa olsun sabit, neredeyse sıfır maliyet. Kullanıcı başına
 tam kişiselleştirme ise günde **kullanıcı sayısı kadar** üretim çağrısı demek —
@@ -572,7 +581,8 @@ rewritten, per this document's own rule.
 
 $9.99/month, $89.99/year. The annual plan is presented as its per-month
 equivalent ($7.49/month, billed annually at $89.99) with a "Save 25%" marker;
-annual is preselected. The 7-day trial applies to both plans.
+annual is preselected. The 7-day trial applies to both plans. *(Superseded
+2026-09-17: 3 days monthly, 7 days annual — see §13.2.)*
 
 **Superseded 2026-09-07 — final pricing: $5.99/month, $49.99/year.** The
 annual plan is presented as $4.17/month, billed annually at $49.99, with a
@@ -655,8 +665,8 @@ The real problem is that Home has data and shows none of it. New structure:
 ### 13.6 Evidence status of the above
 
 All of §13 is a **bet**, not a finding. No user has seen any of it. In
-particular, one tension is recorded rather than resolved: a 7-day trial
-requires a card, and the Day-0 flow asks for it roughly two minutes into first
+particular, one tension is recorded rather than resolved: a free trial (7
+days on annual, 3 on monthly since 2026-09-17, §13.2) requires a card, and the Day-0 flow asks for it roughly two minutes into first
 launch, before the user has ever used Topic Practice. That may convert poorly
 and may read as pressure, which sits badly with the calm, no-pressure
 positioning this product is built on. The alternative — surfacing the offer at
@@ -715,6 +725,143 @@ every response and the proxy currently discards it. Logging those two numbers
 per operation closes §7.1's instrumentation prerequisite and replaces this
 whole section with data. Do that before the numbers here are used for any
 further decision.
+
+### 13.8 Daily session cap lowered 10 → 5 (2026-09-21)
+
+`StorageService.dailySessionLimit` goes from 10 to 5. This is a margin
+decision, made on the §13.7 estimates (which remain unmeasured): at ~$0.034
+per Topic Practice session, 10 sessions/day would cost ~$10.20/month for one
+device, while the annual plan nets ~$3.54/month. At 5 the worst case is ~$5.10.
+
+It also closes the proxy-headroom conflict recorded in `docs/roadmap.md`
+(2026-09-15): a session is 2 proxy units (generate + score), so 5 sessions are
+10 units, plus 1 for the Daily Test — inside `DEVICE_DAILY_LIMIT` = 15, which
+is deliberately **not** changed. The local cap now always binds before the
+proxy's generic per-device wall. The cap is a cost guardrail, not a product
+promise: no user-facing copy states it except the "That's all for today"
+dialog, and nothing anywhere says "unlimited". This resolves §7.2's open
+cap number for launch only; revisit with the token-log data (§13.10).
+
+### 13.9 Onboarding privacy note corrected (2026-09-21)
+
+The onboarding line "Stored only on this device — never sent to a server"
+(§10.1) was false: practice answers go through the proxy to Anthropic, and
+Firebase receives usage and crash data. It is replaced with: "Your name and
+goal stay on this device. Practice answers are sent to our AI provider to give
+you feedback, and usage and crash data is collected." This is what the code
+does (name and goal are sent to neither the proxy nor analytics) and agrees
+with the published privacy policy. Any future in-app privacy claim should be
+checked against that policy and against the App Store privacy label, not
+written from memory of an earlier architecture.
+
+### 13.10 Token logging in the proxy (2026-09-21)
+
+§13.7's unit economics are estimates: prompt and completion sizes were
+modelled, and the proxy threw away Anthropic's `usage` object. The proxy now
+logs, per successful Anthropic call, the operation kind (`daily_test` /
+`topic_practice`), the exact operation, the question count and the real input
+and output token counts, via `console.log` into Workers Logs. It logs nothing
+user-related (no device id, prompts, questions, answers or generated text);
+a test plants secrets in every request and response field and asserts none
+reaches any console channel. See `proxy/README.md`.
+
+Status: deployed; data is accumulating. Until
+a few weeks of real traffic are measured, every figure in §13.7, the session
+cap (§13.8) and the unit economics above stay estimates. Options if the data
+must outlive Workers Logs' short retention, **not built**: (1) Workers
+Analytics Engine — one data point per call, SQL queryable, months of
+retention, the smallest change from today's `console.log` and the
+recommended next step; (2) Logpush of Workers Logs to R2 — keeps raw lines,
+needs a paid plan and a query tool; (3) a daily aggregate in KV or D1 —
+smallest storage but needs new counter code and loses raw per-call detail.
+Any of these would only ever hold the same non-personal fields.
+
+### 13.11 Age and occupation removed from the profile (2026-09-21)
+
+The optional Age and Occupation fields on Profile are removed: UI, model and
+storage. Before removing them, every use in the code was checked: they were
+read by nothing — not prompt generation, not any request body to the proxy
+(which rejects unknown fields anyway), not analytics, not Home or Premium.
+They were stored and shown back, nothing more, so removing them loses no
+personalization. Schema v19 rebuilds `user_profile` without the two columns
+and deletes every stored value; name, learning goal and avatar are kept. Data
+that is never used should not be collected: this also shrinks what the privacy
+policy has to describe. The policy page never mentioned age or occupation as
+collected data (its only age wording is the 13+ audience statement, which
+stays). If a real use appears later, ask for it at the moment it pays off, not
+in a settings form.
+
+### 13.12 Daily Test no longer sends weak spots (2026-09-21)
+
+`generate_daily_test` used to send the device's most frequent error topics
+(`topicId` and `frequency`, derived from what the user got wrong) so the prompt
+could bias the set. That is removed: the client sends only the anonymous quota
+`deviceId` (used by the proxy, never forwarded to Anthropic) and the question
+count, and the prompt is a fixed general mix. Reasons: after launch the Daily
+Test moves to one shared set for everyone (roadmap, out of scope for launch),
+personalization is kept for Premium, and with this change the Daily Test sends
+no user data to Anthropic at all, which keeps the privacy story to one
+sentence (only Topic Practice answers leave the device, and only with the
+user's permission, §13.13).
+
+The proxy removes the field entirely rather than accepting and ignoring it. It
+already rejects unknown fields, so a request that carries `weakSpots` now gets
+a 400 and never reaches Anthropic; the guarantee is enforced and tested
+server-side, not just by what today's client happens to send. The app has never
+shipped, so no older client depends on the field. What is lost: a user's
+Daily Test no longer leans toward their own weak spots. The local error profile
+is still written by the Daily Test and still feeds Home and Review; it just no
+longer feeds generation.
+
+### 13.13 Permission before answers go to the AI provider (2026-09-22)
+
+Only one thing the app does sends what the user wrote to a third party: Topic
+Practice scoring (`score_answers`: the question text and the typed answer, to
+Anthropic's Claude through the proxy). App Review guideline 5.1.2(i) requires
+that to be disclosed and explicitly permitted first. The permission is asked
+once, on the first Topic Practice launch, inside `launchPracticeSet`
+(the single choke point, no caller-supplied flag), before the length picker and
+before anything is generated or counted. It is versioned, stored locally,
+fails closed, and is revocable from Profile → Data (part 2). Declining keeps
+the Daily Test fully working, since it sends nothing about the user (§13.12).
+The screen states what is sent, to whom, why and what never leaves, and
+deliberately makes no claim about the provider's own handling of the data.
+
+Part 2: Profile → Data has the switch (on re-shows the screen, off is
+immediate), the onboarding note (§13.9) now names "Anthropic (Claude)" and says
+the user is asked first, and `ai_consent_result` (analytics plan E7) reports
+granted, declined and revoked with the place and wording version, no content.
+
+### 13.14 The first day, revised (2026-09-22)
+
+Four decisions change §12.3's first-launch sequence and the days after it.
+The first day now runs **Welcome → Onboarding → a fixed Daily Test → results →
+Home climbs → Premium**.
+
+1. *The first test is fixed, not generated.* Five hand-written questions ship
+   with the app (three fill-in-the-blank, two error-correction, one per topic,
+   with predicted wrong answers and their comments). It opens at once, offline
+   and with no generation cost, and the answer key was read by a person before
+   any user sees it. Later days are unchanged (§12.8). `daily_test_completed`
+   reports `set_source` (`bundled` / `generated`), so the two can be compared.
+2. *The result screen has one button and the win comes first.* The Welcome badge
+   card sits under the results; the confetti plays on the user's tap ("Start my
+   climb"), for its whole run, and only then does Home appear. The paywall card
+   that used to end this screen is gone.
+3. *The paywall comes after the payoff, once.* Home opens the Premium screen by
+   itself about 600 ms after the pawn finishes the first climb (or when Home has
+   loaded, if no step was earned), once per install, only for a user who finished
+   the test and does not already have full access. The step in §12.3's diagram,
+   "Result → paywall offer", is replaced by this. Hypothesis to read from data:
+   the moment right after a visible win converts better than the moment right after
+   a result list; the sources `day0_after_climb` (this) against `home` and the
+   others in `paywall_viewed` / `purchase_result` will show it, but not before
+   there are users.
+4. *Tomorrow's test is prepared when today's is completed.* The next day's set is
+   generated in the background at that moment and cached under its date, so the
+   Daily Test opens with no wait from the second day on (§12.8's once-per-day
+   generation is unchanged; it just happens a day earlier, in the background). A
+   failure is silent and falls back to generating on open. The proxy was not changed.
 
 ---
 

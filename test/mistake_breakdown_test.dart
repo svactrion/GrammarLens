@@ -14,7 +14,9 @@ import 'package:grammar_lens/widgets/mistake_breakdown.dart';
 void main() {
   Color? boxColor(WidgetTester tester, String label) {
     final container = tester.widget<Container>(
-      find.ancestor(of: find.text(label), matching: find.byType(Container)).first,
+      find
+          .ancestor(of: find.text(label), matching: find.byType(Container))
+          .first,
     );
     return (container.decoration as BoxDecoration?)?.color;
   }
@@ -62,7 +64,8 @@ void main() {
     expect(find.text('CORRECT ANSWER'), findsNothing);
     expect(find.text('YOU WROTE'), findsOneWidget);
 
-    final semantic = buildAppTheme(Brightness.light).extension<SemanticColors>()!;
+    final semantic =
+        buildAppTheme(Brightness.light).extension<SemanticColors>()!;
     expect(boxColor(tester, 'CORRECTED'), semantic.correctBackground);
   });
 }

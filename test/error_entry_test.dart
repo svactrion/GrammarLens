@@ -10,9 +10,9 @@ void main() {
       }
     });
 
-    test('an unrecognized or missing value defaults to topicPractice — '
-        'every row written before this field existed really was one',
-        () {
+    test(
+        'an unrecognized or missing value defaults to topicPractice — '
+        'every row written before this field existed really was one', () {
       expect(ErrorSource.fromJson(null), ErrorSource.topicPractice);
       expect(ErrorSource.fromJson('something_unexpected'),
           ErrorSource.topicPractice);

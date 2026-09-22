@@ -20,7 +20,8 @@ void main() {
     expect(timeOfDayGreeting(at(18, 0)), 'Good evening');
   });
 
-  test('23:59 is still evening, 00:00 (past midnight) is still evening too '
+  test(
+      '23:59 is still evening, 00:00 (past midnight) is still evening too '
       "— there is no fourth slice, and never 'Good night'", () {
     expect(timeOfDayGreeting(at(23, 59)), 'Good evening');
     expect(timeOfDayGreeting(DateTime(2026, 1, 2, 0, 0)), 'Good evening');

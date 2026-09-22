@@ -36,7 +36,17 @@ void main() {
     expect(second, first);
   });
 
-  test('survives a fresh StorageService instance against the same db — '
+  test('overlapping first calls all get the same id and none throws', () async {
+    final ids = await Future.wait([
+      for (var i = 0; i < 6; i++) storageService.getOrCreateDeviceId(),
+    ]);
+
+    expect(ids.toSet(), hasLength(1));
+    expect(await storageService.getOrCreateDeviceId(), ids.first);
+  });
+
+  test(
+      'survives a fresh StorageService instance against the same db — '
       'real persistence, not an in-memory cache', () async {
     final id = await storageService.getOrCreateDeviceId();
 

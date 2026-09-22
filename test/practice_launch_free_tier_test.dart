@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/models/practice_set.dart';
 import 'package:grammar_lens/models/topic.dart';
@@ -43,6 +44,16 @@ class _FakeStorageService extends StorageService {
   int recordFreePracticeCalls = 0;
 
   _FakeStorageService({this.freePracticeCount = 0});
+
+  // These tests are about the quota gates, so the user has already agreed to
+  // send answers to the AI provider; the permission gate has its own file
+  // (practice_launch_consent_test.dart).
+  @override
+  Future<AiConsent?> getAiConsent() async => AiConsent(
+        granted: true,
+        decidedAt: DateTime(2026, 1, 1),
+        version: AiConsent.currentVersion,
+      );
 
   @override
   Future<Map<String, TopicStats>> getTopicStats() async => const {};
@@ -183,8 +194,8 @@ void main() {
         'lock UI is what normally prevents a free user from reaching this '
         'screen at all; this is the choke point catching it anyway)',
         (tester) async {
-      final storage =
-          _FakeStorageService(freePracticeCount: StorageService.freeDailyPracticeLimit);
+      final storage = _FakeStorageService(
+          freePracticeCount: StorageService.freeDailyPracticeLimit);
       final claude = _FakeClaudeService();
       await tester.pumpWidget(
         MaterialApp(
@@ -210,8 +221,8 @@ void main() {
         'via WeakSpotDetailScreen — the locked row replaces the button '
         'entirely, and tapping it never reaches generation either',
         (tester) async {
-      final storage =
-          _FakeStorageService(freePracticeCount: StorageService.freeDailyPracticeLimit);
+      final storage = _FakeStorageService(
+          freePracticeCount: StorageService.freeDailyPracticeLimit);
       final claude = _FakeClaudeService();
       await tester.pumpWidget(
         MaterialApp(
@@ -244,8 +255,8 @@ void main() {
       'a premium user is unaffected even if the free-tier counter is '
       'already at/over its limit — the new check is a no-op for '
       'hasFullAccess', (tester) async {
-    final storage =
-        _FakeStorageService(freePracticeCount: StorageService.freeDailyPracticeLimit + 3);
+    final storage = _FakeStorageService(
+        freePracticeCount: StorageService.freeDailyPracticeLimit + 3);
     final claude = _FakeClaudeService();
     await tester.pumpWidget(
       MaterialApp(

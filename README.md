@@ -7,11 +7,13 @@
 > trial/paid pivot with a new daily mode — is functionally built and
 > visually polished** (see [`docs/design-audit.md`](docs/design-audit.md));
 > one known debt remains, the paywall's density on the smallest supported
-> screen width. **Pre-launch**: not on the App Store, no TestFlight build
-> yet, and the subscription products themselves don't exist in App Store
-> Connect yet (see [`docs/roadmap.md`](docs/roadmap.md) for current
-> wiring). **v3 is planned but not scoped or built** — a gamification layer
-> and a Home redesign. See [Product Evolution](#product-evolution) below.
+> screen width. **Pre-launch**: not on the App Store, and the subscription
+> products exist in App Store Connect but are not yet submitted for review
+> (see [`docs/roadmap.md`](docs/roadmap.md) for current
+> wiring). The first release also ships **Monthly Climb**, a gamification
+> layer on the Daily Test (monthly route, medals). A Home redesign is
+> planned for after launch, not scoped. See
+> [Product Evolution](#product-evolution) below.
 
 ## The Problem
 
@@ -30,8 +32,9 @@ A mobile app (Flutter, iOS) that teaches grammar from **your own answers**,
 with two entry points:
 
 - **Daily Test** — free, forever, for everyone: a 5-question daily warm-up,
-  the same set for every user, graded instantly with no AI call per
-  answer. The always-free hook into the product.
+  a general mix generated the same way for every user (no personalization, no
+  user data sent), graded instantly with no AI call per answer. The
+  always-free hook into the product.
 - **Topic Practice** — the AI-personalized core loop, and the part that
   actually costs money to run: pick a topic and a session length
   (Quick · 3, Standard · 5, Extended · 10), answer a mixed set (sentence
@@ -40,11 +43,15 @@ with two entry points:
   why, with the grammar rule kept as secondary detail, not the headline.
   Free to try (a payment method is required up front, per standard App
   Store subscription mechanics — it auto-renews unless cancelled), then a
-  subscription. Free-tier users (trial declined or
+  subscription. The trial length differs by plan — a longer one on the annual
+  plan than on the monthly plan — and is configured in App Store Connect and
+  read live from RevenueCat, so the app never hard-codes a number of days.
+  Free-tier users (trial declined or
   expired) still get one Topic Practice session per day at no cost,
   reachable from a weak spot in Review. The purchase flow is built on
-  RevenueCat and functional end-to-end, but no live App Store Connect
-  product is connected yet, so no real subscription can complete today.
+  RevenueCat and works end to end against the App Store sandbox; the
+  subscription products exist in App Store Connect but have not been
+  submitted for review, so the public cannot buy one yet.
 
 Mistakes from either mode feed a personal **error profile**; **Review**
 resurfaces weak spots later with freshly generated practice — not the same
@@ -59,7 +66,8 @@ app can't build a personalized curriculum from what you actually get wrong.
 |---|---|---|---|
 | **v1 — MVP** | Jul–Aug 2026 | [`screenshots/v1/`](screenshots/v1/) | The original topic-mode build: pick a topic, answer a mixed question set, get plain-language feedback, review weak spots. Tested with real users, closed. |
 | **v2** | Aug–Sep 2026 | [Screenshots (v2)](#screenshots-v2) below | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). This is the current build. |
-| **v3 — planned, not yet scoped** | — | — | Two directions under consideration, neither built: a gamification layer (a "Monthly Climb" progression mechanic, redesigned from an earlier weekly-cycle draft — see [`docs/prd-gamification.md`](docs/prd-gamification.md), status draft, design work happening outside this repo) and a Home screen redesign. No scope, no screens, no code in this repo yet. |
+| **Monthly Climb** | Sep 2026 | — | A gamification layer on the Daily Test: each answered test moves the avatar one step up a monthly mountain, and a month's score earns a Bronze/Silver/Gold medal in Profile. Built on branch `monthly-climb-v2` and part of the first App Store release. See [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb section at the top; the weekly draft below it is historical). |
+| **v3 — planned, not yet scoped** | — | — | A Home screen redesign, after launch. No scope, no screens, no code yet. |
 
 <details>
 <summary><strong>Screenshots (v1 / MVP)</strong></summary>
@@ -228,12 +236,42 @@ telling you to do the below.
    (`docs/build-log.md`, 2026-07-21, "Fixed a 401 'invalid API key'
    error") — worth spelling out explicitly here so it doesn't repeat for
    a release build.
-5. **Run `./scripts/preflight.sh` before `flutter build ipa`.** It checks
-   that pre-launch requirements which are easy to forget mid-build —
-   `AppLinks`' Privacy Policy/Terms URLs, and `config/prod.json`'s proxy
-   URL/app token — actually being set, and exits non-zero naming exactly
-   what's missing if not. More checks land here over time rather than
-   each as its own script.
+5. **Run `./scripts/preflight.sh` before every `flutter build ipa`** (so
+   before every TestFlight or App Store build). It checks that pre-launch
+   requirements which are easy to forget mid-build — `AppLinks`' Privacy
+   Policy/Terms URLs, and `config/prod.json`'s proxy URL/app token — are
+   actually set, and exits non-zero naming exactly what's missing if not.
+   It also deletes any macOS `.DS_Store` file under `assets/` and lists
+   what it deleted: Flutter bundles every file in a registered asset
+   folder, so these would otherwise ship inside the app. More checks land
+   here over time rather than each as its own script.
+
+### Visual previews (no build config needed)
+
+`lib/preview/` holds standalone, debug-only entry points for checking a
+feature's every visual state on a device without seeding real data or
+waiting for something to happen (a month rollover, a finalized medal) —
+each is its own `main()`, guarded by `if (!kDebugMode) throw
+StateError(...)` so it can never run in a release build, and none of them
+touch `StorageService` or the real `grammar_lens.db`. Unlike the app
+itself, these need no `config/dev.json`/proxy setup at all.
+
+- **Monthly Climb** (`lib/preview/monthly_climb_preview.dart`): the
+  mountain/route/avatar visual, with sample-progress and month-length
+  controls.
+- **Monthly Medal** (`lib/preview/monthly_medal_preview.dart`): every
+  medal state — In progress, each finalized tier, "No medal", and several
+  finalized months at once — with in-preview dark-mode and Small/Medium/
+  Large text-size toggles, so a device acceptance pass can check all of
+  them without a real month ever rolling over.
+
+Run either directly with `flutter run -t <path>`, or use
+`./scripts/preview_monthly_medal.sh` for the medal one (thin wrapper, no
+VS Code needed — day-to-day development on this project happens from the
+terminal, same as `scripts/dev.sh`). On a physical iPhone: plug it in,
+confirm it shows up with `flutter devices`, then
+`./scripts/preview_monthly_medal.sh -d <device-id>` (any extra arguments
+pass straight through to `flutter run`).
 
 ## Stack
 
@@ -241,7 +279,7 @@ Flutter (iOS) · Anthropic API via a Cloudflare Workers proxy (Claude
 Sonnet, structured JSON outputs — see `proxy/`) · sqflite (local storage)
 · Firebase Analytics + Crashlytics (connected and collecting, iOS only —
 see `docs/roadmap.md` "Current wiring") · RevenueCat (subscriptions —
-built, no live product connected yet) · Material 3 · AI-assisted
+live, both App Store products attached) · Material 3 · AI-assisted
 development (Claude Code)
 
 ## About

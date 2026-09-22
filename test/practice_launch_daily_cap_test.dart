@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
@@ -23,6 +24,16 @@ class _FakeStorageService extends StorageService {
 
   _FakeStorageService({this.sessionCount = 0});
 
+  // These tests are about the quota gates, so the user has already agreed to
+  // send answers to the AI provider; the permission gate has its own file
+  // (practice_launch_consent_test.dart).
+  @override
+  Future<AiConsent?> getAiConsent() async => AiConsent(
+        granted: true,
+        decidedAt: DateTime(2026, 1, 1),
+        version: AiConsent.currentVersion,
+      );
+
   @override
   Future<Map<String, TopicStats>> getTopicStats() async => const {};
 
@@ -33,8 +44,7 @@ class _FakeStorageService extends StorageService {
   Future<void> recordSessionStarted() async => sessionCount++;
 
   @override
-  Future<PracticeLength> getPracticeLength() async =>
-      PracticeLength.standard;
+  Future<PracticeLength> getPracticeLength() async => PracticeLength.standard;
 
   @override
   Future<void> setPracticeLength(PracticeLength length) async {}
@@ -52,8 +62,7 @@ class _FakeFullAccessSubscriptionService extends SubscriptionService {
 }
 
 void main() {
-  testWidgets(
-      'starting a session under the daily cap opens the length picker',
+  testWidgets('starting a session under the daily cap opens the length picker',
       (tester) async {
     final storageService = _FakeStorageService();
     await tester.pumpWidget(
@@ -97,6 +106,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text("That's all for today"), findsOneWidget);
+    // The dialog must show the real cap: 5 since 2026-09-21 (PRD v2 §13.8),
+    // pinned literally so a silent change of the constant fails here.
+    expect(StorageService.dailySessionLimit, 5);
+    expect(find.textContaining('all 5 practice sessions'), findsOneWidget);
     // Never got as far as asking how many questions — the cap is checked
     // before generation is even requested, per practice_launch.dart.
     expect(find.text('How many questions?'), findsNothing);

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/avatar.dart';
 import '../models/practice_length.dart';
@@ -9,10 +8,10 @@ import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
-import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/legal_link.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
 
@@ -66,18 +65,14 @@ class PremiumScreen extends StatefulWidget {
 
   /// Called when the user is done here — either they dismissed via "Maybe
   /// later," or a trial just started and they tapped "Continue" — right
-  /// before this screen pops itself. Null (the default, for every entry
-  /// point except the Day-0 flow) means there's nothing extra to do beyond
-  /// the pop itself: Home's locked-card tap and its own Premium-row tap
-  /// both just want to return to whatever pushed this screen.
+  /// before this screen pops itself. Null (the default, and what every entry
+  /// point passes today; the Day-0 flow used to) means there's nothing extra to
+  /// do beyond the pop itself: Home's locked-card tap, its Premium row and the
+  /// first-day paywall all just want to return to whatever pushed this screen.
   final VoidCallback? onDone;
 
-  /// Optional label for whatever prompted this screen — e.g. a specific
-  /// weak spot's name, so a future caller can open this screen already
-  /// naming what it's for ("Unlock personalized feedback on definite
-  /// articles") instead of a screen-agnostic pitch (PRD v2 §13.5's planned
-  /// weak-spot tap-through). Null for every caller today — mechanism only
-  /// in this batch, nothing passes a value yet.
+  /// The weak spot that prompted this screen. It replaces the supporting
+  /// sentence, keeping the main headline identical across entry points.
   final String? sourceContext;
 
   PremiumScreen({
@@ -239,11 +234,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
     Navigator.of(context).pop();
   }
 
-  String get _headline {
-    final source = widget.sourceContext;
-    return source != null
-        ? 'Unlock personalized feedback on $source'
-        : 'Unlock personalized feedback';
+  String get _supportingText {
+    final source = widget.sourceContext?.trim();
+    return source == null || source.isEmpty
+        ? 'Practice the mistakes you actually make.'
+        : 'Practice $source.';
   }
 
   @override
@@ -254,7 +249,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final annual = _annualPackage;
     final offeringsReady =
         _offeringsAvailable && monthly != null && annual != null;
-    final width = MediaQuery.sizeOf(context).width;
+    final size = MediaQuery.sizeOf(context);
+    final width = size.width;
+    final shortScreen = size.height < _shortScreenHeight;
+    // The legal links belong in the fixed footer, but the footer grows with
+    // text size, and past a point it would take over the screen. Measured: it
+    // is about 46 pt plus 172 pt per unit of system text scale, so it stays
+    // near or under half the screen exactly while height / scale >= 400
+    // (an iPhone SE at Large text holds up to 1.6x; a 320x568 screen up to
+    // about 1.4x). Beyond that the links go back to the end of the scrolling
+    // body, as before this rule existed.
+    final textScale = MediaQuery.textScalerOf(context).scale(10) / 10;
+    final linksInFooter = size.height / textScale >= _minHeightPerTextScale;
     // Matches BrandScaffold's own responsive horizontal padding formula
     // (`body:` bypasses it — see that widget's doc comment — so this
     // screen owns its own padding, same as AvatarPickerScreen already
@@ -297,10 +303,16 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   key: const Key('premiumBody'),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _AvatarHero(centerAvatar: _userAvatar),
-                    const SizedBox(height: 4),
+                    // Decorative, and 94 pt of a screen that has none to
+                    // spare: dropped where the height is under 700 pt (an
+                    // iPhone SE), so the comparison table and plan cards sit
+                    // that much higher above the fixed footer.
+                    if (!shortScreen) ...[
+                      _AvatarHero(centerAvatar: _userAvatar),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
-                      _headline,
+                      'Unlock personalized feedback',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -308,7 +320,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Practice the mistakes you actually make.',
+                      _supportingText,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(color: colorScheme.onSurfaceVariant),
@@ -374,22 +386,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 8),
-                    const Center(
-                      child: Wrap(
-                        alignment: WrapAlignment.center,
-                        children: [
-                          _LegalLink(
-                            label: 'Privacy Policy',
-                            url: AppLinks.privacyPolicyUrl,
-                          ),
-                          _LegalLink(
-                            label: 'Terms of Service',
-                            url: AppLinks.termsUrl,
-                          ),
-                        ],
-                      ),
-                    ),
+                    if (!linksInFooter) ...[
+                      const SizedBox(height: 8),
+                      const Center(child: _LegalLinks()),
+                    ],
                   ],
                 ),
               ),
@@ -401,6 +401,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               purchaseState: _purchaseState,
               disclosureText:
                   offeringsReady ? _disclosureText(_selectedPackage!) : null,
+              showLegalLinks: linksInFooter,
               onStartTrial: _startTrial,
               onContinue: _dismiss,
               onMaybeLater: () => _dismiss(
@@ -433,14 +434,14 @@ List<Avatar> _otherAvatarsFor(Avatar center) {
 }
 
 /// The hero visual (this batch): the user's own avatar front-and-center,
-/// four others peeking from behind — "here's your identity among the
+/// two or four smaller companions alongside — "here's your identity among the
 /// set," not a feature illustration. Built from the existing [AvatarTile]
 /// (transparent background + ground shadow already baked in, since the
 /// ring-removal batch) with no [Hero] wrapper at all: this screen has no
 /// push/pop partner to fly to, and wrapping these in `Hero` risked
 /// colliding with Home's or Settings' own avatar Hero tags, both of which
 /// stay mounted at the same time as this screen (see `home_screen.dart`'s
-/// own `homeAvatarHeroTag` doc comment for why that would crash). [center]
+/// own `homeAvatarHeroTag` doc comment for why that would crash). [centerAvatar]
 /// is never null by the time this builds — [_PremiumScreenState] resolves
 /// a real fallback avatar before this is ever rendered, so there is no
 /// placeholder state here to design for.
@@ -452,41 +453,14 @@ class _AvatarHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final others = _otherAvatarsFor(centerAvatar);
-    // Inner pair sits closer to center (peeks more), outer pair further
-    // out and slightly smaller (peeks less) — a layered "huddle" rather
-    // than five same-size tiles in a row. Vertical offsets alternate so
-    // the group doesn't read as a rigid straight line.
-    //
-    // Radii/offsets scaled to 0.8x the original dimensions (density pass,
-    // docs/build-log.md same date as this comment); the outer [SizedBox]
-    // below is trimmed a further notch to 90pt (still within the ~90-100pt
-    // band this pass targeted) since the avatars' own painted extent
-    // leaves comfortable margin within it. Both changes chase the same
-    // goal: the loaded-state screen fitting above the fixed footer
-    // without scrolling on a 393x852 device.
+    // Keep the user's avatar prominent without fading or overlapping others.
+    // Retain the 90pt hero height so entry-point layout stays consistent.
     const centerRadius = 38.0;
     const innerRadius = 26.0;
     const outerRadius = 21.0;
-    const innerOffsetX = 46.0;
-    const outerOffsetX = 72.0;
-
-    // Stack's own `alignment: center` centers each non-positioned child
-    // first; Transform.translate then offsets it purely at paint time — no
-    // Positioned needed, and no effect on any child's own layout size.
-    Widget positioned({
-      required Avatar avatar,
-      required double radius,
-      required double dx,
-      required double dy,
-    }) {
-      return Transform.translate(
-        offset: Offset(dx, dy),
-        child: Opacity(
-          opacity: 0.6,
-          child: AvatarTile(avatar: avatar, radius: radius),
-        ),
-      );
-    }
+    const gap = 8.0;
+    const fiveAvatarWidth =
+        centerRadius * 2 + innerRadius * 4 + outerRadius * 4 + gap * 4;
 
     // One semantic node for the whole group, not five: the other four
     // avatars are purely decorative (nothing to tap, nothing individually
@@ -499,35 +473,33 @@ class _AvatarHero extends StatelessWidget {
       child: ExcludeSemantics(
         child: SizedBox(
           height: 90,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              positioned(
-                avatar: others[0],
-                radius: outerRadius,
-                dx: -outerOffsetX,
-                dy: 6,
-              ),
-              positioned(
-                avatar: others[1],
-                radius: innerRadius,
-                dx: -innerOffsetX,
-                dy: -5,
-              ),
-              positioned(
-                avatar: others[2],
-                radius: innerRadius,
-                dx: innerOffsetX,
-                dy: -5,
-              ),
-              positioned(
-                avatar: others[3],
-                radius: outerRadius,
-                dx: outerOffsetX,
-                dy: 6,
-              ),
-              AvatarTile(avatar: centerAvatar, radius: centerRadius),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final showOuterPair = constraints.maxWidth >= fiveAvatarWidth;
+              return Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (showOuterPair) ...[
+                        AvatarTile(avatar: others[0], radius: outerRadius),
+                        const SizedBox(width: gap),
+                      ],
+                      AvatarTile(avatar: others[1], radius: innerRadius),
+                      const SizedBox(width: gap),
+                      AvatarTile(avatar: centerAvatar, radius: centerRadius),
+                      const SizedBox(width: gap),
+                      AvatarTile(avatar: others[2], radius: innerRadius),
+                      if (showOuterPair) ...[
+                        const SizedBox(width: gap),
+                        AvatarTile(avatar: others[3], radius: outerRadius),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -558,6 +530,48 @@ String _disclosureText(Package package) {
   return '$trialPart, then $priceStr, auto-renews unless cancelled.';
 }
 
+/// Below this screen height the decorative avatar hero is dropped.
+const double _shortScreenHeight = 700;
+
+/// The legal links go in the fixed footer while screen height divided by the
+/// system text scale is at least this many points (see the screen's `build`).
+const double _minHeightPerTextScale = 400;
+
+/// The height of every text-button target in the footer (the legal links and
+/// "Maybe later"). 44 pt is the smallest target Apple recommends. The default
+/// text button is 40 pt tall inside a 48 pt padded target; shrink-wrapping a 44 pt
+/// minimum makes the target and the drawn button the same 44 pt, so the footer
+/// gets its space back from the gaps around the buttons, not from a target
+/// smaller than 44.
+const double _footerTargetHeight = 44;
+
+/// A text button whose target is exactly [_footerTargetHeight] tall.
+final ButtonStyle _footerTextButtonStyle = TextButton.styleFrom(
+  minimumSize: const Size(64, _footerTargetHeight),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+);
+
+/// Privacy Policy and Terms of Service, side by side (wrapping when narrow).
+class _LegalLinks extends StatelessWidget {
+  const _LegalLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    // The links keep their own colour (`LegalLink` sets it); only the target
+    // size comes from here.
+    return TextButtonTheme(
+      data: TextButtonThemeData(style: _footerTextButtonStyle),
+      child: const Wrap(
+        alignment: WrapAlignment.center,
+        children: [
+          LegalLink(label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
+          LegalLink(label: 'Terms of Service', url: AppLinks.termsUrl),
+        ],
+      ),
+    );
+  }
+}
+
 /// The screen's fixed bottom area — never scrolls away, unlike the
 /// previous single-`ListView` layout. Content varies by state rather than
 /// always showing the same three things:
@@ -570,15 +584,22 @@ String _disclosureText(Package package) {
 ///   and "Maybe later" — hidden once a trial has actually started, since
 ///   the CTA itself becomes "Continue" then and a second identical exit
 ///   would be redundant.
-/// - **pricing unavailable**: *only* "Maybe later" — no CTA, no
-///   disclosure, since neither means anything without a real price. The
-///   retry affordance itself stays in the scrollable body
-///   ([_UnavailableCard]), not duplicated here.
+/// - **pricing unavailable**: no CTA and no disclosure, since neither means
+///   anything without a real price, so just "Maybe later" (and the legal
+///   links, when they are in the footer). The retry affordance itself stays
+///   in the scrollable body ([_UnavailableCard]), not duplicated here.
+///
+/// The Privacy Policy and Terms links sit above "Maybe later" whenever the
+/// screen has room for that (see `linksInFooter` in the screen's `build`).
 class _PremiumFooter extends StatelessWidget {
   final bool loading;
   final bool offeringsReady;
   final _PurchaseState purchaseState;
   final String? disclosureText;
+
+  /// Whether the Privacy Policy and Terms links are shown here, above "Maybe
+  /// later", instead of at the end of the scrolling body.
+  final bool showLegalLinks;
   final VoidCallback onStartTrial;
   final VoidCallback onContinue;
   final VoidCallback onMaybeLater;
@@ -592,6 +613,7 @@ class _PremiumFooter extends StatelessWidget {
     required this.offeringsReady,
     required this.purchaseState,
     required this.disclosureText,
+    required this.showLegalLinks,
     required this.onStartTrial,
     required this.onContinue,
     required this.onMaybeLater,
@@ -604,16 +626,6 @@ class _PremiumFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final showCta = offeringsReady;
     final showMaybeLater = purchaseState != _PurchaseState.success;
-    // The hard-edge separator below only earns its keep when there's
-    // actual footer content above "Maybe later" for it to separate from
-    // the scrollable body (the loading spinner or the loaded CTA). In the
-    // pricing-unavailable state the footer is just "Maybe later" alone,
-    // and the same line reads as a stray, orphaned rule sitting directly
-    // above it rather than a section boundary — dropped for that state
-    // only; the retry affordance itself already lives in the scrollable
-    // body ([_UnavailableCard]), not duplicated here.
-    final showTopBorder = loading || showCta;
-
     return DecoratedBox(
       // A hard edge (not a shadow/blur) between the scrollable content and
       // the fixed footer — the same "permanent, not scroll-triggered"
@@ -622,18 +634,19 @@ class _PremiumFooter extends StatelessWidget {
       // reads as a bug (looks fine at rest, gains an edge mid-scroll).
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        border: showTopBorder
-            ? Border(top: BorderSide(color: colorScheme.outlineVariant))
-            : null,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: SafeArea(
         top: false,
         child: Padding(
+          // Tight on purpose: every button below already has a 44 pt target
+          // of its own, so extra space around the stack would only push the
+          // buttons apart.
           padding: EdgeInsets.fromLTRB(
             horizontalPadding,
-            12,
-            horizontalPadding,
             8,
+            horizontalPadding,
+            4,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -650,7 +663,7 @@ class _PremiumFooter extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
               ] else if (showCta) ...[
                 _PurchaseStatusBanner(
                   state: purchaseState,
@@ -681,21 +694,27 @@ class _PremiumFooter extends StatelessWidget {
                             : 'Start free trial'),
                   ),
                 ),
-                const SizedBox(height: 8),
+                // Close to the button it describes.
+                const SizedBox(height: 6),
                 Text(
+                  // Never truncated: the price, period and auto-renewal
+                  // sentence is a required disclosure, so at large text sizes
+                  // it wraps onto more lines and the footer grows instead.
                   disclosureText!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
-                const SizedBox(height: 4),
               ],
+              // Required wherever a subscription is sold, so seen without
+              // scrolling, in every state (loading, priced, pricing
+              // unavailable).
+              if (showLegalLinks) const _LegalLinks(),
               if (showMaybeLater)
                 TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: colorScheme.onSurfaceVariant,
+                  style: _footerTextButtonStyle.copyWith(
+                    foregroundColor:
+                        WidgetStatePropertyAll(colorScheme.onSurfaceVariant),
                   ),
                   onPressed: onMaybeLater,
                   child: const Text('Maybe later'),
@@ -781,9 +800,16 @@ List<_ComparisonRow> _buildComparisonRows(String weakSpotFreeLabel) => [
 /// net (the previous design's actual bug: a fixed-pixel column didn't fit
 /// its own header word at the *default* text scale, let alone a larger
 /// one).
+///
+/// Measured in the style the text is *drawn* in — [style] merged over the
+/// ambient [DefaultTextStyle], which carries the app font — not in the
+/// platform default font, which is narrower and shorter than Nunito Sans.
 double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   final painter = TextPainter(
-    text: TextSpan(text: text, style: style),
+    text: TextSpan(
+      text: text,
+      style: DefaultTextStyle.of(context).style.merge(style),
+    ),
     textDirection: TextDirection.ltr,
     textScaler: MediaQuery.textScalerOf(context),
   )..layout();
@@ -903,20 +929,61 @@ class _ComparisonTable extends StatelessWidget {
 
         var freeText = longFreeText;
         var freeColumnWidth = columnWidthFor(longFreeWidth);
-        final availableForLabel =
+        var availableForLabel =
             constraints.maxWidth - premiumWidth - freeColumnWidth;
         if (availableForLabel < minLabelWidth) {
           freeText = shortFreeText;
           freeColumnWidth = columnWidthFor(shortFreeWidth);
+          availableForLabel =
+              constraints.maxWidth - premiumWidth - freeColumnWidth;
+        }
+
+        // The table only counts as fitting if every label reads in full in
+        // the two lines a row is sized for. A label that needs a third line
+        // would be cut off with an ellipsis, and a sales table must not clip
+        // what it sells. Measured exactly as drawn: same style, same text
+        // scale, and the label cell's width minus its own padding.
+        final labelStyle =
+            theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
+        bool everyLabelFitsInTwoLines() {
+          final textWidth = availableForLabel - _labelCellHorizontalPadding;
+          if (textWidth <= 0) return false;
+          for (final row in _buildComparisonRows(freeText)) {
+            final painter = TextPainter(
+              text: TextSpan(
+                text: row.label,
+                style: DefaultTextStyle.of(context).style.merge(labelStyle),
+              ),
+              textDirection: TextDirection.ltr,
+              textScaler: MediaQuery.textScalerOf(context),
+              maxLines: 2,
+            )..layout(maxWidth: textWidth);
+            if (painter.didExceedMaxLines) return false;
+          }
+          return true;
+        }
+
+        // Even the shortest phrasing leaves the label less than
+        // [minLabelWidth], or a label would be clipped: three columns no
+        // longer fit (a narrow screen or a large text size). Rather than
+        // squeeze, clip or scroll, stack each row: label on top at full
+        // width, its Free and Premium values on one line below. No content
+        // is dropped and nothing scrolls sideways.
+        if (availableForLabel < minLabelWidth || !everyLabelFitsInTwoLines()) {
+          return _StackedComparison(
+            key: const Key('comparisonStacked'),
+            rows: _buildComparisonRows(longFreeText),
+            theme: theme,
+            colorScheme: colorScheme,
+          );
         }
 
         final rows = _buildComparisonRows(freeText);
-        final labelStyle =
-            theme.textTheme.bodySmall?.copyWith(fontSize: 13) ?? _headerStyle;
         final headerHeight = _measuredHeight(context, _headerStyle, 1);
         final dataRowHeight = _measuredHeight(context, labelStyle, 2);
 
         return Container(
+          key: const Key('comparisonTable'),
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerLow,
@@ -955,8 +1022,154 @@ class _ComparisonTable extends StatelessWidget {
   }
 }
 
+/// The label cell's own horizontal padding in [_ComparisonRowLine]; the
+/// table's fit check subtracts it from the label column to get the text width.
+const double _labelCellLeftPadding = 20;
+const double _labelCellRightPadding = 8;
+const double _labelCellHorizontalPadding =
+    _labelCellLeftPadding + _labelCellRightPadding;
+
 const TextStyle _headerStyle =
     TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+
+/// The comparison table's fallback when its three columns do not fit (see
+/// [_ComparisonTable]): the same four rows, the same Free/Premium facts, laid
+/// out top to bottom. Each row is a label with its full width and natural
+/// height (no ellipsis, no fixed height), then a [Wrap] of two tier chips so
+/// they fall onto separate lines instead of overflowing at the largest text
+/// sizes. The Premium chip keeps the table's Premium-strip colors, so the
+/// two layouts read as one visual language.
+class _StackedComparison extends StatelessWidget {
+  final List<_ComparisonRow> rows;
+  final ThemeData theme;
+  final ColorScheme colorScheme;
+
+  const _StackedComparison({
+    super.key,
+    required this.rows,
+    required this.theme,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerColor = colorScheme.outlineVariant.withValues(alpha: 0.4);
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++)
+            Container(
+              key: ValueKey('comparisonRow_${rows[i].label}'),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                border: i == rows.length - 1
+                    ? null
+                    : Border(bottom: BorderSide(color: dividerColor)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rows[i].label,
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _StackedTierChip(
+                        tier: 'Free',
+                        included: rows[i].free,
+                        valueLabel: rows[i].freeLabel,
+                        fill: colorScheme.surfaceContainerHighest,
+                        foreground: colorScheme.onSurfaceVariant,
+                        dashColor: colorScheme.outline,
+                      ),
+                      _StackedTierChip(
+                        tier: 'Premium',
+                        included: rows[i].premium,
+                        fill: colorScheme.brightness == Brightness.dark
+                            ? colorScheme.surfaceContainerHighest
+                            : colorScheme.secondaryContainer,
+                        foreground: colorScheme.onSecondaryContainer,
+                        dashColor: colorScheme.onSecondaryContainer,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One "Free" or "Premium" value in [_StackedComparison]: the tier name in
+/// the header style, then the same glyph the table uses (or [valueLabel]
+/// when the row has a specific free quota such as "1 a day").
+class _StackedTierChip extends StatelessWidget {
+  final String tier;
+  final bool included;
+  final String? valueLabel;
+  final Color fill;
+  final Color foreground;
+  final Color dashColor;
+
+  const _StackedTierChip({
+    required this.tier,
+    required this.included,
+    this.valueLabel,
+    required this.fill,
+    required this.foreground,
+    required this.dashColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      // A Wrap, not a Row: at the largest text sizes the tier name and its
+      // value must be free to fall onto two lines inside the chip rather
+      // than overflow it.
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            tier.toUpperCase(),
+            style: _headerStyle.copyWith(color: foreground),
+          ),
+          if (valueLabel != null)
+            // The quota is part of the visible text; screen readers get the
+            // whole phrase from it, so it needs no separate semantics label.
+            Text(
+              valueLabel!,
+              style: _freeValueStyle.copyWith(color: foreground),
+            )
+          else
+            _ComparisonCell(
+              included: included,
+              includedColor: foreground,
+              dashColor: dashColor,
+              tier: tier,
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 class _ComparisonHeaderRow extends StatelessWidget {
   final ColorScheme colorScheme;
@@ -1058,9 +1271,8 @@ class _ComparisonRowLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final divider = showDivider
-        ? Border(bottom: BorderSide(color: dividerColor))
-        : null;
+    final divider =
+        showDivider ? Border(bottom: BorderSide(color: dividerColor)) : null;
 
     return SizedBox(
       height: height,
@@ -1071,7 +1283,8 @@ class _ComparisonRowLine extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(border: divider),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 5, 8, 5),
+                padding: const EdgeInsets.fromLTRB(
+                    _labelCellLeftPadding, 5, _labelCellRightPadding, 5),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -1260,8 +1473,11 @@ class _PlanCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // Only two natural-height cards: measure the taller content, then stretch
+    // both borders to it. No fixed height or vertical flex clips scaled text.
+    return IntrinsicHeight(
+        child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           child: _PlanCard(
@@ -1285,7 +1501,7 @@ class _PlanCards extends StatelessWidget {
           ),
         ),
       ],
-    );
+    ));
   }
 }
 
@@ -1319,6 +1535,7 @@ class _PlanCard extends StatelessWidget {
     final borderColor =
         selected ? colorScheme.secondary : colorScheme.outlineVariant;
     final savings = pricing.savingsLabel;
+    final borderWidth = selected ? 2.0 : 1.0;
 
     return Semantics(
       key: ValueKey('planCard_$label'),
@@ -1335,7 +1552,10 @@ class _PlanCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            // Decoration contributes the border to padding. Keep the total
+            // inset stable when selection switches between the two plans.
+            padding: EdgeInsets.symmetric(
+                horizontal: 14 - borderWidth, vertical: 12 - borderWidth),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: borderColor, width: selected ? 2 : 1),
@@ -1470,41 +1690,6 @@ _PlanPricing _planPricing(
   );
 }
 
-/// A small text link to a legal page, disabled (greyed out, non-
-/// interactive) rather than shown as live and then failing silently or
-/// erroring, whenever [url] is still the empty placeholder from
-/// app_links.dart — see that file's doc comment. Once a real URL is set
-/// (as of the custom-domain batch, both are), tapping opens it in the
-/// system browser via `url_launcher`.
-class _LegalLink extends StatelessWidget {
-  final String label;
-  final String url;
-
-  const _LegalLink({required this.label, required this.url});
-
-  Future<void> _open() async {
-    final uri = Uri.parse(url);
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      AppMessenger.show('Could not open $label.');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      // Explicit color for the same reason Restore Purchases' button
-      // needs one — see that TextButton's comment — even though this one
-      // is disabled today; it stays correct once a real URL lands.
-      style: TextButton.styleFrom(
-        foregroundColor: Theme.of(context).colorScheme.secondary,
-      ),
-      onPressed: url.isEmpty ? null : _open,
-      child: Text(label),
-    );
-  }
-}
-
 /// Shown when [SubscriptionService.getOfferings] comes back empty — no
 /// RevenueCat/App Store Connect product connected (expected right now, see
 /// this file's class doc comment) or a transient failure. Either way, a
@@ -1528,27 +1713,77 @@ class _UnavailableCard extends StatelessWidget {
     required this.onRetry,
   });
 
+  static const _message = "Trial pricing isn't available right now";
+
+  /// A TextButton's own horizontal padding is 12 on each side and its
+  /// minimum width 64; the label is measured, not guessed, so this follows
+  /// Dynamic Type.
+  double _retryButtonWidth(BuildContext context) {
+    final label = _measureTextWidth(
+      context,
+      'Try again',
+      theme.textTheme.labelLarge ?? const TextStyle(fontSize: 14),
+    );
+    return (label + 24).clamp(64, double.infinity);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final icon =
+        Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 20);
+    final message = Text(_message, style: theme.textTheme.bodyMedium);
+    final retry =
+        TextButton(onPressed: onRetry, child: const Text('Try again'));
+
     return Container(
+      key: const Key('pricingUnavailableCard'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              "Trial pricing isn't available right now",
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(onPressed: onRetry, child: const Text('Try again')),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Room the sentence gets on the one-row layout: what is left after
+          // the icon, its gap, the gap before the button, and the button.
+          final roomForMessage =
+              constraints.maxWidth - 20 - 10 - 8 - _retryButtonWidth(context);
+          final painter = TextPainter(
+            text: TextSpan(text: _message, style: theme.textTheme.bodyMedium),
+            textDirection: TextDirection.ltr,
+            textScaler: MediaQuery.textScalerOf(context),
+            maxLines: 2,
+          )..layout(maxWidth: roomForMessage > 0 ? roomForMessage : 0);
+          final fitsOnOneRow = roomForMessage > 0 && !painter.didExceedMaxLines;
+
+          if (fitsOnOneRow) {
+            return Row(
+              children: [
+                icon,
+                const SizedBox(width: 10),
+                Expanded(child: message),
+                const SizedBox(width: 8),
+                retry,
+              ],
+            );
+          }
+          // Too big for one row (a narrow screen at a large text size): the
+          // sentence keeps the full width and the retry drops below it.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  icon,
+                  const SizedBox(width: 10),
+                  Expanded(child: message),
+                ],
+              ),
+              Align(alignment: Alignment.centerRight, child: retry),
+            ],
+          );
+        },
       ),
     );
   }

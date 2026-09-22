@@ -7,11 +7,13 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
+import 'ai_consent_screen.dart';
 import 'practice_length_picker.dart';
 import 'practice_screen.dart';
 import 'premium_screen.dart';
 
-/// Checks entitlement and quota, shows the "how many questions" length
+/// Checks entitlement, quota and the user's permission to send answers to the
+/// AI provider, shows the "how many questions" length
 /// picker for a full-access user (a free user skips straight to the
 /// shortest length — see below), then generates a fresh practice set for
 /// [topic] and pushes [PracticeScreen].
@@ -105,6 +107,21 @@ Future<void> launchPracticeSet({
     return;
   }
 
+  // Permission to send answers to the AI provider (App Review guideline
+  // 5.1.2(i)). Checked here, in the one function every real generation goes
+  // through, and never passed in by the caller. It sits before the length
+  // picker so a user who says no is not asked to choose a length first, and
+  // before anything is generated or counted: declining records no session and
+  // spends none of the free tier's practice. The answers themselves leave the
+  // device later, at scoring, but this is the last point before a session
+  // exists at all.
+  final mayUseAi = await ensureAiConsent(
+    context: context,
+    storageService: storageService,
+    analyticsService: analyticsService,
+  );
+  if (!mayUseAi || !context.mounted) return;
+
   PracticeLength length;
   if (hasFullAccess) {
     final lastLength = await storageService.getPracticeLength();
@@ -158,6 +175,7 @@ Future<void> launchPracticeSet({
           claudeService: claudeService,
           storageService: storageService,
           analyticsService: analyticsService,
+          subscriptionService: subscriptionService,
         ),
       ),
     );
@@ -193,4 +211,3 @@ Future<void> _showDailyLimitReachedDialog(BuildContext context) {
     ),
   );
 }
-

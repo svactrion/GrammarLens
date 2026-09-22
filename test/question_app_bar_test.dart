@@ -57,14 +57,16 @@ void main() {
     // the same box, invisible rather than absent.
     expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
     expect(
-      tester.widget<SizedBox>(
-        find
-            .ancestor(
-              of: find.byIcon(Icons.close_rounded),
-              matching: find.byType(SizedBox),
-            )
-            .first,
-      ).width,
+      tester
+          .widget<SizedBox>(
+            find
+                .ancestor(
+                  of: find.byIcon(Icons.close_rounded),
+                  matching: find.byType(SizedBox),
+                )
+                .first,
+          )
+          .width,
       HeaderIconButton.size,
     );
   });
@@ -79,9 +81,7 @@ void main() {
     // (see HeaderIconButton) — what must match is each button's own
     // full SizedBox footprint, not the icon glyph size.
     Size buttonSize(Finder icon) => tester.getSize(
-          find
-              .ancestor(of: icon, matching: find.byType(SizedBox))
-              .first,
+          find.ancestor(of: icon, matching: find.byType(SizedBox)).first,
         );
 
     expect(

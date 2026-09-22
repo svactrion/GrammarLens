@@ -1,5 +1,439 @@
 # GrammarLens — Roadmap & Status
 
+## Launch scope — 2026-09-19
+
+**Plan change:** `monthly-climb-v2` will be merged to `main`, and the app goes
+to the App Store for the **first time** with this branch's content. `main` was
+never shipped, so gamification is part of launch, not a post-launch add-on.
+This branch is the launch branch. The merge (or PR) still happens only on the
+owner's explicit approval; nothing here authorises it.
+
+Status words below are literal: "implemented" means code and automated tests
+exist; "device-confirmed" means the owner confirmed it on a physical phone.
+Nothing is marked complete unless the record says so.
+
+### In scope (launch)
+
+| Item | Why it is in | Status |
+|---|---|---|
+| Monthly Climb: ledger, Home mountain, Results `See your climb` / `Back to Home` CTA | It is the whole engagement layer; without it the release has no gamification, and the ledger is the data every other item reads. | Implemented. CTA (package 1) and Home scrolling (package 2) device-confirmed; a full launch acceptance pass is still open. |
+| Monthly medals + Profile collection (rule v1, frozen history) | Gives a month a payoff and the collection a reason to exist; rule v1 is already approved and versioned. | Implemented. Locked-shell device-confirmed; `In progress` card, finalized history and the v17 migration are **not** device-confirmed. |
+| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. Since 2026-09-22 the celebration is a large card under the results, and the confetti plays when the user taps "Start my climb" (automated tests only, not device-confirmed). |
+| Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
+| Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. Comparison-table overflow at 320 px / 2× text: fixed 2026-09-21 with a stacked layout (see the launch-checklist note below); automated tests only, **not device-confirmed**. |
+| Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | Implemented (E1, E3–E8; E2 dropped by decision), automated tests only: `docs/analytics-plan.md` §8. Open: the physical-device DebugView run (moved to the TestFlight pre-submission checklist, "What's next" §1) and the owner's custom-dimension registration (§9). |
+
+### Out of scope (after launch, on a separate design branch)
+
+| Item | Why it waits |
+|---|---|
+| Mountain geometry redesign (broad-to-narrow, steeper summit, landmark placement, viewpoint contrast) | Current route and landmarks work; this is a visual improvement and needs its own 28/29/30/31-day, theme and text-size verification. |
+| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. |
+| Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
+| Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
+| v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. |
+| Shared Daily Test: the daily question set is generated once per day and shown identically to every user, instead of once per user | **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: a shared set cannot be chosen by an error profile (the per-device set was biased toward the device's own weak spots, PRD v2 §12.8, until 2026-09-21, when that was removed ahead of this change, §13.12); (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs. |
+| Turkish UI copy (localization) | Recorded 2026-09-23 while adding the practice results Premium prompt, whose copy was wanted in both English and Turkish. The app has no localization setup (no `flutter_localizations`, `intl` or l10n files); every string is English in the widget code. Adding Turkish means setting that up and moving all copy into it, a separate project, not a string edit. Nothing is scheduled. |
+| Theme setting as a single toggle button (instead of the System / Light / Dark segmented control) | Not planned, idea only (recorded 2026-09-21). The three-way control is shipped, tested and device-reviewed; a toggle would drop the explicit "System" choice or need a long-press or cycle to keep it, which is a product decision, not a polish item. Nothing is scheduled. |
+
+### Post-launch tasks
+
+- **Delete `~/GrammarLens-backup.git` one week after launch.** It is the
+  full mirror taken before the 2026-09-17 history rewrite and still contains
+  personal data (it also holds the deleted `codex/monthly-climb`). Never push
+  it anywhere.
+- **Premium comparison table does not show the daily session limit
+  difference**, while the results-screen offer card promises "more daily
+  sessions". Adding a row pushes plan cards below the fold at 375x667
+  (measured 2026-09-23). Fix by shortening or restructuring the table, not by
+  appending a row.
+
+Launch blockers unrelated to gamification (false onboarding privacy note,
+App Review assets for the subscription products, expiry/restore and non-USD
+checks) stay in "What's next" §1, Pre-launch checklist.
+
+**Launch checklist, code items — 2026-09-21.** Progress is recorded per item
+as each one lands, with literal status words (see above):
+
+- **Session cap 10 → 5 — implemented, automated tests only.**
+  `StorageService.dailySessionLimit` is 5. This is a margin decision: at
+  ~$0.034/session (an unmeasured estimate, PRD v2 §13.7), 10 sessions/day is
+  ~$10.20/month against ~$3.54/month of net annual-plan revenue. It also
+  closes the proxy-headroom conflict: 5 sessions = 10 proxy units + 1 Daily
+  Test unit, inside `DEVICE_DAILY_LIMIT` = 15, which is unchanged. The only
+  user-facing quota text is the "That's all for today" dialog, which reads the
+  constant. Premium's comparison table states no session quota, and no string
+  in `lib/` says "unlimited" (a test asserts this on the Premium screen).
+  The App Store Connect subscription descriptions are outside this repo and
+  were not re-checked here.
+- **Developer/debug tools out of release builds — implemented, automated
+  tests plus a release web-build check; not verified on an iOS release
+  build.** Scan result: four tools in Settings' "Developer" section
+  (entitlement override, first-launch reset, pricing fixture toggle, theme
+  preview), the raw error text on Daily Test's load-failure screen, the
+  launch-time load of the stored override in `app.dart`, and two standalone
+  preview entry points in `lib/preview/` (Monthly Climb, medals; run only with
+  `flutter run -t`, imported by no app code, each throws outside debug).
+  All UI was already behind `kDebugMode`. Gaps closed: the subscription
+  service's gate was a mutable static, not a compile-time constant; and
+  `StorageService.resetOnboarding()` (deletes the profile) plus the override
+  read/write had no guard of their own. Everything now goes through one
+  switch, `DebugTools` (`kDebugMode && DebugTools.enabledForTesting` at each
+  gate, so a release build folds it to `false`); tests simulate release with
+  it, and one flag turns every tool off. Text size is a real feature and was
+  not touched. Checked by building `flutter build web --release`: none of the
+  tool strings appear in the compiled output. Not removable without a schema
+  change: the empty `debug_settings` table is still created (nothing reads it
+  in release). The iOS release build was broken on this machine by the Xcode
+  27 `lipo` issue at the time, so the AOT binary itself was not inspected.
+  *(Update 2026-09-23: the `lipo` blocker is resolved and a release IPA now
+  builds; the AOT binary has still not been inspected for tool strings.)*
+- **Profile: age and occupation removed — implemented, automated tests
+  only.** Scan before removal: the two fields were used only by the Profile
+  form, `UserProfile` and the `user_profile` table; not by prompt generation,
+  any request body to the proxy, analytics, Home or Premium, so no
+  personalization was lost. Removed from UI, model, storage and tests. Schema
+  v19 rebuilds `user_profile` without the columns (not `DROP COLUMN`, which
+  needs SQLite 3.35+) and deletes every stored value; name, learning goal and
+  avatar survive, and a replayed migration is a no-op. Onboarding never asked
+  for them, its privacy note does not mention them, and the published privacy
+  policy never listed them (its only age wording is the 13+ audience
+  statement). PRD v2 §13.11.
+- **Onboarding privacy note — corrected, automated tests only.** *(Reworded
+  2026-09-22 to name "Anthropic (Claude)" and say the user is asked first; see
+  the AI permission item below. The text quoted here is the earlier version.)* The old
+  line ("Stored only on this device — never sent to a server") was false.
+  It now reads: "Your name and goal stay on this device. Practice answers
+  are sent to our AI provider to give you feedback, and usage and crash data
+  is collected." Checked against the code: name and goal are sent neither to
+  the proxy nor to analytics; answers go via the proxy to Anthropic;
+  Firebase gets usage and crash data. It agrees with the published policy
+  (https://ahmettayfur.com/products/grammarlens/privacy/), which also lists
+  the anonymous device ID (usage limits only), RevenueCat and Cloudflare.
+  The note carries no link, so the policy's other recipients are not named
+  in the app text. No other claim of this kind exists in `lib/` (searched
+  for on-device / never sent / stored only / no server wording); the
+  Premium screen links the policy itself. Still open before submission: the
+  App Store privacy nutrition label must match the same facts (outside this
+  repo).
+- **Proxy token logging — implemented, tested and deployed; data is
+  accumulating in Workers Logs.** Each successful Anthropic call logs `kind` (daily_test /
+  topic_practice), operation, question count and real input/output tokens
+  with `console.log` (Workers Logs). Nothing user-related is logged; a test
+  plants secrets to prove it. Purpose: after a few weeks of traffic, measure
+  the real cost of a Daily Test and of a practice session — all unit
+  economics (PRD v2 §13.7, the session cap, the margin numbers above) are
+  still unmeasured estimates until then. Persistent-storage options are
+  proposed in PRD v2 §13.10 (recommended: Workers Analytics Engine) and none
+  is built. Two pre-existing proxy `console.error` calls (Anthropic's raw
+  error body on a non-200, and the JSON parse exception on unusable
+  content) could echo response text; **fixed 2026-09-21** (see the failure-log
+  entry below).
+- **Proxy `duration_ms` — implemented, tested and deployed.**
+  Usage and failure log lines carry the wall time of the call to Anthropic, so
+  the real generation time of a Daily Test (and any hang) can be read from
+  Workers Logs. Numbers only; the privacy contract is unchanged.
+- **Proxy failure logging — content-free, implemented, tested and
+  deployed.** A failed Anthropic call now logs one JSON line: operation, kind
+  (daily_test / topic_practice), failure category, HTTP status and Anthropic's
+  error `type` restricted to its documented values (anything else is
+  `unknown`). The upstream error body and every exception message are no
+  longer logged, and a body that is not JSON is now handled instead of
+  reaching the catch-all. Tests plant secrets in the body, the model text and
+  the network error. *(Update 2026-09-21, later: the catch-all `Unhandled error` in
+  `proxy/src/index.ts`, first left as is, was narrowed too. It now logs only
+  the operation, kind and an error category, never the message or stack.
+  Every `console` call in `proxy/src/` writes a fixed-field line with no user
+  content; tests plant secrets to prove it. Deployed. The trade-off: an
+  unexpected bug now shows up as a category, so diagnosing it needs a
+  reproduction rather than a stack trace.)*
+- **Trial-length wording — corrected in current-state text.** Truth: annual
+  = 7 days, monthly = 3 days; both are set in App Store Connect and read live
+  from RevenueCat, and no day count is written in `lib/` app copy (checked).
+  README no longer implies a single trial length (its old sentence named no
+  duration, and also wrongly said no App Store Connect product was connected;
+  both fixed). Older dated entries in this file and in the build log keep
+  their original wording as history, with pointers where they would mislead.
+- **Premium legal links in the fixed footer — implemented, automated tests
+  only; not device-confirmed.** Terms and Privacy now sit in the footer above
+  "Maybe later" (33% of a 375x667 screen at Medium/Large), the avatar hero is
+  dropped on screens under 700 pt, and the disclosure sentence is never
+  truncated (it was cut at Large text with a 1.6x system scale). Above about 1.6x
+  (375x667) the links fall back to the end of the scrolling body so the footer
+  cannot take over the screen. Restore Purchases stays in the body. On an
+  iPhone SE the comparison table is now fully in view and the top of the plan
+  cards shows above the footer (about 56 pt at Medium, 11 pt at Large; before,
+  10 pt and none).
+- **Premium comparison-table overflow — implemented (stacked layout),
+  automated tests only; not device-confirmed.** Decision: when the three
+  columns do not fit, rows stack (label on top, Free and Premium chips
+  below); no horizontal scroll and no content removed. The table falls back
+  when its label column would drop under the existing 96 pt minimum even
+  with the short "1/day" phrasing. Measured with the bundled Nunito Sans:
+  320x667 @2x and 375x667 @3x text stack cleanly with no overflow (light,
+  dark, pricing loaded and unavailable); 320-430 pt wide at up to 1.3x text
+  keep the three-column table unchanged. The "pricing unavailable" card had
+  its own overflow (icon + sentence + retry in one row) and now drops the
+  retry below the sentence when the row cannot fit. Two side effects to
+  know: the table's width measurements now use the app font it is drawn in
+  (they used the platform default font, a latent mismatch since the
+  Nunito Sans change), so column widths can differ from before by a few
+  points; and tests load the real font, since `flutter test` otherwise
+  measures in a font about twice as wide. **Update 2026-09-21 (owner
+  decision):** a sales table must not clip, so the table now also stacks
+  whenever any label would not fit in its two lines (measured as drawn: same
+  style, text scale and label-cell width). Sizes where nothing was clipped keep
+  the three-column table unchanged. With the real font: table at 360-430 pt
+  wide at 1x and 1.1x, 375-430 pt at 1.15x, 414-430 pt at 1.3x; stacked at
+  320 pt from 1x up, and at 393 pt from 1.3x up (the previously reported
+  cases), and everywhere at 1.5x and above. Every size that was already
+  unclipped kept its table; every size that changed had a clipped label
+  before (checked by running old and new logic over a width x scale grid).
+  Automated tests only; not device-confirmed.
+- **Resume refresh (day rollover, greeting) — already implemented; now covered
+  end to end.** The premise that no `AppLifecycleState` hook exists was stale
+  (see the closed entry under "What's next"). No third hook was added. Two
+  observers exist with disjoint jobs: the app-level one (analytics, medal
+  finalization) and Home's (Daily Test day, greeting, climb month, weak
+  spots). `test/app_resume_test.dart` drives an overnight background through
+  the real app with an injected clock. Automated tests only.
+- **Avatar attribution (CC BY 4.0) + Profile layout rework — implemented,
+  automated tests only; device check pending.** The avatar set is adapted from
+  "Cute Animal 3D Icons" by Tran Mau Tri Tam (Figma Community), CC BY 4.0; the
+  owner confirmed all twelve avatars, Crab (`avatar_07`) included, come from
+  that set. No separate licence item existed in this file, so this entry is the
+  record and closes it: Profile has a Credits row that opens a Credits screen
+  with the attribution sentence word for word and two link buttons (the Figma
+  file, the licence). The links open exactly as the Premium legal links do:
+  `_LegalLink` was made the public `LegalLink` widget (external browser, the
+  same "Could not open …" message), with no behaviour change. Profile now reads
+  Avatar, Name (+ Save), Monthly medals, Appearance (theme, text size), Data,
+  Credits, and the debug-only Developer section last (still gated by
+  `DebugTools`). The avatar row is unchanged, only moved. "Reset progress data"
+  left Profile: a Data row opens a Data screen holding the explanation, the
+  button and the unchanged confirmation dialog, so the destructive option
+  needs two taps. Link taps are not tested (no `url_launcher` fake, no new
+  dependency); tests assert the buttons exist with live https URLs. Age and
+  occupation stay removed.
+
+- **Day-0 climb animation — implemented, automated tests only; device check
+  pending.** The first-launch Daily Test now ends on a Home that mounts the
+  pawn at its earlier position and animates the step, like the normal flow.
+  `FirstLaunchFlow` hands `pendingClimb: (day, step)` to `app.dart`, which gives
+  it once to the new Home; the result screen's one button is disabled until the
+  result is saved (this also closes a stale-Home race; it was two buttons until
+  2026-09-22). Covered end to end through the
+  real app (`test/first_launch_climb_test.dart`). Not device-confirmed.
+
+- **Daily Test sends no weak spots — implemented and tested (Flutter and
+  proxy); proxy deployed.** `generate_daily_test` no longer receives the
+  error profile: client (`DailyTestService`, `ClaudeService`) and proxy
+  (`validateGenerateDailyTest`, the prompt's bias branch) drop `weakSpots`, and
+  the proxy rejects the field with a 400, so the Daily Test sends no user data
+  to Anthropic. The "no practice history yet" prompt sentence became a plain
+  general-mix instruction. Personalization moves to Premium features later.
+  PRD v2 §13.12. The proxy side is deployed (it already returns 400 for a
+  request that still carries `weakSpots`), so the app must ship with the
+  client change.
+
+- **AI permission before Topic Practice — implemented, automated tests only;
+  device check pending.** A full-screen permission screen ("Feedback on your
+  answers") appears inside `launchPracticeSet` before the length picker, until
+  the user agrees. Stored in a new single-row `ai_consent` table (schema v20,
+  versioned, fails closed, survives "Reset progress"). Declining costs nothing
+  and the Daily Test is unaffected. Profile → Data has an "AI feedback" switch
+  (switching on re-shows the screen, switching off is immediate), the onboarding
+  note now names "Anthropic (Claude)" and says we ask first, and
+  `ai_consent_result` reports granted / declined / revoked (analytics plan E7;
+  register `consent_version` as a custom dimension). Outside this repo and still
+  open before submission: the privacy policy must name Anthropic and this flow,
+  the App Store privacy label must list user content shared with a third party,
+  and the App Review notes should say how to reach the screen (Topic Practice,
+  first session). No claim about the provider's retention or training is made
+  anywhere in the app. PRD v2 §13.13.
+
+- **First Daily Test preload — superseded 2026-09-22 (see the fixed first-day
+  test below).** The "Get started" preload is removed (an AI set would have
+  replaced the fixed one). What stays: single-flight per day in `DailyTestService`,
+  the 40 s proxy request timeout (check it against the proxy's `duration_ms` once
+  deployed), and the `getOrCreateDeviceId` race fix.
+
+- **Tomorrow's Daily Test prepared in the background — implemented, automated
+  tests only; device check pending.** Completing a day's Daily Test (the fixed first
+  test's day included) generates the next day's set in the background and stores it
+  under the next day's key, so that day's test opens from the cache with no wait. Silent
+  on failure (the next day then generates on open as before), free when the set already
+  exists or is already being generated. Home now shares one `DailyTestService`. Cost:
+  one generation per active day, moved earlier, one wasted for a skipped day; the
+  proxy's per-device daily unit count stays within 15 (12 in a full day) and the proxy
+  was not touched. Not device-confirmed: needs a day to pass (or a device clock change)
+  to see the next morning open with no wait.
+
+- **Fixed first-day Daily Test — implemented, automated tests only; device check
+  pending.** New users get the same five hand-written questions
+  (`kDayZeroQuestions`, a Dart constant), seeded into today's set before the
+  profile is saved, so the test opens at once, offline and free of generation
+  cost, and also when the user closes the app mid-test and opens it from Home.
+  Later days are unchanged. Schema v21 adds `daily_test_sets.source`, and
+  `daily_test_completed` reports `set_source` (`bundled` / `generated`; register it
+  as a custom dimension, analytics plan §9). Curly quotes and apostrophes now match
+  in answers, and the Daily Test and Topic Practice answer fields turn off
+  autocorrect, suggestions and smart punctuation. Not device-confirmed: how the five
+  questions read and feel on a phone, and what a real iOS keyboard does with the
+  no-correction flags. The content's difficulty is a hypothesis to read from data.
+
+- **Welcome celebration confetti — implemented, automated tests only; device
+  check pending; reworked 2026-09-22 (see below).** A package-free
+  `CustomPainter` burst (about 1.8 s, the theme's colors) into an overlay, never
+  under reduced motion, removed if the user leaves. It no longer fires when the
+  badge is earned: it plays when the user taps "Start my climb" (next item).
+
+- **Result screen: one fixed button, badge card below, confetti on tap —
+  implemented, automated tests only; device check pending.** The Daily Test result
+  screen has one primary button in a fixed footer (`BrandScaffold.bottomBar`, so a
+  SnackBar floats above it): "Saving your results…", a retry after a failed save,
+  "Start my climb" (with a small badge icon) when the Welcome badge was just earned,
+  otherwise "Continue" (Day-0) or "See your climb" / "Back to Home" (from Home). The
+  large Welcome card is the last item under the results and moves nothing when it
+  arrives. Tapping "Start my climb" disables the button, plays the confetti on the
+  results for its whole run and only then goes on to Home (a 2.5 s timer goes on
+  anyway; no confetti under reduced motion). The same holds for a badge earned from a
+  test opened on Home. The Day-0 paywall card is removed; the paywall moves to Home
+  (next item). Not device-confirmed: how the burst reads from the button on a
+  phone, and the 2.5 s ceiling.
+
+- **First-day paywall on Home — implemented, automated tests only; device check
+  pending.** Home opens the Premium screen by itself, once per install, about 600 ms
+  after the pawn finishes its first climb (or as soon as Home loads, with no step
+  to climb), only for a user who finished the Day-0 test, never with full access,
+  never while Home is covered or in the background (it waits). One-time via a stored
+  flag (schema v22, `one_time_flags`; claimed just before the push, so a paywall the
+  app was closed on counts as shown; an unreadable flag means no paywall).
+  `paywall_viewed` / `paywall_dismissed` use the source `day0_after_climb` (the old
+  `onboarding` source is gone) and the automatic opening sends no `mode_selected`.
+  Debug "reset onboarding" clears the flag. Not device-confirmed: the 600 ms pause
+  and how the Premium screen arrives over the just-finished climb.
+
+- **Submission prep — implemented; launch screen not device-confirmed.**
+  `pubspec.yaml` version `1.0.0+1`. `ITSAppUsesNonExemptEncryption = false` in
+  Info.plist: the app uses no encryption beyond HTTPS and the OS's own (no
+  crypto package in `lib/`; the `crypto` package is only a build-hook
+  dependency). Launch screen: it was Flutter's template, a fixed white
+  background, so a dark-mode user saw white until the first frame (which also
+  waits for Firebase and RevenueCat to start). It now uses a
+  `LaunchBackground` color asset, `#FAF3EC` / dark `#1C1B1F` (the theme's
+  `surfaceContainerLow`), and the app's first frame, the profile-loading view,
+  paints that same color itself (it painted nothing before). A test keeps the
+  asset, the storyboard and the theme in sync. Known limit: the launch screen
+  follows the system appearance, so a user who chose Dark in the app on a
+  Light system still starts on the light color.
+
+- **Premium offer card on the practice results screen — implemented, automated
+  tests only; device check pending.** After the last result card, a free user
+  whose daily free practice is used up sees a plain app card (the theme's
+  `surfaceContainerHigh`, radius 20, 18 pt padding): a "PREMIUM" chip
+  (`secondaryContainer`, as on the Premium screen's PREMIUM column, not the
+  orange band color), "Keep practicing", the shared `freePracticeUsedMessage`
+  ("You've used today's free practice. Unlock Topic Practice and more daily
+  sessions with Premium.", also on the weak-spot screen's locked row), two
+  text-only benefits (Topic Practice; More Daily Sessions, side by side on
+  wide screens, stacked on narrow ones or large text) and a "See Premium"
+  FilledButton (paywall source `practice_result`). "Back to topics" sits under
+  the card as an OutlinedButton, and stays the FilledButton when there is no
+  card; its behavior is unchanged. Benefit icons (2026-09-23): a fixed 24 pt
+  PNG per benefit from `assets/icons/` (light and dark variants, 1x/2x/3x),
+  decorative for screen readers; the SVG sources in `assets/icons/_source/`
+  are not bundled. Hidden for premium, for a free user with
+  practice left, and when either read throws. Events unchanged:
+  `practice_result_upsell_viewed` is exposure and the tapped/viewed ratio is
+  the signal (analytics plan E8). Replaced the first version (2026-09-23, a
+  line and an outlined button under a filled "Back to topics"). Known limit: `hasFullAccess` swallows a RevenueCat
+  failure and returns false, so a paying user during such a failure reads as
+  free; the card still needs a used-up free count, which a premium user does
+  not accumulate. Not device-confirmed.
+
+**Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
+preview and Stage 2 persistence are present. The approved first Stage 3 slice
+now displays persisted monthly progress and the selected avatar on Home, with
+local refresh on completion/return/resume and explicit progress-read retry.
+Main's storage, migration and atomic Daily Test completion remain the base.
+Home device acceptance, the remaining Home redesign/access decisions, medals,
+Profile and rollout are pending. As of 2026-09-19 this is the launch branch: it
+merges to `main` (on the owner's approval) and ships as the first App Store
+release; see "Launch scope" above. Older statements below that no gamification
+exists describe the earlier v2 checkpoint. See `prd-gamification.md` M1–M5 for the active monthly direction.
+
+**Device-feedback package 1 — 2026-09-18:** Results now end with a save-aware
+`See your climb` / `Back to Home` action. Persisted progress waits for Home to
+be visible before animating; the mountain is brought into view first. Both
+CTA/back returns, delayed saves and reduced motion are covered. No new paywall
+route; Day-0 retains its existing CTA. Implementation and automated/widget
+visual checks are complete; the user confirmed successful behavior on their
+phone. Home scrolling follows in package 2, per `monthly-climb-revision-plan.md`.
+
+**Device-feedback package 2 — 2026-09-18:** User confirmed package 1 works on
+their phone. Home's mountain now passes vertical drags to the page while its
+automatic pawn tracking remains. The long caption below the mountain is
+removed; a compact accessible monthly counter sits in the heading area.
+Standalone preview exploration remains enabled. Package 2 device review is
+complete: user confirmed it works. Typography/Premium follow next.
+
+**Premium 4a — equal plan-card frames:** The two pricing cards now stretch to
+the taller natural content height; total border/padding insets remain stable
+when switching selection. No pricing or purchase logic changes. Static
+analysis clean and all 67 Premium tests pass, including equality/selection
+stability at 320px/1× and 375px/2× in light/dark. User device review passed.
+Typography and 4b/4c remain open. Separately observed comparison-table overflow
+at 320px/2× is recorded for the broader Premium layout pass.
+
+**Premium 4b — stable contextual entry:** The headline is identical across
+entry points. Weak-spot context replaces the existing supporting sentence
+instead of lengthening the headline. Empty context uses the generic copy;
+long context remains untruncated and may scroll at large text sizes. All 70
+Premium tests pass, including light/dark geometry comparisons against normal
+entry. User device review passed.
+
+**Premium 4c — separated, opaque avatars:** The selected avatar remains larger
+and centered, with two or four smaller companions according to available width.
+Removed overlapping offsets and side-avatar opacity; preserved 90pt hero height,
+deterministic selection, legacy fallback and one semantic announcement. Static
+analysis clean; all 74 Premium tests pass, including light/dark geometry at
+320/390px. User device review passed; typography remains open.
+
+**App typography — Nunito Sans:** User selected Nunito Sans. The variable font
+and its OFL license are bundled locally (~558KB), so rendering has no runtime
+network dependency. The shared light/dark theme now applies it across Material
+text, app bars and controls. Static analysis clean; 120 focused Home/Premium/
+theme tests and all 412 app tests pass, including a Turkish-character render
+check. Physical-device typography acceptance remains pending.
+
+**Profile + user text sizing:** The Settings tab is now user-facing `Profile`
+with a person icon and Profile page title; all prior settings/profile functions
+remain available. Appearance adds persisted Small/Medium/Large choices. The
+original Nunito size is Small; readable Medium (1.10×) is the default and Large
+is 1.20×. Schema v16 adds only `text_size_settings`, preserving the existing
+v15 climb ledger and every prior table. System accessibility scaling remains
+independent. Static analysis clean; all 416 tests pass. Device review pending.
+
+**Profile medal collection shell:** Added a responsive Bronze/Silver/Gold row
+to Profile with distinct subdued tier colors, mountain marks, lock badges and
+explicit `Not earned` copy. Production supplies no earned tiers while scoring,
+minimum participation and partial-month rules remain undecided, so the UI
+cannot imply an award. Semantics announce tier plus locked/earned state. Static
+analysis clean; all 424 tests pass, including 320px light/dark across all three
+app text sizes. Physical-device visual acceptance remains pending.
+User subsequently confirmed the medal collection on their phone.
+
+**Monthly medal rules + durable history:** Approved rule v1 scores correct +2,
+wrong +1 and skipped +0. Bronze/Silver/Gold are ceil(25/50/75% of the full
+calendar month's 10-points-per-day maximum); there is no separate minimum-day
+gate and partial months are not prorated. Schema v17 adds only frozen monthly
+results after main's raw v15 ledger and the independent v16 text preference.
+Past months with at least one ledger row finalize once (including `No medal`),
+never recompute, and empty months create no fake history. Profile shows current
+score/max/active days as `In progress` plus finalized month history. Static
+analysis clean; all 436 tests pass. Physical-device acceptance pending.
+
 **Purpose of this file:** single source of truth for where the project stands.
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
@@ -154,8 +588,10 @@ product continues.
 
 ## Where we are now
 
-**Status: MVP complete, tested with real users, closed. V2 in definition —
-see `docs/prd-v2.md`.**
+**Status: MVP complete, tested with real users, closed. V2 built; the launch
+branch `monthly-climb-v2` is pending its merge to `main` and the first App
+Store submission — see "Launch scope" at the top of this file and
+`docs/prd-v2.md`.**
 
 ### Current wiring — verified against the repo, 2026-09-14
 
@@ -189,8 +625,8 @@ actually wired today.** Checked against the filesystem, not from memory.
   **ASC metadata:** subscription group display name "GrammarLens Premium";
   product description "Daily topic practice with personalized feedback" —
   replaced an earlier "Unlimited topic practice…" description, which was
-  false: premium is capped at `dailySessionLimit` (10 sessions/day), never
-  unlimited.
+  false: premium is capped at `dailySessionLimit` (5 sessions/day since
+  2026-09-21; it was 10 when this was written), never unlimited.
   **Review assets are placeholders, not launch-ready.** Both products'
   App Review screenshot is a simulator capture of the debug fixture
   offering, not a real device/real price screenshot, and their review
@@ -226,8 +662,10 @@ actually wired today.** Checked against the filesystem, not from memory.
   pricing decision (PRD v2 §13.3) and `PremiumScreen`'s disclosure block doesn't
   support disclosing a commitment term. Left as a post-launch idea only,
   worth revisiting if annual conversion turns out low.
-- **EU DSA — In Review, resubmitted 2026-09-16** (Apple case 102955281512).
-  The first submission was rejected because the declared trader address was
+- **EU DSA — trader verification Active, 2026-09-22** (Apple case
+  102955281512). EU availability is no longer gated. The history below is
+  the 2026-09-16 record, kept as written: it was In Review then, resubmitted
+  2026-09-16. The first submission was rejected because the declared trader address was
   incomplete and misspelled, so it couldn't match the proof document — the
   translation was not the cause. The corrected address was resubmitted with
   the same invoice PDF (English translation included), now matching it
@@ -239,11 +677,19 @@ actually wired today.** Checked against the filesystem, not from memory.
 - **Legal pages — written and live**, no longer placeholder:
   `/products/grammarlens/privacy/`, `/terms/` and `/support/` on
   ahmettayfur.com.
+- **GDPR Art. 27 EU representative — not appointed. Deliberate, documented
+  gap.** Reasoning: sole developer established in Türkiye, no EU
+  establishment; the app does not target the EU as a primary market (initial
+  launch is aimed at Turkish speakers); processing is limited to pseudonymous
+  analytics and crash diagnostics with no special-category data. Revisit
+  trigger: appoint a representative if EU users become a material share of
+  the user base, or if EU-targeted marketing begins.
 
-**Open consequence:** the onboarding privacy note — "data stays on-device,
-never sent to a server" — is now wrong twice over: answers go through the
-proxy *and* telemetry goes to Firebase. A false privacy claim is a real App
-Review rejection reason. Submission blocker, not yet fixed.
+**Open consequence (fixed 2026-09-21 — see "Launch scope"):** the onboarding
+privacy note — "data stays on-device, never sent to a server" — was wrong
+twice over: answers go through the proxy *and* telemetry goes to Firebase. A
+false privacy claim is a real App Review rejection reason. The note now
+matches the privacy policy; automated tests only.
 
 ### Shipped
 
@@ -311,7 +757,8 @@ Review rejection reason. Submission blocker, not yet fixed.
   Streak Mode and AI Practice Partner (not built yet; tapping either is
   informative rather than a dead disabled card)
 - Settings screen, new: theme (proper light/dark/system, replacing the old
-  quick toggle), name edit, optional age/occupation fields, and a "reset
+  quick toggle), name edit, optional age/occupation fields (removed
+  2026-09-21), and a "reset
   progress" action — scoped to practice history only, keeps the guest
   identity intact
 - Bottom nav: three tabs now (Home / Review / Settings)
@@ -350,11 +797,13 @@ avatar picker** (`docs/prd-v2.md` §10.1, §11), five independent commits:
   tracks practice sessions started per local calendar day (schema v7);
   `launchPracticeSet` checks it before even opening the length picker and
   shows a "That's all for today" dialog instead of triggering generation
-  once the limit (10/day, a placeholder default — see §7.2) is reached. A
+  once the limit (10/day at the time, a placeholder default — see §7.2;
+  lowered to 5 on 2026-09-21, see PRD v2 §13.8) is reached. A
   session only counts once generation actually succeeds; both the check and
   the write fail open on a storage error
 - **Onboarding privacy note.** One line under the goal options: data stays
-  on-device, never sent to a server (§10.1's privacy-note item, closed)
+  on-device, never sent to a server (§10.1's privacy-note item, closed —
+  the claim was false and was replaced on 2026-09-21, see PRD v2 §13.9)
 - **Firebase Analytics + Crashlytics — code scaffold only, no project
   connected.** `AnalyticsService` wraps three custom events
   (`onboarding_completed`, `mode_selected`, `session_completed`) plus
@@ -838,8 +1287,8 @@ generation with no gate at all — already noted and deferred in this file's
 - **Checked, not found:** no existing UI copy (`PremiumScreen`/paywall
   included) claims "unlimited" anywhere — grepped across `lib/` to confirm
   before writing this batch's own copy, which also avoids the word, since
-  premium is actually bounded by `dailySessionLimit` (10/day), not
-  unlimited.
+  premium is actually bounded by `dailySessionLimit` (10/day then, 5/day
+  since 2026-09-21), not unlimited.
 - **Analytics:** two new events, `free_practice_used` and
   `free_practice_quota_exhausted`, so post-launch data can actually say
   whether `freeDailyPracticeLimit = 1` is the right number, not just
@@ -859,6 +1308,9 @@ proxy's per-device wall (a generic "come back tomorrow" message, not
 anything premium-aware) before ever reaching their own local cap. Needs a
 decision before launch: raise `DEVICE_DAILY_LIMIT` to ~25, or lower
 `dailySessionLimit` to 7. Not resolved here — recorded so it isn't lost.
+**Resolved 2026-09-21:** `dailySessionLimit` is now 5 and
+`DEVICE_DAILY_LIMIT` stays 15 — see the 2026-09-21 launch-checklist note in
+"Launch scope" above.
 
 **2026-09-15 — Avatar carousel: fixed the layout bug, replaced the picker
 and the avatar set.** Diagnosed first, confirmed, then fixed
@@ -1201,7 +1653,8 @@ measurement below: `docs/build-log.md`, same date.
   `SubscriptionService.getOfferings()` now checks a `debugFixtureOffering`
   first, the same `kDebugMode`-gated/tree-shaken-in-release shape as the
   existing entitlement override. `buildDebugFixtureOffering()` builds PRD
-  v2 §13.2's stated prices ($5.99/month, $49.99/year, 7-day trial) with
+  v2 §13.2's stated prices ($5.99/month, $49.99/year, 7-day trial — the fixture
+  models the annual offer) with
   only the raw numbers fixed — the annual plan's per-month figure is a
   real `49.99 / 12` computed in code, so `PremiumScreen`'s existing
   "Save %" math actually runs against it. Settings > Developer gained a
@@ -1331,7 +1784,8 @@ Firebase project connected yet, needs an interactive `flutterfire
 configure` run against a real account", which is stale now), and now
 the full v2.1 free/trial/paid flow (previous section) — functionally
 complete, but not launch-ready. Still open: distribution channel
-decision, API key safety approach, device coverage, feedback channel —
+decision, device coverage, feedback channel (API key safety is closed, see
+below) —
 several of these are open decisions, not just tasks. **Blocker status, reconciled 2026-09-05** (previous
 entries here were partly stale and partly optimistic — corrected against what
 actually exists):
@@ -1369,7 +1823,8 @@ actually exists):
     still placeholders (a simulator capture of the debug fixture offering,
     and notes stating US prices) — replace or re-check both before the
     first submission that includes them.
-  - **EU DSA trader verification — In Review** (Apple case 102955281512). The
+  - *(Resolved: Active 2026-09-22, see "Current wiring".)*
+    **EU DSA trader verification — In Review** (Apple case 102955281512). The
     Turkish utility bill submitted as address proof was rejected **for
     language only**, not content: Apple's document review reads nine
     languages, Turkish not among them. A signed, self-certified English
@@ -1445,8 +1900,10 @@ actually exists):
   `grammarlens_premium_monthly` and `grammarlens_premium_annual`, all three in
   `lib/services/subscription_service.dart`. One subscription group holds both
   products, so Apple's one-introductory-offer-per-group-per-customer rule
-  means a user who takes the 7-day trial on monthly cannot take a second one
-  on annual — intended, but the paywall copy is written knowing it.
+  means a user who takes the monthly trial cannot take a second one on
+  annual — intended, but the paywall copy is written knowing it. (Written
+  when both trials were 7 days; since 2026-09-17 the annual plan's trial is
+  7 days and the monthly plan's is 3 — read live, never hard-coded.)
 
 - **Apple Small Business Program: enroll.** 15% commission instead of 30%,
   which roughly doubles net revenue at this scale and is what every margin
@@ -1454,7 +1911,9 @@ actually exists):
   (done). Adjusted proceeds only take effect 15 days after the end of the
   fiscal month in which enrollment is approved, so enrolling early is worth
   real money. **Not yet done.**
-- **Privacy Policy / Terms: URLs are real, page content is not — updated
+- *(Superseded: the pages are written and live, see "Current wiring".
+  The text below is the 2026-09-08 record.)*
+  **Privacy Policy / Terms: URLs are real, page content is not — updated
   2026-09-08, corrected from a stale "still do not exist" note.** Checked
   directly against `lib/utils/app_links.dart`: `privacyPolicyUrl`, `termsUrl`,
   and `supportUrl` are no longer empty — all three point at permanent pages
@@ -1489,7 +1948,23 @@ actually exists):
   local cap ever kicks in. Needs a decision before launch: raise
   `DEVICE_DAILY_LIMIT` to ~25, or lower `dailySessionLimit` to 7. See the
   2026-09-15 "Free tier practice quota" entry above for how this was found.
-- **Open bug, found 2026-09-15, not yet fixed: Home doesn't refresh Daily
+  **Resolved 2026-09-21:** `dailySessionLimit` lowered to 5 (a margin
+  decision, PRD v2 §13.8); 5 sessions = 10 proxy units + 1 Daily Test unit,
+  inside `DEVICE_DAILY_LIMIT` = 15, which is unchanged.
+- **Closed (recorded 2026-09-21; the bug text below is the 2026-09-15
+  original, kept as history): Home didn't refresh Daily Test's day-rollover
+  (or its own greeting) on resume, because nothing in this app hooked
+  `AppLifecycleState` at all.** Found stale during the launch-checklist pass:
+  `HomeScreen` has had a resume observer since the Monthly Climb preview
+  commit `0cf7eaa` (refreshes the Daily Test day, greeting, climb month and
+  weak spots, with a Home-level midnight test), and `GrammarLensApp` has one
+  for analytics and medal finalization (`60b799b`). Two observers, disjoint
+  jobs, no shared work. New `test/app_resume_test.dart` proves the whole
+  overnight scenario through the real app with an injected clock (new
+  test-only `GrammarLensApp.clock`): after resume the new day and greeting
+  show, and one resume triggers finalization, Daily Test read and climb read
+  exactly once each. Automated tests only; no device confirmation recorded.
+  Original entry: **Home doesn't refresh Daily
   Test's day-rollover (or its own greeting) on resume, because nothing in
   this app hooks `AppLifecycleState` at all.** `HomeScreen._loadTodaysDailyTest`
   only runs from `initState`; a device left open across local midnight
@@ -1499,7 +1974,9 @@ actually exists):
   `AppLifecycleState.resumed` — real fix, not a `Timer`. Found while
   checking whether the greeting had something to attach a refresh to; see
   the 2026-09-15 "Home: time-of-day greeting + bigger avatar" entry above.
-- **Open blocker, found 2026-09-16, not project-caused: the local iOS
+- **Resolved 2026-09-23: a release IPA builds without problems.** The
+  entry below is the 2026-09-16 record, kept as written.
+  **Open blocker, found 2026-09-16, not project-caused: the local iOS
   simulator build is broken by an Xcode 27 / Flutter toolchain
   incompatibility.** This Xcode's `lipo -verify_arch` now rejects being
   passed more than one architecture at once, which breaks Flutter
@@ -1517,7 +1994,24 @@ actually exists):
   The density pass that fixed this at 393×852 didn't close the gap at
   the smaller iPhone SE size (measured: footer top at 507pt, cards'
   own bottom at ~706–710pt). See the 2026-09-16 "Premium screen: on-
-  device review fixes" entry above.
+  device review fixes" entry above. **Still open (2026-09-23):** the
+  2026-09-21 footer work shows the top of the plan cards above the footer
+  (about 56 pt at Medium), not the whole cards; to be checked on TestFlight
+  (checklist below).
+
+#### TestFlight pre-submission checklist
+
+Open items to run on a TestFlight build before submitting for review
+(build it only after `./scripts/preflight.sh` passes; README "Local setup",
+step 5):
+
+- [ ] **Firebase DebugView on a physical device** for the launch analytics
+  events: not done yet. Procedure: `docs/analytics-plan.md` §6.
+- [ ] **Premium screen at 375×667 (iPhone SE):** do the plan cards clear the
+  fixed footer, or is scrolling acceptable? (Open debt above.)
+- [ ] **An explicit Restore Purchases tap** in a scenario that needs it (a
+  second device, or a signed-out/re-signed-in sandbox account). See
+  "Current wiring".
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
@@ -1527,7 +2021,9 @@ change is wasted work) — **all shipped**, see "Where we are now" above:
 - [x] Merge Early Access and Paywall into one Premium screen; retire the "Early
   Access" name
 - [x] Replace the 3-day trial with the 7-day card-up-front model everywhere; trial
-  length and prices from a single source, never hardcoded copy
+  length and prices from a single source, never hardcoded copy *(superseded
+  2026-09-17: annual 7 days, monthly 3 days, both read from RevenueCat; no day
+  count is written in app copy)*
 - [x] Add the required App Store disclosure block to the purchase point
 - [x] Remove unbuilt features from the purchase surface
 - [x] Rebuild Home as a "today" screen (Daily Test state, Topic Practice, weak
@@ -1717,6 +2213,15 @@ building it.
 
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.
+
+**v3 — superseded 2026-09-19 (was: planned, status draft, not scoped or built).**
+The gamification layer below is no longer post-launch: Monthly Climb is in
+launch scope (see "Launch scope" at the top of this file) and has code on
+`monthly-climb-v2`. The Home redesign remains post-launch, unscoped. The
+entry that follows is the 2026-09-18 record, kept for history and out of
+date on "not scoped for merge into `main`" and its test count. (The
+2026-09-17 GUARD note on `codex/monthly-climb` was removed on 2026-09-18:
+that branch is deleted, see `docs/build-log.md`, 2026-09-17.)
 
 **v3 — planned, status draft, not scoped or built in `main` (updated
 2026-09-18).** Two directions:

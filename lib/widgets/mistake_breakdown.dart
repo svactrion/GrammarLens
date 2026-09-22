@@ -79,14 +79,14 @@ class MistakeBreakdown extends StatelessWidget {
             text: correctedAnswer!,
             fillColor:
                 isSkipped ? colorScheme.surface : semantic.correctBackground,
-            borderColor: isSkipped
-                ? colorScheme.outline
-                : semantic.onCorrectBackground,
+            borderColor:
+                isSkipped ? colorScheme.outline : semantic.onCorrectBackground,
             labelColor: isSkipped
                 ? colorScheme.onSurfaceVariant
                 : semantic.onCorrectBackground,
-            textColor:
-                isSkipped ? colorScheme.onSurface : semantic.onCorrectBackground,
+            textColor: isSkipped
+                ? colorScheme.onSurface
+                : semantic.onCorrectBackground,
           ),
           const SizedBox(height: 16),
         ],

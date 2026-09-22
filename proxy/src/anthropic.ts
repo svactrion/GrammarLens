@@ -1,5 +1,7 @@
 import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
+import { logUpstreamFailure, upstreamErrorType } from './error_log';
+import { elapsedMs, logUsage } from './usage_log';
 import type {
   GenerateDailyTestRequest,
   GeneratePracticeSetRequest,
@@ -25,22 +27,14 @@ function itemMix(count: number): string {
   return `${sentenceWriting} sentence_writing, ${errorCorrection} error_correction, and ${fillInBlank} fill_in_blank`;
 }
 
-/** Ranked by summed frequency per topic, most frequent first; empty input asks for general variety. */
-function dailyTestUserPrompt(count: number, weakSpots: GenerateDailyTestRequest['weakSpots']): string {
-  if (weakSpots.length === 0) {
-    const allTitles = TOPICS.map((t) => t.title).join(', ');
-    return `Generate exactly ${count} Daily Test questions. This user has no practice history yet, so cover a varied general mix across these topics: ${allTitles}.`;
-  }
-
-  const frequencyByTopic = new Map<string, number>();
-  for (const spot of weakSpots) {
-    frequencyByTopic.set(spot.topicId, (frequencyByTopic.get(spot.topicId) ?? 0) + spot.frequency);
-  }
-  const rankedTitles = [...frequencyByTopic.keys()]
-    .sort((a, b) => (frequencyByTopic.get(b) ?? 0) - (frequencyByTopic.get(a) ?? 0))
-    .map((id) => topicById(id)?.title ?? id);
-
-  return `Generate exactly ${count} Daily Test questions. Bias topic selection toward this user's most frequent error categories, most frequent first: ${rankedTitles.join(', ')}. Still include some variety rather than every question targeting the same topic.`;
+/**
+ * The same for every user: a varied general mix across all topics. Nothing
+ * about the device or its history goes into the prompt, so the Daily Test
+ * sends no user data to Anthropic.
+ */
+function dailyTestUserPrompt(count: number): string {
+  const allTitles = TOPICS.map((t) => t.title).join(', ');
+  return `Generate exactly ${count} Daily Test questions. Cover a varied general mix across these topics: ${allTitles}.`;
 }
 
 const GENERATION_SYSTEM_PROMPT = `
@@ -247,7 +241,7 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
     max_tokens: maxTokensFor(req.count),
     system: DAILY_TEST_SYSTEM_PROMPT,
     output_config: { format: { type: 'json_schema', schema } },
-    messages: [{ role: 'user', content: dailyTestUserPrompt(req.count, req.weakSpots) }],
+    messages: [{ role: 'user', content: dailyTestUserPrompt(req.count) }],
   };
 }
 
@@ -319,6 +313,10 @@ function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
 export async function callAnthropic(env: Env, operation: AnthropicOperation): Promise<unknown> {
   const body = buildBody(operation);
 
+  // Timing covers only the wait on Anthropic (not validation or the quota
+  // check), which is the part whose duration the Daily Test's load time
+  // depends on. See `logUsage` for what may be logged.
+  const startedAt = Date.now();
   let response: Response;
   try {
     response = await fetch(ENDPOINT, {
@@ -330,29 +328,62 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
       },
       body: JSON.stringify(body),
     });
-  } catch (e) {
-    console.error('Anthropic request failed to send', e);
+  } catch {
+    // No exception object is logged: its message can carry request text.
+    logUpstreamFailure(operation, 'network_error', { durationMs: elapsedMs(startedAt) });
     throw new ProxyError('upstream_error', 502, 'Could not reach the upstream service.');
   }
 
   if (response.status !== 200) {
-    // Logged server-side only (visible via `wrangler tail`) — never
-    // forwarded to the client.
-    console.error('Anthropic returned', response.status, await response.text());
+    // Logged server-side only (visible via `wrangler tail`) and never
+    // forwarded to the client. Only the status and Anthropic's error type are
+    // kept; the body itself can echo request or response text, so it is read
+    // for that one whitelisted field and then dropped.
+    let errorType = 'unknown';
+    try {
+      errorType = upstreamErrorType(await response.text());
+    } catch {
+      // Body unreadable: the status alone is logged.
+    }
+    logUpstreamFailure(operation, 'http_error', {
+      httpStatus: response.status,
+      errorType,
+      durationMs: elapsedMs(startedAt),
+    });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an error.');
   }
 
-  const decoded = (await response.json()) as { content?: { type: string; text?: string }[] };
+  let decoded: { content?: { type: string; text?: string }[]; usage?: unknown };
+  try {
+    decoded = (await response.json()) as typeof decoded;
+  } catch {
+    logUpstreamFailure(operation, 'unreadable_body', {
+      httpStatus: response.status,
+      durationMs: elapsedMs(startedAt),
+    });
+    throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
+  }
+  // Logged before the content is checked: a response that later fails to
+  // parse was still billed, and that cost belongs in the measurement.
+  logUsage(operation, decoded.usage, elapsedMs(startedAt));
   const textBlock = decoded.content?.find((block) => block.type === 'text');
   if (!textBlock?.text) {
-    console.error('Anthropic response had no text content block');
+    logUpstreamFailure(operation, 'no_text_block', {
+      httpStatus: response.status,
+      durationMs: elapsedMs(startedAt),
+    });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
 
   try {
     return JSON.parse(textBlock.text);
-  } catch (e) {
-    console.error('Anthropic text content was not valid JSON', e);
+  } catch {
+    // The parse exception's message quotes the start of the model's text
+    // (which can contain the user's own words), so it is not logged.
+    logUpstreamFailure(operation, 'invalid_json_content', {
+      httpStatus: response.status,
+      durationMs: elapsedMs(startedAt),
+    });
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
   }
 }

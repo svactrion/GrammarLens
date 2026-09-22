@@ -124,9 +124,8 @@ class _AvatarCarouselState extends State<AvatarCarousel>
 
     setState(() => _settledIndex = settled);
     HapticFeedback.selectionClick();
-    _popController.duration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : _popDuration;
+    _popController.duration =
+        MediaQuery.disableAnimationsOf(context) ? Duration.zero : _popDuration;
     _popController.forward(from: 0);
     widget.onSettled(Avatar.values[settled]);
     return false;

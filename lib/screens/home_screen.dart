@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
+import '../models/pending_climb.dart';
 import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
@@ -16,6 +19,7 @@ import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/locked_premium_pill.dart';
+import '../widgets/monthly_climb/monthly_mountain.dart';
 import '../widgets/weak_spot_card.dart';
 import 'avatar_picker_screen.dart' show homeAvatarHeroTag;
 import 'daily_test_result_screen.dart';
@@ -32,6 +36,7 @@ import 'weak_spot_detail_screen.dart';
 /// real data (today's Daily Test state, the error profile) and showed none
 /// of it; this screen shows it instead.
 class HomeScreen extends StatefulWidget {
+  final bool active;
   final String userName;
   final Avatar? avatar;
   final ClaudeService claudeService;
@@ -48,8 +53,28 @@ class HomeScreen extends StatefulWidget {
   // happens to run at. No caller outside a test ever overrides this.
   final DateTime Function() clock;
 
+  /// A Daily Test completion that finished before this Home existed (the
+  /// first-launch flow's Day-0 test). Read once in `initState`; Home mounts
+  /// the mountain at the position before that step and then animates it.
+  final PendingClimb? initialPendingClimb;
+
+  /// Called from `initState` once [initialPendingClimb] has been taken, so the
+  /// owner can drop it and never hand the same completion to a later Home.
+  final VoidCallback? onInitialPendingClimbTaken;
+
+  /// True when this Home replaces a first-launch flow whose Day-0 Daily Test
+  /// the user finished: Home then opens the Premium screen by itself, once,
+  /// after the climb (see [_HomeScreenState._offerDay0Paywall]). Read once in
+  /// `initState`, like [initialPendingClimb].
+  final bool offerDay0Paywall;
+
+  /// Called from `initState` once [offerDay0Paywall] has been taken, so the
+  /// owner can drop it and never hand it to a later Home.
+  final VoidCallback? onOfferDay0PaywallTaken;
+
   HomeScreen({
     super.key,
+    this.active = true,
     required this.userName,
     this.avatar,
     required this.claudeService,
@@ -57,6 +82,10 @@ class HomeScreen extends StatefulWidget {
     required this.analyticsService,
     SubscriptionService? subscriptionService,
     this.onAvatarTap,
+    this.initialPendingClimb,
+    this.onInitialPendingClimbTaken,
+    this.offerDay0Paywall = false,
+    this.onOfferDay0PaywallTaken,
     DateTime Function()? clock,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
         clock = clock ?? DateTime.now;
@@ -65,7 +94,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // Starts closed rather than "unknown/loading" — PRD v2 §12.2's default
   // for anyone not confirmed to have a trial/subscription is Free, and
   // fail-closed here matches SubscriptionService.hasFullAccess's own
@@ -73,8 +102,56 @@ class _HomeScreenState extends State<HomeScreen> {
   // is still in flight).
   bool _hasFullAccess = false;
 
+  // One service for everything Daily Test on this Home (opening the test, its
+  // result, the completion): its single-flight generation and the next day's
+  // preparation only work when they share an instance.
+  late final DailyTestService _dailyTestService = DailyTestService(
+    claudeService: widget.claudeService,
+    storageService: widget.storageService,
+  );
+
+  int _dailyLoadGeneration = 0;
   bool _loadingToday = true;
   DailyTestSet? _todaysDailyTest;
+
+  int _climbLoadGeneration = 0;
+  int? _climbSteps;
+  late DateTime _climbMonth;
+  bool _loadingClimb = true;
+  bool _climbLoadFailed = false;
+  final _mountainKey = GlobalKey();
+  bool _dailyFlowActive = false;
+  String? _pendingClimbDay;
+
+  /// Steps the pending completion earned, known only when it arrived through
+  /// [HomeScreen.initialPendingClimb]. It lets the first load derive the
+  /// position to mount at (`progress.steps - step`) because, unlike a Home
+  /// that was already showing the mountain, there is no earlier value to
+  /// compare against.
+  int _pendingClimbStep = 0;
+
+  // The first-day paywall ([HomeScreen.offerDay0Paywall]). Pending until it is
+  // shown or ruled out (premium, already claimed, unreadable storage); ready
+  // once the climb has landed; and shown at most once per install through a
+  // stored flag.
+  bool _day0PaywallPending = false;
+  bool _day0PaywallReady = false;
+  bool _day0PaywallChecking = false;
+  Timer? _day0PaywallTimer;
+
+  /// Whether the pawn is still moving to a step this Home animates. While it
+  /// is, a finished load must not open the paywall over the animation.
+  bool _climbAnimating = false;
+
+  /// How long the pawn stands on its new step before the paywall opens.
+  static const Duration _day0PaywallDelay = Duration(milliseconds: 600);
+
+  bool get _homeVisible =>
+      widget.active &&
+      !_dailyFlowActive &&
+      TickerMode.valuesOf(context).enabled &&
+      (ModalRoute.of(context)?.isCurrent ?? true) &&
+      WidgetsBinding.instance.lifecycleState != AppLifecycleState.paused;
 
   bool _loadingWeakSpots = true;
   List<WeakSpot> _weakSpots = const [];
@@ -82,6 +159,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final initialClimb = widget.initialPendingClimb;
+    if (initialClimb != null && initialClimb.step > 0) {
+      _pendingClimbDay = initialClimb.day;
+      _pendingClimbStep = initialClimb.step;
+    }
+    widget.onInitialPendingClimbTaken?.call();
+    _day0PaywallPending = widget.offerDay0Paywall;
+    widget.onOfferDay0PaywallTaken?.call();
     _checkAccess();
     // Live updates (PRD v2 §12.3/§12.6): a trial starting or expiring
     // should re-gate Topic Practice and the weak-spot rows without
@@ -90,19 +176,198 @@ class _HomeScreenState extends State<HomeScreen> {
     // screen's own initial build).
     widget.subscriptionService.addAccessListener(_onAccessChanged);
     _loadTodaysDailyTest();
+    _loadClimb();
     _loadWeakSpots();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
+    _day0PaywallTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A delayed save may finish while another route/tab covers Home.
+    if (_pendingClimbDay != null && _homeVisible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _homeVisible) _loadClimb();
+      });
+    }
+    // Home may just have become visible again (a route above it closed).
+    if (_day0PaywallPending && _day0PaywallReady) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showDay0Paywall();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active && widget.active && _pendingClimbDay != null) {
+      _loadClimb();
+    }
+    if (!oldWidget.active && widget.active) _showDay0Paywall();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh greeting and cached day after midnight/timezone changes.
+      // This is a local read; resuming never generates another question set.
+      setState(() => _loadingToday = true);
+      _loadTodaysDailyTest();
+      _loadClimb();
+      _loadWeakSpots();
+      _showDay0Paywall();
+    }
   }
 
   Future<void> _checkAccess() async {
     final hasAccess = await widget.subscriptionService.hasFullAccess;
     if (!mounted) return;
     setState(() => _hasFullAccess = hasAccess);
+  }
+
+  Future<void> _loadClimb() async {
+    if (!mounted) return;
+    final generation = ++_climbLoadGeneration;
+    // Persistence is already complete; only presentation waits for the return.
+    if (_dailyFlowActive) return;
+    final now = widget.clock();
+    final month = DateTime(now.year, now.month);
+    setState(() {
+      if (_climbSteps == null || _climbMonth != month) _climbSteps = null;
+      _climbMonth = month;
+      _loadingClimb = true;
+      _climbLoadFailed = false;
+    });
+    try {
+      final progress =
+          await widget.storageService.getClimbProgress(month.year, month.month);
+      if (!mounted || generation != _climbLoadGeneration) return;
+      final pendingThisMonth = _pendingClimbDay != null &&
+          _pendingClimbDay!.startsWith(
+              '${month.year}-${month.month.toString().padLeft(2, '0')}-');
+      if (pendingThisMonth && _climbSteps == null && _pendingClimbStep > 0) {
+        // First load of a Home that never showed the mountain: mount it where
+        // it stood before the pending step, so the step below has something
+        // to animate from.
+        final baseline =
+            (progress.steps - _pendingClimbStep).clamp(0, progress.steps);
+        if (progress.steps > baseline) {
+          setState(() => _climbSteps = baseline);
+        }
+      }
+      final showStep = pendingThisMonth &&
+          _climbSteps != null &&
+          progress.steps > _climbSteps!;
+      if (showStep) {
+        if (!_homeVisible) {
+          setState(() => _loadingClimb = false);
+          return;
+        }
+        // Keep the old position rendered while bringing the mountain into view.
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted || generation != _climbLoadGeneration) return;
+        final mountainContext = _mountainKey.currentContext;
+        if (mountainContext != null && mountainContext.mounted) {
+          await Scrollable.ensureVisible(mountainContext,
+              alignment: 0.35,
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 250));
+        }
+        if (!mounted || generation != _climbLoadGeneration) return;
+        if (!_homeVisible) {
+          setState(() => _loadingClimb = false);
+          return;
+        }
+      }
+      setState(() {
+        _climbSteps = progress.steps;
+        _loadingClimb = false;
+        _pendingClimbDay = null;
+        _pendingClimbStep = 0;
+      });
+      // A step is now animating and its end opens the paywall; with none (an
+      // all-skipped test, or a step that belongs to another month) Home is
+      // simply loaded.
+      if (showStep) {
+        _climbAnimating = true;
+      } else if (!_climbAnimating) {
+        _armDay0Paywall(Duration.zero);
+      }
+    } catch (_) {
+      if (!mounted || generation != _climbLoadGeneration) return;
+      setState(() {
+        _loadingClimb = false;
+        _climbLoadFailed = true;
+      });
+      if (!_climbAnimating) _armDay0Paywall(Duration.zero);
+    }
+  }
+
+  void _onMountainMotionEnd() {
+    _climbAnimating = false;
+    _armDay0Paywall(_day0PaywallDelay);
+  }
+
+  /// The climb has landed, or there is none to wait for: opens the paywall
+  /// after [delay] (or as soon as Home is visible, if it is not now).
+  void _armDay0Paywall(Duration delay) {
+    if (!_day0PaywallPending || _day0PaywallReady) return;
+    _day0PaywallTimer?.cancel();
+    _day0PaywallTimer = Timer(delay, () {
+      _day0PaywallReady = true;
+      _showDay0Paywall();
+    });
+  }
+
+  /// Opens the Premium screen by itself, once, after the first climb. It waits
+  /// (returns, to be tried again when Home is visible again) while another route
+  /// or tab covers Home or the app is in the background, and it is dropped for
+  /// good when the user already has full access, the flag was already claimed,
+  /// or the flag cannot be read: a paywall that might show twice is worse than
+  /// one that does not show. The flag is claimed right before the push, so an app
+  /// closed on the paywall still counts as having seen it.
+  Future<void> _showDay0Paywall() async {
+    if (!_day0PaywallPending || !_day0PaywallReady || _day0PaywallChecking) {
+      return;
+    }
+    _day0PaywallChecking = true;
+    try {
+      final hasAccess = await widget.subscriptionService.hasFullAccess;
+      if (!mounted) return;
+      if (hasAccess) {
+        _day0PaywallPending = false;
+        return;
+      }
+      // Covered now (or while the entitlement was being read): try again when
+      // Home is visible again.
+      if (!_homeVisible) return;
+      final claimed = await widget.storageService
+          .claimOneTimeFlag(StorageService.day0PaywallFlag);
+      _day0PaywallPending = false;
+      if (!claimed || !mounted) return;
+      _pushPremium(context,
+          source: AnalyticsService.paywallSourceDay0AfterClimb);
+    } catch (_) {
+      _day0PaywallPending = false;
+    } finally {
+      _day0PaywallChecking = false;
+    }
+  }
+
+  void _refreshAfterDailyTest() {
+    if (!mounted) return;
+    _loadTodaysDailyTest();
+    _loadClimb();
+    _loadWeakSpots();
   }
 
   void _onAccessChanged(bool hasFullAccess) {
@@ -116,15 +381,16 @@ class _HomeScreenState extends State<HomeScreen> {
   /// started" on a storage error, same posture as every other best-effort
   /// read in this app (theme, profile, session cap).
   Future<void> _loadTodaysDailyTest() async {
+    final generation = ++_dailyLoadGeneration;
     try {
       final set = await widget.storageService.getDailyTestSetForToday();
-      if (!mounted) return;
+      if (!mounted || generation != _dailyLoadGeneration) return;
       setState(() {
         _todaysDailyTest = set;
         _loadingToday = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _dailyLoadGeneration) return;
       setState(() {
         _todaysDailyTest = null;
         _loadingToday = false;
@@ -157,20 +423,43 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openDailyTest(BuildContext context) {
+  Future<void> _openDailyTest(BuildContext context) async {
+    if (_dailyFlowActive) return;
+    _dailyFlowActive = true;
+    ++_climbLoadGeneration;
     widget.analyticsService.modeSelected(AnalyticsService.modeDailyTest);
-    Navigator.of(context)
-        .push(
-          MaterialPageRoute(
-            builder: (_) => DailyTestScreen(
-              dailyTestService: DailyTestService(
-                claudeService: widget.claudeService,
-                storageService: widget.storageService,
-              ),
-            ),
-          ),
-        )
-        .then((_) => _loadTodaysDailyTest());
+    final navigator = Navigator.of(context);
+    final result = await navigator.push<(DailyTestSet, Map<String, String>)>(
+      MaterialPageRoute(
+        builder: (_) => DailyTestScreen(
+          analyticsService: widget.analyticsService,
+          onFinished: (set, answers) => navigator.pop((set, answers)),
+          dailyTestService: _dailyTestService,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (result != null) {
+      final resultRoute = MaterialPageRoute<void>(
+        builder: (_) => DailyTestResultScreen(
+          dailyTestSet: result.$1,
+          answers: result.$2,
+          analyticsService: widget.analyticsService,
+          onCompletionSaved: () {
+            if (!mounted) return;
+            _pendingClimbDay = result.$1.day;
+            _refreshAfterDailyTest();
+          },
+          dailyTestService: _dailyTestService,
+        ),
+      );
+      await navigator.push(resultRoute);
+      // push's future resolves at pop, before the reverse transition finishes.
+      await resultRoute.completed;
+    }
+    if (!mounted) return;
+    _dailyFlowActive = false;
+    _refreshAfterDailyTest();
   }
 
   /// Replays the already-completed set through the same result screen a
@@ -179,18 +468,18 @@ class _HomeScreenState extends State<HomeScreen> {
   /// when the set it's given is already completed (see its own doc
   /// comment), so viewing this again doesn't re-write anything.
   void _openDailyTestResult(BuildContext context, DailyTestSet set) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => DailyTestResultScreen(
-          dailyTestSet: set,
-          answers: set.answers ?? const {},
-          dailyTestService: DailyTestService(
-            claudeService: widget.claudeService,
-            storageService: widget.storageService,
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => DailyTestResultScreen(
+              dailyTestSet: set,
+              answers: set.answers ?? const {},
+              analyticsService: widget.analyticsService,
+              dailyTestService: _dailyTestService,
+            ),
           ),
-        ),
-      ),
-    );
+        )
+        .then((_) => _refreshAfterDailyTest());
   }
 
   void _openTopicPractice(BuildContext context) {
@@ -253,12 +542,26 @@ class _HomeScreenState extends State<HomeScreen> {
   /// every time now that all three land on the same screen.
   void _openPremium(BuildContext context, {String? sourceContext}) {
     widget.analyticsService.modeSelected(AnalyticsService.modePremium);
+    _pushPremium(
+      context,
+      source: AnalyticsService.paywallSourceHome,
+      sourceContext: sourceContext,
+    );
+  }
+
+  /// The push itself, shared with the paywall Home opens on its own, which is
+  /// not a user's choice of mode and so logs no `mode_selected`.
+  void _pushPremium(
+    BuildContext context, {
+    required String source,
+    String? sourceContext,
+  }) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PremiumScreen(
           storageService: widget.storageService,
           analyticsService: widget.analyticsService,
-          analyticsSource: AnalyticsService.paywallSourceHome,
+          analyticsSource: source,
           subscriptionService: widget.subscriptionService,
           sourceContext: sourceContext,
         ),
@@ -301,122 +604,184 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       children: [
-        // PRD v2 §11: an avatar next to the greeting, not floating
-        // elsewhere on the page, so it reads as "whose home screen this
-        // is" rather than a decorative icon. Greeting leads on the left,
-        // avatar pinned to the far right edge (trailing, not centered
-        // against the text) — `spaceBetween` with a `Flexible` (not
-        // `Expanded`) text so the avatar always lands flush against the
-        // trailing edge regardless of how short the greeting is, while a
-        // long name still truncates instead of pushing the avatar off
-        // the visible row. `maxLines: 1` + `overflow: ellipsis` here is
-        // also what keeps this row safe at large Dynamic Type sizes: the
-        // text clips to one line and shrinks the space it claims instead
-        // of wrapping into the avatar or growing the row unpredictably;
-        // the avatar's own size never changes with text scale, and the
-        // `Row` (no fixed height) grows to fit whichever of the two is
-        // taller, so nothing clips vertically either.
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Flexible(
-              child: Text(
-                _greeting,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: appBarFg,
+        // Keep the small Home body mounted while covered/scrolled so the
+        // mountain retains the pre-completion position and can be revealed.
+        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // PRD v2 §11: an avatar next to the greeting, not floating
+          // elsewhere on the page, so it reads as "whose home screen this
+          // is" rather than a decorative icon. Greeting leads on the left,
+          // avatar pinned to the far right edge (trailing, not centered
+          // against the text) — `spaceBetween` with a `Flexible` (not
+          // `Expanded`) text so the avatar always lands flush against the
+          // trailing edge regardless of how short the greeting is, while a
+          // long name still truncates instead of pushing the avatar off
+          // the visible row. `maxLines: 1` + `overflow: ellipsis` here is
+          // also what keeps this row safe at large Dynamic Type sizes: the
+          // text clips to one line and shrinks the space it claims instead
+          // of wrapping into the avatar or growing the row unpredictably;
+          // the avatar's own size never changes with text scale, and the
+          // `Row` (no fixed height) grows to fit whichever of the two is
+          // taller, so nothing clips vertically either.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  _greeting,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: appBarFg,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            // PRD v2 §11's natural follow-up: the avatar is the user's
-            // own identity marker, and Settings is where it (and the
-            // rest of the profile) is edited — tapping it jumps there
-            // directly instead of requiring the Settings tab first.
-            // Enlarged from the original radius: 22 (a 44pt tile — this
-            // batch's own instruction to make it more prominent as the
-            // "whose home screen this is" marker); 44pt was already
-            // exactly at the ≥44pt touch-target minimum, so growing it
-            // only makes that minimum more comfortably exceeded, never
-            // at risk. This row lives in Home's own scrollable body
-            // (BrandScaffold's `children`), not its app bar/band, so the
-            // band's height is untouched by this change — confirmed by
-            // reading BrandScaffold itself, not assumed.
-            InkWell(
-              // Matches AvatarTile's own corner rounding at radius: 30
-              // (radius * 0.6) — a circular ripple would visibly mismatch
-              // the tile's now-square shape.
-              customBorder: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+              const SizedBox(width: 12),
+              // PRD v2 §11's natural follow-up: the avatar is the user's
+              // own identity marker, and Settings is where it (and the
+              // rest of the profile) is edited — tapping it jumps there
+              // directly instead of requiring the Settings tab first.
+              // Enlarged from the original radius: 22 (a 44pt tile — this
+              // batch's own instruction to make it more prominent as the
+              // "whose home screen this is" marker); 44pt was already
+              // exactly at the ≥44pt touch-target minimum, so growing it
+              // only makes that minimum more comfortably exceeded, never
+              // at risk. This row lives in Home's own scrollable body
+              // (BrandScaffold's `children`), not its app bar/band, so the
+              // band's height is untouched by this change — confirmed by
+              // reading BrandScaffold itself, not assumed.
+              InkWell(
+                // Matches AvatarTile's own corner rounding at radius: 30
+                // (radius * 0.6) — a circular ripple would visibly mismatch
+                // the tile's now-square shape.
+                customBorder: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                onTap: widget.onAvatarTap,
+                // Hero, not just AvatarTile: `app.dart`'s onAvatarTap now
+                // pushes AvatarPickerScreen directly (a real route push, not
+                // the tab switch this used to be), so this flies to the
+                // carousel's centered avatar there and back. `homeAvatarHeroTag`
+                // is its own tag, distinct from Settings' `avatarHeroTag` —
+                // see that constant's own doc comment for why sharing one tag
+                // across both entry points would crash (both routes' Heroes
+                // stay mounted simultaneously, since Home and Settings are
+                // both permanently alive inside app.dart's IndexedStack).
+                child: Hero(
+                  tag: homeAvatarHeroTag,
+                  child: AvatarTile(avatar: widget.avatar, radius: 30),
+                ),
               ),
-              onTap: widget.onAvatarTap,
-              // Hero, not just AvatarTile: `app.dart`'s onAvatarTap now
-              // pushes AvatarPickerScreen directly (a real route push, not
-              // the tab switch this used to be), so this flies to the
-              // carousel's centered avatar there and back. `homeAvatarHeroTag`
-              // is its own tag, distinct from Settings' `avatarHeroTag` —
-              // see that constant's own doc comment for why sharing one tag
-              // across both entry points would crash (both routes' Heroes
-              // stay mounted simultaneously, since Home and Settings are
-              // both permanently alive inside app.dart's IndexedStack).
-              child: Hero(
-                tag: homeAvatarHeroTag,
-                child: AvatarTile(avatar: widget.avatar, radius: 30),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        const _SectionLabel('Today'),
-        const SizedBox(height: 8),
-        _TodayCard(
-          loading: _loadingToday,
-          dailyTestSet: _todaysDailyTest,
-          onStart: () => _openDailyTest(context),
-          onViewResult: (set) => _openDailyTestResult(context, set),
-        ),
-        const SizedBox(height: 24),
-        _PracticeModeCard(
-          icon: Icons.school_rounded,
-          title: 'Topic Practice',
-          description: _hasFullAccess
-              ? 'Deep grammar practice with plain-language feedback.'
-              : 'Try it free, then continue with a subscription.',
-          locked: !_hasFullAccess,
-          onTap: () => _openTopicPractice(context),
-        ),
-        // Deliberately no empty state here (PRD v2 §13.5 item 4) — the
-        // Review tab already covers "no weak spots yet", and repeating
-        // that message on Home too would just be noise on a screen
-        // that's supposed to lead with what's actually there.
-        if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
+            ],
+          ),
           const SizedBox(height: 24),
-          const _SectionLabel('Your weak spots'),
+          const _SectionLabel('Today'),
           const SizedBox(height: 8),
-          for (final spot in _weakSpots) ...[
-            WeakSpotCard(
-              topic: kTopics.firstWhere(
-                (t) => t.id.name == spot.topicId,
-                orElse: () => kTopics.first,
+          _TodayCard(
+            loading: _loadingToday,
+            dailyTestSet: _todaysDailyTest,
+            onStart: () => _openDailyTest(context),
+            onViewResult: (set) => _openDailyTestResult(context, set),
+          ),
+          const SizedBox(height: 12),
+          _buildClimb(context),
+          const SizedBox(height: 24),
+          _PracticeModeCard(
+            icon: Icons.school_rounded,
+            title: 'Topic Practice',
+            description: _hasFullAccess
+                ? 'Deep grammar practice with plain-language feedback.'
+                : 'Try it free, then continue with a subscription.',
+            locked: !_hasFullAccess,
+            onTap: () => _openTopicPractice(context),
+          ),
+          // Deliberately no empty state here (PRD v2 §13.5 item 4) — the
+          // Review tab already covers "no weak spots yet", and repeating
+          // that message on Home too would just be noise on a screen
+          // that's supposed to lead with what's actually there.
+          if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            const _SectionLabel('Your weak spots'),
+            const SizedBox(height: 8),
+            for (final spot in _weakSpots) ...[
+              WeakSpotCard(
+                topic: kTopics.firstWhere(
+                  (t) => t.id.name == spot.topicId,
+                  orElse: () => kTopics.first,
+                ),
+                spot: spot,
+                locked: !_hasFullAccess,
+                onTap: () => _openWeakSpot(context, spot),
               ),
-              spot: spot,
-              locked: !_hasFullAccess,
-              onTap: () => _openWeakSpot(context, spot),
-            ),
-            if (spot != _weakSpots.last) const SizedBox(height: 10),
+              if (spot != _weakSpots.last) const SizedBox(height: 10),
+            ],
           ],
+          // Quiet by design (PRD v2 §13.5 item 5) — a plain row, not the
+          // solid-fill banner this used to be, and only for a free user:
+          // someone already on a trial or subscribed doesn't need the
+          // upsell repeated at them. Must never outweigh the Today card
+          // above, which is why this has no Card/fill of its own.
+          if (!_hasFullAccess) ...[
+            const SizedBox(height: 8),
+            _PremiumRow(onTap: () => _openPremium(context)),
+          ],
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildClimb(BuildContext context) {
+    final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
+    final monthLabel =
+        MaterialLocalizations.of(context).formatMonthYear(_climbMonth);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 4,
+          children: [
+            Text('Monthly Climb · $monthLabel',
+                style: Theme.of(context).textTheme.titleMedium),
+            if (_climbSteps != null)
+              Semantics(
+                liveRegion: true,
+                container: true,
+                label: _climbSteps == days
+                    ? 'Summit reached. $_climbSteps of $days steps.'
+                    : 'Monthly progress: $_climbSteps of $days steps.',
+                excludeSemantics: true,
+                child: Text('$_climbSteps / $days steps',
+                    style: Theme.of(context).textTheme.labelLarge),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_climbSteps != null) ...[
+          ClipRRect(
+            key: _mountainKey,
+            borderRadius: BorderRadius.circular(20),
+            child: MonthlyMountain(
+              key: ValueKey(_climbMonth),
+              days: days,
+              completedDays: _climbSteps!,
+              avatar: widget.avatar ?? Avatar.values.first,
+              allowUserScroll: false,
+              onMotionEnd: _onMountainMotionEnd,
+            ),
+          ),
         ],
-        // Quiet by design (PRD v2 §13.5 item 5) — a plain row, not the
-        // solid-fill banner this used to be, and only for a free user:
-        // someone already on a trial or subscribed doesn't need the
-        // upsell repeated at them. Must never outweigh the Today card
-        // above, which is why this has no Card/fill of its own.
-        if (!_hasFullAccess) ...[
-          const SizedBox(height: 8),
-          _PremiumRow(onTap: () => _openPremium(context)),
+        if (_loadingClimb)
+          const LinearProgressIndicator(
+              semanticsLabel: 'Loading monthly progress'),
+        if (_climbLoadFailed) ...[
+          const Text('Couldn’t load your monthly progress.',
+              textAlign: TextAlign.center),
+          TextButton(
+              onPressed: _loadClimb, child: const Text('Retry progress')),
         ],
       ],
     );
@@ -611,7 +976,10 @@ class _PracticeModeCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               locked
-                  ? const LockedPremiumPill()
+                  ? MediaQuery.textScalerOf(context).scale(14) > 20
+                      ? Icon(Icons.lock_rounded,
+                          color: muted, semanticLabel: 'Premium')
+                      : const LockedPremiumPill()
                   : Icon(Icons.chevron_right_rounded, color: muted),
             ],
           ),

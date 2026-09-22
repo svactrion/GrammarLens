@@ -7,9 +7,14 @@ import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/screens/daily_test_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/utils/debug_tools.dart';
+
+import 'support/recording_analytics_sink.dart';
 
 /// Fails the first [failCount] calls, then succeeds — simulates a
 /// transient generation failure (a bad API response, a network error, the
@@ -25,7 +30,6 @@ class _FlakyClaudeService extends ClaudeService {
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     callCount++;
     if (callCount <= failCount) {
@@ -54,7 +58,6 @@ class _QuotaExceededClaudeService extends ClaudeService {
   Future<List<DailyTestQuestion>> generateDailyTestQuestions({
     required String deviceId,
     required int count,
-    required List<WeakSpot> weakSpots,
   }) async {
     throw const ClaudeApiException(
       "You've reached today's practice limit on this device. Please try "
@@ -77,6 +80,10 @@ class _FakeStorageService extends StorageService {
   Future<DailyTestSet?> getDailyTestSetForToday() async => todaysSet;
 
   @override
+  Future<DailyTestSet?> getDailyTestSet(String day) =>
+      getDailyTestSetForToday();
+
+  @override
   Future<List<WeakSpot>> getWeakSpots({
     int limit = 10,
     ReviewSortOrder sortOrder = ReviewSortOrder.recent,
@@ -84,10 +91,10 @@ class _FakeStorageService extends StorageService {
       const [];
 
   @override
-  Future<DailyTestSet> saveDailyTestSet(
-    List<DailyTestQuestion> questions,
-  ) async {
-    final set = DailyTestSet(day: '2026-01-01', questions: questions);
+  Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
+      {String? day, DailyTestSource source = DailyTestSource.generated}) async {
+    final set =
+        DailyTestSet(day: '2026-01-01', questions: questions, source: source);
     todaysSet = set;
     return set;
   }
@@ -105,13 +112,37 @@ void main() {
 
   Future<void> pumpScreen(
     WidgetTester tester,
-    DailyTestService service,
-  ) async {
+    DailyTestService service, {
+    ThemeData? theme,
+  }) async {
     await tester.pumpWidget(
-      MaterialApp(home: DailyTestScreen(dailyTestService: service)),
+      MaterialApp(
+          theme: theme,
+          home: DailyTestScreen(
+            dailyTestService: service,
+            analyticsService: AnalyticsService(sink: RecordingAnalyticsSink()),
+          )),
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'the answer field turns off autocorrect, suggestions and smart '
+    'punctuation, so the keyboard cannot fix the learner\'s mistake',
+    (tester) async {
+      final service = DailyTestService(
+        claudeService: _FlakyClaudeService(failCount: 0),
+        storageService: storageService,
+      );
+      await pumpScreen(tester, service);
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.autocorrect, isFalse);
+      expect(field.enableSuggestions, isFalse);
+      expect(field.smartQuotesType, SmartQuotesType.disabled);
+      expect(field.smartDashesType, SmartDashesType.disabled);
+    },
+  );
 
   testWidgets(
     'a load failure shows an in-screen error with a human sentence and a '
@@ -202,6 +233,23 @@ void main() {
     expect(find.textContaining('simulated generation failure'), findsOneWidget);
   });
 
+  testWidgets('a release build never shows the technical error detail',
+      (tester) async {
+    DebugTools.enabledForTesting = false;
+    addTearDown(() => DebugTools.enabledForTesting = true);
+    final service = DailyTestService(
+      claudeService: _FlakyClaudeService(failCount: 5),
+      storageService: storageService,
+    );
+
+    await pumpScreen(tester, service);
+
+    // The human message and retry stay; the raw exception text does not.
+    expect(find.text("Couldn't load today's test"), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.textContaining('simulated generation failure'), findsNothing);
+  });
+
   group('Skip is never the primary action (docs/design-audit.md D3)', () {
     testWidgets(
         'with an empty answer, the primary button reads Next/Finish, '
@@ -239,7 +287,8 @@ void main() {
       expect(button.onPressed, isNotNull);
     });
 
-    testWidgets('tapping Skip with an empty answer still advances to the '
+    testWidgets(
+        'tapping Skip with an empty answer still advances to the '
         'next question', (tester) async {
       final service = DailyTestService(
         claudeService: _FlakyClaudeService(failCount: 0),
@@ -270,7 +319,8 @@ void main() {
       expect(find.textContaining('check your connection'), findsNothing);
     });
 
-    testWidgets('has no "Try again" CTA — it would just fail again with '
+    testWidgets(
+        'has no "Try again" CTA — it would just fail again with '
         'the same answer', (tester) async {
       final service = DailyTestService(
         claudeService: _QuotaExceededClaudeService(),
@@ -282,4 +332,55 @@ void main() {
       expect(find.text('Try again'), findsNothing);
     });
   });
+
+  for (final brightness in Brightness.values) {
+    group('"Leave Daily Test?" dialog ($brightness)', () {
+      Color? fill(ButtonStyleButton b) =>
+          b.style?.backgroundColor?.resolve(const {});
+      Color? label(ButtonStyleButton b) =>
+          b.style?.foregroundColor?.resolve(const {});
+      Color? border(ButtonStyleButton b) =>
+          b.style?.side?.resolve(const {})?.color;
+
+      Future<void> openDialog(WidgetTester tester) async {
+        final service = DailyTestService(
+          claudeService: _FlakyClaudeService(failCount: 0),
+          storageService: storageService,
+        );
+        await pumpScreen(tester, service, theme: buildAppTheme(brightness));
+        await tester.tap(find.byIcon(Icons.close_rounded));
+        await tester.pumpAndSettle();
+        expect(find.text('Leave Daily Test?'), findsOneWidget);
+        expect(find.text('Your progress will be lost.'), findsOneWidget);
+      }
+
+      testWidgets('Leave is destructive, Cancel is neutral and not primary',
+          (tester) async {
+        await openDialog(tester);
+        final scheme = buildAppTheme(brightness).colorScheme;
+
+        final leave = tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Leave'));
+        expect(fill(leave), scheme.destructive);
+        expect(label(leave), scheme.onDestructive);
+
+        final cancel = tester.widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Cancel'));
+        expect(label(cancel), scheme.onSurface);
+        expect(label(cancel), isNot(scheme.primary));
+        expect(border(cancel), scheme.onSurfaceVariant);
+        expect(border(cancel), isNot(scheme.primary));
+        expect(fill(cancel), isNull);
+      });
+
+      testWidgets('Cancel keeps the test open', (tester) async {
+        await openDialog(tester);
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Leave Daily Test?'), findsNothing);
+        expect(find.byType(DailyTestScreen), findsOneWidget);
+      });
+    });
+  }
 }

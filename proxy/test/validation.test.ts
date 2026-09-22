@@ -42,44 +42,27 @@ describe('validateGeneratePracticeSet', () => {
 });
 
 describe('validateGenerateDailyTest', () => {
-  const valid = {
-    deviceId: 'abc123',
-    count: 5,
-    weakSpots: [{ topicId: 'articles', frequency: 3 }],
-  };
+  const valid = { deviceId: 'abc123', count: 5 };
 
-  it('accepts a valid request, including an empty weakSpots list', () => {
+  it('accepts a valid request', () => {
     expect(validateGenerateDailyTest(valid)).toEqual(valid);
-    expect(validateGenerateDailyTest({ ...valid, weakSpots: [] })).toEqual({
-      ...valid,
-      weakSpots: [],
-    });
   });
 
-  it('rejects a weak spot with an unrecognized topicId', () => {
+  it('rejects a weakSpots field, empty or not: the Daily Test carries no user data', () => {
+    expect(() => validateGenerateDailyTest({ ...valid, weakSpots: [] })).toThrow(ProxyError);
     expect(() =>
-      validateGenerateDailyTest({ ...valid, weakSpots: [{ topicId: 'nope', frequency: 1 }] }),
+      validateGenerateDailyTest({ ...valid, weakSpots: [{ topicId: 'articles', frequency: 3 }] }),
     ).toThrow(ProxyError);
   });
 
-  it('rejects a negative frequency', () => {
-    expect(() =>
-      validateGenerateDailyTest({ ...valid, weakSpots: [{ topicId: 'articles', frequency: -1 }] }),
-    ).toThrow(ProxyError);
+  it('rejects any other unexpected field', () => {
+    expect(() => validateGenerateDailyTest({ ...valid, userName: 'x' })).toThrow(ProxyError);
   });
 
-  it('rejects an oversized weakSpots array', () => {
-    const tooMany = Array.from({ length: 21 }, () => ({ topicId: 'articles', frequency: 1 }));
-    expect(() => validateGenerateDailyTest({ ...valid, weakSpots: tooMany })).toThrow(ProxyError);
-  });
-
-  it('rejects an extra field on a weak spot entry', () => {
-    expect(() =>
-      validateGenerateDailyTest({
-        ...valid,
-        weakSpots: [{ topicId: 'articles', frequency: 1, errorType: 'x' }],
-      }),
-    ).toThrow(ProxyError);
+  it('rejects a missing or out-of-range count', () => {
+    expect(() => validateGenerateDailyTest({ deviceId: 'abc123' })).toThrow(ProxyError);
+    expect(() => validateGenerateDailyTest({ ...valid, count: 0 })).toThrow(ProxyError);
+    expect(() => validateGenerateDailyTest({ ...valid, count: 11 })).toThrow(ProxyError);
   });
 });
 

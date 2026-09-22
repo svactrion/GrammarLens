@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-import '../models/daily_test_question.dart';
+import '../models/daily_test_completion.dart';
 import '../models/daily_test_set.dart';
-import '../models/error_entry.dart';
+import '../services/analytics_service.dart';
 import '../services/daily_test_service.dart';
+import '../services/welcome_badge_rules.dart';
 import '../theme.dart';
 import '../utils/answer_matching.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/confetti_burst.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
 
@@ -19,110 +23,270 @@ import '../widgets/result_score_band.dart';
 /// same per-item `SemanticColors` card treatment, same [MistakeBreakdown]
 /// layout) so this reads as the same app, not a bolted-on separate flow.
 class DailyTestResultScreen extends StatefulWidget {
+  /// Refreshes the owning Home even if the user leaves while saving.
+  final VoidCallback? onCompletionSaved;
   final DailyTestSet dailyTestSet;
   final Map<String, String> answers;
   final DailyTestService dailyTestService;
+  final AnalyticsService analyticsService;
 
-  /// Extension point for the next batch: a call-to-action (the trial/
-  /// paywall pitch) rendered below the per-question breakdown. Deliberately
-  /// not a hardcoded "Back to Home" button — leaving this null renders
-  /// nothing here rather than assuming what that ending should be.
-  final WidgetBuilder? bottomBuilder;
+  /// True only for the Day-0 first-launch flow's result screen; reported as
+  /// the `day0` parameter of `daily_test_completed`, and it makes the button
+  /// read "Continue" instead of "Back to Home" (there is no Home to go back to
+  /// yet).
+  final bool isDay0;
+
+  /// How the screen is left. Null (a route pushed from Home) pops it; the
+  /// Day-0 flow is not a route, so it passes the callback that ends the flow.
+  final VoidCallback? onDone;
 
   const DailyTestResultScreen({
     super.key,
     required this.dailyTestSet,
     required this.answers,
     required this.dailyTestService,
-    this.bottomBuilder,
+    required this.analyticsService,
+    this.isDay0 = false,
+    this.onCompletionSaved,
+    this.onDone,
   });
 
   @override
   State<DailyTestResultScreen> createState() => _DailyTestResultScreenState();
 }
 
+/// How long the Welcome card takes to ease in.
+const Duration _bannerDuration = Duration(milliseconds: 350);
+
+/// The longest the screen waits for the confetti to finish before it moves on
+/// anyway. The burst takes 1.8 s ([ConfettiBurst.duration]); this only matters
+/// if something stops its animation (a paused ticker, a torn-down overlay), so
+/// a stuck burst can never trap the user on this screen.
+const Duration _climbFallback = Duration(milliseconds: 2500);
+
 class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
-  late final List<_QuestionResult> _results;
+  late final DailyTestCompletion _completion;
+  List<DailyTestAnswerResult> get _results => _completion.results;
+  bool _saving = false;
+  bool _saveFailed = false;
+
+  /// Set at most once per screen instance, only on a genuine live earn
+  /// (docs/prd-gamification.md §M6.5) — never re-derived from storage, so
+  /// a reopened already-completed set (whose `_saveCompletion` never even
+  /// runs, see `initState` below) or a backfilled badge (which this screen
+  /// never earns) cannot show it. It turns the card on and the button into
+  /// "Start my climb"; it does not delay the save or anything else.
+  bool _showWelcomeCelebration = false;
+
+  /// The "Start my climb" button was tapped. From then on the button is
+  /// disabled, the confetti plays on this screen for its whole run, and only
+  /// then does the screen move on ([_leave]), so the two never overlap.
+  bool _climbStarted = false;
+
+  /// [_leave] has run: the screen is left at most once, whatever combination of
+  /// finished burst, fallback timer and taps gets there.
+  bool _left = false;
+
+  OverlayEntry? _confettiEntry;
+  Timer? _fallbackTimer;
+  final _climbButtonKey = GlobalKey();
+
+  /// Keeps the card's element alive when the list above it changes length (the
+  /// saving bar and the failure text come and go), so it eases in from where it
+  /// was instead of being rebuilt already in its final state.
+  final _cardKey = GlobalKey();
+
+  /// Guards `daily_test_completed`/Welcome analytics to at most once per
+  /// screen instance, on top of `_saveCompletion`'s own already-completed
+  /// early return — a reopened finished result never reports, and a failed
+  /// save that is retried reports only when a save actually succeeds.
+  bool _analyticsReported = false;
 
   @override
   void initState() {
     super.initState();
-    _results = [
-      for (final question in widget.dailyTestSet.questions)
-        _QuestionResult.from(question, widget.answers[question.item.id]),
-    ];
-    _completeDailyTest();
+    _completion = DailyTestCompletion(
+        set: widget.dailyTestSet,
+        answers: widget.answers,
+        completedAt: DateTime.now());
+    if (!widget.dailyTestSet.isCompleted) _saveCompletion();
   }
 
-  /// Marks today's set completed and records this session's wrong answers
-  /// together, in the one atomic `DailyTestService.completeDailyTest` write
-  /// (`StorageService.completeDailyTest`'s doc comment has the full
-  /// reasoning): either both land or neither does, so a failure here can
-  /// never leave a completed day with its mistakes silently lost, or a
-  /// still-not-completed day whose mistakes get logged twice on retake.
-  ///
-  /// Guarded by `isCompleted` — a re-view of an already-completed set
-  /// (e.g. Home's "view result again") must not re-log the same mistakes a
-  /// second time and inflate their frequency, nor re-run the completion
-  /// write at all.
-  Future<void> _completeDailyTest() async {
-    if (widget.dailyTestSet.isCompleted) return;
+  Future<void> _saveCompletion() async {
+    if (_saving || widget.dailyTestSet.isCompleted) return;
+    setState(() {
+      _saving = true;
+      _saveFailed = false;
+    });
     try {
-      await widget.dailyTestService.completeDailyTest(
-        widget.answers,
-        _errorEntries(),
+      final welcomeBadgeJustEarned =
+          await widget.dailyTestService.completeDailyTest(
+        _completion.answers,
+        _completion.errors,
+        day: _completion.set.day,
+        completedAt: _completion.completedAt,
       );
+      _reportCompletion(welcomeBadgeJustEarned);
+      widget.onCompletionSaved?.call();
+      if (welcomeBadgeJustEarned && mounted) {
+        setState(() => _showWelcomeCelebration = true);
+      }
     } catch (e) {
-      // Unlike ResultsScreen's best-effort completion write, a failure here
-      // means NEITHER half of the write landed (the transaction rolled
-      // back) — the day is still genuinely not completed, so this is a
-      // real, actionable failure, not a background stat falling a session
-      // behind. Surfaced via the same AppMessenger toast this screen
-      // already uses for a save failure elsewhere; there is no dedicated
-      // retry affordance on this screen to show instead.
       if (!mounted) return;
+      setState(() => _saveFailed = true);
       AppMessenger.show('Could not save your Daily Test results: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
-  /// Wrong (never skipped, never a [AnswerMatchKind.keyboardVariant] match —
-  /// see [_QuestionResult.isCorrect]) answers, in the shape fed into the
-  /// same error profile Topic Practice's ResultsScreen writes to —
-  /// 2026-09-05 decision: the free tier diagnoses via Daily Test, the paid
-  /// tier treats via Topic Practice (see docs/build-log.md). A
-  /// Turkish-keyboard letter substitution is real content the user got
-  /// right, not a grammar weak spot — writing it here would corrupt the
-  /// exact data this profile exists to be honest about (docs/build-log.md,
-  /// 2026-09-07). [ErrorEntry.explanation] is only ever
-  /// [AnswerMatchResult.comment] — genuinely null when the wrong answer
-  /// didn't match a predicted common mistake, never the screen's own
-  /// generic "Not quite" display fallback and never an invented one: Daily
-  /// Test has no LLM call to generate a real explanation from, so a
-  /// thinner record is the honest one. [ErrorEntry.errorType] is the
-  /// question's topicId — Daily Test has no finer per-mistake
-  /// classification the way Topic Practice's LLM scoring does, so this is
-  /// the coarsest-but-true category available, not a fabricated one.
-  List<ErrorEntry> _errorEntries() {
-    final now = DateTime.now();
-    return _results
-        .where((r) => !r.isSkipped && !r.isCorrect)
-        .map((r) => ErrorEntry(
-              topicId: r.question.topicId,
-              errorType: r.question.topicId,
-              timestamp: now,
-              prompt: r.question.item.fullText,
-              userAnswer: r.userAnswer,
-              correctedAnswer: r.question.correctAnswer,
-              explanation: r.match?.comment,
-              source: ErrorSource.dailyTest,
-            ))
-        .toList();
+  /// "Start my climb": the badge is earned and the user chose to move on. The
+  /// confetti plays here, on the results, for its whole run, and [_leave] runs
+  /// when it ends. Where there is no confetti (reduced motion, no overlay to
+  /// draw on) the screen is left at once.
+  void _startClimb() {
+    if (_climbStarted) return;
+    setState(() => _climbStarted = true);
+    if (!_playConfetti()) {
+      _leave();
+      return;
+    }
+    _fallbackTimer = Timer(_climbFallback, _leave);
+  }
+
+  /// Throws the confetti from the top of the button into an overlay above the
+  /// screen, about 1.8 s, in the theme's colors. False when it was not played:
+  /// never under reduced motion (the card alone is the celebration then).
+  bool _playConfetti() {
+    if (MediaQuery.disableAnimationsOf(context)) return false;
+    final overlay = Overlay.maybeOf(context);
+    final button = _climbButtonKey.currentContext?.findRenderObject();
+    if (overlay == null || button is! RenderBox || !button.hasSize) {
+      return false;
+    }
+    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+    final origin = overlayBox.globalToLocal(
+      button.localToGlobal(Offset(button.size.width / 2, 0)),
+    );
+    final colors = Theme.of(context).colorScheme;
+    final entry = OverlayEntry(
+      builder: (_) => ConfettiBurst(
+        origin: origin,
+        colors: [colors.primary, colors.secondary, colors.tertiary],
+        onFinished: _leave,
+      ),
+    );
+    _confettiEntry = entry;
+    overlay.insert(entry);
+    return true;
+  }
+
+  void _removeConfetti() {
+    final entry = _confettiEntry;
+    if (entry == null) return;
+    _confettiEntry = null;
+    entry.remove();
+    entry.dispose();
+  }
+
+  /// The way out: pops this route, or, for the Day-0 flow (not a route), calls
+  /// [DailyTestResultScreen.onDone]. At most once.
+  void _leave() {
+    if (_left || !mounted) return;
+    _left = true;
+    _fallbackTimer?.cancel();
+    _removeConfetti();
+    final onDone = widget.onDone;
+    if (onDone != null) {
+      onDone();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _fallbackTimer?.cancel();
+    _removeConfetti();
+    super.dispose();
+  }
+
+  /// Analytics for a save that just succeeded (docs/analytics-plan.md E1/E3):
+  /// counts and the ledger day only, never question or answer text. The
+  /// Welcome events and the `first_step_dom` user property fire only on a
+  /// live earn, so they are set exactly once per user.
+  void _reportCompletion(bool welcomeBadgeJustEarned) {
+    if (_analyticsReported) return;
+    _analyticsReported = true;
+    final analytics = widget.analyticsService;
+    unawaited(analytics.dailyTestCompleted(
+      correctCount: _completion.correct,
+      wrongCount: _completion.wrong,
+      skippedCount: _completion.skipped,
+      stepEarned: _completion.step == 1,
+      day0: widget.isDay0,
+      setSource: widget.dailyTestSet.source.name,
+    ));
+    if (!welcomeBadgeJustEarned) return;
+    // The ledger day, not the wall clock: the same authority the step
+    // itself is attributed to across midnight and timezone changes.
+    final ledgerDay = DateTime.tryParse(_completion.set.day);
+    if (ledgerDay == null) return;
+    unawaited(analytics.welcomeBadgeEarned(
+      ruleVersion: WelcomeBadgeRules.ruleVersion,
+      dayOfMonth: ledgerDay.day,
+      daysInMonth: DateTime(ledgerDay.year, ledgerDay.month + 1, 0).day,
+    ));
+    unawaited(analytics.setFirstStepDayOfMonth(ledgerDay.day));
+  }
+
+  /// What the one primary button says and does, from the screen's own state.
+  /// It lives in the fixed footer, so it is on screen however far the results
+  /// are scrolled.
+  Widget _primaryButton() {
+    if (_saving) {
+      return const FilledButton(
+        onPressed: null,
+        child: Text('Saving your results…'),
+      );
+    }
+    if (_saveFailed) {
+      return FilledButton(
+        onPressed: _saveCompletion,
+        child: const Text('Try saving again'),
+      );
+    }
+    if (_showWelcomeCelebration) {
+      return FilledButton(
+        key: _climbButtonKey,
+        onPressed: _climbStarted ? null : _startClimb,
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.emoji_events_rounded, size: 20),
+            SizedBox(width: 8),
+            Flexible(child: Text('Start my climb')),
+          ],
+        ),
+      );
+    }
+    return FilledButton(
+      onPressed: _leave,
+      child: Text(widget.isDay0
+          ? 'Continue'
+          : !widget.dailyTestSet.isCompleted && _completion.step > 0
+              ? 'See your climb'
+              : 'Back to Home'),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final semantic = theme.extension<SemanticColors>()!;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final hPad = (MediaQuery.sizeOf(context).width * 0.045).clamp(16.0, 28.0);
 
     final correctCount = _results.where((r) => r.isCorrect).length;
     final skippedCount = _results.where((r) => r.isSkipped).length;
@@ -134,69 +298,137 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     return BrandScaffold(
       title: const PageTitle('Daily Test Results'),
       bandBottom: ResultScoreBand(text: scoreText),
+      // Fixed, like Premium's footer: a hard edge (not a shadow that only
+      // appears once scrolled) between the results and the one button.
+      bottomBar: DecoratedBox(
+        key: const Key('resultFooter'),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+            child: SizedBox(
+              width: double.infinity,
+              child: _primaryButton(),
+            ),
+          ),
+        ),
+      ),
       children: [
+        // A slot of its own height, so the results do not shift by the bar's
+        // height when the save lands.
+        SizedBox(
+          height: 4,
+          child: _saving ? const LinearProgressIndicator() : null,
+        ),
+        if (_saveFailed) ...[
+          const Text('Your result could not be saved. Please try again.'),
+          const SizedBox(height: 14),
+        ],
         for (final result in _results) ...[
           _QuestionResultCard(result: result, semantic: semantic),
           const SizedBox(height: 14),
         ],
-        if (widget.bottomBuilder != null) ...[
-          const SizedBox(height: 6),
-          widget.bottomBuilder!(context),
-        ],
+        // Below the results, so it never pushes them down when the save
+        // lands, and it eases in (size and fade) instead of jumping. Under
+        // reduced motion it simply appears, and without an AnimatedSize at all
+        // (a zero-duration one mutates its own layout). If the list rebuilds
+        // this item later (scrolled away and back) it is created already in
+        // its final state, so nothing replays.
+        if (reduceMotion)
+          KeyedSubtree(
+            key: _cardKey,
+            child: _showWelcomeCelebration
+                ? const _WelcomeBadgeCard()
+                : const SizedBox.shrink(),
+          )
+        else
+          AnimatedSize(
+            key: _cardKey,
+            duration: _bannerDuration,
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: AnimatedOpacity(
+              duration: _bannerDuration,
+              opacity: _showWelcomeCelebration ? 1 : 0,
+              child: _showWelcomeCelebration
+                  ? const _WelcomeBadgeCard()
+                  : const SizedBox(width: double.infinity),
+            ),
+          ),
       ],
     );
   }
 }
 
-/// One question's outcome — [isSkipped] takes priority over matching (an
-/// empty answer is never run through [checkDailyTestAnswer], mirroring how
-/// ClaudeService.scoreAnswers keeps "skipped" a locally-detected fact
-/// rather than something scored) — [match] is only set otherwise.
-class _QuestionResult {
-  final DailyTestQuestion question;
-  final String? userAnswer;
-  final bool isSkipped;
-  final AnswerMatchResult? match;
+/// The one-time Welcome badge win moment (docs/prd-gamification.md §M6.5), a
+/// large card under the results: the badge, its name and what earns the next
+/// step. Copy is deliberately audience-neutral — no "first test" language —
+/// since the same badge, and the same wording, is earned identically by a brand
+/// new user and by a pre-existing v2 user completing their first Daily Test
+/// after updating. Visual is a temporary placeholder; real artwork lands with
+/// the rest of the medal collection's own design pass later.
+class _WelcomeBadgeCard extends StatelessWidget {
+  const _WelcomeBadgeCard();
 
-  const _QuestionResult._({
-    required this.question,
-    required this.userAnswer,
-    required this.isSkipped,
-    this.match,
-  });
-
-  factory _QuestionResult.from(DailyTestQuestion question, String? rawAnswer) {
-    final trimmed = (rawAnswer ?? '').trim();
-    if (trimmed.isEmpty) {
-      return _QuestionResult._(
-        question: question,
-        userAnswer: rawAnswer,
-        isSkipped: true,
-      );
-    }
-    return _QuestionResult._(
-      question: question,
-      userAnswer: rawAnswer,
-      isSkipped: false,
-      match: checkDailyTestAnswer(question, rawAnswer!),
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final onContainer = colorScheme.onSecondaryContainer;
+    return Semantics(
+      liveRegion: true,
+      child: Card(
+        color: colorScheme.secondaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
+          child: Column(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: onContainer.withValues(alpha: 0.12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Icon(
+                    Icons.emoji_events_rounded,
+                    color: onContainer,
+                    size: 44,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Welcome to the climb',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: onContainer,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Answer at least one question a day to keep moving "
+                "up this month's mountain.",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(color: onContainer),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
-
-  /// True for an exact match and for [AnswerMatchKind.keyboardVariant] —
-  /// a Turkish-keyboard letter substitution is not a grammar mistake, so
-  /// it counts as correct: never "Needs work", never written to the error
-  /// profile (see [_QuestionResultCard]/[_saveErrors] below).
-  bool get isCorrect =>
-      match?.kind == AnswerMatchKind.correct ||
-      match?.kind == AnswerMatchKind.keyboardVariant;
-
-  bool get isKeyboardVariant => match?.kind == AnswerMatchKind.keyboardVariant;
 }
 
 const _fallbackComment = "Not quite — here's the correct answer.";
 
 class _QuestionResultCard extends StatelessWidget {
-  final _QuestionResult result;
+  final DailyTestAnswerResult result;
   final SemanticColors semantic;
 
   const _QuestionResultCard({required this.result, required this.semantic});

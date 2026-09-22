@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:grammar_lens/models/daily_test_question.dart';
+import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 
@@ -45,6 +46,22 @@ void main() {
         ),
       ];
 
+  test('a set is read by its day, and another day\'s set is not today\'s',
+      () async {
+    StorageService.clockForTesting = () => DateTime(2026, 9, 22, 10);
+    addTearDown(() => StorageService.clockForTesting = DateTime.now);
+    await storageService.saveDailyTestSet(sampleQuestions(), day: '2026-09-23');
+
+    expect(await storageService.getDailyTestSet('2026-09-22'), isNull);
+    expect(await storageService.getDailyTestSetForToday(), isNull);
+    final tomorrow = await storageService.getDailyTestSet('2026-09-23');
+    expect(tomorrow!.day, '2026-09-23');
+    expect(tomorrow.questions.single.correctAnswer, 'goes');
+
+    StorageService.clockForTesting = () => DateTime(2026, 9, 23, 0, 1);
+    expect((await storageService.getDailyTestSetForToday())!.day, '2026-09-23');
+  });
+
   test('a fresh day has no cached set yet', () async {
     expect(await storageService.getDailyTestSetForToday(), isNull);
   });
@@ -63,6 +80,31 @@ void main() {
     expect(fetched.questions.single.item.instruction,
         'Fill in the blank: She ___ to work every day.');
     expect(fetched.questions.single.commonWrongAnswers.single.answer, 'go');
+  });
+
+  test(
+      'a set is generated unless saved as bundled, and the source survives a '
+      'reopen', () async {
+    final generated = await storageService.saveDailyTestSet(sampleQuestions());
+    expect(generated.source, DailyTestSource.generated);
+
+    await storageService.saveDailyTestSet(sampleQuestions(),
+        source: DailyTestSource.bundled);
+    final reopened = StorageService(dbName: dbName);
+    expect((await reopened.getDailyTestSetForToday())!.source,
+        DailyTestSource.bundled);
+  });
+
+  test('a completed set keeps its source, and a stale save cannot change it',
+      () async {
+    await storageService.saveDailyTestSet(sampleQuestions(),
+        source: DailyTestSource.bundled);
+    await storageService.completeDailyTest({'q1': 'goes'}, []);
+
+    final again = await storageService.saveDailyTestSet(sampleQuestions());
+
+    expect(again.isCompleted, isTrue);
+    expect(again.source, DailyTestSource.bundled);
   });
 
   test('saving again for the same day replaces rather than duplicating',
@@ -87,7 +129,8 @@ void main() {
     expect(fetched.questions.single.item.id, 'q2');
   });
 
-  test('completeDailyTest sets a completion timestamp and persists '
+  test(
+      'completeDailyTest sets a completion timestamp and persists '
       'the answers', () async {
     await storageService.saveDailyTestSet(sampleQuestions());
     await storageService.completeDailyTest({'q1': 'goes'}, []);
@@ -98,8 +141,7 @@ void main() {
     expect(fetched.answers, {'q1': 'goes'});
   });
 
-  test('completeDailyTest with no set for today is a harmless no-op',
-      () async {
+  test('completeDailyTest with no set for today is a harmless no-op', () async {
     await storageService.completeDailyTest({'q1': 'goes'}, []);
     expect(await storageService.getDailyTestSetForToday(), isNull);
   });
