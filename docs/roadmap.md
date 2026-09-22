@@ -323,21 +323,27 @@ as each one lands, with literal status words (see above):
   follows the system appearance, so a user who chose Dark in the app on a
   Light system still starts on the light color.
 
-- **Premium prompt on the practice results screen — implemented, automated tests
-  only; device check pending.** Under `ResultsScreen`'s unchanged "Back to
-  topics" button, a free user whose daily free practice is used up sees one line
-  and a "See Premium" outlined button that opens the Premium screen (paywall
-  source `practice_result`). The line is the weak-spot screen's locked-row copy,
-  now one shared constant (`freePracticeUsedMessage`). Hidden for premium, for a
-  free user with practice left, and when either read (entitlement, free count)
-  throws. With a free limit of 1 a day this is practically every finished free
-  session, so `practice_result_upsell_viewed` is exposure and the tapped/viewed
-  ratio is the signal (analytics plan E8). Known limit: `hasFullAccess` swallows
-  a RevenueCat failure and returns false, so a paying user during such a failure
-  reads as free; the prompt still needs a used-up free count, which a premium
-  user does not accumulate, so they would only see it if they used the free
-  practice earlier that same day. Not device-confirmed: spacing and how the
-  prompt reads at Large text.
+- **Premium offer card on the practice results screen — implemented, automated
+  tests only; device check pending.** After the last result card, a free user
+  whose daily free practice is used up sees a plain app card (the theme's
+  `surfaceContainerHigh`, radius 20, 18 pt padding): a "PREMIUM" chip
+  (`secondaryContainer`, as on the Premium screen's PREMIUM column, not the
+  orange band color), "Keep practicing", the shared `freePracticeUsedMessage`
+  ("You've used today's free practice. Unlock Topic Practice and more daily
+  sessions with Premium.", also on the weak-spot screen's locked row), two
+  text-only benefits (Topic Practice; More Daily Sessions, side by side on
+  wide screens, stacked on narrow ones or large text) and a "See Premium"
+  FilledButton (paywall source `practice_result`). "Back to topics" sits under
+  the card as an OutlinedButton, and stays the FilledButton when there is no
+  card; its behavior is unchanged. Hidden for premium, for a free user with
+  practice left, and when either read throws. Events unchanged:
+  `practice_result_upsell_viewed` is exposure and the tapped/viewed ratio is
+  the signal (analytics plan E8). Replaced the first version (2026-09-23, a
+  line and an outlined button under a filled "Back to topics"). Benefit icons
+  are a later batch. Known limit: `hasFullAccess` swallows a RevenueCat
+  failure and returns false, so a paying user during such a failure reads as
+  free; the card still needs a used-up free count, which a premium user does
+  not accumulate. Not device-confirmed.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice

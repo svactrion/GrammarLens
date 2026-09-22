@@ -206,7 +206,7 @@ parameters by event name.
 | | |
 |---|---|
 | Params | none (both) |
-| Fired | `ResultsScreen` (`lib/screens/results_screen.dart`), the Topic Practice / "Practice this" results screen. `_viewed`: once per screen instance, when the Premium prompt under "Back to topics" appears, i.e. `hasFullAccess` is false **and** today's free practice count is at `StorageService.freeDailyPracticeLimit`; never when either read throws. `_tapped`: the prompt's "See Premium" button, which opens `PremiumScreen` with the new paywall source `practice_result`. |
+| Fired | `ResultsScreen` (`lib/screens/results_screen.dart`), the Topic Practice / "Practice this" results screen. `_viewed`: once per screen instance, when the Premium offer card (after the result cards, above "Back to topics"; before 2026-09-23, a line and a button under "Back to topics") appears, i.e. `hasFullAccess` is false **and** today's free practice count is at `StorageService.freeDailyPracticeLimit`; never when either read throws. `_tapped`: the card's "See Premium" button, which opens `PremiumScreen` with the new paywall source `practice_result`. |
 | Answers | Does a soft prompt at the end of the free session lead anyone to Premium, and do those visits convert (`paywall_viewed` / `purchase_result` with `source = practice_result`)? |
 
 **Read `_viewed` as exposure, not interest.** With a free limit of 1 a day,

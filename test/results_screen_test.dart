@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/item_feedback.dart';
 import 'package:grammar_lens/models/practice_item.dart';
@@ -15,6 +16,7 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/premium_copy.dart';
+import 'package:grammar_lens/widgets/premium_offer_card.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
 
 import 'support/recording_analytics_sink.dart';
@@ -99,11 +101,12 @@ Future<RecordingAnalyticsSink> _pump(
   WidgetTester tester, {
   required StorageService storage,
   required SubscriptionService subscription,
+  AppTextSize textSize = AppTextSize.medium,
 }) async {
   final sink = RecordingAnalyticsSink();
   await tester.pumpWidget(
     MaterialApp(
-      theme: buildAppTheme(Brightness.light),
+      theme: buildAppTheme(Brightness.light, textSize: textSize),
       home: ResultsScreen(
         topic: _topic,
         result: _result,
@@ -130,10 +133,13 @@ List<String> _upsellEvents(RecordingAnalyticsSink sink) => [
 
 void _expectNoUpsell(RecordingAnalyticsSink sink) {
   expect(find.text(freePracticeUsedMessage), findsNothing);
-  expect(find.widgetWithText(OutlinedButton, 'See Premium'), findsNothing);
+  expect(find.byType(PremiumOfferCard), findsNothing);
+  expect(find.text('See Premium'), findsNothing);
   expect(_upsellEvents(sink), isEmpty);
-  // The primary button is there either way.
+  // With no offer, "Back to topics" is the screen's only action and stays
+  // the filled button.
   expect(find.widgetWithText(FilledButton, 'Back to topics'), findsOneWidget);
+  expect(find.widgetWithText(OutlinedButton, 'Back to topics'), findsNothing);
 }
 
 void main() {
@@ -155,7 +161,7 @@ void main() {
     );
   });
 
-  group('Premium prompt under "Back to topics"', () {
+  group('Premium offer card above "Back to topics"', () {
     testWidgets('premium user: never shown, even with a used-up free count',
         (tester) async {
       final storage = _FakeStorageService(
@@ -185,9 +191,9 @@ void main() {
     });
 
     testWidgets(
-        'free user with free practice used up: shown under the primary '
-        'button, logged once, opens Premium with its own source',
-        (tester) async {
+        'free user with free practice used up: the offer card after the '
+        'results, "Back to topics" outlined below it, logged once, opens '
+        'Premium with its own source', (tester) async {
       final sink = await _pump(
         tester,
         storage: _FakeStorageService(
@@ -196,17 +202,57 @@ void main() {
         subscription: _FakeSubscriptionService(),
       );
 
-      final primary = find.widgetWithText(FilledButton, 'Back to topics');
-      final line = find.text(freePracticeUsedMessage);
-      final cta = find.widgetWithText(OutlinedButton, 'See Premium');
-      expect(primary, findsOneWidget);
-      expect(line, findsOneWidget);
+      final card = find.byType(PremiumOfferCard);
+      final back = find.widgetWithText(OutlinedButton, 'Back to topics');
+      final cta = find.widgetWithText(FilledButton, 'See Premium');
+      expect(card, findsOneWidget);
+      expect(back, findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Back to topics'), findsNothing);
       expect(cta, findsOneWidget);
       expect(find.textContaining('nlimited'), findsNothing);
-      expect(tester.getTopLeft(line).dy,
-          greaterThan(tester.getBottomLeft(primary).dy));
-      expect(tester.getTopLeft(cta).dy,
-          greaterThan(tester.getBottomLeft(line).dy));
+
+      // Everything the offer says sits inside the card, in order.
+      Finder inCard(Finder f) => find.descendant(of: card, matching: f);
+      final chip = inCard(find.text('PREMIUM'));
+      final title = inCard(find.text('Keep practicing'));
+      final body = inCard(find.text(freePracticeUsedMessage));
+      final topic = inCard(find.text('Topic Practice'));
+      final sessions = inCard(find.text('More Daily Sessions'));
+      for (final f in [
+        chip,
+        title,
+        body,
+        topic,
+        inCard(find.text('Focus on the areas you need')),
+        sessions,
+        inCard(find.text('Build your progress faster')),
+        inCard(cta),
+      ]) {
+        expect(f, findsOneWidget);
+      }
+      double top(Finder f) => tester.getTopLeft(f).dy;
+      double bottom(Finder f) => tester.getBottomLeft(f).dy;
+      expect(top(title), greaterThan(bottom(chip)));
+      expect(top(body), greaterThan(bottom(title)));
+      expect(top(topic), greaterThan(bottom(body)));
+      expect(top(sessions), greaterThan(bottom(body)));
+      expect(top(cta), greaterThan(bottom(topic)));
+      expect(top(cta), greaterThan(bottom(sessions)));
+
+      // After every result card, aligned with them, and above "Back to
+      // topics", which is outside it.
+      final resultCards = find.byWidgetPredicate(
+        (w) => w is Card && w.color != null,
+      );
+      // (Scrolled to the end, so only the last result card is still built.)
+      expect(resultCards, findsWidgets);
+      expect(top(card), greaterThan(bottom(resultCards.last)));
+      expect(
+          tester.getTopLeft(card).dx, tester.getTopLeft(resultCards.last).dx);
+      expect(
+          tester.getSize(card).width, tester.getSize(resultCards.last).width);
+      expect(find.descendant(of: card, matching: back), findsNothing);
+      expect(top(back), greaterThan(bottom(card)));
       expect(_upsellEvents(sink), ['practice_result_upsell_viewed']);
 
       // Rebuilds do not log it again.
@@ -258,6 +304,131 @@ void main() {
     });
   });
 
+  group('offer card fits', () {
+    Future<void> pumpAt(
+      WidgetTester tester, {
+      required double width,
+      required AppTextSize textSize,
+      required double systemScale,
+    }) async {
+      tester.view.physicalSize = Size(width, 900) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      tester.platformDispatcher.textScaleFactorTestValue = systemScale;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await _pump(
+        tester,
+        storage: _FakeStorageService(
+          freePracticeCount: StorageService.freeDailyPracticeLimit,
+        ),
+        subscription: _FakeSubscriptionService(),
+        textSize: textSize,
+      );
+    }
+
+    testWidgets(
+        '320 pt wide, Large text, 2.0 system scale: no overflow, benefits '
+        'stacked, everything inside the card', (tester) async {
+      await pumpAt(
+        tester,
+        width: 320,
+        textSize: AppTextSize.large,
+        systemScale: 2.0,
+      );
+
+      expect(tester.takeException(), isNull);
+      final card = find.byType(PremiumOfferCard);
+      expect(card, findsOneWidget);
+      expect(
+          find.byKey(const Key('premiumOfferBenefitsColumn')), findsOneWidget);
+      expect(find.byKey(const Key('premiumOfferBenefitsRow')), findsNothing);
+      final cardRect = tester.getRect(card);
+      for (final text in [
+        'PREMIUM',
+        'Keep practicing',
+        freePracticeUsedMessage,
+        'Topic Practice',
+        'Focus on the areas you need',
+        'More Daily Sessions',
+        'Build your progress faster',
+        'See Premium',
+      ]) {
+        final rect = tester.getRect(find.text(text));
+        expect(
+            cardRect.left <= rect.left && rect.right <= cardRect.right, isTrue,
+            reason: '"$text" stays inside the card horizontally');
+      }
+      expect(
+        tester.getTopLeft(find.text('More Daily Sessions')).dy,
+        greaterThan(
+            tester.getBottomLeft(find.text('Focus on the areas you need')).dy),
+      );
+      final back = find.widgetWithText(OutlinedButton, 'Back to topics');
+      await tester.scrollUntilVisible(back, 200,
+          scrollable: find.byType(Scrollable).first);
+      expect(tester.takeException(), isNull);
+      expect(tester.getRect(back).right, lessThanOrEqualTo(320));
+    });
+
+    testWidgets('a wide phone at Medium text: benefits side by side',
+        (tester) async {
+      await pumpAt(
+        tester,
+        width: 430,
+        textSize: AppTextSize.medium,
+        systemScale: 1.0,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const Key('premiumOfferBenefitsRow')), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Topic Practice')).dy,
+        tester.getTopLeft(find.text('More Daily Sessions')).dy,
+      );
+    });
+  });
+
+  testWidgets(
+      'without the offer, "Back to topics" (filled) returns to the '
+      'first route', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ResultsScreen(
+                  topic: _topic,
+                  result: _result,
+                  practiceSet: _practiceSet,
+                  answers: const {'i1': 'went', 'i2': ''},
+                  storageService: _FakeStorageService(),
+                  analyticsService: AnalyticsService(
+                    sink: RecordingAnalyticsSink(),
+                  ),
+                  subscriptionService:
+                      _FakeSubscriptionService(hasAccess: true),
+                ),
+              ),
+            ),
+            child: const Text('root'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('root'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Back to topics'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ResultsScreen), findsNothing);
+    expect(find.text('root'), findsOneWidget);
+  });
+
   testWidgets('"Back to topics" still returns to the first route',
       (tester) async {
     final sink = RecordingAnalyticsSink();
@@ -292,7 +463,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('See Premium'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Back to topics'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Back to topics'));
     await tester.pumpAndSettle();
 
     expect(find.byType(ResultsScreen), findsNothing);

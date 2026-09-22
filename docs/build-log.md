@@ -4902,3 +4902,43 @@ unnoticed.
   not the in-app theme setting (read from storage after launch), so a user who
   chose Dark on a Light system still starts on the light color. Not
   device-confirmed: the transition on a physical iPhone in both appearances.
+
+## 2026-09-23 (practice results: the Premium prompt becomes an offer card)
+
+- **[Product]** Same content, better grouping, from an owner mockup used for
+  hierarchy only: chip, title, message, two benefits and the Premium button
+  now sit together in one card after the results, and "Back to topics" moves
+  under it. The mockup's blue surface, gradient, illustration and icon style
+  were not reproduced; the project's tokens decide color, radius and padding.
+- **[Product]** `freePracticeUsedMessage` now reads "You've used today's free
+  practice. Unlock Topic Practice and more daily sessions with Premium." The
+  weak-spot screen's locked row reads the same constant, so both change
+  together. Both benefits were checked against the code: Topic Practice is
+  locked for a free user, and "more daily sessions" is
+  `freeDailyPracticeLimit` (1) against `dailySessionLimit` (5), not unlimited.
+  The Premium screen's comparison table did not show that session difference;
+  fixed in the next commit.
+- **[Engineering]** New `PremiumOfferCard` (`lib/widgets/premium_offer_card.dart`):
+  a plain `Card` with the usual 18 pt padding, a "PREMIUM" chip on
+  `secondaryContainer`/`onSecondaryContainer` (not `LockedPremiumPill`, which
+  means "locked", and not the orange band color), chip above the title rather
+  than beside it, and a full-width FilledButton. The two benefits sit side by
+  side while each column keeps at least 120 unscaled points, otherwise they
+  stack; no fixed heights. Benefits are text only; each is one small tile
+  widget, so an icon later goes inside it without touching either layout.
+  `ResultsScreen` keeps `_loadUpsell`, `_openPremium` and the events exactly as
+  they were; only the build changed: card then an OutlinedButton "Back to
+  topics", or the old FilledButton when there is no card.
+- **[Engineering]** Found by the requested 320 pt / Large / 2.0 check, not
+  introduced by this change: each result card's header row (icon plus
+  "Correct", "Skipped" or "Needs work") overflowed by 12 px at that size. The
+  label is now `Flexible` and wraps.
+- **[Validation]** `results_screen_test.dart`: every piece of the offer is
+  inside the card, in order; the card follows the last result card with the
+  same left edge and width; "Back to topics" is outlined and outside, below
+  it; with no card it is filled and still pops to the first route; the
+  earlier cases (premium, practice left, either read throwing, one `_viewed`,
+  `_tapped` and `paywall_viewed {source: practice_result}`) still hold. At
+  320 pt, Large text, 2.0 system scale: no overflow, benefits stacked, all
+  text inside the card; at 430 pt, Medium: benefits side by side. 858 tests
+  pass (855 before, 3 new); `flutter analyze` clean.
