@@ -34,6 +34,11 @@ flutter:
   # dropping the file in plus bumping Avatar.count, nothing here to edit.
   assets:
     - assets/avatars/
+    # Premium offer card benefit icons: 1x here, 2.0x/ and 3.0x/ variants
+    # picked up by Flutter's resolution matching. A folder entry does not
+    # include subfolders, so the design sources in assets/icons/_source/
+    # are not bundled.
+    - assets/icons/
   fonts:
     - family: NunitoSans
       fonts:

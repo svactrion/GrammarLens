@@ -4955,3 +4955,35 @@ unnoticed.
   Writing "5 a day" into an existing row's Premium cell was also rejected: it
   would blur that row's meaning. The gap is a post-launch roadmap item: fix it
   by shortening or restructuring the table, not by appending a row.
+
+## 2026-09-23 (Premium offer card: benefit icons)
+
+- **[Product]** The two benefits on the practice results offer card get their
+  icons (owner-supplied): `ic_topic_practice` and `ic_daily_sessions`, each in a
+  light and a dark variant, as PNGs at 24/48/72 px (1x, `2.0x/`, `3.0x/`).
+  Text, order and the side-by-side / stacked rule are unchanged.
+- **[Engineering]** `pubspec.yaml` registers `assets/icons/` as a folder, like
+  `assets/avatars/`. A folder entry takes the files directly in it plus
+  Flutter's resolution variants, not other subfolders, so the SVG sources in
+  `assets/icons/_source/` stay in the repo but out of the app; checked in the
+  built test bundle (`build/unit_test_assets`), which has the 12 PNGs and no
+  SVG. No new package (`Image.asset`, no `flutter_svg`).
+- **[Engineering]** `PremiumOfferCard.iconAsset(name, brightness)` is the one
+  place the variant is chosen (`_dark` for `Brightness.dark`, `_light`
+  otherwise); `_BenefitTile` reads `Theme.of(context).brightness` and puts a
+  fixed 24x24 `Image.asset(excludeFromSemantics: true)` before an `Expanded`
+  title/detail column, top-aligned, 10 pt apart. The icon's size is in logical
+  points and ignores text scale; the text wraps beside it.
+- **[Validation]** New `premium_offer_card_test.dart`: the light and dark
+  themes each load their own variant for both benefits, and every chosen file
+  loads from the bundle; the images are excluded from semantics and the
+  card's merged label still has each benefit line exactly once; at 320 pt,
+  Large text and a 2.0 system scale there is no overflow, the benefits stack,
+  both icons are 24x24 on one left edge, each top-aligned with its own title
+  with the text to its right and inside the card; on a 430 pt screen the two
+  sit side by side, still 24 pt.
+- **[Known limit]** Flutter bundles everything directly inside a registered
+  folder, including a macOS `.DS_Store` if one exists. It is gitignored, so a
+  clean checkout has none, but a release built on this machine would carry
+  `assets/icons/.DS_Store` (and `assets/avatars/.DS_Store`, which predates
+  this change). Delete them before building for release.

@@ -23,14 +23,22 @@ class PremiumOfferCard extends StatelessWidget {
   /// Premium's `StorageService.dailySessionLimit`.
   static const benefits = [
     _OfferBenefit(
+      icon: 'ic_topic_practice',
       title: 'Topic Practice',
       detail: 'Focus on the areas you need',
     ),
     _OfferBenefit(
+      icon: 'ic_daily_sessions',
       title: 'More Daily Sessions',
       detail: 'Build your progress faster',
     ),
   ];
+
+  /// The one place a benefit icon's light or dark variant is chosen:
+  /// `assets/icons/<name>_dark.png` in a dark theme, `_light.png` otherwise
+  /// (2.0x/3.0x variants resolve on their own).
+  static String iconAsset(String name, Brightness brightness) =>
+      'assets/icons/${name}_${brightness == Brightness.dark ? 'dark' : 'light'}.png';
 
   /// The narrowest a benefit column may get, in unscaled points, before the
   /// two benefits stack instead of sitting side by side.
@@ -105,16 +113,25 @@ class PremiumOfferCard extends StatelessWidget {
 }
 
 class _OfferBenefit {
+  /// Base name of the icon in `assets/icons/`, without the theme suffix.
+  final String icon;
   final String title;
   final String detail;
 
-  const _OfferBenefit({required this.title, required this.detail});
+  const _OfferBenefit({
+    required this.icon,
+    required this.title,
+    required this.detail,
+  });
 }
 
-/// One benefit: a title over its detail line. Text only for now; an icon,
-/// when there is one, goes in front of this column inside this widget, so
-/// neither layout above has to change.
+/// One benefit: a fixed 24 pt icon, then its title over its detail line.
+/// The icon does not grow with text size; the text takes the rest of the
+/// width and wraps. Top-aligned, so it lines up with the title in both the
+/// side-by-side and the stacked layout.
 class _BenefitTile extends StatelessWidget {
+  static const double _iconSize = 24;
+
   final _OfferBenefit benefit;
 
   const _BenefitTile(this.benefit);
@@ -122,19 +139,34 @@ class _BenefitTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          benefit.title,
-          style:
-              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        // Decorative: the title next to it already says what it is.
+        Image.asset(
+          PremiumOfferCard.iconAsset(benefit.icon, theme.brightness),
+          width: _iconSize,
+          height: _iconSize,
+          excludeFromSemantics: true,
         ),
-        const SizedBox(height: 2),
-        Text(
-          benefit.detail,
-          style: theme.textTheme.bodySmall
-              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                benefit.title,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                benefit.detail,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
         ),
       ],
     );

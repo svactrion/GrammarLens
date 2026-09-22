@@ -340,12 +340,14 @@ as each one lands, with literal status words (see above):
   wide screens, stacked on narrow ones or large text) and a "See Premium"
   FilledButton (paywall source `practice_result`). "Back to topics" sits under
   the card as an OutlinedButton, and stays the FilledButton when there is no
-  card; its behavior is unchanged. Hidden for premium, for a free user with
+  card; its behavior is unchanged. Benefit icons (2026-09-23): a fixed 24 pt
+  PNG per benefit from `assets/icons/` (light and dark variants, 1x/2x/3x),
+  decorative for screen readers; the SVG sources in `assets/icons/_source/`
+  are not bundled. Hidden for premium, for a free user with
   practice left, and when either read throws. Events unchanged:
   `practice_result_upsell_viewed` is exposure and the tapped/viewed ratio is
   the signal (analytics plan E8). Replaced the first version (2026-09-23, a
-  line and an outlined button under a filled "Back to topics"). Benefit icons
-  are a later batch. Known limit: `hasFullAccess` swallows a RevenueCat
+  line and an outlined button under a filled "Back to topics"). Known limit: `hasFullAccess` swallows a RevenueCat
   failure and returns false, so a paying user during such a failure reads as
   free; the card still needs a used-up free count, which a premium user does
   not accumulate. Not device-confirmed.
