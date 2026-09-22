@@ -44,8 +44,7 @@ class _FakeStorageService extends StorageService {
   Future<void> recordSessionStarted() async => sessionCount++;
 
   @override
-  Future<PracticeLength> getPracticeLength() async =>
-      PracticeLength.standard;
+  Future<PracticeLength> getPracticeLength() async => PracticeLength.standard;
 
   @override
   Future<void> setPracticeLength(PracticeLength length) async {}
@@ -63,8 +62,7 @@ class _FakeFullAccessSubscriptionService extends SubscriptionService {
 }
 
 void main() {
-  testWidgets(
-      'starting a session under the daily cap opens the length picker',
+  testWidgets('starting a session under the daily cap opens the length picker',
       (tester) async {
     final storageService = _FakeStorageService();
     await tester.pumpWidget(

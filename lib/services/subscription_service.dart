@@ -319,8 +319,10 @@ Offering buildDebugFixtureOffering() {
     null,
   );
 
-  const monthlyTrial = IntroductoryPrice(0, 'Free', 'P3D', 1, PeriodUnit.day, 3);
-  const annualTrial = IntroductoryPrice(0, 'Free', 'P1W', 1, PeriodUnit.week, 1);
+  const monthlyTrial =
+      IntroductoryPrice(0, 'Free', 'P3D', 1, PeriodUnit.day, 3);
+  const annualTrial =
+      IntroductoryPrice(0, 'Free', 'P1W', 1, PeriodUnit.week, 1);
 
   final monthlyProduct = StoreProduct(
     'grammarlens_premium_monthly_fixture',

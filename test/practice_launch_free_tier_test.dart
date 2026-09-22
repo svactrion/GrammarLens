@@ -194,8 +194,8 @@ void main() {
         'lock UI is what normally prevents a free user from reaching this '
         'screen at all; this is the choke point catching it anyway)',
         (tester) async {
-      final storage =
-          _FakeStorageService(freePracticeCount: StorageService.freeDailyPracticeLimit);
+      final storage = _FakeStorageService(
+          freePracticeCount: StorageService.freeDailyPracticeLimit);
       final claude = _FakeClaudeService();
       await tester.pumpWidget(
         MaterialApp(
@@ -221,8 +221,8 @@ void main() {
         'via WeakSpotDetailScreen — the locked row replaces the button '
         'entirely, and tapping it never reaches generation either',
         (tester) async {
-      final storage =
-          _FakeStorageService(freePracticeCount: StorageService.freeDailyPracticeLimit);
+      final storage = _FakeStorageService(
+          freePracticeCount: StorageService.freeDailyPracticeLimit);
       final claude = _FakeClaudeService();
       await tester.pumpWidget(
         MaterialApp(
@@ -255,8 +255,8 @@ void main() {
       'a premium user is unaffected even if the free-tier counter is '
       'already at/over its limit — the new check is a no-op for '
       'hasFullAccess', (tester) async {
-    final storage =
-        _FakeStorageService(freePracticeCount: StorageService.freeDailyPracticeLimit + 3);
+    final storage = _FakeStorageService(
+        freePracticeCount: StorageService.freeDailyPracticeLimit + 3);
     final claude = _FakeClaudeService();
     await tester.pumpWidget(
       MaterialApp(

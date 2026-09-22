@@ -85,7 +85,8 @@ class WeakSpotCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         topicSubtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                        style:
+                            theme.textTheme.bodySmall?.copyWith(color: muted),
                       ),
                     ],
                     if (explanation != null) ...[

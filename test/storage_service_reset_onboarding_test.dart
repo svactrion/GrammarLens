@@ -35,7 +35,8 @@ void main() {
     expect(await storageService.getUserProfile(), isNull);
   });
 
-  test('resetOnboarding clears a saved profile so getUserProfile is null '
+  test(
+      'resetOnboarding clears a saved profile so getUserProfile is null '
       'again — the app\'s only "onboarding complete" signal', () async {
     const profile = UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
     await storageService.saveUserProfile(profile);
@@ -46,7 +47,8 @@ void main() {
     expect(await storageService.getUserProfile(), isNull);
   });
 
-  test('resetOnboarding does not touch practice history, unlike '
+  test(
+      'resetOnboarding does not touch practice history, unlike '
       'resetProgressData\'s separate, opposite scope', () async {
     const profile = UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
     await storageService.saveUserProfile(profile);

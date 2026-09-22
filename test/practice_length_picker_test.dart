@@ -61,8 +61,7 @@ void main() {
   testWidgets(
       'dragging the slider updates the preview and confirms that length on Start',
       (tester) async {
-    final harness =
-        await _openPicker(tester, initial: PracticeLength.standard);
+    final harness = await _openPicker(tester, initial: PracticeLength.standard);
 
     // Directly invoking the bound onChanged callback is the reliable way
     // to drive a Slider in a widget test — simulating an exact drag
@@ -85,8 +84,7 @@ void main() {
   });
 
   testWidgets('dismissing without confirming resolves null', (tester) async {
-    final harness =
-        await _openPicker(tester, initial: PracticeLength.standard);
+    final harness = await _openPicker(tester, initial: PracticeLength.standard);
 
     // showModalBottomSheet is dismissible by default — tapping the scrim,
     // well outside the sheet's own bounds, closes it without a value.
@@ -146,8 +144,7 @@ void main() {
     // and the dial's own centered count (kept outside the dial's ring
     // animation so the ring can tween continuously — see _LengthDial).
     for (final key in ['lengthTextSwitcher', 'lengthNumberSwitcher']) {
-      final switcher =
-          tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
+      final switcher = tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
       expect(switcher.duration, Duration.zero, reason: key);
     }
   });
@@ -158,8 +155,7 @@ void main() {
     await _openPicker(tester, initial: PracticeLength.standard);
 
     for (final key in ['lengthTextSwitcher', 'lengthNumberSwitcher']) {
-      final switcher =
-          tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
+      final switcher = tester.widget<AnimatedSwitcher>(find.byKey(Key(key)));
       expect(
         switcher.duration,
         const Duration(milliseconds: 180),
@@ -210,15 +206,15 @@ void main() {
       expect(
         labelCenter.dx,
         closeTo(expectedStopX[i], 1.0),
-        reason:
-            '${length.label} label should sit under its slider stop, not '
+        reason: '${length.label} label should sit under its slider stop, not '
             'wherever the full-width row happens to place it',
       );
     }
   });
 
   group('practiceLengthDialRatio', () {
-    test('is each length\'s question count over the largest one, not a '
+    test(
+        'is each length\'s question count over the largest one, not a '
         'hand-written constant', () {
       final maxCount = PracticeLength.values
           .map((length) => length.questionCount)

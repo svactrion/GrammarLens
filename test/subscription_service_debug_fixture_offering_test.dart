@@ -18,7 +18,8 @@ void main() {
     service.setDebugFixtureOffering(enabled: false);
   });
 
-  test('no fixture enabled: getOfferings falls through to the real, '
+  test(
+      'no fixture enabled: getOfferings falls through to the real, '
       'unconfigured-project default of null', () async {
     expect(service.debugFixtureOffering, isNull);
     expect(await service.getOfferings(), isNull);
@@ -44,13 +45,15 @@ void main() {
   group('the fixture itself (buildDebugFixtureOffering)', () {
     final offering = buildDebugFixtureOffering();
 
-    test('has both a monthly and an annual package, annual preselected-'
+    test(
+        'has both a monthly and an annual package, annual preselected-'
         'compatible', () {
       expect(offering.monthly, isNotNull);
       expect(offering.annual, isNotNull);
     });
 
-    test('monthly is \$5.99 with a 3-day trial (PRD v2 §13.2, '
+    test(
+        'monthly is \$5.99 with a 3-day trial (PRD v2 §13.2, '
         '2026-09-17 note)', () {
       final product = offering.monthly!.storeProduct;
       expect(product.price, 5.99);
@@ -59,7 +62,8 @@ void main() {
       expect(product.introductoryPrice?.periodNumberOfUnits, 3);
     });
 
-    test('annual is \$49.99 with a 1-week trial, mirroring the "1 Week" '
+    test(
+        'annual is \$49.99 with a 1-week trial, mirroring the "1 Week" '
         'duration App Store Connect actually configures (PRD v2 §13.2, '
         '2026-09-17 note) rather than a simplified 7-day figure', () {
       final product = offering.annual!.storeProduct;

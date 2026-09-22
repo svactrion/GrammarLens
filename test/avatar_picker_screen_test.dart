@@ -68,7 +68,8 @@ void main() {
     expect(changes, hasLength(1));
   });
 
-  testWidgets('the centered avatar carries a Hero for the flight back to '
+  testWidgets(
+      'the centered avatar carries a Hero for the flight back to '
       "Settings' preview row", (tester) async {
     await tester.pumpWidget(
       MaterialApp(

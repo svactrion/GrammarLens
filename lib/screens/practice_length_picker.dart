@@ -10,8 +10,9 @@ import '../spacing.dart';
 /// reference. Computed from the enum so it stays correct if a length is
 /// ever added or its question count changes, rather than a hand-written
 /// ratio constant per option.
-final int _maxQuestionCount =
-    PracticeLength.values.map((length) => length.questionCount).reduce(math.max);
+final int _maxQuestionCount = PracticeLength.values
+    .map((length) => length.questionCount)
+    .reduce(math.max);
 
 /// The selection card dial's fill fraction for [length] — its question
 /// count over the largest question count across [PracticeLength.values],

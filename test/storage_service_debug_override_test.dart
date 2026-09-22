@@ -49,8 +49,7 @@ void main() {
     expect(await storageService.getDebugAccessOverride(), isNull);
   });
 
-  test('setting it again replaces rather than duplicating the row',
-      () async {
+  test('setting it again replaces rather than duplicating the row', () async {
     await storageService.setDebugAccessOverride(true);
     await storageService.setDebugAccessOverride(false);
     expect(await storageService.getDebugAccessOverride(), isFalse);

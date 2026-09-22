@@ -34,8 +34,7 @@ void main() {
       expect(result.comment, isNull);
     });
 
-    test('a match to a predicted common wrong answer returns its comment',
-        () {
+    test('a match to a predicted common wrong answer returns its comment', () {
       final result = checkDailyTestAnswer(question, 'go');
       expect(result.kind, AnswerMatchKind.commonWrong);
       expect(result.correctAnswer, 'goes');
@@ -48,8 +47,7 @@ void main() {
       expect(result.comment, contains('simple present'));
     });
 
-    test('an unpredicted wrong answer falls back with no canned comment',
-        () {
+    test('an unpredicted wrong answer falls back with no canned comment', () {
       final result = checkDailyTestAnswer(question, 'went');
       expect(result.kind, AnswerMatchKind.fallback);
       expect(result.correctAnswer, 'goes');
@@ -119,8 +117,7 @@ void main() {
     });
   });
 
-  group('Turkish-keyboard letter variants (docs/build-log.md, 2026-09-07)',
-      () {
+  group('Turkish-keyboard letter variants (docs/build-log.md, 2026-09-07)', () {
     final keyboardQuestion = DailyTestQuestion(
       item: const PracticeItem(
         id: 'kb1',
@@ -155,8 +152,7 @@ void main() {
       expect(result.comment, contains('i'));
     });
 
-    test('a case-only difference is plain correct, not a keyboard variant',
-        () {
+    test('a case-only difference is plain correct, not a keyboard variant', () {
       // normalizeAnswer's own lowercasing resolves this before the
       // keyboard-variant fold ever runs — locks down that the two paths
       // don't overlap.
@@ -164,7 +160,8 @@ void main() {
       expect(result.kind, AnswerMatchKind.correct);
     });
 
-    test('leading/trailing whitespace around a keyboard-variant answer '
+    test(
+        'leading/trailing whitespace around a keyboard-variant answer '
         'still matches as a variant', () {
       final result = checkDailyTestAnswer(keyboardQuestion, '  cookıng  ');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
@@ -200,8 +197,7 @@ void main() {
       expect(result.kind, AnswerMatchKind.fallback);
     });
 
-    test('multiple differing keyboard letters are all named in the note',
-        () {
+    test('multiple differing keyboard letters are all named in the note', () {
       final multiQuestion = DailyTestQuestion(
         item: const PracticeItem(
           id: 'kb3',

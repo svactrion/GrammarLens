@@ -12,7 +12,8 @@ import 'package:grammar_lens/widgets/floating_nav_shell.dart';
 /// end and check nothing is left behind the bar.
 void main() {
   const tabs = [
-    NavShellTab(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
+    NavShellTab(
+        icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
     NavShellTab(
       icon: Icons.settings_outlined,
       activeIcon: Icons.settings,
@@ -29,8 +30,8 @@ void main() {
     tester.view.devicePixelRatio = 3.0;
     // A real home-indicator inset — exactly the device-specific quantity
     // the old fixed constant couldn't account for.
-    tester.view.padding =
-        FakeViewPadding(bottom: safeAreaBottomInset * tester.view.devicePixelRatio);
+    tester.view.padding = FakeViewPadding(
+        bottom: safeAreaBottomInset * tester.view.devicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPadding);
@@ -66,13 +67,15 @@ void main() {
         builder: (context) => ListView(
           padding: EdgeInsets.only(bottom: NavBarClearance.of(context)),
           children: [
-            for (var i = 0; i < 30; i++) SizedBox(height: 60, child: Text('Item $i')),
+            for (var i = 0; i < 30; i++)
+              SizedBox(height: 60, child: Text('Item $i')),
           ],
         ),
       ),
     );
 
-    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
+    final scrollable =
+        tester.state<ScrollableState>(find.byType(Scrollable).first);
     scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
     await tester.pump();
 

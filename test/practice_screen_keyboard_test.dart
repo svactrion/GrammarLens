@@ -216,8 +216,7 @@ void main() {
           logicalSize: device.size,
           devicePixelRatio: device.dpr,
         );
-        final instructionFinder =
-            find.text(practiceSet.items[0].instruction);
+        final instructionFinder = find.text(practiceSet.items[0].instruction);
         final rectBefore = tester.getRect(instructionFinder);
 
         await tester.tap(find.byType(TextField));

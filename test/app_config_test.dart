@@ -4,7 +4,9 @@ import 'package:grammar_lens/config/app_config.dart';
 
 void main() {
   group('AppConfig', () {
-    test('isConfigured is true only when both proxyBaseUrl and appToken are set', () {
+    test(
+        'isConfigured is true only when both proxyBaseUrl and appToken are set',
+        () {
       expect(
         AppConfig.isConfigured,
         AppConfig.proxyBaseUrl.isNotEmpty && AppConfig.appToken.isNotEmpty,

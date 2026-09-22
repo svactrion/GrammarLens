@@ -52,13 +52,15 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: WeakSpotCard(topic: topic, spot: spot, locked: locked, onTap: () {}),
+          body: WeakSpotCard(
+              topic: topic, spot: spot, locked: locked, onTap: () {}),
         ),
       ),
     );
   }
 
-  group('Topic Practice-sourced record (finer errorType, real explanation)', () {
+  group('Topic Practice-sourced record (finer errorType, real explanation)',
+      () {
     testWidgets('title is the error type name, never the explanation text',
         (tester) async {
       await pump(tester, topic: articlesTopic, spot: topicPracticeSpot);
@@ -75,14 +77,16 @@ void main() {
       );
     });
 
-    testWidgets('topic name is shown as a subtitle since it differs from '
+    testWidgets(
+        'topic name is shown as a subtitle since it differs from '
         'the title', (tester) async {
       await pump(tester, topic: articlesTopic, spot: topicPracticeSpot);
       expect(find.text('Articles'), findsOneWidget);
     });
   });
 
-  group('Daily Test-sourced record (errorType == topic id, no explanation)', () {
+  group('Daily Test-sourced record (errorType == topic id, no explanation)',
+      () {
     testWidgets(
         'title is the topic name (the most specific name available) — '
         'not a fabricated explanation', (tester) async {
@@ -92,15 +96,15 @@ void main() {
 
     testWidgets(
         'the topic name is not printed a second time as a subtitle — the '
-        'exact "X · X" duplicate bug this card used to have',
-        (tester) async {
+        'exact "X · X" duplicate bug this card used to have', (tester) async {
       await pump(tester, topic: gerundTopic, spot: dailyTestSpot);
       // Exactly one occurrence anywhere in the card, not two.
       expect(find.text('Gerund vs. Infinitive'), findsOneWidget);
       expect(find.textContaining('Gerund vs. Infinitive ·'), findsNothing);
     });
 
-    testWidgets('no explanation line renders when there is none to show '
+    testWidgets(
+        'no explanation line renders when there is none to show '
         '(never fabricated)', (tester) async {
       await pump(tester, topic: gerundTopic, spot: dailyTestSpot);
       // Nothing besides the title, the frequency chip and the chevron —
@@ -110,7 +114,8 @@ void main() {
   });
 
   testWidgets('locked shows the lock glyph next to the title', (tester) async {
-    await pump(tester, topic: articlesTopic, spot: topicPracticeSpot, locked: true);
+    await pump(tester,
+        topic: articlesTopic, spot: topicPracticeSpot, locked: true);
     expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
   });
 

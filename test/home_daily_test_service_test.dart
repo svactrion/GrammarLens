@@ -52,8 +52,7 @@ class _Storage extends StorageService {
   Future<DailyTestSet?> getDailyTestSet(String day) async => sets[day];
 
   @override
-  Future<DailyTestSet?> getDailyTestSetForToday() async =>
-      sets[currentDayKey];
+  Future<DailyTestSet?> getDailyTestSetForToday() async => sets[currentDayKey];
 
   @override
   Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
@@ -71,8 +70,8 @@ class _Storage extends StorageService {
     DateTime? completedAt,
   }) async {
     final key = day ?? currentDayKey;
-    sets[key] = sets[key]!.copyWith(
-        completedAt: completedAt ?? DateTime.now(), answers: answers);
+    sets[key] = sets[key]!
+        .copyWith(completedAt: completedAt ?? DateTime.now(), answers: answers);
     return false;
   }
 
@@ -166,7 +165,8 @@ void main() {
 
   testWidgets(
       'finishing the Daily Test from Home prepares tomorrow\'s set through '
-      'the same service: one more request, stored for tomorrow', (tester) async {
+      'the same service: one more request, stored for tomorrow',
+      (tester) async {
     await pumpHome(tester);
     await tester.tap(find.text('Daily Test'));
     await tester.pumpAndSettle();

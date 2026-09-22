@@ -172,8 +172,7 @@ void main() {
       expect(storage.freePracticeReads, 0);
     });
 
-    testWidgets('free user with free practice left: not shown',
-        (tester) async {
+    testWidgets('free user with free practice left: not shown', (tester) async {
       final sink = await _pump(
         tester,
         storage: _FakeStorageService(
@@ -247,8 +246,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('free practice count read throws: not shown',
-        (tester) async {
+    testWidgets('free practice count read throws: not shown', (tester) async {
       final sink = await _pump(
         tester,
         storage: _FakeStorageService(throws: true),

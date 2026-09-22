@@ -12,7 +12,8 @@ void main() {
       // /APP_TOKEN=..., so AppConfig.isConfigured is false and this should
       // fail before any network call.
       await expectLater(
-        ClaudeService().generatePracticeSet(kTopics.first, deviceId: 'test-device'),
+        ClaudeService()
+            .generatePracticeSet(kTopics.first, deviceId: 'test-device'),
         throwsA(
           isA<ClaudeApiException>()
               .having((e) => e.kind, 'kind', ClaudeApiErrorKind.notConfigured)

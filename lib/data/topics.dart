@@ -15,7 +15,8 @@ const List<Topic> kTopics = [
   Topic(
     id: TopicId.modalVerbs,
     title: 'Modal Verbs',
-    description: 'Can, could, must, should, might, and the nuance between them.',
+    description:
+        'Can, could, must, should, might, and the nuance between them.',
     // Modals express the speaker's mental stance toward possibility/necessity.
     icon: Icons.psychology,
   ),

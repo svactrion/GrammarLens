@@ -9,7 +9,8 @@ import 'package:grammar_lens/models/user_profile.dart';
 /// any other unrecognized string) must load without throwing, falling
 /// back to no avatar rather than crashing the app on launch.
 void main() {
-  test('UserProfile.fromMap falls back to no avatar for an unrecognized id, '
+  test(
+      'UserProfile.fromMap falls back to no avatar for an unrecognized id, '
       'never throws', () {
     final map = {
       'name': 'Ada',
@@ -43,7 +44,8 @@ void main() {
     expect(restored.avatar, Avatar.values[5]);
   });
 
-  test('the stored profile carries only name, goal and avatar — no age or '
+  test(
+      'the stored profile carries only name, goal and avatar — no age or '
       'occupation', () {
     const profile = UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
 

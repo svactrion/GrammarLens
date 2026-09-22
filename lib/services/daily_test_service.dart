@@ -130,8 +130,7 @@ class DailyTestService {
     DateTime? completedAt,
   }) async {
     final setDay = day ?? storageService.currentDayKey;
-    final earned = await storageService.completeDailyTest(
-        answers, errorEntries,
+    final earned = await storageService.completeDailyTest(answers, errorEntries,
         day: setDay, completedAt: completedAt);
     unawaited(prefetchSet(StorageService.dayKeyAfter(setDay)));
     return earned;

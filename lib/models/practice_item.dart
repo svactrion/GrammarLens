@@ -66,8 +66,7 @@ class PracticeItem {
   /// [context] and [instruction] combined into one string, for places that
   /// need the item's full text as a single value (scoring payload, saved
   /// error entries) rather than the two display blocks.
-  String get fullText =>
-      (context == null || context!.trim().isEmpty)
-          ? instruction
-          : '$context\n$instruction';
+  String get fullText => (context == null || context!.trim().isEmpty)
+      ? instruction
+      : '$context\n$instruction';
 }

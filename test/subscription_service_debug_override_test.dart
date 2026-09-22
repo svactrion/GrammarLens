@@ -19,21 +19,20 @@ void main() {
     await service.setDebugAccessOverride(null);
   });
 
-  test('no override set: hasFullAccess is unaffected (falls through to the '
+  test(
+      'no override set: hasFullAccess is unaffected (falls through to the '
       'real, unconfigured-project default of false)', () async {
     expect(service.debugAccessOverride, isNull);
     expect(await service.hasFullAccess, isFalse);
   });
 
-  test('setting the override to true forces hasFullAccess to true',
-      () async {
+  test('setting the override to true forces hasFullAccess to true', () async {
     await service.setDebugAccessOverride(true);
     expect(service.debugAccessOverride, isTrue);
     expect(await service.hasFullAccess, isTrue);
   });
 
-  test('setting the override to false forces hasFullAccess to false',
-      () async {
+  test('setting the override to false forces hasFullAccess to false', () async {
     await service.setDebugAccessOverride(false);
     expect(service.debugAccessOverride, isFalse);
     expect(await service.hasFullAccess, isFalse);

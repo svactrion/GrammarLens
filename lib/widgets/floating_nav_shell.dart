@@ -34,7 +34,8 @@ class NavBarClearance extends InheritedWidget {
   /// screen pumped in isolation under test, say) — real usage inside the
   /// app always has a [FloatingNavShell] ancestor by the second frame.
   static double of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<NavBarClearance>()
+    return context
+            .dependOnInheritedWidgetOfExactType<NavBarClearance>()
             ?.value ??
         fallback;
   }
@@ -262,7 +263,8 @@ class _NavTab extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(active ? data.activeIcon : data.icon, size: 24, color: color),
+              Icon(active ? data.activeIcon : data.icon,
+                  size: 24, color: color),
               const SizedBox(height: 4),
               Text(
                 data.label,

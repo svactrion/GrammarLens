@@ -490,9 +490,7 @@ void main() {
 
       final all = find.byType(Card);
       expect(all, findsNWidgets(5));
-      final after = [
-        for (var i = 0; i < 4; i++) tester.getTopLeft(all.at(i))
-      ];
+      final after = [for (var i = 0; i < 4; i++) tester.getTopLeft(all.at(i))];
       expect(after, before);
       expect(tester.getTopLeft(all.at(4)).dy,
           greaterThanOrEqualTo(tester.getRect(all.at(3)).bottom));
@@ -820,8 +818,8 @@ void main() {
     });
   });
 
-  testWidgets(
-      'a double tap on Continue leaves once, not twice', (tester) async {
+  testWidgets('a double tap on Continue leaves once, not twice',
+      (tester) async {
     var left = 0;
     storageService.welcomeBadgeJustEarned = false;
     await pumpResult(

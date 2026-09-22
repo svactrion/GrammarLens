@@ -676,11 +676,13 @@ void main() {
       expect(await flagRows(), isEmpty);
       // Nothing was claimed by the upgrade: the first claim still wins. (A new
       // service, as flagRows() closed the shared connection.)
-      expect(await StorageService(dbName: dbName).claimOneTimeFlag('day0_paywall'),
+      expect(
+          await StorageService(dbName: dbName).claimOneTimeFlag('day0_paywall'),
           isTrue);
     });
 
-    test('the table has exactly the key and set_at columns, key as the primary '
+    test(
+        'the table has exactly the key and set_at columns, key as the primary '
         'key', () async {
       await seedV21();
       await StorageService(dbName: dbName).getUserProfile();

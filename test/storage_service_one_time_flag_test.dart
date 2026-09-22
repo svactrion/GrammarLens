@@ -65,8 +65,8 @@ void main() {
     StorageService.clockForTesting = () => DateTime(2026, 9, 23, 10);
     await storage.claimOneTimeFlag('a');
 
-    final db = await databaseFactory.openDatabase(
-        join(await getDatabasesPath(), dbName));
+    final db = await databaseFactory
+        .openDatabase(join(await getDatabasesPath(), dbName));
     final rows = await db.query('one_time_flags');
     await db.close();
     expect(rows, hasLength(1));
@@ -78,23 +78,23 @@ void main() {
     test('brings the first-day paywall back, and only that flag', () async {
       await storage.saveUserProfile(
           const UserProfile(name: 'Ada', learningGoal: LearningGoal.work));
-      expect(
-          await storage.claimOneTimeFlag(StorageService.day0PaywallFlag), isTrue);
+      expect(await storage.claimOneTimeFlag(StorageService.day0PaywallFlag),
+          isTrue);
       expect(await storage.claimOneTimeFlag('other'), isTrue);
 
       await storage.resetOnboarding();
 
       expect(await storage.getUserProfile(), isNull);
-      expect(
-          await storage.claimOneTimeFlag(StorageService.day0PaywallFlag), isTrue);
+      expect(await storage.claimOneTimeFlag(StorageService.day0PaywallFlag),
+          isTrue);
       expect(await storage.claimOneTimeFlag('other'), isFalse);
     });
 
     test('on a fresh install with no flag it is still a harmless no-op',
         () async {
       await storage.resetOnboarding();
-      expect(
-          await storage.claimOneTimeFlag(StorageService.day0PaywallFlag), isTrue);
+      expect(await storage.claimOneTimeFlag(StorageService.day0PaywallFlag),
+          isTrue);
     });
   });
 

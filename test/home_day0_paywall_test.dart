@@ -380,8 +380,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(premiumShown(), isTrue);
-      expect(sink.named('mode_selected').single.parameters, {'mode': 'premium'});
-      expect(sink.named('paywall_viewed').single.parameters, {'source': 'home'});
+      expect(
+          sink.named('mode_selected').single.parameters, {'mode': 'premium'});
+      expect(
+          sink.named('paywall_viewed').single.parameters, {'source': 'home'});
     });
   });
 }

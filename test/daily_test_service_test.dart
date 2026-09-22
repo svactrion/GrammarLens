@@ -642,8 +642,7 @@ void main() {
   });
 
   group('StorageService.dayKeyAfter', () {
-    test('goes to the next calendar day, across month, year and leap ends',
-        () {
+    test('goes to the next calendar day, across month, year and leap ends', () {
       expect(StorageService.dayKeyAfter('2026-09-22'), '2026-09-23');
       expect(StorageService.dayKeyAfter('2026-09-30'), '2026-10-01');
       expect(StorageService.dayKeyAfter('2026-12-31'), '2027-01-01');

@@ -13,8 +13,8 @@ void main() {
   // around the hang some other way.
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized()
-        .platformDispatcher
-        .accessibilityFeaturesTestValue =
+            .platformDispatcher
+            .accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
   });
 
