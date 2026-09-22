@@ -175,6 +175,7 @@ Future<void> launchPracticeSet({
           claudeService: claudeService,
           storageService: storageService,
           analyticsService: analyticsService,
+          subscriptionService: subscriptionService,
         ),
       ),
     );

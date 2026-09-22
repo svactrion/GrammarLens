@@ -6,13 +6,16 @@ import '../models/scoring_result.dart';
 import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
 import '../theme.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
+import '../utils/premium_copy.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
+import 'premium_screen.dart';
 
 class ResultsScreen extends StatefulWidget {
   final Topic topic;
@@ -21,6 +24,7 @@ class ResultsScreen extends StatefulWidget {
   final Map<String, String> answers;
   final StorageService storageService;
   final AnalyticsService analyticsService;
+  final SubscriptionService subscriptionService;
 
   const ResultsScreen({
     super.key,
@@ -30,6 +34,7 @@ class ResultsScreen extends StatefulWidget {
     required this.answers,
     required this.storageService,
     required this.analyticsService,
+    required this.subscriptionService,
   });
 
   @override
@@ -37,14 +42,50 @@ class ResultsScreen extends StatefulWidget {
 }
 
 class _ResultsScreenState extends State<ResultsScreen> {
+  // The Premium prompt under "Back to topics": only for a free user whose
+  // daily free practice is used up. Hidden until both reads succeed, and
+  // hidden for good if either one throws: a prompt shown to someone who
+  // might be paying is worse than one that doesn't show.
+  bool _showUpsell = false;
+
   @override
   void initState() {
     super.initState();
     _saveErrors();
     _recordCompletion();
+    _loadUpsell();
     widget.analyticsService.practiceCompleted(
       topicId: widget.topic.id.name,
       questionCount: widget.result.totalCount,
+    );
+  }
+
+  Future<void> _loadUpsell() async {
+    bool show;
+    try {
+      final hasFullAccess = await widget.subscriptionService.hasFullAccess;
+      show = !hasFullAccess &&
+          await widget.storageService.getFreePracticeCountForToday() >=
+              StorageService.freeDailyPracticeLimit;
+    } catch (_) {
+      show = false;
+    }
+    if (!show || !mounted) return;
+    setState(() => _showUpsell = true);
+    widget.analyticsService.practiceResultUpsellViewed();
+  }
+
+  void _openPremium() {
+    widget.analyticsService.practiceResultUpsellTapped();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PremiumScreen(
+          storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          analyticsSource: AnalyticsService.paywallSourcePracticeResult,
+          subscriptionService: widget.subscriptionService,
+        ),
+      ),
     );
   }
 
@@ -180,6 +221,23 @@ class _ResultsScreenState extends State<ResultsScreen> {
             child: const Text('Back to topics'),
           ),
         ),
+        if (_showUpsell) ...[
+          const SizedBox(height: 12),
+          Text(
+            freePracticeUsedMessage,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: _openPremium,
+              child: const Text('See Premium'),
+            ),
+          ),
+        ],
       ],
     );
   }

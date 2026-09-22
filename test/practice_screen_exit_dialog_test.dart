@@ -8,6 +8,7 @@ import 'package:grammar_lens/screens/practice_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 
 void main() {
@@ -52,6 +53,7 @@ void main() {
               claudeService: ClaudeService(),
               storageService: StorageService(),
               analyticsService: AnalyticsService(),
+              subscriptionService: SubscriptionService(),
             ),
           ),
         );

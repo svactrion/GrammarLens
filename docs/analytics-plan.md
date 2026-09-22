@@ -201,6 +201,23 @@ wording version. Two names are shared with existing events (`outcome` with
 `practice_launch` also exists as a paywall source, so always slice these
 parameters by event name.
 
+### E8 — `practice_result_upsell_viewed` / `practice_result_upsell_tapped` (added 2026-09-23)
+
+| | |
+|---|---|
+| Params | none (both) |
+| Fired | `ResultsScreen` (`lib/screens/results_screen.dart`), the Topic Practice / "Practice this" results screen. `_viewed`: once per screen instance, when the Premium prompt under "Back to topics" appears, i.e. `hasFullAccess` is false **and** today's free practice count is at `StorageService.freeDailyPracticeLimit`; never when either read throws. `_tapped`: the prompt's "See Premium" button, which opens `PremiumScreen` with the new paywall source `practice_result`. |
+| Answers | Does a soft prompt at the end of the free session lead anyone to Premium, and do those visits convert (`paywall_viewed` / `purchase_result` with `source = practice_result`)? |
+
+**Read `_viewed` as exposure, not interest.** With a free limit of 1 a day,
+spent when the set is generated, practically every free user who finishes a
+"Practice this" session has used up the day's free practice, so the prompt
+shows at the end of practically every free session. `practice_result_upsell_viewed`
+therefore counts free sessions, not people who care about Premium. The
+meaningful metric is the ratio `practice_result_upsell_tapped` /
+`practice_result_upsell_viewed`, then the funnel from `paywall_viewed`
+(`source = practice_result`) onward.
+
 ### Events considered and not proposed
 
 - **`climb_step_earned`** — redundant with E1's `step_earned`.
@@ -505,6 +522,7 @@ Built in separate commits on `monthly-climb-v2`:
 | E6 `text_size_changed`, user property `text_size` | Done in `lib/app.dart`: reported only on a real change; the property is set from the stored value at startup and on change. |
 | E2 `results_cta_tapped` | Dropped by decision. |
 | E7 `ai_consent_result` (2026-09-22) | Done in `ensureAiConsent` / `requestAiConsent` (`lib/screens/ai_consent_screen.dart`) and Profile → Data's switch-off. One test asserts its exact parameter keys and values; the all-events limits test now covers 15 events. |
+| E8 `practice_result_upsell_viewed` / `_tapped`, paywall source `practice_result` (2026-09-23) | Done in `ResultsScreen`. One test per event asserts its exact name and no parameters; the all-events limits test now covers 17 events. Widget tests: no prompt for premium, for a free user with practice left, or when either read throws; prompt, one `_viewed`, then `_tapped` and `paywall_viewed(practice_result)` for a free user with practice used up. |
 | First-day paywall source `day0_after_climb` (2026-09-22) | Done. Home opens the Premium screen by itself once, after the Day-0 climb, so `paywall_viewed` (and its `paywall_dismissed`) carry `source = day0_after_climb`; the old `onboarding` source no longer exists (the Day-0 result screen has no paywall card). An automatic opening sends **no** `mode_selected`, so `mode_selected(premium)` still means "the user tapped Premium". |
 
 **Not done / still open**
@@ -581,7 +599,7 @@ uses 18, 2 and 8. Check the console's counter as you create them.
 | Previous text size | `previous` | Event | `text_size_changed` |
 | Mode | `mode` | Event | `mode_selected` (existing) |
 | Topic | `topic_id` | Event | `practice_completed` (existing) |
-| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing; `home` / `weak_spot_quota` / `practice_launch` / `day0_after_climb`, the last added 2026-09-22 and replacing the old `onboarding`), `ai_consent_result` (`practice_launch` / `data_settings`) |
+| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing; `home` / `weak_spot_quota` / `practice_launch` / `day0_after_climb` / `practice_result`; `day0_after_climb` added 2026-09-22 and replacing the old `onboarding`, `practice_result` added 2026-09-23), `ai_consent_result` (`practice_launch` / `data_settings`) |
 | Paywall dismiss method | `method` | Event | `paywall_dismissed` (existing) |
 | Plan | `plan` | Event | `purchase_started`, `purchase_result` (existing) |
 | Purchase / consent outcome | `outcome` | Event | `purchase_result` (existing), `ai_consent_result` (`granted` / `declined` / `revoked`) |
@@ -601,6 +619,7 @@ uses 18, 2 and 8. Check the console's counter as you create them.
 
 Events themselves (`daily_test_completed`, `welcome_badge_earned`,
 `medal_month_finalized`, `profile_medals_viewed`, `text_size_changed`,
-`practice_completed`) need no registration; they appear in Events reports on
+`practice_completed`, `practice_result_upsell_viewed`,
+`practice_result_upsell_tapped`) need no registration; they appear in Events reports on
 their own. Optionally mark `purchase_result` with `outcome = success` as a
 key event in the console for the paywall guardrail.

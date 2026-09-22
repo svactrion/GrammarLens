@@ -4743,3 +4743,53 @@ unnoticed.
 ## 2026-09-22 (Premium footer: tighter vertical spacing)
 
 - **[Product/Engineering]** Device feedback: too much air between "Start free trial", the Terms/Privacy row and "Maybe later". The footer's text buttons now have a 44 pt target that is also the drawn button (shrink-wrapped, was a 40 pt button in a 48 pt padded target), the padding is 8 above and 4 below (was 12 and 8), the button-to-disclosure gap is 6 (was 8) and the gap under the disclosure is gone (was 4); nothing that is tapped got smaller than 44 pt. At 375x667 the footer is 196 pt at Medium (was 218), 200 at Large (222) and 295 at 1.6x system text (321), and the scrolling area above it grows by the same 22, 22 and 26 pt (373 to 395 at Medium); links stay in the footer by the same rule, the disclosure is still never truncated, and the measurement tests were updated to these values.
+
+## 2026-09-23 (Premium prompt on the practice results screen)
+
+- **[Problem]** A free user who finishes their one daily "Practice this" session
+  (Review → weak spot → practice) lands on `ResultsScreen` with only "Back to
+  topics"; nothing there says what Premium would add, at the moment the day's free
+  practice has just been used.
+- **[Product]** Owner decisions after a read-only Batch 0: "Back to topics" stays
+  the primary `FilledButton`, unchanged in look and behavior. Under it, 12 pt, a
+  `bodySmall` / `onSurfaceVariant` line and a full-width `OutlinedButton` "See
+  Premium" to `PremiumScreen`. The line is exactly the weak-spot screen's locked-row
+  copy, from one shared constant. Shown only when `hasFullAccess` is false **and**
+  `getFreePracticeCountForToday() >= freeDailyPracticeLimit`; if either read throws,
+  it is not shown. English only: the app has no localization, and Turkish copy is
+  recorded as a post-launch roadmap item. No "unlimited", no new screen, nothing
+  modal.
+- **[Engineering]** `ResultsScreen` is shared by Topic Practice (premium only) and
+  "Practice this"; a free user can only reach it through "Practice this", so the
+  entitlement and quota check alone decides, with no origin flag. The
+  `SubscriptionService` is passed down `launchPracticeSet` → `PracticeScreen` →
+  `ResultsScreen` (required, no boolean from callers). The screen reads entitlement
+  first and the free count only for a free user, then shows the prompt and logs
+  `practice_result_upsell_viewed` once (from `initState`'s load, not from `build`).
+  "See Premium" logs `practice_result_upsell_tapped` and pushes `PremiumScreen` with
+  the new `AnalyticsService.paywallSourcePracticeResult` (`practice_result`) as its
+  analytics source. `sourceContext` is left empty: `PremiumScreen` shows it as
+  "Practice $source.", so it is display text, not an analytics tag. New
+  `lib/utils/premium_copy.dart` holds `freePracticeUsedMessage`, now used by both
+  `ResultsScreen` and `WeakSpotDetailScreen`'s locked row.
+- **[Analytics]** Two parameterless events, E8 in `docs/analytics-plan.md`, with
+  the note that `_viewed` is exposure (with a limit of 1 a day, spent at generation,
+  practically every finished free session shows the prompt) and tapped/viewed is
+  the metric. The `source` dimension gets a new value, no new registration.
+- **[Validation]** `results_screen_test.dart` (fake storage and subscription,
+  recording sink): premium user with a used-up count sees nothing and the count is
+  not read; a free user with practice left sees nothing; a free user with practice
+  used up sees the line and button below the primary button, one `_viewed` that a
+  rebuild does not repeat, then `_tapped`, `PremiumScreen` with source
+  `practice_result` and `paywall_viewed {source: practice_result}`; an entitlement
+  read that throws and a count read that throws each show nothing and log nothing;
+  "Back to topics" still pops to the first route with the prompt visible. Contract
+  tests for both events; the all-events Firebase-limits test now covers 17.
+  `flutter analyze` clean; 851 tests pass (843 before, 8 new).
+- **[Known limit]** `SubscriptionService.hasFullAccess` swallows a RevenueCat
+  failure and returns false, so the "read throws" rule does not cover that case: a
+  paying user during a RevenueCat failure reads as free. The prompt still needs a
+  used-up free count, which only builds up while a user is free, so they see it only
+  if they also used the free practice earlier that day. Changing that would change
+  `hasFullAccess`'s contract for every caller, so it is left as is. Not
+  device-confirmed: spacing, and the prompt at Large text and 320 pt width.

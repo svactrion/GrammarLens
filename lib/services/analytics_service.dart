@@ -136,16 +136,32 @@ class AnalyticsService {
     return _logEvent('free_practice_quota_exhausted');
   }
 
+  /// The practice results screen showed its Premium prompt to a free user
+  /// whose daily free practice is used up. Once per results screen. Since
+  /// that is nearly every free session's end, this is an exposure count, not
+  /// an interest signal: read it only as the denominator of
+  /// [practiceResultUpsellTapped].
+  Future<void> practiceResultUpsellViewed() {
+    return _logEvent('practice_result_upsell_viewed');
+  }
+
+  /// The user tapped "See Premium" on the practice results screen.
+  Future<void> practiceResultUpsellTapped() {
+    return _logEvent('practice_result_upsell_tapped');
+  }
+
   /// `PremiumScreen`'s `source` identifiers (`paywall_viewed`/
   /// `paywall_dismissed`) — one per distinct push call site, confirmed by
   /// reading each one rather than guessed: Home's own Premium row and
   /// locked-Topic-Practice-card taps (both funnel through the same push),
   /// the weak-spot detail screen's quota-exhausted redirect,
-  /// `launchPracticeSet`'s own backstop version of that same check, and
-  /// the paywall Home opens by itself once, after the first climb.
+  /// `launchPracticeSet`'s own backstop version of that same check, the
+  /// practice results screen's "See Premium" prompt, and the paywall Home
+  /// opens by itself once, after the first climb.
   static const String paywallSourceHome = 'home';
   static const String paywallSourceWeakSpotQuota = 'weak_spot_quota';
   static const String paywallSourcePracticeLaunch = 'practice_launch';
+  static const String paywallSourcePracticeResult = 'practice_result';
 
   /// Shown by Home on its own, once, after the Day-0 climb animation (not a
   /// user tap, so it sends no `mode_selected`).

@@ -110,6 +110,16 @@ void main() {
       expectOnly('free_practice_quota_exhausted', null);
     });
 
+    test('practice_result_upsell_viewed carries no parameters', () async {
+      await service.practiceResultUpsellViewed();
+      expectOnly('practice_result_upsell_viewed', null);
+    });
+
+    test('practice_result_upsell_tapped carries no parameters', () async {
+      await service.practiceResultUpsellTapped();
+      expectOnly('practice_result_upsell_tapped', null);
+    });
+
     test('paywall_viewed carries only source', () async {
       await service.paywallViewed(AnalyticsService.paywallSourceDay0AfterClimb);
       expectOnly('paywall_viewed', {'source': 'day0_after_climb'});
@@ -314,7 +324,9 @@ void main() {
       await service.practiceCompleted(topicId: 'articles', questionCount: 5);
       await service.freePracticeUsed();
       await service.freePracticeQuotaExhausted();
-      await service.paywallViewed(AnalyticsService.paywallSourceHome);
+      await service.practiceResultUpsellViewed();
+      await service.practiceResultUpsellTapped();
+      await service.paywallViewed(AnalyticsService.paywallSourcePracticeResult);
       await service.paywallDismissed(
         source: AnalyticsService.paywallSourceHome,
         method: AnalyticsService.paywallDismissCloseButton,
@@ -364,7 +376,7 @@ void main() {
 
       final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
       final reserved = RegExp(r'^(firebase_|google_|ga_|_)');
-      expect(sink.events, hasLength(15));
+      expect(sink.events, hasLength(17));
       for (final event in sink.events) {
         expect(event.name.length, lessThanOrEqualTo(40), reason: event.name);
         expect(nameRule.hasMatch(event.name), isTrue, reason: event.name);

@@ -33,6 +33,7 @@ Nothing is marked complete unless the record says so.
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
 | v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. |
 | Shared Daily Test: the daily question set is generated once per day and shown identically to every user, instead of once per user | **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: a shared set cannot be chosen by an error profile (the per-device set was biased toward the device's own weak spots, PRD v2 §12.8, until 2026-09-21, when that was removed ahead of this change, §13.12); (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs. |
+| Turkish UI copy (localization) | Recorded 2026-09-23 while adding the practice results Premium prompt, whose copy was wanted in both English and Turkish. The app has no localization setup (no `flutter_localizations`, `intl` or l10n files); every string is English in the widget code. Adding Turkish means setting that up and moving all copy into it, a separate project, not a string edit. Nothing is scheduled. |
 | Theme setting as a single toggle button (instead of the System / Light / Dark segmented control) | Not planned, idea only (recorded 2026-09-21). The three-way control is shipped, tested and device-reviewed; a toggle would drop the explicit "System" choice or need a long-press or cycle to keep it, which is a product decision, not a polish item. Nothing is scheduled. |
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
@@ -296,6 +297,22 @@ as each one lands, with literal status words (see above):
   `onboarding` source is gone) and the automatic opening sends no `mode_selected`.
   Debug "reset onboarding" clears the flag. Not device-confirmed: the 600 ms pause
   and how the Premium screen arrives over the just-finished climb.
+
+- **Premium prompt on the practice results screen — implemented, automated tests
+  only; device check pending.** Under `ResultsScreen`'s unchanged "Back to
+  topics" button, a free user whose daily free practice is used up sees one line
+  and a "See Premium" outlined button that opens the Premium screen (paywall
+  source `practice_result`). The line is the weak-spot screen's locked-row copy,
+  now one shared constant (`freePracticeUsedMessage`). Hidden for premium, for a
+  free user with practice left, and when either read (entitlement, free count)
+  throws. With a free limit of 1 a day this is practically every finished free
+  session, so `practice_result_upsell_viewed` is exposure and the tapped/viewed
+  ratio is the signal (analytics plan E8). Known limit: `hasFullAccess` swallows
+  a RevenueCat failure and returns false, so a paying user during such a failure
+  reads as free; the prompt still needs a used-up free count, which a premium
+  user does not accumulate, so they would only see it if they used the free
+  practice earlier that same day. Not device-confirmed: spacing and how the
+  prompt reads at Large text.
 
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
