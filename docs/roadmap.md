@@ -331,9 +331,7 @@ as each one lands, with literal status words (see above):
   orange band color), "Keep practicing", the shared `freePracticeUsedMessage`
   ("You've used today's free practice. Unlock Topic Practice and more daily
   sessions with Premium.", also on the weak-spot screen's locked row), two
-  text-only benefits (Topic Practice; More Daily Sessions, which the Premium
-  screen's comparison table now shows as "Practice sessions": Free 1 a day,
-  Premium 5 a day, read from the constants; side by side on
+  text-only benefits (Topic Practice; More Daily Sessions, side by side on
   wide screens, stacked on narrow ones or large text) and a "See Premium"
   FilledButton (paywall source `practice_result`). "Back to topics" sits under
   the card as an OutlinedButton, and stays the FilledButton when there is no
@@ -1990,12 +1988,9 @@ actually exists):
   the smaller iPhone SE size (measured: footer top at 507pt, cards'
   own bottom at ~706–710pt). See the 2026-09-16 "Premium screen: on-
   device review fixes" entry above. **Still open (2026-09-23):** the
-  2026-09-21 footer work showed the top of the plan cards above the footer,
-  not the whole cards. The comparison table's new "Practice sessions" row
-  (2026-09-23) made it one row taller: at 375×667 about 30 pt of the cards
-  now shows at Medium (78 pt before) and none at Large (33 pt before; they
-  start about 15 pt below the footer). The whole table stays in view. To be
-  checked on TestFlight (checklist below).
+  2026-09-21 footer work shows the top of the plan cards above the footer
+  (about 56 pt at Medium), not the whole cards; to be checked on TestFlight
+  (checklist below).
 
 #### TestFlight pre-submission checklist
 
