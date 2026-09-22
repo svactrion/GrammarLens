@@ -2001,7 +2001,9 @@ actually exists):
 
 #### TestFlight pre-submission checklist
 
-Open items to run on a TestFlight build before submitting for review:
+Open items to run on a TestFlight build before submitting for review
+(build it only after `./scripts/preflight.sh` passes; README "Local setup",
+step 5):
 
 - [ ] **Firebase DebugView on a physical device** for the launch analytics
   events: not done yet. Procedure: `docs/analytics-plan.md` §6.

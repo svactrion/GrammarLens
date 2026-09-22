@@ -4987,3 +4987,17 @@ unnoticed.
   clean checkout has none, but a release built on this machine would carry
   `assets/icons/.DS_Store` (and `assets/avatars/.DS_Store`, which predates
   this change). Delete them before building for release.
+
+## 2026-09-23 (preflight removes `.DS_Store` from assets)
+
+- **[Engineering]** Closes the known limit recorded with the benefit icons:
+  `scripts/preflight.sh` now finds every `.DS_Store` under `assets/`, deletes
+  it and prints each path it deleted (or that there were none). They are
+  gitignored, so this only matters for a build taken on a Mac that has them,
+  which is exactly where release builds are taken. Run once here: it removed
+  `assets/.DS_Store`, `assets/icons/.DS_Store` and `assets/avatars/.DS_Store`;
+  a second run reports none. The rest of the script is unchanged.
+- **[Product]** README "Local setup" step 5 already said to run preflight
+  before `flutter build ipa`; it now says before every TestFlight or App Store
+  build and describes the new step. The roadmap's TestFlight checklist points
+  to it.
