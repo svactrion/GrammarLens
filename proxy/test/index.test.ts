@@ -1,5 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { dailyTestMaxTokensFor } from '../src/anthropic';
 
 const TOKEN = 'test-app-token'; // matches vitest.config.ts's miniflare.bindings
 
@@ -220,6 +221,26 @@ describe('POST /v1/generate-daily-test', () => {
 
     const json = (await response.json()) as { questions: { explanation: string }[] };
     expect(json.questions[0]?.explanation).toBe("Use 'the' when there is only one of something.");
+  });
+
+  it('uses its own token budget, while practice generation keeps the shared one', async () => {
+    mockAnthropicSuccess({ questions: [] });
+    await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+    mockAnthropicSuccess({ items: [] });
+    await post('/v1/generate-practice-set', { deviceId: 'd1', topicId: 'articles', count: 5 });
+
+    expect(fetchCalls).toHaveLength(2);
+    const daily = JSON.parse(String(fetchCalls[0]?.init?.body)) as { max_tokens: number; system: string };
+    const practice = JSON.parse(String(fetchCalls[1]?.init?.body)) as { max_tokens: number };
+    expect(daily.max_tokens).toBe(3072);
+    expect(practice.max_tokens).toBe(2048);
+    expect(daily.system).toContain('fewer than 25 words');
+  });
+
+  it('scales the Daily Test budget with the question count, within bounds', () => {
+    expect(dailyTestMaxTokensFor(5)).toBe(3072);
+    expect(dailyTestMaxTokensFor(10)).toBe(6144);
+    expect(dailyTestMaxTokensFor(1)).toBe(1024);
   });
 
   it('rejects a weakSpots field with a 400 and never calls Anthropic', async () => {

@@ -47,6 +47,11 @@ Nothing is marked complete unless the record says so.
   sessions". Adding a row pushes plan cards below the fold at 375x667
   (measured 2026-09-23). Fix by shortening or restructuring the table, not by
   appending a row.
+- **Daily Test sets repeat the same topics and scenarios across days and
+  users** (observed 2026-09-24 across 5 sampled generations: 'admit',
+  'needn't have looked', 'train had already left' recurred). Same prompt for
+  everyone is the cause. Revisit together with shared Daily Test generation,
+  where day-to-day variety becomes the main concern.
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD
@@ -370,7 +375,13 @@ as each one lands, with literal status words (see above):
   before. **Deploy order:** the app tolerates a proxy without the field (old
   behavior), and the old app ignores the new field, so the proxy can be
   deployed on the owner's approval at any time; until then, generated sets
-  still have no explanation. Not device-confirmed.
+  still have no explanation. Measured locally before deploy (2026-09-24,
+  `wrangler dev`, 5 sets each round): with the first prompt a 5-item set used
+  1470–1632 output tokens, only ~20% under the shared 2048 limit, so the
+  Daily Test got its own budget (3072 for 5 items, scaled with count) and the
+  explanation a "fewer than 25 words" limit; the second round used
+  1319–1496 tokens (≥51% headroom), every response parsed, all 25
+  explanations present, 5 of 25 still at 25–27 words. Not device-confirmed.
 
 - **Weak-spot detail no longer repeats the topic name — implemented,
   automated tests only; device check pending.** Recorded 2026-09-24. For a

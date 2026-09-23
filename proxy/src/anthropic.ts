@@ -19,6 +19,16 @@ function maxTokensFor(count: number): number {
   return Math.min(8192, Math.max(1024, Math.ceil((2048 * count) / 5)));
 }
 
+/** Daily Test's own budget, scaled the same way off 3072 tokens for a 5-item
+ * set. Its items carry an answer key, 2-3 predicted wrong answers with
+ * comments and an explanation, so they run longer than practice items: 5
+ * sampled 5-item sets (2026-09-24) used 1470-1632 output tokens, which left
+ * only ~20% of the shared 2048 baseline. Kept separate so practice generation
+ * is unaffected. */
+export function dailyTestMaxTokensFor(count: number): number {
+  return Math.min(8192, Math.max(1024, Math.ceil((3072 * count) / 5)));
+}
+
 /** Keeps a 2:2:1 sentence_writing : error_correction : fill_in_blank ratio at any count. */
 function itemMix(count: number): string {
   const sentenceWriting = Math.round(count * 0.4);
@@ -99,8 +109,8 @@ scoring explanations use. These are shown verbatim if the learner's answer
 matches that prediction, so write them as if speaking directly to the
 learner ("you" / "your"), not about them.
 
-Also give each item an "explanation": one sentence, in the same plain,
-friendly tone, saying why "correctAnswer" is right — which rule is at work,
+Also give each item an "explanation": one sentence of fewer than 25 words,
+in the same plain, friendly tone, saying why "correctAnswer" is right — which rule is at work,
 described the way a fluent friend would, not a textbook (e.g. "After
 'avoid', the next verb takes -ing, so it's 'avoid eating'."). It is shown
 under the answer whether the learner got it right, skipped it, or wrote a
@@ -256,7 +266,7 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
 
   return {
     model: MODEL,
-    max_tokens: maxTokensFor(req.count),
+    max_tokens: dailyTestMaxTokensFor(req.count),
     system: DAILY_TEST_SYSTEM_PROMPT,
     output_config: { format: { type: 'json_schema', schema } },
     messages: [{ role: 'user', content: dailyTestUserPrompt(req.count) }],

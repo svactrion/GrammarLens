@@ -5091,3 +5091,43 @@ unnoticed.
   whose rule differs keeps the "rule in topic" sentence and the rule line; a
   recorded explanation still replaces the template (875 → 878). `flutter
   analyze` clean.
+
+## 2026-09-24 (Daily Test: output measured, own token budget, word limit)
+
+- **[Measurement]** Before deploying the explanation change, the proxy ran
+  locally (`wrangler dev`, real Anthropic calls, Sonnet 4.6) for five
+  5-item Daily Test generations. (A first attempt failed with Anthropic 401:
+  the key in `proxy/.dev.vars` was stale; the owner replaced it.) Output
+  tokens: 1632, 1470, 1527, 1497, 1481 (input 1166 each). Worst case left
+  416 of 2048, 20.3%. Every response was HTTP 200 and parsed completely:
+  5 questions, every required field, 2–3 filled predicted wrong answers,
+  `explanation` present in 25/25. Every explanation was one sentence and
+  stated a rule, none opened with praise or "Not quite", but they ran 18–43
+  words (mean ~29), about twice the hand-written first-day ones, and a few
+  contrasted with an alternative answer.
+- **[Engineering — proxy, not deployed]** `dailyTestMaxTokensFor(count)`:
+  3072 for 5 items, scaled with count and clamped to 1024–8192 like
+  `maxTokensFor`, which is unchanged and still serves practice generation
+  (2048 for 5). `buildGenerateDailyTestBody` is its only caller. Setting a
+  higher `max_tokens` costs nothing by itself (only generated tokens are
+  billed); it removes the truncation risk. The prompt now asks for "one
+  sentence of fewer than 25 words"; the no-particular-wrong-answer and
+  no-praise / no-"Not quite" rules are unchanged.
+- **[Measurement — after]** Five more local generations: output tokens
+  1496, 1436, 1319, 1486, 1335 (input 1173). Worst case leaves 1576 of 3072,
+  51.3%. All five parsed completely, 25/25 explanations present, one
+  sentence each, no praise or "Not quite" openings. Words per explanation:
+  min 12, median 21, mean 20.0, max 27; 4 at ≤15, 8 at 16–20, 8 at 21–24,
+  **5 at 25–27** — the limit is mostly, not always, followed. One of those
+  still contrasts with an alternative ("'had discovered', not simple past
+  'discovered'"). Nothing downstream depends on the length; whether 25–27
+  words is acceptable is the owner's call (no further prompt change made).
+- **[Product]** Also observed across the ten samples: the five topics come
+  in the same order every time and scenarios recur ('admit', "needn't have
+  looked", 'train had already left'), because every device sends the same
+  prompt. Recorded as a post-launch roadmap item next to shared Daily Test
+  generation.
+- **[Validation]** Proxy: the Daily Test request carries `max_tokens: 3072`
+  while a 5-item practice request keeps 2048, the prompt contains the word
+  limit, and `dailyTestMaxTokensFor` gives 3072 / 6144 / 1024 for 5 / 10 / 1
+  items (68 → 70). `tsc` clean. Flutter unchanged (878).
