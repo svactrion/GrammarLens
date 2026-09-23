@@ -320,7 +320,8 @@ as each one lands, with literal status words (see above):
   and how the Premium screen arrives over the just-finished climb.
 
 - **Submission prep — implemented; launch screen not device-confirmed.**
-  `pubspec.yaml` version `1.0.0+1`. `ITSAppUsesNonExemptEncryption = false` in
+  `pubspec.yaml` version `1.0.0+1`, then `1.0.0+2` (2026-09-24, build 2: see
+  below). `ITSAppUsesNonExemptEncryption = false` in
   Info.plist: the app uses no encryption beyond HTTPS and the OS's own (no
   crypto package in `lib/`; the `crypto` package is only a build-hook
   dependency). Launch screen: it was Flutter's template, a fixed white
@@ -358,7 +359,7 @@ as each one lands, with literal status words (see above):
   not accumulate. Not device-confirmed.
 
 - **Daily Test explains every answer — implemented, automated tests only
-  (Flutter and proxy); proxy NOT deployed; device check pending.** Recorded
+  (Flutter and proxy); proxy deployed 2026-09-24; device check pending.** Recorded
   2026-09-24. The App Store description says "you see why each answer was
   right or wrong", but a Daily Test card only explained a wrong answer that
   matched a predicted common mistake; a correct or skipped card had no text,
@@ -372,16 +373,25 @@ as each one lands, with literal status words (see above):
   its own comment; a keyboard-variant match shows its note, then the
   explanation. The five hand-written first-day questions have hand-written
   explanations. A set cached before this has none and behaves exactly as
-  before. **Deploy order:** the app tolerates a proxy without the field (old
-  behavior), and the old app ignores the new field, so the proxy can be
-  deployed on the owner's approval at any time; until then, generated sets
-  still have no explanation. Measured locally before deploy (2026-09-24,
+  before. **Deployed 2026-09-24** (Worker version
+  `39f39064-0374-42ec-9257-282016c191ba`, `api.ahmettayfur.com`); a live
+  request right after returned 5 questions, each with an explanation. The
+  app tolerates a proxy without the field and the old app ignores it, so the
+  deploy did not depend on the app release. Measured locally before deploy (2026-09-24,
   `wrangler dev`, 5 sets each round): with the first prompt a 5-item set used
   1470–1632 output tokens, only ~20% under the shared 2048 limit, so the
   Daily Test got its own budget (3072 for 5 items, scaled with count) and the
   explanation a "fewer than 25 words" limit; the second round used
   1319–1496 tokens (≥51% headroom), every response parsed, all 25
   explanations present, 5 of 25 still at 25–27 words. Not device-confirmed.
+
+- **Build 2 (1.0.0+2) — IPA built 2026-09-24, not uploaded yet (the owner
+  uploads through Transporter).** Carries the Daily Test explanations, the
+  weak-spot sentence fix and everything on `main` at the build commit. 878
+  Flutter + 70 proxy tests passed, `flutter analyze` clean, preflight passed.
+  `build/ios/ipa/grammar_lens.ipa`, 30.3 MB (archive 225.0 MB). One build
+  warning, known and harmless: Flutter's `LaunchImage` is still the template's
+  1x1 transparent PNG, invisible over the `LaunchBackground` color.
 
 - **Weak-spot detail no longer repeats the topic name — implemented,
   automated tests only; device check pending.** Recorded 2026-09-24. For a

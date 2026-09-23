@@ -5131,3 +5131,30 @@ unnoticed.
   while a 5-item practice request keeps 2048, the prompt contains the word
   limit, and `dailyTestMaxTokensFor` gives 3072 / 6144 / 1024 for 5 / 10 / 1
   items (68 → 70). `tsc` clean. Flutter unchanged (878).
+
+## 2026-09-24 (proxy deployed; build 2 archived)
+
+- **[Deploy]** `npm run deploy` from `05e8f91`, on the owner's approval:
+  wrangler 4.129.0, 26.83 KiB upload (8.37 KiB gzip), bindings `QUOTA_KV`,
+  `DEVICE_DAILY_LIMIT` 15, `GLOBAL_DAILY_LIMIT` 300 (unchanged), custom
+  domain `api.ahmettayfur.com`, Worker version
+  `39f39064-0374-42ec-9257-282016c191ba`. Verified with one live
+  `generate-daily-test` request (count 5, a throwaway device id): HTTP 200
+  in 27.6 s, 5 questions, `explanation` on each (16, 18, 23, 22 and 27
+  words), so the new prompt is live. `max_tokens` is not visible from the
+  outside; it ships in the same build as the prompt.
+- **[Release]** `pubspec.yaml` `1.0.0+1` → `1.0.0+2`: same marketing version,
+  build number 2. Before the build: 878 Flutter and 70 proxy tests passed,
+  `flutter analyze` and proxy `tsc` clean, `scripts/preflight.sh` passed (no
+  `.DS_Store` under `assets/`).
+- **[Release]** `flutter build ipa --release
+  --dart-define-from-file=config/prod.json`: automatic signing with team
+  `37U9L67C2J`, archive 225.0 MB, IPA `build/ios/ipa/grammar_lens.ipa` 30.3 MB.
+  Validation: version 1.0.0, build 2, display name GrammarLens, deployment
+  target 15.0, bundle id `com.ahmettayfur.grammarlens`. One warning: "Launch
+  image is set to the default placeholder icon". The `LaunchImage` imageset
+  is still Flutter's template 1x1 transparent PNG; the storyboard centers it
+  over the `LaunchBackground` color, so nothing is visible and the launch
+  screen is the plain color as intended. Not a blocker; replacing or
+  removing the image view would only silence the warning. Not uploaded: the
+  owner uploads through Transporter.
