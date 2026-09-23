@@ -142,6 +142,12 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final ruleTitle = humanizeSlug(widget.spot.errorType);
+    // A Daily Test-sourced weak spot stores its topic id as the error type
+    // (it has no finer classification), so its humanized rule title *is*
+    // the topic title. Same rule as WeakSpotCard's topic subtitle: name the
+    // topic once, and drop the rule line and the rule half of the recap
+    // sentence when they would only repeat it.
+    final ruleRepeatsTopic = ruleTitle == widget.topic.title;
     final theme = Theme.of(context);
     // Not migrated onto BrandScaffold — LoadingView fills the whole screen
     // with its own scaffold-colored background (still the pre-D1 band
@@ -169,13 +175,15 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          ruleTitle,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        if (!ruleRepeatsTopic) ...[
+          const SizedBox(height: 8),
+          Text(
+            ruleTitle,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 20),
         FutureBuilder<List<ErrorEntry>>(
           future: _mistakes,
@@ -216,9 +224,13 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                       children: [
                         Text(
                           recap ??
-                              'You\'ve had trouble with $ruleTitle in '
-                                  '${widget.topic.title}. Practicing it '
-                                  'again will help reinforce it.',
+                              (ruleRepeatsTopic
+                                  ? 'You\'ve had trouble with $ruleTitle. '
+                                      'Practicing it again will help '
+                                      'reinforce it.'
+                                  : 'You\'ve had trouble with $ruleTitle in '
+                                      '${widget.topic.title}. Practicing it '
+                                      'again will help reinforce it.'),
                           style: theme.textTheme.bodyLarge,
                         ),
                         if (mistakes.isNotEmpty &&

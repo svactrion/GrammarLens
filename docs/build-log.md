@@ -5063,3 +5063,31 @@ unnoticed.
 - **[Deploy]** The proxy change is committed, not deployed; it goes out only
   on the owner's approval. Either order is safe: the new app with the old
   proxy shows the old behavior, and the old app ignores the new field.
+
+## 2026-09-24 (weak-spot detail: the topic name once)
+
+- **[Product]** Seen on a device: "You've had trouble with Modal Past Forms in
+  Modal Past Forms. Practicing it again will help reinforce it." The template
+  in `WeakSpotDetailScreen` is `'…with $ruleTitle in ${topic.title}…'`, where
+  `ruleTitle = humanizeSlug(spot.errorType)`. A Daily Test `ErrorEntry` stores
+  `errorType: topicId` (no finer classification exists, 2026-09-05), and
+  `humanizeSlug('modalPastForms')` is exactly `'Modal Past Forms'`, so both
+  slots always got the same value. The template only shows when the latest
+  mistake has neither an explanation nor a rule, which in practice means a
+  Daily Test mistake nobody predicted, so every time it showed it doubled
+  the name. The same screen also printed `ruleTitle` under the frequency
+  pill, under a page title that is already the topic name. `WeakSpotCard`
+  had the same doubling fixed on 2026-09-05; this screen was missed then.
+- **[Engineering]** `ruleRepeatsTopic = ruleTitle == topic.title`, the same
+  comparison `WeakSpotCard` uses for its topic subtitle. When true, the
+  sentence is "You've had trouble with <topic>. Practicing it again will help
+  reinforce it." and the rule line under the pill is not built (the 20 pt gap
+  before the recap card stays). When false (a Topic Practice record with a
+  real rule slug and no recap), both are unchanged. A recorded explanation
+  or rule still replaces the template in every case.
+- **[Validation]** `weak_spot_detail_screen_test.dart`: a Daily Test-shaped
+  spot with an unpredicted mistake shows the single-mention sentence, never
+  "X in X", and "Modal Past Forms" appears only as the page title; a spot
+  whose rule differs keeps the "rule in topic" sentence and the rule line; a
+  recorded explanation still replaces the template (875 → 878). `flutter
+  analyze` clean.

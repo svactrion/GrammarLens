@@ -372,6 +372,15 @@ as each one lands, with literal status words (see above):
   deployed on the owner's approval at any time; until then, generated sets
   still have no explanation. Not device-confirmed.
 
+- **Weak-spot detail no longer repeats the topic name — implemented,
+  automated tests only; device check pending.** Recorded 2026-09-24. For a
+  Daily Test weak spot the detail screen said "You've had trouble with Modal
+  Past Forms in Modal Past Forms." (and showed the name again under the
+  frequency pill), because a Daily Test record stores its topic id as the
+  error type. When the rule title equals the topic title, the sentence now
+  names it once and the line under the pill is hidden, the same rule
+  `WeakSpotCard` has used since 2026-09-05. Not device-confirmed.
+
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
 now displays persisted monthly progress and the selected avatar on Home, with

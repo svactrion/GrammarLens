@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/error_entry.dart';
+import 'package:grammar_lens/models/topic.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/locked_premium_pill.dart';
 
 /// The bottom action's own visual states (this batch's UI spec) — separate
@@ -28,8 +30,9 @@ class _FakeSubscriptionService extends SubscriptionService {
 
 class _FakeStorageService extends StorageService {
   int freePracticeCount;
+  final List<ErrorEntry> mistakes;
 
-  _FakeStorageService({this.freePracticeCount = 0});
+  _FakeStorageService({this.freePracticeCount = 0, this.mistakes = const []});
 
   @override
   Future<int> getFreePracticeCountForToday() async => freePracticeCount;
@@ -40,7 +43,7 @@ class _FakeStorageService extends StorageService {
     String errorType, {
     int limit = 3,
   }) async =>
-      const [];
+      mistakes;
 }
 
 WeakSpot _weakSpot() => WeakSpot(
@@ -71,7 +74,126 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
+Topic get _modalPastForms =>
+    kTopics.firstWhere((t) => t.id == TopicId.modalPastForms);
+
+/// Pumps the detail screen for [spot] under [topic], with [mistakes] as its
+/// recent mistakes — for the recap-sentence tests, which care about the
+/// text, not the access state.
+Future<void> _pumpSpot(
+  WidgetTester tester, {
+  required Topic topic,
+  required WeakSpot spot,
+  List<ErrorEntry> mistakes = const [],
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      // The recent-mistake cards read SemanticColors off the theme.
+      theme: buildAppTheme(Brightness.light),
+      home: WeakSpotDetailScreen(
+        topic: topic,
+        spot: spot,
+        claudeService: ClaudeService(),
+        storageService: _FakeStorageService(mistakes: mistakes),
+        analyticsService: AnalyticsService(),
+        subscriptionService: _FakeSubscriptionService(hasAccess: true),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
+  group('recap sentence and rule line', () {
+    // Shaped exactly like a Daily Test record: the topic id stands in as
+    // the error type, and an unpredicted wrong answer has no explanation
+    // and no rule — so the screen falls back to its template sentence.
+    WeakSpot dailyTestSpot() => WeakSpot(
+          topicId: 'modalPastForms',
+          errorType: 'modalPastForms',
+          frequency: 2,
+          lastSeen: DateTime.now(),
+        );
+    final dailyTestMistake = ErrorEntry(
+      topicId: 'modalPastForms',
+      errorType: 'modalPastForms',
+      timestamp: DateTime(2026, 9, 24),
+      prompt: 'Tom said he ___ call me the next day.',
+      userAnswer: 'shall',
+      correctedAnswer: 'would',
+      source: ErrorSource.dailyTest,
+    );
+
+    testWidgets(
+        'a Daily Test weak spot names its topic once in the sentence and '
+        'drops the repeated rule line', (tester) async {
+      await _pumpSpot(
+        tester,
+        topic: _modalPastForms,
+        spot: dailyTestSpot(),
+        mistakes: [dailyTestMistake],
+      );
+
+      expect(
+        find.text("You've had trouble with Modal Past Forms. Practicing it "
+            'again will help reinforce it.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Modal Past Forms in Modal Past Forms'),
+          findsNothing);
+      // Only the page title is left as a standalone "Modal Past Forms":
+      // the rule line under the frequency pill would have been a second.
+      expect(find.text('Modal Past Forms'), findsOneWidget);
+    });
+
+    testWidgets(
+        'a weak spot whose rule differs from its topic keeps both in the '
+        'sentence and keeps the rule line', (tester) async {
+      await _pumpSpot(
+        tester,
+        topic: _modalPastForms,
+        spot: WeakSpot(
+          topicId: 'modalPastForms',
+          errorType: 'reported_speech_backshift',
+          frequency: 2,
+          lastSeen: DateTime.now(),
+        ),
+      );
+
+      expect(
+        find.text("You've had trouble with Reported Speech Backshift in "
+            'Modal Past Forms. Practicing it again will help reinforce it.'),
+        findsOneWidget,
+      );
+      expect(find.text('Reported Speech Backshift'), findsOneWidget);
+    });
+
+    testWidgets(
+        'a recorded explanation still replaces the template, whatever the '
+        'error type', (tester) async {
+      const comment = "After 'said', 'will' moves back to 'would'.";
+      await _pumpSpot(
+        tester,
+        topic: _modalPastForms,
+        spot: dailyTestSpot(),
+        mistakes: [
+          ErrorEntry(
+            topicId: 'modalPastForms',
+            errorType: 'modalPastForms',
+            timestamp: DateTime(2026, 9, 24),
+            userAnswer: 'will',
+            correctedAnswer: 'would',
+            explanation: comment,
+            source: ErrorSource.dailyTest,
+          ),
+        ],
+      );
+
+      expect(find.text(comment), findsWidgets);
+      expect(find.textContaining("You've had trouble"), findsNothing);
+    });
+  });
+
   testWidgets(
       'free user with quota available: enabled button plus a caption '
       'naming the remaining count — never "unlimited"', (tester) async {
