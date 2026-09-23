@@ -84,5 +84,54 @@ void main() {
       expect(roundTripped.topicId, 'articles');
       expect(roundTripped.correctAnswer, 'He goes to school.');
     });
+
+    group('explanation', () {
+      Map<String, dynamic> questionJson(
+              [Map<String, dynamic> extra = const {}]) =>
+          {
+            'id': 'q1',
+            'type': 'fill_in_blank',
+            'instruction': 'Fill in the blank.',
+            'topicId': 'articles',
+            'correctAnswer': 'the',
+            'commonWrongAnswers': [
+              {'answer': 'a', 'comment': "Close, but 'the' is specific."},
+            ],
+            ...extra,
+          };
+
+      test('is read when present and written back unchanged', () {
+        final question = DailyTestQuestion.fromJson(questionJson(
+            {'explanation': "Use 'the' when there is only one of something."}));
+
+        expect(question.explanation,
+            "Use 'the' when there is only one of something.");
+        expect(question.toJson()['explanation'],
+            "Use 'the' when there is only one of something.");
+        expect(DailyTestQuestion.fromJson(question.toJson()).explanation,
+            question.explanation);
+      });
+
+      test(
+          'a question cached before the field existed parses, with no '
+          'explanation, and round-trips without gaining the key', () {
+        final old = questionJson();
+
+        final question = DailyTestQuestion.fromJson(old);
+
+        expect(question.explanation, isNull);
+        expect(question.commonWrongAnswers.single.comment,
+            "Close, but 'the' is specific.");
+        expect(question.toJson().containsKey('explanation'), isFalse);
+      });
+
+      test('a blank, null or non-string value reads as no explanation', () {
+        for (final value in <Object?>['', '   ', null, 42]) {
+          final question =
+              DailyTestQuestion.fromJson(questionJson({'explanation': value}));
+          expect(question.explanation, isNull, reason: '$value');
+        }
+      });
+    });
   });
 }

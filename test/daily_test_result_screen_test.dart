@@ -63,6 +63,7 @@ DailyTestQuestion _question({
   required String topicId,
   required String correctAnswer,
   List<CommonWrongAnswer> commonWrongAnswers = const [],
+  String? explanation,
 }) =>
     DailyTestQuestion(
       item: PracticeItem(
@@ -73,6 +74,7 @@ DailyTestQuestion _question({
       topicId: topicId,
       correctAnswer: correctAnswer,
       commonWrongAnswers: commonWrongAnswers,
+      explanation: explanation,
     );
 
 void main() {
@@ -200,6 +202,7 @@ void main() {
     DailyTestSet set, {
     bool isDay0 = false,
     VoidCallback? onDone,
+    Map<String, String>? answersOverride,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -210,7 +213,7 @@ void main() {
         scaffoldMessengerKey: AppMessenger.key,
         home: DailyTestResultScreen(
           dailyTestSet: set,
-          answers: answers,
+          answers: answersOverride ?? answers,
           dailyTestService: dailyTestService,
           analyticsService: analyticsService,
           isDay0: isDay0,
@@ -234,6 +237,130 @@ void main() {
     expect(find.text('Try saving again'), findsNothing);
     expect(storageService.completeDailyTestCalls, 1);
     expect(storageService.insertedErrors, hasLength(2));
+  });
+
+  group('card explanations', () {
+    const q1Why = "Use 'the' for q1 because there is only one.";
+    const q2Why = "Use 'the' for q2 because it is specific.";
+    const q3Why = "'Went' is the simple past of 'go'.";
+    const q4Why = "'Must' is for a strong obligation.";
+    const q2Comment = "Close, but 'the' is specific.";
+
+    // The same four outcomes as `questions`, each question now carrying
+    // its own pre-written explanation.
+    final explained = [
+      _question(
+          id: 'q1',
+          topicId: 'articles',
+          correctAnswer: 'the',
+          explanation: q1Why),
+      _question(
+        id: 'q2',
+        topicId: 'articles',
+        correctAnswer: 'the',
+        explanation: q2Why,
+        commonWrongAnswers: const [
+          CommonWrongAnswer(answer: 'a', comment: q2Comment),
+        ],
+      ),
+      _question(
+          id: 'q3',
+          topicId: 'tenseSelection',
+          correctAnswer: 'went',
+          explanation: q3Why),
+      _question(
+          id: 'q4',
+          topicId: 'modalVerbs',
+          correctAnswer: 'must',
+          explanation: q4Why),
+    ];
+
+    Finder text(String value) => find.text(value, skipOffstage: false);
+
+    // The result list builds lazily; a tall surface keeps every card built
+    // so each one's text can be checked directly.
+    void useTallView(WidgetTester tester) {
+      tester.view.physicalSize = const Size(800, 4000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+    }
+
+    testWidgets(
+        'a correct and a skipped card show the explanation, as Topic '
+        'Practice does', (tester) async {
+      useTallView(tester);
+      await pumpResult(
+          tester, DailyTestSet(day: '2026-01-01', questions: explained));
+
+      expect(text(q1Why), findsOneWidget);
+      expect(text(q4Why), findsOneWidget);
+    });
+
+    testWidgets(
+        'an unpredicted wrong answer shows the explanation instead of the '
+        'generic line', (tester) async {
+      useTallView(tester);
+      await pumpResult(
+          tester, DailyTestSet(day: '2026-01-01', questions: explained));
+
+      expect(text(q3Why), findsOneWidget);
+      expect(text("Not quite — here's the correct answer."), findsNothing);
+    });
+
+    testWidgets(
+        'a predicted wrong answer keeps its own comment over the '
+        'explanation', (tester) async {
+      useTallView(tester);
+      await pumpResult(
+          tester, DailyTestSet(day: '2026-01-01', questions: explained));
+
+      expect(text(q2Comment), findsOneWidget);
+      expect(text(q2Why), findsNothing);
+    });
+
+    testWidgets('a keyboard-variant match shows its note, then the explanation',
+        (tester) async {
+      useTallView(tester);
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: [
+          _question(
+              id: 'k1',
+              topicId: 'gerundVsInfinitive',
+              correctAnswer: 'cooking',
+              explanation: "After 'enjoy', the verb takes -ing."),
+        ]),
+        answersOverride: {'k1': 'cookıng'},
+      );
+
+      final shown = tester
+          .widgetList<Text>(find.byType(Text, skipOffstage: false))
+          .map((t) => t.data ?? '')
+          .firstWhere((d) => d.contains('keyboard character'));
+      expect(shown, contains('Not a grammar mistake.'));
+      expect(shown, endsWith("After 'enjoy', the verb takes -ing."));
+    });
+
+    testWidgets(
+        'a set cached before explanations existed still renders: the '
+        'generic line for an unpredicted mistake, the comment for a '
+        'predicted one, and no empty explanation anywhere', (tester) async {
+      useTallView(tester);
+      // `questions` is built with no explanation at all — exactly what an
+      // older cached set parses to.
+      await pumpResult(
+          tester, DailyTestSet(day: '2026-01-01', questions: questions));
+
+      expect(tester.takeException(), isNull);
+      expect(text("Not quite — here's the correct answer."), findsOneWidget);
+      expect(text(q2Comment), findsOneWidget);
+      // No card rendered a blank explanation line.
+      final texts = tester
+          .widgetList<Text>(find.byType(Text, skipOffstage: false))
+          .map((t) => t.data);
+      expect(texts.where((d) => d != null && d.trim().isEmpty), isEmpty);
+    });
   });
 
   group(

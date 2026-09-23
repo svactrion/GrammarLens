@@ -42,11 +42,21 @@ class DailyTestQuestion {
   /// 2-3 predicted common wrong answers, each with its own canned comment.
   final List<CommonWrongAnswer> commonWrongAnswers;
 
+  /// One plain-language sentence on why [correctAnswer] is right — the
+  /// rule at work, written once alongside the question like the
+  /// [commonWrongAnswers] comments, so the result screen can explain every
+  /// answer (correct, skipped, or wrong in a way nobody predicted) without
+  /// a scoring call. Null for a set cached before the field existed (its
+  /// stored JSON has no such key): the result screen then falls back to
+  /// what it showed before, never an empty line.
+  final String? explanation;
+
   DailyTestQuestion({
     required this.item,
     required this.topicId,
     required this.correctAnswer,
     required this.commonWrongAnswers,
+    this.explanation,
   }) : assert(
           item.type == PracticeItemType.fillInBlank ||
               item.type == PracticeItemType.errorCorrection,
@@ -73,7 +83,15 @@ class DailyTestQuestion {
         commonWrongAnswers: requireJsonField<List>(json, 'commonWrongAnswers')
             .map((e) => CommonWrongAnswer.fromJson(e as Map<String, dynamic>))
             .toList(),
+        explanation: _optionalText(json['explanation']),
       );
+
+  /// Lenient on purpose, unlike the required fields above: an old cached
+  /// set has no "explanation" key at all, and a blank or non-string value
+  /// is treated the same as a missing one rather than failing the whole
+  /// set over a field the grading doesn't depend on.
+  static String? _optionalText(Object? value) =>
+      value is String && value.trim().isNotEmpty ? value.trim() : null;
 
   Map<String, dynamic> toJson() => {
         ...item.toJson(),
@@ -81,5 +99,6 @@ class DailyTestQuestion {
         'correctAnswer': correctAnswer,
         'commonWrongAnswers':
             commonWrongAnswers.map((c) => c.toJson()).toList(),
+        if (explanation != null) 'explanation': explanation,
       };
 }

@@ -5001,3 +5001,65 @@ unnoticed.
   before `flutter build ipa`; it now says before every TestFlight or App Store
   build and describes the new step. The roadmap's TestFlight checklist points
   to it.
+
+## 2026-09-24 (Daily Test: a per-question explanation)
+
+- **[Product]** Diagnosis first (2026-09-24): Daily Test grading is local and
+  deterministic (PRD v2 §12.5), and the generated set had no field saying why
+  the correct answer is right, only a comment per predicted wrong answer. So a
+  correct or skipped card showed nothing and an unpredicted wrong answer showed
+  the fixed "Not quite — here's the correct answer." line. That was by design
+  (§12.5, and this log's 2026-09-05 entry), but it contradicts the App Store
+  description ("you see why each answer was right or wrong"). Topic Practice
+  was never affected: its scoring call returns an explanation for every item.
+  The "Spot on…" text seen on a device came from the Topic Practice results
+  screen, not from a Daily Test; there was no generation-quality bug. Owner
+  chose option B: one explanation per question, generated up front.
+- **[Engineering — proxy, not deployed]** `DAILY_TEST_SYSTEM_PROMPT` asks for
+  a one-sentence, plain-language `explanation` per item: why `correctAnswer`
+  is right, which rule is at work, standing on its own (no reference to a
+  particular wrong answer, no praise, no "Not quite") because it is shown on
+  every kind of card. The schema adds `explanation: string` and lists it as
+  required; `commonWrongAnswers[{answer, comment}]` is unchanged.
+  `maxTokensFor` (2048 for 5 items) is unchanged. There is no measured
+  Daily Test `output_tokens` figure yet, so whether the extra ~150–250
+  tokens stay comfortably inside it is unverified: after deploy, check the
+  proxy token log for `generate_daily_test` and for truncated (unparseable)
+  responses.
+- **[Engineering — Flutter]** `DailyTestQuestion.explanation` is an optional
+  `String?`. Unlike the required fields it is read leniently: a missing key
+  (every set cached before this), a blank string or a non-string all read as
+  `null`, so an old cached set never fails to parse over a field grading does
+  not use. `toJson` writes the key only when it has a value, so an old set
+  round-trips byte-for-byte. No schema bump: the field lives inside
+  `questions_json`.
+- **[Engineering — result screen]** `_QuestionResultCard` picks its text by
+  match kind: `commonWrong` → that answer's comment (most specific, kept);
+  `keyboardVariant` → its note, then the explanation; `fallback` → the
+  explanation, else the old fixed line; `correct` and skipped → the
+  explanation, else nothing (as before). This matches Topic Practice, whose
+  skipped cards also show an explanation. The error-profile write is
+  unchanged: a Daily Test `ErrorEntry.explanation` is still the matched
+  comment or `null`, never the question's explanation (a possible follow-up,
+  not part of this change).
+- **[Content]** `kDayZeroQuestions` gets five hand-written explanations, one
+  sentence each, in the Topic Practice tone (plain words, the rule named
+  through an example, e.g. "After 'avoid', the next verb takes the -ing form,
+  so it's 'avoid eating'.").
+- **[Validation]** Proxy: the daily-test request's schema has `explanation`
+  as a required string beside `commonWrongAnswers`, the prompt asks for it,
+  and a response carrying it is passed through unchanged (67 → 68). Flutter:
+  parsing reads and round-trips the field, an old question with no key parses
+  to `null` and round-trips without gaining the key, and blank/null/non-string
+  values read as `null`; a row written in the old JSON shape loads from the
+  real sqflite cache with no explanation, and a new one survives the round
+  trip; every first-day question has exactly one sentence that does not read
+  as feedback on a particular answer; the result screen shows the explanation
+  on correct, skipped and unpredicted-wrong cards, keeps the predicted
+  comment over it, puts it after the keyboard note, and an old set with no
+  explanations still shows the fixed line and the predicted comment with no
+  blank text anywhere (864 → 875). `flutter analyze` clean. Proxy `tsc`
+  clean.
+- **[Deploy]** The proxy change is committed, not deployed; it goes out only
+  on the owner's approval. Either order is safe: the new app with the old
+  proxy shows the old behavior, and the old app ignores the new field.

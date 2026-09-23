@@ -457,17 +457,26 @@ class _QuestionResultCard extends StatelessWidget {
     final label =
         isSkipped ? 'Skipped' : (isCorrect ? 'Correct' : 'Needs work');
 
-    // A keyboard-variant match is correct but still gets its note shown —
-    // "doğru sayılsın ama sessizce geçilmesin" — so it's checked before the
-    // usual "no commentary on a correct answer" rule. Otherwise: the
-    // specific matched wrong answer's comment (or the generic fallback)
-    // explains a real mistake; a genuinely correct or skipped answer needs
-    // no commentary.
-    final explanation = result.isKeyboardVariant
-        ? result.match?.comment
-        : (!isSkipped && !isCorrect)
-            ? (result.match?.comment ?? _fallbackComment)
-            : null;
+    // Mirrors Topic Practice's ResultsScreen, where every card — correct,
+    // skipped or wrong — carries its explanation. Priority, most specific
+    // first: a predicted wrong answer keeps its own comment (it speaks to
+    // that exact mistake); a keyboard-variant match keeps its note —
+    // "doğru sayılsın ama sessizce geçilmesin" — followed by the question's
+    // explanation; everything else (correct, skipped, or a wrong answer
+    // nobody predicted) gets the question's own explanation. A set cached
+    // before `explanation` existed has none: a real mistake then still gets
+    // the generic fallback line, and a correct or skipped card stays
+    // without commentary as before — never an empty line.
+    final questionExplanation = result.question.explanation;
+    final explanation = switch (result.match?.kind) {
+      AnswerMatchKind.commonWrong => result.match?.comment,
+      AnswerMatchKind.keyboardVariant => [
+          result.match?.comment,
+          questionExplanation,
+        ].whereType<String>().join(' '),
+      AnswerMatchKind.fallback => questionExplanation ?? _fallbackComment,
+      AnswerMatchKind.correct || null => questionExplanation,
+    };
 
     return Card(
       color: background,

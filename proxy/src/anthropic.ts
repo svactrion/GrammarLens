@@ -99,6 +99,15 @@ scoring explanations use. These are shown verbatim if the learner's answer
 matches that prediction, so write them as if speaking directly to the
 learner ("you" / "your"), not about them.
 
+Also give each item an "explanation": one sentence, in the same plain,
+friendly tone, saying why "correctAnswer" is right — which rule is at work,
+described the way a fluent friend would, not a textbook (e.g. "After
+'avoid', the next verb takes -ing, so it's 'avoid eating'."). It is shown
+under the answer whether the learner got it right, skipped it, or wrote a
+wrong answer none of your predictions match, so it must stand on its own:
+don't refer to any particular wrong answer, and don't open with praise or
+with "Not quite".
+
 Return only the structured output — no extra commentary.
 `.trim();
 
@@ -217,6 +226,7 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
             hint: { type: 'string' },
             topicId: { type: 'string', enum: TOPIC_IDS },
             correctAnswer: { type: 'string' },
+            explanation: { type: 'string' },
             commonWrongAnswers: {
               type: 'array',
               items: {
@@ -227,7 +237,15 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
               },
             },
           },
-          required: ['id', 'type', 'instruction', 'topicId', 'correctAnswer', 'commonWrongAnswers'],
+          required: [
+            'id',
+            'type',
+            'instruction',
+            'topicId',
+            'correctAnswer',
+            'explanation',
+            'commonWrongAnswers',
+          ],
           additionalProperties: false,
         },
       },

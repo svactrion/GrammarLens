@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -105,6 +107,65 @@ void main() {
 
     expect(again.isCompleted, isTrue);
     expect(again.source, DailyTestSource.bundled);
+  });
+
+  test(
+      'a set cached before questions had an explanation still loads, '
+      'with none', () async {
+    await storageService.saveDailyTestSet(sampleQuestions(), day: '2026-09-20');
+    // Rewrite the stored JSON exactly as an older build wrote it: the same
+    // flat shape, with no "explanation" key at all.
+    final db = await databaseFactory
+        .openDatabase(join(await getDatabasesPath(), dbName));
+    await db.update(
+      'daily_test_sets',
+      {
+        'questions_json': jsonEncode([
+          {
+            'id': 'q1',
+            'type': 'fill_in_blank',
+            'instruction': 'Fill in the blank: She ___ to work every day.',
+            'topicId': 'tenseSelection',
+            'correctAnswer': 'goes',
+            'commonWrongAnswers': [
+              {'answer': 'go', 'comment': "Close! Needs an -s for 'she'."},
+            ],
+          },
+        ]),
+      },
+      where: 'day = ?',
+      whereArgs: ['2026-09-20'],
+    );
+    // Not closed: sqflite hands back the same single instance
+    // StorageService already holds open for this path.
+
+    final fetched = await storageService.getDailyTestSet('2026-09-20');
+
+    final question = fetched!.questions.single;
+    expect(question.correctAnswer, 'goes');
+    expect(question.explanation, isNull);
+    expect(question.commonWrongAnswers.single.answer, 'go');
+  });
+
+  test('a question\'s explanation survives the cache round trip', () async {
+    await storageService.saveDailyTestSet([
+      DailyTestQuestion(
+        item: const PracticeItem(
+          id: 'q1',
+          type: PracticeItemType.fillInBlank,
+          instruction: 'Fill in the blank: She ___ to work every day.',
+        ),
+        topicId: 'tenseSelection',
+        correctAnswer: 'goes',
+        commonWrongAnswers: const [],
+        explanation: "With 'she', a present-simple verb takes -s.",
+      ),
+    ]);
+
+    final fetched = await storageService.getDailyTestSetForToday();
+
+    expect(fetched!.questions.single.explanation,
+        "With 'she', a present-simple verb takes -s.");
   });
 
   test('saving again for the same day replaces rather than duplicating',

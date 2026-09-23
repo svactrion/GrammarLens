@@ -176,6 +176,52 @@ describe('POST /v1/generate-daily-test', () => {
     expect(json.questions).toHaveLength(1);
   });
 
+  it('asks for a per-question explanation and passes it through unchanged', async () => {
+    mockAnthropicSuccess({
+      questions: [
+        {
+          id: 'q1',
+          type: 'fill_in_blank',
+          instruction: 'Fill it in.',
+          topicId: 'articles',
+          correctAnswer: 'the',
+          explanation: "Use 'the' when there is only one of something.",
+          commonWrongAnswers: [{ answer: 'a', comment: "Close, but 'the' is specific." }],
+        },
+      ],
+    });
+
+    const response = await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+
+    expect(response.status).toBe(200);
+    const sent = JSON.parse(String(fetchCalls[0]?.init?.body)) as {
+      system: string;
+      output_config: {
+        format: {
+          schema: {
+            properties: {
+              questions: {
+                items: {
+                  properties: Record<string, unknown>;
+                  required: string[];
+                };
+              };
+            };
+          };
+        };
+      };
+    };
+    const question = sent.output_config.format.schema.properties.questions.items;
+    expect(question.properties.explanation).toEqual({ type: 'string' });
+    expect(question.required).toContain('explanation');
+    // The predicted-wrong-answer structure is unchanged beside it.
+    expect(question.required).toContain('commonWrongAnswers');
+    expect(sent.system).toContain('"explanation"');
+
+    const json = (await response.json()) as { questions: { explanation: string }[] };
+    expect(json.questions[0]?.explanation).toBe("Use 'the' when there is only one of something.");
+  });
+
   it('rejects a weakSpots field with a 400 and never calls Anthropic', async () => {
     let upstreamCalls = 0;
     const originalFetch = globalThis.fetch;

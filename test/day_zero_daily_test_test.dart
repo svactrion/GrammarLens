@@ -51,6 +51,23 @@ void main() {
   });
 
   test(
+      'every question explains its answer in one sentence that stands on '
+      'its own', () {
+    for (final q in kDayZeroQuestions) {
+      final explanation = q.explanation;
+      expect(explanation, isNotNull, reason: q.item.id);
+      expect(explanation!.trim(), isNotEmpty, reason: q.item.id);
+      expect(explanation, endsWith('.'), reason: q.item.id);
+      // One sentence: the only full stop is the final one.
+      expect('.'.allMatches(explanation), hasLength(1), reason: q.item.id);
+      // Shown on correct, skipped and unpredicted-wrong cards alike, so it
+      // must not read as feedback on a particular answer.
+      expect(explanation, isNot(startsWith('Not quite')), reason: q.item.id);
+      expect(explanation, isNot(contains('you wrote')), reason: q.item.id);
+    }
+  });
+
+  test(
       'a fill-in-the-blank question has a blank and a hint; an error '
       'correction one has neither', () {
     for (final q in kDayZeroQuestions) {
@@ -165,6 +182,7 @@ void main() {
       expect(copy.correctAnswer, q.correctAnswer);
       expect(copy.commonWrongAnswers.map((w) => (w.answer, w.comment)),
           q.commonWrongAnswers.map((w) => (w.answer, w.comment)));
+      expect(copy.explanation, q.explanation);
     }
   });
 }

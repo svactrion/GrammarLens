@@ -8,8 +8,10 @@ import '../models/practice_item.dart';
 /// new user does is not left to a model's judgment.
 ///
 /// One question per topic, three fill-in-the-blank and two error-correction,
-/// easy to mid difficulty. Each predicted wrong answer carries the comment the
-/// result screen shows for it, and an error-correction question also has the
+/// easy to mid difficulty. Each question carries a one-sentence explanation of
+/// why its answer is right (shown on every card that has no more specific
+/// comment), each predicted wrong answer carries the comment the result
+/// screen shows for it, and an error-correction question also has the
 /// "unchanged sentence" wrong answer, since copying the sentence back is the
 /// most likely wrong attempt.
 ///
@@ -29,6 +31,8 @@ final List<DailyTestQuestion> kDayZeroQuestions = [
     ),
     topicId: 'gerundVsInfinitive',
     correctAnswer: 'eating',
+    explanation: "After 'avoid', the next verb takes the -ing form, so it's "
+        "'avoid eating'.",
     commonWrongAnswers: const [
       CommonWrongAnswer(
         answer: 'to eat',
@@ -50,6 +54,8 @@ final List<DailyTestQuestion> kDayZeroQuestions = [
     ),
     topicId: 'articles',
     correctAnswer: 'She is the best student in our class',
+    explanation: "'Best' compares her with everyone else, and there is only "
+        "one best, so it needs 'the': 'the best student'.",
     commonWrongAnswers: const [
       CommonWrongAnswer(
         answer: 'She is a best student in our class',
@@ -72,6 +78,8 @@ final List<DailyTestQuestion> kDayZeroQuestions = [
     ),
     topicId: 'modalVerbs',
     correctAnswer: 'She can speak three languages',
+    explanation: "After 'can', the verb stays in its plain form, even with "
+        "'she', so it's 'can speak'.",
     commonWrongAnswers: const [
       CommonWrongAnswer(
         answer: 'She can speaking three languages',
@@ -98,6 +106,8 @@ final List<DailyTestQuestion> kDayZeroQuestions = [
     ),
     topicId: 'modalPastForms',
     correctAnswer: 'would',
+    explanation: "When you report what someone said in the past, 'will' "
+        "moves back to 'would': 'he would call me'.",
     commonWrongAnswers: const [
       CommonWrongAnswer(
         answer: 'will',
@@ -122,6 +132,8 @@ final List<DailyTestQuestion> kDayZeroQuestions = [
     ),
     topicId: 'tenseSelection',
     correctAnswer: 'saw',
+    explanation: "'Yesterday' is a finished time in the past, so the verb goes "
+        "in the simple past: 'saw'.",
     commonWrongAnswers: const [
       CommonWrongAnswer(
         answer: 'have seen',

@@ -352,6 +352,26 @@ as each one lands, with literal status words (see above):
   free; the card still needs a used-up free count, which a premium user does
   not accumulate. Not device-confirmed.
 
+- **Daily Test explains every answer — implemented, automated tests only
+  (Flutter and proxy); proxy NOT deployed; device check pending.** Recorded
+  2026-09-24. The App Store description says "you see why each answer was
+  right or wrong", but a Daily Test card only explained a wrong answer that
+  matched a predicted common mistake; a correct or skipped card had no text,
+  and an unpredicted wrong answer only got "Not quite — here's the correct
+  answer." (Topic Practice already explains every card.) Each Daily Test
+  question now carries a one-sentence `explanation` of why the answer is
+  right, generated in the same single call as the rest of the set (option B
+  of the 2026-09-24 diagnosis; estimated +150–250 output tokens per set,
+  roughly $0.002–0.004 per device per day on Sonnet 4.6, unmeasured). Shown
+  on correct, skipped and unpredicted-wrong cards; a predicted mistake keeps
+  its own comment; a keyboard-variant match shows its note, then the
+  explanation. The five hand-written first-day questions have hand-written
+  explanations. A set cached before this has none and behaves exactly as
+  before. **Deploy order:** the app tolerates a proxy without the field (old
+  behavior), and the old app ignores the new field, so the proxy can be
+  deployed on the owner's approval at any time; until then, generated sets
+  still have no explanation. Not device-confirmed.
+
 **Monthly Climb branch update — 2026-09-18:** On `monthly-climb-v2`, Stage 1
 preview and Stage 2 persistence are present. The approved first Stage 3 slice
 now displays persisted monthly progress and the selected avatar on Home, with
