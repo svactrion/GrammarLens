@@ -399,8 +399,9 @@ as each one lands, with literal status words (see above):
   explanations present, 5 of 25 still at 25–27 words. On a device: seen on the
   first-day set only; a generated set is not device-confirmed.
 
-- **Build 2 (1.0.0+2) — IPA built and uploaded 2026-09-24; build 3 is the one
-  submitted for review.** Carries the Daily Test explanations, the
+- **Build 2 (1.0.0+2) — IPA built 2026-09-24. Build 2 was uploaded to App
+  Store Connect (TestFlight) on 2026-09-24 but not submitted for review;
+  build 3 superseded it.** Carries the Daily Test explanations, the
   weak-spot sentence fix and everything on `main` at the build commit. 878
   Flutter + 70 proxy tests passed, `flutter analyze` clean, preflight passed.
   `build/ios/ipa/grammar_lens.ipa`, 30.3 MB (archive 225.0 MB). One build
@@ -433,7 +434,7 @@ as each one lands, with literal status words (see above):
 - **Build 3 (1.0.0+3) — IPA built, uploaded and submitted to App Store review
   on 2026-09-24, with both subscription products and their group. Not
   approved yet; manual release selected.** Build 2 plus the portrait lock
-  above. Supersedes build 2 (uploaded, not submitted). 883 Flutter + 70 proxy tests
+  above. Supersedes build 2 (uploaded to TestFlight, not submitted for review). 883 Flutter + 70 proxy tests
   passed, `flutter analyze` clean, preflight passed.
   `build/ios/ipa/grammar_lens.ipa`, 30.3 MB (archive 225.0 MB). Built
   Info.plist checked: `UIDeviceFamily` [1, 2], orientations as above,

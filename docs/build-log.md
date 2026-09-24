@@ -5209,8 +5209,9 @@ entries are left as written; where this entry corrects one, it says so.
   2026-09-23 "pre-merge cleanup" entry above records only the opposite merge
   (`main` into the branch).
 - **[Release] Builds uploaded.** Build 1 (`1.0.0+1`) was uploaded to
-  TestFlight on 2026-09-23. Builds 2 and 3 (`1.0.0+3`) were uploaded on
-  2026-09-24. This corrects "Not uploaded" in the build 2 entry and "Build 2
+  TestFlight on 2026-09-23. Build 2 was uploaded to App Store Connect
+  (TestFlight) on 2026-09-24 but not submitted for review; build 3
+  superseded it. Build 3 (`1.0.0+3`) was uploaded the same day. This corrects "Not uploaded" in the build 2 entry and "Build 2
   was never uploaded" in the build 3 entry: both were true when written.
 - **[Release] What build 3 adds over build 1:** the per-question Daily Test
   explanation (proxy prompt and schema, app parsing and result cards), the
