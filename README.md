@@ -6,10 +6,10 @@
 > Status: **MVP (v1) complete, tested with real users, closed. v2 — a free/
 > trial/paid pivot with a new daily mode — is functionally built and
 > visually polished** (see [`docs/design-audit.md`](docs/design-audit.md));
-> one known debt remains, the paywall's density on the smallest supported
-> screen width. **Pre-launch**: not on the App Store, and the subscription
-> products exist in App Store Connect but are not yet submitted for review
-> (see [`docs/roadmap.md`](docs/roadmap.md) for current
+> known debts are listed in [`docs/roadmap.md`](docs/roadmap.md) ("Post-launch
+> tasks" and the TestFlight checklist). **Submitted for App Store review
+> 2026-09-24, not yet approved** (version 1.0.0, build 3, with both
+> subscription products; see [`docs/roadmap.md`](docs/roadmap.md) for current
 > wiring). The first release also ships **Monthly Climb**, a gamification
 > layer on the Daily Test (monthly route, medals). A Home redesign is
 > planned for after launch, not scoped. See
@@ -50,8 +50,8 @@ with two entry points:
   expired) still get one Topic Practice session per day at no cost,
   reachable from a weak spot in Review. The purchase flow is built on
   RevenueCat and works end to end against the App Store sandbox; the
-  subscription products exist in App Store Connect but have not been
-  submitted for review, so the public cannot buy one yet.
+  subscription products were submitted for review with the app on
+  2026-09-24 and are not approved yet, so the public cannot buy one yet.
 
 Mistakes from either mode feed a personal **error profile**; **Review**
 resurfaces weak spots later with freshly generated practice — not the same
@@ -66,7 +66,7 @@ app can't build a personalized curriculum from what you actually get wrong.
 |---|---|---|---|
 | **v1 — MVP** | Jul–Aug 2026 | [`screenshots/v1/`](screenshots/v1/) | The original topic-mode build: pick a topic, answer a mixed question set, get plain-language feedback, review weak spots. Tested with real users, closed. |
 | **v2** | Aug–Sep 2026 | [Screenshots (v2)](#screenshots-v2) below | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). This is the current build. |
-| **Monthly Climb** | Sep 2026 | — | A gamification layer on the Daily Test: each answered test moves the avatar one step up a monthly mountain, and a month's score earns a Bronze/Silver/Gold medal in Profile. Built on branch `monthly-climb-v2` and part of the first App Store release. See [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb section at the top; the weekly draft below it is historical). |
+| **Monthly Climb** | Sep 2026 | — | A gamification layer on the Daily Test: each answered test moves the avatar one step up a monthly mountain, and a month's score earns a Bronze/Silver/Gold medal in Profile. Built on branch `monthly-climb-v2`, merged into `main` on 2026-09-23, and part of the build submitted for App Store review on 2026-09-24 (not yet approved). See [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb section at the top; the weekly draft below it is historical). |
 | **v3 — planned, not yet scoped** | — | — | A Home screen redesign, after launch. No scope, no screens, no code yet. |
 
 <details>
