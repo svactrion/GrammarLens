@@ -1,5 +1,18 @@
 # GrammarLens — Roadmap & Status
 
+## Version naming (decided 2026-09-24)
+
+| Version | What | Status |
+|---|---|---|
+| v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
+| v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
+| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release |
+| 1.1.0 | Next: monthly themes, trail and environment fixes | Planned, not started |
+
+The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
+redesign and other later work go to the next releases. Older entries below
+that say "v3" are kept as written.
+
 ## Launch scope — 2026-09-19
 
 **Plan change:** the app goes to the App Store for the **first time** with
@@ -37,7 +50,7 @@ Nothing is marked complete unless the record says so.
 | Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. |
 | Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
-| v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. |
+| v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. *(2026-09-24: the "v3" label is retired — gamification shipped in 1.0.0; the Home redesign and later work go to the next releases. See "Version naming" at the top.)* |
 | Turkish UI copy (localization) | Recorded 2026-09-23 while adding the practice results Premium prompt, whose copy was wanted in both English and Turkish. The app has no localization setup (no `flutter_localizations`, `intl` or l10n files); every string is English in the widget code. Adding Turkish means setting that up and moving all copy into it, a separate project, not a string edit. Nothing is scheduled. |
 | Theme setting as a single toggle button (instead of the System / Light / Dark segmented control) | Not planned, idea only (recorded 2026-09-21). The three-way control is shipped, tested and device-reviewed; a toggle would drop the explicit "System" choice or need a long-press or cycle to keep it, which is a product decision, not a polish item. Nothing is scheduled. |
 
@@ -2370,7 +2383,7 @@ building it.
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.
 
-**v3 — superseded 2026-09-19 (was: planned, status draft, not scoped or built).**
+**v3 — superseded 2026-09-19 (was: planned, status draft, not scoped or built).** *(2026-09-24: the "v3" label is retired — gamification shipped in 1.0.0; the Home redesign and later work go to the next releases. See "Version naming" at the top.)*
 The gamification layer below is no longer post-launch: Monthly Climb is in
 launch scope (see "Launch scope" at the top of this file) and has code on
 `monthly-climb-v2`. The Home redesign remains post-launch, unscoped. The
@@ -2380,7 +2393,7 @@ date on "not scoped for merge into `main`" and its test count. (The
 that branch is deleted, see `docs/build-log.md`, 2026-09-17.)
 
 **v3 — planned, status draft, not scoped or built in `main` (updated
-2026-09-18).** Two directions:
+2026-09-18).** *(2026-09-24: the "v3" label is retired — gamification shipped in 1.0.0; the Home redesign and later work go to the next releases. See "Version naming" at the top.)* Two directions:
 - **Gamification layer ("Monthly Climb").** Lives on branch
   `monthly-climb-v2`, not merged into `main`. Transplanted onto the
   rebuilt `main` (post-2026-09-17 history rewrite) on 2026-09-17, from
