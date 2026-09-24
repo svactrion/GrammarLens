@@ -212,7 +212,8 @@ as each one lands, with literal status words (see above):
   spots). `test/app_resume_test.dart` drives an overnight background through
   the real app with an injected clock. Automated tests only.
 - **Avatar attribution (CC BY 4.0) + Profile layout rework — implemented;
-  Credits screen device-confirmed 2026-09-21.** The avatar set is adapted from
+  device-confirmed 2026-09-21 (section order, alignment, the Data screen, the
+  Credits screen and its links, and large text were checked).** The avatar set is adapted from
   "Cute Animal 3D Icons" by Tran Mau Tri Tam (Figma Community), CC BY 4.0; the
   owner confirmed all twelve avatars, Crab (`avatar_07`) included, come from
   that set. No separate licence item existed in this file, so this entry is the
