@@ -400,6 +400,15 @@ erken erişimde ücretsiz" konumlandırmasını (§6) sürdürülemez kılıyor.
 Free tier artık "az özellikli Topic Practice" değil, yapısal olarak farklı bir
 mekanik — bu yüzden maliyeti kullanıcı sayısıyla neredeyse hiç büyümüyor.
 
+*(Superseded 2026-09-24, table kept as written: the Daily Test is not shared
+yet — every device generates its own set, one generation per active day — so
+its marginal cost is not ~0 (see §13.7 and its 2026-09-24 measurement note).
+A shared set is a post-launch direction (§13.12 note). Free users also get one
+Topic Practice session per day (`StorageService.freeDailyPracticeLimit` = 1,
+3 questions, from a weak spot), so "Topic Practice: Yok" in the Free column no
+longer holds. The trial column is also out of date: annual 7 days, monthly 3
+days, §13.2.)*
+
 ### 12.3 Ekran akışı (v2.1)
 
 ```
@@ -736,6 +745,29 @@ further decision.
 (§13.10, `proxy/README.md`); the figures above stay estimates until the log
 data is read. The net figures assume Apple's 15% commission, which depends on
 the Small Business Program: applied before 2026-09-14, outcome pending.)*
+
+*(Measurement note, 2026-09-24 — small sample.)* After the per-question
+`explanation` field was added, ten local generations of a 5-item Daily Test
+set used **1166–1173 input and 1319–1632 output tokens** (the final five,
+after the word limit: 1173 input, 1319–1496 output; `docs/build-log.md`,
+2026-09-24). Priced at the rate of the model the proxy actually calls,
+`claude-sonnet-4-6` (`proxy/src/anthropic.ts`), **$3 per million input and
+$15 per million output tokens**: 1173 × $3/M = $0.0035 input, plus 1319–1632 ×
+$15/M = $0.0198–0.0245 output, so **about $0.023–0.028 per Daily Test set**,
+above the $0.021 estimate in the table above. An active free user, every day
+for 30 days:
+
+| Part | Per day | Per 30 days |
+|---|---|---|
+| Daily Test (one generation per active day, measured above) | $0.023–0.028 | $0.70–0.84 |
+| Daily "Practice this" session (1/day, 2 calls), **estimate** $0.034 from the table above (modelled for 5 items; the free session is 3 items, so this is likely high) | $0.034 | $1.02 |
+| **Total** | about $0.057–0.062 | **about $1.72–1.86** |
+
+This replaces the "~$0.63/month" free-user figure above for a user who also
+uses the daily practice session; a free user who only takes the Daily Test
+costs about $0.70–0.84 a month. Ten samples on one prompt version are not a
+cost baseline: read the deployed token log (§13.10) before using these
+figures for a decision.
 
 ### 13.8 Daily session cap lowered 10 → 5 (2026-09-21)
 

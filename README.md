@@ -134,8 +134,10 @@ This project follows a structured product process, documented as it happens:
   of all value — was rejected too: it would mean nobody experiences the
   plain-language feedback that usability testers praised, undermining the
   actual thing a public launch exists to measure. Landed on a structural
-  split instead: a free, deterministic daily mode with near-zero marginal
-  cost, and a time-boxed trial of the real AI-personalized mode.
+  split instead: a free daily mode whose grading is deterministic on the
+  device (no AI call per answer), though each device still generates its own
+  daily set, so it is cheaper than Topic Practice but not free to run; and a
+  time-boxed trial of the real AI-personalized mode.
 - **A new business constraint doesn't override a closed research finding.**
   The free daily mode needed some way to explain a wrong answer without a
   live LLM call per answer — the literal solution is multiple-choice-style
