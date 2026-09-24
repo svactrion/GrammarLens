@@ -3,7 +3,7 @@
 **Version:** 2.0 (draft)
 **Author:** Ahmet Emin Tayfur
 **Date:** August 2026
-**Status:** v2 shipped
+**Status:** built; submitted for review 2026-09-24, not yet approved or released
 **Supersedes:** nothing. `prd.md` (v0.1 MVP) stays as the historical record of
 the MVP's problem definition, user research, and scope decisions. This
 document covers what comes after it.
@@ -321,6 +321,11 @@ after.
 
 Gaps identified when actually planning the launch step — none of these were
 fully resolved earlier in this document.
+
+*(Superseded 2026-09-24, text kept as written: distribution is the App Store
+(build 3 submitted for review 2026-09-24); API key safety was closed by the
+operation-based proxy (2026-09-06/07); the privacy note was corrected in
+§13.9. See `docs/roadmap.md` and `docs/build-log.md` for each.)*
 
 - **Distribution channel — still an open decision.** TestFlight (Apple
   Developer Program enrollment, $99/yr, build signing, ~24–48h Apple review
@@ -725,6 +730,12 @@ every response and the proxy currently discards it. Logging those two numbers
 per operation closes §7.1's instrumentation prerequisite and replaces this
 whole section with data. Do that before the numbers here are used for any
 further decision.
+
+*(Superseded in part, 2026-09-24: the proxy now logs `input_tokens`,
+`output_tokens` and `duration_ms` per call and that logging is deployed
+(§13.10, `proxy/README.md`); the figures above stay estimates until the log
+data is read. The net figures assume Apple's 15% commission, which depends on
+the Small Business Program: applied before 2026-09-14, outcome pending.)*
 
 ### 13.8 Daily session cap lowered 10 → 5 (2026-09-21)
 
