@@ -377,6 +377,14 @@ Constraints to keep in mind while reading the data:
 - **Small cohorts.** A first release from a solo developer will have small
   D7 cohorts; Firebase may show limited data for small cohorts. Do not read
   a percentage without its user count.
+- **Day-0 paywall timing is confounded with Monthly Climb** (known limit,
+  recorded 2026-09-24). The first-day paywall moment (Home opens Premium after
+  the first climb, source `day0_after_climb`) and Monthly Climb shipped in the
+  same first release, and there is no measurement from before either. The
+  `day0_after_climb` conversion is reported, but it cannot be attributed to
+  the timing on its own: any difference may come from the climb, the timing,
+  or both. This is the risk `docs/prd-gamification.md` §11.9 warned about
+  (two changes launched together, one measurement).
 - **Cost guardrail signal (approved for launch):** the Anthropic console's
   aggregate spend plus Cloudflare's per-Worker request counts. This is a
   rough total, not a per-user or per-tier figure — the proxy does not log
