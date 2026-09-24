@@ -320,8 +320,8 @@ as each one lands, with literal status words (see above):
   and how the Premium screen arrives over the just-finished climb.
 
 - **Submission prep — implemented; launch screen not device-confirmed.**
-  `pubspec.yaml` version `1.0.0+1`, then `1.0.0+2` (2026-09-24, build 2: see
-  below). `ITSAppUsesNonExemptEncryption = false` in
+  `pubspec.yaml` version `1.0.0+1`, then `1.0.0+2` (2026-09-24, build 2),
+  then `1.0.0+3` (2026-09-24, build 3: see below). `ITSAppUsesNonExemptEncryption = false` in
   Info.plist: the app uses no encryption beyond HTTPS and the OS's own (no
   crypto package in `lib/`; the `crypto` package is only a build-hook
   dependency). Launch screen: it was Flutter's template, a fixed white
@@ -392,6 +392,37 @@ as each one lands, with literal status words (see above):
   `build/ios/ipa/grammar_lens.ipa`, 30.3 MB (archive 225.0 MB). One build
   warning, known and harmless: Flutter's `LaunchImage` is still the template's
   1x1 transparent PNG, invisible over the `LaunchBackground` color.
+
+- **Portrait-only on iPhone and iPad; iPad support kept — implemented,
+  automated tests only; not device-confirmed.** Decided 2026-09-24, when App
+  Store Connect asked for 13-inch iPad screenshots. `TARGETED_DEVICE_FAMILY`
+  stays `"1,2"`: iPad support is kept on purpose, because the app is expected
+  to be used on school and classroom iPads. Every screen is designed as a
+  single vertical column and none was designed or checked in landscape, so
+  the app is locked to portrait. One rule, two sources that must agree:
+  `lib/utils/app_orientation.dart` (`appOrientations`, applied by
+  `lockAppOrientation()` in `main()` before `runApp`) is `portraitUp` +
+  `portraitDown`; Info.plist allows `Portrait` on iPhone and `Portrait` +
+  `PortraitUpsideDown` on iPad (upside-down portrait is an ordinary iPad
+  grip; iOS intersects the two, so an iPhone stays upright). Info.plist also
+  sets `UIRequiresFullScreen = true`: an iPad app that supports Split View /
+  Slide Over has to support all four orientations, and App Store validation
+  rejects a portrait-only one otherwise. **Accepted costs:** on an iPad in a
+  keyboard case or a landscape stand the app does not rotate, so the iPad
+  has to be held in portrait; and the app is not available in iPad Split
+  View / Slide Over. `test/app_orientation_test.dart` checks the
+  platform call and both Info.plist lists. Before submission: capture the
+  iPad screenshots in portrait, and check on an iPad (or the simulator, once
+  the Xcode 27 `lipo` issue allows) that rotating does nothing.
+
+- **Build 3 (1.0.0+3) — IPA built 2026-09-24, not uploaded yet (the owner
+  uploads through Transporter).** Build 2 plus the portrait lock above.
+  Supersedes build 2, which was never uploaded. 883 Flutter + 70 proxy tests
+  passed, `flutter analyze` clean, preflight passed.
+  `build/ios/ipa/grammar_lens.ipa`, 30.3 MB (archive 225.0 MB). Built
+  Info.plist checked: `UIDeviceFamily` [1, 2], orientations as above,
+  `UIRequiresFullScreen` true. One build warning, the same known, harmless
+  `LaunchImage` placeholder as build 2.
 
 - **Weak-spot detail no longer repeats the topic name — implemented,
   automated tests only; device check pending.** Recorded 2026-09-24. For a

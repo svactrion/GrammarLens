@@ -10,6 +10,7 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'app.dart';
 import 'firebase_options.dart';
 import 'services/subscription_service.dart';
+import 'utils/app_orientation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ Future<void> main() async {
     databaseFactory = databaseFactoryFfiWeb;
   }
 
+  await lockAppOrientation();
   await _initializeFirebase();
   await SubscriptionService().initialize();
   runApp(const GrammarLensApp());

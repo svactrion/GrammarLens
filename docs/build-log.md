@@ -5158,3 +5158,42 @@ unnoticed.
   screen is the plain color as intended. Not a blocker; replacing or
   removing the image view would only silence the warning. Not uploaded: the
   owner uploads through Transporter.
+
+## 2026-09-24 (portrait lock on iPhone and iPad; build 3 archived)
+
+- **[Product]** App Store Connect asked for 13-inch iPad screenshots because
+  `TARGETED_DEVICE_FAMILY` is `"1,2"`. Decision: keep iPad support
+  (unchanged `"1,2"`); it is kept on purpose for classroom and school iPads.
+  Lock the app to portrait on both devices instead, because every screen is a
+  single vertical column and landscape was never designed or checked. The
+  owner accepted the cost on iPad: in a keyboard case or a landscape stand
+  the app does not rotate, so the iPad has to be held in portrait.
+- **[Engineering]** `lib/utils/app_orientation.dart`: `appOrientations`
+  (`portraitUp`, `portraitDown`) and `lockAppOrientation()`, called in
+  `main()` before Firebase and `runApp`. Info.plist agrees with it:
+  `UISupportedInterfaceOrientations` is `Portrait` only (iOS intersects it
+  with Flutter's list, so an iPhone never goes upside down), and
+  `UISupportedInterfaceOrientations~ipad` is `Portrait` +
+  `PortraitUpsideDown` (landscape removed from both). Added
+  `UIRequiresFullScreen = true`: an iPad app that supports multitasking has
+  to support all four orientations, and upload validation rejects a
+  portrait-only one without this key. Side effect, accepted with the
+  decision: no Split View / Slide Over on iPad. Apple has deprecated this
+  key for iPadOS 26; it is still read today, and the upload is where a
+  change in that would show.
+- **[Engineering]** `test/app_orientation_test.dart` (5 tests): the platform
+  call carries exactly portrait up and down, no landscape in the list, both
+  Info.plist lists match, and `UIRequiresFullScreen` is true.
+- **[Release]** `pubspec.yaml` `1.0.0+2` → `1.0.0+3`. Build 2 was never
+  uploaded; build 3 replaces it. Before the build: 883 Flutter tests (878 +
+  5 new) and 70 proxy tests passed, `flutter analyze` and proxy `tsc` clean,
+  `scripts/preflight.sh` passed.
+- **[Release]** `flutter build ipa --release
+  --dart-define-from-file=config/prod.json`: team `37U9L67C2J`, archive
+  225.0 MB, IPA `build/ios/ipa/grammar_lens.ipa` 30.3 MB. Validation: version
+  1.0.0, build 3, display name GrammarLens, deployment target 15.0, bundle id
+  `com.ahmettayfur.grammarlens`. One warning, the known `LaunchImage`
+  placeholder (see build 2). Built Info.plist read back: `UIDeviceFamily`
+  [1, 2], iPhone orientations [Portrait], iPad [Portrait,
+  PortraitUpsideDown], `UIRequiresFullScreen` true, `CFBundleVersion` 3.
+  Not device-confirmed. Not uploaded: the owner uploads through Transporter.
