@@ -38,7 +38,6 @@ Nothing is marked complete unless the record says so.
 | Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
 | v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. |
-| Shared Daily Test: the daily question set is generated once per day and shown identically to every user, instead of once per user | **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: a shared set cannot be chosen by an error profile (the per-device set was biased toward the device's own weak spots, PRD v2 §12.8, until 2026-09-21, when that was removed ahead of this change, §13.12); (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs. |
 | Turkish UI copy (localization) | Recorded 2026-09-23 while adding the practice results Premium prompt, whose copy was wanted in both English and Turkish. The app has no localization setup (no `flutter_localizations`, `intl` or l10n files); every string is English in the widget code. Adding Turkish means setting that up and moving all copy into it, a separate project, not a string edit. Nothing is scheduled. |
 | Theme setting as a single toggle button (instead of the System / Light / Dark segmented control) | Not planned, idea only (recorded 2026-09-21). The three-way control is shipped, tested and device-reviewed; a toggle would drop the explicit "System" choice or need a long-press or cycle to keep it, which is a product decision, not a polish item. Nothing is scheduled. |
 
@@ -53,6 +52,13 @@ Nothing is marked complete unless the record says so.
   sessions". Adding a row pushes plan cards below the fold at 375x667
   (measured 2026-09-23). Fix by shortening or restructuring the table, not by
   appending a row.
+- **Shared Daily Test — direction decided 2026-09-22:** one generated Daily
+  Test set per day for all users, post-launch. Still open: how answers are
+  evaluated (explanations generated with the shared set vs personal AI
+  evaluation), the day-boundary/timezone rule, and the fallback if scheduled
+  generation fails. Timing: after 4 weeks of proxy token-log data. *(Moved
+  here from "Out of scope" on 2026-09-24. The earlier analysis, recorded
+  2026-09-21, is kept as written:)* **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: a shared set cannot be chosen by an error profile (the per-device set was biased toward the device's own weak spots, PRD v2 §12.8, until 2026-09-21, when that was removed ahead of this change, §13.12); (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs.
 - **Daily Test sets repeat the same topics and scenarios across days and
   users** (observed 2026-09-24 across 5 sampled generations: 'admit',
   'needn't have looked', 'train had already left' recurred). Same prompt for

@@ -804,6 +804,14 @@ in a settings form.
 
 ### 13.12 Daily Test no longer sends weak spots (2026-09-21)
 
+*(Update 2026-09-24: the shared set below is a direction, not a built
+feature. Direction decided 2026-09-22: one generated Daily Test set per day
+for all users, post-launch. Still open: how answers are evaluated
+(explanations generated with the shared set vs personal AI evaluation), the
+day-boundary/timezone rule, and the fallback if scheduled generation fails.
+Timing: after 4 weeks of proxy token-log data. See `docs/roadmap.md`,
+"Post-launch tasks".)*
+
 `generate_daily_test` used to send the device's most frequent error topics
 (`topicId` and `frequency`, derived from what the user got wrong) so the prompt
 could bias the set. That is removed: the client sends only the anonymous quota
