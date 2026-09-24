@@ -5,10 +5,16 @@
 > **Status:** 1.0.0 submitted for App Store review on 24 September 2026. Not yet approved.
 
 <p>
-  <img src="screenshots/1.0.0/01-results-explained.png" width="200" alt="Daily Test results: each answer comes with a one-sentence explanation of the rule">
+  <img src="screenshots/1.0.0/01-results-explained.png" width="200" alt="Daily Test results: each answer comes with a one-sentence explanation">
   <img src="screenshots/1.0.0/02-daily-test.png" width="200" alt="A Daily Test question: fill in the blank with the correct verb form">
-  <img src="screenshots/1.0.0/03-review.png" width="200" alt="Review: weak spots listed by topic with how often and how recently they came up">
-  <img src="screenshots/1.0.0/05-practice-this.png" width="200" alt="A weak spot's detail screen with the recent mistake and a Practice this button">
+  <img src="screenshots/1.0.0/03-review.png" width="200" alt="Review: weak spots listed by topic">
+  <img src="screenshots/1.0.0/04-home.png" width="200" alt="Home: the Monthly Climb with the avatar on the trail">
+</p>
+<p>
+  <img src="screenshots/1.0.0/05-practice-this.png" width="200" alt="A weak spot's detail screen with a Practice this button">
+  <img src="screenshots/1.0.0/06-results-end.png" width="200" alt="Practice results with the Premium offer card">
+  <img src="screenshots/1.0.0/07-welcome.png" width="200" alt="The Welcome badge earned after the first Daily Test">
+  <img src="screenshots/1.0.0/08-onboarding.png" width="200" alt="Onboarding: name and learning goal">
 </p>
 
 ## What it does
