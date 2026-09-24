@@ -58,6 +58,9 @@ Nothing is marked complete unless the record says so.
   'needn't have looked', 'train had already left' recurred). Same prompt for
   everyone is the cause. Revisit together with shared Daily Test generation,
   where day-to-day variety becomes the main concern.
+- **README refresh with current launch screenshots** (3–4 images, compressed,
+  in `docs/screenshots/`); add the App Store badge and link only after the app
+  is released.
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD
