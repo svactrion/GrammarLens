@@ -84,6 +84,17 @@ Nothing is marked complete unless the record says so.
 - **Verify whether timed-out or unparseable generations are still billed**
   (recorded 2026-09-24): compare `anthropic_usage` log counts with stored
   sets.
+- **Case study rewritten and published on ahmettayfur.com** (English,
+  2026-09-24): same URL as the MVP-era version; decisions framed as first
+  framing → actual problem; figures tagged measured/estimated.
+- **Turkish case study page still shows the MVP-era text** with outdated
+  figures; a notice links to the English version. Update after the English
+  version settles.
+- **Verify whether `PremiumScreen` shows different copy for the
+  `day0_after_climb` source than for the Home entry**; the case study caption
+  for that frame claims only what is verified.
+- **Case study status line says "not yet approved"**: update it on the site
+  when Apple approves and again when released.
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD

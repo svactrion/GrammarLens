@@ -5251,3 +5251,13 @@ entries are left as written; where this entry corrects one, it says so.
   generated set (seen only on the hand-written first-day set); whether the
   subscriptions' App Review screenshot was replaced. A full DebugView pass
   over every launch event is not recorded.
+
+## 2026-09-24 (case study v2 published)
+
+- **[Product]** The rewritten case study (v2, English) is published on
+  ahmettayfur.com at the same URL as the MVP-era version. Decisions are framed
+  as first framing → actual problem, and figures are tagged measured or
+  estimated. Its brief lives in the site repository at
+  `docs/grammarlens-case-study-v2.md`, not in this repo. The Turkish page still
+  carries the MVP-era text with a notice linking to the English version.
+  Follow-ups are in `docs/roadmap.md`, "Post-launch tasks".
