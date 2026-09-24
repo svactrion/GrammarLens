@@ -24,7 +24,7 @@ Nothing is marked complete unless the record says so.
 |---|---|---|
 | Monthly Climb: ledger, Home mountain, Results `See your climb` / `Back to Home` CTA | It is the whole engagement layer; without it the release has no gamification, and the ledger is the data every other item reads. | Implemented. CTA (package 1) and Home scrolling (package 2) device-confirmed; a full launch acceptance pass is still open. |
 | Monthly medals + Profile collection (rule v1, frozen history) | Gives a month a payoff and the collection a reason to exist; rule v1 is already approved and versioned. | Implemented. Locked-shell device-confirmed; `In progress` card, finalized history and the v17 migration are **not** device-confirmed. |
-| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. Since 2026-09-22 the celebration is a large card under the results, and the confetti plays when the user taps "Start my climb" (automated tests only, not device-confirmed). |
+| Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented. Since 2026-09-22 the celebration is a large card under the results, and the confetti plays when the user taps "Start my climb"; device-confirmed 2026-09-22 (clean install). |
 | Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
 | Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. Comparison-table overflow at 320 px / 2× text: fixed 2026-09-21 with a stacked layout (see the launch-checklist note below); automated tests only, **not device-confirmed**. |
 | Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | Implemented (E1, E3–E8; E2 dropped by decision), automated tests only: `docs/analytics-plan.md` §8. Custom definitions (§9) all registered (2026-09-21; `set_source` and `consent_version` separately). `set_source = generated` seen in DebugView on a device; a full DebugView pass over every event is not recorded (TestFlight checklist, "What's next" §1). |
@@ -211,8 +211,8 @@ as each one lands, with literal status words (see above):
   finalization) and Home's (Daily Test day, greeting, climb month, weak
   spots). `test/app_resume_test.dart` drives an overnight background through
   the real app with an injected clock. Automated tests only.
-- **Avatar attribution (CC BY 4.0) + Profile layout rework — implemented,
-  automated tests only; device check pending.** The avatar set is adapted from
+- **Avatar attribution (CC BY 4.0) + Profile layout rework — implemented;
+  Credits screen device-confirmed 2026-09-21.** The avatar set is adapted from
   "Cute Animal 3D Icons" by Tran Mau Tri Tam (Figma Community), CC BY 4.0; the
   owner confirmed all twelve avatars, Crab (`avatar_07`) included, come from
   that set. No separate licence item existed in this file, so this entry is the
@@ -250,8 +250,8 @@ as each one lands, with literal status words (see above):
   request that still carries `weakSpots`), so the app must ship with the
   client change.
 
-- **AI permission before Topic Practice — implemented, automated tests only;
-  device check pending.** A full-screen permission screen ("Feedback on your
+- **AI permission before Topic Practice — implemented; permission screen
+  device-confirmed 2026-09-22.** A full-screen permission screen ("Feedback on your
   answers") appears inside `launchPracticeSet` before the length picker, until
   the user agrees. Stored in a new single-row `ai_consent` table (schema v20,
   versioned, fails closed, survives "Reset progress"). Declining costs nothing
@@ -296,14 +296,15 @@ as each one lands, with literal status words (see above):
   questions read and feel on a phone, and what a real iOS keyboard does with the
   no-correction flags. The content's difficulty is a hypothesis to read from data.
 
-- **Welcome celebration confetti — implemented, automated tests only; device
-  check pending; reworked 2026-09-22 (see below).** A package-free
+- **Welcome celebration confetti — implemented; reworked 2026-09-22 (see
+  below); device-confirmed 2026-09-22.** A package-free
   `CustomPainter` burst (about 1.8 s, the theme's colors) into an overlay, never
   under reduced motion, removed if the user leaves. It no longer fires when the
   badge is earned: it plays when the user taps "Start my climb" (next item).
 
 - **Result screen: one fixed button, badge card below, confetti on tap —
-  implemented, automated tests only; device check pending.** The Daily Test result
+  implemented; the fixed "Start my climb" footer device-confirmed 2026-09-22
+  on a clean install.** The Daily Test result
   screen has one primary button in a fixed footer (`BrandScaffold.bottomBar`, so a
   SnackBar floats above it): "Saving your results…", a retry after a failed save,
   "Start my climb" (with a small badge icon) when the Welcome badge was just earned,
@@ -313,8 +314,8 @@ as each one lands, with literal status words (see above):
   results for its whole run and only then goes on to Home (a 2.5 s timer goes on
   anyway; no confetti under reduced motion). The same holds for a badge earned from a
   test opened on Home. The Day-0 paywall card is removed; the paywall moves to Home
-  (next item). Not device-confirmed: how the burst reads from the button on a
-  phone, and the 2.5 s ceiling.
+  (next item). Device-confirmed 2026-09-22 (clean install); the 2.5 s fallback
+  timer (a burst that never finishes) is not device-tested.
 
 - **First-day paywall on Home — implemented; the flow (climb, then the paywall)
   device-confirmed on 2026-09-22, after the commit that built it (`d0b6718`,
