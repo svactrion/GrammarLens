@@ -1,12 +1,15 @@
 # Analytics plan — Monthly Climb launch
 
 **Status: implemented 2026-09-19 (events E1, E3–E6, the two user properties
-and the `practice_completed` rename); not yet verified on a physical device.**
+and the `practice_completed` rename). On a physical device, only
+`daily_test_completed` with `set_source = generated` has been seen in
+DebugView (2026-09-24); a full DebugView pass over every event is not
+recorded.**
 This file was first written the same day as a plan only; the owner's
 decisions are folded in ("Decisions" lists them), §8 records what was built,
-and §9 lists the custom dimensions the owner still has to register by hand.
-Branch: `monthly-climb-v2`, the launch branch (see "Launch scope" in
-`docs/roadmap.md`).
+and §9 lists the custom dimensions, all registered (2026-09-21; `set_source`
+and `consent_version` separately). Branch: written on `monthly-climb-v2`,
+merged into `main` on 2026-09-23 (`a0723c6`).
 
 Why this file exists: the app ships to the App Store for the first time with
 gamification in it, so there is no pre-gamification baseline. Whatever is not
@@ -378,7 +381,8 @@ Constraints to keep in mind while reading the data:
   aggregate spend plus Cloudflare's per-Worker request counts. This is a
   rough total, not a per-user or per-tier figure — the proxy does not log
   tokens (§1.5) and Firebase cannot derive cost. **Operation-level usage
-  logging in the proxy is deferred to after launch.**
+  logging in the proxy is deferred to after launch.** *(Superseded: token
+  and `duration_ms` logging is deployed, see `proxy/README.md`.)*
 
 Measurement table (thresholds intentionally blank until the observation window ends):
 
@@ -527,12 +531,16 @@ Built in separate commits on `monthly-climb-v2`:
 
 **Not done / still open**
 
-- No physical-device DebugView run has happened for the new events (§6).
-  Moved to the TestFlight pre-submission checklist in `docs/roadmap.md`
-  ("What's next" §1).
-- The custom dimensions and metrics in §9 are not registered; the owner
-  registers them by hand.
+- Physical-device DebugView (§6): only `set_source = generated` on
+  `daily_test_completed` has been seen (2026-09-24); a full pass over every
+  event is not recorded. Tracked in the TestFlight checklist in
+  `docs/roadmap.md` ("What's next" §1).
+- The custom dimensions and metrics in §9 are registered: 2 user-scoped
+  dimensions, 16 event-scoped dimensions and 8 metrics on 2026-09-21 (the
+  event-scoped `size` as "New text size"), plus `set_source` and
+  `consent_version` separately.
 - Proxy usage logging (cost signal) is deferred until after launch (§5).
+  *(Superseded: deployed, see `proxy/README.md`.)*
 - If Profile is showing when a resume finalizes a month, its list catches up
   on the next tab entry, not immediately (unchanged behavior for Profile).
 
@@ -550,6 +558,7 @@ Built in separate commits on `monthly-climb-v2`:
    shipped, so no data or dashboards are affected.
 5. **Cost signal for launch:** Anthropic console spend and Cloudflare request
    counts. Proxy usage logging deferred until after launch (§5).
+   *(Superseded: deployed, see `proxy/README.md`.)*
 6. **Measurement plan approved** (§5), with an observation window of at least
    4 weeks and at least one week past the first month-end.
 7. **Finalization timing:** `finalizePastMedalMonths` also runs at app launch
@@ -562,6 +571,11 @@ Implementation of these decisions: §8.
 ---
 
 ## 9. Custom dimensions and metrics to register (owner, by hand)
+
+**Status: registered.** Everything below was registered on 2026-09-21
+(2 user-scoped dimensions, 16 event-scoped dimensions, 8 metrics; the
+event-scoped `size` under the name "New text size"); `set_source` and
+`consent_version` were registered separately.
 
 Firebase/GA4 reports show an event parameter or user property only after it
 is registered as a custom dimension (categorical/segmenting) or custom metric
