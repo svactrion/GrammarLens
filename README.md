@@ -1,76 +1,50 @@
-# GrammarLens (working title)
+# GrammarLens
 
-**An AI-powered grammar coach for people who learned English by speaking it — not by studying it.**
+**An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
-> Personal product case study, built in public: research → PRD → MVP → iteration.
-> Status: **MVP (v1) complete, tested with real users, closed. v2 — a free/
-> trial/paid pivot with a new daily mode — is functionally built and
-> visually polished** (see [`docs/design-audit.md`](docs/design-audit.md));
-> known debts are listed in [`docs/roadmap.md`](docs/roadmap.md) ("Post-launch
-> tasks" and the TestFlight checklist). **Submitted for App Store review
-> 2026-09-24, not yet approved** (version 1.0.0, build 3, with both
-> subscription products; see [`docs/roadmap.md`](docs/roadmap.md) for current
-> wiring). The first release also ships **Monthly Climb**, a gamification
-> layer on the Daily Test (monthly route, medals). A Home redesign is
-> planned for after launch, not scoped. See
-> [Product Evolution](#product-evolution) below.
+> **Status:** 1.0.0 submitted for App Store review on 24 September 2026. Not yet approved.
 
-## The Problem
+<p>
+  <img src="screenshots/1.0.0/01-results-explained.png" width="200" alt="Daily Test results: each answer comes with a one-sentence explanation of the rule">
+  <img src="screenshots/1.0.0/02-daily-test.png" width="200" alt="A Daily Test question: fill in the blank with the correct verb form">
+  <img src="screenshots/1.0.0/03-review.png" width="200" alt="Review: weak spots listed by topic with how often and how recently they came up">
+  <img src="screenshots/1.0.0/05-practice-this.png" width="200" alt="A weak spot's detail screen with the recent mistake and a Practice this button">
+</p>
 
-Many English learners (including me) became fluent through conversation:
-foreign friends, games, series. We can speak — but our grammar knowledge
-is implicit. Ask us *why* it's "have been" and not "was", and we freeze.
+## What it does
 
-Exams like IELTS demand explicit grammar accuracy. Existing apps don't
-serve this segment well: beginner apps (Duolingo etc.) start too low and
-move too slowly; grammar books are dry and not personalized; general LLM
-chat has no memory of your recurring mistakes across sessions.
+- **Daily Test** (free): five questions a day, graded on the device, with a
+  short explanation for every answer. The first day's test is a fixed,
+  hand-written set; later days are generated. Wrong answers feed a personal
+  error profile that Review shows as weak spots.
+- **Topic Practice** (Premium): AI-generated question sets on a chosen topic,
+  graded by AI with plain-language feedback. The app asks permission before
+  practice answers are sent to the AI provider. Free users get one short
+  session a day, started from a weak spot in Review. Plans, prices and trial
+  lengths are loaded live from the store, not written in the app.
+- **Monthly Climb**: each answered Daily Test moves your avatar one step up a
+  monthly mountain, and a month's score earns a Bronze, Silver or Gold medal
+  in Profile.
 
-## The Idea
+Known debts and open checks are listed in [`docs/roadmap.md`](docs/roadmap.md)
+("Post-launch tasks" and the TestFlight checklist).
 
-A mobile app (Flutter, iOS) that teaches grammar from **your own answers**,
-with two entry points:
+## Case study
 
-- **Daily Test** — free, forever, for everyone: a 5-question daily warm-up,
-  a general mix generated the same way for every user (no personalization, no
-  user data sent), graded instantly with no AI call per answer. The
-  always-free hook into the product.
-- **Topic Practice** — the AI-personalized core loop, and the part that
-  actually costs money to run: pick a topic and a session length
-  (Quick · 3, Standard · 5, Extended · 10), answer a mixed set (sentence
-  writing, error correction, fill-in-the-blank), and get instant,
-  jargon-light feedback — what sounded wrong, what sounds natural, and
-  why, with the grammar rule kept as secondary detail, not the headline.
-  Free to try (a payment method is required up front, per standard App
-  Store subscription mechanics — it auto-renews unless cancelled), then a
-  subscription. The trial length differs by plan — a longer one on the annual
-  plan than on the monthly plan — and is configured in App Store Connect and
-  read live from RevenueCat, so the app never hard-codes a number of days.
-  Free-tier users (trial declined or
-  expired) still get one Topic Practice session per day at no cost,
-  reachable from a weak spot in Review. The purchase flow is built on
-  RevenueCat and works end to end against the App Store sandbox; the
-  subscription products were submitted for review with the app on
-  2026-09-24 and are not approved yet, so the public cannot buy one yet.
+The decisions behind the product, and what each one cost, are written up in
+the [case study](https://ahmettayfur.com/products/grammarlens/case-study).
 
-Mistakes from either mode feed a personal **error profile**; **Review**
-resurfaces weak spots later with freshly generated practice — not the same
-questions, real reinforcement.
+## Version history
 
-AI is not a feature here — it's the foundation. A static rules-and-quizzes
-app can't build a personalized curriculum from what you actually get wrong.
-
-## Product Evolution
-
-| Version | Timeframe | Screenshots | What it was |
+| Version | When | What | Status |
 |---|---|---|---|
-| **v1 — MVP** | Jul–Aug 2026 | [`screenshots/v1/`](screenshots/v1/) | The original topic-mode build: pick a topic, answer a mixed question set, get plain-language feedback, review weak spots. Tested with real users, closed. |
-| **v2** | Aug–Sep 2026 | [Screenshots (v2)](#screenshots-v2) below | Adds a free daily mode and moves Topic Practice from permanently-free to trial-then-subscription: it triggers a real Claude API call every session regardless of payment status, and a permanently free, unlimited version would have scaled cost directly with user count — unsustainable at the growth a public launch is meant to test for. Full reasoning in [`docs/prd-v2.md` §12.1](docs/prd-v2.md). This is the current build. |
-| **Monthly Climb** | Sep 2026 | — | A gamification layer on the Daily Test: each answered test moves the avatar one step up a monthly mountain, and a month's score earns a Bronze/Silver/Gold medal in Profile. Built on branch `monthly-climb-v2`, merged into `main` on 2026-09-23, and part of the build submitted for App Store review on 2026-09-24 (not yet approved). See [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb section at the top; the weekly draft below it is historical). |
-| **v3 — planned, not yet scoped** | — | — | A Home screen redesign, after launch. No scope, no screens, no code yet. |
+| v1 — MVP | July 2026 | One-week sprint, user research, two iterations | Not released |
+| v2 — product build-out | Aug–Sep 2026 | v2.1: free/paid split; v2.2: structure and visual pass; the API proxy; subscriptions | Not released |
+| 1.0.0 | Sep 2026 | First App Store release: v2 plus Monthly Climb | Submitted for review 24 Sep 2026 (build 3); not yet approved; manual release |
+| 1.1.0 | Next | Monthly themes, trail and environment fixes | Planned, not started |
 
 <details>
-<summary><strong>Screenshots (v1 / MVP)</strong></summary>
+<summary><strong>v1 (MVP) screenshots</strong></summary>
 
 | Home | Length selection | Practice |
 |---|---|---|
@@ -86,15 +60,16 @@ app can't build a personalized curriculum from what you actually get wrong.
 
 </details>
 
-## Screenshots (v2)
+<details>
+<summary><strong>v2 screenshots</strong></summary>
 
 | Onboarding | Home (empty) | Daily Test question |
 |---|---|---|
 | ![Onboarding screen with name and learning goal](screenshots/v2/onboarding.png) | ![Home screen, empty state](screenshots/v2/home_empty.png) | ![Daily Test question](screenshots/v2/daily_test_question.png) |
 
-| Daily Test results | Daily Test results (continued) | Home after use — daily free practice used, Topic Practice locked |
+| Daily Test results | Daily Test results (continued) | Home after use |
 |---|---|---|
-| ![Daily Test results, correct and skipped answers](screenshots/v2/daily_test_results.png) | ![Daily Test results, continued, showing a needs-work answer](screenshots/v2/daily_test_results_continued.png) | ![Home screen after use, with today's Daily Test result and Topic Practice still locked behind Premium](screenshots/v2/home_after_use.png) |
+| ![Daily Test results, correct and skipped answers](screenshots/v2/daily_test_results.png) | ![Daily Test results, continued, showing a needs-work answer](screenshots/v2/daily_test_results_continued.png) | ![Home screen after use, with today's Daily Test result and Topic Practice locked behind Premium](screenshots/v2/home_after_use.png) |
 
 | Premium | Review | Weak spot detail |
 |---|---|---|
@@ -104,78 +79,26 @@ app can't build a personalized curriculum from what you actually get wrong.
 |---|---|---|
 | ![Settings screen with appearance and profile options](screenshots/v2/settings.png) | ![Change avatar screen, reached from Settings](screenshots/v2/change_avatar.png) | ![Home screen after use, dark mode](screenshots/v2/home_dark.png) |
 
-## Product Process
+</details>
 
-This project follows a structured product process, documented as it happens:
+## Tech & docs
 
-- [x] User research — interviews with 4 English learners, findings in [`docs/prd.md §2.1`](docs/prd.md)
-- [x] Competitor analysis (informal, folded into PRD problem framing)
-- [x] PRD → [`docs/prd.md`](docs/prd.md)
-- [x] MVP prototype (Flutter + Claude API, structured JSON feedback)
-- [x] Iteration 1 & 2 — question mix rebalanced toward production, plain-language
-      feedback, error-frequency stats, deterministic skipped-answer handling
-      (see [`docs/build-log.md`](docs/build-log.md))
-- [x] Visual design pass — Material 3, custom orange/blue identity, light + dark mode
-- [x] One-question-at-a-time flow, session length selection
-- [x] User testing with real learners — 3 participants (T1–T3), closed
-      (below the original 5+ target, a deliberate call — see
-      [`docs/prd.md` §2.2](docs/prd.md) for the sample-size note)
-- [x] Public write-up (Medium)
+- **App:** Flutter / Dart, iOS only; local storage in sqflite (no accounts).
+- **AI:** Anthropic's Claude through an operation-based Cloudflare Workers
+  proxy (`proxy/`). The proxy owns the model, prompts and token limits and
+  enforces daily quotas; the API key is never in the client.
+- **Subscriptions:** RevenueCat.
+- **Analytics and crashes:** Firebase Analytics and Crashlytics.
 
-## Key Product Decisions (and why)
+Docs:
+- [`docs/roadmap.md`](docs/roadmap.md): current status and what's next
+- [`docs/build-log.md`](docs/build-log.md): dated record of decisions and bugs
+- [`docs/prd.md`](docs/prd.md) (MVP), [`docs/prd-v2.md`](docs/prd-v2.md) (v2),
+  [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb)
+- [`docs/analytics-plan.md`](docs/analytics-plan.md): launch events and how to read them
+- [`docs/case-study-material.md`](docs/case-study-material.md): sourced raw material behind the case study
 
-- **Cost forced the monetization model, not the other way around.** Topic
-  Practice triggers a real Claude API call every session, regardless of
-  whether the user has paid — a permanently free, unlimited version scales
-  cost directly with user count (rough estimate: ~$90–270/mo at 100 daily
-  active users, ~$900–2,700/mo at 1,000). That made the original
-  "everything free during early access" positioning unsustainable the
-  moment growth became the goal. The alternative — a hard paywall in front
-  of all value — was rejected too: it would mean nobody experiences the
-  plain-language feedback that usability testers praised, undermining the
-  actual thing a public launch exists to measure. Landed on a structural
-  split instead: a free daily mode whose grading is deterministic on the
-  device (no AI call per answer), though each device still generates its own
-  daily set, so it is cheaper than Topic Practice but not free to run; and a
-  time-boxed trial of the real AI-personalized mode.
-- **A new business constraint doesn't override a closed research finding.**
-  The free daily mode needed some way to explain a wrong answer without a
-  live LLM call per answer — the literal solution is multiple-choice-style
-  "you picked B, the answer was A" framing. But multiple-choice had already
-  been conclusively rejected by users (5 of 7 across two research rounds —
-  see `docs/prd.md` §2.2 Theme 1) as feeling like guessing rather than
-  production. Rather than reopening that finding under monetization
-  pressure, kept free-text answer types and pre-generated the 2-3 most
-  likely wrong answers — with canned explanations — alongside the question
-  itself: reads as personalized, costs nothing extra since it rides the one
-  generation call already being made.
-- **Skipped ≠ wrong.** An unanswered question is not a grammar error. Detected
-  deterministically in code (empty answer field) rather than trusting the
-  model's own labeling, which varied between runs.
-- **Error-correction is graded on the grammar fix, not the answer format.**
-  If a user identifies and fixes the target error correctly but doesn't
-  rewrite the full sentence, it's marked correct — the instruction was
-  clarified instead of penalizing the user for a formatting assumption.
-- **Grammar terminology is secondary.** Interview participants described
-  rule names ("Past Perfect Continuous") as a barrier, not a help — the
-  plain-language explanation leads; the rule name is a small caption.
-- **The question mix shifted toward production** (sentence writing, error
-  correction) after interviews showed multiple-choice/gap-fill practice
-  felt useless to fluent-but-informal speakers — they can recognize
-  correct grammar, they struggle to produce it under pressure.
-
-## Scope Decisions (what's deliberately NOT in the MVP)
-
-_v1/MVP scope only — see [Product Evolution](#product-evolution) for what
-v2 adds and what v3 is considering._
-
-- No speech/audio features
-- No gamification, streaks, levels
-- No placement/level test — user self-selects topics and session length
-- No accounts or cloud sync — local storage only
-- Single language pair (Turkish → English) to start
-
-## Local setup
+### Local setup
 
 The Anthropic API key is not in the client at all — the app talks to a
 small Cloudflare Workers proxy (`proxy/`) that holds it as a secret; see
@@ -248,7 +171,7 @@ telling you to do the below.
    folder, so these would otherwise ship inside the app. More checks land
    here over time rather than each as its own script.
 
-### Visual previews (no build config needed)
+#### Visual previews (no build config needed)
 
 `lib/preview/` holds standalone, debug-only entry points for checking a
 feature's every visual state on a device without seeding real data or
@@ -275,18 +198,17 @@ confirm it shows up with `flutter devices`, then
 `./scripts/preview_monthly_medal.sh -d <device-id>` (any extra arguments
 pass straight through to `flutter run`).
 
-## Stack
+## Credits
 
-Flutter (iOS) · Anthropic API via a Cloudflare Workers proxy (Claude
-Sonnet, structured JSON outputs — see `proxy/`) · sqflite (local storage)
-· Firebase Analytics + Crashlytics (connected and collecting, iOS only —
-see `docs/roadmap.md` "Current wiring") · RevenueCat (subscriptions —
-live, both App Store products attached) · Material 3 · AI-assisted
-development (Claude Code)
+The avatar set is adapted from
+["Cute Animal 3D Icons"](https://www.figma.com/community/file/1514963172455082116/cute-animal-3d-icons)
+by Tran Mau Tri Tam (Figma Community), licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); adapted (PNG →
+WebP, resized).
 
 ## About
 
-Built by [Ahmet Emin Tayfur](https://www.linkedin.com/in/ahmettayfur) —
-statistics graduate moving into product management. This repo doubles as
-a learning-in-public log; process write-up on
+Built by [Ahmet Emin Tayfur](https://www.linkedin.com/in/ahmettayfur):
+statistics graduate moving into product management. This repo doubles as a
+learning-in-public log; process write-up on
 [Medium](https://medium.com/@ahmet-tayfur).
