@@ -67,6 +67,23 @@ Nothing is marked complete unless the record says so.
 - **README refresh with current launch screenshots** (3–4 images, compressed,
   in `docs/screenshots/`); add the App Store badge and link only after the app
   is released.
+- **Free practice quota model — undecided** (recorded 2026-09-24). Options:
+  1/day (current), every 3 days, a token earned through completed Daily
+  Tests, an allowance per mistake. Decide with 4 weeks of data: share of free
+  users who use the daily session, and conversion of practice users vs
+  non-users.
+- **"Practice this" is not targeted** (recorded 2026-09-24): only `topicId`
+  and `count` reach the proxy, so the session ignores the specific mistake.
+  Consider sending the mistake pattern; check the AI consent copy covers it
+  first.
+- **Prefetch waste** (recorded 2026-09-24): every install that stops after the
+  Day-0 test pays for one generation; skipped days waste the prepared set;
+  stale `daily_test_sets` rows are never deleted. Solved by the shared Daily
+  Test; if that slips, consider preparing the set on app open instead of after
+  completion.
+- **Verify whether timed-out or unparseable generations are still billed**
+  (recorded 2026-09-24): compare `anthropic_usage` log counts with stored
+  sets.
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD
