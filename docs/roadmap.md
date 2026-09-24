@@ -2,11 +2,17 @@
 
 ## Launch scope — 2026-09-19
 
-**Plan change:** `monthly-climb-v2` will be merged to `main`, and the app goes
-to the App Store for the **first time** with this branch's content. `main` was
-never shipped, so gamification is part of launch, not a post-launch add-on.
-This branch is the launch branch. The merge (or PR) still happens only on the
-owner's explicit approval; nothing here authorises it.
+**Plan change:** the app goes to the App Store for the **first time** with
+`monthly-climb-v2`'s content. `main` was never shipped, so gamification is
+part of launch, not a post-launch add-on.
+
+**Status 2026-09-24:** `monthly-climb-v2` was merged into `main` on
+2026-09-23 (`--no-ff`, `a0723c6`; the branch was kept). Build 1 (`1.0.0+1`)
+went to TestFlight on 2026-09-23; builds 2 and 3 were uploaded on 2026-09-24,
+and build 3 (`1.0.0+3`) was submitted to App Store review with both
+subscription products and their group. **Not approved yet; manual release is
+selected.** See `docs/build-log.md`, 2026-09-24 (build 3 submitted for App
+Store review).
 
 Status words below are literal: "implemented" means code and automated tests
 exist; "device-confirmed" means the owner confirmed it on a physical phone.
@@ -21,7 +27,7 @@ Nothing is marked complete unless the record says so.
 | Welcome badge (first `step = 1` ledger row) | Cheap day-one reward for a first-ever user; kept as an explicit hypothesis to measure, not a proven driver. | Implemented, automated tests only. No device confirmation recorded. Since 2026-09-22 the celebration is a large card under the results, and the confetti plays when the user taps "Start my climb" (automated tests only, not device-confirmed). |
 | Text size setting (Small / Medium / Large) | Medium (1.10×) is now the default for everyone, so the choice has to ship with the default. | Implemented (schema v16). Device review pending. |
 | Premium fixes 4a–4c (plan-card frames, stable contextual entry, separated avatars) | The paywall is the launch's revenue surface and the first subscriptions go out with this version. | 4a–4c device-confirmed. Comparison-table overflow at 320 px / 2× text: fixed 2026-09-21 with a stacked layout (see the launch-checklist note below); automated tests only, **not device-confirmed**. |
-| Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | Implemented (E1, E3–E8; E2 dropped by decision), automated tests only: `docs/analytics-plan.md` §8. Open: the physical-device DebugView run (moved to the TestFlight pre-submission checklist, "What's next" §1) and the owner's custom-dimension registration (§9). |
+| Analytics events for Monthly Climb | First release has no baseline; events that are not in the first build cannot be recovered afterwards. | Implemented (E1, E3–E8; E2 dropped by decision), automated tests only: `docs/analytics-plan.md` §8. Custom definitions (§9) all registered (2026-09-21; `set_source` and `consent_version` separately). `set_source = generated` seen in DebugView on a device; a full DebugView pass over every event is not recorded (TestFlight checklist, "What's next" §1). |
 
 ### Out of scope (after launch, on a separate design branch)
 
@@ -55,7 +61,10 @@ Nothing is marked complete unless the record says so.
 
 Launch blockers unrelated to gamification (false onboarding privacy note,
 App Review assets for the subscription products, expiry/restore and non-USD
-checks) stay in "What's next" §1, Pre-launch checklist.
+checks) stay in "What's next" §1, Pre-launch checklist. *(Update 2026-09-24:
+the privacy note is fixed and the app is submitted; still open there:
+restoring an active subscription, expiry/cancellation, a non-USD storefront,
+and whether the subscriptions' review screenshot was replaced.)*
 
 **Launch checklist, code items — 2026-09-21.** Progress is recorded per item
 as each one lands, with literal status words (see above):
@@ -118,9 +127,9 @@ as each one lands, with literal status words (see above):
   The note carries no link, so the policy's other recipients are not named
   in the app text. No other claim of this kind exists in `lib/` (searched
   for on-device / never sent / stored only / no server wording); the
-  Premium screen links the policy itself. Still open before submission: the
-  App Store privacy nutrition label must match the same facts (outside this
-  repo).
+  Premium screen links the policy itself. The App Store privacy
+  questionnaire (nutrition label) was published in App Store Connect before
+  the 2026-09-24 submission.
 - **Proxy token logging — implemented, tested and deployed; data is
   accumulating in Workers Logs.** Each successful Anthropic call logs `kind` (daily_test /
   topic_practice), operation, question count and real input/output tokens
@@ -250,11 +259,10 @@ as each one lands, with literal status words (see above):
   (switching on re-shows the screen, switching off is immediate), the onboarding
   note now names "Anthropic (Claude)" and says we ask first, and
   `ai_consent_result` reports granted / declined / revoked (analytics plan E7;
-  register `consent_version` as a custom dimension). Outside this repo and still
-  open before submission: the privacy policy must name Anthropic and this flow,
-  the App Store privacy label must list user content shared with a third party,
-  and the App Review notes should say how to reach the screen (Topic Practice,
-  first session). No claim about the provider's retention or training is made
+  `consent_version` is registered as a custom dimension). Outside this repo,
+  done before the 2026-09-24 submission: the privacy policy names Anthropic
+  and has an AI permission section (live since 2026-09-22), the privacy
+  questionnaire is published, and the App Review notes are written. No claim about the provider's retention or training is made
   anywhere in the app. PRD v2 §13.13.
 
 - **First Daily Test preload — superseded 2026-09-22 (see the fixed first-day
@@ -280,8 +288,9 @@ as each one lands, with literal status words (see above):
   profile is saved, so the test opens at once, offline and free of generation
   cost, and also when the user closes the app mid-test and opens it from Home.
   Later days are unchanged. Schema v21 adds `daily_test_sets.source`, and
-  `daily_test_completed` reports `set_source` (`bundled` / `generated`; register it
-  as a custom dimension, analytics plan §9). Curly quotes and apostrophes now match
+  `daily_test_completed` reports `set_source` (`bundled` / `generated`; registered
+  as a custom dimension, analytics plan §9; `generated` seen in DebugView on a
+  device). Curly quotes and apostrophes now match
   in answers, and the Daily Test and Topic Practice answer fields turn off
   autocorrect, suggestions and smart punctuation. Not device-confirmed: how the five
   questions read and feel on a phone, and what a real iOS keyboard does with the
@@ -307,8 +316,9 @@ as each one lands, with literal status words (see above):
   (next item). Not device-confirmed: how the burst reads from the button on a
   phone, and the 2.5 s ceiling.
 
-- **First-day paywall on Home — implemented, automated tests only; device check
-  pending.** Home opens the Premium screen by itself, once per install, about 600 ms
+- **First-day paywall on Home — implemented; the flow (climb, then the paywall)
+  device-confirmed on 2026-09-22, after the commit that built it (`d0b6718`,
+  nothing later changed its timing).** Home opens the Premium screen by itself, once per install, about 600 ms
   after the pawn finishes its first climb (or as soon as Home loads, with no step
   to climb), only for a user who finished the Day-0 test, never with full access,
   never while Home is covered or in the background (it waits). One-time via a stored
@@ -316,10 +326,12 @@ as each one lands, with literal status words (see above):
   app was closed on counts as shown; an unreadable flag means no paywall).
   `paywall_viewed` / `paywall_dismissed` use the source `day0_after_climb` (the old
   `onboarding` source is gone) and the automatic opening sends no `mode_selected`.
-  Debug "reset onboarding" clears the flag. Not device-confirmed: the 600 ms pause
-  and how the Premium screen arrives over the just-finished climb.
+  Debug "reset onboarding" clears the flag. The 600 ms pause and the Premium
+  screen's entrance were part of that commit, so they are covered by the
+  2026-09-22 device check; the v22 migration is device-confirmed too.
 
-- **Submission prep — implemented; launch screen not device-confirmed.**
+- **Submission prep — implemented; launch screen device-confirmed in light and
+  dark (2026-09-24).**
   `pubspec.yaml` version `1.0.0+1`, then `1.0.0+2` (2026-09-24, build 2),
   then `1.0.0+3` (2026-09-24, build 3: see below). `ITSAppUsesNonExemptEncryption = false` in
   Info.plist: the app uses no encryption beyond HTTPS and the OS's own (no
@@ -334,8 +346,8 @@ as each one lands, with literal status words (see above):
   follows the system appearance, so a user who chose Dark in the app on a
   Light system still starts on the light color.
 
-- **Premium offer card on the practice results screen — implemented, automated
-  tests only; device check pending.** After the last result card, a free user
+- **Premium offer card on the practice results screen — implemented,
+  device-confirmed (2026-09-24).** After the last result card, a free user
   whose daily free practice is used up sees a plain app card (the theme's
   `surfaceContainerHigh`, radius 20, 18 pt padding): a "PREMIUM" chip
   (`secondaryContainer`, as on the Premium screen's PREMIUM column, not the
@@ -356,10 +368,11 @@ as each one lands, with literal status words (see above):
   line and an outlined button under a filled "Back to topics"). Known limit: `hasFullAccess` swallows a RevenueCat
   failure and returns false, so a paying user during such a failure reads as
   free; the card still needs a used-up free count, which a premium user does
-  not accumulate. Not device-confirmed.
+  not accumulate. Device-confirmed 2026-09-24.
 
-- **Daily Test explains every answer — implemented, automated tests only
-  (Flutter and proxy); proxy deployed 2026-09-24; device check pending.** Recorded
+- **Daily Test explains every answer — implemented (Flutter and proxy); proxy
+  deployed 2026-09-24; seen on a device only on the hand-written first-day
+  set, not yet on a generated set.** Recorded
   2026-09-24. The App Store description says "you see why each answer was
   right or wrong", but a Daily Test card only explained a wrong answer that
   matched a predicted common mistake; a correct or skipped card had no text,
@@ -383,18 +396,20 @@ as each one lands, with literal status words (see above):
   Daily Test got its own budget (3072 for 5 items, scaled with count) and the
   explanation a "fewer than 25 words" limit; the second round used
   1319–1496 tokens (≥51% headroom), every response parsed, all 25
-  explanations present, 5 of 25 still at 25–27 words. Not device-confirmed.
+  explanations present, 5 of 25 still at 25–27 words. On a device: seen on the
+  first-day set only; a generated set is not device-confirmed.
 
-- **Build 2 (1.0.0+2) — IPA built 2026-09-24, not uploaded yet (the owner
-  uploads through Transporter).** Carries the Daily Test explanations, the
+- **Build 2 (1.0.0+2) — IPA built and uploaded 2026-09-24; build 3 is the one
+  submitted for review.** Carries the Daily Test explanations, the
   weak-spot sentence fix and everything on `main` at the build commit. 878
   Flutter + 70 proxy tests passed, `flutter analyze` clean, preflight passed.
   `build/ios/ipa/grammar_lens.ipa`, 30.3 MB (archive 225.0 MB). One build
   warning, known and harmless: Flutter's `LaunchImage` is still the template's
   1x1 transparent PNG, invisible over the `LaunchBackground` color.
 
-- **Portrait-only on iPhone and iPad; iPad support kept — implemented,
-  automated tests only; not device-confirmed.** Decided 2026-09-24, when App
+- **Portrait-only on iPhone and iPad; iPad support kept — implemented;
+  device-confirmed on iPhone; on iPad tried only in the simulator, rotation
+  on iPad hardware not verified.** Decided 2026-09-24, when App
   Store Connect asked for 13-inch iPad screenshots. `TARGETED_DEVICE_FAMILY`
   stays `"1,2"`: iPad support is kept on purpose, because the app is expected
   to be used on school and classroom iPads. Every screen is designed as a
@@ -411,13 +426,14 @@ as each one lands, with literal status words (see above):
   keyboard case or a landscape stand the app does not rotate, so the iPad
   has to be held in portrait; and the app is not available in iPad Split
   View / Slide Over. `test/app_orientation_test.dart` checks the
-  platform call and both Info.plist lists. Before submission: capture the
-  iPad screenshots in portrait, and check on an iPad (or the simulator, once
-  the Xcode 27 `lipo` issue allows) that rotating does nothing.
+  platform call and both Info.plist lists. Done before submission: 5 iPad
+  screenshots uploaded to App Store Connect. Still open: check on iPad
+  hardware that rotating does nothing.
 
-- **Build 3 (1.0.0+3) — IPA built 2026-09-24, not uploaded yet (the owner
-  uploads through Transporter).** Build 2 plus the portrait lock above.
-  Supersedes build 2, which was never uploaded. 883 Flutter + 70 proxy tests
+- **Build 3 (1.0.0+3) — IPA built, uploaded and submitted to App Store review
+  on 2026-09-24, with both subscription products and their group. Not
+  approved yet; manual release selected.** Build 2 plus the portrait lock
+  above. Supersedes build 2 (uploaded, not submitted). 883 Flutter + 70 proxy tests
   passed, `flutter analyze` clean, preflight passed.
   `build/ios/ipa/grammar_lens.ipa`, 30.3 MB (archive 225.0 MB). Built
   Info.plist checked: `UIDeviceFamily` [1, 2], orientations as above,
@@ -519,7 +535,10 @@ analysis clean; all 436 tests pass. Physical-device acceptance pending.
 Read this first in any new working session (chat or Claude Code) to get context
 without re-explaining history.
 
-**Last updated:** 2026-09-16 (docs sync: defined the v2/v3 boundary — v2
+**Last updated:** 2026-09-24 (build 3 submitted for App Store review; status
+lines brought in line with the merge, the uploads, App Store Connect,
+custom definitions and device checks — see `docs/build-log.md`, same date).
+Previous update 2026-09-16 (docs sync: defined the v2/v3 boundary — v2
 is this build, frozen as-is for a visible before/after; v3 is a
 gamification layer plus a Home redesign, neither built. Corrected a
 stale Paid Apps Agreement status left in the "Pre-launch checklist"
@@ -669,9 +688,10 @@ product continues.
 
 ## Where we are now
 
-**Status: MVP complete, tested with real users, closed. V2 built; the launch
-branch `monthly-climb-v2` is pending its merge to `main` and the first App
-Store submission — see "Launch scope" at the top of this file and
+**Status: MVP complete, tested with real users, closed. V2 and Monthly Climb
+are on `main` (merged 2026-09-23, `a0723c6`); build 3 (`1.0.0+3`) was
+submitted to App Store review on 2026-09-24 and is not approved yet (manual
+release selected) — see "Launch scope" at the top of this file and
 `docs/prd-v2.md`.**
 
 ### Current wiring — verified against the repo, 2026-09-14
@@ -701,8 +721,9 @@ actually wired today.** Checked against the filesystem, not from memory.
   (level 1, 1 year, $49.99, 1-week free introductory offer) and
   `grammarlens_premium_monthly` (level 2, 1 month, $5.99, 3-day free
   introductory offer — see PRD v2 §13.2's own 2026-09-17 note on the
-  asymmetric trial). **Not yet submitted for review** — first subscriptions must go
-  out together with a new app version, not on their own.
+  asymmetric trial). **Submitted for review 2026-09-24** with build 3 and the
+  subscription group (first subscriptions must go out with a new app
+  version, not on their own); not approved yet.
   **ASC metadata:** subscription group display name "GrammarLens Premium";
   product description "Daily topic practice with personalized feedback" —
   replaced an earlier "Unlimited topic practice…" description, which was
@@ -713,7 +734,9 @@ actually wired today.** Checked against the filesystem, not from memory.
   offering, not a real device/real price screenshot, and their review
   notes state US prices and describe the path to the paywall. Both must
   be replaced or re-checked before submission — added to the Pre-launch
-  checklist (§1 below) rather than assumed done here.
+  checklist (§1 below) rather than assumed done here. *(2026-09-24: the app's
+  review notes are written; whether the subscriptions' review screenshot
+  was replaced is not recorded.)*
   **RevenueCat:** both App Store products created and attached to the
   `premium` entitlement; the `default` offering is current, with
   `$rc_monthly`/`$rc_annual` packages each now holding the real App Store
@@ -731,11 +754,10 @@ actually wired today.** Checked against the filesystem, not from memory.
   syncs transactions on launch, which confirms entitlement is actually
   read from RevenueCat/StoreKit, not reconstructed from anything stored
   locally.
-  **Not yet done:** an *explicit* Restore Purchases tap has not been
-  exercised in a scenario that actually needs it (a second device, or a
-  signed-out/re-signed-in sandbox account) — added to the TestFlight
-  pre-submission pass, since the reinstall test above happens not to
-  require it. Also still open: expiry/cancellation behavior (locks
+  **Restore Purchases:** the no-purchase case is device-confirmed (a tap
+  with nothing bought shows "nothing to restore"); restoring an active
+  subscription (a second device, or a signed-out/re-signed-in sandbox
+  account) is not tested — still on the TestFlight checklist below. Also still open: expiry/cancellation behavior (locks
   returning once a subscription actually lapses), and a non-USD
   storefront check (e.g. Türkiye / TRY) of prices and the savings badge.
   **Decided against:** Apple's "Monthly with a 12-Month Commitment"
@@ -1865,7 +1887,8 @@ Firebase project connected yet, needs an interactive `flutterfire
 configure` run against a real account", which is stale now), and now
 the full v2.1 free/trial/paid flow (previous section) — functionally
 complete, but not launch-ready. Still open: distribution channel
-decision, device coverage, feedback channel (API key safety is closed, see
+decision *(settled: App Store, submitted 2026-09-24)*, device coverage,
+feedback channel (API key safety is closed, see
 below) —
 several of these are open decisions, not just tasks. **Blocker status, reconciled 2026-09-05** (previous
 entries here were partly stale and partly optimistic — corrected against what
@@ -1903,7 +1926,8 @@ actually exists):
     done:** both products' App Review screenshot and review notes are
     still placeholders (a simulator capture of the debug fixture offering,
     and notes stating US prices) — replace or re-check both before the
-    first submission that includes them.
+    first submission that includes them. *(2026-09-24: submitted with build
+    3; whether the review screenshot was replaced is not recorded.)*
   - *(Resolved: Active 2026-09-22, see "Current wiring".)*
     **EU DSA trader verification — In Review** (Apple case 102955281512). The
     Turkish utility bill submitted as address proof was rejected **for
@@ -1991,7 +2015,8 @@ actually exists):
   figure in `docs/prd-v2.md` §13.7 assumes. Requires Schedule 2 accepted
   (done). Adjusted proceeds only take effect 15 days after the end of the
   fiscal month in which enrollment is approved, so enrolling early is worth
-  real money. **Not yet done.**
+  real money. **Applied before 2026-09-14; outcome pending.** Until it is
+  approved, the 15% in PRD v2 §13.7's margins is an assumption.
 - *(Superseded: the pages are written and live, see "Current wiring".
   The text below is the 2026-09-08 record.)*
   **Privacy Policy / Terms: URLs are real, page content is not — updated
@@ -2086,13 +2111,20 @@ Open items to run on a TestFlight build before submitting for review
 (build it only after `./scripts/preflight.sh` passes; README "Local setup",
 step 5):
 
+*(2026-09-24: build 3 was submitted with these items as listed below.)*
+
 - [ ] **Firebase DebugView on a physical device** for the launch analytics
-  events: not done yet. Procedure: `docs/analytics-plan.md` §6.
+  events: `set_source = generated` seen; a full pass over every event is not
+  recorded. Procedure: `docs/analytics-plan.md` §6.
 - [ ] **Premium screen at 375×667 (iPhone SE):** do the plan cards clear the
   fixed footer, or is scrolling acceptable? (Open debt above.)
-- [ ] **An explicit Restore Purchases tap** in a scenario that needs it (a
-  second device, or a signed-out/re-signed-in sandbox account). See
-  "Current wiring".
+- [ ] **Restore Purchases:** no-purchase case device-confirmed;
+  active-subscription restore not tested. See "Current wiring".
+- [ ] **Cancellation / expiry** and a **non-USD storefront** (e.g. Türkiye /
+  TRY): not tested.
+- [ ] **Daily Test explanation on a generated set** on a device (seen only on
+  the first-day set).
+- [ ] **Rotation on iPad hardware** does nothing (tried only in the simulator).
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
@@ -2282,6 +2314,9 @@ growing with it) — see `docs/build-log.md`, 2026-09-08.
 
 ### 3. Public launch
 Topic mode + onboarding + premium teaser only. No streak mode yet.
+*(Superseded 2026-09-24: build 3 was submitted for review with the Daily
+Test, subscription Topic Practice and Monthly Climb; not approved yet. Still
+no streak mode.)*
 
 ### 4. Streak mode (post-launch fast-follow)
 Built after real D1/D7 data exists, not before. Carries the open cost
