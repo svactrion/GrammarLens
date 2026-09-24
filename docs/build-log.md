@@ -5197,3 +5197,56 @@ unnoticed.
   [1, 2], iPhone orientations [Portrait], iPad [Portrait,
   PortraitUpsideDown], `UIRequiresFullScreen` true, `CFBundleVersion` 3.
   Not device-confirmed. Not uploaded: the owner uploads through Transporter.
+
+## 2026-09-24 (build 3 submitted for App Store review)
+
+Owner-confirmed facts, recorded after the event; no code changed. Earlier
+entries are left as written; where this entry corrects one, it says so.
+
+- **[Delivery] Merge.** `monthly-climb-v2` was merged into `main` on
+  2026-09-23 with `--no-ff` (`a0723c6`, "Merge branch 'monthly-climb-v2':
+  Monthly Climb and first-release prep"). The branch was not deleted. The
+  2026-09-23 "pre-merge cleanup" entry above records only the opposite merge
+  (`main` into the branch).
+- **[Release] Builds uploaded.** Build 1 (`1.0.0+1`) was uploaded to
+  TestFlight on 2026-09-23. Builds 2 and 3 (`1.0.0+3`) were uploaded on
+  2026-09-24. This corrects "Not uploaded" in the build 2 entry and "Build 2
+  was never uploaded" in the build 3 entry: both were true when written.
+- **[Release] What build 3 adds over build 1:** the per-question Daily Test
+  explanation (proxy prompt and schema, app parsing and result cards), the
+  Daily Test's own `max_tokens` budget (`dailyTestMaxTokensFor`, 3072 for 5
+  items) with a word limit on the explanation, the single-mention topic name
+  on the weak-spot detail screen, and the portrait lock on iPhone and iPad
+  (`UIRequiresFullScreen = true`, iPad support kept). The proxy side of the
+  explanation change is deployed (Worker version in the entry above), as is
+  the proxy's token and `duration_ms` logging.
+- **[Release] Submitted.** Build 3 went to App Store review on 2026-09-24
+  together with both subscription products and their subscription group.
+  Not approved yet. Manual release is selected, so approval does not publish
+  the app by itself.
+- **[Product] Completed in App Store Connect before submission:** age rating
+  13+ (set by override), the privacy questionnaire (published), listing
+  text, App Review notes, 8 iPhone and 5 iPad screenshots.
+- **[Product] Privacy policy:** the current version has been live since
+  2026-09-22; it names Anthropic and has a section on the AI permission.
+- **[Analytics] Custom definitions:** everything in `docs/analytics-plan.md`
+  §9 was registered on 2026-09-21: 2 user-scoped dimensions, 16 event-scoped
+  dimensions and 8 metrics (the event-scoped `size` under the name "New text
+  size"). `set_source` and `consent_version`, added to §9 on 2026-09-22, were
+  registered separately.
+- **[Product] Apple Small Business Program:** applied before 2026-09-14;
+  the outcome is pending. Until it is approved, the margins in PRD v2 §13.7
+  (which assume Apple's 15% commission) are an assumption.
+- **[Device] Confirmed on a physical device:** the launch screen in light
+  and dark; the practice results offer card; the portrait lock on iPhone
+  (tried on iPad in the simulator, not on iPad hardware); `set_source =
+  generated` in Firebase DebugView; the v22 migration; the first-day flow
+  (climb, then the paywall) on 2026-09-22, after the commits that built it
+  (`d0b6718`, 2026-09-22 02:08, and nothing later changed its timing);
+  Restore Purchases with no purchase shows "nothing to restore".
+- **[Open] Not verified, still open:** restoring an active subscription;
+  cancellation and expiry; a non-USD storefront; the Premium plan cards at
+  375x667; rotation on a real iPad; the Daily Test explanation on a
+  generated set (seen only on the hand-written first-day set); whether the
+  subscriptions' App Review screenshot was replaced. A full DebugView pass
+  over every launch event is not recorded.
