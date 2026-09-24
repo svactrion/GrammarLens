@@ -1,5 +1,7 @@
 # Monthly Climb — cihaz geri bildirimi revizyon planı
 
+> **Status 2026-09-24: historical plan.** Merged into `main` (`a0723c6`). Current state lives in `docs/roadmap.md`.
+
 2026-09-18. Kullanıcının cihaz gözlemleri; görseller konu bazında gelecek.
 Bu belge konu bazlı revizyon sırasıdır. İlk paket uygulandı; aşağıdaki kabul
 durumu otomatik/görsel kontrolleri cihazda kullanıcı kabulünden ayırır.

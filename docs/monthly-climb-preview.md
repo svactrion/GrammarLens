@@ -1,5 +1,7 @@
 # Monthly Climb — local preview workflow
 
+> **Status 2026-09-24: historical plan.** Merged into `main` (`a0723c6`). Current state lives in `docs/roadmap.md`.
+
 Run all commands from the current checkout on branch `monthly-climb-v2`:
 
 ```bash

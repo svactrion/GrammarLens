@@ -1,5 +1,7 @@
 # PRD — Monthly Climb
 
+> **Status 2026-09-24: historical plan.** Merged into `main` (`a0723c6`). Current state lives in `docs/roadmap.md`.
+
 **Durum (2026-09-18):** Aşama 1 görsel önizleme kullanıcı tarafından incelendi;
 Aşama 2 veri bütünlüğü temeli uygulandı. Aşama 3'ün ilk diliminde üretim Home'a
 kalıcı aylık ilerleme ve seçili avatar bağlandı; cihazda Home incelemesi bekliyor.

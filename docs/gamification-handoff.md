@@ -1,3 +1,5 @@
+> **Status 2026-09-24: historical plan.** Merged into `main` (`a0723c6`). Current state lives in `docs/roadmap.md`.
+
 ## 1. Design as agreed
 
 - Monthly Climb is a local, guest-first engagement layer on the existing five-question Daily Test. It must not add another test mode, LLM call, account, backend, leaderboard, or paid advantage.
