@@ -7,7 +7,7 @@
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
 | 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release |
-| 1.1.0 | Next: monthly themes, trail and environment fixes | Planned, not started |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | Planned. Shared Daily Test: design approved 2026-09-26, implementation not started. Side work: not defined, not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
@@ -72,6 +72,7 @@ Nothing is marked complete unless the record says so.
   generation fails. Timing: after 4 weeks of proxy token-log data. *(Moved
   here from "Out of scope" on 2026-09-24. The earlier analysis, recorded
   2026-09-21, is kept as written:)* **Why it is worth considering:** as users grow, Daily Test generation cost stops scaling with them (one generation per day, not one per device per day), and opening the test gets faster (no per-user generation wait). **Trade-offs to accept:** (1) personalization is lost: a shared set cannot be chosen by an error profile (the per-device set was biased toward the device's own weak spots, PRD v2 §12.8, until 2026-09-21, when that was removed ahead of this change, §13.12); (2) the proxy needs scheduled generation and storage of the day's set, which is a new source of failure, so a fallback is mandatory (for example, a last good set or on-device generation when the shared set is missing); (3) a time-zone rule must be decided (one global "day", or per region), since "today" is a local calendar day in the app now. **Why not before launch:** there are no users today, so there is no saving to capture; and it is better decided after the proxy token-log data (PRD v2 §13.10) shows what a Daily Test really costs.
+  *(Update 2026-09-26: moved into 1.1.0. The open points are decided — evaluation stays on the device and deterministic, with explanations generated with the set (the personal AI evaluation direction is revised; a personal "why was this wrong?" explanation is a low-priority draft); sets are addressed by local date; a bundled fallback pool covers a failed generation. See `docs/1.1.0-shared-daily-test.md` and `docs/build-log.md`, 2026-09-26. Planned, not implemented.)*
 - **Daily Test sets repeat the same topics and scenarios across days and
   users** (observed 2026-09-24 across 5 sampled generations: 'admit',
   'needn't have looked', 'train had already left' recurred). Same prompt for

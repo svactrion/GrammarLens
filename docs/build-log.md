@@ -5271,3 +5271,47 @@ entries are left as written; where this entry corrects one, it says so.
   already built on 15%, so none of them change; the assumption is now
   confirmed. The pending status in the 2026-09-24 entry is superseded by this
   one. `docs/roadmap.md` and PRD v2 §13.7 updated with a dated note.
+
+## 2026-09-26 (1.1.0 shared Daily Test — owner decisions)
+
+Decisions only; no code changed. The Batch 0 report
+(`docs/1.1.0-shared-daily-test.md`) is approved, and §13 there records each
+answer with its date.
+
+- **[Product] Revision of the 2026-09-22 direction.** "Shared generation +
+  personal AI evaluation" is revised: evaluation stays on the device and
+  deterministic (`checkDailyTestAnswer`), and explanations are generated with
+  the set. A personal AI explanation ("why was this wrong?") becomes a
+  low-priority draft. Reason: Daily Test cost becomes fully independent of the
+  number of users, and the Daily Test stays free of the AI permission.
+- **[Engineering] Legacy route (Option A).** `POST /v1/generate-daily-test`
+  keeps its behavior, prompt, request and response, so 1.0.0 clients are
+  unaffected (the proxy cannot tell their first open from their prefetch, and a
+  shared set there would repeat tests). Only log additions that do not change
+  behavior are allowed, such as `stop_reason`. Accepted cost: each 1.0.0 device
+  keeps costing one generation per active day until it updates.
+- **[Engineering] Cloudflare plan: Free, unchanged.** Consequences: the cron's
+  10 ms CPU limit is measured at D1; KV writes are capped at 1,000/day. Rule:
+  raising `GLOBAL_DAILY_LIMIT` above ~450 means deciding to move to Workers
+  Paid (to be written into `proxy/README.md` in Dx).
+- **[Engineering] Deploy rule.** After each proxy deploy (D1, D2), those proxy
+  commits are also merged into `main`, so a 1.0.x proxy deploy from `main`
+  cannot remove the cron or the new route. Client work (C1–C3) stays on
+  `1.1.0`. Kill switch `SHARED_DAILY_TEST_ENABLED` approved for P3. P2 must
+  also prove that a cron run with the set already in KV makes zero outbound
+  calls.
+- **[Content] Fallback pool: 7 sets,** generated once with the current prompt,
+  reviewed by the owner, committed as bundled content in C2, recorded as
+  "AI-generated, owner-reviewed". Rotation uses the 14 scenario themes of the
+  report's §8 as written (work, travel, health, study, family, technology,
+  food, money, sport, environment, shopping, housing, media, science).
+  Explanation hard cap 35 words; the prompt still asks for fewer than 25.
+- **[Analytics]** `set_date` is added to `daily_test_completed` (C1, Dx).
+  "Ensure today's set on resume" (C3 option) is not in 1.1.0: the
+  `set_source = fallback` share is measured first. C3's cleanup of old
+  unused rows stays.
+- **[Product] 1.1.0 scope.** Main work: the shared Daily Test. Side work, all
+  client-side with no API cost: monthly themes, trail designs, a logo on the
+  launch screen, possible new hero/avatar additions. Side work does not hold
+  back the release; anything not ready moves to the next version, and each
+  item is defined before code is written. Roadmap version table updated.
