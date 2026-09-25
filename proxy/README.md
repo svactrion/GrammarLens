@@ -68,12 +68,19 @@ Every successful Anthropic call writes one JSON line with `console.log`
 in `wrangler.jsonc`) and `wrangler tail` shows live:
 
 ```json
-{"event":"anthropic_usage","kind":"topic_practice","operation":"score_answers","item_count":5,"input_tokens":1100,"output_tokens":400,"duration_ms":6200}
+{"event":"anthropic_usage","kind":"topic_practice","operation":"score_answers","item_count":5,"input_tokens":1100,"output_tokens":400,"stop_reason":"end_turn","duration_ms":6200}
 ```
 
 - `kind` is `daily_test` or `topic_practice`; a practice session is two lines
   (`generate_practice_set` + `score_answers`), so per-session cost is the sum of
-  the two averages. `item_count` is the number of questions the call covered.
+  the two averages. `generate_daily_test` (1.0.0's per-device set) and
+  `generate_shared_daily_test` (1.1.0's one set per date, not wired to a route or
+  schedule yet) are both `daily_test`. `item_count` is the number of questions
+  the call covered.
+- `stop_reason` is why generation stopped, one of Anthropic's documented values
+  (`end_turn`, `max_tokens`, `stop_sequence`, `tool_use`, `pause_turn`,
+  `refusal`, `model_context_window_exceeded`), `unknown` for anything else, or
+  `null` when absent. `max_tokens` means a truncated response.
 - Token counts come from the `usage` object Anthropic returns; a missing or
   non-numeric value is logged as `null`. Logged even if the content later
   fails to parse, because the call was still billed.

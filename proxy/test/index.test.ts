@@ -1,6 +1,7 @@
 import { env, SELF } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { dailyTestMaxTokensFor } from '../src/anthropic';
+import { LEGACY_DAILY_TEST_BODY_COUNT_5 } from './fixtures/legacy_daily_test_body';
 
 const TOKEN = 'test-app-token'; // matches vitest.config.ts's miniflare.bindings
 
@@ -153,6 +154,33 @@ describe('POST /v1/generate-practice-set', () => {
 });
 
 describe('POST /v1/generate-daily-test', () => {
+  it('sends Anthropic exactly the bytes 1.0.0 got: the legacy route never changes (1.1.0 §1, Option A)', async () => {
+    mockAnthropicSuccess({ questions: [] });
+
+    const response = await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+
+    expect(response.status).toBe(200);
+    expect(fetchCalls).toHaveLength(1);
+    expect(String(fetchCalls[0]?.init?.body)).toBe(LEGACY_DAILY_TEST_BODY_COUNT_5);
+    // The same bytes for another device: nothing about the caller goes in.
+    mockAnthropicSuccess({ questions: [] });
+    await post('/v1/generate-daily-test', { deviceId: 'another-device', count: 5 });
+    expect(String(fetchCalls[1]?.init?.body)).toBe(LEGACY_DAILY_TEST_BODY_COUNT_5);
+  });
+
+  it('still returns the content unchanged and counts one quota unit', async () => {
+    const content = { questions: [{ id: 'q1', anything: 'passes through as before' }] };
+    mockAnthropicSuccess(content);
+
+    const response = await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+
+    expect(await response.json()).toEqual(content);
+    const keys = (await env.QUOTA_KV.list()).keys.map((k) => k.name);
+    expect(keys.filter((k) => k.startsWith('d:'))).toHaveLength(1);
+    const deviceKey = keys.find((k) => k.startsWith('d:')) as string;
+    expect(await env.QUOTA_KV.get(deviceKey)).toBe('1');
+  });
+
   it('returns the questions Anthropic produced', async () => {
     mockAnthropicSuccess({
       questions: [

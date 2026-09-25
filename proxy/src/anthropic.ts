@@ -2,6 +2,7 @@ import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
 import { logUpstreamFailure, upstreamErrorType } from './error_log';
 import { elapsedMs, logUsage } from './usage_log';
+import type { GenerateSharedDailyTestRequest } from './shared_daily_test';
 import type {
   GenerateDailyTestRequest,
   GeneratePracticeSetRequest,
@@ -45,6 +46,51 @@ function itemMix(count: number): string {
 function dailyTestUserPrompt(count: number): string {
   const allTitles = TOPICS.map((t) => t.title).join(', ');
   return `Generate exactly ${count} Daily Test questions. Cover a varied general mix across these topics: ${allTitles}.`;
+}
+
+/** Upper bounds on the "do not reuse" list, so a long history can never grow
+ * the prompt without limit (7 days x 5 answers is the intended size). */
+const MAX_AVOID_ANSWERS = 35;
+const MAX_AVOID_ANSWER_LENGTH = 100;
+
+/**
+ * The shared Daily Test's user prompt: the day's plan (topic order, each
+ * slot's type, the scenario theme) and the correct answers of recent sets to
+ * stay away from. Built only from the fixed topic table, the plan and
+ * model-written answers, never from anything a user sent. Any change here is a
+ * new `SHARED_PROMPT_VERSION`.
+ */
+function sharedDailyTestUserPrompt(req: GenerateSharedDailyTestRequest): string {
+  const slots = req.plan.slots
+    .map((slot, i) => {
+      const topic = topicById(slot.topicId);
+      const title = topic ? `${topic.title} — ${topic.description}` : slot.topicId;
+      return `${i + 1}. topicId "${slot.topicId}" (${title}): ${slot.type}`;
+    })
+    .join('\n');
+
+  const avoid = [
+    ...new Set(
+      req.avoidAnswers
+        .map((a) => a.trim().slice(0, MAX_AVOID_ANSWER_LENGTH))
+        .filter((a) => a.length > 0),
+    ),
+  ].slice(0, MAX_AVOID_ANSWERS);
+
+  const lines = [
+    `Generate exactly ${req.count} Daily Test questions, one for each slot below, in this order, each with exactly the topicId and type given:`,
+    slots,
+    `Today's scenario theme is "${req.plan.theme}": set every question in a different everyday situation within that theme.`,
+    'Each "id" must be a short unique slug.',
+  ];
+  if (avoid.length > 0) {
+    lines.push(
+      `These answers were used on recent days. Do not reuse them, or the situations they came from: ${avoid
+        .map((a) => JSON.stringify(a))
+        .join(', ')}.`,
+    );
+  }
+  return lines.join('\n');
 }
 
 const GENERATION_SYSTEM_PROMPT = `
@@ -220,8 +266,12 @@ function buildGeneratePracticeSetBody(req: GeneratePracticeSetRequest): Anthropi
   };
 }
 
-function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicRequestBody {
-  const schema = {
+/** The Daily Test's structured-output schema, shared by the legacy
+ * per-device set and the shared set so both stay parseable by the same
+ * `DailyTestQuestion.fromJson`. Changing it changes the legacy route too,
+ * which `test/index.test.ts` pins byte for byte. */
+function dailyTestSchema() {
+  return {
     type: 'object',
     properties: {
       questions: {
@@ -263,13 +313,30 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
     required: ['questions'],
     additionalProperties: false,
   };
+}
 
+function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicRequestBody {
   return {
     model: MODEL,
     max_tokens: dailyTestMaxTokensFor(req.count),
     system: DAILY_TEST_SYSTEM_PROMPT,
-    output_config: { format: { type: 'json_schema', schema } },
+    output_config: { format: { type: 'json_schema', schema: dailyTestSchema() } },
     messages: [{ role: 'user', content: dailyTestUserPrompt(req.count) }],
+  };
+}
+
+/**
+ * The shared set reuses the legacy Daily Test's model, system prompt, schema
+ * and token budget unchanged (their output was measured on 2026-09-24); only
+ * the user prompt differs, carrying the day's plan. Exported for tests.
+ */
+export function buildGenerateSharedDailyTestBody(req: GenerateSharedDailyTestRequest): AnthropicRequestBody {
+  return {
+    model: MODEL,
+    max_tokens: dailyTestMaxTokensFor(req.count),
+    system: DAILY_TEST_SYSTEM_PROMPT,
+    output_config: { format: { type: 'json_schema', schema: dailyTestSchema() } },
+    messages: [{ role: 'user', content: sharedDailyTestUserPrompt(req) }],
   };
 }
 
@@ -317,6 +384,7 @@ function buildScoreAnswersBody(req: ScoreAnswersRequest): AnthropicRequestBody {
 export type AnthropicOperation =
   | { op: 'generate_practice_set'; request: GeneratePracticeSetRequest }
   | { op: 'generate_daily_test'; request: GenerateDailyTestRequest }
+  | { op: 'generate_shared_daily_test'; request: GenerateSharedDailyTestRequest }
   | { op: 'score_answers'; request: ScoreAnswersRequest };
 
 function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
@@ -325,6 +393,8 @@ function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
       return buildGeneratePracticeSetBody(operation.request);
     case 'generate_daily_test':
       return buildGenerateDailyTestBody(operation.request);
+    case 'generate_shared_daily_test':
+      return buildGenerateSharedDailyTestBody(operation.request);
     case 'score_answers':
       return buildScoreAnswersBody(operation.request);
   }
@@ -381,7 +451,7 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
     throw new ProxyError('upstream_error', 502, 'The upstream service returned an error.');
   }
 
-  let decoded: { content?: { type: string; text?: string }[]; usage?: unknown };
+  let decoded: { content?: { type: string; text?: string }[]; usage?: unknown; stop_reason?: unknown };
   try {
     decoded = (await response.json()) as typeof decoded;
   } catch {
@@ -393,7 +463,7 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
   }
   // Logged before the content is checked: a response that later fails to
   // parse was still billed, and that cost belongs in the measurement.
-  logUsage(operation, decoded.usage, elapsedMs(startedAt));
+  logUsage(operation, decoded.usage, elapsedMs(startedAt), decoded.stop_reason);
   const textBlock = decoded.content?.find((block) => block.type === 'text');
   if (!textBlock?.text) {
     logUpstreamFailure(operation, 'no_text_block', {

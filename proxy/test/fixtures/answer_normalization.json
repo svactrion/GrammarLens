@@ -1,0 +1,123 @@
+{
+  "_comment": [
+    "Shared contract between lib/utils/answer_matching.dart (normalizeAnswer, foldKeyboardVariants) and proxy/src/shared_daily_test.ts (their TypeScript port).",
+    "Expected values were produced by running the Dart functions (2026-09-26). The proxy test reads this file now; the Dart test that reads it is added in batch C1. If either side changes, both tests must agree again.",
+    "fold inputs are already normalized, as in checkDailyTestAnswer."
+  ],
+  "normalize": [
+    {
+      "input": "He goes.",
+      "expected": "he goes"
+    },
+    {
+      "input": "  he   goes  ",
+      "expected": "he goes"
+    },
+    {
+      "input": "Isn’t it?",
+      "expected": "isn't it"
+    },
+    {
+      "input": "“quoted”",
+      "expected": "\"quoted\""
+    },
+    {
+      "input": "‘single’",
+      "expected": "'single'"
+    },
+    {
+      "input": "Wait!!",
+      "expected": "wait!"
+    },
+    {
+      "input": "e.g. this.",
+      "expected": "e.g. this"
+    },
+    {
+      "input": "A\tB\nC",
+      "expected": "a b c"
+    },
+    {
+      "input": "İS",
+      "expected": "is"
+    },
+    {
+      "input": "KALİN",
+      "expected": "kalin"
+    },
+    {
+      "input": "Cookıng",
+      "expected": "cookıng"
+    },
+    {
+      "input": "ŞEKER",
+      "expected": "şeker"
+    },
+    {
+      "input": "ÇÖÜĞ",
+      "expected": "çöüğ"
+    },
+    {
+      "input": "",
+      "expected": ""
+    },
+    {
+      "input": ".",
+      "expected": ""
+    },
+    {
+      "input": "  .  ",
+      "expected": ""
+    },
+    {
+      "input": "don't",
+      "expected": "don't"
+    },
+    {
+      "input": "Had I known, I would have come.",
+      "expected": "had i known, i would have come"
+    },
+    {
+      "input": "I would have gone?",
+      "expected": "i would have gone"
+    },
+    {
+      "input": "no punctuation",
+      "expected": "no punctuation"
+    },
+    {
+      "input": "ends with comma,",
+      "expected": "ends with comma,"
+    },
+    {
+      "input": "I",
+      "expected": "i"
+    },
+    {
+      "input": "Is it?.",
+      "expected": "is it?"
+    }
+  ],
+  "fold": [
+    {
+      "input": "cookıng",
+      "expected": "cooking"
+    },
+    {
+      "input": "şeker",
+      "expected": "seker"
+    },
+    {
+      "input": "ğüçö",
+      "expected": "guco"
+    },
+    {
+      "input": "plain",
+      "expected": "plain"
+    },
+    {
+      "input": "kalın",
+      "expected": "kalin"
+    }
+  ]
+}

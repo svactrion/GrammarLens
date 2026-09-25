@@ -5,7 +5,9 @@ import type { AnthropicOperation } from './anthropic';
 export type UsageKind = 'daily_test' | 'topic_practice';
 
 export function usageKind(op: AnthropicOperation['op']): UsageKind {
-  return op === 'generate_daily_test' ? 'daily_test' : 'topic_practice';
+  // The shared set is Daily Test cost too: filing it under topic_practice
+  // would hide exactly the saving 1.1.0 is meant to show.
+  return op === 'generate_daily_test' || op === 'generate_shared_daily_test' ? 'daily_test' : 'topic_practice';
 }
 
 /** How many questions the call covered — a request size, never its content. */
@@ -25,6 +27,26 @@ export function durationField(value: number | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.round(value) : null;
 }
 
+/** Anthropic's documented `stop_reason` values. Anything else is logged as
+ * `unknown`, so a value can only ever come from this list. `max_tokens` is the
+ * one that matters most: a truncated set, seen directly instead of inferred
+ * from `invalid_json_content`. */
+const KNOWN_STOP_REASONS: ReadonlySet<string> = new Set([
+  'end_turn',
+  'max_tokens',
+  'stop_sequence',
+  'tool_use',
+  'pause_turn',
+  'refusal',
+  'model_context_window_exceeded',
+]);
+
+/** A known stop reason, `unknown` for any other value, null when absent. */
+export function stopReasonField(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  return typeof value === 'string' && KNOWN_STOP_REASONS.has(value) ? value : 'unknown';
+}
+
 function tokenCount(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 }
@@ -34,17 +56,24 @@ function tokenCount(value: unknown): number | null {
  * / `wrangler tail`), so real per-operation token cost can be measured.
  *
  * PRIVACY CONTRACT — this line may contain only the fields built below:
- * operation names, a question count, two token counts and how long the call
+ * operation names, a question count, two token counts, why generation stopped
+ * (`stop_reason`, one of Anthropic's documented values or `unknown`) and how long the call
  * took (`duration_ms`, wall time from just before the request to Anthropic
  * until its body was read, so the real cost of a Daily Test in seconds can be
  * measured). All are names or numbers. It must never be extended with anything
  * from the request (deviceId, prompts, questions, answers) or the response
  * (generated text). The fields are assembled explicitly from `operation.op`,
- * the numeric `usage` fields and the caller's timing for exactly that reason:
- * nothing is spread or stringified from a wider object. `usage` is the only
- * part of Anthropic's response read here.
+ * the numeric `usage` fields, the whitelisted stop reason and the caller's
+ * timing for exactly that reason: nothing is spread or stringified from a
+ * wider object. `usage` and `stop_reason` are the only parts of Anthropic's
+ * response read here.
  */
-export function logUsage(operation: AnthropicOperation, usage: unknown, durationMs?: number): void {
+export function logUsage(
+  operation: AnthropicOperation,
+  usage: unknown,
+  durationMs?: number,
+  stopReason?: unknown,
+): void {
   const raw = typeof usage === 'object' && usage !== null ? (usage as Record<string, unknown>) : {};
   console.log(
     JSON.stringify({
@@ -54,6 +83,7 @@ export function logUsage(operation: AnthropicOperation, usage: unknown, duration
       item_count: itemCount(operation),
       input_tokens: tokenCount(raw.input_tokens),
       output_tokens: tokenCount(raw.output_tokens),
+      stop_reason: stopReasonField(stopReason),
       duration_ms: durationField(durationMs),
     }),
   );
