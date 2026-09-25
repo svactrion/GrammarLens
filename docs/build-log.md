@@ -5261,3 +5261,13 @@ entries are left as written; where this entry corrects one, it says so.
   `docs/grammarlens-case-study-v2.md`, not in this repo. The Turkish page still
   carries the MVP-era text with a notice linking to the English version.
   Follow-ups are in `docs/roadmap.md`, "Post-launch tasks".
+
+## 2026-09-25 (Apple Small Business Program approved)
+
+- **[Product] Apple Small Business Program:** approved 2026-09-25 (acceptance
+  email 22:58). Reduced 15% commission effective per Apple's program terms
+  (15 days after the end of the fiscal month of approval); the email gives no
+  separate effective date. Impact: every margin figure in PRD v2 §13.7 was
+  already built on 15%, so none of them change; the assumption is now
+  confirmed. The pending status in the 2026-09-24 entry is superseded by this
+  one. `docs/roadmap.md` and PRD v2 §13.7 updated with a dated note.

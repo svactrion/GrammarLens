@@ -2068,8 +2068,10 @@ actually exists):
   figure in `docs/prd-v2.md` §13.7 assumes. Requires Schedule 2 accepted
   (done). Adjusted proceeds only take effect 15 days after the end of the
   fiscal month in which enrollment is approved, so enrolling early is worth
-  real money. **Applied before 2026-09-14; outcome pending.** Until it is
-  approved, the 15% in PRD v2 §13.7's margins is an assumption.
+  real money. **Approved 2026-09-25 (reduced 15% commission effective per
+  Apple's program terms (15 days after the end of the fiscal month of
+  approval)).** The 15% in PRD v2 §13.7's margins is confirmed, no longer an
+  assumption.
 - *(Superseded: the pages are written and live, see "Current wiring".
   The text below is the 2026-09-08 record.)*
   **Privacy Policy / Terms: URLs are real, page content is not — updated

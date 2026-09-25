@@ -746,6 +746,11 @@ further decision.
 data is read. The net figures assume Apple's 15% commission, which depends on
 the Small Business Program: applied before 2026-09-14, outcome pending.)*
 
+*(2026-09-25: the Small Business Program was approved 2026-09-25 (reduced 15%
+commission effective per Apple's program terms (15 days after the end of the
+fiscal month of approval)). The margin figures above are unchanged; the 15%
+they use is now confirmed, not assumed.)*
+
 *(Measurement note, 2026-09-24 — small sample.)* After the per-question
 `explanation` field was added, ten local generations of a 5-item Daily Test
 set used **1166–1173 input and 1319–1632 output tokens** (the final five,
