@@ -44,7 +44,7 @@
       // (`npx wrangler kv namespace create DAILY_SETS_KV`) and pastes its id
       // here. `npm run deploy` refuses to run while this placeholder is still
       // here (see package.json).
-      "id": "REPLACE_WITH_DAILY_SETS_KV_ID"
+      "id": "fa8b5ef8463540afb1d125ba644da824"
     }
   ]
 }
