@@ -5426,3 +5426,59 @@ and nothing reads the sets yet (the read route is P3). Proxy tests 70 → 153
   `npx wrangler deploy` does with the placeholder id is expected to be a
   rejection by the Cloudflare API (an invalid namespace id), but that was not
   tried; `npm run deploy` stops before it.
+
+## 2026-09-26 (1.1.0 shared Daily Test — P3 read route, proxy, not deployed)
+
+Batch P3 (`2b85b7b`) of `docs/1.1.0-shared-daily-test.md` §11, on `1.1.0`.
+Proxy only; `lib/` untouched; **not deployed**. Proxy tests 174 → 213, `tsc`
+clean, `wrangler deploy --dry-run` bundles (45.37 KiB).
+
+- **[Engineering]** `GET /v1/shared-daily-test/{date}` in
+  `proxy/src/shared_read.ts`, routed in `index.ts` before the POST-only check.
+  Checks, in order, before any cache or KV read: app token (401), date format
+  (400), window `[UTC today − 1, UTC today + 2]` (404), kill switch
+  `SHARED_DAILY_TEST_ENABLED` exactly `"true"` (404, the same fail-closed rule
+  as the cron, and it also hides a set that is already cached). Then the Cache
+  API under a synthetic key without the token
+  (`https://shared-daily-test.cache.grammarlens/set/{date}`, `public,
+  max-age=3600`, written through `ctx.waitUntil`), then
+  `DAILY_SETS_KV.get(…, {cacheTtl: 3600})`. A found set answers 200
+  `{date, promptVersion, questions}` with `Cache-Control: private, max-age=0`.
+  A miss answers 404 `{"error":"not_found","message":"No shared Daily Test for
+  this date."}`, is not cached, and never generates.
+- **[Engineering]** `setKey` and `PublishedSet` moved from
+  `shared_generation.ts` to `shared_daily_test.ts` (re-exported), so the read
+  side's import graph (`shared_read` → `auth`, `types`, `shared_daily_test` →
+  `topics`) contains neither `anthropic.ts` nor `quota.ts`. A test walks that
+  graph from the sources (`?raw` imports). New error code `not_found`.
+  `logUnhandledError` accepts `read_shared_daily_test` (kind `daily_test`) for
+  an unexpected error on the route.
+- **[Deviations from the P3 brief]**
+  1. A malformed date answers **400 `invalid_request`**, not 404. It is a bad
+     request, not a missing set; the app treats any non-200 the same way
+     (fallback), so nothing depends on the difference.
+  2. The response carries `{date, promptVersion, questions}`, not the stored
+     record: `generatedAt` and `attempt` stay server-side.
+  3. A stored value that does not parse, or whose `date` differs from the key,
+     is treated as missing (404, not cached).
+  4. The D1 commit (the `DAILY_SETS_KV` id) was **not on `origin`** when P3
+     started: `1.1.0` still has the `REPLACE_WITH_DAILY_SETS_KV_ID`
+     placeholder, and no branch has a newer commit. P3 does not touch
+     `wrangler.jsonc`, so that commit will merge cleanly once it is pushed.
+- **[Validation]** 39 new tests in `test/shared_read.test.ts`. Every test
+  asserts, in `afterEach`, zero outbound requests and an empty `QUOTA_KV`.
+  Hit for −1/0/+1/+2 with the headers and body; the storage-only fields not
+  sent; the second read from the Cache API with no KV read; a cached set still
+  served after its KV key is deleted; the cache key (synthetic, no token), its
+  `max-age=3600` and KV's `cacheTtl: 3600`; miss → 404 and not cached (found
+  once published); an unusable value → 404; −2/+3/−30/+400 → 404, and a
+  malformed date → 400, and a missing, wrong or empty token → 401, each with
+  **no KV or cache call at all**; a bad token beats a bad date; four
+  kill-switch values → 404 with no KV or cache call, even with the set cached;
+  POST to the path → 404; path variants; the import graph. The existing POST
+  tests and the byte-pinned legacy request pass unchanged. Mutations that turn
+  tests red: no token check, the token or the window checked after the
+  cache/KV read, no window check, no switch, a switch that only checks for
+  "false", the request URL as the cache key, no cache write, no `cacheTtl`, a
+  public client header, a cached miss, `quota.ts` imported, the route
+  answering POST.
