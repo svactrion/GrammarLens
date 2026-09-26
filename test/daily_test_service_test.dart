@@ -145,7 +145,7 @@ void main() {
   test('generates and caches a set on first open today', () async {
     final set = await dailyTestService.getTodaysSet();
     expect(claudeService.generateCallCount, 1);
-    expect(set.questions, hasLength(DailyTestService.questionCount));
+    expect(set.questions, hasLength(DailyTestSet.questionCount));
     expect(set.isCompleted, isFalse);
   });
 
@@ -206,7 +206,7 @@ void main() {
       // A subsequent attempt (e.g. the user reopening Daily Test) with a
       // working ClaudeService must not be blocked by a stale/partial row.
       final retried = await dailyTestService.getTodaysSet();
-      expect(retried.questions, hasLength(DailyTestService.questionCount));
+      expect(retried.questions, hasLength(DailyTestSet.questionCount));
     },
   );
 
@@ -380,7 +380,7 @@ void main() {
       expect(await storageService.getDailyTestSetForToday(), isNull);
       final retry = await dailyTestService.getTodaysSet();
       expect(claudeService.generateCallCount, 2);
-      expect(retry.questions, hasLength(DailyTestService.questionCount));
+      expect(retry.questions, hasLength(DailyTestSet.questionCount));
     });
 
     test('a call for another day does not join a request for the first',
@@ -502,7 +502,7 @@ void main() {
       expect(tomorrow.day, '2026-09-23');
       expect(tomorrow.source, DailyTestSource.generated);
       expect(tomorrow.isCompleted, isFalse);
-      expect(tomorrow.questions, hasLength(DailyTestService.questionCount));
+      expect(tomorrow.questions, hasLength(DailyTestSet.questionCount));
       // Today's own set is untouched: completed, with its answers.
       final today = (await storageService.getDailyTestSetForToday())!;
       expect(today.day, '2026-09-22');
@@ -553,7 +553,7 @@ void main() {
       StorageService.clockForTesting = () => DateTime(2026, 9, 23, 8);
       final set = await dailyTestService.getTodaysSet();
       expect(claudeService.generateCallCount, 3);
-      expect(set.questions, hasLength(DailyTestService.questionCount));
+      expect(set.questions, hasLength(DailyTestSet.questionCount));
     });
 
     test('completing again does not ask a second time', () async {

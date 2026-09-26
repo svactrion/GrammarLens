@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
+import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/utils/answer_matching.dart';
 
@@ -11,6 +12,10 @@ import 'package:grammar_lens/utils/answer_matching.dart';
 /// the set predicts must hit its own comment, and the shape must satisfy what
 /// the Daily Test needs (allowed types, distinct catalog topics, stable ids).
 void main() {
+  test('has [Q] questions, like every other day', () {
+    expect(kDayZeroQuestions, hasLength(DailyTestSet.questionCount));
+  });
+
   test('is five questions with the ids day0_1 to day0_5, in order', () {
     expect(kDayZeroQuestions.map((q) => q.item.id),
         ['day0_1', 'day0_2', 'day0_3', 'day0_4', 'day0_5']);

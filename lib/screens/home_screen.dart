@@ -858,7 +858,8 @@ class _TodayCard extends StatelessWidget {
       description = 'New test tomorrow. Tap to see today\'s result again.';
     } else {
       title = 'Daily Test';
-      description = "Today's 5-question warm-up is ready — free, always.";
+      description = "Today's ${DailyTestSet.questionCount}-question warm-up "
+          'is ready — free, always.';
     }
 
     return Card(

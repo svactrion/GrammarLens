@@ -238,7 +238,7 @@ void main() {
     // The primary button is disabled while empty (item 4's fix, see
     // PracticeStepFooter), so this taps the outlined Skip button beside it
     // instead, same as a real user would.
-    for (var i = 0; i < DailyTestService.questionCount; i++) {
+    for (var i = 0; i < DailyTestSet.questionCount; i++) {
       await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
       await tester.pumpAndSettle();
     }
@@ -308,7 +308,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
     await tester.pumpAndSettle();
-    for (var i = 1; i < DailyTestService.questionCount; i++) {
+    for (var i = 1; i < DailyTestSet.questionCount; i++) {
       await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
       await tester.pumpAndSettle();
     }
@@ -409,7 +409,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
     await tester.pumpAndSettle();
-    for (var i = 1; i < DailyTestService.questionCount; i++) {
+    for (var i = 1; i < DailyTestSet.questionCount; i++) {
       await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
       await tester.pumpAndSettle();
     }
@@ -564,7 +564,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, 'Next'));
       await tester.pumpAndSettle();
-      for (var i = 1; i < DailyTestService.questionCount; i++) {
+      for (var i = 1; i < DailyTestSet.questionCount; i++) {
         await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
         await tester.pumpAndSettle();
       }

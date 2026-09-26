@@ -11,10 +11,6 @@ import 'storage_service.dart';
 /// general mix, the same request for every user — and cache it. Used by both
 /// Home and the Day-0 onboarding test.
 class DailyTestService {
-  /// 5 questions — enough to feel like a real test, short enough to finish
-  /// in one sitting; matches the existing "Standard" Topic Practice length.
-  static const int questionCount = 5;
-
   final ClaudeService claudeService;
   final StorageService storageService;
 
@@ -100,7 +96,7 @@ class DailyTestService {
     final deviceId = await storageService.getOrCreateDeviceId();
     final questions = await claudeService.generateDailyTestQuestions(
       deviceId: deviceId,
-      count: questionCount,
+      count: DailyTestSet.questionCount,
     );
     return storageService.saveDailyTestSet(questions, day: day);
   }
