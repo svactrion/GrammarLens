@@ -15,19 +15,34 @@ import 'brand_mark.dart';
 class LaunchSplashLayout {
   LaunchSplashLayout._();
 
-  /// The logo's box, in logical points (BrandMark's own 100-unit space).
-  static const double logoSize = 100;
+  /// Size of the splash relative to its first version (logo 100 pt,
+  /// wordmark 34 pt). The owner asked for 1.4 after the device check; 1.25
+  /// is the largest that keeps 24 pt on each side of the wordmark at 320 pt
+  /// wide (the wordmark is 216.7 pt wide at 1.0, so 270.9 pt at 1.25).
+  static const double scale = 1.25;
+
+  /// The logo's box, in logical points (BrandMark's 100-unit space, scaled).
+  static const double logoSize = 100 * scale;
 
   /// The logo's scale on the first frame; it settles to 1.0.
   static const double initialLogoScale = 0.92;
 
-  /// Vertical offset of the logo's center from the screen's center. The
-  /// logo sits a little above center so logo and wordmark together look
-  /// centered.
-  static const double logoCenterOffsetY = -32;
-
   /// Space between the logo's box and the wordmark.
-  static const double wordmarkGap = 16;
+  static const double wordmarkGap = 16 * scale;
+
+  /// The wordmark's font size and letter spacing.
+  static const double wordmarkFontSize = 34 * scale;
+  static const double wordmarkLetterSpacing = -0.5 * scale;
+
+  /// The wordmark's height in NunitoSans at [wordmarkFontSize] (measured;
+  /// `test/launch_gate_test.dart` checks it with the bundled font).
+  static const double wordmarkHeight = 58;
+
+  /// Vertical offset of the logo's center from the screen's center, chosen
+  /// so the logo, the gap and the wordmark together (125 + 20 + 58 = 203 pt)
+  /// are centered: 125 / 2 − 203 / 2 = −39. A literal because the
+  /// storyboard's constraint needs the same number.
+  static const double logoCenterOffsetY = -39;
 }
 
 /// Durations of the launch splash. The intro is at most [intro] plus
@@ -265,9 +280,10 @@ class _LaunchSplashState extends State<LaunchSplash>
                         // A logotype, not body text: fixed like the logo.
                         textScaler: TextScaler.noScaling,
                         style: theme.textTheme.headlineLarge?.copyWith(
-                          fontSize: 34,
+                          fontSize: LaunchSplashLayout.wordmarkFontSize,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
+                          letterSpacing:
+                              LaunchSplashLayout.wordmarkLetterSpacing,
                           color: colorScheme.onSurface,
                         ),
                       ),
