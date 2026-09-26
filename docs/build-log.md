@@ -5579,3 +5579,39 @@ code, config or test changed. No client reads the new route yet.
     migration. Batch 0 gains two checks: how a blank answer comes about, and
     where the daily question count comes from. The rule itself is still to be
     confirmed against the code in Batch 0.
+
+## 2026-09-27 — Batch 0 decisions
+
+- **[Product] Owner decisions on the Batch 0 report** (1.1.0 design side
+  tracks). Docs only, on branch `1.1.0-design`; no code, config or test
+  changed. Written into
+  [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md), "Decisions
+  after Batch 0", each with its reason and the report's conflict number
+  ([`1.1.0-design-batch0-report.md`](1.1.0-design-batch0-report.md)).
+  - **The dark mode decision CHANGED.** It was "the scene is the same in light
+    and dark mode" (a cost decision). Now every theme has a light and a dark
+    palette; Green Slope's existing dark palette is kept and is the model;
+    only external WebP layers stay the same in both modes, and the B-polish
+    exception is narrowed to them. Reason: the report showed the dark palette
+    mechanism already exists in the code (C2).
+  - Theme stored in a new `climb_month_themes` table (schema v22 → v23), no
+    backfill; a month without a row is Green Slope (C1). Rotation by global
+    calendar, the same theme for everyone in a month; anchor month open.
+  - Trail: already a serpentine (C3); Batch 3 makes step spacing even (C4;
+    1.0 is still in review, so no user sees steps move) and joins the trail's
+    end with the summit (C5). The four stop markers stay shared, palette-
+    colored and inside the 4–6-object budget (C12).
+  - Home: no separate title row; the header becomes "Mountain of Learning ·
+    [month]" (C6, C7).
+  - [Q] from one source: the medal maximum's `× 10` becomes
+    `questionCount × 2` (same value) and Home's "5-question" copy follows it;
+    one separate small commit (C8).
+  - Month transition card: also checked on return from the background, once
+    per month; it waits for the launch-time month finalization before
+    reading last month's medal (C13, C14).
+  - Launch: `runApp` runs immediately with the animation while Firebase and
+    RevenueCat initialize; Home opens when both are done. The static screen
+    and the animation follow the system appearance, Home the app's theme,
+    with a fade between them (C9, C10).
+  - Batch 0 checklist gains one open item: iOS's minimum supported version
+    and the smallest supported screen.
