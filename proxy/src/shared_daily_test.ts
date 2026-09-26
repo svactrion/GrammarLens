@@ -432,3 +432,18 @@ function checkQuestion(entry: unknown): SharedQuestion {
     commonWrongAnswers,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Storage shape, shared by the cron that writes and the route that reads
+
+/** The KV key of [date]'s published set in `DAILY_SETS_KV`. */
+export const setKey = (date: string) => `set:${date}`;
+
+/** What `set:{date}` holds. Written once by the cron, never overwritten. */
+export interface PublishedSet {
+  date: string;
+  promptVersion: number;
+  generatedAt: string;
+  attempt: number;
+  questions: SharedQuestion[];
+}

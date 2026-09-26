@@ -49,6 +49,7 @@ export type ProxyErrorCode =
   | 'invalid_request'
   | 'quota_exceeded'
   | 'upstream_error'
+  | 'not_found'
   | 'internal_error';
 
 export class ProxyError extends Error {

@@ -4,10 +4,11 @@ import {
   SHARED_PROMPT_VERSION,
   dailyPlan,
   dateOfDayNumber,
+  setKey,
   sharedDailyTestRequest,
   utcDayNumber,
   validateSharedSet,
-  type SharedQuestion,
+  type PublishedSet,
   type SharedSetRejection,
 } from './shared_daily_test';
 import type { Env } from './types';
@@ -49,17 +50,10 @@ export const ATTEMPTS_TTL_SECONDS = 7 * 24 * 60 * 60;
 /** How many earlier dates' answers go into the "do not reuse" list. */
 const AVOID_LOOKBACK_DAYS = 7;
 
-export const setKey = (date: string) => `set:${date}`;
 export const attemptsKey = (date: string) => `attempts:${date}`;
-
-/** What `set:{date}` holds. Written once, never overwritten. */
-export interface PublishedSet {
-  date: string;
-  promptVersion: number;
-  generatedAt: string;
-  attempt: number;
-  questions: SharedQuestion[];
-}
+// Defined beside the read route's other dependencies, which must not pull in
+// the Anthropic client; re-exported here for the generation side.
+export { setKey, type PublishedSet } from './shared_daily_test';
 
 interface AttemptRecord {
   count: number;

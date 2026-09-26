@@ -97,11 +97,11 @@ export function errorCategory(e: unknown): string {
  * anything from the request: an unexpected error's message can quote request
  * or response text. Only the fields built below are logged.
  */
-export function logUnhandledError(op: AnthropicOperation['op'], e: unknown): void {
+export function logUnhandledError(op: AnthropicOperation['op'] | 'read_shared_daily_test', e: unknown): void {
   console.error(
     JSON.stringify({
       event: 'unhandled_error',
-      kind: usageKind(op),
+      kind: op === 'read_shared_daily_test' ? 'daily_test' : usageKind(op),
       operation: op,
       error: errorCategory(e),
     }),

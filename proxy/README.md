@@ -16,10 +16,11 @@ API key.
 | `POST /v1/generate-practice-set` | `ClaudeService.generatePracticeSet` |
 | `POST /v1/generate-daily-test` | `ClaudeService.generateDailyTestQuestions` |
 | `POST /v1/score-answers` | `ClaudeService.scoreAnswers` |
+| `GET /v1/shared-daily-test/{date}` | the 1.1.0 client's shared Daily Test read (client side not built yet) |
 | `GET /health` | liveness check, no auth |
-| *(cron, hourly)* | shared Daily Test generation — see below; no route yet |
+| *(cron, hourly)* | shared Daily Test generation — see below |
 
-Every operation route requires an `x-grammarlens-token` header matching the
+Every operation route (the `POST` routes) requires an `x-grammarlens-token` header matching the
 `APP_TOKEN` secret (see `src/auth.ts`), validates its body strictly (`src/
 validation.ts` — unknown fields are rejected, not ignored), reserves a slot
 against the per-device and global daily quota (`src/quota.ts`) before ever
@@ -136,8 +137,9 @@ same status as `StorageService.dailySessionLimit` on the client side (see
 ## Shared Daily Test generation (cron)
 
 For 1.1.0 (`docs/1.1.0-shared-daily-test.md`): one Daily Test set per calendar
-date, generated here once for every 1.1.0+ client. **Not deployed yet** (as of
-2026-09-26), and nothing reads the sets yet: the read route comes next (P3).
+date, generated here once for every 1.1.0+ client. The generation (P2) and
+the read route (P3, below) are **not deployed as of 2026-09-26**, and no app
+build calls the read route yet.
 The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
 `test/index.test.ts` pins its Anthropic request byte for byte.
 
@@ -185,6 +187,37 @@ list and checks all console output).
 
 Reading a set by hand:
 `npx wrangler kv key get --binding DAILY_SETS_KV --remote "set:2026-10-08"`.
+
+## Shared Daily Test read route
+
+`GET /v1/shared-daily-test/{date}` (`src/shared_read.ts`), `{date}` being the
+app's local calendar day, `YYYY-MM-DD`. Checks, in this order, with nothing
+read from the cache or KV until all four pass:
+
+1. **App token** (`x-grammarlens-token`) → else `401 unauthorized`.
+2. **Date format**: a real calendar date written exactly as `YYYY-MM-DD` →
+   else `400 invalid_request`.
+3. **Window** `[UTC today − 1, UTC today + 2]` (every local date in use on
+   Earth, plus "tomorrow" for the prefetch) → else `404 not_found`.
+4. **Kill switch**: `SHARED_DAILY_TEST_ENABLED` exactly `"true"` → else
+   `404 not_found`, even for a set that is already cached.
+
+Then the Cache API (`caches.default`, per data center; a synthetic key
+`https://shared-daily-test.cache.grammarlens/set/{date}` that never includes
+the token; kept 3600 s), then `DAILY_SETS_KV.get("set:{date}", {cacheTtl:
+3600})`. A found set answers `200` with `{date, promptVersion, questions}` and
+`Cache-Control: private, max-age=0` (the app stores it itself). A missing or
+unusable set is `404 {"error":"not_found","message":"No shared Daily Test for
+this date."}` and is not cached, so a set published later is found on the next
+read. **A miss never generates.**
+
+The route takes no body and no device id and reserves no quota. It lives in
+modules that import neither `anthropic.ts` nor `quota.ts`;
+`test/shared_read.test.ts` checks that import graph, and that every case (hit,
+miss, out of window, malformed date, bad token, switch off) makes no outbound
+request and leaves `QUOTA_KV` untouched. A pulled set (the owner deleting
+`set:{date}`) can still be served for up to an hour from a data center's cache
+and KV's read cache.
 
 ## Known tradeoff: quota isn't atomic
 
