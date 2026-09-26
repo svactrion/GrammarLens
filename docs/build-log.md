@@ -5482,3 +5482,57 @@ clean, `wrangler deploy --dry-run` bundles (45.37 KiB).
   "false", the request URL as the cache key, no cache write, no `cacheTtl`, a
   public client header, a cached miss, `quota.ts` imported, the route
   answering POST.
+
+## 2026-09-26 (1.1.0 shared Daily Test — first deploy)
+
+First deploy of the shared Daily Test proxy side (P1–P3 plus the
+`DAILY_SETS_KV` id, `910f6e7`), from `1.1.0`. Docs only in this commit; no
+code, config or test changed. No client reads the new route yet.
+
+- **[Deviation from the plan]** D1 and D2 of `docs/1.1.0-shared-daily-test.md`
+  §11 were **combined into one deploy**. Reason: no client uses the read route
+  yet, so watching the cron alone before the read route went live had no
+  benefit.
+- **[Deploy]** 2026-09-26, from `1.1.0`, with `npm run deploy`. New version
+  `5089ae26-4b08-4ae2-a11e-bb6ac9693fc5`; rollback target
+  `39f39064-0374-42ec-9257-282016c191ba`. Bindings: `QUOTA_KV`,
+  `DAILY_SETS_KV` (`fa8b5ef8463540afb1d125ba644da824`).
+  `SHARED_DAILY_TEST_ENABLED` `"true"`; limits 15/300 unchanged; cron
+  `7 * * * *`.
+- **[First cron run]** 15:07 UTC: `set:2026-09-26` published on attempt 1.
+  `stop_reason` `end_turn`; 1,380 input + 1,620 output tokens (≈ $0.028);
+  wall time 35.4 s; **CPU time 8 ms**, 80% of the Free plan's 10 ms limit.
+  Being watched.
+- **[Live read tests]** (`curl`) Today: 200, `Cache-Control: private,
+  max-age=0`, no `generatedAt` or `attempt` in the body. Today + 3: 404
+  `not_found`. Bad token: 401. Malformed date (`2026-13-01`): 400
+  `invalid_request`.
+- **[Content — owner review of `set:2026-09-26`]** The validator checks
+  structure, not grammatical correctness. Issues found:
+  1. `modalPastForms` question: the answer ("should have come") is right, but
+     the hint and explanation teach a rule that does not exist ("should"
+     becomes "should have" in reported speech).
+  2. `modalVerbs` question: two defensible answers ("must" and "should"). The
+     exact on-device check marks "should" wrong.
+  3. Minor: in a `tenseSelection` question, "I already had taken", listed as
+     a wrong answer, is an acceptable form.
+
+  These most likely also occurred in legacy sets, which use the same prompt;
+  the shared set makes them visible and fixable in one place. **No decision
+  yet**: more sets are reviewed first. Candidates: a prompt improvement (no
+  cost); `acceptedAnswers` (schema and client change); a daily verification
+  call (~1–2 cents/day, independent of the number of users).
+- **[Product — launch screen, 1.1.0 side work]** Owner decision, 2026-09-26:
+  logo + "GrammarLens" wordmark. Animation: the logo settles with a slight
+  scale-up and the wordmark fades in; at most ~1.2 s, overlapping launch work;
+  cold start only; the iOS static launch screen is identical to the
+  animation's first frame; static when Reduce Motion is on. Idea for a later
+  version: the wordmark coming into focus through a lens transition.
+  Implemented after the `main` merge.
+- **[Open]**
+  - The 1.0.0 app's live legacy route is not verified on a device yet (owner,
+    2026-09-27).
+  - No read test for tomorrow's date yet.
+  - CPU time of the following cron runs not yet watched.
+  - The `1.1.0` → `main` merge of the proxy commits (deploy rule, §11) is not
+    done.
