@@ -47,7 +47,7 @@ export function stopReasonField(value: unknown): string | null {
   return typeof value === 'string' && KNOWN_STOP_REASONS.has(value) ? value : 'unknown';
 }
 
-function tokenCount(value: unknown): number | null {
+export function tokenCount(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 }
 

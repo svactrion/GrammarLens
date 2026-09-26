@@ -10,9 +10,16 @@ interface WorkerEnv {
    */
   readonly APP_TOKEN: string;
   readonly QUOTA_KV: KVNamespace;
+  /** The shared Daily Test sets (`set:{date}`) and their attempt records
+   * (`attempts:{date}`), written only by the scheduled generation. */
+  readonly DAILY_SETS_KV: KVNamespace;
   /** Plain vars (not secret) — see wrangler.jsonc. */
   readonly DEVICE_DAILY_LIMIT: string;
   readonly GLOBAL_DAILY_LIMIT: string;
+  /** Kill switch for the shared Daily Test: only the exact string "true"
+   * turns it on. Anything else, "false" included, and the scheduled run
+   * touches neither KV nor Anthropic. */
+  readonly SHARED_DAILY_TEST_ENABLED: string;
 }
 
 export type Env = WorkerEnv;

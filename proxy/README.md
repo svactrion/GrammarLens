@@ -17,6 +17,7 @@ API key.
 | `POST /v1/generate-daily-test` | `ClaudeService.generateDailyTestQuestions` |
 | `POST /v1/score-answers` | `ClaudeService.scoreAnswers` |
 | `GET /health` | liveness check, no auth |
+| *(cron, hourly)* | shared Daily Test generation — see below; no route yet |
 
 Every operation route requires an `x-grammarlens-token` header matching the
 `APP_TOKEN` secret (see `src/auth.ts`), validates its body strictly (`src/
@@ -56,7 +57,10 @@ transform doesn't typecheck.
    wrangler secret put ANTHROPIC_API_KEY
    wrangler secret put APP_TOKEN
    ```
-2. `npm run deploy` (`wrangler deploy`).
+2. `npm run deploy` (`scripts/check-placeholders.mjs`, then `wrangler deploy`).
+   The check refuses to deploy while `wrangler.jsonc` still has a
+   `REPLACE_WITH_…` placeholder (the `DAILY_SETS_KV` id until the namespace is
+   created). A bare `npx wrangler deploy` skips it.
 3. `wrangler tail` to watch logs live — the only place upstream error
    detail and validation-rejection reasons are visible (never sent to the
    client).
@@ -108,7 +112,8 @@ A failed Anthropic call writes one `console.error` JSON line (`src/error_log.ts`
 {"event":"anthropic_failure","kind":"topic_practice","operation":"score_answers","failure":"http_error","http_status":429,"upstream_error_type":"rate_limit_error","duration_ms":31000}
 ```
 
-`failure` is one of `network_error`, `http_error`, `unreadable_body`,
+`failure` is one of `network_error`, `timeout` (the caller's abort signal
+fired; only the shared-set cron sets one), `http_error`, `unreadable_body`,
 `no_text_block`, `invalid_json_content`. `upstream_error_type` is Anthropic's
 error `type` only if it is one of its documented values, otherwise `unknown`.
 The upstream response body and exception messages are never logged, since
@@ -118,8 +123,8 @@ secrets in each place and checks all console output. The catch-all in
 `{"event":"unhandled_error","kind":...,"operation":...,"error":"TypeError"}`:
 only a category (a built-in error name, `other_error` or `non_error`), never
 the message or stack. Every `console` call in `src/` now writes one of these
-three fixed-field lines (`anthropic_usage`, `anthropic_failure`,
-`unhandled_error`).
+fixed-field lines: `anthropic_usage`, `anthropic_failure`, `unhandled_error`,
+and the shared-set cron's `shared_set_generation` and `shared_set_cron` (below).
 
 Deployed.
 
@@ -127,6 +132,59 @@ Deployed.
 not secret) are conservative placeholder defaults, not measured numbers —
 same status as `StorageService.dailySessionLimit` on the client side (see
 `docs/prd-v2.md` §7.2). Adjust and redeploy as real usage data comes in.
+
+## Shared Daily Test generation (cron)
+
+For 1.1.0 (`docs/1.1.0-shared-daily-test.md`): one Daily Test set per calendar
+date, generated here once for every 1.1.0+ client. **Not deployed yet** (as of
+2026-09-26), and nothing reads the sets yet: the read route comes next (P3).
+The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
+`test/index.test.ts` pins its Anthropic request byte for byte.
+
+- **Trigger:** `triggers.crons` in `wrangler.jsonc`, `7 * * * *` (hourly, UTC),
+  handled by `scheduled` in `src/index.ts` → `runSharedGeneration`
+  (`src/shared_generation.ts`).
+- **What a run does:** checks UTC today … UTC today + 3, nearest first, and
+  makes **at most one** Anthropic call, for the first date with no set, no
+  attempt in progress and attempts left. A run where every date already has a
+  set only reads KV (4 reads) and makes no outbound request.
+- **Cost bounds:** at most one generation per run; at most 3 attempts per date
+  (`attempts:{date}`), counted before the call. No quota is reserved: no device
+  is involved.
+- **Write-once:** `set:{date}` is written only if still absent right before the
+  write, and never overwritten. An attempt holds its date for 2 minutes (a
+  lease in its attempt record), so a run that overlaps one waiting on Anthropic
+  skips that date. KV has no compare-and-swap: two runs that both read the date
+  as free within the same few milliseconds could still both generate.
+- **Storage:** KV namespace `DAILY_SETS_KV`. `set:{date}` →
+  `{date, promptVersion, generatedAt, attempt, questions}`, kept 35 days;
+  `attempts:{date}` → `{count, leaseUntil}`, kept 7 days.
+- **Quality gate:** `validateSharedSet` (`src/shared_daily_test.ts`). A rejected
+  set is not written; the next hourly run retries within the cap.
+- **Timeout:** 90 s on the Anthropic call (`GENERATION_TIMEOUT_MS`), logged as
+  `failure: "timeout"`.
+- **Kill switch:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it on;
+  anything else and the run touches neither KV nor Anthropic, and logs only
+  `{"event":"shared_set_cron","enabled":false}`.
+
+Each paid attempt writes one line (besides the usual `anthropic_usage`, and
+`anthropic_failure` when it failed):
+
+```json
+{"event":"shared_set_generation","date":"2026-10-08","attempt":1,"outcome":"published","reason":null,"failure":null,"stop_reason":"end_turn","input_tokens":1500,"output_tokens":1400,"duration_ms":27600,"prompt_version":1}
+```
+
+`outcome` is `published`, `rejected` (`reason` is the `validateSharedSet`
+code), `upstream_failed` (`failure` is the `anthropic_failure` category) or
+`already_published` (another run published the date meanwhile; this paid
+result was dropped). Billed but not published = `anthropic_usage` lines for
+`generate_shared_daily_test` minus `published` lines. The date is a calendar
+label, not about anyone; no generated text is ever logged
+(`test/shared_generation.test.ts` plants secrets in the content and the avoid
+list and checks all console output).
+
+Reading a set by hand:
+`npx wrangler kv key get --binding DAILY_SETS_KV --remote "set:2026-10-08"`.
 
 ## Known tradeoff: quota isn't atomic
 

@@ -2,6 +2,7 @@ import { requireAppToken } from './auth';
 import { callAnthropic } from './anthropic';
 import { logUnhandledError } from './error_log';
 import { reserveQuota } from './quota';
+import { runSharedGeneration } from './shared_generation';
 import { ProxyError, type Env } from './types';
 import {
   validateGenerateDailyTest,
@@ -97,6 +98,20 @@ export default {
       // Category only: an unexpected error's message can quote request text.
       logUnhandledError(op, e);
       return new ProxyError('internal_error', 500, 'Something went wrong.').toResponse();
+    }
+  },
+
+  /** The hourly cron (wrangler.jsonc `triggers.crons`): shared Daily Test
+   * generation. Uses the trigger's scheduled time as "now", so a delayed
+   * start still works on the hour it was meant for. An unexpected error is
+   * logged by category only, then rethrown so the dashboard marks the run
+   * as failed. */
+  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
+    try {
+      await runSharedGeneration(env, new Date(controller.scheduledTime));
+    } catch (e) {
+      logUnhandledError('generate_shared_daily_test', e);
+      throw e;
     }
   },
 };

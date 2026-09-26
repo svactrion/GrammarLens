@@ -4,6 +4,7 @@ import { durationField, usageKind } from './usage_log';
 /** What went wrong with an upstream (Anthropic) call, as a fixed vocabulary. */
 export type UpstreamFailure =
   | 'network_error' // the request never got a response
+  | 'timeout' // the caller's abort signal fired first (the shared-set cron only)
   | 'http_error' // a non-200 response
   | 'unreadable_body' // a 200 whose body was not JSON
   | 'no_text_block' // a 200 without a text content block

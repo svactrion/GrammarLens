@@ -21,12 +21,30 @@
   // anywhere else in this repo.
   "vars": {
     "DEVICE_DAILY_LIMIT": "15",
-    "GLOBAL_DAILY_LIMIT": "300"
+    "GLOBAL_DAILY_LIMIT": "300",
+    // Kill switch for the shared Daily Test (docs/1.1.0-shared-daily-test.md
+    // §12). Only "true" enables it; "false" makes the hourly run do nothing
+    // (no KV, no Anthropic). Change it here and redeploy, or edit the variable
+    // in the dashboard.
+    "SHARED_DAILY_TEST_ENABLED": "true"
+  },
+  // Hourly, at minute 7: fills in the shared Daily Test sets for UTC today
+  // through UTC today + 3 (src/shared_generation.ts). Cron runs on UTC.
+  "triggers": {
+    "crons": ["7 * * * *"]
   },
   "kv_namespaces": [
     {
       "binding": "QUOTA_KV",
       "id": "c1073e795cc44de69eb908fd7796a0e9"
+    },
+    {
+      "binding": "DAILY_SETS_KV",
+      // PLACEHOLDER — the owner creates the namespace at D1
+      // (`npx wrangler kv namespace create DAILY_SETS_KV`) and pastes its id
+      // here. `npm run deploy` refuses to run while this placeholder is still
+      // here (see package.json).
+      "id": "REPLACE_WITH_DAILY_SETS_KV_ID"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
-import { logUpstreamFailure, upstreamErrorType } from './error_log';
-import { elapsedMs, logUsage } from './usage_log';
+import { logUpstreamFailure, upstreamErrorType, type UpstreamFailure } from './error_log';
+import { elapsedMs, logUsage, stopReasonField, tokenCount } from './usage_log';
 import type { GenerateSharedDailyTestRequest } from './shared_daily_test';
 import type {
   GenerateDailyTestRequest,
@@ -401,6 +401,28 @@ function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
 }
 
 /**
+ * What one call cost and how it ended, for a caller that must report it in its
+ * own log line (the shared-set cron). Only numbers and fixed vocabularies, the
+ * same fields `logUsage` / `logUpstreamFailure` already write; never content.
+ * Fields stay undefined when the call never got that far (no tokens for a call
+ * that got no answer).
+ */
+export interface CallMeta {
+  durationMs?: number;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  stopReason?: string | null;
+  failure?: UpstreamFailure;
+}
+
+export interface CallOptions {
+  /** Aborts the request to Anthropic; an abort is logged as `timeout`. */
+  signal?: AbortSignal;
+  /** Filled in as the call goes, success or failure. */
+  meta?: CallMeta;
+}
+
+/**
  * Calls Anthropic for the given operation and returns the already-parsed,
  * schema-shaped JSON object (e.g. `{ items: [...] }`) — never Anthropic's
  * raw response envelope, and never its raw error body on failure (that's
@@ -408,8 +430,24 @@ function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
  * Anthropic's own error text, which can carry implementation detail that
  * isn't ours to expose).
  */
-export async function callAnthropic(env: Env, operation: AnthropicOperation): Promise<unknown> {
+export async function callAnthropic(
+  env: Env,
+  operation: AnthropicOperation,
+  options: CallOptions = {},
+): Promise<unknown> {
   const body = buildBody(operation);
+  const { signal, meta } = options;
+
+  function failed(
+    failure: UpstreamFailure,
+    details: { httpStatus?: number; errorType?: string; durationMs: number },
+  ): void {
+    logUpstreamFailure(operation, failure, details);
+    if (meta) {
+      meta.failure = failure;
+      meta.durationMs = details.durationMs;
+    }
+  }
 
   // Timing covers only the wait on Anthropic (not validation or the quota
   // check), which is the part whose duration the Daily Test's load time
@@ -425,10 +463,13 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
         'anthropic-version': API_VERSION,
       },
       body: JSON.stringify(body),
+      // Only set when a caller asked for it, so the request of a call without
+      // one is exactly what it always was.
+      ...(signal ? { signal } : {}),
     });
   } catch {
     // No exception object is logged: its message can carry request text.
-    logUpstreamFailure(operation, 'network_error', { durationMs: elapsedMs(startedAt) });
+    failed(signal?.aborted ? 'timeout' : 'network_error', { durationMs: elapsedMs(startedAt) });
     throw new ProxyError('upstream_error', 502, 'Could not reach the upstream service.');
   }
 
@@ -443,7 +484,7 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
     } catch {
       // Body unreadable: the status alone is logged.
     }
-    logUpstreamFailure(operation, 'http_error', {
+    failed('http_error', {
       httpStatus: response.status,
       errorType,
       durationMs: elapsedMs(startedAt),
@@ -455,7 +496,7 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
   try {
     decoded = (await response.json()) as typeof decoded;
   } catch {
-    logUpstreamFailure(operation, 'unreadable_body', {
+    failed(signal?.aborted ? 'timeout' : 'unreadable_body', {
       httpStatus: response.status,
       durationMs: elapsedMs(startedAt),
     });
@@ -463,10 +504,19 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
   }
   // Logged before the content is checked: a response that later fails to
   // parse was still billed, and that cost belongs in the measurement.
-  logUsage(operation, decoded.usage, elapsedMs(startedAt), decoded.stop_reason);
+  const billedMs = elapsedMs(startedAt);
+  logUsage(operation, decoded.usage, billedMs, decoded.stop_reason);
+  if (meta) {
+    const usage =
+      typeof decoded.usage === 'object' && decoded.usage !== null ? (decoded.usage as Record<string, unknown>) : {};
+    meta.durationMs = billedMs;
+    meta.inputTokens = tokenCount(usage.input_tokens);
+    meta.outputTokens = tokenCount(usage.output_tokens);
+    meta.stopReason = stopReasonField(decoded.stop_reason);
+  }
   const textBlock = decoded.content?.find((block) => block.type === 'text');
   if (!textBlock?.text) {
-    logUpstreamFailure(operation, 'no_text_block', {
+    failed('no_text_block', {
       httpStatus: response.status,
       durationMs: elapsedMs(startedAt),
     });
@@ -478,7 +528,7 @@ export async function callAnthropic(env: Env, operation: AnthropicOperation): Pr
   } catch {
     // The parse exception's message quotes the start of the model's text
     // (which can contain the user's own words), so it is not logged.
-    logUpstreamFailure(operation, 'invalid_json_content', {
+    failed('invalid_json_content', {
       httpStatus: response.status,
       durationMs: elapsedMs(startedAt),
     });
