@@ -147,9 +147,12 @@ class _LaunchGateState extends State<LaunchGate>
         if (_ready)
           KeyedSubtree(
             key: const ValueKey('launch-app'),
-            child: ExcludeSemantics(
-              excluding: !_splashGone,
-              child: Builder(builder: widget.app),
+            child: LaunchSplashScope(
+              covering: !_splashGone,
+              child: ExcludeSemantics(
+                excluding: !_splashGone,
+                child: Builder(builder: widget.app),
+              ),
             ),
           ),
         if (!_splashGone)
@@ -166,6 +169,33 @@ class _LaunchGateState extends State<LaunchGate>
       ],
     );
   }
+}
+
+/// Tells the app whether the launch splash still covers it: true from the
+/// moment the app is built under the splash until the splash's fade has
+/// finished. Screens with an entrance animation (Welcome) hold it until
+/// then, so it is not played unseen. Without a [LaunchGate] above (tests,
+/// previews) nothing is covered.
+class LaunchSplashScope extends InheritedWidget {
+  const LaunchSplashScope({
+    super.key,
+    required this.covering,
+    required super.child,
+  });
+
+  final bool covering;
+
+  /// Whether the splash covers [context]'s screen; rebuilds it when that
+  /// changes.
+  static bool coveringOf(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<LaunchSplashScope>()
+          ?.covering ??
+      false;
+
+  @override
+  bool updateShouldNotify(LaunchSplashScope oldWidget) =>
+      covering != oldWidget.covering;
 }
 
 /// The splash itself: the logo settles from [LaunchSplashLayout.initialLogoScale]
