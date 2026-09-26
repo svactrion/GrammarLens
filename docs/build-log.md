@@ -5580,7 +5580,7 @@ code, config or test changed. No client reads the new route yet.
     where the daily question count comes from. The rule itself is still to be
     confirmed against the code in Batch 0.
 
-## 2026-09-27 — Batch 0 decisions
+## 2026-09-27 (1.1.0 design side tracks — Batch 0 decisions)
 
 - **[Product] Owner decisions on the Batch 0 report** (1.1.0 design side
   tracks). Docs only, on branch `1.1.0-design`; no code, config or test
@@ -5712,3 +5712,66 @@ final duration is decided after it.
   Motion; no splash on return from the background; the fade into an in-app
   theme that differs from the system; the first-launch Welcome screen,
   whose own entrance starts under the splash.
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 1 follow-up: size, Welcome timing, decisions)
+
+On branch `1.1.0-design`; not pushed. `1.1.0` was merged into the branch
+first (a merge, not a rebase): "Already up to date", since `1.1.0`'s tip
+`b08a7ca` was already contained. Commits `5ed21d4` (size), `79f161e`
+(Welcome timing), plus this docs commit.
+
+- **[Product] The launch animation stays at 1.2 s.** An owner decision,
+  made after seeing it on a device. Cost: launch work takes 11–13 ms on the
+  phone (profile), so every cold start gets about 1.2 s longer. Ready
+  alternative if "the launch is slow" feedback comes: logo 0–350 ms,
+  wordmark 150–500 ms, last frame held to 650 ms, 150 ms fade (about 0.8 s).
+- **[Product] The launch screen was enlarged, after Ahmet's feedback on the
+  device.** Asked: 40 %. **Applied: 25 %**, because at 1.4 the wordmark
+  is 303.4 pt wide and leaves only 8.3 pt per side on a 320 pt screen; 1.25
+  is the largest scale that keeps the required 24 pt (270.9 pt wide, 24.5 pt
+  per side). Logo box 100 → 125 pt, gap 16 → 20 pt, wordmark 34 → 42.5 pt
+  (58 pt tall); durations and curves unchanged. The logo's center moved from
+  32 to 39 pt above the screen's center, so logo, gap and wordmark (203 pt)
+  are centered. Launch images regenerated (125/250/375 px, light and dark),
+  storyboard size and offset updated. Finished frame, in pt:
+
+  | Screen | Logo box | Wordmark |
+  |---|---|---|
+  | 402 × 874 | x 138.5–263.5, y 335.5–460.5 | x 65.5–336.5, y 480.5–538.5 |
+  | 375 × 667 | x 125–250, y 232–357 | x 52.0–323.0, y 377–435 |
+  | 320 × 568 | x 97.5–222.5, y 182.5–307.5 | x 24.5–295.5, y 327.5–385.5 |
+
+  On the first frame (and the static screen) the logo is drawn at 0.92
+  (115 pt) inside the same box, and the wordmark is not shown.
+- **[Fix] Welcome waits for the splash.** On a first install Welcome was
+  built under the splash and part of its entrance played unseen. `LaunchGate`
+  now tells the app whether the splash still covers it
+  (`LaunchSplashScope`); Welcome draws every motion at its first frame and
+  starts it once the fade has finished. Nothing is held without a gate or
+  after it, so no other screen changes.
+- **[Open — for the owner] Splash → Welcome handoff.** The splash's last
+  frame and Welcome's mark differ: Welcome's mark at rest is 177 pt (402 ×
+  874) or 146 pt (375 × 667, 320 × 568) against the splash's 125 pt, and its
+  center is 98–102 pt higher (402 × 874: y 297 vs 398; 375 × 667: 197 vs 295;
+  320 × 568: 143 vs 245). The background also changes (cream to Welcome's
+  orange in light mode). There is no visible slide, because Welcome's mark
+  starts invisible and fades in over 900 ms, but the logo disappears in one
+  place and reappears larger and higher. Only on a first install. Not
+  changed here (Welcome's design is the owner's). Options: (1) keep it —
+  Welcome's entrance is its own moment and is seen once; (2) a handoff: the
+  splash's logo glides to Welcome's mark (size and place) during its fade,
+  and Welcome shows its mark already in place instead of fading it in;
+  (3) Welcome's mark keeps its entrance but starts from the splash logo's
+  size and place. Recommended: (1) for 1.1.0, (2) if the device check finds
+  the change distracting.
+- **[Product] Rotation anchor:** October 2026 = Green Slope, then Ember Peak
+  (November), Glacier Peak (December), Red Canyon (January). It follows the
+  global calendar and is a constant in the code, not tied to the release
+  date.
+- **[Answered] iOS minimum version: 15.0** (`IPHONEOS_DEPLOYMENT_TARGET`),
+  so 320 pt wide devices are supported. Vertical additions to Home must be
+  checked on that screen (320 × 568).
+- **[Tests]** 906 passed (901 before): `launch_splash_layout_test.dart` 3
+  (the layout at 402, 375 and 320 pt with the bundled font: block centered,
+  24 pt margins); `welcome_after_splash_test.dart` 2 (Welcome held under the
+  splash and started after the fade; unchanged without a splash).
