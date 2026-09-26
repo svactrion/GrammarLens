@@ -6,6 +6,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/ai_consent.dart';
+import '../models/climb_theme.dart';
 import '../models/app_theme_mode.dart';
 import '../models/app_text_size.dart';
 import '../models/daily_test_question.dart';
@@ -146,7 +147,7 @@ class StorageService {
   ''';
 
   /// The theme of every month before themes were stored, and the fallback.
-  static const String greenSlopeThemeId = 'green_slope';
+  static const String greenSlopeThemeId = ClimbThemes.greenSlopeId;
 
   /// The key for the paywall shown once, on Home, after the first climb.
   static const String day0PaywallFlag = 'day0_paywall';
@@ -1265,8 +1266,18 @@ class StorageService {
     return (await stored())!;
   }
 
-  /// The theme a month gets when its row is first written.
-  static String _themeForNewMonth(int year, int month) => greenSlopeThemeId;
+  /// The theme a month gets when its row is first written: the one it is
+  /// shown with, so a scheduled theme that is not ready yet is recorded as
+  /// Green Slope ([ClimbThemeRotation.shownFor]).
+  static String _themeForNewMonth(int year, int month) =>
+      themeForNewMonthForTesting(year, month).id;
+
+  /// Test-only seam over [ClimbThemeRotation.shownFor], same pattern as
+  /// [clockForTesting]: lets a test make a theme "ready" to prove a month's
+  /// stored theme does not change afterwards. Never assigned outside a test.
+  @visibleForTesting
+  static ClimbTheme Function(int year, int month) themeForNewMonthForTesting =
+      ClimbThemeRotation.shownFor;
 
   static String _monthKey(int year, int month) =>
       '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}';
