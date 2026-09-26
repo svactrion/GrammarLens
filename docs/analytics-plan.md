@@ -229,7 +229,7 @@ and names and parameters may still change in that file's Batch 6.
 
 | Item | Contract (draft) | Status |
 |---|---|---|
-| `theme_id` parameter | String, the id of the month's theme as stored with that month (`greenway_peak` / `ember_peak` / `glacier_peak` / `red_canyon`; exact ids are set in Batch 2). Added to the existing Monthly Climb events; candidates: E1 `daily_test_completed`, E3 `welcome_badge_earned`, E4 `medal_month_finalized` (for E4, the finalized month's theme, not the current one). E5 `profile_medals_viewed` spans several months and gets none. | Planned (1.1.0), not implemented |
+| `theme_id` parameter | String, the id of the month's theme as stored with that month (`green_slope` / `ember_peak` / `glacier_peak` / `red_canyon`; exact ids are set in Batch 2). Added to the existing Monthly Climb events; candidates: E1 `daily_test_completed`, E3 `welcome_badge_earned`, E4 `medal_month_finalized` (for E4, the finalized month's theme, not the current one). E5 `profile_medals_viewed` spans several months and gets none. | Planned (1.1.0), not implemented |
 | Month transition card event(s) | "Card shown" and "`Start climbing` tapped", each with a case parameter (`a` = a medal was earned last month, `b` = no medal). Event names are not decided. Case (c), the user's first month, shows no card and sends nothing. | Planned (1.1.0), not implemented |
 
 Why: the monthly themes are a hypothesis about return visits; without

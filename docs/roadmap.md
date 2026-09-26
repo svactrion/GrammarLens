@@ -20,13 +20,12 @@ Client-side only, no API cost; does not hold back the shared Daily Test, and
 any batch not ready moves to the next version. Built after the `main` merge,
 one tested commit per batch. Nothing below is started.
 
-- [ ] Batch 0 — read-only check report (no code), including the open point
-      that medal thresholds are points while the transition card and the
-      medal camps assume days
+- [ ] Batch 0 — read-only check report (no code), including how medal
+      thresholds (points), the daily question count and blank answers work
 - [ ] Batch 1 — launch screen
 - [ ] Batch 2 — theme data model, theme id stored with the month, migration,
-      rotation, Greenway Peak as data (no visible change)
-- [ ] Batch 3 — serpentine trail, step positions, medal camps, direction
+      rotation, Green Slope as data (no visible change)
+- [ ] Batch 3 — serpentine trail, step positions, score bar, direction
       change, hop, "Mountain of Learning" Home title
 - [ ] Batch 4 — layer slot infrastructure, Ember Peak, Glacier Peak, Red
       Canyon, four summits
@@ -72,7 +71,7 @@ Nothing is marked complete unless the record says so.
 | Item | Why it waits |
 |---|---|
 | Mountain geometry redesign (broad-to-narrow, steeper summit, landmark placement, viewpoint contrast) | Current route and landmarks work; this is a visual improvement and needs its own 28/29/30/31-day, theme and text-size verification. |
-| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. *(Update 2026-09-26: decided for 1.1.0 side work — four themes rotating monthly, Green Slope shown as Greenway Peak, a volcanic Ember Peak included. See `docs/1.1.0-design-side-tracks.md`. Not started.)* |
+| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. *(Update 2026-09-26: decided for 1.1.0 side work — four themes rotating monthly, Green Slope kept as the default, a volcanic Ember Peak included. See `docs/1.1.0-design-side-tracks.md`. Not started.)* |
 | Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
 | v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. *(2026-09-24: the "v3" label is retired — gamification shipped in 1.0.0; the Home redesign and later work go to the next releases. See "Version naming" at the top.)* |

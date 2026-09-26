@@ -5544,7 +5544,7 @@ code, config or test changed. No client reads the new route yet.
   implemented. The owner's decisions for the 1.1.0 side work are written into
   [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md): the launch
   screen (recorded earlier today, repeated there), four monthly themes that
-  rotate every month (Greenway Peak, Ember Peak, Glacier Peak, Red Canyon;
+  rotate every month (Green Slope, Ember Peak, Glacier Peak, Red Canyon;
   visual and identity only, the theme id stored with each month), a
   serpentine trail with medal camps, a one-time month transition card, a
   "Mountain of Learning" title on Home, 4 new avatars appended as
@@ -5558,10 +5558,24 @@ code, config or test changed. No client reads the new route yet.
     winter cues.
   - Idle sway animation for the avatar: battery use, distraction, and the
     risk of breaking `pumpAndSettle` in tests.
-  - Spiral trail: not chosen; the trail is a serpentine with 4–5 legs.
+  - Spiral trail: steps that fall on the far side of the mountain are hidden
+    or overlap, which makes progress hard to read; the trail is a serpentine
+    with 4–5 legs.
   - Premium avatars: deferred together with earned avatars; earned avatars are
     reconsidered after the themes' effect on return visits is measured.
-- **[Open]** Medal rule v1 is score-based (ceil 25/50/75 % of
-  `daysInMonth × 10` points), while the transition card's "Climb [X] days"
-  line and the medal camps assume a threshold in days. The mapping is to be
-  checked in Batch 0 and decided by the owner before Batches 3 and 6.
+- **[Open → resolved 2026-09-27]** Medal rule v1 is score-based (ceil
+  25/50/75 % of `daysInMonth × 10` points), while the transition card's
+  "Climb [X] days" line and the medal camps assumed a threshold in days.
+  - *Sub-note, owner decisions 2026-09-27 (docs only, on `1.1.0-design`):*
+    medal camps are dropped; a thin score bar with Bronze/Silver/Gold marks
+    (computed from the code's thresholds) sits under the trail, which keeps
+    showing days. Case (b) of the transition card reads "Answer all [Q]
+    questions on [N] days to earn your first [Theme] medal. Correct answers
+    get you there sooner.", with [N] = ceil(Bronze threshold ÷ [Q]) and a
+    fallback line when [N] exceeds the days left. The Gold line becomes "Can
+    you win Gold again?" (the summit is a day, Gold is a score). The default
+    theme keeps its 1.0 name, Green Slope (draft id `green_slope`), instead of
+    the "Greenway Peak" name first written here, to avoid a possible
+    migration. Batch 0 gains two checks: how a blank answer comes about, and
+    where the daily question count comes from. The rule itself is still to be
+    confirmed against the code in Batch 0.
