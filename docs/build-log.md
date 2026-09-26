@@ -5775,3 +5775,71 @@ first (a merge, not a rebase): "Already up to date", since `1.1.0`'s tip
   (the layout at 402, 375 and 320 pt with the bundled font: block centered,
   24 pt margins); `welcome_after_splash_test.dart` 2 (Welcome held under the
   splash and started after the fade; unchanged without a splash).
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 2: theme data model)
+
+On branch `1.1.0-design`; not pushed. `1.1.0` merged first (a merge, not a
+rebase): "Already up to date". Commits `41a807c` (table), `7af4ee5`
+(registry and rotation), `21cdf8e` ([Q] from one constant), plus this docs
+commit. **No visible change.**
+
+- **[Schema] v22 → v23: `climb_month_themes`** (`month` TEXT primary key,
+  `YYYY-MM`; `theme_id` TEXT; `assigned_at` TEXT). An idempotent
+  `CREATE TABLE IF NOT EXISTS` step, like v20 and v22; no backfill.
+  `StorageService.resolveClimbMonthTheme(year, month)`:
+  - a month with a row reads its row;
+  - a past month without a row is `green_slope` (all 1.0 ever showed);
+  - the current month without a row gets one, written once (`INSERT OR
+    IGNORE`) and never changed;
+  - a future month is not written.
+
+  "Current" is the Monthly Climb's own calendar (`clockForTesting`,
+  `_monthKey`), the one medal progress and finalization already use; no new
+  date logic. The only writer today is `completeDailyTest`, in its own
+  transaction (Home was out of scope).
+- **[Data] Themes are data** (`lib/models/climb_theme.dart`): id, name,
+  tagline, light and dark palette, layer image slots, summit, emblem. Green
+  Slope is complete; its palettes are `ClimbPalette.of`'s values moved out of
+  `lib/theme.dart` unchanged (a test pins every value; the scene rendered
+  byte-identical before and after the move, light and dark, 28 and 31
+  days). Ember Peak, Glacier Peak and Red Canyon have their names and
+  taglines and are marked **not ready**. The scene's only change is where
+  its palette comes from.
+- **[Rotation]** Global calendar, anchor constant in code: October 2026 =
+  Green Slope, November Ember Peak, December Glacier Peak, January 2027 Red
+  Canyon, then repeating; earlier months are Green Slope.
+- **[Rule] What is recorded for a month is what the month is shown with.**
+  If the calendar's theme for a new month is not ready, the month is
+  recorded as `green_slope`, because that is what the user sees. *Why:* the
+  record exists to measure themes; a record naming a theme nobody saw would
+  make every later analysis wrong, and it cannot be corrected afterwards
+  because a month's row never changes. If Batch 4 misses 1.1.0, the data
+  stays truthful. **Consequence for measurement:** a month whose scheduled
+  theme was not ready never appears as that theme in the data, it appears
+  as Green Slope. Its scheduled theme can still be recomputed from the
+  month key (the calendar is fixed), which is how "Green Slope by schedule"
+  and "Green Slope by fallback" can be told apart if ever needed. A theme
+  that becomes ready in the middle of a month shows from the next month;
+  the running month keeps its row.
+- **[Follow-up, before any theme is marked ready]** Home's climb load must
+  resolve the month's theme (which records it) and the scene must draw the
+  resolved theme, in the same release. Otherwise a month that is viewed but
+  never completed has no row and reads as Green Slope afterwards.
+- **[Q] from one constant: `DailyTestSet.questionCount` (5).** It sits on
+  the model because the medal rules are imported by storage, which the
+  Daily Test service imports. Readers: generation; the medal maximum, now
+  `days × questionCount × pointsPerCorrect` (still 10 a day, so rule v1 and
+  every threshold are unchanged, which a test checks for 28/29/30/31-day
+  months); and Home's Today card copy. The bundled Day-0 set is checked
+  against it by a test; the proxy's `SHARED_SET_QUESTION_COUNT` stays a
+  separate copy. **Home change:** `lib/screens/home_screen.dart`, `_TodayCard`
+  (lines 861–862), the "5-question" description now interpolates the
+  constant; nothing else in Home changed.
+- **[Tests]** 929 passed (906 before): `storage_service_climb_month_theme_test`
+  10 (migration from a v22 database with climb, medal, badge, flag and
+  profile rows; table shape; replayed migration; read and write rules;
+  completion writes the row); `climb_theme_test` 10 (registry, palettes,
+  rotation and wrap, pre-anchor, not-ready fallback, a stored month
+  unchanged after a theme becomes ready); 3 for [Q]. Two older checks of the
+  schema version moved from 22 to 23.
+- **[Device check]** Home looks the same in light and dark mode.

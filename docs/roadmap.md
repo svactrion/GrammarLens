@@ -23,8 +23,9 @@ one tested commit per batch. Nothing below is started.
 - [ ] Batch 0 — read-only check report (no code), including how medal
       thresholds (points), the daily question count and blank answers work
 - [ ] Batch 1 — launch screen
-- [ ] Batch 2 — theme data model, theme id stored with the month, migration,
-      rotation, Green Slope as data (no visible change)
+- [x] Batch 2 — theme data model, theme id stored with the month, migration,
+      rotation, Green Slope as data (no visible change) — done 2026-09-27,
+      with [Q] from one constant; 929 tests green
 - [ ] Batch 3 — serpentine trail, step positions, score bar, direction
       change, hop, "Mountain of Learning" Home title
 - [ ] Batch 4 — layer slot infrastructure, Ember Peak, Glacier Peak, Red
