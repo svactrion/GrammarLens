@@ -27,7 +27,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 22;
+  static const _dbVersion = 23;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -131,6 +131,22 @@ class StorageService {
       set_at TEXT NOT NULL
     )
   ''';
+
+  /// The Monthly Climb theme each month was shown with (see
+  /// [resolveClimbMonthTheme]): one row per month key (`YYYY-MM`), written
+  /// once, the first time the current month's theme is resolved, and never
+  /// changed. No backfill: a past month without a row was Green Slope, the
+  /// only theme 1.0 had.
+  static const _createClimbMonthThemesTable = '''
+    CREATE TABLE IF NOT EXISTS climb_month_themes (
+      month TEXT PRIMARY KEY NOT NULL,
+      theme_id TEXT NOT NULL,
+      assigned_at TEXT NOT NULL
+    )
+  ''';
+
+  /// The theme of every month before themes were stored, and the fallback.
+  static const String greenSlopeThemeId = 'green_slope';
 
   /// The key for the paywall shown once, on Home, after the first climb.
   static const String day0PaywallFlag = 'day0_paywall';
@@ -317,6 +333,7 @@ class StorageService {
         await db.execute(_createWelcomeBadgeTable);
         await db.execute(_createAiConsentTable);
         await db.execute(_createOneTimeFlagsTable);
+        await db.execute(_createClimbMonthThemesTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -492,6 +509,13 @@ class StorageService {
         // could have been claimed before this table existed.
         if (oldVersion < 22) {
           await db.execute(_createOneTimeFlagsTable);
+        }
+
+        // v22 -> v23: climb_month_themes, empty. No backfill: every month
+        // before this was Green Slope, which is what a month without a row
+        // reads as (see [resolveClimbMonthTheme]).
+        if (oldVersion < 23) {
+          await db.execute(_createClimbMonthThemesTable);
         }
       },
     );
@@ -960,6 +984,12 @@ class StorageService {
         'rule_version': DailyTestCompletion.ruleVersion,
       });
 
+      // A completed Daily Test is a use of this month's climb: record the
+      // theme it is shown with, if that is not on record yet.
+      final setMonth = setDay.split('-');
+      await _resolveClimbMonthTheme(
+          txn, int.parse(setMonth[0]), int.parse(setMonth[1]));
+
       // Only a row that moves the avatar (`step = 1`) can earn the badge,
       // and only the first such row ever.
       if (completion.step != 1 || priorStepEntryCount > 0) return false;
@@ -1181,6 +1211,62 @@ class StorageService {
       finalizedAt: DateTime.parse(row['finalized_at'] as String),
     );
   }
+
+  /// The theme id of the Monthly Climb for [year]/[month].
+  ///
+  /// - A month with a row reads its row.
+  /// - A past month without a row is [greenSlopeThemeId]: it was shown
+  ///   before themes were stored, when Green Slope was the only theme.
+  /// - The current month without a row gets one now, written once
+  ///   (`INSERT OR IGNORE`) and never changed afterwards.
+  /// - A future month is not written; it reads what it would get today.
+  ///
+  /// "Current" is the Monthly Climb's own local calendar month
+  /// ([clockForTesting], [_monthKey]), the same one medal progress and
+  /// finalization use.
+  Future<String> resolveClimbMonthTheme(int year, int month) async {
+    final db = await _database;
+    return db.transaction((txn) => _resolveClimbMonthTheme(txn, year, month));
+  }
+
+  Future<String> _resolveClimbMonthTheme(
+    DatabaseExecutor db,
+    int year,
+    int month,
+  ) async {
+    if (month < 1 || month > 12 || year < 1 || year > 9999) {
+      throw ArgumentError('Invalid calendar month');
+    }
+    final key = _monthKey(year, month);
+    Future<String?> stored() async {
+      final rows = await db.query('climb_month_themes',
+          columns: ['theme_id'], where: 'month = ?', whereArgs: [key]);
+      return rows.isEmpty ? null : rows.single['theme_id'] as String;
+    }
+
+    final existing = await stored();
+    if (existing != null) return existing;
+
+    final now = clockForTesting();
+    final current = _monthKey(now.year, now.month);
+    if (key.compareTo(current) < 0) return greenSlopeThemeId;
+    final themeId = _themeForNewMonth(year, month);
+    if (key != current) return themeId;
+
+    await db.insert(
+      'climb_month_themes',
+      {
+        'month': key,
+        'theme_id': themeId,
+        'assigned_at': now.toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+    return (await stored())!;
+  }
+
+  /// The theme a month gets when its row is first written.
+  static String _themeForNewMonth(int year, int month) => greenSlopeThemeId;
 
   static String _monthKey(int year, int month) =>
       '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}';
