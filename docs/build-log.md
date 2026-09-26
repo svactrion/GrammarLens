@@ -5315,3 +5315,114 @@ answer with its date.
   launch screen, possible new hero/avatar additions. Side work does not hold
   back the release; anything not ready moves to the next version, and each
   item is defined before code is written. Roadmap version table updated.
+
+## 2026-09-26 (1.1.0 shared Daily Test — P1 core and P2 cron generation, proxy, not deployed)
+
+Batches P1 (`2b473b6`) and P2 (`910687d`) of `docs/1.1.0-shared-daily-test.md`
+§11, on branch `1.1.0`. Proxy only; `lib/` untouched. **Nothing is deployed**,
+and nothing reads the sets yet (the read route is P3). Proxy tests 70 → 153
+(P1) → 174 (P2), `tsc` clean.
+
+- **[Engineering — P1]** `proxy/src/shared_daily_test.ts`, pure functions:
+  the serving window `[UTC today − 1, UTC today + 2]` with strict
+  `YYYY-MM-DD` parsing through `Date.UTC` (no time zones, no DST); the
+  per-date plan; a TypeScript port of `normalizeAnswer` /
+  `foldKeyboardVariants`; `validateSharedSet`, the quality gate (14 rejection
+  codes, explanation cap 35 words). New operation `generate_shared_daily_test`:
+  it reuses the legacy Daily Test model, system prompt, schema and `max_tokens`
+  (3072) and differs only in the user prompt (the plan, plus up to 35 recent
+  correct answers to avoid); `SHARED_PROMPT_VERSION` 1, guarded by a request
+  fingerprint test. `usageKind` files it as `daily_test`. Every
+  `anthropic_usage` line gains a whitelisted `stop_reason`.
+- **[Engineering — plan rules]** A date's plan is a function of the date
+  alone: a seeded permutation of the 5 topics (one question each); a 3/2 or
+  2/3 fill-in / error-correction split alternating by day, with the
+  alternation flipping every 14 days so a theme does not always get the same
+  split; the theme cycles through the 14 approved themes, so none repeats
+  within 14 days. A validated set is **published in plan order**, whatever
+  order the model returned. The order is not a rejection rule; a topic–type
+  pairing that differs from the plan is (`plan_mismatch`).
+- **[Finding — `İ`]** The normalization fixture
+  (`proxy/test/fixtures/answer_normalization.json`) was produced by running the
+  Dart functions, not written by hand. It showed a real difference: Dart
+  lowercases `İ` (U+0130) to plain `i`, JavaScript to `i` + a combining dot. The
+  port corrects it. The Dart test that reads the same fixture comes in C1.
+- **[Engineering — P2]** `proxy/src/shared_generation.ts` and a `scheduled`
+  handler: hourly cron `7 * * * *` (UTC); dates UTC today … today + 3,
+  nearest first; at most 3 attempts per date, counted before the call;
+  write-once `set:{date}` (read again right before the write, never
+  overwritten), 35-day TTL; `attempts:{date}` 7-day TTL with a 2-minute lease;
+  an idle run (all dates filled) only reads KV. One `shared_set_generation`
+  line per paid attempt: date, attempt, outcome, rejection code, failure
+  category, stop_reason, tokens, duration, prompt version, no content. New
+  failure category `timeout`. Kill switch `SHARED_DAILY_TEST_ENABLED`. New
+  `DAILY_SETS_KV` binding with a marked placeholder id; `npm run deploy` now
+  runs `scripts/check-placeholders.mjs` first and refuses while it is there.
+  No path reserves quota.
+- **[Deviations from the report / the P1 and P2 briefs]**
+  1. P1: the five existing usage-log tests that pin the line's exact key set
+     were updated for `stop_reason` (nothing else in them changed; the
+     planted-secret checks are the same).
+  2. P1: the `İ` difference above.
+  3. P1: the shared request reuses the legacy system prompt, schema and budget
+     unchanged. The schema moved into a shared function; the legacy request
+     bytes are unchanged, as the pin test shows.
+  4. P1: `proxy/README.md` updated for the log format in the same commit
+     (existing practice), and `resolveJsonModule` added to `tsconfig.json` to
+     import the fixture.
+  5. P1: sets are published in plan order; order itself is not a rejection
+     rule, the topic–type pairing is.
+  6. P1: no build-log entry at the time (to keep P1 one commit); this entry
+     covers it.
+  7. P1: single praise words ("Great", "Correct") count as a bad opening only
+     when punctuation follows, so "Great Britain aside…" or "Correct article
+     use…" pass; every rejection is a paid retry.
+  8. P2: **timeout 90 s, not the 60 s in the brief.** The one live
+     measurement was 27.6 s for ~1,500 output tokens (~54 tokens/s); a full
+     3,072-token response at that pace is ~57 s, so 60 s could cut off (and
+     waste) a billed response that is still arriving. Nobody waits on a cron,
+     and a cron may run 15 minutes. One constant (`GENERATION_TIMEOUT_MS`).
+  9. P2: **at most one Anthropic call per run**, not one per missing date.
+     This bounds each run's cost and its CPU (Workers Free: 10 ms per
+     invocation) to one set. After a first deploy, the four dates fill in over
+     four hours.
+  10. P2: the kill switch **fails closed**: only the exact string `"true"`
+      enables generation, so a typo or an empty value stops it rather than
+      running it. A disabled run writes one `shared_set_cron` line (no KV, no
+      Anthropic), so the switch can be seen working in the logs.
+  11. P2: a **lease** (2 minutes) in the attempt record, beyond the brief's
+      read-before-write, so a run that starts while another is waiting on
+      Anthropic skips the date instead of paying for a second set. KV has no
+      compare-and-swap, so two runs that both read the date as free within
+      the same few milliseconds could still both generate. With an hourly
+      schedule this needs Cloudflare to start two runs at the same instant.
+  12. P2: the `scheduled` handler logs an unexpected error by category and
+      rethrows, so the dashboard marks the run as failed.
+- **[Process]** While testing the new deploy guard, `npm run deploy` was run
+  once by mistake. The guard stopped it (placeholder present, exit 1) before
+  `wrangler deploy` ran, so nothing was uploaded. From then on the guard was
+  tested only by running `node scripts/check-placeholders.mjs` directly. A
+  dry run (`wrangler deploy --dry-run`, local bundling only) confirmed the
+  config parses: bindings `QUOTA_KV`, `DAILY_SETS_KV` (placeholder), three vars.
+- **[Validation]** P2 tests (21): a missing date generated once and a second
+  run with no request; an idle run with zero fetches and zero KV writes;
+  nearest date first, one call per run; three rejected attempts then stop, no
+  set written, reason in each line; a retry after a rejection publishes; two
+  overlapping runs make one request and one set write; a set that appears
+  mid-call is never overwritten (`already_published`); a timeout gives
+  `failure: "timeout"` on both lines and counts the attempt; the 90 s signal
+  exists only on this path; an HTTP error and a truncated answer are logged
+  with their category and stop reason; the avoid list covers exactly 7 days
+  back; the TTLs; four kill-switch values that touch nothing; no path touches
+  `QUOTA_KV`; no content in any log line, and a fixed key set; the Worker's
+  `scheduled` export. Mutations that turn tests red: no lease, no re-read
+  before the write, a switch that only checks for "false", no attempt cap, no
+  presence check, no timeout signal, no one-call-per-run limit, no set TTL.
+  In P1, mutations that turn tests red: one legacy prompt word, one schema
+  field, dropping the `İ` fix, `usageKind` without the new operation, no fold
+  check, a plan algorithm change.
+- **[Open]** Not measured until D1: CPU time per run against the Free plan's
+  10 ms, and real `shared_set_generation` outcomes. What a bare
+  `npx wrangler deploy` does with the placeholder id is expected to be a
+  rejection by the Cloudflare API (an invalid namespace id), but that was not
+  tried; `npm run deploy` stops before it.
