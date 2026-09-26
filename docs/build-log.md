@@ -5536,3 +5536,32 @@ code, config or test changed. No client reads the new route yet.
   - CPU time of the following cron runs not yet watched.
   - The `1.1.0` → `main` merge of the proxy commits (deploy rule, §11) is not
     done.
+
+## 2026-09-26 (1.1.0 design side tracks defined)
+
+- **[Product] 1.1.0 design side tracks defined.** Docs only, on branch
+  `1.1.0-design`; no code, config or test changed, and nothing is
+  implemented. The owner's decisions for the 1.1.0 side work are written into
+  [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md): the launch
+  screen (recorded earlier today, repeated there), four monthly themes that
+  rotate every month (Greenway Peak, Ember Peak, Glacier Peak, Red Canyon;
+  visual and identity only, the theme id stored with each month), a
+  serpentine trail with medal camps, a one-time month transition card, a
+  "Mountain of Learning" title on Home, 4 new avatars appended as
+  `avatar_13`–`avatar_16`, and `theme_id` plus a transition-card event for
+  analytics. The work is split into Batches 0–8 after the `main` merge;
+  Batch 0 is a read-only check, and every claim about today's code in that
+  file is marked "to be verified in Batch 0".
+- **Rejected, with the reason:**
+  - Seasonal themes: themes rotate by month, and a season does not follow a
+    fixed month order (nor both hemispheres); Glacier Peak therefore carries no
+    winter cues.
+  - Idle sway animation for the avatar: battery use, distraction, and the
+    risk of breaking `pumpAndSettle` in tests.
+  - Spiral trail: not chosen; the trail is a serpentine with 4–5 legs.
+  - Premium avatars: deferred together with earned avatars; earned avatars are
+    reconsidered after the themes' effect on return visits is measured.
+- **[Open]** Medal rule v1 is score-based (ceil 25/50/75 % of
+  `daysInMonth × 10` points), while the transition card's "Climb [X] days"
+  line and the medal camps assume a threshold in days. The mapping is to be
+  checked in Batch 0 and decided by the owner before Batches 3 and 6.

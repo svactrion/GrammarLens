@@ -7,11 +7,36 @@
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
 | 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release |
-| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26, first set published; watching cron CPU (8 ms of the Free plan's 10 ms on the first run); content quality issues open; proxy commits not yet merged into `main`; client not started. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26, first set published; watching cron CPU (8 ms of the Free plan's 10 ms on the first run); content quality issues open; proxy commits not yet merged into `main`; client not started. Side work: all items defined 2026-09-26 in `docs/1.1.0-design-side-tracks.md` (launch screen, monthly themes, trail and scene, Home title, avatars, measurement); to be built after the `main` merge; nothing started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
 that say "v3" are kept as written.
+
+### 1.1.0 side tracks (design) — defined 2026-09-26, not started
+
+Decisions and reasons: [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md).
+Client-side only, no API cost; does not hold back the shared Daily Test, and
+any batch not ready moves to the next version. Built after the `main` merge,
+one tested commit per batch. Nothing below is started.
+
+- [ ] Batch 0 — read-only check report (no code), including the open point
+      that medal thresholds are points while the transition card and the
+      medal camps assume days
+- [ ] Batch 1 — launch screen
+- [ ] Batch 2 — theme data model, theme id stored with the month, migration,
+      rotation, Greenway Peak as data (no visible change)
+- [ ] Batch 3 — serpentine trail, step positions, medal camps, direction
+      change, hop, "Mountain of Learning" Home title
+- [ ] Batch 4 — layer slot infrastructure, Ember Peak, Glacier Peak, Red
+      Canyon, four summits
+- [ ] Batch 5 — themed medal: body, emblem, month label
+- [ ] Batch 6 — month transition card and measurement events
+- [ ] Batch 7 — one-time environment motion (may move to the next version)
+- [ ] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (may move to the next
+      version)
+- [ ] Last — B-polish dark-mode exception written into `docs/build-log.md` and
+      `docs/design-audit.md`; this roadmap updated
 
 ## Launch scope — 2026-09-19
 
@@ -47,7 +72,7 @@ Nothing is marked complete unless the record says so.
 | Item | Why it waits |
 |---|---|
 | Mountain geometry redesign (broad-to-narrow, steeper summit, landmark placement, viewpoint contrast) | Current route and landmarks work; this is a visual improvement and needs its own 28/29/30/31-day, theme and text-size verification. |
-| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. |
+| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. *(Update 2026-09-26: decided for 1.1.0 side work — four themes rotating monthly, Green Slope shown as Greenway Peak, a volcanic Ember Peak included. See `docs/1.1.0-design-side-tracks.md`. Not started.)* |
 | Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
 | v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. *(2026-09-24: the "v3" label is retired — gamification shipped in 1.0.0; the Home redesign and later work go to the next releases. See "Version naming" at the top.)* |
