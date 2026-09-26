@@ -1,5 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { usageKind } from '../src/usage_log';
 
 const TOKEN = 'test-app-token'; // matches vitest.config.ts's miniflare.bindings
 
@@ -65,6 +66,7 @@ describe('token usage logging', () => {
         item_count: 5,
         input_tokens: 1234,
         output_tokens: 567,
+        stop_reason: null,
         duration_ms: expect.any(Number),
       },
     ]);
@@ -91,6 +93,7 @@ describe('token usage logging', () => {
         item_count: 3,
         input_tokens: 900,
         output_tokens: 1700,
+        stop_reason: null,
         duration_ms: expect.any(Number),
       },
       {
@@ -100,6 +103,7 @@ describe('token usage logging', () => {
         item_count: 2,
         input_tokens: 1100,
         output_tokens: 400,
+        stop_reason: null,
         duration_ms: expect.any(Number),
       },
     ]);
@@ -132,7 +136,7 @@ describe('token usage logging', () => {
     // The usage line has exactly the allowed fields and nothing else.
     for (const line of usageLines()) {
       expect(Object.keys(line).sort()).toEqual(
-        ['duration_ms', 'event', 'input_tokens', 'item_count', 'kind', 'operation', 'output_tokens'].sort(),
+        ['duration_ms', 'event', 'input_tokens', 'item_count', 'kind', 'operation', 'output_tokens', 'stop_reason'].sort(),
       );
     }
   });
@@ -151,6 +155,7 @@ describe('token usage logging', () => {
         item_count: 5,
         input_tokens: null,
         output_tokens: null,
+        stop_reason: null,
         duration_ms: expect.any(Number),
       },
     ]);
@@ -172,6 +177,65 @@ describe('token usage logging', () => {
     expect(response.status).toBe(502);
     expect(usageLines()).toHaveLength(1);
     expect(usageLines()[0]).toMatchObject({ input_tokens: 50, output_tokens: 60 });
+  });
+
+  describe('stop_reason', () => {
+    function anthropicStops(stopReason: unknown) {
+      globalThis.fetch = (async () =>
+        new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: JSON.stringify({ questions: [] }) }],
+            usage: { input_tokens: 1, output_tokens: 2 },
+            stop_reason: stopReason,
+          }),
+          { status: 200 },
+        )) as typeof fetch;
+    }
+
+    it.each(['end_turn', 'max_tokens', 'stop_sequence', 'refusal'])('logs a documented value (%s) as is', async (reason) => {
+      anthropicStops(reason);
+      await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+      expect(usageLines()[0]).toMatchObject({ stop_reason: reason });
+    });
+
+    it('logs any other value as unknown, never its text', async () => {
+      for (const value of ['STOP-SECRET-4410', 42, { reason: 'STOP-SECRET-4410' }]) {
+        anthropicStops(value);
+        await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+      }
+      expect(usageLines().map((l) => l.stop_reason)).toEqual(['unknown', 'unknown', 'unknown']);
+      expect(logged.join('\n')).not.toContain('STOP-SECRET-4410');
+    });
+
+    it('logs null when Anthropic sends none', async () => {
+      anthropicStops(null);
+      await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+      expect(usageLines()[0]).toMatchObject({ stop_reason: null });
+    });
+
+    it('keeps a truncated response visible: max_tokens on the usage line of a failed parse', async () => {
+      globalThis.fetch = (async () =>
+        new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: '{"questions": [{"id": "q1", "type": "fill_' }],
+            usage: { input_tokens: 1173, output_tokens: 3072 },
+            stop_reason: 'max_tokens',
+          }),
+          { status: 200 },
+        )) as typeof fetch;
+
+      const response = await post('/v1/generate-daily-test', { deviceId: 'd1', count: 5 });
+
+      expect(response.status).toBe(502);
+      expect(usageLines()[0]).toMatchObject({ output_tokens: 3072, stop_reason: 'max_tokens' });
+    });
+  });
+
+  it('files the shared set under daily_test, like the legacy Daily Test', () => {
+    expect(usageKind('generate_shared_daily_test')).toBe('daily_test');
+    expect(usageKind('generate_daily_test')).toBe('daily_test');
+    expect(usageKind('generate_practice_set')).toBe('topic_practice');
+    expect(usageKind('score_answers')).toBe('topic_practice');
   });
 
   describe('duration_ms', () => {
@@ -210,6 +274,7 @@ describe('token usage logging', () => {
           item_count: 5,
           input_tokens: 10,
           output_tokens: 20,
+          stop_reason: null,
           duration_ms: 12_345,
         },
       ]);

@@ -5271,3 +5271,268 @@ entries are left as written; where this entry corrects one, it says so.
   already built on 15%, so none of them change; the assumption is now
   confirmed. The pending status in the 2026-09-24 entry is superseded by this
   one. `docs/roadmap.md` and PRD v2 §13.7 updated with a dated note.
+
+## 2026-09-26 (1.1.0 shared Daily Test — owner decisions)
+
+Decisions only; no code changed. The Batch 0 report
+(`docs/1.1.0-shared-daily-test.md`) is approved, and §13 there records each
+answer with its date.
+
+- **[Product] Revision of the 2026-09-22 direction.** "Shared generation +
+  personal AI evaluation" is revised: evaluation stays on the device and
+  deterministic (`checkDailyTestAnswer`), and explanations are generated with
+  the set. A personal AI explanation ("why was this wrong?") becomes a
+  low-priority draft. Reason: Daily Test cost becomes fully independent of the
+  number of users, and the Daily Test stays free of the AI permission.
+- **[Engineering] Legacy route (Option A).** `POST /v1/generate-daily-test`
+  keeps its behavior, prompt, request and response, so 1.0.0 clients are
+  unaffected (the proxy cannot tell their first open from their prefetch, and a
+  shared set there would repeat tests). Only log additions that do not change
+  behavior are allowed, such as `stop_reason`. Accepted cost: each 1.0.0 device
+  keeps costing one generation per active day until it updates.
+- **[Engineering] Cloudflare plan: Free, unchanged.** Consequences: the cron's
+  10 ms CPU limit is measured at D1; KV writes are capped at 1,000/day. Rule:
+  raising `GLOBAL_DAILY_LIMIT` above ~450 means deciding to move to Workers
+  Paid (to be written into `proxy/README.md` in Dx).
+- **[Engineering] Deploy rule.** After each proxy deploy (D1, D2), those proxy
+  commits are also merged into `main`, so a 1.0.x proxy deploy from `main`
+  cannot remove the cron or the new route. Client work (C1–C3) stays on
+  `1.1.0`. Kill switch `SHARED_DAILY_TEST_ENABLED` approved for P3. P2 must
+  also prove that a cron run with the set already in KV makes zero outbound
+  calls.
+- **[Content] Fallback pool: 7 sets,** generated once with the current prompt,
+  reviewed by the owner, committed as bundled content in C2, recorded as
+  "AI-generated, owner-reviewed". Rotation uses the 14 scenario themes of the
+  report's §8 as written (work, travel, health, study, family, technology,
+  food, money, sport, environment, shopping, housing, media, science).
+  Explanation hard cap 35 words; the prompt still asks for fewer than 25.
+- **[Analytics]** `set_date` is added to `daily_test_completed` (C1, Dx).
+  "Ensure today's set on resume" (C3 option) is not in 1.1.0: the
+  `set_source = fallback` share is measured first. C3's cleanup of old
+  unused rows stays.
+- **[Product] 1.1.0 scope.** Main work: the shared Daily Test. Side work, all
+  client-side with no API cost: monthly themes, trail designs, a logo on the
+  launch screen, possible new hero/avatar additions. Side work does not hold
+  back the release; anything not ready moves to the next version, and each
+  item is defined before code is written. Roadmap version table updated.
+
+## 2026-09-26 (1.1.0 shared Daily Test — P1 core and P2 cron generation, proxy, not deployed)
+
+Batches P1 (`2b473b6`) and P2 (`910687d`) of `docs/1.1.0-shared-daily-test.md`
+§11, on branch `1.1.0`. Proxy only; `lib/` untouched. **Nothing is deployed**,
+and nothing reads the sets yet (the read route is P3). Proxy tests 70 → 153
+(P1) → 174 (P2), `tsc` clean.
+
+- **[Engineering — P1]** `proxy/src/shared_daily_test.ts`, pure functions:
+  the serving window `[UTC today − 1, UTC today + 2]` with strict
+  `YYYY-MM-DD` parsing through `Date.UTC` (no time zones, no DST); the
+  per-date plan; a TypeScript port of `normalizeAnswer` /
+  `foldKeyboardVariants`; `validateSharedSet`, the quality gate (14 rejection
+  codes, explanation cap 35 words). New operation `generate_shared_daily_test`:
+  it reuses the legacy Daily Test model, system prompt, schema and `max_tokens`
+  (3072) and differs only in the user prompt (the plan, plus up to 35 recent
+  correct answers to avoid); `SHARED_PROMPT_VERSION` 1, guarded by a request
+  fingerprint test. `usageKind` files it as `daily_test`. Every
+  `anthropic_usage` line gains a whitelisted `stop_reason`.
+- **[Engineering — plan rules]** A date's plan is a function of the date
+  alone: a seeded permutation of the 5 topics (one question each); a 3/2 or
+  2/3 fill-in / error-correction split alternating by day, with the
+  alternation flipping every 14 days so a theme does not always get the same
+  split; the theme cycles through the 14 approved themes, so none repeats
+  within 14 days. A validated set is **published in plan order**, whatever
+  order the model returned. The order is not a rejection rule; a topic–type
+  pairing that differs from the plan is (`plan_mismatch`).
+- **[Finding — `İ`]** The normalization fixture
+  (`proxy/test/fixtures/answer_normalization.json`) was produced by running the
+  Dart functions, not written by hand. It showed a real difference: Dart
+  lowercases `İ` (U+0130) to plain `i`, JavaScript to `i` + a combining dot. The
+  port corrects it. The Dart test that reads the same fixture comes in C1.
+- **[Engineering — P2]** `proxy/src/shared_generation.ts` and a `scheduled`
+  handler: hourly cron `7 * * * *` (UTC); dates UTC today … today + 3,
+  nearest first; at most 3 attempts per date, counted before the call;
+  write-once `set:{date}` (read again right before the write, never
+  overwritten), 35-day TTL; `attempts:{date}` 7-day TTL with a 2-minute lease;
+  an idle run (all dates filled) only reads KV. One `shared_set_generation`
+  line per paid attempt: date, attempt, outcome, rejection code, failure
+  category, stop_reason, tokens, duration, prompt version, no content. New
+  failure category `timeout`. Kill switch `SHARED_DAILY_TEST_ENABLED`. New
+  `DAILY_SETS_KV` binding with a marked placeholder id; `npm run deploy` now
+  runs `scripts/check-placeholders.mjs` first and refuses while it is there.
+  No path reserves quota.
+- **[Deviations from the report / the P1 and P2 briefs]**
+  1. P1: the five existing usage-log tests that pin the line's exact key set
+     were updated for `stop_reason` (nothing else in them changed; the
+     planted-secret checks are the same).
+  2. P1: the `İ` difference above.
+  3. P1: the shared request reuses the legacy system prompt, schema and budget
+     unchanged. The schema moved into a shared function; the legacy request
+     bytes are unchanged, as the pin test shows.
+  4. P1: `proxy/README.md` updated for the log format in the same commit
+     (existing practice), and `resolveJsonModule` added to `tsconfig.json` to
+     import the fixture.
+  5. P1: sets are published in plan order; order itself is not a rejection
+     rule, the topic–type pairing is.
+  6. P1: no build-log entry at the time (to keep P1 one commit); this entry
+     covers it.
+  7. P1: single praise words ("Great", "Correct") count as a bad opening only
+     when punctuation follows, so "Great Britain aside…" or "Correct article
+     use…" pass; every rejection is a paid retry.
+  8. P2: **timeout 90 s, not the 60 s in the brief.** The one live
+     measurement was 27.6 s for ~1,500 output tokens (~54 tokens/s); a full
+     3,072-token response at that pace is ~57 s, so 60 s could cut off (and
+     waste) a billed response that is still arriving. Nobody waits on a cron,
+     and a cron may run 15 minutes. One constant (`GENERATION_TIMEOUT_MS`).
+  9. P2: **at most one Anthropic call per run**, not one per missing date.
+     This bounds each run's cost and its CPU (Workers Free: 10 ms per
+     invocation) to one set. After a first deploy, the four dates fill in over
+     four hours.
+  10. P2: the kill switch **fails closed**: only the exact string `"true"`
+      enables generation, so a typo or an empty value stops it rather than
+      running it. A disabled run writes one `shared_set_cron` line (no KV, no
+      Anthropic), so the switch can be seen working in the logs.
+  11. P2: a **lease** (2 minutes) in the attempt record, beyond the brief's
+      read-before-write, so a run that starts while another is waiting on
+      Anthropic skips the date instead of paying for a second set. KV has no
+      compare-and-swap, so two runs that both read the date as free within
+      the same few milliseconds could still both generate. With an hourly
+      schedule this needs Cloudflare to start two runs at the same instant.
+  12. P2: the `scheduled` handler logs an unexpected error by category and
+      rethrows, so the dashboard marks the run as failed.
+- **[Process]** While testing the new deploy guard, `npm run deploy` was run
+  once by mistake. The guard stopped it (placeholder present, exit 1) before
+  `wrangler deploy` ran, so nothing was uploaded. From then on the guard was
+  tested only by running `node scripts/check-placeholders.mjs` directly. A
+  dry run (`wrangler deploy --dry-run`, local bundling only) confirmed the
+  config parses: bindings `QUOTA_KV`, `DAILY_SETS_KV` (placeholder), three vars.
+- **[Validation]** P2 tests (21): a missing date generated once and a second
+  run with no request; an idle run with zero fetches and zero KV writes;
+  nearest date first, one call per run; three rejected attempts then stop, no
+  set written, reason in each line; a retry after a rejection publishes; two
+  overlapping runs make one request and one set write; a set that appears
+  mid-call is never overwritten (`already_published`); a timeout gives
+  `failure: "timeout"` on both lines and counts the attempt; the 90 s signal
+  exists only on this path; an HTTP error and a truncated answer are logged
+  with their category and stop reason; the avoid list covers exactly 7 days
+  back; the TTLs; four kill-switch values that touch nothing; no path touches
+  `QUOTA_KV`; no content in any log line, and a fixed key set; the Worker's
+  `scheduled` export. Mutations that turn tests red: no lease, no re-read
+  before the write, a switch that only checks for "false", no attempt cap, no
+  presence check, no timeout signal, no one-call-per-run limit, no set TTL.
+  In P1, mutations that turn tests red: one legacy prompt word, one schema
+  field, dropping the `İ` fix, `usageKind` without the new operation, no fold
+  check, a plan algorithm change.
+- **[Open]** Not measured until D1: CPU time per run against the Free plan's
+  10 ms, and real `shared_set_generation` outcomes. What a bare
+  `npx wrangler deploy` does with the placeholder id is expected to be a
+  rejection by the Cloudflare API (an invalid namespace id), but that was not
+  tried; `npm run deploy` stops before it.
+
+## 2026-09-26 (1.1.0 shared Daily Test — P3 read route, proxy, not deployed)
+
+Batch P3 (`2b85b7b`) of `docs/1.1.0-shared-daily-test.md` §11, on `1.1.0`.
+Proxy only; `lib/` untouched; **not deployed**. Proxy tests 174 → 213, `tsc`
+clean, `wrangler deploy --dry-run` bundles (45.37 KiB).
+
+- **[Engineering]** `GET /v1/shared-daily-test/{date}` in
+  `proxy/src/shared_read.ts`, routed in `index.ts` before the POST-only check.
+  Checks, in order, before any cache or KV read: app token (401), date format
+  (400), window `[UTC today − 1, UTC today + 2]` (404), kill switch
+  `SHARED_DAILY_TEST_ENABLED` exactly `"true"` (404, the same fail-closed rule
+  as the cron, and it also hides a set that is already cached). Then the Cache
+  API under a synthetic key without the token
+  (`https://shared-daily-test.cache.grammarlens/set/{date}`, `public,
+  max-age=3600`, written through `ctx.waitUntil`), then
+  `DAILY_SETS_KV.get(…, {cacheTtl: 3600})`. A found set answers 200
+  `{date, promptVersion, questions}` with `Cache-Control: private, max-age=0`.
+  A miss answers 404 `{"error":"not_found","message":"No shared Daily Test for
+  this date."}`, is not cached, and never generates.
+- **[Engineering]** `setKey` and `PublishedSet` moved from
+  `shared_generation.ts` to `shared_daily_test.ts` (re-exported), so the read
+  side's import graph (`shared_read` → `auth`, `types`, `shared_daily_test` →
+  `topics`) contains neither `anthropic.ts` nor `quota.ts`. A test walks that
+  graph from the sources (`?raw` imports). New error code `not_found`.
+  `logUnhandledError` accepts `read_shared_daily_test` (kind `daily_test`) for
+  an unexpected error on the route.
+- **[Deviations from the P3 brief]**
+  1. A malformed date answers **400 `invalid_request`**, not 404. It is a bad
+     request, not a missing set; the app treats any non-200 the same way
+     (fallback), so nothing depends on the difference.
+  2. The response carries `{date, promptVersion, questions}`, not the stored
+     record: `generatedAt` and `attempt` stay server-side.
+  3. A stored value that does not parse, or whose `date` differs from the key,
+     is treated as missing (404, not cached).
+  4. The D1 commit (the `DAILY_SETS_KV` id) was **not on `origin`** when P3
+     started: `1.1.0` still has the `REPLACE_WITH_DAILY_SETS_KV_ID`
+     placeholder, and no branch has a newer commit. P3 does not touch
+     `wrangler.jsonc`, so that commit will merge cleanly once it is pushed.
+- **[Validation]** 39 new tests in `test/shared_read.test.ts`. Every test
+  asserts, in `afterEach`, zero outbound requests and an empty `QUOTA_KV`.
+  Hit for −1/0/+1/+2 with the headers and body; the storage-only fields not
+  sent; the second read from the Cache API with no KV read; a cached set still
+  served after its KV key is deleted; the cache key (synthetic, no token), its
+  `max-age=3600` and KV's `cacheTtl: 3600`; miss → 404 and not cached (found
+  once published); an unusable value → 404; −2/+3/−30/+400 → 404, and a
+  malformed date → 400, and a missing, wrong or empty token → 401, each with
+  **no KV or cache call at all**; a bad token beats a bad date; four
+  kill-switch values → 404 with no KV or cache call, even with the set cached;
+  POST to the path → 404; path variants; the import graph. The existing POST
+  tests and the byte-pinned legacy request pass unchanged. Mutations that turn
+  tests red: no token check, the token or the window checked after the
+  cache/KV read, no window check, no switch, a switch that only checks for
+  "false", the request URL as the cache key, no cache write, no `cacheTtl`, a
+  public client header, a cached miss, `quota.ts` imported, the route
+  answering POST.
+
+## 2026-09-26 (1.1.0 shared Daily Test — first deploy)
+
+First deploy of the shared Daily Test proxy side (P1–P3 plus the
+`DAILY_SETS_KV` id, `910f6e7`), from `1.1.0`. Docs only in this commit; no
+code, config or test changed. No client reads the new route yet.
+
+- **[Deviation from the plan]** D1 and D2 of `docs/1.1.0-shared-daily-test.md`
+  §11 were **combined into one deploy**. Reason: no client uses the read route
+  yet, so watching the cron alone before the read route went live had no
+  benefit.
+- **[Deploy]** 2026-09-26, from `1.1.0`, with `npm run deploy`. New version
+  `5089ae26-4b08-4ae2-a11e-bb6ac9693fc5`; rollback target
+  `39f39064-0374-42ec-9257-282016c191ba`. Bindings: `QUOTA_KV`,
+  `DAILY_SETS_KV` (`fa8b5ef8463540afb1d125ba644da824`).
+  `SHARED_DAILY_TEST_ENABLED` `"true"`; limits 15/300 unchanged; cron
+  `7 * * * *`.
+- **[First cron run]** 15:07 UTC: `set:2026-09-26` published on attempt 1.
+  `stop_reason` `end_turn`; 1,380 input + 1,620 output tokens (≈ $0.028);
+  wall time 35.4 s; **CPU time 8 ms**, 80% of the Free plan's 10 ms limit.
+  Being watched.
+- **[Live read tests]** (`curl`) Today: 200, `Cache-Control: private,
+  max-age=0`, no `generatedAt` or `attempt` in the body. Today + 3: 404
+  `not_found`. Bad token: 401. Malformed date (`2026-13-01`): 400
+  `invalid_request`.
+- **[Content — owner review of `set:2026-09-26`]** The validator checks
+  structure, not grammatical correctness. Issues found:
+  1. `modalPastForms` question: the answer ("should have come") is right, but
+     the hint and explanation teach a rule that does not exist ("should"
+     becomes "should have" in reported speech).
+  2. `modalVerbs` question: two defensible answers ("must" and "should"). The
+     exact on-device check marks "should" wrong.
+  3. Minor: in a `tenseSelection` question, "I already had taken", listed as
+     a wrong answer, is an acceptable form.
+
+  These most likely also occurred in legacy sets, which use the same prompt;
+  the shared set makes them visible and fixable in one place. **No decision
+  yet**: more sets are reviewed first. Candidates: a prompt improvement (no
+  cost); `acceptedAnswers` (schema and client change); a daily verification
+  call (~1–2 cents/day, independent of the number of users).
+- **[Product — launch screen, 1.1.0 side work]** Owner decision, 2026-09-26:
+  logo + "GrammarLens" wordmark. Animation: the logo settles with a slight
+  scale-up and the wordmark fades in; at most ~1.2 s, overlapping launch work;
+  cold start only; the iOS static launch screen is identical to the
+  animation's first frame; static when Reduce Motion is on. Idea for a later
+  version: the wordmark coming into focus through a lens transition.
+  Implemented after the `main` merge.
+- **[Open]**
+  - The 1.0.0 app's live legacy route is not verified on a device yet (owner,
+    2026-09-27).
+  - No read test for tomorrow's date yet.
+  - CPU time of the following cron runs not yet watched.
+  - The `1.1.0` → `main` merge of the proxy commits (deploy rule, §11) is not
+    done.

@@ -4,6 +4,7 @@ import { durationField, usageKind } from './usage_log';
 /** What went wrong with an upstream (Anthropic) call, as a fixed vocabulary. */
 export type UpstreamFailure =
   | 'network_error' // the request never got a response
+  | 'timeout' // the caller's abort signal fired first (the shared-set cron only)
   | 'http_error' // a non-200 response
   | 'unreadable_body' // a 200 whose body was not JSON
   | 'no_text_block' // a 200 without a text content block
@@ -96,11 +97,11 @@ export function errorCategory(e: unknown): string {
  * anything from the request: an unexpected error's message can quote request
  * or response text. Only the fields built below are logged.
  */
-export function logUnhandledError(op: AnthropicOperation['op'], e: unknown): void {
+export function logUnhandledError(op: AnthropicOperation['op'] | 'read_shared_daily_test', e: unknown): void {
   console.error(
     JSON.stringify({
       event: 'unhandled_error',
-      kind: usageKind(op),
+      kind: op === 'read_shared_daily_test' ? 'daily_test' : usageKind(op),
       operation: op,
       error: errorCategory(e),
     }),

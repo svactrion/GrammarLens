@@ -2,6 +2,8 @@ import { requireAppToken } from './auth';
 import { callAnthropic } from './anthropic';
 import { logUnhandledError } from './error_log';
 import { reserveQuota } from './quota';
+import { runSharedGeneration } from './shared_generation';
+import { SHARED_SET_PATH, handleSharedSetRead } from './shared_read';
 import { ProxyError, type Env } from './types';
 import {
   validateGenerateDailyTest,
@@ -74,11 +76,24 @@ const ROUTES: Record<string, 'generate_practice_set' | 'generate_daily_test' | '
 };
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === 'GET' && url.pathname === '/health') {
       return new Response('ok', { status: 200 });
+    }
+
+    // The shared Daily Test read (1.1.0+). Handled apart from the operations
+    // below: no body, no device, no quota, and never a call to Anthropic.
+    const sharedSet = request.method === 'GET' ? SHARED_SET_PATH.exec(url.pathname) : null;
+    if (sharedSet) {
+      try {
+        return await handleSharedSetRead(request, env, sharedSet[1] as string, ctx);
+      } catch (e) {
+        if (e instanceof ProxyError) return e.toResponse();
+        logUnhandledError('read_shared_daily_test', e);
+        return new ProxyError('internal_error', 500, 'Something went wrong.').toResponse();
+      }
     }
 
     if (request.method !== 'POST') {
@@ -97,6 +112,20 @@ export default {
       // Category only: an unexpected error's message can quote request text.
       logUnhandledError(op, e);
       return new ProxyError('internal_error', 500, 'Something went wrong.').toResponse();
+    }
+  },
+
+  /** The hourly cron (wrangler.jsonc `triggers.crons`): shared Daily Test
+   * generation. Uses the trigger's scheduled time as "now", so a delayed
+   * start still works on the hour it was meant for. An unexpected error is
+   * logged by category only, then rethrown so the dashboard marks the run
+   * as failed. */
+  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
+    try {
+      await runSharedGeneration(env, new Date(controller.scheduledTime));
+    } catch (e) {
+      logUnhandledError('generate_shared_daily_test', e);
+      throw e;
     }
   },
 };
