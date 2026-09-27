@@ -5536,3 +5536,61 @@ code, config or test changed. No client reads the new route yet.
   - CPU time of the following cron runs not yet watched.
   - The `1.1.0` → `main` merge of the proxy commits (deploy rule, §11) is not
     done.
+
+## 2026-09-27 (1.1.0 shared Daily Test quality — owner decisions, P4)
+
+Decisions only in this entry; no code changed. The P4 batch 0 report
+(`docs/1.1.0-shared-daily-test-quality.md`) is approved; §12 there records
+each answer with its date.
+
+- **[Facts verified 2026-09-27]**
+  - The 1.0.0 legacy route was verified on a device: one
+    `generate_daily_test` call with 1,173 input tokens, the same as before
+    1.1.0 (build log 2026-09-24), so the legacy request is unchanged in
+    production as well as in the byte-for-byte test.
+  - `1.1.0` was merged into `main` (`f011885`), as the deploy rule requires.
+  - The shared sets for 26–29 September were published on attempt 1.
+  - The highest cron CPU time so far is 8.73 ms, on the first generation, of
+    the Free plan's 10 ms.
+- **[Product] Why a quality step at all.** The owner's review of the 26 and
+  27 September sets found 4 of 10 questions defective: `error_correction`
+  sentences that were already acceptable, questions with two defensible
+  answers under exact-match grading, and hints or explanations stating rules
+  that do not exist. `validateSharedSet` checks structure, not grammar. One
+  shared set reaches every user, so a defect is everyone's.
+- **[Decisions]** Prompt v2 as a separate system prompt (rules 1–5; final
+  wording after the local measurement E), with the legacy prompt and request
+  unchanged byte for byte. A new automatic rule: an `error_correction` answer
+  may change only one contiguous part of the sentence, at most 4 words.
+  Full-sentence answers stay (the wrong-answer share is measured after C1).
+  No per-topic "safe ground" list for now. The checker decision table is
+  approved as written: at most 2 alternatives become `acceptedAnswers`; an
+  original that is not wrong, a wrong key, a false rule, an acceptable
+  "wrong" answer and an explanation that excludes an alternative always
+  reject. Checker model: different from the generator and at least as strong
+  (default candidate `claude-sonnet-5` with thinking, compared with
+  `claude-sonnet-4-6` with thinking). At most 3 generations + 3 checks per
+  date. Fail-closed, with no switch that skips the check; the bundled fallback
+  pool covers long outages. Rejected sets kept as `review:*` in KV for 14 days
+  in the first weeks, to measure checker false alarms. The v1 sets are exported
+  and then deleted (`set:`/`attempts:` from that day on) at D3. The check is
+  counted as `daily_test` cost. E runs before D3, and never without the
+  owner's approval of the run. If CPU exceeds 10 ms: trimming first, Workers
+  Paid ($5/month, a cost increase) only if that is not enough, decided on the
+  D3 measurement.
+- **[Additions, owner]** Reason for each:
+  - **A. Over-generate and select** (2 candidates per topic, the 5 clean ones
+    that fit the plan are published), or regenerate only the failing question.
+    Reason: with the whole set rejected for one bad question, a 40% defect rate
+    publishes a date only ~22% of the time within 3 attempts. Choosing among
+    candidates, or repairing one slot, makes that far less sensitive to the
+    defect rate.
+  - **B. `claude-sonnet-5` as a generator candidate** for the shared set only
+    (the legacy route keeps its model). Reason: a stronger model at a lower
+    list price; costs are compared on measured tokens because its tokenizer
+    produces more tokens for the same text.
+  - **C. Message Batches API** evaluated for the cron (50% discount).
+  - **D. Roadmap note** after 1.1.0: practice generation model migration to
+    `claude-sonnet-5`, quality and schema compliance first.
+- **[Process]** The batch order stays P4 → … → D3 → `main` merge, all before
+  C1, and is updated for the additions in the report's §13.
