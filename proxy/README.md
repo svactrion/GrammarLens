@@ -245,6 +245,16 @@ request and leaves `QUOTA_KV` untouched. A pulled set (the owner deleting
 `set:{date}`) can still be served for up to an hour from a data center's cache
 and KV's read cache.
 
+## Local measurement E (not deployed)
+
+`eval/` holds the local measurement of the shared Daily Test quality step
+(`docs/1.1.0-shared-daily-test-quality.md` §13.6): `npm run eval -- dry-run`
+prints its requests and estimated cost without calling the API; `run` and
+`analyze` need the owner's approval. `eval/README.md` is the owner's checklist.
+It uses the Worker's own request builders and gates, bundled for Node; the
+Worker never imports it. Its outputs (`eval/out/`), inputs (`eval/input/`) and
+bundle (`eval/.build/`) are gitignored.
+
 ## Known tradeoff: quota isn't atomic
 
 `src/quota.ts` reads then writes two KV counters per request (device +

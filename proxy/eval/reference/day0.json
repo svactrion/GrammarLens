@@ -1,0 +1,114 @@
+{
+  "_comment": [
+    "The bundled first Daily Test (kDayZeroQuestions, lib/data/day_zero_daily_test.dart), exported with DailyTestQuestion.toJson on 2026-09-27 through a throwaway flutter test. Reference set R3 of the local measurement E: written and reviewed by hand, so every question is known good.",
+    "If the Dart constant changes, export it again; nothing checks the two against each other."
+  ],
+  "questions": [
+    {
+      "id": "day0_1",
+      "type": "fill_in_blank",
+      "context": "You should avoid ___ too much sugar.",
+      "instruction": "Fill in the blank with the correct form of the verb in brackets.",
+      "hint": "(eat)",
+      "topicId": "gerundVsInfinitive",
+      "correctAnswer": "eating",
+      "commonWrongAnswers": [
+        {
+          "answer": "to eat",
+          "comment": "'Avoid' is followed by the -ing form, not 'to'. Say 'avoid eating'."
+        },
+        {
+          "answer": "eat",
+          "comment": "After 'avoid' the verb takes -ing: 'avoid eating'."
+        }
+      ],
+      "explanation": "After 'avoid', the next verb takes the -ing form, so it's 'avoid eating'."
+    },
+    {
+      "id": "day0_2",
+      "type": "error_correction",
+      "context": "She is best student in our class.",
+      "instruction": "Find the mistake and rewrite the full corrected sentence.",
+      "topicId": "articles",
+      "correctAnswer": "She is the best student in our class",
+      "commonWrongAnswers": [
+        {
+          "answer": "She is a best student in our class",
+          "comment": "'Best' is a superlative, and superlatives take 'the': there is only one best."
+        },
+        {
+          "answer": "She is best student in our class",
+          "comment": "That is the same sentence. Look for the small word missing before 'best student'."
+        }
+      ],
+      "explanation": "'Best' compares her with everyone else, and there is only one best, so it needs 'the': 'the best student'."
+    },
+    {
+      "id": "day0_3",
+      "type": "error_correction",
+      "context": "She can speaks three languages.",
+      "instruction": "Find the mistake and rewrite the full corrected sentence.",
+      "topicId": "modalVerbs",
+      "correctAnswer": "She can speak three languages",
+      "commonWrongAnswers": [
+        {
+          "answer": "She can speaking three languages",
+          "comment": "After a modal like 'can', use the plain verb: 'can speak'."
+        },
+        {
+          "answer": "She can to speak three languages",
+          "comment": "Modals are followed by the plain verb without 'to'."
+        },
+        {
+          "answer": "She can speaks three languages",
+          "comment": "That is the same sentence. Look at the verb after 'can'."
+        }
+      ],
+      "explanation": "After 'can', the verb stays in its plain form, even with 'she', so it's 'can speak'."
+    },
+    {
+      "id": "day0_4",
+      "type": "fill_in_blank",
+      "context": "Tom said he ___ call me the next day.",
+      "instruction": "Put the verb in brackets into reported speech.",
+      "hint": "(will)",
+      "topicId": "modalPastForms",
+      "correctAnswer": "would",
+      "commonWrongAnswers": [
+        {
+          "answer": "will",
+          "comment": "After 'said' (past), 'will' moves back to 'would' in reported speech."
+        },
+        {
+          "answer": "could",
+          "comment": "'Could' means 'was able to'. To report 'will', use 'would'."
+        }
+      ],
+      "explanation": "When you report what someone said in the past, 'will' moves back to 'would': 'he would call me'."
+    },
+    {
+      "id": "day0_5",
+      "type": "fill_in_blank",
+      "context": "Yesterday I ___ a great film.",
+      "instruction": "Fill in the blank with the correct form of the verb in brackets.",
+      "hint": "(see)",
+      "topicId": "tenseSelection",
+      "correctAnswer": "saw",
+      "commonWrongAnswers": [
+        {
+          "answer": "have seen",
+          "comment": "With a finished time like 'yesterday', use the simple past: 'saw'."
+        },
+        {
+          "answer": "seen",
+          "comment": "'Seen' needs a helper verb. With 'yesterday', use the simple past 'saw'."
+        },
+        {
+          "answer": "had seen",
+          "comment": "'Had seen' is for something before another past moment. With 'yesterday', use 'saw'."
+        }
+      ],
+      "explanation": "'Yesterday' is a finished time in the past, so the verb goes in the simple past: 'saw'."
+    }
+  ]
+}
