@@ -5594,3 +5594,65 @@ each answer with its date.
     `claude-sonnet-5`, quality and schema compliance first.
 - **[Process]** The batch order stays P4 → … → D3 → `main` merge, all before
   C1, and is updated for the additions in the report's §13.
+
+## 2026-09-27 (1.1.0 shared Daily Test quality — P4 prompt v2 and one-span rule, proxy, not deployed)
+
+Batch P4 (`9ce63c1`) of `docs/1.1.0-shared-daily-test-quality.md` §13.5, on
+`1.1.0`. Proxy only; `lib/` untouched; **not deployed**, and Anthropic was not
+called. Proxy tests 213 → 240, `tsc` clean, `wrangler deploy --dry-run`
+bundles (50.63 KiB).
+
+- **[Why this batch first]** Of the updated plan, P4 is the one batch the
+  additions A–C do not change: every generation variant in E (either model,
+  either strategy) uses the v2 text and the one-span rule, and E needs both
+  prompt versions buildable. P5 (model and candidates per slot) and P6
+  (checker) depend on A and B.
+- **[Engineering]** `SHARED_DAILY_TEST_SYSTEM_PROMPT_V2` in `anthropic.ts`,
+  used only by `generate_shared_daily_test` when the request asks for
+  `promptVersion: 2`. Self-contained (the legacy prompt refers to a practice
+  prompt the model never sees and never defines "hint"), with the five
+  correctness rules; the answer-key, predicted-wrong-answer and explanation
+  paragraphs are carried over. Model, schema and `max_tokens` are unchanged.
+  Version 2's user prompt adds one clause (keep the slot's topic and type, move
+  the situation). `SharedPromptVersion` = 1 | 2 is a request option;
+  **`SHARED_PROMPT_VERSION`, what the cron sends and stores, stays 1** until
+  the two-phase cron ships (P7), so the final wording can still change after E
+  with no deploy in between.
+- **[Engineering]** `validateSharedSet` rule `error_correction_multi_edit`,
+  via `isSingleShortEdit`: after `normalizeAnswer`, a word-level common prefix
+  and suffix (never overlapping) leave one differing span, which may hold at
+  most `ERROR_CORRECTION_MAX_EDIT_WORDS` (4) words on each side. Linear in
+  sentence length. It applies to every version, so it also takes effect on the
+  current cron at the next deploy (none is planned before D3).
+- **[Deviations from the report]**
+  1. Rule 5 (hint) also allows the base form of the word to change, e.g.
+     "(travel)". The report's wording ("never gives the answer; points to where
+     to look") would have forbidden the hint form the bundled day-0 set uses.
+  2. The user-prompt clause says "without breaking the correctness rules"
+     instead of "under the rules above": the rules are in the system prompt, not
+     above the clause.
+  3. The cron keeps version 1 (the report's P4 row said "`SHARED_PROMPT_VERSION`
+     → 2"); explained above.
+  4. One existing test changed its data, not its assertion: `plan_mismatch`
+     "a type the plan does not give that topic" switched a fill-in item to
+     `error_correction` without changing its text, which the new rule now
+     rejects first. The item is now a valid error-correction pair, so the test
+     still isolates the type mismatch.
+- **[Validation]** New tests: the rule accepts an inserted, replaced or removed
+  word, 4 words each side, and normalized differences (case, spacing, curly
+  quote, final full stop); it rejects 5 words either side, two fixes far apart
+  and a rewritten sentence; `unchanged_error_correction` still wins for an
+  unchanged sentence; fill-in items are exempt; 12 table cases for
+  `isSingleShortEdit`, including repeated words. The owner's cases (c) and (d)
+  are one-word edits, and a test records that the rule does **not** catch them
+  (the checker's job). Request: version 1's fingerprint unchanged (`c1a5703`),
+  version 2 pinned (`22121840`); v2 keeps v1's model, budget and schema; its
+  system prompt is its own and carries the five rules; the user prompts differ
+  only by the clause; the default is version 1, and a cron test checks that the
+  hourly run sends the version 1 system prompt. The legacy byte pin
+  (`test/index.test.ts`) passes unchanged. **Mutations that turn tests red:**
+  the rule not applied; the limit 4 → 5; the rule on raw instead of normalized
+  text; a suffix allowed to overlap the prefix (this one survived at first and
+  got its own test case); only the removed side checked; v2 sending the legacy
+  system prompt; the clause added for every version; one word of the legacy
+  prompt; the cron switched to version 2; one word of the v2 prompt.
