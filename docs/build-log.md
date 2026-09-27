@@ -5656,3 +5656,103 @@ bundles (50.63 KiB).
   got its own test case); only the removed side checked; v2 sending the legacy
   system prompt; the clause added for every version; one word of the legacy
   prompt; the cron switched to version 2; one word of the v2 prompt.
+
+## 2026-09-27 (1.1.0 shared Daily Test quality — P5, P6 and E prepared, proxy, not deployed, E not run)
+
+Batches P5 (`6017820`) and P6 (`087ee61`) of
+`docs/1.1.0-shared-daily-test-quality.md` §13.5, and the preparation of the
+local measurement E (`3619d8b`), on `1.1.0`. Proxy only; `lib/` untouched;
+**not deployed**; **no Anthropic call** (E's dry run makes none, and E itself was
+not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (now also
+`tsc -p eval`), `wrangler deploy --dry-run` bundles (56.11 KiB).
+
+- **[Owner decision, 2026-09-27]** P4 approved, its deviations 1–7 accepted.
+  On the conflict in deviation 7: if E picks `claude-sonnet-5` as the generator,
+  the checker candidate is `claude-opus-5-5` (E measures it as K3).
+- **[Engineering — P5]** The shared generation request takes a model
+  (`SharedGeneratorModel`: `claude-sonnet-4-6`, the default, or
+  `claude-sonnet-5`, sent with `thinking: {type: "adaptive"}` and
+  `THINKING_HEADROOM_TOKENS` (12,000) more `max_tokens`) and 1 or 2 candidates
+  per plan slot (the request asks for 10 questions grouped by slot, with the
+  budget for 10). Options are an object: `sharedDailyTestRequest(plan, avoid,
+  {promptVersion, model, candidatesPerSlot})`. `validateSharedCandidates` judges
+  an over-generated answer's shape as a whole (count, plan, two per slot,
+  unique ids) and drops only candidates that break a content rule; a slot left
+  empty rejects it with that slot's first reason. The legacy route keeps its own
+  `MODEL` constant; the cron's request is unchanged (v1 fingerprint
+  `c1a5703`). The measured variants are pinned: G3 `9391a5af`, G4 `f04badb8`,
+  G5 `98f1bfc3`.
+- **[Engineering — P6]** `src/shared_check.ts` and operation
+  `check_shared_daily_test`: the §2.1 checker prompt, the §2.2 schema (enums
+  for every verdict field), adaptive thinking for all three checker candidates,
+  and a budget of 400 tokens per question + the thinking headroom. The proxy
+  decides: `parseCheckOutput` (an unusable review is `unreadable`, a failed
+  check rather than a rejection), `decideQuestion` (§2.3 rows 1–9 in order;
+  noise among the alternatives is dropped, not rejected), `decideCheckedSet`
+  (one per slot) and `selectCandidates` (two per slot: the passing candidate
+  with the fewest alternatives, then the first). Up to 2 alternatives become
+  `acceptedAnswers`, always present (possibly empty) on a published question.
+  `CHECK_VERSION` 1, fingerprint `3c489122`. The check is `daily_test` cost
+  (decision 11), and its log line carries no content (planted-secret test).
+  `gradeAnswer` states the grading order C1 implements, against a new shared
+  fixture, `proxy/test/fixtures/daily_test_grading.json` (written by hand: the
+  `accepted` kind does not exist in Dart yet). Not wired to the cron (P7).
+- **[Engineering — E, prepared]** `proxy/eval/` (Node, bundled with the esbuild
+  wrangler already installs; the Worker never imports it): the §13.6 matrix
+  (111 requests: 30 generations, 81 checks), stages A (5 synchronous
+  generations) → B (25 batched) → C (3 synchronous checks) → D (78 batched),
+  prices from the 2026-09-27 pricing page, a $4.00 cap on measured spend
+  (a stage is trimmed, least important first, if spend so far + 1.25 × its
+  estimate would pass it; token estimates are replaced by the synchronous
+  stages' measurements), resume of a stopped run, a synchronous request the
+  API refuses with a 4xx drops the rest of that variant or checker, and the
+  results host is checked before the key is sent. The owner's sheet
+  (`labels.csv`) is shuffled with a seeded generator under random keys; the
+  mapping, raw outputs and state are under `private/`. `analyze` reports raw and
+  published defect rates, checker recall and false rejects, publish rates (S1,
+  S2 measured, S3 simulated), measured tokens and cost, wall time, and the JSON
+  work per phase timed in Node. The day-0 set is exported to
+  `eval/reference/day0.json` (through a throwaway Flutter test, not committed).
+  `eval/out/`, `eval/input/` and `eval/.build/` are gitignored.
+  `@types/node` added as a dev dependency, for `eval/tsconfig.json` only.
+  Owner checklist: `proxy/eval/README.md`.
+- **[Dry run]** `npm run eval -- dry-run`: 111 requests, **estimated $3.12**
+  (all synchronous would be $5.84); reference sets R1/R2 not exported yet (their
+  checks would be skipped); API key found in `proxy/.dev.vars` (not shown; not
+  tested against the API).
+- **[Offline rehearsal]** The full `run` → `labels.csv` → `analyze` path was
+  run once against a stub of `fetch` loaded with `node --import` (fake key, fake
+  responses, one expired batch result): no network call, and no change to the
+  code under test. 30 generations, 3 synchronous and 67 batched checks, a
+  155-row sheet with no source information in any cell, and a report from
+  synthetic labels. The rehearsal's files were outside the repo, and a fake R1
+  input it needed was deleted afterwards.
+- **[Deviations]**
+  1. `sharedDailyTestRequest`'s third parameter became an options object
+     (P4's tests call it with `{ promptVersion }` now); the requests are
+     unchanged, as the fingerprints show.
+  2. P6 has no `review:*` records or log line yet: both belong to the cron
+     wiring (P7).
+  3. Reference sets R1/R2 are labelled in the sheet like every other row, not
+     pre-filled as §13.6 said: pre-filling would reveal which rows are
+     references, and the owner reviewed them anyway.
+  4. E's checks of over-generated sets send only the candidates that passed the
+     proxy's gate (up to 10).
+  5. `@types/node` added (a dev dependency, used by `eval/tsconfig.json` only).
+  6. One mutation survived and is equivalent: using the two-candidate gate
+     with one candidate per slot accepts and rejects exactly what
+     `validateSharedSet` does (a P5 test asserts that).
+- **[Validation]** Mutations that turn tests red. **P5 (11):** the default model
+  changed, thinking for every model or for none, no headroom, the builder
+  ignoring the model, the count ignoring candidates, a bad candidate rejecting
+  all, no per-slot limit, no duplicate-id check, an empty slot allowed, the
+  legacy model constant changed. **P6 (21):** each §2.3 row removed or
+  loosened, `uncertain` passing, no dedupe, the key kept as an alternative, no
+  length limit, a review missing or an id repeated in the parse, selection
+  ignoring the alternative count, two grading-order changes, `acceptedAnswers`
+  sent to the checker, a checker without thinking, the check filed as practice
+  cost, one word of the checker prompt. **E (13 of 14):** the budget drop
+  order, margin or spent ignored, full price for batches, K2 on every
+  variant, all calls synchronous, no formula guard in the CSV, doubled quotes,
+  the source leaking into a row, a key collision kept, no shuffle, any label
+  accepted, recall swapped. The legacy byte pin passes unchanged throughout.
