@@ -17,13 +17,25 @@ import { TOPICS } from './topics';
 export const SHARED_SET_QUESTION_COUNT = 5;
 
 /**
- * Stored with every published set. Bump it on any change to what the
- * generation request asks for (the user prompt below, the Daily Test system
- * prompt or schema it reuses, the plan), so a set can always be traced to the
- * prompt that produced it. `test/shared_daily_test.test.ts` pins a fingerprint
- * of the request to this number.
+ * The shared generation prompts that can be built. Each is pinned by a request
+ * fingerprint in `test/shared_daily_test.test.ts`; any change to what a
+ * version asks for (its system prompt, user prompt, schema or the plan) is a
+ * new version, so a set can always be traced to the prompt that produced it.
+ *
+ * - 1: the legacy Daily Test system prompt and schema, with the day's plan in
+ *   the user prompt.
+ * - 2: its own system prompt with explicit correctness rules
+ *   (docs/1.1.0-shared-daily-test-quality.md §1.2, approved 2026-09-27; the
+ *   final wording is fixed after the local measurement E).
  */
-export const SHARED_PROMPT_VERSION = 1;
+export type SharedPromptVersion = 1 | 2;
+
+/**
+ * The version the hourly cron builds, and stores with every published set.
+ * Still 1: version 2 is built only on request (the local measurement E) until
+ * the two-phase cron with the check call ships (P7).
+ */
+export const SHARED_PROMPT_VERSION: SharedPromptVersion = 1;
 
 /** Hard cap on an explanation's length. The prompt asks for fewer than 25
  * words; 35 sits above the measured maximum (27, 2026-09-24), so an ordinary
@@ -191,13 +203,16 @@ export interface GenerateSharedDailyTestRequest {
   /** Correct answers from recent published sets, for "do not reuse" in the
    * prompt. Model-written text, never anything from a user. */
   readonly avoidAnswers: readonly string[];
+  /** Which prompt to build; see [SharedPromptVersion]. */
+  readonly promptVersion: SharedPromptVersion;
 }
 
 export function sharedDailyTestRequest(
   plan: DailyPlan,
   avoidAnswers: readonly string[] = [],
+  promptVersion: SharedPromptVersion = SHARED_PROMPT_VERSION,
 ): GenerateSharedDailyTestRequest {
-  return { plan, count: plan.slots.length, avoidAnswers };
+  return { plan, count: plan.slots.length, avoidAnswers, promptVersion };
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +277,7 @@ export type SharedSetRejection =
   | 'wrong_answer_matches_correct' // a predicted wrong answer grades as correct
   | 'duplicate_wrong_answer'
   | 'unchanged_error_correction' // the "correction" equals the flawed sentence
+  | 'error_correction_multi_edit' // the correction changes more than one short span
   | 'explanation_not_one_sentence'
   | 'explanation_too_long'
   | 'explanation_bad_opening'; // opens with praise or "Not quite"
@@ -322,6 +338,36 @@ function optionalText(value: unknown): string | undefined {
 
 function wordCount(value: string): number {
   return value.trim().split(/\s+/).length;
+}
+
+/** Words an `error_correction` answer may remove from, or put into, the flawed
+ * sentence (owner decision 2026-09-27). */
+export const ERROR_CORRECTION_MAX_EDIT_WORDS = 4;
+
+/**
+ * Whether [correct] differs from [original] (both already normalized, so
+ * words are separated by single spaces) in one contiguous run of at most
+ * [ERROR_CORRECTION_MAX_EDIT_WORDS] words on each side. Everything before the
+ * first differing word and after the last one must be identical, so two fixes
+ * further apart than that, or a rewritten sentence, fail. Linear in the
+ * sentence length.
+ */
+export function isSingleShortEdit(original: string, correct: string): boolean {
+  const from = original.split(' ');
+  const to = correct.split(' ');
+  let prefix = 0;
+  while (prefix < from.length && prefix < to.length && from[prefix] === to[prefix]) prefix++;
+  let suffix = 0;
+  while (
+    suffix < from.length - prefix &&
+    suffix < to.length - prefix &&
+    from[from.length - 1 - suffix] === to[to.length - 1 - suffix]
+  ) {
+    suffix++;
+  }
+  const removed = from.length - prefix - suffix;
+  const added = to.length - prefix - suffix;
+  return removed <= ERROR_CORRECTION_MAX_EDIT_WORDS && added <= ERROR_CORRECTION_MAX_EDIT_WORDS;
 }
 
 /**
@@ -411,8 +457,12 @@ function checkQuestion(entry: unknown): SharedQuestion {
     if (seen.has(normalized)) throw new Rejected('duplicate_wrong_answer');
     seen.add(normalized);
   }
-  if (type === 'error_correction' && context !== undefined && normalizeAnswer(context) === correct) {
-    throw new Rejected('unchanged_error_correction');
+  if (type === 'error_correction' && context !== undefined) {
+    const original = normalizeAnswer(context);
+    if (original === correct) throw new Rejected('unchanged_error_correction');
+    // One error fixed and nothing else touched: a rewritten sentence can be
+    // "corrected" in more ways than one exact-match key can hold.
+    if (!isSingleShortEdit(original, correct)) throw new Rejected('error_correction_multi_edit');
   }
 
   const trimmedExplanation = explanation.trim();

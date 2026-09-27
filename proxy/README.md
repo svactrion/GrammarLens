@@ -162,7 +162,16 @@ The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
   `{date, promptVersion, generatedAt, attempt, questions}`, kept 35 days;
   `attempts:{date}` → `{count, leaseUntil}`, kept 7 days.
 - **Quality gate:** `validateSharedSet` (`src/shared_daily_test.ts`). A rejected
-  set is not written; the next hourly run retries within the cap.
+  set is not written; the next hourly run retries within the cap. Among its
+  rules: an `error_correction` answer may change only one contiguous span of
+  the flawed sentence, at most 4 words on each side
+  (`error_correction_multi_edit`, 2026-09-27).
+- **Prompt versions:** 1 (the legacy Daily Test system prompt plus the day's
+  plan) is what the cron sends and stores as `promptVersion`. 2 (its own system
+  prompt with correctness rules, `docs/1.1.0-shared-daily-test-quality.md`
+  §1.2) is built only on request, for the local measurement, until the
+  two-phase cron with the check call ships. Each version is pinned by a request
+  fingerprint test.
 - **Timeout:** 90 s on the Anthropic call (`GENERATION_TIMEOUT_MS`), logged as
   `failure: "timeout"`.
 - **Kill switch:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it on;

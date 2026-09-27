@@ -2,6 +2,7 @@ import { env } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildGenerateSharedDailyTestBody, callAnthropic, dailyTestMaxTokensFor } from '../src/anthropic';
 import {
+  ERROR_CORRECTION_MAX_EDIT_WORDS,
   EXPLANATION_MAX_WORDS,
   SCENARIO_THEMES,
   SHARED_PROMPT_VERSION,
@@ -11,10 +12,12 @@ import {
   dayNumberOf,
   foldKeyboardVariants,
   isInServingWindow,
+  isSingleShortEdit,
   normalizeAnswer,
   sharedDailyTestRequest,
   validateSharedSet,
   type DailyPlan,
+  type SharedPromptVersion,
   type SharedSetRejection,
 } from '../src/shared_daily_test';
 import { TOPICS } from '../src/topics';
@@ -460,7 +463,15 @@ describe('validateSharedSet', () => {
 
   describe('plan_mismatch', () => {
     it('rejects a type the plan does not give that topic', () => {
-      expectRejected(withQuestion(0, (q) => (q.type = 'error_correction')), 'plan_mismatch');
+      // An otherwise valid error-correction item, so only the type is wrong.
+      expectRejected(
+        withQuestion(0, (q) => {
+          q.type = 'error_correction';
+          q.context = 'We stayed at a hotel you recommended.';
+          q.correctAnswer = 'We stayed at the hotel you recommended.';
+        }),
+        'plan_mismatch',
+      );
     });
 
     it('rejects an unknown type or topic', () => {
@@ -565,6 +576,78 @@ describe('validateSharedSet', () => {
 
     it('does not apply the rule to fill-in-the-blank', () => {
       expect(validate(withQuestion(0, (q) => (q.context = 'the'))).ok).toBe(true);
+    });
+  });
+
+  describe('error_correction_multi_edit', () => {
+    const ARRIVED = 'When we arrived, the plane already left.';
+    /** The valid set with its tense item's flawed sentence and key replaced. */
+    const tense = (correctAnswer: string, context = ARRIVED) =>
+      withQuestion(3, (q) => {
+        q.context = context;
+        q.correctAnswer = correctAnswer;
+      });
+    const passes = (correctAnswer: string, context?: string) => expect(validate(tense(correctAnswer, context)).ok).toBe(true);
+    const fails = (correctAnswer: string, context?: string) =>
+      expectRejected(tense(correctAnswer, context), 'error_correction_multi_edit');
+
+    it('accepts one fix: an inserted, a replaced or a removed word', () => {
+      passes('When we arrived, the plane had already left.'); // the valid set's own item
+      passes('When we arrived, the plane had left.', 'When we arrived, the plane has left.');
+      passes('When we arrived, the plane had left.', 'When we arrived, the plane had had left.');
+    });
+
+    it(`allows a span of ${ERROR_CORRECTION_MAX_EDIT_WORDS} words on each side and rejects ${ERROR_CORRECTION_MAX_EDIT_WORDS + 1}`, () => {
+      passes('When we arrived, w x y z left.', 'When we arrived, a b c d left.');
+      fails('When we arrived, v w x y z left.', 'When we arrived, a b c d e left.');
+      fails('When we arrived, the plane left.', 'When we arrived, the plane a b c d e left.');
+      fails('When we arrived, the plane a b c d e left.', 'When we arrived, the plane left.');
+    });
+
+    it('rejects two fixes far apart, and a rewritten sentence', () => {
+      fails(
+        'When we arrived at the station, the plane had already left.',
+        'When we arrive at the station, the plane already left.',
+      );
+      fails('The plane had left before we got there.');
+    });
+
+    it('compares normalized text: case, spacing, curly quotes and the final full stop are not edits', () => {
+      passes("WHEN we arrived,   the plane's door HAD already closed", 'When we arrived, the plane\u2019s door already closed.');
+    });
+
+    it('does not apply to fill-in-the-blank', () => {
+      expect(validate(withQuestion(0, (q) => (q.context = 'a b c d e f g h'))).ok).toBe(true);
+    });
+
+    it('still reports an unchanged sentence as unchanged_error_correction', () => {
+      expectRejected(tense('When we arrived, the plane already left.'), 'unchanged_error_correction');
+    });
+
+    it("does not catch the owner's one-word cases from 2026-09-26/27: judging those is the checker's job", () => {
+      // Paraphrased from the owner's review (docs/1.1.0-shared-daily-test-quality.md §0):
+      // the original was already acceptable, and the key changes one word.
+      expect(isSingleShortEdit('i knew i must study harder', 'i knew i should study harder')).toBe(true);
+      expect(isSingleShortEdit('i go to a library on campus', 'i go to the library on campus')).toBe(true);
+    });
+  });
+
+  describe('isSingleShortEdit', () => {
+    it.each([
+      ['a b c', 'a x c', true],
+      ['a b c', 'a b c d', true],
+      ['a b c d', 'a b c', true],
+      ['x a b', 'a b', true],
+      ['a b a', 'a a', true], // repeated words: prefix and suffix never overlap
+      ['a a a', 'a a', true],
+      ['a b c d e f a b a', 'a b a', false], // 6 words removed; an overlap would count 4
+      ['a', 'b c d e', true],
+      ['a', 'b c d e f', false],
+      ['a b c d e f', 'x', false],
+      ['a b c d e f g', 'x b c d e f y', false], // two fixes 5 words apart
+      ['a b c d e f g', 'x b c y e f g', true], // two fixes inside 4 words
+    ])('%j -> %j: %s', (from, to, expected) => {
+      expect(isSingleShortEdit(from, to)).toBe(expected);
     });
   });
 
@@ -684,22 +767,82 @@ describe('generate_shared_daily_test request', () => {
     expect(body).not.toContain('deviceId');
   });
 
-  it(`is pinned to SHARED_PROMPT_VERSION ${SHARED_PROMPT_VERSION}`, () => {
-    // A fingerprint of the full request for a fixed plan and avoid list. If it
-    // changes, the shared prompt changed: bump SHARED_PROMPT_VERSION, then
-    // update the fingerprint here.
-    const body = JSON.stringify(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'])));
+  /** FNV-1a over the full request for a fixed plan and avoid list. */
+  const fingerprint = (promptVersion: SharedPromptVersion) => {
+    const body = JSON.stringify(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], promptVersion)));
     let hash = 0x811c9dc5;
     for (let i = 0; i < body.length; i++) {
       hash ^= body.charCodeAt(i);
       hash = Math.imul(hash, 0x01000193) >>> 0;
     }
-    expect({ version: SHARED_PROMPT_VERSION, fingerprint: hash.toString(16) }).toMatchInlineSnapshot(`
-      {
-        "fingerprint": "c1a5703",
-        "version": 1,
-      }
-    `);
+    return hash.toString(16);
+  };
+
+  it.each([
+    [1, 'c1a5703'],
+    [2, '22121840'],
+  ] as const)('pins prompt version %i to its request fingerprint', (version, expected) => {
+    // If a fingerprint changes, that prompt changed: make it a new version
+    // instead, and pin the new one here. Version 1 is what every published set
+    // so far was generated with.
+    expect(fingerprint(version)).toBe(expected);
+  });
+
+  it(`builds version ${SHARED_PROMPT_VERSION} by default, the one the cron uses until the check call ships`, () => {
+    expect(SHARED_PROMPT_VERSION).toBe(1);
+    expect(sharedDailyTestRequest(plan).promptVersion).toBe(1);
+    expect(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan))).toEqual(
+      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, [], 1)),
+    );
+  });
+});
+
+describe('generate_shared_daily_test request, prompt version 2', () => {
+  const plan = PLAN;
+  const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], 1));
+  const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], 2));
+  const v2User = v2.messages[0]?.content ?? '';
+
+  it('keeps the model, token budget and schema of version 1 (and so of the legacy route)', () => {
+    expect(v2.model).toBe(v1.model);
+    expect(v2.max_tokens).toBe(v1.max_tokens);
+    expect(v2.output_config).toEqual(v1.output_config);
+    expect(v2.messages).toHaveLength(1);
+  });
+
+  it('has its own system prompt, not the legacy Daily Test one', () => {
+    expect(v2.system).not.toBe(v1.system);
+    expect(v1.system).toContain('as regular');
+    // Self-contained: no pointer to a practice prompt the model never sees.
+    expect(v2.system).not.toContain('practice generation');
+  });
+
+  it('states the five correctness rules', () => {
+    for (const rule of [
+      '1. Single correct answer.',
+      '2. error_correction: the original must be clearly wrong.',
+      '3. Predicted wrong answers must be wrong.',
+      '4. Only true, standard rules.',
+      '5. "hint" is optional.',
+    ]) {
+      expect(v2.system).toContain(rule);
+    }
+    expect(v2.system).toContain('at most 15 words');
+    expect(v2.system).toContain('self-contained and unambiguous');
+  });
+
+  it('keeps the explanation and predicted-wrong-answer instructions of version 1', () => {
+    expect(v2.system).toContain('"explanation": one sentence of fewer than 25 words');
+    expect(v2.system).toContain('predict 2-3 common wrong answers');
+    expect(v2.system).toContain('don\'t open with praise');
+  });
+
+  it('adds the keep-the-slot clause to the user prompt, and nothing else changes there', () => {
+    const v1User = v1.messages[0]?.content ?? '';
+    const clause = v2User.split('\n').find((l) => l.startsWith("If a slot's type cannot be written")) ?? '';
+    expect(clause).toContain('keep the topic and type');
+    expect(v1User).not.toContain(clause);
+    expect(v2User.split('\n').filter((l) => l !== clause)).toEqual(v1User.split('\n'));
   });
 });
 

@@ -1,7 +1,14 @@
 import { createExecutionContext, createScheduledController, env, waitOnExecutionContext } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { buildGenerateSharedDailyTestBody } from '../src/anthropic';
 import worker from '../src/index';
-import { dailyPlan, dateOfDayNumber, dayNumberOf, type DailyPlan } from '../src/shared_daily_test';
+import {
+  dailyPlan,
+  dateOfDayNumber,
+  dayNumberOf,
+  sharedDailyTestRequest,
+  type DailyPlan,
+} from '../src/shared_daily_test';
 import {
   ATTEMPTS_TTL_SECONDS,
   GENERATION_TIMEOUT_MS,
@@ -155,6 +162,19 @@ async function storedSet(date: string): Promise<PublishedSet | null> {
 }
 
 describe('shared set generation (cron)', () => {
+  it('asks with prompt version 1 until the check call ships (P7): version 2 is built only on request', async () => {
+    for (const offset of [0, 1, 2]) await seed(dateAt(offset));
+    respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
+
+    await runSharedGeneration(env, NOW);
+
+    const sent = JSON.parse(String(fetchCalls[0]?.init?.body)) as { system: string };
+    const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], 1));
+    const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], 2));
+    expect(sent.system).toBe(v1.system);
+    expect(sent.system).not.toBe(v2.system);
+  });
+
   it('generates a missing date once, in plan order, and a second run makes no request', async () => {
     for (const offset of [0, 1, 2]) await seed(dateAt(offset));
     respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));

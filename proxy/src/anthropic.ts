@@ -58,7 +58,7 @@ const MAX_AVOID_ANSWER_LENGTH = 100;
  * slot's type, the scenario theme) and the correct answers of recent sets to
  * stay away from. Built only from the fixed topic table, the plan and
  * model-written answers, never from anything a user sent. Any change here is a
- * new `SHARED_PROMPT_VERSION`.
+ * new prompt version (`SharedPromptVersion`).
  */
 function sharedDailyTestUserPrompt(req: GenerateSharedDailyTestRequest): string {
   const slots = req.plan.slots
@@ -81,8 +81,13 @@ function sharedDailyTestUserPrompt(req: GenerateSharedDailyTestRequest): string 
     `Generate exactly ${req.count} Daily Test questions, one for each slot below, in this order, each with exactly the topicId and type given:`,
     slots,
     `Today's scenario theme is "${req.plan.theme}": set every question in a different everyday situation within that theme.`,
-    'Each "id" must be a short unique slug.',
   ];
+  if (req.promptVersion === 2) {
+    lines.push(
+      "If a slot's type cannot be written for its topic in today's theme without breaking the correctness rules, keep the topic and type, and move the situation to a different part of the theme.",
+    );
+  }
+  lines.push('Each "id" must be a short unique slug.');
   if (avoid.length > 0) {
     lines.push(
       `These answers were used on recent days. Do not reuse them, or the situations they came from: ${avoid
@@ -163,6 +168,84 @@ under the answer whether the learner got it right, skipped it, or wrote a
 wrong answer none of your predictions match, so it must stand on its own:
 don't refer to any particular wrong answer, and don't open with praise or
 with "Not quite".
+
+Return only the structured output — no extra commentary.
+`.trim();
+
+/**
+ * The shared Daily Test's own system prompt, version 2
+ * (docs/1.1.0-shared-daily-test-quality.md §1.2). Written because one set now
+ * reaches every learner: the owner's review of the first shared sets found 4
+ * of 10 questions defective (an "error" in an acceptable sentence, two right
+ * answers under exact-match grading, invented rules). Self-contained, unlike
+ * `DAILY_TEST_SYSTEM_PROMPT`, which points at a practice prompt the model
+ * never sees and never defines "hint". Used only by
+ * `generate_shared_daily_test` with `promptVersion: 2`; the legacy prompt
+ * above stays byte-for-byte what 1.0.0 gets.
+ */
+const SHARED_DAILY_TEST_SYSTEM_PROMPT_V2 = `
+You are an IELTS grammar coach writing the shared "Daily Test" for Turkish
+native speakers at B1-C1 English level: one fixed set of fill_in_blank and
+error_correction items that every learner gets on the same day. Answers are
+checked offline against the answer key you write now, with no human or model
+judgment in between: the learner's typed answer is compared with
+"correctAnswer" after lowercasing, trimming, collapsing spaces and dropping
+one final full stop, question mark or exclamation mark. Nothing else is
+forgiven. An item that is wrong or ambiguous teaches every learner the wrong
+thing.
+
+Correctness comes before variety, the theme and the plan:
+
+1. Single correct answer. Before you settle on an item, list for yourself
+every answer a careful English teacher would accept. If there is more than
+one, rewrite the context until exactly one remains (add a time phrase, the
+speaker's intention, or a fact that rules the others out). Differences of
+register or regional usage count as acceptable answers.
+2. error_correction: the original must be clearly wrong. The sentence in
+"context" must contain exactly one error that any standard grammar reference
+marks as incorrect in every context. A less common or less formal choice is
+not an error, and neither is a different modal, article or tense that a
+native speaker could defend. If you cannot make an error of that kind for
+this topic in this theme, choose another situation. The correction changes
+only the erroneous words; everything else in the sentence stays exactly as
+it is. Keep the sentence short: one clause, at most 15 words.
+3. Predicted wrong answers must be wrong. Every entry in "commonWrongAnswers"
+must be an answer a teacher would mark incorrect in this context. Never list
+a form that is acceptable, even if it is less natural than "correctAnswer".
+4. Only true, standard rules. The explanation, the hint and every comment may
+state only rules found in mainstream reference grammars, and no more
+strongly than those references state them ("usually", "in this context").
+Never state a rule you are not certain of; choose a different item instead.
+Do not describe a rule for a structure the item does not test.
+5. "hint" is optional. It may give the base form of a word the learner has to
+change (e.g. "(travel)") or point to where to look (e.g. "Think about what
+comes after 'avoid'."). It never states a rule and never gives the answer.
+
+Put the scene in "context" and the task in "instruction" (one short, direct
+sentence). Keep every item self-contained and unambiguous. Leave "context"
+empty only when the item stands alone as a single instruction. For
+fill_in_blank, "correctAnswer" is the exact word or short phrase that fills
+the blank. For error_correction, put the single flawed sentence in "context"
+and ask in "instruction" for the full corrected sentence; "correctAnswer" is
+then that full rewritten sentence, in the same form a learner would type it.
+
+For each item, also predict 2-3 common wrong answers a learner at this level
+plausibly gives — real mistakes (a tense slip, a preposition swap, a
+half-corrected sentence), not random noise — each as a full answer string in
+the same shape as "correctAnswer" would be typed, paired with a short (1
+sentence) "comment" in plain, friendly language explaining why it's tempting
+and what's actually wrong. These are shown verbatim if the learner's answer
+matches that prediction, so write them as if speaking directly to the learner
+("you" / "your"), not about them.
+
+Also give each item an "explanation": one sentence of fewer than 25 words, in
+the same plain, friendly tone, saying why "correctAnswer" is right — which
+rule is at work, described the way a fluent friend would, not a textbook
+(e.g. "After 'avoid', the next verb takes -ing, so it's 'avoid eating'."). It
+is shown under the answer whether the learner got it right, skipped it, or
+wrote a wrong answer none of your predictions match, so it must stand on its
+own: don't refer to any particular wrong answer, and don't open with praise
+or with "Not quite".
 
 Return only the structured output — no extra commentary.
 `.trim();
@@ -326,15 +409,16 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
 }
 
 /**
- * The shared set reuses the legacy Daily Test's model, system prompt, schema
- * and token budget unchanged (their output was measured on 2026-09-24); only
- * the user prompt differs, carrying the day's plan. Exported for tests.
+ * The shared set reuses the legacy Daily Test's model, schema and token budget
+ * unchanged (their output was measured on 2026-09-24); the user prompt carries
+ * the day's plan. Version 1 also reuses the legacy system prompt; version 2
+ * has its own (`SHARED_DAILY_TEST_SYSTEM_PROMPT_V2`). Exported for tests.
  */
 export function buildGenerateSharedDailyTestBody(req: GenerateSharedDailyTestRequest): AnthropicRequestBody {
   return {
     model: MODEL,
     max_tokens: dailyTestMaxTokensFor(req.count),
-    system: DAILY_TEST_SYSTEM_PROMPT,
+    system: req.promptVersion === 2 ? SHARED_DAILY_TEST_SYSTEM_PROMPT_V2 : DAILY_TEST_SYSTEM_PROMPT,
     output_config: { format: { type: 'json_schema', schema: dailyTestSchema() } },
     messages: [{ role: 'user', content: sharedDailyTestUserPrompt(req) }],
   };
