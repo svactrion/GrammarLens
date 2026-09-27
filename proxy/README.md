@@ -179,6 +179,16 @@ The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
   (`validateSharedCandidates` drops a candidate that breaks a content rule and
   rejects only when a slot has none left). The cron uses the defaults. The legacy
   route's model is its own constant and does not follow these options.
+- **Check call — built, not wired** (P6, 2026-09-27): operation
+  `check_shared_daily_test` (`src/shared_check.ts`, request in `anthropic.ts`):
+  an adversarial review of a generated set with adaptive thinking
+  (`claude-sonnet-5` by default; `claude-sonnet-4-6` and `claude-opus-5-5` are
+  also buildable), whose structured review the proxy turns into publish or
+  reject by a fixed table (`decideQuestion`, `decideCheckedSet`,
+  `selectCandidates` for over-generated sets). Up to 2 alternatives become a
+  question's `acceptedAnswers`. Filed as `daily_test` cost. `CHECK_VERSION` 1,
+  pinned by a request fingerprint. Nothing calls it yet: the two-phase cron is
+  P7.
 - **Timeout:** 90 s on the Anthropic call (`GENERATION_TIMEOUT_MS`), logged as
   `failure: "timeout"`.
 - **Kill switch:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it on;

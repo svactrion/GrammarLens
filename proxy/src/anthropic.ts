@@ -3,6 +3,13 @@ import { ProxyError, type Env } from './types';
 import { logUpstreamFailure, upstreamErrorType, type UpstreamFailure } from './error_log';
 import { elapsedMs, logUsage, stopReasonField, tokenCount } from './usage_log';
 import type { GenerateSharedDailyTestRequest, SharedGeneratorModel } from './shared_daily_test';
+import {
+  CORRECT_ANSWER_VALUES,
+  ORIGINAL_SENTENCE_VALUES,
+  RULE_FIELD_VALUES,
+  VERDICT_VALUES,
+  type CheckSharedDailyTestRequest,
+} from './shared_check';
 import type {
   GenerateDailyTestRequest,
   GeneratePracticeSetRequest,
@@ -454,6 +461,120 @@ export function buildGenerateSharedDailyTestBody(req: GenerateSharedDailyTestReq
   };
 }
 
+/**
+ * The check call's system prompt (docs/1.1.0-shared-daily-test-quality.md
+ * §2.1): an adversarial review of a generated set before it is published. It
+ * judges grammar and correctness only; the proxy, not the model, turns the
+ * review into publish or reject (`src/shared_check.ts`). Any change here is a
+ * new `CHECK_VERSION`.
+ */
+const SHARED_CHECK_SYSTEM_PROMPT = `
+You review English grammar exercises for Turkish learners at B1-C1 before they
+are published. Every learner gets the same set. Answers are graded
+automatically: the learner's text is compared with "correctAnswer" after
+lowercasing, trimming, collapsing spaces and dropping one final full stop,
+question mark or exclamation mark. Nothing else is forgiven. A learner who
+types an acceptable answer that is not in the key is told they are wrong.
+
+Assume the set may contain mistakes, and look for them. For each question:
+
+1. For error_correction: is the sentence in "context" wrong in standard
+English in every reading, or could a careful native speaker or a reference
+grammar accept it? If it can be defended, it is "acceptable". For
+fill_in_blank, answer "not_applicable".
+2. Is "correctAnswer" correct in this context? If you are not sure, say
+"uncertain".
+3. List every other answer a careful teacher would accept, typed in the same
+shape as "correctAnswer" (the full sentence for error_correction). Do not list
+spelling, capitalization or punctuation variants of the key.
+4. List any entry of "commonWrongAnswers" that is in fact acceptable, exactly
+as it is written there.
+5. Check every rule stated in "hint", "explanation" and each wrong answer's
+"comment": is it a real rule as mainstream reference grammars state it, and no
+stronger? Name the fields that are not.
+6. Does the explanation say or imply that any answer you listed in step 3 is
+wrong?
+
+Then give a verdict: "pass" if nothing is wrong and you listed no
+alternatives, "pass_with_alternatives" if the only finding is acceptable
+alternatives, "reject" otherwise. Judge only grammar and correctness, not
+style, theme or difficulty. Return one review per question, with its "id".
+`.trim();
+
+function sharedCheckSchema() {
+  return {
+    type: 'object',
+    properties: {
+      questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            originalSentence: { type: 'string', enum: [...ORIGINAL_SENTENCE_VALUES] },
+            correctAnswer: { type: 'string', enum: [...CORRECT_ANSWER_VALUES] },
+            acceptableAlternatives: { type: 'array', items: { type: 'string' } },
+            acceptableWrongAnswers: { type: 'array', items: { type: 'string' } },
+            incorrectRuleFields: { type: 'array', items: { type: 'string', enum: [...RULE_FIELD_VALUES] } },
+            explanationExcludesAlternatives: { type: 'boolean' },
+            verdict: { type: 'string', enum: [...VERDICT_VALUES] },
+          },
+          required: [
+            'id',
+            'originalSentence',
+            'correctAnswer',
+            'acceptableAlternatives',
+            'acceptableWrongAnswers',
+            'incorrectRuleFields',
+            'explanationExcludesAlternatives',
+            'verdict',
+          ],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ['questions'],
+    additionalProperties: false,
+  };
+}
+
+/** The review's own share of `max_tokens`, per question (a review is ~100-150
+ * tokens; the rest of the budget is thinking). */
+const CHECK_TOKENS_PER_QUESTION = 400;
+
+/**
+ * The check request: every checker candidate runs with adaptive thinking, and
+ * sees the questions exactly as a learner would, plus the key, the predicted
+ * wrong answers and the explanation; never `acceptedAnswers` (the check is what
+ * adds them). Exported for tests and the local measurement E.
+ */
+export function buildCheckSharedDailyTestBody(req: CheckSharedDailyTestRequest): AnthropicRequestBody {
+  const questions = req.questions.map((q) => ({
+    id: q.id,
+    type: q.type,
+    topicId: q.topicId,
+    ...(q.context === undefined ? {} : { context: q.context }),
+    instruction: q.instruction,
+    ...(q.hint === undefined ? {} : { hint: q.hint }),
+    correctAnswer: q.correctAnswer,
+    commonWrongAnswers: q.commonWrongAnswers.map((w) => ({ answer: w.answer, comment: w.comment })),
+    explanation: q.explanation,
+  }));
+  return {
+    model: req.model,
+    max_tokens: Math.max(2048, CHECK_TOKENS_PER_QUESTION * req.count) + THINKING_HEADROOM_TOKENS,
+    system: SHARED_CHECK_SYSTEM_PROMPT,
+    thinking: { type: 'adaptive' },
+    output_config: { format: { type: 'json_schema', schema: sharedCheckSchema() } },
+    messages: [
+      {
+        role: 'user',
+        content: `Review these ${req.count} questions:\n${JSON.stringify({ questions })}`,
+      },
+    ],
+  };
+}
+
 function buildScoreAnswersBody(req: ScoreAnswersRequest): AnthropicRequestBody {
   const schema = {
     type: 'object',
@@ -499,9 +620,12 @@ export type AnthropicOperation =
   | { op: 'generate_practice_set'; request: GeneratePracticeSetRequest }
   | { op: 'generate_daily_test'; request: GenerateDailyTestRequest }
   | { op: 'generate_shared_daily_test'; request: GenerateSharedDailyTestRequest }
+  | { op: 'check_shared_daily_test'; request: CheckSharedDailyTestRequest }
   | { op: 'score_answers'; request: ScoreAnswersRequest };
 
-function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
+/** The exact request body an operation sends. Exported for the local
+ * measurement E, which submits the same bodies through the Batches API. */
+export function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
   switch (operation.op) {
     case 'generate_practice_set':
       return buildGeneratePracticeSetBody(operation.request);
@@ -509,6 +633,8 @@ function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
       return buildGenerateDailyTestBody(operation.request);
     case 'generate_shared_daily_test':
       return buildGenerateSharedDailyTestBody(operation.request);
+    case 'check_shared_daily_test':
+      return buildCheckSharedDailyTestBody(operation.request);
     case 'score_answers':
       return buildScoreAnswersBody(operation.request);
   }

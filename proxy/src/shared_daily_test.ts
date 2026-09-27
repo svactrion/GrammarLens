@@ -334,6 +334,9 @@ export interface SharedQuestion {
   correctAnswer: string;
   explanation: string;
   commonWrongAnswers: SharedWrongAnswer[];
+  /** Other answers graded as correct, added only by the check call
+   * (`src/shared_check.ts`), never by the generator. */
+  acceptedAnswers?: string[];
 }
 
 export type SharedSetValidation =
