@@ -1,6 +1,11 @@
 import { env } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildGenerateSharedDailyTestBody, callAnthropic, dailyTestMaxTokensFor } from '../src/anthropic';
+import {
+  THINKING_HEADROOM_TOKENS,
+  buildGenerateSharedDailyTestBody,
+  callAnthropic,
+  dailyTestMaxTokensFor,
+} from '../src/anthropic';
 import {
   ERROR_CORRECTION_MAX_EDIT_WORDS,
   EXPLANATION_MAX_WORDS,
@@ -13,10 +18,13 @@ import {
   foldKeyboardVariants,
   isInServingWindow,
   isSingleShortEdit,
+  SHARED_GENERATOR_MODEL,
   normalizeAnswer,
   sharedDailyTestRequest,
+  validateSharedCandidates,
   validateSharedSet,
   type DailyPlan,
+  type SharedGenerationOptions,
   type SharedPromptVersion,
   type SharedSetRejection,
 } from '../src/shared_daily_test';
@@ -710,6 +718,17 @@ describe('validateSharedSet', () => {
 // ---------------------------------------------------------------------------
 // The generation request
 
+/** FNV-1a over the full generation request for [PLAN] and a fixed avoid list. */
+function requestFingerprint(options: SharedGenerationOptions): string {
+  const body = JSON.stringify(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(PLAN, ['admit'], options)));
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < body.length; i++) {
+    hash ^= body.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16);
+}
+
 describe('generate_shared_daily_test request', () => {
   const plan = PLAN;
 
@@ -767,16 +786,7 @@ describe('generate_shared_daily_test request', () => {
     expect(body).not.toContain('deviceId');
   });
 
-  /** FNV-1a over the full request for a fixed plan and avoid list. */
-  const fingerprint = (promptVersion: SharedPromptVersion) => {
-    const body = JSON.stringify(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], promptVersion)));
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < body.length; i++) {
-      hash ^= body.charCodeAt(i);
-      hash = Math.imul(hash, 0x01000193) >>> 0;
-    }
-    return hash.toString(16);
-  };
+  const fingerprint = (promptVersion: SharedPromptVersion) => requestFingerprint({ promptVersion });
 
   it.each([
     [1, 'c1a5703'],
@@ -792,15 +802,15 @@ describe('generate_shared_daily_test request', () => {
     expect(SHARED_PROMPT_VERSION).toBe(1);
     expect(sharedDailyTestRequest(plan).promptVersion).toBe(1);
     expect(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan))).toEqual(
-      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, [], 1)),
+      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, [], { promptVersion: 1 })),
     );
   });
 });
 
 describe('generate_shared_daily_test request, prompt version 2', () => {
   const plan = PLAN;
-  const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], 1));
-  const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], 2));
+  const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], { promptVersion: 1 }));
+  const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], { promptVersion: 2 }));
   const v2User = v2.messages[0]?.content ?? '';
 
   it('keeps the model, token budget and schema of version 1 (and so of the legacy route)', () => {
@@ -846,6 +856,119 @@ describe('generate_shared_daily_test request, prompt version 2', () => {
   });
 });
 
+describe('generate_shared_daily_test request, generation variants (owner additions A and B)', () => {
+  const build = (options: SharedGenerationOptions) => buildGenerateSharedDailyTestBody(sharedDailyTestRequest(PLAN, [], options));
+  const base = build({ promptVersion: 2 });
+
+  it('defaults to claude-sonnet-4-6, one question per slot and no thinking: the request the cron sends', () => {
+    expect(SHARED_GENERATOR_MODEL).toBe('claude-sonnet-4-6');
+    const request = sharedDailyTestRequest(PLAN);
+    expect(request).toMatchObject({ model: 'claude-sonnet-4-6', candidatesPerSlot: 1, count: 5 });
+    const body = buildGenerateSharedDailyTestBody(request);
+    expect(body.model).toBe('claude-sonnet-4-6');
+    expect('thinking' in body).toBe(false);
+  });
+
+  it('claude-sonnet-5 gets adaptive thinking and thinking headroom; nothing else changes', () => {
+    const body = build({ promptVersion: 2, model: 'claude-sonnet-5' });
+    expect(body.model).toBe('claude-sonnet-5');
+    expect(body.thinking).toEqual({ type: 'adaptive' });
+    expect(body.max_tokens).toBe(dailyTestMaxTokensFor(5) + THINKING_HEADROOM_TOKENS);
+    expect({ ...body, model: base.model, max_tokens: base.max_tokens, thinking: undefined }).toEqual({
+      ...base,
+      thinking: undefined,
+    });
+  });
+
+  it('two candidates per slot ask for 10 questions, grouped by slot, with the budget for 10', () => {
+    const request = sharedDailyTestRequest(PLAN, [], { promptVersion: 2, candidatesPerSlot: 2 });
+    expect(request.count).toBe(10);
+    const body = buildGenerateSharedDailyTestBody(request);
+    expect(body.max_tokens).toBe(dailyTestMaxTokensFor(10));
+    const content = body.messages[0]?.content ?? '';
+    expect(content).toContain('Generate exactly 10 Daily Test questions, two candidates for each slot below');
+    expect(content).toContain('Only one of them will be used');
+    // The same slot lines and the v2 clause as the one-candidate request.
+    const baseContent = base.messages[0]?.content ?? '';
+    for (const line of baseContent.split('\n').slice(1)) expect(content).toContain(line);
+    expect(build({ promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 }).max_tokens).toBe(
+      dailyTestMaxTokensFor(10) + THINKING_HEADROOM_TOKENS,
+    );
+  });
+
+  it.each([
+    ['G3: v2, claude-sonnet-5', { promptVersion: 2, model: 'claude-sonnet-5' }, '9391a5af'],
+    ['G4: v2, two candidates', { promptVersion: 2, candidatesPerSlot: 2 }, 'f04badb8'],
+    ['G5: v2, claude-sonnet-5, two candidates', { promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 }, '98f1bfc3'],
+  ] as const)('pins the measured variant %s to its request fingerprint', (_name, options, expected) => {
+    expect(requestFingerprint(options)).toBe(expected);
+  });
+});
+
+describe('validateSharedCandidates (two candidates per slot)', () => {
+  /** Both candidates of every slot, in plan order: the valid set twice, ids made unique. */
+  function tenCandidates(): Question[] {
+    return validQuestions().flatMap((q) => [
+      { ...q, id: `${String(q.id)}-a` },
+      { ...q, id: `${String(q.id)}-b` },
+    ]);
+  }
+  const candidates = (questions: Question[]) => validateSharedCandidates({ questions }, PLAN, 2);
+  const at = (questions: Question[], id: string) => questions.find((q) => q.id === id) as Question;
+
+  it('groups two valid candidates per slot, in plan order, and drops nothing', () => {
+    const result = candidates(tenCandidates().reverse());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.candidates.map((slot) => slot.map((q) => q.topicId))).toEqual(
+      PLAN.slots.map((s) => [s.topicId, s.topicId]),
+    );
+    expect(result.dropped).toEqual([]);
+  });
+
+  it("drops a candidate that breaks a content rule and keeps its slot's other one", () => {
+    const questions = tenCandidates();
+    at(questions, 'q-tense-a').correctAnswer = 'The plane had left before we got there.';
+    const result = candidates(questions);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.candidates[3]?.map((q) => q.id)).toEqual(['q-tense-b']);
+    expect(result.dropped).toEqual([{ slot: 3, reason: 'error_correction_multi_edit' }]);
+  });
+
+  it('rejects the answer when both candidates of a slot break a rule, with the first reason', () => {
+    const questions = tenCandidates();
+    at(questions, 'q-modal-a').explanation = 'Great! It is must.';
+    at(questions, 'q-modal-b').commonWrongAnswers = [];
+    expect(candidates(questions)).toEqual({ ok: false, reason: 'explanation_not_one_sentence' });
+  });
+
+  it('rejects the whole answer for its shape: count, plan, three in one slot, a duplicate id', () => {
+    expect(candidates(tenCandidates().slice(1))).toEqual({ ok: false, reason: 'wrong_question_count' });
+    expect(validateSharedCandidates('nope', PLAN, 2)).toEqual({ ok: false, reason: 'not_an_object' });
+
+    const wrongType = tenCandidates();
+    at(wrongType, 'q-articles-a').type = 'error_correction';
+    expect(candidates(wrongType)).toEqual({ ok: false, reason: 'plan_mismatch' });
+
+    const threeInSlot = tenCandidates();
+    at(threeInSlot, 'q-modal-a').topicId = 'articles';
+    at(threeInSlot, 'q-modal-a').type = 'fill_in_blank';
+    expect(candidates(threeInSlot)).toEqual({ ok: false, reason: 'plan_mismatch' });
+
+    const duplicate = tenCandidates();
+    at(duplicate, 'q-modal-b').id = 'q-modal-a';
+    expect(candidates(duplicate)).toEqual({ ok: false, reason: 'duplicate_id' });
+  });
+
+  it('with one candidate per slot, accepts exactly what validateSharedSet accepts', () => {
+    const result = validateSharedCandidates({ questions: validQuestions() }, PLAN, 1);
+    const set = validateSharedSet({ questions: validQuestions() }, PLAN);
+    expect(result.ok && set.ok).toBe(true);
+    if (result.ok && set.ok) expect(result.candidates.map((slot) => slot[0])).toEqual(set.questions);
+  });
+});
+
 describe('callAnthropic with generate_shared_daily_test', () => {
   const originalFetch = globalThis.fetch;
   const originalLog = console.log;
@@ -874,6 +997,14 @@ describe('callAnthropic with generate_shared_daily_test', () => {
   afterEach(() => {
     globalThis.fetch = originalFetch;
     console.log = originalLog;
+  });
+
+  it('logs an over-generated request with the number of questions asked for', async () => {
+    const request = sharedDailyTestRequest(PLAN, [], { promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 });
+    await callAnthropic(env, { op: 'generate_shared_daily_test', request });
+
+    expect(sentBodies).toEqual([JSON.stringify(buildGenerateSharedDailyTestBody(request))]);
+    expect(JSON.parse(logged[0] ?? '{}')).toMatchObject({ kind: 'daily_test', item_count: 10 });
   });
 
   it('sends the shared body, returns the parsed content, and logs it as daily_test cost', async () => {

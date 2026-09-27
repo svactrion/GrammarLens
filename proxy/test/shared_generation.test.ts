@@ -169,8 +169,8 @@ describe('shared set generation (cron)', () => {
     await runSharedGeneration(env, NOW);
 
     const sent = JSON.parse(String(fetchCalls[0]?.init?.body)) as { system: string };
-    const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], 1));
-    const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], 2));
+    const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], { promptVersion: 1 }));
+    const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], { promptVersion: 2 }));
     expect(sent.system).toBe(v1.system);
     expect(sent.system).not.toBe(v2.system);
   });

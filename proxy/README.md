@@ -172,6 +172,13 @@ The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
   §1.2) is built only on request, for the local measurement, until the
   two-phase cron with the check call ships. Each version is pinned by a request
   fingerprint test.
+- **Generation variants** (for the local measurement E, 2026-09-27): the shared
+  request also takes a model (`claude-sonnet-4-6`, the default and the legacy
+  route's model, or `claude-sonnet-5`, sent with adaptive thinking and
+  `THINKING_HEADROOM_TOKENS` more) and 1 or 2 candidates per plan slot
+  (`validateSharedCandidates` drops a candidate that breaks a content rule and
+  rejects only when a slot has none left). The cron uses the defaults. The legacy
+  route's model is its own constant and does not follow these options.
 - **Timeout:** 90 s on the Anthropic call (`GENERATION_TIMEOUT_MS`), logged as
   `failure: "timeout"`.
 - **Kill switch:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it on;

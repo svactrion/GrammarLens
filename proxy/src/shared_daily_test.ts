@@ -37,6 +37,23 @@ export type SharedPromptVersion = 1 | 2;
  */
 export const SHARED_PROMPT_VERSION: SharedPromptVersion = 1;
 
+/**
+ * Models the shared set can be generated with (owner addition B, 2026-09-27).
+ * Only the shared operation takes one: the legacy 1.0.0 route keeps its own
+ * model, whatever is chosen here.
+ */
+export type SharedGeneratorModel = 'claude-sonnet-4-6' | 'claude-sonnet-5';
+
+/** What the cron generates with until the measurement E decides otherwise. */
+export const SHARED_GENERATOR_MODEL: SharedGeneratorModel = 'claude-sonnet-4-6';
+
+/**
+ * Questions asked for per plan slot (owner addition A): 1 is the published set
+ * itself; 2 over-generates, and a clean candidate per slot is chosen after the
+ * check (docs/1.1.0-shared-daily-test-quality.md §13.2, strategy S2).
+ */
+export type CandidatesPerSlot = 1 | 2;
+
 /** Hard cap on an explanation's length. The prompt asks for fewer than 25
  * words; 35 sits above the measured maximum (27, 2026-09-24), so an ordinary
  * output is never rejected, and every rejection is a paid retry. */
@@ -197,22 +214,41 @@ export function dailyPlan(date: string): DailyPlan {
 /** What `callAnthropic` needs for the `generate_shared_daily_test` operation. */
 export interface GenerateSharedDailyTestRequest {
   readonly plan: DailyPlan;
-  /** Equal to `plan.slots.length`; kept as its own field so the usage log's
-   * `item_count` reads it the same way as for every other operation. */
+  /** Questions asked for: `plan.slots.length` × [candidatesPerSlot]. Its own
+   * field so the usage log's `item_count` reads it the same way as for every
+   * other operation. */
   readonly count: number;
   /** Correct answers from recent published sets, for "do not reuse" in the
    * prompt. Model-written text, never anything from a user. */
   readonly avoidAnswers: readonly string[];
   /** Which prompt to build; see [SharedPromptVersion]. */
   readonly promptVersion: SharedPromptVersion;
+  readonly model: SharedGeneratorModel;
+  readonly candidatesPerSlot: CandidatesPerSlot;
+}
+
+/** The generation variants the measurement E compares; the cron uses the
+ * defaults. */
+export interface SharedGenerationOptions {
+  promptVersion?: SharedPromptVersion;
+  model?: SharedGeneratorModel;
+  candidatesPerSlot?: CandidatesPerSlot;
 }
 
 export function sharedDailyTestRequest(
   plan: DailyPlan,
   avoidAnswers: readonly string[] = [],
-  promptVersion: SharedPromptVersion = SHARED_PROMPT_VERSION,
+  options: SharedGenerationOptions = {},
 ): GenerateSharedDailyTestRequest {
-  return { plan, count: plan.slots.length, avoidAnswers, promptVersion };
+  const candidatesPerSlot = options.candidatesPerSlot ?? 1;
+  return {
+    plan,
+    count: plan.slots.length * candidatesPerSlot,
+    avoidAnswers,
+    promptVersion: options.promptVersion ?? SHARED_PROMPT_VERSION,
+    model: options.model ?? SHARED_GENERATOR_MODEL,
+    candidatesPerSlot,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -413,6 +449,70 @@ function checkSet(content: unknown, plan: DailyPlan): SharedQuestion[] {
     bySlot.set(slot, question);
   }
   return plan.slots.map((_, i) => bySlot.get(i) as SharedQuestion);
+}
+
+/** Over-generated candidates (strategy S2), grouped by plan slot in plan
+ * order, with the candidates that broke a rule left out. */
+export type SharedCandidatesValidation =
+  | {
+      ok: true;
+      candidates: SharedQuestion[][];
+      /** Candidates left out, by slot index and the first rule each broke. */
+      dropped: { slot: number; reason: SharedSetRejection }[];
+    }
+  | { ok: false; reason: SharedSetRejection };
+
+/**
+ * The quality gate for an over-generated answer ([perSlot] candidates for
+ * every plan slot). The shape is judged for the whole answer: the count, every
+ * candidate's topic and type against the plan, [perSlot] candidates per slot,
+ * unique ids; any of these rejects it, as in [validateSharedSet]. A
+ * candidate's own content rules (the answer key, the one-span correction, the
+ * explanation, …) only drop that candidate, since its slot can still be filled
+ * by the other one. The answer is rejected only when a slot is left with no
+ * valid candidate, with the first reason one of that slot's candidates broke.
+ */
+export function validateSharedCandidates(
+  content: unknown,
+  plan: DailyPlan,
+  perSlot: CandidatesPerSlot,
+): SharedCandidatesValidation {
+  if (typeof content !== 'object' || content === null || Array.isArray(content)) {
+    return { ok: false, reason: 'not_an_object' };
+  }
+  const raw = (content as Record<string, unknown>).questions;
+  if (!Array.isArray(raw)) return { ok: false, reason: 'not_an_object' };
+  if (raw.length !== plan.slots.length * perSlot) return { ok: false, reason: 'wrong_question_count' };
+
+  const candidates: SharedQuestion[][] = plan.slots.map(() => []);
+  const seen = plan.slots.map(() => 0);
+  const dropped: { slot: number; reason: SharedSetRejection }[] = [];
+  const ids = new Set<string>();
+  for (const entry of raw) {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      return { ok: false, reason: 'missing_field' };
+    }
+    const q = entry as Record<string, unknown>;
+    const slot = plan.slots.findIndex((s) => s.topicId === q.topicId);
+    if (slot < 0 || plan.slots[slot]?.type !== q.type) return { ok: false, reason: 'plan_mismatch' };
+    seen[slot] = (seen[slot] ?? 0) + 1;
+    if ((seen[slot] ?? 0) > perSlot) return { ok: false, reason: 'plan_mismatch' };
+    if (typeof q.id === 'string') {
+      if (ids.has(q.id)) return { ok: false, reason: 'duplicate_id' };
+      ids.add(q.id);
+    }
+    try {
+      candidates[slot]?.push(checkQuestion(entry));
+    } catch (e) {
+      if (!(e instanceof Rejected)) throw e;
+      dropped.push({ slot, reason: e.reason });
+    }
+  }
+  const empty = candidates.findIndex((c) => c.length === 0);
+  if (empty >= 0) {
+    return { ok: false, reason: dropped.find((d) => d.slot === empty)?.reason ?? 'wrong_question_count' };
+  }
+  return { ok: true, candidates, dropped };
 }
 
 function checkQuestion(entry: unknown): SharedQuestion {
