@@ -8,6 +8,7 @@ import {
 } from '../src/anthropic';
 import {
   ERROR_CORRECTION_MAX_EDIT_WORDS,
+  ERROR_CORRECTION_MIN_WORDS,
   EXPLANATION_MAX_WORDS,
   SCENARIO_THEMES,
   SHARED_PROMPT_VERSION,
@@ -587,6 +588,73 @@ describe('validateSharedSet', () => {
     });
   });
 
+  describe('error_correction_missing_sentence', () => {
+    // E, 2026-09-28: 19 of 28 error_correction questions from claude-sonnet-4-6
+    // had no "context" at all, and no other field held the sentence to correct.
+    const tenseWith = (edit: (q: Question) => void) => withQuestion(3, edit);
+
+    it('rejects an error_correction question with no "context" field', () => {
+      expectRejected(tenseWith((q) => delete q.context), 'error_correction_missing_sentence');
+    });
+
+    it('rejects an empty or whitespace-only "context"', () => {
+      expectRejected(tenseWith((q) => (q.context = '')), 'error_correction_missing_sentence');
+      expectRejected(tenseWith((q) => (q.context = ' \n\t ')), 'error_correction_missing_sentence');
+    });
+
+    it(`rejects a "context" of fewer than ${ERROR_CORRECTION_MIN_WORDS} words with a letter`, () => {
+      expectRejected(tenseWith((q) => (q.context = '...')), 'error_correction_missing_sentence');
+      expectRejected(tenseWith((q) => (q.context = '— 1 2 3 —')), 'error_correction_missing_sentence');
+      expectRejected(tenseWith((q) => (q.context = 'Plane left.')), 'error_correction_missing_sentence');
+    });
+
+    it(`accepts a sentence of ${ERROR_CORRECTION_MIN_WORDS} words`, () => {
+      expect(
+        validate(
+          tenseWith((q) => {
+            q.context = 'She go home.';
+            q.correctAnswer = 'She goes home.';
+            q.commonWrongAnswers = [
+              { answer: 'She going home.', comment: 'c1' },
+              { answer: 'She go home.', comment: 'c2' },
+            ];
+          }),
+        ).ok,
+      ).toBe(true);
+    });
+
+    it('is reported before the other rules, whatever else is wrong with the question', () => {
+      expectRejected(
+        tenseWith((q) => {
+          delete q.context;
+          q.commonWrongAnswers = [];
+        }),
+        'error_correction_missing_sentence',
+      );
+    });
+
+    it('does not apply to fill-in-the-blank, which may leave "context" out', () => {
+      expect(validate(withQuestion(0, (q) => delete q.context)).ok).toBe(true);
+      expect(validate(withQuestion(0, (q) => (q.context = ''))).ok).toBe(true);
+    });
+
+    it('drops a two-candidate answer\'s sentenceless candidate, and rejects when both of a slot\'s are', () => {
+      const pair = validQuestions().flatMap((q) => [
+        { ...q, id: `${String(q.id)}-a` },
+        { ...q, id: `${String(q.id)}-b` },
+      ]);
+      const tenseA = pair.find((q) => q.id === 'q-tense-a') as Question;
+      delete tenseA.context;
+      const one = validateSharedCandidates({ questions: pair }, PLAN, 2);
+      expect(one.ok && one.dropped).toEqual([{ slot: 3, reason: 'error_correction_missing_sentence' }]);
+      (pair.find((q) => q.id === 'q-tense-b') as Question).context = '  ';
+      expect(validateSharedCandidates({ questions: pair }, PLAN, 2)).toEqual({
+        ok: false,
+        reason: 'error_correction_missing_sentence',
+      });
+    });
+  });
+
   describe('error_correction_multi_edit', () => {
     const ARRIVED = 'When we arrived, the plane already left.';
     /** The valid set with its tense item's flawed sentence and key replaced. */
@@ -790,11 +858,13 @@ describe('generate_shared_daily_test request', () => {
 
   it.each([
     [1, 'c1a5703'],
-    [2, '22121840'],
+    [2, '3b9d4a6b'],
   ] as const)('pins prompt version %i to its request fingerprint', (version, expected) => {
     // If a fingerprint changes, that prompt changed: make it a new version
     // instead, and pin the new one here. Version 1 is what every published set
-    // so far was generated with.
+    // so far was generated with. Version 2 was re-pinned once, before any set
+    // was published with it (2026-09-28: `context` required for
+    // error_correction in its schema; E measured the earlier 22121840).
     expect(fingerprint(version)).toBe(expected);
   });
 
@@ -813,11 +883,39 @@ describe('generate_shared_daily_test request, prompt version 2', () => {
   const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], { promptVersion: 2 }));
   const v2User = v2.messages[0]?.content ?? '';
 
-  it('keeps the model, token budget and schema of version 1 (and so of the legacy route)', () => {
+  it('keeps the model and token budget of version 1 (and so of the legacy route)', () => {
     expect(v2.model).toBe(v1.model);
     expect(v2.max_tokens).toBe(v1.max_tokens);
-    expect(v2.output_config).toEqual(v1.output_config);
     expect(v2.messages).toHaveLength(1);
+  });
+
+  it("uses version 1's schema with each question one of two shapes, error_correction requiring \"context\"", () => {
+    type Obj = Record<string, unknown> & { properties: Record<string, unknown>; required: string[] };
+    const schemaOf = (body: typeof v1) => (body.output_config.format.schema as { properties: { questions: { items: unknown } } });
+    const v1Item = schemaOf(v1).properties.questions.items as Obj;
+    const [fill, ec] = (schemaOf(v2).properties.questions.items as { anyOf: Obj[] }).anyOf as [Obj, Obj];
+    for (const [shape, type] of [
+      [fill, 'fill_in_blank'],
+      [ec, 'error_correction'],
+    ] as const) {
+      expect(shape.properties).toEqual({ ...v1Item.properties, type: { type: 'string', const: type } });
+      expect(shape.additionalProperties).toBe(false);
+    }
+    expect(fill.required).toEqual(v1Item.required);
+    expect(fill.required).not.toContain('context');
+    expect(new Set(ec.required)).toEqual(new Set([...v1Item.required, 'context']));
+    // Everything outside the questions' items is version 1's.
+    const withoutItems = (body: typeof v1) => {
+      const schema = structuredClone(schemaOf(body));
+      schema.properties.questions.items = null;
+      return { ...body.output_config, format: { ...body.output_config.format, schema } };
+    };
+    expect(withoutItems(v2)).toEqual(withoutItems(v1));
+  });
+
+  it('uses only schema keywords structured outputs documents as supported (no oneOf, if, minLength, pattern)', () => {
+    const json = JSON.stringify(v2.output_config);
+    for (const keyword of ['oneOf', '"if"', 'minLength', 'maxLength', 'pattern', 'minimum']) expect(json).not.toContain(keyword);
   });
 
   it('has its own system prompt, not the legacy Daily Test one', () => {
@@ -897,9 +995,10 @@ describe('generate_shared_daily_test request, generation variants (owner additio
   });
 
   it.each([
-    ['G3: v2, claude-sonnet-5', { promptVersion: 2, model: 'claude-sonnet-5' }, '9391a5af'],
-    ['G4: v2, two candidates', { promptVersion: 2, candidatesPerSlot: 2 }, 'f04badb8'],
-    ['G5: v2, claude-sonnet-5, two candidates', { promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 }, '98f1bfc3'],
+    // Re-pinned with version 2 (2026-09-28); E measured 9391a5af, f04badb8, 98f1bfc3.
+    ['G3: v2, claude-sonnet-5', { promptVersion: 2, model: 'claude-sonnet-5' }, 'ac736d3e'],
+    ['G4: v2, two candidates', { promptVersion: 2, candidatesPerSlot: 2 }, 'aac0a37'],
+    ['G5: v2, claude-sonnet-5, two candidates', { promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 }, '8a3ca186'],
   ] as const)('pins the measured variant %s to its request fingerprint', (_name, options, expected) => {
     expect(requestFingerprint(options)).toBe(expected);
   });

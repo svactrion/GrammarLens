@@ -312,6 +312,7 @@ export type SharedSetRejection =
   | 'blank_correct_answer' // correctAnswer normalizes to nothing
   | 'wrong_answer_matches_correct' // a predicted wrong answer grades as correct
   | 'duplicate_wrong_answer'
+  | 'error_correction_missing_sentence' // no flawed sentence in "context" to correct
   | 'unchanged_error_correction' // the "correction" equals the flawed sentence
   | 'error_correction_multi_edit' // the correction changes more than one short span
   | 'explanation_not_one_sentence'
@@ -377,6 +378,21 @@ function optionalText(value: unknown): string | undefined {
 
 function wordCount(value: string): number {
   return value.trim().split(/\s+/).length;
+}
+
+/**
+ * Words (with at least one letter) an `error_correction` question's "context"
+ * needs to count as a sentence to correct. The schema cannot enforce it:
+ * `context` is optional there (the legacy schema is shared, and the structured
+ * outputs grammar has no `minLength`), and in E (2026-09-28) 19 of 28
+ * `error_correction` questions from `claude-sonnet-4-6` left it out, with the
+ * sentence in no other field.
+ */
+export const ERROR_CORRECTION_MIN_WORDS = 3;
+
+function isSentence(value: string | undefined): boolean {
+  const words = (value ?? '').trim().split(/\s+/).filter((w) => /\p{L}/u.test(w));
+  return words.length >= ERROR_CORRECTION_MIN_WORDS;
 }
 
 /** Words an `error_correction` answer may remove from, or put into, the flawed
@@ -533,6 +549,9 @@ function checkQuestion(entry: unknown): SharedQuestion {
   const hint = optionalText(q.hint);
   const correctAnswer = text(q.correctAnswer);
   const explanation = text(q.explanation);
+  // First among the content rules: without the sentence, nothing else about
+  // the question can be answered.
+  if (type === 'error_correction' && !isSentence(context)) throw new Rejected('error_correction_missing_sentence');
 
   const rawWrong = q.commonWrongAnswers;
   if (!Array.isArray(rawWrong)) throw new Rejected('missing_field');
@@ -560,8 +579,8 @@ function checkQuestion(entry: unknown): SharedQuestion {
     if (seen.has(normalized)) throw new Rejected('duplicate_wrong_answer');
     seen.add(normalized);
   }
-  if (type === 'error_correction' && context !== undefined) {
-    const original = normalizeAnswer(context);
+  if (type === 'error_correction') {
+    const original = normalizeAnswer(context as string);
     if (original === correct) throw new Rejected('unchanged_error_correction');
     // One error fixed and nothing else touched: a rewritten sentence can be
     // "corrected" in more ways than one exact-match key can hold.

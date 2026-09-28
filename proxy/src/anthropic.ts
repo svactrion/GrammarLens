@@ -431,6 +431,39 @@ function dailyTestSchema() {
   };
 }
 
+/**
+ * Prompt version 2's schema: the Daily Test schema with each question one of
+ * two shapes, told apart by `type` (`const`), so that an `error_correction`
+ * question must carry "context", where its flawed sentence goes. The
+ * structured outputs grammar supports `anyOf` and `const` but no `minLength`,
+ * so an empty "context" still parses; `validateSharedSet` rejects it
+ * (`error_correction_missing_sentence`). Version 1 and the legacy route keep
+ * `dailyTestSchema()` unchanged.
+ */
+function sharedDailyTestSchemaV2() {
+  const base = dailyTestSchema();
+  const item = base.properties.questions.items;
+  const shape = (type: 'fill_in_blank' | 'error_correction', required: readonly string[]) => ({
+    ...item,
+    properties: { ...item.properties, type: { type: 'string', const: type } },
+    required: [...required],
+  });
+  return {
+    ...base,
+    properties: {
+      questions: {
+        type: 'array',
+        items: {
+          anyOf: [
+            shape('fill_in_blank', item.required),
+            shape('error_correction', [...item.required.slice(0, 2), 'context', ...item.required.slice(2)]),
+          ],
+        },
+      },
+    },
+  };
+}
+
 function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicRequestBody {
   return {
     model: MODEL,
@@ -456,7 +489,9 @@ export function buildGenerateSharedDailyTestBody(req: GenerateSharedDailyTestReq
     max_tokens: dailyTestMaxTokensFor(req.count) + (thinks ? THINKING_HEADROOM_TOKENS : 0),
     system: req.promptVersion === 2 ? SHARED_DAILY_TEST_SYSTEM_PROMPT_V2 : DAILY_TEST_SYSTEM_PROMPT,
     ...(thinks ? { thinking: { type: 'adaptive' as const } } : {}),
-    output_config: { format: { type: 'json_schema', schema: dailyTestSchema() } },
+    output_config: {
+      format: { type: 'json_schema', schema: req.promptVersion === 2 ? sharedDailyTestSchemaV2() : dailyTestSchema() },
+    },
     messages: [{ role: 'user', content: sharedDailyTestUserPrompt(req) }],
   };
 }

@@ -5842,4 +5842,19 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   and tested against a local KV; the owner runs it. Options for the legacy
   route compared (as now / regenerate in-request / error / drop with a floor
   of 3); recommended: drop, error below 3; the owner decides.
+- **[B — engineering]** `error_correction_missing_sentence`: an
+  `error_correction` question needs a `context` of at least 3 words with a
+  letter; checked first among the content rules, in `checkQuestion`, so both
+  `validateSharedSet` and `validateSharedCandidates` apply it to every prompt
+  version. Prompt version 2's schema makes each question one of two shapes
+  (`anyOf`, `type` as `const`), requiring `context` for `error_correction`
+  (structured outputs has no `minLength`, so blanks are the validator's job).
+  v1 and legacy schemas unchanged; v2, G3, G4, G5 fingerprints re-pinned (no
+  v2 set was ever published). 346 tests. Mutations that turn tests red (13
+  of 13): the rule removed, 1 word enough, no letter check, applied to every
+  type, the wrong code, the rule moved after the wrong-answer checks, the
+  `error_correction` shape without `context`, the fill shape requiring it,
+  the v2 schema used for v1, v1's schema used for v2, `const` loosened to an
+  `enum`, the legacy schema requiring `context` (the legacy byte pin fails),
+  `minLength` added. Re-analysis of E with the rule: report §14.5.
 
