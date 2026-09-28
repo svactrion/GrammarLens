@@ -5857,4 +5857,11 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   the v2 schema used for v1, v1's schema used for v2, `const` loosened to an
   `enum`, the legacy schema requiring `context` (the legacy byte pin fails),
   `minLength` added. Re-analysis of E with the rule: report §14.5.
+- **[Plan]** Report §14.6 replaces §13.5: P7a (decision table, decision 2,
+  checker `claude-opus-5-5`) → P7b (repair generation) → P7c (two-phase cron
+  with S3: generate / check / repair runs, one Anthropic call per run, 3
+  generations + 3 checks per date) → D3 → M → Dx → C1, plus an optional L
+  (legacy response check) if the owner picks an option. Cost: ≈ $0.071 per
+  normal day, ≈ $0.23 absolute worst per date. CPU risk sits in P7c (the
+  cron's highest measured CPU is 8.73 ms).
 
