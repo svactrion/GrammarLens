@@ -135,6 +135,20 @@ Save it back as **CSV (UTF-8)** under the same name (Numbers: File → Export
 To → CSV, Unicode UTF-8; Excel: "CSV UTF-8"). Keep the header and the `key`
 column. The row order does not matter.
 
+**Numbers may use `;` as the separator** (it follows the region setting, e.g.
+Turkish), and `analyze` reads only `,`. If the first line of the saved file
+reads `key;topic;type;…`, convert it in place from `proxy/`:
+
+```bash
+python3 -c "import csv,sys; p=sys.argv[1]; rows=list(csv.reader(open(p,encoding='utf-8-sig',newline=''),delimiter=';')); csv.writer(open(p,'w',encoding='utf-8',newline='')).writerows(rows)" eval/out/run-…/labels.csv
+```
+
+**Check the `key` column after saving:** a spreadsheet can read a key such as
+`267981e9` as a number and write it back as `2,67981E+14`. Such a row no
+longer matches its question, and `analyze` counts it as unlabelled. Keep a
+copy of `labels.csv` before you open it, and if a key changed, copy the key
+back from that copy (same row content) before running `analyze`.
+
 ### 6. Report
 
 ```bash

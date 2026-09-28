@@ -5795,3 +5795,39 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   format regex whose removal no test could see was deleted (the round trip
   already rejects anything but `YYYY-MM-DD`). The legacy byte pin passes
   unchanged; `src/` and `lib/` unchanged.
+
+## 2026-09-28 (1.1.0 shared Daily Test quality — E run, owner decisions, not deployed)
+
+- **[E — run]** Approved by the owner and run by the owner on the 3-date
+  matrix (`run-2026-09-28T13-58-26-981Z`): 63 minutes, **$2.849 measured**
+  over 60 billed calls (estimate $2.06; the difference is thinking output),
+  no request left out for the $4.00 cap, 0 errored or expired batch requests.
+  54 rows to label. Claude pre-labelled every row with a reason; the owner
+  reviewed each pre-label and set the final labels, deciding 2 rows alone:
+  32 ok, 7 minor, 15 defect.
+- **[E — findings]** Defect rate by the owner's labels: G1 60% (n=5), G2 30%
+  (10), G3 30% (10; the report's 22% of 9 misses one row, below), G5 14% (14,
+  after K1), R1/R2 40%, R3 0%. Checkers: K1 `claude-sonnet-5` recall 44%, 4%
+  clean rejected, 0 of 4 reference defects; K2 `claude-sonnet-4-6` 100%, 15%,
+  91 s per call; K3 `claude-opus-5-5` 79%, 14%, ≈ $0.047 and 14 s per call
+  (model mapping verified in the records). Checked: G5's synchronous
+  generation took 100.4 s (above the 90 s timeout); all 3 K1 checks of G4
+  stopped at `max_tokens` (16,000), which is why K1 reviewed no G4 set; the 8
+  unusable checks are all `max_tokens` stops (K3 never exceeded 2,280 output
+  tokens); the 9 unbilled calls are checks of sets that failed the gate, not
+  errors. Found while labelling: `error_correction` questions without a
+  sentence (§14.4 of the report), and one key (`267981e9`) that Numbers
+  turned into `2,67981E+14`.
+- **[Decisions — owner]** (1) Live: prompt v2 + `claude-sonnet-4-6` +
+  checker `claude-opus-5-5` + S3, no over-generation. (2) **Decision 5
+  revised:** a question whose only problems are `multiple_answers` or
+  `wrong_answer_acceptable` is not rejected; the alternatives go into
+  `acceptedAnswers` (max 2) and leave the wrong answers; `original_not_wrong`,
+  `key_incorrect` and `wrong_rule` always reject. (3) E is not extended; the
+  live sets, `review:*` records and a weekly owner look replace it.
+  `docs/1.1.0-shared-daily-test-quality.md` §14.
+- **[Docs]** Numbers exported the sheet with `;`: `proxy/eval/README.md` now
+  says so and gives a one-line conversion (chosen over teaching `analyze` to
+  detect `;`, since E is closed), and warns about keys read as numbers.
+  Roadmap 1.1.0 status updated.
+
