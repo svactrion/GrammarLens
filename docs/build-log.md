@@ -5830,4 +5830,16 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   says so and gives a one-line conversion (chosen over teaching `analyze` to
   detect `;`, since E is closed), and warns about keys read as numbers.
   Roadmap 1.1.0 status updated.
+- **[A — impact, no code]** In E's raw outputs, 19 of 28 `error_correction`
+  questions from `claude-sonnet-4-6` (G1 4/7, G2 5/7, G4 10/14; 6 of 9 sets)
+  and 0 of 21 from `claude-sonnet-5` had no `context`; in none of the 19 was
+  the sentence in any other field. The legacy route uses the same system
+  prompt, schema and model as G1 and returns the response unchecked, so it
+  can produce them; how often is not measurable from stored data (the two
+  reviewed v1 sets had none). On 1.0.0 such a question renders without a
+  sentence, cannot be answered, and does not crash (report §14.4, with
+  file:line). A read-only KV scan command for the published sets was written
+  and tested against a local KV; the owner runs it. Options for the legacy
+  route compared (as now / regenerate in-request / error / drop with a floor
+  of 3); recommended: drop, error below 3; the owner decides.
 
