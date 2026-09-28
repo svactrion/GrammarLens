@@ -5865,3 +5865,41 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   normal day, ≈ $0.23 absolute worst per date. CPU risk sits in P7c (the
   cron's highest measured CPU is 8.73 ms).
 
+## 2026-09-28 (1.1.0 shared Daily Test quality — generator D, legacy check L, not deployed)
+
+- **[Decisions — owner]** Report §14 approved; deviations 1, 3, 4 accepted.
+  (1) **Combination C → D:** the shared set generator becomes
+  `claude-sonnet-5` (repairs too), because `claude-sonnet-4-6` left the
+  sentence out of 19 of 28 `error_correction` questions and `claude-sonnet-5`
+  of 0 of 21, at the same labelled defect rate (30% each); the checker stays
+  `claude-opus-5-5`. (2) L3 for the legacy route, first: built, deployed by the
+  owner (D-L), then `1.1.0` merged into `main`, before P7. (3) After P7a moves
+  answers, at least 1 wrong answer must remain, else reject; the 2–3 rule
+  becomes 1–3 only for such questions. Report §15.
+- **[Timeout — assessment]** `claude-sonnet-5` generated at 97–98 output
+  tokens/s; E's single sets used 4,052–4,878 tokens (≈ 41–50 s), so 90 s holds
+  them with ≈ 1.8× margin but not the 15,072-token budget (≈ 155 s).
+  Recommended for P7c: 150 s, lease 180 s (a cron may run 15 minutes;
+  waiting on `fetch` is not CPU). Report §15.2.
+- **[L — engineering]** `proxy/src/legacy_daily_test.ts`: the legacy route
+  drops sentenceless `error_correction` questions from Anthropic's response
+  with the shared gate's rule (now exported as `hasSentenceToCorrect`); fewer
+  than 3 left after a drop → the existing `502 upstream_error`, which 1.0.0
+  shows with "Try again". New count-only line `legacy_daily_test_filter`
+  (`received_count`, `removed_count`, `served_count`, `outcome`), its own line
+  because `anthropic_usage` is written before the response is parsed.
+  Request, quota and cost unchanged. 358 tests (346 + 12). Mutations that
+  turn tests red (14 of 14): the filter disabled, dropped questions served,
+  the floor at 2, the floor applied when nothing was removed, a rejected set
+  served, another error code, `fill_in_blank` dropped too, a weaker rule of
+  its own, the served count on a rejection, content in the log line, the log
+  line missing, a copied object when nothing changed, the order reversed, the
+  removed count wrong. One further mutation (a request built with
+  `count + 0`) was equivalent and is not counted. The legacy byte pin passes
+  unchanged. `wrangler deploy --dry-run` 59.05 KiB.
+- **[Plan]** L → D-L → M → P7a → P7b → P7c → D3 → Dx → C1. D costs ≈ $0.096 on
+  a normal day, ≈ $0.29 at the absolute worst per date. D-L checklist and the
+  merge steps: report §15.5. Checked read-only: `1.1.0` changes nothing under
+  `lib/` or outside `proxy/` and `docs/` against `origin/main`, and merging it
+  into `main` is conflict-free and gives exactly `1.1.0`'s tree.
+
