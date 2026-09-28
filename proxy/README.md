@@ -125,9 +125,34 @@ secrets in each place and checks all console output. The catch-all in
 only a category (a built-in error name, `other_error` or `non_error`), never
 the message or stack. Every `console` call in `src/` now writes one of these
 fixed-field lines: `anthropic_usage`, `anthropic_failure`, `unhandled_error`,
-and the shared-set cron's `shared_set_generation` and `shared_set_cron` (below).
+`legacy_daily_test_filter` (below), and the shared-set cron's
+`shared_set_generation` and `shared_set_cron` (below).
 
 Deployed.
+
+### Legacy Daily Test response check
+
+`POST /v1/generate-daily-test` (1.0.0) drops `error_correction` questions that
+have no sentence to correct from the response (`src/legacy_daily_test.ts`;
+`docs/1.1.0-shared-daily-test-quality.md` §14.4, option L3). The rule is the
+shared set gate's (`hasSentenceToCorrect`: a `context` of at least 3 words
+with a letter). Every other question is served exactly as the model wrote it.
+If something was dropped and fewer than 3 questions remain, the route answers
+the existing `502 upstream_error` ("The upstream service returned an
+unexpected response."), which 1.0.0 shows as "Couldn't load today's test"
+with "Try again". The request to Anthropic, the quota unit and the cost are
+unchanged. One line per response with a `questions` array:
+
+```json
+{"event":"legacy_daily_test_filter","operation":"generate_daily_test","received_count":5,"removed_count":1,"served_count":4,"outcome":"served"}
+```
+
+`outcome` is `served` or `rejected` (`served_count` 0). Counts only, no
+content; `test/legacy_daily_test.test.ts` plants secrets and checks all
+console output. Legacy rate of sentenceless questions = sum of
+`removed_count` / sum of `received_count`.
+
+Not deployed yet (D-L).
 
 `DEVICE_DAILY_LIMIT`/`GLOBAL_DAILY_LIMIT` (plain vars in `wrangler.jsonc`,
 not secret) are conservative placeholder defaults, not measured numbers —
@@ -140,8 +165,9 @@ For 1.1.0 (`docs/1.1.0-shared-daily-test.md`): one Daily Test set per calendar
 date, generated here once for every 1.1.0+ client. The generation (P2) and
 the read route (P3, below) are **not deployed as of 2026-09-26**, and no app
 build calls the read route yet.
-The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
-`test/index.test.ts` pins its Anthropic request byte for byte.
+The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
+`test/index.test.ts` pins it byte for byte; only its response is checked
+(above).
 
 - **Trigger:** `triggers.crons` in `wrangler.jsonc`, `7 * * * *` (hourly, UTC),
   handled by `scheduled` in `src/index.ts` → `runSharedGeneration`

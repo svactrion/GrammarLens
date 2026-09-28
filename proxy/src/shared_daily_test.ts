@@ -390,8 +390,12 @@ function wordCount(value: string): number {
  */
 export const ERROR_CORRECTION_MIN_WORDS = 3;
 
-function isSentence(value: string | undefined): boolean {
-  const words = (value ?? '').trim().split(/\s+/).filter((w) => /\p{L}/u.test(w));
+/** Whether an `error_correction` question's "context" holds a sentence to
+ * correct. Shared with the legacy route's response check
+ * (`src/legacy_daily_test.ts`), so both apply the same rule. */
+export function hasSentenceToCorrect(context: unknown): boolean {
+  if (typeof context !== 'string') return false;
+  const words = context.trim().split(/\s+/).filter((w) => /\p{L}/u.test(w));
   return words.length >= ERROR_CORRECTION_MIN_WORDS;
 }
 
@@ -551,7 +555,7 @@ function checkQuestion(entry: unknown): SharedQuestion {
   const explanation = text(q.explanation);
   // First among the content rules: without the sentence, nothing else about
   // the question can be answered.
-  if (type === 'error_correction' && !isSentence(context)) throw new Rejected('error_correction_missing_sentence');
+  if (type === 'error_correction' && !hasSentenceToCorrect(context)) throw new Rejected('error_correction_missing_sentence');
 
   const rawWrong = q.commonWrongAnswers;
   if (!Array.isArray(rawWrong)) throw new Rejected('missing_field');
