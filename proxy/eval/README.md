@@ -1,14 +1,17 @@
 # E — the local measurement of the shared Daily Test quality step
 
 What it is and why: `docs/1.1.0-shared-daily-test-quality.md` §13.6. It
-generates Daily Test sets with 5 variants (prompt v1/v2 × `claude-sonnet-4-6` /
+generates Daily Test sets for 3 dates (2026-10-10, 2026-10-11, 2026-10-13;
+§13.6 says why these) with 5 variants (prompt v1/v2 × `claude-sonnet-4-6` /
 `claude-sonnet-5` × one set / two candidates per slot), has them reviewed by up
 to 3 checker models, and turns your labels into defect rates, checker accuracy,
 publish rates, measured cost, wall time and JSON CPU time. It runs on this
 machine only; nothing here is deployed.
 
-**It calls the Anthropic API and costs money: about $3.1, never more than
-$4.00 of measured spend.** Run it only after the owner has approved the run.
+**It calls the Anthropic API and costs money: about $2.1 (69 requests), never
+more than $4.00 of measured spend.** Run it only after the owner has approved
+the run. Adding the 3 extra dates later (step 7) is about $1.1 more, under the
+same $4.00 cap.
 
 ## Owner checklist
 
@@ -47,8 +50,10 @@ npx wrangler kv key get --binding DAILY_SETS_KV --remote "set:2026-09-27" > eval
 npm run eval -- dry-run
 ```
 
-It prints the requests per stage with their estimated cost, and must end with
-`Reference sets: all present` and `API key: found (not shown)`.
+It prints the requests per stage with their estimated cost (69 requests,
+about $2.06), what adding the extra dates later would add (42 requests, about
+$1.06), and must end with `Reference sets: all present` and
+`API key: found (not shown)`.
 
 ### 4. Run
 
@@ -61,9 +66,9 @@ caffeinate -i npm run eval -- run
 | Stage | What | Typical time |
 |---|---|---|
 | A | 5 generations, one after another (one date per variant, for wall time) | 6–10 min |
-| B | 25 generations in one batch | usually under 1 h; up to 24 h |
+| B | 10 generations in one batch | usually under 1 h; up to 24 h |
 | C | 3 checks, one per checker model | 3–6 min |
-| D | the other ~78 checks in one batch | usually under 1 h; up to 24 h |
+| D | the other ~51 checks in one batch | usually under 1 h; up to 24 h |
 
 **Typically 1–2.5 hours in total.** Anthropic only guarantees a batch within 24
 hours, so the worst case is about 2 days.
@@ -86,8 +91,9 @@ the `claude-sonnet-4-6` checker). The final report lists what was left out.
 
 ### 5. Label
 
-When it finishes it prints the path of **`eval/out/run-…/labels.csv`**, about
-165 rows. Open it in Numbers or Excel. The rows are shuffled and carry a
+When it finishes it prints the path of **`eval/out/run-…/labels.csv`**, at
+most 90 rows (45 from G1–G3, 30 from G4–G5, 15 from the reference sets; fewer
+if a set fails the gate). **About 1 hour** (45–70 min). Open it in Numbers or Excel. The rows are shuffled and carry a
 random key. **Do not open `private/`** until you have finished: it holds the
 mapping from key to variant, and the raw outputs.
 
@@ -138,3 +144,28 @@ npm run eval -- analyze --out eval/out/run-…
 It writes `eval/out/run-…/report.md` and names any row still unlabelled or
 with a value outside the lists above. The results then go into the build log
 and §13 of the report. The run folder stays out of the repo.
+
+### 7. If the results are not clear: add the extra dates
+
+With 3 sets per variant the intervals are wide. If the report does not
+separate the variants or checkers clearly, add the other 3 dates
+(2026-10-12, 2026-10-14, 2026-10-15) **to the same run folder**, after the
+owner's approval:
+
+```bash
+npm run eval -- dry-run
+caffeinate -i npm run eval -- run --out eval/out/run-… --add-dates
+```
+
+(`--add-dates 2026-10-12,2026-10-14` adds only those; any other calendar
+dates work too.) It needs a run that has written `labels.csv`. It generates
+and checks only the new dates (15 generations and 27 checks, about $1.06, all
+batched: stages B and D again, usually under 2 hours); the synchronous calls
+and the reference checks are not repeated. The $4.00 cap counts what the
+folder has already spent. If it stops, run the same command without
+`--add-dates` to resume it.
+
+The new rows go to a separate sheet, **`labels-2.csv`** (at most 75 rows,
+about 45–55 min), shuffled under new random keys; `labels.csv` and your
+labels in it are not touched. Label it the same way, then run `analyze` as
+in step 6: it reads every sheet in the folder.

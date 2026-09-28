@@ -4,6 +4,8 @@
  *
  *   npm run eval -- dry-run            requests and estimated cost, no API call
  *   npm run eval -- run [--out DIR]    runs E (or resumes DIR), spending at most $4
+ *   npm run eval -- run --out DIR --add-dates [YYYY-MM-DD,…]
+ *                                      adds dates to a finished run (default: EXTRA_DATES)
  *   npm run eval -- analyze --out DIR  the report, after the owner has labelled
  *
  * The API key is read from the environment (ANTHROPIC_API_KEY) or from
@@ -13,16 +15,31 @@
  * variant under `private/`.
  */
 import { randomInt, randomUUID } from 'node:crypto';
-import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { buildBody, type AnthropicRequestBody } from '../src/anthropic';
 import { sharedCheckRequest, type QuestionDecision } from '../src/shared_check';
 import { dailyPlan, sharedDailyTestRequest, type SharedQuestion } from '../src/shared_daily_test';
 import { analyze, benchmarkJsonWork, reviewedSets } from './lib/analysis';
-import { LABEL_COLUMNS, buildLabelSheet, parseCsv, readLabels, seededRandom, toCsv, type LabelItem } from './lib/labels';
+import {
+  LABEL_COLUMNS,
+  buildLabelSheet,
+  isSheetFileName,
+  newLabelItems,
+  parseCsv,
+  readLabels,
+  seededRandom,
+  sheetFileName,
+  toCsv,
+  type LabelItem,
+  type LabelSource,
+} from './lib/labels';
 import {
   EVAL_DATES,
+  EXTRA_DATES,
   SPEND_CAP_USD,
+  addDates,
+  batchKey,
   TOKEN_ESTIMATES,
   checkerModel,
   costOf,
@@ -55,8 +72,14 @@ const REFERENCE_FILES: Readonly<Record<ReferenceId, string>> = {
 
 interface RunState {
   seed: number;
-  batches: Partial<Record<'B' | 'D', string>>;
+  /** Batch ids by [batchKey]. */
+  batches: Record<string, string>;
   estimates: Record<string, Usage>;
+  /** The run's dates: [EVAL_DATES], then any added. Absent in a run started
+   * before dates could be added. */
+  dates?: string[];
+  /** 0, then one more for each `--add-dates`. */
+  round?: number;
 }
 
 class Run {
@@ -273,10 +296,11 @@ async function runBatch(
   items: { request: PlannedRequest; body: AnthropicRequestBody }[],
 ): Promise<CallRecord[]> {
   if (items.length === 0) return [];
-  let id = state.batches[stage];
+  const slot = batchKey(stage, state.round ?? 0);
+  let id = state.batches[slot];
   if (!id) {
     id = await submitBatch(key, items);
-    state.batches[stage] = id;
+    state.batches[slot] = id;
     await run.writeJson('state.json', state);
     await run.log(`stage ${stage}: submitted batch ${id} with ${items.length} requests`);
   } else {
@@ -313,6 +337,12 @@ async function dryRun(): Promise<void> {
   console.log(`Estimated cost: ${money(summary.totalUsd)} (all synchronous it would be ${money(summary.totalIfAllSyncUsd)})`);
   console.log(`Spend cap: ${money(SPEND_CAP_USD)} of measured spend; a stage is trimmed if spend so far + 1.25 × its estimate would pass it.`);
   console.log(`Dates: ${EVAL_DATES.join(', ')}`);
+  const planned = new Set(requests.map((r) => r.customId));
+  const extra = planRequests(addDates(EVAL_DATES)).filter((r) => !planned.has(r.customId));
+  const extraSummary = summarizePlan(extra);
+  console.log(
+    `Adding ${EXTRA_DATES.join(', ')} later (run --out DIR --add-dates): +${extraSummary.totalRequests} requests (${extra.filter((r) => r.kind === 'generation').length} generations, ${extra.filter((r) => r.kind === 'check').length} checks), +${money(extraSummary.totalUsd)}; the same ${money(SPEND_CAP_USD)} cap covers the whole run folder.`,
+  );
   console.log(`Reference sets: ${missing.length === 0 ? 'all present' : `missing ${missing.join(', ')} (${missing.map((m) => REFERENCE_FILES[m]).join(', ')}); their checks would be skipped`}`);
   let keyFound = true;
   try {
@@ -323,13 +353,30 @@ async function dryRun(): Promise<void> {
   console.log(`API key: ${keyFound ? 'found (not shown)' : 'not found'}`);
 }
 
-async function runE(outArg: string | undefined): Promise<void> {
+async function runE(outArg: string | undefined, add: string[] | undefined): Promise<void> {
   const key = await apiKey();
   const dir = outArg ? path.resolve(ROOT, outArg) : path.join(ROOT, 'eval/out', `run-${new Date().toISOString().replace(/[:.]/g, '-')}`);
   const run = new Run(dir);
+  if (add && !(await exists(run.file('state.json')))) throw new Error('--add-dates needs --out with the folder of a finished run.');
   await run.init();
-  const state = await run.readJson<RunState>('state.json', { seed: randomInt(2 ** 31), batches: {}, estimates: { ...TOKEN_ESTIMATES } });
+  const state = await run.readJson<RunState>('state.json', {
+    seed: randomInt(2 ** 31),
+    batches: {},
+    estimates: { ...TOKEN_ESTIMATES },
+    dates: [...EVAL_DATES],
+    round: 0,
+  });
+  state.dates ??= [...EVAL_DATES];
+  state.round ??= 0;
+  if (add) {
+    if (!(await exists(path.join(dir, sheetFileName(state.round))))) {
+      throw new Error('Finish the run first (it has not written its label sheet yet): run it again with --out and without --add-dates.');
+    }
+    state.dates = addDates(state.dates, add);
+    state.round++;
+  }
   await run.writeJson('state.json', state);
+  const round = state.round;
   const records = await run.readJson<CallRecord[]>('records.json', []);
   const done = new Set(records.map((r) => r.customId));
   const save = async (added: CallRecord[]) => {
@@ -342,7 +389,8 @@ async function runE(outArg: string | undefined): Promise<void> {
   await run.writeJson('references.json', references);
   await run.log(`E run in ${dir}; spent so far ${money(spent())}`);
 
-  const plan = planRequests();
+  await run.log(`dates: ${state.dates.join(', ')}${round > 0 ? ` (round ${round + 1})` : ''}`);
+  const plan = planRequests(state.dates);
   const broken = new Set<string>(); // a model/prompt combination the API refused synchronously
 
   // A and C: synchronous
@@ -390,7 +438,7 @@ async function runE(outArg: string | undefined): Promise<void> {
         candidates.push(request);
       }
     }
-    const fit = state.batches[stage] ? { kept: candidates, dropped: [] } : fitBudget(candidates, spent(), SPEND_CAP_USD, state.estimates);
+    const fit = state.batches[batchKey(stage, round)] ? { kept: candidates, dropped: [] } : fitBudget(candidates, spent(), SPEND_CAP_USD, state.estimates);
     skipped.push(...fit.dropped.map((r) => recordOf(r, { status: 'skipped_budget', costUsd: 0 })));
     await save(skipped);
     if (fit.dropped.length > 0) await run.log(`stage ${stage}: ${fit.dropped.length} requests left out for the budget`);
@@ -419,12 +467,24 @@ async function runE(outArg: string | undefined): Promise<void> {
   await syncStage('C', checkInput);
   await batchStage('D', checkInput);
 
-  // The owner's sheet
-  const items = labelItems(records, references);
-  const sheet = buildLabelSheet(items, () => randomUUID().replaceAll('-', '').slice(0, 8), seededRandom(state.seed));
-  await writeFile(path.join(dir, 'labels.csv'), toCsv(LABEL_COLUMNS, sheet.rows));
-  await run.writeJson('mapping.json', sheet.mapping);
-  await run.log(`done: ${sheet.rows.length} rows in ${path.join(dir, 'labels.csv')}; spent ${money(spent())}`);
+  // The owner's sheet: this round's new rows only; a written sheet is never
+  // rewritten.
+  const mapping = await run.readJson<Record<string, LabelSource>>('mapping.json', {});
+  const sheetFile = path.join(dir, sheetFileName(round));
+  const items = newLabelItems(labelItems(records, references), mapping);
+  if (await exists(sheetFile)) {
+    await run.log(`done: ${sheetFile} already written, left as it is; spent ${money(spent())}`);
+  } else {
+    const newKey = () => {
+      let k = randomUUID().replaceAll('-', '').slice(0, 8);
+      while (k in mapping) k = randomUUID().replaceAll('-', '').slice(0, 8);
+      return k;
+    };
+    const sheet = buildLabelSheet(items, newKey, seededRandom(state.seed + round));
+    await writeFile(sheetFile, toCsv(LABEL_COLUMNS, sheet.rows));
+    await run.writeJson('mapping.json', { ...mapping, ...sheet.mapping });
+    await run.log(`done: ${sheet.rows.length} rows in ${sheetFile}; spent ${money(spent())}`);
+  }
   if (missing.length > 0) await run.log(`reference sets missing: ${missing.join(', ')}`);
 }
 
@@ -468,11 +528,13 @@ async function analyzeRun(outArg: string | undefined): Promise<void> {
   const run = new Run(path.resolve(ROOT, outArg));
   const records = await run.readJson<CallRecord[]>('records.json', []);
   const references = await run.readJson<ReferenceSets>('references.json', {});
-  const mapping = await run.readJson<Record<string, import('./lib/labels').LabelSource>>('mapping.json', {});
-  const labelsFile = path.join(run.dir, 'labels.csv');
+  const mapping = await run.readJson<Record<string, LabelSource>>('mapping.json', {});
+  const sheets = (await readdir(run.dir)).filter(isSheetFileName).sort();
   let labels;
-  if (await exists(labelsFile)) {
-    const read = readLabels(parseCsv(await readFile(labelsFile, 'utf8')));
+  if (sheets.length > 0) {
+    const rows = [];
+    for (const sheet of sheets) rows.push(...parseCsv(await readFile(path.join(run.dir, sheet), 'utf8')));
+    const read = readLabels(rows);
     if (read.invalid.length > 0) console.log(`Rows with a label or defect type outside the allowed values: ${read.invalid.join(', ')}`);
     if (read.unlabelled.length > 0) console.log(`Rows not labelled yet: ${read.unlabelled.length}`);
     labels = read.labels;
@@ -488,10 +550,13 @@ async function main(): Promise<void> {
   const [command, ...rest] = process.argv.slice(2);
   const outIndex = rest.indexOf('--out');
   const out = outIndex >= 0 ? rest[outIndex + 1] : undefined;
+  const addIndex = rest.indexOf('--add-dates');
+  const addValue = addIndex >= 0 ? rest[addIndex + 1] : undefined;
+  const add = addIndex < 0 ? undefined : addValue && !addValue.startsWith('--') ? addValue.split(',').map((d) => d.trim()) : [];
   if (command === 'dry-run') return dryRun();
-  if (command === 'run') return runE(out);
+  if (command === 'run') return runE(out, add);
   if (command === 'analyze') return analyzeRun(out);
-  console.log('Usage: npm run eval -- dry-run | run [--out DIR] | analyze --out DIR');
+  console.log('Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR');
   process.exitCode = 1;
 }
 

@@ -7,9 +7,24 @@ import type { CandidatesPerSlot, SharedGeneratorModel, SharedPromptVersion } fro
  * Pure: no network, no files. `eval/run.ts` does the I/O.
  */
 
-/** The same 6 dates for every variant, so every variant answers the same 6
- * plans (consecutive dates: both 3/2 and 2/3 splits, 6 different themes). */
-export const EVAL_DATES = ['2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15'] as const;
+/**
+ * The dates every variant generates for, so every variant answers the same
+ * plans (owner, 2026-09-28: 3 dates, not 6). Every day has the same 5 topics;
+ * the dates differ in theme and in which topic gets which type. These 3 give
+ * 3 themes (health, study, technology), both splits (2 fill-in-blank / 3
+ * error-correction on the 10th, 3/2 on the 11th and 13th) and every topic in
+ * both types, and they put `modalVerbs` and `modalPastForms`, where the 26-27
+ * September defects were, into error correction twice each. The first stays
+ * 2026-10-10, the synchronous date.
+ */
+export const EVAL_DATES = ['2026-10-10', '2026-10-11', '2026-10-13'] as const;
+
+/**
+ * The dates a finished run can add if its results are not clear
+ * (`run --out DIR --add-dates`), in this order. On their own they also give 3
+ * themes (family, food, money), both splits and every topic in both types.
+ */
+export const EXTRA_DATES = ['2026-10-12', '2026-10-14', '2026-10-15'] as const;
 
 export type VariantId = 'G1' | 'G2' | 'G3' | 'G4' | 'G5';
 export type Strategy = 'S1' | 'S2';
@@ -149,12 +164,14 @@ export const generationId = (v: VariantId, date: string) => `gen_${v}_${date}`;
 export const setCheckId = (k: CheckerId, v: VariantId, date: string) => `chk_${k}_${v}_${date}`;
 export const referenceCheckId = (k: CheckerId, r: ReferenceId, repeat: number) => `chk_${k}_${r}_${repeat}`;
 
-/** Every request E would make if nothing failed and the budget held: 30
- * generations and 81 checks. */
-export function planRequests(): PlannedRequest[] {
+/** Every request E would make for [dates] if nothing failed and the budget
+ * held: with [EVAL_DATES], 15 generations and 54 checks. The first date's
+ * generations are the synchronous ones; the reference checks do not depend on
+ * the dates. */
+export function planRequests(dates: readonly string[] = EVAL_DATES): PlannedRequest[] {
   const requests: PlannedRequest[] = [];
   for (const v of GENERATION_VARIANTS) {
-    EVAL_DATES.forEach((date, i) => {
+    dates.forEach((date, i) => {
       requests.push({
         customId: generationId(v.id, date),
         kind: 'generation',
@@ -190,7 +207,7 @@ export function planRequests(): PlannedRequest[] {
     }
     for (const vId of k.variants) {
       const questions = 5 * variant(vId).candidatesPerSlot;
-      for (const date of EVAL_DATES) {
+      for (const date of dates) {
         requests.push({
           customId: setCheckId(k.id, vId, date),
           kind: 'check',
@@ -216,6 +233,31 @@ export function checkerModel(id: CheckerId): CheckerModel {
 
 export function generationVariant(id: VariantId): GenerationVariant {
   return variant(id);
+}
+
+/**
+ * The run's dates after adding [requested] (or, with none, every
+ * [EXTRA_DATES] date not in it yet) to [current]. Throws on a date that is
+ * not a calendar date or is already in the run, and when nothing is left to
+ * add. The order is kept, so the first (synchronous) date does not change.
+ */
+export function addDates(current: readonly string[], requested: readonly string[] = []): string[] {
+  const adding = requested.length > 0 ? [...requested] : EXTRA_DATES.filter((d) => !current.includes(d));
+  if (adding.length === 0) throw new Error('No dates left to add; name them with --add-dates YYYY-MM-DD,….');
+  for (const date of adding) {
+    // Only a YYYY-MM-DD calendar date survives the round trip.
+    const time = Date.parse(`${date}T00:00:00Z`);
+    if (Number.isNaN(time) || new Date(time).toISOString().slice(0, 10) !== date) throw new Error(`Not a calendar date: ${date}.`);
+    if (current.includes(date) || adding.indexOf(date) !== adding.lastIndexOf(date)) throw new Error(`Date already in the run: ${date}.`);
+  }
+  return [...current, ...adding];
+}
+
+/** The state key of a batch stage's batch: `B`/`D` for the first round, `B2`,
+ * `D2`… for each round of added dates, so an added round never resumes an
+ * earlier round's batch. */
+export function batchKey(stage: 'B' | 'D', round: number): string {
+  return round === 0 ? stage : `${stage}${round + 1}`;
 }
 
 /** The estimated cost of [request], from [estimates] (falling back to the

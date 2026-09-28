@@ -110,6 +110,24 @@ export function buildLabelSheet(
   return { rows: shuffle(rows, random), mapping };
 }
 
+/** The sheet a run writes in [round]: `labels.csv` first, then
+ * `labels-2.csv`… for each round of added dates. A written sheet is never
+ * rewritten, so labels already filled in stay. */
+export function sheetFileName(round: number): string {
+  return round === 0 ? 'labels.csv' : `labels-${round + 1}.csv`;
+}
+
+/** Whether [name] is one of a run's sheets. */
+export const isSheetFileName = (name: string) => /^labels(-([2-9]|[1-9]\d+))?\.csv$/.test(name);
+
+/** The items no sheet has yet: those whose source, date and question id are
+ * not in [mapping]. */
+export function newLabelItems(items: readonly LabelItem[], mapping: Readonly<Record<string, LabelSource>>): LabelItem[] {
+  const id = (s: LabelSource) => `${s.source}|${s.date ?? ''}|${s.questionId}`;
+  const known = new Set(Object.values(mapping).map(id));
+  return items.filter((item) => !known.has(id(item)));
+}
+
 // ---------------------------------------------------------------------------
 // CSV (RFC 4180), opened in a spreadsheet by the owner
 

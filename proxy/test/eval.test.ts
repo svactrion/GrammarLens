@@ -2,11 +2,25 @@ import { describe, expect, it } from 'vitest';
 import type { QuestionCheck } from '../src/shared_check';
 import { dailyPlan, type DailyPlan, type SharedQuestion } from '../src/shared_daily_test';
 import { analyze, reviewedSets } from '../eval/lib/analysis';
-import { LABEL_COLUMNS, buildLabelSheet, parseCsv, readLabels, seededRandom, toCsv, type LabelItem } from '../eval/lib/labels';
+import {
+  LABEL_COLUMNS,
+  buildLabelSheet,
+  isSheetFileName,
+  newLabelItems,
+  parseCsv,
+  readLabels,
+  seededRandom,
+  sheetFileName,
+  toCsv,
+  type LabelItem,
+} from '../eval/lib/labels';
 import {
   CHECKERS,
   EVAL_DATES,
+  EXTRA_DATES,
   SPEND_CAP_USD,
+  addDates,
+  batchKey,
   TOKEN_ESTIMATES,
   costOf,
   estimateCost,
@@ -23,15 +37,27 @@ import day0 from '../eval/reference/day0.json';
 describe('E plan (docs/1.1.0-shared-daily-test-quality.md §13.6)', () => {
   const plan = planRequests();
 
-  it('makes 111 requests: 30 generations and 81 checks', () => {
-    expect(plan).toHaveLength(111);
-    expect(plan.filter((r) => r.kind === 'generation')).toHaveLength(30);
-    expect(plan.filter((r) => r.kind === 'check')).toHaveLength(81);
+  it('makes 69 requests on 3 dates: 15 generations and 54 checks', () => {
+    expect(EVAL_DATES).toEqual(['2026-10-10', '2026-10-11', '2026-10-13']);
+    expect(plan).toHaveLength(69);
+    expect(plan.filter((r) => r.kind === 'generation')).toHaveLength(15);
+    expect(plan.filter((r) => r.kind === 'check')).toHaveLength(54);
+  });
+
+  it('covers 3 themes, both splits and every topic in both types, in the dates and in the extra dates', () => {
+    for (const dates of [EVAL_DATES, EXTRA_DATES]) {
+      const plans = dates.map((d) => dailyPlan(d));
+      expect(new Set(plans.map((p) => p.theme)).size).toBe(3);
+      const fills = plans.map((p) => p.slots.filter((s) => s.type === 'fill_in_blank').length);
+      expect(new Set(fills)).toEqual(new Set([2, 3]));
+      const pairs = new Set(plans.flatMap((p) => p.slots.map((s) => `${s.topicId}|${s.type}`)));
+      expect(pairs.size).toBe(10);
+    }
   });
 
   it('runs one date per variant and one check per checker synchronously, the rest batched', () => {
     const count = (stage: string) => plan.filter((r) => r.stage === stage).length;
-    expect([count('A'), count('B'), count('C'), count('D')]).toEqual([5, 25, 3, 78]);
+    expect([count('A'), count('B'), count('C'), count('D')]).toEqual([5, 10, 3, 51]);
     expect(plan.filter((r) => r.sync).every((r) => r.stage === 'A' || r.stage === 'C')).toBe(true);
     expect(plan.filter((r) => r.stage === 'A').map((r) => r.date)).toEqual(Array(5).fill(EVAL_DATES[0]));
     expect(plan.filter((r) => r.stage === 'C').map((r) => `${r.checker} ${r.reference} ${r.repeat}`)).toEqual([
@@ -58,11 +84,24 @@ describe('E plan (docs/1.1.0-shared-daily-test-quality.md §13.6)', () => {
     for (const id of ids) expect(id).toMatch(/^[A-Za-z0-9_-]{1,64}$/);
   });
 
-  it('estimates ≈ $3.1 batched and ≈ $5.8 all synchronous, under the $4 cap', () => {
+  it('estimates ≈ $2.1 batched and ≈ $3.7 all synchronous, under the $4 cap', () => {
     const summary = summarizePlan(plan);
-    expect(summary.totalUsd).toBeCloseTo(3.12, 1);
-    expect(summary.totalIfAllSyncUsd).toBeCloseTo(5.84, 1);
+    expect(summary.totalUsd).toBeCloseTo(2.06, 1);
+    expect(summary.totalIfAllSyncUsd).toBeCloseTo(3.71, 1);
     expect(summary.totalUsd).toBeLessThan(SPEND_CAP_USD);
+  });
+
+  it('with the extra dates added, is the 6-date plan: the first 69 requests unchanged, 42 more, all batched', () => {
+    const extended = planRequests(addDates(EVAL_DATES));
+    expect(extended).toHaveLength(111);
+    const ids = new Set(extended.map((r) => r.customId));
+    for (const r of plan) expect(extended.find((e) => e.customId === r.customId)).toEqual(r);
+    const added = extended.filter((r) => !plan.some((p) => p.customId === r.customId));
+    expect(added).toHaveLength(42);
+    expect(added.every((r) => !r.sync && (r.stage === 'B' || r.stage === 'D') && EXTRA_DATES.includes(r.date as never))).toBe(true);
+    expect(ids.size).toBe(111);
+    expect(summarizePlan(added).totalUsd).toBeCloseTo(1.06, 1);
+    expect(summarizePlan(extended).totalUsd).toBeLessThan(SPEND_CAP_USD);
   });
 
   it('prices at the documented list price, and half through the Batches API', () => {
@@ -71,6 +110,28 @@ describe('E plan (docs/1.1.0-shared-daily-test-quality.md §13.6)', () => {
     expect(costOf('claude-sonnet-5', usage, true)).toBe(12);
     expect(costOf('claude-opus-5-5', usage, true)).toBe(24);
     expect(costOf('claude-sonnet-5', usage, false)).toBe(6);
+  });
+});
+
+describe('addDates', () => {
+  it('adds the extra dates not in the run yet, in order, after the current ones', () => {
+    expect(addDates(EVAL_DATES)).toEqual([...EVAL_DATES, ...EXTRA_DATES]);
+    expect(addDates([...EVAL_DATES, '2026-10-12'])).toEqual([...EVAL_DATES, '2026-10-12', '2026-10-14', '2026-10-15']);
+    expect(addDates(EVAL_DATES, ['2026-10-20'])).toEqual([...EVAL_DATES, '2026-10-20']);
+  });
+
+  it('refuses a date already in the run, a repeated date, a non-date, and nothing left to add', () => {
+    expect(() => addDates(EVAL_DATES, ['2026-10-11'])).toThrow(/already/);
+    expect(() => addDates(EVAL_DATES, ['2026-10-20', '2026-10-20'])).toThrow(/already/);
+    expect(() => addDates(EVAL_DATES, ['2026-02-30'])).toThrow(/calendar/);
+    expect(() => addDates(EVAL_DATES, ['10/20/2026'])).toThrow(/calendar/);
+    expect(() => addDates(EVAL_DATES, ['+02026-10-20'])).toThrow(/calendar/);
+    expect(() => addDates(EVAL_DATES, ['2026-10-1'])).toThrow(/calendar/);
+    expect(() => addDates([...EVAL_DATES, ...EXTRA_DATES])).toThrow(/No dates left/);
+  });
+
+  it('gives each round of added dates its own batches', () => {
+    expect([batchKey('B', 0), batchKey('D', 0), batchKey('B', 1), batchKey('D', 2)]).toEqual(['B', 'D', 'B2', 'D3']);
   });
 });
 
@@ -187,6 +248,20 @@ describe('buildLabelSheet', () => {
   it('shows the wrong answers with their comments', () => {
     const sheet = buildLabelSheet(items.slice(0, 1), () => 'k', seededRandom(1));
     expect(sheet.rows[0]?.predicted_wrong_answers).toBe("might — Only a possibility, isn't it? || can — Permission.");
+  });
+
+  it('for added dates, sheets only the items no earlier sheet has', () => {
+    const first = buildLabelSheet(items, () => `k${Math.random()}`, seededRandom(1));
+    const added: LabelItem = { source: 'G1', date: '2026-10-12', questionId: 'q1', question: question('q1') };
+    expect(newLabelItems([...items, added], first.mapping)).toEqual([added]);
+    expect(newLabelItems(items, first.mapping)).toEqual([]);
+    expect(newLabelItems(items, {})).toEqual(items);
+  });
+
+  it('names each round its own sheet, and finds only sheets', () => {
+    expect([0, 1, 2].map(sheetFileName)).toEqual(['labels.csv', 'labels-2.csv', 'labels-3.csv']);
+    expect(['labels.csv', 'labels-2.csv', 'labels-12.csv'].every(isSheetFileName)).toBe(true);
+    expect(['labels-1.csv', 'labels.csv.bak', 'labels-2.numbers', 'report.md', 'my-labels.csv'].some(isSheetFileName)).toBe(false);
   });
 });
 

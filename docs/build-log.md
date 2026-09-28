@@ -5756,3 +5756,42 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   variant, all calls synchronous, no formula guard in the CSV, doubled quotes,
   the source leaking into a row, a key collision kept, no shuffle, any label
   accepted, recall swapped. The legacy byte pin passes unchanged throughout.
+
+## 2026-09-28 (1.1.0 shared Daily Test quality — E reduced to 3 dates, not run)
+
+- **[Decision — owner]** E runs reduced (option B): the matrix is unchanged
+  (G1–G5, R1–R3, the same checkers); the generation dates go from 6 to 3.
+- **[Engineering]** `EVAL_DATES` is now 2026-10-10 (health), 2026-10-11 (study)
+  and 2026-10-13 (technology): 3 themes, both splits, all 10 topic × type
+  pairs, and `modalVerbs` / `modalPastForms` in error correction twice each
+  (§13.6 has the table and the tie with 10/14/15). `EXTRA_DATES`
+  (2026-10-12, 2026-10-14, 2026-10-15) also cover all 10 pairs on their own.
+  `planRequests(dates)` takes the run's dates. `run --out DIR --add-dates
+  [YYYY-MM-DD,…]` adds dates to a run that has written its sheet: the dates
+  are kept in `state.json` with a round number, each round gets its own batches
+  (`B2`, `D2`, …) so it never resumes an earlier round's, and only the new
+  rows are written, to `labels-2.csv`, under keys not already in the mapping.
+  A written sheet is never rewritten (before, running a finished run again
+  would have replaced `labels.csv` and its labels). `analyze` reads every
+  sheet. The $4.00 cap still covers the whole run folder.
+- **[Dry run]** 69 requests (15 generations, 54 checks), **estimated $2.06**
+  ($3.71 all synchronous). Adding the extra dates: +42 requests (15
+  generations, 27 checks), +$1.06, all batched; 6 dates in all ≈ $3.1 as
+  before. Sheet: at most 90 rows, about 1 h; the extra dates at most 75 more,
+  in `labels-2.csv`.
+- **[Offline rehearsal]** Against the same `fetch` stub (no network): a
+  3-date run (75 rows, the R1/R2 inputs being absent), synthetic labels, a
+  second `run` on the finished folder (no call, sheet untouched), then
+  `--add-dates` (round 2: batches `B2`/`D2`, 70 new rows in `labels-2.csv`, no
+  key shared with `labels.csv`, which stayed byte-identical), `analyze` over
+  both sheets. `--add-dates` is refused without a finished run, for a date
+  already in it, and with nothing left to add, before anything is written.
+- **[Validation]** 337 tests (330 + 7). Mutations that turn tests red (17 of
+  17): the default extra dates, their order, no already-in-run or repeat
+  check, no calendar round trip or NaN check, the batch key for round 0 or
+  off by one, generations or set checks ignoring the run's dates, another
+  date chosen, the first sheet renamed, the dedupe ignoring the date or
+  inverted, the sheet pattern loosened or taking `labels-1.csv`. A redundant
+  format regex whose removal no test could see was deleted (the round trip
+  already rejects anything but `YYYY-MM-DD`). The legacy byte pin passes
+  unchanged; `src/` and `lib/` unchanged.
