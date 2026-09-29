@@ -88,6 +88,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _finalizeMedalMonths();
+    _deleteStaleDailyTestSets();
     _loadThemeMode();
     _loadTextSize();
     _loadProfile();
@@ -112,6 +113,15 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       _analyticsService.appResumed();
       _finalizeMedalMonths();
     }
+  }
+
+  /// Launch only, never on resume: old unfinished Daily Test sets
+  /// (`StorageService.deleteStaleDailyTestSets`). Best effort; a failure
+  /// just leaves them for the next launch.
+  Future<void> _deleteStaleDailyTestSets() async {
+    try {
+      await _storageService.deleteStaleDailyTestSets();
+    } catch (_) {}
   }
 
   /// Freezes past medal months at launch and on every resume, not only when

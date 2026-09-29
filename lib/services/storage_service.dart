@@ -860,6 +860,33 @@ class StorageService {
         .split('T')[0];
   }
 
+  /// How old, in days, an unfinished Daily Test set must be before
+  /// [deleteStaleDailyTestSets] removes it.
+  static const int staleDailyTestSetDays = 7;
+
+  /// Deletes Daily Test sets that were never completed and whose day is more
+  /// than [staleDailyTestSetDays] days before today: prepared days nobody
+  /// opened and abandoned tests (docs/1.1.0-shared-daily-test.md §7, batch
+  /// C3). Only today's and tomorrow's rows are ever read, so these can never
+  /// be shown again. Completed sets are always kept — they hold the only
+  /// record of the answers — and so is everything from the last
+  /// [staleDailyTestSetDays] days, today and tomorrow included. Returns how
+  /// many rows were deleted. Run once per launch.
+  Future<int> deleteStaleDailyTestSets() async {
+    final today = DateTime.parse(_todayKey());
+    final cutoff =
+        DateTime(today.year, today.month, today.day - staleDailyTestSetDays)
+            .toIso8601String()
+            .split('T')[0];
+    final db = await _database;
+    // Day keys are YYYY-MM-DD, so text order is calendar order.
+    return db.delete(
+      'daily_test_sets',
+      where: 'completed_at IS NULL AND day < ?',
+      whereArgs: [cutoff],
+    );
+  }
+
   /// Cache the generated set for its original day. Unfinished sets retain
   /// main's replacement behavior; completed sets cannot be reset by a stale
   /// generation request, which would allow duplicate completion writes.
