@@ -6055,3 +6055,65 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   replaces the "merge `1.1.0` into `main`" step of report §13's deploy rule).
   A proxy deploy is still made from the tree that has every deployed proxy
   commit.
+
+## 2026-09-30 (1.1.0 shared Daily Test — C1 verified; C2 infrastructure, C3)
+
+- **[Verified — owner, device]** C1: after a completion one
+  `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`,
+  Monthly Climb unaffected.
+- **[Decisions — owner]** C1 deviations 1, 2, 3, 5, 6, 8 accepted. The
+  `acceptedAnswers` card copy stays a placeholder until P7. Registering
+  `set_date` in Firebase is an owner item on the new 1.1.0 release checklist
+  (roadmap). **Fallback pool content:** 7 sets the live cron published
+  (prompt v2, `claude-sonnet-5-5` at `low`, passed the gate), exported from
+  KV and reviewed by the owner; no separate API call. When committed they are
+  recorded here as "live-generated, validator-passed, owner-reviewed".
+- **[Engineering — C2 pool, app side]** `FallbackPool`
+  (`lib/data/fallback_pool.dart`) reads `assets/daily_test_fallback/pool.json`
+  (`{"formatVersion": 1, "sets": [{"questions": [...]}]}`) once and picks a set
+  by date: days since 1970-01-01 modulo the pool size, so a day always gets the
+  same set and 7 sets give one per weekday; a set's origin date plays no part.
+  Each set is checked at load with the gate rules the app depends on (five
+  questions, five distinct catalog topics, unique ids, exactly one blank in
+  `fill_in_blank`, a sentence in `error_correction` that is not the key, 2–3
+  predicted wrong answers that each reach their own comment, a key that grades
+  correct); a bad set is left out. A missing, unreadable, other-version or empty
+  pool gives the day-0 questions, so the Daily Test is never empty. The asset
+  ships with no sets. Commit `dc066b2`.
+- **[Engineering — C2 export, owner's tool]** `scripts/fallback_pool.sh`:
+  `fetch <dates>` runs only `wrangler kv key get --binding DAILY_SETS_KV
+  --remote "set:<date>"` into `tool/fallback_pool/raw/` (git-ignored; a test
+  checks the script has no other KV command); `build <dates>` runs
+  `tool/fallback_pool/convert.ts`: prompt v2, the stored date equals the key,
+  the proxy's own `validateSharedSet` with `dailyPlan(date)` (blank rule
+  included), exactly 7 distinct dates; it drops `date`, `generatedAt`,
+  `attempt`, `promptVersion`, renames ids to `fbNN_i`, writes the asset and
+  `tool/fallback_pool/review.md` (question text and answers only) only if all
+  pass, then runs the app-side asset test; `test` runs the converter's 13
+  `node:test` cases. Checked end to end with 7 synthetic sets: the written
+  asset passed every app-side test. Commit `0dccfff`.
+- **[Deviation — selection]** The report's rule (§5: first unused pool set,
+  then least recently used) is replaced by the owner's date rotation. A
+  learner can meet a pool set they already had: on its own date as the shared
+  set, or a week later as the fallback.
+- **[Engineering — C3]** `StorageService.deleteStaleDailyTestSets` at launch
+  (not on resume): deletes rows never completed whose day is more than 7 days
+  before today; completed rows, the last 7 days, today and tomorrow are kept.
+  Commit `eb0f736`. The Daily Test's "Today's limit reached" state removed
+  (unreachable since C1); `1.1.0-design` does not touch
+  `daily_test_screen.dart`. The error state's copy ("…generating it. Check
+  your connection…") is unchanged although only a local storage failure can
+  reach it now. Commit `a1ee36c`.
+- **[Heads-up — merge with `1.1.0-design`]** That branch moves
+  `DailyTestService.questionCount` to `DailyTestSet.questionCount` and still
+  calls `generateDailyTestQuestions` (removed in C1): expect a small conflict
+  in `daily_test_service.dart` and in tests using the old constant.
+- **[Tests]** 1015 Flutter tests (970 before; +45) and 13 converter tests.
+  33 of 33 deliberate breakages red: rotation (off by one, wall clock), pool
+  ignored, empty pool, unreadable asset, re-read, format version, invalid
+  sets kept, each set rule (count, topics, no blank, two blanks, one
+  underscore, sentence, unchanged, reachability, wrong-answer count), the
+  service ignoring the pool; cleanup (completed deleted, 6 or 8 days, `<=`,
+  not at launch, on resume); converter (v1, date, gate skipped, count,
+  duplicates, ids kept, origin fields kept, explanations in the review); the
+  script writing to KV.
