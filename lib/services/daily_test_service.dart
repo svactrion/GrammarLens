@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../data/day_zero_daily_test.dart';
+import '../data/fallback_pool.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
@@ -24,16 +25,17 @@ class DailyTestService {
   final ClaudeService claudeService;
   final StorageService storageService;
 
+  /// What a day gets when its shared set cannot be read: the pool set for
+  /// that date, or the fixed first-day questions when the pool has none
+  /// (docs/1.1.0-shared-daily-test.md §5). Always saved as
+  /// [DailyTestSource.fallback], so it stays apart from day 0 in analytics.
+  final FallbackPool fallbackPool;
+
   DailyTestService({
     required this.claudeService,
     required this.storageService,
-  });
-
-  /// What a day gets when its shared set cannot be read. For now the fixed
-  /// first-day questions (marked [DailyTestSource.fallback], so the two stay
-  /// apart in analytics); the pool of hand-checked fallback sets replaces it
-  /// in batch C2 (docs/1.1.0-shared-daily-test.md §5, §11).
-  static List<DailyTestQuestion> get fallbackQuestions => kDayZeroQuestions;
+    FallbackPool? fallbackPool,
+  }) : fallbackPool = fallbackPool ?? FallbackPool();
 
   /// The load (cache, shared read, fallback) currently running for each day.
   /// See [getTodaysSet].
@@ -147,7 +149,7 @@ class DailyTestService {
       return storageService.saveDailyTestSet(shared,
           day: day, source: DailyTestSource.shared);
     }
-    return storageService.saveDailyTestSet(fallbackQuestions,
+    return storageService.saveDailyTestSet(await fallbackPool.questionsFor(day),
         day: day, source: DailyTestSource.fallback);
   }
 

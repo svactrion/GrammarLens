@@ -39,6 +39,9 @@ flutter:
     # include subfolders, so the design sources in assets/icons/_source/
     # are not bundled.
     - assets/icons/
+    # The Daily Test's fallback pool (lib/data/fallback_pool.dart). The file
+    # only: the folder may hold notes that must not ship.
+    - assets/daily_test_fallback/pool.json
   fonts:
     - family: NunitoSans
       fonts:

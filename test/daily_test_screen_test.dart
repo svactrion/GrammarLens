@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/data/day_zero_daily_test.dart';
+import 'package:grammar_lens/data/fallback_pool.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -155,6 +157,7 @@ void main() {
       final service = DailyTestService(
         claudeService: claudeService,
         storageService: storageService,
+        fallbackPool: FallbackPool.withSets(const []),
       );
 
       await pumpScreen(tester, service);
@@ -165,7 +168,7 @@ void main() {
       expect(find.byType(TextField), findsOneWidget);
       expect(storageService.todaysSet!.source, DailyTestSource.fallback);
       expect(storageService.todaysSet!.questions.map((q) => q.item.id),
-          DailyTestService.fallbackQuestions.map((q) => q.item.id));
+          kDayZeroQuestions.map((q) => q.item.id));
     },
   );
 

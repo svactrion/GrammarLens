@@ -9,6 +9,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:grammar_lens/data/day_zero_daily_test.dart';
+import 'package:grammar_lens/data/fallback_pool.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -17,7 +18,6 @@ import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
-import 'package:grammar_lens/utils/answer_matching.dart';
 
 /// Stands in for the real network-backed ClaudeService so this test can
 /// assert on how many shared-set reads were made, for which dates, without a
@@ -136,6 +136,9 @@ void main() {
     dailyTestService = DailyTestService(
       claudeService: claudeService,
       storageService: storageService,
+      // An empty pool: the fallback is then the day-0 questions, whatever
+      // the shipped asset holds.
+      fallbackPool: FallbackPool.withSets(const []),
     );
   });
 
@@ -183,8 +186,7 @@ void main() {
 
   test('a set already cached for today (e.g. from 1.0.0) makes no request',
       () async {
-    await storageService.saveDailyTestSet(
-        [DailyTestService.fallbackQuestions.first],
+    await storageService.saveDailyTestSet([kDayZeroQuestions.first],
         day: storageService.currentDayKey);
 
     final set = await dailyTestService.getTodaysSet();
@@ -221,7 +223,7 @@ void main() {
       expect(set.source, DailyTestSource.fallback);
       expect(set.day, storageService.currentDayKey);
       expect(set.questions.map((q) => q.item.id),
-          DailyTestService.fallbackQuestions.map((q) => q.item.id));
+          kDayZeroQuestions.map((q) => q.item.id));
       final stored = (await storageService.getDailyTestSetForToday())!;
       expect(stored.source, DailyTestSource.fallback);
     }
@@ -253,13 +255,45 @@ void main() {
           first.questions.map((q) => q.item.id));
     });
 
-    test('the fallback is a complete, gradable set', () {
-      final questions = DailyTestService.fallbackQuestions;
-      expect(questions, hasLength(DailyTestService.questionCount));
-      for (final q in questions) {
-        expect(checkDailyTestAnswer(q, q.correctAnswer).kind,
-            AnswerMatchKind.correct);
-      }
+    test(
+        'with a pool, a failed read gives the pool set the date rotates to, '
+        'marked fallback; another date gets another set', () async {
+      List<DailyTestQuestion> poolSet(int n) => [
+            for (final q in kDayZeroQuestions)
+              DailyTestQuestion(
+                item: PracticeItem(
+                  id: 'fb0${n}_${q.item.id}',
+                  type: q.item.type,
+                  context: q.item.context,
+                  instruction: q.item.instruction,
+                  hint: q.item.hint,
+                ),
+                topicId: q.topicId,
+                correctAnswer: q.correctAnswer,
+                commonWrongAnswers: q.commonWrongAnswers,
+                explanation: q.explanation,
+              ),
+          ];
+      final sets = [for (var n = 1; n <= 7; n++) poolSet(n)];
+      final service = DailyTestService(
+        claudeService: claudeService,
+        storageService: storageService,
+        fallbackPool: FallbackPool.withSets(sets),
+      );
+      claudeService.failuresLeft = 2;
+
+      StorageService.clockForTesting = () => DateTime(2026, 10, 2, 9);
+      final first = await service.getTodaysSet();
+      StorageService.clockForTesting = () => DateTime(2026, 10, 3, 9);
+      final second = await service.getTodaysSet();
+
+      expect(first.source, DailyTestSource.fallback);
+      expect(first.questions.map((q) => q.item.id),
+          sets[FallbackPool.indexFor('2026-10-02', 7)!].map((q) => q.item.id));
+      expect(second.questions.map((q) => q.item.id),
+          sets[FallbackPool.indexFor('2026-10-03', 7)!].map((q) => q.item.id));
+      expect(
+          first.questions.first.item.id, isNot(second.questions.first.item.id));
     });
 
     test(
@@ -779,6 +813,7 @@ void main() {
             sharedSetTimeout: timeout,
           ),
           storageService: storageService,
+          fallbackPool: FallbackPool.withSets(const []),
         );
 
     setUp(() {
@@ -835,7 +870,7 @@ void main() {
         expect(requests, hasLength(1));
         expect(set.source, DailyTestSource.fallback);
         expect(set.questions.map((q) => q.item.id),
-            DailyTestService.fallbackQuestions.map((q) => q.item.id));
+            kDayZeroQuestions.map((q) => q.item.id));
       });
     });
 
