@@ -105,9 +105,9 @@ value.
 
 | | |
 |---|---|
-| Params | `correct_count`, `wrong_count`, `skipped_count` (ints; sum is 5 today, computed rather than assumed), `step_earned` (0/1: at least one non-blank answer), `day0` (0/1: completed inside the first-launch flow), `set_source` (`bundled` = the fixed first-day set shipped with the app, `generated` = model-written; added 2026-09-22) |
+| Params | `correct_count`, `wrong_count`, `skipped_count` (ints; sum is 5 today, computed rather than assumed), `step_earned` (0/1: at least one non-blank answer), `day0` (0/1: completed inside the first-launch flow), `set_source` (`bundled` = the fixed first-day set shipped with the app, `generated` = model-written per device by 1.0.0, added 2026-09-22; from 1.1.0 (2026-09-30): `shared` = the date's shared set, `fallback` = the shared set could not be read and a set shipped with the app was shown; 1.1.0 never writes `generated`, which remains for 1.0.0 devices and sets cached before the update), `set_date` (`YYYY-MM-DD`: the set's own day, i.e. the local day key it was loaded for; added 2026-09-30 in 1.1.0) |
 | Fired | In `DailyTestResultScreen._saveCompletion` (`lib/screens/daily_test_result_screen.dart:67-90`), **after** `completeDailyTest` succeeds, and only when the set was not already completed. A failed save that is retried yields one event; reopening a finished result yields none. |
-| Answers | Is the daily habit forming (events/user/week)? What share of tests earn no step (all-skipped)? Does a first-ever (Day-0) test behave differently from later ones, and does the fixed first-day set (`set_source = bundled`) score differently from generated ones? Is scoring "favoring habit over accuracy" (`prd-gamification.md` §M6.1) showing up as a real accuracy spread? |
+| Answers | Is the daily habit forming (events/user/week)? What share of tests earn no step (all-skipped)? Does a first-ever (Day-0) test behave differently from later ones, and does the fixed first-day set (`set_source = bundled`) score differently from generated ones? How often is the fallback shown (`fallback` share of 1.1.0 completions = the health of the shared-set pipeline; `docs/1.1.0-shared-daily-test.md` §9)? Per-date difficulty of the shared set: completions and `correct_count` per `set_date` with `set_source = shared` show a set that was too hard or had a broken key (everyone gets the same set on a date). Is scoring "favoring habit over accuracy" (`prd-gamification.md` §M6.1) showing up as a real accuracy spread? |
 
 ### E2 — `results_cta_tapped` — DROPPED (owner decision, 2026-09-19)
 
@@ -473,7 +473,9 @@ flutter run --dart-define-from-file=config/prod.json -d <DEVICE>
 device in the top-left selector. Events appear within seconds, with
 parameters expanded. Walk the checklist: complete a Daily Test (E1; also check
 a fresh-install first test for `day0 = 1`, `set_source = bundled` (the
-fixed first-day set; a later day should show `generated`) and E3 + the
+fixed first-day set; a later day should show `shared` on 1.1.0, `generated`
+on 1.0.0), `set_date` equal to the device's local date, and with the app
+opened on a new day in airplane mode `set_source = fallback`, and E3 + the
 `first_step_dom` user property), open Profile (E5), change text size (E6; also the `text_size`
 user property). After the first test's "Start my climb" (or "Continue"), Home climbs and about 600 ms later opens Premium by itself: check `paywall_viewed` with `source = day0_after_climb` and **no** `mode_selected` in between, then `paywall_dismissed` with the same source. It opens once per install; to see it again use Profile → Developer → reset onboarding (debug builds only), which also clears the one-time flag. Launch and resume the app to see E4 trigger (below). E4 needs a past month in the ledger; use a seeded/controlled-clock
 database, since a real month rollover is impractical. Confirm it fires once
@@ -528,7 +530,7 @@ Built in separate commits on `monthly-climb-v2`:
 |---|---|
 | Test seam: `AnalyticsSink` (default Firebase), `AnalyticsService(sink:, clock:)`; `test/support/recording_analytics_sink.dart` | Done. Every event has a test for its exact name and parameter key set; one test checks all 14 events and both user properties against the Firebase limits in §4 and that values are only ints/short strings. |
 | `session_completed` → `practice_completed` | Done (`AnalyticsService.practiceCompleted`). |
-| E1 `daily_test_completed`, E3 `welcome_badge_earned`, user property `first_step_dom` | Done (E1 gained `set_source` on 2026-09-22), in `DailyTestResultScreen._reportCompletion`: once per screen instance, after a durable save; never for a reopened finished result; the Welcome pair and the property fire only when `completeDailyTest` reports a live earn, using the ledger day of the set. `isDay0` is passed by the first-launch flow. |
+| E1 `daily_test_completed`, E3 `welcome_badge_earned`, user property `first_step_dom` | Done (E1 gained `set_source` on 2026-09-22; in 1.1.0 its values `shared` / `fallback` and the `set_date` parameter, 2026-09-30), in `DailyTestResultScreen._reportCompletion`: once per screen instance, after a durable save; never for a reopened finished result; the Welcome pair and the property fire only when `completeDailyTest` reports a live earn, using the ledger day of the set. `isDay0` is passed by the first-launch flow. |
 | E4 `medal_month_finalized` and the finalize timing | Done. `finalizePastMedalMonths` returns the months it newly froze; `finalizePastMedalMonthsAndReport` (`lib/services/medal_finalization.dart`) reports each; it runs at launch and on resume (`lib/app.dart`) and from Profile. Concurrency test: three simultaneous calls freeze and report each month once. |
 | E5 `profile_medals_viewed` | Done, once per session, only when the Profile tab is showing (`AnalyticsService.appPaused`/`appResumed` drive the 30-minute reset). |
 | E6 `text_size_changed`, user property `text_size` | Done in `lib/app.dart`: reported only on a real change; the property is set from the stored value at startup and on change. |
@@ -543,6 +545,8 @@ Built in separate commits on `monthly-climb-v2`:
   `daily_test_completed` has been seen (2026-09-24); a full pass over every
   event is not recorded. Tracked in the TestFlight checklist in
   `docs/roadmap.md` ("What's next" §1).
+- `set_date` (1.1.0, 2026-09-30) is **not registered** as a custom dimension
+  yet (§9); DebugView shows it without registration.
 - The custom dimensions and metrics in §9 are registered: 2 user-scoped
   dimensions, 16 event-scoped dimensions and 8 metrics on 2026-09-21 (the
   event-scoped `size` as "New text size"), plus `set_source` and
@@ -596,7 +600,7 @@ DebugView and BigQuery export show every parameter without registration.
 Limits for a standard property were not verified from Google's help pages
 here (the fetched page did not cover them); I believe they are 50 event-scoped
 dimensions, 25 user-scoped dimensions and 50 custom metrics, and this list
-uses 18, 2 and 8. Check the console's counter as you create them.
+uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the console's counter as you create them.
 
 ### User-scoped custom dimensions
 
@@ -611,7 +615,8 @@ uses 18, 2 and 8. Check the console's counter as you create them.
 |---|---|---|---|
 | Step earned | `step_earned` | Event | `daily_test_completed` (0/1) |
 | Day 0 | `day0` | Event | `daily_test_completed` (0/1) |
-| Set source | `set_source` | Event | `daily_test_completed` (`bundled` / `generated`; added 2026-09-22) |
+| Set source | `set_source` | Event | `daily_test_completed` (`bundled` / `generated`, added 2026-09-22; `shared` / `fallback` from 1.1.0, 2026-09-30 — new values of a registered dimension need no re-registration) |
+| Set date | `set_date` | Event | `daily_test_completed` (`YYYY-MM-DD`, one value per day; added 2026-09-30 in 1.1.0). **Not registered yet**: register before the 1.1.0 build ships (owner decision 6, `docs/1.1.0-shared-daily-test.md` §13) |
 | Rule version | `rule_version` | Event | `welcome_badge_earned`, `medal_month_finalized` |
 | Day of month | `day_of_month` | Event | `welcome_badge_earned` |
 | Days in month | `days_in_month` | Event | `welcome_badge_earned`, `medal_month_finalized` |

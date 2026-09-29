@@ -227,8 +227,14 @@ class AnalyticsService {
   /// that eventually succeeds twice, or for a reopened finished result.
   /// Counts only; no question or answer text. Booleans go out as `0`/`1`
   /// because Firebase parameters are strings or numbers. [setSource] is
-  /// `bundled` for the fixed first-day set and `generated` for a model-written
-  /// one (`DailyTestSource.name`), so completion can be read per source.
+  /// `DailyTestSource.name`: `shared` for the date's shared set, `fallback`
+  /// when it could not be read, `bundled` for the fixed first-day set and
+  /// `generated` for a set cached by 1.0.0's per-device generation — so
+  /// completion, and how often the fallback is shown, can be read per
+  /// source. [setDate] is the set's own day (`YYYY-MM-DD`, the local day key
+  /// it was loaded for): everyone gets the same shared set on a date, so
+  /// completions per `set_date` show whether one set was too hard or had a
+  /// broken key (docs/1.1.0-shared-daily-test.md §9).
   Future<void> dailyTestCompleted({
     required int correctCount,
     required int wrongCount,
@@ -236,6 +242,7 @@ class AnalyticsService {
     required bool stepEarned,
     required bool day0,
     required String setSource,
+    required String setDate,
   }) {
     return _logEvent('daily_test_completed', {
       'correct_count': correctCount,
@@ -244,6 +251,7 @@ class AnalyticsService {
       'step_earned': stepEarned ? 1 : 0,
       'day0': day0 ? 1 : 0,
       'set_source': setSource,
+      'set_date': setDate,
     });
   }
 

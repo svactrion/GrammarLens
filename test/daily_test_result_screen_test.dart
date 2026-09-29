@@ -830,6 +830,7 @@ void main() {
         'step_earned': 1,
         'day0': 0,
         'set_source': 'generated',
+        'set_date': '2026-01-01',
       });
     });
 
@@ -854,6 +855,26 @@ void main() {
         'bundled',
       );
     });
+
+    for (final source in [DailyTestSource.shared, DailyTestSource.fallback]) {
+      testWidgets(
+          'a ${source.name} set reports set_source = ${source.name} and its '
+          'own day as set_date', (tester) async {
+        await pumpWith(
+          tester,
+          set: DailyTestSet(
+            day: '2026-10-01',
+            questions: questions,
+            source: source,
+          ),
+        );
+
+        final parameters =
+            analyticsSink.named('daily_test_completed').single.parameters!;
+        expect(parameters['set_source'], source.name);
+        expect(parameters['set_date'], '2026-10-01');
+      });
+    }
 
     testWidgets('the Day-0 result screen reports day0 = 1', (tester) async {
       await pumpWith(
@@ -883,6 +904,7 @@ void main() {
         'step_earned': 0,
         'day0': 0,
         'set_source': 'generated',
+        'set_date': '2026-01-01',
       });
       expect(analyticsSink.named('welcome_badge_earned'), isEmpty);
     });
