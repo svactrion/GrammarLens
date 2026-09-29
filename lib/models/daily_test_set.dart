@@ -30,6 +30,14 @@ enum DailyTestSource {
 /// lock: whether a completed set can be retaken is a UI-layer decision left
 /// to the batch that builds the actual screens, not assumed here.
 class DailyTestSet {
+  /// The number of questions in a day's set ([Q]): 5 — enough to feel like
+  /// a real test, short enough to finish in one sitting; matches the
+  /// "Standard" Topic Practice length. The one source for everything that
+  /// depends on it: generation, the medal maximum, Home's card copy. The
+  /// bundled Day-0 set is checked against it by a test; the proxy's shared
+  /// set has its own copy (`SHARED_SET_QUESTION_COUNT`).
+  static const int questionCount = 5;
+
   /// Local calendar day this set belongs to, `YYYY-MM-DD` — same key shape
   /// as `StorageService`'s existing daily-session-cap tracking.
   final String day;

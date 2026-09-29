@@ -11,7 +11,6 @@ import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
-import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
@@ -28,7 +27,7 @@ class _GatedClaude extends ClaudeService {
     readCalls++;
     if (gate != null) await gate!.future;
     return List.generate(
-      DailyTestService.questionCount,
+      DailyTestSet.questionCount,
       (i) => DailyTestQuestion(
         item: PracticeItem(
           id: 'q$i',

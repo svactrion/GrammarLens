@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/monthly_medal_rules.dart';
 
@@ -15,6 +16,23 @@ void main() {
     expect(_thresholds(2028, 2), [73, 145, 218]);
     expect(_thresholds(2026, 4), [75, 150, 225]);
     expect(_thresholds(2026, 1), [78, 155, 233]);
+  });
+
+  // [Q] now comes from DailyTestSet.questionCount instead of a literal
+  // `× 10`: the maximum and so every threshold must be exactly as before.
+  test('the monthly maximum is unchanged for 28-31 day months', () {
+    expect(MonthlyMedalRules.maxScore(2026, 2), 280);
+    expect(MonthlyMedalRules.maxScore(2028, 2), 290);
+    expect(MonthlyMedalRules.maxScore(2026, 4), 300);
+    expect(MonthlyMedalRules.maxScore(2026, 1), 310);
+  });
+
+  test('the maximum is days x [Q] x points for a correct answer', () {
+    expect(DailyTestSet.questionCount * MonthlyMedalRules.pointsPerCorrect, 10);
+    expect(
+        MonthlyMedalRules.score(correct: DailyTestSet.questionCount, wrong: 0),
+        10,
+        reason: 'one perfect day');
   });
 
   test('tier boundaries are inclusive and return only the highest tier', () {

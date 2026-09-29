@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/avatar.dart';
-import '../../theme.dart';
+import '../../models/climb_theme.dart';
 import '../avatar_tile.dart';
 import 'climb_route.dart';
 
@@ -104,7 +104,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
 
   @override
   Widget build(BuildContext context) {
-    final palette = ClimbPalette.of(Theme.of(context).brightness);
+    final palette =
+        ClimbThemes.greenSlope.paletteFor(Theme.of(context).brightness);
     return Semantics(
       label: 'Green Slope. ${widget.completedDays} of ${widget.days} steps. '
           '${widget.avatar.semanticLabel} avatar. Milestones: day 7 campfire, '

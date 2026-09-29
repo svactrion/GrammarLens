@@ -49,7 +49,7 @@ class _FakeClaudeService extends ClaudeService {
     }
     if (unpublished.contains(date)) return null;
     return List.generate(
-      DailyTestService.questionCount,
+      DailyTestSet.questionCount,
       (i) => DailyTestQuestion(
         item: PracticeItem(
           id: 'q$i',
@@ -165,7 +165,7 @@ void main() {
     expect(claudeService.readDates, ['2026-09-30']);
     expect(set.day, '2026-09-30');
     expect(set.source, DailyTestSource.shared);
-    expect(set.questions, hasLength(DailyTestService.questionCount));
+    expect(set.questions, hasLength(DailyTestSet.questionCount));
     expect(set.isCompleted, isFalse);
     expect((await storageService.getDailyTestSet('2026-09-30'))!.source,
         DailyTestSource.shared);
@@ -602,7 +602,7 @@ void main() {
       expect(tomorrow.day, '2026-09-23');
       expect(tomorrow.source, DailyTestSource.shared);
       expect(tomorrow.isCompleted, isFalse);
-      expect(tomorrow.questions, hasLength(DailyTestService.questionCount));
+      expect(tomorrow.questions, hasLength(DailyTestSet.questionCount));
       // Today's own set is untouched: completed, with its answers.
       final today = (await storageService.getDailyTestSetForToday())!;
       expect(today.day, '2026-09-22');

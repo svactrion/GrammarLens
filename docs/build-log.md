@@ -5537,6 +5537,313 @@ code, config or test changed. No client reads the new route yet.
   - The `1.1.0` → `main` merge of the proxy commits (deploy rule, §11) is not
     done.
 
+## 2026-09-26 (1.1.0 design side tracks defined)
+
+- **[Product] 1.1.0 design side tracks defined.** Docs only, on branch
+  `1.1.0-design`; no code, config or test changed, and nothing is
+  implemented. The owner's decisions for the 1.1.0 side work are written into
+  [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md): the launch
+  screen (recorded earlier today, repeated there), four monthly themes that
+  rotate every month (Green Slope, Ember Peak, Glacier Peak, Red Canyon;
+  visual and identity only, the theme id stored with each month), a
+  serpentine trail with medal camps, a one-time month transition card, a
+  "Mountain of Learning" title on Home, 4 new avatars appended as
+  `avatar_13`–`avatar_16`, and `theme_id` plus a transition-card event for
+  analytics. The work is split into Batches 0–8 after the `main` merge;
+  Batch 0 is a read-only check, and every claim about today's code in that
+  file is marked "to be verified in Batch 0".
+- **Rejected, with the reason:**
+  - Seasonal themes: themes rotate by month, and a season does not follow a
+    fixed month order (nor both hemispheres); Glacier Peak therefore carries no
+    winter cues.
+  - Idle sway animation for the avatar: battery use, distraction, and the
+    risk of breaking `pumpAndSettle` in tests.
+  - Spiral trail: steps that fall on the far side of the mountain are hidden
+    or overlap, which makes progress hard to read; the trail is a serpentine
+    with 4–5 legs.
+  - Premium avatars: deferred together with earned avatars; earned avatars are
+    reconsidered after the themes' effect on return visits is measured.
+- **[Open → resolved 2026-09-27]** Medal rule v1 is score-based (ceil
+  25/50/75 % of `daysInMonth × 10` points), while the transition card's
+  "Climb [X] days" line and the medal camps assumed a threshold in days.
+  - *Sub-note, owner decisions 2026-09-27 (docs only, on `1.1.0-design`):*
+    medal camps are dropped; a thin score bar with Bronze/Silver/Gold marks
+    (computed from the code's thresholds) sits under the trail, which keeps
+    showing days. Case (b) of the transition card reads "Answer all [Q]
+    questions on [N] days to earn your first [Theme] medal. Correct answers
+    get you there sooner.", with [N] = ceil(Bronze threshold ÷ [Q]) and a
+    fallback line when [N] exceeds the days left. The Gold line becomes "Can
+    you win Gold again?" (the summit is a day, Gold is a score). The default
+    theme keeps its 1.0 name, Green Slope (draft id `green_slope`), instead of
+    the "Greenway Peak" name first written here, to avoid a possible
+    migration. Batch 0 gains two checks: how a blank answer comes about, and
+    where the daily question count comes from. The rule itself is still to be
+    confirmed against the code in Batch 0.
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 0 decisions)
+
+- **[Product] Owner decisions on the Batch 0 report** (1.1.0 design side
+  tracks). Docs only, on branch `1.1.0-design`; no code, config or test
+  changed. Written into
+  [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md), "Decisions
+  after Batch 0", each with its reason and the report's conflict number
+  ([`1.1.0-design-batch0-report.md`](1.1.0-design-batch0-report.md)).
+  - **The dark mode decision CHANGED.** It was "the scene is the same in light
+    and dark mode" (a cost decision). Now every theme has a light and a dark
+    palette; Green Slope's existing dark palette is kept and is the model;
+    only external WebP layers stay the same in both modes, and the B-polish
+    exception is narrowed to them. Reason: the report showed the dark palette
+    mechanism already exists in the code (C2).
+  - Theme stored in a new `climb_month_themes` table (schema v22 → v23), no
+    backfill; a month without a row is Green Slope (C1). Rotation by global
+    calendar, the same theme for everyone in a month; anchor month open.
+  - Trail: already a serpentine (C3); Batch 3 makes step spacing even (C4;
+    1.0 is still in review, so no user sees steps move) and joins the trail's
+    end with the summit (C5). The four stop markers stay shared, palette-
+    colored and inside the 4–6-object budget (C12).
+  - Home: no separate title row; the header becomes "Mountain of Learning ·
+    [month]" (C6, C7).
+  - [Q] from one source: the medal maximum's `× 10` becomes
+    `questionCount × 2` (same value) and Home's "5-question" copy follows it;
+    one separate small commit (C8).
+  - Month transition card: also checked on return from the background, once
+    per month; it waits for the launch-time month finalization before
+    reading last month's medal (C13, C14).
+  - Launch: `runApp` runs immediately with the animation while Firebase and
+    RevenueCat initialize; Home opens when both are done. The static screen
+    and the animation follow the system appearance, Home the app's theme,
+    with a fade between them (C9, C10).
+  - Batch 0 checklist gains one open item: iOS's minimum supported version
+    and the smallest supported screen.
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 1: launch screen)
+
+On branch `1.1.0-design`; not merged, not pushed. Commits `301bb91` (splash
+and `LaunchGate`), `b14752a` (`runApp` first), `de11c7e` (iOS static launch
+screen), plus this docs commit. **Pending the owner's device check**; the
+final duration is decided after it.
+
+- **[Stop check before any code]** What in `main.dart` ran before `runApp`
+  and depended on Firebase or RevenueCat:
+  1. `Firebase.initializeApp`, then the Crashlytics hooks
+     (`FlutterError.onError`, `PlatformDispatcher.onError`). Moved after
+     `runApp`, errors raised while the splash draws would have gone only to
+     the console.
+  2. `SubscriptionService().initialize()` (`Purchases.configure`, anonymous;
+     no RevenueCat log-in exists). Every other `SubscriptionService` method
+     returns its safe default until `_configured` is set, so a Premium user
+     checked before it would have looked free.
+  3. Not in `main.dart`, but started by the app as soon as it is built:
+     `GrammarLensApp.initState` finalizes medal months and reports
+     `medal_month_finalized` through `FirebaseAnalytics.instance`, and sets
+     the `text_size` user property. Before `Firebase.initializeApp` those calls
+     throw inside `AnalyticsService`'s `try`, so the event would be **dropped
+     silently**, and because finalization is idempotent it would never be sent
+     again.
+
+  **A safe order exists, so the work went ahead:** early error handlers are
+  installed first thing in `main()` and keep every error until Firebase is
+  ready, then hand them to Crashlytics in order (or restore Flutter's
+  defaults if Firebase fails, as before); `runApp` shows `LaunchGate`, which
+  starts Firebase and RevenueCat in parallel (neither depends on the other)
+  and builds `GrammarLensApp` **only after both have finished**. Nothing in the
+  app can therefore reach an unconfigured SDK, and the pre-init error window
+  is smaller than before (it used to include orientation locking and
+  Firebase's own start without any handler).
+- **[Design]** Logo (`BrandMark`) centered 32 pt above the screen's center,
+  "GrammarLens" wordmark 16 pt under the logo's box (34 pt, w700, fixed
+  size). The logo scales 0.92 → 1.0 over 0–600 ms (`easeOutCubic`); the
+  wordmark fades in over 300–800 ms (`easeOut`); the finished frame holds
+  until 1000 ms; the splash then fades out over the app in 200 ms, so Home is
+  fully shown at 1.2 s if launch work is shorter. *Why:* 600 ms is long
+  enough for an 8 % scale change to read as settling rather than a jump; the
+  wordmark starts once the logo is mostly in place; the 200 ms hold lets the
+  full wordmark be read before it leaves. If launch work is longer, the last
+  frame holds and the fade starts when it finishes. Follows the system
+  appearance (colors from `buildAppTheme(platformBrightness)`, background
+  `surfaceContainerLow`), not the in-app theme; the fade covers the change
+  to the app's theme. Cold start only: the gate lives at the root and is not
+  rebuilt on resume. **Reduce Motion:** no animation; the logo stays at 0.92
+  (so there is no jump from the static screen), the wordmark is shown at
+  once, and the app replaces the splash on the next frame after launch work.
+- **[Measured] Launch work (Firebase + RevenueCat, in parallel):**
+  - Debug, iPhone 17 Pro simulator (iOS 26.5), 7 cold starts: 245 ms (first,
+    with the debugger attached), then 182, 126, 121, 121, 120, 162 ms.
+  - Profile, iPhone (iOS 27.0, over Wi-Fi), 4 cold starts: 13, 12, 13,
+    11 ms. (Two more attempts did not start: the phone was locked.)
+  - Both finish within 1 ms of each other in every run.
+
+  Launch work is far shorter than the intro, so **the splash adds wait
+  time**: Home is fully shown about 1.19 s after the first frame in profile
+  (1.02–1.08 s in debug), where before it followed launch work directly.
+  **Proposed shortest readable variant, ~0.8 s:** logo 0–350 ms, wordmark
+  150–500 ms, hold to 650 ms, 150 ms fade (added wait ~0.79 s). Not applied;
+  decided after the device check.
+- **[iOS static launch screen]** `LaunchImage` (a 1 × 1 transparent
+  placeholder) is replaced by the logo rendered from the app's own
+  `LaunchLogo` widget at 0.92: @1x/@2x/@3x (100/200/300 px), light and dark
+  appearance variants, generated by `scripts/generate_launch_image.sh`. The
+  storyboard centers the 100 × 100 pt image with a centerY constant of
+  −32 pt. **Measurements:** logo box 100 × 100 pt, center (W/2, H/2 − 32); the
+  drawing at 0.92 fills 92 × 92 pt of it; its inked area runs from −32.7 to
+  +39.6 pt around that center. iPhone 17 Pro (402 × 874 pt): box (151, 355) to
+  (251, 455), inked area x 168.3–240.6, y 372.3–444.6 pt. 375 × 667: box
+  (137.5, 251.5) to (237.5, 351.5). 320 × 568: box (110, 202) to (210, 302).
+  Wordmark top at H/2 + 34 pt. On the simulator, burst screenshots of a cold
+  start in both appearances show the logo's pixels at exactly the computed
+  place (x 505–720, y 1117–1332 px at @3x) on the first frames, then growing.
+  `LaunchBackground` is unchanged. **iOS files changed:**
+  `ios/Runner/Base.lproj/LaunchScreen.storyboard`;
+  `ios/Runner/Assets.xcassets/LaunchImage.imageset/` `Contents.json`,
+  `LaunchImage.png`, `LaunchImage@2x.png`, `LaunchImage@3x.png` (replaced),
+  `LaunchImageDark.png`, `LaunchImageDark@2x.png`, `LaunchImageDark@3x.png`
+  (new), `README.md` (Flutter's template note, removed).
+- **[Tests]** 901 passed (883 before): `launch_gate_test.dart` 11 (finite
+  animation with `pumpAndSettle`, first frame = static screen, Reduce Motion,
+  launch work shorter and longer than the intro, failed launch work, no
+  replay on resume, both appearances); `early_error_reporting_test.dart` 3;
+  `launch_image_test.dart` 4 (catalog variants, storyboard geometry, images
+  re-rendered and compared).
+- **[Note]** The profile build used for measuring was installed on the
+  owner's iPhone with `config/prod.json`; it stays there until the next
+  install.
+- **[Open — device check]** No jump from the static screen to the
+  animation on a cold start; light and dark system appearance; Reduce
+  Motion; no splash on return from the background; the fade into an in-app
+  theme that differs from the system; the first-launch Welcome screen,
+  whose own entrance starts under the splash.
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 1 follow-up: size, Welcome timing, decisions)
+
+On branch `1.1.0-design`; not pushed. `1.1.0` was merged into the branch
+first (a merge, not a rebase): "Already up to date", since `1.1.0`'s tip
+`b08a7ca` was already contained. Commits `5ed21d4` (size), `79f161e`
+(Welcome timing), plus this docs commit.
+
+- **[Product] The launch animation stays at 1.2 s.** An owner decision,
+  made after seeing it on a device. Cost: launch work takes 11–13 ms on the
+  phone (profile), so every cold start gets about 1.2 s longer. Ready
+  alternative if "the launch is slow" feedback comes: logo 0–350 ms,
+  wordmark 150–500 ms, last frame held to 650 ms, 150 ms fade (about 0.8 s).
+- **[Product] The launch screen was enlarged, after Ahmet's feedback on the
+  device.** Asked: 40 %. **Applied: 25 %**, because at 1.4 the wordmark
+  is 303.4 pt wide and leaves only 8.3 pt per side on a 320 pt screen; 1.25
+  is the largest scale that keeps the required 24 pt (270.9 pt wide, 24.5 pt
+  per side). Logo box 100 → 125 pt, gap 16 → 20 pt, wordmark 34 → 42.5 pt
+  (58 pt tall); durations and curves unchanged. The logo's center moved from
+  32 to 39 pt above the screen's center, so logo, gap and wordmark (203 pt)
+  are centered. Launch images regenerated (125/250/375 px, light and dark),
+  storyboard size and offset updated. Finished frame, in pt:
+
+  | Screen | Logo box | Wordmark |
+  |---|---|---|
+  | 402 × 874 | x 138.5–263.5, y 335.5–460.5 | x 65.5–336.5, y 480.5–538.5 |
+  | 375 × 667 | x 125–250, y 232–357 | x 52.0–323.0, y 377–435 |
+  | 320 × 568 | x 97.5–222.5, y 182.5–307.5 | x 24.5–295.5, y 327.5–385.5 |
+
+  On the first frame (and the static screen) the logo is drawn at 0.92
+  (115 pt) inside the same box, and the wordmark is not shown.
+- **[Fix] Welcome waits for the splash.** On a first install Welcome was
+  built under the splash and part of its entrance played unseen. `LaunchGate`
+  now tells the app whether the splash still covers it
+  (`LaunchSplashScope`); Welcome draws every motion at its first frame and
+  starts it once the fade has finished. Nothing is held without a gate or
+  after it, so no other screen changes.
+- **[Open — for the owner] Splash → Welcome handoff.** The splash's last
+  frame and Welcome's mark differ: Welcome's mark at rest is 177 pt (402 ×
+  874) or 146 pt (375 × 667, 320 × 568) against the splash's 125 pt, and its
+  center is 98–102 pt higher (402 × 874: y 297 vs 398; 375 × 667: 197 vs 295;
+  320 × 568: 143 vs 245). The background also changes (cream to Welcome's
+  orange in light mode). There is no visible slide, because Welcome's mark
+  starts invisible and fades in over 900 ms, but the logo disappears in one
+  place and reappears larger and higher. Only on a first install. Not
+  changed here (Welcome's design is the owner's). Options: (1) keep it —
+  Welcome's entrance is its own moment and is seen once; (2) a handoff: the
+  splash's logo glides to Welcome's mark (size and place) during its fade,
+  and Welcome shows its mark already in place instead of fading it in;
+  (3) Welcome's mark keeps its entrance but starts from the splash logo's
+  size and place. Recommended: (1) for 1.1.0, (2) if the device check finds
+  the change distracting.
+- **[Product] Rotation anchor:** October 2026 = Green Slope, then Ember Peak
+  (November), Glacier Peak (December), Red Canyon (January). It follows the
+  global calendar and is a constant in the code, not tied to the release
+  date.
+- **[Answered] iOS minimum version: 15.0** (`IPHONEOS_DEPLOYMENT_TARGET`),
+  so 320 pt wide devices are supported. Vertical additions to Home must be
+  checked on that screen (320 × 568).
+- **[Tests]** 906 passed (901 before): `launch_splash_layout_test.dart` 3
+  (the layout at 402, 375 and 320 pt with the bundled font: block centered,
+  24 pt margins); `welcome_after_splash_test.dart` 2 (Welcome held under the
+  splash and started after the fade; unchanged without a splash).
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 2: theme data model)
+
+On branch `1.1.0-design`; not pushed. `1.1.0` merged first (a merge, not a
+rebase): "Already up to date". Commits `41a807c` (table), `7af4ee5`
+(registry and rotation), `21cdf8e` ([Q] from one constant), plus this docs
+commit. **No visible change.**
+
+- **[Schema] v22 → v23: `climb_month_themes`** (`month` TEXT primary key,
+  `YYYY-MM`; `theme_id` TEXT; `assigned_at` TEXT). An idempotent
+  `CREATE TABLE IF NOT EXISTS` step, like v20 and v22; no backfill.
+  `StorageService.resolveClimbMonthTheme(year, month)`:
+  - a month with a row reads its row;
+  - a past month without a row is `green_slope` (all 1.0 ever showed);
+  - the current month without a row gets one, written once (`INSERT OR
+    IGNORE`) and never changed;
+  - a future month is not written.
+
+  "Current" is the Monthly Climb's own calendar (`clockForTesting`,
+  `_monthKey`), the one medal progress and finalization already use; no new
+  date logic. The only writer today is `completeDailyTest`, in its own
+  transaction (Home was out of scope).
+- **[Data] Themes are data** (`lib/models/climb_theme.dart`): id, name,
+  tagline, light and dark palette, layer image slots, summit, emblem. Green
+  Slope is complete; its palettes are `ClimbPalette.of`'s values moved out of
+  `lib/theme.dart` unchanged (a test pins every value; the scene rendered
+  byte-identical before and after the move, light and dark, 28 and 31
+  days). Ember Peak, Glacier Peak and Red Canyon have their names and
+  taglines and are marked **not ready**. The scene's only change is where
+  its palette comes from.
+- **[Rotation]** Global calendar, anchor constant in code: October 2026 =
+  Green Slope, November Ember Peak, December Glacier Peak, January 2027 Red
+  Canyon, then repeating; earlier months are Green Slope.
+- **[Rule] What is recorded for a month is what the month is shown with.**
+  If the calendar's theme for a new month is not ready, the month is
+  recorded as `green_slope`, because that is what the user sees. *Why:* the
+  record exists to measure themes; a record naming a theme nobody saw would
+  make every later analysis wrong, and it cannot be corrected afterwards
+  because a month's row never changes. If Batch 4 misses 1.1.0, the data
+  stays truthful. **Consequence for measurement:** a month whose scheduled
+  theme was not ready never appears as that theme in the data, it appears
+  as Green Slope. Its scheduled theme can still be recomputed from the
+  month key (the calendar is fixed), which is how "Green Slope by schedule"
+  and "Green Slope by fallback" can be told apart if ever needed. A theme
+  that becomes ready in the middle of a month shows from the next month;
+  the running month keeps its row.
+- **[Follow-up, before any theme is marked ready]** Home's climb load must
+  resolve the month's theme (which records it) and the scene must draw the
+  resolved theme, in the same release. Otherwise a month that is viewed but
+  never completed has no row and reads as Green Slope afterwards.
+- **[Q] from one constant: `DailyTestSet.questionCount` (5).** It sits on
+  the model because the medal rules are imported by storage, which the
+  Daily Test service imports. Readers: generation; the medal maximum, now
+  `days × questionCount × pointsPerCorrect` (still 10 a day, so rule v1 and
+  every threshold are unchanged, which a test checks for 28/29/30/31-day
+  months); and Home's Today card copy. The bundled Day-0 set is checked
+  against it by a test; the proxy's `SHARED_SET_QUESTION_COUNT` stays a
+  separate copy. **Home change:** `lib/screens/home_screen.dart`, `_TodayCard`
+  (lines 861–862), the "5-question" description now interpolates the
+  constant; nothing else in Home changed.
+- **[Tests]** 929 passed (906 before): `storage_service_climb_month_theme_test`
+  10 (migration from a v22 database with climb, medal, badge, flag and
+  profile rows; table shape; replayed migration; read and write rules;
+  completion writes the row); `climb_theme_test` 10 (registry, palettes,
+  rotation and wrap, pre-anchor, not-ready fallback, a stored month
+  unchanged after a theme becomes ready); 3 for [Q]. Two older checks of the
+  schema version moved from 22 to 23.
+- **[Device check]** Home looks the same in light and dark mode.
+
 ## 2026-09-27 (1.1.0 shared Daily Test quality — owner decisions, P4)
 
 Decisions only in this entry; no code changed. The P4 batch 0 report

@@ -17,11 +17,6 @@ import 'storage_service.dart';
 /// happens once per date on the proxy's own schedule. Used by both Home and
 /// the Day-0 onboarding test.
 class DailyTestService {
-  /// 5 questions — enough to feel like a real test, short enough to finish
-  /// in one sitting; matches the existing "Standard" Topic Practice length.
-  /// Every shared set has exactly this many (the proxy's gate).
-  static const int questionCount = 5;
-
   final ClaudeService claudeService;
   final StorageService storageService;
 

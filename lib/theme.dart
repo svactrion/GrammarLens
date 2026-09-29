@@ -126,6 +126,12 @@ const Color _darkOnIncorrectBg = Color(0xFFF4B8B4);
 const Color _darkSkippedBg = Color(0xFF36353A);
 const Color _darkOnSkippedBg = Color(0xFFC9C5D0);
 
+/// The light and dark `colorScheme.primary`, for data defined outside a
+/// theme that still uses the brand color (the Monthly Climb palettes in
+/// `models/climb_theme.dart`).
+const Color appLightPrimary = _lightPrimary;
+const Color appDarkPrimary = _darkPrimary;
+
 // Brand mark (see widgets/brand_mark.dart) — the loupe's glass and glint
 // are fixed identity colors, not theme roles: unlike everything else in
 // this file they don't change with light/dark mode (the mark's rim does —
@@ -600,36 +606,4 @@ ThemeData buildAppTheme(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
-}
-
-/// Named decorative Green Slope tokens for the isolated Monthly Climb preview.
-/// Independent of semantic correct/incorrect colors and existing screen roles.
-class ClimbPalette {
-  final Color sky, mountain, ridge, trail, stone, ink, accent;
-  const ClimbPalette(
-      {required this.sky,
-      required this.mountain,
-      required this.ridge,
-      required this.trail,
-      required this.stone,
-      required this.ink,
-      required this.accent});
-
-  static ClimbPalette of(Brightness brightness) => brightness == Brightness.dark
-      ? const ClimbPalette(
-          sky: Color(0xFF182327),
-          mountain: Color(0xFF405C53),
-          ridge: Color(0xFF2E463F),
-          trail: Color(0xFF8E8874),
-          stone: Color(0xFFC8C8B9),
-          ink: Color(0xFFE4E2D8),
-          accent: _darkPrimary)
-      : const ClimbPalette(
-          sky: Color(0xFFEAF0EC),
-          mountain: Color(0xFFACC4AC),
-          ridge: Color(0xFF789B86),
-          trail: Color(0xFFD9CCAC),
-          stone: Color(0xFFF5F0DF),
-          ink: Color(0xFF263D39),
-          accent: _lightPrimary);
 }

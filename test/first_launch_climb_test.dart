@@ -13,7 +13,6 @@ import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
-import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
@@ -30,7 +29,7 @@ class _FakeClaudeService extends ClaudeService {
   @override
   Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async =>
       List.generate(
-        DailyTestService.questionCount,
+        DailyTestSet.questionCount,
         (i) => DailyTestQuestion(
           item: PracticeItem(
             id: 'q$i',

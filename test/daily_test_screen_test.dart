@@ -35,7 +35,7 @@ class _FlakyClaudeService extends ClaudeService {
           kind: ClaudeApiErrorKind.network);
     }
     return List.generate(
-      DailyTestService.questionCount,
+      DailyTestSet.questionCount,
       (i) => DailyTestQuestion(
         item: PracticeItem(
           id: 'q$i',

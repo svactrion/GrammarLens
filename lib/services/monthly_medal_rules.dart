@@ -1,13 +1,23 @@
+import '../models/daily_test_set.dart';
 import '../models/medal_tier.dart';
 
 abstract final class MonthlyMedalRules {
   static const ruleVersion = 1;
 
-  static int score({required int correct, required int wrong}) =>
-      correct * 2 + wrong;
+  /// Points per answer (rule v1): correct +2, wrong +1, skipped +0.
+  static const pointsPerCorrect = 2;
+  static const pointsPerWrong = 1;
 
+  static int score({required int correct, required int wrong}) =>
+      correct * pointsPerCorrect + wrong * pointsPerWrong;
+
+  /// Every question of every day of the month answered correctly:
+  /// days × [DailyTestSet.questionCount] × [pointsPerCorrect] (5 × 2 = 10 a
+  /// day).
   static int maxScore(int year, int month) =>
-      DateTime(year, month + 1, 0).day * 10;
+      DateTime(year, month + 1, 0).day *
+      DailyTestSet.questionCount *
+      pointsPerCorrect;
 
   static int threshold(int year, int month, MedalTier tier) {
     final percent = switch (tier) {
