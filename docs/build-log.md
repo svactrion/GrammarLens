@@ -5954,3 +5954,31 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
 - **[Plan]** Step 2 (this) → comparison (owner) → cron deploy → merge into
   `main` → C1 → C2 → C3 → release; P7a–c after 1.1.0. Report §16.4.
 
+
+## 2026-09-29 (1.1.0 shared Daily Test — generator comparison run, V3 chosen, not deployed)
+
+- **[Comparison — owner run]** `eval/out/compare-2026-09-29T18-01-35-800Z`,
+  $0.385 (cap $1). All three variants passed the gate 3 of 3, 0 of 7
+  sentenceless `error_correction` each, `stop_reason` `end_turn` everywhere,
+  nothing over 90 s. V1 (`claude-sonnet-5`) $0.055 per set, 48 s; V2
+  (`claude-sonnet-5-5`, default effort) $0.054, 39 s; V3 (`claude-sonnet-5-5`,
+  `low`) $0.019, 11 s. The owner's reading of `questions.md`: no clear quality
+  difference; remaining defect types in all three are "more than one correct
+  answer" and "optional time shift"; `low` writes the context more explicitly.
+- **[Decision — owner]** Generator `claude-sonnet-5-5`, `effort: "low"` (V3).
+  `SHARED_GENERATOR` changed, the cron's fingerprint re-pinned (`80b1fa85`).
+  381 tests; 21 of 21 deliberate breakages red. Commit `2dc8ad8`.
+- **[Finding — fill_in_blank without a blank]** Checked in `records.json`: V1
+  3 of 8 `fill_in_blank` questions have no blank in any field (all on
+  2026-10-13; the scene is in `context`, a generic instruction, the key only),
+  V2 0 of 8, V3 0 of 8. Not a `questions.md` display gap. In E: 8 of 26 with
+  prompt v2 on `claude-sonnet-4-6` (G2, G4), 0 of 24 with `claude-sonnet-5`,
+  0 of 8 with prompt v1; 0 of 5 in the published v1 sets. The gate does not
+  check it. Proposed (not built): `fill_in_blank_missing_blank` /
+  `fill_in_blank_multiple_blanks`, exactly one underscore run across
+  `context` and `instruction`. L: not now (0 of 13 on the legacy request);
+  a count-only field first if wanted. Report §16.6.
+- **[Cost]** With V3 and no check call: ≈ $0.019 per date, ≈ $0.57 a month
+  normally; ≈ $1.71 a month if every date used all 3 attempts. Report §16.7.
+- **[Plan]** Cron deploy (owner) → merge into `main` → C1 → C2 → C3 →
+  release. The `fill_in_blank` rule waits for the owner's decision.

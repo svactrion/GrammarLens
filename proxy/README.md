@@ -200,7 +200,8 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   pinned by a request fingerprint test, and the cron's own request by another
   (`test/shared_generation.test.ts`).
 - **Generator:** `SHARED_GENERATOR` in `src/shared_daily_test.ts`, one line:
-  a model and optionally an `effort` (`{ model: 'claude-sonnet-5' }` today).
+  a model and optionally an `effort` (`{ model: 'claude-sonnet-5-5', effort:
+  'low' }` since 2026-09-29, the owner's choice after the comparison).
   How each model is asked is in `GENERATOR_MODELS` next to it:
   `claude-sonnet-4-6` without thinking, `claude-sonnet-5` and
   `claude-sonnet-5-5` with adaptive thinking and `THINKING_HEADROOM_TOKENS`
