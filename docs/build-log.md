@@ -5999,3 +5999,59 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   blankless questions sit in sets already rejected for other reasons); V2 and
   V3: 0 of 3 each.
 - **[Tests]** 391 (381 + 10); 16 of 16 deliberate breakages red. Report §16.8.
+
+## 2026-09-30 (1.1.0 shared Daily Test — client C1, not on a device yet)
+
+- **[State at start]** Cron on prompt v2 + `claude-sonnet-5-5` `low` live
+  (version `7e91abd3`); `main` equals the deployed tree (`d49cfb4`).
+- **[Engineering — grading]** `DailyTestQuestion.acceptedAnswers` (lenient
+  parse; written back only when present, so a set without it is stored
+  byte-for-byte as before). `checkDailyTestAnswer` follows the shared order:
+  correct → keyboard variant → accepted (exact, then keyboard variant) →
+  predicted wrong → fallback; `AnswerMatchKind.accepted` counts as correct
+  (score, never "Needs work", never in the error profile). Result card copy
+  for it: `Also correct: "<key>".` before the explanation — a placeholder
+  until the owner picks the copy (report §8.4). No set carries the field yet;
+  it lets P7 turn on server-side without an app update. The Dart side of both
+  proxy fixtures (`answer_normalization.json`, `daily_test_grading.json`) is
+  now a test. Commit `6c07dc2`.
+- **[Engineering — the chain]** `ClaudeService.fetchSharedDailyTest(date)`:
+  `GET /v1/shared-daily-test/{date}`, app token only (no device id, no body),
+  10 s timeout; null on 404, an exception on anything else, including a body
+  that is not a complete set for that date. `generateDailyTestQuestions` is
+  removed, so 1.1.0 has no way to call `POST /v1/generate-daily-test` (a test
+  checks that the path appears nowhere in `lib/`). `DailyTestService`:
+  local cache → the date's shared set (saved as `shared`) → fallback (saved
+  as `fallback`, so the day keeps its questions until midnight). The date is
+  the app's local day key. Single-flight per day kept. After a completion,
+  tomorrow's shared set is read and saved only if found; a 404 or failure
+  writes nothing (never the fallback) and that day's first open tries again.
+  No read on launch or resume (C3 decision). Commit `e61afc6`.
+- **[Deviation — fallback content]** Until C2's 7-set pool the fallback is
+  the bundled day-0 question set, marked `fallback` (not `bundled`), exposed
+  as `DailyTestService.fallbackQuestions` so C2 swaps one getter. A learner
+  who did day 0 and then falls back sees those five questions again. The
+  report's selection rule (first unused pool set) comes with C2.
+- **[Engineering — analytics]** `daily_test_completed`: `set_source` now
+  `shared` / `fallback` too; new `set_date` = the set's own day.
+  `docs/analytics-plan.md` updated; `set_date` must be registered as a custom
+  dimension before release. Commit `0fc07d8`.
+- **[Not changed]** Monthly Climb keys on the set's own day as before; Home and
+  Daily Test visuals unchanged (the unreachable "Today's limit reached" branch
+  in the Daily Test screen is left in place to keep the diff small against
+  `1.1.0-design`; C3 can remove it). The Daily Test still needs no AI consent.
+- **[Tests]** 970 Flutter tests (883 before C1; +87, of which 48 are the
+  two shared fixtures run case by case). 29 of 29 deliberate breakages red: the accepted branch,
+  its keyboard pass, order, counting, JSON write/parse; 404 handling, date
+  check, empty set, timeout (value and which one is used), a device header,
+  the legacy path; no fallback, fallback on 404, fallback not cached or
+  mislabeled, shared mislabeled, cache skipped; prefetch removed, writing the
+  fallback, reading today, ignoring an existing set; single-flight removed;
+  not waiting for a running prefetch; `set_date` missing or wrong,
+  `set_source` constant, the accepted copy dropped.
+- **[Rule — from C1 on]** `1.1.0` now carries `lib/` changes that must not
+  reach `main` before release. Proxy commits made on `1.1.0` are moved to
+  `main` by **cherry-pick**, never by merging `1.1.0` into `main` (this
+  replaces the "merge `1.1.0` into `main`" step of report §13's deploy rule).
+  A proxy deploy is still made from the tree that has every deployed proxy
+  commit.
