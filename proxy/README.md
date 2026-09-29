@@ -191,7 +191,12 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   set is not written; the next hourly run retries within the cap. Among its
   rules: an `error_correction` answer may change only one contiguous span of
   the flawed sentence, at most 4 words on each side
-  (`error_correction_multi_edit`, 2026-09-27).
+  (`error_correction_multi_edit`, 2026-09-27); an `error_correction` question
+  needs its sentence in `context` (`error_correction_missing_sentence`); a
+  `fill_in_blank` question needs exactly one blank, a run of two or more
+  underscores in `context` or `instruction` (`fill_in_blank_missing_blank`,
+  `fill_in_blank_multiple_blanks`, 2026-09-29; the legacy route does not apply
+  this one).
 - **Prompt versions:** 2 (its own system prompt with correctness rules,
   `docs/1.1.0-shared-daily-test-quality.md` §1.2) is what the cron sends and
   stores as `promptVersion`, since 2026-09-29 (path A, report §16), without a
@@ -235,8 +240,13 @@ Each paid attempt writes one line (besides the usual `anthropic_usage`, and
 `anthropic_failure` when it failed):
 
 ```json
-{"event":"shared_set_generation","date":"2026-10-08","attempt":1,"outcome":"published","reason":null,"failure":null,"stop_reason":"end_turn","input_tokens":1500,"output_tokens":1400,"duration_ms":27600,"prompt_version":2}
+{"event":"shared_set_generation","date":"2026-10-08","attempt":1,"outcome":"published","reason":null,"failure":null,"stop_reason":"end_turn","input_tokens":1500,"output_tokens":1400,"duration_ms":11400,"prompt_version":2,"model":"claude-sonnet-5-5","effort":"low"}
 ```
+
+`model` and `effort` are what the request asked for (`SHARED_GENERATOR`;
+`effort` is `null` when none was sent). They are only on this line:
+`anthropic_usage` keeps one shape for every operation, the legacy one
+included.
 
 `outcome` is `published`, `rejected` (`reason` is the `validateSharedSet`
 code), `upstream_failed` (`failure` is the `anthropic_failure` category) or

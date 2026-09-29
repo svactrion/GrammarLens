@@ -5982,3 +5982,20 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   normally; ≈ $1.71 a month if every date used all 3 attempts. Report §16.7.
 - **[Plan]** Cron deploy (owner) → merge into `main` → C1 → C2 → C3 →
   release. The `fill_in_blank` rule waits for the owner's decision.
+
+## 2026-09-29 (1.1.0 shared Daily Test — fill_in_blank blank rule, model in the log, not deployed)
+
+- **[Decisions — owner]** Before the cron deploy: the §16.6 rule for the
+  shared path only (not L); `model` and `effort` on `shared_set_generation`.
+- **[Engineering]** `blankCount` beside `hasSentenceToCorrect`: exactly one
+  run of two or more underscores across `context` and `instruction`, else
+  `fill_in_blank_missing_blank` / `fill_in_blank_multiple_blanks`, in
+  `validateSharedSet` and `validateSharedCandidates`. L unchanged (byte pin
+  and behavior). `shared_set_generation` gains `model` and `effort` (`null`
+  when none) from the request; `anthropic_usage` unchanged, so every
+  operation's line keeps one shape. Commits `785216e`, `c51ae16`.
+- **[Replay, no call]** On the stored records the rule changes one outcome:
+  the comparison's V1 2026-10-13 set would now be rejected. E: 0 of 15 (its
+  blankless questions sit in sets already rejected for other reasons); V2 and
+  V3: 0 of 3 each.
+- **[Tests]** 391 (381 + 10); 16 of 16 deliberate breakages red. Report §16.8.
