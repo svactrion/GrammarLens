@@ -26,7 +26,7 @@
     // §12). Only "true" enables it; "false" makes the hourly run do nothing
     // (no KV, no Anthropic). Change it here and redeploy, or edit the variable
     // in the dashboard.
-    "SHARED_DAILY_TEST_ENABLED": "false"
+    "SHARED_DAILY_TEST_ENABLED": "true"
   },
   // Hourly, at minute 7: fills in the shared Daily Test sets for UTC today
   // through UTC today + 3 (src/shared_generation.ts). Cron runs on UTC.
