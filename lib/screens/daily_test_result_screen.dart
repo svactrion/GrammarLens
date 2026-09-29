@@ -474,6 +474,12 @@ class _QuestionResultCard extends StatelessWidget {
           result.match?.comment,
           questionExplanation,
         ].whereType<String>().join(' '),
+      // An alternative the set accepts: shown as correct, with the key
+      // named so the learner also sees the form the set expected.
+      AnswerMatchKind.accepted => [
+          'Also correct: "${result.question.correctAnswer}".',
+          questionExplanation,
+        ].whereType<String>().join(' '),
       AnswerMatchKind.fallback => questionExplanation ?? _fallbackComment,
       AnswerMatchKind.correct || null => questionExplanation,
     };

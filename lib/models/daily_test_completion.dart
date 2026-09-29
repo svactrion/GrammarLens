@@ -78,13 +78,13 @@ class DailyTestAnswerResult {
     );
   }
 
-  /// True for an exact match and for [AnswerMatchKind.keyboardVariant] —
-  /// a Turkish-keyboard letter substitution is not a grammar mistake, so
-  /// it counts as correct: never "Needs work", never written to the error
-  /// profile (see the result screen and completion snapshot below).
-  bool get isCorrect =>
-      match?.kind == AnswerMatchKind.correct ||
-      match?.kind == AnswerMatchKind.keyboardVariant;
+  /// True for an exact match, for [AnswerMatchKind.keyboardVariant] — a
+  /// Turkish-keyboard letter substitution is not a grammar mistake — and for
+  /// [AnswerMatchKind.accepted], an alternative the set itself marks as
+  /// right. Such an answer counts as correct: never "Needs work", never
+  /// written to the error profile (see the result screen and completion
+  /// snapshot below).
+  bool get isCorrect => match?.kind.isCorrect ?? false;
 
   bool get isKeyboardVariant => match?.kind == AnswerMatchKind.keyboardVariant;
 }

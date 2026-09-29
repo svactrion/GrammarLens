@@ -133,5 +133,46 @@ void main() {
         }
       });
     });
+
+    group('acceptedAnswers', () {
+      Map<String, dynamic> json([Object? accepted = _absent]) => {
+            'id': 'q1',
+            'type': 'fill_in_blank',
+            'instruction': 'She ___ to work.',
+            'topicId': 'tenseSelection',
+            'correctAnswer': 'goes',
+            'commonWrongAnswers': [
+              {'answer': 'go', 'comment': 'c'},
+            ],
+            if (!identical(accepted, _absent)) 'acceptedAnswers': accepted,
+          };
+
+      test('missing reads as none, and toJson writes nothing back', () {
+        final question = DailyTestQuestion.fromJson(json());
+        expect(question.acceptedAnswers, isEmpty);
+        expect(question.toJson().containsKey('acceptedAnswers'), isFalse);
+        expect(question.toJson(), json());
+      });
+
+      test('is read when present and round-trips through the cache shape', () {
+        final question = DailyTestQuestion.fromJson(json(['walks', 'runs']));
+        expect(question.acceptedAnswers, ['walks', 'runs']);
+        expect(question.toJson()['acceptedAnswers'], ['walks', 'runs']);
+        expect(DailyTestQuestion.fromJson(question.toJson()).acceptedAnswers,
+            ['walks', 'runs']);
+      });
+
+      test('a non-list, null, blank or non-string entry is ignored', () {
+        expect(
+            DailyTestQuestion.fromJson(json('walks')).acceptedAnswers, isEmpty);
+        expect(DailyTestQuestion.fromJson(json(null)).acceptedAnswers, isEmpty);
+        expect(
+            DailyTestQuestion.fromJson(json([' walks ', '', '  ', 3, null]))
+                .acceptedAnswers,
+            ['walks']);
+      });
+    });
   });
 }
+
+const Object _absent = Object();

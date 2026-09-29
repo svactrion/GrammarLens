@@ -92,6 +92,15 @@ enum AnswerMatchKind {
   /// "Needs work" — this is not a grammar mistake.
   keyboardVariant,
 
+  /// Matched one of the question's [DailyTestQuestion.acceptedAnswers] — an
+  /// alternative the shared set's check marked as also right — exactly or
+  /// once keyboard variants are folded. Counts as correct; callers show the
+  /// key alongside it ([AnswerMatchResult.acceptedAnswer] is the alternative
+  /// that matched). Only reachable when a set carries alternatives, which no
+  /// set does before the proxy's check call (docs/1.1.0-shared-daily-test-quality.md
+  /// §8, §16.4).
+  accepted,
+
   /// Matched one of the question's predicted [CommonWrongAnswer]s — show
   /// that answer's own canned comment.
   commonWrong,
@@ -99,7 +108,12 @@ enum AnswerMatchKind {
   /// Matched neither — a real free-text answer the generation step didn't
   /// predict. Callers show a generic "not quite" message alongside
   /// [correctAnswer]; no canned comment applies.
-  fallback,
+  fallback;
+
+  /// Whether this kind counts as a correct answer: never "Needs work", never
+  /// written to the error profile, counted in the score.
+  bool get isCorrect =>
+      this == correct || this == keyboardVariant || this == accepted;
 }
 
 class AnswerMatchResult {
@@ -112,18 +126,30 @@ class AnswerMatchResult {
   /// [AnswerMatchKind.correct] and [AnswerMatchKind.fallback].
   final String? comment;
 
+  /// The alternative from [DailyTestQuestion.acceptedAnswers] that matched;
+  /// set only when [kind] is [AnswerMatchKind.accepted].
+  final String? acceptedAnswer;
+
   const AnswerMatchResult({
     required this.kind,
     required this.correctAnswer,
     this.comment,
+    this.acceptedAnswer,
   });
 }
 
 /// Deterministic Daily Test grading (PRD v2 §12.5) — no LLM call. Checks
-/// [userAnswer] against [question]'s correct answer, then each predicted
-/// common wrong answer, normalizing both sides the same way so surface
-/// differences (case, extra spaces, a trailing period) don't cause a false
-/// mismatch.
+/// [userAnswer] against [question]'s correct answer, then its accepted
+/// alternatives, then each predicted common wrong answer, normalizing both
+/// sides the same way so surface differences (case, extra spaces, a trailing
+/// period) don't cause a false mismatch.
+///
+/// The order is a contract shared with the proxy
+/// (`proxy/test/fixtures/daily_test_grading.json`, docs/1.1.0-shared-daily-test-quality.md
+/// §8.2): correct → keyboard variant of correct → accepted (exact, then
+/// keyboard variant) → predicted wrong (exact) → fallback. A question without
+/// [DailyTestQuestion.acceptedAnswers] grades exactly as before the field
+/// existed.
 AnswerMatchResult checkDailyTestAnswer(
   DailyTestQuestion question,
   String userAnswer,
@@ -149,6 +175,23 @@ AnswerMatchResult checkDailyTestAnswer(
       correctAnswer: question.correctAnswer,
       comment: _keyboardVariantNote(normalizedUser, normalizedCorrect),
     );
+  }
+
+  final foldedUser = foldKeyboardVariants(normalizedUser);
+  for (final folded in [false, true]) {
+    for (final alternative in question.acceptedAnswers) {
+      final normalizedAlternative = normalizeAnswer(alternative);
+      final matches = folded
+          ? foldedUser == foldKeyboardVariants(normalizedAlternative)
+          : normalizedUser == normalizedAlternative;
+      if (matches) {
+        return AnswerMatchResult(
+          kind: AnswerMatchKind.accepted,
+          correctAnswer: question.correctAnswer,
+          acceptedAnswer: alternative,
+        );
+      }
+    }
   }
 
   for (final wrong in question.commonWrongAnswers) {
@@ -183,11 +226,7 @@ AnswerMatchResult checkDailyTestAnswer(
     if (raw.isEmpty) {
       skipped++;
     } else {
-      final kind = checkDailyTestAnswer(question, raw).kind;
-      if (kind == AnswerMatchKind.correct ||
-          kind == AnswerMatchKind.keyboardVariant) {
-        correct++;
-      }
+      if (checkDailyTestAnswer(question, raw).kind.isCorrect) correct++;
     }
   }
   return (correct: correct, total: questions.length, skipped: skipped);

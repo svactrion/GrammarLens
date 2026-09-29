@@ -64,6 +64,7 @@ DailyTestQuestion _question({
   required String correctAnswer,
   List<CommonWrongAnswer> commonWrongAnswers = const [],
   String? explanation,
+  List<String> acceptedAnswers = const [],
 }) =>
     DailyTestQuestion(
       item: PracticeItem(
@@ -75,6 +76,7 @@ DailyTestQuestion _question({
       correctAnswer: correctAnswer,
       commonWrongAnswers: commonWrongAnswers,
       explanation: explanation,
+      acceptedAnswers: acceptedAnswers,
     );
 
 void main() {
@@ -489,6 +491,31 @@ void main() {
       expect(find.text('Correct'), findsOneWidget);
       expect(find.text('Needs work'), findsNothing);
       expect(find.textContaining('keyboard character'), findsOneWidget);
+    });
+
+    testWidgets(
+        'an accepted alternative is shown as Correct with the key named, '
+        'and is not written to the error profile', (tester) async {
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: [
+          _question(
+              id: 'a1',
+              topicId: 'modals',
+              correctAnswer: 'had to',
+              acceptedAnswers: const ['should'],
+              explanation: 'Past obligation.'),
+        ]),
+        answersOverride: {'a1': 'Should'},
+      );
+
+      expect(find.text('Correct'), findsOneWidget);
+      expect(find.text('Needs work'), findsNothing);
+      expect(
+          find.text('Also correct: "had to". Past obligation.',
+              skipOffstage: false),
+          findsOneWidget);
+      expect(storageService.insertedErrors, isEmpty);
     });
 
     testWidgets(
