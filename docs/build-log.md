@@ -6040,7 +6040,7 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   Daily Test visuals unchanged (the unreachable "Today's limit reached" branch
   in the Daily Test screen is left in place to keep the diff small against
   `1.1.0-design`; C3 can remove it). The Daily Test still needs no AI consent.
-- **[Tests]** 970 Flutter tests (883 before C1; +87, of which 48 are the
+- **[Tests]** 970 Flutter tests (883 before C1; +87, of which 41 are the
   two shared fixtures run case by case). 29 of 29 deliberate breakages red: the accepted branch,
   its keyboard pass, order, counting, JSON write/parse; 404 handling, date
   check, empty set, timeout (value and which one is used), a device header,
