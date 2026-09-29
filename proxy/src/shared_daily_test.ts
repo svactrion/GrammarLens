@@ -17,13 +17,42 @@ import { TOPICS } from './topics';
 export const SHARED_SET_QUESTION_COUNT = 5;
 
 /**
- * Stored with every published set. Bump it on any change to what the
- * generation request asks for (the user prompt below, the Daily Test system
- * prompt or schema it reuses, the plan), so a set can always be traced to the
- * prompt that produced it. `test/shared_daily_test.test.ts` pins a fingerprint
- * of the request to this number.
+ * The shared generation prompts that can be built. Each is pinned by a request
+ * fingerprint in `test/shared_daily_test.test.ts`; any change to what a
+ * version asks for (its system prompt, user prompt, schema or the plan) is a
+ * new version, so a set can always be traced to the prompt that produced it.
+ *
+ * - 1: the legacy Daily Test system prompt and schema, with the day's plan in
+ *   the user prompt.
+ * - 2: its own system prompt with explicit correctness rules
+ *   (docs/1.1.0-shared-daily-test-quality.md §1.2, approved 2026-09-27; the
+ *   final wording is fixed after the local measurement E).
  */
-export const SHARED_PROMPT_VERSION = 1;
+export type SharedPromptVersion = 1 | 2;
+
+/**
+ * The version the hourly cron builds, and stores with every published set.
+ * Still 1: version 2 is built only on request (the local measurement E) until
+ * the two-phase cron with the check call ships (P7).
+ */
+export const SHARED_PROMPT_VERSION: SharedPromptVersion = 1;
+
+/**
+ * Models the shared set can be generated with (owner addition B, 2026-09-27).
+ * Only the shared operation takes one: the legacy 1.0.0 route keeps its own
+ * model, whatever is chosen here.
+ */
+export type SharedGeneratorModel = 'claude-sonnet-4-6' | 'claude-sonnet-5';
+
+/** What the cron generates with until the measurement E decides otherwise. */
+export const SHARED_GENERATOR_MODEL: SharedGeneratorModel = 'claude-sonnet-4-6';
+
+/**
+ * Questions asked for per plan slot (owner addition A): 1 is the published set
+ * itself; 2 over-generates, and a clean candidate per slot is chosen after the
+ * check (docs/1.1.0-shared-daily-test-quality.md §13.2, strategy S2).
+ */
+export type CandidatesPerSlot = 1 | 2;
 
 /** Hard cap on an explanation's length. The prompt asks for fewer than 25
  * words; 35 sits above the measured maximum (27, 2026-09-24), so an ordinary
@@ -185,19 +214,41 @@ export function dailyPlan(date: string): DailyPlan {
 /** What `callAnthropic` needs for the `generate_shared_daily_test` operation. */
 export interface GenerateSharedDailyTestRequest {
   readonly plan: DailyPlan;
-  /** Equal to `plan.slots.length`; kept as its own field so the usage log's
-   * `item_count` reads it the same way as for every other operation. */
+  /** Questions asked for: `plan.slots.length` × [candidatesPerSlot]. Its own
+   * field so the usage log's `item_count` reads it the same way as for every
+   * other operation. */
   readonly count: number;
   /** Correct answers from recent published sets, for "do not reuse" in the
    * prompt. Model-written text, never anything from a user. */
   readonly avoidAnswers: readonly string[];
+  /** Which prompt to build; see [SharedPromptVersion]. */
+  readonly promptVersion: SharedPromptVersion;
+  readonly model: SharedGeneratorModel;
+  readonly candidatesPerSlot: CandidatesPerSlot;
+}
+
+/** The generation variants the measurement E compares; the cron uses the
+ * defaults. */
+export interface SharedGenerationOptions {
+  promptVersion?: SharedPromptVersion;
+  model?: SharedGeneratorModel;
+  candidatesPerSlot?: CandidatesPerSlot;
 }
 
 export function sharedDailyTestRequest(
   plan: DailyPlan,
   avoidAnswers: readonly string[] = [],
+  options: SharedGenerationOptions = {},
 ): GenerateSharedDailyTestRequest {
-  return { plan, count: plan.slots.length, avoidAnswers };
+  const candidatesPerSlot = options.candidatesPerSlot ?? 1;
+  return {
+    plan,
+    count: plan.slots.length * candidatesPerSlot,
+    avoidAnswers,
+    promptVersion: options.promptVersion ?? SHARED_PROMPT_VERSION,
+    model: options.model ?? SHARED_GENERATOR_MODEL,
+    candidatesPerSlot,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -261,7 +312,9 @@ export type SharedSetRejection =
   | 'blank_correct_answer' // correctAnswer normalizes to nothing
   | 'wrong_answer_matches_correct' // a predicted wrong answer grades as correct
   | 'duplicate_wrong_answer'
+  | 'error_correction_missing_sentence' // no flawed sentence in "context" to correct
   | 'unchanged_error_correction' // the "correction" equals the flawed sentence
+  | 'error_correction_multi_edit' // the correction changes more than one short span
   | 'explanation_not_one_sentence'
   | 'explanation_too_long'
   | 'explanation_bad_opening'; // opens with praise or "Not quite"
@@ -282,6 +335,9 @@ export interface SharedQuestion {
   correctAnswer: string;
   explanation: string;
   commonWrongAnswers: SharedWrongAnswer[];
+  /** Other answers graded as correct, added only by the check call
+   * (`src/shared_check.ts`), never by the generator. */
+  acceptedAnswers?: string[];
 }
 
 export type SharedSetValidation =
@@ -322,6 +378,55 @@ function optionalText(value: unknown): string | undefined {
 
 function wordCount(value: string): number {
   return value.trim().split(/\s+/).length;
+}
+
+/**
+ * Words (with at least one letter) an `error_correction` question's "context"
+ * needs to count as a sentence to correct. The schema cannot enforce it:
+ * `context` is optional there (the legacy schema is shared, and the structured
+ * outputs grammar has no `minLength`), and in E (2026-09-28) 19 of 28
+ * `error_correction` questions from `claude-sonnet-4-6` left it out, with the
+ * sentence in no other field.
+ */
+export const ERROR_CORRECTION_MIN_WORDS = 3;
+
+/** Whether an `error_correction` question's "context" holds a sentence to
+ * correct. Shared with the legacy route's response check
+ * (`src/legacy_daily_test.ts`), so both apply the same rule. */
+export function hasSentenceToCorrect(context: unknown): boolean {
+  if (typeof context !== 'string') return false;
+  const words = context.trim().split(/\s+/).filter((w) => /\p{L}/u.test(w));
+  return words.length >= ERROR_CORRECTION_MIN_WORDS;
+}
+
+/** Words an `error_correction` answer may remove from, or put into, the flawed
+ * sentence (owner decision 2026-09-27). */
+export const ERROR_CORRECTION_MAX_EDIT_WORDS = 4;
+
+/**
+ * Whether [correct] differs from [original] (both already normalized, so
+ * words are separated by single spaces) in one contiguous run of at most
+ * [ERROR_CORRECTION_MAX_EDIT_WORDS] words on each side. Everything before the
+ * first differing word and after the last one must be identical, so two fixes
+ * further apart than that, or a rewritten sentence, fail. Linear in the
+ * sentence length.
+ */
+export function isSingleShortEdit(original: string, correct: string): boolean {
+  const from = original.split(' ');
+  const to = correct.split(' ');
+  let prefix = 0;
+  while (prefix < from.length && prefix < to.length && from[prefix] === to[prefix]) prefix++;
+  let suffix = 0;
+  while (
+    suffix < from.length - prefix &&
+    suffix < to.length - prefix &&
+    from[from.length - 1 - suffix] === to[to.length - 1 - suffix]
+  ) {
+    suffix++;
+  }
+  const removed = from.length - prefix - suffix;
+  const added = to.length - prefix - suffix;
+  return removed <= ERROR_CORRECTION_MAX_EDIT_WORDS && added <= ERROR_CORRECTION_MAX_EDIT_WORDS;
 }
 
 /**
@@ -369,6 +474,70 @@ function checkSet(content: unknown, plan: DailyPlan): SharedQuestion[] {
   return plan.slots.map((_, i) => bySlot.get(i) as SharedQuestion);
 }
 
+/** Over-generated candidates (strategy S2), grouped by plan slot in plan
+ * order, with the candidates that broke a rule left out. */
+export type SharedCandidatesValidation =
+  | {
+      ok: true;
+      candidates: SharedQuestion[][];
+      /** Candidates left out, by slot index and the first rule each broke. */
+      dropped: { slot: number; reason: SharedSetRejection }[];
+    }
+  | { ok: false; reason: SharedSetRejection };
+
+/**
+ * The quality gate for an over-generated answer ([perSlot] candidates for
+ * every plan slot). The shape is judged for the whole answer: the count, every
+ * candidate's topic and type against the plan, [perSlot] candidates per slot,
+ * unique ids; any of these rejects it, as in [validateSharedSet]. A
+ * candidate's own content rules (the answer key, the one-span correction, the
+ * explanation, …) only drop that candidate, since its slot can still be filled
+ * by the other one. The answer is rejected only when a slot is left with no
+ * valid candidate, with the first reason one of that slot's candidates broke.
+ */
+export function validateSharedCandidates(
+  content: unknown,
+  plan: DailyPlan,
+  perSlot: CandidatesPerSlot,
+): SharedCandidatesValidation {
+  if (typeof content !== 'object' || content === null || Array.isArray(content)) {
+    return { ok: false, reason: 'not_an_object' };
+  }
+  const raw = (content as Record<string, unknown>).questions;
+  if (!Array.isArray(raw)) return { ok: false, reason: 'not_an_object' };
+  if (raw.length !== plan.slots.length * perSlot) return { ok: false, reason: 'wrong_question_count' };
+
+  const candidates: SharedQuestion[][] = plan.slots.map(() => []);
+  const seen = plan.slots.map(() => 0);
+  const dropped: { slot: number; reason: SharedSetRejection }[] = [];
+  const ids = new Set<string>();
+  for (const entry of raw) {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      return { ok: false, reason: 'missing_field' };
+    }
+    const q = entry as Record<string, unknown>;
+    const slot = plan.slots.findIndex((s) => s.topicId === q.topicId);
+    if (slot < 0 || plan.slots[slot]?.type !== q.type) return { ok: false, reason: 'plan_mismatch' };
+    seen[slot] = (seen[slot] ?? 0) + 1;
+    if ((seen[slot] ?? 0) > perSlot) return { ok: false, reason: 'plan_mismatch' };
+    if (typeof q.id === 'string') {
+      if (ids.has(q.id)) return { ok: false, reason: 'duplicate_id' };
+      ids.add(q.id);
+    }
+    try {
+      candidates[slot]?.push(checkQuestion(entry));
+    } catch (e) {
+      if (!(e instanceof Rejected)) throw e;
+      dropped.push({ slot, reason: e.reason });
+    }
+  }
+  const empty = candidates.findIndex((c) => c.length === 0);
+  if (empty >= 0) {
+    return { ok: false, reason: dropped.find((d) => d.slot === empty)?.reason ?? 'wrong_question_count' };
+  }
+  return { ok: true, candidates, dropped };
+}
+
 function checkQuestion(entry: unknown): SharedQuestion {
   if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
     throw new Rejected('missing_field');
@@ -384,6 +553,9 @@ function checkQuestion(entry: unknown): SharedQuestion {
   const hint = optionalText(q.hint);
   const correctAnswer = text(q.correctAnswer);
   const explanation = text(q.explanation);
+  // First among the content rules: without the sentence, nothing else about
+  // the question can be answered.
+  if (type === 'error_correction' && !hasSentenceToCorrect(context)) throw new Rejected('error_correction_missing_sentence');
 
   const rawWrong = q.commonWrongAnswers;
   if (!Array.isArray(rawWrong)) throw new Rejected('missing_field');
@@ -411,8 +583,12 @@ function checkQuestion(entry: unknown): SharedQuestion {
     if (seen.has(normalized)) throw new Rejected('duplicate_wrong_answer');
     seen.add(normalized);
   }
-  if (type === 'error_correction' && context !== undefined && normalizeAnswer(context) === correct) {
-    throw new Rejected('unchanged_error_correction');
+  if (type === 'error_correction') {
+    const original = normalizeAnswer(context as string);
+    if (original === correct) throw new Rejected('unchanged_error_correction');
+    // One error fixed and nothing else touched: a rewritten sentence can be
+    // "corrected" in more ways than one exact-match key can hold.
+    if (!isSingleShortEdit(original, correct)) throw new Rejected('error_correction_multi_edit');
   }
 
   const trimmedExplanation = explanation.trim();

@@ -2,3 +2,9 @@ node_modules/
 .wrangler/
 .dev.vars
 *.log
+# The local measurement E (eval/run.ts): its outputs (generated sets, the
+# owner's label sheet, the variant mapping, cost logs), its bundle, and the
+# owner's exported reference sets never go into the repo.
+eval/out/
+eval/.build/
+eval/input/

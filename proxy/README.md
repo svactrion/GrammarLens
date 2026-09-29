@@ -125,9 +125,34 @@ secrets in each place and checks all console output. The catch-all in
 only a category (a built-in error name, `other_error` or `non_error`), never
 the message or stack. Every `console` call in `src/` now writes one of these
 fixed-field lines: `anthropic_usage`, `anthropic_failure`, `unhandled_error`,
-and the shared-set cron's `shared_set_generation` and `shared_set_cron` (below).
+`legacy_daily_test_filter` (below), and the shared-set cron's
+`shared_set_generation` and `shared_set_cron` (below).
 
 Deployed.
+
+### Legacy Daily Test response check
+
+`POST /v1/generate-daily-test` (1.0.0) drops `error_correction` questions that
+have no sentence to correct from the response (`src/legacy_daily_test.ts`;
+`docs/1.1.0-shared-daily-test-quality.md` §14.4, option L3). The rule is the
+shared set gate's (`hasSentenceToCorrect`: a `context` of at least 3 words
+with a letter). Every other question is served exactly as the model wrote it.
+If something was dropped and fewer than 3 questions remain, the route answers
+the existing `502 upstream_error` ("The upstream service returned an
+unexpected response."), which 1.0.0 shows as "Couldn't load today's test"
+with "Try again". The request to Anthropic, the quota unit and the cost are
+unchanged. One line per response with a `questions` array:
+
+```json
+{"event":"legacy_daily_test_filter","operation":"generate_daily_test","received_count":5,"removed_count":1,"served_count":4,"outcome":"served"}
+```
+
+`outcome` is `served` or `rejected` (`served_count` 0). Counts only, no
+content; `test/legacy_daily_test.test.ts` plants secrets and checks all
+console output. Legacy rate of sentenceless questions = sum of
+`removed_count` / sum of `received_count`.
+
+Not deployed yet (D-L).
 
 `DEVICE_DAILY_LIMIT`/`GLOBAL_DAILY_LIMIT` (plain vars in `wrangler.jsonc`,
 not secret) are conservative placeholder defaults, not measured numbers —
@@ -140,8 +165,9 @@ For 1.1.0 (`docs/1.1.0-shared-daily-test.md`): one Daily Test set per calendar
 date, generated here once for every 1.1.0+ client. The generation (P2) and
 the read route (P3, below) are **not deployed as of 2026-09-26**, and no app
 build calls the read route yet.
-The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
-`test/index.test.ts` pins its Anthropic request byte for byte.
+The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
+`test/index.test.ts` pins it byte for byte; only its response is checked
+(above).
 
 - **Trigger:** `triggers.crons` in `wrangler.jsonc`, `7 * * * *` (hourly, UTC),
   handled by `scheduled` in `src/index.ts` → `runSharedGeneration`
@@ -162,7 +188,33 @@ The 1.0.0 route `POST /v1/generate-daily-test` is unchanged, and
   `{date, promptVersion, generatedAt, attempt, questions}`, kept 35 days;
   `attempts:{date}` → `{count, leaseUntil}`, kept 7 days.
 - **Quality gate:** `validateSharedSet` (`src/shared_daily_test.ts`). A rejected
-  set is not written; the next hourly run retries within the cap.
+  set is not written; the next hourly run retries within the cap. Among its
+  rules: an `error_correction` answer may change only one contiguous span of
+  the flawed sentence, at most 4 words on each side
+  (`error_correction_multi_edit`, 2026-09-27).
+- **Prompt versions:** 1 (the legacy Daily Test system prompt plus the day's
+  plan) is what the cron sends and stores as `promptVersion`. 2 (its own system
+  prompt with correctness rules, `docs/1.1.0-shared-daily-test-quality.md`
+  §1.2) is built only on request, for the local measurement, until the
+  two-phase cron with the check call ships. Each version is pinned by a request
+  fingerprint test.
+- **Generation variants** (for the local measurement E, 2026-09-27): the shared
+  request also takes a model (`claude-sonnet-4-6`, the default and the legacy
+  route's model, or `claude-sonnet-5`, sent with adaptive thinking and
+  `THINKING_HEADROOM_TOKENS` more) and 1 or 2 candidates per plan slot
+  (`validateSharedCandidates` drops a candidate that breaks a content rule and
+  rejects only when a slot has none left). The cron uses the defaults. The legacy
+  route's model is its own constant and does not follow these options.
+- **Check call — built, not wired** (P6, 2026-09-27): operation
+  `check_shared_daily_test` (`src/shared_check.ts`, request in `anthropic.ts`):
+  an adversarial review of a generated set with adaptive thinking
+  (`claude-sonnet-5` by default; `claude-sonnet-4-6` and `claude-opus-5-5` are
+  also buildable), whose structured review the proxy turns into publish or
+  reject by a fixed table (`decideQuestion`, `decideCheckedSet`,
+  `selectCandidates` for over-generated sets). Up to 2 alternatives become a
+  question's `acceptedAnswers`. Filed as `daily_test` cost. `CHECK_VERSION` 1,
+  pinned by a request fingerprint. Nothing calls it yet: the two-phase cron is
+  P7.
 - **Timeout:** 90 s on the Anthropic call (`GENERATION_TIMEOUT_MS`), logged as
   `failure: "timeout"`.
 - **Kill switch:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it on;
@@ -218,6 +270,17 @@ miss, out of window, malformed date, bad token, switch off) makes no outbound
 request and leaves `QUOTA_KV` untouched. A pulled set (the owner deleting
 `set:{date}`) can still be served for up to an hour from a data center's cache
 and KV's read cache.
+
+## Local measurement E (not deployed)
+
+`eval/` holds the local measurement of the shared Daily Test quality step
+(`docs/1.1.0-shared-daily-test-quality.md` §13.6): `npm run eval -- dry-run`
+prints its requests and estimated cost without calling the API; `run` (3
+dates; `--add-dates` adds more to a finished run) and `analyze` need the
+owner's approval. `eval/README.md` is the owner's checklist.
+It uses the Worker's own request builders and gates, bundled for Node; the
+Worker never imports it. Its outputs (`eval/out/`), inputs (`eval/input/`) and
+bundle (`eval/.build/`) are gitignored.
 
 ## Known tradeoff: quota isn't atomic
 

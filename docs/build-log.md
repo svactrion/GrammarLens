@@ -5536,3 +5536,370 @@ code, config or test changed. No client reads the new route yet.
   - CPU time of the following cron runs not yet watched.
   - The `1.1.0` → `main` merge of the proxy commits (deploy rule, §11) is not
     done.
+
+## 2026-09-27 (1.1.0 shared Daily Test quality — owner decisions, P4)
+
+Decisions only in this entry; no code changed. The P4 batch 0 report
+(`docs/1.1.0-shared-daily-test-quality.md`) is approved; §12 there records
+each answer with its date.
+
+- **[Facts verified 2026-09-27]**
+  - The 1.0.0 legacy route was verified on a device: one
+    `generate_daily_test` call with 1,173 input tokens, the same as before
+    1.1.0 (build log 2026-09-24), so the legacy request is unchanged in
+    production as well as in the byte-for-byte test.
+  - `1.1.0` was merged into `main` (`f011885`), as the deploy rule requires.
+  - The shared sets for 26–29 September were published on attempt 1.
+  - The highest cron CPU time so far is 8.73 ms, on the first generation, of
+    the Free plan's 10 ms.
+- **[Product] Why a quality step at all.** The owner's review of the 26 and
+  27 September sets found 4 of 10 questions defective: `error_correction`
+  sentences that were already acceptable, questions with two defensible
+  answers under exact-match grading, and hints or explanations stating rules
+  that do not exist. `validateSharedSet` checks structure, not grammar. One
+  shared set reaches every user, so a defect is everyone's.
+- **[Decisions]** Prompt v2 as a separate system prompt (rules 1–5; final
+  wording after the local measurement E), with the legacy prompt and request
+  unchanged byte for byte. A new automatic rule: an `error_correction` answer
+  may change only one contiguous part of the sentence, at most 4 words.
+  Full-sentence answers stay (the wrong-answer share is measured after C1).
+  No per-topic "safe ground" list for now. The checker decision table is
+  approved as written: at most 2 alternatives become `acceptedAnswers`; an
+  original that is not wrong, a wrong key, a false rule, an acceptable
+  "wrong" answer and an explanation that excludes an alternative always
+  reject. Checker model: different from the generator and at least as strong
+  (default candidate `claude-sonnet-5` with thinking, compared with
+  `claude-sonnet-4-6` with thinking). At most 3 generations + 3 checks per
+  date. Fail-closed, with no switch that skips the check; the bundled fallback
+  pool covers long outages. Rejected sets kept as `review:*` in KV for 14 days
+  in the first weeks, to measure checker false alarms. The v1 sets are exported
+  and then deleted (`set:`/`attempts:` from that day on) at D3. The check is
+  counted as `daily_test` cost. E runs before D3, and never without the
+  owner's approval of the run. If CPU exceeds 10 ms: trimming first, Workers
+  Paid ($5/month, a cost increase) only if that is not enough, decided on the
+  D3 measurement.
+- **[Additions, owner]** Reason for each:
+  - **A. Over-generate and select** (2 candidates per topic, the 5 clean ones
+    that fit the plan are published), or regenerate only the failing question.
+    Reason: with the whole set rejected for one bad question, a 40% defect rate
+    publishes a date only ~22% of the time within 3 attempts. Choosing among
+    candidates, or repairing one slot, makes that far less sensitive to the
+    defect rate.
+  - **B. `claude-sonnet-5` as a generator candidate** for the shared set only
+    (the legacy route keeps its model). Reason: a stronger model at a lower
+    list price; costs are compared on measured tokens because its tokenizer
+    produces more tokens for the same text.
+  - **C. Message Batches API** evaluated for the cron (50% discount).
+  - **D. Roadmap note** after 1.1.0: practice generation model migration to
+    `claude-sonnet-5`, quality and schema compliance first.
+- **[Process]** The batch order stays P4 → … → D3 → `main` merge, all before
+  C1, and is updated for the additions in the report's §13.
+
+## 2026-09-27 (1.1.0 shared Daily Test quality — P4 prompt v2 and one-span rule, proxy, not deployed)
+
+Batch P4 (`9ce63c1`) of `docs/1.1.0-shared-daily-test-quality.md` §13.5, on
+`1.1.0`. Proxy only; `lib/` untouched; **not deployed**, and Anthropic was not
+called. Proxy tests 213 → 240, `tsc` clean, `wrangler deploy --dry-run`
+bundles (50.63 KiB).
+
+- **[Why this batch first]** Of the updated plan, P4 is the one batch the
+  additions A–C do not change: every generation variant in E (either model,
+  either strategy) uses the v2 text and the one-span rule, and E needs both
+  prompt versions buildable. P5 (model and candidates per slot) and P6
+  (checker) depend on A and B.
+- **[Engineering]** `SHARED_DAILY_TEST_SYSTEM_PROMPT_V2` in `anthropic.ts`,
+  used only by `generate_shared_daily_test` when the request asks for
+  `promptVersion: 2`. Self-contained (the legacy prompt refers to a practice
+  prompt the model never sees and never defines "hint"), with the five
+  correctness rules; the answer-key, predicted-wrong-answer and explanation
+  paragraphs are carried over. Model, schema and `max_tokens` are unchanged.
+  Version 2's user prompt adds one clause (keep the slot's topic and type, move
+  the situation). `SharedPromptVersion` = 1 | 2 is a request option;
+  **`SHARED_PROMPT_VERSION`, what the cron sends and stores, stays 1** until
+  the two-phase cron ships (P7), so the final wording can still change after E
+  with no deploy in between.
+- **[Engineering]** `validateSharedSet` rule `error_correction_multi_edit`,
+  via `isSingleShortEdit`: after `normalizeAnswer`, a word-level common prefix
+  and suffix (never overlapping) leave one differing span, which may hold at
+  most `ERROR_CORRECTION_MAX_EDIT_WORDS` (4) words on each side. Linear in
+  sentence length. It applies to every version, so it also takes effect on the
+  current cron at the next deploy (none is planned before D3).
+- **[Deviations from the report]**
+  1. Rule 5 (hint) also allows the base form of the word to change, e.g.
+     "(travel)". The report's wording ("never gives the answer; points to where
+     to look") would have forbidden the hint form the bundled day-0 set uses.
+  2. The user-prompt clause says "without breaking the correctness rules"
+     instead of "under the rules above": the rules are in the system prompt, not
+     above the clause.
+  3. The cron keeps version 1 (the report's P4 row said "`SHARED_PROMPT_VERSION`
+     → 2"); explained above.
+  4. One existing test changed its data, not its assertion: `plan_mismatch`
+     "a type the plan does not give that topic" switched a fill-in item to
+     `error_correction` without changing its text, which the new rule now
+     rejects first. The item is now a valid error-correction pair, so the test
+     still isolates the type mismatch.
+- **[Validation]** New tests: the rule accepts an inserted, replaced or removed
+  word, 4 words each side, and normalized differences (case, spacing, curly
+  quote, final full stop); it rejects 5 words either side, two fixes far apart
+  and a rewritten sentence; `unchanged_error_correction` still wins for an
+  unchanged sentence; fill-in items are exempt; 12 table cases for
+  `isSingleShortEdit`, including repeated words. The owner's cases (c) and (d)
+  are one-word edits, and a test records that the rule does **not** catch them
+  (the checker's job). Request: version 1's fingerprint unchanged (`c1a5703`),
+  version 2 pinned (`22121840`); v2 keeps v1's model, budget and schema; its
+  system prompt is its own and carries the five rules; the user prompts differ
+  only by the clause; the default is version 1, and a cron test checks that the
+  hourly run sends the version 1 system prompt. The legacy byte pin
+  (`test/index.test.ts`) passes unchanged. **Mutations that turn tests red:**
+  the rule not applied; the limit 4 → 5; the rule on raw instead of normalized
+  text; a suffix allowed to overlap the prefix (this one survived at first and
+  got its own test case); only the removed side checked; v2 sending the legacy
+  system prompt; the clause added for every version; one word of the legacy
+  prompt; the cron switched to version 2; one word of the v2 prompt.
+
+## 2026-09-27 (1.1.0 shared Daily Test quality — P5, P6 and E prepared, proxy, not deployed, E not run)
+
+Batches P5 (`6017820`) and P6 (`087ee61`) of
+`docs/1.1.0-shared-daily-test-quality.md` §13.5, and the preparation of the
+local measurement E (`3619d8b`), on `1.1.0`. Proxy only; `lib/` untouched;
+**not deployed**; **no Anthropic call** (E's dry run makes none, and E itself was
+not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (now also
+`tsc -p eval`), `wrangler deploy --dry-run` bundles (56.11 KiB).
+
+- **[Owner decision, 2026-09-27]** P4 approved, its deviations 1–7 accepted.
+  On the conflict in deviation 7: if E picks `claude-sonnet-5` as the generator,
+  the checker candidate is `claude-opus-5-5` (E measures it as K3).
+- **[Engineering — P5]** The shared generation request takes a model
+  (`SharedGeneratorModel`: `claude-sonnet-4-6`, the default, or
+  `claude-sonnet-5`, sent with `thinking: {type: "adaptive"}` and
+  `THINKING_HEADROOM_TOKENS` (12,000) more `max_tokens`) and 1 or 2 candidates
+  per plan slot (the request asks for 10 questions grouped by slot, with the
+  budget for 10). Options are an object: `sharedDailyTestRequest(plan, avoid,
+  {promptVersion, model, candidatesPerSlot})`. `validateSharedCandidates` judges
+  an over-generated answer's shape as a whole (count, plan, two per slot,
+  unique ids) and drops only candidates that break a content rule; a slot left
+  empty rejects it with that slot's first reason. The legacy route keeps its own
+  `MODEL` constant; the cron's request is unchanged (v1 fingerprint
+  `c1a5703`). The measured variants are pinned: G3 `9391a5af`, G4 `f04badb8`,
+  G5 `98f1bfc3`.
+- **[Engineering — P6]** `src/shared_check.ts` and operation
+  `check_shared_daily_test`: the §2.1 checker prompt, the §2.2 schema (enums
+  for every verdict field), adaptive thinking for all three checker candidates,
+  and a budget of 400 tokens per question + the thinking headroom. The proxy
+  decides: `parseCheckOutput` (an unusable review is `unreadable`, a failed
+  check rather than a rejection), `decideQuestion` (§2.3 rows 1–9 in order;
+  noise among the alternatives is dropped, not rejected), `decideCheckedSet`
+  (one per slot) and `selectCandidates` (two per slot: the passing candidate
+  with the fewest alternatives, then the first). Up to 2 alternatives become
+  `acceptedAnswers`, always present (possibly empty) on a published question.
+  `CHECK_VERSION` 1, fingerprint `3c489122`. The check is `daily_test` cost
+  (decision 11), and its log line carries no content (planted-secret test).
+  `gradeAnswer` states the grading order C1 implements, against a new shared
+  fixture, `proxy/test/fixtures/daily_test_grading.json` (written by hand: the
+  `accepted` kind does not exist in Dart yet). Not wired to the cron (P7).
+- **[Engineering — E, prepared]** `proxy/eval/` (Node, bundled with the esbuild
+  wrangler already installs; the Worker never imports it): the §13.6 matrix
+  (111 requests: 30 generations, 81 checks), stages A (5 synchronous
+  generations) → B (25 batched) → C (3 synchronous checks) → D (78 batched),
+  prices from the 2026-09-27 pricing page, a $4.00 cap on measured spend
+  (a stage is trimmed, least important first, if spend so far + 1.25 × its
+  estimate would pass it; token estimates are replaced by the synchronous
+  stages' measurements), resume of a stopped run, a synchronous request the
+  API refuses with a 4xx drops the rest of that variant or checker, and the
+  results host is checked before the key is sent. The owner's sheet
+  (`labels.csv`) is shuffled with a seeded generator under random keys; the
+  mapping, raw outputs and state are under `private/`. `analyze` reports raw and
+  published defect rates, checker recall and false rejects, publish rates (S1,
+  S2 measured, S3 simulated), measured tokens and cost, wall time, and the JSON
+  work per phase timed in Node. The day-0 set is exported to
+  `eval/reference/day0.json` (through a throwaway Flutter test, not committed).
+  `eval/out/`, `eval/input/` and `eval/.build/` are gitignored.
+  `@types/node` added as a dev dependency, for `eval/tsconfig.json` only.
+  Owner checklist: `proxy/eval/README.md`.
+- **[Dry run]** `npm run eval -- dry-run`: 111 requests, **estimated $3.12**
+  (all synchronous would be $5.84); reference sets R1/R2 not exported yet (their
+  checks would be skipped); API key found in `proxy/.dev.vars` (not shown; not
+  tested against the API).
+- **[Offline rehearsal]** The full `run` → `labels.csv` → `analyze` path was
+  run once against a stub of `fetch` loaded with `node --import` (fake key, fake
+  responses, one expired batch result): no network call, and no change to the
+  code under test. 30 generations, 3 synchronous and 67 batched checks, a
+  155-row sheet with no source information in any cell, and a report from
+  synthetic labels. The rehearsal's files were outside the repo, and a fake R1
+  input it needed was deleted afterwards.
+- **[Deviations]**
+  1. `sharedDailyTestRequest`'s third parameter became an options object
+     (P4's tests call it with `{ promptVersion }` now); the requests are
+     unchanged, as the fingerprints show.
+  2. P6 has no `review:*` records or log line yet: both belong to the cron
+     wiring (P7).
+  3. Reference sets R1/R2 are labelled in the sheet like every other row, not
+     pre-filled as §13.6 said: pre-filling would reveal which rows are
+     references, and the owner reviewed them anyway.
+  4. E's checks of over-generated sets send only the candidates that passed the
+     proxy's gate (up to 10).
+  5. `@types/node` added (a dev dependency, used by `eval/tsconfig.json` only).
+  6. One mutation survived and is equivalent: using the two-candidate gate
+     with one candidate per slot accepts and rejects exactly what
+     `validateSharedSet` does (a P5 test asserts that).
+- **[Validation]** Mutations that turn tests red. **P5 (11):** the default model
+  changed, thinking for every model or for none, no headroom, the builder
+  ignoring the model, the count ignoring candidates, a bad candidate rejecting
+  all, no per-slot limit, no duplicate-id check, an empty slot allowed, the
+  legacy model constant changed. **P6 (21):** each §2.3 row removed or
+  loosened, `uncertain` passing, no dedupe, the key kept as an alternative, no
+  length limit, a review missing or an id repeated in the parse, selection
+  ignoring the alternative count, two grading-order changes, `acceptedAnswers`
+  sent to the checker, a checker without thinking, the check filed as practice
+  cost, one word of the checker prompt. **E (13 of 14):** the budget drop
+  order, margin or spent ignored, full price for batches, K2 on every
+  variant, all calls synchronous, no formula guard in the CSV, doubled quotes,
+  the source leaking into a row, a key collision kept, no shuffle, any label
+  accepted, recall swapped. The legacy byte pin passes unchanged throughout.
+
+## 2026-09-28 (1.1.0 shared Daily Test quality — E reduced to 3 dates, not run)
+
+- **[Decision — owner]** E runs reduced (option B): the matrix is unchanged
+  (G1–G5, R1–R3, the same checkers); the generation dates go from 6 to 3.
+- **[Engineering]** `EVAL_DATES` is now 2026-10-10 (health), 2026-10-11 (study)
+  and 2026-10-13 (technology): 3 themes, both splits, all 10 topic × type
+  pairs, and `modalVerbs` / `modalPastForms` in error correction twice each
+  (§13.6 has the table and the tie with 10/14/15). `EXTRA_DATES`
+  (2026-10-12, 2026-10-14, 2026-10-15) also cover all 10 pairs on their own.
+  `planRequests(dates)` takes the run's dates. `run --out DIR --add-dates
+  [YYYY-MM-DD,…]` adds dates to a run that has written its sheet: the dates
+  are kept in `state.json` with a round number, each round gets its own batches
+  (`B2`, `D2`, …) so it never resumes an earlier round's, and only the new
+  rows are written, to `labels-2.csv`, under keys not already in the mapping.
+  A written sheet is never rewritten (before, running a finished run again
+  would have replaced `labels.csv` and its labels). `analyze` reads every
+  sheet. The $4.00 cap still covers the whole run folder.
+- **[Dry run]** 69 requests (15 generations, 54 checks), **estimated $2.06**
+  ($3.71 all synchronous). Adding the extra dates: +42 requests (15
+  generations, 27 checks), +$1.06, all batched; 6 dates in all ≈ $3.1 as
+  before. Sheet: at most 90 rows, about 1 h; the extra dates at most 75 more,
+  in `labels-2.csv`.
+- **[Offline rehearsal]** Against the same `fetch` stub (no network): a
+  3-date run (75 rows, the R1/R2 inputs being absent), synthetic labels, a
+  second `run` on the finished folder (no call, sheet untouched), then
+  `--add-dates` (round 2: batches `B2`/`D2`, 70 new rows in `labels-2.csv`, no
+  key shared with `labels.csv`, which stayed byte-identical), `analyze` over
+  both sheets. `--add-dates` is refused without a finished run, for a date
+  already in it, and with nothing left to add, before anything is written.
+- **[Validation]** 337 tests (330 + 7). Mutations that turn tests red (17 of
+  17): the default extra dates, their order, no already-in-run or repeat
+  check, no calendar round trip or NaN check, the batch key for round 0 or
+  off by one, generations or set checks ignoring the run's dates, another
+  date chosen, the first sheet renamed, the dedupe ignoring the date or
+  inverted, the sheet pattern loosened or taking `labels-1.csv`. A redundant
+  format regex whose removal no test could see was deleted (the round trip
+  already rejects anything but `YYYY-MM-DD`). The legacy byte pin passes
+  unchanged; `src/` and `lib/` unchanged.
+
+## 2026-09-28 (1.1.0 shared Daily Test quality — E run, owner decisions, not deployed)
+
+- **[E — run]** Approved by the owner and run by the owner on the 3-date
+  matrix (`run-2026-09-28T13-58-26-981Z`): 63 minutes, **$2.849 measured**
+  over 60 billed calls (estimate $2.06; the difference is thinking output),
+  no request left out for the $4.00 cap, 0 errored or expired batch requests.
+  54 rows to label. Claude pre-labelled every row with a reason; the owner
+  reviewed each pre-label and set the final labels, deciding 2 rows alone:
+  32 ok, 7 minor, 15 defect.
+- **[E — findings]** Defect rate by the owner's labels: G1 60% (n=5), G2 30%
+  (10), G3 30% (10; the report's 22% of 9 misses one row, below), G5 14% (14,
+  after K1), R1/R2 40%, R3 0%. Checkers: K1 `claude-sonnet-5` recall 44%, 4%
+  clean rejected, 0 of 4 reference defects; K2 `claude-sonnet-4-6` 100%, 15%,
+  91 s per call; K3 `claude-opus-5-5` 79%, 14%, ≈ $0.047 and 14 s per call
+  (model mapping verified in the records). Checked: G5's synchronous
+  generation took 100.4 s (above the 90 s timeout); all 3 K1 checks of G4
+  stopped at `max_tokens` (16,000), which is why K1 reviewed no G4 set; the 8
+  unusable checks are all `max_tokens` stops (K3 never exceeded 2,280 output
+  tokens); the 9 unbilled calls are checks of sets that failed the gate, not
+  errors. Found while labelling: `error_correction` questions without a
+  sentence (§14.4 of the report), and one key (`267981e9`) that Numbers
+  turned into `2,67981E+14`.
+- **[Decisions — owner]** (1) Live: prompt v2 + `claude-sonnet-4-6` +
+  checker `claude-opus-5-5` + S3, no over-generation. (2) **Decision 5
+  revised:** a question whose only problems are `multiple_answers` or
+  `wrong_answer_acceptable` is not rejected; the alternatives go into
+  `acceptedAnswers` (max 2) and leave the wrong answers; `original_not_wrong`,
+  `key_incorrect` and `wrong_rule` always reject. (3) E is not extended; the
+  live sets, `review:*` records and a weekly owner look replace it.
+  `docs/1.1.0-shared-daily-test-quality.md` §14.
+- **[Docs]** Numbers exported the sheet with `;`: `proxy/eval/README.md` now
+  says so and gives a one-line conversion (chosen over teaching `analyze` to
+  detect `;`, since E is closed), and warns about keys read as numbers.
+  Roadmap 1.1.0 status updated.
+- **[A — impact, no code]** In E's raw outputs, 19 of 28 `error_correction`
+  questions from `claude-sonnet-4-6` (G1 4/7, G2 5/7, G4 10/14; 6 of 9 sets)
+  and 0 of 21 from `claude-sonnet-5` had no `context`; in none of the 19 was
+  the sentence in any other field. The legacy route uses the same system
+  prompt, schema and model as G1 and returns the response unchecked, so it
+  can produce them; how often is not measurable from stored data (the two
+  reviewed v1 sets had none). On 1.0.0 such a question renders without a
+  sentence, cannot be answered, and does not crash (report §14.4, with
+  file:line). A read-only KV scan command for the published sets was written
+  and tested against a local KV; the owner runs it. Options for the legacy
+  route compared (as now / regenerate in-request / error / drop with a floor
+  of 3); recommended: drop, error below 3; the owner decides.
+- **[B — engineering]** `error_correction_missing_sentence`: an
+  `error_correction` question needs a `context` of at least 3 words with a
+  letter; checked first among the content rules, in `checkQuestion`, so both
+  `validateSharedSet` and `validateSharedCandidates` apply it to every prompt
+  version. Prompt version 2's schema makes each question one of two shapes
+  (`anyOf`, `type` as `const`), requiring `context` for `error_correction`
+  (structured outputs has no `minLength`, so blanks are the validator's job).
+  v1 and legacy schemas unchanged; v2, G3, G4, G5 fingerprints re-pinned (no
+  v2 set was ever published). 346 tests. Mutations that turn tests red (13
+  of 13): the rule removed, 1 word enough, no letter check, applied to every
+  type, the wrong code, the rule moved after the wrong-answer checks, the
+  `error_correction` shape without `context`, the fill shape requiring it,
+  the v2 schema used for v1, v1's schema used for v2, `const` loosened to an
+  `enum`, the legacy schema requiring `context` (the legacy byte pin fails),
+  `minLength` added. Re-analysis of E with the rule: report §14.5.
+- **[Plan]** Report §14.6 replaces §13.5: P7a (decision table, decision 2,
+  checker `claude-opus-5-5`) → P7b (repair generation) → P7c (two-phase cron
+  with S3: generate / check / repair runs, one Anthropic call per run, 3
+  generations + 3 checks per date) → D3 → M → Dx → C1, plus an optional L
+  (legacy response check) if the owner picks an option. Cost: ≈ $0.071 per
+  normal day, ≈ $0.23 absolute worst per date. CPU risk sits in P7c (the
+  cron's highest measured CPU is 8.73 ms).
+
+## 2026-09-28 (1.1.0 shared Daily Test quality — generator D, legacy check L, not deployed)
+
+- **[Decisions — owner]** Report §14 approved; deviations 1, 3, 4 accepted.
+  (1) **Combination C → D:** the shared set generator becomes
+  `claude-sonnet-5` (repairs too), because `claude-sonnet-4-6` left the
+  sentence out of 19 of 28 `error_correction` questions and `claude-sonnet-5`
+  of 0 of 21, at the same labelled defect rate (30% each); the checker stays
+  `claude-opus-5-5`. (2) L3 for the legacy route, first: built, deployed by the
+  owner (D-L), then `1.1.0` merged into `main`, before P7. (3) After P7a moves
+  answers, at least 1 wrong answer must remain, else reject; the 2–3 rule
+  becomes 1–3 only for such questions. Report §15.
+- **[Timeout — assessment]** `claude-sonnet-5` generated at 97–98 output
+  tokens/s; E's single sets used 4,052–4,878 tokens (≈ 41–50 s), so 90 s holds
+  them with ≈ 1.8× margin but not the 15,072-token budget (≈ 155 s).
+  Recommended for P7c: 150 s, lease 180 s (a cron may run 15 minutes;
+  waiting on `fetch` is not CPU). Report §15.2.
+- **[L — engineering]** `proxy/src/legacy_daily_test.ts`: the legacy route
+  drops sentenceless `error_correction` questions from Anthropic's response
+  with the shared gate's rule (now exported as `hasSentenceToCorrect`); fewer
+  than 3 left after a drop → the existing `502 upstream_error`, which 1.0.0
+  shows with "Try again". New count-only line `legacy_daily_test_filter`
+  (`received_count`, `removed_count`, `served_count`, `outcome`), its own line
+  because `anthropic_usage` is written before the response is parsed.
+  Request, quota and cost unchanged. 358 tests (346 + 12). Mutations that
+  turn tests red (14 of 14): the filter disabled, dropped questions served,
+  the floor at 2, the floor applied when nothing was removed, a rejected set
+  served, another error code, `fill_in_blank` dropped too, a weaker rule of
+  its own, the served count on a rejection, content in the log line, the log
+  line missing, a copied object when nothing changed, the order reversed, the
+  removed count wrong. One further mutation (a request built with
+  `count + 0`) was equivalent and is not counted. The legacy byte pin passes
+  unchanged. `wrangler deploy --dry-run` 59.05 KiB.
+- **[Plan]** L → D-L → M → P7a → P7b → P7c → D3 → Dx → C1. D costs ≈ $0.096 on
+  a normal day, ≈ $0.29 at the absolute worst per date. D-L checklist and the
+  merge steps: report §15.5. Checked read-only: `1.1.0` changes nothing under
+  `lib/` or outside `proxy/` and `docs/` against `origin/main`, and merging it
+  into `main` is conflict-free and gives exactly `1.1.0`'s tree.
+

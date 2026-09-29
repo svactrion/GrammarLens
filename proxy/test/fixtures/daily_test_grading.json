@@ -1,0 +1,28 @@
+{
+  "_comment": [
+    "Shared contract for Daily Test grading once a question carries acceptedAnswers (docs/1.1.0-shared-daily-test-quality.md §8.2): correct -> keyboardVariant (of the key) -> accepted (exact or keyboard variant) -> commonWrong (exact after normalizing) -> fallback.",
+    "The proxy's gradeAnswer (src/shared_check.ts) is tested against this file now. The Dart test that runs checkDailyTestAnswer against the same file is added in batch C1; until then the first two and last two kinds describe today's Dart behaviour, and 'accepted' is new.",
+    "Written by hand on 2026-09-27, not produced by the Dart code: the 'accepted' kind does not exist in Dart yet."
+  ],
+  "question": {
+    "correctAnswer": "I knew I had to study harder.",
+    "acceptedAnswers": ["I knew I should study harder."],
+    "commonWrongAnswers": [
+      { "answer": "I knew I have to study harder." },
+      { "answer": "I knew I must studied harder." }
+    ]
+  },
+  "cases": [
+    { "input": "I knew I had to study harder.", "kind": "correct" },
+    { "input": "  i knew i HAD to study   harder ", "kind": "correct" },
+    { "input": "I knew ı had to study harder", "kind": "keyboardVariant" },
+    { "input": "I knew I should study harder.", "kind": "accepted" },
+    { "input": "i knew i should study harder", "kind": "accepted" },
+    { "input": "ı knew ı should study harder", "kind": "accepted" },
+    { "input": "I knew I have to study harder.", "kind": "commonWrong" },
+    { "input": "i knew i must studied harder", "kind": "commonWrong" },
+    { "input": "ı knew ı have to study harder", "kind": "fallback" },
+    { "input": "I knew I needed to study harder.", "kind": "fallback" },
+    { "input": "I knew I should study harder and harder.", "kind": "fallback" }
+  ]
+}

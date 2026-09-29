@@ -7,7 +7,7 @@
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
 | 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release |
-| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26, first set published; watching cron CPU (8 ms of the Free plan's 10 ms on the first run); content quality issues open; proxy commits not yet merged into `main`; client not started. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response (built, not deployed). Next: owner deploy of the legacy check (D-L), merge into `main`, then cron wiring (P7) and deploy (D3). Client not started. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
@@ -79,6 +79,11 @@ Nothing is marked complete unless the record says so.
   'needn't have looked', 'train had already left' recurred). Same prompt for
   everyone is the cause. Revisit together with shared Daily Test generation,
   where day-to-day variety becomes the main concern.
+- **Practice generation model migration (claude-sonnet-4-6 → claude-sonnet-5)**
+  (after 1.1.0; recorded 2026-09-27) — evaluate quality and schema compliance
+  first; potential per-user cost reduction. A note only; no work planned. The
+  shared Daily Test's local measurement (E) tries `claude-sonnet-5` as a
+  generator first, which gives a first data point.
 - **README refresh with current launch screenshots** (3–4 images, compressed,
   in `docs/screenshots/`); add the App Store badge and link only after the app
   is released.
