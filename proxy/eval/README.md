@@ -183,3 +183,92 @@ The new rows go to a separate sheet, **`labels-2.csv`** (at most 75 rows,
 about 45–55 min), shuffled under new random keys; `labels.csv` and your
 labels in it are not touched. Label it the same way, then run `analyze` as
 in step 6: it reads every sheet in the folder.
+
+---
+
+# The generator comparison (path A, 2026-09-29)
+
+What and why: `docs/1.1.0-shared-daily-test-quality.md` §16. Prompt v2 with
+the cron's generator today against `claude-sonnet-5-5`, **generation only**: no
+check call, no label sheet. 3 variants × E's 3 dates = **9 synchronous calls**:
+
+| Variant | Request |
+|---|---|
+| V1 | v2 + `claude-sonnet-5`, adaptive thinking, no `effort` (the cron's request today) |
+| V2 | v2 + `claude-sonnet-5-5`, adaptive thinking, no `effort` (its API default, `high`) |
+| V3 | v2 + `claude-sonnet-5-5`, adaptive thinking, `effort: "low"` |
+
+**It calls the Anthropic API and costs money: about $0.44, never more than
+$1.00.** A call is made only if the spend so far plus that call's worst case
+(every token its `max_tokens` allows, billed) stays within $1, so the cap holds
+even if every estimate is wrong. Run it only after the owner has approved it.
+
+## Owner checklist
+
+### 1. A separate API key (recommended)
+
+Create a key only for this run in the Console (Settings → API keys, e.g.
+"grammarlens-compare"), use it once, and **revoke it when the run is done**.
+Its spend then shows on its own line, and nothing that uses the Worker's key
+can be affected.
+
+Give it to the script through the environment, for this terminal only and
+without it landing in your shell history (from `proxy/`):
+
+```bash
+read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY
+```
+
+(paste, Enter). The environment wins over `proxy/.dev.vars`, so a key already in
+that file is not used. The key is sent only to `api.anthropic.com` and is never
+printed or written by the script. Close the terminal (or `unset
+ANTHROPIC_API_KEY`) afterwards.
+
+**If you use the live key instead** (the Worker's `ANTHROPIC_API_KEY` secret,
+or whatever key is in `.dev.vars`): **do not revoke it afterwards.** The
+deployed Worker uses that key for every 1.0.0 request and for the hourly cron;
+revoking it would stop the app's practice sets, Daily Test and scoring until a
+new key is set with `wrangler secret put ANTHROPIC_API_KEY` and deployed.
+
+### 2. Dry run (no API call)
+
+```bash
+npm run eval -- compare --dry-run
+```
+
+It prints the 9 calls, their `max_tokens` (15,072 each), the estimated cost
+(about $0.44), the worst case, and must end with `API key: found (not shown)`.
+
+### 3. Run
+
+```bash
+caffeinate -i npm run eval -- compare
+```
+
+**About 10 minutes** (one call after another; E's `claude-sonnet-5` sets took
+about 45 s each). Calls are not cut off at the cron's 150 s: the time over the
+limit is what is being measured. One line per call in the terminal and in
+`progress.log` (counts only, never content).
+
+**If it stops**, run it again with the same folder:
+`npm run eval -- compare --out eval/out/compare-…`. Finished calls are not
+repeated, and the $1 cap counts what the folder has already spent.
+
+### 4. Results
+
+In **`eval/out/compare-…/`** (gitignored; the last line of the run prints the path):
+
+- **`report.md`**: one row per variant: sets passing the proxy's gate
+  (`validateSharedSet`) and the rejection codes, `error_correction` questions
+  without a sentence (counted over every set, whatever the gate said), average
+  input and output tokens, cost per set, average and longest time, calls over
+  90 s and over 150 s, and `stop_reason`s (`max_tokens` = truncated).
+- **`questions.md`**: every set's questions as a learner would first read them,
+  sentence and instruction only (no key, no wrong answers, no explanation), for a
+  quick look at a few sets.
+- `records.json`: the full sets and every measured field; `progress.log`.
+
+The results then go into the build log and §16 of the report, and the owner
+decides the generator (`SHARED_GENERATOR` in `src/shared_daily_test.ts`, one
+line).
+
