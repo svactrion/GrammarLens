@@ -354,6 +354,8 @@ export type SharedSetRejection =
   | 'wrong_answer_matches_correct' // a predicted wrong answer grades as correct
   | 'duplicate_wrong_answer'
   | 'error_correction_missing_sentence' // no flawed sentence in "context" to correct
+  | 'fill_in_blank_missing_blank' // no blank in "context" or "instruction"
+  | 'fill_in_blank_multiple_blanks' // more than one blank for one key
   | 'unchanged_error_correction' // the "correction" equals the flawed sentence
   | 'error_correction_multi_edit' // the correction changes more than one short span
   | 'explanation_not_one_sentence'
@@ -438,6 +440,26 @@ export function hasSentenceToCorrect(context: unknown): boolean {
   if (typeof context !== 'string') return false;
   const words = context.trim().split(/\s+/).filter((w) => /\p{L}/u.test(w));
   return words.length >= ERROR_CORRECTION_MIN_WORDS;
+}
+
+/** A blank in a `fill_in_blank` sentence: a run of two or more underscores,
+ * the only marker any generated set has used (`___` to `__________`). */
+const BLANK = /_{2,}/g;
+
+/**
+ * How many blanks a `fill_in_blank` question shows the learner: counted in
+ * "context" and "instruction", the two fields the app displays (`hint` is
+ * optional and not counted). The shared gate requires exactly one
+ * (docs/1.1.0-shared-daily-test-quality.md §16.6): with prompt v2, 11 of 74
+ * generated questions had none, their sentence present nowhere but in the
+ * key. Shared-set path only; the legacy route does not apply it (§16.6).
+ */
+export function blankCount(context: unknown, instruction: unknown): number {
+  let count = 0;
+  for (const field of [context, instruction]) {
+    if (typeof field === 'string') count += field.match(BLANK)?.length ?? 0;
+  }
+  return count;
 }
 
 /** Words an `error_correction` answer may remove from, or put into, the flawed
@@ -597,6 +619,11 @@ function checkQuestion(entry: unknown): SharedQuestion {
   // First among the content rules: without the sentence, nothing else about
   // the question can be answered.
   if (type === 'error_correction' && !hasSentenceToCorrect(context)) throw new Rejected('error_correction_missing_sentence');
+  if (type === 'fill_in_blank') {
+    const blanks = blankCount(context, instruction);
+    if (blanks === 0) throw new Rejected('fill_in_blank_missing_blank');
+    if (blanks > 1) throw new Rejected('fill_in_blank_multiple_blanks');
+  }
 
   const rawWrong = q.commonWrongAnswers;
   if (!Array.isArray(rawWrong)) throw new Rejected('missing_field');

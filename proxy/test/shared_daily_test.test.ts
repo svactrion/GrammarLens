@@ -12,6 +12,7 @@ import {
   EXPLANATION_MAX_WORDS,
   SCENARIO_THEMES,
   SHARED_PROMPT_VERSION,
+  blankCount,
   SHARED_SET_QUESTION_COUNT,
   dailyPlan,
   dateOfDayNumber,
@@ -396,6 +397,8 @@ describe('validateSharedSet', () => {
     const questions = withQuestion(0, (q) => {
       q.extra = 'dropped';
       delete q.context;
+      // Its blank moves into the instruction, where the learner still sees it.
+      q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.';
     });
     const result = validate(questions);
     expect(result.ok).toBe(true);
@@ -585,7 +588,14 @@ describe('validateSharedSet', () => {
     });
 
     it('does not apply the rule to fill-in-the-blank', () => {
-      expect(validate(withQuestion(0, (q) => (q.context = 'the'))).ok).toBe(true);
+      expect(
+        validate(
+          withQuestion(0, (q) => {
+            q.context = 'the';
+            q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.';
+          }),
+        ).ok,
+      ).toBe(true);
     });
   });
 
@@ -634,9 +644,10 @@ describe('validateSharedSet', () => {
       );
     });
 
-    it('does not apply to fill-in-the-blank, which may leave "context" out', () => {
-      expect(validate(withQuestion(0, (q) => delete q.context)).ok).toBe(true);
-      expect(validate(withQuestion(0, (q) => (q.context = ''))).ok).toBe(true);
+    it('does not apply to fill-in-the-blank, which may leave "context" out (its blank then in the instruction)', () => {
+      const blankInInstruction = (q: Question) => (q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.');
+      expect(validate(withQuestion(0, (q) => (delete q.context, blankInInstruction(q)))).ok).toBe(true);
+      expect(validate(withQuestion(0, (q) => ((q.context = ''), blankInInstruction(q)))).ok).toBe(true);
     });
 
     it('drops a two-candidate answer\'s sentenceless candidate, and rejects when both of a slot\'s are', () => {
@@ -652,6 +663,84 @@ describe('validateSharedSet', () => {
       expect(validateSharedCandidates({ questions: pair }, PLAN, 2)).toEqual({
         ok: false,
         reason: 'error_correction_missing_sentence',
+      });
+    });
+  });
+
+  describe('fill_in_blank_missing_blank and fill_in_blank_multiple_blanks (§16.6)', () => {
+    // The comparison, 2026-09-29 (V1, 2026-10-13, question 3): a scene in
+    // "context", a generic instruction, and the sentence to complete nowhere.
+    const NO_BLANK = {
+      context: 'My phone suddenly restarted while I was updating apps.',
+      instruction: 'Complete the sentence with the correct form of the verb in brackets.',
+      hint: '(already / download)',
+    };
+    const articlesWith = (edit: (q: Question) => void) => withQuestion(0, edit);
+
+    it('counts runs of two or more underscores in context and instruction only', () => {
+      expect(blankCount('We stayed at ___ hotel.', 'Fill in the blank.')).toBe(1);
+      expect(blankCount('A scene.', 'Complete: I ___ it.')).toBe(1);
+      expect(blankCount('I ___ it and ______ that.', undefined)).toBe(2);
+      expect(blankCount('I __ it.', 'Also __ here.')).toBe(2);
+      expect(blankCount('I _ it (one underscore is not a blank).', 'No blank here.')).toBe(0);
+      expect(blankCount(undefined, 'No blank.')).toBe(0);
+      expect(blankCount(42, null)).toBe(0);
+    });
+
+    it('rejects a fill_in_blank question with no blank (the real case)', () => {
+      expectRejected(articlesWith((q) => Object.assign(q, NO_BLANK)), 'fill_in_blank_missing_blank');
+    });
+
+    it('does not count a blank that is only in the hint', () => {
+      expectRejected(
+        articlesWith((q) => Object.assign(q, NO_BLANK, { hint: 'Think of: I ___ it.' })),
+        'fill_in_blank_missing_blank',
+      );
+    });
+
+    it('rejects no context and a blankless instruction', () => {
+      expectRejected(articlesWith((q) => delete q.context), 'fill_in_blank_missing_blank');
+    });
+
+    it('accepts exactly one blank, in context or in instruction', () => {
+      expect(validate(validQuestions()).ok).toBe(true); // every blank in "context"
+      expect(
+        validate(
+          articlesWith((q) => {
+            q.context = 'You are talking about a trip.';
+            q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.';
+          }),
+        ).ok,
+      ).toBe(true);
+    });
+
+    it('rejects two blanks, in one field or across both', () => {
+      expectRejected(articlesWith((q) => (q.context = 'We stayed at ___ hotel near ___ station.')), 'fill_in_blank_multiple_blanks');
+      expectRejected(
+        articlesWith((q) => (q.instruction = 'Fill in ___ blank with the correct article.')),
+        'fill_in_blank_multiple_blanks',
+      );
+    });
+
+    it('does not apply to error_correction', () => {
+      // Its flawed sentence has no blank, as every valid one does.
+      expect(validQuestions()[3]?.type).toBe('error_correction');
+      expect(blankCount(validQuestions()[3]?.context, validQuestions()[3]?.instruction)).toBe(0);
+      expect(validate(validQuestions()).ok).toBe(true);
+    });
+
+    it('drops a two-candidate answer\'s blankless candidate, and rejects when both of a slot\'s are', () => {
+      const pair = validQuestions().flatMap((q) => [
+        { ...q, id: `${String(q.id)}-a` },
+        { ...q, id: `${String(q.id)}-b` },
+      ]);
+      Object.assign(pair.find((q) => q.id === 'q-articles-a') as Question, NO_BLANK);
+      const one = validateSharedCandidates({ questions: pair }, PLAN, 2);
+      expect(one.ok && one.dropped).toEqual([{ slot: 0, reason: 'fill_in_blank_missing_blank' }]);
+      (pair.find((q) => q.id === 'q-articles-b') as Question).context = 'We stayed at ___ hotel near ___ station.';
+      expect(validateSharedCandidates({ questions: pair }, PLAN, 2)).toEqual({
+        ok: false,
+        reason: 'fill_in_blank_missing_blank',
       });
     });
   });
@@ -694,7 +783,7 @@ describe('validateSharedSet', () => {
     });
 
     it('does not apply to fill-in-the-blank', () => {
-      expect(validate(withQuestion(0, (q) => (q.context = 'a b c d e f g h'))).ok).toBe(true);
+      expect(validate(withQuestion(0, (q) => (q.context = 'a b c d ___ e f g h'))).ok).toBe(true);
     });
 
     it('still reports an unchanged sentence as unchanged_error_correction', () => {
