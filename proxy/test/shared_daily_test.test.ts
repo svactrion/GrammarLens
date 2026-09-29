@@ -969,15 +969,14 @@ describe('generate_shared_daily_test request, generation variants (owner additio
   const build = (options: SharedGenerationOptions) => buildGenerateSharedDailyTestBody(sharedDailyTestRequest(PLAN, [], options));
   const base = build({ promptVersion: 2, model: 'claude-sonnet-4-6' });
 
-  it('defaults to SHARED_GENERATOR: claude-sonnet-5, no effort field, adaptive thinking, one question per slot', () => {
-    expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5' });
+  it('defaults to SHARED_GENERATOR: claude-sonnet-5-5 at effort low, adaptive thinking, one question per slot', () => {
+    expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5-5', effort: 'low' });
     const request = sharedDailyTestRequest(PLAN);
-    expect(request).toMatchObject({ model: 'claude-sonnet-5', candidatesPerSlot: 1, count: 5 });
-    expect('effort' in request).toBe(false);
+    expect(request).toMatchObject({ model: 'claude-sonnet-5-5', effort: 'low', candidatesPerSlot: 1, count: 5 });
     const body = buildGenerateSharedDailyTestBody(request);
-    expect(body.model).toBe('claude-sonnet-5');
+    expect(body.model).toBe('claude-sonnet-5-5');
     expect(body.thinking).toEqual({ type: 'adaptive' });
-    expect('effort' in body.output_config).toBe(false);
+    expect(body.output_config).toMatchObject({ effort: 'low' });
     expect(body.max_tokens).toBe(dailyTestMaxTokensFor(5) + THINKING_HEADROOM_TOKENS);
   });
 

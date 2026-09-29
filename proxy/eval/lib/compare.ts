@@ -27,8 +27,9 @@ export interface CompareVariant {
 }
 
 /**
- * V1 is the cron's request today. V2 is `claude-sonnet-5-5` as the cron would
- * send it after a one-line switch. V3 adds `effort: "low"`: Sonnet 5.5's
+ * V1 was the cron's request when the comparison was written. V2 is
+ * `claude-sonnet-5-5` at its default effort. V3 adds `effort: "low"`, and is
+ * what the cron sends since the owner's choice (2026-09-29): Sonnet 5.5's
  * levels are recalibrated, so the default is not the same amount of thinking
  * as on Sonnet 5, and `low` is the cheaper setting the docs name for content
  * generation (and the one where they warn that thinking may run to

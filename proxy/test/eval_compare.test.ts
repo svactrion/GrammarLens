@@ -91,9 +91,9 @@ describe('generator comparison: plan and requests', () => {
     ]);
   });
 
-  it('V1 sends exactly what the cron sends for that date (with no avoid list)', () => {
-    expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5' });
-    expect(comparisonBody({ customId: 'x', variant: 'V1', date: DATE })).toEqual(
+  it('V3, the owner\'s choice, sends exactly what the cron sends for that date (with no avoid list)', () => {
+    expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5-5', effort: 'low' });
+    expect(comparisonBody({ customId: 'x', variant: 'V3', date: DATE })).toEqual(
       buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(DATE))),
     );
   });

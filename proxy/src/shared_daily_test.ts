@@ -72,12 +72,14 @@ export interface SharedGenerator {
 }
 
 /**
- * What the hourly cron generates with. After the generator comparison
- * (`npm run eval -- compare`), switching is this one line, e.g.
- * `{ model: 'claude-sonnet-5-5', effort: 'low' }`; its request fingerprint
- * test in `test/shared_generation.test.ts` then asks to be re-pinned.
+ * What the hourly cron generates with: `claude-sonnet-5-5` at `low` effort,
+ * the owner's choice after the generator comparison (2026-09-29, variant V3,
+ * docs/1.1.0-shared-daily-test-quality.md §16.5): every set passed the gate,
+ * no quality difference the owner could see, at about a third of the cost and
+ * time. Switching is this one line; the cron's request fingerprint test in
+ * `test/shared_generation.test.ts` then asks to be re-pinned.
  */
-export const SHARED_GENERATOR: SharedGenerator = { model: 'claude-sonnet-5' };
+export const SHARED_GENERATOR: SharedGenerator = { model: 'claude-sonnet-5-5', effort: 'low' };
 
 /**
  * Questions asked for per plan slot (owner addition A): 1 is the published set

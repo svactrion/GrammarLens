@@ -180,36 +180,38 @@ describe('shared set generation (cron)', () => {
       return String(fetchCalls[0]?.init?.body);
     }
 
-    it('sends prompt version 2 with claude-sonnet-5, adaptive thinking and its headroom, no effort', async () => {
+    it('sends prompt version 2 with claude-sonnet-5-5 at effort low, adaptive thinking and its headroom', async () => {
       expect(SHARED_PROMPT_VERSION).toBe(2);
-      expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5' });
+      expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5-5', effort: 'low' });
       const sent = JSON.parse(await sentBody()) as Record<string, unknown> & { output_config: object };
       const avoid = ['recent 2', 'recent 1', 'recent 0'];
       const v2 = buildGenerateSharedDailyTestBody(
-        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 2, model: 'claude-sonnet-5' }),
+        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 2, model: 'claude-sonnet-5-5', effort: 'low' }),
       );
       const v1 = buildGenerateSharedDailyTestBody(
-        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 1, model: 'claude-sonnet-5' }),
+        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 1, model: 'claude-sonnet-5-5', effort: 'low' }),
       );
       expect(sent).toEqual(v2);
       expect(sent.system).not.toBe(v1.system);
-      expect(sent.model).toBe('claude-sonnet-5');
+      expect(sent.model).toBe('claude-sonnet-5-5');
       expect(sent.thinking).toEqual({ type: 'adaptive' });
       expect(sent.max_tokens).toBe(dailyTestMaxTokensFor(5) + THINKING_HEADROOM_TOKENS);
-      expect('effort' in sent.output_config).toBe(false);
+      expect(sent.output_config).toMatchObject({ effort: 'low' });
     });
 
     it('pins the bytes the cron sends to a fingerprint', async () => {
       // If this changes, the cron's request changed: the prompt (a new
       // SHARED_PROMPT_VERSION), the plan, or SHARED_GENERATOR. Switching the
       // generator after the comparison is expected to re-pin it here.
+      // History: b7ef3b35 (claude-sonnet-5, no effort, never deployed), then
+      // 80b1fa85 (claude-sonnet-5-5, effort low; owner, 2026-09-29).
       const body = await sentBody();
       let hash = 0x811c9dc5;
       for (let i = 0; i < body.length; i++) {
         hash ^= body.charCodeAt(i);
         hash = Math.imul(hash, 0x01000193) >>> 0;
       }
-      expect(hash.toString(16)).toBe('b7ef3b35');
+      expect(hash.toString(16)).toBe('80b1fa85');
     });
 
     it('stores prompt version 2 with the published set and in its log line', async () => {
