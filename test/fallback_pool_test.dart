@@ -333,4 +333,18 @@ void main() {
       expect(sets, hasLength(rawSets.length));
     });
   });
+
+  test(
+      'the export script only ever reads KV: no put, delete, bulk or list '
+      'command, and its one wrangler call is a key get', () {
+    final script = File('scripts/fallback_pool.sh').readAsStringSync();
+    final code = script
+        .split('\n')
+        .where((l) => !l.trimLeft().startsWith('#'))
+        .join('\n');
+    final wrangler = RegExp(r'wrangler[^\n]*').allMatches(code).toList();
+    expect(wrangler, hasLength(1));
+    expect(wrangler.single[0], contains('kv key get'));
+    expect(code, isNot(matches(RegExp(r'\b(put|delete|bulk|list)\b'))));
+  });
 }
