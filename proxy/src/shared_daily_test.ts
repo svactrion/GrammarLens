@@ -32,20 +32,52 @@ export type SharedPromptVersion = 1 | 2;
 
 /**
  * The version the hourly cron builds, and stores with every published set.
- * Still 1: version 2 is built only on request (the local measurement E) until
- * the two-phase cron with the check call ships (P7).
+ * 2 since 2026-09-29 (path A, docs/1.1.0-shared-daily-test-quality.md §16):
+ * the cron generates with prompt v2, without the check call.
  */
-export const SHARED_PROMPT_VERSION: SharedPromptVersion = 1;
+export const SHARED_PROMPT_VERSION: SharedPromptVersion = 2;
 
 /**
- * Models the shared set can be generated with (owner addition B, 2026-09-27).
- * Only the shared operation takes one: the legacy 1.0.0 route keeps its own
- * model, whatever is chosen here.
+ * Models the shared set can be generated with (owner addition B, 2026-09-27;
+ * `claude-sonnet-5-5` added 2026-09-29 for the generator comparison). Only the
+ * shared operation takes one: the legacy 1.0.0 route keeps its own model,
+ * whatever is chosen here.
  */
-export type SharedGeneratorModel = 'claude-sonnet-4-6' | 'claude-sonnet-5';
+export type SharedGeneratorModel = 'claude-sonnet-4-6' | 'claude-sonnet-5' | 'claude-sonnet-5-5';
 
-/** What the cron generates with until the measurement E decides otherwise. */
-export const SHARED_GENERATOR_MODEL: SharedGeneratorModel = 'claude-sonnet-4-6';
+/** `output_config.effort` levels a generation may send. Not sending one means
+ * the model's API default (`high` on all three models, per
+ * https://platform.claude.com/docs/en/build-with-claude/effort). */
+export type GeneratorEffort = 'low' | 'medium' | 'high';
+
+/**
+ * How each generator model is asked, in one place: whether it runs with
+ * adaptive thinking (and so gets `THINKING_HEADROOM_TOKENS` more). The request
+ * builder in `anthropic.ts` reads only this table. `claude-sonnet-4-6` runs
+ * without thinking, as it always has; `claude-sonnet-5` and `claude-sonnet-5-5`
+ * think, because correctness is the goal (on `claude-sonnet-5-5` adaptive is
+ * also what omitting `thinking` does, and `disabled` is a 400).
+ */
+export const GENERATOR_MODELS: Readonly<Record<SharedGeneratorModel, { readonly adaptiveThinking: boolean }>> = {
+  'claude-sonnet-4-6': { adaptiveThinking: false },
+  'claude-sonnet-5': { adaptiveThinking: true },
+  'claude-sonnet-5-5': { adaptiveThinking: true },
+};
+
+/** A generator: a model, and optionally an effort level (omitted = the model's
+ * API default, and no `effort` field in the request). */
+export interface SharedGenerator {
+  readonly model: SharedGeneratorModel;
+  readonly effort?: GeneratorEffort;
+}
+
+/**
+ * What the hourly cron generates with. After the generator comparison
+ * (`npm run eval -- compare`), switching is this one line, e.g.
+ * `{ model: 'claude-sonnet-5-5', effort: 'low' }`; its request fingerprint
+ * test in `test/shared_generation.test.ts` then asks to be re-pinned.
+ */
+export const SHARED_GENERATOR: SharedGenerator = { model: 'claude-sonnet-5' };
 
 /**
  * Questions asked for per plan slot (owner addition A): 1 is the published set
@@ -224,14 +256,18 @@ export interface GenerateSharedDailyTestRequest {
   /** Which prompt to build; see [SharedPromptVersion]. */
   readonly promptVersion: SharedPromptVersion;
   readonly model: SharedGeneratorModel;
+  /** Absent: no `effort` in the request (the model's default). */
+  readonly effort?: GeneratorEffort;
   readonly candidatesPerSlot: CandidatesPerSlot;
 }
 
-/** The generation variants the measurement E compares; the cron uses the
- * defaults. */
+/** The generation variants the measurements compare; the cron uses the
+ * defaults. Without `model`, the model and effort are [SHARED_GENERATOR]'s;
+ * with `model`, the effort is `effort` alone (none if absent). */
 export interface SharedGenerationOptions {
   promptVersion?: SharedPromptVersion;
   model?: SharedGeneratorModel;
+  effort?: GeneratorEffort;
   candidatesPerSlot?: CandidatesPerSlot;
 }
 
@@ -241,12 +277,15 @@ export function sharedDailyTestRequest(
   options: SharedGenerationOptions = {},
 ): GenerateSharedDailyTestRequest {
   const candidatesPerSlot = options.candidatesPerSlot ?? 1;
+  const generator: SharedGenerator =
+    options.model === undefined ? SHARED_GENERATOR : { model: options.model, ...(options.effort ? { effort: options.effort } : {}) };
   return {
     plan,
     count: plan.slots.length * candidatesPerSlot,
     avoidAnswers,
     promptVersion: options.promptVersion ?? SHARED_PROMPT_VERSION,
-    model: options.model ?? SHARED_GENERATOR_MODEL,
+    model: generator.model,
+    ...(generator.effort ? { effort: generator.effort } : {}),
     candidatesPerSlot,
   };
 }

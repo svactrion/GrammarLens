@@ -2,7 +2,11 @@ import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
 import { logUpstreamFailure, upstreamErrorType, type UpstreamFailure } from './error_log';
 import { elapsedMs, logUsage, stopReasonField, tokenCount } from './usage_log';
-import type { GenerateSharedDailyTestRequest, SharedGeneratorModel } from './shared_daily_test';
+import {
+  GENERATOR_MODELS,
+  type GenerateSharedDailyTestRequest,
+  type GeneratorEffort,
+} from './shared_daily_test';
 import {
   CORRECT_ANSWER_VALUES,
   ORIGINAL_SENTENCE_VALUES,
@@ -320,7 +324,8 @@ export interface AnthropicRequestBody {
   /** Only on requests that use it, so every other request is byte-for-byte
    * what it always was. */
   thinking?: { type: 'adaptive' };
-  output_config: { format: { type: 'json_schema'; schema: unknown } };
+  /** `effort` only on requests that set one, like `thinking`. */
+  output_config: { format: { type: 'json_schema'; schema: unknown }; effort?: GeneratorEffort };
   messages: { role: 'user'; content: string }[];
 }
 
@@ -332,12 +337,6 @@ export interface AnthropicRequestBody {
  */
 export const THINKING_HEADROOM_TOKENS = 12_000;
 
-/** Shared-set generator models that run with adaptive thinking.
- * `claude-sonnet-4-6` does not, as today; `claude-sonnet-5` does (its
- * documented thinking mode is adaptive), because correctness is the goal. */
-function generatorThinks(model: SharedGeneratorModel): boolean {
-  return model === 'claude-sonnet-5';
-}
 
 function buildGeneratePracticeSetBody(req: GeneratePracticeSetRequest): AnthropicRequestBody {
   const topic = topicById(req.topicId);
@@ -479,11 +478,12 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
  * output was measured on 2026-09-24); the user prompt carries the day's plan.
  * Version 1 also reuses the legacy system prompt; version 2 has its own
  * (`SHARED_DAILY_TEST_SYSTEM_PROMPT_V2`). The model is the request's own
- * (`claude-sonnet-4-6` by default, the legacy route's model); a thinking model
- * gets `THINKING_HEADROOM_TOKENS` more. Exported for tests.
+ * (`SHARED_GENERATOR` by default); how each model is asked (thinking, and so
+ * `THINKING_HEADROOM_TOKENS` more) comes from `GENERATOR_MODELS`, and an
+ * `effort` is sent only when the request has one. Exported for tests.
  */
 export function buildGenerateSharedDailyTestBody(req: GenerateSharedDailyTestRequest): AnthropicRequestBody {
-  const thinks = generatorThinks(req.model);
+  const thinks = GENERATOR_MODELS[req.model].adaptiveThinking;
   return {
     model: req.model,
     max_tokens: dailyTestMaxTokensFor(req.count) + (thinks ? THINKING_HEADROOM_TOKENS : 0),
@@ -491,6 +491,7 @@ export function buildGenerateSharedDailyTestBody(req: GenerateSharedDailyTestReq
     ...(thinks ? { thinking: { type: 'adaptive' as const } } : {}),
     output_config: {
       format: { type: 'json_schema', schema: req.promptVersion === 2 ? sharedDailyTestSchemaV2() : dailyTestSchema() },
+      ...(req.effort ? { effort: req.effort } : {}),
     },
     messages: [{ role: 'user', content: sharedDailyTestUserPrompt(req) }],
   };

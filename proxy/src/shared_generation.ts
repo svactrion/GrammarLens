@@ -31,14 +31,16 @@ export const GENERATION_AHEAD_DAYS = 3;
 export const MAX_ATTEMPTS_PER_DATE = 3;
 
 /**
- * How long one generation may take before it is abandoned. The one live
- * measurement was 27.6 s for ~1,500 output tokens (build log 2026-09-24,
- * about 54 tokens/s); the budget is 3,072 output tokens, which at that pace
- * is ~57 s. A 60 s limit would cut off a response that is still being written
- * (and billed) near a long output; nobody is waiting on a scheduled run, and a
- * cron may run for 15 minutes, so 90 s leaves margin for a slower hour.
+ * How long one generation may take before it is abandoned
+ * (docs/1.1.0-shared-daily-test-quality.md §15.2). `claude-sonnet-5` with
+ * adaptive thinking wrote 4,052–4,878 output tokens at ~97 tokens/s in E
+ * (≈ 50 s for the largest), but its budget is 15,072 tokens (≈ 155 s): 90 s
+ * would cut off (and still bill) a call that thinks longer. 150 s lets a
+ * generation end at its token budget rather than at the timer. It costs
+ * nothing: nobody waits on a scheduled run, a cron invocation may run for 15
+ * minutes, and waiting on `fetch` is not CPU time.
  */
-export const GENERATION_TIMEOUT_MS = 90_000;
+export const GENERATION_TIMEOUT_MS = 150_000;
 
 /** An attempt holds its date this long, so an overlapping run skips it
  * instead of paying for a second generation: the timeout plus margin. */
