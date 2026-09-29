@@ -32,20 +32,54 @@ export type SharedPromptVersion = 1 | 2;
 
 /**
  * The version the hourly cron builds, and stores with every published set.
- * Still 1: version 2 is built only on request (the local measurement E) until
- * the two-phase cron with the check call ships (P7).
+ * 2 since 2026-09-29 (path A, docs/1.1.0-shared-daily-test-quality.md §16):
+ * the cron generates with prompt v2, without the check call.
  */
-export const SHARED_PROMPT_VERSION: SharedPromptVersion = 1;
+export const SHARED_PROMPT_VERSION: SharedPromptVersion = 2;
 
 /**
- * Models the shared set can be generated with (owner addition B, 2026-09-27).
- * Only the shared operation takes one: the legacy 1.0.0 route keeps its own
- * model, whatever is chosen here.
+ * Models the shared set can be generated with (owner addition B, 2026-09-27;
+ * `claude-sonnet-5-5` added 2026-09-29 for the generator comparison). Only the
+ * shared operation takes one: the legacy 1.0.0 route keeps its own model,
+ * whatever is chosen here.
  */
-export type SharedGeneratorModel = 'claude-sonnet-4-6' | 'claude-sonnet-5';
+export type SharedGeneratorModel = 'claude-sonnet-4-6' | 'claude-sonnet-5' | 'claude-sonnet-5-5';
 
-/** What the cron generates with until the measurement E decides otherwise. */
-export const SHARED_GENERATOR_MODEL: SharedGeneratorModel = 'claude-sonnet-4-6';
+/** `output_config.effort` levels a generation may send. Not sending one means
+ * the model's API default (`high` on all three models, per
+ * https://platform.claude.com/docs/en/build-with-claude/effort). */
+export type GeneratorEffort = 'low' | 'medium' | 'high';
+
+/**
+ * How each generator model is asked, in one place: whether it runs with
+ * adaptive thinking (and so gets `THINKING_HEADROOM_TOKENS` more). The request
+ * builder in `anthropic.ts` reads only this table. `claude-sonnet-4-6` runs
+ * without thinking, as it always has; `claude-sonnet-5` and `claude-sonnet-5-5`
+ * think, because correctness is the goal (on `claude-sonnet-5-5` adaptive is
+ * also what omitting `thinking` does, and `disabled` is a 400).
+ */
+export const GENERATOR_MODELS: Readonly<Record<SharedGeneratorModel, { readonly adaptiveThinking: boolean }>> = {
+  'claude-sonnet-4-6': { adaptiveThinking: false },
+  'claude-sonnet-5': { adaptiveThinking: true },
+  'claude-sonnet-5-5': { adaptiveThinking: true },
+};
+
+/** A generator: a model, and optionally an effort level (omitted = the model's
+ * API default, and no `effort` field in the request). */
+export interface SharedGenerator {
+  readonly model: SharedGeneratorModel;
+  readonly effort?: GeneratorEffort;
+}
+
+/**
+ * What the hourly cron generates with: `claude-sonnet-5-5` at `low` effort,
+ * the owner's choice after the generator comparison (2026-09-29, variant V3,
+ * docs/1.1.0-shared-daily-test-quality.md §16.5): every set passed the gate,
+ * no quality difference the owner could see, at about a third of the cost and
+ * time. Switching is this one line; the cron's request fingerprint test in
+ * `test/shared_generation.test.ts` then asks to be re-pinned.
+ */
+export const SHARED_GENERATOR: SharedGenerator = { model: 'claude-sonnet-5-5', effort: 'low' };
 
 /**
  * Questions asked for per plan slot (owner addition A): 1 is the published set
@@ -224,14 +258,18 @@ export interface GenerateSharedDailyTestRequest {
   /** Which prompt to build; see [SharedPromptVersion]. */
   readonly promptVersion: SharedPromptVersion;
   readonly model: SharedGeneratorModel;
+  /** Absent: no `effort` in the request (the model's default). */
+  readonly effort?: GeneratorEffort;
   readonly candidatesPerSlot: CandidatesPerSlot;
 }
 
-/** The generation variants the measurement E compares; the cron uses the
- * defaults. */
+/** The generation variants the measurements compare; the cron uses the
+ * defaults. Without `model`, the model and effort are [SHARED_GENERATOR]'s;
+ * with `model`, the effort is `effort` alone (none if absent). */
 export interface SharedGenerationOptions {
   promptVersion?: SharedPromptVersion;
   model?: SharedGeneratorModel;
+  effort?: GeneratorEffort;
   candidatesPerSlot?: CandidatesPerSlot;
 }
 
@@ -241,12 +279,15 @@ export function sharedDailyTestRequest(
   options: SharedGenerationOptions = {},
 ): GenerateSharedDailyTestRequest {
   const candidatesPerSlot = options.candidatesPerSlot ?? 1;
+  const generator: SharedGenerator =
+    options.model === undefined ? SHARED_GENERATOR : { model: options.model, ...(options.effort ? { effort: options.effort } : {}) };
   return {
     plan,
     count: plan.slots.length * candidatesPerSlot,
     avoidAnswers,
     promptVersion: options.promptVersion ?? SHARED_PROMPT_VERSION,
-    model: options.model ?? SHARED_GENERATOR_MODEL,
+    model: generator.model,
+    ...(generator.effort ? { effort: generator.effort } : {}),
     candidatesPerSlot,
   };
 }
@@ -313,6 +354,8 @@ export type SharedSetRejection =
   | 'wrong_answer_matches_correct' // a predicted wrong answer grades as correct
   | 'duplicate_wrong_answer'
   | 'error_correction_missing_sentence' // no flawed sentence in "context" to correct
+  | 'fill_in_blank_missing_blank' // no blank in "context" or "instruction"
+  | 'fill_in_blank_multiple_blanks' // more than one blank for one key
   | 'unchanged_error_correction' // the "correction" equals the flawed sentence
   | 'error_correction_multi_edit' // the correction changes more than one short span
   | 'explanation_not_one_sentence'
@@ -397,6 +440,26 @@ export function hasSentenceToCorrect(context: unknown): boolean {
   if (typeof context !== 'string') return false;
   const words = context.trim().split(/\s+/).filter((w) => /\p{L}/u.test(w));
   return words.length >= ERROR_CORRECTION_MIN_WORDS;
+}
+
+/** A blank in a `fill_in_blank` sentence: a run of two or more underscores,
+ * the only marker any generated set has used (`___` to `__________`). */
+const BLANK = /_{2,}/g;
+
+/**
+ * How many blanks a `fill_in_blank` question shows the learner: counted in
+ * "context" and "instruction", the two fields the app displays (`hint` is
+ * optional and not counted). The shared gate requires exactly one
+ * (docs/1.1.0-shared-daily-test-quality.md §16.6): with prompt v2, 11 of 74
+ * generated questions had none, their sentence present nowhere but in the
+ * key. Shared-set path only; the legacy route does not apply it (§16.6).
+ */
+export function blankCount(context: unknown, instruction: unknown): number {
+  let count = 0;
+  for (const field of [context, instruction]) {
+    if (typeof field === 'string') count += field.match(BLANK)?.length ?? 0;
+  }
+  return count;
 }
 
 /** Words an `error_correction` answer may remove from, or put into, the flawed
@@ -556,6 +619,11 @@ function checkQuestion(entry: unknown): SharedQuestion {
   // First among the content rules: without the sentence, nothing else about
   // the question can be answered.
   if (type === 'error_correction' && !hasSentenceToCorrect(context)) throw new Rejected('error_correction_missing_sentence');
+  if (type === 'fill_in_blank') {
+    const blanks = blankCount(context, instruction);
+    if (blanks === 0) throw new Rejected('fill_in_blank_missing_blank');
+    if (blanks > 1) throw new Rejected('fill_in_blank_multiple_blanks');
+  }
 
   const rawWrong = q.commonWrongAnswers;
   if (!Array.isArray(rawWrong)) throw new Rejected('missing_field');

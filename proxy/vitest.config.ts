@@ -13,6 +13,11 @@ export default defineConfig({
         bindings: {
           ANTHROPIC_API_KEY: 'test-anthropic-key',
           APP_TOKEN: 'test-app-token',
+          // The shared Daily Test kill switch, fixed for the tests that go
+          // through the Worker (SELF, the scheduled handler): the owner can set
+          // the live value in wrangler.jsonc to "false" without turning them
+          // red. Tests that call a handler directly set it themselves.
+          SHARED_DAILY_TEST_ENABLED: 'true',
         },
       },
     }),

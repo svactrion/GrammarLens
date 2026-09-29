@@ -1,16 +1,19 @@
 import { createExecutionContext, createScheduledController, env, waitOnExecutionContext } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildGenerateSharedDailyTestBody } from '../src/anthropic';
+import { THINKING_HEADROOM_TOKENS, buildGenerateSharedDailyTestBody, dailyTestMaxTokensFor } from '../src/anthropic';
 import worker from '../src/index';
 import {
   dailyPlan,
   dateOfDayNumber,
   dayNumberOf,
+  SHARED_GENERATOR,
+  SHARED_PROMPT_VERSION,
   sharedDailyTestRequest,
   type DailyPlan,
 } from '../src/shared_daily_test';
 import {
   ATTEMPTS_TTL_SECONDS,
+  ATTEMPT_LEASE_MS,
   GENERATION_TIMEOUT_MS,
   MAX_ATTEMPTS_PER_DATE,
   SET_TTL_SECONDS,
@@ -20,6 +23,7 @@ import {
   type PublishedSet,
 } from '../src/shared_generation';
 import type { Env } from '../src/types';
+import wranglerSource from '../wrangler.jsonc?raw';
 
 const NOW = new Date('2026-10-05T00:07:00Z');
 const HOUR = 60 * 60 * 1000;
@@ -129,8 +133,13 @@ function counting(kv: KVNamespace) {
   return { kv: wrapped, counts };
 }
 
-function envWith(overrides: Partial<Env>): Env {
-  return { ...env, ...overrides } as Env;
+/**
+ * The test environment with the kill switch set here, not read from
+ * wrangler.jsonc: the owner may switch the live value off (docs 2026-09-29)
+ * without turning these tests red. Every run in this file goes through it.
+ */
+function envWith(overrides: Partial<Env> = {}): Env {
+  return { ...env, SHARED_DAILY_TEST_ENABLED: 'true', ...overrides } as Env;
 }
 
 beforeEach(async () => {
@@ -162,29 +171,66 @@ async function storedSet(date: string): Promise<PublishedSet | null> {
 }
 
 describe('shared set generation (cron)', () => {
-  it('asks with prompt version 1 until the check call ships (P7): version 2 is built only on request', async () => {
-    for (const offset of [0, 1, 2]) await seed(dateAt(offset));
-    respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
+  describe('request (path A, 2026-09-29): prompt version 2 with SHARED_GENERATOR, no check call', () => {
+    async function sentBody(): Promise<string> {
+      for (const offset of [0, 1, 2]) await seed(dateAt(offset), [`recent ${offset}`]);
+      respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
+      await runSharedGeneration(envWith(), NOW);
+      expect(fetchCalls).toHaveLength(1);
+      return String(fetchCalls[0]?.init?.body);
+    }
 
-    await runSharedGeneration(env, NOW);
+    it('sends prompt version 2 with claude-sonnet-5-5 at effort low, adaptive thinking and its headroom', async () => {
+      expect(SHARED_PROMPT_VERSION).toBe(2);
+      expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5-5', effort: 'low' });
+      const sent = JSON.parse(await sentBody()) as Record<string, unknown> & { output_config: object };
+      const avoid = ['recent 2', 'recent 1', 'recent 0'];
+      const v2 = buildGenerateSharedDailyTestBody(
+        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 2, model: 'claude-sonnet-5-5', effort: 'low' }),
+      );
+      const v1 = buildGenerateSharedDailyTestBody(
+        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 1, model: 'claude-sonnet-5-5', effort: 'low' }),
+      );
+      expect(sent).toEqual(v2);
+      expect(sent.system).not.toBe(v1.system);
+      expect(sent.model).toBe('claude-sonnet-5-5');
+      expect(sent.thinking).toEqual({ type: 'adaptive' });
+      expect(sent.max_tokens).toBe(dailyTestMaxTokensFor(5) + THINKING_HEADROOM_TOKENS);
+      expect(sent.output_config).toMatchObject({ effort: 'low' });
+    });
 
-    const sent = JSON.parse(String(fetchCalls[0]?.init?.body)) as { system: string };
-    const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], { promptVersion: 1 }));
-    const v2 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(PLUS_3), [], { promptVersion: 2 }));
-    expect(sent.system).toBe(v1.system);
-    expect(sent.system).not.toBe(v2.system);
+    it('pins the bytes the cron sends to a fingerprint', async () => {
+      // If this changes, the cron's request changed: the prompt (a new
+      // SHARED_PROMPT_VERSION), the plan, or SHARED_GENERATOR. Switching the
+      // generator after the comparison is expected to re-pin it here.
+      // History: b7ef3b35 (claude-sonnet-5, no effort, never deployed), then
+      // 80b1fa85 (claude-sonnet-5-5, effort low; owner, 2026-09-29).
+      const body = await sentBody();
+      let hash = 0x811c9dc5;
+      for (let i = 0; i < body.length; i++) {
+        hash ^= body.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+      }
+      expect(hash.toString(16)).toBe('80b1fa85');
+    });
+
+    it('stores prompt version 2 with the published set and in its log line', async () => {
+      await sentBody();
+      expect(await storedSet(PLUS_3)).toMatchObject({ promptVersion: 2 });
+      expect(lines('shared_set_generation')).toEqual([expect.objectContaining({ outcome: 'published', prompt_version: 2 })]);
+    });
   });
 
   it('generates a missing date once, in plan order, and a second run makes no request', async () => {
     for (const offset of [0, 1, 2]) await seed(dateAt(offset));
     respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
 
-    await runSharedGeneration(env, NOW);
+    await runSharedGeneration(envWith(), NOW);
 
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0]?.url).toBe('https://api.anthropic.com/v1/messages');
     const set = await storedSet(PLUS_3);
-    expect(set).toMatchObject({ date: PLUS_3, promptVersion: 1, attempt: 1, generatedAt: NOW.toISOString() });
+    expect(set).toMatchObject({ date: PLUS_3, promptVersion: 2, attempt: 1, generatedAt: NOW.toISOString() });
     expect(set?.questions.map((q) => q.topicId)).toEqual(dailyPlan(PLUS_3).slots.map((s) => s.topicId));
     expect(lines('shared_set_generation')).toEqual([
       {
@@ -198,16 +244,21 @@ describe('shared set generation (cron)', () => {
         input_tokens: 1500,
         output_tokens: 1400,
         duration_ms: expect.any(Number),
-        prompt_version: 1,
+        prompt_version: 2,
+        model: 'claude-sonnet-5-5',
+        effort: 'low',
       },
     ]);
-    // The ordinary cost line is written too, filed as Daily Test cost.
-    expect(lines('anthropic_usage')).toEqual([
-      expect.objectContaining({ kind: 'daily_test', operation: 'generate_shared_daily_test', item_count: 5 }),
-    ]);
+    // The ordinary cost line is written too, filed as Daily Test cost, in the
+    // one shape every operation's line has: no model or effort there.
+    const [usage] = lines('anthropic_usage');
+    expect(usage).toMatchObject({ kind: 'daily_test', operation: 'generate_shared_daily_test', item_count: 5 });
+    expect(Object.keys(usage as object).sort()).toEqual(
+      ['event', 'kind', 'operation', 'item_count', 'input_tokens', 'output_tokens', 'stop_reason', 'duration_ms'].sort(),
+    );
 
     const before = await env.DAILY_SETS_KV.get(setKey(PLUS_3));
-    await runSharedGeneration(env, at(1));
+    await runSharedGeneration(envWith(), at(1));
     expect(fetchCalls).toHaveLength(1);
     expect(await env.DAILY_SETS_KV.get(setKey(PLUS_3))).toBe(before);
   });
@@ -236,7 +287,7 @@ describe('shared set generation (cron)', () => {
     };
 
     for (let run = 0; run < 4; run++) {
-      await runSharedGeneration(env, at(run));
+      await runSharedGeneration(envWith(), at(run));
       // At most one Anthropic call per run, even with several dates missing.
       expect(fetchCalls).toHaveLength(run + 1);
     }
@@ -244,7 +295,7 @@ describe('shared set generation (cron)', () => {
     expect(lines('shared_set_generation').map((l) => l.date)).toEqual([0, 1, 2, 3].map(dateAt));
     for (const offset of [0, 1, 2, 3]) expect(await storedSet(dateAt(offset))).not.toBeNull();
 
-    await runSharedGeneration(env, at(4));
+    await runSharedGeneration(envWith(), at(4));
     expect(fetchCalls).toHaveLength(4);
   });
 
@@ -254,7 +305,7 @@ describe('shared set generation (cron)', () => {
     const short = { questions: validSetFor(plan).questions.slice(0, 4) };
     respond = async () => anthropicBody(short);
 
-    for (let run = 0; run < 5; run++) await runSharedGeneration(env, at(run));
+    for (let run = 0; run < 5; run++) await runSharedGeneration(envWith(), at(run));
 
     expect(fetchCalls).toHaveLength(3);
     expect(await storedSet(PLUS_3)).toBeNull();
@@ -274,8 +325,8 @@ describe('shared set generation (cron)', () => {
     const results = [anthropicBody(bad), anthropicBody(validSetFor(plan, 'b'))];
     respond = async () => results.shift() as Response;
 
-    await runSharedGeneration(env, NOW);
-    await runSharedGeneration(env, at(1));
+    await runSharedGeneration(envWith(), NOW);
+    await runSharedGeneration(envWith(), at(1));
 
     expect(lines('shared_set_generation').map((l) => [l.attempt, l.outcome, l.reason])).toEqual([
       [1, 'rejected', 'explanation_bad_opening'],
@@ -310,7 +361,7 @@ describe('shared set generation (cron)', () => {
     let release: (r: Response) => void = () => {};
     respond = () => new Promise<Response>((resolve) => (release = resolve));
 
-    const run = runSharedGeneration(env, NOW);
+    const run = runSharedGeneration(envWith(), NOW);
     while (fetchCalls.length === 0) await new Promise((r) => setTimeout(r, 1));
     await seed(PLUS_3, ['the winner']);
     const winner = await env.DAILY_SETS_KV.get(setKey(PLUS_3));
@@ -328,7 +379,7 @@ describe('shared set generation (cron)', () => {
         init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
       });
 
-    await runSharedGeneration(env, NOW, { timeoutMs: 20 });
+    await runSharedGeneration(envWith(), NOW, { timeoutMs: 20 });
 
     expect(await storedSet(PLUS_3)).toBeNull();
     const [line] = lines('shared_set_generation');
@@ -351,11 +402,29 @@ describe('shared set generation (cron)', () => {
     for (const offset of [0, 1, 2]) await seed(dateAt(offset));
     respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
 
-    await runSharedGeneration(env, NOW);
+    await runSharedGeneration(envWith(), NOW);
 
-    expect(GENERATION_TIMEOUT_MS).toBe(90_000);
+    expect(GENERATION_TIMEOUT_MS).toBe(150_000);
     expect(fetchCalls[0]?.init?.signal).toBeInstanceOf(AbortSignal);
     expect(fetchCalls[0]?.init?.signal?.aborted).toBe(false);
+  });
+
+  it(`holds a date for ${ATTEMPT_LEASE_MS / 1000} s after an attempt starts (the timeout plus 30 s)`, async () => {
+    expect(ATTEMPT_LEASE_MS).toBe(180_000);
+    for (const offset of [0, 1, 2]) await seed(dateAt(offset));
+    respond = async () => new Response('{}', { status: 500 });
+
+    await runSharedGeneration(envWith(), NOW);
+    expect(JSON.parse((await env.DAILY_SETS_KV.get(attemptsKey(PLUS_3))) as string)).toEqual({
+      count: 1,
+      leaseUntil: NOW.getTime() + 180_000,
+    });
+    // Still held just before the lease ends: no second call.
+    await runSharedGeneration(envWith(), new Date(NOW.getTime() + 179_999));
+    expect(fetchCalls).toHaveLength(1);
+    // Free again once it has ended.
+    await runSharedGeneration(envWith(), new Date(NOW.getTime() + 180_001));
+    expect(fetchCalls).toHaveLength(2);
   });
 
   it('logs an Anthropic error as upstream_failed with its category', async () => {
@@ -363,7 +432,7 @@ describe('shared set generation (cron)', () => {
     respond = async () =>
       new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error' } }), { status: 529 });
 
-    await runSharedGeneration(env, NOW);
+    await runSharedGeneration(envWith(), NOW);
 
     expect(lines('shared_set_generation')).toEqual([
       expect.objectContaining({ outcome: 'upstream_failed', failure: 'http_error', attempt: 1 }),
@@ -383,7 +452,7 @@ describe('shared set generation (cron)', () => {
         { status: 200 },
       );
 
-    await runSharedGeneration(env, NOW);
+    await runSharedGeneration(envWith(), NOW);
 
     expect(lines('shared_set_generation')).toEqual([
       expect.objectContaining({
@@ -401,7 +470,7 @@ describe('shared set generation (cron)', () => {
     await seed(dateAt(-5), ['too old']); // PLUS_3 − 8
     respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
 
-    await runSharedGeneration(env, NOW);
+    await runSharedGeneration(envWith(), NOW);
 
     const content = String(JSON.parse(String(fetchCalls[0]?.init?.body)).messages[0].content);
     expect(content).toContain('"recent 2", "recent 1", "recent 0"');
@@ -414,7 +483,7 @@ describe('shared set generation (cron)', () => {
     respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
     const nowSeconds = Date.now() / 1000;
 
-    await runSharedGeneration(env, NOW);
+    await runSharedGeneration(envWith(), NOW);
 
     const keys = (await env.DAILY_SETS_KV.list()).keys;
     const expiry = (name: string) => keys.find((k) => k.name === name)?.expiration as number;
@@ -440,8 +509,22 @@ describe('shared set generation (cron)', () => {
       expect(lines('shared_set_cron')).toEqual([{ event: 'shared_set_cron', enabled: false }]);
     });
 
-    it('is on in wrangler.jsonc', () => {
-      expect(env.SHARED_DAILY_TEST_ENABLED).toBe('true');
+    it('makes zero Anthropic calls on a run where every date is missing', async () => {
+      respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
+
+      for (let run = 0; run < 3; run++) await runSharedGeneration(envWith({ SHARED_DAILY_TEST_ENABLED: 'false' }), at(run));
+
+      expect(fetchCalls).toHaveLength(0);
+      expect((await env.DAILY_SETS_KV.list()).keys).toHaveLength(0);
+      expect(lines('shared_set_generation')).toHaveLength(0);
+    });
+
+    it('is "true" or "false" in wrangler.jsonc: either is a valid live setting', () => {
+      // Which one is the owner's call (off until release is fine); the tests
+      // above set it themselves, so neither value turns them red.
+      const match = wranglerSource.match(/"SHARED_DAILY_TEST_ENABLED"\s*:\s*"([^"]*)"/g) ?? [];
+      expect(match).toHaveLength(1);
+      expect(['true', 'false']).toContain(/:\s*"([^"]*)"/.exec(match[0] as string)?.[1]);
     });
   });
 
@@ -472,8 +555,8 @@ describe('shared set generation (cron)', () => {
     const results = [anthropicBody(rejected), anthropicBody(validSetFor(plan))];
     respond = async () => results.shift() as Response;
 
-    await runSharedGeneration(env, NOW);
-    await runSharedGeneration(env, at(1));
+    await runSharedGeneration(envWith(), NOW);
+    await runSharedGeneration(envWith(), at(1));
 
     expect(lines('shared_set_generation')).toHaveLength(2);
     const everything = logged.join('\n');
@@ -485,9 +568,11 @@ describe('shared set generation (cron)', () => {
           'attempt',
           'date',
           'duration_ms',
+          'effort',
           'event',
           'failure',
           'input_tokens',
+          'model',
           'outcome',
           'output_tokens',
           'prompt_version',
@@ -498,13 +583,48 @@ describe('shared set generation (cron)', () => {
     }
   });
 
+  it('logs the model and effort asked for on every outcome, as fixed values only', async () => {
+    for (const offset of [0, 1, 2]) await seed(dateAt(offset));
+    const plan = dailyPlan(PLUS_3);
+    // A blankless fill_in_blank question whose text must not reach the log.
+    const blankless = validSetFor(plan);
+    const fill = blankless.questions.find((q) => q.type === 'fill_in_blank') as Record<string, unknown>;
+    fill.context = `A scene with no gap ${CONTENT_SECRET}.`;
+    fill.instruction = `Complete the sentence ${CONTENT_SECRET}.`;
+    const results: (() => Promise<Response>)[] = [
+      async () => new Response('{}', { status: 500 }), // upstream_failed
+      async () => anthropicBody(blankless), // rejected
+      async () => anthropicBody(validSetFor(plan)), // published
+    ];
+    respond = () => (results.shift() as () => Promise<Response>)();
+
+    for (let run = 0; run < 3; run++) await runSharedGeneration(envWith(), at(run));
+
+    expect(lines('shared_set_generation').map((l) => [l.outcome, l.reason, l.model, l.effort, l.prompt_version])).toEqual([
+      ['upstream_failed', null, 'claude-sonnet-5-5', 'low', 2],
+      ['rejected', 'fill_in_blank_missing_blank', 'claude-sonnet-5-5', 'low', 2],
+      ['published', null, 'claude-sonnet-5-5', 'low', 2],
+    ]);
+    expect(logged.join('\n')).not.toContain(CONTENT_SECRET);
+  });
+
+  it('logs effort as null when the generator sends none', async () => {
+    for (const offset of [0, 1, 2]) await seed(dateAt(offset));
+    respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
+
+    await runSharedGeneration(envWith(), NOW, { generation: { model: 'claude-sonnet-5' } });
+
+    expect(JSON.parse(String(fetchCalls[0]?.init?.body)).model).toBe('claude-sonnet-5');
+    expect(lines('shared_set_generation')).toEqual([expect.objectContaining({ model: 'claude-sonnet-5', effort: null })]);
+  });
+
   it('runs from the Worker\'s scheduled handler, using the trigger\'s scheduled time', async () => {
     for (const offset of [0, 1, 2]) await seed(dateAt(offset));
     respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
     const controller = createScheduledController({ scheduledTime: NOW.getTime(), cron: '7 * * * *' });
     const ctx = createExecutionContext();
 
-    await worker.scheduled(controller, env);
+    await worker.scheduled(controller, envWith());
     await waitOnExecutionContext(ctx);
 
     expect(fetchCalls).toHaveLength(1);

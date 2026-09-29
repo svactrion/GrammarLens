@@ -5903,3 +5903,99 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   `lib/` or outside `proxy/` and `docs/` against `origin/main`, and merging it
   into `main` is conflict-free and gives exactly `1.1.0`'s tree.
 
+## 2026-09-29 (1.1.0 shared Daily Test — D-L deployed, path A, cron on prompt v2, not deployed)
+
+- **[D-L — owner]** L deployed: version
+  `45cf4ef3-5a8b-43e7-a351-22bc4f504140` (rollback target `5089ae26`).
+  Verified on a device: 2 legacy requests, both `input_tokens` 1,173 (the
+  same as before 1.1.0), `legacy_daily_test_filter` `received_count` 5 /
+  `removed_count` 0 / `served_count` 5 / `outcome` `served`. `1.1.0` merged
+  into `main` (`52a6d09`).
+- **[Kill switch — owner]** To pause the cron until release, the owner set
+  `SHARED_DAILY_TEST_ENABLED` to `"false"` (`8ac4605`): 29 tests turned red,
+  because the cron and read-route tests used the value in `wrangler.jsonc` and
+  one test checked that it was on. Reverted (`7323075`); the deploy went out
+  with `"true"`.
+- **[Decisions — owner]** **Path A:** the shared Daily Test ships with prompt
+  v2 and a newer Sonnet generator; the check call and repairs (P7a–c) move to
+  after 1.1.0; the P5/P6 code stays, not wired. **Release plan (planned):** if
+  1.0.0 is approved it is held, and 1.1.0 is the first public release.
+  Anthropic released `claude-sonnet-5-5` on 2026-09-28 (Sonnet 5's price).
+  Report §16.
+- **[Sonnet 5.5 — review, no code]** From the Anthropic docs (sources in
+  report §16.2): ID `claude-sonnet-5-5`, $2 / $10 per MTok, Sonnet 5's
+  tokenizer, adaptive thinking by default, effort default `high` with
+  recalibrated levels, structured outputs supported on the Claude API. Its
+  breaking changes (`disabled` thinking, forced `tool_choice`, preserved
+  thinking, computer use, advisor) touch none of our single-turn, tool-less
+  request. Worth knowing: with structured outputs at `low`/`medium` effort
+  the model occasionally thinks until `max_tokens` (our gate rejects such a
+  response). Not verified against the live API.
+- **[Cron on v2 — engineering, not deployed]** `SHARED_PROMPT_VERSION` 2;
+  `SHARED_GENERATOR = { model: 'claude-sonnet-5' }`, the one line to change
+  after the comparison; `GENERATOR_MODELS` holds each model's thinking mode;
+  an `effort` is sent only when set; `claude-sonnet-5-5` buildable.
+  `GENERATION_TIMEOUT_MS` 150 s, lease 180 s. One call per run, the gate, the
+  read route, the legacy route and L unchanged; no check call. The cron's
+  request is pinned (`b7ef3b35`). Tests set the kill switch themselves
+  (`vitest.config.ts` binding, explicit env in direct calls); the
+  `wrangler.jsonc` test only asks for `"true"` or `"false"`. With `"false"`
+  there, all tests pass. 368 tests (358 + 10); 18 of 18 deliberate breakages
+  red. Commit `6d0fac6`.
+- **[Generator comparison — prepared, not run]** `npm run eval -- compare`:
+  v2 + `claude-sonnet-5` (V1, the cron's request), v2 + `claude-sonnet-5-5`
+  (V2), and the same at `effort: "low"` (V3), E's 3 dates, 9 synchronous
+  calls, no check call, no labels. Reports gate passes and rejection codes,
+  sentenceless `error_correction`, tokens, cost per set, time against
+  90 s / 150 s and `stop_reason`, plus `questions.md` (question text only).
+  A call is made only if spend + its worst case stays within $1. Dry run: 9
+  calls, ≈ $0.44. 13 tests; 11 of 11 deliberate breakages red. 381 tests in
+  total. Commit `e7d4eaf`.
+- **[Plan]** Step 2 (this) → comparison (owner) → cron deploy → merge into
+  `main` → C1 → C2 → C3 → release; P7a–c after 1.1.0. Report §16.4.
+
+
+## 2026-09-29 (1.1.0 shared Daily Test — generator comparison run, V3 chosen, not deployed)
+
+- **[Comparison — owner run]** `eval/out/compare-2026-09-29T18-01-35-800Z`,
+  $0.385 (cap $1). All three variants passed the gate 3 of 3, 0 of 7
+  sentenceless `error_correction` each, `stop_reason` `end_turn` everywhere,
+  nothing over 90 s. V1 (`claude-sonnet-5`) $0.055 per set, 48 s; V2
+  (`claude-sonnet-5-5`, default effort) $0.054, 39 s; V3 (`claude-sonnet-5-5`,
+  `low`) $0.019, 11 s. The owner's reading of `questions.md`: no clear quality
+  difference; remaining defect types in all three are "more than one correct
+  answer" and "optional time shift"; `low` writes the context more explicitly.
+- **[Decision — owner]** Generator `claude-sonnet-5-5`, `effort: "low"` (V3).
+  `SHARED_GENERATOR` changed, the cron's fingerprint re-pinned (`80b1fa85`).
+  381 tests; 21 of 21 deliberate breakages red. Commit `2dc8ad8`.
+- **[Finding — fill_in_blank without a blank]** Checked in `records.json`: V1
+  3 of 8 `fill_in_blank` questions have no blank in any field (all on
+  2026-10-13; the scene is in `context`, a generic instruction, the key only),
+  V2 0 of 8, V3 0 of 8. Not a `questions.md` display gap. In E: 8 of 26 with
+  prompt v2 on `claude-sonnet-4-6` (G2, G4), 0 of 24 with `claude-sonnet-5`,
+  0 of 8 with prompt v1; 0 of 5 in the published v1 sets. The gate does not
+  check it. Proposed (not built): `fill_in_blank_missing_blank` /
+  `fill_in_blank_multiple_blanks`, exactly one underscore run across
+  `context` and `instruction`. L: not now (0 of 13 on the legacy request);
+  a count-only field first if wanted. Report §16.6.
+- **[Cost]** With V3 and no check call: ≈ $0.019 per date, ≈ $0.57 a month
+  normally; ≈ $1.71 a month if every date used all 3 attempts. Report §16.7.
+- **[Plan]** Cron deploy (owner) → merge into `main` → C1 → C2 → C3 →
+  release. The `fill_in_blank` rule waits for the owner's decision.
+
+## 2026-09-29 (1.1.0 shared Daily Test — fill_in_blank blank rule, model in the log, not deployed)
+
+- **[Decisions — owner]** Before the cron deploy: the §16.6 rule for the
+  shared path only (not L); `model` and `effort` on `shared_set_generation`.
+- **[Engineering]** `blankCount` beside `hasSentenceToCorrect`: exactly one
+  run of two or more underscores across `context` and `instruction`, else
+  `fill_in_blank_missing_blank` / `fill_in_blank_multiple_blanks`, in
+  `validateSharedSet` and `validateSharedCandidates`. L unchanged (byte pin
+  and behavior). `shared_set_generation` gains `model` and `effort` (`null`
+  when none) from the request; `anthropic_usage` unchanged, so every
+  operation's line keeps one shape. Commits `785216e`, `c51ae16`.
+- **[Replay, no call]** On the stored records the rule changes one outcome:
+  the comparison's V1 2026-10-13 set would now be rejected. E: 0 of 15 (its
+  blankless questions sit in sets already rejected for other reasons); V2 and
+  V3: 0 of 3 each.
+- **[Tests]** 391 (381 + 10); 16 of 16 deliberate breakages red. Report §16.8.

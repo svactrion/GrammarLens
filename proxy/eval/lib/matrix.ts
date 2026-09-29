@@ -80,6 +80,8 @@ export type EvalModel = SharedGeneratorModel | CheckerModel;
 export const PRICES: Readonly<Record<EvalModel, { input: number; output: number }>> = {
   'claude-sonnet-4-6': { input: 3, output: 15 },
   'claude-sonnet-5': { input: 2, output: 10 },
+  // Read 2026-09-29 from the same page: the same price as claude-sonnet-5.
+  'claude-sonnet-5-5': { input: 2, output: 10 },
   'claude-opus-5-5': { input: 4, output: 20 },
 };
 

@@ -7,6 +7,9 @@
  *   npm run eval -- run --out DIR --add-dates [YYYY-MM-DD,…]
  *                                      adds dates to a finished run (default: EXTRA_DATES)
  *   npm run eval -- analyze --out DIR  the report, after the owner has labelled
+ *   npm run eval -- compare --dry-run  the generator comparison's requests and cost, no API call
+ *   npm run eval -- compare [--out DIR]
+ *                                      runs the generator comparison (or resumes DIR), at most $1
  *
  * The API key is read from the environment (ANTHROPIC_API_KEY) or from
  * `proxy/.dev.vars`, is sent only to api.anthropic.com, and is never printed or
@@ -21,6 +24,23 @@ import { buildBody, type AnthropicRequestBody } from '../src/anthropic';
 import { sharedCheckRequest, type QuestionDecision } from '../src/shared_check';
 import { dailyPlan, sharedDailyTestRequest, type SharedQuestion } from '../src/shared_daily_test';
 import { analyze, benchmarkJsonWork, reviewedSets } from './lib/analysis';
+import {
+  COMPARE_DATES,
+  COMPARE_ESTIMATE,
+  COMPARE_SPEND_CAP_USD,
+  compareVariant,
+  comparisonBody,
+  estimatedCostUsd,
+  fitsCap,
+  planComparison,
+  renderComparisonReport,
+  renderQuestions,
+  summarizeComparison,
+  variantLabel,
+  worstCaseCostUsd,
+  type CompareRecord,
+  type CompareRequest,
+} from './lib/compare';
 import {
   LABEL_COLUMNS,
   buildLabelSheet,
@@ -545,6 +565,132 @@ async function analyzeRun(outArg: string | undefined): Promise<void> {
   console.log(`Report written to ${path.join(run.dir, 'report.md')}`);
 }
 
+// ---------------------------------------------------------------------------
+// The generator comparison (docs/1.1.0-shared-daily-test-quality.md §16)
+
+async function compareDryRun(): Promise<void> {
+  const plan = planComparison();
+  console.log('Generator comparison dry run: no API call is made.\n');
+  console.log('Variant                                         Calls  max_tokens  Est. cost  Worst case');
+  for (const id of ['V1', 'V2', 'V3'] as const) {
+    const own = plan.filter((r) => r.variant === id);
+    const est = own.reduce((s, r) => s + estimatedCostUsd(r), 0);
+    const worst = own.reduce((s, r) => s + worstCaseCostUsd(r), 0);
+    console.log(
+      `${variantLabel(compareVariant(id)).padEnd(46)} ${String(own.length).padStart(6)}  ${String(comparisonBody(own[0] as CompareRequest).max_tokens).padStart(10)}  ${money(est).padStart(9)}  ${money(worst).padStart(10)}`,
+    );
+  }
+  const est = plan.reduce((s, r) => s + estimatedCostUsd(r), 0);
+  const worst = plan.reduce((s, r) => s + worstCaseCostUsd(r), 0);
+  console.log(`\nCalls: ${plan.length}, synchronous, one after another, date by date (${COMPARE_DATES.join(', ')})`);
+  console.log(
+    `Estimated cost: ${money(est)} (${COMPARE_ESTIMATE.inputTokens} in / ${COMPARE_ESTIMATE.outputTokens} out per set, E's G3 mean, list price)`,
+  );
+  console.log(
+    `Spend cap: ${money(COMPARE_SPEND_CAP_USD)}. A call is made only if spend so far + its worst case (every max_tokens token billed) stays within it; all ${plan.length} at worst case would be ${money(worst)}, so at worst the last ones are left out.`,
+  );
+  console.log('Typical time: 1 min per call, about 10 min in total (each call may run to its token budget; nothing is cut off at 150 s, so the time over the limit is measured).');
+  let keyFound = true;
+  try {
+    await apiKey();
+  } catch {
+    keyFound = false;
+  }
+  console.log(`API key: ${keyFound ? 'found (not shown)' : 'not found'}`);
+}
+
+/** One synchronous call, retried twice on 429/5xx (not billed). */
+async function compareCall(key: string, request: CompareRequest): Promise<CompareRecord> {
+  const v = compareVariant(request.variant);
+  const base = { customId: request.customId, variant: request.variant, date: request.date, model: v.model, ...(v.effort ? { effort: v.effort } : {}) };
+  const body = comparisonBody(request);
+  for (let attempt = 1; ; attempt++) {
+    const started = Date.now();
+    let response: Response;
+    try {
+      response = await fetch(`${API}/messages`, {
+        method: 'POST',
+        headers: headers(key),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(SYNC_TIMEOUT_MS),
+      });
+    } catch {
+      return { ...base, status: 'network_error', costUsd: 0, durationMs: Date.now() - started };
+    }
+    if (response.status === 200) {
+      const m = (await response.json()) as {
+        usage?: { input_tokens?: number; output_tokens?: number };
+        stop_reason?: string;
+        content?: { type: string; text?: string }[];
+      };
+      const durationMs = Date.now() - started;
+      const usage = { inputTokens: m.usage?.input_tokens ?? 0, outputTokens: m.usage?.output_tokens ?? 0 };
+      const measured = { ...base, ...usage, stopReason: m.stop_reason ?? null, durationMs, costUsd: costOf(v.model, usage, true) };
+      const text = m.content?.find((b) => b.type === 'text')?.text;
+      try {
+        if (text === undefined) throw new Error('no text block');
+        return { ...measured, status: 'ok', content: JSON.parse(text) };
+      } catch {
+        return { ...measured, status: 'unparseable' };
+      }
+    }
+    let errorType = 'unknown';
+    try {
+      errorType = ((await response.json()) as { error?: { type?: string } }).error?.type ?? 'unknown';
+    } catch {
+      // unreadable error body
+    }
+    if ((response.status === 429 || response.status >= 500) && attempt < 3) {
+      await sleep(20_000 * attempt);
+      continue;
+    }
+    return { ...base, status: 'http_error', httpStatus: response.status, errorType, costUsd: 0, durationMs: Date.now() - started };
+  }
+}
+
+async function runComparison(outArg: string | undefined): Promise<void> {
+  const key = await apiKey();
+  const dir = outArg ? path.resolve(ROOT, outArg) : path.join(ROOT, 'eval/out', `compare-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+  await mkdir(dir, { recursive: true });
+  const log = async (line: string) => {
+    const stamped = `${new Date().toISOString()} ${line}`;
+    console.log(stamped);
+    await appendFile(path.join(dir, 'progress.log'), `${stamped}\n`);
+  };
+  const recordsFile = path.join(dir, 'records.json');
+  let records: CompareRecord[] = [];
+  try {
+    records = JSON.parse(await readFile(recordsFile, 'utf8')) as CompareRecord[];
+  } catch {
+    // a new run
+  }
+  // A call left out for the cap is tried again on a resumed run.
+  records = records.filter((r) => r.status !== 'skipped_budget');
+  const done = new Set(records.map((r) => r.customId));
+  const spent = () => records.reduce((s, r) => s + r.costUsd, 0);
+  await log(`generator comparison in ${dir}; spent so far ${money(spent())}`);
+
+  for (const request of planComparison().filter((r) => !done.has(r.customId))) {
+    if (!fitsCap(spent(), request)) {
+      const v = compareVariant(request.variant);
+      records.push({ customId: request.customId, variant: request.variant, date: request.date, model: v.model, ...(v.effort ? { effort: v.effort } : {}), status: 'skipped_budget', costUsd: 0 });
+      await log(`${request.customId}: left out, its worst case ${money(worstCaseCostUsd(request))} would pass the ${money(COMPARE_SPEND_CAP_USD)} cap`);
+      continue;
+    }
+    await log(`${request.customId}: calling`);
+    const record = await compareCall(key, request);
+    records.push(record);
+    await writeFile(recordsFile, `${JSON.stringify(records, null, 2)}\n`);
+    await log(
+      `${request.customId}: ${record.status}${record.httpStatus ? ` ${record.httpStatus} ${record.errorType}` : ''}, ${record.inputTokens ?? 0} in / ${record.outputTokens ?? 0} out, stop ${record.stopReason ?? '–'}, ${money(record.costUsd)}, ${((record.durationMs ?? 0) / 1000).toFixed(1)} s; spent ${money(spent())}`,
+    );
+  }
+  await writeFile(recordsFile, `${JSON.stringify(records, null, 2)}\n`);
+  await writeFile(path.join(dir, 'report.md'), renderComparisonReport(summarizeComparison(records), { dates: COMPARE_DATES, generatedAt: new Date().toISOString() }));
+  await writeFile(path.join(dir, 'questions.md'), renderQuestions(records));
+  await log(`done: ${path.join(dir, 'report.md')} and questions.md; spent ${money(spent())}`);
+}
+
 async function main(): Promise<void> {
   if (!(await exists(path.join(ROOT, 'wrangler.jsonc')))) throw new Error('Run from proxy/ (npm run eval -- …).');
   const [command, ...rest] = process.argv.slice(2);
@@ -556,7 +702,10 @@ async function main(): Promise<void> {
   if (command === 'dry-run') return dryRun();
   if (command === 'run') return runE(out, add);
   if (command === 'analyze') return analyzeRun(out);
-  console.log('Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR');
+  if (command === 'compare') return rest.includes('--dry-run') ? compareDryRun() : runComparison(out);
+  console.log(
+    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR]',
+  );
   process.exitCode = 1;
 }
 

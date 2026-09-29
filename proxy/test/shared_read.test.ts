@@ -109,7 +109,15 @@ async function readDirect(date: string, options: { token?: string | null; overri
   const sets = countingKv(env.DAILY_SETS_KV);
   const quota = countingKv(env.QUOTA_KV);
   const cache = countingCache(caches.default);
-  const e = { ...env, DAILY_SETS_KV: sets.kv, QUOTA_KV: quota.kv, ...options.overrides } as Env;
+  // The kill switch is set here, not read from wrangler.jsonc (the owner may
+  // switch the live value off); the kill-switch tests override it.
+  const e = {
+    ...env,
+    SHARED_DAILY_TEST_ENABLED: 'true',
+    DAILY_SETS_KV: sets.kv,
+    QUOTA_KV: quota.kv,
+    ...options.overrides,
+  } as Env;
   const ctx = createExecutionContext();
   let response: Response;
   try {

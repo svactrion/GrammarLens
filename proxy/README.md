@@ -79,8 +79,8 @@ in `wrangler.jsonc`) and `wrangler tail` shows live:
 - `kind` is `daily_test` or `topic_practice`; a practice session is two lines
   (`generate_practice_set` + `score_answers`), so per-session cost is the sum of
   the two averages. `generate_daily_test` (1.0.0's per-device set) and
-  `generate_shared_daily_test` (1.1.0's one set per date, not wired to a route or
-  schedule yet) are both `daily_test`. `item_count` is the number of questions
+  `generate_shared_daily_test` (1.1.0's one set per date, made by the hourly
+  cron) are both `daily_test`. `item_count` is the number of questions
   the call covered.
 - `stop_reason` is why generation stopped, one of Anthropic's documented values
   (`end_turn`, `max_tokens`, `stop_sequence`, `tool_use`, `pause_turn`,
@@ -152,7 +152,7 @@ content; `test/legacy_daily_test.test.ts` plants secrets and checks all
 console output. Legacy rate of sentenceless questions = sum of
 `removed_count` / sum of `received_count`.
 
-Not deployed yet (D-L).
+Deployed 2026-09-29 (D-L, version `45cf4ef3-5a8b-43e7-a351-22bc4f504140`).
 
 `DEVICE_DAILY_LIMIT`/`GLOBAL_DAILY_LIMIT` (plain vars in `wrangler.jsonc`,
 not secret) are conservative placeholder defaults, not measured numbers —
@@ -163,8 +163,8 @@ same status as `StorageService.dailySessionLimit` on the client side (see
 
 For 1.1.0 (`docs/1.1.0-shared-daily-test.md`): one Daily Test set per calendar
 date, generated here once for every 1.1.0+ client. The generation (P2) and
-the read route (P3, below) are **not deployed as of 2026-09-26**, and no app
-build calls the read route yet.
+the read route (P3, below) were first deployed on 2026-09-26; no app build
+calls the read route yet.
 The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
 `test/index.test.ts` pins it byte for byte; only its response is checked
 (above).
@@ -180,7 +180,7 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   (`attempts:{date}`), counted before the call. No quota is reserved: no device
   is involved.
 - **Write-once:** `set:{date}` is written only if still absent right before the
-  write, and never overwritten. An attempt holds its date for 2 minutes (a
+  write, and never overwritten. An attempt holds its date for 3 minutes (a
   lease in its attempt record), so a run that overlaps one waiting on Anthropic
   skips that date. KV has no compare-and-swap: two runs that both read the date
   as free within the same few milliseconds could still both generate.
@@ -191,20 +191,31 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   set is not written; the next hourly run retries within the cap. Among its
   rules: an `error_correction` answer may change only one contiguous span of
   the flawed sentence, at most 4 words on each side
-  (`error_correction_multi_edit`, 2026-09-27).
-- **Prompt versions:** 1 (the legacy Daily Test system prompt plus the day's
-  plan) is what the cron sends and stores as `promptVersion`. 2 (its own system
-  prompt with correctness rules, `docs/1.1.0-shared-daily-test-quality.md`
-  §1.2) is built only on request, for the local measurement, until the
-  two-phase cron with the check call ships. Each version is pinned by a request
-  fingerprint test.
-- **Generation variants** (for the local measurement E, 2026-09-27): the shared
-  request also takes a model (`claude-sonnet-4-6`, the default and the legacy
-  route's model, or `claude-sonnet-5`, sent with adaptive thinking and
-  `THINKING_HEADROOM_TOKENS` more) and 1 or 2 candidates per plan slot
-  (`validateSharedCandidates` drops a candidate that breaks a content rule and
-  rejects only when a slot has none left). The cron uses the defaults. The legacy
-  route's model is its own constant and does not follow these options.
+  (`error_correction_multi_edit`, 2026-09-27); an `error_correction` question
+  needs its sentence in `context` (`error_correction_missing_sentence`); a
+  `fill_in_blank` question needs exactly one blank, a run of two or more
+  underscores in `context` or `instruction` (`fill_in_blank_missing_blank`,
+  `fill_in_blank_multiple_blanks`, 2026-09-29; the legacy route does not apply
+  this one).
+- **Prompt versions:** 2 (its own system prompt with correctness rules,
+  `docs/1.1.0-shared-daily-test-quality.md` §1.2) is what the cron sends and
+  stores as `promptVersion`, since 2026-09-29 (path A, report §16), without a
+  check call. 1 (the legacy Daily Test system prompt plus the day's plan) is
+  what every set published before that was generated with. Each version is
+  pinned by a request fingerprint test, and the cron's own request by another
+  (`test/shared_generation.test.ts`).
+- **Generator:** `SHARED_GENERATOR` in `src/shared_daily_test.ts`, one line:
+  a model and optionally an `effort` (`{ model: 'claude-sonnet-5-5', effort:
+  'low' }` since 2026-09-29, the owner's choice after the comparison).
+  How each model is asked is in `GENERATOR_MODELS` next to it:
+  `claude-sonnet-4-6` without thinking, `claude-sonnet-5` and
+  `claude-sonnet-5-5` with adaptive thinking and `THINKING_HEADROOM_TOKENS`
+  more. An `effort` is sent (in `output_config`) only when set.
+- **Generation variants** (for the local measurements): the shared request
+  also takes any of those models, an effort, and 1 or 2 candidates per plan
+  slot (`validateSharedCandidates` drops a candidate that breaks a content rule
+  and rejects only when a slot has none left). The cron uses the defaults. The
+  legacy route's model is its own constant and does not follow these options.
 - **Check call — built, not wired** (P6, 2026-09-27): operation
   `check_shared_daily_test` (`src/shared_check.ts`, request in `anthropic.ts`):
   an adversarial review of a generated set with adaptive thinking
@@ -214,19 +225,28 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   `selectCandidates` for over-generated sets). Up to 2 alternatives become a
   question's `acceptedAnswers`. Filed as `daily_test` cost. `CHECK_VERSION` 1,
   pinned by a request fingerprint. Nothing calls it yet: the two-phase cron is
-  P7.
-- **Timeout:** 90 s on the Anthropic call (`GENERATION_TIMEOUT_MS`), logged as
-  `failure: "timeout"`.
+  P7, after 1.1.0 (path A, 2026-09-29).
+- **Timeout:** 150 s on the Anthropic call (`GENERATION_TIMEOUT_MS`, 90 s
+  before 2026-09-29; a thinking model's 15,072-token budget takes ≈ 155 s,
+  report §15.2), logged as `failure: "timeout"`.
 - **Kill switch:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it on;
   anything else and the run touches neither KV nor Anthropic, and logs only
-  `{"event":"shared_set_cron","enabled":false}`.
+  `{"event":"shared_set_cron","enabled":false}`. The tests set it themselves
+  (`vitest.config.ts` for the Worker routes, explicitly in the direct calls),
+  so `"false"` in `wrangler.jsonc` turns no test red; a test only checks that
+  the value there is `"true"` or `"false"`.
 
 Each paid attempt writes one line (besides the usual `anthropic_usage`, and
 `anthropic_failure` when it failed):
 
 ```json
-{"event":"shared_set_generation","date":"2026-10-08","attempt":1,"outcome":"published","reason":null,"failure":null,"stop_reason":"end_turn","input_tokens":1500,"output_tokens":1400,"duration_ms":27600,"prompt_version":1}
+{"event":"shared_set_generation","date":"2026-10-08","attempt":1,"outcome":"published","reason":null,"failure":null,"stop_reason":"end_turn","input_tokens":1500,"output_tokens":1400,"duration_ms":11400,"prompt_version":2,"model":"claude-sonnet-5-5","effort":"low"}
 ```
+
+`model` and `effort` are what the request asked for (`SHARED_GENERATOR`;
+`effort` is `null` when none was sent). They are only on this line:
+`anthropic_usage` keeps one shape for every operation, the legacy one
+included.
 
 `outcome` is `published`, `rejected` (`reason` is the `validateSharedSet`
 code), `upstream_failed` (`failure` is the `anthropic_failure` category) or
@@ -281,6 +301,12 @@ owner's approval. `eval/README.md` is the owner's checklist.
 It uses the Worker's own request builders and gates, bundled for Node; the
 Worker never imports it. Its outputs (`eval/out/`), inputs (`eval/input/`) and
 bundle (`eval/.build/`) are gitignored.
+
+The **generator comparison** (2026-09-29, report §16) lives in the same place:
+`npm run eval -- compare --dry-run` prints its 9 calls and estimated cost
+(≈ $0.44); `compare` runs prompt v2 with `claude-sonnet-5` and
+`claude-sonnet-5-5` (default and `low` effort) on 3 dates, at most $1, and
+needs the owner's approval. Checklist: the second half of `eval/README.md`.
 
 ## Known tradeoff: quota isn't atomic
 
