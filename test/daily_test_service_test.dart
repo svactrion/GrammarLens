@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -13,34 +17,39 @@ import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/utils/answer_matching.dart';
 
 /// Stands in for the real network-backed ClaudeService so this test can
-/// assert on how many times generation was actually called, without an API
-/// key or a live request.
+/// assert on how many shared-set reads were made, for which dates, without a
+/// proxy.
 class _FakeClaudeService extends ClaudeService {
-  int generateCallCount = 0;
-  void Function()? onGenerate;
+  final List<String> readDates = [];
+  int get readCount => readDates.length;
+  void Function()? onRead;
 
-  /// When set, generation waits for it: a request that is still running.
+  /// When set, a read waits for it: a request that is still running.
   Completer<void>? gate;
 
-  /// Generations that fail before one succeeds.
+  /// Reads that fail (no connection, a timeout, a bad body) before one
+  /// succeeds.
   int failuresLeft = 0;
 
+  /// Dates the proxy has no set for yet: a 404, read as null.
+  final Set<String> unpublished = {};
+
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
-    generateCallCount++;
-    onGenerate?.call();
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async {
+    readDates.add(date);
+    onRead?.call();
     if (gate != null) await gate!.future;
     if (failuresLeft > 0) {
       failuresLeft--;
-      throw const FormatException('simulated failure');
+      throw const ClaudeApiException('simulated read failure',
+          kind: ClaudeApiErrorKind.network);
     }
+    if (unpublished.contains(date)) return null;
     return List.generate(
-      count,
+      DailyTestService.questionCount,
       (i) => DailyTestQuestion(
         item: PracticeItem(
           id: 'q$i',
@@ -52,20 +61,6 @@ class _FakeClaudeService extends ClaudeService {
         commonWrongAnswers: const [],
       ),
     );
-  }
-}
-
-/// Simulates a generation call that fails partway through parsing the
-/// API response (e.g. the schema-mismatch bug documented in
-/// docs/build-log.md) — throws instead of ever returning a question list,
-/// so `DailyTestService.getTodaysSet` never reaches `saveDailyTestSet`.
-class _FailingClaudeService extends ClaudeService {
-  @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
-    throw const FormatException('simulated parse failure');
   }
 }
 
@@ -101,6 +96,24 @@ class _FailingCompletionStorage extends StorageService {
       throw StateError('disk full');
 }
 
+/// A real store whose next [failuresLeft] saves of a Daily Test set fail: the
+/// one failure the chain does not absorb.
+class _FailingSaveStorage extends StorageService {
+  int failuresLeft;
+
+  _FailingSaveStorage({required super.dbName}) : failuresLeft = 1;
+
+  @override
+  Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
+      {String? day, DailyTestSource source = DailyTestSource.generated}) {
+    if (failuresLeft > 0) {
+      failuresLeft--;
+      throw StateError('disk full');
+    }
+    return super.saveDailyTestSet(questions, day: day, source: source);
+  }
+}
+
 void main() {
   setUpAll(() {
     sqfliteFfiInit();
@@ -128,10 +141,10 @@ void main() {
 
   tearDown(() => StorageService.clockForTesting = DateTime.now);
 
-  test('generation across midnight keeps the day captured before the request',
+  test('a read across midnight keeps the day captured before the request',
       () async {
     StorageService.clockForTesting = () => DateTime(2026, 9, 30, 23, 59);
-    claudeService.onGenerate = () {
+    claudeService.onRead = () {
       StorageService.clockForTesting = () => DateTime(2026, 10, 1, 0, 1);
     };
     final set = await dailyTestService.getTodaysSet();
@@ -139,22 +152,28 @@ void main() {
     expect(await storageService.getDailyTestSetForToday(), isNull);
     StorageService.clockForTesting = () => DateTime(2026, 9, 30, 23, 59);
     expect((await dailyTestService.getTodaysSet()).day, set.day);
-    expect(claudeService.generateCallCount, 1);
+    expect(claudeService.readCount, 1);
   });
 
-  test('generates and caches a set on first open today', () async {
+  test('reads today\'s shared set on first open and caches it as shared',
+      () async {
+    StorageService.clockForTesting = () => DateTime(2026, 9, 30, 9);
     final set = await dailyTestService.getTodaysSet();
-    expect(claudeService.generateCallCount, 1);
+    expect(claudeService.readDates, ['2026-09-30']);
+    expect(set.day, '2026-09-30');
+    expect(set.source, DailyTestSource.shared);
     expect(set.questions, hasLength(DailyTestService.questionCount));
     expect(set.isCompleted, isFalse);
+    expect((await storageService.getDailyTestSet('2026-09-30'))!.source,
+        DailyTestSource.shared);
   });
 
-  test('a repeat open the same day reuses the cached set, no regeneration',
+  test('a repeat open the same day reuses the cached set: no request',
       () async {
     final first = await dailyTestService.getTodaysSet();
     final second = await dailyTestService.getTodaysSet();
 
-    expect(claudeService.generateCallCount, 1);
+    expect(claudeService.readCount, 1);
     expect(second.day, first.day);
     expect(
       second.questions.map((q) => q.item.id),
@@ -162,8 +181,20 @@ void main() {
     );
   });
 
+  test('a set already cached for today (e.g. from 1.0.0) makes no request',
+      () async {
+    await storageService.saveDailyTestSet(
+        [DailyTestService.fallbackQuestions.first],
+        day: storageService.currentDayKey);
+
+    final set = await dailyTestService.getTodaysSet();
+
+    expect(claudeService.readCount, 0);
+    expect(set.source, DailyTestSource.generated);
+  });
+
   test(
-      'generation never reads the local error profile: an existing weak '
+      'the Daily Test never reads the local error profile: an existing weak '
       'spot changes nothing about the request', () async {
     await storageService.insertErrors([
       ErrorEntry(
@@ -181,34 +212,72 @@ void main() {
 
     await service.getTodaysSet();
 
-    expect(claudeService.generateCallCount, 1);
+    expect(claudeService.readCount, 1);
     expect(recording.weakSpotReads, 0);
   });
 
-  test(
-    'a failed generation is never cached as "today\'s test" — no half/'
-    'broken set gets saved, and a retry can still succeed',
-    () async {
-      final failingService = DailyTestService(
-        claudeService: _FailingClaudeService(),
-        storageService: storageService,
+  group('the fallback (docs/1.1.0-shared-daily-test.md §5)', () {
+    Future<void> expectFallbackToday(DailyTestSet set) async {
+      expect(set.source, DailyTestSource.fallback);
+      expect(set.day, storageService.currentDayKey);
+      expect(set.questions.map((q) => q.item.id),
+          DailyTestService.fallbackQuestions.map((q) => q.item.id));
+      final stored = (await storageService.getDailyTestSetForToday())!;
+      expect(stored.source, DailyTestSource.fallback);
+    }
+
+    test('a failed read (offline, timeout, bad body) opens the fallback',
+        () async {
+      claudeService.failuresLeft = 1;
+      await expectFallbackToday(await dailyTestService.getTodaysSet());
+      expect(claudeService.readCount, 1);
+    });
+
+    test('a date with no shared set (404) opens the fallback', () async {
+      claudeService.unpublished.add(storageService.currentDayKey);
+      await expectFallbackToday(await dailyTestService.getTodaysSet());
+      expect(claudeService.readCount, 1);
+    });
+
+    test(
+        'the fallback is kept for the rest of the day: a later open makes no '
+        'request and shows the same questions', () async {
+      claudeService.failuresLeft = 1;
+      final first = await dailyTestService.getTodaysSet();
+
+      final again = await dailyTestService.getTodaysSet();
+
+      expect(claudeService.readCount, 1);
+      expect(again.source, DailyTestSource.fallback);
+      expect(again.questions.map((q) => q.item.id),
+          first.questions.map((q) => q.item.id));
+    });
+
+    test('the fallback is a complete, gradable set', () {
+      final questions = DailyTestService.fallbackQuestions;
+      expect(questions, hasLength(DailyTestService.questionCount));
+      for (final q in questions) {
+        expect(checkDailyTestAnswer(q, q.correctAnswer).kind,
+            AnswerMatchKind.correct);
+      }
+    });
+
+    test(
+        'a local storage failure is the one error that reaches the caller, '
+        'and it is not remembered: the next open is a fresh attempt', () async {
+      final failing = DailyTestService(
+        claudeService: claudeService,
+        storageService: _FailingSaveStorage(dbName: dbName),
       );
 
-      await expectLater(
-        failingService.getTodaysSet(),
-        throwsA(isA<FormatException>()),
-      );
-
-      // Nothing should have been written for today — the failure happened
-      // before saveDailyTestSet was ever called.
+      await expectLater(failing.getTodaysSet(), throwsStateError);
       expect(await storageService.getDailyTestSetForToday(), isNull);
 
-      // A subsequent attempt (e.g. the user reopening Daily Test) with a
-      // working ClaudeService must not be blocked by a stale/partial row.
-      final retried = await dailyTestService.getTodaysSet();
-      expect(retried.questions, hasLength(DailyTestService.questionCount));
-    },
-  );
+      final retried = await failing.getTodaysSet();
+      expect(retried.source, DailyTestSource.shared);
+      expect(claudeService.readCount, 2);
+    });
+  });
 
   test(
       'completeDailyTest flows through to the cached set (answers included) '
@@ -338,7 +407,7 @@ void main() {
     expect(mistakes, hasLength(1));
   });
 
-  group('single-flight generation', () {
+  group('single-flight', () {
     test('two calls while one is running share one request and one set',
         () async {
       claudeService.gate = Completer<void>();
@@ -349,38 +418,30 @@ void main() {
       claudeService.gate!.complete();
       final sets = await Future.wait([first, second]);
 
-      expect(claudeService.generateCallCount, 1);
+      expect(claudeService.readCount, 1);
       expect(sets[0].day, sets[1].day);
       expect(sets[0].questions.map((q) => q.item.id),
           sets[1].questions.map((q) => q.item.id));
-      // And it was cached once: a later call reads it, generating nothing.
+      // And it was cached once: a later call reads it, asking for nothing.
       await dailyTestService.getTodaysSet();
-      expect(claudeService.generateCallCount, 1);
+      expect(claudeService.readCount, 1);
     });
 
     test(
-        'everyone who joined a failing request sees its error, and the next '
-        'call is a fresh attempt', () async {
+        'everyone who joined a failing read gets the same fallback, from one '
+        'request', () async {
       claudeService
         ..gate = Completer<void>()
         ..failuresLeft = 1;
 
       final first = dailyTestService.getTodaysSet();
       final second = dailyTestService.getTodaysSet();
-      final failures = [
-        expectLater(first, throwsA(isA<FormatException>())),
-        expectLater(second, throwsA(isA<FormatException>())),
-      ];
       await Future<void>.delayed(const Duration(milliseconds: 20));
       claudeService.gate!.complete();
-      await Future.wait(failures);
-      expect(claudeService.generateCallCount, 1);
+      final sets = await Future.wait([first, second]);
 
-      // Nothing was cached and nothing is remembered as in flight.
-      expect(await storageService.getDailyTestSetForToday(), isNull);
-      final retry = await dailyTestService.getTodaysSet();
-      expect(claudeService.generateCallCount, 2);
-      expect(retry.questions, hasLength(DailyTestService.questionCount));
+      expect(claudeService.readCount, 1);
+      expect(sets.map((s) => s.source).toSet(), {DailyTestSource.fallback});
     });
 
     test('a call for another day does not join a request for the first',
@@ -394,7 +455,7 @@ void main() {
       claudeService.gate!.complete();
       final sets = await Future.wait([evening, morning]);
 
-      expect(claudeService.generateCallCount, 2);
+      expect(claudeService.readCount, 2);
       expect(sets[0].day, '2026-09-30');
       expect(sets[1].day, '2026-10-01');
     });
@@ -415,24 +476,24 @@ void main() {
           kDayZeroQuestions.map((q) => q.correctAnswer));
     });
 
-    test('the Daily Test then opens on it with no generation at all', () async {
+    test('the Daily Test then opens on it with no request at all', () async {
       await dailyTestService.seedDayZeroSet();
 
       final set = await dailyTestService.getTodaysSet();
 
-      expect(claudeService.generateCallCount, 0);
+      expect(claudeService.readCount, 0);
       expect(set.source, DailyTestSource.bundled);
       expect(set.questions, hasLength(5));
     });
 
-    test('does nothing when today already has a generated set', () async {
+    test('does nothing when today already has a shared set', () async {
       final generated = await dailyTestService.getTodaysSet();
-      expect(generated.source, DailyTestSource.generated);
+      expect(generated.source, DailyTestSource.shared);
 
       await dailyTestService.seedDayZeroSet();
 
       final after = await storageService.getDailyTestSetForToday();
-      expect(after!.source, DailyTestSource.generated);
+      expect(after!.source, DailyTestSource.shared);
       expect(after.questions.map((q) => q.item.id),
           generated.questions.map((q) => q.item.id));
     });
@@ -454,21 +515,26 @@ void main() {
 
       final set = await storageService.getDailyTestSetForToday();
       expect(set!.questions, hasLength(5));
-      expect(claudeService.generateCallCount, 0);
+      expect(claudeService.readCount, 0);
     });
 
-    test(
-        'a generated set is marked generated, and the marker survives a '
-        'reopen of the store', () async {
+    test('the shared and fallback markers survive a reopen of the store',
+        () async {
+      StorageService.clockForTesting = () => DateTime(2026, 9, 30, 9);
+      await dailyTestService.getTodaysSet();
+      StorageService.clockForTesting = () => DateTime(2026, 10, 1, 9);
+      claudeService.failuresLeft = 1;
       await dailyTestService.getTodaysSet();
 
       final reopened = StorageService(dbName: dbName);
-      expect((await reopened.getDailyTestSetForToday())!.source,
-          DailyTestSource.generated);
+      expect((await reopened.getDailyTestSet('2026-09-30'))!.source,
+          DailyTestSource.shared);
+      expect((await reopened.getDailyTestSet('2026-10-01'))!.source,
+          DailyTestSource.fallback);
     });
   });
 
-  group('the next day\'s set, prepared in the background', () {
+  group('the next day\'s shared set, read in the background', () {
     /// Polls until [check] holds: the preparation is background work, so a test
     /// cannot await it directly.
     Future<void> eventually(Future<bool> Function() check) async {
@@ -482,25 +548,25 @@ void main() {
     Future<bool> tomorrowExists() async =>
         await storageService.getDailyTestSet('2026-09-23') != null;
 
-    /// Today (2026-09-22) has its set, generated with one request.
+    /// Today (2026-09-22) has its set, read with one request.
     Future<void> openToday() async {
       StorageService.clockForTesting = () => DateTime(2026, 9, 22, 10);
       await dailyTestService.getTodaysSet();
-      expect(claudeService.generateCallCount, 1);
+      expect(claudeService.readCount, 1);
     }
 
     test(
-        'completing today\'s test asks for exactly one more set, stored under '
-        'tomorrow\'s day, generated and not completed', () async {
+        'completing today\'s test reads exactly one more set, tomorrow\'s, '
+        'stored under tomorrow\'s day, shared and not completed', () async {
       await openToday();
 
       await dailyTestService.completeDailyTest({'q0': 'x'}, []);
       await eventually(tomorrowExists);
 
-      expect(claudeService.generateCallCount, 2);
+      expect(claudeService.readDates, ['2026-09-22', '2026-09-23']);
       final tomorrow = (await storageService.getDailyTestSet('2026-09-23'))!;
       expect(tomorrow.day, '2026-09-23');
-      expect(tomorrow.source, DailyTestSource.generated);
+      expect(tomorrow.source, DailyTestSource.shared);
       expect(tomorrow.isCompleted, isFalse);
       expect(tomorrow.questions, hasLength(DailyTestService.questionCount));
       // Today's own set is untouched: completed, with its answers.
@@ -520,41 +586,54 @@ void main() {
       StorageService.clockForTesting = () => DateTime(2026, 9, 23, 8);
       final set = await dailyTestService.getTodaysSet();
 
-      expect(claudeService.generateCallCount, 2);
+      expect(claudeService.readCount, 2);
       expect(set.day, '2026-09-23');
       expect(set.isCompleted, isFalse);
       expect(set.questions.map((q) => q.item.id),
           prepared!.questions.map((q) => q.item.id));
     });
 
-    test(
-        'a failed background generation is silent, leaves nothing behind, and '
-        'the next day generates as before', () async {
-      await openToday();
-      claudeService.failuresLeft = 1;
-      final uncaught = <Object>[];
-      late bool earned;
+    for (final (name, arrange) in [
+      (
+        'a failed background read',
+        (_FakeClaudeService c) => c.failuresLeft = 1,
+      ),
+      (
+        'a tomorrow with no shared set yet (404)',
+        (_FakeClaudeService c) => c.unpublished.add('2026-09-23'),
+      ),
+    ]) {
+      test(
+          '$name is silent, writes nothing (not even the fallback), and the '
+          'next day reads again on its first open', () async {
+        await openToday();
+        arrange(claudeService);
+        final uncaught = <Object>[];
+        late bool earned;
 
-      await runZonedGuarded(() async {
-        earned = await dailyTestService.completeDailyTest({'q0': 'x'}, []);
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-      }, (error, _) => uncaught.add(error));
+        await runZonedGuarded(() async {
+          earned = await dailyTestService.completeDailyTest({'q0': 'x'}, []);
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+        }, (error, _) => uncaught.add(error));
 
-      expect(uncaught, isEmpty);
-      // The completion itself succeeded and returned its own result (this first
-      // answered test earns the Welcome badge).
-      expect(earned, isTrue);
-      expect(claudeService.generateCallCount, 2);
-      expect(await tomorrowExists(), isFalse);
-      // Today's completion itself is saved regardless.
-      expect((await storageService.getDailyTestSetForToday())!.isCompleted,
-          isTrue);
+        expect(uncaught, isEmpty);
+        // The completion itself succeeded and returned its own result (this
+        // first answered test earns the Welcome badge).
+        expect(earned, isTrue);
+        expect(claudeService.readCount, 2);
+        expect(await tomorrowExists(), isFalse);
+        // Today's completion itself is saved regardless.
+        expect((await storageService.getDailyTestSetForToday())!.isCompleted,
+            isTrue);
 
-      StorageService.clockForTesting = () => DateTime(2026, 9, 23, 8);
-      final set = await dailyTestService.getTodaysSet();
-      expect(claudeService.generateCallCount, 3);
-      expect(set.questions, hasLength(DailyTestService.questionCount));
-    });
+        claudeService.unpublished.clear();
+        StorageService.clockForTesting = () => DateTime(2026, 9, 23, 8);
+        final set = await dailyTestService.getTodaysSet();
+        expect(claudeService.readDates.last, '2026-09-23');
+        expect(claudeService.readCount, 3);
+        expect(set.source, DailyTestSource.shared);
+      });
+    }
 
     test('completing again does not ask a second time', () async {
       await openToday();
@@ -566,7 +645,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // One for today, one for tomorrow: the repeats joined it, then found it.
-      expect(claudeService.generateCallCount, 2);
+      expect(claudeService.readCount, 2);
     });
 
     test('a next day that already has a set costs no request', () async {
@@ -587,7 +666,7 @@ void main() {
       await dailyTestService.completeDailyTest({'q0': 'x'}, []);
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
-      expect(claudeService.generateCallCount, 1);
+      expect(claudeService.readCount, 1);
       final tomorrow = (await storageService.getDailyTestSet('2026-09-23'))!;
       expect(tomorrow.questions.single.item.id, 'kept');
     });
@@ -595,21 +674,21 @@ void main() {
     test('the day of the fixed first test prepares tomorrow too', () async {
       StorageService.clockForTesting = () => DateTime(2026, 9, 22, 10);
       await dailyTestService.seedDayZeroSet();
-      expect(claudeService.generateCallCount, 0);
+      expect(claudeService.readCount, 0);
 
       await dailyTestService.completeDailyTest({'day0_1': 'eating'}, []);
       await eventually(tomorrowExists);
 
-      expect(claudeService.generateCallCount, 1);
+      expect(claudeService.readCount, 1);
       final today = (await storageService.getDailyTestSetForToday())!;
       expect(today.source, DailyTestSource.bundled);
       expect(today.isCompleted, isTrue);
       expect((await storageService.getDailyTestSet('2026-09-23'))!.source,
-          DailyTestSource.generated);
+          DailyTestSource.shared);
     });
 
     test(
-        'a day opened while its set is still being prepared joins the request '
+        'a day opened while its set is still being read waits for that read '
         'instead of asking again', () async {
       await openToday();
       claudeService.gate = Completer<void>();
@@ -621,8 +700,9 @@ void main() {
       claudeService.gate!.complete();
       final set = await opened;
 
-      expect(claudeService.generateCallCount, 2);
+      expect(claudeService.readCount, 2);
       expect(set.day, '2026-09-23');
+      expect(set.source, DailyTestSource.shared);
     });
 
     test('a completion that fails to save starts no preparation', () async {
@@ -636,7 +716,7 @@ void main() {
           failing.completeDailyTest({'q0': 'x'}, []), throwsStateError);
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      expect(claudeService.generateCallCount, 1);
+      expect(claudeService.readCount, 1);
       expect(await tomorrowExists(), isFalse);
     });
   });
@@ -661,6 +741,151 @@ void main() {
       expect(StorageService.dayKeyAfter('2026-10-24'), '2026-10-25');
       expect(StorageService.dayKeyAfter('2026-10-25'), '2026-10-26');
       expect(StorageService.dayKeyAfter('2026-11-01'), '2026-11-02');
+    });
+  });
+
+  group('over HTTP, with the real ClaudeService', () {
+    final requests = <http.BaseRequest>[];
+    late Future<http.Response> Function(http.Request) respond;
+
+    Map<String, dynamic> question(String id) => {
+          'id': id,
+          'type': 'fill_in_blank',
+          'context': 'She ___ to work.',
+          'instruction': 'Fill it.',
+          'topicId': 'tenseSelection',
+          'correctAnswer': 'goes',
+          'explanation': 'Why.',
+          'commonWrongAnswers': [
+            {'answer': 'go', 'comment': 'c'},
+          ],
+        };
+    http.Response sharedSet(String date) => http.Response(
+        jsonEncode({
+          'date': date,
+          'promptVersion': 2,
+          'questions': [for (var i = 1; i <= 5; i++) question('s$i')],
+        }),
+        200);
+
+    DailyTestService serviceOver({Duration? timeout}) => DailyTestService(
+          claudeService: ClaudeService(
+            client: MockClient((request) {
+              requests.add(request);
+              return respond(request);
+            }),
+            proxyBaseUrl: 'https://proxy.test',
+            appToken: 'test-token',
+            sharedSetTimeout: timeout,
+          ),
+          storageService: storageService,
+        );
+
+    setUp(() {
+      requests.clear();
+      StorageService.clockForTesting = () => DateTime(2026, 9, 30, 9);
+      respond = (request) async => sharedSet(request.url.pathSegments.last);
+    });
+
+    /// Every request any test in this group made: only reads of the shared
+    /// route, never the legacy per-device generation
+    /// (docs/1.1.0-shared-daily-test.md §13, decision 2).
+    tearDown(() {
+      for (final r in requests) {
+        expect(r.method, 'GET');
+        expect(r.url.path, startsWith('/v1/shared-daily-test/'));
+        expect(r.url.path, isNot(contains('generate')));
+      }
+    });
+
+    test('a shared set: one GET for today\'s local day key, saved as shared',
+        () async {
+      final set = await serviceOver().getTodaysSet();
+
+      expect(requests.map((r) => r.url.path),
+          ['/v1/shared-daily-test/2026-09-30']);
+      expect(set.source, DailyTestSource.shared);
+      expect(
+          set.questions.map((q) => q.item.id), ['s1', 's2', 's3', 's4', 's5']);
+    });
+
+    final failures = <String, Future<http.Response> Function(http.Request)>{
+      '404': (_) async => http.Response(
+          jsonEncode({'error': 'not_found', 'message': 'x'}), 404),
+      'a 5xx': (_) async => http.Response(
+          jsonEncode({'error': 'upstream_error', 'message': 'x'}), 503),
+      'no connection': (_) async => throw const SocketException('offline'),
+      'a body that is not JSON': (_) async => http.Response('{"date":', 200),
+      'a set for another date': (_) async => sharedSet('2026-10-01'),
+      'a question missing its key': (_) async => http.Response(
+          jsonEncode({
+            'date': '2026-09-30',
+            'questions': [
+              {...question('s1')}..remove('correctAnswer'),
+            ],
+          }),
+          200),
+    };
+    failures.forEach((name, failure) {
+      test('$name → the fallback, from exactly one request', () async {
+        respond = failure;
+
+        final set = await serviceOver().getTodaysSet();
+
+        expect(requests, hasLength(1));
+        expect(set.source, DailyTestSource.fallback);
+        expect(set.questions.map((q) => q.item.id),
+            DailyTestService.fallbackQuestions.map((q) => q.item.id));
+      });
+    });
+
+    test('a timeout → the fallback', () async {
+      respond = (_) => Completer<http.Response>().future;
+
+      final set = await serviceOver(timeout: const Duration(milliseconds: 50))
+          .getTodaysSet();
+
+      expect(requests, hasLength(1));
+      expect(set.source, DailyTestSource.fallback);
+    });
+
+    test('a cached set makes no request at all', () async {
+      final service = serviceOver();
+      await service.getTodaysSet();
+      requests.clear();
+
+      await service.getTodaysSet();
+
+      expect(requests, isEmpty);
+    });
+
+    test(
+        'a completion reads tomorrow\'s shared set with one GET; a 404 there '
+        'writes nothing', () async {
+      final service = serviceOver();
+      await service.getTodaysSet();
+      respond = (_) async => http.Response(
+          jsonEncode({'error': 'not_found', 'message': 'x'}), 404);
+
+      await service.completeDailyTest({'s1': 'goes'}, []);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(requests.map((r) => r.url.path), [
+        '/v1/shared-daily-test/2026-09-30',
+        '/v1/shared-daily-test/2026-10-01',
+      ]);
+      expect(await storageService.getDailyTestSet('2026-10-01'), isNull);
+    });
+
+    test('the request carries no device id or anything about the user',
+        () async {
+      await serviceOver().getTodaysSet();
+
+      final request = requests.single as http.Request;
+      expect(request.body, isEmpty);
+      expect(request.url.query, isEmpty);
+      expect(request.headers.keys.map((k) => k.toLowerCase()).toSet(),
+          {'x-grammarlens-token'});
     });
   });
 }

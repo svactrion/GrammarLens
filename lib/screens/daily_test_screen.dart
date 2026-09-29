@@ -73,12 +73,11 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     _load();
   }
 
-  /// Generation failing here never leaves anything cached as "today's
-  /// test" — `DailyTestService.getTodaysSet` only calls `saveDailyTestSet`
-  /// after a full, successful generation, so a thrown error here always
-  /// means nothing was saved (see its own doc comment). Re-entering this
-  /// method — via the initial call or a "Try again" tap — is always a
-  /// real attempt, never blocked by a stale/partial cache row.
+  /// `DailyTestService.getTodaysSet` never fails over the network: a shared
+  /// set that cannot be read gives way to the fallback. What can still throw
+  /// here is local storage, and nothing is cached by a failed attempt, so
+  /// re-entering this method — via the initial call or a "Try again" tap —
+  /// is always a real attempt, never blocked by a stale/partial cache row.
   Future<void> _load() async {
     setState(() {
       _loading = true;

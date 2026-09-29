@@ -1,13 +1,30 @@
 import 'daily_test_question.dart';
 
-/// Where a day's set came from: written by the model ([generated]) or the
-/// fixed first-day set that ships inside the app ([bundled]). Stored as the
-/// enum's name and reported as `set_source` on `daily_test_completed`.
-enum DailyTestSource { generated, bundled }
+/// Where a day's set came from. Stored as the enum's name and reported as
+/// `set_source` on `daily_test_completed`
+/// (docs/1.1.0-shared-daily-test.md §9).
+enum DailyTestSource {
+  /// Generated for this device by the legacy per-device route: 1.0.0, and
+  /// rows a 1.1.0 install cached before it updated. 1.1.0 never writes it.
+  generated,
 
-/// One calendar day's Daily Test — generated at most once per device per
-/// day (PRD v2 §12.8) and cached locally, so re-opening the app the same
-/// day reuses this instead of generating (and paying for) a new one.
+  /// The fixed first-day set that ships inside the app (day 0).
+  bundled,
+
+  /// The date's shared set, read from the proxy
+  /// (`GET /v1/shared-daily-test/{date}`): the same questions for everyone
+  /// on that date.
+  shared,
+
+  /// Shown because the shared set could not be read (offline, timeout, not
+  /// published, a bad response): content that ships inside the app. Its
+  /// share of completions is the health of the shared pipeline.
+  fallback,
+}
+
+/// One calendar day's Daily Test — fetched at most once per device per day
+/// (PRD v2 §12.8) and cached locally, so re-opening the app the same day
+/// reuses this instead of asking again.
 ///
 /// [completedAt] is deliberately nullable rather than a hard single-attempt
 /// lock: whether a completed set can be retaken is a UI-layer decision left

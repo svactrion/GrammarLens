@@ -44,7 +44,8 @@ class ClaudeApiException implements Exception {
 }
 
 /// Talks to the GrammarLens Cloudflare Workers proxy (`proxy/`) to
-/// generate practice sets/Daily Test questions and score answers — never
+/// generate practice sets, read the shared Daily Test set and score
+/// answers — never
 /// to Anthropic directly. The model, system prompts, schemas, and the
 /// Anthropic API key itself all live server-side now (docs/build-log.md);
 /// this class only ever sends an operation name and the small structured
@@ -60,6 +61,7 @@ class ClaudeService {
   final String _proxyBaseUrl;
   final String _appToken;
   final Duration _requestTimeout;
+  final Duration _sharedSetTimeout;
 
   /// How long one request to the proxy may take before it is given up as
   /// failed. Without a limit a request that never answers would leave a
@@ -68,15 +70,24 @@ class ClaudeService {
   /// leaves enough room for a 10-question session.
   static const Duration defaultRequestTimeout = Duration(seconds: 40);
 
+  /// How long the shared Daily Test read may take. It is a KV read at the
+  /// edge, not a generation, so it is far shorter than
+  /// [defaultRequestTimeout]: past it the Daily Test opens on its fallback
+  /// instead of keeping the learner waiting
+  /// (docs/1.1.0-shared-daily-test.md §5).
+  static const Duration sharedSetTimeout = Duration(seconds: 10);
+
   ClaudeService({
     http.Client? client,
     String? proxyBaseUrl,
     String? appToken,
     Duration? requestTimeout,
+    Duration? sharedSetTimeout,
   })  : _client = client ?? http.Client(),
         _proxyBaseUrl = proxyBaseUrl ?? AppConfig.proxyBaseUrl,
         _appToken = appToken ?? AppConfig.appToken,
-        _requestTimeout = requestTimeout ?? defaultRequestTimeout;
+        _requestTimeout = requestTimeout ?? defaultRequestTimeout,
+        _sharedSetTimeout = sharedSetTimeout ?? ClaudeService.sharedSetTimeout;
 
   bool get _isConfigured => _proxyBaseUrl.isNotEmpty && _appToken.isNotEmpty;
 
@@ -107,21 +118,48 @@ class ClaudeService {
     return PracticeSet(topicId: topic.id.name, items: items);
   }
 
-  /// The Daily Test request carries no user data: just the anonymous quota
-  /// [deviceId] (used by the proxy, never forwarded to Anthropic) and the
-  /// question count. The prompt is the same for every user, so the set is a
-  /// general mix, not a personalized one (docs/build-log.md, 2026-09-21).
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
-    final json = await _post('/v1/generate-daily-test', {
-      'deviceId': deviceId,
-      'count': count,
-    });
-    return (json['questions'] as List)
-        .map((e) => DailyTestQuestion.fromJson(e as Map<String, dynamic>))
-        .toList();
+  /// The shared Daily Test set for [date] (`YYYY-MM-DD`, the app's local day
+  /// key), or null when the proxy has none for that date (a 404: not yet
+  /// published, outside the serving window, or the feature switched off).
+  ///
+  /// A read, not a generation: `GET /v1/shared-daily-test/{date}` never
+  /// reaches Anthropic and never touches quota, and the request carries
+  /// nothing but the date and the app token — no device id, nothing about
+  /// the user (docs/1.1.0-shared-daily-test.md §6, §7). Every other failure
+  /// (no connection, [sharedSetTimeout], a 5xx, a body that is not a usable
+  /// set for this date) throws a [ClaudeApiException]; the caller decides
+  /// what to show instead.
+  ///
+  /// 1.1.0 has no per-device generation: the legacy per-device Daily Test
+  /// route is kept on the proxy for 1.0.0 only, and this client has no
+  /// method that calls it (§13, decision 2; a test checks that its path
+  /// appears nowhere in `lib/`).
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async {
+    final response = await _send(
+      () => _client.get(
+        _uri('/v1/shared-daily-test/${Uri.encodeComponent(date)}'),
+        headers: {'x-grammarlens-token': _appToken},
+      ),
+      _sharedSetTimeout,
+    );
+    if (response.statusCode == 404) return null;
+    if (response.statusCode != 200) _throwProxyError(response);
+    try {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      if (json['date'] != date) {
+        throw const FormatException('the set is for another date');
+      }
+      final questions = (json['questions'] as List)
+          .map((e) => DailyTestQuestion.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (questions.isEmpty) throw const FormatException('no questions');
+      return questions;
+    } catch (_) {
+      throw const ClaudeApiException(
+        "The shared Daily Test couldn't be read.",
+        kind: ClaudeApiErrorKind.upstream,
+      );
+    }
   }
 
   Future<ScoringResult> scoreAnswers({
@@ -152,7 +190,18 @@ class ClaudeService {
   }
 
   Future<Map<String, dynamic>> _post(
-      String path, Map<String, dynamic> body) async {
+          String path, Map<String, dynamic> body) async =>
+      _decodeOk(await _send(
+        () =>
+            _client.post(_uri(path), headers: _headers, body: jsonEncode(body)),
+        _requestTimeout,
+      ));
+
+  /// Sends one request with [timeout], mapping a missing configuration, a
+  /// timeout or a transport failure to a [ClaudeApiException]. Any HTTP
+  /// response, whatever its status, is returned as is.
+  Future<http.Response> _send(
+      Future<http.Response> Function() request, Duration timeout) async {
     if (!_isConfigured) {
       throw const ClaudeApiException(
         'The practice service is not configured. Copy '
@@ -163,11 +212,8 @@ class ClaudeService {
       );
     }
 
-    http.Response response;
     try {
-      response = await _client
-          .post(_uri(path), headers: _headers, body: jsonEncode(body))
-          .timeout(_requestTimeout);
+      return await request().timeout(timeout);
     } on TimeoutException {
       throw const ClaudeApiException(
         'The practice service took too long to respond. Please try again.',
@@ -180,11 +226,19 @@ class ClaudeService {
         kind: ClaudeApiErrorKind.network,
       );
     }
+  }
 
+  /// The body of a 200 response, or the proxy's error mapped to a
+  /// [ClaudeApiException].
+  Map<String, dynamic> _decodeOk(http.Response response) {
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
+    _throwProxyError(response);
+  }
 
+  /// Maps a non-200 response to a [ClaudeApiException].
+  Never _throwProxyError(http.Response response) {
     // The proxy's own clean error envelope (`{error, message}`) — never
     // Anthropic's raw body, which never reaches this far by design (see
     // proxy/src/anthropic.ts). Reusing its `message` here rather than
