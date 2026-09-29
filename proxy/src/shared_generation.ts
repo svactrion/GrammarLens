@@ -1,14 +1,15 @@
 import { callAnthropic, type CallMeta } from './anthropic';
 import type { UpstreamFailure } from './error_log';
 import {
-  SHARED_PROMPT_VERSION,
   dailyPlan,
   dateOfDayNumber,
   setKey,
   sharedDailyTestRequest,
   utcDayNumber,
   validateSharedSet,
+  type GenerateSharedDailyTestRequest,
   type PublishedSet,
+  type SharedGenerationOptions,
   type SharedSetRejection,
 } from './shared_daily_test';
 import type { Env } from './types';
@@ -105,9 +106,13 @@ async function recentAnswers(kv: KVNamespace, dayNumber: number): Promise<string
  * PRIVACY CONTRACT — one line per paid attempt, built field by field: the date
  * (a calendar label, not about anyone), the attempt number, the outcome, a
  * rejection code from `SharedSetRejection`, an upstream failure category, the
- * whitelisted stop reason, token counts, duration and prompt version. Never
- * any generated text. The token counts and stop reason also appear on the
- * `anthropic_usage` line that `callAnthropic` writes for the same call.
+ * whitelisted stop reason, token counts, duration, and what was asked: the
+ * prompt version, the generator model and its effort (`null` when none was
+ * sent), all fixed vocabularies from the request. Never any generated text.
+ * The token counts and stop reason also appear on the `anthropic_usage` line
+ * that `callAnthropic` writes for the same call; the model and effort only
+ * here (that line keeps one shape for every operation, the legacy one
+ * included).
  */
 function logGeneration(fields: {
   date: string;
@@ -116,6 +121,7 @@ function logGeneration(fields: {
   reason?: SharedSetRejection;
   failure?: UpstreamFailure;
   meta: CallMeta;
+  request: GenerateSharedDailyTestRequest;
 }): void {
   console.log(
     JSON.stringify({
@@ -129,7 +135,9 @@ function logGeneration(fields: {
       input_tokens: fields.meta.inputTokens ?? null,
       output_tokens: fields.meta.outputTokens ?? null,
       duration_ms: durationField(fields.meta.durationMs),
-      prompt_version: SHARED_PROMPT_VERSION,
+      prompt_version: fields.request.promptVersion,
+      model: fields.request.model,
+      effort: fields.request.effort ?? null,
     }),
   );
 }
@@ -137,6 +145,9 @@ function logGeneration(fields: {
 export interface GenerationOptions {
   /** Test seam; production uses [GENERATION_TIMEOUT_MS]. */
   timeoutMs?: number;
+  /** Test seam; production uses the defaults (`SHARED_GENERATOR`, the
+   * current prompt version). */
+  generation?: SharedGenerationOptions;
 }
 
 /**
@@ -197,7 +208,7 @@ async function generate(
   });
 
   const plan = dailyPlan(date);
-  const request = sharedDailyTestRequest(plan, await recentAnswers(kv, dayNumber));
+  const request = sharedDailyTestRequest(plan, await recentAnswers(kv, dayNumber), options.generation);
   const meta: CallMeta = {};
 
   let content: unknown;
@@ -208,27 +219,27 @@ async function generate(
       { signal: AbortSignal.timeout(options.timeoutMs ?? GENERATION_TIMEOUT_MS), meta },
     );
   } catch {
-    logGeneration({ date, attempt, outcome: 'upstream_failed', failure: meta.failure, meta });
+    logGeneration({ date, attempt, outcome: 'upstream_failed', failure: meta.failure, meta, request });
     return;
   }
 
   const result = validateSharedSet(content, plan);
   if (!result.ok) {
-    logGeneration({ date, attempt, outcome: 'rejected', reason: result.reason, meta });
+    logGeneration({ date, attempt, outcome: 'rejected', reason: result.reason, meta, request });
     return;
   }
 
   if ((await kv.get(setKey(date))) !== null) {
-    logGeneration({ date, attempt, outcome: 'already_published', meta });
+    logGeneration({ date, attempt, outcome: 'already_published', meta, request });
     return;
   }
   const published: PublishedSet = {
     date,
-    promptVersion: SHARED_PROMPT_VERSION,
+    promptVersion: request.promptVersion,
     generatedAt: now.toISOString(),
     attempt,
     questions: result.questions,
   };
   await kv.put(setKey(date), JSON.stringify(published), { expirationTtl: SET_TTL_SECONDS });
-  logGeneration({ date, attempt, outcome: 'published', meta });
+  logGeneration({ date, attempt, outcome: 'published', meta, request });
 }

@@ -245,12 +245,17 @@ describe('shared set generation (cron)', () => {
         output_tokens: 1400,
         duration_ms: expect.any(Number),
         prompt_version: 2,
+        model: 'claude-sonnet-5-5',
+        effort: 'low',
       },
     ]);
-    // The ordinary cost line is written too, filed as Daily Test cost.
-    expect(lines('anthropic_usage')).toEqual([
-      expect.objectContaining({ kind: 'daily_test', operation: 'generate_shared_daily_test', item_count: 5 }),
-    ]);
+    // The ordinary cost line is written too, filed as Daily Test cost, in the
+    // one shape every operation's line has: no model or effort there.
+    const [usage] = lines('anthropic_usage');
+    expect(usage).toMatchObject({ kind: 'daily_test', operation: 'generate_shared_daily_test', item_count: 5 });
+    expect(Object.keys(usage as object).sort()).toEqual(
+      ['event', 'kind', 'operation', 'item_count', 'input_tokens', 'output_tokens', 'stop_reason', 'duration_ms'].sort(),
+    );
 
     const before = await env.DAILY_SETS_KV.get(setKey(PLUS_3));
     await runSharedGeneration(envWith(), at(1));
@@ -563,9 +568,11 @@ describe('shared set generation (cron)', () => {
           'attempt',
           'date',
           'duration_ms',
+          'effort',
           'event',
           'failure',
           'input_tokens',
+          'model',
           'outcome',
           'output_tokens',
           'prompt_version',
@@ -574,6 +581,41 @@ describe('shared set generation (cron)', () => {
         ].sort(),
       );
     }
+  });
+
+  it('logs the model and effort asked for on every outcome, as fixed values only', async () => {
+    for (const offset of [0, 1, 2]) await seed(dateAt(offset));
+    const plan = dailyPlan(PLUS_3);
+    // A blankless fill_in_blank question whose text must not reach the log.
+    const blankless = validSetFor(plan);
+    const fill = blankless.questions.find((q) => q.type === 'fill_in_blank') as Record<string, unknown>;
+    fill.context = `A scene with no gap ${CONTENT_SECRET}.`;
+    fill.instruction = `Complete the sentence ${CONTENT_SECRET}.`;
+    const results: (() => Promise<Response>)[] = [
+      async () => new Response('{}', { status: 500 }), // upstream_failed
+      async () => anthropicBody(blankless), // rejected
+      async () => anthropicBody(validSetFor(plan)), // published
+    ];
+    respond = () => (results.shift() as () => Promise<Response>)();
+
+    for (let run = 0; run < 3; run++) await runSharedGeneration(envWith(), at(run));
+
+    expect(lines('shared_set_generation').map((l) => [l.outcome, l.reason, l.model, l.effort, l.prompt_version])).toEqual([
+      ['upstream_failed', null, 'claude-sonnet-5-5', 'low', 2],
+      ['rejected', 'fill_in_blank_missing_blank', 'claude-sonnet-5-5', 'low', 2],
+      ['published', null, 'claude-sonnet-5-5', 'low', 2],
+    ]);
+    expect(logged.join('\n')).not.toContain(CONTENT_SECRET);
+  });
+
+  it('logs effort as null when the generator sends none', async () => {
+    for (const offset of [0, 1, 2]) await seed(dateAt(offset));
+    respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
+
+    await runSharedGeneration(envWith(), NOW, { generation: { model: 'claude-sonnet-5' } });
+
+    expect(JSON.parse(String(fetchCalls[0]?.init?.body)).model).toBe('claude-sonnet-5');
+    expect(lines('shared_set_generation')).toEqual([expect.objectContaining({ model: 'claude-sonnet-5', effort: null })]);
   });
 
   it('runs from the Worker\'s scheduled handler, using the trigger\'s scheduled time', async () => {
