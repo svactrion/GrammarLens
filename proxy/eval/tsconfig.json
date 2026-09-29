@@ -1,0 +1,10 @@
+{
+  // The local measurement E runs under Node, not in the Worker: Node's types
+  // on top of the proxy's, for eval/run.ts. eval/lib is also typechecked with
+  // the proxy (../tsconfig.json), since the tests import it.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "@cloudflare/workers-types"]
+  },
+  "include": ["run.ts", "lib/**/*.ts"]
+}

@@ -21,7 +21,14 @@ class _CountingStorage extends StorageService {
   int finalizeCalls = 0;
   int dailyReads = 0;
   int climbReads = 0;
+  int staleCleanups = 0;
   DailyTestSet? todaysDailyTest;
+
+  @override
+  Future<int> deleteStaleDailyTestSets() async {
+    staleCleanups++;
+    return 0;
+  }
 
   @override
   Future<UserProfile?> getUserProfile() async =>
@@ -95,6 +102,8 @@ void main() {
     // Evening, yesterday's test done.
     expect(find.text('Good evening, Ada'), findsOneWidget);
     expect(find.textContaining('New test tomorrow'), findsOneWidget);
+    // Old unfinished Daily Test sets are cleaned up once, at launch.
+    expect(storage.staleCleanups, 1);
     final launch = (
       finalize: storage.finalizeCalls,
       daily: storage.dailyReads,
@@ -132,5 +141,7 @@ void main() {
     expect(storage.finalizeCalls, launch.finalize + 1);
     expect(storage.dailyReads, launch.daily + 1);
     expect(storage.climbReads, launch.climb + 1);
+    // The cleanup is launch-only: a resume never runs it again.
+    expect(storage.staleCleanups, 1);
   });
 }

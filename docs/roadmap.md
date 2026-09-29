@@ -6,8 +6,8 @@
 |---|---|---|
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
-| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release |
-| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26, first set published; watching cron CPU (8 ms of the Free plan's 10 ms on the first run); content quality issues open; proxy commits not yet merged into `main`; client not started. Side work: all items defined 2026-09-26 in `docs/1.1.0-design-side-tracks.md` (launch screen, monthly themes, trail and scene, Home title, avatars, measurement); to be built after the `main` merge; nothing started |
+| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0 |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist). **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
@@ -104,6 +104,19 @@ Nothing is marked complete unless the record says so.
   'needn't have looked', 'train had already left' recurred). Same prompt for
   everyone is the cause. Revisit together with shared Daily Test generation,
   where day-to-day variety becomes the main concern.
+- **Shared Daily Test check call and repairs (P7a–c)** (after 1.1.0; moved
+  there 2026-09-29, path A). The pure parts (P5, P6) are built and tested on
+  `1.1.0` but not wired: the decision table with `acceptedAnswers`, repair
+  generation, and the two-phase cron with `claude-opus-5-5` as the checker.
+  The 1.1.0 client already grades `acceptedAnswers` (C1, 2026-09-30), so
+  turning P7 on needs no app update.
+  `docs/1.1.0-shared-daily-test-quality.md` §14.6, §15.4, §16. Planned, not
+  scheduled.
+- **Practice generation model migration (claude-sonnet-4-6 → claude-sonnet-5)**
+  (after 1.1.0; recorded 2026-09-27) — evaluate quality and schema compliance
+  first; potential per-user cost reduction. A note only; no work planned. The
+  shared Daily Test's local measurement (E) tries `claude-sonnet-5` as a
+  generator first, which gives a first data point.
 - **README refresh with current launch screenshots** (3–4 images, compressed,
   in `docs/screenshots/`); add the App Store badge and link only after the app
   is released.
@@ -120,7 +133,8 @@ Nothing is marked complete unless the record says so.
   Day-0 test pays for one generation; skipped days waste the prepared set;
   stale `daily_test_sets` rows are never deleted. Solved by the shared Daily
   Test; if that slips, consider preparing the set on app open instead of after
-  completion.
+  completion. *(Update 2026-09-30: C1 makes the 1.1.0 prefetch a free read of
+  tomorrow's shared set; stale-row cleanup is C3.)*
 - **Verify whether timed-out or unparseable generations are still billed**
   (recorded 2026-09-24): compare `anthropic_usage` log counts with stored
   sets.
@@ -2207,6 +2221,24 @@ step 5):
 - [ ] **Daily Test explanation on a generated set** on a device (seen only on
   the first-day set).
 - [ ] **Rotation on iPad hardware** does nothing (tried only in the simulator).
+
+#### 1.1.0 release checklist
+
+Owner items before the 1.1.0 build ships (added 2026-09-30):
+
+- [ ] **Register `set_date` as a custom dimension in Firebase** (event
+  scope, parameter `set_date`, event `daily_test_completed`) before the
+  build ships: registration is not retroactive (`docs/analytics-plan.md`
+  §9).
+- [ ] **Fallback pool filled:** 7 live v2 sets exported, reviewed and
+  committed with `scripts/fallback_pool.sh` (build log 2026-09-30); until
+  then every fallback day shows the day-0 questions.
+- [ ] **`SHARED_DAILY_TEST_ENABLED` is `"true"`** and has been for at least
+  3–4 days before release, so dates up to local tomorrow are published
+  (quality report §16.4, open point 2).
+- [ ] **DebugView:** `set_source = shared` on a normal day and `fallback`
+  with the app opened on a new day in airplane mode; `set_date` present
+  (`docs/analytics-plan.md` §6).
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.

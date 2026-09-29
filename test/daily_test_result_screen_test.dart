@@ -64,6 +64,7 @@ DailyTestQuestion _question({
   required String correctAnswer,
   List<CommonWrongAnswer> commonWrongAnswers = const [],
   String? explanation,
+  List<String> acceptedAnswers = const [],
 }) =>
     DailyTestQuestion(
       item: PracticeItem(
@@ -75,6 +76,7 @@ DailyTestQuestion _question({
       correctAnswer: correctAnswer,
       commonWrongAnswers: commonWrongAnswers,
       explanation: explanation,
+      acceptedAnswers: acceptedAnswers,
     );
 
 void main() {
@@ -492,6 +494,31 @@ void main() {
     });
 
     testWidgets(
+        'an accepted alternative is shown as Correct with the key named, '
+        'and is not written to the error profile', (tester) async {
+      await pumpResult(
+        tester,
+        DailyTestSet(day: '2026-01-01', questions: [
+          _question(
+              id: 'a1',
+              topicId: 'modals',
+              correctAnswer: 'had to',
+              acceptedAnswers: const ['should'],
+              explanation: 'Past obligation.'),
+        ]),
+        answersOverride: {'a1': 'Should'},
+      );
+
+      expect(find.text('Correct'), findsOneWidget);
+      expect(find.text('Needs work'), findsNothing);
+      expect(
+          find.text('Also correct: "had to". Past obligation.',
+              skipOffstage: false),
+          findsOneWidget);
+      expect(storageService.insertedErrors, isEmpty);
+    });
+
+    testWidgets(
         'reopening an already-completed set (Home\'s "view result again") '
         'does not re-log the same mistakes a second time', (tester) async {
       final completedSet = DailyTestSet(
@@ -803,6 +830,7 @@ void main() {
         'step_earned': 1,
         'day0': 0,
         'set_source': 'generated',
+        'set_date': '2026-01-01',
       });
     });
 
@@ -827,6 +855,26 @@ void main() {
         'bundled',
       );
     });
+
+    for (final source in [DailyTestSource.shared, DailyTestSource.fallback]) {
+      testWidgets(
+          'a ${source.name} set reports set_source = ${source.name} and its '
+          'own day as set_date', (tester) async {
+        await pumpWith(
+          tester,
+          set: DailyTestSet(
+            day: '2026-10-01',
+            questions: questions,
+            source: source,
+          ),
+        );
+
+        final parameters =
+            analyticsSink.named('daily_test_completed').single.parameters!;
+        expect(parameters['set_source'], source.name);
+        expect(parameters['set_date'], '2026-10-01');
+      });
+    }
 
     testWidgets('the Day-0 result screen reports day0 = 1', (tester) async {
       await pumpWith(
@@ -856,6 +904,7 @@ void main() {
         'step_earned': 0,
         'day0': 0,
         'set_source': 'generated',
+        'set_date': '2026-01-01',
       });
       expect(analyticsSink.named('welcome_badge_earned'), isEmpty);
     });

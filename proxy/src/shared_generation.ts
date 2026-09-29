@@ -1,14 +1,15 @@
 import { callAnthropic, type CallMeta } from './anthropic';
 import type { UpstreamFailure } from './error_log';
 import {
-  SHARED_PROMPT_VERSION,
   dailyPlan,
   dateOfDayNumber,
   setKey,
   sharedDailyTestRequest,
   utcDayNumber,
   validateSharedSet,
+  type GenerateSharedDailyTestRequest,
   type PublishedSet,
+  type SharedGenerationOptions,
   type SharedSetRejection,
 } from './shared_daily_test';
 import type { Env } from './types';
@@ -31,14 +32,16 @@ export const GENERATION_AHEAD_DAYS = 3;
 export const MAX_ATTEMPTS_PER_DATE = 3;
 
 /**
- * How long one generation may take before it is abandoned. The one live
- * measurement was 27.6 s for ~1,500 output tokens (build log 2026-09-24,
- * about 54 tokens/s); the budget is 3,072 output tokens, which at that pace
- * is ~57 s. A 60 s limit would cut off a response that is still being written
- * (and billed) near a long output; nobody is waiting on a scheduled run, and a
- * cron may run for 15 minutes, so 90 s leaves margin for a slower hour.
+ * How long one generation may take before it is abandoned
+ * (docs/1.1.0-shared-daily-test-quality.md §15.2). `claude-sonnet-5` with
+ * adaptive thinking wrote 4,052–4,878 output tokens at ~97 tokens/s in E
+ * (≈ 50 s for the largest), but its budget is 15,072 tokens (≈ 155 s): 90 s
+ * would cut off (and still bill) a call that thinks longer. 150 s lets a
+ * generation end at its token budget rather than at the timer. It costs
+ * nothing: nobody waits on a scheduled run, a cron invocation may run for 15
+ * minutes, and waiting on `fetch` is not CPU time.
  */
-export const GENERATION_TIMEOUT_MS = 90_000;
+export const GENERATION_TIMEOUT_MS = 150_000;
 
 /** An attempt holds its date this long, so an overlapping run skips it
  * instead of paying for a second generation: the timeout plus margin. */
@@ -103,9 +106,13 @@ async function recentAnswers(kv: KVNamespace, dayNumber: number): Promise<string
  * PRIVACY CONTRACT — one line per paid attempt, built field by field: the date
  * (a calendar label, not about anyone), the attempt number, the outcome, a
  * rejection code from `SharedSetRejection`, an upstream failure category, the
- * whitelisted stop reason, token counts, duration and prompt version. Never
- * any generated text. The token counts and stop reason also appear on the
- * `anthropic_usage` line that `callAnthropic` writes for the same call.
+ * whitelisted stop reason, token counts, duration, and what was asked: the
+ * prompt version, the generator model and its effort (`null` when none was
+ * sent), all fixed vocabularies from the request. Never any generated text.
+ * The token counts and stop reason also appear on the `anthropic_usage` line
+ * that `callAnthropic` writes for the same call; the model and effort only
+ * here (that line keeps one shape for every operation, the legacy one
+ * included).
  */
 function logGeneration(fields: {
   date: string;
@@ -114,6 +121,7 @@ function logGeneration(fields: {
   reason?: SharedSetRejection;
   failure?: UpstreamFailure;
   meta: CallMeta;
+  request: GenerateSharedDailyTestRequest;
 }): void {
   console.log(
     JSON.stringify({
@@ -127,7 +135,9 @@ function logGeneration(fields: {
       input_tokens: fields.meta.inputTokens ?? null,
       output_tokens: fields.meta.outputTokens ?? null,
       duration_ms: durationField(fields.meta.durationMs),
-      prompt_version: SHARED_PROMPT_VERSION,
+      prompt_version: fields.request.promptVersion,
+      model: fields.request.model,
+      effort: fields.request.effort ?? null,
     }),
   );
 }
@@ -135,6 +145,9 @@ function logGeneration(fields: {
 export interface GenerationOptions {
   /** Test seam; production uses [GENERATION_TIMEOUT_MS]. */
   timeoutMs?: number;
+  /** Test seam; production uses the defaults (`SHARED_GENERATOR`, the
+   * current prompt version). */
+  generation?: SharedGenerationOptions;
 }
 
 /**
@@ -195,7 +208,7 @@ async function generate(
   });
 
   const plan = dailyPlan(date);
-  const request = sharedDailyTestRequest(plan, await recentAnswers(kv, dayNumber));
+  const request = sharedDailyTestRequest(plan, await recentAnswers(kv, dayNumber), options.generation);
   const meta: CallMeta = {};
 
   let content: unknown;
@@ -206,27 +219,27 @@ async function generate(
       { signal: AbortSignal.timeout(options.timeoutMs ?? GENERATION_TIMEOUT_MS), meta },
     );
   } catch {
-    logGeneration({ date, attempt, outcome: 'upstream_failed', failure: meta.failure, meta });
+    logGeneration({ date, attempt, outcome: 'upstream_failed', failure: meta.failure, meta, request });
     return;
   }
 
   const result = validateSharedSet(content, plan);
   if (!result.ok) {
-    logGeneration({ date, attempt, outcome: 'rejected', reason: result.reason, meta });
+    logGeneration({ date, attempt, outcome: 'rejected', reason: result.reason, meta, request });
     return;
   }
 
   if ((await kv.get(setKey(date))) !== null) {
-    logGeneration({ date, attempt, outcome: 'already_published', meta });
+    logGeneration({ date, attempt, outcome: 'already_published', meta, request });
     return;
   }
   const published: PublishedSet = {
     date,
-    promptVersion: SHARED_PROMPT_VERSION,
+    promptVersion: request.promptVersion,
     generatedAt: now.toISOString(),
     attempt,
     questions: result.questions,
   };
   await kv.put(setKey(date), JSON.stringify(published), { expirationTtl: SET_TTL_SECONDS });
-  logGeneration({ date, attempt, outcome: 'published', meta });
+  logGeneration({ date, attempt, outcome: 'published', meta, request });
 }

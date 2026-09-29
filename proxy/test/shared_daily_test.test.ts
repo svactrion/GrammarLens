@@ -1,20 +1,34 @@
 import { env } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildGenerateSharedDailyTestBody, callAnthropic, dailyTestMaxTokensFor } from '../src/anthropic';
 import {
+  THINKING_HEADROOM_TOKENS,
+  buildGenerateSharedDailyTestBody,
+  callAnthropic,
+  dailyTestMaxTokensFor,
+} from '../src/anthropic';
+import {
+  ERROR_CORRECTION_MAX_EDIT_WORDS,
+  ERROR_CORRECTION_MIN_WORDS,
   EXPLANATION_MAX_WORDS,
   SCENARIO_THEMES,
   SHARED_PROMPT_VERSION,
+  blankCount,
   SHARED_SET_QUESTION_COUNT,
   dailyPlan,
   dateOfDayNumber,
   dayNumberOf,
   foldKeyboardVariants,
   isInServingWindow,
+  isSingleShortEdit,
+  GENERATOR_MODELS,
+  SHARED_GENERATOR,
   normalizeAnswer,
   sharedDailyTestRequest,
+  validateSharedCandidates,
   validateSharedSet,
   type DailyPlan,
+  type SharedGenerationOptions,
+  type SharedPromptVersion,
   type SharedSetRejection,
 } from '../src/shared_daily_test';
 import { TOPICS } from '../src/topics';
@@ -383,6 +397,8 @@ describe('validateSharedSet', () => {
     const questions = withQuestion(0, (q) => {
       q.extra = 'dropped';
       delete q.context;
+      // Its blank moves into the instruction, where the learner still sees it.
+      q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.';
     });
     const result = validate(questions);
     expect(result.ok).toBe(true);
@@ -460,7 +476,15 @@ describe('validateSharedSet', () => {
 
   describe('plan_mismatch', () => {
     it('rejects a type the plan does not give that topic', () => {
-      expectRejected(withQuestion(0, (q) => (q.type = 'error_correction')), 'plan_mismatch');
+      // An otherwise valid error-correction item, so only the type is wrong.
+      expectRejected(
+        withQuestion(0, (q) => {
+          q.type = 'error_correction';
+          q.context = 'We stayed at a hotel you recommended.';
+          q.correctAnswer = 'We stayed at the hotel you recommended.';
+        }),
+        'plan_mismatch',
+      );
     });
 
     it('rejects an unknown type or topic', () => {
@@ -564,7 +588,232 @@ describe('validateSharedSet', () => {
     });
 
     it('does not apply the rule to fill-in-the-blank', () => {
-      expect(validate(withQuestion(0, (q) => (q.context = 'the'))).ok).toBe(true);
+      expect(
+        validate(
+          withQuestion(0, (q) => {
+            q.context = 'the';
+            q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.';
+          }),
+        ).ok,
+      ).toBe(true);
+    });
+  });
+
+  describe('error_correction_missing_sentence', () => {
+    // E, 2026-09-28: 19 of 28 error_correction questions from claude-sonnet-4-6
+    // had no "context" at all, and no other field held the sentence to correct.
+    const tenseWith = (edit: (q: Question) => void) => withQuestion(3, edit);
+
+    it('rejects an error_correction question with no "context" field', () => {
+      expectRejected(tenseWith((q) => delete q.context), 'error_correction_missing_sentence');
+    });
+
+    it('rejects an empty or whitespace-only "context"', () => {
+      expectRejected(tenseWith((q) => (q.context = '')), 'error_correction_missing_sentence');
+      expectRejected(tenseWith((q) => (q.context = ' \n\t ')), 'error_correction_missing_sentence');
+    });
+
+    it(`rejects a "context" of fewer than ${ERROR_CORRECTION_MIN_WORDS} words with a letter`, () => {
+      expectRejected(tenseWith((q) => (q.context = '...')), 'error_correction_missing_sentence');
+      expectRejected(tenseWith((q) => (q.context = '— 1 2 3 —')), 'error_correction_missing_sentence');
+      expectRejected(tenseWith((q) => (q.context = 'Plane left.')), 'error_correction_missing_sentence');
+    });
+
+    it(`accepts a sentence of ${ERROR_CORRECTION_MIN_WORDS} words`, () => {
+      expect(
+        validate(
+          tenseWith((q) => {
+            q.context = 'She go home.';
+            q.correctAnswer = 'She goes home.';
+            q.commonWrongAnswers = [
+              { answer: 'She going home.', comment: 'c1' },
+              { answer: 'She go home.', comment: 'c2' },
+            ];
+          }),
+        ).ok,
+      ).toBe(true);
+    });
+
+    it('is reported before the other rules, whatever else is wrong with the question', () => {
+      expectRejected(
+        tenseWith((q) => {
+          delete q.context;
+          q.commonWrongAnswers = [];
+        }),
+        'error_correction_missing_sentence',
+      );
+    });
+
+    it('does not apply to fill-in-the-blank, which may leave "context" out (its blank then in the instruction)', () => {
+      const blankInInstruction = (q: Question) => (q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.');
+      expect(validate(withQuestion(0, (q) => (delete q.context, blankInInstruction(q)))).ok).toBe(true);
+      expect(validate(withQuestion(0, (q) => ((q.context = ''), blankInInstruction(q)))).ok).toBe(true);
+    });
+
+    it('drops a two-candidate answer\'s sentenceless candidate, and rejects when both of a slot\'s are', () => {
+      const pair = validQuestions().flatMap((q) => [
+        { ...q, id: `${String(q.id)}-a` },
+        { ...q, id: `${String(q.id)}-b` },
+      ]);
+      const tenseA = pair.find((q) => q.id === 'q-tense-a') as Question;
+      delete tenseA.context;
+      const one = validateSharedCandidates({ questions: pair }, PLAN, 2);
+      expect(one.ok && one.dropped).toEqual([{ slot: 3, reason: 'error_correction_missing_sentence' }]);
+      (pair.find((q) => q.id === 'q-tense-b') as Question).context = '  ';
+      expect(validateSharedCandidates({ questions: pair }, PLAN, 2)).toEqual({
+        ok: false,
+        reason: 'error_correction_missing_sentence',
+      });
+    });
+  });
+
+  describe('fill_in_blank_missing_blank and fill_in_blank_multiple_blanks (§16.6)', () => {
+    // The comparison, 2026-09-29 (V1, 2026-10-13, question 3): a scene in
+    // "context", a generic instruction, and the sentence to complete nowhere.
+    const NO_BLANK = {
+      context: 'My phone suddenly restarted while I was updating apps.',
+      instruction: 'Complete the sentence with the correct form of the verb in brackets.',
+      hint: '(already / download)',
+    };
+    const articlesWith = (edit: (q: Question) => void) => withQuestion(0, edit);
+
+    it('counts runs of two or more underscores in context and instruction only', () => {
+      expect(blankCount('We stayed at ___ hotel.', 'Fill in the blank.')).toBe(1);
+      expect(blankCount('A scene.', 'Complete: I ___ it.')).toBe(1);
+      expect(blankCount('I ___ it and ______ that.', undefined)).toBe(2);
+      expect(blankCount('I __ it.', 'Also __ here.')).toBe(2);
+      expect(blankCount('I _ it (one underscore is not a blank).', 'No blank here.')).toBe(0);
+      expect(blankCount(undefined, 'No blank.')).toBe(0);
+      expect(blankCount(42, null)).toBe(0);
+    });
+
+    it('rejects a fill_in_blank question with no blank (the real case)', () => {
+      expectRejected(articlesWith((q) => Object.assign(q, NO_BLANK)), 'fill_in_blank_missing_blank');
+    });
+
+    it('does not count a blank that is only in the hint', () => {
+      expectRejected(
+        articlesWith((q) => Object.assign(q, NO_BLANK, { hint: 'Think of: I ___ it.' })),
+        'fill_in_blank_missing_blank',
+      );
+    });
+
+    it('rejects no context and a blankless instruction', () => {
+      expectRejected(articlesWith((q) => delete q.context), 'fill_in_blank_missing_blank');
+    });
+
+    it('accepts exactly one blank, in context or in instruction', () => {
+      expect(validate(validQuestions()).ok).toBe(true); // every blank in "context"
+      expect(
+        validate(
+          articlesWith((q) => {
+            q.context = 'You are talking about a trip.';
+            q.instruction = 'Fill in the blank: We stayed at ___ hotel you recommended.';
+          }),
+        ).ok,
+      ).toBe(true);
+    });
+
+    it('rejects two blanks, in one field or across both', () => {
+      expectRejected(articlesWith((q) => (q.context = 'We stayed at ___ hotel near ___ station.')), 'fill_in_blank_multiple_blanks');
+      expectRejected(
+        articlesWith((q) => (q.instruction = 'Fill in ___ blank with the correct article.')),
+        'fill_in_blank_multiple_blanks',
+      );
+    });
+
+    it('does not apply to error_correction', () => {
+      // Its flawed sentence has no blank, as every valid one does.
+      expect(validQuestions()[3]?.type).toBe('error_correction');
+      expect(blankCount(validQuestions()[3]?.context, validQuestions()[3]?.instruction)).toBe(0);
+      expect(validate(validQuestions()).ok).toBe(true);
+    });
+
+    it('drops a two-candidate answer\'s blankless candidate, and rejects when both of a slot\'s are', () => {
+      const pair = validQuestions().flatMap((q) => [
+        { ...q, id: `${String(q.id)}-a` },
+        { ...q, id: `${String(q.id)}-b` },
+      ]);
+      Object.assign(pair.find((q) => q.id === 'q-articles-a') as Question, NO_BLANK);
+      const one = validateSharedCandidates({ questions: pair }, PLAN, 2);
+      expect(one.ok && one.dropped).toEqual([{ slot: 0, reason: 'fill_in_blank_missing_blank' }]);
+      (pair.find((q) => q.id === 'q-articles-b') as Question).context = 'We stayed at ___ hotel near ___ station.';
+      expect(validateSharedCandidates({ questions: pair }, PLAN, 2)).toEqual({
+        ok: false,
+        reason: 'fill_in_blank_missing_blank',
+      });
+    });
+  });
+
+  describe('error_correction_multi_edit', () => {
+    const ARRIVED = 'When we arrived, the plane already left.';
+    /** The valid set with its tense item's flawed sentence and key replaced. */
+    const tense = (correctAnswer: string, context = ARRIVED) =>
+      withQuestion(3, (q) => {
+        q.context = context;
+        q.correctAnswer = correctAnswer;
+      });
+    const passes = (correctAnswer: string, context?: string) => expect(validate(tense(correctAnswer, context)).ok).toBe(true);
+    const fails = (correctAnswer: string, context?: string) =>
+      expectRejected(tense(correctAnswer, context), 'error_correction_multi_edit');
+
+    it('accepts one fix: an inserted, a replaced or a removed word', () => {
+      passes('When we arrived, the plane had already left.'); // the valid set's own item
+      passes('When we arrived, the plane had left.', 'When we arrived, the plane has left.');
+      passes('When we arrived, the plane had left.', 'When we arrived, the plane had had left.');
+    });
+
+    it(`allows a span of ${ERROR_CORRECTION_MAX_EDIT_WORDS} words on each side and rejects ${ERROR_CORRECTION_MAX_EDIT_WORDS + 1}`, () => {
+      passes('When we arrived, w x y z left.', 'When we arrived, a b c d left.');
+      fails('When we arrived, v w x y z left.', 'When we arrived, a b c d e left.');
+      fails('When we arrived, the plane left.', 'When we arrived, the plane a b c d e left.');
+      fails('When we arrived, the plane a b c d e left.', 'When we arrived, the plane left.');
+    });
+
+    it('rejects two fixes far apart, and a rewritten sentence', () => {
+      fails(
+        'When we arrived at the station, the plane had already left.',
+        'When we arrive at the station, the plane already left.',
+      );
+      fails('The plane had left before we got there.');
+    });
+
+    it('compares normalized text: case, spacing, curly quotes and the final full stop are not edits', () => {
+      passes("WHEN we arrived,   the plane's door HAD already closed", 'When we arrived, the plane\u2019s door already closed.');
+    });
+
+    it('does not apply to fill-in-the-blank', () => {
+      expect(validate(withQuestion(0, (q) => (q.context = 'a b c d ___ e f g h'))).ok).toBe(true);
+    });
+
+    it('still reports an unchanged sentence as unchanged_error_correction', () => {
+      expectRejected(tense('When we arrived, the plane already left.'), 'unchanged_error_correction');
+    });
+
+    it("does not catch the owner's one-word cases from 2026-09-26/27: judging those is the checker's job", () => {
+      // Paraphrased from the owner's review (docs/1.1.0-shared-daily-test-quality.md §0):
+      // the original was already acceptable, and the key changes one word.
+      expect(isSingleShortEdit('i knew i must study harder', 'i knew i should study harder')).toBe(true);
+      expect(isSingleShortEdit('i go to a library on campus', 'i go to the library on campus')).toBe(true);
+    });
+  });
+
+  describe('isSingleShortEdit', () => {
+    it.each([
+      ['a b c', 'a x c', true],
+      ['a b c', 'a b c d', true],
+      ['a b c d', 'a b c', true],
+      ['x a b', 'a b', true],
+      ['a b a', 'a a', true], // repeated words: prefix and suffix never overlap
+      ['a a a', 'a a', true],
+      ['a b c d e f a b a', 'a b a', false], // 6 words removed; an overlap would count 4
+      ['a', 'b c d e', true],
+      ['a', 'b c d e f', false],
+      ['a b c d e f', 'x', false],
+      ['a b c d e f g', 'x b c d e f y', false], // two fixes 5 words apart
+      ['a b c d e f g', 'x b c y e f g', true], // two fixes inside 4 words
+    ])('%j -> %j: %s', (from, to, expected) => {
+      expect(isSingleShortEdit(from, to)).toBe(expected);
     });
   });
 
@@ -627,11 +876,26 @@ describe('validateSharedSet', () => {
 // ---------------------------------------------------------------------------
 // The generation request
 
+/** FNV-1a over the full generation request for [PLAN] and a fixed avoid list. */
+function requestFingerprint(options: SharedGenerationOptions): string {
+  const body = JSON.stringify(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(PLAN, ['admit'], options)));
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < body.length; i++) {
+    hash ^= body.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16);
+}
+
+/** Prompt version 1 as it was measured and published: `claude-sonnet-4-6`,
+ * the legacy route's model. */
+const V1_LEGACY: SharedGenerationOptions = { promptVersion: 1, model: 'claude-sonnet-4-6' };
+
 describe('generate_shared_daily_test request', () => {
   const plan = PLAN;
 
-  it('reuses the legacy Daily Test model, system prompt, schema and budget; only the user prompt differs', () => {
-    const body = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan));
+  it('version 1 reuses the legacy Daily Test model, system prompt, schema and budget; only the user prompt differs', () => {
+    const body = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, [], V1_LEGACY));
     expect(body.max_tokens).toBe(dailyTestMaxTokensFor(5));
     expect(body.max_tokens).toBe(3072);
     expect(body.model).toBe('claude-sonnet-4-6');
@@ -684,22 +948,255 @@ describe('generate_shared_daily_test request', () => {
     expect(body).not.toContain('deviceId');
   });
 
-  it(`is pinned to SHARED_PROMPT_VERSION ${SHARED_PROMPT_VERSION}`, () => {
-    // A fingerprint of the full request for a fixed plan and avoid list. If it
-    // changes, the shared prompt changed: bump SHARED_PROMPT_VERSION, then
-    // update the fingerprint here.
-    const body = JSON.stringify(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'])));
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < body.length; i++) {
-      hash ^= body.charCodeAt(i);
-      hash = Math.imul(hash, 0x01000193) >>> 0;
+  // With the model that generated every set so far, so the pins stay what E
+  // and the published v1 sets used.
+  const fingerprint = (promptVersion: SharedPromptVersion) =>
+    requestFingerprint({ promptVersion, model: 'claude-sonnet-4-6' });
+
+  it.each([
+    [1, 'c1a5703'],
+    [2, '3b9d4a6b'],
+  ] as const)('pins prompt version %i to its request fingerprint', (version, expected) => {
+    // If a fingerprint changes, that prompt changed: make it a new version
+    // instead, and pin the new one here. Version 1 is what every published set
+    // so far was generated with. Version 2 was re-pinned once, before any set
+    // was published with it (2026-09-28: `context` required for
+    // error_correction in its schema; E measured the earlier 22121840).
+    expect(fingerprint(version)).toBe(expected);
+  });
+
+  it(`builds version ${SHARED_PROMPT_VERSION} by default, the one the cron uses (path A, 2026-09-29)`, () => {
+    expect(SHARED_PROMPT_VERSION).toBe(2);
+    expect(sharedDailyTestRequest(plan).promptVersion).toBe(2);
+    expect(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan))).toEqual(
+      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, [], { promptVersion: 2 })),
+    );
+  });
+});
+
+describe('generate_shared_daily_test request, prompt version 2', () => {
+  const plan = PLAN;
+  // The same model for both, so only the prompt differs.
+  const v1 = buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], V1_LEGACY));
+  const v2 = buildGenerateSharedDailyTestBody(
+    sharedDailyTestRequest(plan, ['admit'], { promptVersion: 2, model: 'claude-sonnet-4-6' }),
+  );
+  const v2User = v2.messages[0]?.content ?? '';
+
+  it('keeps the model and token budget of version 1 (and so of the legacy route)', () => {
+    expect(v2.model).toBe(v1.model);
+    expect(v2.max_tokens).toBe(v1.max_tokens);
+    expect(v2.messages).toHaveLength(1);
+  });
+
+  it("uses version 1's schema with each question one of two shapes, error_correction requiring \"context\"", () => {
+    type Obj = Record<string, unknown> & { properties: Record<string, unknown>; required: string[] };
+    const schemaOf = (body: typeof v1) => (body.output_config.format.schema as { properties: { questions: { items: unknown } } });
+    const v1Item = schemaOf(v1).properties.questions.items as Obj;
+    const [fill, ec] = (schemaOf(v2).properties.questions.items as { anyOf: Obj[] }).anyOf as [Obj, Obj];
+    for (const [shape, type] of [
+      [fill, 'fill_in_blank'],
+      [ec, 'error_correction'],
+    ] as const) {
+      expect(shape.properties).toEqual({ ...v1Item.properties, type: { type: 'string', const: type } });
+      expect(shape.additionalProperties).toBe(false);
     }
-    expect({ version: SHARED_PROMPT_VERSION, fingerprint: hash.toString(16) }).toMatchInlineSnapshot(`
-      {
-        "fingerprint": "c1a5703",
-        "version": 1,
-      }
-    `);
+    expect(fill.required).toEqual(v1Item.required);
+    expect(fill.required).not.toContain('context');
+    expect(new Set(ec.required)).toEqual(new Set([...v1Item.required, 'context']));
+    // Everything outside the questions' items is version 1's.
+    const withoutItems = (body: typeof v1) => {
+      const schema = structuredClone(schemaOf(body));
+      schema.properties.questions.items = null;
+      return { ...body.output_config, format: { ...body.output_config.format, schema } };
+    };
+    expect(withoutItems(v2)).toEqual(withoutItems(v1));
+  });
+
+  it('uses only schema keywords structured outputs documents as supported (no oneOf, if, minLength, pattern)', () => {
+    const json = JSON.stringify(v2.output_config);
+    for (const keyword of ['oneOf', '"if"', 'minLength', 'maxLength', 'pattern', 'minimum']) expect(json).not.toContain(keyword);
+  });
+
+  it('has its own system prompt, not the legacy Daily Test one', () => {
+    expect(v2.system).not.toBe(v1.system);
+    expect(v1.system).toContain('as regular');
+    // Self-contained: no pointer to a practice prompt the model never sees.
+    expect(v2.system).not.toContain('practice generation');
+  });
+
+  it('states the five correctness rules', () => {
+    for (const rule of [
+      '1. Single correct answer.',
+      '2. error_correction: the original must be clearly wrong.',
+      '3. Predicted wrong answers must be wrong.',
+      '4. Only true, standard rules.',
+      '5. "hint" is optional.',
+    ]) {
+      expect(v2.system).toContain(rule);
+    }
+    expect(v2.system).toContain('at most 15 words');
+    expect(v2.system).toContain('self-contained and unambiguous');
+  });
+
+  it('keeps the explanation and predicted-wrong-answer instructions of version 1', () => {
+    expect(v2.system).toContain('"explanation": one sentence of fewer than 25 words');
+    expect(v2.system).toContain('predict 2-3 common wrong answers');
+    expect(v2.system).toContain('don\'t open with praise');
+  });
+
+  it('adds the keep-the-slot clause to the user prompt, and nothing else changes there', () => {
+    const v1User = v1.messages[0]?.content ?? '';
+    const clause = v2User.split('\n').find((l) => l.startsWith("If a slot's type cannot be written")) ?? '';
+    expect(clause).toContain('keep the topic and type');
+    expect(v1User).not.toContain(clause);
+    expect(v2User.split('\n').filter((l) => l !== clause)).toEqual(v1User.split('\n'));
+  });
+});
+
+describe('generate_shared_daily_test request, generation variants (owner additions A and B)', () => {
+  const build = (options: SharedGenerationOptions) => buildGenerateSharedDailyTestBody(sharedDailyTestRequest(PLAN, [], options));
+  const base = build({ promptVersion: 2, model: 'claude-sonnet-4-6' });
+
+  it('defaults to SHARED_GENERATOR: claude-sonnet-5-5 at effort low, adaptive thinking, one question per slot', () => {
+    expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5-5', effort: 'low' });
+    const request = sharedDailyTestRequest(PLAN);
+    expect(request).toMatchObject({ model: 'claude-sonnet-5-5', effort: 'low', candidatesPerSlot: 1, count: 5 });
+    const body = buildGenerateSharedDailyTestBody(request);
+    expect(body.model).toBe('claude-sonnet-5-5');
+    expect(body.thinking).toEqual({ type: 'adaptive' });
+    expect(body.output_config).toMatchObject({ effort: 'low' });
+    expect(body.max_tokens).toBe(dailyTestMaxTokensFor(5) + THINKING_HEADROOM_TOKENS);
+  });
+
+  it('keeps how each model is asked in one table: only claude-sonnet-4-6 runs without thinking', () => {
+    expect(GENERATOR_MODELS).toEqual({
+      'claude-sonnet-4-6': { adaptiveThinking: false },
+      'claude-sonnet-5': { adaptiveThinking: true },
+      'claude-sonnet-5-5': { adaptiveThinking: true },
+    });
+    const noThinking = build({ promptVersion: 2, model: 'claude-sonnet-4-6' });
+    expect('thinking' in noThinking).toBe(false);
+    expect(noThinking.max_tokens).toBe(dailyTestMaxTokensFor(5));
+  });
+
+  it('claude-sonnet-5-5 is asked like claude-sonnet-5: adaptive thinking and headroom, only the model differs', () => {
+    const five = build({ promptVersion: 2, model: 'claude-sonnet-5' });
+    const fiveFive = build({ promptVersion: 2, model: 'claude-sonnet-5-5' });
+    expect(fiveFive).toEqual({ ...five, model: 'claude-sonnet-5-5' });
+  });
+
+  it.each(['low', 'medium', 'high'] as const)('sends effort "%s" in output_config only when asked, nothing else changes', (effort) => {
+    const plain = build({ promptVersion: 2, model: 'claude-sonnet-5-5' });
+    const withEffort = build({ promptVersion: 2, model: 'claude-sonnet-5-5', effort });
+    expect(withEffort.output_config).toEqual({ ...plain.output_config, effort });
+    expect({ ...withEffort, output_config: plain.output_config }).toEqual(plain);
+    expect('effort' in plain.output_config).toBe(false);
+  });
+
+  it('an explicit model does not inherit the default generator\'s effort', () => {
+    expect('effort' in sharedDailyTestRequest(PLAN, [], { model: 'claude-sonnet-5-5' })).toBe(false);
+    expect(sharedDailyTestRequest(PLAN, [], { model: 'claude-sonnet-5-5', effort: 'low' }).effort).toBe('low');
+  });
+
+  it('claude-sonnet-5 gets adaptive thinking and thinking headroom; nothing else changes', () => {
+    const body = build({ promptVersion: 2, model: 'claude-sonnet-5' });
+    expect(body.model).toBe('claude-sonnet-5');
+    expect(body.thinking).toEqual({ type: 'adaptive' });
+    expect(body.max_tokens).toBe(dailyTestMaxTokensFor(5) + THINKING_HEADROOM_TOKENS);
+    expect({ ...body, model: base.model, max_tokens: base.max_tokens, thinking: undefined }).toEqual({
+      ...base,
+      thinking: undefined,
+    });
+  });
+
+  it('two candidates per slot ask for 10 questions, grouped by slot, with the budget for 10', () => {
+    const request = sharedDailyTestRequest(PLAN, [], { promptVersion: 2, model: 'claude-sonnet-4-6', candidatesPerSlot: 2 });
+    expect(request.count).toBe(10);
+    const body = buildGenerateSharedDailyTestBody(request);
+    expect(body.max_tokens).toBe(dailyTestMaxTokensFor(10));
+    const content = body.messages[0]?.content ?? '';
+    expect(content).toContain('Generate exactly 10 Daily Test questions, two candidates for each slot below');
+    expect(content).toContain('Only one of them will be used');
+    // The same slot lines and the v2 clause as the one-candidate request.
+    const baseContent = base.messages[0]?.content ?? '';
+    for (const line of baseContent.split('\n').slice(1)) expect(content).toContain(line);
+    expect(build({ promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 }).max_tokens).toBe(
+      dailyTestMaxTokensFor(10) + THINKING_HEADROOM_TOKENS,
+    );
+  });
+
+  it.each([
+    // Re-pinned with version 2 (2026-09-28); E measured 9391a5af, f04badb8, 98f1bfc3.
+    ['G3: v2, claude-sonnet-5', { promptVersion: 2, model: 'claude-sonnet-5' }, 'ac736d3e'],
+    ['G4: v2, two candidates', { promptVersion: 2, model: 'claude-sonnet-4-6', candidatesPerSlot: 2 }, 'aac0a37'],
+    ['G5: v2, claude-sonnet-5, two candidates', { promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 }, '8a3ca186'],
+  ] as const)('pins the measured variant %s to its request fingerprint', (_name, options, expected) => {
+    expect(requestFingerprint(options)).toBe(expected);
+  });
+});
+
+describe('validateSharedCandidates (two candidates per slot)', () => {
+  /** Both candidates of every slot, in plan order: the valid set twice, ids made unique. */
+  function tenCandidates(): Question[] {
+    return validQuestions().flatMap((q) => [
+      { ...q, id: `${String(q.id)}-a` },
+      { ...q, id: `${String(q.id)}-b` },
+    ]);
+  }
+  const candidates = (questions: Question[]) => validateSharedCandidates({ questions }, PLAN, 2);
+  const at = (questions: Question[], id: string) => questions.find((q) => q.id === id) as Question;
+
+  it('groups two valid candidates per slot, in plan order, and drops nothing', () => {
+    const result = candidates(tenCandidates().reverse());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.candidates.map((slot) => slot.map((q) => q.topicId))).toEqual(
+      PLAN.slots.map((s) => [s.topicId, s.topicId]),
+    );
+    expect(result.dropped).toEqual([]);
+  });
+
+  it("drops a candidate that breaks a content rule and keeps its slot's other one", () => {
+    const questions = tenCandidates();
+    at(questions, 'q-tense-a').correctAnswer = 'The plane had left before we got there.';
+    const result = candidates(questions);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.candidates[3]?.map((q) => q.id)).toEqual(['q-tense-b']);
+    expect(result.dropped).toEqual([{ slot: 3, reason: 'error_correction_multi_edit' }]);
+  });
+
+  it('rejects the answer when both candidates of a slot break a rule, with the first reason', () => {
+    const questions = tenCandidates();
+    at(questions, 'q-modal-a').explanation = 'Great! It is must.';
+    at(questions, 'q-modal-b').commonWrongAnswers = [];
+    expect(candidates(questions)).toEqual({ ok: false, reason: 'explanation_not_one_sentence' });
+  });
+
+  it('rejects the whole answer for its shape: count, plan, three in one slot, a duplicate id', () => {
+    expect(candidates(tenCandidates().slice(1))).toEqual({ ok: false, reason: 'wrong_question_count' });
+    expect(validateSharedCandidates('nope', PLAN, 2)).toEqual({ ok: false, reason: 'not_an_object' });
+
+    const wrongType = tenCandidates();
+    at(wrongType, 'q-articles-a').type = 'error_correction';
+    expect(candidates(wrongType)).toEqual({ ok: false, reason: 'plan_mismatch' });
+
+    const threeInSlot = tenCandidates();
+    at(threeInSlot, 'q-modal-a').topicId = 'articles';
+    at(threeInSlot, 'q-modal-a').type = 'fill_in_blank';
+    expect(candidates(threeInSlot)).toEqual({ ok: false, reason: 'plan_mismatch' });
+
+    const duplicate = tenCandidates();
+    at(duplicate, 'q-modal-b').id = 'q-modal-a';
+    expect(candidates(duplicate)).toEqual({ ok: false, reason: 'duplicate_id' });
+  });
+
+  it('with one candidate per slot, accepts exactly what validateSharedSet accepts', () => {
+    const result = validateSharedCandidates({ questions: validQuestions() }, PLAN, 1);
+    const set = validateSharedSet({ questions: validQuestions() }, PLAN);
+    expect(result.ok && set.ok).toBe(true);
+    if (result.ok && set.ok) expect(result.candidates.map((slot) => slot[0])).toEqual(set.questions);
   });
 });
 
@@ -731,6 +1228,14 @@ describe('callAnthropic with generate_shared_daily_test', () => {
   afterEach(() => {
     globalThis.fetch = originalFetch;
     console.log = originalLog;
+  });
+
+  it('logs an over-generated request with the number of questions asked for', async () => {
+    const request = sharedDailyTestRequest(PLAN, [], { promptVersion: 2, model: 'claude-sonnet-5', candidatesPerSlot: 2 });
+    await callAnthropic(env, { op: 'generate_shared_daily_test', request });
+
+    expect(sentBodies).toEqual([JSON.stringify(buildGenerateSharedDailyTestBody(request))]);
+    expect(JSON.parse(logged[0] ?? '{}')).toMatchObject({ kind: 'daily_test', item_count: 10 });
   });
 
   it('sends the shared body, returns the parsed content, and logs it as daily_test cost', async () => {

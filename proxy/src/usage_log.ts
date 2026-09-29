@@ -5,9 +5,12 @@ import type { AnthropicOperation } from './anthropic';
 export type UsageKind = 'daily_test' | 'topic_practice';
 
 export function usageKind(op: AnthropicOperation['op']): UsageKind {
-  // The shared set is Daily Test cost too: filing it under topic_practice
-  // would hide exactly the saving 1.1.0 is meant to show.
-  return op === 'generate_daily_test' || op === 'generate_shared_daily_test' ? 'daily_test' : 'topic_practice';
+  // The shared set and its check are Daily Test cost too (decision 11,
+  // 2026-09-27): filing them under topic_practice would hide exactly the
+  // saving 1.1.0 is meant to show, and leaving the check out would overstate it.
+  return op === 'generate_daily_test' || op === 'generate_shared_daily_test' || op === 'check_shared_daily_test'
+    ? 'daily_test'
+    : 'topic_practice';
 }
 
 /** How many questions the call covered — a request size, never its content. */

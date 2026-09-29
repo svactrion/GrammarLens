@@ -226,6 +226,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       stepEarned: _completion.step == 1,
       day0: widget.isDay0,
       setSource: widget.dailyTestSet.source.name,
+      setDate: widget.dailyTestSet.day,
     ));
     if (!welcomeBadgeJustEarned) return;
     // The ledger day, not the wall clock: the same authority the step
@@ -472,6 +473,12 @@ class _QuestionResultCard extends StatelessWidget {
       AnswerMatchKind.commonWrong => result.match?.comment,
       AnswerMatchKind.keyboardVariant => [
           result.match?.comment,
+          questionExplanation,
+        ].whereType<String>().join(' '),
+      // An alternative the set accepts: shown as correct, with the key
+      // named so the learner also sees the form the set expected.
+      AnswerMatchKind.accepted => [
+          'Also correct: "${result.question.correctAnswer}".',
           questionExplanation,
         ].whereType<String>().join(' '),
       AnswerMatchKind.fallback => questionExplanation ?? _fallbackComment,

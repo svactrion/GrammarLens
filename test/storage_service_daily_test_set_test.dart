@@ -219,4 +219,93 @@ void main() {
     // Topic Practice session counter either way.
     expect(await storageService.getSessionCountForToday(), 2);
   });
+
+  group('deleteStaleDailyTestSets (docs/1.1.0-shared-daily-test.md §7, C3)',
+      () {
+    final question = DailyTestQuestion(
+      item: const PracticeItem(
+        id: 'q0',
+        type: PracticeItemType.fillInBlank,
+        instruction: 'She ___ to work.',
+      ),
+      topicId: 'tenseSelection',
+      correctAnswer: 'goes',
+      commonWrongAnswers: const [],
+    );
+
+    Future<void> save(String day, {bool completed = false}) async {
+      await storageService.saveDailyTestSet([question],
+          day: day, source: DailyTestSource.shared);
+      if (completed) {
+        await storageService.completeDailyTest({'q0': 'goes'}, const [],
+            day: day, completedAt: DateTime.parse(day));
+      }
+    }
+
+    Future<Set<String>> days() async => {
+          for (final d in [
+            '2026-09-01',
+            '2026-09-21',
+            '2026-09-22',
+            '2026-09-23',
+            '2026-09-28',
+            '2026-09-29',
+            '2026-09-30',
+          ])
+            if (await storageService.getDailyTestSet(d) != null) d,
+        };
+
+    setUp(() {
+      StorageService.clockForTesting = () => DateTime(2026, 9, 29, 10);
+    });
+    tearDown(() => StorageService.clockForTesting = DateTime.now);
+
+    test(
+        'deletes only unfinished sets more than 7 days old; completed ones, '
+        'the last 7 days, today and tomorrow stay', () async {
+      await save('2026-09-01'); // old, unfinished: deleted
+      await save('2026-09-21'); // 8 days old, unfinished: deleted
+      await save('2026-09-22'); // exactly 7 days old: kept
+      await save('2026-09-23', completed: true);
+      await save('2026-09-28', completed: true); // yesterday, completed
+      await save('2026-09-29'); // today, unfinished
+      await save('2026-09-30'); // tomorrow, prefetched
+      StorageService.clockForTesting = () => DateTime(2026, 9, 29, 10);
+
+      final deleted = await storageService.deleteStaleDailyTestSets();
+
+      expect(deleted, 2);
+      expect(await days(), {
+        '2026-09-22',
+        '2026-09-23',
+        '2026-09-28',
+        '2026-09-29',
+        '2026-09-30',
+      });
+    });
+
+    test('an old completed set keeps its answers', () async {
+      await save('2026-09-01', completed: true);
+      StorageService.clockForTesting = () => DateTime(2026, 9, 29, 10);
+
+      expect(await storageService.deleteStaleDailyTestSets(), 0);
+      final kept = (await storageService.getDailyTestSet('2026-09-01'))!;
+      expect(kept.isCompleted, isTrue);
+      expect(kept.answers, {'q0': 'goes'});
+    });
+
+    test('the cutoff follows the calendar across a month end', () async {
+      await save('2026-09-23'); // 8 days before 2026-10-01
+      await save('2026-09-24'); // exactly 7 days before
+      StorageService.clockForTesting = () => DateTime(2026, 10, 1, 0, 5);
+
+      expect(await storageService.deleteStaleDailyTestSets(), 1);
+      expect(await storageService.getDailyTestSet('2026-09-23'), isNull);
+      expect(await storageService.getDailyTestSet('2026-09-24'), isNotNull);
+    });
+
+    test('nothing to delete is a no-op', () async {
+      expect(await storageService.deleteStaleDailyTestSets(), 0);
+    });
+  });
 }

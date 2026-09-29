@@ -27,12 +27,9 @@ import 'support/recording_analytics_sink.dart';
 
 class _FakeClaudeService extends ClaudeService {
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async =>
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async =>
       List.generate(
-        count,
+        DailyTestSet.questionCount,
         (i) => DailyTestQuestion(
           item: PracticeItem(
             id: 'q$i',

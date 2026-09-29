@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/data/day_zero_daily_test.dart';
+import 'package:grammar_lens/data/fallback_pool.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -16,10 +18,9 @@ import 'package:grammar_lens/utils/debug_tools.dart';
 
 import 'support/recording_analytics_sink.dart';
 
-/// Fails the first [failCount] calls, then succeeds — simulates a
-/// transient generation failure (a bad API response, a network error, the
-/// schema-mismatch bug fixed in a previous batch) so a test can drive
-/// DailyTestScreen's retry path without a real API key.
+/// Fails the first [failCount] shared-set reads, then serves a shared set —
+/// simulates the read failing (offline, a timeout, a bad response) without a
+/// real proxy.
 class _FlakyClaudeService extends ClaudeService {
   int callCount = 0;
   final int failCount;
@@ -27,16 +28,14 @@ class _FlakyClaudeService extends ClaudeService {
   _FlakyClaudeService({required this.failCount});
 
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async {
     callCount++;
     if (callCount <= failCount) {
-      throw const FormatException('simulated generation failure');
+      throw const ClaudeApiException('simulated read failure',
+          kind: ClaudeApiErrorKind.network);
     }
     return List.generate(
-      count,
+      DailyTestSet.questionCount,
       (i) => DailyTestQuestion(
         item: PracticeItem(
           id: 'q$i',
@@ -51,14 +50,12 @@ class _FlakyClaudeService extends ClaudeService {
   }
 }
 
-/// Always throws a quota-exceeded ClaudeApiException, simulating the
-/// proxy's 429 response once the device/global daily cap is reached.
+/// Answers every read with a quota-exceeded error: the read route never
+/// sends one, but the screen must not show "Today's limit reached" even if
+/// it did.
 class _QuotaExceededClaudeService extends ClaudeService {
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async {
     throw const ClaudeApiException(
       "You've reached today's practice limit on this device. Please try "
       'again tomorrow.',
@@ -75,6 +72,10 @@ class _QuotaExceededClaudeService extends ClaudeService {
 /// fake, which hit and documented this exact issue first.
 class _FakeStorageService extends StorageService {
   DailyTestSet? todaysSet;
+
+  /// Saves that fail before one succeeds: the one failure left that can
+  /// keep the Daily Test from opening (a shared read failure falls back).
+  int saveFailuresLeft = 0;
 
   @override
   Future<DailyTestSet?> getDailyTestSetForToday() async => todaysSet;
@@ -93,6 +94,10 @@ class _FakeStorageService extends StorageService {
   @override
   Future<DailyTestSet> saveDailyTestSet(List<DailyTestQuestion> questions,
       {String? day, DailyTestSource source = DailyTestSource.generated}) async {
+    if (saveFailuresLeft > 0) {
+      saveFailuresLeft--;
+      throw StateError('simulated storage failure');
+    }
     final set =
         DailyTestSet(day: '2026-01-01', questions: questions, source: source);
     todaysSet = set;
@@ -145,12 +150,47 @@ void main() {
   );
 
   testWidgets(
-    'a load failure shows an in-screen error with a human sentence and a '
-    'Try again action, not a SnackBar',
+    'a failed shared read opens the fallback questions, never an error '
+    'screen (docs/1.1.0-shared-daily-test.md §5)',
     (tester) async {
       final claudeService = _FlakyClaudeService(failCount: 1);
       final service = DailyTestService(
         claudeService: claudeService,
+        storageService: storageService,
+        fallbackPool: FallbackPool.withSets(const []),
+      );
+
+      await pumpScreen(tester, service);
+
+      expect(claudeService.callCount, 1);
+      expect(find.text("Couldn't load today's test"), findsNothing);
+      expect(find.text('Try again'), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(storageService.todaysSet!.source, DailyTestSource.fallback);
+      expect(storageService.todaysSet!.questions.map((q) => q.item.id),
+          kDayZeroQuestions.map((q) => q.item.id));
+    },
+  );
+
+  testWidgets('a readable shared set is what the screen shows', (tester) async {
+    final service = DailyTestService(
+      claudeService: _FlakyClaudeService(failCount: 0),
+      storageService: storageService,
+    );
+
+    await pumpScreen(tester, service);
+
+    expect(find.text('Question 0'), findsOneWidget);
+    expect(storageService.todaysSet!.source, DailyTestSource.shared);
+  });
+
+  testWidgets(
+    'a load failure (local storage) shows an in-screen error with a human '
+    'sentence and a Try again action, not a SnackBar',
+    (tester) async {
+      storageService.saveFailuresLeft = 1;
+      final service = DailyTestService(
+        claudeService: _FlakyClaudeService(failCount: 0),
         storageService: storageService,
       );
 
@@ -163,7 +203,8 @@ void main() {
   );
 
   testWidgets('Try again really retries and can succeed', (tester) async {
-    final claudeService = _FlakyClaudeService(failCount: 1);
+    storageService.saveFailuresLeft = 1;
+    final claudeService = _FlakyClaudeService(failCount: 0);
     final service = DailyTestService(
       claudeService: claudeService,
       storageService: storageService,
@@ -184,9 +225,9 @@ void main() {
   testWidgets(
     'Try again can fail again and still shows the error state, not a crash',
     (tester) async {
-      final claudeService = _FlakyClaudeService(failCount: 2);
+      storageService.saveFailuresLeft = 2;
       final service = DailyTestService(
-        claudeService: claudeService,
+        claudeService: _FlakyClaudeService(failCount: 0),
         storageService: storageService,
       );
 
@@ -194,51 +235,30 @@ void main() {
       await tester.tap(find.text('Try again'));
       await tester.pumpAndSettle();
 
-      expect(claudeService.callCount, 2);
       expect(find.text('Try again'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    "a failed attempt is never cached as today's test — retrying gets a "
-    'real generation attempt, and only a real success gets cached',
-    (tester) async {
-      final claudeService = _FlakyClaudeService(failCount: 1);
-      final service = DailyTestService(
-        claudeService: claudeService,
-        storageService: storageService,
-      );
-
-      await pumpScreen(tester, service);
-      expect(storageService.todaysSet, isNull);
-
-      await tester.tap(find.text('Try again'));
-      await tester.pumpAndSettle();
-
-      expect(storageService.todaysSet, isNotNull);
-      expect(storageService.todaysSet!.questions, hasLength(5));
     },
   );
 
   testWidgets('the technical error detail is shown in this (debug) build',
       (tester) async {
-    final claudeService = _FlakyClaudeService(failCount: 5);
+    storageService.saveFailuresLeft = 5;
     final service = DailyTestService(
-      claudeService: claudeService,
+      claudeService: _FlakyClaudeService(failCount: 0),
       storageService: storageService,
     );
 
     await pumpScreen(tester, service);
 
-    expect(find.textContaining('simulated generation failure'), findsOneWidget);
+    expect(find.textContaining('simulated storage failure'), findsOneWidget);
   });
 
   testWidgets('a release build never shows the technical error detail',
       (tester) async {
     DebugTools.enabledForTesting = false;
     addTearDown(() => DebugTools.enabledForTesting = true);
+    storageService.saveFailuresLeft = 5;
     final service = DailyTestService(
-      claudeService: _FlakyClaudeService(failCount: 5),
+      claudeService: _FlakyClaudeService(failCount: 0),
       storageService: storageService,
     );
 
@@ -247,7 +267,7 @@ void main() {
     // The human message and retry stay; the raw exception text does not.
     expect(find.text("Couldn't load today's test"), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
-    expect(find.textContaining('simulated generation failure'), findsNothing);
+    expect(find.textContaining('simulated storage failure'), findsNothing);
   });
 
   group('Skip is never the primary action (docs/design-audit.md D3)', () {
@@ -303,34 +323,19 @@ void main() {
     });
   });
 
-  group('quota exceeded (Cloudflare Workers proxy 429)', () {
-    testWidgets(
-        'shows accurate copy, not the generic "check your connection" '
-        'message — retrying can\'t succeed until tomorrow', (tester) async {
-      final service = DailyTestService(
-        claudeService: _QuotaExceededClaudeService(),
-        storageService: storageService,
-      );
+  testWidgets(
+      'a quota error from the proxy opens the fallback, never "Today\'s '
+      'limit reached": the read route has no quota', (tester) async {
+    final service = DailyTestService(
+      claudeService: _QuotaExceededClaudeService(),
+      storageService: storageService,
+    );
 
-      await pumpScreen(tester, service);
+    await pumpScreen(tester, service);
 
-      expect(find.text("Today's limit reached"), findsOneWidget);
-      expect(find.textContaining('try again tomorrow'), findsWidgets);
-      expect(find.textContaining('check your connection'), findsNothing);
-    });
-
-    testWidgets(
-        'has no "Try again" CTA — it would just fail again with '
-        'the same answer', (tester) async {
-      final service = DailyTestService(
-        claudeService: _QuotaExceededClaudeService(),
-        storageService: storageService,
-      );
-
-      await pumpScreen(tester, service);
-
-      expect(find.text('Try again'), findsNothing);
-    });
+    expect(find.text("Today's limit reached"), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(storageService.todaysSet!.source, DailyTestSource.fallback);
   });
 
   for (final brightness in Brightness.values) {

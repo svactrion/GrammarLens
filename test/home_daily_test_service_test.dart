@@ -16,21 +16,18 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 
 /// Home shares one `DailyTestService` across everything Daily Test, so its
-/// single-flight generation holds across separate openings of the test, and the
+/// single-flight read holds across separate openings of the test, and the
 /// next day's preparation goes through the same instance.
 class _GatedClaude extends ClaudeService {
-  int generationCalls = 0;
+  int readCalls = 0;
   Completer<void>? gate;
 
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
-    generationCalls++;
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async {
+    readCalls++;
     if (gate != null) await gate!.future;
     return List.generate(
-      count,
+      DailyTestSet.questionCount,
       (i) => DailyTestQuestion(
         item: PracticeItem(
           id: 'q$i',
@@ -134,16 +131,15 @@ void main() {
   }
 
   testWidgets(
-      'opening the Daily Test again while its set is still being generated '
-      'joins that request: one generation, not one per opening',
-      (tester) async {
+      'opening the Daily Test again while its set is still being read '
+      'joins that request: one read, not one per opening', (tester) async {
     claude.gate = Completer<void>();
     await pumpHome(tester);
 
     await tester.tap(find.text('Daily Test'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(claude.generationCalls, 1);
+    expect(claude.readCalls, 1);
 
     // The loading spinner never settles, so plain pumps while the gate is shut.
     await tester.tap(find.byIcon(Icons.close_rounded));
@@ -155,12 +151,12 @@ void main() {
     await tester.tap(find.text('Daily Test'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(claude.generationCalls, 1, reason: 'joined, not asked again');
+    expect(claude.readCalls, 1, reason: 'joined, not asked again');
 
     claude.gate!.complete();
     await tester.pumpAndSettle();
     expect(find.text('Question 0'), findsOneWidget);
-    expect(claude.generationCalls, 1);
+    expect(claude.readCalls, 1);
   });
 
   testWidgets(
@@ -170,7 +166,7 @@ void main() {
     await pumpHome(tester);
     await tester.tap(find.text('Daily Test'));
     await tester.pumpAndSettle();
-    expect(claude.generationCalls, 1);
+    expect(claude.readCalls, 1);
 
     await tester.enterText(find.byType(TextField).first, 'right0');
     await tester.pump();
@@ -182,11 +178,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Daily Test Results'), findsOneWidget);
-    expect(claude.generationCalls, 2);
+    expect(claude.readCalls, 2);
     expect(storage.sets.keys, containsAll(['2026-09-22', '2026-09-23']));
     expect(storage.sets['2026-09-22']!.isCompleted, isTrue);
     expect(storage.sets['2026-09-23']!.isCompleted, isFalse);
-    expect(storage.sets['2026-09-23']!.source, DailyTestSource.generated);
+    expect(storage.sets['2026-09-23']!.source, DailyTestSource.shared);
   });
 
   testWidgets(
@@ -199,7 +195,7 @@ void main() {
       await tester.tap(find.text('Skip'));
       await tester.pumpAndSettle();
     }
-    expect(claude.generationCalls, 2);
+    expect(claude.readCalls, 2);
 
     tester.state<NavigatorState>(find.byType(Navigator)).pop();
     await tester.pumpAndSettle();
@@ -209,6 +205,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Daily Test Results'), findsOneWidget);
 
-    expect(claude.generationCalls, 2);
+    expect(claude.readCalls, 2);
   });
 }

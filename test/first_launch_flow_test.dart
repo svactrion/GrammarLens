@@ -22,32 +22,29 @@ import 'package:grammar_lens/theme.dart';
 
 import 'support/recording_analytics_sink.dart';
 
-/// A working (not network-backed) Daily Test generator, so the Day-0 flow
+/// A working (not network-backed) shared Daily Test read, so the Day-0 flow
 /// (PRD v2 §12.3) can be driven all the way through question → result
 /// rather than relying on the real ClaudeService's network call failing —
 /// same fake shape as daily_test_service_test.dart's own.
 class _FakeClaudeService extends ClaudeService {
-  int generateCalls = 0;
+  int readCalls = 0;
 
-  /// When set, generation waits for it: a request that is still running.
+  /// When set, a read waits for it: a request that is still running.
   Completer<void>? gate;
 
-  /// Generations that fail before one succeeds.
+  /// Reads that fail before one succeeds.
   int failuresLeft = 0;
 
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
-    generateCalls++;
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async {
+    readCalls++;
     if (gate != null) await gate!.future;
     if (failuresLeft > 0) {
       failuresLeft--;
       throw const ClaudeApiException('simulated failure');
     }
     return List.generate(
-      count,
+      DailyTestSet.questionCount,
       (i) => DailyTestQuestion(
         item: PracticeItem(
           id: 'q$i',
@@ -463,20 +460,20 @@ void main() {
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
 
-      expect(claudeService.generateCalls, 0);
+      expect(claudeService.readCalls, 0);
       expect(storageService.events, isEmpty);
     });
 
     testWidgets(
         'the Daily Test opens on the bundled set: the five fixed questions, '
-        'no generation request', (tester) async {
+        'no request', (tester) async {
       await pumpFlow(tester,
           onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
       await tapThroughToDailyTest(tester);
 
       expect(find.text('You should avoid ___ too much sugar.'), findsOneWidget);
       expect(find.text('Question 0'), findsNothing);
-      expect(claudeService.generateCalls, 0);
+      expect(claudeService.readCalls, 0);
       expect(storageService.todaysSet!.source, DailyTestSource.bundled);
       expect(storageService.todaysSet!.questions.map((q) => q.item.id),
           ['day0_1', 'day0_2', 'day0_3', 'day0_4', 'day0_5']);
@@ -512,7 +509,7 @@ void main() {
 
       expect(set!.source, DailyTestSource.bundled);
       expect(set.questions.first.item.id, 'day0_1');
-      expect(claudeService.generateCalls, 0);
+      expect(claudeService.readCalls, 0);
     });
 
     testWidgets('a day that already has a set is left alone', (tester) async {
@@ -541,7 +538,7 @@ void main() {
 
     testWidgets(
         'if writing the set fails, onboarding still finishes and the Daily '
-        'Test screen generates one as before', (tester) async {
+        'Test screen reads today\'s shared set instead', (tester) async {
       storageService.failSeed = true;
       await pumpFlow(tester,
           onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
@@ -549,7 +546,7 @@ void main() {
 
       expect(storageService.savedProfile?.name, 'Ada');
       expect(find.text('Question 0'), findsOneWidget);
-      expect(claudeService.generateCalls, 1);
+      expect(claudeService.readCalls, 1);
     });
 
     testWidgets(

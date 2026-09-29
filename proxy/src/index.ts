@@ -1,6 +1,7 @@
 import { requireAppToken } from './auth';
 import { callAnthropic } from './anthropic';
 import { logUnhandledError } from './error_log';
+import { filterLegacyDailyTest, logLegacyFilter } from './legacy_daily_test';
 import { reserveQuota } from './quota';
 import { runSharedGeneration } from './shared_generation';
 import { SHARED_SET_PATH, handleSharedSetRead } from './shared_read';
@@ -54,7 +55,14 @@ async function handleOperation(
       const req = validateGenerateDailyTest(body);
       deviceId = req.deviceId;
       await reserveQuota(env, deviceId);
-      result = await callAnthropic(env, { op, request: req });
+      // The request is untouched; sentenceless error_correction questions are
+      // dropped from the response (docs/1.1.0-shared-daily-test-quality.md §14.4).
+      const checked = filterLegacyDailyTest(await callAnthropic(env, { op, request: req }));
+      logLegacyFilter(checked);
+      if (checked.rejected) {
+        throw new ProxyError('upstream_error', 502, 'The upstream service returned an unexpected response.');
+      }
+      result = checked.content;
       break;
     }
     case 'score_answers': {

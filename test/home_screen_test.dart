@@ -57,14 +57,11 @@ class _RecordingAnalyticsService extends AnalyticsService {
 }
 
 class _CountingClaudeService extends ClaudeService {
-  int generationCalls = 0;
+  int readCalls = 0;
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async {
-    generationCalls++;
-    throw StateError('Cached Home flow must not generate questions');
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async {
+    readCalls++;
+    throw StateError('Cached Home flow must not read a set');
   }
 }
 
@@ -378,7 +375,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(storage.completionCalls, 1);
       expect(storage.steps, answer.isEmpty ? 0 : 1);
-      expect(claude.generationCalls, 0);
+      expect(claude.readCalls, 0);
     });
   }
 

@@ -330,4 +330,71 @@ void main() {
       expect(result.skipped, 1);
     });
   });
+
+  group('acceptedAnswers (docs/1.1.0-shared-daily-test-quality.md §8)', () {
+    DailyTestQuestion withAlternatives(List<String> accepted) =>
+        DailyTestQuestion(
+          item: question.item,
+          topicId: question.topicId,
+          correctAnswer: question.correctAnswer,
+          commonWrongAnswers: question.commonWrongAnswers,
+          acceptedAnswers: accepted,
+        );
+
+    test('without alternatives every answer grades exactly as before', () {
+      final withEmpty = withAlternatives(const []);
+      for (final answer in [
+        'goes',
+        'Goes.',
+        'goes!',
+        'go',
+        'is going',
+        'went',
+        'göes',
+        '',
+      ]) {
+        final a = checkDailyTestAnswer(question, answer);
+        final b = checkDailyTestAnswer(withEmpty, answer);
+        expect(b.kind, a.kind, reason: answer);
+        expect(b.comment, a.comment, reason: answer);
+        expect(a.acceptedAnswer, isNull);
+      }
+    });
+
+    test('an alternative is accepted, normalized the same way, and counts', () {
+      final q = withAlternatives(const ['is used to going']);
+      final result = checkDailyTestAnswer(q, '  Is used to GOING. ');
+      expect(result.kind, AnswerMatchKind.accepted);
+      expect(result.acceptedAnswer, 'is used to going');
+      expect(result.correctAnswer, 'goes');
+      expect(result.kind.isCorrect, isTrue);
+      expect(computeDailyTestScore([q], {'q1': 'is used to going'}).correct, 1);
+    });
+
+    test('a keyboard variant of an alternative is accepted too', () {
+      final q = withAlternatives(const ['is used to going']);
+      expect(checkDailyTestAnswer(q, 'ıs used to going').kind,
+          AnswerMatchKind.accepted);
+    });
+
+    test('the key still wins over an alternative', () {
+      final q = withAlternatives(const ['goes']);
+      expect(checkDailyTestAnswer(q, 'goes').kind, AnswerMatchKind.correct);
+    });
+
+    test('an alternative is checked before the predicted wrong answers', () {
+      final q = withAlternatives(const ['go']);
+      expect(checkDailyTestAnswer(q, 'go').kind, AnswerMatchKind.accepted);
+      expect(checkDailyTestAnswer(q, 'is going').kind,
+          AnswerMatchKind.commonWrong);
+    });
+
+    test('only correct, keyboardVariant and accepted count as correct', () {
+      expect(AnswerMatchKind.values.where((k) => k.isCorrect).toSet(), {
+        AnswerMatchKind.correct,
+        AnswerMatchKind.keyboardVariant,
+        AnswerMatchKind.accepted,
+      });
+    });
+  });
 }

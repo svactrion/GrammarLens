@@ -69,3 +69,6 @@ config/prod.json
 .claude/
 .DS_Store
 docs/Claude outputs/
+
+# Raw shared sets fetched from KV by scripts/fallback_pool.sh fetch.
+tool/fallback_pool/raw/

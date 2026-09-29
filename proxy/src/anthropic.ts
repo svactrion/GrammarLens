@@ -2,7 +2,18 @@ import { TOPICS, topicById } from './topics';
 import { ProxyError, type Env } from './types';
 import { logUpstreamFailure, upstreamErrorType, type UpstreamFailure } from './error_log';
 import { elapsedMs, logUsage, stopReasonField, tokenCount } from './usage_log';
-import type { GenerateSharedDailyTestRequest } from './shared_daily_test';
+import {
+  GENERATOR_MODELS,
+  type GenerateSharedDailyTestRequest,
+  type GeneratorEffort,
+} from './shared_daily_test';
+import {
+  CORRECT_ANSWER_VALUES,
+  ORIGINAL_SENTENCE_VALUES,
+  RULE_FIELD_VALUES,
+  VERDICT_VALUES,
+  type CheckSharedDailyTestRequest,
+} from './shared_check';
 import type {
   GenerateDailyTestRequest,
   GeneratePracticeSetRequest,
@@ -58,7 +69,7 @@ const MAX_AVOID_ANSWER_LENGTH = 100;
  * slot's type, the scenario theme) and the correct answers of recent sets to
  * stay away from. Built only from the fixed topic table, the plan and
  * model-written answers, never from anything a user sent. Any change here is a
- * new `SHARED_PROMPT_VERSION`.
+ * new prompt version (`SharedPromptVersion`).
  */
 function sharedDailyTestUserPrompt(req: GenerateSharedDailyTestRequest): string {
   const slots = req.plan.slots
@@ -77,12 +88,25 @@ function sharedDailyTestUserPrompt(req: GenerateSharedDailyTestRequest): string 
     ),
   ].slice(0, MAX_AVOID_ANSWERS);
 
-  const lines = [
-    `Generate exactly ${req.count} Daily Test questions, one for each slot below, in this order, each with exactly the topicId and type given:`,
-    slots,
-    `Today's scenario theme is "${req.plan.theme}": set every question in a different everyday situation within that theme.`,
-    'Each "id" must be a short unique slug.',
-  ];
+  const lines =
+    req.candidatesPerSlot === 2
+      ? [
+          `Generate exactly ${req.count} Daily Test questions, two candidates for each slot below: both candidates of slot 1 first, then both of slot 2, and so on, each with exactly the topicId and type given:`,
+          slots,
+          `Today's scenario theme is "${req.plan.theme}": set every question in a different everyday situation within that theme.`,
+          "The two candidates of a slot test the same topic in different situations. Only one of them will be used, so each must be complete on its own.",
+        ]
+      : [
+          `Generate exactly ${req.count} Daily Test questions, one for each slot below, in this order, each with exactly the topicId and type given:`,
+          slots,
+          `Today's scenario theme is "${req.plan.theme}": set every question in a different everyday situation within that theme.`,
+        ];
+  if (req.promptVersion === 2) {
+    lines.push(
+      "If a slot's type cannot be written for its topic in today's theme without breaking the correctness rules, keep the topic and type, and move the situation to a different part of the theme.",
+    );
+  }
+  lines.push('Each "id" must be a short unique slug.');
   if (avoid.length > 0) {
     lines.push(
       `These answers were used on recent days. Do not reuse them, or the situations they came from: ${avoid
@@ -167,6 +191,84 @@ with "Not quite".
 Return only the structured output — no extra commentary.
 `.trim();
 
+/**
+ * The shared Daily Test's own system prompt, version 2
+ * (docs/1.1.0-shared-daily-test-quality.md §1.2). Written because one set now
+ * reaches every learner: the owner's review of the first shared sets found 4
+ * of 10 questions defective (an "error" in an acceptable sentence, two right
+ * answers under exact-match grading, invented rules). Self-contained, unlike
+ * `DAILY_TEST_SYSTEM_PROMPT`, which points at a practice prompt the model
+ * never sees and never defines "hint". Used only by
+ * `generate_shared_daily_test` with `promptVersion: 2`; the legacy prompt
+ * above stays byte-for-byte what 1.0.0 gets.
+ */
+const SHARED_DAILY_TEST_SYSTEM_PROMPT_V2 = `
+You are an IELTS grammar coach writing the shared "Daily Test" for Turkish
+native speakers at B1-C1 English level: one fixed set of fill_in_blank and
+error_correction items that every learner gets on the same day. Answers are
+checked offline against the answer key you write now, with no human or model
+judgment in between: the learner's typed answer is compared with
+"correctAnswer" after lowercasing, trimming, collapsing spaces and dropping
+one final full stop, question mark or exclamation mark. Nothing else is
+forgiven. An item that is wrong or ambiguous teaches every learner the wrong
+thing.
+
+Correctness comes before variety, the theme and the plan:
+
+1. Single correct answer. Before you settle on an item, list for yourself
+every answer a careful English teacher would accept. If there is more than
+one, rewrite the context until exactly one remains (add a time phrase, the
+speaker's intention, or a fact that rules the others out). Differences of
+register or regional usage count as acceptable answers.
+2. error_correction: the original must be clearly wrong. The sentence in
+"context" must contain exactly one error that any standard grammar reference
+marks as incorrect in every context. A less common or less formal choice is
+not an error, and neither is a different modal, article or tense that a
+native speaker could defend. If you cannot make an error of that kind for
+this topic in this theme, choose another situation. The correction changes
+only the erroneous words; everything else in the sentence stays exactly as
+it is. Keep the sentence short: one clause, at most 15 words.
+3. Predicted wrong answers must be wrong. Every entry in "commonWrongAnswers"
+must be an answer a teacher would mark incorrect in this context. Never list
+a form that is acceptable, even if it is less natural than "correctAnswer".
+4. Only true, standard rules. The explanation, the hint and every comment may
+state only rules found in mainstream reference grammars, and no more
+strongly than those references state them ("usually", "in this context").
+Never state a rule you are not certain of; choose a different item instead.
+Do not describe a rule for a structure the item does not test.
+5. "hint" is optional. It may give the base form of a word the learner has to
+change (e.g. "(travel)") or point to where to look (e.g. "Think about what
+comes after 'avoid'."). It never states a rule and never gives the answer.
+
+Put the scene in "context" and the task in "instruction" (one short, direct
+sentence). Keep every item self-contained and unambiguous. Leave "context"
+empty only when the item stands alone as a single instruction. For
+fill_in_blank, "correctAnswer" is the exact word or short phrase that fills
+the blank. For error_correction, put the single flawed sentence in "context"
+and ask in "instruction" for the full corrected sentence; "correctAnswer" is
+then that full rewritten sentence, in the same form a learner would type it.
+
+For each item, also predict 2-3 common wrong answers a learner at this level
+plausibly gives — real mistakes (a tense slip, a preposition swap, a
+half-corrected sentence), not random noise — each as a full answer string in
+the same shape as "correctAnswer" would be typed, paired with a short (1
+sentence) "comment" in plain, friendly language explaining why it's tempting
+and what's actually wrong. These are shown verbatim if the learner's answer
+matches that prediction, so write them as if speaking directly to the learner
+("you" / "your"), not about them.
+
+Also give each item an "explanation": one sentence of fewer than 25 words, in
+the same plain, friendly tone, saying why "correctAnswer" is right — which
+rule is at work, described the way a fluent friend would, not a textbook
+(e.g. "After 'avoid', the next verb takes -ing, so it's 'avoid eating'."). It
+is shown under the answer whether the learner got it right, skipped it, or
+wrote a wrong answer none of your predictions match, so it must stand on its
+own: don't refer to any particular wrong answer, and don't open with praise
+or with "Not quite".
+
+Return only the structured output — no extra commentary.
+`.trim();
+
 const SCORING_SYSTEM_PROMPT = `
 You are an IELTS grammar coach scoring a learner's practice answers. For each
 item, judge correctness, give the corrected version, and a short (1-2
@@ -215,13 +317,26 @@ a genuine one-character grammar difference (e.g. "stay" vs. "stays") is
 still a real mistake and must still be marked isCorrect: false.
 `.trim();
 
-interface AnthropicRequestBody {
+export interface AnthropicRequestBody {
   model: string;
   max_tokens: number;
   system: string;
-  output_config: { format: { type: 'json_schema'; schema: unknown } };
+  /** Only on requests that use it, so every other request is byte-for-byte
+   * what it always was. */
+  thinking?: { type: 'adaptive' };
+  /** `effort` only on requests that set one, like `thinking`. */
+  output_config: { format: { type: 'json_schema'; schema: unknown }; effort?: GeneratorEffort };
   messages: { role: 'user'; content: string }[];
 }
+
+/**
+ * Room for adaptive thinking on top of the answer's own budget. Thinking
+ * tokens count against `max_tokens` and are billed as output, but only what is
+ * generated is billed, so a generous ceiling costs nothing by itself; a tight
+ * one would truncate the answer after a long think.
+ */
+export const THINKING_HEADROOM_TOKENS = 12_000;
+
 
 function buildGeneratePracticeSetBody(req: GeneratePracticeSetRequest): AnthropicRequestBody {
   const topic = topicById(req.topicId);
@@ -315,6 +430,39 @@ function dailyTestSchema() {
   };
 }
 
+/**
+ * Prompt version 2's schema: the Daily Test schema with each question one of
+ * two shapes, told apart by `type` (`const`), so that an `error_correction`
+ * question must carry "context", where its flawed sentence goes. The
+ * structured outputs grammar supports `anyOf` and `const` but no `minLength`,
+ * so an empty "context" still parses; `validateSharedSet` rejects it
+ * (`error_correction_missing_sentence`). Version 1 and the legacy route keep
+ * `dailyTestSchema()` unchanged.
+ */
+function sharedDailyTestSchemaV2() {
+  const base = dailyTestSchema();
+  const item = base.properties.questions.items;
+  const shape = (type: 'fill_in_blank' | 'error_correction', required: readonly string[]) => ({
+    ...item,
+    properties: { ...item.properties, type: { type: 'string', const: type } },
+    required: [...required],
+  });
+  return {
+    ...base,
+    properties: {
+      questions: {
+        type: 'array',
+        items: {
+          anyOf: [
+            shape('fill_in_blank', item.required),
+            shape('error_correction', [...item.required.slice(0, 2), 'context', ...item.required.slice(2)]),
+          ],
+        },
+      },
+    },
+  };
+}
+
 function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicRequestBody {
   return {
     model: MODEL,
@@ -326,17 +474,140 @@ function buildGenerateDailyTestBody(req: GenerateDailyTestRequest): AnthropicReq
 }
 
 /**
- * The shared set reuses the legacy Daily Test's model, system prompt, schema
- * and token budget unchanged (their output was measured on 2026-09-24); only
- * the user prompt differs, carrying the day's plan. Exported for tests.
+ * The shared set reuses the legacy Daily Test's schema and token budget (their
+ * output was measured on 2026-09-24); the user prompt carries the day's plan.
+ * Version 1 also reuses the legacy system prompt; version 2 has its own
+ * (`SHARED_DAILY_TEST_SYSTEM_PROMPT_V2`). The model is the request's own
+ * (`SHARED_GENERATOR` by default); how each model is asked (thinking, and so
+ * `THINKING_HEADROOM_TOKENS` more) comes from `GENERATOR_MODELS`, and an
+ * `effort` is sent only when the request has one. Exported for tests.
  */
 export function buildGenerateSharedDailyTestBody(req: GenerateSharedDailyTestRequest): AnthropicRequestBody {
+  const thinks = GENERATOR_MODELS[req.model].adaptiveThinking;
   return {
-    model: MODEL,
-    max_tokens: dailyTestMaxTokensFor(req.count),
-    system: DAILY_TEST_SYSTEM_PROMPT,
-    output_config: { format: { type: 'json_schema', schema: dailyTestSchema() } },
+    model: req.model,
+    max_tokens: dailyTestMaxTokensFor(req.count) + (thinks ? THINKING_HEADROOM_TOKENS : 0),
+    system: req.promptVersion === 2 ? SHARED_DAILY_TEST_SYSTEM_PROMPT_V2 : DAILY_TEST_SYSTEM_PROMPT,
+    ...(thinks ? { thinking: { type: 'adaptive' as const } } : {}),
+    output_config: {
+      format: { type: 'json_schema', schema: req.promptVersion === 2 ? sharedDailyTestSchemaV2() : dailyTestSchema() },
+      ...(req.effort ? { effort: req.effort } : {}),
+    },
     messages: [{ role: 'user', content: sharedDailyTestUserPrompt(req) }],
+  };
+}
+
+/**
+ * The check call's system prompt (docs/1.1.0-shared-daily-test-quality.md
+ * §2.1): an adversarial review of a generated set before it is published. It
+ * judges grammar and correctness only; the proxy, not the model, turns the
+ * review into publish or reject (`src/shared_check.ts`). Any change here is a
+ * new `CHECK_VERSION`.
+ */
+const SHARED_CHECK_SYSTEM_PROMPT = `
+You review English grammar exercises for Turkish learners at B1-C1 before they
+are published. Every learner gets the same set. Answers are graded
+automatically: the learner's text is compared with "correctAnswer" after
+lowercasing, trimming, collapsing spaces and dropping one final full stop,
+question mark or exclamation mark. Nothing else is forgiven. A learner who
+types an acceptable answer that is not in the key is told they are wrong.
+
+Assume the set may contain mistakes, and look for them. For each question:
+
+1. For error_correction: is the sentence in "context" wrong in standard
+English in every reading, or could a careful native speaker or a reference
+grammar accept it? If it can be defended, it is "acceptable". For
+fill_in_blank, answer "not_applicable".
+2. Is "correctAnswer" correct in this context? If you are not sure, say
+"uncertain".
+3. List every other answer a careful teacher would accept, typed in the same
+shape as "correctAnswer" (the full sentence for error_correction). Do not list
+spelling, capitalization or punctuation variants of the key.
+4. List any entry of "commonWrongAnswers" that is in fact acceptable, exactly
+as it is written there.
+5. Check every rule stated in "hint", "explanation" and each wrong answer's
+"comment": is it a real rule as mainstream reference grammars state it, and no
+stronger? Name the fields that are not.
+6. Does the explanation say or imply that any answer you listed in step 3 is
+wrong?
+
+Then give a verdict: "pass" if nothing is wrong and you listed no
+alternatives, "pass_with_alternatives" if the only finding is acceptable
+alternatives, "reject" otherwise. Judge only grammar and correctness, not
+style, theme or difficulty. Return one review per question, with its "id".
+`.trim();
+
+function sharedCheckSchema() {
+  return {
+    type: 'object',
+    properties: {
+      questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            originalSentence: { type: 'string', enum: [...ORIGINAL_SENTENCE_VALUES] },
+            correctAnswer: { type: 'string', enum: [...CORRECT_ANSWER_VALUES] },
+            acceptableAlternatives: { type: 'array', items: { type: 'string' } },
+            acceptableWrongAnswers: { type: 'array', items: { type: 'string' } },
+            incorrectRuleFields: { type: 'array', items: { type: 'string', enum: [...RULE_FIELD_VALUES] } },
+            explanationExcludesAlternatives: { type: 'boolean' },
+            verdict: { type: 'string', enum: [...VERDICT_VALUES] },
+          },
+          required: [
+            'id',
+            'originalSentence',
+            'correctAnswer',
+            'acceptableAlternatives',
+            'acceptableWrongAnswers',
+            'incorrectRuleFields',
+            'explanationExcludesAlternatives',
+            'verdict',
+          ],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ['questions'],
+    additionalProperties: false,
+  };
+}
+
+/** The review's own share of `max_tokens`, per question (a review is ~100-150
+ * tokens; the rest of the budget is thinking). */
+const CHECK_TOKENS_PER_QUESTION = 400;
+
+/**
+ * The check request: every checker candidate runs with adaptive thinking, and
+ * sees the questions exactly as a learner would, plus the key, the predicted
+ * wrong answers and the explanation; never `acceptedAnswers` (the check is what
+ * adds them). Exported for tests and the local measurement E.
+ */
+export function buildCheckSharedDailyTestBody(req: CheckSharedDailyTestRequest): AnthropicRequestBody {
+  const questions = req.questions.map((q) => ({
+    id: q.id,
+    type: q.type,
+    topicId: q.topicId,
+    ...(q.context === undefined ? {} : { context: q.context }),
+    instruction: q.instruction,
+    ...(q.hint === undefined ? {} : { hint: q.hint }),
+    correctAnswer: q.correctAnswer,
+    commonWrongAnswers: q.commonWrongAnswers.map((w) => ({ answer: w.answer, comment: w.comment })),
+    explanation: q.explanation,
+  }));
+  return {
+    model: req.model,
+    max_tokens: Math.max(2048, CHECK_TOKENS_PER_QUESTION * req.count) + THINKING_HEADROOM_TOKENS,
+    system: SHARED_CHECK_SYSTEM_PROMPT,
+    thinking: { type: 'adaptive' },
+    output_config: { format: { type: 'json_schema', schema: sharedCheckSchema() } },
+    messages: [
+      {
+        role: 'user',
+        content: `Review these ${req.count} questions:\n${JSON.stringify({ questions })}`,
+      },
+    ],
   };
 }
 
@@ -385,9 +656,12 @@ export type AnthropicOperation =
   | { op: 'generate_practice_set'; request: GeneratePracticeSetRequest }
   | { op: 'generate_daily_test'; request: GenerateDailyTestRequest }
   | { op: 'generate_shared_daily_test'; request: GenerateSharedDailyTestRequest }
+  | { op: 'check_shared_daily_test'; request: CheckSharedDailyTestRequest }
   | { op: 'score_answers'; request: ScoreAnswersRequest };
 
-function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
+/** The exact request body an operation sends. Exported for the local
+ * measurement E, which submits the same bodies through the Batches API. */
+export function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
   switch (operation.op) {
     case 'generate_practice_set':
       return buildGeneratePracticeSetBody(operation.request);
@@ -395,6 +669,8 @@ function buildBody(operation: AnthropicOperation): AnthropicRequestBody {
       return buildGenerateDailyTestBody(operation.request);
     case 'generate_shared_daily_test':
       return buildGenerateSharedDailyTestBody(operation.request);
+    case 'check_shared_daily_test':
+      return buildCheckSharedDailyTestBody(operation.request);
     case 'score_answers':
       return buildScoreAnswersBody(operation.request);
   }
