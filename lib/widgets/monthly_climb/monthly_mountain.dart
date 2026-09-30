@@ -204,31 +204,16 @@ class _MountainPainter extends CustomPainter {
       canvas.drawPath(path, Paint()..color = color);
     }
 
-    shape(ClimbScene.body, palette.mountain);
-    shape(const [
-      Offset(162, 56),
-      Offset(151, 177),
-      Offset(181, 240),
-      Offset(153, 347),
-      Offset(180, 453),
-      Offset(147, 560),
-      Offset(189, 740),
-      Offset(379, 740),
-      Offset(340, 470),
-      Offset(279, 286),
-      Offset(226, 210),
-      Offset(205, 138)
-    ], palette.ridge);
-    shape(const [
-      Offset(162, 56),
-      Offset(118, 128),
-      Offset(103, 171),
-      Offset(139, 149),
-      Offset(158, 163),
-      Offset(181, 143),
-      Offset(211, 161),
-      Offset(205, 138)
-    ], palette.stone);
+    // The mountain's layers, back to front, in flat colors (Batch 3c e).
+    final tones = ClimbSceneTones.of(palette);
+    shape(ClimbScene.farRidge, tones.farRidge);
+    shape(ClimbScene.midRidge, tones.midRidge);
+    shape(ClimbScene.body, tones.litFace);
+    shape(ClimbScene.shadowFace, tones.shadowFace);
+    shape(ClimbScene.cap, tones.cap);
+    for (final hill in ClimbScene.foothills) {
+      canvas.drawOval(hill, Paint()..color = tones.foothill);
+    }
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
