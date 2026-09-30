@@ -7,6 +7,28 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 void main() {
+  test(
+      'Every month shares one frozen path, evenly spaced, ending on the summit',
+      () {
+    final length = ClimbRoute.sharedPath.computeMetrics().single.length;
+    for (final days in [28, 29, 30, 31]) {
+      final route = ClimbRoute(days);
+      expect(route.path, same(ClimbRoute.sharedPath));
+      expect(route.pointAt(0).dx, closeTo(136, .01));
+      expect(route.pointAt(0).dy, closeTo(700, .01));
+      for (var day = 1; day <= days; day++) {
+        // Straight-line distance never exceeds the even share along the path,
+        // and on straight legs equals it.
+        final chord =
+            (route.pointAt(day.toDouble()) - route.pointAt(day - 1.0)).distance;
+        expect(chord, lessThanOrEqualTo(length / days + .05));
+      }
+      // The first leg rises at 45° (D1): day 1 is up as much as across.
+      final first = route.pointAt(1) - route.pointAt(0);
+      expect(first.dx, closeTo(-first.dy, .01));
+    }
+  });
+
   test('Every month keeps continuous motion and landmarks within scene', () {
     for (final days in [28, 29, 30, 31]) {
       final route = ClimbRoute(days);
@@ -25,8 +47,8 @@ void main() {
         expect(landmarkX - 30, greaterThanOrEqualTo(0));
         expect(landmarkX + 30, lessThanOrEqualTo(320));
       }
-      expect(route.pointAt(days.toDouble()).dx, closeTo(160, .01));
-      expect(route.pointAt(days.toDouble()).dy, closeTo(120, .01));
+      expect(route.pointAt(days.toDouble()).dx, closeTo(162, .01));
+      expect(route.pointAt(days.toDouble()).dy, closeTo(84, .01));
     }
   });
 

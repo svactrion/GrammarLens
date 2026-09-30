@@ -243,18 +243,20 @@ class _MountainPainter extends CustomPainter {
       _landmark(canvas, i);
       canvas.restore();
     }
+    // The flag stands on the trail's end: the last day is the summit.
+    final summit = ClimbRoute.summit;
     canvas.drawLine(
-        const Offset(162, 57),
-        const Offset(162, 20),
+        summit + const Offset(0, 1),
+        summit + const Offset(0, -36),
         stroke
           ..color = palette.ink
           ..strokeWidth = 2.5);
-    shape(const [
-      Offset(163, 21),
-      Offset(188, 22),
-      Offset(181, 30),
-      Offset(188, 36),
-      Offset(163, 35)
+    shape([
+      summit + const Offset(1, -35),
+      summit + const Offset(26, -34),
+      summit + const Offset(19, -26),
+      summit + const Offset(26, -20),
+      summit + const Offset(1, -21)
     ], palette.accent);
     canvas.restore();
   }
