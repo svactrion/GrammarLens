@@ -6662,3 +6662,79 @@ measurements and renders: `docs/design/batch3c/report.md`, "After: Batch
 - **[Open — owner]** Device check and merge approval.
 
 - **2026-09-30 — Batch 3c-B verified on the owner's device and merged into `1.1.0`** by fast-forward to `0488714` (no merge commit); 1143 tests green on `1.1.0`.
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 8: four new avatars, looping carousel; not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]**
+  - `a75f71f`: four new avatars, `avatar_13`–`avatar_16`.
+  - `3080861`: `AvatarCarousel` loops in both directions.
+  - Plus this docs commit.
+- **[Engineering] Source check, before any conversion.** Four PNGs in the
+  owner's folder (plus a `.DS_Store`), all 1024 × 1024 RGBA, the same
+  soft-clay style as the existing twelve; three carry Figma's export tag,
+  the fox none. Checked against the `avatar_07` precedent: no column or row
+  with alpha over 95% of the image's length, no stripe. What the sources do
+  carry is alpha 1–3 specks outside the body (bird 839 px, panda 801,
+  sloth 382, fox 0), the same invisible class the shipped set already has
+  (`avatar_02` 91 px, `avatar_12` 77); the bird and the sloth also bake in
+  a soft ground shadow, like `avatar_02`/`05`/`06`/`12`. The sloth's
+  shadow runs out to the source's left edge (41 px, alpha ≤ 5).
+- **[Engineering] Pipeline.** Premultiplied Lanczos resize to 508 × 508,
+  lossy WebP quality 90 with a separate `ALPH` chunk (the set's
+  convention); alpha checked by decoding. Alphabetical file order gives
+  13 Bird, 14 Fox, 15 Panda, 16 Sloth. Sizes: 41.3 KB, 43.9 KB, 38.4 KB,
+  114.3 KB. Feet land at y ≈ 452–472 of 508, inside the existing set's
+  428–485, so the fixed ground-shadow placement in `AvatarTile` holds.
+- **[Engineering] `avatar_16` edge fix, the `avatar_01`/`03` way.** After
+  encoding, 21 pixels of the sloth's shadow (left column, alpha ≤ 5) were
+  still on the edge. Decoded, zeroed exactly those 21, re-saved lossless
+  (`exact`); the decoded diff against the lossy encode is those 21 pixels
+  and nothing else. 45.9 KB → 114.3 KB, the tradeoff already accepted for
+  `avatar_01`/`03`. Putting the unfixed lossy file back turns the edges
+  test red.
+- **[Product] Append-only.** The original twelve files, indices and labels
+  are untouched (a test pins all twelve labels in order); `Avatar.count`
+  12 → 16. Credits unchanged: the attribution names the set ("Cute Animal
+  3D Icons" by Tran Mau Tri Tam), not a count. Labels Bird, Fox, Panda,
+  Sloth are for the owner to confirm on a device.
+- **[Decision — owner] The carousel loops in both directions.** After the
+  last avatar comes the first; dragging back from the first reaches the
+  last. *Why:* with a clamped list, whoever starts at either end (and the
+  onboarding start is random) meets a dead end in one direction; a loop
+  removes it, and with sixteen avatars the ends are further apart than
+  before. One widget, so onboarding and Settings' picker both change.
+- **[Engineering] How it loops.** `PageView.builder` without `itemCount`;
+  a raw page maps to `Avatar.values[rawPage % Avatar.count]`, starting at
+  `Avatar.count * 1000 + selected index` (out of reach by swiping).
+  `_settledIndex` keeps the raw page, and "settled" compares raw pages,
+  never modulo: when another copy of the same avatar is built, it must not
+  count as settled, or `centerTileBuilder` would give the same `Hero` tag
+  to two tiles. `onSettled`, the haptic and the pop fire only when the
+  avatar changes; a full lap moves the settled page (the `Hero` follows
+  the centered tile) and nothing else. Geometry and the layout-footprint
+  rule are unchanged.
+- **[Tests]** New: wrap forward from the last and back from the first;
+  every start, one page forward and back; neighbors on both sides of
+  avatars 1 and 16 at mount; a silent full lap; one `Hero` and one
+  selected node while duplicate copies are on screen (viewportFraction
+  0.02); one `Hero` across the seam in the picker; the bundled avatar
+  files equal `Avatar.count`, each 508 × 508 with real decoded alpha.
+  Changed: onboarding's opposite-direction retry (the 2026-09-15 boundary
+  flake workaround) is removed, since one forward drag now changes the
+  avatar from any random start; Settings' autosave test keeps its fixed
+  start for determinism, comment updated. Mutation checks, each red:
+  clamp instead of modulo, modulo by `count - 1`, modulo in "settled",
+  and no same-avatar guard.
+- **[Tests]** 1156 passed (1143 before this batch), full suite three runs
+  in a row, the onboarding/Settings/picker files ten more. `flutter
+  analyze` is clean.
+- **[Visual — pre-release check]** The paywall's hero companions
+  (offsets 2, 4, 6, 8 modulo `Avatar.count`) now draw from sixteen, so
+  for a user whose avatar is 6–12 the companions change. New avatars can
+  appear in onboarding, Home, Settings. App Store screenshots and
+  case-study images that show a carousel end or the paywall hero may
+  differ.
+- **[Open — owner]** Device check (the four labels, the loop in onboarding
+  and Settings) and merge approval.
