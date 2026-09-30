@@ -6507,3 +6507,48 @@ measurements and images: `docs/design/batch3b/report.md`, "After".
   - Merge approval.
 
 - **2026-09-30 — Batch 3b verified on the owner's device and merged into `1.1.0`** by fast-forward (no merge commit; `1.1.0` now at `497b6f9`); 1108 tests green on `1.1.0`.
+
+## 2026-09-30 (Home greeting: the user's name was lost at 320 pt — fixed, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Report:
+`docs/design/greeting-fix/report.md`.
+
+- **[Bug] Root cause.**
+  - The greeting was one line, `Text('$word, $name', maxLines: 1,
+    overflow: ellipsis)`, beside the 60 pt avatar: 216 pt of width on a
+    320 pt screen.
+  - An ellipsis cuts from the end, where the name is. "Good morning, "
+    leaves less room than one letter plus "…" (228 pt at Medium), so the
+    whole name went.
+  - **Every name was lost at 320 pt at the default and Large text sizes.**
+    Across 108 cases (3 widths × 3 text sizes × 3 greetings × 4 names) the
+    name was lost in 30 and cut in 60.
+- **[Bug] Also in 1.0.0.** Measured on `v1.0.0` (`509f94d`, build 3, the
+  build in App Store review): byte-identical results. **If 1.0.0 is
+  released, it ships with this bug.**
+- **[Fix — owner's choice, option A]** `HomeGreeting`:
+  - one line when it fits;
+  - otherwise "Good morning," on the first line (scaled down only if the
+    word alone does not fit) and the name on its own line, at the user's
+    text size, cut with "…" only if longer than a line;
+  - VoiceOver reads one sentence.
+  - Rejected: first name only (it does not fit at 320 pt either) and
+    shrinking the text (it overrides the user's text size).
+- **[Cost — measured]** Mountain above the fold at 320 × 568:
+  - Medium 81 → 73 pt;
+  - Large 66 → 52 pt;
+  - Small 97 → 95 pt.
+
+  With a longer name at 375 × 667: Medium 199 → 191 pt, Large 186 → 172 pt.
+  No change wherever the greeting fits one line.
+- **[Result]** Of the 108 cases:
+  - name lost 30 → **0**;
+  - name in full 18 → **105**.
+
+  The other 3 are a 15-character full name at 320 pt Large, shown as "Mary
+  Anne S…".
+- **[Tests]** 1120 passed (1108 before):
+  - the 108-case regression test, red on the tree before the fix in all 9
+    groups (separate worktree);
+  - 3 VoiceOver tests, red without the single label.
+- **[Open — owner]** Device check and merge approval.
