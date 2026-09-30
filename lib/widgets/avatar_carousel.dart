@@ -12,6 +12,13 @@ import 'avatar_tile.dart';
 /// "confirm" affordance — whichever avatar is centered once the page
 /// settles *is* the selection, reported via [onSettled].
 ///
+/// The carousel loops in both directions (Batch 8, 2026-09-30): after the
+/// last avatar comes the first again, and dragging back from the first
+/// reaches the last — no dead end at either side. The [PageView] has no
+/// `itemCount`; a raw page maps to `Avatar.values[rawPage % Avatar.count]`
+/// and starts [_loopOffset] pages in, far enough that neither end of the
+/// int range is reachable by swiping.
+///
 /// Used inline by both `OnboardingScreen` (embedded above the name field)
 /// and `AvatarPickerScreen` (Settings' own pushed screen) — one widget, so
 /// the swipe/settle/haptic behavior can't drift between the two.
@@ -87,8 +94,17 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   // paint without visibly clipping against this box's own edge.
   static const double _verticalSlack = 1.12;
   static const Duration _popDuration = Duration(milliseconds: 180);
+  // Where the initial avatar's raw page sits: a whole number of laps in,
+  // so `_loopOffset % Avatar.count == 0` and the first avatar lands on
+  // raw page `_loopOffset` itself.
+  static const int _loopOffset = Avatar.count * 1000;
 
   late final PageController _pageController;
+  // The RAW page index of the settled page, not an avatar index. Each
+  // avatar has many raw pages (one per lap); only the one actually
+  // centered counts as settled, so `centerTileBuilder` (a Hero, in
+  // `AvatarPickerScreen`) wraps exactly one tile even when another copy
+  // of the same avatar is built nearby.
   late int _settledIndex;
   late final AnimationController _popController;
   late final Animation<double> _popAnimation;
@@ -96,7 +112,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   @override
   void initState() {
     super.initState();
-    _settledIndex = widget.initialAvatar.index - 1;
+    _settledIndex = _loopOffset + widget.initialAvatar.index - 1;
     _pageController = PageController(
       viewportFraction: widget.viewportFraction,
       initialPage: _settledIndex,
@@ -107,6 +123,9 @@ class _AvatarCarouselState extends State<AvatarCarousel>
       TweenSequenceItem(tween: Tween(begin: 1.06, end: 1.0), weight: 1),
     ]).animate(_popController);
   }
+
+  static Avatar _avatarAt(int rawPage) =>
+      Avatar.values[rawPage % Avatar.count];
 
   @override
   void dispose() {
@@ -119,15 +138,22 @@ class _AvatarCarouselState extends State<AvatarCarousel>
     if (notification is! ScrollEndNotification) return false;
     final page = _pageController.page;
     if (page == null) return false;
-    final settled = page.round().clamp(0, Avatar.count - 1);
+    final settled = page.round();
     if (settled == _settledIndex) return false;
 
+    final previous = _avatarAt(_settledIndex);
     setState(() => _settledIndex = settled);
+    // A full lap lands on another copy of the same avatar: the settled
+    // page moves (so the Hero follows the centered tile), but the
+    // selection didn't change, so no haptic, pop or callback.
+    final avatar = _avatarAt(settled);
+    if (avatar == previous) return false;
+
     HapticFeedback.selectionClick();
     _popController.duration =
         MediaQuery.disableAnimationsOf(context) ? Duration.zero : _popDuration;
     _popController.forward(from: 0);
-    widget.onSettled(Avatar.values[settled]);
+    widget.onSettled(avatar);
     return false;
   }
 
@@ -142,9 +168,8 @@ class _AvatarCarouselState extends State<AvatarCarousel>
         onNotification: _onScrollNotification,
         child: PageView.builder(
           controller: _pageController,
-          itemCount: Avatar.count,
           itemBuilder: (context, index) => _CarouselPage(
-            avatar: Avatar.values[index],
+            avatar: _avatarAt(index),
             pageController: _pageController,
             popAnimation: _popAnimation,
             index: index,
@@ -168,7 +193,9 @@ class _AvatarCarouselState extends State<AvatarCarousel>
 /// builder above only so [Listenable.merge] has one clear place to
 /// rebuild from — [pageController] (continuous drag) and [popAnimation]
 /// (the brief post-settle bump) are two independent listenables, and this
-/// widget needs both.
+/// widget needs both. [index] and [settledIndex] are both raw page
+/// indices (see `_AvatarCarouselState._settledIndex`), compared as-is —
+/// never reduced modulo [Avatar.count].
 class _CarouselPage extends StatelessWidget {
   final Avatar avatar;
   final PageController pageController;

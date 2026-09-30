@@ -124,16 +124,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // The carousel starts on a random avatar (no seam to fix it for this
-      // test) — if that happened to land near the end of the list, a
-      // forward drag has nowhere further to go and settles right back
-      // where it started (PageView clamps, it doesn't wrap). Retry the
-      // other direction rather than let the test flake on that boundary.
-      var after = centeredAvatarLabel(tester);
-      if (after == before) {
-        await tester.drag(find.byType(PageView), const Offset(500, 0));
-        await tester.pumpAndSettle();
-        after = centeredAvatarLabel(tester);
-      }
+      // test). Before Batch 8 a start near the end of the list left a
+      // forward drag nowhere to go, so this test retried the other
+      // direction; the carousel now loops, so one forward drag from any
+      // start must change the avatar — no retry.
+      final after = centeredAvatarLabel(tester);
       expect(after, isNot(before));
 
       await fillNameAndGoal(tester);
