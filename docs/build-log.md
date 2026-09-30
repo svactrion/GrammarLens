@@ -6552,3 +6552,5 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Report:
     groups (separate worktree);
   - 3 VoiceOver tests, red without the single label.
 - **[Open — owner]** Device check and merge approval.
+
+- **2026-09-30 — Home greeting fix verified on the owner's device and merged into `1.1.0`** by fast-forward to `69bef5f` (no merge commit; the Batch 3c-A commits `133c53f` and `baf4eef` stay on `1.1.0-design` only); 1120 tests green on `1.1.0`.

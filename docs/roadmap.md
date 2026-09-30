@@ -42,6 +42,10 @@ D1–D6 in the side-tracks file.)*
       camera layer with framing F1; hop (none with Reduce Motion); score bar
       under the mountain window; two-row header. No 320 pt fix: there was no
       shift (D6)
+- [x] Home greeting: the user's name is never lost (at 320 pt it was lost for
+      every name since 1.0.0) — done, verified on device, merged into
+      `1.1.0` (2026-09-30, fast-forward to `69bef5f`; 1120 tests green on
+      `1.1.0`) (`docs/design/greeting-fix/report.md`)
 - [ ] Batch 4 — layer slot infrastructure (including a ridge/summit
       silhouette slot in the background), Ember Peak, Glacier Peak, Red
       Canyon, four summits
