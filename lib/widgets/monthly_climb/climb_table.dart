@@ -137,3 +137,30 @@ const climbStepTable = <int, List<(double, double)>>{
     (0.50625, 0.11351),
   ],
 };
+
+/// Stop markers per month length: (day, x, y), the drawing origin in the same
+/// normalized space. A marker within the month's last 2 steps is left out
+/// (design decision D2): the summit takes its place.
+const climbMarkerTable = <int, List<(int, double, double)>>{
+  28: [
+    (7, 0.87561, 0.74216),
+    (14, 0.50163, 0.51034),
+    (21, 0.43620, 0.36977),
+  ],
+  29: [
+    (7, 0.87809, 0.75517),
+    (14, 0.52895, 0.52258),
+    (21, 0.41239, 0.39312),
+  ],
+  30: [
+    (7, 0.87842, 0.76738),
+    (14, 0.55444, 0.53401),
+    (21, 0.40155, 0.40552),
+  ],
+  31: [
+    (7, 0.87700, 0.77877),
+    (14, 0.57830, 0.54470),
+    (21, 0.39031, 0.41590),
+    (28, 0.57728, 0.23142),
+  ],
+};

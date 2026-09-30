@@ -28,6 +28,36 @@ class ClimbRoute {
   ];
   static const filletRadius = 110.0;
 
+  /// The mountain body's outline (the painter's first polygon). The step
+  /// table's generator keeps stop markers on it.
+  static const mountainBody = [
+    Offset(-60, 740),
+    Offset(0, 403),
+    Offset(42, 264),
+    Offset(88, 211),
+    Offset(118, 128),
+    Offset(162, 56),
+    Offset(205, 138),
+    Offset(226, 210),
+    Offset(279, 286),
+    Offset(340, 470),
+    Offset(379, 740)
+  ];
+
+  /// The days that carry a stop marker: campfire, tent, mountain cabin,
+  /// lookout terrace.
+  static const markerDays = [7, 14, 21, 28];
+  static const markerNames = [
+    'campfire',
+    'tent',
+    'mountain cabin',
+    'lookout terrace'
+  ];
+
+  /// Design decision D2: a marker within the month's last 2 steps is not
+  /// drawn; the summit takes its place. By step, never by screen size.
+  static bool markerShown(int markerDay, int days) => days - markerDay > 2;
+
   /// The shared path, built once.
   static final Path sharedPath = _filletPolyline(corners, filletRadius);
   static final PathMetric _metric = sharedPath.computeMetrics().single;
@@ -48,6 +78,13 @@ class ClimbRoute {
     final (x, y) = climbStepTable[days]![day.clamp(0, days)];
     return Offset(x * sceneSize.width, y * sceneSize.height);
   }
+
+  /// The stop markers shown in this month (D2 applied), each with its
+  /// drawing origin in scene units, from the generated [climbMarkerTable].
+  List<({int day, Offset origin})> get markers => [
+        for (final (day, x, y) in climbMarkerTable[days]!)
+          (day: day, origin: Offset(x * sceneSize.width, y * sceneSize.height)),
+      ];
 
   /// Any point along the trail, including between two days (the pawn's
   /// motion). At whole days it equals [stepAt] to within the table's

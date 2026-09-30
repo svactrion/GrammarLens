@@ -108,8 +108,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         ClimbThemes.greenSlope.paletteFor(Theme.of(context).brightness);
     return Semantics(
       label: 'Green Slope. ${widget.completedDays} of ${widget.days} steps. '
-          '${widget.avatar.semanticLabel} avatar. Milestones: day 7 campfire, '
-          'day 14 tent, day 21 mountain cabin, day 28 lookout terrace. '
+          '${widget.avatar.semanticLabel} avatar. Milestones: '
+          '${_route.markers.map((m) => 'day ${m.day} ${ClimbRoute.markerNames[ClimbRoute.markerDays.indexOf(m.day)]}').join(', ')}. '
           'Summit at ${widget.days} steps.',
       child: LayoutBuilder(builder: (context, constraints) {
         final scale = constraints.maxWidth / ClimbRoute.sceneSize.width;
@@ -177,19 +177,7 @@ class _MountainPainter extends CustomPainter {
       canvas.drawPath(path, Paint()..color = color);
     }
 
-    shape(const [
-      Offset(-60, 740),
-      Offset(0, 403),
-      Offset(42, 264),
-      Offset(88, 211),
-      Offset(118, 128),
-      Offset(162, 56),
-      Offset(205, 138),
-      Offset(226, 210),
-      Offset(279, 286),
-      Offset(340, 470),
-      Offset(379, 740)
-    ], palette.mountain);
+    shape(ClimbRoute.mountainBody, palette.mountain);
     shape(const [
       Offset(162, 56),
       Offset(151, 177),
@@ -236,11 +224,12 @@ class _MountainPainter extends CustomPainter {
               const Radius.circular(6)),
           Paint()..color = day <= progress ? palette.accent : palette.stone);
     }
-    for (var i = 0; i < 4; i++) {
-      final point = route.pointAt((i + 1) * 7.0);
+    // Only the markers the table lists: D2 leaves out a marker within the
+    // month's last 2 steps.
+    for (final marker in route.markers) {
       canvas.save();
-      canvas.translate(point.dx + (point.dx > 160 ? -42 : 42), point.dy - 22);
-      _landmark(canvas, i);
+      canvas.translate(marker.origin.dx, marker.origin.dy);
+      _landmark(canvas, ClimbRoute.markerDays.indexOf(marker.day));
       canvas.restore();
     }
     // The flag stands on the trail's end: the last day is the summit.

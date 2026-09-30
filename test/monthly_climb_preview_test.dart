@@ -41,11 +41,9 @@ void main() {
         expect(point.dy, inInclusiveRange(55, 740));
         previous = point;
       }
-      for (final day in [7, 14, 21, 28]) {
-        final point = route.pointAt(day.toDouble());
-        final landmarkX = point.dx + (point.dx > 160 ? -42 : 42);
-        expect(landmarkX - 30, greaterThanOrEqualTo(0));
-        expect(landmarkX + 30, lessThanOrEqualTo(320));
+      for (final marker in route.markers) {
+        expect(marker.origin.dx - 30, greaterThanOrEqualTo(0));
+        expect(marker.origin.dx + 30, lessThanOrEqualTo(320));
       }
       expect(route.pointAt(days.toDouble()).dx, closeTo(162, .01));
       expect(route.pointAt(days.toDouble()).dy, closeTo(84, .01));

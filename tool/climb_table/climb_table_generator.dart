@@ -2,6 +2,9 @@
 // (ClimbRoute). Used by generate_climb_table_test.dart to write the file and
 // by test/climb_table_test.dart to check the committed file is current.
 
+import 'dart:math' as math;
+import 'dart:ui';
+
 import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 
 const climbTablePath = 'lib/widgets/monthly_climb/climb_table.dart';
@@ -35,6 +38,122 @@ String generateClimbTable() {
     }
     out.writeln('  ],');
   }
+  out
+    ..writeln('};')
+    ..writeln()
+    ..writeln('/// Stop markers per month length: (day, x, y), the drawing '
+        "origin in the same")
+    ..writeln('/// normalized space. A marker within the month\'s last 2 '
+        'steps is left out')
+    ..writeln('/// (design decision D2): the summit takes its place.')
+    ..writeln('const climbMarkerTable = <int, List<(int, double, double)>>{');
+  for (var days = 28; days <= 31; days++) {
+    out.writeln('  $days: [');
+    for (final (day, o) in placeMarkers(days)) {
+      out.writeln('    ($day, ${_n(o.dx / size.width)}, '
+          '${_n(o.dy / size.height)}),');
+    }
+    out.writeln('  ],');
+  }
   out.writeln('};');
   return out.toString();
+}
+
+// Marker placement: the Batch 3a study's rule (docs/design/batch3a/report.md,
+// "How the numbers and images were made"), unchanged.
+
+/// The union of the four marker drawings around their origin.
+const markerBox = Rect.fromLTRB(-28, -30, 30, 20);
+const _trailHalf = 13.0; // the trail's outer stroke is 26 wide
+const _stepSize = Size(20, 13);
+
+/// The flag at the summit: pole and cloth.
+Rect _summitBox(Offset s) =>
+    Rect.fromLTRB(s.dx - 3, s.dy - 40, s.dx + 28, s.dy);
+
+final _body = Path()..addPolygon(ClimbRoute.mountainBody, true);
+
+double _rectDistance(Rect r, Offset p) {
+  final dx = math.max(math.max(r.left - p.dx, 0.0), p.dx - r.right);
+  final dy = math.max(math.max(r.top - p.dy, 0.0), p.dy - r.bottom);
+  return math.sqrt(dx * dx + dy * dy);
+}
+
+/// Each shown marker beside its own step, on whichever side is clear: the
+/// closest spot (both sides, 30–90 units out along the normal, lifted
+/// 0/−10/+10/−20) where its box stays 4 units off the trail band, covers no
+/// step, stays on the mountain and in the scene, and meets no other marker
+/// or the summit flag. If no spot is on the mountain, the box's top may
+/// reach into the sky. If there is still none, generation fails: a curve
+/// change must not silently put a marker on the trail.
+List<(int, Offset)> placeMarkers(int days) {
+  final route = ClimbRoute(days);
+  final metric = route.path.computeMetrics().single;
+  final samples = [
+    for (var s = 0.0; s < metric.length; s += 1)
+      metric.getTangentForOffset(s)!.position,
+    metric.getTangentForOffset(metric.length)!.position,
+  ];
+  final steps = [for (var d = 0; d <= days; d++) route.pointAt(d.toDouble())];
+  final placed = <Rect>[];
+
+  bool fits(Rect box, {required bool relaxed}) {
+    const size = ClimbRoute.sceneSize;
+    if (box.left < 4 || box.right > size.width - 4 || box.top < 4) {
+      return false;
+    }
+    if (box.bottom > size.height - 4) return false;
+    if (!_body.contains(box.bottomLeft + const Offset(4, -4)) ||
+        !_body.contains(box.bottomRight + const Offset(-4, -4)) ||
+        (!relaxed && !_body.contains(box.topCenter + const Offset(0, 10)))) {
+      return false;
+    }
+    for (final p in samples) {
+      if (_rectDistance(box, p) < _trailHalf + 4) return false;
+    }
+    for (final p in steps) {
+      if (box.overlaps(Rect.fromCenter(
+          center: p, width: _stepSize.width, height: _stepSize.height))) {
+        return false;
+      }
+    }
+    for (final r in placed) {
+      if (r.overlaps(box)) return false;
+    }
+    return !box
+        .inflate(relaxed ? 0 : 6)
+        .overlaps(_summitBox(ClimbRoute.summit));
+  }
+
+  final result = <(int, Offset)>[];
+  for (final day in ClimbRoute.markerDays) {
+    if (!ClimbRoute.markerShown(day, days)) continue;
+    final t = metric.getTangentForOffset(metric.length * day / days)!;
+    final normal = Offset(-t.vector.dy, t.vector.dx);
+    Offset? best;
+    for (final relaxed in [false, true]) {
+      var bestCost = double.infinity;
+      for (final side in [1.0, -1.0]) {
+        for (var dist = 30.0; dist <= 90; dist += 2) {
+          for (final lift in [0.0, -10.0, 10.0, -20.0]) {
+            final o = t.position + normal * (side * dist) + Offset(0, lift);
+            if (!fits(markerBox.shift(o), relaxed: relaxed)) continue;
+            final cost = (o - t.position).distance + lift.abs() * .5;
+            if (cost < bestCost) {
+              bestCost = cost;
+              best = o;
+            }
+          }
+        }
+      }
+      if (best != null) break;
+    }
+    if (best == null) {
+      throw StateError('No clear spot for the day-$day marker in a '
+          '$days-day month');
+    }
+    placed.add(markerBox.shift(best).inflate(6));
+    result.add((day, best));
+  }
+  return result;
 }
