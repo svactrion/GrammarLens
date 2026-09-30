@@ -6424,3 +6424,41 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   not at launch, on resume); converter (v1, date, gate skipped, count,
   duplicates, ids kept, origin fields kept, explanations in the review); the
   script writing to KV.
+
+## 2026-09-30 (1.1.0 ships with the full scope; Batch 3a decisions)
+
+Docs only, on branch `1.1.0-design`; no code, config or test changed.
+
+- **[Product — owner] D7. 1.1.0 ships with the full scope:** it does not
+  ship before the theme package (design Batches 4–6) is done. Batch 7
+  (one-time environment motion) may still move to the next version.
+  - **This knowingly overrides**, for this release, the rule "side work
+    never holds back the shared Daily Test"
+    (`1.1.0-design-side-tracks.md`, "Rules").
+  - **Facts:** 1.0.0 is in App Store review and has no users; the app will
+    most likely enter the store with 1.1.0 (roadmap, "Version naming").
+  - **The cost is conditional:** only if 1.0.0 is approved, released and
+    gains users before 1.1.0 do those users stay on the old per-device Daily
+    Test route, which costs per user.
+  - **Why:**
+    - (A) the first store entry comes with a complete, visible package;
+    - (B) one submission cycle instead of two;
+    - (C) the decision and its cost analysis are to be written up in the
+      Medium article and the case study on the personal site.
+  - **Target date:** not set.
+- **[Product — owner] Batch 3a decisions D1–D6**, written with their
+  reasons into `1.1.0-design-side-tracks.md`, "Decisions after Batch 3a":
+  - trail (b) "Wide S" with a steeper first leg, frozen after measured
+    renders (D1);
+  - a stop marker within the month's last 2 steps is not drawn; the summit
+    takes its place (D2);
+  - stop coordinates as a generated, normalized table per month length,
+    checked against the curve by a test, with the camera as its own layer
+    (D3);
+  - no avatar mirroring and no facing data (D4);
+  - mountain framing: a measured comparison in Batch 3b, a ridge/summit
+    silhouette slot in Batch 4, a once-a-month zoom after the month card in
+    Batch 6; a zoom on every open rejected; a "see the mountain" button
+    parked for 1.2 (D5);
+  - the 14 pt shift at 320 pt: diagnosed and fixed in Batch 3b if it comes
+    from this work, otherwise reported separately (D6).

@@ -20,23 +20,39 @@ Client-side only, no API cost; does not hold back the shared Daily Test, and
 any batch not ready moves to the next version. Built after the `main` merge,
 one tested commit per batch. Nothing below is started.
 
+*(Owner, 2026-09-30, `build-log.md` "1.1.0 ships with the full scope":
+for 1.1.0 this is overridden. 1.1.0 does not ship before Batches 4–6 are
+done; Batch 7 may move. Batch 3 is split into 3a (study) and 3b; decisions
+D1–D6 in the side-tracks file.)*
+
 - [ ] Batch 0 — read-only check report (no code), including how medal
       thresholds (points), the daily question count and blank answers work
 - [ ] Batch 1 — launch screen
 - [x] Batch 2 — theme data model, theme id stored with the month, migration,
       rotation, Green Slope as data (no visible change) — done 2026-09-27,
       with [Q] from one constant; 929 tests green
-- [ ] Batch 3 — serpentine trail, step positions, score bar, direction
-      change, hop, "Mountain of Learning" Home title
-- [ ] Batch 4 — layer slot infrastructure, Ember Peak, Glacier Peak, Red
+- [ ] Batch 3a — trail geometry candidates (study, no product code)
+- [ ] Batch 3b — trail (b) "Wide S" with a steeper first leg, frozen;
+      generated, normalized stop table with its test; stop markers with the
+      day-28 rule; the camera as its own layer (framing compared, changed
+      only on approval); hop, score bar, "Mountain of Learning" Home title;
+      the 320 pt shift. No avatar mirroring (D4)
+- [ ] Batch 4 — layer slot infrastructure (including a ridge/summit
+      silhouette slot in the background), Ember Peak, Glacier Peak, Red
       Canyon, four summits
 - [ ] Batch 5 — themed medal: body, emblem, month label
-- [ ] Batch 6 — month transition card and measurement events
+- [ ] Batch 6 — month transition card and measurement events; after the
+      card, once a month, a zoom from the whole mountain to the avatar
 - [ ] Batch 7 — one-time environment motion (may move to the next version)
-- [ ] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (may move to the next
-      version)
+- [ ] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16`, without facing data
+      (may move to the next version)
 - [ ] Last — B-polish dark-mode exception written into `docs/build-log.md` and
       `docs/design-audit.md`; this roadmap updated
+
+Parked for 1.2 (not 1.1.0):
+
+- A "see the mountain" button or a tappable mountain card (D5; a zoom on
+  every open was rejected: a repeated wait before the Daily Test).
 
 ## Launch scope — 2026-09-19
 
