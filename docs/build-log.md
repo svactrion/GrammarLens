@@ -6552,3 +6552,37 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Report:
     groups (separate worktree);
   - 3 VoiceOver tests, red without the single label.
 - **[Open — owner]** Device check and merge approval.
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 3c decisions: mountain redesign)
+
+Docs only, on branch `1.1.0-design`; no code changed.
+
+- **[Product — owner, after the Batch 3b device check]** The mountain is
+  redesigned as a visual layer (`1.1.0-design-side-tracks.md`, "Batch 3c —
+  mountain redesign"). Not touched: the Daily Test data flow, `dayKey`, the
+  medal rule.
+  - a. A thin frame around the card: the B-polish card border.
+  - b. "Mountain of Learning" moves onto a trail-sign plaque centered on the
+    frame's top line, as real text. The header row above the card goes.
+  - c. The month without the year ("September") goes top left inside the
+    frame, the step counter top right. Medals keep month and year.
+  - d. A new trail:
+    - a long low start, then legs that get steeper and shorter up to the
+      summit;
+    - steps evenly spaced;
+    - step markers turned with the trail or round;
+    - stop markers from a fixed table, D2 kept;
+    - side-facing avatars mirrored to their walking direction.
+  - e. A mountain that reads as one:
+    - a summit with sky around it and lighter ridges behind;
+    - flat-color light and shadow, no gradients;
+    - a concave silhouette, shared by all themes.
+  - f. Green Slope's environment items (pine, shrub, wildflower; 4–6
+    objects in the scene).
+  - g. Framing unchanged: a measured comparison with a wider one; the
+    month-change zoom is Batch 6; no zoom on every open.
+- **[Changes earlier decisions]**
+  - D1 (the frozen 45° curve) is reopened. The table machinery (D3) stays.
+  - D4 is reversed: side-facing avatars are mirrored, which needs a facing
+    value per avatar (today only the snail).
+  - D10's two-row header is replaced by (b) and (c).
