@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/avatar.dart';
 import '../../models/climb_theme.dart';
 import '../avatar_tile.dart';
+import 'climb_camera.dart';
 import 'climb_route.dart';
 
 /// Presentation only: no storage, scoring, services or test completion writes.
@@ -36,8 +37,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   late final AnimationController _motion;
   final _scroll = ScrollController();
   late ClimbRoute _route;
+  static const _camera = ClimbCamera();
   double _from = 0, _to = 0;
-  double _scale = 1;
+  double? _width;
   bool _reduceMotion = false;
   double get _day =>
       _from + (_to - _from) * Curves.easeInOut.transform(_motion.value);
@@ -90,9 +92,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
 
   void _follow() {
     if (!mounted || !_scroll.hasClients) return;
-    final desired = _route.pointAt(_day).dy * _scale -
-        _scroll.position.viewportDimension * .72;
-    _scroll.jumpTo(desired.clamp(0.0, _scroll.position.maxScrollExtent));
+    _scroll.jumpTo(_camera.scrollFor(_route.pointAt(_day),
+        _scroll.position.viewportDimension, _scroll.position.maxScrollExtent));
   }
 
   @override
@@ -112,13 +113,14 @@ class _MonthlyMountainState extends State<MonthlyMountain>
           '${_route.markers.map((m) => 'day ${m.day} ${ClimbRoute.markerNames[ClimbRoute.markerDays.indexOf(m.day)]}').join(', ')}. '
           'Summit at ${widget.days} steps.',
       child: LayoutBuilder(builder: (context, constraints) {
-        final scale = constraints.maxWidth / ClimbRoute.sceneSize.width;
-        if (_scale != scale || !_scroll.hasClients) {
-          _scale = scale;
+        final width = constraints.maxWidth;
+        final scale = _camera.scale;
+        if (_width != width || !_scroll.hasClients) {
+          _width = width;
           WidgetsBinding.instance.addPostFrameCallback((_) => _follow());
         }
         return SizedBox(
-            height: 350,
+            height: ClimbCamera.windowHeight,
             child: ColoredBox(
               color: palette.sky,
               child: Scrollbar(
@@ -131,23 +133,30 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                         : const NeverScrollableScrollPhysics(),
                     controller: _scroll,
                     child: SizedBox(
-                      width: constraints.maxWidth,
-                      height: 740 * scale,
+                      width: width,
+                      height: _camera.sceneHeight,
                       child: ExcludeSemantics(
                           child: AnimatedBuilder(
                         animation: _motion,
                         builder: (context, _) {
-                          final point = _route.pointAt(_day);
+                          final point =
+                              _camera.toScreen(_route.pointAt(_day), width);
                           return Stack(children: [
-                            Positioned.fill(
+                            // Mountain space, placed by the camera; it paints
+                            // past its box, so wide windows show the flanks.
+                            Positioned(
+                                left: _camera.sceneLeft(width),
+                                top: 0,
+                                width: ClimbRoute.sceneSize.width * scale,
+                                height: _camera.sceneHeight,
                                 child: CustomPaint(
                                     painter: _MountainPainter(
                                         route: _route,
                                         palette: palette,
                                         progress: _day))),
                             Positioned(
-                                left: (point.dx - 29) * scale,
-                                top: (point.dy - 55) * scale,
+                                left: point.dx - 29 * scale,
+                                top: point.dy - 55 * scale,
                                 child: AvatarTile(
                                     avatar: widget.avatar, radius: 29 * scale)),
                           ]);
