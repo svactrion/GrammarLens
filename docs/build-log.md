@@ -6738,3 +6738,5 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
   differ.
 - **[Open — owner]** Device check (the four labels, the loop in onboarding
   and Settings) and merge approval.
+
+- **2026-09-30 — Batch 8 device-checked by the owner and merged into `1.1.0`** (`--no-ff`). Checked: all 16 avatars in the picker and onboarding, both loop seams, the Hero back to Home, an existing selection preserved, a silent full lap. Label decision: `avatar_13` stays "Bird".

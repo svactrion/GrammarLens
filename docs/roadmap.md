@@ -64,8 +64,8 @@ D1–D6 in the side-tracks file.)*
 - [ ] Batch 7 — one-time environment motion (may move to the next version)
 - [x] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (Bird, Fox, Panda,
       Sloth), without facing data; the avatar carousel loops in both
-      directions — built 2026-09-30, 1156 tests green; **device check
-      pending**, not merged into `1.1.0` (`docs/build-log.md`, Batch 8)
+      directions — built 2026-09-30, 1156 tests green; device-checked
+      2026-09-30; merged into `1.1.0` (`docs/build-log.md`, Batch 8)
 - [ ] Last — B-polish dark-mode exception written into `docs/build-log.md` and
       `docs/design-audit.md`; this roadmap updated
 
