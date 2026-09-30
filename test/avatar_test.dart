@@ -6,6 +6,36 @@ import 'package:grammar_lens/models/avatar.dart';
 
 void main() {
   group('Avatar.values', () {
+    test('the set has sixteen avatars (Batch 8 added avatar_13–16)', () {
+      expect(Avatar.count, 16);
+    });
+
+    test(
+        'the original twelve keep their index and label — the set is '
+        'append-only, since an index is a stored id', () {
+      expect(
+        Avatar.values.take(12).map((a) => a.semanticLabel).toList(),
+        [
+          'Koala',
+          'Snail',
+          'Elephant',
+          'Bee',
+          'Frog',
+          'Chick',
+          'Crab',
+          'Cat',
+          'Turtle',
+          'Penguin',
+          'Giraffe',
+          'Hedgehog',
+        ],
+      );
+      expect(
+        Avatar.values.skip(12).map((a) => a.semanticLabel).toList(),
+        ['Bird', 'Fox', 'Panda', 'Sloth'],
+      );
+    });
+
     test('holds exactly Avatar.count entries, in asset order', () {
       expect(Avatar.values.length, Avatar.count);
       for (var i = 0; i < Avatar.values.length; i++) {
@@ -25,7 +55,7 @@ void main() {
       final paths = Avatar.values.map((a) => a.assetPath).toSet();
       expect(paths.length, Avatar.count);
       expect(Avatar.values.first.assetPath, 'assets/avatars/avatar_01.webp');
-      expect(Avatar.values.last.assetPath, 'assets/avatars/avatar_12.webp');
+      expect(Avatar.values.last.assetPath, 'assets/avatars/avatar_16.webp');
     });
   });
 
@@ -49,9 +79,15 @@ void main() {
       }
     });
 
+    test('the Batch 8 ids avatar_13–16 resolve to the new avatars', () {
+      for (var n = 13; n <= 16; n++) {
+        expect(Avatar.fromJson('avatar_$n'), same(Avatar.values[n - 1]));
+      }
+    });
+
     test('ids are zero-padded and match the asset filename', () {
       expect(Avatar.values.first.toJson(), 'avatar_01');
-      expect(Avatar.values.last.toJson(), 'avatar_12');
+      expect(Avatar.values.last.toJson(), 'avatar_16');
     });
 
     test(
@@ -60,7 +96,7 @@ void main() {
       expect(Avatar.fromJson(null), isNull);
       expect(Avatar.fromJson(''), isNull);
       expect(Avatar.fromJson('avatar_00'), isNull);
-      expect(Avatar.fromJson('avatar_13'), isNull);
+      expect(Avatar.fromJson('avatar_17'), isNull);
       expect(Avatar.fromJson('avatar_1'), isNull);
       expect(Avatar.fromJson('not-an-avatar'), isNull);
     });

@@ -30,10 +30,11 @@ class Avatar {
   const Avatar._(this.index);
 
   /// How many stock avatars exist — the one place this number is written.
-  /// Adding avatar_13.webp: drop the file in `assets/avatars/`, add its
-  /// character name to [_semanticLabels], bump this to 13. Nothing else
-  /// changes.
-  static const int count = 12;
+  /// Adding avatar_17.webp: drop the file in `assets/avatars/`, add its
+  /// character name to [_semanticLabels], bump this to 17. Nothing else
+  /// changes. Append-only: an existing index is a stored id, so it is
+  /// never renumbered or reused.
+  static const int count = 16;
 
   /// The [count] singleton instances, in asset order. Every other accessor
   /// on this class indexes into this same list rather than constructing a
@@ -72,6 +73,10 @@ class Avatar {
     'Penguin',
     'Giraffe',
     'Hedgehog',
+    'Bird',
+    'Fox',
+    'Panda',
+    'Sloth',
   ];
 
   /// Persisted as `avatar_NN`, matching the asset filename exactly — the

@@ -422,7 +422,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 /// fixed offset from its own index rather than [Avatar.random] — the same
 /// visitor sees the same group every time they open this screen (no
 /// re-roll on every rebuild), and it's trivially testable. Offsets (2, 4,
-/// 6, 8 positions around the 12-avatar cycle) are spread out rather than
+/// 6, 8 positions around the avatar cycle) are spread out rather than
 /// adjacent so the four don't cluster right next to the center avatar's
 /// own asset-numbering neighborhood.
 List<Avatar> _otherAvatarsFor(Avatar center) {
