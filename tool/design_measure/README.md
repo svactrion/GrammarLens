@@ -97,8 +97,9 @@ flutter test tool/design_measure/scene_art_test.dart
 
 A composition guide for AI image tools (`docs/design/scene-art/`): the whole
 mountain in flat grays, the trail in red, the turns in blue, the summit as a
-star, and a copy with the F1 window on days 3 and 25; plus the dimensions
-(`numbers.txt`).
+star (`mountain_guide.png`); a copy with the F1 window on days 3 and 25
+(`mountain_guide_f1_windows.png`); a copy with the silhouettes only
+(`mountain_guide_clean.png`); plus the dimensions (`numbers.txt`).
 
 To write the images straight into the report folder:
 

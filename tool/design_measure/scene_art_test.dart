@@ -2,7 +2,7 @@
 // own geometry (ClimbScene, ClimbRoute, ClimbCamera), as flat grays with the
 // trail in red, the four turns in blue and the summit as a black star. No
 // text, labels or avatar. A second copy adds the F1 window on day 3 and day 25
-// of a 31-day month. Output: DESIGN_MEASURE_OUT or build/design_measure.
+// of a 31-day month; a third, "clean", has the silhouettes only. Output: DESIGN_MEASURE_OUT or build/design_measure.
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -87,7 +87,9 @@ void _dashedRect(Canvas c, Rect r, Paint paint,
   line(r.bottomLeft, r.topLeft);
 }
 
-ui.Picture guide({required bool windows}) {
+/// [markings] adds the trail, the turns and the summit star; [windows]
+/// adds the F1 windows. With neither, only the silhouettes are drawn.
+ui.Picture guide({bool markings = true, bool windows = false}) {
   final recorder = ui.PictureRecorder();
   final c = Canvas(recorder);
   c.scale(pxPerUnit);
@@ -113,6 +115,7 @@ ui.Picture guide({required bool windows}) {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2
         ..color = const Color(0xFF7A7A7A));
+  if (!markings) return recorder.endRecording();
   // The trail's center line.
   c.drawPath(
       ClimbRoute(31).path,
@@ -156,11 +159,13 @@ void main() {
     final out = outDir();
     final w = (canvas.width * pxPerUnit).round(),
         h = (canvas.height * pxPerUnit).round();
-    for (final (name, windows) in [
-      ('mountain_guide.png', false),
-      ('mountain_guide_f1_windows.png', true),
+    for (final (name, markings, windows) in [
+      ('mountain_guide.png', true, false),
+      ('mountain_guide_f1_windows.png', true, true),
+      ('mountain_guide_clean.png', false, false),
     ]) {
-      final image = await guide(windows: windows).toImage(w, h);
+      final image =
+          await guide(markings: markings, windows: windows).toImage(w, h);
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
       File('$out/$name').writeAsBytesSync(bytes!.buffer.asUint8List());
     }

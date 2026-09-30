@@ -29,6 +29,10 @@ DESIGN_MEASURE_OUT=docs/design/scene-art flutter test tool/design_measure/scene_
   - **day 25 of 31**, long dashes, at its exact edges.
 
   The two windows have the same width and overlap on y 260–480.
+- **`mountain_guide_clean.png`**: the same size and aspect, **silhouettes
+  only**: the mountain and foothills in light gray, the two back ridges
+  lighter, and the lit/shadow boundary as a thin gray line. There is no
+  trail line, no turn circles, no summit star and no window.
 - **`numbers.txt`**: every figure below, as measured by the tool.
 
 ## Dimensions
