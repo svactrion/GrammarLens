@@ -285,7 +285,7 @@ void main() {
           tester.widget<MonthlyMountain>(find.byType(MonthlyMountain));
       expect(mountain.days, 28);
       expect(mountain.completedDays, 28);
-      expect(find.text('28 / 28 steps'), findsOneWidget);
+      expect(find.text('28 / 28'), findsOneWidget);
       for (var i = 0;
           i < 20 && find.text('Topic Practice').evaluate().isEmpty;
           i++) {
@@ -323,12 +323,15 @@ void main() {
       expect(find.text('Topic Practice').hitTestable(), findsOneWidget);
       expect(find.textContaining('Answer at least'), findsNothing);
       expect(find.textContaining('Your climb starts'), findsNothing);
-      await tester.ensureVisible(find.text('8 / 31 steps'));
+      await tester.ensureVisible(find.text('8 / 31'));
       await tester.pumpAndSettle();
-      expect(tester.getSemantics(find.text('8 / 31 steps')).label,
-          'Monthly progress: 8 of 31 steps.');
-      expect(tester.getTopLeft(find.text('8 / 31 steps')).dy,
-          lessThan(tester.getTopLeft(mountain).dy));
+      expect(tester.getSemantics(find.text('8 / 31')).label,
+          '8 of 31 steps.');
+      // Inside the card's frame, at the top of the mountain window
+      // (design decision K3), not in a header row above it.
+      final counterTop = tester.getTopLeft(find.text('8 / 31')).dy;
+      expect(counterTop, greaterThan(tester.getTopLeft(mountain).dy));
+      expect(counterTop, lessThan(tester.getTopLeft(mountain).dy + 60));
       expect(tester.takeException(), isNull);
       semantics.dispose();
     });

@@ -250,7 +250,7 @@ void main() {
       expect(seen.tops.first, greaterThan(seen.tops[1]));
       expect(seen.tops.last, closeTo(finalTop, 0.01));
       // Home may already be under the first-day paywall.
-      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -291,7 +291,7 @@ void main() {
       expect(seen.steps, [0]);
       expect(seen.tops, hasLength(1));
       // Home may already be under the first-day paywall.
-      expect(find.text('0 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('0 / 31', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -343,7 +343,7 @@ void main() {
 
       expect(seen.steps, [0, 1]);
       // Home may already be under the first-day paywall.
-      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -426,7 +426,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(premium, findsNothing);
       // Home may already be under the first-day paywall.
-      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
 
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       for (var i = 0; i < 120; i++) {

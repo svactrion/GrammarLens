@@ -22,6 +22,7 @@ import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/home_greeting.dart';
 import '../widgets/locked_premium_pill.dart';
+import '../widgets/monthly_climb/climb_card.dart';
 import '../widgets/monthly_climb/climb_score_bar.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
 import '../widgets/weak_spot_card.dart';
@@ -737,69 +738,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildClimb(BuildContext context) {
     final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
-    final monthLabel =
-        MaterialLocalizations.of(context).formatMonthYear(_climbMonth);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Two fixed rows (design decision D10): one line of "Mountain of
-        // Learning · <month>" does not fit a 320 pt screen and wrapped into
-        // three rows; two rows keep the same height at every width and text
-        // size.
-        Text('Mountain of Learning',
-            style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 2),
-        // One line at every app text size; only a very large system text
-        // size (Dynamic Type) wraps it instead of overflowing.
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(_climbSteps == null ? monthLabel : '$monthLabel · ',
-                style: Theme.of(context).textTheme.labelLarge),
-            if (_climbSteps != null)
-              Semantics(
-                liveRegion: true,
-                container: true,
-                label: _climbSteps == days
-                    ? 'Summit reached. $_climbSteps of $days steps.'
-                    : 'Monthly progress: $_climbSteps of $days steps.',
-                excludeSemantics: true,
-                child: Text('$_climbSteps / $days steps',
-                    style: Theme.of(context).textTheme.labelLarge),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        if (_climbSteps != null) ...[
-          ClipRRect(
+        // The card carries the title on its plaque (design decision K3);
+        // until the month's progress has loaded there is no card, so the
+        // title stands alone above the progress indicator or the retry.
+        if (_climbSteps == null) ...[
+          Text('Mountain of Learning',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+        ],
+        if (_climbSteps != null)
+          ClimbCard(
             key: _mountainKey,
-            borderRadius: BorderRadius.circular(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                MonthlyMountain(
-                  key: ValueKey(_climbMonth),
-                  days: days,
-                  completedDays: _climbSteps!,
-                  avatar: widget.avatar ?? Avatar.values.first,
-                  allowUserScroll: false,
-                  onMotionEnd: _onMountainMotionEnd,
-                ),
-                // Under the window, not over the scene (design decision D9).
-                ClimbScoreBar(
-                  score: _climbScore,
-                  maxScore: MonthlyMedalRules.maxScore(
-                      _climbMonth.year, _climbMonth.month),
-                  thresholds: {
-                    for (final tier in MedalTier.values)
-                      tier: MonthlyMedalRules.threshold(
-                          _climbMonth.year, _climbMonth.month, tier),
-                  },
-                ),
-              ],
+            month: _climbMonth,
+            steps: _climbSteps!,
+            days: days,
+            mountain: MonthlyMountain(
+              key: ValueKey(_climbMonth),
+              days: days,
+              completedDays: _climbSteps!,
+              avatar: widget.avatar ?? Avatar.values.first,
+              allowUserScroll: false,
+              onMotionEnd: _onMountainMotionEnd,
+            ),
+            // Under the window, not over the scene (design decision D9).
+            scoreBar: ClimbScoreBar(
+              score: _climbScore,
+              maxScore: MonthlyMedalRules.maxScore(
+                  _climbMonth.year, _climbMonth.month),
+              thresholds: {
+                for (final tier in MedalTier.values)
+                  tier: MonthlyMedalRules.threshold(
+                      _climbMonth.year, _climbMonth.month, tier),
+              },
             ),
           ),
-        ],
         if (_loadingClimb)
           const LinearProgressIndicator(
               semanticsLabel: 'Loading monthly progress'),

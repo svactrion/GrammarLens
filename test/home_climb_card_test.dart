@@ -11,6 +11,8 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_card.dart';
+import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 class _Subs extends SubscriptionService {
   @override
@@ -37,10 +39,10 @@ class _Storage extends StorageService {
       const [];
 }
 
-/// Design decision D10: the header above the mountain is two fixed rows,
-/// "Mountain of Learning" and "<month> · n / N steps", at every width and
-/// every app text size. (The one-line "Mountain of Learning · <month>" is
-/// 314 pt at Medium and wrapped on a 320 pt screen.)
+/// Design decision K3 (Batch 3c a–c): "Mountain of Learning" on a plaque on
+/// the frame's top line; the month without the year and the steps inside
+/// the frame, at every width and app text size. Replaces D10's two header
+/// rows.
 void main() {
   setUpAll(() async {
     final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
@@ -49,9 +51,10 @@ void main() {
 
   for (final width in [320.0, 375.0, 430.0]) {
     for (final textSize in AppTextSize.values) {
-      testWidgets('$width pt, ${textSize.name} text: two one-line rows',
-          (tester) async {
-        tester.view.physicalSize = Size(width, 900) * 3;
+      testWidgets(
+          '$width pt, ${textSize.name} text: plaque on the line, '
+          'month and steps inside', (tester) async {
+        tester.view.physicalSize = Size(width, 1100) * 3;
         tester.view.devicePixelRatio = 3;
         addTearDown(tester.view.reset);
         await tester.pumpWidget(MaterialApp(
@@ -65,35 +68,45 @@ void main() {
             storageService: _Storage(),
             analyticsService: AnalyticsService(),
             subscriptionService: _Subs(),
-            // The longest month name: "September 2026 · 30 / 30 steps".
+            // The longest month name: "September", 30 / 30.
             clock: () => DateTime(2026, 9, 30, 9),
           ),
         ));
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('Monthly Climb'), findsNothing);
-        final title = find.text('Mountain of Learning');
-        final month = find.text('September 2026 · ');
-        final steps = find.text('30 / 30 steps');
-        expect(title, findsOneWidget);
-        expect(month, findsOneWidget);
-        expect(steps, findsOneWidget);
+        final card = tester.getRect(find.byType(ClimbCard));
+        final plaque = tester.getRect(find.byKey(ClimbCard.plaqueKey));
+        final window = tester.getRect(find.byType(MonthlyMountain));
+        final month = tester.getRect(find.byKey(ClimbCard.monthKey));
+        final steps = tester.getRect(find.byKey(ClimbCard.stepsKey));
 
-        double lineHeight(Finder f) {
-          final style = tester.widget<Text>(f).style!;
-          return style.fontSize! * (style.height ?? 1);
-        }
+        // The plaque is centered on the frame's top line (the window's top).
+        expect(plaque.center.dx, closeTo(card.center.dx, .5));
+        expect(plaque.center.dy, closeTo(window.top, .5));
+        expect(plaque.top, closeTo(card.top, .5));
 
-        // Each row is a single line...
-        for (final f in [title, month, steps]) {
-          expect(tester.getSize(f).height, lessThan(lineHeight(f) * 1.5),
-              reason: tester.widget<Text>(f).data);
+        // Month top left, steps top right, inside the frame, under the
+        // plaque, one line each and never scaled down at the app's sizes.
+        expect(find.text('September'), findsOneWidget);
+        expect(find.text('30 / 30'), findsOneWidget);
+        expect(find.textContaining('2026'), findsNothing);
+        for (final label in [month, steps]) {
+          expect(label.top, greaterThan(plaque.bottom));
+          expect(label.overlaps(plaque), isFalse);
+          expect(label.top, lessThan(window.top + 60));
         }
-        // ...and the month and the steps share the second row.
-        expect(tester.getTopLeft(steps).dy,
-            closeTo(tester.getTopLeft(month).dy, 2));
-        expect(tester.getTopLeft(month).dy,
-            greaterThan(tester.getBottomLeft(title).dy - .5));
+        expect(month.left, lessThan(card.center.dx));
+        expect(steps.right, greaterThan(card.center.dx));
+        expect(month.right, lessThan(steps.left));
+        for (final key in [ClimbCard.monthKey, ClimbCard.stepsKey]) {
+          final text = find.byKey(key);
+          final style = tester.widget<Text>(text).style!;
+          expect(tester.getSize(text).height,
+              lessThan(style.fontSize! * (style.height ?? 1) * 1.5));
+          // Laid out and drawn at the same size: no FittedBox scaling.
+          expect(tester.getRect(text).width,
+              closeTo(tester.getSize(text).width, .01));
+        }
         expect(tester.takeException(), isNull);
       });
     }
