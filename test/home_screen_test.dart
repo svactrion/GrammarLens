@@ -495,7 +495,9 @@ void main() {
           expect(startTop, endTop);
         } else {
           expect(middleTop, lessThan(startTop));
-          expect(middleTop, greaterThan(endTop));
+          // Halfway, the pawn hops above the line between the two steps
+          // (design decision D8: 14 units, 10.2 pt with the camera).
+          expect(middleTop, lessThan((startTop + endTop) / 2 - 8));
         }
         await tester.ensureVisible(find.textContaining('0/1 correct'));
         await tester.pumpAndSettle();
@@ -570,7 +572,8 @@ void main() {
     final endTop = pawnTop();
     expect(endTop, lessThan(oldTop));
     expect(middleTop, lessThan(startTop));
-    expect(middleTop, greaterThan(endTop));
+    // Halfway, the pawn hops above the line between the two steps (D8).
+    expect(middleTop, lessThan((startTop + endTop) / 2 - 8));
     expect(storage.completionCalls, 1);
   });
 

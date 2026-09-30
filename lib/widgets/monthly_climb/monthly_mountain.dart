@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../models/avatar.dart';
 import '../../models/climb_theme.dart';
@@ -7,6 +9,10 @@ import 'climb_route.dart';
 
 /// Presentation only: no storage, scoring, services or test completion writes.
 class MonthlyMountain extends StatefulWidget {
+  /// How high the pawn hops between two steps, in scene units (design
+  /// decision D8): one arc per step; none with Reduce Motion.
+  static const hopHeight = 14.0;
+
   final int days;
   final int completedDays;
   final Avatar avatar;
@@ -43,6 +49,15 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   bool _reduceMotion = false;
   double get _day =>
       _from + (_to - _from) * Curves.easeInOut.transform(_motion.value);
+
+  /// The hop's height now: an arc between each two whole days, zero on a
+  /// step. Measured from whole days, not from where the move started, so a
+  /// move that interrupts another continues the arc and still lands. Reduce
+  /// Motion never animates, so it is always zero there.
+  double get _hopLift {
+    final day = _day;
+    return MonthlyMountain.hopHeight * math.sin(math.pi * (day - day.floor()));
+  }
 
   @override
   void initState() {
@@ -156,7 +171,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                                         progress: _day))),
                             Positioned(
                                 left: point.dx - 29 * scale,
-                                top: point.dy - 55 * scale,
+                                // The camera follows the trail point, not the
+                                // hop, so the view does not bob.
+                                top: point.dy - (55 + _hopLift) * scale,
                                 child: AvatarTile(
                                     avatar: widget.avatar, radius: 29 * scale)),
                           ]);
