@@ -1,0 +1,15 @@
+image: 1450 × 1850 px, 2.5 px per unit; canvas x -130.0–450.0, y 0.0–740.0 (580.0 × 740.0 units, aspect 0.7838)
+mountain space: 320 × 740 units, aspect 0.4324; in the image at px 325–1125 × 0–1850
+trail center line: x 22.0–212.4, y 86.4–716.0 (190.4 × 629.6); normalized x 0.069–0.664, y 0.117–0.968
+trail band (±13): x 9.0–225.4, y 73.4–729.0 (216.4 × 655.6); normalized x 0.028–0.704, y 0.099–0.985
+mountain body (to y 760): x -102.0–422.0, y 72.0–760.0 (524.0 × 688.0); normalized x -0.319–1.319, y 0.097–1.027
+mountain body inside the scene: x 0.0–320.0, y 72.0–740.0 (320.0 × 668.0); normalized x 0.000–1.000, y 0.097–1.000
+peak vertex: (160.0, 72.0); summit (trail end): (160.0, 86.0)
+trail start: (22.0, 716.0)
+turns (arc middle): (203.6, 648.5), (120.5, 535.7), (212.2, 397.7), (116.2, 248.8)
+turn corners (legs meet): (276.0, 660.0), (70.0, 540.0), (236.0, 400.0), (110.0, 250.0)
+F1 window at 320.0 pt (card 288.0 pt): 395.0 × 480 units, x -37.5–357.5
+F1 window at 375.0 pt (card 341.3 pt): 468.0 × 480 units, x -74.0–394.0
+F1 window at 430.0 pt (card 391.3 pt): 536.6 × 480 units, x -108.3–428.3
+F1 window, 375 pt, day 3 of 31: x -74.0–394.0, y 260.0–740.0 (468.0 × 480.0); normalized x -0.231–1.231, y 0.351–1.000
+F1 window, 375 pt, day 25 of 31: x -74.0–394.0, y 0.0–480.0 (468.0 × 480.0); normalized x -0.231–1.231, y 0.000–0.649

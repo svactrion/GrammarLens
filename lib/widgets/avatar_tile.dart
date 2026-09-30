@@ -105,7 +105,7 @@ class AvatarTile extends StatelessWidget {
 /// measured per illustration: the bundled avatars share a consistent
 /// composition (a centered character with headroom above and below), so
 /// one general-purpose placement reads correctly across the set without
-/// pixel-tuning each of the twelve individually.
+/// pixel-tuning each one individually.
 class _AvatarGroundShadow extends StatelessWidget {
   final double radius;
 

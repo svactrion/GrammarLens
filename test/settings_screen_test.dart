@@ -389,11 +389,10 @@ void main() {
     //
     // Starts with an explicit avatar, not the plain `profile` const (whose
     // avatar is null): a null avatar makes the picker fall back to
-    // Avatar.random(), which occasionally lands near the end of the list,
-    // where a fixed-direction drag has nowhere further to go and never
-    // settles on a different avatar at all — the same flake already found
-    // and fixed in onboarding_screen_test.dart. Avatar.values[3] is safely
-    // clear of either boundary regardless of drag direction.
+    // Avatar.random(). That used to flake when the random start sat at
+    // the end of the list, where a fixed-direction drag had nowhere to go
+    // (2026-09-15). The carousel loops since Batch 8, so that dead end is
+    // gone; the explicit start stays so the test is deterministic.
     var currentProfile = profile.copyWith(avatar: Avatar.values[3]);
     await tester.pumpWidget(
       MaterialApp(
