@@ -1,0 +1,18 @@
+320x568 small  Ada             now=95.0 shell=128.0 gain=33.0 belowLabels=83.0 plaque=34.0 fold=478.0
+320x568 small  Mary Anne Smith now=95.0 shell=128.0 gain=33.0 belowLabels=83.0 plaque=34.0 fold=478.0
+320x568 medium Ada             now=73.0 shell=109.0 gain=36.0 belowLabels=61.0 plaque=36.0 fold=476.0
+320x568 medium Mary Anne Smith now=73.0 shell=109.0 gain=36.0 belowLabels=61.0 plaque=36.0 fold=476.0
+320x568 large  Ada             now=52.1 shell=91.1 gain=39.0 belowLabels=40.1 plaque=38.0 fold=475.0
+320x568 large  Mary Anne Smith now=52.1 shell=91.1 gain=39.0 belowLabels=40.1 plaque=38.0 fold=475.0
+375x667 small  Ada             now=213.0 shell=246.0 gain=33.0 belowLabels=201.0 plaque=34.0 fold=577.0
+375x667 small  Mary Anne Smith now=211.0 shell=244.0 gain=33.0 belowLabels=199.0 plaque=34.0 fold=577.0
+375x667 medium Ada             now=199.0 shell=235.0 gain=36.0 belowLabels=187.0 plaque=36.0 fold=575.0
+375x667 medium Mary Anne Smith now=191.0 shell=227.0 gain=36.0 belowLabels=179.0 plaque=36.0 fold=575.0
+375x667 large  Ada             now=172.0 shell=211.0 gain=39.0 belowLabels=160.0 plaque=38.0 fold=574.0
+375x667 large  Mary Anne Smith now=172.0 shell=211.0 gain=39.0 belowLabels=160.0 plaque=38.0 fold=574.0
+430x932 small  Ada             now=350.0 shell=350.0 gain=33.0 belowLabels=305.0 plaque=34.0 fold=808.0
+430x932 small  Mary Anne Smith now=350.0 shell=350.0 gain=33.0 belowLabels=305.0 plaque=34.0 fold=808.0
+430x932 medium Ada             now=350.0 shell=350.0 gain=36.0 belowLabels=302.0 plaque=36.0 fold=806.0
+430x932 medium Mary Anne Smith now=350.0 shell=350.0 gain=36.0 belowLabels=302.0 plaque=36.0 fold=806.0
+430x932 large  Ada             now=350.0 shell=350.0 gain=39.0 belowLabels=299.0 plaque=38.0 fold=805.0
+430x932 large  Mary Anne Smith now=350.0 shell=350.0 gain=39.0 belowLabels=299.0 plaque=38.0 fold=805.0
