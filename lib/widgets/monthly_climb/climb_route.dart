@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'climb_table.dart';
+
 /// Logical scene coordinates. Painting and movement use the same Path.
 ///
 /// **The curve is frozen** (1.1.0 design decision D1,
@@ -9,6 +11,10 @@ import 'dart:ui';
 /// [corners], joined by circular arcs of radius [filletRadius]. The same path
 /// serves every month length; day d of an N-day month sits at d / N of its
 /// length, so steps are evenly spaced and the last day is the summit.
+///
+/// Whole days are read from the generated [climbStepTable] (decision D3);
+/// changing [corners] or [filletRadius] makes `test/climb_table_test.dart`
+/// fail until the table is regenerated (`scripts/generate_climb_table.sh`).
 class ClimbRoute {
   static const sceneSize = Size(320, 740);
 
@@ -37,6 +43,15 @@ class ClimbRoute {
     }
   }
 
+  /// Where day [day] stands, from the step table, in scene units.
+  Offset stepAt(int day) {
+    final (x, y) = climbStepTable[days]![day.clamp(0, days)];
+    return Offset(x * sceneSize.width, y * sceneSize.height);
+  }
+
+  /// Any point along the trail, including between two days (the pawn's
+  /// motion). At whole days it equals [stepAt] to within the table's
+  /// rounding.
   Offset pointAt(double day) {
     final bounded = day.clamp(0.0, days.toDouble());
     return _metric

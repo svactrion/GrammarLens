@@ -229,7 +229,7 @@ class _MountainPainter extends CustomPainter {
           ..color = palette.trail
           ..strokeWidth = 21);
     for (var day = 0; day <= route.days; day++) {
-      final point = route.pointAt(day.toDouble());
+      final point = route.stepAt(day);
       canvas.drawRRect(
           RRect.fromRectAndRadius(
               Rect.fromCenter(center: point, width: 20, height: 13),
