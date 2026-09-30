@@ -134,6 +134,22 @@ Future<void> loadFont() async {
       .load();
 }
 
+/// Loads Flutter's Material icon font too, so screenshots of real screens
+/// show icons instead of the test font's boxes. Needs `FLUTTER_ROOT`, which
+/// `flutter test` sets; without it the icons stay boxes.
+Future<void> loadIconFont() async {
+  final root = Platform.environment['FLUTTER_ROOT'];
+  if (root == null) return;
+  final file = File(
+      '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
+  if (!file.existsSync()) return;
+  final bytes = file.readAsBytesSync();
+  await (FontLoader('MaterialIcons')
+        ..addFont(
+            Future.value(ByteData.view(Uint8List.fromList(bytes).buffer))))
+      .load();
+}
+
 /// One card as Home would show it: [cardW] × 350 placed by [camera], or the
 /// whole scene when [camera] is null.
 Widget panel({
