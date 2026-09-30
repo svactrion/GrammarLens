@@ -52,6 +52,7 @@ Widget designHome({
   AppTextSize textSize = AppTextSize.medium,
   Brightness brightness = Brightness.light,
   String userName = 'Ada',
+  Avatar? avatar,
 }) =>
     MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -60,7 +61,7 @@ Widget designHome({
         body: HomeScreen(
           active: true,
           userName: userName,
-          avatar: Avatar.values.first,
+          avatar: avatar ?? Avatar.values.first,
           claudeService: ClaudeService(),
           storageService: storage,
           analyticsService: AnalyticsService(),
