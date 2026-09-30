@@ -51,6 +51,7 @@ Widget designHome({
   required StorageService storage,
   AppTextSize textSize = AppTextSize.medium,
   Brightness brightness = Brightness.light,
+  String userName = 'Ada',
 }) =>
     MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -58,7 +59,7 @@ Widget designHome({
       home: FloatingNavShell(
         body: HomeScreen(
           active: true,
-          userName: 'Ada',
+          userName: userName,
           avatar: Avatar.values.first,
           claudeService: ClaudeService(),
           storageService: storage,

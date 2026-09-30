@@ -44,6 +44,21 @@ The "after" images of the real product (Home at 320 × 568, 375 × 667 and
 the summit for 28–31 days). `home_layout_test.dart` also reports the
 avatar's size and one day's step on screen.
 
+```bash
+flutter test tool/design_measure/greeting_test.dart
+```
+
+Home's greeting row: how much of the user's name is drawn, for 3 screens × 3
+text sizes × 3 greetings × 4 names (`greeting.txt`). It depends only on
+`home_fakes.dart`, so it also runs on the 1.0.0 tree
+(`docs/design/greeting-fix/report.md`).
+
+```bash
+flutter test tool/design_measure/greeting_options_test.dart
+```
+
+Fix options for the greeting row at 320 pt, measured and rendered.
+
 To write the images straight into the report folder:
 
 ```bash
