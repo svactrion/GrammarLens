@@ -6586,5 +6586,15 @@ Docs only, on branch `1.1.0-design`; no code changed.
   - D4 is reversed: side-facing avatars are mirrored, which needs a facing
     value per avatar (today only the snail).
   - D10's two-row header is replaced by (b) and (c).
+- **[Correction — owner, 2026-09-30, after reviewing Batch 3c-A]** The "D4
+  is reversed" line above is withdrawn: D4 stays in force, and no avatar is
+  mirrored. The reversal came from a prompt written without knowledge of D4
+  (K2). Also decided: candidate 1 (K1), with a new acceptance criterion
+  (≥ 17 pt a day and ≥ 5 pt between neighbouring steps at 320 pt, 31 days)
+  and an accepted cost of 3–5 covered days a month. The card shell is
+  accepted if the mountain above the fold at 320 × 568 stays at or above
+  73 pt (default text) and 52 pt (Large) (K3). Sky-colored chips give the
+  month and the counter at least 4.5:1 contrast (K4).
+  `1.1.0-design-side-tracks.md`, "Decisions after Batch 3c-A".
 
 - **2026-09-30 — Home greeting fix verified on the owner's device and merged into `1.1.0`** by fast-forward to `69bef5f` (no merge commit; the Batch 3c-A commits `133c53f` and `baf4eef` stay on `1.1.0-design` only); 1120 tests green on `1.1.0`.
