@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_scene.dart';
 
 const climbTablePath = 'lib/widgets/monthly_climb/climb_table.dart';
 
@@ -65,13 +66,13 @@ String generateClimbTable() {
 /// The union of the four marker drawings around their origin.
 const markerBox = Rect.fromLTRB(-28, -30, 30, 20);
 const _trailHalf = 13.0; // the trail's outer stroke is 26 wide
-const _stepSize = Size(20, 13);
+/// The space kept clear around each step: a step marker, turned with the
+/// trail (Batch 3c d), fits inside it at any angle.
+const _stepClear = Size(20, 20);
 
 /// The flag at the summit: pole and cloth.
 Rect _summitBox(Offset s) =>
     Rect.fromLTRB(s.dx - 3, s.dy - 40, s.dx + 28, s.dy);
-
-final _body = Path()..addPolygon(ClimbRoute.mountainBody, true);
 
 double _rectDistance(Rect r, Offset p) {
   final dx = math.max(math.max(r.left - p.dx, 0.0), p.dx - r.right);
@@ -103,9 +104,10 @@ List<(int, Offset)> placeMarkers(int days) {
       return false;
     }
     if (box.bottom > size.height - 4) return false;
-    if (!_body.contains(box.bottomLeft + const Offset(4, -4)) ||
-        !_body.contains(box.bottomRight + const Offset(-4, -4)) ||
-        (!relaxed && !_body.contains(box.topCenter + const Offset(0, 10)))) {
+    if (!ClimbScene.onGround(box.bottomLeft + const Offset(4, -4)) ||
+        !ClimbScene.onGround(box.bottomRight + const Offset(-4, -4)) ||
+        (!relaxed &&
+            !ClimbScene.onGround(box.topCenter + const Offset(0, 10)))) {
       return false;
     }
     for (final p in samples) {
@@ -113,7 +115,7 @@ List<(int, Offset)> placeMarkers(int days) {
     }
     for (final p in steps) {
       if (box.overlaps(Rect.fromCenter(
-          center: p, width: _stepSize.width, height: _stepSize.height))) {
+          center: p, width: _stepClear.width, height: _stepClear.height))) {
         return false;
       }
     }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/avatar.dart';
@@ -14,8 +16,8 @@ void main() {
     for (final days in [28, 29, 30, 31]) {
       final route = ClimbRoute(days);
       expect(route.path, same(ClimbRoute.sharedPath));
-      expect(route.pointAt(0).dx, closeTo(136, .01));
-      expect(route.pointAt(0).dy, closeTo(700, .01));
+      expect(route.pointAt(0).dx, closeTo(ClimbRoute.corners.first.dx, .01));
+      expect(route.pointAt(0).dy, closeTo(ClimbRoute.corners.first.dy, .01));
       for (var day = 1; day <= days; day++) {
         // Straight-line distance never exceeds the even share along the path,
         // and on straight legs equals it.
@@ -23,9 +25,10 @@ void main() {
             (route.pointAt(day.toDouble()) - route.pointAt(day - 1.0)).distance;
         expect(chord, lessThanOrEqualTo(length / days + .05));
       }
-      // The first leg rises at 45° (D1): day 1 is up as much as across.
+      // A low, long start (K1): the first leg rises at about 12°.
       final first = route.pointAt(1) - route.pointAt(0);
-      expect(first.dx, closeTo(-first.dy, .01));
+      expect(
+          math.atan2(-first.dy, first.dx) * 180 / math.pi, closeTo(12.4, .5));
     }
   });
 
@@ -37,7 +40,7 @@ void main() {
         final point = route.pointAt(tick / 100);
         expect(point.dy, lessThanOrEqualTo(previous.dy + .01));
         expect((point - previous).distance, lessThan(3));
-        expect(point.dx, inInclusiveRange(29, 291));
+        expect(point.dx, inInclusiveRange(0, 320));
         expect(point.dy, inInclusiveRange(55, 740));
         previous = point;
       }
@@ -45,8 +48,10 @@ void main() {
         expect(marker.origin.dx - 30, greaterThanOrEqualTo(0));
         expect(marker.origin.dx + 30, lessThanOrEqualTo(320));
       }
-      expect(route.pointAt(days.toDouble()).dx, closeTo(162, .01));
-      expect(route.pointAt(days.toDouble()).dy, closeTo(84, .01));
+      expect(route.pointAt(days.toDouble()).dx,
+          closeTo(ClimbRoute.summit.dx, .01));
+      expect(route.pointAt(days.toDouble()).dy,
+          closeTo(ClimbRoute.summit.dy, .01));
     }
   });
 

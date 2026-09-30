@@ -6,6 +6,7 @@ import '../../models/climb_theme.dart';
 import '../avatar_tile.dart';
 import 'climb_camera.dart';
 import 'climb_route.dart';
+import 'climb_scene.dart';
 
 /// Presentation only: no storage, scoring, services or test completion writes.
 class MonthlyMountain extends StatefulWidget {
@@ -203,7 +204,7 @@ class _MountainPainter extends CustomPainter {
       canvas.drawPath(path, Paint()..color = color);
     }
 
-    shape(ClimbRoute.mountainBody, palette.mountain);
+    shape(ClimbScene.body, palette.mountain);
     shape(const [
       Offset(162, 56),
       Offset(151, 177),
@@ -246,7 +247,10 @@ class _MountainPainter extends CustomPainter {
       final point = route.stepAt(day);
       canvas.drawRRect(
           RRect.fromRectAndRadius(
-              Rect.fromCenter(center: point, width: 20, height: 13),
+              Rect.fromCenter(
+                  center: point,
+                  width: ClimbRoute.stepMarkerSize.width,
+                  height: ClimbRoute.stepMarkerSize.height),
               const Radius.circular(6)),
           Paint()..color = day <= progress ? palette.accent : palette.stone);
     }

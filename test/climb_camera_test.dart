@@ -39,10 +39,11 @@ void main() {
         closeTo(500 * 350 / 480 - 350 * .72, 1e-9));
   });
 
-  test('from day 17 of a 31-day month the summit flag is in the window', () {
+  // Batch 3c-A measured days 19–31 for candidate 1 (K1).
+  test('from day 19 of a 31-day month the summit flag is in the window', () {
     const maxExtent = 740 * 350 / 480 - 350;
     final route = ClimbRoute(31);
-    for (var day = 17; day <= 31; day++) {
+    for (var day = 19; day <= 31; day++) {
       final top =
           camera.scrollFor(route.pointAt(day.toDouble()), 350, maxExtent);
       // The flag reaches 36 units above the summit point.

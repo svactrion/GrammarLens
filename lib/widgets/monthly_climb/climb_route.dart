@@ -5,44 +5,38 @@ import 'climb_table.dart';
 
 /// Logical scene coordinates. Painting and movement use the same Path.
 ///
-/// **The curve is frozen** (1.1.0 design decision D1,
-/// `docs/1.1.0-design-side-tracks.md`): trail (b) "Wide S" from the Batch 3a
-/// study, its first leg steepened to 45° in Batch 3b. Straight legs through
-/// [corners], joined by circular arcs of radius [filletRadius]. The same path
-/// serves every month length; day d of an N-day month sits at d / N of its
-/// length, so steps are evenly spaced and the last day is the summit.
+/// **The curve is frozen** (1.1.0 design decision K1,
+/// `docs/1.1.0-design-side-tracks.md`, replacing Batch 3b's 45° curve):
+/// candidate 1 of the Batch 3c-A study, five legs from a long 12° start to a
+/// 73° final climb. Straight legs through [corners], joined by circular arcs
+/// of the [fillets] radii. The same path serves every month length; day d of
+/// an N-day month sits at d / N of its length, so steps are evenly spaced
+/// and the last day is the summit.
+///
+/// Acceptance (K1): at 320 pt in a 31-day month a day's step is at least
+/// 17 pt and neighbouring step markers are at least 5 pt apart
+/// (`test/climb_acceptance_test.dart`).
 ///
 /// Whole days are read from the generated [climbStepTable] (decision D3);
-/// changing [corners] or [filletRadius] makes `test/climb_table_test.dart`
+/// changing [corners] or [fillets] makes `test/climb_table_test.dart`
 /// fail until the table is regenerated (`scripts/generate_climb_table.sh`).
 class ClimbRoute {
   static const sceneSize = Size(320, 740);
 
-  /// Foot, the two bends, and the summit (the trail's end, where the summit
-  /// layer stands: Batch 0 decision 5).
+  /// The foot, the four turns, and the summit (the trail's end, where the
+  /// summit layer stands: Batch 0 decision 5).
   static const corners = [
-    Offset(136, 700),
-    Offset(270, 566),
-    Offset(50, 338),
-    Offset(162, 84),
+    Offset(22, 716),
+    Offset(276, 660),
+    Offset(70, 540),
+    Offset(236, 400),
+    Offset(110, 250),
+    Offset(160, 86),
   ];
-  static const filletRadius = 110.0;
 
-  /// The mountain body's outline (the painter's first polygon). The step
-  /// table's generator keeps stop markers on it.
-  static const mountainBody = [
-    Offset(-60, 740),
-    Offset(0, 403),
-    Offset(42, 264),
-    Offset(88, 211),
-    Offset(118, 128),
-    Offset(162, 56),
-    Offset(205, 138),
-    Offset(226, 210),
-    Offset(279, 286),
-    Offset(340, 470),
-    Offset(379, 740)
-  ];
+  /// One radius per turn. A turn whose legs are too short for its radius
+  /// gets a smaller one (the first turn: 42 units).
+  static const fillets = [80.0, 70.0, 58.0, 46.0];
 
   /// The days that carry a stop marker: campfire, tent, mountain cabin,
   /// lookout terrace.
@@ -59,7 +53,7 @@ class ClimbRoute {
   static bool markerShown(int markerDay, int days) => days - markerDay > 2;
 
   /// The shared path, built once.
-  static final Path sharedPath = _filletPolyline(corners, filletRadius);
+  static final Path sharedPath = _filletPolyline(corners, fillets);
   static final PathMetric _metric = sharedPath.computeMetrics().single;
 
   static Offset get summit => corners.last;
@@ -86,6 +80,26 @@ class ClimbRoute {
           (day: day, origin: Offset(x * sceneSize.width, y * sceneSize.height)),
       ];
 
+  /// A step marker's size in scene units.
+  static const stepMarkerSize = Size(20, 13);
+
+  /// Points around day [day]'s step marker, as drawn: for measuring the gap
+  /// between neighbouring markers.
+  List<Offset> stepMarkerOutline(int day) {
+    final r = Rect.fromCenter(
+        center: stepAt(day),
+        width: stepMarkerSize.width,
+        height: stepMarkerSize.height);
+    return [
+      for (var i = 0; i <= 12; i++) ...[
+        Offset.lerp(r.topLeft, r.topRight, i / 12)!,
+        Offset.lerp(r.bottomLeft, r.bottomRight, i / 12)!,
+        Offset.lerp(r.topLeft, r.bottomLeft, i / 12)!,
+        Offset.lerp(r.topRight, r.bottomRight, i / 12)!,
+      ]
+    ];
+  }
+
   /// Any point along the trail, including between two days (the pawn's
   /// motion). At whole days it equals [stepAt] to within the table's
   /// rounding.
@@ -96,10 +110,10 @@ class ClimbRoute {
         .position;
   }
 
-  /// Straight legs joined by circular arcs of [radius] at each inner corner.
+  /// Straight legs joined by circular arcs of [radii] at the inner corners.
   /// If a leg is too short for the arc, the arc's tangent length is capped at
   /// 45 % of the shorter leg and the radius shrinks to fit.
-  static Path _filletPolyline(List<Offset> points, double radius) {
+  static Path _filletPolyline(List<Offset> points, List<double> radii) {
     final path = Path()..moveTo(points.first.dx, points.first.dy);
     Offset unit(Offset o) => o / o.distance;
     for (var i = 1; i < points.length - 1; i++) {
@@ -107,7 +121,7 @@ class ClimbRoute {
       final u = unit(c - a), v = unit(b - c);
       final turn =
           math.acos((u.dx * v.dx + u.dy * v.dy).clamp(-1.0, 1.0).toDouble());
-      var r = radius;
+      var r = radii[i - 1];
       var t = r * math.tan(turn / 2);
       final cap = .45 * math.min((c - a).distance, (b - c).distance);
       if (t > cap) {
