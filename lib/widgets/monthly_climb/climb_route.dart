@@ -80,22 +80,30 @@ class ClimbRoute {
           (day: day, origin: Offset(x * sceneSize.width, y * sceneSize.height)),
       ];
 
-  /// A step marker's size in scene units.
-  static const stepMarkerSize = Size(20, 13);
+  /// A step marker: a pill, [stepMarkerSize] along the trail by across it,
+  /// turned with the trail's direction at its step (Batch 3c d), so markers
+  /// on the flat first leg do not touch.
+  static const stepMarkerSize = Size(18, 11);
+
+  /// The trail's direction at day [day], in radians (0 = to the right).
+  double stepAngle(int day) {
+    final t = _metric
+        .getTangentForOffset(_metric.length * day.clamp(0, days) / days)!;
+    return math.atan2(t.vector.dy, t.vector.dx);
+  }
 
   /// Points around day [day]'s step marker, as drawn: for measuring the gap
   /// between neighbouring markers.
   List<Offset> stepMarkerOutline(int day) {
-    final r = Rect.fromCenter(
-        center: stepAt(day),
-        width: stepMarkerSize.width,
-        height: stepMarkerSize.height);
+    final c = stepAt(day), a = stepAngle(day);
+    final u = Offset(math.cos(a), math.sin(a)), n = Offset(-u.dy, u.dx);
+    const w = stepMarkerSize;
     return [
       for (var i = 0; i <= 12; i++) ...[
-        Offset.lerp(r.topLeft, r.topRight, i / 12)!,
-        Offset.lerp(r.bottomLeft, r.bottomRight, i / 12)!,
-        Offset.lerp(r.topLeft, r.bottomLeft, i / 12)!,
-        Offset.lerp(r.topRight, r.bottomRight, i / 12)!,
+        for (final side in [-1.0, 1.0])
+          c + u * ((-1 + 2 * i / 12) * w.width / 2) + n * (side * w.height / 2),
+        for (final end in [-1.0, 1.0])
+          c + u * (end * w.width / 2) + n * ((-1 + 2 * i / 12) * w.height / 2),
       ]
     ];
   }

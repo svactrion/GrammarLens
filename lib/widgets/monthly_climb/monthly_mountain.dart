@@ -243,16 +243,21 @@ class _MountainPainter extends CustomPainter {
         stroke
           ..color = palette.trail
           ..strokeWidth = 21);
+    // Pills turned with the trail (Batch 3c d).
     for (var day = 0; day <= route.days; day++) {
       final point = route.stepAt(day);
+      canvas.save();
+      canvas.translate(point.dx, point.dy);
+      canvas.rotate(route.stepAngle(day));
       canvas.drawRRect(
           RRect.fromRectAndRadius(
               Rect.fromCenter(
-                  center: point,
+                  center: Offset.zero,
                   width: ClimbRoute.stepMarkerSize.width,
                   height: ClimbRoute.stepMarkerSize.height),
-              const Radius.circular(6)),
+              Radius.circular(ClimbRoute.stepMarkerSize.height / 2)),
           Paint()..color = day <= progress ? palette.accent : palette.stone);
+      canvas.restore();
     }
     // Only the markers the table lists: D2 leaves out a marker within the
     // month's last 2 steps.
