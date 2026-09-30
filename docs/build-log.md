@@ -6598,3 +6598,65 @@ Docs only, on branch `1.1.0-design`; no code changed.
   `1.1.0-design-side-tracks.md`, "Decisions after Batch 3c-A".
 
 - **2026-09-30 — Home greeting fix verified on the owner's device and merged into `1.1.0`** by fast-forward to `69bef5f` (no merge commit; the Batch 3c-A commits `133c53f` and `baf4eef` stay on `1.1.0-design` only); 1120 tests green on `1.1.0`.
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 3c-B built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Details,
+measurements and renders: `docs/design/batch3c/report.md`, "After: Batch
+3c-B built".
+
+- **[Commits]**
+  - `ccdca12`: `1.1.0` merged in; the `build-log.md` conflict resolved by
+    keeping both entries.
+  - `97d0b16`: K1–K4 in the docs.
+  - `4f6f428`: the 3c-A harness in the repo, reproducing its numbers
+    exactly.
+  - `e351bb1`: the K3 gate.
+  - `1d84b32`: candidate 1's trail and silhouette.
+  - `22e2e23`: turned step pills.
+  - `c5faf8d`: the mountain's layers and tone rule.
+  - `9687363`: pine and shrub.
+  - `08f036c`: `ClimbCard`, with the frame, plaque and chips.
+  - `836e65b`: contrast, VoiceOver and no-mirroring tests.
+  - `2bd9387`: after-build measurements.
+  - `4ed15d7`: the renders.
+  - Plus this docs commit.
+- **[Decisions — owner, after the build]** (`1.1.0-design-side-tracks.md`,
+  G1–G3)
+  - **G1.** The K3 gate is read on the whole window: 109 / 91 pt at 320 ×
+    568 (default / Large) against 73 / 52. Below the chips it is 61 / 40
+    pt, also recorded. *Why:* the thresholds were measured on the whole
+    window, and the chips cover only the sky at its top edge.
+  - **G2.** Green Slope keeps 2 items; the free ground would hold 11 more
+    pines or 19 more shrubs. *Why:* the 4–6 object limit keeps the scene
+    uncluttered. The count is looked at again in Batch 4b, with all four
+    themes.
+  - **G3.** Batch 3d is planned: the stop markers move to the trail's 4
+    turns as "save points", in the same place every month. The weekly days
+    and D2 are then retired. A weekly reward, if one is ever designed,
+    belongs to the calendar (Batch 5). Open: inside or outside the turn.
+- **[Tests removed or changed]**
+  - The two-row header test (D10) is replaced by `home_climb_card_test.dart`
+    (K3).
+  - The preview test pins the new corners and the ~12° start, no longer
+    3b's start and 45°.
+  - The camera test's summit day moves 17 → 19: the new trail's long lower
+    legs reach the height where the flag comes into F1's view later in the
+    month.
+  - Home and first-launch tests find the counter as "n / N". Its VoiceOver
+    label is "n of N steps." (K3), and it sits inside the frame, no longer
+    above it.
+- **[Measured cost]** At 320 pt, 31 days:
+  - a day's step 17.2 → 20.6 pt;
+  - closest neighbouring markers 2.67 → 5.16 pt (K1: ≥ 17 and ≥ 5, pinned
+    by a test);
+  - covered days 2 → 3, and 5 in 30- and 28-day months, the cost K1
+    accepts;
+  - the summit in view from day 17 → 19.
+
+  Mountain above the fold at 320 × 568: 73 → 109 pt (default), 52 → 91 pt
+  (Large).
+- **[Tests]** 1143 passed (1120 before this batch). `flutter analyze` is
+  clean. Deliberate breakages red on backup copies: level pills, a flipped
+  avatar, a 3.78:1 chip.
+- **[Open — owner]** Device check and merge approval.

@@ -241,3 +241,146 @@ Flat colors only; no gradients (decision e).
     leg), as the decision asks.
 - **One more open point for either candidate:** the light-mode contrast of
   the month and counter on the shadow face (3.78:1).
+
+---
+
+## After: Batch 3c-B built (2026-09-30)
+
+**Approved by the owner after 3c-A** (`1.1.0-design-side-tracks.md`,
+"Decisions after Batch 3c-A"):
+- K1: candidate 1;
+- K2: D4 stays, and no avatar is mirrored;
+- K3: the card shell, on a condition;
+- K4: sky-colored chips.
+
+**Not yet checked on a device; not merged into `1.1.0`.** "Before" is
+`1.1.0` as it stands: Batch 3b plus the greeting fix.
+
+### Commits
+
+| Commit | What |
+|---|---|
+| `ccdca12` | `1.1.0` merged in; `build-log.md` conflict resolved by keeping both entries |
+| `97d0b16` | Docs: K1–K4; the "D4 reversed" wording withdrawn |
+| `4f6f428` | Tool: the 3c-A harness in `tool/design_measure/batch3c/`, reproducing the report's numbers exactly |
+| `e351bb1` | Tool: the K3 gate, measured before any product change |
+| `1d84b32` | Candidate 1's trail and silhouette (`ClimbRoute`, `ClimbScene`); table regenerated |
+| `22e2e23` | Step markers: 18 × 11 pills turned with the trail |
+| `c5faf8d` | The mountain's layers and their tone rule (`ClimbSceneTones`) |
+| `9687363` | Green Slope's pine and shrub (`climbEnvironmentTable`) |
+| `08f036c` | `ClimbCard`: frame, plaque, month and steps on sky chips |
+| `836e65b` | Tests: chip contrast, VoiceOver, no avatar mirrored |
+| `2bd9387` | Tool: after-build measurements |
+| `4ed15d7` | The "after" renders |
+
+### Mountain above the fold
+
+Tool: `tool/design_measure/batch3c/after_numbers_test.dart`. The same
+conditions as the gate: 14:00 ("Good afternoon"), 8 of 30 steps, and a
+short and a long name. At 320 pt both names put the greeting on two lines.
+
+There are two readings:
+- **window:** the fold minus the mountain window's top. This is the
+  measure the 73 / 52 pt thresholds were set with, and the one the gate
+  uses (decision 1 below).
+- **below the chips:** the fold minus the month/counter chips' bottom.
+  It is recorded as well.
+
+Values in pt; the window is 350 pt tall.
+
+| Screen | Text | Name | Before | After, window | After, below the chips |
+|---|---|---|---|---|---|
+| 320 × 568 | Small | Ada / Mary Anne Smith | 95 / 95 | 128 / 128 | 83 / 83 |
+| 320 × 568 | **Default** | Ada / Mary Anne Smith | **73** / 73 | **109** / 109 | 61 / 61 |
+| 320 × 568 | **Large** | Ada / Mary Anne Smith | **52** / 52 | **91** / 91 | 40 / 40 |
+| 375 × 667 | Small | Ada / Mary Anne Smith | 213 / 211 | 246 / 244 | 201 / 199 |
+| 375 × 667 | Default | Ada / Mary Anne Smith | 199 / 191 | 235 / 227 | 187 / 179 |
+| 375 × 667 | Large | Ada / Mary Anne Smith | 172 / 172 | 211 / 211 | 160 / 160 |
+| 430 × 932 | all | both | whole window | whole window | whole window |
+
+- **K3's condition is met:** at 320 × 568, 109 ≥ 73 at the default size
+  and 91 ≥ 52 at Large.
+- Removing the two header rows gives back 33–39 pt at every size.
+- **The real layout equals the gate's figures to the tenth.** The gate
+  computed them before the build, from the measured Home.
+
+### The trail
+
+At 320 pt, F1 (0.729 pt per unit, the same at every width).
+
+- **Before:** Batch 3b's trail with its drawn 20 × 13 boxes, measured on
+  `1.1.0`.
+- **After:** the product's pills.
+- Both measured with the same rules: the gap between the outlines as
+  drawn, and a covered day when the resting avatar's box (58 × 58, less 4)
+  is within the trail band of a part more than 70 units away along it.
+
+| | 31 days | 30 days | 29 days | 28 days |
+|---|---|---|---|---|
+| A day's step, before → after | 17.2 → **20.6** | 17.7 → 21.3 | 18.4 → 22.0 | 19.0 → 22.8 |
+| Closest neighbouring markers, before → after | 2.67 → **5.16** | 3.10 → 5.83 | 3.52 → 6.43 | 3.97 → 7.15 |
+| Covered days, before → after | 2 → **3** | 2 → 5 | 3 → 3 | 1 → 5 |
+| Summit (flag) in view from day, before → after | 17 → **19** | 17 → 19 | 16 → 18 | 16 → 17 |
+
+- **K1's acceptance criterion is met:** 20.6 ≥ 17 pt and 5.16 ≥ 5 pt, at
+  320 pt in a 31-day month. `test/climb_acceptance_test.dart` pins both.
+- **Covered days, 3 and 5,** are all just after a turn. That is the cost K1
+  accepts ("3–5 days a month").
+- **The summit shows two days later.**
+  - Why: F1 keeps the pawn at 72 % of a 480-unit window, so the flag comes
+    into view once the pawn is about 346 units below it, around y 396.
+  - Candidate 1 spends most of its length low down: its three long lower
+    legs measure 715 units corner to corner, on a trail 876 units long.
+    So it reaches y 396 later in the month than Batch 3b's two broad bends
+    did.
+  - `test/climb_camera_test.dart` moved from day 17 to day 19 for this
+    reason.
+
+### Environment items
+
+- Green Slope keeps **2 items**: the pine at (300, 556) and the shrub with
+  wildflowers at (64, 398). With the markers that is **6 objects in
+  31-day months and 5 in 28–30-day months**, within decision f's 4–6.
+- **Capacity, recorded:** the remaining free ground would hold 11 more
+  pines, or 19 more shrubs (`environment_capacity.txt`). The object limit,
+  not space, is what holds the count.
+- The count is revisited in Batch 4b, with all four themes side by side.
+
+### Images (after)
+
+- `after_card_{320,375}_{light,dark}_31d.png`: the real `ClimbCard`,
+  `MonthlyMountain` and `ClimbScoreBar`, days 3 and 25 of 31.
+- `after_home_{320,375}_{light,dark}_day{3,25}.png`: the real Home as it
+  opens, without scrolling.
+- The avatar is the snail, the one side-facing avatar, **never mirrored**.
+  On day 3 it walks right with its head to the left: the cost D4 accepts.
+
+### Tests
+
+- **1143 passed; `flutter analyze` clean.**
+- Replaced or changed, with the reason:
+  - `test/home_climb_header_test.dart`, D10's two rows, is removed.
+    `test/home_climb_card_test.dart` replaces it (K3).
+  - `monthly_climb_preview_test.dart` pins the frozen corners and the
+    ~12° start. It used to pin 3b's (136, 700) start and 45° leg.
+  - `climb_camera_test.dart`: the summit is in view from day 19, not 17
+    (above).
+  - `home_screen_test.dart` and `first_launch_climb_test.dart` find the
+    counter as "n / N", not "n / N steps".
+  - The VoiceOver label is "n of N steps." (K3), no longer "Monthly
+    progress: …".
+  - The counter is inside the frame, at the top of the window, not above
+    it.
+- New:
+  - `climb_acceptance_test.dart` (K1);
+  - `climb_scene_test.dart` (layers, tones, concavity, the trail on the
+    ground);
+  - `climb_environment_test.dart` (items, 4–6 objects, clearances per
+    month length);
+  - `climb_card_test.dart` (K4 contrast, VoiceOver, no mirroring);
+  - `home_climb_card_test.dart`.
+- **Checked red on backup copies:**
+  - level pills fail the turn test. The ≥ 5 pt gap test alone still
+    passes, because the pills are smaller than 1.0's boxes.
+  - a flipped avatar fails the mirroring test;
+  - a shadow-colored chip (3.78:1) fails the contrast test.
