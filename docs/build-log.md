@@ -6586,3 +6586,5 @@ Docs only, on branch `1.1.0-design`; no code changed.
   - D4 is reversed: side-facing avatars are mirrored, which needs a facing
     value per avatar (today only the snail).
   - D10's two-row header is replaced by (b) and (c).
+
+- **2026-09-30 — Home greeting fix verified on the owner's device and merged into `1.1.0`** by fast-forward to `69bef5f` (no merge commit; the Batch 3c-A commits `133c53f` and `baf4eef` stay on `1.1.0-design` only); 1120 tests green on `1.1.0`.
