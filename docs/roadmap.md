@@ -33,15 +33,15 @@ D1–D6 in the side-tracks file.)*
       with [Q] from one constant; 929 tests green
 - [x] Batch 3a — trail geometry candidates (study, no product code) — done
       2026-09-30 (`docs/design/batch3a/report.md`; decisions D1–D6)
-- [ ] Batch 3b — **built 2026-09-30, not yet checked on a device, not
-      merged into `1.1.0`** (`docs/design/batch3b/report.md`, "After"):
-      measuring tool in `tool/design_measure/`; trail frozen at 45° from
-      (136, 700); generated, normalized step and marker table with its test
+- [x] Batch 3b — done, verified on device, merged into `1.1.0`
+      (2026-09-30, fast-forward to `497b6f9`; 1108 tests green on `1.1.0`)
+      (`docs/design/batch3b/report.md`): measuring tool in
+      `tool/design_measure/`; trail frozen at 45° from (136, 700); generated,
+      normalized step and marker table with its test
       (`scripts/generate_climb_table.sh`); stop markers with the day-28 rule;
       camera layer with framing F1; hop (none with Reduce Motion); score bar
-      under the mountain window; two-row header. 1108 tests green. Open: the
-      owner's device check, then the merge. No 320 pt fix: there was no shift
-      (D6)
+      under the mountain window; two-row header. No 320 pt fix: there was no
+      shift (D6)
 - [ ] Batch 4 — layer slot infrastructure (including a ridge/summit
       silhouette slot in the background), Ember Peak, Glacier Peak, Red
       Canyon, four summits

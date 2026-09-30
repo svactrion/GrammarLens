@@ -6505,3 +6505,5 @@ measurements and images: `docs/design/batch3b/report.md`, "After".
     430 pt.
   - App Store screenshots and case-study images change.
   - Merge approval.
+
+- **2026-09-30 — Batch 3b verified on the owner's device and merged into `1.1.0`** by fast-forward (no merge commit; `1.1.0` now at `497b6f9`); 1108 tests green on `1.1.0`.
