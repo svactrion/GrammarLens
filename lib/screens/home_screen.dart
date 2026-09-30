@@ -746,14 +746,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Two fixed rows (design decision D10): one line of "Mountain of
+        // Learning · <month>" does not fit a 320 pt screen and wrapped into
+        // three rows; two rows keep the same height at every width and text
+        // size.
+        Text('Mountain of Learning',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 2),
+        // One line at every app text size; only a very large system text
+        // size (Dynamic Type) wraps it instead of overflowing.
         Wrap(
-          alignment: WrapAlignment.spaceBetween,
           crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 12,
-          runSpacing: 4,
           children: [
-            Text('Monthly Climb · $monthLabel',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(_climbSteps == null ? monthLabel : '$monthLabel · ',
+                style: Theme.of(context).textTheme.labelLarge),
             if (_climbSteps != null)
               Semantics(
                 liveRegion: true,
