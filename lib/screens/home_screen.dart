@@ -6,11 +6,13 @@ import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
+import '../models/medal_tier.dart';
 import '../models/pending_climb.dart';
 import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
+import '../services/monthly_medal_rules.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/answer_matching.dart';
@@ -19,6 +21,7 @@ import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/locked_premium_pill.dart';
+import '../widgets/monthly_climb/climb_score_bar.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
 import '../widgets/weak_spot_card.dart';
 import 'avatar_picker_screen.dart' show homeAvatarHeroTag;
@@ -116,6 +119,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   int _climbLoadGeneration = 0;
   int? _climbSteps;
+
+  /// The month's medal score (rule v1), shown by the score bar.
+  int _climbScore = 0;
   late DateTime _climbMonth;
   bool _loadingClimb = true;
   bool _climbLoadFailed = false;
@@ -290,6 +296,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
       setState(() {
         _climbSteps = progress.steps;
+        _climbScore = MonthlyMedalRules.score(
+            correct: progress.correct, wrong: progress.wrong);
         _loadingClimb = false;
         _pendingClimbDay = null;
         _pendingClimbStep = 0;
@@ -764,13 +772,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ClipRRect(
             key: _mountainKey,
             borderRadius: BorderRadius.circular(20),
-            child: MonthlyMountain(
-              key: ValueKey(_climbMonth),
-              days: days,
-              completedDays: _climbSteps!,
-              avatar: widget.avatar ?? Avatar.values.first,
-              allowUserScroll: false,
-              onMotionEnd: _onMountainMotionEnd,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                MonthlyMountain(
+                  key: ValueKey(_climbMonth),
+                  days: days,
+                  completedDays: _climbSteps!,
+                  avatar: widget.avatar ?? Avatar.values.first,
+                  allowUserScroll: false,
+                  onMotionEnd: _onMountainMotionEnd,
+                ),
+                // Under the window, not over the scene (design decision D9).
+                ClimbScoreBar(
+                  score: _climbScore,
+                  maxScore: MonthlyMedalRules.maxScore(
+                      _climbMonth.year, _climbMonth.month),
+                  thresholds: {
+                    for (final tier in MedalTier.values)
+                      tier: MonthlyMedalRules.threshold(
+                          _climbMonth.year, _climbMonth.month, tier),
+                  },
+                ),
+              ],
             ),
           ),
         ],

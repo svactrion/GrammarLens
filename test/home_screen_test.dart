@@ -6,6 +6,7 @@ import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
+import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
@@ -22,6 +23,7 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 /// The bottom "Premium" upsell row's own label — disambiguated from
@@ -107,6 +109,8 @@ class _FakeStorageService extends StorageService {
   DailyTestSet? todaysDailyTest;
   List<WeakSpot> weakSpots = const [];
   int steps = 0;
+  int correct = 0;
+  int wrong = 0;
   int completionCalls = 0;
   Completer<void>? pendingCompletion;
 
@@ -124,7 +128,7 @@ class _FakeStorageService extends StorageService {
     monthsRead.add((year, month));
     if (failProgress) throw StateError('Read failed');
     if (pendingProgress != null) return pendingProgress!.future;
-    return (steps: steps, correct: 0, wrong: 0, skipped: 0);
+    return (steps: steps, correct: correct, wrong: wrong, skipped: 0);
   }
 
   @override
@@ -575,6 +579,38 @@ void main() {
     // Halfway, the pawn hops above the line between the two steps (D8).
     expect(middleTop, lessThan((startTop + endTop) / 2 - 8));
     expect(storage.completionCalls, 1);
+  });
+
+  testWidgets(
+      'the score bar under the mountain reads the month\'s score and '
+      'thresholds (D9)', (tester) async {
+    final semantics = tester.ensureSemantics();
+    // October 2026: 31 days, 310 points at most; Bronze 78, Silver 155,
+    // Gold 233 (rule v1). 20 correct and 10 wrong = 50 points.
+    final storage = _FakeStorageService()
+      ..steps = 6
+      ..correct = 20
+      ..wrong = 10;
+    await pumpHome(tester,
+        storageService: storage, clock: () => DateTime(2026, 10, 12, 9));
+    await tester.pumpAndSettle();
+    final bar = find.byType(ClimbScoreBar);
+    expect(bar, findsOneWidget);
+    final widget = tester.widget<ClimbScoreBar>(bar);
+    expect(widget.score, 50);
+    expect(widget.maxScore, 310);
+    expect(widget.thresholds,
+        {MedalTier.bronze: 78, MedalTier.silver: 155, MedalTier.gold: 233});
+    expect(
+        find.bySemanticsLabel('Monthly score: 50 of 310 points. Bronze at 78, '
+            'Silver at 155, Gold at 233.'),
+        findsOneWidget);
+    // A strip of its own directly under the window, not over the scene.
+    final window = tester.getRect(find.byType(MonthlyMountain));
+    final strip = tester.getRect(bar);
+    expect(strip.top, closeTo(window.bottom, .01));
+    expect(strip.width, window.width);
+    semantics.dispose();
   });
 
   testWidgets(

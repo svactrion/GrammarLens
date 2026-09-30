@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
 import '../models/welcome_badge.dart';
+import 'medal_tier_color.dart';
 
 class MonthlyMedalCollection extends StatelessWidget {
   /// A separate, one-time achievement — not a fourth tier. Rendered above
@@ -322,11 +323,7 @@ class _MedalSpecimen extends StatelessWidget {
 
   const _MedalSpecimen({required this.tier, required this.earned});
 
-  Color get _tierColor => switch (tier) {
-        MedalTier.bronze => const Color(0xFFB56A3B),
-        MedalTier.silver => const Color(0xFF8A95A3),
-        MedalTier.gold => const Color(0xFFD39B21),
-      };
+  Color get _tierColor => tier.color;
 
   @override
   Widget build(BuildContext context) {
