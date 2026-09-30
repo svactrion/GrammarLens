@@ -1,0 +1,12 @@
+c1 F1 (today, 480 units)      320 pt: avatar 42.3 pt, day step 20.6 pt, summit in frame on days 19–31, sky day 3 8 %, day 25 55 %
+c1 F1 (today, 480 units)      375 pt: avatar 42.3 pt, day step 20.6 pt, summit in frame on days 19–31, sky day 3 10 %, day 25 57 %
+c1 F1 (today, 480 units)      430 pt: avatar 42.3 pt, day step 20.6 pt, summit in frame on days 19–31, sky day 3 11 %, day 25 59 %
+c1 whole mountain (740 units) 320 pt: avatar 27.4 pt, day step 13.4 pt, summit in frame on days 0–31, sky day 3 39 %, day 25 39 %
+c1 whole mountain (740 units) 375 pt: avatar 27.4 pt, day step 13.4 pt, summit in frame on days 0–31, sky day 3 41 %, day 25 41 %
+c1 whole mountain (740 units) 430 pt: avatar 27.4 pt, day step 13.4 pt, summit in frame on days 0–31, sky day 3 43 %, day 25 43 %
+c2 F1 (today, 480 units)      320 pt: avatar 42.3 pt, day step 22.0 pt, summit in frame on days 20–31, sky day 3 12 %, day 25 54 %
+c2 F1 (today, 480 units)      375 pt: avatar 42.3 pt, day step 22.0 pt, summit in frame on days 20–31, sky day 3 19 %, day 25 61 %
+c2 F1 (today, 480 units)      430 pt: avatar 42.3 pt, day step 22.0 pt, summit in frame on days 20–31, sky day 3 25 %, day 25 66 %
+c2 whole mountain (740 units) 320 pt: avatar 27.4 pt, day step 14.3 pt, summit in frame on days 0–31, sky day 3 49 %, day 25 49 %
+c2 whole mountain (740 units) 375 pt: avatar 27.4 pt, day step 14.3 pt, summit in frame on days 0–31, sky day 3 54 %, day 25 54 %
+c2 whole mountain (740 units) 430 pt: avatar 27.4 pt, day step 14.3 pt, summit in frame on days 0–31, sky day 3 57 %, day 25 57 %
