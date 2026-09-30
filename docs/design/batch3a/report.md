@@ -69,6 +69,17 @@ Context: [`1.1.0-design-side-tracks.md`](../../1.1.0-design-side-tracks.md)
 
 ## 0. Home size, re-measured after the C1–C3 merge
 
+> **Correction (2026-09-30, Batch 3b report R4).** The text-size rows below
+> were measured with the text size applied twice: the default theme (already
+> Medium, 1.1) plus a `MediaQuery.textScaler` of 1.0 / 1.1 / 1.2 on top. So
+> the row labelled **Small is really Medium, "Medium" is really Large** (1.21
+> lays out like the app's Large), and "Large" is 1.32, a size the app does not
+> have. Measured the app's way (`buildAppTheme(textSize:)` only), 320 × 568
+> Medium has the mountain top at **397** and **79 pt above the fold**, exactly
+> as in Batch 0, and the climb header is **two rows**. There is **no 14 pt
+> shift**; the "cause of the shift" paragraph below does not apply. The table
+> is kept as it was measured.
+
 The real `HomeScreen` inside the real `FloatingNavShell`, with the bundled
 NunitoSans font and fake storage. The fake shows 12 of 31 steps in October
 2026, no Daily Test done, a free user, and no weak spots. Status bar and home
