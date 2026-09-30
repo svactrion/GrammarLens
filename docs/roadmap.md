@@ -31,16 +31,17 @@ D1–D6 in the side-tracks file.)*
 - [x] Batch 2 — theme data model, theme id stored with the month, migration,
       rotation, Green Slope as data (no visible change) — done 2026-09-27,
       with [Q] from one constant; 929 tests green
-- [ ] Batch 3a — trail geometry candidates (study, no product code)
-- [ ] Batch 3b — measurement report written 2026-09-30
-      (`docs/design/batch3b/report.md`), decisions approved (D1, D5, D6,
-      D8–D10). Remaining: the measuring tool committed under `tool/`; trail
-      (b) frozen at 45° from (136, 700); generated, normalized stop table
-      with its test; stop markers with the day-28 rule; the camera as its
-      own layer with framing F1 (480 units tall); hop (14 units, none with
-      Reduce Motion); score bar strip under the mountain window; two-row
-      header "Mountain of Learning" / "<month> · n / N steps". No avatar
-      mirroring (D4). No 320 pt fix: there was no shift (D6)
+- [x] Batch 3a — trail geometry candidates (study, no product code) — done
+      2026-09-30 (`docs/design/batch3a/report.md`; decisions D1–D6)
+- [ ] Batch 3b — **built 2026-09-30, not yet checked on a device, not
+      merged into `1.1.0`** (`docs/design/batch3b/report.md`, "After"):
+      measuring tool in `tool/design_measure/`; trail frozen at 45° from
+      (136, 700); generated, normalized step and marker table with its test
+      (`scripts/generate_climb_table.sh`); stop markers with the day-28 rule;
+      camera layer with framing F1; hop (none with Reduce Motion); score bar
+      under the mountain window; two-row header. 1108 tests green. Open: the
+      owner's device check, then the merge. No 320 pt fix: there was no shift
+      (D6)
 - [ ] Batch 4 — layer slot infrastructure (including a ridge/summit
       silhouette slot in the background), Ember Peak, Glacier Peak, Red
       Canyon, four summits

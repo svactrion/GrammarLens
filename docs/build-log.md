@@ -6462,3 +6462,46 @@ Docs only, on branch `1.1.0-design`; no code, config or test changed.
     parked for 1.2 (D5);
   - the 14 pt shift at 320 pt: diagnosed and fixed in Batch 3b if it comes
     from this work, otherwise reported separately (D6).
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 3b built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Details,
+measurements and images: `docs/design/batch3b/report.md`, "After".
+
+- **[Decisions — owner]** Approved after the Batch 3b measurements and
+  written into `1.1.0-design-side-tracks.md`:
+  - D1: first leg at 45° from (136, 700), curve frozen;
+  - D5: framing F1, 480 scene units tall at every width;
+  - D6 rewritten: there was no 320 pt shift. Batch 3a's tool applied text
+    size twice, and its §0 carries a correction note;
+  - D4's evidence corrected: only the snail is side-on;
+  - new D8 (hop), D9 (score bar) and D10 (two-row header, which replaces
+    Batch 0 decision 7's one-line format).
+- **[Engineering]**
+  - `tool/design_measure/` reproduces the report. Text size goes only
+    through `buildAppTheme(textSize:)`.
+  - `ClimbRoute` holds the frozen curve, one path for all month lengths
+    with evenly spaced steps, and the flag on the trail's end.
+  - `tool/climb_table/` + `scripts/generate_climb_table.sh` generate
+    `climb_table.dart`: steps and stop markers, normalized to mountain
+    space, D2 applied. A test compares the file with a fresh generation.
+  - `ClimbCamera` (F1).
+  - Hop of 14 units per step, phased on whole days; none with Reduce Motion.
+  - `ClimbScoreBar` under the window; tier colors moved into a shared
+    `MedalTierColor`.
+  - Header "Mountain of Learning" / "\<month\> · n / N steps".
+  - No change to the Daily Test, medal rule v1, `dayKey` or analytics.
+- **[Measured]** Mountain above the fold at 320 × 568:
+  - Medium 79 → 81 pt;
+  - Large 38 → 66 pt;
+  - at 375 × 667 Small 233 → 213 pt (the header is now always two rows).
+
+  Avatar 42.3 pt and one day's step 17.7 pt (30-day month) at every width.
+  At 320 pt these were 52.2 and 24.3.
+- **[Tests]** 1108 passed (1061 before). Deliberate breakages red: curve
+  change vs table, D2 rule loosened, hop phase from the move's start.
+- **[Open — owner]**
+  - Device check: the hop's feel, Reduce Motion, dark mode, the side sky at
+    430 pt.
+  - App Store screenshots and case-study images change.
+  - Merge approval.

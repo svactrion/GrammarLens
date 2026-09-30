@@ -355,3 +355,126 @@ at 45°, avatar on day 12.
 - `r1_curve_{320,375,430}_{light,dark}_31d.png` (6)
 - `r2_framing_{320,375,430}_light_31d.png` (3)
 - `r6_markers_{28,29,30,31}d_375_light.png` (4)
+
+---
+
+## After: built on the approved decisions (2026-09-30)
+
+Approved: D1 (45°), D5 (framing F1), D6 (no shift, no fix), D8 (hop), D9
+(score bar), D10 (two-row header); see `1.1.0-design-side-tracks.md`.
+**Not yet checked on a device; not merged into `1.1.0`.**
+
+### Commits
+
+| Commit | What |
+|---|---|
+| `977393b` | Docs: the approvals, D4's corrected evidence, D6 rewritten, the Batch 3a §0 correction note |
+| `0e6da16` | `tool/design_measure/`: this report's measuring tool (reproduces R1, R2 and R6 byte for byte) |
+| `319b859` | The curve frozen: (b), first leg 45° from (136, 700); one path for all month lengths; the flag on the trail's end |
+| `68a8f0d` | `tool/climb_table/` + `scripts/generate_climb_table.sh` → `lib/widgets/monthly_climb/climb_table.dart` (normalized); `test/climb_table_test.dart` regenerates it and compares |
+| `7abd174` | Stop markers placed by the generator, D2 applied; per-month tests (28/29/30/31) |
+| `2989c3c` | `ClimbCamera`: framing F1 as its own layer |
+| `199e8b6` | Hop, 14 units per step; none with Reduce Motion (tested) |
+| `9966dec` | Score bar under the mountain window |
+| `91095ab` | Two-row header |
+| `9b199ec` | Tool: "after" renders of the real product; avatar size and daily step |
+
+### Tests
+
+**1108 passed, 0 failed** (1061 before this batch; +47). `flutter analyze`:
+no issues. Deliberate breakages checked red:
+- a 1-unit change to the curve's fillet (all 5 table tests fail, with "run
+  scripts/generate_climb_table.sh");
+- the D2 rule loosened to "last 1 step" (the 30-day tests fail);
+- the hop's phase measured from the move's start instead of whole days (the
+  interrupted-move test fails; that version left the pawn in the air after an
+  interrupted move).
+
+### Measured again: Batch 0 against now
+
+`tool/design_measure/home_layout_test.dart` with Batch 0's inputs (15
+September 2026, 8 of 30 steps, no Daily Test done, free user). Text size
+only through the theme. "Before" is the product at `0e6da16`, unchanged since
+Batch 0 (its 320 × 568 and 375 × 667 values equal the Batch 0 report's).
+
+**Mountain above the fold** (pt; the window is 350 pt tall, so 350 means the
+whole window is in view):
+
+| Screen | Text size | Batch 0 | Now | Header rows, before → now |
+|---|---|---|---|---|
+| 320 × 568 | Medium (default) | 79 | **81** | 2 → 2 |
+| 320 × 568 | Large | 38 | **66** | 3 → 2 |
+| 375 × 667 | Medium | 197 | 199 | 2 → 2 |
+| 375 × 667 | Large | 184 | 186 | 2 → 2 |
+| 430 × 932 | Medium | 350 (413 to the fold) | 350 (391) | 1 → 2 |
+| 430 × 932 | Large | 350 (376) | 350 (378) | 2 → 2 |
+
+**Avatar and one day's step on screen** (pt, the same at both text sizes;
+the step is the median over a 30-day month):
+
+| Screen | Avatar, Batch 0 → now | Daily step, Batch 0 → now |
+|---|---|---|
+| 320 pt | 52.2 → **42.3** | 24.3 → **17.7** |
+| 375 pt | 61.9 → 42.3 | 28.8 → 17.7 |
+| 430 pt | 70.9 → 42.3 | 33.0 → 17.7 |
+
+- The biggest gain is at **320 × 568 Large: 38 → 66 pt**. The old
+  one-line header wrapped to 3 rows there.
+- **Cost of fixed rows:** where the old header fit on one line, it is now
+  one row taller. At 375 × 667 **Small**, the mountain above the fold goes
+  from 233 to 213 pt. At 430 × 932 Medium it goes from 413 to 391 pt to the
+  fold, but the whole window stays in view.
+- **Avatar and step are now the same at every width**, as decided for F1.
+  Before, both grew with the phone.
+  - A day's step is 17.7 pt here because September has 30 days. In a
+    31-day month it is 17.2, matching R2.
+  - Before, steps were unevenly spaced, so the 1.0 figure is a median.
+
+### Where it differs from the plan in R5
+
+- **Score bar label colors.** The metal color is on the ticks only. The
+  labels use the normal text colors, bold for the tier reached, because
+  gold as small text on a light surface would be too faint.
+  - The tier colors moved into a shared `MedalTierColor` extension, with
+    the same values as Profile's medal collection.
+- **Header, row 2** ("\<month\> · n / N steps"):
+  - it is a single line at every app text size, tested at 320 / 375 / 430
+    pt with the longest month;
+  - under a very large **system** text size (iOS Dynamic Type, an existing
+    2× test) it wraps instead of overflowing;
+  - the steps keep their live-region label ("Monthly progress: n of N
+    steps.").
+- **Hop:**
+  - the arc is measured from whole days, so a move that interrupts another
+    still lands on its step;
+  - two existing Home tests asserted the old glide (halfway, the pawn sits
+    between start and end). They now assert the hop above that line.
+- **Markers:** the generator fails instead of falling back when a marker has
+  no clear spot, so a future curve change cannot silently put one on the
+  trail. With the frozen curve, every shown marker has one.
+
+### Images (after)
+
+The real product, rendered by `tool/design_measure/after_test.dart`:
+
+- `after_home_{320,375,430}_{medium,large}_light.png` and
+  `after_home_375_medium_dark.png`: Home on 12 October 2026, 12 of 31 steps,
+  92 points (Bronze reached).
+- `after_window_{320,375,430}_light_31d.png`: the mountain window at each
+  card width, with the pawn on days 4, 12 and 24.
+- `after_markers_28-31d_375_light.png`: near the summit in each month
+  length, D2 applied.
+
+### Flags for the device check and release
+
+- Home looks different: the framing, the header and the score bar. **App
+  Store screenshots and case-study images** need a pre-release check.
+- On a device, check:
+  - the hop's feel (850 ms, 10.2 pt high);
+  - that no hop plays with Reduce Motion on;
+  - the score bar in dark mode;
+  - the side sky at 430 pt, which is empty until Batch 4's silhouette layer
+    (D5b).
+- **Seen in passing, not changed:** at 320 × 568 Medium the greeting reads
+  "Good morning, …" (ellipsized next to the 60 pt avatar). No Batch 3b
+  commit touches the greeting row.
