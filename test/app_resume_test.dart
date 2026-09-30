@@ -12,6 +12,7 @@ import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 
 import 'support/recording_analytics_sink.dart';
+import 'package:grammar_lens/widgets/home_greeting.dart';
 
 /// Counts every resume-driven read the two lifecycle observers make, so a
 /// test can prove one resume triggers each job exactly once. Any storage call
@@ -72,6 +73,11 @@ DailyTestSet _completedYesterday() => DailyTestSet(
       answers: const {'q0': 'right'},
     );
 
+/// Home's greeting by what it says (and what VoiceOver reads), whether it is
+/// laid out on one line or, when that does not fit, two.
+Finder _greeting(String text) =>
+    find.byWidgetPredicate((w) => w is HomeGreeting && w.text == text);
+
 void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized()
@@ -100,7 +106,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Evening, yesterday's test done.
-    expect(find.text('Good evening, Ada'), findsOneWidget);
+    expect(_greeting('Good evening, Ada'), findsOneWidget);
     expect(find.textContaining('New test tomorrow'), findsOneWidget);
     // Old unfinished Daily Test sets are cleaned up once, at launch.
     expect(storage.staleCleanups, 1);
@@ -131,8 +137,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // New day is shown, not yesterday's state.
-    expect(find.text('Good morning, Ada'), findsOneWidget);
-    expect(find.text('Good evening, Ada'), findsNothing);
+    expect(_greeting('Good morning, Ada'), findsOneWidget);
+    expect(_greeting('Good evening, Ada'), findsNothing);
     expect(find.textContaining('New test tomorrow'), findsNothing);
     expect(find.textContaining("Today's 5-question warm-up"), findsOneWidget);
 

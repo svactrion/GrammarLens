@@ -20,6 +20,7 @@ import '../utils/greeting.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/home_greeting.dart';
 import '../widgets/locked_premium_pill.dart';
 import '../widgets/monthly_climb/climb_score_bar.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
@@ -582,19 +583,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // to a time-of-day word instead of a constant one, plus the one new case
   // that copy never needed: an empty name (`userName` is a required
   // `String`, never `null`, but nothing stops it being empty) renders the
-  // greeting word alone, no dangling ", ".
+  // greeting word alone, no dangling ", ". Built by HomeGreeting, which
+  // also moves the name to a line of its own when one line does not fit.
   //
-  // Computed fresh on every build rather than cached in state — Home
+  // The time-of-day word is computed fresh on every build rather than cached in state — Home
   // already rebuilds for other reasons (Daily Test/weak-spot loads,
   // entitlement changes), so this rides along on those instead of needing
   // its own refresh mechanism. It intentionally does *not* refresh purely
   // from time passing while the app sits open with nothing else changing —
   // see docs/build-log.md for why that gap is accepted here rather than
   // patched with a new lifecycle hook or a Timer.
-  String get _greeting {
-    final word = timeOfDayGreeting(widget.clock());
-    return widget.userName.isEmpty ? word : '$word, ${widget.userName}';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -622,23 +620,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           // against the text) — `spaceBetween` with a `Flexible` (not
           // `Expanded`) text so the avatar always lands flush against the
           // trailing edge regardless of how short the greeting is, while a
-          // long name still truncates instead of pushing the avatar off
-          // the visible row. `maxLines: 1` + `overflow: ellipsis` here is
-          // also what keeps this row safe at large Dynamic Type sizes: the
-          // text clips to one line and shrinks the space it claims instead
-          // of wrapping into the avatar or growing the row unpredictably;
-          // the avatar's own size never changes with text scale, and the
-          // `Row` (no fixed height) grows to fit whichever of the two is
+          // long name never pushes the avatar off the visible row.
+          // HomeGreeting is at most two lines, each capped at one line with
+          // an ellipsis, which also keeps this row safe at large Dynamic
+          // Type sizes: it never wraps into the avatar or grows without
+          // bound; the avatar's own size never changes with text scale, and
+          // the `Row` (no fixed height) grows to fit whichever of the two is
           // taller, so nothing clips vertically either.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Flexible(
-                child: Text(
-                  _greeting,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: HomeGreeting(
+                  word: timeOfDayGreeting(widget.clock()),
+                  name: widget.userName,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: appBarFg,

@@ -25,6 +25,7 @@ import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
+import 'package:grammar_lens/widgets/home_greeting.dart';
 
 /// The bottom "Premium" upsell row's own label — disambiguated from
 /// `LockedPremiumPill`'s identically-worded "Premium" text (shown on a
@@ -196,6 +197,11 @@ WeakSpot _weakSpot({String topicId = 'articles', int frequency = 5}) =>
       lastSeen: DateTime.now(),
       latestExplanation: 'You left out "the" before a specific noun.',
     );
+
+/// Home's greeting by what it says (and what VoiceOver reads), whether it is
+/// laid out on one line or, when that does not fit, two.
+Finder _greeting(String text) =>
+    find.byWidgetPredicate((w) => w is HomeGreeting && w.text == text);
 
 void main() {
   Future<void> pumpHome(
@@ -681,20 +687,20 @@ void main() {
     final storage = _FakeStorageService()
       ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
     await pumpHome(tester, storageService: storage, clock: () => now);
-    expect(find.text('Good evening, Ada'), findsOneWidget);
+    expect(_greeting('Good evening, Ada'), findsOneWidget);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     now = DateTime(2026, 1, 2, 9);
     storage.todaysDailyTest = null;
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(find.text('Good morning, Ada'), findsOneWidget);
+    expect(_greeting('Good morning, Ada'), findsOneWidget);
     expect(find.textContaining('New test tomorrow'), findsNothing);
     expect(find.textContaining("Today's 5-question warm-up"), findsOneWidget);
   });
 
   testWidgets('greets the user by their onboarding name', (tester) async {
     await pumpHome(tester);
-    expect(find.text('Good morning, Ada'), findsOneWidget);
+    expect(_greeting('Good morning, Ada'), findsOneWidget);
   });
 
   testWidgets(
@@ -710,8 +716,8 @@ void main() {
   testWidgets('the greeting follows the injected clock, not a fixed word',
       (tester) async {
     await pumpHome(tester, clock: () => DateTime(2026, 1, 1, 19, 0));
-    expect(find.text('Good evening, Ada'), findsOneWidget);
-    expect(find.text('Good morning, Ada'), findsNothing);
+    expect(_greeting('Good evening, Ada'), findsOneWidget);
+    expect(_greeting('Good morning, Ada'), findsNothing);
   });
 
   testWidgets('shows a placeholder avatar when none has been picked',
@@ -734,7 +740,7 @@ void main() {
       'leading before it', (tester) async {
     await pumpHome(tester);
 
-    final greetingLeft = tester.getTopLeft(find.text('Good morning, Ada')).dx;
+    final greetingLeft = tester.getTopLeft(_greeting('Good morning, Ada')).dx;
     final avatarRect = tester.getRect(find.byType(AvatarTile));
     final screenWidth =
         tester.view.physicalSize.width / tester.view.devicePixelRatio;
