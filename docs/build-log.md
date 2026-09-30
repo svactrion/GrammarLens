@@ -6660,3 +6660,5 @@ measurements and renders: `docs/design/batch3c/report.md`, "After: Batch
   clean. Deliberate breakages red on backup copies: level pills, a flipped
   avatar, a 3.78:1 chip.
 - **[Open — owner]** Device check and merge approval.
+
+- **2026-09-30 — Batch 3c-B verified on the owner's device and merged into `1.1.0`** by fast-forward to `0488714` (no merge commit); 1143 tests green on `1.1.0`.

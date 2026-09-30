@@ -42,12 +42,12 @@ D1–D6 in the side-tracks file.)*
       camera layer with framing F1; hop (none with Reduce Motion); score bar
       under the mountain window; two-row header. No 320 pt fix: there was no
       shift (D6)
-- [ ] Batch 3c — mountain redesign. 3c-A (candidates, report) done
-      2026-09-30; **3c-B built 2026-09-30, not yet checked on a device, not
-      merged** (`docs/design/batch3c/report.md`): candidate 1's trail and
+- [x] Batch 3c — mountain redesign — done, verified on device, merged into
+      `1.1.0` (2026-09-30, fast-forward to `0488714`; 1143 tests green on
+      `1.1.0`). 3c-A: candidates and report; 3c-B: candidate 1's trail and
       layered mountain, turned step pills, Green Slope's pine and shrub, the
-      climb card (frame, plaque, month and steps on sky chips); 1143 tests
-      green. Open: the owner's device check, then the merge
+      climb card (frame, plaque, month and steps on sky chips)
+      (`docs/design/batch3c/report.md`)
 - [ ] Batch 3d — stop markers become "save points" at the trail's 4 turns
       (same place every month; weekly days and D2 retired). Planned, not
       started (`docs/1.1.0-design-side-tracks.md`, G3)
