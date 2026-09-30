@@ -66,6 +66,31 @@ flutter test tool/design_measure/greeting_after_test.dart
 The fixed greeting on the real Home at 320 × 568 (Medium and Large, three
 names, afternoon).
 
+```bash
+flutter test tool/design_measure/batch3c/numbers_test.dart
+```
+
+```bash
+flutter test tool/design_measure/batch3c/framing_test.dart
+```
+
+```bash
+flutter test tool/design_measure/batch3c/render_test.dart
+```
+
+Batch 3c-A (`docs/design/batch3c/report.md`): the two mountain candidates.
+- `numbers_test.dart` measures legs, turns, spacing, marker gaps, covered
+  days, D2 markers for 28–31 days and free area
+  (`candidate_numbers.json`).
+- `framing_test.dart` compares F1 with the whole-mountain framing
+  (`framing_numbers.txt`).
+- `render_test.dart` renders the candidates in the new card shell and
+  measures the plaque and contrast (`shell_numbers.txt`).
+
+The candidates' geometry is in `batch3c/geometry.dart`. The avatar is never
+mirrored (D4, confirmed by Batch 3c K2); the 3c-A images, made before that
+decision, showed a mirrored snail.
+
 To write the images straight into the report folder:
 
 ```bash
