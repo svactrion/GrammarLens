@@ -56,8 +56,105 @@ String generateClimbTable() {
     }
     out.writeln('  ],');
   }
-  out.writeln('};');
+  out
+    ..writeln('};')
+    ..writeln()
+    ..writeln('/// Environment items, the same in every month: (kind, x, y), '
+        'the item\'s base')
+    ..writeln('/// (bottom center) in the same normalized space. With the '
+        'stop markers, 4–6')
+    ..writeln('/// objects in the scene (Batch 0 decision 6, Batch 3c f).')
+    ..writeln('const climbEnvironmentTable = <(String, double, double)>[');
+  for (final (kind, o) in placeEnvironment()) {
+    out.writeln("  ('$kind', ${_n(o.dx / size.width)}, "
+        '${_n(o.dy / size.height)}),');
+  }
+  out.writeln('];');
   return out.toString();
+}
+
+// Environment items: the Batch 3c-A rule (docs/design/batch3c/report.md).
+
+/// Item boxes around their base point (bottom center), in scene units.
+const pineBox = Rect.fromLTRB(-16, -58, 16, 0);
+const shrubBox = Rect.fromLTRB(-22, -22, 22, 0);
+
+/// The avatar's box above a trail point.
+const _avatarBox = Rect.fromLTRB(-29, -55, 29, 3);
+
+/// The trail every 2 units, and every month's marker boxes (+6), computed
+/// once.
+final List<Offset> _trailEvery2 = () {
+  final metric = ClimbRoute(31).path.computeMetrics().single;
+  return [
+    for (var s = 0.0; s <= metric.length; s += 2)
+      metric.getTangentForOffset(s)!.position
+  ];
+}();
+final List<Rect> _allMarkers = [
+  for (var days = 28; days <= 31; days++)
+    for (final (_, o) in placeMarkers(days)) markerBox.shift(o).inflate(6)
+];
+
+/// Whether an item's [box] is free: on the ground, inside x 4–316 (so every
+/// width shows it), 8 units off the trail band, out of the avatar's space
+/// above every point of the trail, off every other item in [taken], every
+/// month's stop markers and the summit flag.
+bool environmentFree(Rect box, {List<Rect> taken = const []}) {
+  const size = ClimbRoute.sceneSize;
+  if (box.left < 4 || box.right > size.width - 4 || box.top < 4) {
+    return false;
+  }
+  if (!ClimbScene.onGround(box.bottomLeft + const Offset(3, -2)) ||
+      !ClimbScene.onGround(box.bottomRight + const Offset(-3, -2))) {
+    return false;
+  }
+  for (final p in _trailEvery2) {
+    if (_rectDistance(box, p) < _trailHalf + 8) return false;
+    if (box.overlaps(_avatarBox.shift(p).inflate(2))) return false;
+  }
+  for (final r in _allMarkers) {
+    if (box.overlaps(r)) return false;
+  }
+  for (final r in taken) {
+    if (r.overlaps(box)) return false;
+  }
+  return !box.overlaps(_summitBox(ClimbRoute.summit).inflate(6));
+}
+
+/// Green Slope's two items (Batch 0 decision 6: the stop markers plus at
+/// most two): a pine low on the mountain and a shrub with wildflowers
+/// higher up, each at the free spot farthest from the trail in its band.
+List<(String, Offset)> placeEnvironment() {
+  final samples = _trailEvery2;
+  final taken = <Rect>[];
+  Offset? pick(Rect item, double yMin, double yMax) {
+    Offset? best;
+    var bestClear = -1.0;
+    for (var y = yMin; y <= yMax; y += 4) {
+      for (var x = 20.0; x <= 300; x += 4) {
+        final base = Offset(x, y);
+        final box = item.shift(base);
+        if (!environmentFree(box, taken: taken)) continue;
+        final clear =
+            samples.map((p) => _rectDistance(box, p)).reduce(math.min);
+        if (clear > bestClear) {
+          bestClear = clear;
+          best = base;
+        }
+      }
+    }
+    if (best == null) {
+      throw StateError('No free spot for an environment item');
+    }
+    taken.add(item.shift(best).inflate(8));
+    return best;
+  }
+
+  return [
+    ('pine', pick(pineBox, 520, 730)!),
+    ('shrub', pick(shrubBox, 250, 500)!),
+  ];
 }
 
 // Marker placement: the Batch 3a study's rule (docs/design/batch3a/report.md,

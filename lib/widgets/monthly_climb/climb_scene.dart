@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import '../../models/climb_theme.dart';
+import 'climb_table.dart';
 
 /// The mountain's shapes in scene units (320 × 740), shared by every theme
 /// (1.1.0 design decision e, Batch 3c): a theme only chooses their colors,
@@ -80,6 +81,14 @@ abstract final class ClimbScene {
     Rect.fromLTRB(-280, 650, 90, 830),
     Rect.fromLTRB(250, 670, 600, 840),
   ];
+
+  /// Green Slope's environment items (Batch 3c f), the same in every month:
+  /// each kind with its base point (bottom center), from the generated
+  /// [climbEnvironmentTable].
+  static List<({String kind, Offset base})> get environment => [
+        for (final (kind, x, y) in climbEnvironmentTable)
+          (kind: kind, base: Offset(x * 320, y * 740)),
+      ];
 
   static final Path _bodyPath = Path()..addPolygon(body, true);
 

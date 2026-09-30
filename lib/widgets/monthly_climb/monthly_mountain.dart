@@ -214,6 +214,17 @@ class _MountainPainter extends CustomPainter {
     for (final hill in ClimbScene.foothills) {
       canvas.drawOval(hill, Paint()..color = tones.foothill);
     }
+    // Environment items, behind the trail (Batch 3c f).
+    for (final item in ClimbScene.environment) {
+      canvas.save();
+      canvas.translate(item.base.dx, item.base.dy);
+      if (item.kind == 'pine') {
+        _pine(canvas, tones);
+      } else {
+        _shrub(canvas, tones);
+      }
+      canvas.restore();
+    }
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -268,6 +279,38 @@ class _MountainPainter extends CustomPainter {
       summit + const Offset(1, -21)
     ], palette.accent);
     canvas.restore();
+  }
+
+  /// A pine: a trunk and three stacked tiers, 32 × 58 units above its base.
+  void _pine(Canvas canvas, ClimbSceneTones tones) {
+    canvas.drawRect(
+        const Rect.fromLTRB(-3, -12, 3, 0), Paint()..color = tones.trunk);
+    final paint = Paint()..color = tones.pine;
+    for (final (top, halfWidth, height) in const [
+      (-58.0, 12.0, 22.0),
+      (-46.0, 16.0, 24.0),
+      (-32.0, 16.0, 22.0),
+    ]) {
+      canvas.drawPath(
+          Path()
+            ..moveTo(0, top)
+            ..lineTo(halfWidth, top + height)
+            ..lineTo(-halfWidth, top + height)
+            ..close(),
+          paint);
+    }
+  }
+
+  /// A shrub with a few wildflowers, 44 × 22 units above its base.
+  void _shrub(Canvas canvas, ClimbSceneTones tones) {
+    final paint = Paint()..color = tones.shrub;
+    canvas.drawOval(const Rect.fromLTRB(-22, -16, 2, 0), paint);
+    canvas.drawOval(const Rect.fromLTRB(-8, -22, 16, 0), paint);
+    canvas.drawOval(const Rect.fromLTRB(6, -14, 22, 0), paint);
+    for (final o in const [Offset(-14, -12), Offset(2, -17), Offset(13, -8)]) {
+      canvas.drawCircle(o, 3, Paint()..color = tones.flower);
+      canvas.drawCircle(o, 1.1, Paint()..color = tones.flowerCenter);
+    }
   }
 
   void _landmark(Canvas canvas, int index) {

@@ -164,3 +164,11 @@ const climbMarkerTable = <int, List<(int, double, double)>>{
     (28, 0.57226, 0.25894),
   ],
 };
+
+/// Environment items, the same in every month: (kind, x, y), the item's base
+/// (bottom center) in the same normalized space. With the stop markers, 4–6
+/// objects in the scene (Batch 0 decision 6, Batch 3c f).
+const climbEnvironmentTable = <(String, double, double)>[
+  ('pine', 0.93750, 0.75135),
+  ('shrub', 0.20000, 0.53784),
+];
