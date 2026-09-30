@@ -26,8 +26,8 @@ flutter test tool/design_measure/home_layout_test.dart
 
 Home's vertical layout at 320 × 568, 375 × 667, 375 × 812 and 430 × 932 for
 each text size: `home_layout.txt`. The inputs default to Batch 0's (15
-September 2026, 8 steps). `DESIGN_MEASURE_CLOCK` (an ISO date-time) and
-`DESIGN_MEASURE_STEPS` override them.
+September 2026, 8 steps, the name "Ada"). `DESIGN_MEASURE_CLOCK` (an ISO
+date-time), `DESIGN_MEASURE_STEPS` and `DESIGN_MEASURE_NAME` override them.
 
 ```bash
 flutter test tool/design_measure/header_width_test.dart
@@ -58,6 +58,13 @@ flutter test tool/design_measure/greeting_options_test.dart
 ```
 
 Fix options for the greeting row at 320 pt, measured and rendered.
+
+```bash
+flutter test tool/design_measure/greeting_after_test.dart
+```
+
+The fixed greeting on the real Home at 320 × 568 (Medium and Large, three
+names, afternoon).
 
 To write the images straight into the report folder:
 

@@ -142,11 +142,9 @@ Smith". Images: [`greeting_options_320_medium.png`](greeting_options_320_medium.
     than the space. That only happens with "Good afternoon," at Large,
     where 28.8 becomes 28.7.
   - The name is cut only if it is longer than a whole line.
-  - **Cost:** the row grows by 8 pt at Medium and 14 pt at Large. The
-    mountain moves down by the same amount, so at 320 × 568 the mountain
-    above the fold goes from 81 to about 73 pt at Medium, and from 66 to
-    about 52 at Large. This is derived from the row height; it would be
-    measured again in step 2.
+  - **Cost:** the row grows by 8 pt at Medium and 14 pt at Large, and the
+    mountain moves down by the same amount. *(The estimate first written
+    here is replaced by the measurement in "After" below.)*
   - The row only grows when the one line does not fit. At 430 pt with a
     short name it stays one line.
 - **B: first name only.** It does not solve the problem.
@@ -183,3 +181,91 @@ Smith". Images: [`greeting_options_320_medium.png`](greeting_options_320_medium.
 - Confirm the test is red without the fix, using `git stash` or a separate
   worktree.
 - Measure the mountain above the fold again.
+
+---
+
+## After: option A built (2026-09-30)
+
+**Approved (owner):** option A. The first line may shrink only if the
+greeting word alone does not fit; the name keeps the user's text size; a
+very long name may end in "…", but it is never lost. Options B and C are
+rejected, for the reasons in section 4. **Not yet checked on a device; not
+merged into `1.1.0`.**
+
+### Commits
+
+| Commit | What |
+|---|---|
+| `62e9154` | `HomeGreeting` (`lib/widgets/home_greeting.dart`), used by Home's greeting row |
+| `bb4d315` | Regression test over the 108-case matrix (`test/home_greeting_name_test.dart`) |
+| `c377674` | VoiceOver test: one sentence on one line or two (`test/home_greeting_semantics_test.dart`) |
+
+- **Checked red without the fix:** the regression test was run on the tree
+  before it (`bd69ef7`), in a separate worktree with the test file copied
+  in. **All 9 groups fail**; at 320 pt Medium and Large the first failure is
+  "name lost" ("Ada", 09:00).
+- **The VoiceOver test** fails in all 3 cases when `HomeGreeting`'s single
+  label is removed. That check was done on a backup copy of the file and
+  restored from it, not with `git checkout`.
+- **Existing tests:** 9 assertions in `home_screen_test.dart` and
+  `app_resume_test.dart` found the greeting as one `Text`. They now find it
+  by `HomeGreeting.text`, the whole sentence, which is also what VoiceOver
+  reads. Under the test font every glyph is a full square, so at 390 pt the
+  greeting is on two lines there.
+
+### The matrix, before and after
+
+Same harness, same 108 cases (before: [`greeting.txt`](greeting.txt); after:
+[`greeting_after.txt`](greeting_after.txt)).
+
+| | Name lost | Name cut | Name in full | Greeting on two lines |
+|---|---|---|---|---|
+| Before | **30** | 60 | 18 | 0 |
+| After | **0** | 3 | **105** | 81 |
+
+- The 3 cut cases are the 15-character "Mary Anne Smith" at 320 pt Large,
+  once per greeting word. It shows as "Mary Anne S…", 11 of 15 characters
+  (rendered below).
+
+### Mountain above the fold, measured
+
+`tool/design_measure/home_layout_test.dart`, before at `bd69ef7`, after at
+the fix. Values in pt; the window is 350 pt tall. The measured values
+replace the estimates in section 4.
+
+With Batch 0's inputs ("Ada", 09:00):
+
+| Screen | Text size | Before | After | Change |
+|---|---|---|---|---|
+| 320 × 568 | Small | 97 | 95 | −2 |
+| 320 × 568 | **Medium** (default) | **81** | **73** | −8 |
+| 320 × 568 | **Large** | **66** | **52** | −14 |
+| 375 × 667 | Small / Medium / Large | 213 / 199 / 186 | 213 / 199 / 186 | 0 ("Ada" fits one line) |
+| 430 × 932 | Small / Medium / Large | whole window | whole window | 0 |
+
+With a longer name ("Charlotte", 14:00):
+
+| Screen | Text size | Before | After | Change |
+|---|---|---|---|---|
+| 320 × 568 | Medium / Large | 81 / 66 | 73 / 52 | −8 / −14 |
+| 375 × 667 | Small / Medium / Large | 213 / 199 / 186 | 211 / 191 / 172 | −2 / −8 / −14 |
+| 375 × 812 | Medium / Large | 286 / 273 | 278 / 259 | −8 / −14 |
+| 430 × 932 | Medium / Large | whole window | whole window (383 / 364 to the fold) | 0 |
+
+- Before the fix the greeting row was always 60 pt (the avatar), whatever
+  the name, so "before" is the same for both names.
+- The cost is paid only where the name would otherwise be lost or cut.
+  - **At 320 × 568** it gives back part of Batch 3b's gain: Medium 79 → 81
+    → **73**, Large 38 → 66 → **52**.
+  - Large still has 14 pt more than Batch 0.
+
+### Images (after, 320 × 568)
+
+The real Home at 14:00 ("Good afternoon", the longest greeting word), 8 of
+30 steps:
+
+- `greeting_after_320_medium_{ada,charlotte,mary}.png`
+- `greeting_after_320_large_{ada,charlotte,mary}.png`. The last one shows
+  the one cut case, "Mary Anne S…".
+
+Rendered by `tool/design_measure/greeting_after_test.dart`.

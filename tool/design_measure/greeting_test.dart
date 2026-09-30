@@ -10,6 +10,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
+import 'package:grammar_lens/utils/greeting.dart';
 
 import 'home_fakes.dart';
 
@@ -60,10 +61,15 @@ void main() {
                 textSize: textSize,
                 userName: name));
             await tester.pump();
-            final finder = find.textContaining(', $name');
-            final text = tester.widget<Text>(finder).data!;
+            // The paragraph that ends with the name: the whole greeting on
+            // one line, or (since the greeting fix) the name's own line.
             final paragraph = tester.renderObject<RenderParagraph>(
-                find.descendant(of: finder, matching: find.byType(RichText)));
+                find.byWidgetPredicate((w) =>
+                    w is RichText && w.text.toPlainText().endsWith(name)));
+            final text = paragraph.text.toPlainText();
+            final lines = text == name ? 2 : 1;
+            final greeting =
+                '${timeOfDayGreeting(DateTime(2026, 9, 15, hour))}, $name';
             // A character is drawn if the paragraph lays out a box for it;
             // characters cut by the ellipsis get none.
             var drawn = 0;
@@ -76,7 +82,7 @@ void main() {
               }
             }
             final full = (TextPainter(
-                    text: TextSpan(text: text, style: paragraph.text.style),
+                    text: TextSpan(text: greeting, style: paragraph.text.style),
                     textDirection: TextDirection.ltr)
                   ..layout())
                 .width;
@@ -88,7 +94,8 @@ void main() {
             out.writeln('${size.width.toInt()} ${textSize.name.padRight(6)} '
                 '${hour.toString().padLeft(2)}h ${name.padRight(15)} '
                 'available=${_f(paragraph.constraints.maxWidth)} '
-                'needed=${_f(full)} drawn=$drawn/${name.length} $state');
+                'needed=${_f(full)} lines=$lines '
+                'drawn=$drawn/${name.length} $state');
           }
         }
       });

@@ -1,0 +1,108 @@
+320 small   9h Ada             available=216.0 needed=216.9 lines=2 drawn=3/3 full
+320 small   9h Charlotte       available=216.0 needed=276.4 lines=2 drawn=9/9 full
+320 small   9h Maximilian      available=216.0 needed=292.9 lines=2 drawn=10/10 full
+320 small   9h Mary Anne Smith available=216.0 needed=365.8 lines=2 drawn=15/15 full
+320 small  14h Ada             available=216.0 needed=232.3 lines=2 drawn=3/3 full
+320 small  14h Charlotte       available=216.0 needed=291.8 lines=2 drawn=9/9 full
+320 small  14h Maximilian      available=216.0 needed=308.4 lines=2 drawn=10/10 full
+320 small  14h Mary Anne Smith available=216.0 needed=381.2 lines=2 drawn=15/15 full
+320 small  20h Ada             available=216.0 needed=210.8 lines=1 drawn=3/3 full
+320 small  20h Charlotte       available=216.0 needed=270.3 lines=2 drawn=9/9 full
+320 small  20h Maximilian      available=216.0 needed=286.8 lines=2 drawn=10/10 full
+320 small  20h Mary Anne Smith available=216.0 needed=359.7 lines=2 drawn=15/15 full
+320 medium  9h Ada             available=216.0 needed=238.6 lines=2 drawn=3/3 full
+320 medium  9h Charlotte       available=216.0 needed=304.0 lines=2 drawn=9/9 full
+320 medium  9h Maximilian      available=216.0 needed=322.2 lines=2 drawn=10/10 full
+320 medium  9h Mary Anne Smith available=216.0 needed=402.4 lines=2 drawn=15/15 full
+320 medium 14h Ada             available=216.0 needed=255.6 lines=2 drawn=3/3 full
+320 medium 14h Charlotte       available=216.0 needed=321.0 lines=2 drawn=9/9 full
+320 medium 14h Maximilian      available=216.0 needed=339.2 lines=2 drawn=10/10 full
+320 medium 14h Mary Anne Smith available=216.0 needed=419.4 lines=2 drawn=15/15 full
+320 medium 20h Ada             available=216.0 needed=231.9 lines=2 drawn=3/3 full
+320 medium 20h Charlotte       available=216.0 needed=297.3 lines=2 drawn=9/9 full
+320 medium 20h Maximilian      available=216.0 needed=315.5 lines=2 drawn=10/10 full
+320 medium 20h Mary Anne Smith available=216.0 needed=395.7 lines=2 drawn=15/15 full
+320 large   9h Ada             available=216.0 needed=260.2 lines=2 drawn=3/3 full
+320 large   9h Charlotte       available=216.0 needed=331.6 lines=2 drawn=9/9 full
+320 large   9h Maximilian      available=216.0 needed=351.5 lines=2 drawn=10/10 full
+320 large   9h Mary Anne Smith available=216.0 needed=438.9 lines=2 drawn=11/15 cut
+320 large  14h Ada             available=216.0 needed=278.8 lines=2 drawn=3/3 full
+320 large  14h Charlotte       available=216.0 needed=350.2 lines=2 drawn=9/9 full
+320 large  14h Maximilian      available=216.0 needed=370.0 lines=2 drawn=10/10 full
+320 large  14h Mary Anne Smith available=216.0 needed=457.5 lines=2 drawn=11/15 cut
+320 large  20h Ada             available=216.0 needed=253.0 lines=2 drawn=3/3 full
+320 large  20h Charlotte       available=216.0 needed=324.4 lines=2 drawn=9/9 full
+320 large  20h Maximilian      available=216.0 needed=344.2 lines=2 drawn=10/10 full
+320 large  20h Mary Anne Smith available=216.0 needed=431.7 lines=2 drawn=11/15 cut
+375 small   9h Ada             available=269.3 needed=216.9 lines=1 drawn=3/3 full
+375 small   9h Charlotte       available=269.3 needed=276.4 lines=2 drawn=9/9 full
+375 small   9h Maximilian      available=269.3 needed=292.9 lines=2 drawn=10/10 full
+375 small   9h Mary Anne Smith available=269.3 needed=365.8 lines=2 drawn=15/15 full
+375 small  14h Ada             available=269.3 needed=232.3 lines=1 drawn=3/3 full
+375 small  14h Charlotte       available=269.3 needed=291.8 lines=2 drawn=9/9 full
+375 small  14h Maximilian      available=269.3 needed=308.4 lines=2 drawn=10/10 full
+375 small  14h Mary Anne Smith available=269.3 needed=381.2 lines=2 drawn=15/15 full
+375 small  20h Ada             available=269.3 needed=210.8 lines=1 drawn=3/3 full
+375 small  20h Charlotte       available=269.3 needed=270.3 lines=2 drawn=9/9 full
+375 small  20h Maximilian      available=269.3 needed=286.8 lines=2 drawn=10/10 full
+375 small  20h Mary Anne Smith available=269.3 needed=359.7 lines=2 drawn=15/15 full
+375 medium  9h Ada             available=269.3 needed=238.6 lines=1 drawn=3/3 full
+375 medium  9h Charlotte       available=269.3 needed=304.0 lines=2 drawn=9/9 full
+375 medium  9h Maximilian      available=269.3 needed=322.2 lines=2 drawn=10/10 full
+375 medium  9h Mary Anne Smith available=269.3 needed=402.4 lines=2 drawn=15/15 full
+375 medium 14h Ada             available=269.3 needed=255.6 lines=1 drawn=3/3 full
+375 medium 14h Charlotte       available=269.3 needed=321.0 lines=2 drawn=9/9 full
+375 medium 14h Maximilian      available=269.3 needed=339.2 lines=2 drawn=10/10 full
+375 medium 14h Mary Anne Smith available=269.3 needed=419.4 lines=2 drawn=15/15 full
+375 medium 20h Ada             available=269.3 needed=231.9 lines=1 drawn=3/3 full
+375 medium 20h Charlotte       available=269.3 needed=297.3 lines=2 drawn=9/9 full
+375 medium 20h Maximilian      available=269.3 needed=315.5 lines=2 drawn=10/10 full
+375 medium 20h Mary Anne Smith available=269.3 needed=395.7 lines=2 drawn=15/15 full
+375 large   9h Ada             available=269.3 needed=260.2 lines=1 drawn=3/3 full
+375 large   9h Charlotte       available=269.3 needed=331.6 lines=2 drawn=9/9 full
+375 large   9h Maximilian      available=269.3 needed=351.5 lines=2 drawn=10/10 full
+375 large   9h Mary Anne Smith available=269.3 needed=438.9 lines=2 drawn=15/15 full
+375 large  14h Ada             available=269.3 needed=278.8 lines=2 drawn=3/3 full
+375 large  14h Charlotte       available=269.3 needed=350.2 lines=2 drawn=9/9 full
+375 large  14h Maximilian      available=269.3 needed=370.0 lines=2 drawn=10/10 full
+375 large  14h Mary Anne Smith available=269.3 needed=457.5 lines=2 drawn=15/15 full
+375 large  20h Ada             available=269.3 needed=253.0 lines=1 drawn=3/3 full
+375 large  20h Charlotte       available=269.3 needed=324.4 lines=2 drawn=9/9 full
+375 large  20h Maximilian      available=269.3 needed=344.2 lines=2 drawn=10/10 full
+375 large  20h Mary Anne Smith available=269.3 needed=431.7 lines=2 drawn=15/15 full
+430 small   9h Ada             available=319.3 needed=216.9 lines=1 drawn=3/3 full
+430 small   9h Charlotte       available=319.3 needed=276.4 lines=1 drawn=9/9 full
+430 small   9h Maximilian      available=319.3 needed=292.9 lines=1 drawn=10/10 full
+430 small   9h Mary Anne Smith available=319.3 needed=365.8 lines=2 drawn=15/15 full
+430 small  14h Ada             available=319.3 needed=232.3 lines=1 drawn=3/3 full
+430 small  14h Charlotte       available=319.3 needed=291.8 lines=1 drawn=9/9 full
+430 small  14h Maximilian      available=319.3 needed=308.4 lines=1 drawn=10/10 full
+430 small  14h Mary Anne Smith available=319.3 needed=381.2 lines=2 drawn=15/15 full
+430 small  20h Ada             available=319.3 needed=210.8 lines=1 drawn=3/3 full
+430 small  20h Charlotte       available=319.3 needed=270.3 lines=1 drawn=9/9 full
+430 small  20h Maximilian      available=319.3 needed=286.8 lines=1 drawn=10/10 full
+430 small  20h Mary Anne Smith available=319.3 needed=359.7 lines=2 drawn=15/15 full
+430 medium  9h Ada             available=319.3 needed=238.6 lines=1 drawn=3/3 full
+430 medium  9h Charlotte       available=319.3 needed=304.0 lines=1 drawn=9/9 full
+430 medium  9h Maximilian      available=319.3 needed=322.2 lines=2 drawn=10/10 full
+430 medium  9h Mary Anne Smith available=319.3 needed=402.4 lines=2 drawn=15/15 full
+430 medium 14h Ada             available=319.3 needed=255.6 lines=1 drawn=3/3 full
+430 medium 14h Charlotte       available=319.3 needed=321.0 lines=2 drawn=9/9 full
+430 medium 14h Maximilian      available=319.3 needed=339.2 lines=2 drawn=10/10 full
+430 medium 14h Mary Anne Smith available=319.3 needed=419.4 lines=2 drawn=15/15 full
+430 medium 20h Ada             available=319.3 needed=231.9 lines=1 drawn=3/3 full
+430 medium 20h Charlotte       available=319.3 needed=297.3 lines=1 drawn=9/9 full
+430 medium 20h Maximilian      available=319.3 needed=315.5 lines=1 drawn=10/10 full
+430 medium 20h Mary Anne Smith available=319.3 needed=395.7 lines=2 drawn=15/15 full
+430 large   9h Ada             available=319.3 needed=260.2 lines=1 drawn=3/3 full
+430 large   9h Charlotte       available=319.3 needed=331.6 lines=2 drawn=9/9 full
+430 large   9h Maximilian      available=319.3 needed=351.5 lines=2 drawn=10/10 full
+430 large   9h Mary Anne Smith available=319.3 needed=438.9 lines=2 drawn=15/15 full
+430 large  14h Ada             available=319.3 needed=278.8 lines=1 drawn=3/3 full
+430 large  14h Charlotte       available=319.3 needed=350.2 lines=2 drawn=9/9 full
+430 large  14h Maximilian      available=319.3 needed=370.0 lines=2 drawn=10/10 full
+430 large  14h Mary Anne Smith available=319.3 needed=457.5 lines=2 drawn=15/15 full
+430 large  20h Ada             available=319.3 needed=253.0 lines=1 drawn=3/3 full
+430 large  20h Charlotte       available=319.3 needed=324.4 lines=2 drawn=9/9 full
+430 large  20h Maximilian      available=319.3 needed=344.2 lines=2 drawn=10/10 full
+430 large  20h Mary Anne Smith available=319.3 needed=431.7 lines=2 drawn=15/15 full

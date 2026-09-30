@@ -17,11 +17,14 @@ import 'home_fakes.dart';
 import 'layouts.dart';
 
 /// Inputs, the same as Batch 0 unless overridden: `DESIGN_MEASURE_CLOCK`
-/// (ISO date-time, default 2026-09-15T09:00) and `DESIGN_MEASURE_STEPS`
-/// (default 8).
+/// (ISO date-time, default 2026-09-15T09:00), `DESIGN_MEASURE_STEPS`
+/// (default 8) and `DESIGN_MEASURE_NAME` (below).
 final _clock = DateTime.parse(
     Platform.environment['DESIGN_MEASURE_CLOCK'] ?? '2026-09-15T09:00:00');
 final _steps = int.parse(Platform.environment['DESIGN_MEASURE_STEPS'] ?? '8');
+
+/// The user's name, `DESIGN_MEASURE_NAME` (default "Ada").
+final _name = Platform.environment['DESIGN_MEASURE_NAME'] ?? 'Ada';
 
 String _f(double v) => v.toStringAsFixed(1);
 String _r(Rect r) => '${_f(r.top)}..${_f(r.bottom)}';
@@ -50,7 +53,8 @@ void main() {
         await tester.pumpWidget(designHome(
             clock: _clock,
             storage: DesignStorage(steps: _steps),
-            textSize: ts));
+            textSize: ts,
+            userName: _name));
         await tester.pump();
         await tester.pump(const Duration(seconds: 2));
         await tester.pump();
