@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import '../../models/avatar.dart';
 import '../../models/climb_theme.dart';
@@ -19,9 +20,18 @@ class MonthlyMountain extends StatefulWidget {
   /// (scene art G3: it shrinks toward the summit).
   static const hopShare = 14 / 58;
 
+  /// Scene art G5: faint dots on the days already walked, like a trail
+  /// left behind; future days are not marked. **The one switch:** false
+  /// shows only the image's trail, the fallback if the dots are not liked
+  /// on a device.
+  static const passedDayDots = true;
+
   final int days;
   final int completedDays;
   final Avatar avatar;
+
+  /// Whether to draw [ClimbTrailDots]; defaults to [passedDayDots].
+  final bool showPassedDayDots;
 
   /// Called when the pawn has finished moving to a new position: at the end of
   /// the animation, or right after the frame when there is none (reduced
@@ -33,6 +43,7 @@ class MonthlyMountain extends StatefulWidget {
       required this.days,
       required this.completedDays,
       required this.avatar,
+      this.showPassedDayDots = passedDayDots,
       this.onMotionEnd});
 
   @override
@@ -155,6 +166,16 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                                   fit: BoxFit.fill,
                                   filterQuality: FilterQuality.medium,
                                   gaplessPlayback: true)),
+                          if (widget.showPassedDayDots)
+                            Positioned.fill(
+                                child: CustomPaint(
+                                    painter: ClimbTrailDots(points: [
+                              // Days the pawn has left behind: on day n,
+                              // 1 to n − 1 (day n is under the avatar,
+                              // day 0 is the START mat).
+                              for (var d = 1; d < _day; d++)
+                                _route.stepAt(d) * camera.scale
+                            ], color: palette.ink))),
                           Positioned(
                               left: pawn.dx - tile / 2,
                               // The feet on the step: the tile's top is
@@ -173,4 +194,34 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       }),
     );
   }
+}
+
+/// Scene art G5: a faint dot on each passed day's step, in the image's
+/// points. Small and see-through, so the painted trail stays the trail.
+class ClimbTrailDots extends CustomPainter {
+  /// A dot's diameter, in points.
+  static const diameter = 4.0;
+
+  /// The dots' opacity: faint on the trail in both modes.
+  static const opacity = .22;
+
+  final List<Offset> points;
+
+  /// The theme palette's `ink`: dark on the light trail, light on the dusk
+  /// one.
+  final Color color;
+
+  const ClimbTrailDots({required this.points, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color.withValues(alpha: opacity);
+    for (final p in points) {
+      canvas.drawCircle(p, diameter / 2, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(ClimbTrailDots oldDelegate) =>
+      oldDelegate.color != color || !listEquals(oldDelegate.points, points);
 }
