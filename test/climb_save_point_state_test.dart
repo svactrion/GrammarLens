@@ -176,9 +176,10 @@ void main() {
     final gain = climbObjectDarkGain['green_slope']!;
     tearDown(() => ClimbSavePoints.debugDarkFilterStrengthOverride = null);
 
-    test('the default is 0.6, one constant', () {
-      expect(ClimbSavePoints.defaultDarkFilterStrength, .6);
-      expect(ClimbSavePoints.darkFilterStrength, .6);
+    // Chosen on the device (owner, 2026-10-01) after 0.6 and 0.4.
+    test('the default is 0.5, one constant', () {
+      expect(ClimbSavePoints.defaultDarkFilterStrength, .5);
+      expect(ClimbSavePoints.darkFilterStrength, .5);
     });
 
     test('0: the object is not filtered (as in light mode)', () {

@@ -99,10 +99,10 @@ abstract final class ClimbSavePoints {
   /// G6's strength in dark mode: 0 leaves the objects as they are, 1 is the
   /// full relighting measured from the clearings; in between, a linear mix.
   /// On the device (2026-10-01) the full filter made every object but the
-  /// campfire darker than the scene, so it is 0.6 until the owner picks the
-  /// value on a device (0.4 and 0.8 rendered next to it,
-  /// docs/design/scene-art/stage2/). The flame layer is never filtered.
-  static const defaultDarkFilterStrength = .6;
+  /// campfire darker than the scene; 0.6, 0.4 and 0.5 were tried there and
+  /// 0.5 chosen (measured strengths: docs/design/scene-art/stage2/
+  /// fix_dark_strength.txt). The flame layer is never filtered.
+  static const defaultDarkFilterStrength = .5;
 
   static double? _strengthForTesting;
 
