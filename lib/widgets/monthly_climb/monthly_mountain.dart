@@ -8,6 +8,7 @@ import '../avatar_tile.dart';
 import 'climb_camera.dart';
 import 'climb_debug_day.dart';
 import 'climb_route.dart';
+import 'climb_save_points.dart';
 
 /// The Monthly Climb scene (1.1.0 design, scene art S1–S2): the theme's
 /// illustration, with the trail painted in, and the avatar on its step.
@@ -136,9 +137,14 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     // every month too (`ClimbThemeRotation.shownFor`).
     const theme = ClimbThemes.greenSlope;
     final palette = theme.paletteFor(brightness);
+    final savePoints = [
+      for (final p in ClimbSavePoints.all)
+        '${p.object} at step ${p.reachedOn(widget.days)}'
+    ].join(', ');
     return Semantics(
       label: '${theme.name}. $_shownSteps of ${widget.days} steps. '
           '${widget.avatar.semanticLabel} avatar. '
+          'Save points: $savePoints. '
           'Summit at ${widget.days} steps.',
       child: LayoutBuilder(builder: (context, constraints) {
         final camera = ClimbCamera(constraints.maxWidth);
@@ -184,6 +190,25 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                               for (var d = 0; d < _day; d++)
                                 _route.stepAt(d) * camera.scale
                             ], color: palette.ink))),
+                          // The save points and the summit flag, between
+                          // the dots and the avatar.
+                          for (final p in ClimbSavePoints.all)
+                            Positioned.fromRect(
+                                rect: _scaled(p.rect, camera.scale),
+                                child: ClimbObjectLayer(
+                                    key: ValueKey(
+                                        'climb_save_point_${p.clearing}'),
+                                    asset: p.asset,
+                                    matrix: ClimbSavePoints.identity)),
+                          if (theme.hasSummitFlag)
+                            Positioned.fromRect(
+                                rect: _scaled(
+                                    ClimbSavePoints.summitFlag, camera.scale),
+                                child: ClimbObjectLayer(
+                                    key: const ValueKey('climb_summit_flag'),
+                                    asset:
+                                        ClimbSavePoints.assetFor('summit_flag'),
+                                    matrix: ClimbSavePoints.identity)),
                           Positioned(
                               left: pawn.dx - tile / 2,
                               // The feet on the step: the tile's top is
@@ -202,6 +227,26 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       }),
     );
   }
+
+  static Rect _scaled(Rect r, double scale) => Rect.fromLTRB(
+      r.left * scale, r.top * scale, r.right * scale, r.bottom * scale);
+}
+
+/// One object image through a colour matrix, kept so it can be read back.
+class ClimbObjectLayer extends StatelessWidget {
+  final String asset;
+  final List<double> matrix;
+
+  const ClimbObjectLayer(
+      {super.key, required this.asset, required this.matrix});
+
+  @override
+  Widget build(BuildContext context) => ColorFiltered(
+      colorFilter: ColorFilter.matrix(matrix),
+      child: Image.asset(asset,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.medium,
+          gaplessPlayback: true));
 }
 
 /// Scene art G5: a faint dot on each step the avatar has left behind, in

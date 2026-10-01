@@ -84,6 +84,25 @@ kept lossless).
   `docs/design/scene-art/stage2/objects.json`, which the save point table
   generator reads.
 
+```bash
+build/scene_art_venv/bin/python tool/scene_art/place_save_points.py
+```
+
+```bash
+scripts/generate_climb_save_points.sh
+```
+
+Stage 2: where the save points and the summit flag stand
+(`docs/design/scene-art/stage2/placement.json`).
+- **Assignment:** G9's, with each object's largest width ratio (≤ 1.0)
+  that keeps its shape off the trail.
+- **Alternatives:** every other assignment, measured.
+- **Generated table:** the script writes
+  `lib/widgets/monthly_climb/climb_save_point_table.dart`;
+  `test/climb_save_point_table_test.dart` fails until it matches.
+- **Order after a source change:** run `extract_trail.py` and
+  `export_objects.py` first, then `scripts/generate_climb_trail.sh`.
+
 ## Checking a day on a device
 
 In a debug build the climb scene can show any step of the month instead

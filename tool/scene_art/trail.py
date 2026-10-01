@@ -346,6 +346,23 @@ def clearings(t: Trail) -> list[dict]:
     return out
 
 
+def horizontal_run(mask: np.ndarray, p) -> tuple[float, float]:
+    """The trail's horizontal run through [p]: its left and right edge
+    (px). Not centred on the centre line on a bend."""
+    y = int(round(p[1]))
+    row = mask[y]
+    x = int(round(p[0]))
+    if not row[x]:
+        return (float(x), float(x))
+    l = x
+    while l > 0 and row[l - 1]:
+        l -= 1
+    r = x
+    while r < len(row) - 1 and row[r + 1]:
+        r += 1
+    return (float(l), float(r))
+
+
 def horizontal_chord(mask: np.ndarray, p) -> float:
     """The trail's horizontal width (px) through [p]: an avatar stands
     upright, so its footprint lies along x whatever the leg's direction."""

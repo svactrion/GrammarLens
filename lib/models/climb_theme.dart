@@ -49,6 +49,11 @@ class ClimbTheme {
   final String? backgroundLight;
   final String? backgroundDark;
 
+  /// Whether the summit flag (assets/climb/objects/summit_flag.webp) stands
+  /// on this theme's summit (scene art S3): only where the summit suits it;
+  /// not on a crater (volcanic).
+  final bool hasSummitFlag;
+
   final ClimbSummit summit;
   final ClimbEmblem emblem;
 
@@ -61,6 +66,7 @@ class ClimbTheme {
     this.darkPalette,
     this.backgroundLight,
     this.backgroundDark,
+    this.hasSummitFlag = false,
     required this.summit,
     required this.emblem,
   }) : assert(
@@ -111,6 +117,7 @@ class ClimbThemes {
         accent: appDarkPrimary),
     backgroundLight: 'assets/climb/green_slope/background_light.webp',
     backgroundDark: 'assets/climb/green_slope/background_dark.webp',
+    hasSummitFlag: true,
     summit: ClimbSummit.grassyHilltopWithFlag,
     emblem: ClimbEmblem.pine,
   );

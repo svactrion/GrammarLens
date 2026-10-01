@@ -49,6 +49,10 @@ void main() {
           'assets/climb/green_slope/background_light.webp');
       expect(ClimbThemes.greenSlope.backgroundFor(Brightness.dark),
           'assets/climb/green_slope/background_dark.webp');
+      // S3: Green Slope's grassy summit has the flag; Ember Peak's crater
+      // does not.
+      expect(ClimbThemes.greenSlope.hasSummitFlag, isTrue);
+      expect(ClimbThemes.emberPeak.hasSummitFlag, isFalse);
       for (final theme in ClimbThemes.all.skip(1)) {
         expect(theme.backgroundLight, isNull);
         expect(theme.backgroundDark, isNull);

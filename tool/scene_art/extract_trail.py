@@ -112,6 +112,9 @@ def main() -> None:
         # The trail's horizontal width through each point (Stage 1, G3: an
         # upright avatar's footprint lies along x on any leg).
         "chord_px": [r(T.horizontal_chord(t.mask, p), 1) for p in t.points],
+        # The run's left and right edge (Stage 2: save points must not
+        # touch the trail).
+        "run_px": [[r(v, 1) for v in T.horizontal_run(t.mask, p)] for p in t.points],
         "arc_length_px": r(L, 2),
         "bends": bends,
         "clearings": clear,

@@ -16,8 +16,7 @@ const climbTrailSourcePath = 'docs/design/scene-art/batch0/trail_green.json';
 /// Fixed-point text: stable across runs and platforms.
 String _f(double v, int digits) => v.toStringAsFixed(digits);
 
-String generateClimbTrailTable(
-    {String source = climbTrailSourcePath}) {
+String generateClimbTrailTable({String source = climbTrailSourcePath}) {
   final json =
       jsonDecode(File(source).readAsStringSync()) as Map<String, dynamic>;
   final size = (json['image_size_px'] as List).cast<num>();
@@ -32,6 +31,10 @@ String generateClimbTrailTable(
   ];
   final chords = [
     for (final c in json['chord_px'] as List) (c as num).toDouble() / width
+  ];
+  final runs = [
+    for (final r in json['run_px'] as List)
+      [for (final v in r as List) (v as num).toDouble() / width]
   ];
   // Arc length in image-width units: x as is, y × height ÷ width.
   final aspect = width / height;
@@ -83,6 +86,18 @@ String generateClimbTrailTable(
     ..writeln('const climbTrailChords = <double>[');
   for (final c in chords) {
     out.writeln('  ${_f(c, 5)},');
+  }
+  out
+    ..writeln('];')
+    ..writeln()
+    ..writeln("/// The trail's horizontal run through each point of "
+        '[climbTrail]: its left and')
+    ..writeln("/// right edge, ÷ the image width (not centred on the centre "
+        'line on a bend).')
+    ..writeln('/// Save points must stay off it (Stage 2).')
+    ..writeln('const climbTrailRuns = <(double, double)>[');
+  for (final r in runs) {
+    out.writeln('  (${_f(r[0], 5)}, ${_f(r[1], 5)}),');
   }
   out
     ..writeln('];')
