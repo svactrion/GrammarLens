@@ -102,9 +102,16 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     _lit.addAll(_reached());
   }
 
-  /// The save points reached at the step the pawn is going to (G8).
+  /// The theme's objects: the save points, and the flag where the theme
+  /// has one (lit only on the month's last step).
+  static List<ClimbSavePoint> get _objects => [
+        ...ClimbSavePoints.all,
+        if (ClimbThemes.greenSlope.hasSummitFlag) ClimbSavePoints.flag,
+      ];
+
+  /// The objects reached at the step the pawn is going to (G8).
   Set<String> _reached() => {
-        for (final p in ClimbSavePoints.all)
+        for (final p in _objects)
           if (p.reachedAt(_route.arcAt(_to))) p.clearing
       };
 
@@ -254,22 +261,12 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                               for (var d = 0; d < _day; d++)
                                 _route.stepAt(d) * camera.scale
                             ], color: palette.ink))),
-                          // The save points and the summit flag, between
-                          // the dots and the avatar.
-                          for (final p in ClimbSavePoints.all)
+                          // The save points and the flag, between the dots
+                          // and the avatar.
+                          for (final p in _objects)
                             Positioned.fromRect(
                                 rect: _scaled(p.rect, camera.scale),
                                 child: _savePoint(p, _litFor(p), darkGain)),
-                          if (theme.hasSummitFlag)
-                            Positioned.fromRect(
-                                rect: _scaled(
-                                    ClimbSavePoints.summitFlag, camera.scale),
-                                child: ClimbObjectLayer(
-                                    key: const ValueKey('climb_summit_flag'),
-                                    asset:
-                                        ClimbSavePoints.assetFor('summit_flag'),
-                                    matrix: ClimbSavePoints.matrix(
-                                        lit: 1, darkGain: darkGain))),
                           Positioned(
                               left: pawn.dx - tile / 2,
                               // The feet on the step: the tile's top is

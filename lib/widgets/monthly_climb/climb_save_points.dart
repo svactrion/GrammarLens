@@ -79,13 +79,18 @@ abstract final class ClimbSavePoints {
         arc: arc);
   }
 
-  /// The summit flag's box, in image widths: beside the trail's end, in
-  /// themes whose summit suits it (`ClimbTheme.hasSummitFlag`).
-  static final Rect summitFlag = () {
-    final (x, y, w) = climbSummitFlag;
-    final h = w * climbObjectAspects['summit_flag']!;
-    final base = y / climbImageAspect;
-    return Rect.fromLTRB(x - w / 2, base - h, x + w / 2, base);
+  /// The flag (the summit_flag asset), in themes that have one
+  /// (`ClimbTheme.hasSummitFlag`): the month's goal, on its own clearing
+  /// (C5) by the save points' rule, but reached only on the month's last
+  /// step, the summit (its arc is the whole trail's).
+  static final ClimbSavePoint flag = () {
+    final (clearing, object, cx, cy, bw, bh, ratio) = climbFlag;
+    final p = _place(clearing, object, cx, cy, bw, bh, ratio);
+    return ClimbSavePoint(
+        clearing: p.clearing,
+        object: p.object,
+        rect: p.rect,
+        arc: ClimbRoute.length);
   }();
 
   // G8: an unreached save point is faded, lower opacity and a slight

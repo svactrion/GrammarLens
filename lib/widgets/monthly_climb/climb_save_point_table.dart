@@ -17,9 +17,10 @@ const climbSavePointTable = <(String, String, double, double, double, double, do
 
 const climbSavePointBaseDrop = 0.25;
 
-/// The summit flag: its base's x and y and its width, normalized like
-/// `climbTrail`.
-const climbSummitFlag = (0.57645, 0.16302, 0.05341);
+/// The flag (the summit_flag asset): the month's goal, on its own clearing,
+/// in the same fields as [climbSavePointTable]; it lights only on the
+/// month's last step.
+const climbFlag = ('C5', 'summit_flag', 0.63310, 0.28250, 0.08470, 0.02590, 0.55);
 
 /// Each object asset's height ÷ width (assets/climb/objects/).
 const climbObjectAspects = <String, double>{

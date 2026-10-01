@@ -1,0 +1,7 @@
+Stage 2's flag base: (0.5765, 0.1630), 95 px right of and 10 px above the trail's end (0.5327, 0.1665); in a clearing: none
+C1 (right): centre (0.8622, 0.7475), box 201 × 110 px; 1803 px from the flag's base
+C2 (left): centre (0.1936, 0.5438), box 173 × 97 px; 1381 px from the flag's base
+C3 (right): centre (0.7658, 0.4400), box 125 × 78 px; 901 px from the flag's base
+C4 (left): centre (0.3173, 0.3371), box 133 × 73 px; 756 px from the flag's base
+C5 (right): centre (0.6331, 0.2825), box 184 × 75 px; 367 px from the flag's base
+C6 (left): centre (0.4308, 0.2053), box 116 × 50 px; 339 px from the flag's base

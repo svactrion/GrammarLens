@@ -231,11 +231,53 @@ void main() {
     expect(find.byKey(const ValueKey('climb_campfire_flame')), findsNothing);
   });
 
-  testWidgets('the summit flag stands in Green Slope, unfaded', (tester) async {
-    await tester.pumpWidget(mountain(31, 3));
-    final flag = tester.widget<ClimbObjectLayer>(
-        find.byKey(const ValueKey('climb_summit_flag')));
-    expect(_matrix(flag)[18], 1);
+  // The flag on C5 is the month's goal: faded until the summit is reached
+  // on the month's last step, then lit like a save point.
+  for (var days = 28; days <= 31; days++) {
+    testWidgets('$days days: the flag is lit only on the last day',
+        (tester) async {
+      final flag = ClimbSavePoints.flag;
+      expect(flag.reachedOn(days), days);
+      for (final d in [1, days - 2, days - 1]) {
+        await tester.pumpWidget(mountain(days, d));
+        expect(opacity(tester, flag.clearing), ClimbSavePoints.unreachedOpacity,
+            reason: 'day $d');
+      }
+      await tester.pumpWidget(mountain(days, days));
+      await tester.pumpAndSettle();
+      expect(opacity(tester, flag.clearing), 1);
+    });
+  }
+
+  testWidgets(
+      'the flag fades in after the last hop; at once with Reduce '
+      'Motion', (tester) async {
+    final flag = ClimbSavePoints.flag;
+    await tester.pumpWidget(mountain(31, 30));
+    await tester.pumpWidget(mountain(31, 31));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(opacity(tester, flag.clearing), ClimbSavePoints.unreachedOpacity);
+    await tester.pumpAndSettle();
+    expect(opacity(tester, flag.clearing), 1);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(mountain(31, 30, reduce: true));
+    await tester.pumpWidget(mountain(31, 31, reduce: true));
+    await tester.pump();
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(opacity(tester, flag.clearing), 1);
+  });
+
+  testWidgets('dark mode: the flag takes the theme filter like the others',
+      (tester) async {
+    await tester.pumpWidget(mountain(31, 31, brightness: Brightness.dark));
+    await tester.pumpAndSettle();
+    final layer = tester.widget<ClimbObjectLayer>(find
+        .byKey(ValueKey('climb_save_point_${ClimbSavePoints.flag.clearing}')));
+    expect(
+        layer.matrix,
+        ClimbSavePoints.matrix(
+            lit: 1, darkGain: climbObjectDarkGain['green_slope']));
   });
 }
 

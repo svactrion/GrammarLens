@@ -20,9 +20,13 @@ combination was measured (stage2/placement.json, "alternatives"); this one
 keeps every object largest: the tent on C1 at 0.9, the cabin on C2 at
 1.0, the fountain on C3 at 1.0, the campfire on C4 at 0.9.
 
-The summit flag: FLAG_OFFSET from the trail's end (the summit day's
-step), on the grass right of the snow cap, clear of the avatar; placed by
-hand on renders. Its width is the smallest clearing's (C6, 116 px).
+The flag (the summit_flag asset, the month's goal): on clearing C5, by
+the same rule as the save points (largest ratio whose shape stays off the
+trail). Stage 2 first stood it beside the trail's end; on the device it
+did not fit there (its pole leant on the snow cap's edge and the rocks,
+its base on no flat ground; that spot is in no clearing,
+stage2/fix_flag_clearings.txt), so it moved to C5, a real flat clearing
+(owner, 2026-10-01).
 
 Writes docs/design/scene-art/stage2/placement.json (read by
 tool/climb_table/climb_save_point_generator.dart).
@@ -41,10 +45,11 @@ import trail as T
 ASSIGNMENT = {1: "tent", 2: "cabin", 3: "fountain", 4: "campfire"}
 LARGE, SMALL = ("cabin", "tent"), ("campfire", "fountain")
 BASE_DROP = 0.25
-RATIOS = (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7)
+# Down to 0.5: the flag on C5 is tall and its pennant reaches the bend
+# above; it first clears at 0.5 (0.6 touches by 1 px).
+RATIOS = (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5)
 ALPHA = 25
-FLAG_OFFSET = (95, -10)  # px at 2172 from the trail's end
-FLAG_WIDTH = 116  # px at 2172: C6's width
+FLAG_CLEARING = 5
 
 
 def fit(mask, clearing, name, size) -> dict:
@@ -80,16 +85,16 @@ def main() -> None:
         points.append({"clearing": f"C{i}", "object": name, "ratio": f["ratio"],
                        "base_drop": BASE_DROP, "center_norm": c["center_norm"],
                        "box_norm": c["box_norm"], "area_px": c["area_px"]})
-    end = np.array(trail["polyline"][-1]) * [W, H]
-    flag = {"object": "summit_flag",
-            "base_norm": [round(float((end[0] + FLAG_OFFSET[0]) / W), 5),
-                          round(float((end[1] + FLAG_OFFSET[1]) / H), 5)],
-            "width_norm": round(FLAG_WIDTH / W, 5)}
+    c = clearings[FLAG_CLEARING - 1]
+    f = fit(t.mask, c, "summit_flag", (W, H))
+    flag = {"clearing": f"C{FLAG_CLEARING}", "object": "summit_flag", "ratio": f["ratio"],
+            "base_drop": BASE_DROP, "center_norm": c["center_norm"],
+            "box_norm": c["box_norm"], "area_px": c["area_px"]}
     out = {"generator": "tool/scene_art/place_save_points.py", "image_size_px": [W, H],
-           "save_points": points, "summit_flag": flag, "alternatives": alternatives}
+           "save_points": points, "flag": flag, "alternatives": alternatives}
     path = T.REPO / "docs/design/scene-art/stage2/placement.json"
     path.write_text(json.dumps(out, indent=1) + "\n")
-    print(json.dumps({k: out[k] for k in ("save_points", "summit_flag")}, indent=1))
+    print(json.dumps({k: out[k] for k in ("save_points", "flag")}, indent=1))
     for alt in alternatives:
         print(alt["assignment"], alt["width_px"])
 

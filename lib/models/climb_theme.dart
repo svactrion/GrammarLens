@@ -49,9 +49,10 @@ class ClimbTheme {
   final String? backgroundLight;
   final String? backgroundDark;
 
-  /// Whether the summit flag (assets/climb/objects/summit_flag.webp) stands
-  /// on this theme's summit (scene art S3): only where the summit suits it;
-  /// not on a crater (volcanic).
+  /// Whether this theme draws the flag (assets/climb/objects/summit_flag.webp),
+  /// the month's goal: on clearing C5, lit only when the summit is reached
+  /// (scene art S3, G4). Only in themes it suits; not on a crater
+  /// (volcanic). The name is from when the flag stood on the summit.
   final bool hasSummitFlag;
 
   final ClimbSummit summit;

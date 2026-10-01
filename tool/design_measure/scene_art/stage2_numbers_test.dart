@@ -1,8 +1,9 @@
 // Scene Art Stage 2, measured on the real Home (the shell, HomeScreen,
 // ClimbCard, MonthlyMountain) on the last day of October 2026 (31 steps,
-// the window at the image's top): the summit flag against the month and
-// step chips and the plaque, and against the avatar standing on the
-// summit; plus the object assets' bytes.
+// the window at the image's top): the flag (on the summit until the
+// Stage 2 fix, on C5 since) against the month and step chips and the
+// plaque, and against the avatar standing on the summit; plus the object
+// assets' bytes.
 //
 //   DESIGN_MEASURE_OUT=docs/design/scene-art/stage2 \
 //     flutter test tool/design_measure/scene_art/stage2_numbers_test.dart
@@ -22,7 +23,7 @@ String _f(double v) => v.toStringAsFixed(1);
 
 void main() {
   final out = StringBuffer()
-    ..writeln('Scene Art Stage 2 — the summit flag on the real Home, '
+    ..writeln('Scene Art Stage 2 — the flag on the real Home, '
         'day 31 of 31 (window at the image top)')
     ..writeln();
   setUpAll(() async {
@@ -42,8 +43,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 2));
       final window = tester.getRect(find.byType(MonthlyMountain));
-      final flag =
-          tester.getRect(find.byKey(const ValueKey('climb_summit_flag')));
+      final flag = tester.getRect(find.byKey(
+          ValueKey('climb_save_point_${ClimbSavePoints.flag.clearing}')));
       final avatar = tester.getRect(find.descendant(
           of: find.byType(MonthlyMountain), matching: find.byType(AvatarTile)));
       Rect chip(Key key) => tester.getRect(find

@@ -48,20 +48,23 @@ String generateClimbSavePointTable() {
         '${_f(c[1])}, ${_f(b[0])}, ${_f(b[1])}, ${_f(p['ratio'] as num, 2)}),');
   }
   final drop = ((placement['save_points'] as List).first as Map)['base_drop'];
-  final flag = placement['summit_flag'] as Map;
-  final base = (flag['base_norm'] as List).cast<num>();
+  final flag = placement['flag'] as Map;
+  final fc = (flag['center_norm'] as List).cast<num>();
+  final fb = (flag['box_norm'] as List).cast<num>();
   final gain = (objects['dark_gain_green_slope'] as List).cast<num>();
   out
     ..writeln('];')
     ..writeln()
     ..writeln('const climbSavePointBaseDrop = ${_f(drop as num, 2)};')
     ..writeln()
-    ..writeln(
-        "/// The summit flag: its base's x and y and its width, normalized "
-        'like')
-    ..writeln('/// `climbTrail`.')
-    ..writeln('const climbSummitFlag = (${_f(base[0])}, ${_f(base[1])}, '
-        '${_f(flag['width_norm'] as num)});')
+    ..writeln("/// The flag (the summit_flag asset): the month's goal, on its "
+        'own clearing,')
+    ..writeln('/// in the same fields as [climbSavePointTable]; it lights only '
+        'on the')
+    ..writeln("/// month's last step.")
+    ..writeln("const climbFlag = ('${flag['clearing']}', '${flag['object']}', "
+        '${_f(fc[0])}, ${_f(fc[1])}, ${_f(fb[0])}, ${_f(fb[1])}, '
+        '${_f(flag['ratio'] as num, 2)});')
     ..writeln()
     ..writeln("/// Each object asset's height ÷ width (assets/climb/objects/).")
     ..writeln('const climbObjectAspects = <String, double>{');

@@ -7,7 +7,7 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 /// Scene art Stage 2: the scene's layers, bottom to top — the background,
-/// the passed-day dots, the save points and the summit flag, the avatar.
+/// the passed-day dots, the save points and the flag, the avatar.
 void main() {
   testWidgets('drawn in order: background, dots, save points, flag, avatar',
       (tester) async {
@@ -35,7 +35,8 @@ void main() {
       for (final p in ClimbSavePoints.all)
         indexOf((c) => c.key == ValueKey('climb_save_point_${p.clearing}'))
     ];
-    final flag = indexOf((c) => c.key == const ValueKey('climb_summit_flag'));
+    final flag = indexOf((c) =>
+        c.key == ValueKey('climb_save_point_${ClimbSavePoints.flag.clearing}'));
     final avatar = indexOf((c) => c is AvatarTile);
     expect([background, dots, ...points, flag, avatar].every((i) => i >= 0),
         isTrue,

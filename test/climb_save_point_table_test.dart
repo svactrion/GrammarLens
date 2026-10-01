@@ -10,7 +10,7 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_trail_table.dart';
 import '../tool/climb_table/climb_save_point_generator.dart';
 
 /// Scene art Stage 2: the save points on their clearings (G4, G9) and the
-/// summit flag, generated from the Stage 2 placement and never written by
+/// flag on C5, generated from the Stage 2 placement and never written by
 /// hand (the trail table's pattern, D3).
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -38,10 +38,21 @@ void main() {
     expect({byArea[2].$2, byArea[3].$2}, {'campfire', 'fountain'});
   });
 
-  test('each object stands inside its clearing and is no wider than it', () {
-    for (final (clearing, _, cx, cy, bw, bh, ratio) in climbSavePointTable) {
-      final p = ClimbSavePoints.all.firstWhere((p) => p.clearing == clearing);
-      expect(ratio, inInclusiveRange(.7, 1.0));
+  test('the flag stands on C5, the flat clearing right of the last bends', () {
+    expect(ClimbSavePoints.flag.clearing, 'C5');
+    expect(ClimbSavePoints.flag.object, 'summit_flag');
+  });
+
+  test(
+      'each object, and the flag, stands inside its clearing and is no '
+      'wider than it', () {
+    for (final (clearing, _, cx, cy, bw, bh, ratio) in [
+      ...climbSavePointTable,
+      climbFlag
+    ]) {
+      final p = [...ClimbSavePoints.all, ClimbSavePoints.flag]
+          .firstWhere((p) => p.clearing == clearing);
+      expect(ratio, inInclusiveRange(.5, 1.0));
       expect(p.rect.left, greaterThanOrEqualTo(cx - bw / 2 - 1e-9));
       expect(p.rect.right, lessThanOrEqualTo(cx + bw / 2 + 1e-9));
       // The base is on the clearing's ground, between its top and bottom.
@@ -93,13 +104,12 @@ void main() {
     return hits;
   }
 
-  test('no object, and not the summit flag, touches the trail', () async {
+  test('no object, and not the flag, touches the trail', () async {
     for (final p in ClimbSavePoints.all) {
       expect(await trailHits(p.asset, p.rect), 0, reason: p.object);
     }
     expect(
-        await trailHits(ClimbSavePoints.assetFor('summit_flag'),
-            ClimbSavePoints.summitFlag),
+        await trailHits(ClimbSavePoints.flag.asset, ClimbSavePoints.flag.rect),
         0);
   });
 }

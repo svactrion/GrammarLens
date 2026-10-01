@@ -130,7 +130,7 @@ DESIGN_MEASURE_OUT=build/design_measure/scene_art_stage2 DESIGN_MEASURE_SCREENS=
 
 Scene Art Stage 2 (`docs/design/scene-art/stage2/`).
 - `stage2_numbers_test.dart` measures, on the real Home on day 31 at 320,
-  375 and 430 pt, the summit flag's box against the month and step chips,
+  375 and 430 pt, the flag's box against the month and step chips,
   the plaque and the avatar on the summit, plus the object assets' bytes
   (`numbers.txt`).
 - `home_render_test.dart` takes its screens and days from
