@@ -6922,3 +6922,45 @@ Slope's illustration replaces the coded mountain. Numbers:
   mountain will differ.
 - **[Open — owner]** The device check, including K-a against K-b by
   changing `ClimbCamera.zoom`. Then merge approval.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 1 after the device check)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Device — owner]**
+  - The framing was compared at 1.3×, 1.0× and 1.1×; 1.1× is best.
+  - The backgrounds are sharp on the phone.
+  - The dusk (dark) version is very good, better than the light one.
+  - No passed-day dots were seen, on the month's first day after one
+    step.
+- **[Commits]**
+  - `5383c01`: `ClimbCamera.zoom` is 1.1. G2 records the comparison.
+    Measured in a 31-day month at 320 / 375 / 430 pt
+    (`docs/design/scene-art/stage1-device/numbers.txt`):
+    - a day's step: 25.1 / 29.8 / 34.2 pt;
+    - gap between dots: 15.7 / 19.4 / 22.8 pt;
+    - avatar, days 0–26: 27.2 / 32.2 / 36.9 pt;
+    - avatar at the summit: 16.3 / 19.3 / 22.1 pt;
+    - summit in view from day 8 / 13 / 15.
+
+    K1 holds.
+  - `6674980`: `--dart-define=CLIMB_DEBUG_DAY=<n>` shows step n in debug
+    builds only (`kDebugMode`). It is display only: progress, the Daily
+    Test, `dayKey` and the chips are untouched.
+  - `d92ea2c`: **fix**, the dots.
+    - *Root cause:* step 0 (the foot) was left out by Stage 1's design, so
+      n steps gave n − 1 dots, and one step gave none.
+    - *Ruled out (a):* the calendar day. On October 20 one step also gave
+      0 dots, not 19.
+    - *Ruled out (b):* too faint. Nothing was drawn at all.
+    - *Fix:* dots on steps 0 to n − 1, none under the avatar. The
+      reproduction test was red before the fix.
+    - *Measured anyway:* at the current 0.22 opacity a dot is 1.45:1
+      against the trail in light mode and 1.36:1 in dark
+      (`stage1-device/dot_contrast.txt`). Unchanged: the owner decides on
+      the device.
+  - *Correction:* the Stage 1 entry above says "on days 1 to n − 1"; since
+    `d92ea2c` it is steps 0 to n − 1.
+- **[Tests]** 1161 passed. `flutter analyze` is clean.
+- **[Open — owner]** The device check of the dots and their opacity, then
+  merge approval.
