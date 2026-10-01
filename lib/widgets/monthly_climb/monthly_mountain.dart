@@ -124,9 +124,10 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    // Every month shows Green Slope until the other themes have images
-    // (scene art, Stage 1): none of them is ready, so the rotation records
-    // Green Slope too (`ClimbThemeRotation.shownFor`).
+    // Every month shows Green Slope's image, light or dark with the app's
+    // mode, until the other themes have images (scene art, Stage 1): none
+    // of them is ready, so the rotation shows and records Green Slope for
+    // every month too (`ClimbThemeRotation.shownFor`).
     const theme = ClimbThemes.greenSlope;
     final palette = theme.paletteFor(brightness);
     return Semantics(

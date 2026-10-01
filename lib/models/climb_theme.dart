@@ -110,6 +110,7 @@ class ClimbThemes {
         ink: Color(0xFFE4E2D8),
         accent: appDarkPrimary),
     backgroundLight: 'assets/climb/green_slope/background_light.webp',
+    backgroundDark: 'assets/climb/green_slope/background_dark.webp',
     summit: ClimbSummit.grassyHilltopWithFlag,
     emblem: ClimbEmblem.pine,
   );
@@ -172,6 +173,11 @@ class ClimbThemeRotation {
   /// calendar's theme if it is ready, otherwise Green Slope. What is
   /// recorded must be what the user sees, so a theme that is not ready
   /// never appears in the data.
+  ///
+  /// Scene art Stage 1: only Green Slope has images, so only it is ready,
+  /// and every month, whatever the calendar says, is shown and recorded
+  /// (`climb_month_themes`) as Green Slope. A theme becomes ready with its
+  /// light and dark images (Stage 2).
   static ClimbTheme shownFor(int year, int month) {
     final scheduled = scheduledFor(year, month);
     return scheduled.ready ? scheduled : ClimbThemes.greenSlope;

@@ -47,6 +47,8 @@ void main() {
       // Scene art S1: Green Slope is the one theme with an illustration.
       expect(ClimbThemes.greenSlope.backgroundFor(Brightness.light),
           'assets/climb/green_slope/background_light.webp');
+      expect(ClimbThemes.greenSlope.backgroundFor(Brightness.dark),
+          'assets/climb/green_slope/background_dark.webp');
       for (final theme in ClimbThemes.all.skip(1)) {
         expect(theme.backgroundLight, isNull);
         expect(theme.backgroundDark, isNull);

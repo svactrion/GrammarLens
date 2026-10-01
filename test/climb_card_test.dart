@@ -46,6 +46,9 @@ void main() {
             .ancestor(of: find.byKey(key), matching: find.byType(DecoratedBox))
             .first);
         final chipColor = (chip.decoration as BoxDecoration).color!;
+        // Opaque, so the contrast below holds over any part of the
+        // illustrated scene (scene art S1), light or dusk.
+        expect(chipColor.a, 1.0, reason: '$key in ${b.name}');
         expect(
             _contrast(text.style!.color!, chipColor), greaterThanOrEqualTo(4.5),
             reason: '$key in ${b.name}');
