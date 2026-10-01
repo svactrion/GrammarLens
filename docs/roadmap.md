@@ -70,7 +70,9 @@ D1–D6 in the side-tracks file.)*
         shrink at the summit, faint dots on passed days (one setting turns
         them off). Every month shows the Green Slope image until other
         themes have images (G1–G7)
-  - [ ] Scene Art Stage 2 — save point objects on C1–C4, placed by
+  - [ ] Scene Art Stage 2 — **built 2026-10-01, not yet checked on a device,
+        not merged** (`docs/build-log.md`, "Scene Art Stage 2 built";
+        `docs/design/scene-art/stage2/`). Save point objects on C1–C4, placed by
         clearing size (G9: cabin and tent on the largest, campfire and
         fountain on the smaller), faded until reached and lit with a short
         fade, the flame burning only once reached (G8); the dark-mode object

@@ -6986,3 +6986,83 @@ Docs only, on branch `1.1.0-design` (at `1.1.0`, `537a68e`).
 - **[Roadmap]** Scene Art Batch 0 is marked done. Stage 2 is described;
   the volcanic theme stays open (its resolution is too low and it has no
   dark version).
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 2 built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Numbers,
+placement and object data: `docs/design/scene-art/stage2/` (start with
+`overview.jpg`).
+
+- **[Commits]**
+  - `bf49ba4`: G8, G9, D2 retired.
+  - `aa68983`: object assets.
+  - `e003fb4`: placement and the summit flag.
+  - `e931a76`: G8 states.
+  - `ee71470`: G6 dark filter.
+  - `c8418be`: measurements and renders.
+  - Plus this docs commit.
+- **[Engineering] Assets.** `tool/scene_art/export_objects.py` made
+  `assets/climb/objects/`: five objects, 192 px wide, WebP q90 with
+  lossless alpha, 6.7–8.4 KB each, plus `campfire_flame.webp`, 44.1 KB in
+  all.
+  - Zeroed: the 12 invisible alpha = 1 corner pixels, and 29 faint pixels
+    the resize left cut off from the flag.
+  - A test checks that every object is one alpha region.
+- **[Product] Placement (G9).**
+  - Tent C1, cabin C2, fountain C3, campfire C4. The large objects are on
+    the two largest clearings.
+  - *Open choices, measured (`placement.json`, "alternatives"):* this
+    combination keeps each object largest. C3/C4 is a true tie (125 against
+    120 px for either small object); the fountain takes C3.
+  - *Batch 0's width ratio 1.0 covered the trail* (the cabin on C1 by 344
+    px, the fountain on C4 by 44). Each object takes the largest ratio
+    whose shape stays off the trail: tent 0.9, cabin 1.0, fountain 1.0,
+    campfire 0.9.
+  - The table is generated and tested like the trail's. A test checks the
+    objects' and the flag's alpha rows against the trail's runs (new
+    `run_px`).
+- **[Product] Summit flag.** `ClimbTheme.hasSummitFlag`: Green Slope true,
+  the default false. It stands 95 px right of the trail's end (at 2172), on
+  the grass. On the renders the avatar's arm and the flag's stones stand
+  side by side; their boxes overlap by 2.7–3.7 pt of transparent margin.
+- **[Product] States (G8).**
+  - *Unreached:* opacity 0.5 and saturation 0.6, one colour matrix, the
+    flame included.
+  - *Reached:* the avatar's arc is at or past the nearest trail point's.
+    Days in 28 / 29 / 30 / 31-day months:
+    - tent: 7 / 7 / 7 / 7;
+    - cabin: 14 / 14 / 15 / 15;
+    - fountain: 19 / 20 / 20 / 21;
+    - campfire: 23 / 24 / 25 / 26.
+  - *Lighting:* a 400 ms fade when the hop ends; at once with Reduce
+    Motion.
+  - The first docs commit said "days 6–25"; corrected to 7–26.
+- **[Product] Dark mode (G6).**
+  - Gain R 0.4824, G 0.5182, B 0.6714, from the clearings of the app's
+    backgrounds.
+  - *Flame threshold* (campfire only): hue 15–60°, saturation ≥ 0.55,
+    value ≥ 0.90. It also catches the tent's trim, the cabin's knob and
+    the flag's pennant, so it is not applied to them.
+  - *Reached:* the flame layer is drawn unfiltered over the relit fire.
+    *Unreached:* filtered and faded.
+- **[Measured]** At 320 pt on day 31 the flag's top is 46.9 pt into the
+  window, against a chip band ending at 48.0. The flag stands between the
+  chips, 49–69 pt clear across, so there is no overlap. No fix is applied.
+  *If more air is wanted:* move the flag 10 px lower (at 2172), about
+  1.5 pt on screen.
+- **[Size]** +44.1 KB of object assets. The generated tables add the
+  trail's runs (739 pairs) and a 4-entry save point table.
+- **[Tests]** 1191 passed (1161 before this stage). `flutter analyze` is
+  clean.
+  - *Deliberate breaks on backup copies:* a stray corner pixel in the
+    flag; the tent at ratio 1.0 (table and trail tests); the flame layer
+    removed (the dark test).
+- **[Visual — pre-release check]** The save points, the flag and their
+  states change Home's mountain card. App Store screenshots and case-study
+  images will differ.
+- **[Open — owner]**
+  - The device check: the states and the fade, the dark flame, the sizes
+    at 320 pt.
+  - C6's small object (G4).
+  - The volcanic theme: its resolution is too low and it has no dark
+    version.
