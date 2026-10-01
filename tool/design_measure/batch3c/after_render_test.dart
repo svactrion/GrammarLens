@@ -25,10 +25,10 @@ Widget _card(double w, int day) => SizedBox(
         steps: day,
         days: 31,
         mountain: MonthlyMountain(
-            days: 31,
-            completedDays: day,
-            avatar: _snail,
-            allowUserScroll: false),
+          days: 31,
+          completedDays: day,
+          avatar: _snail,
+        ),
         scoreBar: ClimbScoreBar(
           score: day * 7,
           maxScore: MonthlyMedalRules.maxScore(2026, 10),

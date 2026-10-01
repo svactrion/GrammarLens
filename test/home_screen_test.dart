@@ -310,23 +310,20 @@ void main() {
       await tester.pumpAndSettle();
       final outer =
           tester.state<ScrollableState>(find.byType(Scrollable).first).position;
-      final inner = tester
-          .state<ScrollableState>(
-              find.descendant(of: mountain, matching: find.byType(Scrollable)))
-          .position;
+      // The scene has no scrollable of its own (the camera follows the
+      // pawn), so a vertical drag on it always reaches the page.
+      expect(find.descendant(of: mountain, matching: find.byType(Scrollable)),
+          findsNothing);
       final pageBefore = outer.pixels;
-      final trailBefore = inner.pixels;
       await tester.dragFrom(tester.getCenter(mountain), const Offset(0, -140));
       await tester.pumpAndSettle();
       expect(outer.pixels, greaterThan(pageBefore));
-      expect(inner.pixels, trailBefore);
       expect(find.text('Topic Practice').hitTestable(), findsOneWidget);
       expect(find.textContaining('Answer at least'), findsNothing);
       expect(find.textContaining('Your climb starts'), findsNothing);
       await tester.ensureVisible(find.text('8 / 31'));
       await tester.pumpAndSettle();
-      expect(tester.getSemantics(find.text('8 / 31')).label,
-          '8 of 31 steps.');
+      expect(tester.getSemantics(find.text('8 / 31')).label, '8 of 31 steps.');
       // Inside the card's frame, at the top of the mountain window
       // (design decision K3), not in a header row above it.
       final counterTop = tester.getTopLeft(find.text('8 / 31')).dy;

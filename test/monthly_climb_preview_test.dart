@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/avatar.dart';
@@ -9,49 +7,39 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 void main() {
-  test(
-      'Every month shares one frozen path, evenly spaced, ending on the summit',
+  test('Every month walks the image\'s trail, evenly spaced, foot to summit',
       () {
-    final length = ClimbRoute.sharedPath.computeMetrics().single.length;
     for (final days in [28, 29, 30, 31]) {
       final route = ClimbRoute(days);
-      expect(route.path, same(ClimbRoute.sharedPath));
-      expect(route.pointAt(0).dx, closeTo(ClimbRoute.corners.first.dx, .01));
-      expect(route.pointAt(0).dy, closeTo(ClimbRoute.corners.first.dy, .01));
+      expect((route.pointAt(0) - ClimbRoute.foot).distance, lessThan(1e-4));
+      expect((route.pointAt(days.toDouble()) - ClimbRoute.summit).distance,
+          lessThan(1e-4));
       for (var day = 1; day <= days; day++) {
-        // Straight-line distance never exceeds the even share along the path,
-        // and on straight legs equals it.
+        // Straight-line distance never exceeds the even share along the
+        // trail.
         final chord =
             (route.pointAt(day.toDouble()) - route.pointAt(day - 1.0)).distance;
-        expect(chord, lessThanOrEqualTo(length / days + .05));
+        expect(chord, lessThanOrEqualTo(ClimbRoute.length / days + 1e-4));
       }
-      // A low, long start (K1): the first leg rises at about 12°.
-      final first = route.pointAt(1) - route.pointAt(0);
-      expect(
-          math.atan2(-first.dy, first.dx) * 180 / math.pi, closeTo(12.4, .5));
     }
   });
 
-  test('Every month keeps continuous motion and landmarks within scene', () {
+  test('Every month keeps continuous motion inside the image', () {
     for (final days in [28, 29, 30, 31]) {
       final route = ClimbRoute(days);
       var previous = route.pointAt(0);
       for (var tick = 1; tick <= days * 100; tick++) {
         final point = route.pointAt(tick / 100);
-        expect(point.dy, lessThanOrEqualTo(previous.dy + .01));
-        expect((point - previous).distance, lessThan(3));
-        expect(point.dx, inInclusiveRange(0, 320));
-        expect(point.dy, inInclusiveRange(55, 740));
+        // Never jumps: well under a hundredth of a day's share per tick.
+        expect((point - previous).distance,
+            lessThan(ClimbRoute.length / days / 50));
+        expect(point.dx, inInclusiveRange(0, ClimbRoute.sceneSize.width));
+        expect(point.dy, inInclusiveRange(0, ClimbRoute.sceneSize.height));
         previous = point;
       }
-      for (final marker in route.markers) {
-        expect(marker.origin.dx - 30, greaterThanOrEqualTo(0));
-        expect(marker.origin.dx + 30, lessThanOrEqualTo(320));
-      }
-      expect(route.pointAt(days.toDouble()).dx,
-          closeTo(ClimbRoute.summit.dx, .01));
+      // The whole climb goes up: the summit is far above the foot.
       expect(route.pointAt(days.toDouble()).dy,
-          closeTo(ClimbRoute.summit.dy, .01));
+          lessThan(route.pointAt(0).dy - .5));
     }
   });
 

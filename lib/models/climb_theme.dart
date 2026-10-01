@@ -17,12 +17,6 @@ class ClimbPalette {
       required this.accent});
 }
 
-/// The scene's layers, bottom to top, that a theme may replace with an
-/// image (docs/1.1.0-design-side-tracks.md, "Production of the artwork").
-/// The trail, its steps, the stop markers and the avatar are always drawn
-/// in code and shared by every theme, so they are not slots.
-enum ClimbLayerSlot { sky, farBackground, mountainBody, environment, summit }
-
 /// A theme's summit, sitting on the trail's end.
 enum ClimbSummit { grassyHilltopWithFlag, smokingCrater, iceCrown, mesa }
 
@@ -47,9 +41,13 @@ class ClimbTheme {
   final ClimbPalette? lightPalette;
   final ClimbPalette? darkPalette;
 
-  /// A WebP file per slot; a slot without one is drawn in code from the
-  /// palette (and so is a slot whose file is missing or broken).
-  final Map<ClimbLayerSlot, String> layerImages;
+  /// The scene's illustration, one asset per mode (scene art S1, S4): the
+  /// mountain, its trail and the START flag are all in the image, at the
+  /// trail coordinates every theme shares (`ClimbRoute`). Null until the
+  /// theme's images exist. A theme without a dark image shows the light
+  /// one in dark mode.
+  final String? backgroundLight;
+  final String? backgroundDark;
 
   final ClimbSummit summit;
   final ClimbEmblem emblem;
@@ -61,15 +59,25 @@ class ClimbTheme {
     required this.ready,
     this.lightPalette,
     this.darkPalette,
-    this.layerImages = const {},
+    this.backgroundLight,
+    this.backgroundDark,
     required this.summit,
     required this.emblem,
-  }) : assert(!ready || (lightPalette != null && darkPalette != null),
-            'a ready theme has both palettes');
+  }) : assert(
+            !ready ||
+                (lightPalette != null &&
+                    darkPalette != null &&
+                    backgroundLight != null),
+            'a ready theme has both palettes and a background');
 
   /// The palette for [brightness]. Only for a ready theme.
   ClimbPalette paletteFor(Brightness brightness) =>
       (brightness == Brightness.dark ? darkPalette : lightPalette)!;
+
+  /// The background asset for [brightness]. Only for a ready theme.
+  String backgroundFor(Brightness brightness) =>
+      (brightness == Brightness.dark ? backgroundDark : null) ??
+      backgroundLight!;
 }
 
 /// Every monthly theme, in rotation order.
@@ -101,6 +109,7 @@ class ClimbThemes {
         stone: Color(0xFFC8C8B9),
         ink: Color(0xFFE4E2D8),
         accent: appDarkPrimary),
+    backgroundLight: 'assets/climb/green_slope/background_light.webp',
     summit: ClimbSummit.grassyHilltopWithFlag,
     emblem: ClimbEmblem.pine,
   );

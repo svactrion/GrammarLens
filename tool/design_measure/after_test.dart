@@ -33,10 +33,10 @@ Widget _window(double width, int days, int day, Brightness b, String caption) =>
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: MonthlyMountain(
-                days: days,
-                completedDays: day,
-                avatar: Avatar.values.first,
-                allowUserScroll: false),
+              days: days,
+              completedDays: day,
+              avatar: Avatar.values.first,
+            ),
           ),
         ),
       ],

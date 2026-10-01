@@ -61,7 +61,7 @@ class _MonthlyClimbPreviewState extends State<MonthlyClimbPreview> {
                   child: MonthlyMountain(
                       days: _days, completedDays: _progress, avatar: _avatar)),
               const SizedBox(height: Spacing.sm),
-              const Text('Scroll to explore your milestones',
+              const Text('The camera follows the avatar up the trail',
                   textAlign: TextAlign.center),
               const SizedBox(height: Spacing.lg),
               Semantics(

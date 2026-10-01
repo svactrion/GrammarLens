@@ -760,7 +760,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               days: days,
               completedDays: _climbSteps!,
               avatar: widget.avatar ?? Avatar.values.first,
-              allowUserScroll: false,
               onMotionEnd: _onMountainMotionEnd,
             ),
             // Under the window, not over the scene (design decision D9).

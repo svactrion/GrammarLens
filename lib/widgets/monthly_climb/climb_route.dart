@@ -1,65 +1,47 @@
-import 'dart:math' as math;
 import 'dart:ui';
 
-import 'climb_table.dart';
+import 'climb_trail_table.dart';
 
-/// Logical scene coordinates. Painting and movement use the same Path.
+/// The trail, as painted into the scene's illustration (1.1.0 design,
+/// scene art S2): the center line Scene Art Batch 0 extracted from Green
+/// Slope's image, the same in every theme's image (S4).
 ///
-/// **The curve is frozen** (1.1.0 design decision K1,
-/// `docs/1.1.0-design-side-tracks.md`, replacing Batch 3b's 45° curve):
-/// candidate 1 of the Batch 3c-A study, five legs from a long 12° start to a
-/// 73° final climb. Straight legs through [corners], joined by circular arcs
-/// of the [fillets] radii. The same path serves every month length; day d of
-/// an N-day month sits at d / N of its length, so steps are evenly spaced
-/// and the last day is the summit.
+/// **Units: image widths.** x is a share of the image's width, and so is y
+/// (y ÷ the image's height × its height ÷ width), so one unit is the same
+/// length across and down; the image is 1 wide and 1 ÷ [climbImageAspect]
+/// tall ([sceneSize]). Placing it on screen is the camera's job (D3).
 ///
-/// Acceptance (K1): at 320 pt in a 31-day month a day's step is at least
-/// 17 pt and neighbouring step markers are at least 5 pt apart
-/// (`test/climb_acceptance_test.dart`).
-///
-/// Whole days are read from the generated [climbStepTable] (decision D3);
-/// changing [corners] or [fillets] makes `test/climb_table_test.dart`
-/// fail until the table is regenerated (`scripts/generate_climb_table.sh`).
+/// Day d of an N-day month stands at d / N of the trail's length, so steps
+/// are evenly spaced and the last day is the summit. Whole days are read
+/// from the generated [climbStepTable]; a change to the extracted trail
+/// makes `test/climb_trail_table_test.dart` fail until the table is
+/// regenerated (`scripts/generate_climb_trail.sh`).
 class ClimbRoute {
-  static const sceneSize = Size(320, 740);
+  static const sceneSize = Size(1, 1 / climbImageAspect);
 
-  /// The foot, the four turns, and the summit (the trail's end, where the
-  /// summit layer stands: Batch 0 decision 5).
-  static const corners = [
-    Offset(22, 716),
-    Offset(276, 660),
-    Offset(70, 540),
-    Offset(236, 400),
-    Offset(110, 250),
-    Offset(160, 86),
+  /// The center line, foot to summit, in image widths.
+  static final List<Offset> trail = [
+    for (final (x, y) in climbTrail) Offset(x, y / climbImageAspect)
   ];
 
-  /// One radius per turn. A turn whose legs are too short for its radius
-  /// gets a smaller one (the first turn: 42 units).
-  static const fillets = [80.0, 70.0, 58.0, 46.0];
+  static final List<double> _cumulative = () {
+    final out = <double>[0];
+    for (var i = 1; i < trail.length; i++) {
+      out.add(out.last + (trail[i] - trail[i - 1]).distance);
+    }
+    return out;
+  }();
 
-  /// The days that carry a stop marker: campfire, tent, mountain cabin,
-  /// lookout terrace.
-  static const markerDays = [7, 14, 21, 28];
-  static const markerNames = [
-    'campfire',
-    'tent',
-    'mountain cabin',
-    'lookout terrace'
-  ];
+  /// The trail's length, in image widths.
+  static double get length => _cumulative.last;
 
-  /// Design decision D2: a marker within the month's last 2 steps is not
-  /// drawn; the summit takes its place. By step, never by screen size.
-  static bool markerShown(int markerDay, int days) => days - markerDay > 2;
+  /// The foot, beside the START flag: day 0.
+  static Offset get foot => trail.first;
 
-  /// The shared path, built once.
-  static final Path sharedPath = _filletPolyline(corners, fillets);
-  static final PathMetric _metric = sharedPath.computeMetrics().single;
-
-  static Offset get summit => corners.last;
+  /// The trail's end under the snow cap: the last day (Batch 0 decision 5).
+  static Offset get summit => trail.last;
 
   final int days;
-  Path get path => sharedPath;
 
   ClimbRoute(this.days) {
     if (days < 28 || days > 31) {
@@ -67,81 +49,50 @@ class ClimbRoute {
     }
   }
 
-  /// Where day [day] stands, from the step table, in scene units.
+  /// Where day [day] stands, from the step table, in image widths.
   Offset stepAt(int day) {
     final (x, y) = climbStepTable[days]![day.clamp(0, days)];
-    return Offset(x * sceneSize.width, y * sceneSize.height);
+    return Offset(x, y / climbImageAspect);
   }
 
-  /// The stop markers shown in this month (D2 applied), each with its
-  /// drawing origin in scene units, from the generated [climbMarkerTable].
-  List<({int day, Offset origin})> get markers => [
-        for (final (day, x, y) in climbMarkerTable[days]!)
-          (day: day, origin: Offset(x * sceneSize.width, y * sceneSize.height)),
-      ];
-
-  /// A step marker: a pill, [stepMarkerSize] along the trail by across it,
-  /// turned with the trail's direction at its step (Batch 3c d), so markers
-  /// on the flat first leg do not touch.
-  static const stepMarkerSize = Size(18, 11);
-
-  /// The trail's direction at day [day], in radians (0 = to the right).
-  double stepAngle(int day) {
-    final t = _metric
-        .getTangentForOffset(_metric.length * day.clamp(0, days) / days)!;
-    return math.atan2(t.vector.dy, t.vector.dx);
-  }
-
-  /// Points around day [day]'s step marker, as drawn: for measuring the gap
-  /// between neighbouring markers.
-  List<Offset> stepMarkerOutline(int day) {
-    final c = stepAt(day), a = stepAngle(day);
-    final u = Offset(math.cos(a), math.sin(a)), n = Offset(-u.dy, u.dx);
-    const w = stepMarkerSize;
-    return [
-      for (var i = 0; i <= 12; i++) ...[
-        for (final side in [-1.0, 1.0])
-          c + u * ((-1 + 2 * i / 12) * w.width / 2) + n * (side * w.height / 2),
-        for (final end in [-1.0, 1.0])
-          c + u * (end * w.width / 2) + n * ((-1 + 2 * i / 12) * w.height / 2),
-      ]
-    ];
-  }
+  /// How far along the trail [day] is, in image widths; between two days
+  /// for the pawn's motion.
+  double arcAt(double day) => length * day.clamp(0.0, days.toDouble()) / days;
 
   /// Any point along the trail, including between two days (the pawn's
   /// motion). At whole days it equals [stepAt] to within the table's
   /// rounding.
-  Offset pointAt(double day) {
-    final bounded = day.clamp(0.0, days.toDouble());
-    return _metric
-        .getTangentForOffset(_metric.length * bounded / days)!
-        .position;
+  Offset pointAt(double day) => at(arcAt(day));
+
+  /// The point [s] image widths along the trail.
+  static Offset at(double s) {
+    final i = _segment(s);
+    final a = _cumulative[i - 1], b = _cumulative[i];
+    final t = b == a ? 0.0 : ((s - a) / (b - a)).clamp(0.0, 1.0);
+    return Offset.lerp(trail[i - 1], trail[i], t)!;
   }
 
-  /// Straight legs joined by circular arcs of [radii] at the inner corners.
-  /// If a leg is too short for the arc, the arc's tangent length is capped at
-  /// 45 % of the shorter leg and the radius shrinks to fit.
-  static Path _filletPolyline(List<Offset> points, List<double> radii) {
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    Offset unit(Offset o) => o / o.distance;
-    for (var i = 1; i < points.length - 1; i++) {
-      final a = points[i - 1], c = points[i], b = points[i + 1];
-      final u = unit(c - a), v = unit(b - c);
-      final turn =
-          math.acos((u.dx * v.dx + u.dy * v.dy).clamp(-1.0, 1.0).toDouble());
-      var r = radii[i - 1];
-      var t = r * math.tan(turn / 2);
-      final cap = .45 * math.min((c - a).distance, (b - c).distance);
-      if (t > cap) {
-        t = cap;
-        r = t / math.tan(turn / 2);
+  /// The trail's horizontal width at [s] image widths along it, in image
+  /// widths: the room an upright avatar's footprint has there (G3).
+  static double chordAt(double s) {
+    final i = _segment(s);
+    final a = _cumulative[i - 1], b = _cumulative[i];
+    final t = b == a ? 0.0 : ((s - a) / (b - a)).clamp(0.0, 1.0);
+    return climbTrailChords[i - 1] +
+        (climbTrailChords[i] - climbTrailChords[i - 1]) * t;
+  }
+
+  /// The index of the polyline point ending the segment that holds [s].
+  static int _segment(double s) {
+    var lo = 1, hi = _cumulative.length - 1;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (_cumulative[mid] < s) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
       }
-      final entry = c - u * t, exit = c + v * t;
-      path.lineTo(entry.dx, entry.dy);
-      final cross = u.dx * v.dy - u.dy * v.dx;
-      path.arcToPoint(exit, radius: Radius.circular(r), clockwise: cross > 0);
     }
-    path.lineTo(points.last.dx, points.last.dy);
-    return path;
+    return lo;
   }
 }

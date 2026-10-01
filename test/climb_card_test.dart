@@ -27,8 +27,7 @@ Widget _card(Brightness brightness, {int steps = 3, Avatar? avatar}) =>
             mountain: MonthlyMountain(
                 days: 31,
                 completedDays: steps,
-                avatar: avatar ?? Avatar.values.first,
-                allowUserScroll: false),
+                avatar: avatar ?? Avatar.values.first),
             scoreBar: const SizedBox(height: 40),
           ),
         ),
@@ -81,8 +80,8 @@ void main() {
       (tester) async {
     // The legs alternate direction: day 3 walks right, day 10 left.
     final route = ClimbRoute(31);
-    expect(math.cos(route.stepAngle(3)), greaterThan(0));
-    expect(math.cos(route.stepAngle(10)), lessThan(0));
+    expect(route.stepAt(4).dx - route.stepAt(3).dx, greaterThan(0));
+    expect(route.stepAt(11).dx - route.stepAt(10).dx, lessThan(0));
     for (final avatar in Avatar.values) {
       for (final day in [0, 3, 10, 17, 24, 31]) {
         await tester

@@ -134,23 +134,27 @@ void main() {
   });
 
   group('hop (design decision D8)', () {
-    const camera = ClimbCamera();
     final route = ClimbRoute(31);
+    const tile = MonthlyMountain.avatarTile;
+    const hop = MonthlyMountain.hopShare * tile;
 
-    /// The avatar's `top` inside the scrolled scene, and the `top` it has
-    /// standing on the trail at [day] with no hop.
+    /// The avatar's `top` in the image (the layer the camera moves), and
+    /// the `top` it has standing on the trail at [day] with no hop.
     double avatarTop(WidgetTester tester) => tester
-        .widget<Positioned>(find.ancestor(
-            of: find.byType(AvatarTile), matching: find.byType(Positioned)))
+        .widget<Positioned>(find
+            .ancestor(
+                of: find.byType(AvatarTile), matching: find.byType(Positioned))
+            .first)
         .top!;
     double standingTop(double day, double width) =>
-        camera.toScreen(route.pointAt(day), width).dy - 55 * camera.scale;
+        route.pointAt(day).dy * ClimbCamera(width).scale - tile * 55 / 58;
+
     double width(WidgetTester tester) =>
         tester.getSize(find.byType(MonthlyMountain)).width;
 
     testWidgets(
-        'the pawn is 14 units up halfway through a step, on the '
-        'trail at both ends', (tester) async {
+        'the pawn is a hop up halfway through a step, on the trail at '
+        'both ends', (tester) async {
       await pumpMountain(tester);
       final w = width(tester);
       expect(avatarTop(tester), closeTo(standingTop(3, w), .01));
@@ -159,8 +163,7 @@ void main() {
       await tester.pump();
       // easeInOut is symmetric: at half the time, half the step.
       await tester.pump(const Duration(milliseconds: 425));
-      expect(avatarTop(tester),
-          closeTo(standingTop(3.5, w) - 14 * camera.scale, .05));
+      expect(avatarTop(tester), closeTo(standingTop(3.5, w) - hop, .05));
 
       await tester.pump(const Duration(milliseconds: 500));
       expect(avatarTop(tester), closeTo(standingTop(4, w), .01));

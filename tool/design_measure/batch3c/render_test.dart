@@ -45,10 +45,10 @@ Widget currentCard(double cardW, int day, BuildContext? _) =>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   MonthlyMountain(
-                      days: 31,
-                      completedDays: day,
-                      avatar: snail,
-                      allowUserScroll: false),
+                    days: 31,
+                    completedDays: day,
+                    avatar: snail,
+                  ),
                   ClimbScoreBar(
                     score: day * 7,
                     maxScore: MonthlyMedalRules.maxScore(2026, 10),

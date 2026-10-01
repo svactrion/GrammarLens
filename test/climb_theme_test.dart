@@ -44,8 +44,13 @@ void main() {
         expect(theme.lightPalette, isNull);
         expect(theme.darkPalette, isNull);
       }
-      // Drawn entirely in code, as in 1.0.
-      expect(ClimbThemes.greenSlope.layerImages, isEmpty);
+      // Scene art S1: Green Slope is the one theme with an illustration.
+      expect(ClimbThemes.greenSlope.backgroundFor(Brightness.light),
+          'assets/climb/green_slope/background_light.webp');
+      for (final theme in ClimbThemes.all.skip(1)) {
+        expect(theme.backgroundLight, isNull);
+        expect(theme.backgroundDark, isNull);
+      }
     });
 
     test('an unknown id falls back to Green Slope', () {
