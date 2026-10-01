@@ -6964,3 +6964,5 @@ On branch `1.1.0-design`; not merged, not pushed.
 - **[Tests]** 1161 passed. `flutter analyze` is clean.
 - **[Open — owner]** The device check of the dots and their opacity, then
   merge approval.
+
+- **2026-10-01 — Scene Art Stage 1 verified on the owner's device (1.1× framing; days 2, 15, 27 and 31 through `CLIMB_DEBUG_DAY`; dots at 0.40) and merged into `1.1.0`** by fast-forward to `0740e83` (no merge commit; Scene Art Batch 0 comes with it); 1161 tests green on `1.1.0`.

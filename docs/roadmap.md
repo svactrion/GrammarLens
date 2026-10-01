@@ -57,9 +57,12 @@ D1–D6 in the side-tracks file.)*
         trail extraction, clearings, theme consistency check, framing,
         objects, WebP size, replacement plan
         (`docs/design/scene-art/batch0/report.md`)
-  - [ ] Scene Art Stage 1 — **built 2026-10-01, not yet checked on a device,
-        not merged** (`docs/build-log.md`, "Scene Art Stage 1 built";
-        `docs/design/scene-art/stage1/`). Green Slope's illustration replaces the coded
+  - [x] Scene Art Stage 1 — **done, verified on device, merged into
+        `1.1.0`** (2026-10-01, fast-forward to `0740e83`; 1161 tests green
+        on `1.1.0`). After the device check: framing 1.1×, passed-day dots
+        at 0.40 opacity, a dot on every step left behind
+        (`docs/build-log.md`, "Scene Art Stage 1 built" and "after the
+        device check"; `docs/design/scene-art/stage1/`, `stage1-device/`). Green Slope's illustration replaces the coded
         mountain: WebP backgrounds (light and dark), the trail from the
         extracted polyline (generated table and test), framing K-b 1.3×
         with two-axis follow, the avatar sized to the trail with a gradual
