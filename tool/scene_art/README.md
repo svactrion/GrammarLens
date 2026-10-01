@@ -69,6 +69,25 @@ Stage 1's real-Home renders as JPEGs and an overview
 `tool/design_measure/scene_art/home_render_test.dart` writes
 (`tool/design_measure/README.md`).
 
+## Checking a day on a device
+
+In a debug build the climb scene can show any step of the month instead
+of the real progress (`ClimbDebugDay`, `lib/widgets/monthly_climb/`):
+
+```bash
+flutter run --dart-define=CLIMB_DEBUG_DAY=15
+```
+
+- **What it changes:** the avatar's place, the passed-day dots and the
+  shrink at the summit. A value past the month's length stops at the
+  summit.
+- **What it leaves alone:** the real progress, the Daily Test, `dayKey`
+  and the card's month and step chips.
+- **Profile and release builds ignore it:** it is guarded by
+  `kDebugMode`.
+- **Hot restart keeps the define; changing the day needs a new
+  `flutter run`.**
+
 ## How the trail is found (`trail.py`)
 
 1. **Mask.** Lab colour distance under 14 from the trail's own colour,

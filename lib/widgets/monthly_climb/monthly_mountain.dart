@@ -6,6 +6,7 @@ import '../../models/avatar.dart';
 import '../../models/climb_theme.dart';
 import '../avatar_tile.dart';
 import 'climb_camera.dart';
+import 'climb_debug_day.dart';
 import 'climb_route.dart';
 
 /// The Monthly Climb scene (1.1.0 design, scene art S1–S2): the theme's
@@ -71,11 +72,16 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         math.sin(math.pi * (day - day.floor()));
   }
 
+  /// The step the scene shows: the real progress, or, in debug builds
+  /// only, `CLIMB_DEBUG_DAY` ([ClimbDebugDay]). Display only.
+  int get _shownSteps =>
+      (ClimbDebugDay.value ?? widget.completedDays).clamp(0, widget.days);
+
   @override
   void initState() {
     super.initState();
     _route = ClimbRoute(widget.days);
-    _from = _to = widget.completedDays.clamp(0, widget.days).toDouble();
+    _from = _to = _shownSteps.toDouble();
     _motion = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 850), value: 1);
   }
@@ -97,7 +103,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     if (oldWidget.days != widget.days ||
         oldWidget.completedDays != widget.completedDays) {
       _from = _day;
-      _to = widget.completedDays.clamp(0, widget.days).toDouble();
+      _to = _shownSteps.toDouble();
       _route = ClimbRoute(widget.days);
       if (_reduceMotion || oldWidget.days != widget.days) {
         _from = _to;
@@ -131,7 +137,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     const theme = ClimbThemes.greenSlope;
     final palette = theme.paletteFor(brightness);
     return Semantics(
-      label: '${theme.name}. ${widget.completedDays} of ${widget.days} steps. '
+      label: '${theme.name}. $_shownSteps of ${widget.days} steps. '
           '${widget.avatar.semanticLabel} avatar. '
           'Summit at ${widget.days} steps.',
       child: LayoutBuilder(builder: (context, constraints) {
