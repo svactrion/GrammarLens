@@ -346,6 +346,23 @@ def clearings(t: Trail) -> list[dict]:
     return out
 
 
+def horizontal_chord(mask: np.ndarray, p) -> float:
+    """The trail's horizontal width (px) through [p]: an avatar stands
+    upright, so its footprint lies along x whatever the leg's direction."""
+    y = int(round(p[1]))
+    row = mask[y]
+    x = int(round(p[0]))
+    if not row[x]:
+        return 0.0
+    l = x
+    while l > 0 and row[l - 1]:
+        l -= 1
+    r = x
+    while r < len(row) - 1 and row[r + 1]:
+        r += 1
+    return float(r - l + 1)
+
+
 def nearest_arc(t: Trail, xy) -> tuple[float, float]:
     """(arc length px, distance px) of the trail point nearest [xy]."""
     d = np.linalg.norm(t.points - np.asarray(xy), axis=1)

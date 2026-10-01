@@ -39,13 +39,6 @@ Step 2: the trail's center line, bends and clearings from
 build/scene_art_venv/bin/python tool/scene_art/check_theme.py
 ```
 
-```bash
-build/scene_art_venv/bin/python tool/scene_art/export_assets.py
-```
-
-Stage 1: the app's background assets, `assets/climb/<theme>/background_<mode>.webp`
-(1536 × 2048, WebP quality 80; byte-identical on a re-run).
-
 Step 2.5: the theme consistency check. With no arguments it checks
 `green/background_dark.png` and `volcanic/background_light.png` against
 `green/background_light.png`; pass other paths (relative to `source/`, or
@@ -58,6 +51,14 @@ build/scene_art_venv/bin/python tool/scene_art/break_check.py
 
 The check's deliberate-break run: shifted and scaled copies of the dark
 image, made in a temporary directory, must all fail.
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/export_assets.py
+```
+
+Stage 1: the app's background assets,
+`assets/climb/<theme>/background_<mode>.webp` (1536 × 2048, WebP quality
+80; byte-identical on a re-run).
 
 ## How the trail is found (`trail.py`)
 

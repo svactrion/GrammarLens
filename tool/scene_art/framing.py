@@ -24,6 +24,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 import trail as T
+from trail import horizontal_chord
 from extract_trail import font
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -90,23 +91,6 @@ class Frame:
     def visible(self, p, off, top_margin=0.0) -> bool:
         x, y = self.to_pt(p, off)
         return 0 <= x <= self.card_w and top_margin <= y <= WINDOW_H
-
-
-def horizontal_chord(mask: np.ndarray, p) -> float:
-    """The trail's horizontal width (px) through [p]: an avatar stands
-    upright, so its footprint lies along x whatever the leg's direction."""
-    y = int(round(p[1]))
-    row = mask[y]
-    x = int(round(p[0]))
-    if not row[x]:
-        return 0.0
-    l = x
-    while l > 0 and row[l - 1]:
-        l -= 1
-    r = x
-    while r < len(row) - 1 and row[r + 1]:
-        r += 1
-    return float(r - l + 1)
 
 
 def avatar_sprite() -> Image.Image:

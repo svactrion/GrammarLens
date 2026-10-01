@@ -109,6 +109,9 @@ def main() -> None:
         "coordinates": "normalized: x / width, y / height, origin top left",
         "polyline": [[r(x, 5), r(y, 5)] for x, y in t.norm],
         "width_px": [r(v, 1) for v in t.widths],
+        # The trail's horizontal width through each point (Stage 1, G3: an
+        # upright avatar's footprint lies along x on any leg).
+        "chord_px": [r(T.horizontal_chord(t.mask, p), 1) for p in t.points],
         "arc_length_px": r(L, 2),
         "bends": bends,
         "clearings": clear,
