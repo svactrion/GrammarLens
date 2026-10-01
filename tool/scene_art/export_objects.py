@@ -20,8 +20,9 @@ it unfiltered over the filtered campfire once the save point is reached
 are the tent's trim, the cabin's knob and the flag's pennant (counted in
 objects.json).
 
-The dark-mode filter (G6): per-channel gain, dark ÷ light, of the
-clearings' ground in the app's own WebP backgrounds.
+The dark-mode filter (G6): per theme, the per-channel gain, dark ÷ light,
+of the clearings' ground in that theme's own WebP backgrounds (the
+clearings are at the same place in every theme, S4).
 
 Writes assets/climb/objects/*.webp and
 docs/design/scene-art/stage2/objects.json (read by
@@ -85,9 +86,12 @@ def save(im: Image.Image, name: str) -> int:
     return path.stat().st_size
 
 
-def dark_gain(clearings: list[dict]) -> list[float]:
-    light = np.asarray(Image.open(T.REPO / "assets/climb/green_slope/background_light.webp").convert("RGB"), float)
-    dark = np.asarray(Image.open(T.REPO / "assets/climb/green_slope/background_dark.webp").convert("RGB"), float)
+THEMES = ("green_slope", "ember_peak", "glacier_peak", "red_canyon")
+
+
+def dark_gain(clearings: list[dict], theme: str) -> list[float]:
+    light = np.asarray(Image.open(T.REPO / f"assets/climb/{theme}/background_light.webp").convert("RGB"), float)
+    dark = np.asarray(Image.open(T.REPO / f"assets/climb/{theme}/background_dark.webp").convert("RGB"), float)
     h, w = light.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w]
     m = np.zeros((h, w), bool)
@@ -136,7 +140,7 @@ def main() -> None:
             entry["flame_share_of_body"] = round(float(flame_mask(crop).sum() / (crop[..., 3] > 0).sum()), 4)
         data["objects"][name] = entry
     trail = json.loads((T.OUT / "trail_green.json").read_text())
-    data["dark_gain_green_slope"] = dark_gain(trail["clearings"])
+    data["dark_gain"] = {t: dark_gain(trail["clearings"], t) for t in THEMES}
     data["total_bytes"] = sum(o["bytes"] + o.get("flame_bytes", 0) for o in data["objects"].values())
     (STAGE2 / "objects.json").write_text(json.dumps(data, indent=1) + "\n")
     print(json.dumps(data, indent=1))

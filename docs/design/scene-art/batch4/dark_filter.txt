@@ -1,0 +1,28 @@
+G6 per theme, dark mode, strength 0.5, real Home at 375 pt: mean L* of each object's own
+pixels; 'vs ground' on the last day (all reached); 'reached − unreached' for the fountain
+and the campfire (unreached on the early day). A theme is flagged when a difference is
+under half of Green's.
+
+green_slope (2026-10, days 20 and 31); gain R 0.4824 G 0.5182 B 0.6714
+  tent      not wholly in the window on day 31
+  cabin     vs ground  -3.2
+  fountain  vs ground +12.5 | reached − unreached  +7.3 (Green  +7.3)
+  campfire  vs ground +19.6 | reached − unreached +10.2 (Green +10.2)
+
+ember_peak (2026-11, days 19 and 30); gain R 0.6191 G 0.7260 B 0.9518
+  tent      not wholly in the window on day 30
+  cabin     vs ground  +5.8
+  fountain  vs ground +23.4 | reached − unreached +12.9 (Green  +7.3)
+  campfire  vs ground +29.4 | reached − unreached +13.2 (Green +10.2)
+
+glacier_peak (2026-12, days 20 and 31); gain R 0.5369 G 0.5300 B 0.6437
+  tent      not wholly in the window on day 31
+  cabin     vs ground -16.3
+  fountain  vs ground  +6.6 | reached − unreached  +4.8 (Green  +7.3)
+  campfire  vs ground  +4.9 | reached − unreached  +6.8 (Green +10.2)
+
+red_canyon (2027-01, days 20 and 31); gain R 0.5989 G 0.6145 B 0.8091
+  tent      not wholly in the window on day 31
+  cabin     vs ground  -7.1
+  fountain  vs ground +21.3 | reached − unreached  +7.6 (Green  +7.3)
+  campfire  vs ground +11.7 | reached − unreached  +6.9 (Green +10.2)

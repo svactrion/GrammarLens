@@ -4,6 +4,7 @@
 // without scrolling; each image is the climb card cut out of the screen at
 // 3x. Stage 1: days 1, 15 and 31 at 320 and 375 pt (the defaults);
 // Stage 2: DESIGN_MEASURE_SCREENS=375 DESIGN_MEASURE_DAYS=1,10,20,31.
+// DESIGN_MEASURE_MONTH (YYYY-MM) shows that month's theme on its last day.
 // DESIGN_MEASURE_MODES (light,dark) limits the modes, and
 // DESIGN_MEASURE_DARK_STRENGTH sets G6's strength, added to the file name.
 // Next to each image, <name>.json holds the objects' boxes in its pixels.
@@ -49,10 +50,19 @@ void main() {
   ];
   final strength = double.tryParse(
       Platform.environment['DESIGN_MEASURE_DARK_STRENGTH'] ?? '');
+  // DESIGN_MEASURE_MONTH (YYYY-MM): the month shown, on its last day, so
+  // its rotation theme (Batch 4); October 2026 when unset. Added to the
+  // file name.
+  final monthEnv = Platform.environment['DESIGN_MEASURE_MONTH'];
+  final (year, month) = monthEnv == null
+      ? (2026, 10)
+      : (int.parse(monthEnv.split('-')[0]), int.parse(monthEnv.split('-')[1]));
+  final clock = DateTime(year, month + 1, 0, 14);
   for (final screen in screens) {
     for (final b in modes) {
       for (final day in days) {
-        final suffix = strength == null ? '' : '_strength$strength';
+        final suffix = (strength == null ? '' : '_strength$strength') +
+            (monthEnv == null ? '' : '_$monthEnv');
         final file = 'home_${screen.toInt()}_${b.name}_day$day$suffix.png';
         testWidgets(file, (tester) async {
           ClimbSavePoints.debugDarkFilterStrengthOverride = strength;
@@ -66,7 +76,7 @@ void main() {
           await tester.pumpWidget(RepaintBoundary(
             key: key,
             child: designHome(
-                clock: DateTime(2026, 10, 31, 14),
+                clock: clock,
                 storage: DesignStorage(steps: day, correct: day * 3),
                 brightness: b),
           ));
@@ -75,7 +85,7 @@ void main() {
             await Future.wait([
               for (final asset in [
                 Avatar.values.first.assetPath,
-                ClimbThemes.greenSlope.backgroundFor(b),
+                ClimbThemeRotation.shownFor(year, month).backgroundFor(b),
                 for (final p in ClimbSavePoints.all) p.asset,
                 ClimbSavePoints.assetFor('summit_flag'),
                 ClimbSavePoints.flameAsset,

@@ -35,4 +35,7 @@ const climbObjectAspects = <String, double>{
 /// in the theme's two backgrounds, by theme id.
 const climbObjectDarkGain = <String, (double, double, double)>{
   'green_slope': (0.4824, 0.5182, 0.6714),
+  'ember_peak': (0.6191, 0.7260, 0.9518),
+  'glacier_peak': (0.5369, 0.5300, 0.6437),
+  'red_canyon': (0.5989, 0.6145, 0.8091),
 };

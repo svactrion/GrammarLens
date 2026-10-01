@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_point_table.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_trail_table.dart';
@@ -27,6 +28,17 @@ void main() {
         ['C1', 'C2', 'C3', 'C4']);
     expect({for (final p in ClimbSavePoints.all) p.object},
         {'tent', 'cabin', 'fountain', 'campfire'});
+  });
+
+  test('G6: every theme has its own dark-mode gain, each channel in (0, 1]',
+      () {
+    for (final theme in ClimbThemes.all) {
+      final gain = climbObjectDarkGain[theme.id];
+      expect(gain, isNotNull, reason: theme.id);
+      for (final g in [gain!.$1, gain.$2, gain.$3]) {
+        expect(g, inExclusiveRange(0, 1.0001), reason: theme.id);
+      }
+    }
   });
 
   test('G9: the cabin and the tent on the two largest clearings', () {

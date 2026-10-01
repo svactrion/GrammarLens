@@ -7204,3 +7204,15 @@ On branch `1.1.0-design` (at `1.1.0`, `a76a4b0`); not pushed.
     November expectations (now Ember Peak). Added: each theme's image per
     mode, Home's theme per month (recorded, rotation fallback), the flag in
     every theme.
+
+- **2026-10-02 — Batch 4, step 3: the dark-mode filter per theme.**
+  - `export_objects.py` derives each theme's gain from its own
+    backgrounds' clearings (`stage2/objects.json` `dark_gain`; the table
+    has all four). Green's gain and the object assets are byte-identical.
+  - Gains (R, G, B):
+    - Ember 0.619 / 0.726 / 0.952;
+    - Glacier 0.537 / 0.530 / 0.644;
+    - Canyon 0.599 / 0.615 / 0.809.
+  - At strength 0.5 every theme keeps its unreached state distinguishable
+    (`batch4/dark_filter.txt`). On Glacier the reached cabin is 16.3 L*
+    darker than the snow (recorded).

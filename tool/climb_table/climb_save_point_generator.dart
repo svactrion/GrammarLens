@@ -51,7 +51,7 @@ String generateClimbSavePointTable() {
   final flag = placement['flag'] as Map;
   final fc = (flag['center_norm'] as List).cast<num>();
   final fb = (flag['box_norm'] as List).cast<num>();
-  final gain = (objects['dark_gain_green_slope'] as List).cast<num>();
+  final gains = (objects['dark_gain'] as Map).cast<String, List>();
   out
     ..writeln('];')
     ..writeln()
@@ -78,9 +78,13 @@ String generateClimbSavePointTable() {
     ..writeln('/// Dark mode (G6): per-channel gain, dark ÷ light, of the '
         "clearings' ground")
     ..writeln("/// in the theme's two backgrounds, by theme id.")
-    ..writeln('const climbObjectDarkGain = <String, (double, double, double)>{')
-    ..writeln("  'green_slope': (${_f(gain[0], 4)}, ${_f(gain[1], 4)}, "
-        '${_f(gain[2], 4)}),')
-    ..writeln('};');
+    ..writeln(
+        'const climbObjectDarkGain = <String, (double, double, double)>{');
+  for (final e in gains.entries) {
+    final g = e.value.cast<num>();
+    out.writeln("  '${e.key}': (${_f(g[0], 4)}, ${_f(g[1], 4)}, "
+        '${_f(g[2], 4)}),');
+  }
+  out.writeln('};');
   return out.toString();
 }

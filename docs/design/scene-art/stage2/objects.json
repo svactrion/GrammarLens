@@ -103,10 +103,27 @@
    "flame_threshold_pixels": 173616
   }
  },
- "dark_gain_green_slope": [
-  0.4824,
-  0.5182,
-  0.6714
- ],
+ "dark_gain": {
+  "green_slope": [
+   0.4824,
+   0.5182,
+   0.6714
+  ],
+  "ember_peak": [
+   0.6191,
+   0.726,
+   0.9518
+  ],
+  "glacier_peak": [
+   0.5369,
+   0.53,
+   0.6437
+  ],
+  "red_canyon": [
+   0.5989,
+   0.6145,
+   0.8091
+  ]
+ },
  "total_bytes": 45112
 }
