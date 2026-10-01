@@ -48,16 +48,31 @@ D1–D6 in the side-tracks file.)*
       layered mountain, turned step pills, Green Slope's pine and shrub, the
       climb card (frame, plaque, month and steps on sky chips)
       (`docs/design/batch3c/report.md`)
-- [ ] Batch 3d — stop markers become "save points" at the trail's 4 turns
-      (same place every month; weekly days and D2 retired). Planned, not
-      started (`docs/1.1.0-design-side-tracks.md`, G3)
+- [ ] Scene art (2026-10-01, S1–S5 in `docs/1.1.0-design-side-tracks.md`):
+      the coded mountain of Batch 3c is replaced by ChatGPT illustrations
+      (Green light and dark ready, volcanic light only and temporary); the
+      trail comes from the image, its steps from the extracted center line.
+      Order:
+  - [ ] Scene Art Batch 0 — import, measure, report (no product code):
+        trail extraction, clearings, theme consistency check, framing,
+        objects, WebP size, replacement plan
+        (`docs/design/scene-art/batch0/report.md`)
+  - [ ] Scene Art build — the illustrated background replaces the coded
+        mountain; step table from the extracted polyline; K1 re-checked.
+        Batches after it, in the order Batch 0 proposes
+- [ ] Batch 3d — stop markers become "save points": now the save point
+      objects (campfire, tent, fountain, cabin) on 4 of the image's 6
+      clearings (S3; which 4 is open; weekly days and D2 retired). Planned,
+      not started (`docs/1.1.0-design-side-tracks.md`, G3, S3)
 - [x] Home greeting: the user's name is never lost (at 320 pt it was lost for
       every name since 1.0.0) — done, verified on device, merged into
       `1.1.0` (2026-09-30, fast-forward to `69bef5f`; 1120 tests green on
       `1.1.0`) (`docs/design/greeting-fix/report.md`)
 - [ ] Batch 4 — layer slot infrastructure (including a ridge/summit
       silhouette slot in the background), Ember Peak, Glacier Peak, Red
-      Canyon, four summits
+      Canyon, four summits. *(Scene art, S1/S4: becomes a light + dark
+      background pair per theme on the shared trail coordinates; only
+      Green is produced; to be reshaped from the Scene Art Batch 0 plan.)*
 - [ ] Batch 5 — themed medal: body, emblem, month label
 - [ ] Batch 6 — month transition card and measurement events; after the
       card, once a month, a zoom from the whole mountain to the avatar

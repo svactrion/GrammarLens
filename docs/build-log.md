@@ -6740,3 +6740,44 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
   and Settings) and merge approval.
 
 - **2026-09-30 — Batch 8 device-checked by the owner and merged into `1.1.0`** (`--no-ff`). Checked: all 16 avatars in the picker and onboarding, both loop seams, the Hero back to Home, an existing selection preserved, a silent full lap. Label decision: `avatar_13` stays "Bird".
+
+## 2026-10-01 (1.1.0 design side tracks — scene art decisions; Scene Art Batch 0 started)
+
+Docs and source images only, on branch `1.1.0-design`; no product code
+changed. `1.1.0` merged in first (fast-forward to `b34fd06`, no conflict).
+
+- **[Product — owner, after the Batch 3c-B device check]** The code-drawn
+  mountain looked low-quality next to the avatars. The scene becomes a set
+  of ChatGPT illustrations in the avatars' style
+  (`1.1.0-design-side-tracks.md`, "Scene art (2026-10-01)", S1–S5):
+  - **S1.** Illustrated scene, ~35° oblique camera, 3:4. Replaces Batch 3c
+    e's flat colors and the coded mountain (`ClimbScene` silhouette,
+    layers, environment items).
+  - **S2.** The trail is in the image; code extracts its center line,
+    measures it and spreads 28–31 steps evenly; the avatar scales to fit.
+    Replaces "the trail is drawn in code", K1's curve and D3's table from
+    the curve (now from the extracted polyline). K1's criterion (≥ 17 pt a
+    day, ≥ 5 pt between steps at 320 pt, 31 days) is re-checked.
+  - **S3.** 6 clearings on the bends' outer corners (3 left, 3 right);
+    the save point objects (campfire, tent, fountain, cabin) are separate
+    PNGs placed by code; which 4 clearings is open; summit flag only where
+    the summit suits it (not volcanic); pine and shrub dropped. Makes
+    Batch 3d (G3) concrete.
+  - **S4.** Each theme is a light + dark (starless dusk) pair. Green: both.
+    Volcanic: light only, temporary. Others not produced. One coordinate
+    set for all images (Ahmet's overlay check; to be checked
+    automatically).
+  - **S5.** START word and flag are in the image; no code text.
+- **[Tool — recorded]** Images: ChatGPT image generation, 2026-10-01
+  (Gemini tried and dropped: it could not produce the mountain). Upscale
+  (2×) and background removal by Ahmet. Commercial-use terms and a Credits
+  line are still to be checked (side-tracks, "Production of the
+  artwork").
+- **[Files]** `docs/design/scene-art/source/` (green light/dark and their
+  pre-upscale `raw/`, volcanic light, five objects; byte-identical to the
+  owner's folder) and `docs/design/scene-art/PROMPTS.md`. Not yet app
+  assets.
+- **[Open — not done]** Dark volcanic and the other 3 themes; how the
+  objects read at device size (tent entrance, fountain, cabin; the
+  campfire's smoke after background removal); upscale and background
+  removal checked by Ahmet only.
