@@ -1,0 +1,31 @@
+lossy WebP, Pillow libwebp method 6; PSNR / SSIM on lightness against the resized source
+
+green/background_light.png (2172 x 2896, PNG 9.80 MB)
+  1086 x 1448: q70 182 KB (PSNR 36.3, SSIM 0.9597); q80 238 KB (PSNR 38.5, SSIM 0.9739); q90 371 KB (PSNR 42.7, SSIM 0.9882)
+  1174 x 1565: q70 203 KB (PSNR 36.6, SSIM 0.9617); q80 261 KB (PSNR 38.6, SSIM 0.9740); q90 414 KB (PSNR 42.9, SSIM 0.9884)
+  1536 x 2048: q70 282 KB (PSNR 37.4, SSIM 0.9656); q80 366 KB (PSNR 39.5, SSIM 0.9773); q90 587 KB (PSNR 43.5, SSIM 0.9889)
+  1878 x 2504: q70 356 KB (PSNR 38.3, SSIM 0.9698); q80 464 KB (PSNR 40.2, SSIM 0.9791); q90 752 KB (PSNR 44.1, SSIM 0.9894)
+  2172 x 2896: q70 423 KB (PSNR 38.9, SSIM 0.9724); q80 548 KB (PSNR 40.9, SSIM 0.9808); q90 898 KB (PSNR 44.4, SSIM 0.9898)
+
+green/background_dark.png (2172 x 2896, PNG 9.00 MB)
+  1086 x 1448: q70 132 KB (PSNR 37.2, SSIM 0.9508); q80 175 KB (PSNR 39.3, SSIM 0.9669); q90 296 KB (PSNR 43.4, SSIM 0.9856)
+  1174 x 1565: q70 145 KB (PSNR 37.4, SSIM 0.9513); q80 195 KB (PSNR 39.3, SSIM 0.9668); q90 330 KB (PSNR 43.6, SSIM 0.9857)
+  1536 x 2048: q70 205 KB (PSNR 38.4, SSIM 0.9591); q80 272 KB (PSNR 40.3, SSIM 0.9721); q90 447 KB (PSNR 44.0, SSIM 0.9863)
+  1878 x 2504: q70 265 KB (PSNR 39.1, SSIM 0.9646); q80 339 KB (PSNR 40.8, SSIM 0.9742); q90 571 KB (PSNR 44.7, SSIM 0.9877)
+  2172 x 2896: q70 310 KB (PSNR 39.8, SSIM 0.9687); q80 403 KB (PSNR 41.6, SSIM 0.9776); q90 676 KB (PSNR 45.1, SSIM 0.9883)
+
+volcanic/background_light.png (1086 x 1448, PNG 2.16 MB)
+  1086 x 1448: q70 122 KB (PSNR 39.0, SSIM 0.9660); q80 158 KB (PSNR 40.7, SSIM 0.9757); q90 257 KB (PSNR 44.0, SSIM 0.9866)
+  1174 x 1565 (upscaled from the source): q70 133 KB (PSNR 39.5, SSIM 0.9678); q80 174 KB (PSNR 41.1, SSIM 0.9767); q90 287 KB (PSNR 44.3, SSIM 0.9874)
+  1536 x 2048 (upscaled from the source): q70 181 KB (PSNR 40.8, SSIM 0.9728); q80 232 KB (PSNR 42.5, SSIM 0.9803); q90 383 KB (PSNR 45.3, SSIM 0.9882)
+  1878 x 2504 (upscaled from the source): q70 230 KB (PSNR 41.7, SSIM 0.9759); q80 294 KB (PSNR 43.3, SSIM 0.9824); q90 474 KB (PSNR 45.9, SSIM 0.9888)
+  2172 x 2896 (upscaled from the source): q70 272 KB (PSNR 42.6, SSIM 0.9786); q80 344 KB (PSNR 44.2, SSIM 0.9841); q90 554 KB (PSNR 46.3, SSIM 0.9888)
+
+objects at q90 (alpha kept, lossy RGB + alpha):
+  campfire: 192 px wide 8.3 KB; 256 px wide 11.6 KB
+  tent: 192 px wide 6.7 KB; 256 px wide 9.3 KB
+  fountain: 192 px wide 6.7 KB; 256 px wide 9.5 KB
+  cabin: 192 px wide 7.9 KB; 256 px wide 11.0 KB
+  summit_flag: 192 px wide 8.6 KB; 256 px wide 11.7 KB
+
+for scale: the 16 bundled avatars total 720 KB
