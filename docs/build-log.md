@@ -6781,3 +6781,16 @@ changed. `1.1.0` merged in first (fast-forward to `b34fd06`, no conflict).
   objects read at device size (tent entrance, fountain, cabin; the
   campfire's smoke after background removal); upscale and background
   removal checked by Ahmet only.
+- **2026-10-01 — Scene Art Batch 0 report written, not decided**
+  (`docs/design/scene-art/batch0/report.md`; tools in `tool/scene_art/`).
+  - The trail, its 6 bends and the 6 clearings are extracted
+    automatically.
+  - S4 holds on green dark and volcanic light (theme check; a deliberate
+    break fails).
+  - K1 passes at 320 pt with K-b 1.3 and 1.6, but not with K-a (pills
+    kept) or K-c.
+  - The trail is narrower than today's 42 pt avatar in most framings.
+  - The campfire's smoke is gone; the objects' edges are clean.
+  - 1536 px q80 WebP is about 0.64 MB per theme pair.
+  - Ten open questions, each with a recommendation, wait for the owner. No
+    product code changed.
