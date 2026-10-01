@@ -210,8 +210,11 @@ class ClimbTrailDots extends CustomPainter {
   /// A dot's diameter, in points.
   static const diameter = 4.0;
 
-  /// The dots' opacity: faint on the trail in both modes.
-  static const opacity = .22;
+  /// The dots' opacity: faint on the trail in both modes. Chosen on a
+  /// device (scene art G5): 0.22 was too faint to see; 0.30 and 0.40 were
+  /// tried, 0.40 kept (2.06:1 against the trail in light mode, 1.72:1 in
+  /// dark).
+  static const opacity = .40;
 
   final List<Offset> points;
 

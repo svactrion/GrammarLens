@@ -21,7 +21,7 @@ import trail as T
 
 INK = {"light": (0x26, 0x3D, 0x39), "dark": (0xE4, 0xE2, 0xD8)}  # ClimbPalette.ink
 OPACITIES = (0.22, 0.30, 0.40, 0.50, 0.60)
-CURRENT = 0.22
+CURRENT = 0.40  # G5, chosen on the device (Stage 1 measured 0.22)
 
 
 def lum(rgb) -> float:

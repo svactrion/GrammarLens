@@ -73,14 +73,15 @@ void main() {
     expect(painters(tester).single.points, hasLength(9));
   });
 
-  testWidgets('faint, in the palette\'s ink, in both modes', (tester) async {
+  testWidgets('in the palette\'s ink at 0.40, in both modes', (tester) async {
     for (final b in Brightness.values) {
       await tester.pumpWidget(mountain(8, brightness: b));
       // MaterialApp animates a theme change; read the settled palette.
       await tester.pumpAndSettle();
       final dots = painters(tester).single;
       expect(dots.color, ClimbThemes.greenSlope.paletteFor(b).ink);
-      expect(ClimbTrailDots.opacity, lessThanOrEqualTo(.25));
+      // G5's device choice: 0.40 (0.22 was too faint to see).
+      expect(ClimbTrailDots.opacity, .40);
       expect(ClimbTrailDots.diameter, lessThanOrEqualTo(4));
     }
   });
