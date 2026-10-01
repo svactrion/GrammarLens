@@ -135,8 +135,8 @@ void main() {
 
   group('hop (design decision D8)', () {
     final route = ClimbRoute(31);
-    const tile = MonthlyMountain.avatarTile;
-    const hop = MonthlyMountain.hopShare * tile;
+    double tile(double day, double width) =>
+        ClimbCamera(width).avatarTileAt(route.arcAt(day));
 
     /// The avatar's `top` in the image (the layer the camera moves), and
     /// the `top` it has standing on the trail at [day] with no hop.
@@ -147,7 +147,8 @@ void main() {
             .first)
         .top!;
     double standingTop(double day, double width) =>
-        route.pointAt(day).dy * ClimbCamera(width).scale - tile * 55 / 58;
+        route.pointAt(day).dy * ClimbCamera(width).scale -
+        tile(day, width) * 55 / 58;
 
     double width(WidgetTester tester) =>
         tester.getSize(find.byType(MonthlyMountain)).width;
@@ -163,7 +164,10 @@ void main() {
       await tester.pump();
       // easeInOut is symmetric: at half the time, half the step.
       await tester.pump(const Duration(milliseconds: 425));
-      expect(avatarTop(tester), closeTo(standingTop(3.5, w) - hop, .05));
+      expect(
+          avatarTop(tester),
+          closeTo(standingTop(3.5, w) - MonthlyMountain.hopShare * tile(3.5, w),
+              .05));
 
       await tester.pump(const Duration(milliseconds: 500));
       expect(avatarTop(tester), closeTo(standingTop(4, w), .01));

@@ -15,12 +15,9 @@ class MonthlyMountain extends StatefulWidget {
   /// How high the pawn hops between two steps, as a share of its tile
   /// (design decision D8): one arc per step; none with Reduce Motion. 1.0
   /// to 1.1.0's coded mountain hopped 14 scene units with a 58-unit tile;
-  /// keeping the ratio keeps the hop's feel whatever the avatar's size.
+  /// keeping the ratio keeps the hop's feel whatever the avatar's size
+  /// (scene art G3: it shrinks toward the summit).
   static const hopShare = 14 / 58;
-
-  /// The avatar's tile, in points: Batch 3b's 42.3 pt (29 units × 2 at
-  /// 350 / 480 pt per unit).
-  static const avatarTile = 58 * 350 / 480;
 
   final int days;
   final int completedDays;
@@ -51,14 +48,15 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   double get _day =>
       _from + (_to - _from) * Curves.easeInOut.transform(_motion.value);
 
-  /// The hop's height now: an arc between each two whole days, zero on a
-  /// step. Measured from whole days, not from where the move started, so a
-  /// move that interrupts another continues the arc and still lands. Reduce
-  /// Motion never animates, so it is always zero there.
-  double get _hopLift {
+  /// The hop's height now, for a [tile]-point avatar: an arc between each
+  /// two whole days, zero on a step. Measured from whole days, not from
+  /// where the move started, so a move that interrupts another continues
+  /// the arc and still lands. Reduce Motion never animates, so it is always
+  /// zero there.
+  double _hopLift(double tile) {
     final day = _day;
     return MonthlyMountain.hopShare *
-        MonthlyMountain.avatarTile *
+        tile *
         math.sin(math.pi * (day - day.floor()));
   }
 
@@ -141,7 +139,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                     // The camera follows the trail point, not the hop, so
                     // the view does not bob.
                     final offset = camera.offsetFor(_route.pointAt(_day));
-                    const tile = MonthlyMountain.avatarTile;
+                    final tile = camera.avatarTileAt(_route.arcAt(_day));
                     // One layer, the image and the avatar in the image's
                     // own points, moved by the camera.
                     return Stack(clipBehavior: Clip.none, children: [
@@ -162,7 +160,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                               // The feet on the step: the tile's top is
                               // 55/58 of its side above it (AvatarTile's
                               // art).
-                              top: pawn.dy - tile * 55 / 58 - _hopLift,
+                              top: pawn.dy - tile * 55 / 58 - _hopLift(tile),
                               child: AvatarTile(
                                   avatar: widget.avatar, radius: tile / 2)),
                         ]),

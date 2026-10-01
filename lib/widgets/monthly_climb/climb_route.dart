@@ -82,6 +82,17 @@ class ClimbRoute {
         (climbTrailChords[i] - climbTrailChords[i - 1]) * t;
   }
 
+  /// The trail's narrowest horizontal width over its first [share] of
+  /// length, in image widths.
+  static double narrowestChord(double share) {
+    var narrowest = double.infinity;
+    for (var i = 0; i < trail.length; i++) {
+      if (_cumulative[i] > length * share) break;
+      if (climbTrailChords[i] < narrowest) narrowest = climbTrailChords[i];
+    }
+    return narrowest;
+  }
+
   /// The index of the polyline point ending the segment that holds [s].
   static int _segment(double s) {
     var lo = 1, hi = _cumulative.length - 1;
