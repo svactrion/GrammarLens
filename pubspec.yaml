@@ -42,6 +42,10 @@ flutter:
     # The Daily Test's fallback pool (lib/data/fallback_pool.dart). The file
     # only: the folder may hold notes that must not ship.
     - assets/daily_test_fallback/pool.json
+    # Monthly Climb's illustrated backgrounds, one folder per theme
+    # (lib/models/climb_theme.dart), exported by
+    # tool/scene_art/export_assets.py from docs/design/scene-art/source/.
+    - assets/climb/green_slope/
   fonts:
     - family: NunitoSans
       fonts:
