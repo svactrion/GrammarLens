@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
 import '../models/avatar.dart';
+import '../models/climb_theme.dart';
 import '../models/daily_test_set.dart';
 import '../models/error_entry.dart';
 import '../models/medal_tier.dart';
@@ -121,6 +122,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   int _climbLoadGeneration = 0;
   int? _climbSteps;
+
+  /// The month's theme ([_resolveClimbTheme]); Green Slope until it has loaded.
+  ClimbTheme _climbTheme = ClimbThemes.greenSlope;
 
   /// The month's medal score (rule v1), shown by the score bar.
   int _climbScore = 0;
@@ -241,6 +245,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() => _hasFullAccess = hasAccess);
   }
 
+  /// The month's theme, recorded the first time the month is shown, not
+  /// only when a Daily Test is completed (Batch 2: a month that was only
+  /// viewed must not read as Green Slope afterwards). If storage cannot
+  /// answer, the rotation's theme is shown and nothing is recorded.
+  Future<ClimbTheme> _resolveClimbTheme(DateTime month) async {
+    try {
+      return ClimbThemes.byId(await widget.storageService
+          .resolveClimbMonthTheme(month.year, month.month));
+    } catch (_) {
+      return ClimbThemeRotation.shownFor(month.year, month.month);
+    }
+  }
+
   Future<void> _loadClimb() async {
     if (!mounted) return;
     final generation = ++_climbLoadGeneration;
@@ -257,6 +274,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       final progress =
           await widget.storageService.getClimbProgress(month.year, month.month);
+      if (!mounted || generation != _climbLoadGeneration) return;
+      final theme = await _resolveClimbTheme(month);
       if (!mounted || generation != _climbLoadGeneration) return;
       final pendingThisMonth = _pendingClimbDay != null &&
           _pendingClimbDay!.startsWith(
@@ -297,6 +316,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       }
       setState(() {
+        _climbTheme = theme;
         _climbSteps = progress.steps;
         _climbScore = MonthlyMedalRules.score(
             correct: progress.correct, wrong: progress.wrong);
@@ -760,6 +780,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               days: days,
               completedDays: _climbSteps!,
               avatar: widget.avatar ?? Avatar.values.first,
+              theme: _climbTheme,
               onMotionEnd: _onMountainMotionEnd,
             ),
             // Under the window, not over the scene (design decision D9).

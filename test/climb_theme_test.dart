@@ -38,24 +38,21 @@ void main() {
       ]);
     });
 
-    test('only Green Slope is ready; the others have no palette yet', () {
-      expect(ClimbThemes.all.where((t) => t.ready), [ClimbThemes.greenSlope]);
-      for (final theme in ClimbThemes.all.skip(1)) {
-        expect(theme.lightPalette, isNull);
-        expect(theme.darkPalette, isNull);
-      }
-      // Scene art S1: Green Slope is the one theme with an illustration.
-      expect(ClimbThemes.greenSlope.backgroundFor(Brightness.light),
-          'assets/climb/green_slope/background_light.webp');
-      expect(ClimbThemes.greenSlope.backgroundFor(Brightness.dark),
-          'assets/climb/green_slope/background_dark.webp');
-      // S3: Green Slope's grassy summit has the flag; Ember Peak's crater
-      // does not.
-      expect(ClimbThemes.greenSlope.hasSummitFlag, isTrue);
-      expect(ClimbThemes.emberPeak.hasSummitFlag, isFalse);
-      for (final theme in ClimbThemes.all.skip(1)) {
-        expect(theme.backgroundLight, isNull);
-        expect(theme.backgroundDark, isNull);
+    test('all four are ready, each with its light and dark images (Batch 4)',
+        () {
+      expect(ClimbThemes.all.every((t) => t.ready), isTrue);
+      for (final theme in ClimbThemes.all) {
+        expect(theme.backgroundFor(Brightness.light),
+            'assets/climb/${theme.id}/background_light.webp');
+        expect(theme.backgroundFor(Brightness.dark),
+            'assets/climb/${theme.id}/background_dark.webp');
+        // The palettes only colour the dots and the loading fill now; every
+        // theme shares Green Slope's.
+        expect(theme.lightPalette, same(ClimbThemes.greenSlope.lightPalette));
+        expect(theme.darkPalette, same(ClimbThemes.greenSlope.darkPalette));
+        // G4 (Batch 4): the flag stands on C6, whatever the summit's shape,
+        // so every theme draws it.
+        expect(theme.hasSummitFlag, isTrue, reason: theme.id);
       }
     });
 
@@ -131,11 +128,17 @@ void main() {
       expect(scheduled(2025, 12), 'green_slope');
     });
 
-    test('a scheduled theme that is not ready is shown as Green Slope', () {
-      expect(ClimbThemeRotation.shownFor(2026, 11), ClimbThemes.greenSlope);
-      expect(ClimbThemeRotation.shownFor(2026, 12), ClimbThemes.greenSlope);
-      expect(ClimbThemeRotation.shownFor(2027, 1), ClimbThemes.greenSlope);
+    test('every theme is ready, so a month is shown with its scheduled theme',
+        () {
       expect(ClimbThemeRotation.shownFor(2026, 10), ClimbThemes.greenSlope);
+      expect(ClimbThemeRotation.shownFor(2026, 11), ClimbThemes.emberPeak);
+      expect(ClimbThemeRotation.shownFor(2026, 12), ClimbThemes.glacierPeak);
+      expect(ClimbThemeRotation.shownFor(2027, 1), ClimbThemes.redCanyon);
+      for (var i = 0; i < 24; i++) {
+        final m = DateTime(2026, 10 + i);
+        expect(ClimbThemeRotation.shownFor(m.year, m.month),
+            ClimbThemeRotation.scheduledFor(m.year, m.month));
+      }
     });
   });
 
@@ -159,26 +162,25 @@ void main() {
       StorageService.themeForNewMonthForTesting = ClimbThemeRotation.shownFor;
     });
 
-    test('Ember Peak is not ready, so November 2026 is recorded as Green Slope',
-        () async {
+    test('November 2026 is recorded as Ember Peak', () async {
       StorageService.clockForTesting = () => DateTime(2026, 11, 3);
-      expect(await storage.resolveClimbMonthTheme(2026, 11), 'green_slope');
+      expect(await storage.resolveClimbMonthTheme(2026, 11), 'ember_peak');
     });
 
     test('a month keeps its recorded theme when the rotation changes later',
         () async {
       StorageService.clockForTesting = () => DateTime(2026, 11, 3);
-      expect(await storage.resolveClimbMonthTheme(2026, 11), 'green_slope');
+      expect(await storage.resolveClimbMonthTheme(2026, 11), 'ember_peak');
 
-      // Ember Peak becomes ready (a later build) while November is running.
+      // A later build changes the rotation while November is running.
       StorageService.themeForNewMonthForTesting =
-          (year, month) => ClimbThemeRotation.scheduledFor(year, month);
-      expect(await storage.resolveClimbMonthTheme(2026, 11), 'green_slope');
+          (year, month) => ClimbThemes.greenSlope;
+      expect(await storage.resolveClimbMonthTheme(2026, 11), 'ember_peak');
 
       // The next month gets its theme from the new rotation.
       StorageService.clockForTesting = () => DateTime(2026, 12, 1);
-      expect(await storage.resolveClimbMonthTheme(2026, 12), 'glacier_peak');
-      expect(await storage.resolveClimbMonthTheme(2026, 11), 'green_slope');
+      expect(await storage.resolveClimbMonthTheme(2026, 12), 'green_slope');
+      expect(await storage.resolveClimbMonthTheme(2026, 11), 'ember_peak');
     });
   });
 }

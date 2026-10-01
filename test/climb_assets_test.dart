@@ -3,15 +3,21 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 
-/// Scene art (S1, S4): Green Slope's illustrated background, light and dark,
+/// Scene art (S1, S4): each theme's illustrated background, light and dark,
 /// exported by tool/scene_art/export_assets.py at Batch 0's recommended
 /// 1536 × 2048 px (docs/design/scene-art/batch0/report.md, §5.1).
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const backgrounds = [
-    'assets/climb/green_slope/background_light.webp',
-    'assets/climb/green_slope/background_dark.webp',
+  final backgrounds = [
+    for (final theme in [
+      'green_slope',
+      'ember_peak',
+      'glacier_peak',
+      'red_canyon'
+    ])
+      for (final mode in ['light', 'dark'])
+        'assets/climb/$theme/background_$mode.webp',
   ];
 
   const objects = [
@@ -24,7 +30,7 @@ void main() {
   // Not an object: the campfire's flame only, drawn over it (G6, G8).
   const flame = 'assets/climb/objects/campfire_flame.webp';
 
-  test('the bundle holds the Green Slope backgrounds and the objects',
+  test('the bundle holds the four themes\' backgrounds and the objects',
       () async {
     final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
     expect(

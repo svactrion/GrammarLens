@@ -178,14 +178,14 @@ void main() {
         () async {
       await seedV22();
       final storage = StorageService(dbName: path);
-      expect(await storage.resolveClimbMonthTheme(2026, 11), 'green_slope');
+      expect(await storage.resolveClimbMonthTheme(2026, 11), 'ember_peak');
 
       final db = await databaseFactory.openDatabase(path);
       await db.setVersion(22);
       await db.close();
 
       final reopened = StorageService(dbName: path);
-      expect(await reopened.resolveClimbMonthTheme(2026, 11), 'green_slope');
+      expect(await reopened.resolveClimbMonthTheme(2026, 11), 'ember_peak');
       expect(await themeRows(), hasLength(1));
       expect((await reopened.getClimbProgress(2026, 11)).steps, 1);
     });
@@ -202,13 +202,13 @@ void main() {
 
     test('the current month is written once, on first resolution', () async {
       final storage = StorageService(dbName: path);
-      expect(await storage.resolveClimbMonthTheme(2026, 11), 'green_slope');
-      expect(await storage.resolveClimbMonthTheme(2026, 11), 'green_slope');
+      expect(await storage.resolveClimbMonthTheme(2026, 11), 'ember_peak');
+      expect(await storage.resolveClimbMonthTheme(2026, 11), 'ember_peak');
 
       final rows = await themeRows();
       expect(rows, hasLength(1));
       expect(rows.single['month'], '2026-11');
-      expect(rows.single['theme_id'], 'green_slope');
+      expect(rows.single['theme_id'], 'ember_peak');
       expect(rows.single['assigned_at'], '2026-11-14T09:00:00.000');
     });
 
@@ -257,6 +257,6 @@ void main() {
 
     final rows = await themeRows();
     expect(rows.single['month'], '2026-11');
-    expect(rows.single['theme_id'], 'green_slope');
+    expect(rows.single['theme_id'], 'ember_peak');
   });
 }

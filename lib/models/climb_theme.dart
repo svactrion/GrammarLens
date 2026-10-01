@@ -51,8 +51,10 @@ class ClimbTheme {
 
   /// Whether this theme draws the flag (assets/climb/objects/summit_flag.webp),
   /// the month's goal: on clearing C6, lit only when the summit is reached
-  /// (scene art S3, G4). Only in themes it suits; not on a crater
-  /// (volcanic). The name is from when the flag stood on the summit.
+  /// (scene art S3, G4). On C6 it does not depend on the summit's shape, so
+  /// all four themes draw it (Batch 4); the field stays for a later theme
+  /// whose C6 does not suit it. The name is from when the flag stood on the
+  /// summit.
   final bool hasSummitFlag;
 
   final ClimbSummit summit;
@@ -93,29 +95,36 @@ class ClimbThemes {
 
   static const String greenSlopeId = 'green_slope';
 
-  /// The 1.0 mountain: the default and the fallback. Its palettes are the
-  /// scene's colors from 1.0, unchanged.
+  /// The palettes: the 1.0 scene's colours, unchanged. Since scene art
+  /// (S1) the image paints the mountain, so a palette is used only for the
+  /// passed-day dots (`ink`) and the window's fill until the image has
+  /// decoded (`sky`); the month and step chips read Green Slope's
+  /// (`ClimbCard`). Every theme shares these two.
+  static const _lightPalette = ClimbPalette(
+      sky: Color(0xFFEAF0EC),
+      mountain: Color(0xFFACC4AC),
+      ridge: Color(0xFF789B86),
+      trail: Color(0xFFD9CCAC),
+      stone: Color(0xFFF5F0DF),
+      ink: Color(0xFF263D39),
+      accent: appLightPrimary);
+  static const _darkPalette = ClimbPalette(
+      sky: Color(0xFF182327),
+      mountain: Color(0xFF405C53),
+      ridge: Color(0xFF2E463F),
+      trail: Color(0xFF8E8874),
+      stone: Color(0xFFC8C8B9),
+      ink: Color(0xFFE4E2D8),
+      accent: appDarkPrimary);
+
+  /// The 1.0 mountain: the default and the fallback.
   static const greenSlope = ClimbTheme(
     id: greenSlopeId,
     name: 'Green Slope',
     tagline: 'Green slopes and an easy trail to find your rhythm.',
     ready: true,
-    lightPalette: ClimbPalette(
-        sky: Color(0xFFEAF0EC),
-        mountain: Color(0xFFACC4AC),
-        ridge: Color(0xFF789B86),
-        trail: Color(0xFFD9CCAC),
-        stone: Color(0xFFF5F0DF),
-        ink: Color(0xFF263D39),
-        accent: appLightPrimary),
-    darkPalette: ClimbPalette(
-        sky: Color(0xFF182327),
-        mountain: Color(0xFF405C53),
-        ridge: Color(0xFF2E463F),
-        trail: Color(0xFF8E8874),
-        stone: Color(0xFFC8C8B9),
-        ink: Color(0xFFE4E2D8),
-        accent: appDarkPrimary),
+    lightPalette: _lightPalette,
+    darkPalette: _darkPalette,
     backgroundLight: 'assets/climb/green_slope/background_light.webp',
     backgroundDark: 'assets/climb/green_slope/background_dark.webp',
     hasSummitFlag: true,
@@ -127,7 +136,12 @@ class ClimbThemes {
     id: 'ember_peak',
     name: 'Ember Peak',
     tagline: 'Smoke on the ridge, warm rock underfoot.',
-    ready: false,
+    ready: true,
+    lightPalette: _lightPalette,
+    darkPalette: _darkPalette,
+    backgroundLight: 'assets/climb/ember_peak/background_light.webp',
+    backgroundDark: 'assets/climb/ember_peak/background_dark.webp',
+    hasSummitFlag: true,
     summit: ClimbSummit.smokingCrater,
     emblem: ClimbEmblem.flame,
   );
@@ -136,7 +150,12 @@ class ClimbThemes {
     id: 'glacier_peak',
     name: 'Glacier Peak',
     tagline: 'Thin air, bright ice, and a view worth the climb.',
-    ready: false,
+    ready: true,
+    lightPalette: _lightPalette,
+    darkPalette: _darkPalette,
+    backgroundLight: 'assets/climb/glacier_peak/background_light.webp',
+    backgroundDark: 'assets/climb/glacier_peak/background_dark.webp',
+    hasSummitFlag: true,
     summit: ClimbSummit.iceCrown,
     emblem: ClimbEmblem.iceCrystal,
   );
@@ -145,7 +164,12 @@ class ClimbThemes {
     id: 'red_canyon',
     name: 'Red Canyon',
     tagline: 'Sun-baked rock and a mesa waiting at the top.',
-    ready: false,
+    ready: true,
+    lightPalette: _lightPalette,
+    darkPalette: _darkPalette,
+    backgroundLight: 'assets/climb/red_canyon/background_light.webp',
+    backgroundDark: 'assets/climb/red_canyon/background_dark.webp',
+    hasSummitFlag: true,
     summit: ClimbSummit.mesa,
     emblem: ClimbEmblem.rockArch,
   );
@@ -181,11 +205,6 @@ class ClimbThemeRotation {
   /// calendar's theme if it is ready, otherwise Green Slope. What is
   /// recorded must be what the user sees, so a theme that is not ready
   /// never appears in the data.
-  ///
-  /// Scene art Stage 1: only Green Slope has images, so only it is ready,
-  /// and every month, whatever the calendar says, is shown and recorded
-  /// (`climb_month_themes`) as Green Slope. A theme becomes ready with its
-  /// light and dark images (Stage 2).
   static ClimbTheme shownFor(int year, int month) {
     final scheduled = scheduledFor(year, month);
     return scheduled.ready ? scheduled : ClimbThemes.greenSlope;

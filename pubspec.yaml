@@ -46,6 +46,9 @@ flutter:
     # (lib/models/climb_theme.dart), exported by
     # tool/scene_art/export_assets.py from docs/design/scene-art/source/.
     - assets/climb/green_slope/
+    - assets/climb/ember_peak/
+    - assets/climb/glacier_peak/
+    - assets/climb/red_canyon/
     # The save point objects and the summit flag, shared by every theme,
     # from tool/scene_art/export_objects.py.
     - assets/climb/objects/

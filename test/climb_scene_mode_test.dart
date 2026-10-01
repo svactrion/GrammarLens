@@ -6,8 +6,7 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 /// Scene art S4/G7: the scene is the theme's light image in light mode and
-/// its dark (dusk) image in dark mode. Stage 1: only Green Slope has
-/// images, so every month draws Green Slope's.
+/// its dark (dusk) image in dark mode, for each of the four themes.
 void main() {
   String drawnAsset(WidgetTester tester) => (tester
           .widget<Image>(find
@@ -37,20 +36,32 @@ void main() {
     expect(drawnAsset(tester), 'assets/climb/green_slope/background_dark.webp');
   });
 
-  test('every month of the rotation is shown as Green Slope for now', () {
-    // A year from the anchor covers every theme of the rotation.
+  // Batch 4: each month draws its own theme, light or dark.
+  for (final theme in ClimbThemes.all) {
+    for (final b in Brightness.values) {
+      testWidgets('${theme.id}, ${b.name}: its own image', (tester) async {
+        await tester.pumpWidget(MaterialApp(
+            theme: buildAppTheme(b),
+            home: Scaffold(
+                body: SizedBox(
+                    width: 341.25,
+                    child: MonthlyMountain(
+                        days: 30,
+                        completedDays: 5,
+                        avatar: Avatar.values.first,
+                        theme: theme)))));
+        expect(drawnAsset(tester),
+            'assets/climb/${theme.id}/background_${b.name}.webp');
+      });
+    }
+  }
+
+  test('a year of the rotation: each month its scheduled theme', () {
     for (var i = 0; i < 12; i++) {
       final month = DateTime(2026, 10 + i);
-      expect(ClimbThemeRotation.scheduledFor(month.year, month.month),
-          isA<ClimbTheme>());
       expect(ClimbThemeRotation.shownFor(month.year, month.month),
-          ClimbThemes.greenSlope,
+          ClimbThemes.all[i % 4],
           reason: '${month.year}-${month.month}');
-    }
-    // The one ready theme has both images.
-    for (final theme in ClimbThemes.all.where((t) => t.ready)) {
-      expect(theme.backgroundLight, isNotNull);
-      expect(theme.backgroundDark, isNotNull);
     }
   });
 }

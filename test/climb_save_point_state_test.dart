@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_point_table.dart';
@@ -268,6 +269,25 @@ void main() {
     expect(tester.hasRunningAnimations, isFalse);
     expect(opacity(tester, flag.clearing), 1);
   });
+
+  for (final theme in ClimbThemes.all) {
+    testWidgets('G4: ${theme.id} draws the flag on C6', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: Scaffold(
+              body: SizedBox(
+                  width: 341.25,
+                  child: MonthlyMountain(
+                      days: 31,
+                      completedDays: 31,
+                      avatar: Avatar.values.first,
+                      theme: theme)))));
+      expect(
+          find.byKey(
+              ValueKey('climb_save_point_${ClimbSavePoints.flag.clearing}')),
+          findsOneWidget);
+    });
+  }
 
   testWidgets('dark mode: the flag takes the theme filter like the others',
       (tester) async {

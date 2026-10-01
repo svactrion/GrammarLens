@@ -21,10 +21,12 @@ WIDTH, HEIGHT = 1536, 2048
 QUALITY = 80
 
 # (source image under docs/design/scene-art/source/, asset path)
-BACKGROUNDS = (
-    ("green/background_light.png", "assets/climb/green_slope/background_light.webp"),
-    ("green/background_dark.png", "assets/climb/green_slope/background_dark.webp"),
-)
+# (source folder, theme id): the theme ids of lib/models/climb_theme.dart.
+THEMES = (("green", "green_slope"), ("ember", "ember_peak"),
+          ("glacier", "glacier_peak"), ("canyon", "red_canyon"))
+BACKGROUNDS = tuple(
+    (f"{folder}/background_{mode}.png", f"assets/climb/{theme}/background_{mode}.webp")
+    for folder, theme in THEMES for mode in ("light", "dark"))
 
 
 def main() -> None:

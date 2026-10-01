@@ -7176,3 +7176,31 @@ On branch `1.1.0-design` (at `1.1.0`, `a76a4b0`); not pushed.
     falling snow is seen, but it may read as winter (the "no season cues"
     rule).
   - *Red Canyon:* red rock and mesas.
+
+- **2026-10-02 — Batch 4, step 2: the three themes are in the app.**
+  - **Assets:** `export_assets.py` with Green's settings (1536 px, q80).
+    Green's own files are byte-identical.
+    - Ember Peak 363.1 + 275.6 KB;
+    - Glacier Peak 298.2 + 237.3 KB;
+    - Red Canyon 345.6 + 276.7 KB;
+    - 1.80 MB for the three; 2.43 MB for all four themes' backgrounds.
+  - **Themes:** all four are ready, with their light and dark images.
+    Rotation and names checked against the table and the side-tracks
+    file: October 2026 Green Slope, November Ember Peak, December Glacier
+    Peak, January Red Canyon. No difference.
+    - The palettes now colour only the dots and the loading fill, so the
+      three share Green's.
+  - **Home:** `_loadClimb` resolves the month's theme
+    (`resolveClimbMonthTheme`, which records the current month on its
+    first view, per the Batch 2 note) and passes it to `MonthlyMountain`.
+    If storage fails, the rotation's theme is shown and nothing is
+    recorded.
+  - **Flag (G4):** drawn in all four themes; the field stays.
+  - The temporary "every month shows Green" note is removed from the code
+    and the docs.
+  - **Not yet:** the new themes have no dark-mode object gain (step 3), so
+    their objects are drawn unfiltered in dark mode until then.
+  - 1230 tests pass. Changed: the "only Green is ready" tests, and the
+    November expectations (now Ember Peak). Added: each theme's image per
+    mode, Home's theme per month (recorded, rotation fallback), the flag in
+    every theme.

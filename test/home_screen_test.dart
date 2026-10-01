@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
+import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
@@ -122,6 +123,20 @@ class _FakeStorageService extends StorageService {
   final monthsRead = <(int, int)>[];
   Completer<({int steps, int correct, int wrong, int skipped})>?
       pendingProgress;
+
+  /// The month's recorded theme: [recordedTheme] if set, else the
+  /// rotation's (what the real one writes for a new month); throws when
+  /// [failTheme].
+  String? recordedTheme;
+  bool failTheme = false;
+  final themesResolved = <(int, int)>[];
+
+  @override
+  Future<String> resolveClimbMonthTheme(int year, int month) async {
+    themesResolved.add((year, month));
+    if (failTheme) throw StateError('Theme read failed');
+    return recordedTheme ?? ClimbThemeRotation.shownFor(year, month).id;
+  }
 
   @override
   Future<({int steps, int correct, int wrong, int skipped})> getClimbProgress(
@@ -296,6 +311,47 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  // Batch 4: Home shows the month's recorded theme, and records it on the
+  // first view (StorageService.resolveClimbMonthTheme), not only when a
+  // Daily Test is completed.
+  for (final (year, month, id) in [
+    (2026, 10, 'green_slope'),
+    (2026, 11, 'ember_peak'),
+    (2026, 12, 'glacier_peak'),
+    (2027, 1, 'red_canyon'),
+  ]) {
+    testWidgets('$year-$month: the mountain shows $id', (tester) async {
+      final storage = _FakeStorageService()..steps = 3;
+      await pumpHome(tester,
+          storageService: storage, clock: () => DateTime(year, month, 5, 14));
+      await tester.pumpAndSettle();
+      expect(
+          tester.widget<MonthlyMountain>(find.byType(MonthlyMountain)).theme.id,
+          id);
+      expect(storage.themesResolved, contains((year, month)));
+    });
+  }
+
+  testWidgets('a recorded theme wins over the rotation', (tester) async {
+    final storage = _FakeStorageService()..recordedTheme = 'glacier_peak';
+    await pumpHome(tester,
+        storageService: storage, clock: () => DateTime(2026, 11, 5, 14));
+    await tester.pumpAndSettle();
+    expect(tester.widget<MonthlyMountain>(find.byType(MonthlyMountain)).theme,
+        ClimbThemes.glacierPeak);
+  });
+
+  testWidgets('if the theme cannot be read, the rotation\'s is shown',
+      (tester) async {
+    final storage = _FakeStorageService()..failTheme = true;
+    await pumpHome(tester,
+        storageService: storage, clock: () => DateTime(2026, 12, 5, 14));
+    await tester.pumpAndSettle();
+    expect(tester.widget<MonthlyMountain>(find.byType(MonthlyMountain)).theme,
+        ClimbThemes.glacierPeak);
+    expect(find.text('Retry progress'), findsNothing);
+  });
 
   // Device report, 2026-10-01: one step done on the month's first day, no
   // dot behind the avatar. The dots follow the completed steps, never the

@@ -44,11 +44,17 @@ class MonthlyMountain extends StatefulWidget {
   /// motion, a changed month length). Not called for the position the mountain
   /// mounts at, and not for a move that another move interrupts.
   final VoidCallback? onMotionEnd;
+
+  /// The month's theme: its images, its dark-mode object filter and
+  /// whether it draws the flag. Home passes the month's recorded theme
+  /// (`StorageService.resolveClimbMonthTheme`).
+  final ClimbTheme theme;
   const MonthlyMountain(
       {super.key,
       required this.days,
       required this.completedDays,
       required this.avatar,
+      this.theme = ClimbThemes.greenSlope,
       this.showPassedDayDots = passedDayDots,
       this.onMotionEnd});
 
@@ -87,6 +93,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
 
   /// The step the scene shows: the real progress, or, in debug builds
   /// only, `CLIMB_DEBUG_DAY` ([ClimbDebugDay]). Display only.
+  /// The theme the scene draws: the month's.
+  ClimbTheme get _theme => widget.theme;
+
   int get _shownSteps =>
       (ClimbDebugDay.value ?? widget.completedDays).clamp(0, widget.days);
 
@@ -104,9 +113,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
 
   /// The theme's objects: the save points, and the flag where the theme
   /// has one (lit only on the month's last step).
-  static List<ClimbSavePoint> get _objects => [
+  List<ClimbSavePoint> get _objects => [
         ...ClimbSavePoints.all,
-        if (ClimbThemes.greenSlope.hasSummitFlag) ClimbSavePoints.flag,
+        if (_theme.hasSummitFlag) ClimbSavePoints.flag,
       ];
 
   /// The objects reached at the step the pawn is going to (G8).
@@ -166,6 +175,15 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   @override
   void didUpdateWidget(MonthlyMountain oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.theme != widget.theme) {
+      // Another theme can draw another set of objects (the flag): states
+      // follow at once, without a fade.
+      _fade.stop();
+      _fading.clear();
+      _lit
+        ..clear()
+        ..addAll(_reached());
+    }
     if (oldWidget.days != widget.days ||
         oldWidget.completedDays != widget.completedDays) {
       _from = _day;
@@ -199,11 +217,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    // Every month shows Green Slope's image, light or dark with the app's
-    // mode, until the other themes have images (scene art, Stage 1): none
-    // of them is ready, so the rotation shows and records Green Slope for
-    // every month too (`ClimbThemeRotation.shownFor`).
-    const theme = ClimbThemes.greenSlope;
+    // The month's theme, light or dark image with the app's mode.
+    final theme = _theme;
     final palette = theme.paletteFor(brightness);
     // G6: in dark mode the objects take the theme's relighting.
     final darkGain =

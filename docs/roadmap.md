@@ -68,8 +68,8 @@ D1–D6 in the side-tracks file.)*
         extracted polyline (generated table and test), framing K-b 1.3×
         with two-axis follow, the avatar sized to the trail with a gradual
         shrink at the summit, faint dots on passed days (one setting turns
-        them off). Every month shows the Green Slope image until other
-        themes have images (G1–G7)
+        them off). Every month showed the Green Slope image until other
+        themes had images (Batch 4) (G1–G7)
   - [x] Scene Art Stage 2 — **done, verified on device, merged into
         `1.1.0`** (2026-10-01, fast-forward to `75d717f`; 1206 tests green
         on `1.1.0`). After the device checks: the dark-mode filter at
