@@ -1,0 +1,38 @@
+image: docs/design/scene-art/source/green/background_light.png  2172 x 2896 px
+trail colour (Lab median): [87.6, 7.5, 31.4]
+polyline points: 739 (every 7.24 px = 0.0025 of height)
+arc length: 5344.8 px; 1.8456 of height; 2.4608 of width
+arc length in normalized (x/w, y/h) space: 2.3505
+start (foot): px [581.4, 2469.7]  norm [0.2677, 0.8528]
+end (summit): px [1157.0, 482.1]  norm [0.5327, 0.1665]
+trail width across (px, image space; caps excluded):
+  min 43.5  median 73.0  max 160.0
+  normalized by width: min 0.02  median 0.0336  max 0.0737
+  narrowest at arc 0.926 (y 0.239), widest at arc 0.228 (y 0.725)
+  median width per tenth of arc, foot to summit: [95.5, 106.0, 90.8, 73.0, 76.0, 60.0, 68.5, 59.5, 55.8, 50.5]
+bends: 6 (a bend = the horizontal direction reverses by > 2% of width)
+  B1 right apex px [1700.1, 2098.6]  norm [0.7827, 0.7246]  arc 0.2277
+  B2 left  apex px [580.0, 1608.1]  norm [0.267, 0.5553]  arc 0.4662
+  B3 right apex px [1521.9, 1288.4]  norm [0.7007, 0.4449]  arc 0.6599
+  B4 left  apex px [827.2, 965.7]  norm [0.3809, 0.3335]  arc 0.8103
+  B5 right apex px [1280.4, 757.4]  norm [0.5895, 0.2615]  arc 0.9079
+  B6 left  apex px [1047.9, 611.1]  norm [0.4824, 0.211]  arc 0.9634
+clearings (automatic: the flat region beyond each bend's outer edge):
+  C1 right (bend B1) center px [1872.7, 2164.6] norm [0.8622, 0.7475]  box px [201.0, 110.0] norm [0.0925, 0.038]  area 15401 px  nearest trail arc 0.224 at 181.3 px
+  C2 left  (bend B2) center px [420.5, 1574.8] norm [0.1936, 0.5438]  box px [173.0, 97.0] norm [0.0797, 0.0335]  area 11015 px  nearest trail arc 0.468 at 162.7 px
+  C3 right (bend B3) center px [1663.2, 1274.3] norm [0.7658, 0.44]  box px [125.0, 78.0] norm [0.0576, 0.0269]  area 7528 px  nearest trail arc 0.661 at 141.6 px
+  C4 left  (bend B4) center px [689.1, 976.2] norm [0.3173, 0.3371]  box px [133.0, 73.0] norm [0.0612, 0.0252]  area 7027 px  nearest trail arc 0.81 at 138.5 px
+  C5 right (bend B5) center px [1375.1, 818.2] norm [0.6331, 0.2825]  box px [184.0, 75.0] norm [0.0847, 0.0259]  area 8800 px  nearest trail arc 0.905 at 109.2 px
+  C6 left  (bend B6) center px [935.6, 594.5] norm [0.4308, 0.2053]  box px [116.0, 50.0] norm [0.0534, 0.0173]  area 3932 px  nearest trail arc 0.963 at 113.5 px
+steps, evenly by arc length (day 0 = foot, last day = summit):
+  28 days: 190.9 px per step along the trail (0.06591 of height)
+  29 days: 184.3 px per step along the trail (0.06364 of height)
+  30 days: 178.2 px per step along the trail (0.06152 of height)
+  31 days: 172.4 px per step along the trail (0.05953 of height)
+  31 days, straight-line distance between neighbours: min 135.3 px  max 172.4 px
+  C1 nearest day: 28d 6, 29d 6, 30d 7, 31d 7
+  C2 nearest day: 28d 13, 29d 14, 30d 14, 31d 14
+  C3 nearest day: 28d 19, 29d 19, 30d 20, 31d 20
+  C4 nearest day: 28d 23, 29d 23, 30d 24, 31d 25
+  C5 nearest day: 28d 25, 29d 26, 30d 27, 31d 28
+  C6 nearest day: 28d 27, 29d 28, 30d 29, 31d 30

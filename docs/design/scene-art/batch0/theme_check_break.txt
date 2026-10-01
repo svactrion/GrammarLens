@@ -1,0 +1,26 @@
+Deliberate break: each altered copy must FAIL.
+RESULT: all three FAIL, as they must
+
+reference: green/background_light.png 2172 x 2896 px; px below are the reference's pixels; 'h' = share of its height
+thresholds: trail body max 0.005 h, mean 0.0015 h, ends 0.012 h, clearing 0.004 h, flag 0.002 h
+
+shift_8px.png: 2172 x 2896 px (x1 to the reference)  FAIL
+  trail body (3-97 % of its length) deviation: max 13.58 px (0.00469 h), mean 2.75 px (0.00095 h), p95 8.59 px
+  ends: start 21.06 px, summit 10.18 px; arc length ratio 0.9907
+  clearing center shifts (px): C1 7.8, C2 8.1, C3 7.4, C4 8.1, C5 8.3, C6 8.3
+  START flag offset: dx +8 px, dy +0 px (0.00276 h)
+  trail max: ok, trail mean: ok, ends: ok, clearings: ok, flag: FAIL
+
+shift_20px.png: 2172 x 2896 px (x1 to the reference)  FAIL
+  trail body (3-97 % of its length) deviation: max 25.4 px (0.00877 h), mean 7.08 px (0.00244 h), p95 18.04 px
+  ends: start 30.59 px, summit 22.13 px; arc length ratio 0.9907
+  clearing center shifts (px): C1 19.8, C2 20.0, C3 19.3, C4 20.0, C5 20.2, C6 20.2
+  START flag offset: dx +20 px, dy +0 px (0.00691 h)
+  trail max: FAIL, trail mean: FAIL, ends: ok, clearings: FAIL, flag: FAIL
+
+scale_1.5pct.png: 2172 x 2896 px (x1 to the reference)  FAIL
+  trail body (3-97 % of its length) deviation: max 19.93 px (0.00688 h), mean 6.52 px (0.00225 h), p95 14.31 px
+  ends: start 14.68 px, summit 13.07 px; arc length ratio 1.0083
+  clearing center shifts (px): C1 17.0, C2 10.0, C3 8.8, C4 7.7, C5 9.8, C6 12.3
+  START flag offset: dx -10 px, dy +14 px (0.00594 h)
+  trail max: FAIL, trail mean: FAIL, ends: ok, clearings: FAIL, flag: FAIL
