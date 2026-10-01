@@ -12,10 +12,11 @@ import 'climb_route.dart';
 /// pawn centered across and at [pawnAt] of the window's height, clamped so
 /// the window never shows past the image.
 class ClimbCamera {
-  /// G2: 1.3× for the daily view. One constant, so the owner can compare
-  /// K-a (1.0, the image just fitted to the width) on a device. At least 1:
-  /// below that the image would not cover the window's width.
-  static const zoom = 1.3;
+  /// G2: 1.1× for the daily view, chosen on a device after trying 1.3, 1.0
+  /// and 1.1 (2026-10-01). One constant, so framings can be compared on a
+  /// device. At least 1: below that the image would not cover the window's
+  /// width.
+  static const zoom = 1.1;
 
   /// The Home window's height, unchanged from 1.0.
   static const windowHeight = 350.0;

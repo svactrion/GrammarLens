@@ -90,7 +90,10 @@ void main() {
             'summit (floor) ${_f(sizes[31])} pt; hop ${_f(sizes[0] * MonthlyMountain.hopShare)} pt '
             'on the body')
         ..writeln('  the summit (snow cap top) is in the window from day '
-            '${from(0)}, below the chips from day ${from(_chipBand)}');
+            '${from(0) ?? 'never'}, below the chips (~${_f(_chipBand, 0)} pt) '
+            'from day ${from(_chipBand) ?? 'never'}; at its highest the '
+            'window shows the tip ${_f(peak.dy * camera.scale)} pt below '
+            'its top');
       for (final days in [28, 29, 30]) {
         final r = ClimbRoute(days);
         final first = [

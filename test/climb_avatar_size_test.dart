@@ -14,11 +14,11 @@ void main() {
   // Home's card widths on 320, 375 and 430 pt screens.
   const cardWidths = [288.0, 341.25, 391.3];
 
-  test('the base size: about 30–40 pt with K-b 1.3×, never above 42.3 pt', () {
+  test('the base size: about 27–37 pt with K-b 1.1×, never above 42.3 pt', () {
     final bases = [
       for (final w in cardWidths) ClimbCamera(w).baseAvatarTile,
     ];
-    expect(bases[0], inInclusiveRange(30, 42.3));
+    expect(bases[0], inInclusiveRange(25, 42.3));
     expect(bases[1], inInclusiveRange(bases[0], 42.3));
     expect(bases[2], inInclusiveRange(bases[1], 42.3));
     for (final b in bases) {

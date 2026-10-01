@@ -7,19 +7,19 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_camera.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
-/// Framing K-b 1.3× (scene art G2): the image fitted to the window's width
-/// and zoomed 1.3×, the camera following the pawn on both axes and never
+/// Framing K-b 1.1× (scene art G2, chosen on a device): the image fitted to
+/// the window's width and zoomed 1.1×, the camera following the pawn on both axes and never
 /// showing past the image. The camera is its own layer (D3).
 void main() {
   // Home's card widths on 320, 375 and 430 pt screens.
   const cardWidths = [288.0, 341.25, 391.3];
 
-  test('one zoom constant: 1.3×, the image fitted to the width and zoomed', () {
-    expect(ClimbCamera.zoom, 1.3);
+  test('one zoom constant: 1.1×, the image fitted to the width and zoomed', () {
+    expect(ClimbCamera.zoom, 1.1);
     for (final width in cardWidths) {
       final camera = ClimbCamera(width);
-      expect(camera.imageSize.width, closeTo(width * 1.3, 1e-9));
-      expect(camera.imageSize.height, closeTo(width * 1.3 * 4 / 3, 1e-6));
+      expect(camera.imageSize.width, closeTo(width * 1.1, 1e-9));
+      expect(camera.imageSize.height, closeTo(width * 1.1 * 4 / 3, 1e-6));
     }
   });
 
@@ -64,9 +64,12 @@ void main() {
           expect(w.dy, closeTo(350 * .72, 1e-9));
         }
       }
-      // Both axes really follow for most of the trail.
-      expect(followedX, greaterThan(100), reason: '$width pt');
-      expect(followedY, greaterThan(100), reason: '$width pt');
+      // Both axes really follow. At 1.1× the image is only a tenth wider
+      // than the window (across: 104 of 401 samples at every width) and,
+      // at 288 pt, only 72 pt taller (down: 95; 178 and 251 on wider
+      // cards).
+      expect(followedX, greaterThan(50), reason: '$width pt');
+      expect(followedY, greaterThan(50), reason: '$width pt');
       // At the foot the pawn is no higher than 72 % (the window may stop
       // at the image's bottom); at the summit the window stops at the top.
       expect(
