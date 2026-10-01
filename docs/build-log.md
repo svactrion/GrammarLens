@@ -6966,3 +6966,23 @@ On branch `1.1.0-design`; not merged, not pushed.
   merge approval.
 
 - **2026-10-01 — Scene Art Stage 1 verified on the owner's device (1.1× framing; days 2, 15, 27 and 31 through `CLIMB_DEBUG_DAY`; dots at 0.40) and merged into `1.1.0`** by fast-forward to `0740e83` (no merge commit; Scene Art Batch 0 comes with it); 1161 tests green on `1.1.0`.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 2 decisions G8, G9; D2 retired)
+
+Docs only, on branch `1.1.0-design` (at `1.1.0`, `537a68e`).
+
+- **[Product — owner]** Recorded in `1.1.0-design-side-tracks.md`,
+  "Decisions for Scene Art Stage 2":
+  - **G8.** A save point is faded (lower opacity, slight desaturation)
+    until the avatar reaches it, then takes its colours with a short fade
+    when the hop ends; there is no animation with Reduce Motion. The
+    campfire's flame burns only once reached. *Why:* "you took a break
+    here", small rewards through the month.
+  - **G9.** Placement by clearing size: cabin and tent on the largest of
+    C1–C4, campfire and fountain on the smaller ones. This replaces G4's
+    order. A tie is reported with a proposal.
+- **[Changes earlier decisions]** D2 (the day-28 rule) is retired. The
+  save points are reached on days 6–25, never within the last 2 steps.
+- **[Roadmap]** Scene Art Batch 0 is marked done. Stage 2 is described;
+  the volcanic theme stays open (its resolution is too low and it has no
+  dark version).

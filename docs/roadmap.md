@@ -53,10 +53,11 @@ D1–D6 in the side-tracks file.)*
       (Green light and dark ready, volcanic light only and temporary); the
       trail comes from the image, its steps from the extracted center line.
       Order:
-  - [ ] Scene Art Batch 0 — import, measure, report (no product code):
+  - [x] Scene Art Batch 0 — import, measure, report (no product code):
         trail extraction, clearings, theme consistency check, framing,
         objects, WebP size, replacement plan
-        (`docs/design/scene-art/batch0/report.md`)
+        (`docs/design/scene-art/batch0/report.md`) — done: report written,
+        owner's decisions G1–G7 taken, merged into `1.1.0` with Stage 1
   - [x] Scene Art Stage 1 — **done, verified on device, merged into
         `1.1.0`** (2026-10-01, fast-forward to `0740e83`; 1161 tests green
         on `1.1.0`). After the device check: framing 1.1×, passed-day dots
@@ -69,9 +70,14 @@ D1–D6 in the side-tracks file.)*
         shrink at the summit, faint dots on passed days (one setting turns
         them off). Every month shows the Green Slope image until other
         themes have images (G1–G7)
-  - [ ] Scene Art Stage 2 — save point objects on C1–C4 (campfire, tent,
-        fountain, cabin), D2 retired; the dark-mode object filter with the
-        flame excluded; the summit flag; the other themes' images (G4, G6)
+  - [ ] Scene Art Stage 2 — save point objects on C1–C4, placed by
+        clearing size (G9: cabin and tent on the largest, campfire and
+        fountain on the smaller), faded until reached and lit with a short
+        fade, the flame burning only once reached (G8); the dark-mode object
+        filter with the flame excluded (G6); the summit flag in themes whose
+        summit suits it; D2 retired (G4, G6, G8, G9). The other themes'
+        images, volcanic included (its resolution is too low and it has no
+        dark version), stay open
 - [ ] Batch 3d — stop markers become "save points": now the save point
       objects (campfire, tent, fountain, cabin) on 4 of the image's 6
       clearings (S3; which 4 is open; weekly days and D2 retired). Planned,
