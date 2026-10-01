@@ -6830,3 +6830,95 @@ Docs only, on branch `1.1.0-design`; `1.1.0` had no new commits to merge.
   - the volcanic resolution;
   - the theme check's thresholds;
   - the image tool's terms and Credits.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 1 built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Green
+Slope's illustration replaces the coded mountain. Numbers:
+`docs/design/scene-art/stage1/numbers.txt`. Renders:
+`docs/design/scene-art/stage1/`, starting with `overview.jpg`.
+
+- **[Commits]**
+  - `60db4c0`: decisions G1–G7, replaced decisions marked.
+  - `f52c80a`: the WebP backgrounds (1536 × 2048, q80;
+    `tool/scene_art/export_assets.py`).
+  - `4208c49`: the trail table generated from Batch 0's polyline
+    (`scripts/generate_climb_trail.sh`).
+  - `9803320`: the illustration replaces the coded mountain.
+  - `0f5d13d`: camera K-b 1.3×, following on both axes.
+  - `b02dbf9`: the avatar sized to the trail.
+  - `afbbee6`: passed-day dots.
+  - `35f7e7f`: the dusk image in dark mode.
+  - `1b061fd` and `1f2ad99`: the numbers and renders.
+  - Plus this docs commit.
+- **[Engineering] The trail.** `climb_trail_table.dart` is generated from
+  `docs/design/scene-art/batch0/trail_green.json`: 739 points, the trail's
+  horizontal width at each, and the 28–31-day step table evenly spaced by
+  arc length. The JSON gained `chord_px`; its other fields are unchanged.
+  `ClimbRoute` works in image widths.
+  - D3's test is now the regenerate-and-compare test. It turned red on a
+    backup copy with one table value edited, and again with one JSON point
+    edited.
+- **[Engineering] Camera (G2).** `ClimbCamera.zoom = 1.3` is one constant.
+  The camera follows on both axes and clamps both, so the window never
+  shows past the image. A boundary test checks every twentieth of a day of
+  28–31-day months at three widths.
+  - It turned red on a backup copy without the x clamp, and again without
+    the bottom clamp.
+- **[Product] Avatar (G3), chosen from the trail's narrowing.**
+  - **Base:** the footprint (the ground shadow, 0.65 of the tile) fits the
+    narrowest horizontal width over the trail's first 85 % (121 px of
+    2172), never above 42.3 pt.
+  - **Shrink:** from 85 % of the trail to the summit the size falls
+    linearly to a 0.6 floor. That is the latest start that keeps the
+    footprint inside the trail up to 99 % of its length; only the tip is
+    narrower than the floor.
+  - **Days shrinking:** 27–31 in a 31-day month, 24–28 in a 28-day month.
+  - **Hop:** stays 14/58 of the tile (D8's ratio); Reduce Motion is
+    unchanged.
+  - G3 estimated about 30 / 35 / 40 pt. The built base is 32.1 / 38.0 /
+    42.3: Batch 0's 112 px day-30 width now falls inside the shrink.
+- **[Product] Dots (G5).** 4 pt, 22 % opacity, in the palette's ink, on
+  days 1 to n − 1 (behind the avatar). The switch is
+  `MonthlyMountain.passedDayDots`.
+- **[Product] Light and dark.** The scene follows the app's mode, light or
+  dusk image.
+  - Every month shows Green Slope until other themes have images: none is
+    ready, so the rotation shows and records Green Slope. This is stated
+    in code (`shownFor`, `MonthlyMountain`) and in the side-tracks file.
+- **[Measured]** 31-day month, K-b 1.3×, at 320 / 375 / 430 pt:
+
+  | | 320 | 375 | 430 |
+  |---|---|---|---|
+  | Day step | 29.7 pt | 35.2 pt | 40.4 pt |
+  | Shortest straight step | 23.3 pt | 27.6 pt | 31.7 pt |
+  | Gap between dots | 19.3 pt | 23.6 pt | 27.7 pt |
+  | Avatar, days 0–26 | 32.1 pt | 38.0 pt | 42.3 pt |
+  | Avatar at the summit | 19.3 pt | 22.8 pt | 25.4 pt |
+  | Summit in the window from | day 13 | day 15 | day 20 |
+  | Summit below the chips from | day 16 | day 21 | day 22 |
+  | Share of the image shown | 54 % | 46 % | 40 % |
+
+  - **K1** (320 pt, 31 days): a day's step is 29.7 ≥ 17 pt and the dot
+    gap is 19.3 ≥ 5 pt, both pinned by tests.
+  - **App size:** the assets add 638.1 KB (366 + 272 KB). The code change
+    was not measured with a build. The generated table is 28 KB of Dart
+    source; the coded painter, scene and old tables are removed.
+- **[Tests removed]** 14 tests in total; the reason for each is in the
+  `9803320` commit message.
+  - `climb_scene_test.dart` (6), `climb_environment_test.dart` (3) and
+    `climb_markers_test.dart` (3): the coded mountain, the environment
+    items and the weekly markers are gone.
+  - `climb_table_test.dart` (2): replaced by `climb_trail_table_test.dart`.
+  - Also removed: the pill and F1 cases in the acceptance and camera tests.
+- **[Tests added]** Assets, the trail table, the K-b camera and its
+  bounds, avatar size and shrink, dots, light/dark, chip opacity (K4 over
+  any background). Also K1's dot gap.
+- **[Tests]** 1154 passed (1156 before this stage). `flutter analyze` is
+  clean.
+- **[Visual — pre-release check]** The Home mountain card changes
+  completely: the illustration, the camera, the avatar's size and the
+  dots. App Store screenshots and case-study images that show Home's
+  mountain will differ.
+- **[Open — owner]** The device check, including K-a against K-b by
+  changing `ClimbCamera.zoom`. Then merge approval.
