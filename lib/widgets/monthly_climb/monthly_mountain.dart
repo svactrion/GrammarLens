@@ -177,10 +177,11 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                             Positioned.fill(
                                 child: CustomPaint(
                                     painter: ClimbTrailDots(points: [
-                              // Days the pawn has left behind: on day n,
-                              // 1 to n − 1 (day n is under the avatar,
-                              // day 0 is the START mat).
-                              for (var d = 1; d < _day; d++)
+                              // One dot per completed step left behind: with n
+                              // steps done, on steps 0 to n − 1 (step n is
+                              // under the avatar). Step 0 is the trail's
+                              // foot by the START flag.
+                              for (var d = 0; d < _day; d++)
                                 _route.stepAt(d) * camera.scale
                             ], color: palette.ink))),
                           Positioned(
@@ -203,8 +204,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   }
 }
 
-/// Scene art G5: a faint dot on each passed day's step, in the image's
-/// points. Small and see-through, so the painted trail stays the trail.
+/// Scene art G5: a faint dot on each step the avatar has left behind, in
+/// the image's points. Small and see-through, so the painted trail stays the trail.
 class ClimbTrailDots extends CustomPainter {
   /// A dot's diameter, in points.
   static const diameter = 4.0;

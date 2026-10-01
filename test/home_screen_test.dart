@@ -297,6 +297,34 @@ void main() {
     });
   }
 
+  // Device report, 2026-10-01: one step done on the month's first day, no
+  // dot behind the avatar. The dots follow the completed steps, never the
+  // calendar day: on the 1st and on the 20th, one step gives one dot.
+  for (final calendarDay in [1, 20]) {
+    testWidgets(
+        'one completed step on October $calendarDay: one passed-day dot',
+        (tester) async {
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..steps = 1,
+          clock: () => DateTime(2026, 10, calendarDay, 14));
+      for (var i = 0;
+          i < 20 && find.byType(MonthlyMountain).evaluate().isEmpty;
+          i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.pumpAndSettle();
+      final mountain = find.byType(MonthlyMountain);
+      expect(tester.widget<MonthlyMountain>(mountain).completedDays, 1);
+      final dots = tester
+          .widgetList<CustomPaint>(
+              find.descendant(of: mountain, matching: find.byType(CustomPaint)))
+          .map((p) => p.painter)
+          .whereType<ClimbTrailDots>()
+          .single;
+      expect(dots.points, hasLength(1));
+    });
+  }
+
   for (final brightness in Brightness.values) {
     testWidgets('dragging the Home mountain scrolls the page in $brightness',
         (tester) async {

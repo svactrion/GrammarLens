@@ -27,7 +27,8 @@ void main() {
 
   test('neighbouring passed-day dots are at least 5 pt apart', () {
     var smallest = double.infinity;
-    for (var d = 2; d <= 31; d++) {
+    // Dots stand on steps 0–30 (the summit, 31, is under the avatar).
+    for (var d = 1; d <= 30; d++) {
       final gap =
           (route.stepAt(d) - route.stepAt(d - 1)).distance * camera.scale -
               ClimbTrailDots.diameter;

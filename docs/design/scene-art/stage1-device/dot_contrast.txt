@@ -1,0 +1,19 @@
+Passed-day dots: WCAG contrast between a dot and the trail around it,
+31-day month, steps 0-30; trail colour from the app's WebP backgrounds.
+Dots today: 4 pt, opacity 0.22. For scale: 3:1 is WCAG's minimum for
+meaningful non-text marks (1.4.11); these dots are decorative, so it is
+a reference, not a rule.
+
+light: trail under the dots, median RGB [254, 214, 162]; ink (38, 61, 57)
+  opacity 0.22: contrast median 1.45:1, lowest 1.45:1  <- today
+  opacity 0.30: contrast median 1.69:1, lowest 1.68:1
+  opacity 0.40: contrast median 2.06:1, lowest 2.04:1
+  opacity 0.50: contrast median 2.54:1, lowest 2.52:1
+  opacity 0.60: contrast median 3.17:1, lowest 3.14:1
+
+dark: trail under the dots, median RGB [143, 114, 105]; ink (228, 226, 216)
+  opacity 0.22: contrast median 1.36:1, lowest 1.35:1  <- today
+  opacity 0.30: contrast median 1.51:1, lowest 1.49:1
+  opacity 0.40: contrast median 1.72:1, lowest 1.69:1
+  opacity 0.50: contrast median 1.95:1, lowest 1.90:1
+  opacity 0.60: contrast median 2.19:1, lowest 2.13:1

@@ -38,32 +38,39 @@ void main() {
     expect(MonthlyMountain.passedDayDots, isTrue);
   });
 
-  testWidgets('on day 8, a dot on each of days 1–7 and on no other step',
+  testWidgets('8 steps done: a dot on each of steps 0–7 and on no other',
       (tester) async {
     await tester.pumpWidget(mountain(8));
     final dots = painters(tester).single;
     final route = ClimbRoute(31);
     expect(dots.points, [
-      for (var d = 1; d <= 7; d++) route.stepAt(d) * camera.scale,
+      for (var d = 0; d <= 7; d++) route.stepAt(d) * camera.scale,
     ]);
   });
 
-  testWidgets('on day 0 and day 1 there are no dots yet', (tester) async {
-    for (final steps in [0, 1]) {
-      await tester.pumpWidget(mountain(steps));
-      expect(painters(tester).single.points, isEmpty, reason: 'day $steps');
-    }
+  // The device report (2026-10-01): on the month's first day the Daily
+  // Test was done, the avatar moved one step, and no dot showed behind it.
+  testWidgets('one completed step: one dot, on the step left behind',
+      (tester) async {
+    await tester.pumpWidget(mountain(1));
+    expect(painters(tester).single.points,
+        [ClimbRoute(31).stepAt(0) * camera.scale]);
+  });
+
+  testWidgets('no step done: no dots yet', (tester) async {
+    await tester.pumpWidget(mountain(0));
+    expect(painters(tester).single.points, isEmpty);
   });
 
   testWidgets('a dot appears on the step the avatar has just left',
       (tester) async {
     await tester.pumpWidget(mountain(8));
-    expect(painters(tester).single.points, hasLength(7));
+    expect(painters(tester).single.points, hasLength(8));
     await tester.pumpWidget(mountain(9));
     await tester.pump(const Duration(milliseconds: 100));
-    expect(painters(tester).single.points, hasLength(8));
+    expect(painters(tester).single.points, hasLength(9));
     await tester.pumpAndSettle();
-    expect(painters(tester).single.points, hasLength(8));
+    expect(painters(tester).single.points, hasLength(9));
   });
 
   testWidgets('faint, in the palette\'s ink, in both modes', (tester) async {
