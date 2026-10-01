@@ -1,7 +1,7 @@
 // Scene Art Stage 2, measured on the real Home (the shell, HomeScreen,
 // ClimbCard, MonthlyMountain) on the last day of October 2026 (31 steps,
 // the window at the image's top): the flag (on the summit until the
-// Stage 2 fix, on C5 since) against the month and step chips and the
+// Stage 2 fix, on C6 since) against the month and step chips and the
 // plaque, and against the avatar standing on the summit; plus the object
 // assets' bytes.
 //

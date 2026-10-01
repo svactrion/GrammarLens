@@ -10,7 +10,7 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_trail_table.dart';
 import '../tool/climb_table/climb_save_point_generator.dart';
 
 /// Scene art Stage 2: the save points on their clearings (G4, G9) and the
-/// flag on C5, generated from the Stage 2 placement and never written by
+/// flag on C6, generated from the Stage 2 placement and never written by
 /// hand (the trail table's pattern, D3).
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -38,8 +38,8 @@ void main() {
     expect({byArea[2].$2, byArea[3].$2}, {'campfire', 'fountain'});
   });
 
-  test('the flag stands on C5, the flat clearing right of the last bends', () {
-    expect(ClimbSavePoints.flag.clearing, 'C5');
+  test('the flag stands on C6, the clearing under the summit, left of B6', () {
+    expect(ClimbSavePoints.flag.clearing, 'C6');
     expect(ClimbSavePoints.flag.object, 'summit_flag');
   });
 

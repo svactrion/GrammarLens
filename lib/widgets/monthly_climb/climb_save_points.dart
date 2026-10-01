@@ -81,8 +81,8 @@ abstract final class ClimbSavePoints {
 
   /// The flag (the summit_flag asset), in themes that have one
   /// (`ClimbTheme.hasSummitFlag`): the month's goal, on its own clearing
-  /// (C5) by the save points' rule, but reached only on the month's last
-  /// step, the summit (its arc is the whole trail's).
+  /// (C6, under the summit) by the save points' rule, but reached only on
+  /// the month's last step, the summit (its arc is the whole trail's).
   static final ClimbSavePoint flag = () {
     final (clearing, object, cx, cy, bw, bh, ratio) = climbFlag;
     final p = _place(clearing, object, cx, cy, bw, bh, ratio);

@@ -20,13 +20,14 @@ combination was measured (stage2/placement.json, "alternatives"); this one
 keeps every object largest: the tent on C1 at 0.9, the cabin on C2 at
 1.0, the fountain on C3 at 1.0, the campfire on C4 at 0.9.
 
-The flag (the summit_flag asset, the month's goal): on clearing C5, by
-the same rule as the save points (largest ratio whose shape stays off the
-trail). Stage 2 first stood it beside the trail's end; on the device it
-did not fit there (its pole leant on the snow cap's edge and the rocks,
+The flag (the summit_flag asset, the month's goal): on clearing C6, the
+clearing under the summit, left of bend B6 (Batch 0's verify_trail.jpg),
+by the same rule as the save points (largest ratio whose shape stays off
+the trail). Stage 2 first stood it beside the trail's end; on the device
+it did not fit there (its pole leant on the snow cap's edge and the rocks,
 its base on no flat ground; that spot is in no clearing,
-stage2/fix_flag_clearings.txt), so it moved to C5, a real flat clearing
-(owner, 2026-10-01).
+stage2/fix_flag_clearings.txt). The first fix put it on C5 by a label
+mix-up; the owner meant C6 from the start (2026-10-01).
 
 Writes docs/design/scene-art/stage2/placement.json (read by
 tool/climb_table/climb_save_point_generator.dart).
@@ -45,11 +46,11 @@ import trail as T
 ASSIGNMENT = {1: "tent", 2: "cabin", 3: "fountain", 4: "campfire"}
 LARGE, SMALL = ("cabin", "tent"), ("campfire", "fountain")
 BASE_DROP = 0.25
-# Down to 0.5: the flag on C5 is tall and its pennant reaches the bend
-# above; it first clears at 0.5 (0.6 touches by 1 px).
+# Down to 0.5: on C5 (the first fix) the tall flag's pennant reached the
+# bend above and only cleared at 0.55; on C6 it clears at 1.0.
 RATIOS = (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5)
 ALPHA = 25
-FLAG_CLEARING = 5
+FLAG_CLEARING = 6
 
 
 def fit(mask, clearing, name, size) -> dict:

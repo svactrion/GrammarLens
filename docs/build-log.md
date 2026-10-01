@@ -7109,3 +7109,16 @@ On branch `1.1.0-design`; not merged, not pushed.
 - **[Tests]** 1206 passed (1191 before). `flutter analyze` is clean.
 - **[Open — owner]** The device check: the dark strength (0.4 / 0.6 /
   0.8) and the flag on C5.
+
+- **2026-10-01 — Scene Art Stage 2: the flag moves from C5 to C6.**
+  - *Why:* the first fix's C5 came from a label mix-up. Ahmet meant C6
+    from the start: the clearing under the summit, left of bend B6
+    (Batch 0's `verify_trail.jpg`).
+  - *Size:* by the save points' rule it fits at ratio 1.0 of C6's width:
+    116 px at 2172, about 20 pt at 375 pt (on C5 it was 0.55, 101 px,
+    17.5 pt).
+  - *Unchanged:* it is faded until the month's last step, lit on it.
+  - C5 is now empty. C6, left empty at first for being within 3 steps of
+    the summit, takes one object, accepted on the device. G4 is updated.
+  - *Seen on renders:* on day 30 of 31 the avatar stands at B6, just right
+    of the flag; the pennant comes close to its ear but does not cover it.

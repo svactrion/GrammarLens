@@ -231,7 +231,7 @@ void main() {
     expect(find.byKey(const ValueKey('climb_campfire_flame')), findsNothing);
   });
 
-  // The flag on C5 is the month's goal: faded until the summit is reached
+  // The flag on C6 is the month's goal: faded until the summit is reached
   // on the month's last step, then lit like a save point.
   for (var days = 28; days <= 31; days++) {
     testWidgets('$days days: the flag is lit only on the last day',
