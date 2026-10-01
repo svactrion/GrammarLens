@@ -69,6 +69,21 @@ Stage 1's real-Home renders as JPEGs and an overview
 `tool/design_measure/scene_art/home_render_test.dart` writes
 (`tool/design_measure/README.md`).
 
+```bash
+build/scene_art_venv/bin/python tool/scene_art/export_objects.py
+```
+
+Stage 2: the save point objects and the summit flag,
+`assets/climb/objects/<name>.webp` (192 px wide, WebP quality 90, alpha
+kept lossless).
+- **Cleaning:** invisible stray pixels are zeroed, before and after the
+  resize.
+- **Flame layer:** `campfire_flame.webp`, the flame only, by a colour
+  threshold.
+- **Data:** the sizes, the threshold and the dark-mode gain go to
+  `docs/design/scene-art/stage2/objects.json`, which the save point table
+  generator reads.
+
 ## Checking a day on a device
 
 In a debug build the climb scene can show any step of the month instead
