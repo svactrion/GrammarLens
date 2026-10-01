@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
+
 import 'climb_route.dart';
 import 'climb_save_point_table.dart';
 import 'climb_trail_table.dart';
@@ -89,6 +91,25 @@ abstract final class ClimbSavePoints {
   // G8: an unreached save point is faded, lower opacity and a slight
   // desaturation; reached, it takes its own colours.
 
+  /// G6's strength in dark mode: 0 leaves the objects as they are, 1 is the
+  /// full relighting measured from the clearings; in between, a linear mix.
+  /// On the device (2026-10-01) the full filter made every object but the
+  /// campfire darker than the scene, so it is 0.6 until the owner picks the
+  /// value on a device (0.4 and 0.8 rendered next to it,
+  /// docs/design/scene-art/stage2/). The flame layer is never filtered.
+  static const defaultDarkFilterStrength = .6;
+
+  static double? _strengthForTesting;
+
+  /// Debug builds only: stands in for [defaultDarkFilterStrength] in tests
+  /// and measuring tools (renders at other strengths). Ignored in profile
+  /// and release builds.
+  static set debugDarkFilterStrengthOverride(double? value) =>
+      _strengthForTesting = value;
+
+  static double get darkFilterStrength =>
+      (kDebugMode ? _strengthForTesting : null) ?? defaultDarkFilterStrength;
+
   /// Opacity and saturation of an unreached save point.
   static const unreachedOpacity = .5;
   static const unreachedSaturation = .6;
@@ -97,11 +118,19 @@ abstract final class ClimbSavePoints {
   /// point that is [lit] (0 unreached, 1 reached, in between while fading
   /// in), in dark mode with the theme's [darkGain] (G6), or null in light.
   static List<double> matrix(
-      {required double lit, (double, double, double)? darkGain}) {
+      {required double lit,
+      (double, double, double)? darkGain,
+      double? strength}) {
     final s = unreachedSaturation + (1 - unreachedSaturation) * lit;
     final a = unreachedOpacity + (1 - unreachedOpacity) * lit;
     const lr = .2126, lg = .7152, lb = .0722;
-    final (gr, gg, gb) = darkGain ?? (1.0, 1.0, 1.0);
+    // The gain is diagonal, so mixing the object's own colour and the
+    // filtered one linearly is the gain moved toward 1.
+    final k = strength ?? darkFilterStrength;
+    double mix(double g) => 1 + k * (g - 1);
+    final (gr, gg, gb) = darkGain == null
+        ? (1.0, 1.0, 1.0)
+        : (mix(darkGain.$1), mix(darkGain.$2), mix(darkGain.$3));
     List<double> row(double g, double r0, double g0, double b0) => [
           g * ((1 - s) * lr + s * r0),
           g * ((1 - s) * lg + s * g0),

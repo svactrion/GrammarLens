@@ -4,9 +4,13 @@
 // without scrolling; each image is the climb card cut out of the screen at
 // 3x. Stage 1: days 1, 15 and 31 at 320 and 375 pt (the defaults);
 // Stage 2: DESIGN_MEASURE_SCREENS=375 DESIGN_MEASURE_DAYS=1,10,20,31.
+// DESIGN_MEASURE_MODES (light,dark) limits the modes, and
+// DESIGN_MEASURE_DARK_STRENGTH sets G6's strength, added to the file name.
+// Next to each image, <name>.json holds the objects' boxes in its pixels.
 //
 //   DESIGN_MEASURE_OUT=build/design_measure/scene_art_stage1 \
 //     flutter test tool/design_measure/scene_art/home_render_test.dart
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -17,6 +21,7 @@ import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_card.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
+import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 import '../home_fakes.dart';
 import '../layouts.dart' show loadFont, loadIconFont, outDir;
@@ -38,11 +43,21 @@ void main() {
     for (final d in env('DESIGN_MEASURE_DAYS') ?? ['1', '15', '31'])
       int.parse(d)
   ];
+  final modes = [
+    for (final m in env('DESIGN_MEASURE_MODES') ?? ['light', 'dark'])
+      Brightness.values.byName(m)
+  ];
+  final strength = double.tryParse(
+      Platform.environment['DESIGN_MEASURE_DARK_STRENGTH'] ?? '');
   for (final screen in screens) {
-    for (final b in Brightness.values) {
+    for (final b in modes) {
       for (final day in days) {
-        final file = 'home_${screen.toInt()}_${b.name}_day$day.png';
+        final suffix = strength == null ? '' : '_strength$strength';
+        final file = 'home_${screen.toInt()}_${b.name}_day$day$suffix.png';
         testWidgets(file, (tester) async {
+          ClimbSavePoints.debugDarkFilterStrengthOverride = strength;
+          addTearDown(
+              () => ClimbSavePoints.debugDarkFilterStrengthOverride = null);
           tester.view.physicalSize = Size(screen, 1400) * 3;
           tester.view.devicePixelRatio = 3;
           tester.view.padding = const FakeViewPadding(top: 60);
@@ -72,6 +87,12 @@ void main() {
           await tester.pump(const Duration(seconds: 2));
           await tester.pump();
           final card = tester.getRect(find.byType(ClimbCard));
+          final boxes = {
+            'window': tester.getRect(find.byType(MonthlyMountain)),
+            for (final p in ClimbSavePoints.all)
+              p.object: tester.getRect(
+                  find.byKey(ValueKey('climb_save_point_${p.clearing}'))),
+          };
           await tester.runAsync(() async {
             final full = await (key.currentContext!.findRenderObject()
                     as RenderRepaintBoundary)
@@ -91,6 +112,19 @@ void main() {
                 .toImage((src.width * 3).round(), (src.height * 3).round());
             final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
             File('$out/$file').writeAsBytesSync(bytes!.buffer.asUint8List());
+            File('$out/${file.replaceAll('.png', '.json')}')
+                .writeAsStringSync(jsonEncode({
+              for (final name in boxes.keys)
+                name: [
+                  for (final v in [
+                    boxes[name]!.left - src.left,
+                    boxes[name]!.top - src.top,
+                    boxes[name]!.right - src.left,
+                    boxes[name]!.bottom - src.top,
+                  ])
+                    v * 3
+                ]
+            }));
           });
         });
       }

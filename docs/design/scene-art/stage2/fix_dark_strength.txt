@@ -1,0 +1,27 @@
+G6 strength in dark mode, 375 pt, real Home: mean L* (0-100) of each object's
+own pixels and of the ground around it. Day 20: fountain and campfire
+unreached; day 31: all reached.
+
+strength 0.4
+  tent      not wholly in the window on day 31
+  cabin     reached (day 31): object  34.0, ground  35.2, object − ground  -1.2
+  fountain  reached (day 31): object  55.6, ground  40.1, object − ground +15.5 | unreached (day 20): object  46.8; reached − unreached  +8.7
+  campfire  reached (day 31): object  52.0, ground  30.6, object − ground +21.4 | unreached (day 20): object  41.4; reached − unreached +10.6
+
+strength 0.6
+  tent      not wholly in the window on day 31
+  cabin     reached (day 31): object  29.9, ground  35.2, object − ground  -5.3
+  fountain  reached (day 31): object  49.5, ground  40.1, object − ground  +9.5 | unreached (day 20): object  43.7; reached − unreached  +5.8
+  campfire  reached (day 31): object  48.4, ground  30.6, object − ground +17.8 | unreached (day 20): object  38.7; reached − unreached  +9.8
+
+strength 0.8
+  tent      not wholly in the window on day 31
+  cabin     reached (day 31): object  25.7, ground  35.2, object − ground  -9.6
+  fountain  reached (day 31): object  43.4, ground  40.1, object − ground  +3.3 | unreached (day 20): object  40.5; reached − unreached  +2.9
+  campfire  reached (day 31): object  44.8, ground  30.6, object − ground +14.2 | unreached (day 20): object  35.9; reached − unreached  +8.9
+
+strength 1.0
+  tent      not wholly in the window on day 31
+  cabin     reached (day 31): object  21.3, ground  35.2, object − ground -13.9
+  fountain  reached (day 31): object  37.1, ground  40.1, object − ground  -3.0 | unreached (day 20): object  37.3; reached − unreached  -0.2
+  campfire  reached (day 31): object  41.1, ground  30.6, object − ground +10.5 | unreached (day 20): object  33.2; reached − unreached  +7.9

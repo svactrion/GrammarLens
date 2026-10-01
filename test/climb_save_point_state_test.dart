@@ -144,11 +144,14 @@ void main() {
     // The body is relit by the theme's gain.
     final body = tester.widget<ClimbObjectLayer>(
         find.byKey(ValueKey('climb_save_point_${campfire.clearing}')));
+    // At the default strength: the gain moved toward 1.
     final (gr, gg, gb) = climbObjectDarkGain['green_slope']!;
+    double mix(double g) =>
+        1 + ClimbSavePoints.defaultDarkFilterStrength * (g - 1);
     final m = _matrix(body);
-    expect(m[0], closeTo(gr, 1e-9));
-    expect(m[6], closeTo(gg, 1e-9));
-    expect(m[12], closeTo(gb, 1e-9));
+    expect(m[0], closeTo(mix(gr), 1e-9));
+    expect(m[6], closeTo(mix(gg), 1e-9));
+    expect(m[12], closeTo(mix(gb), 1e-9));
   });
 
   testWidgets(
@@ -162,8 +165,64 @@ void main() {
         find.byKey(ValueKey('climb_save_point_${campfire.clearing}')));
     final c = ClimbSavePoints.apply(_matrix(body), flame);
     final (gr, _, _) = climbObjectDarkGain['green_slope']!;
+    const k = ClimbSavePoints.defaultDarkFilterStrength;
     expect(c.a, closeTo(ClimbSavePoints.unreachedOpacity, 1e-6));
-    expect(c.r, lessThan(flame.r * gr + 1e-6));
+    expect(c.r, lessThan(flame.r * (1 + k * (gr - 1)) + 1e-6));
+  });
+
+  // G6's strength (device check, 2026-10-01): 0 leaves an object as it is,
+  // 1 is the full relighting; the flame layer is outside it at any value.
+  group('dark filter strength', () {
+    final gain = climbObjectDarkGain['green_slope']!;
+    tearDown(() => ClimbSavePoints.debugDarkFilterStrengthOverride = null);
+
+    test('the default is 0.6, one constant', () {
+      expect(ClimbSavePoints.defaultDarkFilterStrength, .6);
+      expect(ClimbSavePoints.darkFilterStrength, .6);
+    });
+
+    test('0: the object is not filtered (as in light mode)', () {
+      for (final lit in [0.0, .5, 1.0]) {
+        expect(ClimbSavePoints.matrix(lit: lit, darkGain: gain, strength: 0),
+            ClimbSavePoints.matrix(lit: lit));
+      }
+    });
+
+    test('1: the full filter, as before the device check', () {
+      final m = ClimbSavePoints.matrix(lit: 1, darkGain: gain, strength: 1);
+      expect(m[0], closeTo(gain.$1, 1e-9));
+      expect(m[6], closeTo(gain.$2, 1e-9));
+      expect(m[12], closeTo(gain.$3, 1e-9));
+    });
+
+    test('in between, a linear mix of the two', () {
+      const c = Color(0xFF8A6E52);
+      final none = ClimbSavePoints.apply(
+          ClimbSavePoints.matrix(lit: 1, darkGain: gain, strength: 0), c);
+      final full = ClimbSavePoints.apply(
+          ClimbSavePoints.matrix(lit: 1, darkGain: gain, strength: 1), c);
+      for (final k in [.4, .6, .8]) {
+        final mid = ClimbSavePoints.apply(
+            ClimbSavePoints.matrix(lit: 1, darkGain: gain, strength: k), c);
+        expect(mid.r, closeTo(none.r + k * (full.r - none.r), 1e-9));
+        expect(mid.b, closeTo(none.b + k * (full.b - none.b), 1e-9));
+      }
+    });
+
+    for (final k in [0.0, .4, .6, .8, 1.0]) {
+      testWidgets('$k: the reached flame stays outside the filter',
+          (tester) async {
+        ClimbSavePoints.debugDarkFilterStrengthOverride = k;
+        await tester.pumpWidget(
+            mountain(31, campfire.reachedOn(31), brightness: Brightness.dark));
+        await tester.pumpAndSettle();
+        final overlay = find.byKey(const ValueKey('climb_campfire_flame'));
+        expect(overlay, findsOneWidget);
+        expect(tester.widget<Opacity>(overlay).opacity, 1);
+        expect(find.ancestor(of: overlay, matching: find.byType(ColorFiltered)),
+            findsNothing);
+      });
+    }
   });
 
   testWidgets('light mode: no flame layer is needed', (tester) async {
