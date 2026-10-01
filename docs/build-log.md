@@ -6982,7 +6982,7 @@ Docs only, on branch `1.1.0-design` (at `1.1.0`, `537a68e`).
     C1–C4, campfire and fountain on the smaller ones. This replaces G4's
     order. A tie is reported with a proposal.
 - **[Changes earlier decisions]** D2 (the day-28 rule) is retired. The
-  save points are reached on days 6–25, never within the last 2 steps.
+  save points are reached on days 7–26 (corrected in Stage 2's state commit; first written as 6–25), never within the last 2 steps.
 - **[Roadmap]** Scene Art Batch 0 is marked done. Stage 2 is described;
   the volcanic theme stays open (its resolution is too low and it has no
   dark version).

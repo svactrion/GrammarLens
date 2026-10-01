@@ -82,11 +82,45 @@ abstract final class ClimbSavePoints {
     return Rect.fromLTRB(x - w / 2, base - h, x + w / 2, base);
   }();
 
-  /// The colour matrix that leaves an object as it is.
-  static const identity = <double>[
-    1, 0, 0, 0, 0, //
-    0, 1, 0, 0, 0, //
-    0, 0, 1, 0, 0, //
-    0, 0, 0, 1, 0, //
-  ];
+  // G8: an unreached save point is faded, lower opacity and a slight
+  // desaturation; reached, it takes its own colours.
+
+  /// Opacity and saturation of an unreached save point.
+  static const unreachedOpacity = .5;
+  static const unreachedSaturation = .6;
+
+  /// The colour matrix (Flutter's `ColorFilter.matrix`, 5 × 4) for a save
+  /// point that is [lit] (0 unreached, 1 reached, in between while fading
+  /// in).
+  static List<double> matrix({required double lit}) {
+    final s = unreachedSaturation + (1 - unreachedSaturation) * lit;
+    final a = unreachedOpacity + (1 - unreachedOpacity) * lit;
+    const lr = .2126, lg = .7152, lb = .0722;
+    List<double> row(double r0, double g0, double b0) => [
+          (1 - s) * lr + s * r0,
+          (1 - s) * lg + s * g0,
+          (1 - s) * lb + s * b0,
+          0,
+          0,
+        ];
+    return [
+      ...row(1, 0, 0),
+      ...row(0, 1, 0),
+      ...row(0, 0, 1),
+      0, 0, 0, a, 0, //
+    ];
+  }
+
+  /// [matrix] applied to [c] (for tests and measuring).
+  static Color apply(List<double> m, Color c) {
+    final v = [c.r, c.g, c.b, c.a];
+    double ch(int row) {
+      final o = row * 5;
+      return (m[o] * v[0] + m[o + 1] * v[1] + m[o + 2] * v[2] + m[o + 3] * v[3])
+              .clamp(0.0, 1.0) +
+          m[o + 4] / 255;
+    }
+
+    return Color.from(alpha: ch(3), red: ch(0), green: ch(1), blue: ch(2));
+  }
 }

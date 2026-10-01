@@ -22,6 +22,9 @@ class MonthlyMountain extends StatefulWidget {
   /// (scene art G3: it shrinks toward the summit).
   static const hopShare = 14 / 58;
 
+  /// G8: how long a reached save point takes to light, after the hop.
+  static const savePointFade = Duration(milliseconds: 400);
+
   /// Scene art G5: faint dots on the days already walked, like a trail
   /// left behind; future days are not marked. **The one switch:** false
   /// shows only the image's trail, the fallback if the dots are not liked
@@ -53,8 +56,16 @@ class MonthlyMountain extends StatefulWidget {
 }
 
 class _MonthlyMountainState extends State<MonthlyMountain>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _motion;
+
+  /// G8: a save point the avatar has just reached fades in when the hop
+  /// ends.
+  late final AnimationController _fade;
+
+  /// Save points shown as reached, and those fading in now (by clearing).
+  final _lit = <String>{};
+  final _fading = <String>{};
   late ClimbRoute _route;
   double _from = 0, _to = 0;
   bool _reduceMotion = false;
@@ -85,6 +96,52 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     _from = _to = _shownSteps.toDouble();
     _motion = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 850), value: 1);
+    _fade = AnimationController(
+        vsync: this, duration: MonthlyMountain.savePointFade);
+    _lit.addAll(_reached());
+  }
+
+  /// The save points reached at the step the pawn is going to (G8).
+  Set<String> _reached() => {
+        for (final p in ClimbSavePoints.all)
+          if (p.reachedAt(_route.arcAt(_to))) p.clearing
+      };
+
+  /// Brings the save points' states up to the pawn's step: a newly reached
+  /// one fades in, unless Reduce Motion is on; a step back (or a new month)
+  /// changes them at once.
+  void _updateSavePoints() {
+    final reached = _reached();
+    final added = reached.difference(_lit).difference(_fading);
+    final keep = reached.containsAll(_lit) && reached.containsAll(_fading);
+    if (added.isEmpty && keep) return;
+    if (!keep || _reduceMotion) {
+      _fade.stop();
+      setState(() {
+        _fading.clear();
+        _lit
+          ..clear()
+          ..addAll(reached);
+      });
+      return;
+    }
+    setState(() => _fading.addAll(added));
+    _fade.forward(from: 0).then((_) {
+      if (!mounted) return;
+      setState(() {
+        _lit.addAll(_fading);
+        _fading.clear();
+      });
+    }, onError: (_) {});
+  }
+
+  /// 0 unreached, 1 reached, in between while fading in.
+  double _litFor(ClimbSavePoint p) {
+    if (_lit.contains(p.clearing)) return 1;
+    if (_fading.contains(p.clearing)) {
+      return Curves.easeOut.transform(_fade.value);
+    }
+    return 0;
   }
 
   @override
@@ -119,12 +176,15 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   }
 
   void _motionEnded() {
-    if (mounted) widget.onMotionEnd?.call();
+    if (!mounted) return;
+    _updateSavePoints();
+    widget.onMotionEnd?.call();
   }
 
   @override
   void dispose() {
     _motion.dispose();
+    _fade.dispose();
     super.dispose();
   }
 
@@ -157,7 +217,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                 color: palette.sky,
                 child: ExcludeSemantics(
                     child: AnimatedBuilder(
-                  animation: _motion,
+                  animation: Listenable.merge([_motion, _fade]),
                   builder: (context, _) {
                     final pawn = _route.pointAt(_day) * camera.scale;
                     // The camera follows the trail point, not the hop, so
@@ -195,11 +255,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                           for (final p in ClimbSavePoints.all)
                             Positioned.fromRect(
                                 rect: _scaled(p.rect, camera.scale),
-                                child: ClimbObjectLayer(
-                                    key: ValueKey(
-                                        'climb_save_point_${p.clearing}'),
-                                    asset: p.asset,
-                                    matrix: ClimbSavePoints.identity)),
+                                child: _savePoint(p, _litFor(p))),
                           if (theme.hasSummitFlag)
                             Positioned.fromRect(
                                 rect: _scaled(
@@ -208,7 +264,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                                     key: const ValueKey('climb_summit_flag'),
                                     asset:
                                         ClimbSavePoints.assetFor('summit_flag'),
-                                    matrix: ClimbSavePoints.identity)),
+                                    matrix: ClimbSavePoints.matrix(lit: 1))),
                           Positioned(
                               left: pawn.dx - tile / 2,
                               // The feet on the step: the tile's top is
@@ -230,9 +286,17 @@ class _MonthlyMountainState extends State<MonthlyMountain>
 
   static Rect _scaled(Rect r, double scale) => Rect.fromLTRB(
       r.left * scale, r.top * scale, r.right * scale, r.bottom * scale);
+
+  /// G8: the object faded until reached, its own colours once reached;
+  /// the campfire's flame with the rest.
+  Widget _savePoint(ClimbSavePoint p, double lit) => ClimbObjectLayer(
+      key: ValueKey('climb_save_point_${p.clearing}'),
+      asset: p.asset,
+      matrix: ClimbSavePoints.matrix(lit: lit));
 }
 
-/// One object image through a colour matrix, kept so it can be read back.
+/// One object image through a colour matrix (G6, G8): [matrix] is
+/// `ClimbSavePoints.matrix`, kept so it can be read back.
 class ClimbObjectLayer extends StatelessWidget {
   final String asset;
   final List<double> matrix;
