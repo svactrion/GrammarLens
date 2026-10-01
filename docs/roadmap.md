@@ -91,11 +91,15 @@ D1–D6 in the side-tracks file.)*
       every name since 1.0.0) — done, verified on device, merged into
       `1.1.0` (2026-09-30, fast-forward to `69bef5f`; 1120 tests green on
       `1.1.0`) (`docs/design/greeting-fix/report.md`)
-- [ ] Batch 4 — layer slot infrastructure (including a ridge/summit
-      silhouette slot in the background), Ember Peak, Glacier Peak, Red
-      Canyon, four summits. *(Scene art, S1/S4: becomes a light + dark
-      background pair per theme on the shared trail coordinates; only
-      Green is produced; to be reshaped from the Scene Art Batch 0 plan.)*
+- [ ] Batch 4 — **built 2026-10-02, not yet checked on a device, not
+      merged** (`docs/build-log.md`, "Batch 4"; `docs/design/scene-art/
+      batch4/`): Ember Peak, Glacier Peak and Red Canyon as light + dark
+      background pairs on the shared trail coordinates (scene art S1/S4),
+      each month showing (and recording) its rotation theme; the theme
+      check now verifies at Green's positions; the dark-mode object filter
+      per theme; the flag in all four themes; CLIMB_DEBUG_THEME. *(Was:
+      layer slot infrastructure, a ridge/summit silhouette slot and four
+      code-drawn summits, replaced by scene art.)*
 - [ ] Batch 5 — themed medal: body, emblem, month label
 - [ ] Batch 6 — month transition card and measurement events; after the
       card, once a month, a zoom from the whole mountain to the avatar

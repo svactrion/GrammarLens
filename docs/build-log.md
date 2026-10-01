@@ -7216,3 +7216,37 @@ On branch `1.1.0-design` (at `1.1.0`, `a76a4b0`); not pushed.
   - At strength 0.5 every theme keeps its unreached state distinguishable
     (`batch4/dark_filter.txt`). On Glacier the reached cabin is 16.3 L*
     darker than the snow (recorded).
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 4 built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Renders:
+`docs/design/scene-art/batch4/`, starting with `overview.jpg` (the four
+themes side by side, light and dark, day 20 and the last day).
+
+- **[Commits]**
+  - `0f087dd`: the theme check, now at Green's positions.
+  - `1be1d17`: the sources.
+  - `42f8866`: the themes in the app.
+  - `5b3d627`: the dark-mode gain per theme.
+  - `8b615b9`: `CLIMB_DEBUG_THEME`.
+  - Plus the renders and this docs commit.
+- **[Renders]** The real Home at 375 pt, light and dark, days 1, 20 and
+  the last (November 30, December and January 31), for the three new
+  themes, plus Green Slope (October) in the overview.
+  - *Seen:* on Red Canyon in light mode the orange flag on C6 stands on
+    orange rock and is harder to pick out than in the other themes. For
+    the device check.
+- **[Size]** +1.80 MB of backgrounds (Ember 638.7 KB, Glacier 535.5 KB,
+  Canyon 622.3 KB). The objects are shared, and the code change is a few
+  KB. All four themes' backgrounds together are 2.43 MB.
+- **[Tests]** 1235 passed (1206 before Batch 4). `flutter analyze` is
+  clean.
+- **[Visual — pre-release check]** November, December and January now
+  show their own themes on Home. App Store screenshots and case-study
+  images may differ by month.
+- **[Open — owner]**
+  - The device check of the three themes.
+  - The Ember lava against the destructive red (dark mode).
+  - Glacier's snow and the season rule.
+  - Glacier's dark cabin.
+  - Then merge approval.
