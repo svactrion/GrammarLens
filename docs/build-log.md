@@ -7122,3 +7122,12 @@ On branch `1.1.0-design`; not merged, not pushed.
     the summit, takes one object, accepted on the device. G4 is updated.
   - *Seen on renders:* on day 30 of 31 the avatar stands at B6, just right
     of the flag; the pennant comes close to its ear but does not cover it.
+
+- **2026-10-01 — Scene Art Stage 2: dark filter strength 0.5, chosen on
+  the device** (`ce05163`).
+  - The full filter (1.0) was too dark. 0.6, 0.4 and 0.5 were tried, and
+    0.5 is used (`ClimbSavePoints.defaultDarkFilterStrength`; G6).
+  - Renders: `stage2/fix2_*.jpg` and `fix2_overview.jpg` (375 pt, light
+    and dark, days 30 and 31). The flag on C6 is faded on day 30 and lit
+    on day 31.
+  - 1206 tests passed; `flutter analyze` is clean.
