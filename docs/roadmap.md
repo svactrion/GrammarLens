@@ -57,9 +57,16 @@ D1–D6 in the side-tracks file.)*
         trail extraction, clearings, theme consistency check, framing,
         objects, WebP size, replacement plan
         (`docs/design/scene-art/batch0/report.md`)
-  - [ ] Scene Art build — the illustrated background replaces the coded
-        mountain; step table from the extracted polyline; K1 re-checked.
-        Batches after it, in the order Batch 0 proposes
+  - [ ] Scene Art Stage 1 — Green Slope's illustration replaces the coded
+        mountain: WebP backgrounds (light and dark), the trail from the
+        extracted polyline (generated table and test), framing K-b 1.3×
+        with two-axis follow, the avatar sized to the trail with a gradual
+        shrink at the summit, faint dots on passed days (one setting turns
+        them off). Every month shows the Green Slope image until other
+        themes have images (G1–G7)
+  - [ ] Scene Art Stage 2 — save point objects on C1–C4 (campfire, tent,
+        fountain, cabin), D2 retired; the dark-mode object filter with the
+        flame excluded; the summit flag; the other themes' images (G4, G6)
 - [ ] Batch 3d — stop markers become "save points": now the save point
       objects (campfire, tent, fountain, cabin) on 4 of the image's 6
       clearings (S3; which 4 is open; weekly days and D2 retired). Planned,

@@ -6794,3 +6794,39 @@ changed. `1.1.0` merged in first (fast-forward to `b34fd06`, no conflict).
   - 1536 px q80 WebP is about 0.64 MB per theme pair.
   - Ten open questions, each with a recommendation, wait for the owner. No
     product code changed.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene art decisions G1–G7; Stage 1 started)
+
+Docs only, on branch `1.1.0-design`; `1.1.0` had no new commits to merge.
+
+- **[Product — owner, on Scene Art Batch 0 §6]** Recorded in
+  `1.1.0-design-side-tracks.md`, "Decisions after Scene Art Batch 0":
+  - **G1.** The source images stay in history (30 MB); looked at again
+    near 100 MB.
+  - **G2.** Daily framing K-b 1.3×, with one zoom constant for a K-a
+    comparison on the device. K-c only as the start of the month-change
+    zoom. F1 is replaced.
+  - **G3.** The avatar's shadow fits the trail. It shrinks gradually
+    toward the summit, with a floor; the span and the floor are chosen in
+    the build from the trail's narrowing.
+  - **G4.** Save points on C1–C4; C5 and C6 empty; D2 retired with them
+    (Stage 2).
+  - **G5.** Faint dots on passed days only, behind one setting; the step
+    pills are replaced.
+  - **G6.** Dark-mode object filter from the clearings, with the flame
+    kept out by a colour threshold (Stage 2).
+  - **G7.** S4's note confirmed: the background has its own dark version.
+- **[Changes earlier decisions]** Marked where they were written:
+  - F1;
+  - K1's curve (its criterion stays);
+  - `ClimbScene`'s silhouette and layers;
+  - the environment items;
+  - the code-drawn step markers.
+- **[Product] Until other themes have images, every month shows the Green
+  Slope image.** No other theme is ready, so the rotation already resolves
+  to Green Slope; the record (`climb_month_themes`) is unchanged.
+- **[Open]** Still open from Batch 0 §6, none blocking Stage 1:
+  - the campfire's smoke;
+  - the volcanic resolution;
+  - the theme check's thresholds;
+  - the image tool's terms and Credits.
