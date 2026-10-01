@@ -7133,3 +7133,46 @@ On branch `1.1.0-design`; not merged, not pushed.
   - 1206 tests passed; `flutter analyze` is clean.
 
 - **2026-10-01 — Scene Art Stage 2 verified on the owner's device (save points faded and lit, the flag on C6 faded on day 30 and lit on day 31 with no overlap with the avatar, dark filter strength 0.5) and merged into `1.1.0`** by fast-forward to `75d717f` (no merge commit); 1206 tests green on `1.1.0`, `flutter analyze` clean.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 4: three theme images in, checked)
+
+On branch `1.1.0-design` (at `1.1.0`, `a76a4b0`); not pushed.
+
+- **[Files]** Ember Peak, Glacier Peak and Red Canyon backgrounds, light
+  and dark, copied byte-identical to `docs/design/scene-art/source/`
+  (`ember/`, `glacier/`, `canyon/`; no `raw/`).
+  - Each is 2172 × 2896, like Green; light and dark are the same size.
+  - Batch 0's `volcanic/` draft moved to `source/archive/volcanic/` (with
+    a README: the first Ember Peak draft).
+  - `PROMPTS.md` on the Desktop is byte-identical to the repository's, so
+    it is unchanged.
+- **[Engineering] Theme check (`0f087dd`).** The first version failed five
+  of the six; the images are aligned (START flags within 2 px), its Green-
+  tuned detection was not. The check now verifies at Green's positions,
+  and all seven pass (Green dark and the six new):
+
+  | Image | Trail centre | Trail edges | Clearings (max) | Flag |
+  |---|---|---|---|---|
+  | Green dark | 100 % | 100 % | 0.53 | 0 px |
+  | Ember light | 100 % | 100 % | 0.73 | 1 px |
+  | Ember dark | 100 % | 100 % | 0.45 | 0 px |
+  | Glacier light | 100 % | 100 % | 0.40 | 2 px |
+  | Glacier dark | 100 % | 100 % | 0.24 | 2 px |
+  | Canyon light | 100 % | 100 % | 0.40 | 3 px |
+  | Canyon dark | 100 % | 100 % | 0.37 | 2 px |
+
+  Thresholds: ≥ 99 %, ≥ 99 %, ≤ 1.0, ≤ 0.002 h (about 6 px). All four
+  breaks fail (moved 8 and 20 px, scaled 1.5 %, C3 covered).
+- **[G1]** The sources in the repository are now 82 MB, under the 100 MB
+  mark.
+- **[Product — for the owner, not decided] Names and images** (Batch 2's
+  accuracy rule):
+  - *Ember Peak:* basalt, a glowing crater, lava cracks. A small share of
+    the lava pixels is close to the destructive red `#DC3232`: 11 % of
+    them within ΔE2000 10 in light, 21 % in dark (redder there, median ΔE
+    11.4). The Ember constraint in the side-tracks file asks the lava
+    not to be close to it.
+  - *Glacier Peak:* ice and snow. The ground is snow-covered all over; no
+    falling snow is seen, but it may read as winter (the "no season cues"
+    rule).
+  - *Red Canyon:* red rock and mesas.

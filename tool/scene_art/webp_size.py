@@ -26,7 +26,7 @@ import trail as T
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-BACKGROUNDS = ("green/background_light.png", "green/background_dark.png", "volcanic/background_light.png")
+BACKGROUNDS = ("green/background_light.png", "green/background_dark.png", "archive/volcanic/background_light.png")
 # 1086: the pre-upscale size; 1174: K-a at 430 pt; 1536: K-b 1.3 at 430 pt
 # (needs 1526); 1878: K-b 1.6 at 430 pt; 2172: the delivered size.
 WIDTHS = (1086, 1174, 1536, 1878, 2172)
