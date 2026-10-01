@@ -3,26 +3,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_save_point_table.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 /// Scene art G8 (and G6 in dark mode): a save point is faded until the
 /// avatar reaches it, then lights with a short fade when the hop ends (at
-/// once with Reduce Motion); the campfire's flame burns only once reached.
+/// once with Reduce Motion); the campfire's flame burns only once reached,
+/// and in dark mode it keeps its own colours then (G6).
 void main() {
-  Widget mountain(int days, int steps, {bool reduce = false}) => MaterialApp(
-      theme: buildAppTheme(Brightness.light),
-      home: MediaQuery(
-          data: MediaQueryData(disableAnimations: reduce),
-          child: Scaffold(
-              body: Align(
-                  alignment: Alignment.topLeft,
-                  child: SizedBox(
-                      width: 341.25,
-                      child: MonthlyMountain(
-                          days: days,
-                          completedDays: steps,
-                          avatar: Avatar.values.first))))));
+  Widget mountain(int days, int steps,
+          {Brightness brightness = Brightness.light, bool reduce = false}) =>
+      MaterialApp(
+          theme: buildAppTheme(brightness),
+          home: MediaQuery(
+              data: MediaQueryData(disableAnimations: reduce),
+              child: Scaffold(
+                  body: Align(
+                      alignment: Alignment.topLeft,
+                      child: SizedBox(
+                          width: 341.25,
+                          child: MonthlyMountain(
+                              days: days,
+                              completedDays: steps,
+                              avatar: Avatar.values.first))))));
 
   /// The save point's opacity, read from its colour matrix's alpha row:
   /// 0.5 unreached, 1 reached.
@@ -123,6 +127,49 @@ void main() {
             of: find.byKey(ValueKey('climb_save_point_${campfire.clearing}')),
             matching: find.byType(Image)),
         findsOneWidget);
+  });
+
+  testWidgets(
+      'dark mode, reached: the flame is drawn unfiltered over the '
+      'relit campfire', (tester) async {
+    await tester.pumpWidget(
+        mountain(31, campfire.reachedOn(31), brightness: Brightness.dark));
+    await tester.pumpAndSettle();
+    final overlay = find.byKey(const ValueKey('climb_campfire_flame'));
+    expect(overlay, findsOneWidget);
+    expect(tester.widget<Opacity>(overlay).opacity, 1);
+    // Not inside any colour filter.
+    expect(find.ancestor(of: overlay, matching: find.byType(ColorFiltered)),
+        findsNothing);
+    // The body is relit by the theme's gain.
+    final body = tester.widget<ClimbObjectLayer>(
+        find.byKey(ValueKey('climb_save_point_${campfire.clearing}')));
+    final (gr, gg, gb) = climbObjectDarkGain['green_slope']!;
+    final m = _matrix(body);
+    expect(m[0], closeTo(gr, 1e-9));
+    expect(m[6], closeTo(gg, 1e-9));
+    expect(m[12], closeTo(gb, 1e-9));
+  });
+
+  testWidgets(
+      'dark mode, unreached: no unfiltered flame; the fire is '
+      'relit and faded', (tester) async {
+    await tester.pumpWidget(
+        mountain(31, campfire.reachedOn(31) - 1, brightness: Brightness.dark));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('climb_campfire_flame')), findsNothing);
+    final body = tester.widget<ClimbObjectLayer>(
+        find.byKey(ValueKey('climb_save_point_${campfire.clearing}')));
+    final c = ClimbSavePoints.apply(_matrix(body), flame);
+    final (gr, _, _) = climbObjectDarkGain['green_slope']!;
+    expect(c.a, closeTo(ClimbSavePoints.unreachedOpacity, 1e-6));
+    expect(c.r, lessThan(flame.r * gr + 1e-6));
+  });
+
+  testWidgets('light mode: no flame layer is needed', (tester) async {
+    await tester.pumpWidget(mountain(31, 31));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('climb_campfire_flame')), findsNothing);
   });
 
   testWidgets('the summit flag stands in Green Slope, unfaded', (tester) async {

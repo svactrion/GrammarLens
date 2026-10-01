@@ -8,6 +8,7 @@ import '../avatar_tile.dart';
 import 'climb_camera.dart';
 import 'climb_debug_day.dart';
 import 'climb_route.dart';
+import 'climb_save_point_table.dart';
 import 'climb_save_points.dart';
 
 /// The Monthly Climb scene (1.1.0 design, scene art S1–S2): the theme's
@@ -197,6 +198,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     // every month too (`ClimbThemeRotation.shownFor`).
     const theme = ClimbThemes.greenSlope;
     final palette = theme.paletteFor(brightness);
+    // G6: in dark mode the objects take the theme's relighting.
+    final darkGain =
+        brightness == Brightness.dark ? climbObjectDarkGain[theme.id] : null;
     final savePoints = [
       for (final p in ClimbSavePoints.all)
         '${p.object} at step ${p.reachedOn(widget.days)}'
@@ -255,7 +259,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                           for (final p in ClimbSavePoints.all)
                             Positioned.fromRect(
                                 rect: _scaled(p.rect, camera.scale),
-                                child: _savePoint(p, _litFor(p))),
+                                child: _savePoint(p, _litFor(p), darkGain)),
                           if (theme.hasSummitFlag)
                             Positioned.fromRect(
                                 rect: _scaled(
@@ -264,7 +268,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                                     key: const ValueKey('climb_summit_flag'),
                                     asset:
                                         ClimbSavePoints.assetFor('summit_flag'),
-                                    matrix: ClimbSavePoints.matrix(lit: 1))),
+                                    matrix: ClimbSavePoints.matrix(
+                                        lit: 1, darkGain: darkGain))),
                           Positioned(
                               left: pawn.dx - tile / 2,
                               // The feet on the step: the tile's top is
@@ -287,12 +292,30 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   static Rect _scaled(Rect r, double scale) => Rect.fromLTRB(
       r.left * scale, r.top * scale, r.right * scale, r.bottom * scale);
 
-  /// G8: the object faded until reached, its own colours once reached;
-  /// the campfire's flame with the rest.
-  Widget _savePoint(ClimbSavePoint p, double lit) => ClimbObjectLayer(
-      key: ValueKey('climb_save_point_${p.clearing}'),
-      asset: p.asset,
-      matrix: ClimbSavePoints.matrix(lit: lit));
+  static Widget _asset(String path) => Image.asset(path,
+      fit: BoxFit.fill,
+      filterQuality: FilterQuality.medium,
+      gaplessPlayback: true);
+
+  /// G8 and G6: the object faded until reached; in dark mode relit by the
+  /// theme's gain. The campfire's flame keeps its own colours once reached
+  /// in dark mode: drawn unfiltered over the filtered fire, fading in with
+  /// it (unreached, the flame is filtered and faded like the rest).
+  Widget _savePoint(
+      ClimbSavePoint p, double lit, (double, double, double)? darkGain) {
+    final body = ClimbObjectLayer(
+        key: ValueKey('climb_save_point_${p.clearing}'),
+        asset: p.asset,
+        matrix: ClimbSavePoints.matrix(lit: lit, darkGain: darkGain));
+    if (p.object != 'campfire' || darkGain == null || lit == 0) return body;
+    return Stack(fit: StackFit.expand, children: [
+      body,
+      Opacity(
+          key: const ValueKey('climb_campfire_flame'),
+          opacity: lit,
+          child: _asset(ClimbSavePoints.flameAsset)),
+    ]);
+  }
 }
 
 /// One object image through a colour matrix (G6, G8): [matrix] is

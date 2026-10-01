@@ -45,6 +45,10 @@ class ClimbSavePoint {
 abstract final class ClimbSavePoints {
   static String assetFor(String object) => 'assets/climb/objects/$object.webp';
 
+  /// The campfire's flame only (tool/scene_art/export_objects.py): drawn
+  /// unfiltered over the filtered campfire in dark mode once reached (G6).
+  static const flameAsset = 'assets/climb/objects/campfire_flame.webp';
+
   /// The four save points, from the generated table.
   static final List<ClimbSavePoint> all = [
     for (final (clearing, object, cx, cy, bw, bh, ratio) in climbSavePointTable)
@@ -91,22 +95,24 @@ abstract final class ClimbSavePoints {
 
   /// The colour matrix (Flutter's `ColorFilter.matrix`, 5 × 4) for a save
   /// point that is [lit] (0 unreached, 1 reached, in between while fading
-  /// in).
-  static List<double> matrix({required double lit}) {
+  /// in), in dark mode with the theme's [darkGain] (G6), or null in light.
+  static List<double> matrix(
+      {required double lit, (double, double, double)? darkGain}) {
     final s = unreachedSaturation + (1 - unreachedSaturation) * lit;
     final a = unreachedOpacity + (1 - unreachedOpacity) * lit;
     const lr = .2126, lg = .7152, lb = .0722;
-    List<double> row(double r0, double g0, double b0) => [
-          (1 - s) * lr + s * r0,
-          (1 - s) * lg + s * g0,
-          (1 - s) * lb + s * b0,
+    final (gr, gg, gb) = darkGain ?? (1.0, 1.0, 1.0);
+    List<double> row(double g, double r0, double g0, double b0) => [
+          g * ((1 - s) * lr + s * r0),
+          g * ((1 - s) * lg + s * g0),
+          g * ((1 - s) * lb + s * b0),
           0,
           0,
         ];
     return [
-      ...row(1, 0, 0),
-      ...row(0, 1, 0),
-      ...row(0, 0, 1),
+      ...row(gr, 1, 0, 0),
+      ...row(gg, 0, 1, 0),
+      ...row(gb, 0, 0, 1),
       0, 0, 0, a, 0, //
     ];
   }
