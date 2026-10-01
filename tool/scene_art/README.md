@@ -39,18 +39,52 @@ Step 2: the trail's center line, bends and clearings from
 build/scene_art_venv/bin/python tool/scene_art/check_theme.py
 ```
 
-Step 2.5: the theme consistency check. With no arguments it checks
-`green/background_dark.png` and `volcanic/background_light.png` against
-`green/background_light.png`; pass other paths (relative to `source/`, or
-absolute) to check a new theme image. Exit code 1 on a failure.
-Thresholds and their reasons are at the top of the file.
+The theme consistency check (S4: every theme's image keeps Green's trail,
+clearings and START flag). Pass the images to check (relative to
+`source/`, or absolute); with no arguments it checks
+`green/background_dark.png`. Exit code 1 on a failure. Thresholds and their
+reasons are at the top of the file.
+
+**How it checks (since Batch 4, 2026-10-02).** At Green's known positions,
+not by re-detecting:
+1. **Trail.** Green's centre line must lie on the image's trail: 600
+   points within ΔE 20 of the image's own trail colour. The points at
+   ±0.6 of the half width must match the centre (ΔE 15).
+2. **Clearings.** There must be flat ground (median local L* deviation
+   ≤ 1.0) inside each of Green's six clearing ellipses.
+3. **START flag.** Its edge correlation, unchanged.
+
+**Why the first version was replaced.** It re-ran the trail and clearing
+extraction on each image and compared the results. That extraction is
+tuned on Green, and on the Batch 4 themes it failed images that are
+aligned (START flags within 2 px):
+- Ember's C6 is as dark and flat as the rock around it;
+- the canyon's trail mask leaked into same-coloured sand;
+- the glacier and canyon clearings touch the trail with no grass rim, so
+  growing them by colour pulled their centres 12–14 px.
+
+Crops of each failure: `docs/design/scene-art/batch4/check/`, made by
+`check_theme_detail.py`.
+
+The Batch 0 outputs in `docs/design/scene-art/batch0/` are from the first
+version.
 
 ```bash
-build/scene_art_venv/bin/python tool/scene_art/break_check.py
+build/scene_art_venv/bin/python tool/scene_art/check_theme_detail.py <out dir> <image> ...
 ```
 
-The check's deliberate-break run: shifted and scaled copies of the dark
-image, made in a temporary directory, must all fail.
+A close look at what the *first* version failed on: each failing
+clearing and the trail's worst point, the reference and the image side by
+side. Kept as the record of why the check changed. It uses the extraction,
+so it does not explain a failure of the current check.
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/break_check.py [<image> ...]
+```
+
+The check's deliberate-break run, on `green/background_dark.png` and any
+image given, made in memory: moved 8 px and 20 px, scaled 1.5 %, and
+clearing C3 painted over. Every copy must fail.
 
 ```bash
 build/scene_art_venv/bin/python tool/scene_art/export_assets.py

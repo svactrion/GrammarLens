@@ -1,0 +1,58 @@
+Deliberate break: each altered copy must FAIL.
+RESULT: every copy FAILS, as it must
+
+green/background_dark shift_8px: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.0)
+  trail edges (±0.6 of the half width): 99.7% within ΔE 15 of the centre (p95 2.5)
+  clearing flatness (median L* deviation): C1 0.27 C2 0.23 C3 0.47 C4 0.48 C5 0.53 C6 0.44
+  START flag offset: dx +8 px, dy +0 px (0.00276 h)
+  trail centre: ok, trail edges: ok, clearings: ok, flag: FAIL
+
+green/background_dark shift_20px: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.2)
+  trail edges (±0.6 of the half width): 98.0% within ΔE 15 of the centre (p95 5.6)
+  clearing flatness (median L* deviation): C1 0.29 C2 0.22 C3 0.51 C4 0.51 C5 0.55 C6 0.54
+  START flag offset: dx +20 px, dy +0 px (0.00691 h)
+  trail centre: ok, trail edges: FAIL, clearings: ok, flag: FAIL
+
+green/background_dark scale_1.5pct: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.1)
+  trail edges (±0.6 of the half width): 97.2% within ΔE 15 of the centre (p95 9.2)
+  clearing flatness (median L* deviation): C1 0.32 C2 0.25 C3 0.47 C4 0.46 C5 0.51 C6 0.44
+  START flag offset: dx -10 px, dy +14 px (0.00594 h)
+  trail centre: ok, trail edges: FAIL, clearings: ok, flag: FAIL
+
+green/background_dark C3_covered: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.1)
+  trail edges (±0.6 of the half width): 100.0% within ΔE 15 of the centre (p95 2.1)
+  clearing flatness (median L* deviation): C1 0.26 C2 0.23 C3 4.18 C4 0.48 C5 0.53 C6 0.44
+  START flag offset: dx +0 px, dy +0 px (0.00000 h)
+  trail centre: ok, trail edges: ok, clearings: FAIL, flag: ok
+
+canyon/background_dark shift_8px: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.2)
+  trail edges (±0.6 of the half width): 99.3% within ΔE 15 of the centre (p95 3.1)
+  clearing flatness (median L* deviation): C1 0.13 C2 0.16 C3 0.23 C4 0.17 C5 0.36 C6 0.29
+  START flag offset: dx +7 px, dy +2 px (0.00251 h)
+  trail centre: ok, trail edges: ok, clearings: ok, flag: FAIL
+
+canyon/background_dark shift_20px: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.4)
+  trail edges (±0.6 of the half width): 95.8% within ΔE 15 of the centre (p95 13.5)
+  clearing flatness (median L* deviation): C1 0.13 C2 0.16 C3 0.22 C4 0.18 C5 0.36 C6 0.31
+  START flag offset: dx +19 px, dy +2 px (0.00660 h)
+  trail centre: ok, trail edges: FAIL, clearings: ok, flag: FAIL
+
+canyon/background_dark scale_1.5pct: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.2)
+  trail edges (±0.6 of the half width): 91.2% within ΔE 15 of the centre (p95 38.9)
+  clearing flatness (median L* deviation): C1 0.14 C2 0.16 C3 0.22 C4 0.17 C5 0.30 C6 0.24
+  START flag offset: dx -12 px, dy +16 px (0.00691 h)
+  trail centre: ok, trail edges: FAIL, clearings: ok, flag: FAIL
+
+canyon/background_dark C3_covered: FAIL
+  trail centre: 100.0% of 600 points within ΔE 20 of its trail colour (p95 2.1)
+  trail edges (±0.6 of the half width): 100.0% within ΔE 15 of the centre (p95 1.5)
+  clearing flatness (median L* deviation): C1 0.13 C2 0.16 C3 3.01 C4 0.17 C5 0.37 C6 0.28
+  START flag offset: dx -1 px, dy +2 px (0.00077 h)
+  trail centre: ok, trail edges: ok, clearings: FAIL, flag: ok
