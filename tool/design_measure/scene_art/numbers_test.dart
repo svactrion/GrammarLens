@@ -8,7 +8,6 @@
 //     flutter test tool/design_measure/scene_art/numbers_test.dart
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_camera.dart';
