@@ -120,6 +120,25 @@ classes:
   `tool/scene_art/stage1_sheet.py` turns those PNGs into the report's
   JPEGs and `overview.jpg`.
 
+```bash
+DESIGN_MEASURE_OUT=docs/design/scene-art/stage2 flutter test tool/design_measure/scene_art/stage2_numbers_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/scene_art_stage2 DESIGN_MEASURE_SCREENS=375 DESIGN_MEASURE_DAYS=1,10,20,31 flutter test tool/design_measure/scene_art/home_render_test.dart
+```
+
+Scene Art Stage 2 (`docs/design/scene-art/stage2/`).
+- `stage2_numbers_test.dart` measures, on the real Home on day 31 at 320,
+  375 and 430 pt, the summit flag's box against the month and step chips,
+  the plaque and the avatar on the summit, plus the object assets' bytes
+  (`numbers.txt`).
+- `home_render_test.dart` takes its screens and days from
+  `DESIGN_MEASURE_SCREENS` and `DESIGN_MEASURE_DAYS` (Stage 1's when
+  unset) and decodes the object assets too.
+- `tool/scene_art/stage1_sheet.py stage2 375 1,10,20,31` makes the JPEGs
+  and `overview.jpg`.
+
 To write the images straight into the report folder:
 
 ```bash
