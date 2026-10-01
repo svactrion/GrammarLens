@@ -156,6 +156,28 @@ flutter run --dart-define=CLIMB_DEBUG_DAY=15
 - **Hot restart keeps the define; changing the day needs a new
   `flutter run`.**
 
+## Checking a theme on a device
+
+In a debug build the climb scene can show any theme instead of the
+month's (`ClimbDebugTheme`, `lib/widgets/monthly_climb/`). The ids are
+`green_slope`, `ember_peak`, `glacier_peak` and `red_canyon`:
+
+```bash
+flutter run --dart-define=CLIMB_DEBUG_THEME=ember_peak
+```
+
+It combines with `CLIMB_DEBUG_DAY`:
+
+```bash
+flutter run --dart-define=CLIMB_DEBUG_THEME=glacier_peak --dart-define=CLIMB_DEBUG_DAY=31
+```
+
+- **What it changes:** the scene only. The month's recorded theme, the
+  rotation, the Daily Test and `dayKey` are untouched.
+- **An unknown id has no effect.**
+- **Profile and release builds ignore it:** it is guarded by
+  `kDebugMode`.
+
 ## How the trail is found (`trail.py`)
 
 1. **Mask.** Lab colour distance under 14 from the trail's own colour,

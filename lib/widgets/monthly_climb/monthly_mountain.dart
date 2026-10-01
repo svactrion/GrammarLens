@@ -7,6 +7,7 @@ import '../../models/climb_theme.dart';
 import '../avatar_tile.dart';
 import 'climb_camera.dart';
 import 'climb_debug_day.dart';
+import 'climb_debug_theme.dart';
 import 'climb_route.dart';
 import 'climb_save_point_table.dart';
 import 'climb_save_points.dart';
@@ -93,8 +94,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
 
   /// The step the scene shows: the real progress, or, in debug builds
   /// only, `CLIMB_DEBUG_DAY` ([ClimbDebugDay]). Display only.
-  /// The theme the scene draws: the month's.
-  ClimbTheme get _theme => widget.theme;
+  /// The theme the scene draws: the month's, or, in debug builds only,
+  /// `CLIMB_DEBUG_THEME` ([ClimbDebugTheme]). Display only.
+  ClimbTheme get _theme => ClimbDebugTheme.value ?? widget.theme;
 
   int get _shownSteps =>
       (ClimbDebugDay.value ?? widget.completedDays).clamp(0, widget.days);
