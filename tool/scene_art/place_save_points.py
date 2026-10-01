@@ -1,4 +1,4 @@
-"""Scene Art Stage 2: where the save points and the summit flag stand.
+"""Scene Art Stage 2: where the save points and the flag stand.
 
     build/scene_art_venv/bin/python tool/scene_art/place_save_points.py
 

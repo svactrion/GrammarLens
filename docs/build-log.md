@@ -7066,3 +7066,46 @@ placement and object data: `docs/design/scene-art/stage2/` (start with
   - C6's small object (G4).
   - The volcanic theme: its resolution is too low and it has no dark
     version.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 2 after the device check)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Device — owner]**
+  - The campfire is right in both modes, its flame exclusion included;
+    unchanged.
+  - In dark mode every other object looked darker than the scene, even on
+    day 31: G6's full filter is too strong.
+  - The flag did not fit beside the summit: its pole leant on the snow cap
+    and the rocks, and its base stood on no flat ground.
+- **[Commits]**
+  - `bdf86af`: **G6 strength.** `ClimbSavePoints.defaultDarkFilterStrength`
+    in `lib/widgets/monthly_climb/climb_save_points.dart`: 0 is the object
+    as it is, 1 the full filter, a linear mix in between. The flame stays
+    outside the filter at any value. Set to **0.6, to be chosen on a
+    device.**
+    - Measured at 375 pt in dark mode (`stage2/fix_dark_strength.txt`,
+      `fix_dark_strength.jpg`):
+
+      | Strength | Cabin against its ground, reached | Fountain, reached − unreached | Campfire, reached − unreached |
+      |---|---|---|---|
+      | 1.0 | −13.9 L* | −0.2 L* | +7.9 L* |
+      | 0.8 | −9.6 L* | +2.9 L* | +8.9 L* |
+      | 0.6 | −5.3 L* | +5.8 L* | +9.8 L* |
+      | 0.4 | −1.2 L* | +8.7 L* | +10.6 L* |
+
+    - At the full filter the fountain looked the same reached and
+      unreached.
+  - `177bdb9`: **the flag moves to C5.** The Stage 2 spot was in no
+    clearing (`stage2/fix_flag_clearings.txt`).
+    - It is placed by the save points' rule at a width ratio of 0.55: 0.6
+      touches the trail by 1 px.
+    - It is faded until the month's last step, then lit with the same fade
+      and Reduce Motion behaviour. In dark mode it takes the theme filter.
+    - G4 is updated. C6 stays empty.
+    - `stage2/numbers.txt` still describes the old flag spot.
+  - Renders: `stage2/fix_*.jpg`, 375 pt, light and dark, days 20, 30, 31.
+    On day 30 the flag is faded, and lit on day 31.
+- **[Tests]** 1206 passed (1191 before). `flutter analyze` is clean.
+- **[Open — owner]** The device check: the dark strength (0.4 / 0.6 /
+  0.8) and the flag on C5.
