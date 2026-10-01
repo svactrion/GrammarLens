@@ -1,0 +1,30 @@
+Scene Art Stage 1 — measured on ClimbRoute / ClimbCamera (zoom 1.3), 31-day month unless stated
+trail length 2.4608 image widths; shrink from 0.85 of it to 0.6 of the base; dots 4.0 pt at 0.22
+
+320.0 pt screen, card 288.00 pt (374.4 pt per image width; image 374.4 × 499.2 pt; window shows 54 % of it)
+  a day's step along the trail: 29.7 pt; shortest straight step 23.3 pt; gap between neighbouring dots 19.3 pt
+  avatar: 32.1 pt on days 0–26; shrinking on days 27–31: 30.3 / 27.5 / 24.8 / 22.0 / 19.3 pt; summit (floor) 19.3 pt; hop 7.7 pt on the body
+  the summit (snow cap top) is in the window from day 13, below the chips from day 16
+  28 days: shrinking from day 24, step 32.9 pt
+  29 days: shrinking from day 25, step 31.8 pt
+  30 days: shrinking from day 26, step 30.7 pt
+
+375.0 pt screen, card 341.25 pt (443.6 pt per image width; image 443.6 × 591.5 pt; window shows 46 % of it)
+  a day's step along the trail: 35.2 pt; shortest straight step 27.6 pt; gap between neighbouring dots 23.6 pt
+  avatar: 38.0 pt on days 0–26; shrinking on days 27–31: 35.9 / 32.6 / 29.4 / 26.1 / 22.8 pt; summit (floor) 22.8 pt; hop 9.2 pt on the body
+  the summit (snow cap top) is in the window from day 15, below the chips from day 21
+  28 days: shrinking from day 24, step 39.0 pt
+  29 days: shrinking from day 25, step 37.6 pt
+  30 days: shrinking from day 26, step 36.4 pt
+
+430.0 pt screen, card 391.30 pt (508.7 pt per image width; image 508.7 × 678.3 pt; window shows 40 % of it)
+  a day's step along the trail: 40.4 pt; shortest straight step 31.7 pt; gap between neighbouring dots 27.7 pt
+  avatar: 42.3 pt on days 0–26; shrinking on days 27–31: 39.9 / 36.3 / 32.7 / 29.0 / 25.4 pt; summit (floor) 25.4 pt; hop 10.2 pt on the body
+  the summit (snow cap top) is in the window from day 20, below the chips from day 22
+  28 days: shrinking from day 24, step 44.7 pt
+  29 days: shrinking from day 25, step 43.2 pt
+  30 days: shrinking from day 26, step 41.7 pt
+
+assets/climb/green_slope/background_light.webp: 365.9 KB
+assets/climb/green_slope/background_dark.webp: 272.2 KB
+assets added: 638.1 KB

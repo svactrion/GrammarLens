@@ -60,6 +60,15 @@ Stage 1: the app's background assets,
 `assets/climb/<theme>/background_<mode>.webp` (1536 × 2048, WebP quality
 80; byte-identical on a re-run).
 
+```bash
+build/scene_art_venv/bin/python tool/scene_art/stage1_sheet.py
+```
+
+Stage 1's real-Home renders as JPEGs and an overview
+(`docs/design/scene-art/stage1/`), from the PNGs that
+`tool/design_measure/scene_art/home_render_test.dart` writes
+(`tool/design_measure/README.md`).
+
 ## How the trail is found (`trail.py`)
 
 1. **Mask.** Lab colour distance under 14 from the trail's own colour,

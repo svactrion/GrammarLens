@@ -100,6 +100,26 @@ the code is in the history before that commit. `after_test.dart`,
 they now render the illustrated scene, so their images no longer match the
 3b/3c reports.
 
+```bash
+DESIGN_MEASURE_OUT=docs/design/scene-art/stage1 flutter test tool/design_measure/scene_art/numbers_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/scene_art_stage1 flutter test tool/design_measure/scene_art/home_render_test.dart
+```
+
+Scene Art Stage 1 (`docs/design/scene-art/stage1/`), on the product's own
+classes:
+- `numbers_test.dart`: per card width, a day's step, the gap between
+  passed-day dots, the avatar's size on each day and at the summit, the
+  day the summit comes into view, and the added asset bytes
+  (`numbers.txt`);
+- `home_render_test.dart`: the real Home (shell, HomeScreen, ClimbCard)
+  at 320 and 375 pt, light and dark, days 1, 15 and 31 of October 2026,
+  each cut to the climb card at 3x, with the images really decoded.
+  `tool/scene_art/stage1_sheet.py` turns those PNGs into the report's
+  JPEGs and `overview.jpg`.
+
 To write the images straight into the report folder:
 
 ```bash
