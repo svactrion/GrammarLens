@@ -7131,3 +7131,5 @@ On branch `1.1.0-design`; not merged, not pushed.
     and dark, days 30 and 31). The flag on C6 is faded on day 30 and lit
     on day 31.
   - 1206 tests passed; `flutter analyze` is clean.
+
+- **2026-10-01 — Scene Art Stage 2 verified on the owner's device (save points faded and lit, the flag on C6 faded on day 30 and lit on day 31 with no overlap with the avatar, dark filter strength 0.5) and merged into `1.1.0`** by fast-forward to `75d717f` (no merge commit); 1206 tests green on `1.1.0`, `flutter analyze` clean.
