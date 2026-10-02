@@ -7288,3 +7288,5 @@ On branch `1.1.0-design`; not merged, not pushed.
 - **[Renders]** `batch4/flag_red_canyon_*.jpg` and `flag_overview.jpg`:
   Red Canyon at 375 pt, light and dark, days 30 (faded) and 31 (lit),
   with the cyan pennant. 1250 tests pass; `flutter analyze` is clean.
+
+- **2026-10-02 — Batch 4 verified on the owner's device (Ember Peak, Glacier Peak and Red Canyon right in both modes; Red Canyon's cyan pennant, G10, easy to pick out in light mode) and merged into `1.1.0`** by fast-forward to `d403e3f` (no merge commit); 1250 tests green on `1.1.0`, `flutter analyze` clean.

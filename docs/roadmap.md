@@ -91,9 +91,10 @@ D1–D6 in the side-tracks file.)*
       every name since 1.0.0) — done, verified on device, merged into
       `1.1.0` (2026-09-30, fast-forward to `69bef5f`; 1120 tests green on
       `1.1.0`) (`docs/design/greeting-fix/report.md`)
-- [ ] Batch 4 — **built 2026-10-02, not yet checked on a device, not
-      merged** (`docs/build-log.md`, "Batch 4"; `docs/design/scene-art/
-      batch4/`): Ember Peak, Glacier Peak and Red Canyon as light + dark
+- [x] Batch 4 — **done, verified on device, merged into `1.1.0`**
+      (2026-10-02, fast-forward to `d403e3f`; 1250 tests green on `1.1.0`;
+      after the device check G10: Red Canyon's flag pennant is cyan blue)
+      (`docs/build-log.md`, "Batch 4"; `docs/design/scene-art/batch4/`): Ember Peak, Glacier Peak and Red Canyon as light + dark
       background pairs on the shared trail coordinates (scene art S1/S4),
       each month showing (and recording) its rotation theme; the theme
       check now verifies at Green's positions; the dark-mode object filter
