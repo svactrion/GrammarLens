@@ -101,7 +101,11 @@ D1–D6 in the side-tracks file.)*
       per theme; the flag in all four themes; CLIMB_DEBUG_THEME. *(Was:
       layer slot infrastructure, a ridge/summit silhouette slot and four
       code-drawn summits, replaced by scene art.)*
-- [ ] Batch 5 — themed medal: body, emblem, month label
+- [ ] Batch 5 — themed medals (12 composed images + the Welcome badge),
+      save point names and labels, the tier celebration, the C5 signpost.
+      Decisions N1–N14 (2026-10-02, `1.1.0-design-side-tracks.md`, "Batch
+      5"); Batch 0 started (`docs/design/batch5/batch0-report.md`). *(Was:
+      "themed medal: body, emblem, month label", replaced by N1–N3.)*
       Device checklist additions (Batch 6, M8, M15): the month transition
       card with the new medals; review the near-miss threshold (5 points)
       if the rule changes
@@ -152,6 +156,12 @@ Parked for 1.2 (not 1.1.0):
   data exists per month is listed in the Batch 6 Batch 0 report.
 - A mid-month return card (2026-10-02, Batch 6 M3): for a user who comes
   back in the middle of a month after a gap. Not designed.
+- A "reachable tier" hint (2026-10-02, Batch 5 N5): for a user who starts
+  late in a month, which tier is still within reach. The thresholds are
+  not prorated in 1.1.0. Not designed.
+- Tapping a save point shows its name (2026-10-02, Batch 5 N6). In 1.1.0
+  the name shows only once, when the avatar arrives. Not designed.
+- A save point earns a "rest day" (2026-10-02, Batch 5 N7). Not designed.
 
 ## Launch scope — 2026-09-19
 

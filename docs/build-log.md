@@ -7741,3 +7741,65 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
   the new medals" and "review the near-miss threshold".
 - **[Merge]** `1.1.0` fast-forwarded to `1.1.0-design` (the commit
   carrying this entry); see the roadmap.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 5 decisions N1–N14; Batch 0 started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date,
+both at `8301088`); not pushed. Docs only. Full text and reasons:
+`docs/1.1.0-design-side-tracks.md`, "Batch 5 — medals, save point names,
+the C5 signpost". The owner's prompt numbered them R1–R14; they are
+recorded as N1–N14 because R1–R6 already name the Batch 3b report's items.
+
+- **[Product — owner] N1 medal identity: per theme.** Each medal is
+  composed ahead of time from the tier's body, the theme's mountain and
+  stars on the rim (Gold 3, Silver 2, Bronze 1): 4 themes × 3 tiers = 12
+  images. *Rejected:* three generic medals (the collection repeats);
+  twelve separate generations (style drift); a written ribbon (unreadable
+  small). Stars sharp, golden, dark-edged (a soft cream star was lost on
+  Silver). Silver and Bronze are recoloured from the Gold body, same
+  geometry. Replaces "one body + emblem + month label, 7 layered assets".
+- **[Product — owner] N2 Welcome badge.** The same body in beige, a grey
+  stone mountain with an orange START flag, an orange ribbon with
+  "WELCOME" (Poppins Bold, SIL OFL 1.1, baked in), no stars.
+- **[Product — owner] N3 production.** `tool/medals/build_medals.py`
+  composes the images from `docs/design/medals/source/`; the app picks a
+  finished image and never layers one. Composed PNGs are not committed;
+  the app's assets are produced by the tool.
+- **[Product — owner] N4 thresholds unchanged** (25 / 50 / 75 %, rule
+  v1). *Why:* no user score distribution yet; the rule is versioned.
+- **[Product — owner] N5 no proration** for a late starter. 1.2: a
+  "reachable tier" hint.
+- **[Product — owner] N6 save point names**, the same in every theme:
+  tent "First Camp", cabin "Halfway Hut", fountain "Mountain Spring",
+  campfire "High Camp", flag "Summit". When the avatar arrives and the
+  object comes alive, an opaque name label shows above it, stays briefly
+  and fades; no tap; kept inside the card; no animation under Reduce
+  Motion; no day count. *Rejected:* a snackbar (covers Home's bottom
+  items), a popup (interrupts). 1.2: tap a save point to see its name.
+- **[Product — owner] N7 parked for 1.2:** a save point earning a "rest
+  day".
+- **[Product — owner] N8 tier celebration** the moment the score crosses
+  a threshold: medal image and confetti, reusing the Welcome badge's
+  celebration layout; once per tier per month; one tap moves on; no
+  confetti under Reduce Motion. The month card still sums up the month.
+- **[Product — owner] N9 same day:** the celebration first, then on Home
+  the avatar's step and the save point label (exact order after the
+  report).
+- **[Product — owner] N10 collection:** each month with its own theme's
+  medal; "Gold unlocks Bronze and Silver" stays; unearned medals faded
+  (opacity 0.5, saturation 0.6), no new image.
+- **[Product — owner] N11 C5 signpost** (dark wood, no lettering, arrow
+  up-left): decoration, not a save point; no name or label; always lit.
+  Changes G4's "C5 stays empty". *Why:* the empty clearing looked
+  unfinished; a save point there would crowd the last five steps (C5 is
+  reached on step 26 of 28, 29 of 31). It can become a save point later.
+- **[Product — owner] N12** two new events: a save point reached, a tier
+  becoming certain; names after the report. **N13** a `CLIMB_DEBUG_*`-style
+  setting to play the celebration and the label on a device. **N14** no
+  Home shortcut to the medals in 1.1.0.
+- **[Known limits]** Stars unreadable below 48 px and "WELCOME" below
+  96 px; the weakest colour pair is Red Canyon's mountain on Bronze; Ember
+  Peak's smoke is partly behind the stars; the medals on a dark background
+  are not yet checked on a device.
+- **[Roadmap]** Parked for 1.2: the reachable-tier hint (N5), tapping a
+  save point for its name (N6), the rest day (N7).
