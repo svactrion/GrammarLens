@@ -230,7 +230,28 @@ and names and parameters may still change in that file's Batch 6.
 | Item | Contract (draft) | Status |
 |---|---|---|
 | `theme_id` parameter | String, the id of the month's theme as stored with that month (`green_slope` / `ember_peak` / `glacier_peak` / `red_canyon`; exact ids are set in Batch 2). Added to the existing Monthly Climb events; candidates: E1 `daily_test_completed`, E3 `welcome_badge_earned`, E4 `medal_month_finalized` (for E4, the finalized month's theme, not the current one). E5 `profile_medals_viewed` spans several months and gets none. | Planned (1.1.0), not implemented |
-| Month transition card event(s) | "Card shown" and "`Start climbing` tapped", each with a case parameter (`a` = a medal was earned last month, `b` = no medal). Event names are not decided. Case (c), the user's first month, shows no card and sends nothing. | Planned (1.1.0), not implemented |
+| ~~Month transition card event(s)~~ | ~~"Card shown" and "`Start climbing` tapped", each with a case parameter.~~ Replaced by M19 (2026-10-02), below. | Replaced |
+| `theme_id` on `mode_selected` (M19) | Only when `mode = daily_test`: the theme of the month the Daily Test is opened in, from Home. `topic` and `premium` keep no extra parameter. The Day-0 test sends no `mode_selected` (§1, gap 2), so it carries none. | Planned (1.1.0), not implemented |
+
+#### Month transition (Batch 6, decision M19, owner 2026-10-02) — planned, not implemented
+
+`docs/1.1.0-design-side-tracks.md`, M16–M19. Values are strings or ints;
+booleans as 0/1, as everywhere else.
+
+| Event | Params | Fired |
+|---|---|---|
+| `month_card_shown` | `theme_id` (the new month's), `variant` = `summary` / `fresh`, `medal_tier` = `none` / `bronze` / `silver` / `gold` (last month's; `none` on the fresh-start card), `near_miss_shown` (0/1) | Once per showing of the sheet. A card shown again after the app was closed with it open sends it again. |
+| `month_card_dismissed` | `theme_id`, `variant`, `method` = `button` / `drag` / `barrier`, `open_ms` (int: milliseconds from shown to dismissed) | Once, when the sheet closes by one of the three ways. |
+| `month_zoom_ended` | `theme_id`, `outcome` = `completed` / `skipped` / `reduce_motion` / `daily_test_opened`, `trigger` = `month_change` / `first_run` | Once per zoom. `skipped` = a tap on the mountain; `daily_test_opened` = the zoom jumped to its end because the Daily Test was opened (M16). |
+
+Differences from the Batch 0 report's §8 proposal: `tier` → `medal_tier`
+(its own name, so it is not read together with `medal_month_finalized`'s
+`tier`); `near_miss` → `near_miss_shown`; `month_card_dismissed` gains
+`theme_id` and `variant`; `method` values `swipe` / `outside` → `drag` /
+`barrier`; `outcome` gains `daily_test_opened` (M16). The debug replay
+sends none of these (M18). To register after the code is merged:
+dimensions `theme_id`, `variant`, `medal_tier`, `near_miss_shown`,
+`trigger`; metric `open_ms` (`method` and `outcome` are registered).
 
 Why: the monthly themes are a hypothesis about return visits; without
 `theme_id`, a drop in a given month cannot be told apart from that month's

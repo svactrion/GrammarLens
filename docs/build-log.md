@@ -7418,3 +7418,37 @@ folder. Nothing of Batch 6 is built.
   near-miss limit, the button, the old card's [N] line and tagline, sheet
   room, K-c bands, Daily Test during the zoom, profile builds, debug
   events and the developer-traffic filter, event names, first-run order.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 decisions M10–M20; build started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Owner's answers to the Batch 0 report's §11; full text and
+reasons in `docs/1.1.0-design-side-tracks.md`, "Decisions after Batch 6's
+Batch 0".
+
+- **[Product — owner]**
+  - M10: Home scrolls the climb card into view before the sheet opens;
+    the summary card is compacted for 320 × 568, or the scroll stays as a
+    written-down flaw.
+  - M11: K-c side bands in one colour per theme and mode, measured from
+    the image's edge (rejected: the window's fill, a blurred copy).
+  - M12: one button, "See the mountain", only closes the sheet.
+  - M13: no [N] goal line; the tagline only on the fresh-start card.
+  - M14: first run: zoom → hop → Premium, never stalling.
+  - M15: near-miss line at a gap of 5 points or less; one constant; never
+    at Gold; the gap as a number, no "one more day".
+  - M16: four zoom outcomes; opening the Daily Test is its own.
+  - M17: `CLIMB_DEBUG_MONTH_CARD` also in profile builds.
+  - M18: the debug replay sends no events; an opt-in define for DebugView.
+  - M19: the three events with their parameters; `theme_id` on the Daily
+    Test start (`mode_selected`, `mode = daily_test`).
+  - M20: the card freezes last month's medal itself; a read method and
+    per-month keys for `one_time_flags`; a next-tier function as the
+    card's only source.
+- **[Plaque — owner]** `plaqueRadiusShare` goes from 0.4 to 0.7 (14 pt).
+- **[Docs]** `analytics-plan.md`: the card events of 2026-09-26 replaced
+  by M19, with the differences from Batch 0 §8; still planned, not built.
+  `roadmap.md`: the Firebase developer-traffic filter under the 1.1.0
+  release checklist (not verified, most likely not set up); Batch 5's
+  device checklist gains the month card with the new medals and a review
+  of the near-miss threshold.

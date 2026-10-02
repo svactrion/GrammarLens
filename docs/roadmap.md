@@ -102,6 +102,9 @@ D1–D6 in the side-tracks file.)*
       layer slot infrastructure, a ridge/summit silhouette slot and four
       code-drawn summits, replaced by scene art.)*
 - [ ] Batch 5 — themed medal: body, emblem, month label
+      Device checklist additions (Batch 6, M8, M15): the month transition
+      card with the new medals; review the near-miss threshold (5 points)
+      if the rule changes
 - [ ] Batch 6 — month transition card and measurement events; after the
       card, once a month, a zoom from the whole mountain to the avatar.
       Decisions M1–M9 taken 2026-10-02 (`1.1.0-design-side-tracks.md`,
@@ -2326,6 +2329,12 @@ Owner items before the 1.1.0 build ships (added 2026-09-30):
 - [ ] **DebugView:** `set_source = shared` on a normal day and `fallback`
   with the app opened on a new day in airplane mode; `set_date` present
   (`docs/analytics-plan.md` §6).
+- [ ] **Firebase developer-traffic filter:** not verified to be set up,
+  most likely not set up. Debug (and profile) builds write to the
+  production Firebase project (`grammarlens-18d47`; no build-mode gate in
+  `AnalyticsService`), so test events count as real ones until a filter
+  excludes them (Batch 6 Batch 0 report §8, decision M18; added
+  2026-10-02).
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
