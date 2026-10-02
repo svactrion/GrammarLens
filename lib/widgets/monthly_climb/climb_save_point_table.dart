@@ -22,6 +22,10 @@ const climbSavePointBaseDrop = 0.25;
 /// month's last step.
 const climbFlag = ('C6', 'summit_flag', 0.43080, 0.20530, 0.05340, 0.01730, 1.00);
 
+/// The flag's pennant's median luminance (Rec. 709 on sRGB, 0–1): a theme
+/// that recolours it (G10) scales its colour by each pixel's luminance over this.
+const climbPennantLuminance = 0.5645;
+
 /// Each object asset's height ÷ width (assets/climb/objects/).
 const climbObjectAspects = <String, double>{
   'campfire': 0.94271,

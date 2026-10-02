@@ -29,6 +29,12 @@ void main() {
   ];
   // Not an object: the campfire's flame only, drawn over it (G6, G8).
   const flame = 'assets/climb/objects/campfire_flame.webp';
+  // G10: the flag split for a recoloured pennant, the pennant and the flag
+  // without it; each is one region like an object.
+  const flagParts = [
+    'assets/climb/objects/summit_flag_base.webp',
+    'assets/climb/objects/summit_flag_pennant.webp',
+  ];
 
   test('the bundle holds the four themes\' backgrounds and the objects',
       () async {
@@ -38,7 +44,7 @@ void main() {
             .listAssets()
             .where((path) => path.startsWith('assets/climb/'))
             .toSet(),
-        {...backgrounds, ...objects, flame});
+        {...backgrounds, ...objects, flame, ...flagParts});
   });
 
   Future<ui.Image> decode(String path) async {
@@ -50,7 +56,7 @@ void main() {
   // Scene art Stage 2: the sources carried invisible alpha = 1 pixels at
   // their corners (Batch 0, the avatar_16 class), and resizing can leave
   // faint alpha cut off from the edge; export_objects.py zeroes both.
-  for (final path in [...objects, flame]) {
+  for (final path in [...objects, flame, ...flagParts]) {
     test('$path: 192 px wide, decodes, under 16 KB', () async {
       final image = await decode(path);
       expect(image.width, 192);
@@ -58,7 +64,7 @@ void main() {
     });
   }
 
-  for (final path in objects) {
+  for (final path in [...objects, ...flagParts]) {
     test('$path: no alpha > 0 pixel cut off from the object\'s body', () async {
       final image = await decode(path);
       final w = image.width, h = image.height;

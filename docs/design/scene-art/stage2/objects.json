@@ -100,7 +100,20 @@
    ],
    "aspect_h_over_w": 1.29688,
    "bytes": 8576,
-   "flame_threshold_pixels": 173616
+   "flame_threshold_pixels": 173616,
+   "pennant_asset": "assets/climb/objects/summit_flag_pennant.webp",
+   "pennant_bytes": 3378,
+   "base_asset": "assets/climb/objects/summit_flag_base.webp",
+   "base_bytes": 6674,
+   "base_specks_zeroed": 82,
+   "pennant_threshold": {
+    "hue_min": 10,
+    "hue_max": 40,
+    "saturation_min": 0.72,
+    "value_min": 0.4
+   },
+   "pennant_share_of_body": 0.3049,
+   "pennant_luminance": 0.5645
   }
  },
  "dark_gain": {
@@ -125,5 +138,5 @@
    0.8091
   ]
  },
- "total_bytes": 45112
+ "total_bytes": 55164
 }

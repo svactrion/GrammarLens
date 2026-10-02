@@ -66,6 +66,14 @@ String generateClimbSavePointTable() {
         '${_f(fc[0])}, ${_f(fc[1])}, ${_f(fb[0])}, ${_f(fb[1])}, '
         '${_f(flag['ratio'] as num, 2)});')
     ..writeln()
+    ..writeln(
+        "/// The flag's pennant's median luminance (Rec. 709 on sRGB, 0–1): "
+        'a theme')
+    ..writeln('/// that recolours it (G10) scales its colour by each pixel\'s '
+        'luminance over this.')
+    ..writeln('const climbPennantLuminance = '
+        '${_f((objectData['summit_flag'] as Map)['pennant_luminance'] as num, 4)};')
+    ..writeln()
     ..writeln("/// Each object asset's height ÷ width (assets/climb/objects/).")
     ..writeln('const climbObjectAspects = <String, double>{');
   for (final e in objectData.entries) {

@@ -317,10 +317,30 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   /// it (unreached, the flame is filtered and faded like the rest).
   Widget _savePoint(
       ClimbSavePoint p, double lit, (double, double, double)? darkGain) {
+    final matrix = ClimbSavePoints.matrix(lit: lit, darkGain: darkGain);
+    // G10: a theme that recolours the flag's pennant draws the flag in two
+    // parts, the flag without its pennant and the pennant recoloured, both
+    // through the same state and dark-mode matrix.
+    final pennant = p.object == 'summit_flag'
+        ? ClimbSavePoints.pennantColorFor(_theme)
+        : null;
+    if (pennant != null) {
+      return Stack(fit: StackFit.expand, children: [
+        ClimbObjectLayer(
+            key: ValueKey('climb_save_point_${p.clearing}'),
+            asset: ClimbSavePoints.flagBaseAsset,
+            matrix: matrix),
+        ClimbObjectLayer(
+            key: const ValueKey('climb_flag_pennant'),
+            asset: ClimbSavePoints.pennantAsset,
+            matrix: ClimbSavePoints.compose(
+                matrix, ClimbSavePoints.pennantMatrix(pennant))),
+      ]);
+    }
     final body = ClimbObjectLayer(
         key: ValueKey('climb_save_point_${p.clearing}'),
         asset: p.asset,
-        matrix: ClimbSavePoints.matrix(lit: lit, darkGain: darkGain));
+        matrix: matrix);
     if (p.object != 'campfire' || darkGain == null || lit == 0) return body;
     return Stack(fit: StackFit.expand, children: [
       body,
@@ -332,8 +352,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   }
 }
 
-/// One object image through a colour matrix (G6, G8): [matrix] is
-/// `ClimbSavePoints.matrix`, kept so it can be read back.
+/// One object image through a colour matrix (G6, G8, G10): [matrix] is
+/// `ClimbSavePoints.matrix` (composed with the pennant's recolour for a
+/// recoloured pennant), kept so it can be read back.
 class ClimbObjectLayer extends StatelessWidget {
   final String asset;
   final List<double> matrix;

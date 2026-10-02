@@ -7250,3 +7250,38 @@ themes side by side, light and dark, day 20 and the last day).
   - Glacier's snow and the season rule.
   - Glacier's dark cabin.
   - Then merge approval.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 4 device check; G10: Red Canyon's pennant is blue)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Device — owner]** Ember, Glacier and Red Canyon are right in both
+  modes. The one problem: Red Canyon's orange pennant on C6 is hard to
+  pick out on its orange rock in light mode.
+- **[Product — owner] G10.** Only in Red Canyon the pennant is blue; the
+  pole, the stones and the other themes stay. An outline was rejected:
+  not enough at about 20 pt faded, and in every theme it would change
+  themes that work.
+- **[Engineering]** `export_objects.py` cuts the pennant by a colour
+  threshold, applied to the flag only (hue 10–40°, saturation ≥ 0.72,
+  value ≥ 0.40, the largest region).
+  - Checked by eye: the whole pennant, shade included; not the pole or
+    the stones.
+  - It writes `summit_flag_pennant.webp` (3.3 KB) and
+    `summit_flag_base.webp` (6.5 KB). Their alphas add up to the flag's.
+  - The other object assets are byte-identical.
+  - Red Canyon draws the base and the pennant through a shading-keeping
+    recolour, both through the same G8 state and 0.5 dark filter.
+    `ClimbTheme.flagPennantColor` is set for Red Canyon only.
+- **[Measured]** ΔE2000 of the pennant against the rock around it, for
+  the faded (day 30) and lit (day 31) flag (`batch4/flag_pennant.txt`):
+
+  | Pennant | Light, faded | Light, lit | Dark, faded | Dark, lit |
+  |---|---|---|---|---|
+  | Dark blue `#1E4FA3` | 26.2 | 54.3 | 14.5 | 28.2 |
+  | Mid blue `#2F7BD8` | 21.7 | 46.5 | 13.6 | 29.6 |
+  | Cyan `#1FB5C9` | 19.0 | 41.7 | 16.4 | 46.1 |
+  | Orange (≈ today) | 8.4 | 8.7 | 10.1 | 24.7 |
+
+  The default is cyan `#1FB5C9`, the best in the weakest shot.
+  `ClimbThemes.redCanyonPennant` changes it.

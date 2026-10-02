@@ -57,6 +57,11 @@ class ClimbTheme {
   /// summit.
   final bool hasSummitFlag;
 
+  /// The flag's pennant colour where the theme recolours it (G10), or null
+  /// for the asset's own brand orange. Only Red Canyon: on its orange rock
+  /// the orange pennant was hard to pick out on the device.
+  final Color? flagPennantColor;
+
   final ClimbSummit summit;
   final ClimbEmblem emblem;
 
@@ -70,6 +75,7 @@ class ClimbTheme {
     this.backgroundLight,
     this.backgroundDark,
     this.hasSummitFlag = false,
+    this.flagPennantColor,
     required this.summit,
     required this.emblem,
   }) : assert(
@@ -160,6 +166,13 @@ class ClimbThemes {
     emblem: ClimbEmblem.iceCrystal,
   );
 
+  /// G10: Red Canyon's flag pennant, a cyan blue, the complement of its red
+  /// rock. One constant. Of dark blue 1E4FA3, mid blue 2F7BD8 and cyan
+  /// 1FB5C9, cyan separates best from the rock in its weakest case (faded,
+  /// dark mode: ΔE2000 16.4, against 14.5 and 13.6; the brand orange 8.4
+  /// faded in light mode) (docs/design/scene-art/batch4/flag_pennant.txt).
+  static const redCanyonPennant = Color(0xFF1FB5C9);
+
   static const redCanyon = ClimbTheme(
     id: 'red_canyon',
     name: 'Red Canyon',
@@ -170,6 +183,7 @@ class ClimbThemes {
     backgroundLight: 'assets/climb/red_canyon/background_light.webp',
     backgroundDark: 'assets/climb/red_canyon/background_dark.webp',
     hasSummitFlag: true,
+    flagPennantColor: redCanyonPennant,
     summit: ClimbSummit.mesa,
     emblem: ClimbEmblem.rockArch,
   );

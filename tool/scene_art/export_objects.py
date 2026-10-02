@@ -50,6 +50,14 @@ QUALITY = 90
 # and the firelit log tips and stone edges, not the logs or the stones.
 FLAME = {"hue_min": 15, "hue_max": 60, "saturation_min": 0.55, "value_min": 0.90}
 
+# The flag's pennant (G10, Red Canyon recolours it): hue 10–40°,
+# saturation ≥ 0.72, value ≥ 0.40, then the largest connected region with
+# its holes filled. Chosen on the flag: it takes the whole pennant, its
+# shaded lower edge included, and leaves the pole's lit edges and the
+# stones out (the flame's threshold missed the pennant's shade; lower
+# saturation limits took the pole).
+PENNANT = {"hue_min": 10, "hue_max": 40, "saturation_min": 0.72, "value_min": 0.40}
+
 ASSETS = T.REPO / "assets/climb/objects"
 STAGE2 = T.REPO / "docs/design/scene-art/stage2"
 
@@ -59,6 +67,22 @@ def flame_mask(rgba: np.ndarray) -> np.ndarray:
     h, s, v = hsv[..., 0] * 360, hsv[..., 1], hsv[..., 2]
     return ((rgba[..., 3] > 0) & (h >= FLAME["hue_min"]) & (h <= FLAME["hue_max"])
             & (s >= FLAME["saturation_min"]) & (v >= FLAME["value_min"]))
+
+
+def pennant_mask(rgba: np.ndarray) -> np.ndarray:
+    hsv = rgb2hsv(rgba[..., :3] / 255.0)
+    h, s, v = hsv[..., 0] * 360, hsv[..., 1], hsv[..., 2]
+    m = ((rgba[..., 3] > 0) & (h >= PENNANT["hue_min"]) & (h <= PENNANT["hue_max"])
+         & (s >= PENNANT["saturation_min"]) & (v >= PENNANT["value_min"]))
+    labels, n = ndimage.label(m)
+    sizes = ndimage.sum(m, labels, range(1, n + 1))
+    return ndimage.binary_fill_holes(labels == (int(np.argmax(sizes)) + 1))
+
+
+def luminance(rgb: np.ndarray) -> np.ndarray:
+    """Rec. 709 weights on the sRGB values (0–1): what a colour matrix
+    can compute."""
+    return 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
 
 
 def clean(rgba: np.ndarray) -> tuple[np.ndarray, int]:
@@ -138,10 +162,37 @@ def main() -> None:
             entry["flame_asset"] = "assets/climb/objects/campfire_flame.webp"
             entry["flame_bytes"] = save(fim, "campfire_flame")
             entry["flame_share_of_body"] = round(float(flame_mask(crop).sum() / (crop[..., 3] > 0).sum()), 4)
+        if name == "summit_flag":
+            pm = pennant_mask(crop)
+            # A 1 px feather: the pennant meets the pole there. The pennant
+            # and the base split each pixel's alpha (m and 1 − m), so drawn
+            # together, at any shared opacity, they add up to the flag.
+            soft = np.clip(ndimage.gaussian_filter(pm.astype(float), 1.0) * 1.5, 0, 1)
+            base = crop.copy().astype(float)
+            base[..., 3] = base[..., 3] * (1 - soft)
+            entry["pennant_asset"] = "assets/climb/objects/summit_flag_pennant.webp"
+            # The base is cleaned like the objects (the feather leaves faint
+            # specks cut off from it); the pennant is then the flag minus
+            # the base, so the two add up to the flag exactly.
+            bim, specks = clean(np.asarray(resize(base, WIDTH)))
+            full = np.asarray(im).astype(int)
+            pim = full.copy()
+            pim[..., 3] = np.clip(full[..., 3] - bim[..., 3].astype(int), 0, 255)
+            pim, _ = clean(pim.astype(np.uint8))
+            entry["pennant_bytes"] = save(Image.fromarray(pim, "RGBA"), "summit_flag_pennant")
+            entry["base_asset"] = "assets/climb/objects/summit_flag_base.webp"
+            entry["base_bytes"] = save(Image.fromarray(bim, "RGBA"), "summit_flag_base")
+            entry["base_specks_zeroed"] = specks
+            entry["pennant_threshold"] = PENNANT
+            entry["pennant_share_of_body"] = round(float(pm.sum() / (crop[..., 3] > 0).sum()), 4)
+            # The pennant's median luminance: a recolour scales the target
+            # colour by each pixel's luminance over this, keeping the shading.
+            entry["pennant_luminance"] = round(float(np.median(luminance(crop[pm][:, :3] / 255.0))), 4)
         data["objects"][name] = entry
     trail = json.loads((T.OUT / "trail_green.json").read_text())
     data["dark_gain"] = {t: dark_gain(trail["clearings"], t) for t in THEMES}
-    data["total_bytes"] = sum(o["bytes"] + o.get("flame_bytes", 0) for o in data["objects"].values())
+    data["total_bytes"] = sum(o["bytes"] + o.get("flame_bytes", 0) + o.get("pennant_bytes", 0)
+                              + o.get("base_bytes", 0) for o in data["objects"].values())
     (STAGE2 / "objects.json").write_text(json.dumps(data, indent=1) + "\n")
     print(json.dumps(data, indent=1))
 

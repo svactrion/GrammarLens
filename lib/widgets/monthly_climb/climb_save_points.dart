@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 
+import '../../models/climb_theme.dart';
 import 'climb_route.dart';
 import 'climb_save_point_table.dart';
 import 'climb_trail_table.dart';
@@ -46,6 +47,68 @@ class ClimbSavePoint {
 
 abstract final class ClimbSavePoints {
   static String assetFor(String object) => 'assets/climb/objects/$object.webp';
+
+  /// G10: the flag split in two, for a theme that recolours the pennant:
+  /// the pennant alone, and the flag without it (their alphas add up to the
+  /// flag's, so together they fade like one object).
+  static const pennantAsset = 'assets/climb/objects/summit_flag_pennant.webp';
+  static const flagBaseAsset = 'assets/climb/objects/summit_flag_base.webp';
+
+  static Color? _pennantForTesting;
+
+  /// Debug builds only: stands in for a recolouring theme's pennant colour
+  /// in tests and measuring tools (renders of candidate colours). Themes
+  /// that keep the orange pennant are not affected. Ignored in profile and
+  /// release builds.
+  static set debugPennantColorOverride(Color? value) =>
+      _pennantForTesting = value;
+
+  /// The pennant colour [theme] draws, or null for the asset's own.
+  static Color? pennantColorFor(ClimbTheme theme) =>
+      theme.flagPennantColor == null
+          ? null
+          : (kDebugMode ? _pennantForTesting : null) ?? theme.flagPennantColor;
+
+  /// The colour matrix that turns the pennant into [colour], keeping its
+  /// shading: each pixel becomes [colour] scaled by its luminance over the
+  /// pennant's median luminance ([climbPennantLuminance]).
+  static List<double> pennantMatrix(Color colour) {
+    const lr = .2126, lg = .7152, lb = .0722;
+    List<double> row(double c) => [
+          c * lr / climbPennantLuminance,
+          c * lg / climbPennantLuminance,
+          c * lb / climbPennantLuminance,
+          0,
+          0,
+        ];
+    return [
+      ...row(colour.r),
+      ...row(colour.g),
+      ...row(colour.b),
+      0, 0, 0, 1, 0, //
+    ];
+  }
+
+  /// [outer] applied after [inner], as one colour matrix (5 × 4, offsets
+  /// in 0–255 like Flutter's).
+  static List<double> compose(List<double> outer, List<double> inner) {
+    final out = List<double>.filled(20, 0);
+    for (var r = 0; r < 4; r++) {
+      for (var c = 0; c < 4; c++) {
+        var sum = 0.0;
+        for (var k = 0; k < 4; k++) {
+          sum += outer[r * 5 + k] * inner[k * 5 + c];
+        }
+        out[r * 5 + c] = sum;
+      }
+      var offset = outer[r * 5 + 4];
+      for (var k = 0; k < 4; k++) {
+        offset += outer[r * 5 + k] * inner[k * 5 + 4];
+      }
+      out[r * 5 + 4] = offset;
+    }
+    return out;
+  }
 
   /// The campfire's flame only (tool/scene_art/export_objects.py): drawn
   /// unfiltered over the filtered campfire in dark mode once reached (G6).

@@ -54,6 +54,12 @@ void main() {
   // its rotation theme (Batch 4); October 2026 when unset. Added to the
   // file name.
   final monthEnv = Platform.environment['DESIGN_MEASURE_MONTH'];
+  // DESIGN_MEASURE_PENNANT (RRGGBB): a candidate pennant colour for a
+  // theme that recolours it (G10), added to the file name.
+  final pennantEnv = Platform.environment['DESIGN_MEASURE_PENNANT'];
+  final pennant = pennantEnv == null
+      ? null
+      : Color(0xFF000000 | int.parse(pennantEnv, radix: 16));
   final (year, month) = monthEnv == null
       ? (2026, 10)
       : (int.parse(monthEnv.split('-')[0]), int.parse(monthEnv.split('-')[1]));
@@ -62,10 +68,13 @@ void main() {
     for (final b in modes) {
       for (final day in days) {
         final suffix = (strength == null ? '' : '_strength$strength') +
-            (monthEnv == null ? '' : '_$monthEnv');
+            (monthEnv == null ? '' : '_$monthEnv') +
+            (pennantEnv == null ? '' : '_pennant$pennantEnv');
         final file = 'home_${screen.toInt()}_${b.name}_day$day$suffix.png';
         testWidgets(file, (tester) async {
           ClimbSavePoints.debugDarkFilterStrengthOverride = strength;
+          ClimbSavePoints.debugPennantColorOverride = pennant;
+          addTearDown(() => ClimbSavePoints.debugPennantColorOverride = null);
           addTearDown(
               () => ClimbSavePoints.debugDarkFilterStrengthOverride = null);
           tester.view.physicalSize = Size(screen, 1400) * 3;
@@ -89,6 +98,8 @@ void main() {
                 for (final p in ClimbSavePoints.all) p.asset,
                 ClimbSavePoints.assetFor('summit_flag'),
                 ClimbSavePoints.flameAsset,
+                ClimbSavePoints.flagBaseAsset,
+                ClimbSavePoints.pennantAsset,
               ])
                 precacheImage(AssetImage(asset), key.currentContext!),
             ]);
@@ -99,7 +110,7 @@ void main() {
           final card = tester.getRect(find.byType(ClimbCard));
           final boxes = {
             'window': tester.getRect(find.byType(MonthlyMountain)),
-            for (final p in ClimbSavePoints.all)
+            for (final p in [...ClimbSavePoints.all, ClimbSavePoints.flag])
               p.object: tester.getRect(
                   find.byKey(ValueKey('climb_save_point_${p.clearing}'))),
           };

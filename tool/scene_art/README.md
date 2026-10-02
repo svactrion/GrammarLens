@@ -114,6 +114,10 @@ kept lossless).
   resize.
 - **Flame layer:** `campfire_flame.webp`, the flame only, by a colour
   threshold.
+- **Flag parts (G10):** `summit_flag_pennant.webp` and
+  `summit_flag_base.webp`, the pennant and the flag without it, by a
+  colour threshold. Their alphas add up to the flag's. A theme that
+  recolours the pennant draws these two.
 - **Data:** the sizes, the threshold and the dark-mode gain go to
   `docs/design/scene-art/stage2/objects.json`, which the save point table
   generator reads.
