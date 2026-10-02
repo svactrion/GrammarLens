@@ -8,11 +8,16 @@ Writes to docs/design/batch6/card/: overview_<card>.jpg (3 screens × light
 and dark, Medium), textsizes_320.jpg (both cards at 320 × 568, light,
 Small / Medium / Large), one 1x JPEG per screen and mode at Medium, and
 month_card_real_numbers.txt.
+
+With the argument "se" (DESIGN_MEASURE_CARD_SCREENS=375x667 for the
+render): overview_375x667.jpg (both cards, light and dark, three text
+sizes) and month_card_real_numbers_375x667.txt.
 """
 
 from __future__ import annotations
 
 import shutil
+import sys
 
 from PIL import Image, ImageDraw
 
@@ -45,8 +50,22 @@ def grid(cells: list[tuple[str, Image.Image]], cols: int) -> Image.Image:
     return out
 
 
+def se() -> None:
+    cells = [
+        (f"{card} · {mode} · {size}", one(f"card_{card}_375_{mode}_{size}"))
+        for card in ("summary", "fresh")
+        for mode in ("light", "dark")
+        for size in ("small", "medium", "large")
+    ]
+    grid(cells, 6).save(DST / "overview_375x667.jpg", quality=82)
+    shutil.copy(SRC / "month_card_real_numbers_375x667.txt", DST / "month_card_real_numbers_375x667.txt")
+
+
 def main() -> None:
     DST.mkdir(parents=True, exist_ok=True)
+    if len(sys.argv) > 1 and sys.argv[1] == "se":
+        se()
+        return
     for card in ("summary", "fresh"):
         cells = []
         for screen in (320, 375, 430):

@@ -81,11 +81,27 @@ class _CardStorage extends StorageService {
       const [];
 }
 
-const _screens = [
-  (320.0, 568.0, 20.0, 0.0),
-  (375.0, 812.0, 47.0, 34.0),
-  (430.0, 932.0, 59.0, 34.0),
+/// Screens with their safe areas (status bar; home indicator).
+const _allScreens = {
+  '320x568': (320.0, 568.0, 20.0, 0.0),
+  '375x812': (375.0, 812.0, 47.0, 34.0),
+  '430x932': (430.0, 932.0, 59.0, 34.0),
+  // iPhone SE (2nd / 3rd gen): no notch, no home indicator.
+  '375x667': (375.0, 667.0, 20.0, 0.0),
+};
+
+/// DESIGN_MEASURE_CARD_SCREENS (comma list of the keys above) picks the
+/// screens and adds them to the numbers file's name; unset, the first
+/// three (Batch 6 step B's file).
+final _screenKeys =
+    Platform.environment['DESIGN_MEASURE_CARD_SCREENS']?.split(',');
+final _screens = [
+  for (final k in _screenKeys ?? ['320x568', '375x812', '430x932'])
+    _allScreens[k.trim()]!
 ];
+final _numbersFile = _screenKeys == null
+    ? 'month_card_real_numbers.txt'
+    : 'month_card_real_numbers_${_screenKeys!.join('_')}.txt';
 
 void main() {
   final out = outDir();
@@ -94,7 +110,7 @@ void main() {
     await loadFont();
     await loadIconFont();
   });
-  tearDownAll(() => File('$out/month_card_real_numbers.txt').writeAsStringSync([
+  tearDownAll(() => File('$out/$_numbersFile').writeAsStringSync([
         'Batch 6 step B: the real month card over the real Home after the M21 '
             'scroll (1 November 2026, Ember Peak). Points.',
         'sheet: top and height (share of the screen); content: the card\'s '

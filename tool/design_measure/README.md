@@ -266,3 +266,13 @@ and match their sources (`blur_check.txt`). The render shows K-c at
 430 pt for four themes × two modes × three strengths, then
 `tool/scene_art/batch6_blur_sheet.py` writes `blur_430_<mode>.jpg` and the
 seam measure `blur_seam.txt`.
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch6_card DESIGN_MEASURE_CARD_SCREENS=375x667 flutter test tool/design_measure/batch6/month_card_real_render_test.dart
+```
+
+The same real-card measure for the iPhone SE size (375 × 667, safe areas
+20 / 0): `month_card_real_numbers_375x667.txt`; then
+`tool/scene_art/batch6_card_sheet.py se` → `overview_375x667.jpg`.
+`DESIGN_MEASURE_CARD_SCREENS` takes any of 320x568, 375x812, 430x932,
+375x667.

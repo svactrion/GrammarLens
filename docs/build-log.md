@@ -7686,3 +7686,20 @@ On branch `1.1.0-design` at `d723917`; not pushed.
     `BackdropFilter` in it; the eight assets bundled, 192 × 256, under
     4 KB. The zoom's "scene not repainted" test stays green. 1343 tests
     pass.
+
+- **2026-10-02 — Batch 6: the month card measured at 375 × 667 (iPhone SE).**
+  The real card on the real Home after the M21 scroll, both cards, three
+  text sizes, light and dark (identical)
+  (`docs/design/batch6/card/month_card_real_numbers_375x667.txt`, renders
+  in `overview_375x667.jpg`, with the M22 backdrop):
+
+  | Card | Sheet S / M / L | Scrolls | Mountain above the sheet S / M / L | Today card's last 56 pt |
+  |---|---|---|---|---|
+  | Summary | 294 / 302 / 311 pt (44–47 %) | no | 61 / 58 / 55 % | on screen |
+  | Fresh | 226 / 257 / 269 pt (34–40 %) | no | 80 / 71 / 67 % | on screen |
+
+  No overflow. The avatar on START (in K-c) is under the sheet with both
+  cards; known, like at 320 pt. Nothing changed.
+  - *Note:* the step B renders for 320 / 375 × 812 / 430 pt in the same
+    folder were made before M22 and show the single-colour bands; their
+    numbers do not depend on the bands.
