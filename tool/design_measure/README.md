@@ -171,3 +171,33 @@ corner gets, and the largest share that no corner fits down
 `scene_art/home_render_test.dart` (which now also writes the plaque's
 box) run on the commit before and after the change, then
 `tool/scene_art/batch6_plaque_sheet.py`.
+
+```bash
+DESIGN_MEASURE_OUT=docs/design/batch6 flutter test tool/design_measure/batch6/medal_numbers_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=docs/design/batch6 flutter test tool/design_measure/batch6/zoom_numbers_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch6_sheet flutter test tool/design_measure/batch6/month_card_render_test.dart
+```
+
+Batch 6 Batch 0, step 3 (`docs/design/batch6/batch0-report.md`):
+- `medal_numbers_test.dart`: rule v1's maximum and thresholds for 28–31
+  days, the score bands, and the near-miss candidates (which scores show
+  the line); checks a next-tier helper against `tierFor`
+  (`medal_numbers.txt`).
+- `zoom_numbers_test.dart`: K-c (whole image, fitted to the window's
+  height) against `ClimbCamera`'s daily framing on the real Home at 320 /
+  375 / 430 pt: scales, offsets, s0, the avatar's place and size, the
+  daily layer's pixel size (`zoom_numbers.txt`).
+- `month_card_render_test.dart` with `month_card_prototype.dart`: the
+  month card prototype (fullest summary card, fresh-start card) as a real
+  modal bottom sheet over the real Home, the climb card redrawn in K-c
+  under the barrier; 3 screens × light/dark × 3 text sizes × Home at its
+  top or scrolled to the card; sheet height, content height, scrolling,
+  overflow, how much of the window shows (`month_card_numbers.txt`).
+  `tool/scene_art/batch6_sheet_sheet.py` writes the JPEGs to
+  `docs/design/batch6/sheet/`. The prototype is for measuring only.
