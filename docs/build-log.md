@@ -7597,3 +7597,21 @@ On branch `1.1.0-design` at `d98c083`; not pushed.
   each once on Home; `button` / `drag` / `barrier`; `completed` /
   `skipped` / `reduce_motion` / `daily_test_opened` on the month change
   and on the first run; the limits test covers 20 events.
+
+- **2026-10-02 — Batch 6 step D: `CLIMB_DEBUG_MONTH_CARD` (not on a device yet).**
+  `lib/widgets/monthly_climb/climb_debug_month_card.dart`. Applies when
+  `!kReleaseMode` (debug and profile, M17; the two older defines stay
+  `kDebugMode`). Home replays it once per Home, so on every launch and hot
+  restart, not on resume; the samples come from `MonthlyMedalRules`
+  (Gold + 12; Bronze − 33; Gold − 5 for the near-miss line). The replay
+  never asks storage for the card, never reads or writes a "seen" record
+  (the zoom claims nothing), and sends no `month_*` event unless
+  `CLIMB_DEBUG_MONTH_CARD_EVENTS=true` (M18). `first_run` plays the first
+  run's zoom through the same chain. With `CLIMB_DEBUG_THEME` the card
+  names that theme; with `CLIMB_DEBUG_DAY` the zoom ends on that step.
+  Tests (`test/climb_debug_month_card_test.dart`, 15): the release / debug
+  truth table; samples; each value on Home with no flag access recorded and
+  no event; replay on a new Home, not on resume; the combination with the
+  other two defines; the events opt-in. README: a new "Monthly Climb debug
+  defines" section (the two older defines were only in this log before).
+  The card's test harness moved to `test/support/month_card_support.dart`.

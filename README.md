@@ -177,6 +177,25 @@ telling you to do the below.
    folder, so these would otherwise ship inside the app. More checks land
    here over time rather than each as its own script.
 
+#### Monthly Climb debug defines
+
+Compile-time switches for checking the Monthly Climb on a device without
+waiting for a day or a month to pass. Pass them with `--dart-define` next
+to the usual config, for example
+`flutter run --dart-define-from-file=config/dev.json --dart-define=CLIMB_DEBUG_MONTH_CARD=summary_near`.
+They are display-only and never change stored progress, the Daily Test or
+`dayKey`.
+
+| Define | Builds | What it does |
+|---|---|---|
+| `CLIMB_DEBUG_DAY=<n>` | debug | The scene shows step n of the month (avatar, passed-day dots, save points). The card's month and step chips keep the real numbers. |
+| `CLIMB_DEBUG_THEME=<id>` | debug | The scene shows that theme (`green_slope`, `ember_peak`, `glacier_peak`, `red_canyon`) in any month. |
+| `CLIMB_DEBUG_MONTH_CARD=<value>` | debug **and profile** | Replays the month transition card with sample data on every launch and hot restart, then the month-change zoom: `summary_gold`, `summary_none`, `summary_near` (Silver, the near-miss line), `fresh` (the fresh-start card), or `first_run` (no card, the first run's zoom). It never reads or writes the stored "seen" records and sends no analytics events. Works in profile builds so the zoom's frame times can be measured there. |
+| `CLIMB_DEBUG_MONTH_CARD_EVENTS=true` | with the one above | Lets the replay send its `month_card_shown`, `month_card_dismissed` and `month_zoom_ended` events, for a DebugView check. Off by default: debug and profile builds write to the production Firebase project. |
+
+All three combine (for example a month card on Red Canyon, zooming to step
+20). Release builds ignore every one of them.
+
 #### Visual previews (no build config needed)
 
 `lib/preview/` holds standalone, debug-only entry points for checking a

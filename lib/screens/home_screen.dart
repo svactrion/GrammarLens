@@ -28,6 +28,7 @@ import '../widgets/launch_splash.dart';
 import '../widgets/locked_premium_pill.dart';
 import '../widgets/month_card_sheet.dart';
 import '../widgets/monthly_climb/climb_card.dart';
+import '../widgets/monthly_climb/climb_debug_month_card.dart';
 import '../widgets/monthly_climb/climb_score_bar.dart';
 import '../widgets/monthly_climb/climb_zoom.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
@@ -213,6 +214,16 @@ class _HomeScreenState extends State<HomeScreen>
   MonthCardData? _pendingMonthCard;
   bool _monthCardShowing = false;
 
+  /// `CLIMB_DEBUG_MONTH_CARD` (debug and profile builds, M17): replayed
+  /// once per Home, so on every launch and hot restart; never reads or
+  /// writes the "seen" records, and sends no events unless
+  /// `CLIMB_DEBUG_MONTH_CARD_EVENTS` is on (M18).
+  final ClimbDebugMonthCardValue? _debugMonthCard = ClimbDebugMonthCard.value;
+  bool _debugMonthCardReplayed = false;
+
+  bool get _sendMonthEvents =>
+      _debugMonthCard == null || ClimbDebugMonthCard.sendsEvents;
+
   /// How long the month card has been open in the foreground
   /// (`month_card_dismissed`'s `open_ms`): counting stops while the app is
   /// in the background, so a card left open overnight does not read as
@@ -252,7 +263,8 @@ class _HomeScreenState extends State<HomeScreen>
     widget.onInitialPendingClimbTaken?.call();
     _day0PaywallPending = widget.offerDay0Paywall;
     widget.onOfferDay0PaywallTaken?.call();
-    if (widget.firstRunZoom) {
+    if (widget.firstRunZoom ||
+        _debugMonthCard == ClimbDebugMonthCardValue.firstRun) {
       _firstRunZoomPending = true;
       // K-c from the first frame the mountain is drawn.
       _zoom.hold(ClimbZoomTrigger.firstRun);
@@ -481,19 +493,24 @@ class _HomeScreenState extends State<HomeScreen>
       return Future.value();
     }
     return _firstRunZoomRun = _runZoom(
-        ClimbZoomTrigger.firstRun, StorageService.firstRunZoomFlag, themeId);
+        ClimbZoomTrigger.firstRun,
+        _debugMonthCard == null ? StorageService.firstRunZoomFlag : null,
+        themeId);
   }
 
   /// Plays a zoom on the month drawn with [themeId], claiming [flag] as it
-  /// starts (M6: never twice), and reports how it ended (M19).
+  /// starts (M6: never twice; null for the debug replay, which claims
+  /// nothing), and reports how it ended (M19).
   Future<void> _runZoom(
-      ClimbZoomTrigger trigger, String flag, String themeId) async {
+      ClimbZoomTrigger trigger, String? flag, String themeId) async {
     final outcome = await _zoom.run(
         trigger: trigger,
         reduceMotion: MediaQuery.disableAnimationsOf(context),
-        claim: () => widget.storageService.claimOneTimeFlag(flag));
+        claim: flag == null
+            ? () async => true
+            : () => widget.storageService.claimOneTimeFlag(flag));
     // Null: it had already played and did not run, so nothing ended.
-    if (outcome == null) return;
+    if (outcome == null || !_sendMonthEvents) return;
     unawaited(widget.analyticsService.monthZoomEnded(
         themeId: themeId,
         outcome: outcome.wireName,
@@ -511,6 +528,13 @@ class _HomeScreenState extends State<HomeScreen>
   /// This month's card, if one is due (`MonthTransition.load`): never on the
   /// first run's Home (M2), never while one is waiting or open.
   Future<MonthCardData?> _loadMonthCard(DateTime month) async {
+    final debug = _debugMonthCard;
+    if (debug != null) {
+      // The replay instead of the real card: storage is not asked.
+      if (_debugMonthCardReplayed || widget.firstRunZoom) return null;
+      _debugMonthCardReplayed = true;
+      return ClimbDebugMonthCard.sample(debug, widget.clock());
+    }
     if (widget.firstRunZoom ||
         _firstRunZoomPending ||
         _firstRunZoomRun != null ||
@@ -548,11 +572,13 @@ class _HomeScreenState extends State<HomeScreen>
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
       _scrollForMonthCard();
-      unawaited(widget.analyticsService.monthCardShown(
-          themeId: card.theme.id,
-          variant: card.variant.wireName,
-          medalTier: card.tier,
-          nearMissShown: card.nearMiss != null));
+      if (_sendMonthEvents) {
+        unawaited(widget.analyticsService.monthCardShown(
+            themeId: card.theme.id,
+            variant: card.variant.wireName,
+            medalTier: card.tier,
+            nearMissShown: card.nearMiss != null));
+      }
       _monthCardOpenFor = Duration.zero;
       _monthCardOpenStart();
       final how = await showMonthCard(context,
@@ -561,18 +587,25 @@ class _HomeScreenState extends State<HomeScreen>
       if (!mounted) return;
       // All three ways of closing count as seen (M6), recorded on closing:
       // a card open when the app is closed shows again.
-      try {
-        await MonthTransition.markSeen(
-            widget.storageService, card.year, card.month);
-      } catch (_) {}
-      if (!mounted) return;
-      unawaited(widget.analyticsService.monthCardDismissed(
-          themeId: card.theme.id,
-          variant: card.variant.wireName,
-          method: how.wireName,
-          openMs: _monthCardOpenFor.inMilliseconds));
-      await _runZoom(ClimbZoomTrigger.monthChange,
-          StorageService.monthZoomFlag(card.year, card.month), card.theme.id);
+      final replay = _debugMonthCard != null;
+      if (!replay) {
+        try {
+          await MonthTransition.markSeen(
+              widget.storageService, card.year, card.month);
+        } catch (_) {}
+        if (!mounted) return;
+      }
+      if (_sendMonthEvents) {
+        unawaited(widget.analyticsService.monthCardDismissed(
+            themeId: card.theme.id,
+            variant: card.variant.wireName,
+            method: how.wireName,
+            openMs: _monthCardOpenFor.inMilliseconds));
+      }
+      await _runZoom(
+          ClimbZoomTrigger.monthChange,
+          replay ? null : StorageService.monthZoomFlag(card.year, card.month),
+          card.theme.id);
     } finally {
       _monthCardShowing = false;
     }
