@@ -107,24 +107,27 @@ D1–D6 in the side-tracks file.)*
       if the rule changes
 - [ ] Batch 6 — month transition card and measurement events; after the
       card, once a month, a zoom from the whole mountain to the avatar.
-      **Built 2026-10-02 on `1.1.0-design`, awaiting device verification;
-      not merged into `1.1.0`** (decisions M1–M21 in
-      `1.1.0-design-side-tracks.md`; Batch 0 report
-      `docs/design/batch6/batch0-report.md`; build log 2026-10-02, "Batch 6
-      step …"). Built: the month card (summary / fresh start, bottom sheet,
-      M21 scroll), the K-c → daily zoom and the first run's zoom → step →
-      Premium, the three events and `theme_id` on the Daily Test start,
-      `CLIMB_DEBUG_MONTH_CARD`; the plaque's corners at 14 pt. Open:
-  - [ ] the zoom's duration on a device: 1.2 / 1.8 / 2.5 s (1.8 s now,
-        `ClimbZoomController.duration`);
-  - [ ] the K-c side bands: one colour per theme and mode (built) or the
-        vertical gradient (render only,
-        `docs/design/batch6/kc_bands_430_light.jpg`);
-  - [ ] 320 pt flaws: with the sheet open only 27–32 % (summary) / 32–46 %
-        (fresh) of the mountain shows; the avatar on START is under the
-        sheet at 320 pt (and at 375 pt for the summary card);
-  - [ ] performance on a device, not measured: frame times of the zoom in
-        a profile build (`CLIMB_DEBUG_MONTH_CARD` works there), memory;
+      **Built on `1.1.0-design`; device-checked on 2026-10-02 (Ahmet,
+      iPhone 14 Plus) except the blurred K-c bands: awaiting device
+      verification of the blurred bands only. Not merged into `1.1.0`.**
+      Decisions M1–M22 in `1.1.0-design-side-tracks.md`; Batch 0 report
+      `docs/design/batch6/batch0-report.md`; build log 2026-10-02.
+      Built: the month card (summary / fresh start, bottom sheet, M21
+      scroll), the K-c → daily zoom (1.8 s, chosen on the device) and the
+      first run's zoom → step → Premium, the three events and `theme_id` on
+      the Daily Test start, `CLIMB_DEBUG_MONTH_CARD`; the plaque at 14 pt;
+      the K-c bands as a pre-made blurred backdrop (M22, replacing the
+      single colour). Open:
+  - [ ] device check of the blurred bands, and their strength (0.03 now;
+        light 0.015 / strong 0.06 rendered in
+        `docs/design/batch6/blur/`); the sharp image's edge shows as a
+        visible line against the backdrop (`blur_seam.txt`);
+  - [x] the zoom's duration: 1.8 s (device, 2026-10-02);
+  - [x] 320 pt flaws accepted as known flaws (only while the sheet is
+        open); 375 × 667 measured: no scrolling, 55–80 % of the mountain
+        shows, START under the sheet (known);
+  - [ ] performance: frame times not measured with DevTools; no stutter
+        was reported on the device (an observation, not a measurement);
   - [ ] DebugView pass over the three events and `theme_id`; register the
         new dimensions and metric (`analytics-plan.md`, "Month
         transition");

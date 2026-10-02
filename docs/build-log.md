@@ -7703,3 +7703,15 @@ On branch `1.1.0-design` at `d723917`; not pushed.
   - *Note:* the step B renders for 320 / 375 × 812 / 430 pt in the same
     folder were made before M22 and show the single-colour bands; their
     numbers do not depend on the bands.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6: blurred bands built; awaiting their device check)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `56b0edf` (M22 and the device check in the docs),
+  `94ef852` (the blurred backdrop), `cbcb590` (the 375 × 667 measure),
+  and this closing commit.
+- **[Status]** Batch 6 awaits device verification of the blurred K-c
+  bands only (and their strength). Everything else was checked on the
+  device (iPhone 14 Plus). Performance not measured.
+- **[Tests]** 1343 pass; `flutter analyze` clean.
