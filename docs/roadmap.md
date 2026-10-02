@@ -103,7 +103,10 @@ D1–D6 in the side-tracks file.)*
       code-drawn summits, replaced by scene art.)*
 - [ ] Batch 5 — themed medal: body, emblem, month label
 - [ ] Batch 6 — month transition card and measurement events; after the
-      card, once a month, a zoom from the whole mountain to the avatar
+      card, once a month, a zoom from the whole mountain to the avatar.
+      Decisions M1–M9 taken 2026-10-02 (`1.1.0-design-side-tracks.md`,
+      "Batch 6 — month transition"); Batch 6's Batch 0 report:
+      `docs/design/batch6/batch0-report.md`. Not built
 - [ ] Batch 7 — one-time environment motion (may move to the next version)
 - [x] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (Bird, Fox, Panda,
       Sloth), without facing data; the avatar carousel loops in both
@@ -116,6 +119,11 @@ Parked for 1.2 (not 1.1.0):
 
 - A "see the mountain" button or a tappable mountain card (D5; a zoom on
   every open was rejected: a repeated wait before the Daily Test).
+- A monthly learning report (2026-10-02, Batch 6 M5): a premium
+  candidate, entered from the month transition card. Not designed; which
+  data exists per month is listed in the Batch 6 Batch 0 report.
+- A mid-month return card (2026-10-02, Batch 6 M3): for a user who comes
+  back in the middle of a month after a gap. Not designed.
 
 ## Launch scope — 2026-09-19
 

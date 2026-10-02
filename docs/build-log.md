@@ -7290,3 +7290,58 @@ On branch `1.1.0-design`; not merged, not pushed.
   with the cyan pennant. 1250 tests pass; `flutter analyze` is clean.
 
 - **2026-10-02 — Batch 4 verified on the owner's device (Ember Peak, Glacier Peak and Red Canyon right in both modes; Red Canyon's cyan pennant, G10, easy to pick out in light mode) and merged into `1.1.0`** by fast-forward to `d403e3f` (no merge commit); 1250 tests green on `1.1.0`, `flutter analyze` clean.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 decisions M1–M9; Batch 0 started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date,
+both at `31cc1d6`); not pushed. Docs only. Full text and reasons:
+`docs/1.1.0-design-side-tracks.md`, "Batch 6 — month transition".
+
+- **[Product — owner] M1 trigger.** The month card shows on the new
+  month's first Home open, before anything else. *Rejected:* after the
+  first Daily Test (the changed mountain and the avatar back on START
+  would go unexplained); a delayed card over a visible Home (reads as a
+  flicker).
+- **[Product — owner] M2 new user.** No card; on the first Home open,
+  once, a zoom from the whole mountain (K-c) to the avatar on START. To be
+  confirmed against the first-launch flow after the Batch 0 report.
+- **[Product — owner] M3 variants.** A summary card if the previous
+  calendar month has at least one step, otherwise a fresh-start card
+  (avatar, warm, no numbers, a clean start rather than "we missed you").
+  One card whatever the number of skipped months, for the month the user
+  is in. Mid-month return card parked for 1.2.
+- **[Product — owner] M4 form.** A bottom sheet over Home, which shows
+  dimmed in the K-c framing.
+- **[Product — owner] M5 content.** Last month's name, the medal (no row
+  if none), steps n / N, points, a near-miss line under a threshold (never
+  after Gold; threshold chosen from the Batch 0 numbers), the new month's
+  theme name, one button. A detailed-statistics button and a premium
+  monthly report parked for 1.2.
+- **[Product — owner] M6 zoom.** After the sheet closes, a short pause,
+  then a zoom from K-c to the daily framing. Home takes touches
+  throughout; a tap on the mountain card jumps to the last frame. Button,
+  swipe down and tap outside all count as "seen". Duration chosen on a
+  device from three values. Reduce Motion: a short cross-fade instead.
+  The card's "seen" is recorded on dismissal (a card open when the app is
+  closed comes back); the zoom's when it starts (it never plays twice).
+- **[Product — owner] M7 measurement.** Three events: card shown
+  (`theme_id`, variant, tier, near-miss line shown), card dismissed
+  (method, time open), zoom ended (completed / skipped / Reduce Motion;
+  month change / first open). Names not fixed.
+- **[Product — owner] M8 Batch 5.** Batch 6 goes first, with today's
+  medals; the card reads tier, thresholds and image from the medal system
+  (no hard-coded numbers, no copied image). Batch 5's device checklist
+  gains "month card with the new medals".
+- **[Product — owner] M9 debug.**
+  `CLIMB_DEBUG_MONTH_CARD=<summary_gold|summary_none|summary_near|fresh|first_run>`,
+  debug builds only (`kDebugMode`), replays sample data on every launch
+  and hot restart, never reads or writes the stored "seen" records. The
+  real trigger is tested with an injected clock.
+- **[Docs]** The side-tracks file's "Month transition card" and
+  "Measurement" sections point to M1–M9, which list what they replace:
+  cases (a)/(b) become the two variants; the card events become M7; the
+  "card comes last" order under the one-time opening motion is replaced
+  by M1. Open for the report: the button's label and action, and whether
+  the [N] goal line and the tagline stay.
+- **[Roadmap]** Parked for 1.2: a monthly learning report (premium
+  candidate, entered from the month card) and a mid-month return card.
