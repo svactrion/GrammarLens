@@ -54,11 +54,27 @@ output size in px (default 768). It writes 13 files:
 The run is deterministic: two runs give byte-identical files (checked
 2026-10-02 with Pillow 11.3.0 and NumPy 2.0.2, Python 3.9.6, about 2 s).
 
+## Measuring (Batch 5 Batch 0)
+
+```bash
+build/scene_art_venv/bin/python tool/medals/medal_assets.py
+```
+
+Reads `build/medals/png/` (the command above) and writes
+`docs/design/batch5/medal_assets.txt` and `medals_sheet.jpg`: how far the
+stars and the ribbon reach past the body's disc, and the WebP candidates'
+bytes and error at 256 / 384 / 512 px (also written to
+`build/medals/webp/<px>/` for the prototypes in
+`tool/design_measure/batch5/`). About 3 minutes.
+
 ## Known limits (N1, N2)
 
 - The stars are not readable below 48 px; "WELCOME" not below 96 px.
 - The weakest colour pair is Red Canyon's mountain on the Bronze body.
 - Ember Peak's smoke is partly behind the stars (`THEME_DY` moves that
   mountain down 75 px for it).
-- The stars stand above the body's circle and the Welcome ribbon is wider
-  than it: the measured overflow is in `docs/design/batch5/batch0-report.md`.
+- The stars stand above the body's disc (up to 5.6 % of its diameter);
+  the Welcome ribbon crosses the round outline at the top corners but stays
+  inside the disc's bounding square (`docs/design/batch5/medal_assets.txt`).
+- The font's licence: the TTF carries its copyright and an OFL 1.1 pointer
+  in its name table, but the OFL text itself is not in the repository.

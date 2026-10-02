@@ -197,3 +197,23 @@ flutter run --dart-define=CLIMB_DEBUG_THEME=glacier_peak --dart-define=CLIMB_DEB
    deviation under 1.0 at a common 1086 px analysis width) beyond the
    bend's outer edge and within 48 px (at 2172) of the trail, grown by
    colour to include its shaded rim.
+
+## Batch 5 Batch 0 (`docs/design/batch5/batch0-report.md`)
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/batch5_signpost.py
+```
+
+The C5 signpost (N11): exported like the save point objects but into
+`build/scene_art/batch5/` (no asset is added), placed on C5 by the save
+points' rule with every ratio's trail contact listed, rendered in the four
+themes, light and dark, with its colour separation from the ground
+(`docs/design/batch5/signpost/`). `placement.json` is read by
+`tool/design_measure/batch5/save_point_numbers_test.dart`.
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/batch5_sheet.py sites
+```
+
+The report's JPEGs from the Batch 5 Flutter tools' PNGs (`sites`,
+`welcome`, `labels`; `tool/design_measure/README.md`).

@@ -1,0 +1,17 @@
+Batch 5 Batch 0 §1: medals where the app draws them today, and the composed medals in the same places (tool/design_measure/batch5/medal_sites_test.dart). Points. Light and dark lay out the same; light only below.
+
+Profile today (MonthlyMedalCollection at Profile's width): column = the list's content width; specimen = each Bronze/Silver/Gold circle; height = the whole collection with the sample data.
+Profile proposal (ProtoCollection): discs 72.0 (this month), 48.0 (history), 64.0 (Welcome row).
+Month card: content height of the real MonthCardSheet (Silver, the fullest summary) and of the copy with each medal option. Batch 6 measured the real sheet at content + 16 pt, scrolling above 9/16 of the screen (docs/design/batch6/card/).
+Celebration card: the Day-0 Welcome card today (80 pt trophy circle) and with the Welcome image at 112.0 pt.
+
+width text    column  specimen  profile today  proposal | month card: real  fit 40  disc 40  disc 48  disc 56 | card today  image 96  image 112
+320   small    288.0    90.7     537.7        522.0 |                   294.0   294.0   296.2   304.7   313.1 |     233.0     249.0     265.0
+320   medium   288.0    90.7     565.7        546.0 |                   302.0   302.0   304.2   312.7   321.1 |     241.0     257.0     273.0
+320   large    288.0    90.7     591.7        608.0 |                   311.0   311.0   313.2   321.7   330.1 |     249.0     265.0     281.0
+375   small    341.3   108.4     555.4        522.0 |                   294.0   294.0   296.2   304.7   313.1 |     212.0     228.0     244.0
+375   medium   341.3   108.4     583.4        546.0 |                   302.0   302.0   304.2   312.7   321.1 |     218.0     234.0     250.0
+375   large    341.3   108.4     609.4        564.0 |                   311.0   311.0   313.2   321.7   330.1 |     249.0     265.0     281.0
+430   small    391.3   125.1     572.1        522.0 |                   294.0   294.0   296.2   304.7   313.1 |     212.0     228.0     244.0
+430   medium   391.3   125.1     600.1        546.0 |                   302.0   302.0   304.2   312.7   321.1 |     218.0     234.0     250.0
+430   large    391.3   125.1     626.1        564.0 |                   311.0   311.0   313.2   321.7   330.1 |     224.0     240.0     256.0

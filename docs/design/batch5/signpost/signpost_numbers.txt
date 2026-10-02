@@ -1,0 +1,39 @@
+Batch 5 Batch 0 §4: the C5 signpost (tool/scene_art/batch5_signpost.py).
+
+Asset (as export_objects.py, written to build/): 192 x 218 px, 9980 bytes, WebP q90; 291 stray source pixels zeroed (the source has scattered alpha specks), 0 after the resize.
+Alpha inside the body: median 253, 0.4 % fully opaque (the other objects: 255).
+Wood colour (saturated pixels): mean RGB (168, 105, 68), HSV value 0.661.
+
+C5: centre [0.6331, 0.2825], box [184.0, 75.0] px at 2172 (8800 px area); for comparison C4 [133.0, 73.0], C6 [116.0, 50.0].
+Width ratio -> trail pixels covered (alpha > 25 against Green's trail mask, 2172 px):
+  1.00   184.0 px  15
+  0.95   174.8 px  0
+  0.90   165.6 px  3
+  0.85   156.4 px  48
+  0.80   147.2 px  134
+  0.75   138.0 px  258
+  0.70   128.8 px  401
+  0.65   119.6 px  505
+  0.60   110.4 px  518
+  0.55   101.2 px  453
+  0.50    92.0 px  367
+Chosen by the rule: 0.95 (174.8 px at 2172).
+Rect (image widths, ClimbRoute's unit): [0.59287, 0.29394, 0.67333, 0.3853].
+
+On screen (window = card width at 320 / 375 / 430 pt: 288.0 / 341.3 / 391.3; K-b 1.1x):
+  320 pt: signpost 25.5 x 28.9 pt; tent 26.4, cabin 25.2, fountain 18.2, campfire 17.4, summit_flag 16.9 pt wide
+  375 pt: signpost 30.2 x 34.3 pt; tent 31.3, cabin 29.9, fountain 21.6, campfire 20.7, summit_flag 20.0 pt wide
+  430 pt: signpost 34.6 x 39.3 pt; tent 35.8, cabin 34.3, fountain 24.8, campfire 23.7, summit_flag 23.0 pt wide
+
+Colour separation at 375 pt (signpost lit; dark: G6 at 0.5): the drawn wood's
+mean colour against the ground 2-8 pt around the sign (CIEDE2000).
+For scale: G10 measured the orange pennant at 8.4 on Red Canyon (faded,
+light) and kept the blue at 16.4 (its weakest case).
+  green_slope   light  wood L*  50.7  ground L*  73.1  dE2000  27.6
+  green_slope   dark   wood L*  38.1  ground L*  36.8  dE2000  19.5
+  ember_peak    light  wood L*  50.4  ground L*  42.6  dE2000  14.5
+  ember_peak    dark   wood L*  42.5  ground L*  29.7  dE2000  23.4
+  glacier_peak  light  wood L*  50.8  ground L*  79.6  dE2000  35.9
+  glacier_peak  dark   wood L*  39.0  ground L*  45.3  dE2000  29.4
+  red_canyon    light  wood L*  50.6  ground L*  67.2  dE2000  14.9
+  red_canyon    dark   wood L*  40.8  ground L*  38.5  dE2000  14.2

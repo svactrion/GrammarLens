@@ -276,3 +276,50 @@ The same real-card measure for the iPhone SE size (375 × 667, safe areas
 `tool/scene_art/batch6_card_sheet.py se` → `overview_375x667.jpg`.
 `DESIGN_MEASURE_CARD_SCREENS` takes any of 320x568, 375x812, 430x932,
 375x667.
+
+## Batch 5 Batch 0 (`docs/design/batch5/batch0-report.md`)
+
+The composed medals need building first (`tool/medals/README.md`):
+
+```bash
+build/scene_art_venv/bin/python tool/medals/build_medals.py docs/design/medals/source build/medals/png
+```
+
+```bash
+build/scene_art_venv/bin/python tool/medals/medal_assets.py
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_sites flutter test tool/design_measure/batch5/medal_sites_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_welcome flutter test tool/design_measure/batch5/welcome_result_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=docs/design/batch5 flutter test tool/design_measure/batch5/save_point_numbers_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_labels flutter test tool/design_measure/batch5/save_point_label_test.dart
+```
+
+- `medal_sites_test.dart` with `batch5/medal_prototype.dart`: today's
+  medal places (Profile's collection, the month card, the Day-0 Welcome
+  card) and tool-only copies of them with the composed medals, read from
+  `build/medals/webp/512/` (no asset is added); 320 / 375 / 430 pt, light
+  and dark, three text sizes; the month card's content height with each
+  medal option against the real `MonthCardSheet` (`medal_sites.txt`).
+- `welcome_result_test.dart`: the real Day-0 result screen with the
+  Welcome card; where the card is at the list's scroll top
+  (`welcome_result.txt`).
+- `save_point_numbers_test.dart`: the step each save point, the flag and
+  C5 are reached on in 28–31-day months, and the resting avatar against
+  the signpost's box (`save_point_numbers.txt`; needs
+  `tool/scene_art/batch5_signpost.py` first).
+- `save_point_label_test.dart`: N6's label as a prototype over the real
+  Home in two placements, what it touches (`save_point_labels.txt`).
+
+Then `tool/scene_art/batch5_sheet.py sites|welcome|labels` makes the
+report's JPEGs and copies the text files into `docs/design/batch5/`.
