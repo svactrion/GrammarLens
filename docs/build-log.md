@@ -7497,3 +7497,21 @@ Batch 0".
   - Three existing first-launch tests changed on purpose: the hop now
     comes after the zoom (observed over 200 frames, not 100), and the
     claimed flags include `first_run_zoom`.
+
+- **2026-10-02 — Batch 6 step 5 stopped at its stop condition (owner's
+  rule): nothing of the month card is built.**
+  - Measured (`docs/design/batch6/scroll/scroll_check.txt`, renders in
+    `scroll_overview.jpg`): with M10's scroll (the climb card at the top
+    of the list), the Today card, the Daily Test's entry, is **entirely
+    off screen at 320 and 375 pt** at every text size (0 pt of 113–129 /
+    96–108 pt). At 430 pt the list cannot scroll that far, and 30–58 pt of
+    it show.
+  - Two other scrolls measured for the owner's decision:
+    - `today` (the Today card at the top): the whole entry shows; the
+      window above Batch 0's summary sheet is 4–9 % at 320 pt, 34–45 % at
+      375, 65–76 % at 430;
+    - `peek` (the Today card's last 56 pt show): 24–25 % / 49–56 % /
+      67–68 %.
+  - These use Batch 0's fullest summary prototype; a compacted card (M10)
+    is shorter, so more of the window would show. Not measured yet.
+  - Waiting for the owner. Steps 5–8 not started.

@@ -220,3 +220,15 @@ The K-c bands at 430 pt in light mode, four themes: the product's single
 colour, and a vertical gradient painted over the bands for comparison only
 (then `tool/scene_art/batch6_kc_bands_sheet.py` →
 `docs/design/batch6/kc_bands_430_light.jpg`).
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch6_scroll flutter test tool/design_measure/batch6/scroll_check_test.dart
+```
+
+Batch 6 step 5's stop condition (M10): after Home scrolls for the month
+card, how much of the Today card (the Daily Test entry) is on screen, and
+how much of the mountain window shows above Batch 0's summary-card
+prototype, for three scrolls (`card`, `peek`, `today`) at three screens and
+text sizes (`scroll_check.txt`); then `tool/scene_art/batch6_scroll_sheet.py`
+→ `docs/design/batch6/scroll/`. The renders show Home's daily framing and
+Batch 0's prototype copy; only the geometry is measured.
