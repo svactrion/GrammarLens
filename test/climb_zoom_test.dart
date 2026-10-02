@@ -190,17 +190,42 @@ void main() {
       expect(transforms.last, Matrix4.identity());
     });
 
-    testWidgets('the window\'s fill is the theme\'s K-c band colour (M11)',
+    testWidgets(
+        'M22: during a zoom the blurred backdrop is in the scaled layer and '
+        'exactly covers the window at K-c; outside a zoom it is not drawn',
         (tester) async {
       await tester.pumpWidget(scene(kAlwaysDismissedAnimation));
-      final fill = tester
-          .widget<ColoredBox>(find.descendant(
-              of: find.byType(MonthlyMountain),
-              matching: find.byType(ColoredBox)))
-          .color;
-      expect(fill, ClimbThemes.emberPeak.kcBandFor(Brightness.light));
+      final backdrop = find.byKey(MonthlyMountain.kcBackdropKey);
       expect(
-          fill, isNot(ClimbThemes.emberPeak.paletteFor(Brightness.light).sky));
+          find.descendant(
+              of: find.byKey(MonthlyMountain.sceneKey), matching: backdrop),
+          findsOneWidget);
+      final window = tester.getRect(find.byType(MonthlyMountain));
+      final rect = tester.getRect(backdrop);
+      expect(rect.left, closeTo(window.left, .01));
+      expect(rect.top, closeTo(window.top, .01));
+      expect(rect.right, closeTo(window.right, .01));
+      expect(rect.bottom, closeTo(window.top + 350, .01));
+      final image = tester.widget<Image>(
+          find.descendant(of: backdrop, matching: find.byType(Image)));
+      expect((image.image as AssetImage).assetName,
+          'assets/climb/ember_peak/background_light_blur.webp');
+      expect(image.fit, BoxFit.cover);
+      // The backdrop is a plain image: no run-time blur in it, and none over
+      // the scene. (AvatarTile's own ground shadow, inside the cached layer,
+      // is unchanged.)
+      for (final filter in [ImageFiltered, BackdropFilter]) {
+        expect(find.descendant(of: backdrop, matching: find.byType(filter)),
+            findsNothing);
+      }
+      expect(
+          find.descendant(
+              of: find.byType(MonthlyMountain),
+              matching: find.byType(BackdropFilter)),
+          findsNothing);
+
+      await tester.pumpWidget(scene(null));
+      expect(backdrop, findsNothing);
     });
 
     testWidgets(
@@ -219,10 +244,12 @@ void main() {
       expect(fade.opacity.value, 0);
     });
 
-    test('every theme has its band colours, both modes', () {
+    test('every theme\'s backdrop sits next to its background, per mode', () {
       for (final theme in ClimbThemes.all) {
-        expect(theme.kcBandLight, isNotNull, reason: theme.id);
-        expect(theme.kcBandDark, isNotNull, reason: theme.id);
+        for (final b in Brightness.values) {
+          expect(theme.kcBackdropFor(b),
+              theme.backgroundFor(b).replaceAll('.webp', '_blur.webp'));
+        }
       }
     });
   });

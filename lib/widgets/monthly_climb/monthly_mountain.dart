@@ -77,6 +77,9 @@ class MonthlyMountain extends StatefulWidget {
   /// The repaint boundary around the scene (tests count its paints).
   static const sceneKey = ValueKey('climb_scene_layer');
 
+  /// The K-c blurred backdrop (M22), present only during a zoom.
+  static const kcBackdropKey = ValueKey('climb_kc_backdrop');
+
   @override
   State<MonthlyMountain> createState() => _MonthlyMountainState();
 }
@@ -259,11 +262,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
             height: ClimbCamera.windowHeight,
             child: ClipRect(
               child: ColoredBox(
-                // Shown only until the image has decoded, and in a zoom's
-                // K-c framing as the bands beside the image (M11).
-                color: widget.zoom == null
-                    ? palette.sky
-                    : theme.kcBandFor(brightness),
+                // Shown only until the images have decoded.
+                color: palette.sky,
                 child: ExcludeSemantics(
                     child: AnimatedBuilder(
                   animation: Listenable.merge([_motion, _fade]),
@@ -284,6 +284,22 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                             child: RepaintBoundary(
                               key: MonthlyMountain.sceneKey,
                               child: Stack(clipBehavior: Clip.none, children: [
+                                // M22: during a zoom, the blurred copy fills
+                                // the K-c window behind the sharp image (a
+                                // pre-made asset, part of this layer: no blur
+                                // at run time). Outside the image's bounds,
+                                // so the daily framing never shows it.
+                                if (widget.zoom != null)
+                                  Positioned.fromRect(
+                                    key: MonthlyMountain.kcBackdropKey,
+                                    rect: ClimbOverview.backdropRect(camera),
+                                    child: Image(
+                                        image: ClimbOverview.backdropImage(
+                                            theme, brightness),
+                                        fit: BoxFit.cover,
+                                        filterQuality: FilterQuality.low,
+                                        gaplessPlayback: true),
+                                  ),
                                 Positioned.fill(
                                     child: Image.asset(
                                         theme.backgroundFor(brightness),
@@ -328,14 +344,15 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                     Matrix4 at(double t) =>
                         ClimbOverview.transform(camera, offset, t);
                     if (widget.zoomCrossFade) {
-                      // Reduce Motion (M6): no zoom; the K-c frame, bands
-                      // included, fades out over the daily one.
+                      // Reduce Motion (M6): no zoom; the K-c frame, its
+                      // blurred backdrop included, fades out over the daily
+                      // one.
                       return Stack(children: [
                         scene(),
                         FadeTransition(
                           opacity: ReverseAnimation(zoom),
                           child: ColoredBox(
-                              color: theme.kcBandFor(brightness),
+                              color: palette.sky,
                               child:
                                   Transform(transform: at(0), child: scene())),
                         ),

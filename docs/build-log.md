@@ -7652,3 +7652,37 @@ On branch `1.1.0-design` at `d723917`; not pushed.
 - **[Replaced by M22]** The single-colour bands of Batch 6 step 4
   (`tool/scene_art/kc_band_colors.py`, `docs/design/batch6/kc_bands.txt`,
   `.json`, `kc_bands_430_light.jpg`) stay as a record.
+
+- **2026-10-02 — Batch 6, M22: the blurred K-c backdrop (not on a device yet).**
+  - `tool/scene_art/export_blur.py`: from each full-resolution source, a
+    192 × 256 px Lanczos copy, a Gaussian blur of sigma `STRENGTH` × width
+    (the one setting: 0.03, so 5.76 px), WebP quality 70. Eight assets,
+    `assets/climb/<theme>/background_<mode>_blur.webp`, **12.0 KB in all**
+    (1.1–1.8 KB each; `docs/design/batch6/blur/blur_assets.txt`).
+  - `ClimbTheme.kcBackdropFor` names it; `MonthlyMountain` draws it, only
+    during a zoom, inside the scaled scene layer behind the sharp image, at
+    `ClimbOverview.backdropRect`: exactly the window at K-c (cover fit). No
+    run-time blur. The daily framing is unchanged (the backdrop lies
+    outside the image's bounds and is not drawn without a zoom). In dark
+    mode it is the dark image's blur; the object filter is untouched.
+  - **Replaced by M22:** `ClimbTheme.kcBandLight` / `kcBandDark` /
+    `kcBandFor` removed; the window's fill is the palette's `sky` again.
+    `tool/scene_art/kc_band_colors.py` and its outputs stay as a record.
+  - `check_theme.py --blur`: each of the eight exists and matches what
+    `export_blur.py` makes now from its source (same bytes, or pixels
+    within 2). All eight pass (`blur_check.txt`). Break check on a backed-up
+    copy: Ember's dark backdrop replaced by the "strong" candidate failed
+    (max pixel difference 36); restored byte-identical, passes again.
+  - **Renders:** `docs/design/batch6/blur/blur_430_light.jpg` and
+    `blur_430_dark.jpg`, K-c at 430 pt with the sheet closed, four themes,
+    strengths light 0.015 / medium 0.03 (in the product) / strong 0.06.
+  - **Seam (reported, nothing added):** the sharp image's edge stays a
+    visible hard line against the backdrop at every strength. CIEDE2000
+    across the edge (4 px each side, row by row; median / 95th percentile,
+    worse side; `blur_seam.txt`): medium 8.3–14.6 / 19.0–44.6; light
+    8.9–15.4; strong 7.7–13.4. A stronger blur lowers it only a little.
+  - Tests: the backdrop is inside the scene's repaint boundary and covers
+    the window at K-c exactly; none without a zoom; no `ImageFiltered` or
+    `BackdropFilter` in it; the eight assets bundled, 192 × 256, under
+    4 KB. The zoom's "scene not repainted" test stays green. 1343 tests
+    pass.

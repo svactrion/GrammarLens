@@ -1,4 +1,7 @@
-"""Batch 6, decision M11: the K-c side bands' colour, one per theme and
+"""Replaced by M22 (2026-10-02): a record only; the product now shows a
+blurred backdrop (export_blur.py).
+
+Batch 6, decision M11: the K-c side bands' colour, one per theme and
 mode, measured from the image's own left and right edges.
 
     build/scene_art_venv/bin/python tool/scene_art/kc_band_colors.py
@@ -73,7 +76,7 @@ def main() -> None:
             )
     lines += [
         "",
-        "band: the product's colour (ClimbTheme.kcBandLight / kcBandDark).",
+        "band: the single colour M11 put in the product (replaced by M22, a blurred backdrop).",
         "top / bottom: only for the vertical-gradient render (not in the product).",
     ]
     DST.mkdir(parents=True, exist_ok=True)

@@ -37,6 +37,15 @@ Green's positions:
    60 % of the clearing's ellipse.
 3. FLAG: the START flag's offset by edge correlation, unchanged, exact to
    the pixel; it catches small rigid shifts the other two let through.
+
+**Batch 6, M22: the K-c blurred backdrops.** With `--blur` it instead checks
+the eight assets/climb/<theme>/background_<mode>_blur.webp: each exists and
+is up to date with its source, i.e. export_blur.py, run now on the same
+source with the same settings, gives the same bytes (or, if the encoder
+changed, pixels within MAX_BLUR_DIFF). Exit code 1 if any fails. Writes
+docs/design/batch6/blur/blur_check.txt.
+
+    build/scene_art_venv/bin/python tool/scene_art/check_theme.py --blur
 """
 
 from __future__ import annotations
@@ -242,7 +251,48 @@ def run(images: list[tuple[str, object]], out_txt: str = "theme_check.txt",
     return 1 if failed else 0
 
 
+# --blur: how far a re-made backdrop may differ, per channel (0–255), when
+# its bytes differ (another libwebp); beyond it the asset is stale.
+MAX_BLUR_DIFF = 2
+
+
+def check_blur() -> int:
+    import io
+
+    import export_blur as B
+    from export_assets import THEMES
+
+    lines = ["Batch 6 M22: the K-c blurred backdrops against their sources", ""]
+    failed = False
+    for folder, theme in THEMES:
+        for mode in B.MODES:
+            path = B.asset_path(theme, mode)
+            name = path.relative_to(T.REPO)
+            if not path.exists():
+                lines.append(f"FAIL {name}: missing")
+                failed = True
+                continue
+            fresh = B.make_blur(folder, mode)
+            stored = path.read_bytes()
+            if fresh == stored:
+                lines.append(f"ok   {name}: same bytes as export_blur.py makes now")
+                continue
+            a = np.asarray(Image.open(io.BytesIO(fresh)).convert("RGB"), dtype=np.int16)
+            b = np.asarray(Image.open(path).convert("RGB"), dtype=np.int16)
+            diff = int(np.abs(a - b).max()) if a.shape == b.shape else 255
+            ok = diff <= MAX_BLUR_DIFF
+            failed |= not ok
+            lines.append(f"{'ok  ' if ok else 'FAIL'} {name}: bytes differ, max pixel difference {diff}")
+    out = T.REPO / "docs/design/batch6/blur"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "blur_check.txt").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+    return 1 if failed else 0
+
+
 def main(argv: list[str]) -> int:
+    if argv == ["--blur"]:
+        return check_blur()
     names = argv or ["green/background_dark.png"]
     images = []
     for n in names:

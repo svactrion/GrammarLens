@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/widgets.dart';
+
+import '../../models/climb_theme.dart';
 
 import 'climb_camera.dart';
 import 'climb_route.dart';
@@ -33,8 +36,8 @@ enum ClimbZoomTrigger {
 }
 
 /// The K-c framing (scene art Batch 0 §3, Batch 6): the whole image fitted
-/// to the window's height, centred across, with bands either side
-/// (`ClimbTheme.kcBandFor`). Only the start of the zoom; the daily
+/// to the window's height, centred across, over its blurred copy
+/// (`ClimbTheme.kcBackdropFor`, M22). Only the start of the zoom; the daily
 /// framing is [ClimbCamera].
 abstract final class ClimbOverview {
   /// Points per image width in K-c, the same at every width.
@@ -44,6 +47,29 @@ abstract final class ClimbOverview {
   /// The empty band on each side of the image in a [width]-point window.
   static double band(double width) =>
       (width - ClimbRoute.sceneSize.width * scale) / 2;
+
+  /// Where the blurred backdrop goes in the scene layer (the image's own
+  /// points in the daily framing): exactly the window at K-c, so the
+  /// transform that brings the layer to K-c makes it fill the window.
+  static Rect backdropRect(ClimbCamera camera) {
+    final s0 = scale / camera.scale;
+    return Rect.fromLTWH(-band(camera.width) / s0, 0, camera.width / s0,
+        ClimbCamera.windowHeight / s0);
+  }
+
+  static ImageProvider Function(ClimbTheme, Brightness)? _backdropForTesting;
+
+  /// Debug builds only: another image for the backdrop, for measuring
+  /// tools (renders of other blur strengths). Ignored in profile and
+  /// release builds.
+  static set debugBackdropOverride(
+          ImageProvider Function(ClimbTheme, Brightness)? value) =>
+      _backdropForTesting = value;
+
+  /// The backdrop's image for [theme] in [brightness].
+  static ImageProvider backdropImage(ClimbTheme theme, Brightness brightness) =>
+      (kDebugMode ? _backdropForTesting?.call(theme, brightness) : null) ??
+      AssetImage(theme.kcBackdropFor(brightness));
 
   /// The transform applied to the scene layer as drawn in the daily
   /// framing (the camera's [camera] scale, at [offset]) to show it at

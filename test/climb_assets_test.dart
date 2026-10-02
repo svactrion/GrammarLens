@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/models/climb_theme.dart';
 
 /// Scene art (S1, S4): each theme's illustrated background, light and dark,
 /// exported by tool/scene_art/export_assets.py at Batch 0's recommended
@@ -44,7 +45,14 @@ void main() {
             .listAssets()
             .where((path) => path.startsWith('assets/climb/'))
             .toSet(),
-        {...backgrounds, ...objects, flame, ...flagParts});
+        {
+          ...backgrounds,
+          // Batch 6, M22: the K-c blurred backdrops.
+          for (final b in backgrounds) b.replaceAll('.webp', '_blur.webp'),
+          ...objects,
+          flame,
+          ...flagParts,
+        });
   });
 
   Future<ui.Image> decode(String path) async {
@@ -112,5 +120,19 @@ void main() {
       // Under 450 KB each: Batch 0 measured 366 and 272 KB at quality 80.
       expect(data.lengthInBytes, lessThan(450 * 1024));
     });
+  }
+
+  // Batch 6, M22: the K-c blurred backdrops (tool/scene_art/export_blur.py).
+  for (final theme in ClimbThemes.all) {
+    for (final b in ui.Brightness.values) {
+      final path = theme.kcBackdropFor(b);
+      test('$path is bundled, decodes to 192 × 256, under 4 KB', () async {
+        final data = await rootBundle.load(path);
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        final image = (await codec.getNextFrame()).image;
+        expect((image.width, image.height), (192, 256));
+        expect(data.lengthInBytes, lessThan(4 * 1024));
+      });
+    }
   }
 }

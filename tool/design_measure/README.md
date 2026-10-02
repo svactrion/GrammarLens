@@ -209,8 +209,9 @@ build/scene_art_venv/bin/python tool/scene_art/kc_band_colors.py
 ```
 
 M11: each theme's K-c band colour per mode from its background asset's
-side edges (`docs/design/batch6/kc_bands.txt`, `.json`); the values are
-`ClimbTheme.kcBandLight` / `kcBandDark`.
+side edges (`docs/design/batch6/kc_bands.txt`, `.json`). *Replaced by M22
+(2026-10-02): the product no longer has these colours; the tool and its
+output stay as the record.*
 
 ```bash
 DESIGN_MEASURE_OUT=build/design_measure/batch6_kc_bands flutter test tool/design_measure/batch6/kc_bands_render_test.dart
@@ -243,3 +244,25 @@ sheet and content heights, scrolling, overflow, the Today card's visible
 height, the mountain window above the sheet
 (`month_card_real_numbers.txt`); then `tool/scene_art/batch6_card_sheet.py`
 → `docs/design/batch6/card/`.
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/export_blur.py
+```
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/check_theme.py --blur
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch6_blur flutter test tool/design_measure/batch6/kc_blur_render_test.dart
+```
+
+Batch 6, M22: the K-c blurred backdrops. `export_blur.py` writes the eight
+`assets/climb/<theme>/background_<mode>_blur.webp` (192 × 256, sigma =
+`STRENGTH` × width) and `docs/design/batch6/blur/blur_assets.txt`; with
+`--candidates` it writes light / medium / strong versions to
+`build/scene_art/blur/`. `check_theme.py --blur` checks the assets exist
+and match their sources (`blur_check.txt`). The render shows K-c at
+430 pt for four themes × two modes × three strengths, then
+`tool/scene_art/batch6_blur_sheet.py` writes `blur_430_<mode>.jpg` and the
+seam measure `blur_seam.txt`.
