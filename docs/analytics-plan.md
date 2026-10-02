@@ -231,9 +231,9 @@ and names and parameters may still change in that file's Batch 6.
 |---|---|---|
 | `theme_id` parameter | String, the id of the month's theme as stored with that month (`green_slope` / `ember_peak` / `glacier_peak` / `red_canyon`; exact ids are set in Batch 2). Added to the existing Monthly Climb events; candidates: E1 `daily_test_completed`, E3 `welcome_badge_earned`, E4 `medal_month_finalized` (for E4, the finalized month's theme, not the current one). E5 `profile_medals_viewed` spans several months and gets none. | Planned (1.1.0), not implemented |
 | ~~Month transition card event(s)~~ | ~~"Card shown" and "`Start climbing` tapped", each with a case parameter.~~ Replaced by M19 (2026-10-02), below. | Replaced |
-| `theme_id` on `mode_selected` (M19) | Only when `mode = daily_test`: the theme of the month the Daily Test is opened in, from Home. `topic` and `premium` keep no extra parameter. The Day-0 test sends no `mode_selected` (§1, gap 2), so it carries none. | Planned (1.1.0), not implemented |
+| `theme_id` on `mode_selected` (M19) | Only when `mode = daily_test`: the theme of the month the Daily Test is opened in, from Home. `topic` and `premium` keep no extra parameter. The Day-0 test sends no `mode_selected` (§1, gap 2), so it carries none. | Implemented 2026-10-02 (`AnalyticsService.modeSelected(mode, themeId:)`, Home's `_openDailyTest`); not seen in DebugView; not registered |
 
-#### Month transition (Batch 6, decision M19, owner 2026-10-02) — planned, not implemented
+#### Month transition (Batch 6, decision M19, owner 2026-10-02) — implemented 2026-10-02, not seen in DebugView
 
 `docs/1.1.0-design-side-tracks.md`, M16–M19. Values are strings or ints;
 booleans as 0/1, as everywhere else.
@@ -249,7 +249,16 @@ Differences from the Batch 0 report's §8 proposal: `tier` → `medal_tier`
 `tier`); `near_miss` → `near_miss_shown`; `month_card_dismissed` gains
 `theme_id` and `variant`; `method` values `swipe` / `outside` → `drag` /
 `barrier`; `outcome` gains `daily_test_opened` (M16). The debug replay
-sends none of these (M18). To register after the code is merged:
+sends none of these (M18). Built in `AnalyticsService.monthCardShown`,
+`monthCardDismissed` and `monthZoomEnded`, sent from Home; `open_ms` counts
+only foreground time (paused while the app is in the background). Tests:
+`test/analytics_service_test.dart` (exact keys and values; the
+all-events limits test now covers 20 events), `test/month_card_test.dart`
+(each event once; the three methods; the four outcomes on the month
+change), `test/first_launch_climb_test.dart` (the `first_run` trigger's
+outcomes). Accepted (owner, 2026-10-02): `theme_id` is on no other event;
+the theme is derived from the date (global calendar). To register after
+the code is merged:
 dimensions `theme_id`, `variant`, `medal_tier`, `near_miss_shown`,
 `trigger`; metric `open_ms` (`method` and `outcome` are registered).
 

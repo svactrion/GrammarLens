@@ -117,6 +117,11 @@ class HomeScreen extends StatefulWidget {
   /// entry stays on screen (and tappable) through the zoom that follows.
   static const monthCardTodayPeek = 56.0;
 
+  /// The clock the month card's open time is measured with; a test seam,
+  /// like `StorageService.clockForTesting`. Never assigned outside a test.
+  @visibleForTesting
+  static DateTime Function() monthCardClockForTesting = DateTime.now;
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -207,6 +212,25 @@ class _HomeScreenState extends State<HomeScreen>
   /// Home is visible and the launch splash has gone.
   MonthCardData? _pendingMonthCard;
   bool _monthCardShowing = false;
+
+  /// How long the month card has been open in the foreground
+  /// (`month_card_dismissed`'s `open_ms`): counting stops while the app is
+  /// in the background, so a card left open overnight does not read as
+  /// hours. [HomeScreen.monthCardClockForTesting] is the clock.
+  Duration _monthCardOpenFor = Duration.zero;
+  DateTime? _monthCardOpenSince;
+
+  void _monthCardOpenStart() =>
+      _monthCardOpenSince = HomeScreen.monthCardClockForTesting();
+
+  void _monthCardOpenStop() {
+    final since = _monthCardOpenSince;
+    if (since == null) return;
+    _monthCardOpenFor +=
+        HomeScreen.monthCardClockForTesting().difference(since);
+    _monthCardOpenSince = null;
+  }
+
   final _todayKey = GlobalKey();
 
   void _onZoomChanged() {
@@ -294,6 +318,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_monthCardShowing) {
+      if (state == AppLifecycleState.paused) _monthCardOpenStop();
+      if (state == AppLifecycleState.resumed && _monthCardOpenSince == null) {
+        _monthCardOpenStart();
+      }
+    }
     if (state == AppLifecycleState.resumed) {
       // Refresh greeting and cached day after midnight/timezone changes.
       // This is a local read; resuming never generates another question set.
@@ -389,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen>
           return;
         }
         // M14: the first run's zoom comes before the Day-0 step.
-        await _firstRunZoom();
+        await _firstRunZoom(theme.id);
         if (!mounted || generation != _climbLoadGeneration) return;
       }
       setState(() {
@@ -417,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen>
                   : const Duration(milliseconds: 250));
           if (!mounted) return;
         }
-        await _firstRunZoom();
+        await _firstRunZoom(theme.id);
         if (!mounted || generation != _climbLoadGeneration) return;
       }
       if (_pendingMonthCard != null) _presentMonthCard();
@@ -443,29 +473,40 @@ class _HomeScreenState extends State<HomeScreen>
   /// climb load that follows: the Day-0 step and the paywall come after
   /// it. Ends however the zoom ends; if Home is not visible when it would
   /// start, it is dropped, so the chain never waits for it.
-  Future<void> _firstRunZoom() {
+  Future<void> _firstRunZoom(String themeId) {
     if (!_firstRunZoomPending) return _firstRunZoomRun ?? Future.value();
     _firstRunZoomPending = false;
     if (!_homeVisible) {
       _zoom.release();
       return Future.value();
     }
-    return _firstRunZoomRun =
-        _runZoom(ClimbZoomTrigger.firstRun, StorageService.firstRunZoomFlag);
+    return _firstRunZoomRun = _runZoom(
+        ClimbZoomTrigger.firstRun, StorageService.firstRunZoomFlag, themeId);
   }
 
-  /// Plays a zoom, claiming [flag] as it starts (M6: never twice).
-  Future<void> _runZoom(ClimbZoomTrigger trigger, String flag) async {
+  /// Plays a zoom on the month drawn with [themeId], claiming [flag] as it
+  /// starts (M6: never twice), and reports how it ended (M19).
+  Future<void> _runZoom(
+      ClimbZoomTrigger trigger, String flag, String themeId) async {
     final outcome = await _zoom.run(
         trigger: trigger,
         reduceMotion: MediaQuery.disableAnimationsOf(context),
         claim: () => widget.storageService.claimOneTimeFlag(flag));
-    if (!mounted) return;
-    _onZoomEnded(trigger, outcome);
+    // Null: it had already played and did not run, so nothing ended.
+    if (outcome == null) return;
+    unawaited(widget.analyticsService.monthZoomEnded(
+        themeId: themeId,
+        outcome: outcome.wireName,
+        trigger: trigger.wireName));
   }
 
-  /// A zoom ended; null: it had already played and did not run.
-  void _onZoomEnded(ClimbZoomTrigger trigger, ClimbZoomOutcome? outcome) {}
+  /// The theme of the month Home shows (M19): the loaded one, or, before
+  /// the climb has loaded, the calendar's.
+  String get _monthThemeId {
+    if (_climbSteps != null) return _climbTheme.id;
+    final now = widget.clock();
+    return ClimbThemeRotation.shownFor(now.year, now.month).id;
+  }
 
   /// This month's card, if one is due (`MonthTransition.load`): never on the
   /// first run's Home (M2), never while one is waiting or open.
@@ -507,8 +548,16 @@ class _HomeScreenState extends State<HomeScreen>
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
       _scrollForMonthCard();
+      unawaited(widget.analyticsService.monthCardShown(
+          themeId: card.theme.id,
+          variant: card.variant.wireName,
+          medalTier: card.tier,
+          nearMissShown: card.nearMiss != null));
+      _monthCardOpenFor = Duration.zero;
+      _monthCardOpenStart();
       final how = await showMonthCard(context,
           data: card, avatar: widget.avatar ?? Avatar.values.first);
+      _monthCardOpenStop();
       if (!mounted) return;
       // All three ways of closing count as seen (M6), recorded on closing:
       // a card open when the app is closed shows again.
@@ -517,16 +566,17 @@ class _HomeScreenState extends State<HomeScreen>
             widget.storageService, card.year, card.month);
       } catch (_) {}
       if (!mounted) return;
-      _onMonthCardClosed(card, how);
+      unawaited(widget.analyticsService.monthCardDismissed(
+          themeId: card.theme.id,
+          variant: card.variant.wireName,
+          method: how.wireName,
+          openMs: _monthCardOpenFor.inMilliseconds));
       await _runZoom(ClimbZoomTrigger.monthChange,
-          StorageService.monthZoomFlag(card.year, card.month));
+          StorageService.monthZoomFlag(card.year, card.month), card.theme.id);
     } finally {
       _monthCardShowing = false;
     }
   }
-
-  /// The month card closed by [how].
-  void _onMonthCardClosed(MonthCardData card, MonthCardDismissal how) {}
 
   /// M21: scrolls Home so the Today card's last
   /// [HomeScreen.monthCardTodayPeek]
@@ -660,7 +710,8 @@ class _HomeScreenState extends State<HomeScreen>
     _zoom.dailyTestOpened();
     _dailyFlowActive = true;
     ++_climbLoadGeneration;
-    widget.analyticsService.modeSelected(AnalyticsService.modeDailyTest);
+    widget.analyticsService
+        .modeSelected(AnalyticsService.modeDailyTest, themeId: _monthThemeId);
     final navigator = Navigator.of(context);
     final result = await navigator.push<(DailyTestSet, Map<String, String>)>(
       MaterialPageRoute(

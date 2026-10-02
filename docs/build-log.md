@@ -7585,3 +7585,15 @@ On branch `1.1.0-design` at `d98c083`; not pushed.
     at 320 × 568 under the test font (Ahem, wider than the app's), which
     is why the entry test checks that the route was pushed rather than
     laying the screen out. Not checked with the real font.
+
+- **2026-10-02 — Batch 6 step C: the events (not seen in DebugView).**
+  `month_card_shown`, `month_card_dismissed`, `month_zoom_ended` (M19)
+  and `theme_id` on `mode_selected` when `mode = daily_test`
+  (`docs/analytics-plan.md`, "Month transition"). `open_ms` counts only
+  foreground time, through a test clock
+  (`HomeScreen.monthCardClockForTesting`): measured on the first try with a
+  plain `Stopwatch`, which test time does not move. A zoom that had already
+  played (its flag claimed) sends nothing. Tests: each event's exact keys;
+  each once on Home; `button` / `drag` / `barrier`; `completed` /
+  `skipped` / `reduce_motion` / `daily_test_opened` on the month change
+  and on the first run; the limits test covers 20 events.

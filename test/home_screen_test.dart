@@ -55,7 +55,7 @@ class _RecordingAnalyticsService extends AnalyticsService {
   final List<String> modesSelected = [];
 
   @override
-  Future<void> modeSelected(String mode) async {
+  Future<void> modeSelected(String mode, {String? themeId}) async {
     modesSelected.add(mode);
   }
 }

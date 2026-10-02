@@ -333,4 +333,142 @@ void main() {
       expect(tester.widget<MonthlyMountain>(_mountain).zoom, isNull);
     });
   }
+
+  group('events (M19)', () {
+    List<RecordedEvent> named(RecordingAnalyticsSink sink, String name) =>
+        sink.events.where((e) => e.name == name).toList();
+
+    Future<void> closeBy(WidgetTester tester, String method) async {
+      switch (method) {
+        case 'button':
+          await tester.ensureVisible(find.text(MonthCardSheet.buttonLabel));
+          await tester.pump();
+          await tester.tap(find.text(MonthCardSheet.buttonLabel));
+        case 'drag':
+          await tester.fling(_sheet, const Offset(0, 500), 1500);
+        case 'barrier':
+          await tester.tapAt(const Offset(20, 120));
+      }
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    testWidgets('shown once, with theme, variant, tier and the line',
+        (tester) async {
+      final sink = RecordingAnalyticsSink();
+      await pumpHome(tester, CardStorage(), sink: sink);
+      expect(named(sink, 'month_card_shown').single.parameters, {
+        'theme_id': 'ember_peak',
+        'variant': 'summary',
+        'medal_tier': 'silver',
+        'near_miss_shown': 1,
+      });
+    });
+
+    testWidgets('fresh start: tier none, no line', (tester) async {
+      final sink = RecordingAnalyticsSink();
+      await pumpHome(tester, CardStorage(steps: 0)..frozen = null, sink: sink);
+      expect(named(sink, 'month_card_shown').single.parameters, {
+        'theme_id': 'ember_peak',
+        'variant': 'fresh',
+        'medal_tier': 'none',
+        'near_miss_shown': 0,
+      });
+    });
+
+    for (final method in ['button', 'drag', 'barrier']) {
+      testWidgets('dismissed once by $method, with how long it was open',
+          (tester) async {
+        var now = DateTime(2026, 11, 1, 9);
+        HomeScreen.monthCardClockForTesting = () => now;
+        addTearDown(() => HomeScreen.monthCardClockForTesting = DateTime.now);
+        final sink = RecordingAnalyticsSink();
+        await pumpHome(tester, CardStorage(), sink: sink);
+        now = now.add(const Duration(milliseconds: 4200));
+        // Ten minutes in the background do not count.
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        now = now.add(const Duration(minutes: 10));
+        tester.binding
+            .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pump();
+        now = now.add(const Duration(milliseconds: 800));
+        await closeBy(tester, method);
+        final dismissed = named(sink, 'month_card_dismissed');
+        expect(dismissed, hasLength(1));
+        final p = dismissed.single.parameters!;
+        expect({...p}..remove('open_ms'), {
+          'theme_id': 'ember_peak',
+          'variant': 'summary',
+          'method': method,
+        });
+        expect(p['open_ms'], 5000);
+        await settleZoom(tester);
+        expect(named(sink, 'month_card_shown'), hasLength(1));
+      });
+    }
+
+    Future<RecordingAnalyticsSink> zoomUntilEnd(WidgetTester tester,
+        {bool reduceMotion = false, Future<void> Function()? during}) async {
+      if (reduceMotion) {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+            tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      }
+      final sink = RecordingAnalyticsSink();
+      await pumpHome(tester, CardStorage(), sink: sink);
+      await closeBy(tester, 'drag');
+      // The zoom has started (its pause, then 1.8 s; Reduce Motion's
+      // 250 ms cross-fade may already have ended).
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      if (!reduceMotion) expect(named(sink, 'month_zoom_ended'), isEmpty);
+      await during?.call();
+      await settleZoom(tester);
+      return sink;
+    }
+
+    Map<String, Object>? ended(RecordingAnalyticsSink sink) {
+      final events = named(sink, 'month_zoom_ended');
+      expect(events, hasLength(1));
+      return events.single.parameters;
+    }
+
+    testWidgets('zoom ended: completed', (tester) async {
+      final sink = await zoomUntilEnd(tester);
+      expect(ended(sink), {
+        'theme_id': 'ember_peak',
+        'outcome': 'completed',
+        'trigger': 'month_change',
+      });
+    });
+
+    testWidgets('zoom ended: skipped by a tap on the mountain', (tester) async {
+      final sink = await zoomUntilEnd(tester, during: () async {
+        final window = tester.getRect(_mountain);
+        await tester.tapAt(window.topCenter + const Offset(0, 80));
+        await tester.pump();
+      });
+      expect(ended(sink)!['outcome'], 'skipped');
+    });
+
+    testWidgets('zoom ended: Reduce Motion', (tester) async {
+      final sink = await zoomUntilEnd(tester, reduceMotion: true);
+      expect(ended(sink)!['outcome'], 'reduce_motion');
+    });
+
+    testWidgets(
+        'zoom ended: the Daily Test opened; mode_selected carries '
+        'the month\'s theme', (tester) async {
+      final sink = await zoomUntilEnd(tester, during: () async {
+        final today = tester.getRect(find
+            .ancestor(of: find.text('Daily Test'), matching: find.byType(Card))
+            .first);
+        await tester.tapAt(Offset(today.center.dx, today.bottom - 20));
+      });
+      expect(ended(sink)!['outcome'], 'daily_test_opened');
+      expect(named(sink, 'mode_selected').single.parameters,
+          {'mode': 'daily_test', 'theme_id': 'ember_peak'});
+    });
+  });
 }

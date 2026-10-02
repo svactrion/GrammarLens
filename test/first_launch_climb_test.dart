@@ -532,6 +532,11 @@ void main() {
       expect(premium, findsOneWidget);
       expect(mtn(tester).completedDays, 1);
       expect(storage.claimedFlags, contains(StorageService.firstRunZoomFlag));
+      expect(sink.named('month_zoom_ended').single.parameters, {
+        'theme_id': 'green_slope',
+        'outcome': 'completed',
+        'trigger': 'first_run',
+      });
     });
 
     testWidgets(
@@ -560,6 +565,8 @@ void main() {
       }
       expect(premium, findsOneWidget);
       expect(mtn(tester).completedDays, 1);
+      expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
+          'skipped');
     });
 
     testWidgets(
@@ -592,6 +599,8 @@ void main() {
       }
       expect(premium, findsOneWidget);
       expect(mtn(tester).completedDays, 1);
+      expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
+          'daily_test_opened');
     });
 
     testWidgets(
@@ -611,6 +620,8 @@ void main() {
       }
       expect(crossFaded, isTrue);
       expect(premium, findsOneWidget);
+      expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
+          'reduce_motion');
     });
   });
 }

@@ -100,8 +100,63 @@ class AnalyticsService {
     return _logEvent('onboarding_completed');
   }
 
-  Future<void> modeSelected(String mode) {
-    return _logEvent('mode_selected', {'mode': mode});
+  /// [themeId] (Batch 6, M19): the month's theme, sent only with
+  /// [modeDailyTest], the Daily Test's start. The theme follows a global
+  /// calendar, so the other events derive it from their date.
+  Future<void> modeSelected(String mode, {String? themeId}) {
+    return _logEvent('mode_selected', {
+      'mode': mode,
+      if (themeId != null && mode == modeDailyTest) 'theme_id': themeId,
+    });
+  }
+
+  /// The month transition card was shown (Batch 6, M19): the new month's
+  /// [themeId], the [variant] (`summary` / `fresh`), last month's
+  /// [medalTier] (null: `none`, also on the fresh-start card) and whether
+  /// the near-miss line was shown.
+  Future<void> monthCardShown({
+    required String themeId,
+    required String variant,
+    required MedalTier? medalTier,
+    required bool nearMissShown,
+  }) {
+    return _logEvent('month_card_shown', {
+      'theme_id': themeId,
+      'variant': variant,
+      'medal_tier': medalTier?.name ?? 'none',
+      'near_miss_shown': nearMissShown ? 1 : 0,
+    });
+  }
+
+  /// The month card was closed by [method] (`button` / `drag` / `barrier`)
+  /// after [openMs] milliseconds on screen in the foreground.
+  Future<void> monthCardDismissed({
+    required String themeId,
+    required String variant,
+    required String method,
+    required int openMs,
+  }) {
+    return _logEvent('month_card_dismissed', {
+      'theme_id': themeId,
+      'variant': variant,
+      'method': method,
+      'open_ms': openMs,
+    });
+  }
+
+  /// A zoom from the whole mountain to the daily framing ended (M16, M19):
+  /// [outcome] `completed` / `skipped` / `reduce_motion` /
+  /// `daily_test_opened`; [trigger] `month_change` / `first_run`.
+  Future<void> monthZoomEnded({
+    required String themeId,
+    required String outcome,
+    required String trigger,
+  }) {
+    return _logEvent('month_zoom_ended', {
+      'theme_id': themeId,
+      'outcome': outcome,
+      'trigger': trigger,
+    });
   }
 
   /// A Topic Practice session reached its results screen. Named

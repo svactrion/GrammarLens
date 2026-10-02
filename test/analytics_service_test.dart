@@ -91,6 +91,72 @@ void main() {
       expectOnly('mode_selected', {'mode': 'daily_test'});
     });
 
+    test('mode_selected carries theme_id only for the Daily Test (M19)',
+        () async {
+      await service.modeSelected(AnalyticsService.modeDailyTest,
+          themeId: 'ember_peak');
+      expectOnly(
+          'mode_selected', {'mode': 'daily_test', 'theme_id': 'ember_peak'});
+      sink.events.clear();
+      await service.modeSelected(AnalyticsService.modeTopic,
+          themeId: 'ember_peak');
+      expectOnly('mode_selected', {'mode': 'topic'});
+    });
+
+    test('month_card_shown carries theme, variant, tier and the 0/1 line',
+        () async {
+      await service.monthCardShown(
+          themeId: 'ember_peak',
+          variant: 'summary',
+          medalTier: MedalTier.silver,
+          nearMissShown: true);
+      expectOnly('month_card_shown', {
+        'theme_id': 'ember_peak',
+        'variant': 'summary',
+        'medal_tier': 'silver',
+        'near_miss_shown': 1,
+      });
+      sink.events.clear();
+      await service.monthCardShown(
+          themeId: 'glacier_peak',
+          variant: 'fresh',
+          medalTier: null,
+          nearMissShown: false);
+      expectOnly('month_card_shown', {
+        'theme_id': 'glacier_peak',
+        'variant': 'fresh',
+        'medal_tier': 'none',
+        'near_miss_shown': 0,
+      });
+    });
+
+    test('month_card_dismissed carries theme, variant, method and open_ms',
+        () async {
+      await service.monthCardDismissed(
+          themeId: 'ember_peak',
+          variant: 'summary',
+          method: 'drag',
+          openMs: 4200);
+      expectOnly('month_card_dismissed', {
+        'theme_id': 'ember_peak',
+        'variant': 'summary',
+        'method': 'drag',
+        'open_ms': 4200,
+      });
+    });
+
+    test('month_zoom_ended carries theme, outcome and trigger', () async {
+      await service.monthZoomEnded(
+          themeId: 'green_slope',
+          outcome: 'daily_test_opened',
+          trigger: 'first_run');
+      expectOnly('month_zoom_ended', {
+        'theme_id': 'green_slope',
+        'outcome': 'daily_test_opened',
+        'trigger': 'first_run',
+      });
+    });
+
     test('practice_completed carries only topic_id and question_count',
         () async {
       await service.practiceCompleted(topicId: 'articles', questionCount: 5);
@@ -374,12 +440,26 @@ void main() {
         source: AiConsentSource.dataSettings,
         consentVersion: 1,
       );
+      await service.monthCardShown(
+          themeId: 'glacier_peak',
+          variant: 'summary',
+          medalTier: MedalTier.gold,
+          nearMissShown: false);
+      await service.monthCardDismissed(
+          themeId: 'glacier_peak',
+          variant: 'summary',
+          method: 'barrier',
+          openMs: 123456);
+      await service.monthZoomEnded(
+          themeId: 'glacier_peak',
+          outcome: 'reduce_motion',
+          trigger: 'month_change');
       await service.setTextSizeProperty(AppTextSize.large);
       await service.setFirstStepDayOfMonth(31);
 
       final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
       final reserved = RegExp(r'^(firebase_|google_|ga_|_)');
-      expect(sink.events, hasLength(17));
+      expect(sink.events, hasLength(20));
       for (final event in sink.events) {
         expect(event.name.length, lessThanOrEqualTo(40), reason: event.name);
         expect(nameRule.hasMatch(event.name), isTrue, reason: event.name);
