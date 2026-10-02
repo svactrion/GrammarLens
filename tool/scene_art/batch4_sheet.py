@@ -13,9 +13,15 @@ Writes docs/design/scene-art/batch4/<theme>_<mode>_day<d>.jpg (2x, the
 three new themes) and overview.jpg: one column per theme (Green Slope,
 Ember Peak, Glacier Peak, Red Canyon), rows light day 20, light last day,
 dark day 20, dark last day (1x).
+
+With --flag (G10), Red Canyon on days 30 and 31 instead, from renders of
+January 2027 with DESIGN_MEASURE_DAYS=30,31:
+flag_red_canyon_<mode>_day<d>.jpg and flag_overview.jpg.
 """
 
 from __future__ import annotations
+
+import sys
 
 from PIL import Image, ImageDraw
 
@@ -32,8 +38,31 @@ def png(mode: str, day: int, month: str) -> Image.Image:
     return Image.open(SRC / f"home_375_{mode}_day{day}_{month}.png").convert("RGB")
 
 
+def flag_sheet() -> None:
+    shots = [(m, d) for m in ("light", "dark") for d in (30, 31)]
+    tiles = []
+    for mode, day in shots:
+        im = png(mode, day, "2027-01")
+        im.resize((im.width * 2 // 3, im.height * 2 // 3), Image.LANCZOS).save(
+            DST / f"flag_red_canyon_{mode}_day{day}.jpg", quality=88)
+        tiles.append((f"Red Canyon · {mode} · day {day}/31",
+                      im.resize((im.width // 3, im.height // 3), Image.LANCZOS)))
+    w, h = tiles[0][1].size
+    g, head = 12, 26
+    sheet = Image.new("RGB", (4 * w + 5 * g, h + head + 2 * g), "white")
+    d = ImageDraw.Draw(sheet)
+    for j, (label, im) in enumerate(tiles):
+        x = g + j * (w + g)
+        d.text((x, g), label, fill=(0, 0, 0), font=font(15))
+        sheet.paste(im, (x, g + head))
+    sheet.save(DST / "flag_overview.jpg", quality=88)
+
+
 def main() -> None:
     DST.mkdir(parents=True, exist_ok=True)
+    if "--flag" in sys.argv:
+        flag_sheet()
+        return
     for theme, _, month, last in THEMES[1:]:
         for mode in ("light", "dark"):
             for day in (1, 20, last):

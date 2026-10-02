@@ -7285,3 +7285,6 @@ On branch `1.1.0-design`; not merged, not pushed.
 
   The default is cyan `#1FB5C9`, the best in the weakest shot.
   `ClimbThemes.redCanyonPennant` changes it.
+- **[Renders]** `batch4/flag_red_canyon_*.jpg` and `flag_overview.jpg`:
+  Red Canyon at 375 pt, light and dark, days 30 (faded) and 31 (lit),
+  with the cyan pennant. 1250 tests pass; `flutter analyze` is clean.
