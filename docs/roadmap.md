@@ -105,34 +105,36 @@ D1–D6 in the side-tracks file.)*
       Device checklist additions (Batch 6, M8, M15): the month transition
       card with the new medals; review the near-miss threshold (5 points)
       if the rule changes
-- [ ] Batch 6 — month transition card and measurement events; after the
+- [x] Batch 6 — month transition card and measurement events; after the
       card, once a month, a zoom from the whole mountain to the avatar.
-      **Built on `1.1.0-design`; device-checked on 2026-10-02 (Ahmet,
-      iPhone 14 Plus) except the blurred K-c bands: awaiting device
-      verification of the blurred bands only. Not merged into `1.1.0`.**
-      Decisions M1–M22 in `1.1.0-design-side-tracks.md`; Batch 0 report
-      `docs/design/batch6/batch0-report.md`; build log 2026-10-02.
-      Built: the month card (summary / fresh start, bottom sheet, M21
-      scroll), the K-c → daily zoom (1.8 s, chosen on the device) and the
-      first run's zoom → step → Premium, the three events and `theme_id` on
-      the Daily Test start, `CLIMB_DEBUG_MONTH_CARD`; the plaque at 14 pt;
-      the K-c bands as a pre-made blurred backdrop (M22, replacing the
-      single colour). Open:
-  - [ ] device check of the blurred bands, and their strength (0.03 now;
-        light 0.015 / strong 0.06 rendered in
-        `docs/design/batch6/blur/`); the sharp image's edge shows as a
-        visible line against the backdrop (`blur_seam.txt`);
-  - [x] the zoom's duration: 1.8 s (device, 2026-10-02);
-  - [x] 320 pt flaws accepted as known flaws (only while the sheet is
-        open); 375 × 667 measured: no scrolling, 55–80 % of the mountain
-        shows, START under the sheet (known);
-  - [ ] performance: frame times not measured with DevTools; no stutter
-        was reported on the device (an observation, not a measurement);
-  - [ ] DebugView pass over the three events and `theme_id`; register the
-        new dimensions and metric (`analytics-plan.md`, "Month
-        transition");
+      **Done 2026-10-02, verified on device, merged into `1.1.0`** by
+      fast-forward (build log 2026-10-02, "Batch 6 done"). Decisions
+      M1–M22 in `1.1.0-design-side-tracks.md`; Batch 0 report
+      `docs/design/batch6/batch0-report.md`. Built: the month card
+      (summary / fresh start, bottom sheet, M21 scroll), the K-c → daily
+      zoom (1.8 s) and the first run's zoom → step → Premium, the three
+      events and `theme_id` on the Daily Test start,
+      `CLIMB_DEBUG_MONTH_CARD`, the plaque at 14 pt, the K-c bands as a
+      pre-made blurred backdrop (strength 0.03).
+      **Device check scope (Ahmet, iPhone 14 Plus):** the five debug states,
+      the zoom, the plaque and the cards on the device; the blurred bands
+      only on Green Slope in dark mode. The other three themes and light
+      mode of the bands: renders only, not seen on a device. The seam
+      between the sharp image and the backdrop (ΔE2000 median 8.3–14.6)
+      was accepted on the device: a known small flaw. Still open:
+  - [ ] frame times and memory: not measured on a device;
+  - [ ] the three events and `theme_id`: not yet seen in DebugView; the
+        new dimensions and metric not registered (`analytics-plan.md`,
+        "Month transition");
+  - [ ] known flaws: at 320 pt and 375 × 667 (iPhone SE) the avatar on
+        START is under the sheet while it is open; if the first-launch
+        flow is quit half way, the first run's zoom does not play;
+  - [ ] the Firebase developer-traffic filter (1.1.0 release checklist);
   - [ ] pre-release check: Home's plaque and the month card may appear in
         App Store screenshots and case-study images
+- **Next: Batch 5 (medals).** Its device checklist keeps the two Batch 6
+  items above (the month card with the new medals; reviewing the
+  near-miss threshold).
 - [ ] Batch 7 — one-time environment motion (may move to the next version)
 - [x] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (Bird, Fox, Panda,
       Sloth), without facing data; the avatar carousel loops in both

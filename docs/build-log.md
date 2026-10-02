@@ -7715,3 +7715,29 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
   bands only (and their strength). Everything else was checked on the
   device (iPhone 14 Plus). Performance not measured.
 - **[Tests]** 1343 pass; `flutter analyze` clean.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 done; merged into 1.1.0)
+
+- **[Device — Ahmet, iPhone 14 Plus]** The blurred K-c bands approved, as
+  seen on **Green Slope in dark mode only**. The other three themes and
+  light mode were verified in renders only
+  (`docs/design/batch6/blur/blur_430_light.jpg`, `blur_430_dark.jpg`),
+  not on a device. Strength stays medium (0.03). The seam between the
+  sharp image and the backdrop (CIEDE2000 median 8.3–14.6) is accepted as
+  a known small flaw.
+- **[Done]** Batch 6 is done. Everything else was device-checked earlier
+  the same day (the five debug states, the 1.8 s zoom, the plaque at 0.7,
+  the cards).
+- **[Still open]**
+  - frame times and memory: not measured on a device (no stutter was
+    reported, which is not a measurement);
+  - the three events and `theme_id`: not yet seen in DebugView, not
+    registered;
+  - at 320 pt and 375 × 667 the avatar on START is under the open sheet;
+  - if the first-launch flow is quit half way, the first run's zoom does
+    not play;
+  - the Firebase developer-traffic filter (release checklist).
+- **[Next]** Batch 5 (medals); its checklist keeps "the month card with
+  the new medals" and "review the near-miss threshold".
+- **[Merge]** `1.1.0` fast-forwarded to `1.1.0-design` (the commit
+  carrying this entry); see the roadmap.
