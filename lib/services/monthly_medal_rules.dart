@@ -44,4 +44,28 @@ abstract final class MonthlyMedalRules {
     }
     return null;
   }
+
+  /// Batch 6, M15: the month card's near-miss line shows when the gap to
+  /// the next tier is at most this many points (and never at Gold). One
+  /// fully answered day is worth at least this much
+  /// ([DailyTestSet.questionCount] × [pointsPerWrong]). Reviewed again if
+  /// Batch 5 changes the rule.
+  static const nearMissPoints = 5;
+
+  /// The next tier above [score] in [year]/[month] and the points still
+  /// missing to it, or null at Gold. The month card's only source for
+  /// "next tier and gap" (M20).
+  static (MedalTier, int)? nextTier(int year, int month, int score) {
+    for (final tier in MedalTier.values) {
+      final t = threshold(year, month, tier);
+      if (score < t) return (tier, t - score);
+    }
+    return null;
+  }
+
+  /// [nextTier] when its gap is at most [nearMissPoints], else null (M15).
+  static (MedalTier, int)? nearMiss(int year, int month, int score) {
+    final next = nextTier(year, month, score);
+    return next != null && next.$2 <= nearMissPoints ? next : null;
+  }
 }

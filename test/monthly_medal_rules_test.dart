@@ -41,6 +41,49 @@ void main() {
     expect(_tier(2026, 4, 150), MedalTier.silver);
     expect(_tier(2026, 4, 225), MedalTier.gold);
   });
+
+  group('next tier and the near-miss line (Batch 6, M15, M20)', () {
+    // October 2026: Bronze 78, Silver 155, Gold 233.
+    test('the next tier and its gap, null at Gold', () {
+      expect(MonthlyMedalRules.nextTier(2026, 10, 0), (MedalTier.bronze, 78));
+      expect(MonthlyMedalRules.nextTier(2026, 10, 78), (MedalTier.silver, 77));
+      expect(MonthlyMedalRules.nextTier(2026, 10, 232), (MedalTier.gold, 1));
+      expect(MonthlyMedalRules.nextTier(2026, 10, 233), isNull);
+      expect(MonthlyMedalRules.nextTier(2026, 10, 310), isNull);
+    });
+
+    test('agrees with tierFor on every score of 28-31 day months', () {
+      for (final (y, m) in [(2026, 2), (2028, 2), (2026, 11), (2026, 10)]) {
+        for (var s = 0; s <= MonthlyMedalRules.maxScore(y, m); s++) {
+          final tier = _tier(y, m, s);
+          final expected = tier == null
+              ? MedalTier.bronze
+              : tier == MedalTier.gold
+                  ? null
+                  : MedalTier.values[tier.index + 1];
+          expect(MonthlyMedalRules.nextTier(y, m, s)?.$1, expected,
+              reason: '$y-$m score $s');
+        }
+      }
+    });
+
+    test('the line shows at a gap of 5, not 6', () {
+      expect(MonthlyMedalRules.nearMissPoints, 5);
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 228), (MedalTier.gold, 5));
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 227), isNull);
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 154), (MedalTier.silver, 1));
+    });
+
+    test('never at Gold', () {
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 233), isNull);
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 310), isNull);
+    });
+
+    test('without a medal, the gap is to Bronze', () {
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 74), (MedalTier.bronze, 4));
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 72), isNull);
+    });
+  });
 }
 
 List<int> _thresholds(int year, int month) => [

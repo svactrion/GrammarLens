@@ -152,6 +152,20 @@ class StorageService {
   /// The key for the paywall shown once, on Home, after the first climb.
   static const String day0PaywallFlag = 'day0_paywall';
 
+  /// Batch 6 (M6, M20): the month transition card for [year]/[month] was
+  /// dismissed. Written on dismissal, so a card open when the app is
+  /// closed shows again.
+  static String monthCardSeenFlag(int year, int month) =>
+      'month_card:${_monthKey(year, month)}';
+
+  /// Batch 6 (M6): the month-change zoom for [year]/[month] has started.
+  /// Claimed when it starts, so it never plays twice.
+  static String monthZoomFlag(int year, int month) =>
+      'month_zoom:${_monthKey(year, month)}';
+
+  /// Batch 6 (M2, M14): the first run's zoom has started.
+  static const String firstRunZoomFlag = 'first_run_zoom';
+
   static const _createPracticeSettingsTable = '''
     CREATE TABLE IF NOT EXISTS practice_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
@@ -1426,6 +1440,32 @@ class StorageService {
     });
   }
 
+  /// Whether [key] has been claimed ([claimOneTimeFlag]), without claiming
+  /// it. Throws if the database cannot be read.
+  Future<bool> hasOneTimeFlag(String key) async {
+    final db = await _database;
+    final rows = await db.query('one_time_flags',
+        columns: ['key'], where: 'key = ?', whereArgs: [key], limit: 1);
+    return rows.isNotEmpty;
+  }
+
+  /// Whether this device used the Monthly Climb in a month before
+  /// [year]/[month]: a month theme recorded (Home was shown that month,
+  /// from 1.1.0 on) or a Daily Test completed (also 1.0's history). The
+  /// month transition card goes only to such a returning user (Batch 6,
+  /// M2: no card in the month a user starts in).
+  Future<bool> hasClimbHistoryBefore(int year, int month) async {
+    final key = _monthKey(year, month);
+    final db = await _database;
+    final rows = await db.rawQuery('''
+      SELECT 1 FROM climb_month_themes WHERE month < ?
+      UNION ALL
+      SELECT 1 FROM climb_daily_entries WHERE day < ?
+      LIMIT 1
+    ''', [key, '$key-01']);
+    return rows.isNotEmpty;
+  }
+
   /// Settings' "reset data" (PRD v2 §4) — clears practice history (logged
   /// mistakes and per-topic counts) so the app reads like a fresh install
   /// without actually losing the guest identity: name, learning goal, and
@@ -1452,8 +1492,9 @@ class StorageService {
     if (!(kDebugMode && DebugTools.enabledForTesting)) return;
     final db = await _database;
     await db.delete('user_profile');
-    // The first-day paywall is part of onboarding: a reset brings it back.
+    // The first-day paywall and the first run's zoom are part of
+    // onboarding: a reset brings them back.
     await db.delete('one_time_flags',
-        where: 'key = ?', whereArgs: [day0PaywallFlag]);
+        where: 'key IN (?, ?)', whereArgs: [day0PaywallFlag, firstRunZoomFlag]);
   }
 }
