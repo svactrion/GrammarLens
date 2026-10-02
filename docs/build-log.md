@@ -7803,3 +7803,24 @@ recorded as N1–N14 because R1–R6 already name the Batch 3b report's items.
   are not yet checked on a device.
 - **[Roadmap]** Parked for 1.2: the reachable-tier hint (N5), tapping a
   save point for its name (N6), the rest day (N7).
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 5 Batch 0 report written; waiting for the owner)
+
+On branch `1.1.0-design`; not pushed. No `lib/` or `assets/` change.
+Report: `docs/design/batch5/batch0-report.md`.
+
+- **[Commits]** `2ddef83` (N1–N14), `4a53de9` (the owner's inputs, hashes
+  verified; `build_medals.py` unchanged, 13 medals, byte-identical runs),
+  `065d879` (tools and outputs), and this report.
+- **[Measured]** The Day-0 Welcome card is 980–1954 pt below the fold
+  when it appears, on every screen; N6's label above its object overlaps
+  the arriving avatar in 43 of 45 cases (above object and avatar: none);
+  the month card's 40 pt medal is below the stars' 48 floor, a 48 pt disc
+  makes it scroll 2.2 pt at 320 × 568 Large; the signpost fits C5 at
+  ratio 0.95 only (tent-sized), ΔE2000 ≥ 14.2 from the ground in every
+  theme and mode; C5 is reached on step 26 of 28 and 29 of 31, as N11
+  says; source images total 97.51 MB (G1: 100 MB).
+- **[Open — owner]** Thirteen questions in the report's §9 (celebration
+  place, label placement and timing, month card medal size, Profile
+  layout, events, debug define, assets, signpost size, OFL text, G1).
+- **[Tests]** 1343 pass; `flutter analyze` clean.

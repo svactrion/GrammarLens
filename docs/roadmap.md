@@ -104,7 +104,8 @@ D1–D6 in the side-tracks file.)*
 - [ ] Batch 5 — themed medals (12 composed images + the Welcome badge),
       save point names and labels, the tier celebration, the C5 signpost.
       Decisions N1–N14 (2026-10-02, `1.1.0-design-side-tracks.md`, "Batch
-      5"); Batch 0 started (`docs/design/batch5/batch0-report.md`). *(Was:
+      5"); Batch 0 report written 2026-10-02, waiting for the owner's
+      answers (`docs/design/batch5/batch0-report.md`, §9). *(Was:
       "themed medal: body, emblem, month label", replaced by N1–N3.)*
       Device checklist additions (Batch 6, M8, M15): the month transition
       card with the new medals; review the near-miss threshold (5 points)
