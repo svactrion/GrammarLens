@@ -7463,3 +7463,37 @@ Batch 0".
   debug-only `ClimbCard.debugPlaqueRadiusShareOverride`, like
   `ClimbSavePoints.debugDarkFilterStrengthOverride`, and the render tool's
   `DESIGN_MEASURE_PLAQUE_SHARE`). 1255 tests pass (2 new).
+
+- **2026-10-02 — Batch 6 step 4: the zoom (not on a device yet).**
+  - `lib/widgets/monthly_climb/climb_zoom.dart`: `ClimbOverview` (K-c: the
+    image fitted to the 350 pt height, centred; its transform to the daily
+    layer) and `ClimbZoomController` (hold K-c; then the claim, a 0.3 s
+    pause and a 1.8 s zoom, `duration` and `pause` named constants;
+    Reduce Motion a 250 ms cross-fade; `skip`, `dailyTestOpened`; four
+    outcomes, M16). A run always completes (skip, Daily Test, "already
+    played", dispose), so a chain waiting on it never stalls.
+  - `MonthlyMountain` draws the scene once in the daily framing behind a
+    `RepaintBoundary`; during a zoom only a `Transform` above it changes.
+    Tested: the boundary is not repainted across the zoom's frames (its
+    symmetric paint count stays); only the layer is reused.
+  - The month and step chips fade in over the zoom's last 15 % (they cover
+    the top of the image in K-c).
+  - M11: band colours per theme and mode measured from the images' side
+    edges (`tool/scene_art/kc_band_colors.py`,
+    `docs/design/batch6/kc_bands.txt`) into `ClimbTheme`; seam ΔE2000
+    (edge rows to the band colour) median 5.9–12.0. The vertical-gradient
+    alternative is only a render: `docs/design/batch6/kc_bands_430_light.jpg`.
+  - Home: tap on the climb card during a run skips it; opening the Daily
+    Test or its result jumps it to the end (M16).
+  - First run (M2, M14): the Home that replaces the first-launch flow
+    holds K-c from its first frame; zoom → Day-0 step → paywall. Tested:
+    the order; a tap skip; the Daily Test result opened during the zoom
+    (after it closes, the step and the paywall follow); Reduce Motion.
+    Flag `first_run_zoom` claimed when it starts; the debug onboarding
+    reset clears it.
+  - Found and fixed while testing: starting a run and choosing the
+    cross-fade did not notify Home, so tap-to-skip was off and Reduce
+    Motion showed the zoom.
+  - Three existing first-launch tests changed on purpose: the hop now
+    comes after the zoom (observed over 200 frames, not 100), and the
+    claimed flags include `first_run_zoom`.

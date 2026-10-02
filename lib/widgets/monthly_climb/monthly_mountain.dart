@@ -11,6 +11,7 @@ import 'climb_debug_theme.dart';
 import 'climb_route.dart';
 import 'climb_save_point_table.dart';
 import 'climb_save_points.dart';
+import 'climb_zoom.dart';
 
 /// The Monthly Climb scene (1.1.0 design, scene art S1–S2): the theme's
 /// illustration, with the trail painted in, and the avatar on its step.
@@ -50,6 +51,18 @@ class MonthlyMountain extends StatefulWidget {
   /// whether it draws the flag. Home passes the month's recorded theme
   /// (`StorageService.resolveClimbMonthTheme`).
   final ClimbTheme theme;
+
+  /// Batch 6 (M6): a zoom's progress, 0 the K-c framing (the whole image)
+  /// to 1 the daily one; null shows the daily framing as always. The scene
+  /// is drawn once, in the daily framing, behind a repaint boundary, and
+  /// only a transform above it follows the zoom: no relayout or repaint of
+  /// the scene while it plays.
+  final Animation<double>? zoom;
+
+  /// With [zoom]: Reduce Motion's cross-fade, the K-c frame fading out
+  /// over the daily one, instead of the zoom.
+  final bool zoomCrossFade;
+
   const MonthlyMountain(
       {super.key,
       required this.days,
@@ -57,7 +70,12 @@ class MonthlyMountain extends StatefulWidget {
       required this.avatar,
       this.theme = ClimbThemes.greenSlope,
       this.showPassedDayDots = passedDayDots,
-      this.onMotionEnd});
+      this.onMotionEnd,
+      this.zoom,
+      this.zoomCrossFade = false});
+
+  /// The repaint boundary around the scene (tests count its paints).
+  static const sceneKey = ValueKey('climb_scene_layer');
 
   @override
   State<MonthlyMountain> createState() => _MonthlyMountainState();
@@ -241,8 +259,11 @@ class _MonthlyMountainState extends State<MonthlyMountain>
             height: ClimbCamera.windowHeight,
             child: ClipRect(
               child: ColoredBox(
-                // Shown only until the image has decoded.
-                color: palette.sky,
+                // Shown only until the image has decoded, and in a zoom's
+                // K-c framing as the bands beside the image (M11).
+                color: widget.zoom == null
+                    ? palette.sky
+                    : theme.kcBandFor(brightness),
                 child: ExcludeSemantics(
                     child: AnimatedBuilder(
                   animation: Listenable.merge([_motion, _fade]),
@@ -254,47 +275,80 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                     final tile = camera.avatarTileAt(_route.arcAt(_day));
                     // One layer, the image and the avatar in the image's
                     // own points, moved by the camera.
-                    return Stack(clipBehavior: Clip.none, children: [
-                      Positioned(
-                        left: -offset.dx,
-                        top: -offset.dy,
-                        width: image.width,
-                        height: image.height,
-                        child: Stack(clipBehavior: Clip.none, children: [
-                          Positioned.fill(
-                              child: Image.asset(
-                                  theme.backgroundFor(brightness),
-                                  fit: BoxFit.fill,
-                                  filterQuality: FilterQuality.medium,
-                                  gaplessPlayback: true)),
-                          if (widget.showPassedDayDots)
-                            Positioned.fill(
-                                child: CustomPaint(
-                                    painter: ClimbTrailDots(points: [
-                              // One dot per completed step left behind: with n
-                              // steps done, on steps 0 to n − 1 (step n is
-                              // under the avatar). Step 0 is the trail's
-                              // foot by the START flag.
-                              for (var d = 0; d < _day; d++)
-                                _route.stepAt(d) * camera.scale
-                            ], color: palette.ink))),
-                          // The save points and the flag, between the dots
-                          // and the avatar.
-                          for (final p in _objects)
-                            Positioned.fromRect(
-                                rect: _scaled(p.rect, camera.scale),
-                                child: _savePoint(p, _litFor(p), darkGain)),
+                    Widget scene() => Stack(clipBehavior: Clip.none, children: [
                           Positioned(
-                              left: pawn.dx - tile / 2,
-                              // The feet on the step: the tile's top is
-                              // 55/58 of its side above it (AvatarTile's
-                              // art).
-                              top: pawn.dy - tile * 55 / 58 - _hopLift(tile),
-                              child: AvatarTile(
-                                  avatar: widget.avatar, radius: tile / 2)),
-                        ]),
-                      ),
-                    ]);
+                            left: -offset.dx,
+                            top: -offset.dy,
+                            width: image.width,
+                            height: image.height,
+                            child: RepaintBoundary(
+                              key: MonthlyMountain.sceneKey,
+                              child: Stack(clipBehavior: Clip.none, children: [
+                                Positioned.fill(
+                                    child: Image.asset(
+                                        theme.backgroundFor(brightness),
+                                        fit: BoxFit.fill,
+                                        filterQuality: FilterQuality.medium,
+                                        gaplessPlayback: true)),
+                                if (widget.showPassedDayDots)
+                                  Positioned.fill(
+                                      child: CustomPaint(
+                                          painter: ClimbTrailDots(points: [
+                                    // One dot per completed step left behind:
+                                    // with n steps done, on steps 0 to n − 1
+                                    // (step n is under the avatar). Step 0 is
+                                    // the trail's foot by the START flag.
+                                    for (var d = 0; d < _day; d++)
+                                      _route.stepAt(d) * camera.scale
+                                  ], color: palette.ink))),
+                                // The save points and the flag, between the
+                                // dots and the avatar.
+                                for (final p in _objects)
+                                  Positioned.fromRect(
+                                      rect: _scaled(p.rect, camera.scale),
+                                      child:
+                                          _savePoint(p, _litFor(p), darkGain)),
+                                Positioned(
+                                    left: pawn.dx - tile / 2,
+                                    // The feet on the step: the tile's top is
+                                    // 55/58 of its side above it (AvatarTile's
+                                    // art).
+                                    top: pawn.dy -
+                                        tile * 55 / 58 -
+                                        _hopLift(tile),
+                                    child: AvatarTile(
+                                        avatar: widget.avatar,
+                                        radius: tile / 2)),
+                              ]),
+                            ),
+                          ),
+                        ]);
+                    final zoom = widget.zoom;
+                    if (zoom == null) return scene();
+                    Matrix4 at(double t) =>
+                        ClimbOverview.transform(camera, offset, t);
+                    if (widget.zoomCrossFade) {
+                      // Reduce Motion (M6): no zoom; the K-c frame, bands
+                      // included, fades out over the daily one.
+                      return Stack(children: [
+                        scene(),
+                        FadeTransition(
+                          opacity: ReverseAnimation(zoom),
+                          child: ColoredBox(
+                              color: theme.kcBandFor(brightness),
+                              child:
+                                  Transform(transform: at(0), child: scene())),
+                        ),
+                      ]);
+                    }
+                    // Only the transform follows the zoom; the scene below
+                    // is the builder's child, built once.
+                    return AnimatedBuilder(
+                      animation: zoom,
+                      child: scene(),
+                      builder: (context, child) =>
+                          Transform(transform: at(zoom.value), child: child),
+                    );
                   },
                 )),
               ),

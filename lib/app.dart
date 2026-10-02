@@ -83,6 +83,11 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   // cleared by it in `initState`, like [_initialPendingClimb].
   bool _offerDay0Paywall = false;
 
+  // Whether Home plays the first run's zoom (Batch 6, M2): true for the Home
+  // that replaces the first-launch flow, however it ended. Cleared by that
+  // Home in `initState`, like [_offerDay0Paywall].
+  bool _firstRunZoom = false;
+
   @override
   void initState() {
     super.initState();
@@ -325,6 +330,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
                 _profile = profile;
                 _initialPendingClimb = pendingClimb;
                 _offerDay0Paywall = dayZeroCompleted;
+                _firstRunZoom = true;
               }),
             );
           }
@@ -343,6 +349,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               onInitialPendingClimbTaken: () => _initialPendingClimb = null,
               offerDay0Paywall: _offerDay0Paywall,
               onOfferDay0PaywallTaken: () => _offerDay0Paywall = false,
+              firstRunZoom: _firstRunZoom,
+              onFirstRunZoomTaken: () => _firstRunZoom = false,
               onAvatarTap: () => _openAvatarPickerFromHome(context),
             ),
             ReviewScreen(

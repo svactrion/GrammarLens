@@ -235,7 +235,8 @@ void main() {
       expect(mountain, findsNothing);
 
       await tester.pump(const Duration(milliseconds: 900));
-      final seen = await observeHome(tester);
+      // Batch 6 (M14): the first run's zoom (pause + 1.8 s) comes first.
+      final seen = await observeHome(tester, frames: 200);
       await tester.pumpAndSettle();
       final finalTop = pawnTop(tester);
 
@@ -409,7 +410,8 @@ void main() {
       expect(sink.named('paywall_viewed').single.parameters,
           {'source': 'day0_after_climb'});
       expect(sink.named('mode_selected'), isEmpty);
-      expect(storage.claimedFlags, {StorageService.day0PaywallFlag});
+      expect(storage.claimedFlags,
+          {StorageService.firstRunZoomFlag, StorageService.day0PaywallFlag});
     });
 
     testWidgets(
@@ -486,8 +488,129 @@ void main() {
       }
 
       expect(mountain, findsOneWidget);
-      expect(storage.claimedFlags, isEmpty);
+      // Only the first run's zoom (Batch 6, M2): no paywall flag.
+      expect(storage.claimedFlags, {StorageService.firstRunZoomFlag});
       expect(sink.named('paywall_viewed'), isEmpty);
+    });
+  });
+
+  group('first run zoom (Batch 6, M2, M14)', () {
+    final premium = find.byType(PremiumScreen);
+    MonthlyMountain mtn(WidgetTester tester) =>
+        tester.widget<MonthlyMountain>(mountain);
+
+    Future<void> untilMountain(WidgetTester tester) async {
+      for (var i = 0; i < 200 && mountain.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+    }
+
+    testWidgets(
+        'Home first draws the whole mountain (K-c) on the step before; the '
+        'zoom ends before the step, and the paywall comes last',
+        (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      expect(mtn(tester).zoom, isNotNull);
+      expect(mtn(tester).zoom!.value, 0);
+      expect(mtn(tester).completedDays, 0);
+      // While the zoom is on, the step waits.
+      var zoomEnded = false;
+      for (var i = 0; i < 400; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        if (premium.evaluate().isNotEmpty) break;
+        final m = mtn(tester);
+        if (m.zoom != null) expect(m.completedDays, 0);
+        if (m.zoom == null) zoomEnded = true;
+      }
+      expect(zoomEnded, isTrue);
+      expect(premium, findsOneWidget);
+      expect(mtn(tester).completedDays, 1);
+      expect(storage.claimedFlags, contains(StorageService.firstRunZoomFlag));
+    });
+
+    testWidgets(
+        'a tap on the mountain skips the zoom; the step and the '
+        'paywall still follow', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      // Into the zoom (after the scroll and the pause).
+      // Into the zoom: the scroll and the pause, frame by frame.
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(mtn(tester).zoom!.value, greaterThan(0));
+      // The card's upper part: the lower one may be under the tab bar.
+      final card = tester.getRect(mountain);
+      await tester.tapAt(card.topCenter + const Offset(0, 60));
+      await tester.pump();
+      expect(mtn(tester).zoom, isNull);
+      for (var i = 0; i < 160 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(premium, findsOneWidget);
+      expect(mtn(tester).completedDays, 1);
+    });
+
+    testWidgets(
+        'opening the Daily Test (its result) during the zoom ends it; '
+        'after it closes, the step and the paywall follow', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      // Into the zoom: the scroll and the pause, frame by frame.
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(mtn(tester).zoom!.value, greaterThan(0));
+      final today = find.textContaining("Today's test");
+      await tester.ensureVisible(today);
+      await tester.pump();
+      expect(mtn(tester).zoom, isNotNull);
+      await tester.tap(today);
+      await tester.pumpAndSettle();
+      expect(resultsTitle, findsOneWidget);
+      expect(mtn(tester).zoom, isNull);
+      expect(premium, findsNothing);
+      await tester.pageBack();
+      for (var i = 0; i < 200 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(premium, findsOneWidget);
+      expect(mtn(tester).completedDays, 1);
+    });
+
+    testWidgets(
+        'Reduce Motion: a cross-fade, not a zoom, and the chain '
+        'goes on', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      var crossFaded = false;
+      for (var i = 0; i < 120 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        if (mountain.evaluate().isNotEmpty && mtn(tester).zoomCrossFade) {
+          crossFaded = true;
+        }
+      }
+      expect(crossFaded, isTrue);
+      expect(premium, findsOneWidget);
     });
   });
 }

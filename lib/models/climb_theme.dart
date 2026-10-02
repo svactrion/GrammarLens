@@ -65,6 +65,14 @@ class ClimbTheme {
   final ClimbSummit summit;
   final ClimbEmblem emblem;
 
+  /// Batch 6, M11: the colour of the empty bands beside the image in the
+  /// K-c framing (the whole image fitted to the window's height), one per
+  /// mode, measured from the image's own side edges
+  /// (`tool/scene_art/kc_band_colors.py`,
+  /// docs/design/batch6/kc_bands.txt). Null: the palette's `sky`.
+  final Color? kcBandLight;
+  final Color? kcBandDark;
+
   const ClimbTheme({
     required this.id,
     required this.name,
@@ -78,6 +86,8 @@ class ClimbTheme {
     this.flagPennantColor,
     required this.summit,
     required this.emblem,
+    this.kcBandLight,
+    this.kcBandDark,
   }) : assert(
             !ready ||
                 (lightPalette != null &&
@@ -88,6 +98,11 @@ class ClimbTheme {
   /// The palette for [brightness]. Only for a ready theme.
   ClimbPalette paletteFor(Brightness brightness) =>
       (brightness == Brightness.dark ? darkPalette : lightPalette)!;
+
+  /// The K-c band colour for [brightness] (M11). Only for a ready theme.
+  Color kcBandFor(Brightness brightness) =>
+      (brightness == Brightness.dark ? kcBandDark : kcBandLight) ??
+      paletteFor(brightness).sky;
 
   /// The background asset for [brightness]. Only for a ready theme.
   String backgroundFor(Brightness brightness) =>
@@ -136,6 +151,8 @@ class ClimbThemes {
     hasSummitFlag: true,
     summit: ClimbSummit.grassyHilltopWithFlag,
     emblem: ClimbEmblem.pine,
+    kcBandLight: Color(0xFF9EAB8C),
+    kcBandDark: Color(0xFF454F5E),
   );
 
   static const emberPeak = ClimbTheme(
@@ -150,6 +167,8 @@ class ClimbThemes {
     hasSummitFlag: true,
     summit: ClimbSummit.smokingCrater,
     emblem: ClimbEmblem.flame,
+    kcBandLight: Color(0xFF775E58),
+    kcBandDark: Color(0xFF413F53),
   );
 
   static const glacierPeak = ClimbTheme(
@@ -164,6 +183,8 @@ class ClimbThemes {
     hasSummitFlag: true,
     summit: ClimbSummit.iceCrown,
     emblem: ClimbEmblem.iceCrystal,
+    kcBandLight: Color(0xFFB8CFF5),
+    kcBandDark: Color(0xFF6370AF),
   );
 
   /// G10: Red Canyon's flag pennant, a cyan blue, the complement of its red
@@ -186,6 +207,8 @@ class ClimbThemes {
     flagPennantColor: redCanyonPennant,
     summit: ClimbSummit.mesa,
     emblem: ClimbEmblem.rockArch,
+    kcBandLight: Color(0xFFD08660),
+    kcBandDark: Color(0xFF6C464F),
   );
 
   /// Rotation order.

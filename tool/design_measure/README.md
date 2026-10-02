@@ -201,3 +201,22 @@ Batch 6 Batch 0, step 3 (`docs/design/batch6/batch0-report.md`):
   overflow, how much of the window shows (`month_card_numbers.txt`).
   `tool/scene_art/batch6_sheet_sheet.py` writes the JPEGs to
   `docs/design/batch6/sheet/`. The prototype is for measuring only.
+
+Batch 6 build (`docs/build-log.md`, 2026-10-02):
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/kc_band_colors.py
+```
+
+M11: each theme's K-c band colour per mode from its background asset's
+side edges (`docs/design/batch6/kc_bands.txt`, `.json`); the values are
+`ClimbTheme.kcBandLight` / `kcBandDark`.
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch6_kc_bands flutter test tool/design_measure/batch6/kc_bands_render_test.dart
+```
+
+The K-c bands at 430 pt in light mode, four themes: the product's single
+colour, and a vertical gradient painted over the bands for comparison only
+(then `tool/scene_art/batch6_kc_bands_sheet.py` →
+`docs/design/batch6/kc_bands_430_light.jpg`).

@@ -1,0 +1,15 @@
+Batch 6 M11: K-c side band colours, measured from the image edges
+Outer 8 px of both sides of each background asset, full height, mean in CIELAB.
+
+theme          mode   band      top fifth  bottom fifth  ΔE2000 of edge rows to band (median / p95)
+green_slope    light  #9EAB8C   #C4D5D6    #90986B       12.0 / 19.4
+green_slope    dark   #454F5E   #5A5785    #404C4F       10.0 / 18.0
+ember_peak     light  #775E58   #C4846C    #615452       10.4 / 30.3
+ember_peak     dark   #413F53   #5B517A    #3D3D4A       7.4 / 14.8
+glacier_peak   light  #B8CFF5   #B0D1FE    #B8CEF1       5.9 / 15.0
+glacier_peak   dark   #6370AF   #7572AB    #6074B3       6.6 / 17.0
+red_canyon     light  #D08660   #E6BC9E    #C57449       10.3 / 21.2
+red_canyon     dark   #6C464F   #6C5879    #6D4041       8.6 / 18.5
+
+band: the product's colour (ClimbTheme.kcBandLight / kcBandDark).
+top / bottom: only for the vertical-gradient render (not in the product).

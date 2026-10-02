@@ -26,6 +26,11 @@ class ClimbCard extends StatelessWidget {
   final int steps;
   final int days;
 
+  /// Batch 6: the month and step chips' opacity during a zoom. They cover
+  /// the top of the image in the K-c framing, so they are hidden there and
+  /// fade in at the zoom's end. Null: always shown.
+  final Animation<double>? chipOpacity;
+
   const ClimbCard({
     super.key,
     required this.mountain,
@@ -33,7 +38,10 @@ class ClimbCard extends StatelessWidget {
     required this.month,
     required this.steps,
     required this.days,
+    this.chipOpacity,
   });
+
+  static const chipsKey = ValueKey('climb_card_chips');
 
   /// English month names: the app has no localization setup (roadmap,
   /// "Turkish UI copy"), and `MaterialLocalizations` only formats a month
@@ -123,42 +131,45 @@ class ClimbCard extends StatelessWidget {
                 Stack(children: [
                   mountain,
                   Positioned(
-                    left: 10,
-                    right: 10,
-                    top: plaqueH / 2 + 6,
-                    // Each chip scales down only if the row cannot hold it:
-                    // never at the app's text sizes, only under a very
-                    // large system text size (Dynamic Type).
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: AlignmentDirectional.centerStart,
-                              child: chip(Text(monthNames[month.month - 1],
-                                  key: monthKey, style: labelStyle)),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: AlignmentDirectional.centerEnd,
-                              child: Semantics(
-                                liveRegion: true,
-                                container: true,
-                                label: steps == days
-                                    ? 'Summit reached. $steps of $days steps.'
-                                    : '$steps of $days steps.',
-                                excludeSemantics: true,
-                                child: chip(Text('$steps / $days',
-                                    key: stepsKey, style: labelStyle)),
+                      left: 10,
+                      right: 10,
+                      top: plaqueH / 2 + 6,
+                      // Each chip scales down only if the row cannot hold it:
+                      // never at the app's text sizes, only under a very
+                      // large system text size (Dynamic Type).
+                      child: FadeTransition(
+                        key: chipsKey,
+                        opacity: chipOpacity ?? kAlwaysCompleteAnimation,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: chip(Text(monthNames[month.month - 1],
+                                      key: monthKey, style: labelStyle)),
+                                ),
                               ),
-                            ),
-                          ),
-                        ]),
-                  ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: AlignmentDirectional.centerEnd,
+                                  child: Semantics(
+                                    liveRegion: true,
+                                    container: true,
+                                    label: steps == days
+                                        ? 'Summit reached. $steps of $days steps.'
+                                        : '$steps of $days steps.',
+                                    excludeSemantics: true,
+                                    child: chip(Text('$steps / $days',
+                                        key: stepsKey, style: labelStyle)),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                      )),
                 ]),
                 scoreBar,
               ],

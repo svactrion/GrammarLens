@@ -25,6 +25,7 @@ import '../widgets/home_greeting.dart';
 import '../widgets/locked_premium_pill.dart';
 import '../widgets/monthly_climb/climb_card.dart';
 import '../widgets/monthly_climb/climb_score_bar.dart';
+import '../widgets/monthly_climb/climb_zoom.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
 import '../widgets/weak_spot_card.dart';
 import 'avatar_picker_screen.dart' show homeAvatarHeroTag;
@@ -78,6 +79,15 @@ class HomeScreen extends StatefulWidget {
   /// owner can drop it and never hand it to a later Home.
   final VoidCallback? onOfferDay0PaywallTaken;
 
+  /// True when this Home replaces the first-launch flow (Batch 6, M2,
+  /// M14): no month card; once, a zoom from the whole mountain to the
+  /// avatar on START, before the Day-0 step and the first-day paywall.
+  /// Read once in `initState`, like [offerDay0Paywall].
+  final bool firstRunZoom;
+
+  /// Called from `initState` once [firstRunZoom] has been taken.
+  final VoidCallback? onFirstRunZoomTaken;
+
   HomeScreen({
     super.key,
     this.active = true,
@@ -92,6 +102,8 @@ class HomeScreen extends StatefulWidget {
     this.onInitialPendingClimbTaken,
     this.offerDay0Paywall = false,
     this.onOfferDay0PaywallTaken,
+    this.firstRunZoom = false,
+    this.onFirstRunZoomTaken,
     DateTime Function()? clock,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
         clock = clock ?? DateTime.now;
@@ -100,7 +112,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   // Starts closed rather than "unknown/loading" — PRD v2 §12.2's default
   // for anyone not confirmed to have a trial/subscription is Free, and
   // fail-closed here matches SubscriptionService.hasFullAccess's own
@@ -168,9 +181,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _loadingWeakSpots = true;
   List<WeakSpot> _weakSpots = const [];
 
+  /// Batch 6: the zoom from the whole mountain (K-c) to the daily framing,
+  /// after the month card or on the first run.
+  late final ClimbZoomController _zoom;
+
+  /// The month and step chips: hidden in K-c, fading in at the zoom's end.
+  late final Animation<double> _chipOpacity;
+
+  /// The first run's zoom (M2, M14): pending until it starts; then the run
+  /// every climb load waits for before the Day-0 step.
+  bool _firstRunZoomPending = false;
+  Future<void>? _firstRunZoomRun;
+
+  void _onZoomChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    _zoom = ClimbZoomController(vsync: this)..addListener(_onZoomChanged);
+    _chipOpacity =
+        CurvedAnimation(parent: _zoom.progress, curve: const Interval(.85, 1));
     WidgetsBinding.instance.addObserver(this);
     final initialClimb = widget.initialPendingClimb;
     if (initialClimb != null && initialClimb.step > 0) {
@@ -180,6 +212,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     widget.onInitialPendingClimbTaken?.call();
     _day0PaywallPending = widget.offerDay0Paywall;
     widget.onOfferDay0PaywallTaken?.call();
+    if (widget.firstRunZoom) {
+      _firstRunZoomPending = true;
+      // K-c from the first frame the mountain is drawn.
+      _zoom.hold(ClimbZoomTrigger.firstRun);
+    }
+    widget.onFirstRunZoomTaken?.call();
     _checkAccess();
     // Live updates (PRD v2 §12.3/§12.6): a trial starting or expiring
     // should re-gate Topic Practice and the weak-spot rows without
@@ -197,6 +235,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     _day0PaywallTimer?.cancel();
+    _zoom.removeListener(_onZoomChanged);
+    _zoom.dispose();
     super.dispose();
   }
 
@@ -314,6 +354,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           setState(() => _loadingClimb = false);
           return;
         }
+        // M14: the first run's zoom comes before the Day-0 step.
+        await _firstRunZoom();
+        if (!mounted || generation != _climbLoadGeneration) return;
       }
       setState(() {
         _climbTheme = theme;
@@ -324,6 +367,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _pendingClimbDay = null;
         _pendingClimbStep = 0;
       });
+      // With no step to show (the Day-0 test left, or all skipped), the first
+      // run's zoom plays now, and the paywall below waits for it (M14).
+      if (!showStep && (_firstRunZoomPending || _firstRunZoomRun != null)) {
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+        final mountainContext = _mountainKey.currentContext;
+        if (_firstRunZoomPending &&
+            mountainContext != null &&
+            mountainContext.mounted) {
+          await Scrollable.ensureVisible(mountainContext,
+              alignment: 0.35,
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 250));
+          if (!mounted) return;
+        }
+        await _firstRunZoom();
+        if (!mounted || generation != _climbLoadGeneration) return;
+      }
       // A step is now animating and its end opens the paywall; with none (an
       // all-skipped test, or a step that belongs to another month) Home is
       // simply loaded.
@@ -341,6 +403,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (!_climbAnimating) _armDay0Paywall(Duration.zero);
     }
   }
+
+  /// The first run's zoom (M2, M14), started once and awaited by every
+  /// climb load that follows: the Day-0 step and the paywall come after
+  /// it. Ends however the zoom ends; if Home is not visible when it would
+  /// start, it is dropped, so the chain never waits for it.
+  Future<void> _firstRunZoom() {
+    if (!_firstRunZoomPending) return _firstRunZoomRun ?? Future.value();
+    _firstRunZoomPending = false;
+    if (!_homeVisible) {
+      _zoom.release();
+      return Future.value();
+    }
+    return _firstRunZoomRun =
+        _runZoom(ClimbZoomTrigger.firstRun, StorageService.firstRunZoomFlag);
+  }
+
+  /// Plays a zoom, claiming [flag] as it starts (M6: never twice).
+  Future<void> _runZoom(ClimbZoomTrigger trigger, String flag) async {
+    final outcome = await _zoom.run(
+        trigger: trigger,
+        reduceMotion: MediaQuery.disableAnimationsOf(context),
+        claim: () => widget.storageService.claimOneTimeFlag(flag));
+    if (!mounted) return;
+    _onZoomEnded(trigger, outcome);
+  }
+
+  /// A zoom ended; null: it had already played and did not run.
+  void _onZoomEnded(ClimbZoomTrigger trigger, ClimbZoomOutcome? outcome) {}
 
   void _onMountainMotionEnd() {
     _climbAnimating = false;
@@ -455,6 +545,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _openDailyTest(BuildContext context) async {
     if (_dailyFlowActive) return;
+    // M16: a zoom jumps to its last frame.
+    _zoom.dailyTestOpened();
     _dailyFlowActive = true;
     ++_climbLoadGeneration;
     widget.analyticsService.modeSelected(AnalyticsService.modeDailyTest);
@@ -498,6 +590,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// when the set it's given is already completed (see its own doc
   /// comment), so viewing this again doesn't re-write anything.
   void _openDailyTestResult(BuildContext context, DailyTestSet set) {
+    _zoom.dailyTestOpened();
     Navigator.of(context)
         .push(
           MaterialPageRoute(
@@ -770,31 +863,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           const SizedBox(height: 8),
         ],
         if (_climbSteps != null)
-          ClimbCard(
-            key: _mountainKey,
-            month: _climbMonth,
-            steps: _climbSteps!,
-            days: days,
-            mountain: MonthlyMountain(
-              key: ValueKey(_climbMonth),
-              days: days,
-              completedDays: _climbSteps!,
-              avatar: widget.avatar ?? Avatar.values.first,
-              theme: _climbTheme,
-              onMotionEnd: _onMountainMotionEnd,
-            ),
-            // Under the window, not over the scene (design decision D9).
-            scoreBar: ClimbScoreBar(
-              score: _climbScore,
-              maxScore: MonthlyMedalRules.maxScore(
-                  _climbMonth.year, _climbMonth.month),
-              thresholds: {
-                for (final tier in MedalTier.values)
-                  tier: MonthlyMedalRules.threshold(
-                      _climbMonth.year, _climbMonth.month, tier),
-              },
-            ),
-          ),
+          // M6: during a zoom a tap on the card jumps it to its last frame;
+          // otherwise the card takes no taps (a tappable card is parked for
+          // 1.2, D5).
+          GestureDetector(
+              onTap: _zoom.running ? _zoom.skip : null,
+              excludeFromSemantics: true,
+              child: ClimbCard(
+                key: _mountainKey,
+                month: _climbMonth,
+                steps: _climbSteps!,
+                days: days,
+                chipOpacity: _zoom.active ? _chipOpacity : null,
+                mountain: MonthlyMountain(
+                  key: ValueKey(_climbMonth),
+                  days: days,
+                  completedDays: _climbSteps!,
+                  avatar: widget.avatar ?? Avatar.values.first,
+                  theme: _climbTheme,
+                  onMotionEnd: _onMountainMotionEnd,
+                  zoom: _zoom.active ? _zoom.progress : null,
+                  zoomCrossFade: _zoom.crossFade,
+                ),
+                // Under the window, not over the scene (design decision D9).
+                scoreBar: ClimbScoreBar(
+                  score: _climbScore,
+                  maxScore: MonthlyMedalRules.maxScore(
+                      _climbMonth.year, _climbMonth.month),
+                  thresholds: {
+                    for (final tier in MedalTier.values)
+                      tier: MonthlyMedalRules.threshold(
+                          _climbMonth.year, _climbMonth.month, tier),
+                  },
+                ),
+              )),
         if (_loadingClimb)
           const LinearProgressIndicator(
               semanticsLabel: 'Loading monthly progress'),
