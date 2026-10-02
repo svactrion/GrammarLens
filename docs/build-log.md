@@ -7515,3 +7515,19 @@ Batch 0".
   - These use Batch 0's fullest summary prototype; a compacted card (M10)
     is shorter, so more of the window would show. Not measured yet.
   - Waiting for the owner. Steps 5–8 not started.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 decision M21; the rest of the build resumes)
+
+On branch `1.1.0-design` at `d98c083`; not pushed.
+
+- **[Product — owner] M21 (corrects M10).** Before the month card opens,
+  Home scrolls until the Today card's last 56 pt still show. *Why:* with
+  the climb card at the top the Daily Test's entry is off screen at 320
+  and 375 pt (`d98c083`), which breaks reaching the Daily Test during the
+  zoom. *Rejected:* the climb card at the top; the Today card at the top
+  (4–9 % of the mountain at 320 pt). *Known flaw:* at 320 pt about a
+  quarter of the mountain shows with the sheet open.
+- **[Product — owner] Accepted deviations:** `theme_id` only on
+  `mode_selected` (`daily_test`), derivable from the date elsewhere (global
+  calendar); no first-run zoom if the first-launch flow is quit half way;
+  a covered Home pauses the zoom, with no extra outcome.
