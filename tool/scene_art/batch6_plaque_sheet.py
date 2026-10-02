@@ -10,7 +10,17 @@ the real-Home tool into its own folder:
     (the same with batch6_plaque_after on the commit with the change)
     build/scene_art_venv/bin/python tool/scene_art/batch6_plaque_sheet.py
 
-Writes docs/design/batch6/plaque/plaque_before_after.jpg (the plaque cut
+With the argument "shares" (Batch 6 step 2: 0.4 → 0.7), instead compares
+plaqueRadiusShare 0.4 / 0.7 / 1.0 at 375 pt, light and dark:
+
+    for s in 0.4 0.7 1.0; do DESIGN_MEASURE_OUT=build/design_measure/batch6_plaque_share \
+        DESIGN_MEASURE_SCREENS=375 DESIGN_MEASURE_DAYS=15 DESIGN_MEASURE_PLAQUE_SHARE=$s \
+        flutter test tool/design_measure/scene_art/home_render_test.dart; done
+    build/scene_art_venv/bin/python tool/scene_art/batch6_plaque_sheet.py shares
+
+writing docs/design/batch6/plaque/plaque_shares.jpg.
+
+Otherwise writes docs/design/batch6/plaque/plaque_before_after.jpg (the plaque cut
 out at 3x, before | after, per screen and mode) and cards_before_after.jpg
 (the whole climb card at 1x).
 """
@@ -18,6 +28,7 @@ out at 3x, before | after, per screen and mode) and cards_before_after.jpg
 from __future__ import annotations
 
 import json
+import sys
 
 from PIL import Image, ImageDraw
 
@@ -54,7 +65,35 @@ def sheet(rows: list[tuple[str, list[Image.Image]]], heads: list[str]) -> Image.
     return out
 
 
+def shares() -> None:
+    folder = SRC / "batch6_plaque_share"
+    rows = []
+    for mode in MODES:
+        crops = []
+        for share in ("0.4", "0.7", "1.0"):
+            name = f"home_375_{mode}_day15_plaque{share}"
+            box = json.loads((folder / f"{name}.json").read_text())["plaque"]
+            im = Image.open(folder / f"{name}.png").convert("RGB")
+            crops.append(im.crop((int(box[0]) - PAD, int(box[1]) - PAD, int(box[2]) + PAD, int(box[3]) + PAD)))
+        rows.append((f"375 pt · {mode}", crops))
+    gap, head = 12, 26
+    cw = max(im.width for _, ims in rows for im in ims)
+    rh = max(im.height for _, ims in rows for im in ims) + head
+    out = Image.new("RGB", (3 * cw + 4 * gap, len(rows) * rh + (len(rows) + 1) * gap), "white")
+    d = ImageDraw.Draw(out)
+    for r, (label, ims) in enumerate(rows):
+        y = gap + r * (rh + gap)
+        for i, (im, share) in enumerate(zip(ims, ("0.4 (8 pt)", "0.7 (14 pt)", "1.0 (20 pt asked)"))):
+            x = gap + i * (cw + gap)
+            d.text((x, y), f"{label} · share {share}", fill="black", font=font(18))
+            out.paste(im, (x, y + head))
+    out.save(DST / "plaque_shares.jpg", quality=90)
+
+
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "shares":
+        shares()
+        return
     DST.mkdir(parents=True, exist_ok=True)
     plaques, cards = [], []
     for screen in SCREENS:

@@ -1,10 +1,10 @@
 Batch 6 Batch 0, step 2: the plaque's rounded corners
-frameRadius = 20.0 pt (appCardRadius), plaqueRadiusShare = 0.4, asked radius = 8.0 pt
+frameRadius = 20.0 pt (appCardRadius), plaqueRadiusShare = 0.7, asked radius = 14.0 pt
 
 size    plaque h  point corner r  top/bottom corner r  point pulled in  largest unfitted share
-small       34.0            8.00                 8.00             2.05                    0.70
-medium      36.0            8.00                 8.00             2.05                    0.74
-large       38.0            8.00                 8.00             2.05                    0.79
+small       34.0           14.00                14.00             3.58                    0.70
+medium      36.0           14.00                14.00             3.58                    0.74
+large       38.0           14.00                14.00             3.58                    0.79
 
 All in points. "point pulled in": how far each point moves in from
 the sharp sign's end. "largest unfitted share": above it, the

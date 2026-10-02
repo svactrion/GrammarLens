@@ -7452,3 +7452,14 @@ Batch 0".
   release checklist (not verified, most likely not set up); Batch 5's
   device checklist gains the month card with the new medals and a review
   of the near-miss threshold.
+
+- **2026-10-02 — Batch 6 step 2: the plaque's share 0.4 → 0.7 (14 pt), owner.**
+  `ClimbCard.plaqueRadiusShare` is 0.7. Measured
+  (`docs/design/batch6/plaque/plaque_numbers.txt`): 14 pt fits every
+  corner unchanged at Small / Medium / Large (Small's limit is 0.70, so
+  0.7 is at its edge); each point moves in by 3.58 pt. Comparison of 0.4 /
+  0.7 / 1.0 at 375 pt, light and dark:
+  `docs/design/batch6/plaque/plaque_shares.jpg` (made through a new
+  debug-only `ClimbCard.debugPlaqueRadiusShareOverride`, like
+  `ClimbSavePoints.debugDarkFilterStrengthOverride`, and the render tool's
+  `DESIGN_MEASURE_PLAQUE_SHARE`). 1255 tests pass (2 new).

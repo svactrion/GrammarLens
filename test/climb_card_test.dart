@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
@@ -115,6 +116,45 @@ void main() {
       final card = Theme.of(tester.element(find.byType(ClimbCard))).cardTheme;
       expect((card.shape! as RoundedRectangleBorder).borderRadius,
           BorderRadius.circular(ClimbCard.frameRadius));
+    });
+
+    testWidgets('0.7 asks 14 pt, and every corner gets it at every text size',
+        (tester) async {
+      expect(ClimbCard.frameRadius * ClimbCard.plaqueRadiusShare,
+          closeTo(14, 1e-9));
+      for (final size in AppTextSize.values) {
+        late double h;
+        await tester.pumpWidget(MaterialApp(
+            key: ValueKey(size),
+            theme: buildAppTheme(Brightness.light, textSize: size),
+            home: Builder(builder: (context) {
+              h = ClimbCard.plaqueHeight(context);
+              return const SizedBox();
+            })));
+        final c = TrailSignBorder.corners(Rect.fromLTWH(0, 0, 200, h));
+        expect(TrailSignBorder.fittedRadius(c[0], c[5], c[4], 14),
+            closeTo(14, 1e-9),
+            reason: size.name);
+        expect(TrailSignBorder.fittedRadius(c[5], c[0], c[1], 14),
+            closeTo(14, 1e-9),
+            reason: size.name);
+      }
+    });
+
+    testWidgets(
+        'the measuring override changes the radius; unset, the share '
+        'is the constant', (tester) async {
+      addTearDown(() => ClimbCard.debugPlaqueRadiusShareOverride = null);
+      ClimbCard.debugPlaqueRadiusShareOverride = .4;
+      await tester.pumpWidget(_card(Brightness.light));
+      TrailSignBorder shape() => (tester
+              .widget<DecoratedBox>(find.byKey(ClimbCard.plaqueKey))
+              .decoration as ShapeDecoration)
+          .shape as TrailSignBorder;
+      expect(shape().radius, closeTo(8, 1e-9));
+      ClimbCard.debugPlaqueRadiusShareOverride = null;
+      await tester.pumpWidget(_card(Brightness.dark));
+      expect(shape().radius, closeTo(14, 1e-9));
     });
 
     const rect = Rect.fromLTWH(0, 0, 220, 36);

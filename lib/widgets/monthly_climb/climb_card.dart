@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import '../../models/climb_theme.dart';
@@ -48,10 +49,21 @@ class ClimbCard extends StatelessWidget {
 
   /// The plaque's corner radius as a share of [frameRadius]: every corner
   /// of the trail sign, its two points included, is rounded with
-  /// `frameRadius × plaqueRadiusShare` (8 pt at 0.4). **The one setting**
-  /// to try on a device. A corner never takes more than half of either
-  /// edge it joins, so the sign keeps its silhouette at any value.
-  static const plaqueRadiusShare = .4;
+  /// `frameRadius × plaqueRadiusShare` (14 pt at 0.7, owner 2026-10-02;
+  /// 0.4 before). **The one setting** to try on a device. A corner never
+  /// takes more than half of either edge it joins, so the sign keeps its
+  /// silhouette at any value.
+  static const plaqueRadiusShare = .7;
+
+  static double? _plaqueShareForTesting;
+
+  /// Debug builds only: stands in for [plaqueRadiusShare] in measuring
+  /// tools (renders at other shares). Ignored in profile and release.
+  static set debugPlaqueRadiusShareOverride(double? value) =>
+      _plaqueShareForTesting = value;
+
+  static double get _plaqueShare =>
+      (kDebugMode ? _plaqueShareForTesting : null) ?? plaqueRadiusShare;
 
   static const plaqueKey = ValueKey('climb_card_plaque');
   static const monthKey = ValueKey('climb_card_month');
@@ -166,7 +178,7 @@ class ClimbCard extends StatelessWidget {
               decoration: ShapeDecoration(
                   color: scheme.surfaceContainerHigh,
                   shape: TrailSignBorder(BorderSide(color: scheme.outline),
-                      radius: frameRadius * plaqueRadiusShare)),
+                      radius: frameRadius * _plaqueShare)),
               child: SizedBox(
                 height: plaqueH,
                 child: Padding(
