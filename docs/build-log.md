@@ -7615,3 +7615,20 @@ On branch `1.1.0-design` at `d98c083`; not pushed.
   other two defines; the events opt-in. README: a new "Monthly Climb debug
   defines" section (the two older defines were only in this log before).
   The card's test harness moved to `test/support/month_card_support.dart`.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `6fbf2a9` (M10–M20), `89be9a7` (plaque 0.7), `b9f7d88`
+  (detection, flags, next tier), `94d9a88` (zoom, first run), `d98c083`
+  (step 5's stop measurement), `08f4680` (M21), `ada478b` (month card),
+  `fe47227` (events), `d69463f` (debug define), and this closing commit.
+- **[Tests]** 1335 pass (1250 before Batch 6); `flutter analyze` clean.
+- **[Open — owner]** The zoom's duration (1.2 / 1.8 / 2.5 s); single band
+  colour or vertical gradient; the 320 pt flaws (a quarter to a third of
+  the mountain above the sheet; START under the sheet); performance on a
+  device (not measured); DebugView and registering the new parameters;
+  the device checklist; then merge approval.
+- **[Visual — pre-release check]** The plaque's rounder corners and the
+  month card may appear in App Store screenshots and case-study images.

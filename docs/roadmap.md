@@ -107,9 +107,29 @@ D1–D6 in the side-tracks file.)*
       if the rule changes
 - [ ] Batch 6 — month transition card and measurement events; after the
       card, once a month, a zoom from the whole mountain to the avatar.
-      Decisions M1–M9 taken 2026-10-02 (`1.1.0-design-side-tracks.md`,
-      "Batch 6 — month transition"); Batch 6's Batch 0 report:
-      `docs/design/batch6/batch0-report.md`. Not built
+      **Built 2026-10-02 on `1.1.0-design`, awaiting device verification;
+      not merged into `1.1.0`** (decisions M1–M21 in
+      `1.1.0-design-side-tracks.md`; Batch 0 report
+      `docs/design/batch6/batch0-report.md`; build log 2026-10-02, "Batch 6
+      step …"). Built: the month card (summary / fresh start, bottom sheet,
+      M21 scroll), the K-c → daily zoom and the first run's zoom → step →
+      Premium, the three events and `theme_id` on the Daily Test start,
+      `CLIMB_DEBUG_MONTH_CARD`; the plaque's corners at 14 pt. Open:
+  - [ ] the zoom's duration on a device: 1.2 / 1.8 / 2.5 s (1.8 s now,
+        `ClimbZoomController.duration`);
+  - [ ] the K-c side bands: one colour per theme and mode (built) or the
+        vertical gradient (render only,
+        `docs/design/batch6/kc_bands_430_light.jpg`);
+  - [ ] 320 pt flaws: with the sheet open only 27–32 % (summary) / 32–46 %
+        (fresh) of the mountain shows; the avatar on START is under the
+        sheet at 320 pt (and at 375 pt for the summary card);
+  - [ ] performance on a device, not measured: frame times of the zoom in
+        a profile build (`CLIMB_DEBUG_MONTH_CARD` works there), memory;
+  - [ ] DebugView pass over the three events and `theme_id`; register the
+        new dimensions and metric (`analytics-plan.md`, "Month
+        transition");
+  - [ ] pre-release check: Home's plaque and the month card may appear in
+        App Store screenshots and case-study images
 - [ ] Batch 7 — one-time environment motion (may move to the next version)
 - [x] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (Bird, Fox, Panda,
       Sloth), without facing data; the avatar carousel loops in both
