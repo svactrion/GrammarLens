@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
 import '../models/welcome_badge.dart';
-import 'medal_tier_color.dart';
+import 'medal_badge.dart';
 
 class MonthlyMedalCollection extends StatelessWidget {
   /// A separate, one-time achievement — not a fourth tier. Rendered above
@@ -323,17 +323,10 @@ class _MedalSpecimen extends StatelessWidget {
 
   const _MedalSpecimen({required this.tier, required this.earned});
 
-  Color get _tierColor => tier.color;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final tint = earned ? _tierColor : _tierColor.withValues(alpha: 0.42);
-    final fill = Color.alphaBlend(
-      tint.withValues(alpha: earned ? 0.20 : 0.10),
-      scheme.surfaceContainerHigh,
-    );
 
     return Semantics(
       label: '${tier.label} medal, ${earned ? 'earned' : 'locked'}.',
@@ -343,38 +336,7 @@ class _MedalSpecimen extends StatelessWidget {
           children: [
             AspectRatio(
               aspectRatio: 1,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: fill,
-                  border: Border.all(color: tint, width: 2),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(Icons.landscape_rounded, color: tint, size: 34),
-                    if (!earned)
-                      Align(
-                        alignment: const Alignment(0.72, 0.72),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: scheme.surface,
-                            border: Border.all(color: scheme.outlineVariant),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.lock_rounded,
-                              size: 13,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              child: MedalBadge(tier: tier, earned: earned),
             ),
             const SizedBox(height: 8),
             Text(

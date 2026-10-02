@@ -232,3 +232,14 @@ prototype, for three scrolls (`card`, `peek`, `today`) at three screens and
 text sizes (`scroll_check.txt`); then `tool/scene_art/batch6_scroll_sheet.py`
 → `docs/design/batch6/scroll/`. The renders show Home's daily framing and
 Batch 0's prototype copy; only the geometry is measured.
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch6_card flutter test tool/design_measure/batch6/month_card_real_render_test.dart
+```
+
+Batch 6 step B: the real month card, opened by the real Home after the
+M21 scroll, both variants, three screens × light/dark × three text sizes:
+sheet and content heights, scrolling, overflow, the Today card's visible
+height, the mountain window above the sheet
+(`month_card_real_numbers.txt`); then `tool/scene_art/batch6_card_sheet.py`
+→ `docs/design/batch6/card/`.

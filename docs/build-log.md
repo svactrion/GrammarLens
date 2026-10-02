@@ -7531,3 +7531,57 @@ On branch `1.1.0-design` at `d98c083`; not pushed.
   `mode_selected` (`daily_test`), derivable from the date elsewhere (global
   calendar); no first-run zoom if the first-launch flow is quit half way;
   a covered Home pauses the zoom, with no extra outcome.
+
+- **2026-10-02 — Batch 6 step B: the month card (not on a device yet).**
+  - `lib/widgets/month_card_sheet.dart`: `MonthCardSheet` (summary and
+    fresh start) and `showMonthCard`, which reports how it was closed:
+    button, drag or barrier (where the last pointer went down: on the
+    sheet or outside it). Its own drag handle, so the sheet's top is the
+    content's top.
+  - Summary: "Your {Month} climb"; the medal row (the shared
+    `MedalBadge`, now Profile's too; no row without a medal); "n / N
+    steps"; points; "Just {gap} points from {Tier}" from
+    `MonthlyMedalRules.nearMiss`; "Next: {Month} · {Theme}"; "See the
+    mountain". Fresh start: the user's avatar beside "A new mountain
+    awaits" and the theme name; the tagline; "Your avatar is ready at the
+    start."; the same button; no numbers.
+  - `lib/widgets/medal_badge.dart`: Profile's medal circle made public
+    (M8); Profile looks the same (its tests unchanged).
+  - Home: the card is decided inside the climb load, before the new
+    month's mountain is drawn, so the mountain is first drawn in K-c behind
+    it (M1); it opens once Home is visible, the launch splash has gone and
+    no Daily Test runs. Before it opens, Home scrolls until the Today
+    card's last 56 pt show (M21, `HomeScreen.monthCardTodayPeek`). Any
+    close records "seen" and starts the month-change zoom (flag
+    `month_zoom:YYYY-MM` claimed as it starts). Never on the first run's
+    Home (M2).
+  - **Measured** (`docs/design/batch6/card/month_card_real_numbers.txt`,
+    renders in the same folder; light and dark identical):
+
+    | Card | Screen | Sheet (share) S / M / L | Scrolls | Mountain above the sheet S / M / L |
+    |---|---|---|---|---|
+    | Summary | 320 × 568 | 294 / 302 / 311 pt (52–55 %) | no | 32 / 30 / 27 % |
+    | Summary | 375 × 812 | 328 / 336 / 345 (40–42 %) | no | 85 / 82 / 79 % |
+    | Summary | 430 × 932 | 328 / 336 / 345 (35–37 %) | no | 100 % |
+    | Fresh | 320 × 568 | 247 / 280 / 294 (43–52 %) | no | 46 / 36 / 32 % |
+    | Fresh | 375 × 812 | 260 / 291 / 303 (32–37 %) | no | 100 / 95 / 91 % |
+    | Fresh | 430 × 932 | 260 / 264 / 269 (28–29 %) | no | 100 % |
+
+    The Today card's last 56 pt show in every case (58.4 pt at 430 /
+    Small, where the list ends). The avatar on START shows above the sheet
+    at 430 pt (both cards) and at 375 pt for the fresh card only. No
+    overflow in the 36 renders. The first fresh layout (avatar above the
+    title) scrolled at 320 pt Medium and Large (307 / 352 pt against 319.5
+    pt); the avatar now sits beside the title.
+  - **Tests** (`test/month_card_test.dart`, 16): variants end to end
+    (summary; no medal → Bronze gap; Gold → no line; a gap of 6 → no
+    line; fresh with no digits; no card for a user new this month); the
+    three closes each record "seen" and start the zoom; `showMonthCard`
+    reports button / drag / barrier; a card open when the app is closed
+    shows again, and not after it is closed; after closing, the Daily
+    Test entry shows at least 56 pt and a tap on it opens the test during
+    the zoom, at 320, 375 and 430 pt.
+  - *Seen in a test, not a product finding:* `DailyTestScreen` overflows
+    at 320 × 568 under the test font (Ahem, wider than the app's), which
+    is why the entry test checks that the route was pushed rather than
+    laying the screen out. Not checked with the real font.

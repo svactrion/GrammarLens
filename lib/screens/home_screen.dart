@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 
 import '../data/topics.dart';
 import '../models/avatar.dart';
@@ -13,6 +14,7 @@ import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
+import '../services/month_transition.dart';
 import '../services/monthly_medal_rules.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
@@ -22,7 +24,9 @@ import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/home_greeting.dart';
+import '../widgets/launch_splash.dart';
 import '../widgets/locked_premium_pill.dart';
+import '../widgets/month_card_sheet.dart';
 import '../widgets/monthly_climb/climb_card.dart';
 import '../widgets/monthly_climb/climb_score_bar.dart';
 import '../widgets/monthly_climb/climb_zoom.dart';
@@ -107,6 +111,11 @@ class HomeScreen extends StatefulWidget {
     DateTime Function()? clock,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
         clock = clock ?? DateTime.now;
+
+  /// Batch 6, M21: before the month card opens, Home scrolls until the
+  /// Today card's last this-many points still show, so the Daily Test's
+  /// entry stays on screen (and tappable) through the zoom that follows.
+  static const monthCardTodayPeek = 56.0;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -193,6 +202,13 @@ class _HomeScreenState extends State<HomeScreen>
   bool _firstRunZoomPending = false;
   Future<void>? _firstRunZoomRun;
 
+  /// The month transition card (Batch 6, M1–M5): loaded with the climb, so
+  /// the new month's mountain is first drawn in K-c behind it; shown once
+  /// Home is visible and the launch splash has gone.
+  MonthCardData? _pendingMonthCard;
+  bool _monthCardShowing = false;
+  final _todayKey = GlobalKey();
+
   void _onZoomChanged() {
     if (mounted) setState(() {});
   }
@@ -249,6 +265,13 @@ class _HomeScreenState extends State<HomeScreen>
         if (mounted && _homeVisible) _loadClimb();
       });
     }
+    // The splash has gone, or Home became visible again: a waiting month
+    // card can open.
+    if (_pendingMonthCard != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _presentMonthCard();
+      });
+    }
     // Home may just have become visible again (a route above it closed).
     if (_day0PaywallPending && _day0PaywallReady) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -263,7 +286,10 @@ class _HomeScreenState extends State<HomeScreen>
     if (!oldWidget.active && widget.active && _pendingClimbDay != null) {
       _loadClimb();
     }
-    if (!oldWidget.active && widget.active) _showDay0Paywall();
+    if (!oldWidget.active && widget.active) {
+      _showDay0Paywall();
+      _presentMonthCard();
+    }
   }
 
   @override
@@ -317,6 +343,14 @@ class _HomeScreenState extends State<HomeScreen>
       if (!mounted || generation != _climbLoadGeneration) return;
       final theme = await _resolveClimbTheme(month);
       if (!mounted || generation != _climbLoadGeneration) return;
+      // M1: the month card is decided before this month's mountain is drawn,
+      // so it is first drawn in K-c behind the card.
+      final card = await _loadMonthCard(month);
+      if (!mounted || generation != _climbLoadGeneration) return;
+      if (card != null) {
+        _pendingMonthCard = card;
+        _zoom.hold(ClimbZoomTrigger.monthChange);
+      }
       final pendingThisMonth = _pendingClimbDay != null &&
           _pendingClimbDay!.startsWith(
               '${month.year}-${month.month.toString().padLeft(2, '0')}-');
@@ -386,6 +420,7 @@ class _HomeScreenState extends State<HomeScreen>
         await _firstRunZoom();
         if (!mounted || generation != _climbLoadGeneration) return;
       }
+      if (_pendingMonthCard != null) _presentMonthCard();
       // A step is now animating and its end opens the paywall; with none (an
       // all-skipped test, or a step that belongs to another month) Home is
       // simply loaded.
@@ -431,6 +466,82 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// A zoom ended; null: it had already played and did not run.
   void _onZoomEnded(ClimbZoomTrigger trigger, ClimbZoomOutcome? outcome) {}
+
+  /// This month's card, if one is due (`MonthTransition.load`): never on the
+  /// first run's Home (M2), never while one is waiting or open.
+  Future<MonthCardData?> _loadMonthCard(DateTime month) async {
+    if (widget.firstRunZoom ||
+        _firstRunZoomPending ||
+        _firstRunZoomRun != null ||
+        _pendingMonthCard != null ||
+        _monthCardShowing) {
+      return null;
+    }
+    final card = await MonthTransition.load(
+        storage: widget.storageService,
+        analytics: widget.analyticsService,
+        now: widget.clock());
+    // Only for the month this load shows.
+    if (card == null || card.year != month.year || card.month != month.month) {
+      return null;
+    }
+    return card;
+  }
+
+  /// Opens the waiting month card when Home can show it: visible, not
+  /// under the launch splash, no Daily Test running. Tried again from
+  /// `didChangeDependencies` and when the Home tab becomes active.
+  Future<void> _presentMonthCard() async {
+    final card = _pendingMonthCard;
+    if (card == null || _monthCardShowing || !mounted) return;
+    if (!_homeVisible ||
+        _dailyFlowActive ||
+        LaunchSplashScope.coveringOf(context)) {
+      return;
+    }
+    _monthCardShowing = true;
+    _pendingMonthCard = null;
+    try {
+      // K-c behind the sheet (again, if a Daily Test released it).
+      _zoom.hold(ClimbZoomTrigger.monthChange);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      _scrollForMonthCard();
+      final how = await showMonthCard(context,
+          data: card, avatar: widget.avatar ?? Avatar.values.first);
+      if (!mounted) return;
+      // All three ways of closing count as seen (M6), recorded on closing:
+      // a card open when the app is closed shows again.
+      try {
+        await MonthTransition.markSeen(
+            widget.storageService, card.year, card.month);
+      } catch (_) {}
+      if (!mounted) return;
+      _onMonthCardClosed(card, how);
+      await _runZoom(ClimbZoomTrigger.monthChange,
+          StorageService.monthZoomFlag(card.year, card.month));
+    } finally {
+      _monthCardShowing = false;
+    }
+  }
+
+  /// The month card closed by [how].
+  void _onMonthCardClosed(MonthCardData card, MonthCardDismissal how) {}
+
+  /// M21: scrolls Home so the Today card's last
+  /// [HomeScreen.monthCardTodayPeek]
+  /// points show at the top of the list, with the climb card below them.
+  void _scrollForMonthCard() {
+    final todayContext = _todayKey.currentContext;
+    final box = todayContext?.findRenderObject();
+    if (todayContext == null || box is! RenderBox || !box.hasSize) return;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    final position = Scrollable.maybeOf(todayContext)?.position;
+    if (viewport == null || position == null) return;
+    final top = viewport.getOffsetToReveal(box, 0).offset;
+    position.jumpTo((top + box.size.height - HomeScreen.monthCardTodayPeek)
+        .clamp(position.minScrollExtent, position.maxScrollExtent));
+  }
 
   void _onMountainMotionEnd() {
     _climbAnimating = false;
@@ -797,6 +908,7 @@ class _HomeScreenState extends State<HomeScreen>
           const _SectionLabel('Today'),
           const SizedBox(height: 8),
           _TodayCard(
+            key: _todayKey,
             loading: _loadingToday,
             dailyTestSet: _todaysDailyTest,
             onStart: () => _openDailyTest(context),
@@ -944,6 +1056,7 @@ class _TodayCard extends StatelessWidget {
   final ValueChanged<DailyTestSet> onViewResult;
 
   const _TodayCard({
+    super.key,
     required this.loading,
     required this.dailyTestSet,
     required this.onStart,
