@@ -7632,3 +7632,23 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
   the device checklist; then merge approval.
 - **[Visual — pre-release check]** The plaque's rounder corners and the
   month card may appear in App Store screenshots and case-study images.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 device check; M22: blurred K-c bands)
+
+On branch `1.1.0-design` at `d723917`; not pushed.
+
+- **[Device — Ahmet, iPhone 14 Plus]** The five `CLIMB_DEBUG_MONTH_CARD`
+  states work. The zoom stays at **1.8 s**. The plaque at 0.7, the fresh
+  card's avatar beside the title and the cards' copy are accepted. The
+  single-colour K-c bands are not liked: on Green Slope they read as a
+  flat greenish strip.
+- **[Product — owner] M22 (replaces M11).** The bands show a pre-made
+  blurred copy of the image. *Rejected:* a live blur (computed on every
+  frame of the zoom).
+- **[Accepted — owner]** The 320 pt flaws are known flaws (only while the
+  sheet is open); `open_ms` counts only foreground time.
+- **[Performance]** Not measured with DevTools; no stutter was reported on
+  the device. Not a measurement.
+- **[Replaced by M22]** The single-colour bands of Batch 6 step 4
+  (`tool/scene_art/kc_band_colors.py`, `docs/design/batch6/kc_bands.txt`,
+  `.json`, `kc_bands_430_light.jpg`) stay as a record.
