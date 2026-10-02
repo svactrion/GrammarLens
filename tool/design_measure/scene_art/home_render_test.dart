@@ -110,6 +110,7 @@ void main() {
           final card = tester.getRect(find.byType(ClimbCard));
           final boxes = {
             'window': tester.getRect(find.byType(MonthlyMountain)),
+            'plaque': tester.getRect(find.byKey(ClimbCard.plaqueKey)),
             for (final p in [...ClimbSavePoints.all, ClimbSavePoints.flag])
               p.object: tester.getRect(
                   find.byKey(ValueKey('climb_save_point_${p.clearing}'))),

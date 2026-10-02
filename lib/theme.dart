@@ -132,6 +132,10 @@ const Color _darkOnSkippedBg = Color(0xFFC9C5D0);
 const Color appLightPrimary = _lightPrimary;
 const Color appDarkPrimary = _darkPrimary;
 
+/// The app-wide card's corner radius (`cardTheme` below), for widgets that
+/// draw a card-like frame themselves (the Monthly Climb card, `ClimbCard`).
+const double appCardRadius = 20;
+
 // Brand mark (see widgets/brand_mark.dart) — the loupe's glass and glint
 // are fixed identity colors, not theme roles: unlike everything else in
 // this file they don't change with light/dark mode (the mark's rim does —
@@ -525,7 +529,7 @@ ThemeData buildAppTheme(
       // ~3.11:1 (body) / ~2.72:1 (card) in light, ~5.05:1 / ~4.20:1 in
       // dark — comfortably legible in both, still an existing role.
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(appCardRadius),
         side: BorderSide(color: colorScheme.outline),
       ),
       surfaceTintColor: colorScheme.surfaceTint,

@@ -7345,3 +7345,38 @@ both at `31cc1d6`); not pushed. Docs only. Full text and reasons:
   the [N] goal line and the tagline stay.
 - **[Roadmap]** Parked for 1.2: a monthly learning report (premium
   candidate, entered from the month card) and a mid-month return card.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 Batch 0, step 2: the plaque's corners rounded, not on a device yet)
+
+On branch `1.1.0-design`; not merged, not pushed. The one product-code
+change of Batch 6's Batch 0 (owner's request).
+
+- **[Design]** The "Mountain of Learning" plaque keeps its "<=>" trail
+  sign silhouette; all six corners, the two points included, are rounded.
+- **[Engineering]**
+  - The card radius is now one constant, `appCardRadius` (20 pt,
+    `lib/theme.dart`), used by `CardThemeData` and by `ClimbCard`'s frame
+    (`ClimbCard.frameRadius`); the frame had its own literal 20.
+  - The plaque's radius is derived from it:
+    `frameRadius × ClimbCard.plaqueRadiusShare`, **the one setting** to
+    try on a device; 0.4 for now, so 8 pt.
+  - `TrailSignBorder` (was the private `_TrailSignBorder`) rounds each
+    corner with a tangent arc and fits a corner down only where the arc
+    would take more than half of an edge, so the silhouette holds at any
+    share. Text padding, the opaque chips and the plaque's place on the
+    frame line are unchanged.
+- **[Measured]** (`docs/design/batch6/plaque/plaque_numbers.txt`) The
+  plaque is 34 / 36 / 38 pt tall at Small / Medium / Large; 8 pt fits
+  every corner unchanged at every size; each point moves in by 2.05 pt.
+  Above a share of 0.70 (Small) to 0.79 (Large) the points would be drawn
+  smaller than asked.
+- **[Renders]** `docs/design/batch6/plaque/plaque_before_after.jpg` and
+  `cards_before_after.jpg`: the real Home at 320 / 375 / 430 pt, light and
+  dark, day 15, before (`ac6c900`) and after.
+- **[Tests]** 1253 pass (3 new: the radius is derived from the frame's,
+  which is the app's card radius; the rounded outline keeps the sign's
+  extent and pulls the points in by r (1 / sin(half) − 1); a too-large
+  radius is fitted to half the edge). No golden files exist; none
+  changed. `flutter analyze` clean.
+- **[Visual — pre-release check]** The plaque shows on Home in App Store
+  screenshots and case-study images.

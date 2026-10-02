@@ -158,3 +158,16 @@ Batch 3a's tool did both, and so measured every size one step too large
 geometries can be drawn without changing the product (`report_test.dart`
 uses it; `after_test.dart` renders the product itself). `geo.dart` holds the
 Batch 3a geometry and measuring rules.
+
+```bash
+DESIGN_MEASURE_OUT=docs/design/batch6/plaque flutter test tool/design_measure/batch6/plaque_numbers_test.dart
+```
+
+Batch 6 Batch 0, step 2 (`docs/design/batch6/batch0-report.md`): the
+plaque's rounded corners. Per text size, the plaque's height, the asked
+radius (`ClimbCard.frameRadius × plaqueRadiusShare`), the radius each
+corner gets, and the largest share that no corner fits down
+(`plaque_numbers.txt`). The before/after images come from
+`scene_art/home_render_test.dart` (which now also writes the plaque's
+box) run on the commit before and after the change, then
+`tool/scene_art/batch6_plaque_sheet.py`.

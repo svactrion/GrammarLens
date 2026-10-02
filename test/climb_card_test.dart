@@ -101,4 +101,67 @@ void main() {
       expect(mirrored(tester), isFalse);
     }
   });
+
+  group('the plaque\'s rounded corners (Batch 6 Batch 0, step 2)', () {
+    testWidgets(
+        'its radius is derived from the frame\'s, which is the app\'s card '
+        'radius', (tester) async {
+      await tester.pumpWidget(_card(Brightness.light));
+      final shape = (tester
+              .widget<DecoratedBox>(find.byKey(ClimbCard.plaqueKey))
+              .decoration as ShapeDecoration)
+          .shape as TrailSignBorder;
+      expect(shape.radius, ClimbCard.frameRadius * ClimbCard.plaqueRadiusShare);
+      final card = Theme.of(tester.element(find.byType(ClimbCard))).cardTheme;
+      expect((card.shape! as RoundedRectangleBorder).borderRadius,
+          BorderRadius.circular(ClimbCard.frameRadius));
+    });
+
+    const rect = Rect.fromLTWH(0, 0, 220, 36);
+    // Half of a point's angle: atan((height / 2) / depth).
+    final tipHalf = math.atan(1 / (2 * TrailSignBorder.pointDepth));
+
+    test(
+        'the sharp sign reaches the rect\'s ends; the rounded one keeps its '
+        'silhouette and pulls its points in by r (1 / sin(half) − 1)', () {
+      const side = BorderSide();
+      final sharp = const TrailSignBorder(side).getOuterPath(rect).getBounds();
+      expect(sharp.left, closeTo(rect.left, 1e-9));
+      expect(sharp.right, closeTo(rect.right, 1e-9));
+      const r = 8.0;
+      final rounded = const TrailSignBorder(side, radius: r).getOuterPath(rect);
+      // The outline's own extent, sampled (`getBounds` counts the arcs'
+      // control points).
+      final xs = <double>[], ys = <double>[];
+      for (final m in rounded.computeMetrics()) {
+        for (var d = 0.0; d <= m.length; d += .01) {
+          final p = m.getTangentForOffset(d)!.position;
+          xs.add(p.dx);
+          ys.add(p.dy);
+        }
+      }
+      final pullIn = r * (1 / math.sin(tipHalf) - 1);
+      expect(xs.reduce(math.min), closeTo(rect.left + pullIn, .01));
+      expect(xs.reduce(math.max), closeTo(rect.right - pullIn, .01));
+      expect(ys.reduce(math.min), closeTo(rect.top, .01));
+      expect(ys.reduce(math.max), closeTo(rect.bottom, .01));
+      // No point of the sharp sign's corners is inside the rounded one, and
+      // the text area (between the points' inner ends) is.
+      for (final c in TrailSignBorder.corners(rect)) {
+        expect(rounded.contains(c), isFalse, reason: '$c');
+      }
+      final inset = rect.height * TrailSignBorder.pointDepth;
+      expect(rounded.contains(Offset(inset + 1, 1.5)), isTrue);
+      expect(rounded.contains(Offset(rect.right - inset - 1, 34.5)), isTrue);
+    });
+
+    test('a radius too large for an edge is fitted to half of it', () {
+      final c = TrailSignBorder.corners(rect);
+      final edge = (c[0] - c[5]).distance;
+      final fitted = TrailSignBorder.fittedRadius(c[0], c[5], c[4], 100);
+      expect(fitted / math.tan(tipHalf), closeTo(edge / 2, 1e-9));
+      expect(
+          TrailSignBorder.fittedRadius(c[0], c[5], c[4], 8), closeTo(8, 1e-9));
+    });
+  });
 }

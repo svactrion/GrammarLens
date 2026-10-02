@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../models/climb_theme.dart';
+import '../../theme.dart';
 
 /// The Monthly Climb card on Home (1.1.0 design decision K3, Batch 3c
 /// a–c): a thin frame around the mountain and the score bar, "Mountain of
@@ -38,6 +41,17 @@ class ClimbCard extends StatelessWidget {
     'January', 'February', 'March', 'April', 'May', 'June', 'July', //
     'August', 'September', 'October', 'November', 'December',
   ];
+
+  /// The frame's corner radius: the app's card radius (B-polish
+  /// `CardThemeData`).
+  static const frameRadius = appCardRadius;
+
+  /// The plaque's corner radius as a share of [frameRadius]: every corner
+  /// of the trail sign, its two points included, is rounded with
+  /// `frameRadius × plaqueRadiusShare` (8 pt at 0.4). **The one setting**
+  /// to try on a device. A corner never takes more than half of either
+  /// edge it joins, so the sign keeps its silhouette at any value.
+  static const plaqueRadiusShare = .4;
 
   static const plaqueKey = ValueKey('climb_card_plaque');
   static const monthKey = ValueKey('climb_card_month');
@@ -84,12 +98,13 @@ class ClimbCard extends StatelessWidget {
         padding: EdgeInsets.only(top: plaqueH / 2),
         child: DecoratedBox(
           position: DecorationPosition.foreground,
-          // The B-polish card border (CardThemeData): `outline`, radius 20.
+          // The B-polish card border (CardThemeData): `outline`,
+          // [frameRadius].
           decoration: BoxDecoration(
               border: Border.all(color: scheme.outline),
-              borderRadius: BorderRadius.circular(20)),
+              borderRadius: BorderRadius.circular(frameRadius)),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(frameRadius),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -150,12 +165,13 @@ class ClimbCard extends StatelessWidget {
               key: plaqueKey,
               decoration: ShapeDecoration(
                   color: scheme.surfaceContainerHigh,
-                  shape: _TrailSignBorder(BorderSide(color: scheme.outline))),
+                  shape: TrailSignBorder(BorderSide(color: scheme.outline),
+                      radius: frameRadius * plaqueRadiusShare)),
               child: SizedBox(
                 height: plaqueH,
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: plaqueH * _TrailSignBorder.pointDepth + 12),
+                      horizontal: plaqueH * TrailSignBorder.pointDepth + 12),
                   child: Center(
                       widthFactor: 1,
                       child: Text('Mountain of Learning',
@@ -170,24 +186,69 @@ class ClimbCard extends StatelessWidget {
   }
 }
 
-/// A trail sign: a flat board whose ends come to a point.
-class _TrailSignBorder extends ShapeBorder {
+/// A trail sign: a flat board whose ends come to a point, every corner
+/// rounded with [radius].
+class TrailSignBorder extends ShapeBorder {
   /// How far in, as a share of the height, each point reaches.
   static const pointDepth = .38;
 
   final BorderSide side;
-  const _TrailSignBorder(this.side);
 
-  Path _path(Rect r) {
+  /// Each corner's radius, in points; 0 draws the sharp sign.
+  final double radius;
+  const TrailSignBorder(this.side, {this.radius = 0});
+
+  /// The sign's six corners, clockwise from the top left.
+  static List<Offset> corners(Rect r) {
     final p = r.height * pointDepth;
-    return Path()
-      ..moveTo(r.left + p, r.top)
-      ..lineTo(r.right - p, r.top)
-      ..lineTo(r.right, r.center.dy)
-      ..lineTo(r.right - p, r.bottom)
-      ..lineTo(r.left + p, r.bottom)
-      ..lineTo(r.left, r.center.dy)
-      ..close();
+    return [
+      Offset(r.left + p, r.top),
+      Offset(r.right - p, r.top),
+      Offset(r.right, r.center.dy),
+      Offset(r.right - p, r.bottom),
+      Offset(r.left + p, r.bottom),
+      Offset(r.left, r.center.dy),
+    ];
+  }
+
+  /// Half the angle between the corner's edges toward [a] and [b].
+  static double _halfAngle(Offset a, Offset b) =>
+      math.acos(((a.dx * b.dx + a.dy * b.dy) / (a.distance * b.distance))
+          .clamp(-1.0, 1.0)) /
+      2;
+
+  /// The radius a corner is drawn with: [r], made smaller where the arc
+  /// would take more than half of an edge it joins.
+  static double fittedRadius(Offset prev, Offset at, Offset next, double r) {
+    final a = prev - at, b = next - at;
+    final half = _halfAngle(a, b);
+    final reach =
+        math.min(r / math.tan(half), math.min(a.distance, b.distance) / 2);
+    return reach * math.tan(half);
+  }
+
+  Path _path(Rect rect) {
+    final c = corners(rect);
+    if (radius <= 0) return Path()..addPolygon(c, true);
+    final path = Path();
+    for (var i = 0; i < c.length; i++) {
+      final prev = c[(i + c.length - 1) % c.length];
+      final at = c[i];
+      final next = c[(i + 1) % c.length];
+      final a = prev - at, b = next - at;
+      final r = fittedRadius(prev, at, next, radius);
+      // Where the arc meets each edge, measured from the corner.
+      final reach = r / math.tan(_halfAngle(a, b));
+      final from = at + a / a.distance * reach;
+      final to = at + b / b.distance * reach;
+      if (i == 0) {
+        path.moveTo(from.dx, from.dy);
+      } else {
+        path.lineTo(from.dx, from.dy);
+      }
+      path.arcToPoint(to, radius: Radius.circular(r));
+    }
+    return path..close();
   }
 
   @override
@@ -200,5 +261,6 @@ class _TrailSignBorder extends ShapeBorder {
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) =>
       canvas.drawPath(_path(rect), side.toPaint());
   @override
-  ShapeBorder scale(double t) => _TrailSignBorder(side.scale(t));
+  ShapeBorder scale(double t) =>
+      TrailSignBorder(side.scale(t), radius: radius * t);
 }
