@@ -7380,3 +7380,41 @@ change of Batch 6's Batch 0 (owner's request).
   changed. `flutter analyze` clean.
 - **[Visual — pre-release check]** The plaque shows on Home in App Store
   screenshots and case-study images.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 Batch 0 report written; waiting for the owner)
+
+On branch `1.1.0-design`; not merged, not pushed. Report:
+`docs/design/batch6/batch0-report.md`; renders and numbers in the same
+folder. Nothing of Batch 6 is built.
+
+- **[Commits]** `ac6c900` (M1–M9 in the docs), `7642fe3` (the plaque's
+  rounded corners, the only `lib/` change), `e2bf3b0` (measuring tools and
+  outputs), plus this report.
+- **[Measured — main findings]**
+  - The default bottom sheet covers the whole mountain window at
+    320 × 568, and all but 0–27 pt of it at 375 × 812 (summary card), with
+    Home at its scroll top. Scrolled so the climb card is at the top first,
+    44 % / 69–76 % / 86–87 % of the window shows at 320 / 375 / 430.
+  - The fullest summary card (321–344 pt) does not fit the 271.5 pt room
+    at 320 × 568 and scrolls; it fits at 375 and 430 at every text size.
+    The fresh-start card fits everywhere. No overflow in 72 renders.
+  - K-c is only 1.21× / 1.43× / 1.64× smaller than the daily framing at
+    320 / 375 / 430 pt and leaves 12.8 / 39.4 / 64.4 pt side bands.
+  - Rule v1 thresholds for 28–31 days; near-miss candidates ≤ 5, ≤ 10 and
+    ≤ 5 % of the maximum show on 6–7 %, 13–14 % and 19–20 % of each tier
+    band. Real score distribution not measured.
+- **[Found in the code]**
+  - Last month's medal is frozen at launch / resume without Home waiting;
+    the card path should call the idempotent finalization itself.
+  - `one_time_flags` has only a claim operation and one key; "seen" needs
+    a read method and per-month keys.
+  - Next tier and gap are not in `MonthlyMedalRules`; a small pure
+    function covers it.
+  - Debug builds send events to the production Firebase project (no
+    build-mode gate); a debug replay would pollute the card events.
+  - `CLIMB_DEBUG_MONTH_CARD` under `kDebugMode` cannot trigger the zoom in
+    the profile build its performance has to be measured in.
+- **[Open — owner]** Q1–Q11 in the report (§11): plaque radius reading,
+  near-miss limit, the button, the old card's [N] line and tagline, sheet
+  room, K-c bands, Daily Test during the zoom, profile builds, debug
+  events and the developer-traffic filter, event names, first-run order.
