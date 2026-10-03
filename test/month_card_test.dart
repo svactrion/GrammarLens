@@ -51,9 +51,31 @@ void main() {
           matching: find.byType(MedalBadge)));
       // October 2026 is Green Slope; the card is November's (Ember Peak).
       expect(badge.asset, MedalArt.monthly('green_slope', MedalTier.silver));
-      expect(badge.disc, MonthCardSheet.medalDisc);
-      expect(MonthCardSheet.medalDisc, 48);
+      // N30: by the screen's height (the test screen is 932 pt tall).
+      expect(badge.disc, MonthCardSheet.medalDiscFor(932));
+      expect(MonthCardSheet.medalDiscRegular, 88);
       expect(badge.earned, isTrue);
+    });
+
+    test('N30: the disc by screen height: 88 ordinary, 70 at 667, 48 at 568',
+        () {
+      expect(MonthCardSheet.medalDiscFor(932), 88);
+      expect(MonthCardSheet.medalDiscFor(812), 88);
+      expect(MonthCardSheet.medalDiscFor(667), 70);
+      expect(MonthCardSheet.medalDiscFor(568), 48);
+    });
+
+    testWidgets(
+        'N30: the medal centred, large, its tier under it; steps and points '
+        'under the medal', (tester) async {
+      await pumpHome(tester, CardStorage());
+      final sheet = tester.getRect(_sheet);
+      final medal = tester.getRect(find.byType(MedalBadge));
+      expect(medal.center.dx, closeTo(sheet.center.dx, 1));
+      final steps = tester.getRect(find.textContaining('24 / 31'));
+      expect(steps.top, greaterThan(medal.bottom));
+      expect(tester.getRect(find.text('Silver medal')).top,
+          greaterThan(medal.bottom));
     });
 
     testWidgets('summary without a medal: no medal row; the gap to Bronze',

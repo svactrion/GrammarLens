@@ -100,7 +100,12 @@ final mountainFinder = find.byType(MonthlyMountain);
 Future<void> pumpHome(
   WidgetTester tester,
   StorageService storage, {
-  Size screen = const Size(375, 812),
+  // Batch 5 (N30): the centred medal makes the fullest summary card taller;
+  // in the test font (wider and taller than the app's) it scrolls at
+  // 375 × 812, and a drag on a scrolling sheet scrolls instead of closing
+  // it. 430 × 932 keeps the default card unscrolled; screen-specific tests
+  // pass their own size.
+  Size screen = const Size(430, 932),
   AppTextSize textSize = AppTextSize.medium,
   RecordingAnalyticsSink? sink,
   Key? key,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -47,14 +48,39 @@ class MonthCardSheet extends StatelessWidget {
   static const nearMissKey = ValueKey('month_card_near_miss');
   static const medalKey = ValueKey('month_card_medal');
 
-  /// The medal's disc (Batch 5, N16): 48 pt, the stars' readability floor
-  /// (N20).
-  static const medalDisc = 48.0;
+  /// N30: the medal large in the card's centre. 88 pt on ordinary screens
+  /// ([medalDiscRegular]); on shorter ones the largest disc with which the
+  /// fullest summary card does not scroll at any of the three text sizes
+  /// ([medalDiscCompact] at 375 × 667, [medalDiscSmall] at 320 × 568),
+  /// chosen by tool/design_measure/batch5/month_card_disc_test.dart.
+  ///
+  /// Measured (docs/design/batch5/card/month_card_disc.txt): at 375 × 667
+  /// the card fits up to 88 / 80 / 70 pt at Small / Medium / Large, so
+  /// 70. At 320 × 568 no disc down to 40 pt fits (the card without a medal
+  /// is already 279 / 289 / 300 pt of 319.5); 48 pt, the stars'
+  /// readability floor (N20), keeps the overflow smallest among readable
+  /// discs: a known flaw, the card scrolls there.
+  static const medalDiscRegular = 88.0;
+  static const medalDiscCompact = 70.0;
+  static const medalDiscSmall = 48.0;
 
-  /// The gaps above and below the medal row: 8 pt, not the card's 10. The
-  /// 48 pt medal and its stars add 10.7 pt; without these 4 the summary card
-  /// scrolled by 2.2 pt at 320 × 568 with Large text (N16).
-  static const medalGap = 8.0;
+  /// The screen heights where the disc steps down.
+  static const compactBelow = 740.0;
+  static const smallBelow = 640.0;
+
+  static double? _discForTesting;
+
+  /// Debug builds only: stands in for the chosen disc in measuring tools.
+  /// Ignored in profile and release builds.
+  static set debugMedalDiscOverride(double? value) => _discForTesting = value;
+
+  /// The medal's disc on a screen [height] points tall.
+  static double medalDiscFor(double height) {
+    if (kDebugMode && _discForTesting != null) return _discForTesting!;
+    if (height < smallBelow) return medalDiscSmall;
+    if (height < compactBelow) return medalDiscCompact;
+    return medalDiscRegular;
+  }
 
   /// The near-miss line (M15): the gap as a number, no promise of days.
   static String nearMissText(int gap, String tier) =>
@@ -108,6 +134,7 @@ class MonthCardSheet extends StatelessWidget {
     final month = ClimbCard.monthNames[data.previousMonth - 1];
     final next = ClimbCard.monthNames[data.month - 1];
     final title = Text('Your $month climb',
+        textAlign: TextAlign.center,
         style:
             theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800));
     Widget stat(String value, String label) => Text.rich(TextSpan(children: [
@@ -122,33 +149,43 @@ class MonthCardSheet extends StatelessWidget {
     final tier = data.tier;
     return [
       Semantics(header: true, child: title),
+      // N30: the medal in the centre, large; no medal, no block.
       if (tier != null) ...[
-        const SizedBox(height: medalGap),
-        Row(key: medalKey, children: [
+        const SizedBox(height: 12),
+        Column(key: medalKey, children: [
           MedalBadge.monthly(
-              themeId: data.previousTheme.id, tier: tier, disc: medalDisc),
-          const SizedBox(width: 10),
-          Expanded(
-              child: Text('${tier.label} medal',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700))),
+              themeId: data.previousTheme.id,
+              tier: tier,
+              disc: medalDiscFor(MediaQuery.sizeOf(context).height)),
+          const SizedBox(height: 4),
+          Text('${tier.label} medal',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700)),
         ]),
       ],
-      SizedBox(height: tier != null ? medalGap : 10),
-      Wrap(spacing: 20, runSpacing: 4, children: [
-        stat('${data.steps} / ${data.days}', 'steps'),
-        stat('${data.score}', 'points'),
-      ]),
+      const SizedBox(height: 10),
+      // Steps and points side by side, under the medal.
+      Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 20,
+          runSpacing: 4,
+          children: [
+            stat('${data.steps} / ${data.days}', 'steps'),
+            stat('${data.score}', 'points'),
+          ]),
       if (data.nearMiss case (final next, final gap)) ...[
         const SizedBox(height: 6),
         Text(nearMissText(gap, next.label),
             key: nearMissKey,
+            textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
       ],
       const SizedBox(height: 12),
       const Divider(height: 1),
       const SizedBox(height: 12),
       Text('Next: $next · ${data.theme.name}',
+          textAlign: TextAlign.center,
           style: theme.textTheme.titleSmall
               ?.copyWith(fontWeight: FontWeight.w700)),
     ];

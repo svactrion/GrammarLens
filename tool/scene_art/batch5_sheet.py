@@ -144,16 +144,20 @@ def card() -> None:
     shutil.copy(new_file, out)
     old = _rows(T.REPO / "docs/design/batch6/card/month_card_real_numbers.txt")
     old.update(_rows(T.REPO / "docs/design/batch6/card/month_card_real_numbers_375x667.txt"))
+    # N16's numbers (48 pt medal in a row), kept when N30 replaced them.
+    n16 = _rows(out / "month_card_real_numbers_N16.txt")
     new = _rows(new_file)
-    lines = ["Batch 5 step 3 (N16): the real month card, Batch 6 (40 pt medal) against now (48 pt disc,",
-             "the gaps around the medal row 8 pt). Light (dark is identical). Sheet height in points.",
-             "", "card     screen    text    sheet before  sheet now  change  scrolls before/now"]
+    lines = ["Batch 5 (N16, N30): the real month card on the real Home after the M21 scroll: Batch 6",
+             "(40 pt medal in a row) -> N16 (48 pt in a row) -> N30 (centred, 88 / 70 / 48 pt by screen",
+             "height). Light (dark is identical). Sheet height in points; window = the mountain above",
+             "the sheet (of 350 pt).", "",
+             "card     screen    text    sheet B6 -> N16 -> N30       scrolls B6/N16/N30   window B6 -> N30"]
     for key, f in new.items():
         if key[2] != "light" or key not in old:
             continue
-        o = old[key]
-        lines.append(f"{key[0]:8} {key[1]:9} {key[3]:7} {float(o[5]):11.1f}  {float(f[5]):9.1f}  "
-                     f"{float(f[5]) - float(o[5]):+6.1f}  {o[10]}/{f[10]}")
+        o, m = old[key], n16.get(key, old[key])
+        lines.append(f"{key[0]:8} {key[1]:9} {key[3]:7} {float(o[5]):6.1f} -> {float(m[5]):6.1f} -> {float(f[5]):6.1f}"
+                     f"     {o[10]}/{m[10]}/{f[10]:3}            {o[13]} -> {f[13]}")
     (out / "card_compare.txt").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
     screens = (320, 375, 430)

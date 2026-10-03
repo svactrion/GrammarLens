@@ -382,3 +382,13 @@ DESIGN_MEASURE_OUT=build/design_measure/batch5_steps STEPS_ENDING=flag STEPS_WID
 run with `STEPS_LABEL=before` in a worktree at `fd215e4` (the commit
 before N31), with a `steps_render_hooks.dart` whose `setEnding` does
 nothing; then `tool/scene_art/batch5_sheet.py steps`.
+
+```bash
+DESIGN_MEASURE_OUT=docs/design/batch5/card flutter test tool/design_measure/batch5/month_card_disc_test.dart
+```
+
+Step 5 (N30): the fullest summary card's height by medal disc at four
+screens and three text sizes, and the largest disc that does not scroll
+(`month_card_disc.txt`). Then the real card on the real Home with Batch
+6's `month_card_real_render_test.dart` (four screens) and
+`batch5_sheet.py card` (Batch 6 → N16 → N30 in `card_compare.txt`).
