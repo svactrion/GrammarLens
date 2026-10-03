@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/content_width.dart';
 
 /// The score line on a results screen's band — `BrandScaffold`'s
 /// `bandBottom` slot, first used here (docs/design-audit.md §5 D1 Batch 4).
@@ -22,7 +23,9 @@ class ResultScoreBand extends StatelessWidget implements PreferredSizeWidget {
     final theme = Theme.of(context);
     final fg = theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // The band itself is moved in to the content column on an iPad
+    // (`BrandScaffold`), so only the base padding here.
+    final hPad = ContentWidth.basePadding(width);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),

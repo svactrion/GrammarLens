@@ -33,7 +33,27 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show RenderParagraph;
+import 'dart:ui' as ui;
+
+import 'package:flutter/rendering.dart'
+    show RenderParagraph, RenderRepaintBoundary;
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/item_feedback.dart';
+import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/models/practice_set.dart';
+import 'package:grammar_lens/models/scoring_result.dart';
+import 'package:grammar_lens/models/topic_stats.dart';
+import 'package:grammar_lens/screens/ai_consent_screen.dart';
+import 'package:grammar_lens/screens/daily_test_screen.dart';
+import 'package:grammar_lens/screens/onboarding_screen.dart';
+import 'package:grammar_lens/screens/practice_screen.dart';
+import 'package:grammar_lens/screens/premium_screen.dart';
+import 'package:grammar_lens/screens/results_screen.dart';
+import 'package:grammar_lens/screens/review_screen.dart';
+import 'package:grammar_lens/screens/topic_practice_screen.dart';
+import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
+import 'package:grammar_lens/screens/welcome_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
@@ -73,22 +93,34 @@ import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 
 import '../home_fakes.dart';
-import '../layouts.dart' show loadFont, loadIconFont, outDir, writePng;
+import '../layouts.dart' show loadFont, loadIconFont, outDir;
 
 /// The scene images' width in pixels (every theme, both modes).
 const _assetWidth = 1536.0;
 
+/// Size, pixel ratio and safe areas (status bar; home indicator). The
+/// iPads' 24 / 20 pt are assumed, not read from a simulator. The iPhones
+/// are the existing tools' four screens, for P1's before/after check
+/// (IPAD_DEVICES=iphone320,iphone375se,iphone375,iphone430).
 const _allDevices = {
-  '13in': (1032.0, 1376.0),
-  '11in': (834.0, 1194.0),
-  'mini': (744.0, 1133.0),
+  '13in': (1032.0, 1376.0, 2.0, 24.0, 20.0),
+  '11in': (834.0, 1194.0, 2.0, 24.0, 20.0),
+  'mini': (744.0, 1133.0, 2.0, 24.0, 20.0),
+  'iphone320': (320.0, 568.0, 2.0, 20.0, 0.0),
+  'iphone375se': (375.0, 667.0, 2.0, 20.0, 0.0),
+  'iphone375': (375.0, 812.0, 3.0, 47.0, 34.0),
+  'iphone430': (430.0, 932.0, 3.0, 59.0, 34.0),
 };
-const _safeTop = 24.0, _safeBottom = 20.0;
+const _ipads = ['13in', '11in', 'mini'];
 
 const _allCases = [
   'launch', 'home_day1', 'home_day15', 'home_day31', 'card_summary', //
   'card_fresh', 'kc', 'label', 'cel_welcome', 'cel_gold', 'result', //
   'profile', 'profile_detail', 'avatar_picker',
+  // Step 3 of P1: the rest of the app.
+  'welcome', 'onboarding', 'daily_test', 'topic_list', 'practice', //
+  'practice_results', 'review', 'weak_spot', 'profile_bottom', 'premium', //
+  'ai_consent',
 ];
 
 List<String>? _env(String name) =>
@@ -290,7 +322,7 @@ void main() {
     final lines = [
       '1.1.0 release step 2: the iPad check on the real components. Points '
           '(1 pt = 2 px on every iPad here). Portrait; safe areas '
-          '${_safeTop.toInt()} / ${_safeBottom.toInt()} pt. Light mode '
+          '24 / 20 pt on iPads (assumed). Light mode '
           '(dark lays out the same). Exceptions: the framework errors the '
           'case raised (overflow and the like); "none" when none.',
       '',
@@ -317,18 +349,18 @@ void main() {
   });
 
   final cases = _env('IPAD_CASES') ?? _allCases;
-  final devices = _env('IPAD_DEVICES') ?? _allDevices.keys.toList();
+  final devices = _env('IPAD_DEVICES') ?? _ipads;
   for (final c in cases) {
     for (final d in devices) {
-      final (w, h) = _allDevices[d]!;
+      final (w, h, dpr, safeTop, safeBottom) = _allDevices[d]!;
       for (final b in Brightness.values) {
         for (final size in [AppTextSize.medium, AppTextSize.large]) {
           final name = 'ipad_${c}_${d}_${b.name}_${size.name}';
           testWidgets(name, (tester) async {
-            tester.view.physicalSize = Size(w, h) * 2;
-            tester.view.devicePixelRatio = 2;
-            tester.view.padding = const FakeViewPadding(
-                top: _safeTop * 2, bottom: _safeBottom * 2);
+            tester.view.physicalSize = Size(w, h) * dpr;
+            tester.view.devicePixelRatio = dpr;
+            tester.view.padding =
+                FakeViewPadding(top: safeTop * dpr, bottom: safeBottom * dpr);
             addTearDown(tester.view.reset);
             final key = GlobalKey();
             final notes = <String>[];
@@ -357,8 +389,8 @@ void main() {
                     data: MediaQueryData(
                         size: Size(w, h),
                         platformBrightness: b,
-                        padding: const EdgeInsets.only(
-                            top: _safeTop, bottom: _safeBottom)),
+                        padding:
+                            EdgeInsets.only(top: safeTop, bottom: safeBottom)),
                     child: const LaunchSplash(),
                   ),
                 ));
@@ -634,6 +666,142 @@ void main() {
                 notes.add('${rects.length} avatar tiles built, $onScreen on '
                     'screen; the largest ${rects.isEmpty ? '-' : '${_f(rects.first.width)} pt '
                         '(${_f(rects.first.width * 100 / w, 0)} % of the width)'}');
+
+              case 'welcome':
+                await tester
+                    .pumpWidget(app(WelcomeScreen(onGetStarted: () {})));
+                await tester.pump(const Duration(seconds: 3));
+                notes.add(_column(tester, find.text('Get started'), w));
+
+              case 'onboarding':
+                await tester
+                    .pumpWidget(app(OnboardingScreen(onComplete: (_) {})));
+                await precache([for (final a in Avatar.values) a.assetPath]);
+                await tester.pump(const Duration(seconds: 1));
+                // Onboarding starts on a random avatar (PRD v2 §13.5); the
+                // render jumps to the lap's first one, so runs compare.
+                final pages =
+                    tester.widget<PageView>(find.byType(PageView)).controller!;
+                final page = pages.page!.round();
+                pages.jumpToPage(page - page % Avatar.count);
+                await tester.pump(const Duration(seconds: 1));
+                notes.add(_column(tester, find.byType(TextField), w));
+
+              case 'daily_test':
+                final storage = _TestStorage();
+                await tester.pumpWidget(app(DailyTestScreen(
+                  dailyTestService: DailyTestService(
+                      claudeService: ClaudeService(), storageService: storage),
+                  analyticsService: AnalyticsService(),
+                )));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(TextField), w));
+
+              case 'topic_list':
+                await tester.pumpWidget(app(TopicPracticeScreen(
+                  claudeService: ClaudeService(),
+                  storageService: _AppStorage(),
+                  analyticsService: AnalyticsService(),
+                  subscriptionService: DesignSubs(),
+                )));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(Card), w));
+
+              case 'practice':
+                await tester.pumpWidget(app(PracticeScreen(
+                  topic: kTopics.first,
+                  practiceSet: _practiceSet,
+                  claudeService: ClaudeService(),
+                  storageService: _AppStorage(),
+                  analyticsService: AnalyticsService(),
+                  subscriptionService: DesignSubs(),
+                )));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(TextField), w));
+
+              case 'practice_results':
+                await tester.pumpWidget(app(ResultsScreen(
+                  topic: kTopics.first,
+                  result: _practiceResult,
+                  practiceSet: _practiceSet,
+                  answers: const {'i1': 'went', 'i2': 'gone'},
+                  storageService: _AppStorage(),
+                  analyticsService: AnalyticsService(),
+                  subscriptionService: DesignSubs(),
+                )));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(Card), w));
+
+              case 'review':
+                await tester.pumpWidget(app(_shell(
+                    ReviewScreen(
+                      claudeService: ClaudeService(),
+                      storageService: _AppStorage(),
+                      analyticsService: AnalyticsService(),
+                      subscriptionService: DesignSubs(),
+                      active: true,
+                      onGoToPractice: () {},
+                    ),
+                    1)));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(Card), w));
+
+              case 'weak_spot':
+                await tester.pumpWidget(app(WeakSpotDetailScreen(
+                  topic: kTopics.first,
+                  spot: _AppStorage.spots.first,
+                  claudeService: ClaudeService(),
+                  storageService: _AppStorage(),
+                  analyticsService: AnalyticsService(),
+                  subscriptionService: DesignSubs(),
+                )));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(FilledButton), w));
+
+              case 'profile_bottom':
+                await tester.pumpWidget(app(_shell(
+                    SettingsScreen(
+                      active: true,
+                      themeMode: AppThemeMode.system,
+                      onSelectThemeMode: (_) {},
+                      textSize: size,
+                      onSelectTextSize: (_) {},
+                      profile: UserProfile(
+                          name: 'Ada',
+                          learningGoal: LearningGoal.general,
+                          avatar: Avatar.values.first),
+                      storageService: _ProfileStorage(),
+                      onProfileUpdated: (_) {},
+                      onResetOnboarding: () {},
+                      subscriptionService: DesignSubs(),
+                      analyticsService: AnalyticsService(),
+                    ),
+                    2)));
+                await precache([
+                  ..._medalAssets,
+                  for (final a in Avatar.values) a.assetPath
+                ]);
+                await tester.pumpAndSettle();
+                await tester.drag(
+                    find.byType(Scrollable).first, const Offset(0, -6000));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.text('Credits'), w));
+
+              case 'premium':
+                await tester.pumpWidget(app(PremiumScreen(
+                  storageService: _AppStorage(),
+                  analyticsService: AnalyticsService(),
+                  analyticsSource: AnalyticsService.paywallSourceHome,
+                  subscriptionService: _OfferingSubs(),
+                )));
+                await precache([for (final a in Avatar.values) a.assetPath]);
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(Card), w));
+
+              case 'ai_consent':
+                await tester.pumpWidget(app(const AiConsentScreen()));
+                await tester.pumpAndSettle();
+                notes.add(_column(tester, find.byType(FilledButton), w));
             }
 
             final exceptions = <Object>[];
@@ -648,7 +816,7 @@ void main() {
               rows.putIfAbsent(c, () => []).add(
                   '$d ${w.toInt()}×${h.toInt()} ${size.name}: ${notes.join('\n    ')}');
             }
-            await writePng(tester, key, '$out/$name.png');
+            await _writePng(tester, key, '$out/$name.png', dpr);
             // Let Home's timers (the hop, the label) run out.
             await tester.pumpWidget(const SizedBox());
             await tester.pump(const Duration(seconds: 5));
@@ -688,4 +856,175 @@ void _measureScene(
       'cap ${_f(ClimbCamera.maxAvatarTile)} pt)');
   notes.add('screen below the card: ${_f(h - card.bottom)} pt; '
       'max(0, ...) ${_f(math.max(0, h - card.bottom))}');
+}
+
+/// The box of [finder]'s first match and its share of the screen width:
+/// the content column's width on that screen.
+String _column(WidgetTester tester, Finder finder, double w) {
+  if (finder.evaluate().isEmpty) return 'column: (reference not found)';
+  final r = tester.getRect(finder.first);
+  return 'column reference ${_r(r)} (${_f(r.width * 100 / w, 0)} % of the '
+      'width)';
+}
+
+Future<void> _writePng(
+        WidgetTester tester, GlobalKey key, String file, double dpr) =>
+    tester.runAsync(() async {
+      final img = await (key.currentContext!.findRenderObject()
+              as RenderRepaintBoundary)
+          .toImage(pixelRatio: dpr);
+      final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+      File(file).writeAsBytesSync(bytes!.buffer.asUint8List());
+    });
+
+const _practiceSet = PracticeSet(
+  topicId: 'gerundVsInfinitive',
+  items: [
+    PracticeItem(
+        id: 'i1',
+        type: PracticeItemType.fillInBlank,
+        instruction: 'She ___ (go) to the store yesterday.'),
+    PracticeItem(
+        id: 'i2',
+        type: PracticeItemType.sentenceWriting,
+        instruction: 'Write a sentence about your weekend using the past '
+            'simple.'),
+  ],
+);
+
+const _practiceResult = ScoringResult(
+  topicId: 'gerundVsInfinitive',
+  feedback: [
+    ItemFeedback(
+        itemId: 'i1',
+        isCorrect: true,
+        isSkipped: false,
+        correctedAnswer: 'went',
+        explanation: "'Yesterday' is a finished time, so the past simple: "
+            "'went'."),
+    ItemFeedback(
+        itemId: 'i2',
+        isCorrect: false,
+        isSkipped: false,
+        correctedAnswer: 'I went to the beach last weekend.',
+        explanation: "'Gone' is the past participle; on its own the past "
+            "simple is 'went'."),
+  ],
+);
+
+/// Today's Daily Test already stored (the bundled first-day questions).
+class _TestStorage extends StorageService {
+  @override
+  Future<DailyTestSet?> getDailyTestSetForToday() async => DailyTestSet(
+      day: '2026-10-14',
+      questions: kDayZeroQuestions,
+      source: DailyTestSource.shared);
+  @override
+  Future<DailyTestSet?> getDailyTestSet(String day) =>
+      getDailyTestSetForToday();
+  @override
+  Future<List<WeakSpot>> getWeakSpots(
+          {int limit = 10,
+          ReviewSortOrder sortOrder = ReviewSortOrder.recent}) async =>
+      const [];
+  @override
+  Future<String> getOrCreateDeviceId() async => 'design-device';
+}
+
+/// Review, the weak spot detail, practice, its results, the topic list
+/// and Premium: a free user with three weak spots and one free practice
+/// used today.
+class _AppStorage extends StorageService {
+  static final spots = [
+    WeakSpot(
+        topicId: kTopics[0].id.name,
+        errorType: 'gerund_after_avoid',
+        frequency: 3,
+        lastSeen: DateTime(2026, 10, 14),
+        latestExplanation:
+            "'Avoid' is followed by the -ing form, not 'to'. Say 'avoid "
+            "eating'.",
+        latestRule: 'Gerund vs. Infinitive'),
+    WeakSpot(
+        topicId: kTopics[1].id.name,
+        errorType: 'modal_plus_s',
+        frequency: 2,
+        lastSeen: DateTime(2026, 10, 13)),
+    WeakSpot(
+        topicId: kTopics[2].id.name,
+        errorType: 'modal_past',
+        frequency: 1,
+        lastSeen: DateTime(2026, 10, 10)),
+  ];
+  @override
+  Future<List<WeakSpot>> getWeakSpots(
+          {int limit = 10,
+          ReviewSortOrder sortOrder = ReviewSortOrder.recent}) async =>
+      spots;
+  @override
+  Future<ReviewSortOrder> getReviewSortOrder() async => ReviewSortOrder.recent;
+  @override
+  Future<List<ErrorEntry>> getRecentMistakes(String topicId, String errorType,
+          {int limit = 3}) async =>
+      [
+        ErrorEntry(
+            topicId: topicId,
+            errorType: errorType,
+            timestamp: DateTime(2026, 10, 14),
+            prompt: 'You should avoid ___ too much sugar.\nFill in the blank '
+                'with the correct form of the verb in brackets.',
+            userAnswer: 'to eat',
+            correctedAnswer: 'eating',
+            explanation: "'Avoid' is followed by the -ing form, not 'to'. Say "
+                "'avoid eating'.",
+            source: ErrorSource.dailyTest),
+      ];
+  @override
+  Future<int> getFreePracticeCountForToday() async => 1;
+  @override
+  Future<void> recordPracticeCompletion(String topicId, int answered) async {}
+  @override
+  Future<void> insertErrors(List<ErrorEntry> entries) async {}
+  @override
+  Future<UserProfile?> getUserProfile() async => UserProfile(
+      name: 'Ada',
+      learningGoal: LearningGoal.general,
+      avatar: Avatar.values.first);
+  @override
+  Future<Map<String, TopicStats>> getTopicStats() async => {
+        kTopics[0].id.name: const TopicStats(practiced: 2, weakSpotCount: 1),
+        kTopics[1].id.name: const TopicStats(practiced: 1, weakSpotCount: 1),
+      };
+  @override
+  Future<String> getOrCreateDeviceId() async => 'design-device';
+}
+
+/// A free user offered both plans (the Premium tests' fixture prices).
+class _OfferingSubs extends DesignSubs {
+  static const _context = PresentedOfferingContext('default', null, null);
+  @override
+  Future<Offering?> getOfferings() async {
+    const monthly = Package(
+        '\$rc_monthly',
+        PackageType.monthly,
+        StoreProduct('grammarlens_premium_monthly', 'Full access',
+            'GrammarLens Premium (Monthly)', 9.99, '\$9.99', 'USD',
+            introductoryPrice:
+                IntroductoryPrice(0, '\$0.00', 'P3D', 1, PeriodUnit.day, 3),
+            subscriptionPeriod: 'P1M'),
+        _context);
+    const annual = Package(
+        '\$rc_annual',
+        PackageType.annual,
+        StoreProduct('grammarlens_premium_annual', 'Full access (annual)',
+            'GrammarLens Premium (Annual)', 89.99, '\$89.99', 'USD',
+            introductoryPrice:
+                IntroductoryPrice(0, '\$0.00', 'P1W', 1, PeriodUnit.week, 1),
+            subscriptionPeriod: 'P1Y',
+            pricePerMonth: 7.49,
+            pricePerMonthString: '\$7.49'),
+        _context);
+    return const Offering('default', 'Default offering', {}, [monthly, annual],
+        monthly: monthly, annual: annual);
+  }
 }

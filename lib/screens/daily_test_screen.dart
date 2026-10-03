@@ -14,6 +14,7 @@ import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import '../utils/debug_tools.dart';
 import 'daily_test_result_screen.dart';
+import '../utils/content_width.dart';
 
 /// One-question-at-a-time flow over today's cached Daily Test set (PRD v2
 /// §12.2, §12.5). Deliberately mirrors PracticeScreen's layout — same
@@ -203,8 +204,8 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context);
     final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
     return PopScope(

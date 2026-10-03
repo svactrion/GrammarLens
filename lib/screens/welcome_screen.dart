@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../spacing.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/launch_splash.dart';
+import '../utils/content_width.dart';
 
 // Ambient background decoration for this screen only — not reused
 // elsewhere, so (unlike BrandMark's glass/glint) these stay local rather
@@ -93,7 +94,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final size = MediaQuery.sizeOf(context);
-    final hPad = (size.width * 0.08).clamp(24.0, 40.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePadding(
+        size, (size.width * 0.08).clamp(24.0, 40.0).toDouble());
     final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
     // The decorative artwork below (mark, rings, background blobs, twinkle

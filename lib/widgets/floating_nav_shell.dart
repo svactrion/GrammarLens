@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
+import '../utils/content_width.dart';
 
 /// How much bottom padding a scrollable tab screen needs to reserve so its
 /// last item can be scrolled fully clear of [FloatingNavShell]'s bar,
@@ -166,13 +167,21 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
                           ),
                         ],
                       ),
-                      child: _FloatingNavBar(
-                        tabs: widget.tabs,
-                        selectedIndex: widget.selectedIndex,
-                        onTabChange: widget.onTabChange,
-                        unselectedColor: unselectedColor,
-                        activeColor: colorScheme.secondary,
-                        labelStyle: theme.textTheme.labelMedium,
+                      // P1: the pill stays full width; on an iPad its tabs
+                      // sit over the content column (the pill's 16 pt and
+                      // the row's 8 pt are already in).
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal:
+                                ContentWidth.insetOf(context, edge: 24)),
+                        child: _FloatingNavBar(
+                          tabs: widget.tabs,
+                          selectedIndex: widget.selectedIndex,
+                          onTabChange: widget.onTabChange,
+                          unselectedColor: unselectedColor,
+                          activeColor: colorScheme.secondary,
+                          labelStyle: theme.textTheme.labelMedium,
+                        ),
                       ),
                     ),
                   ),

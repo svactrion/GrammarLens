@@ -19,6 +19,7 @@ import '../widgets/brand_scaffold.dart';
 import '../widgets/medal_celebration.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
+import '../utils/content_width.dart';
 
 /// Shown after the last Daily Test question. Grading is entirely local —
 /// [checkDailyTestAnswer] against the answer key the data layer generated
@@ -267,7 +268,8 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final semantic = theme.extension<SemanticColors>()!;
-    final hPad = (MediaQuery.sizeOf(context).width * 0.045).clamp(16.0, 28.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context);
 
     final correctCount = _results.where((r) => r.isCorrect).length;
     final skippedCount = _results.where((r) => r.isSkipped).length;

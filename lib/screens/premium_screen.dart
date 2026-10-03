@@ -12,6 +12,7 @@ import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/legal_link.dart';
+import '../utils/content_width.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
 
@@ -250,7 +251,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final offeringsReady =
         _offeringsAvailable && monthly != null && annual != null;
     final size = MediaQuery.sizeOf(context);
-    final width = size.width;
     final shortScreen = size.height < _shortScreenHeight;
     // The legal links belong in the fixed footer, but the footer grows with
     // text size, and past a point it would take over the screen. Measured: it
@@ -265,7 +265,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
     // (`body:` bypasses it — see that widget's doc comment — so this
     // screen owns its own padding, same as AvatarPickerScreen already
     // does for the same reason).
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context);
 
     return PopScope(
       // Observes rather than blocks (canPop stays true): unlike

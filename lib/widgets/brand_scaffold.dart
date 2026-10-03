@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme.dart';
+import '../utils/content_width.dart';
 import 'floating_nav_shell.dart';
 
 /// The D1 hybrid-theme shell (docs/design-audit.md §5, closed): an orange
@@ -118,13 +120,57 @@ class BrandScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = horizontalPadding ?? (width * 0.045).clamp(16.0, 28.0);
+    final size = MediaQuery.sizeOf(context);
+    // P1: on an iPad the list is held to the centred content column
+    // (`ContentWidth`); on an iPhone this is the padding unchanged.
+    final hPad = ContentWidth.sidePadding(
+        size, horizontalPadding ?? ContentWidth.basePadding(size.width));
     final bottomPadding = bottomBar != null
         ? 16.0
         : isTabRoot
             ? NavBarClearance.of(context)
             : MediaQuery.paddingOf(context).bottom + 16;
+
+    final PreferredSizeWidget bar = appBar ??
+        AppBar(
+          title: title,
+          leading: leading,
+          automaticallyImplyLeading: automaticallyImplyLeading,
+          actions: actions,
+          bottom: bandBottom,
+          // Decided once here, not per screen (docs/design-audit.md: Daily
+          // Test results showed "an opaque orange app bar with a hard edge
+          // appears on scroll but is absent at scroll-top" — content
+          // scrolling under the band must look the same at rest and mid-
+          // scroll, not gain a new edge). The band already has a permanent
+          // separation from the body via bandBackground/bandForeground
+          // alone (a hard, un-blurred color cut, not a gradient — visible
+          // at every scroll position because it's the app bar's own
+          // bottom edge, not scroll-triggered) — the default Material
+          // scrolled-under shadow would only add a second, redundant edge
+          // signal on top of that, so it's turned off explicitly rather
+          // than left to the inherited default. A custom [appBar] (see
+          // its own doc comment) makes this same call for itself.
+          scrolledUnderElevation: 0,
+        );
+    // P1: on an iPad the band stays full width and its content (back,
+    // title, actions, [bandBottom]) moves in to the content column. Not
+    // wrapped at all on an iPhone, so nothing there changes.
+    final bandInset = ContentWidth.insetOf(context,
+        edge: ContentWidth.basePadding(size.width));
+    final PreferredSizeWidget band = bandInset == 0
+        ? bar
+        : PreferredSize(
+            preferredSize: bar.preferredSize,
+            child: ColoredBox(
+              color: theme.appBarTheme.backgroundColor ??
+                  colorScheme.bandBackground,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: bandInset),
+                child: bar,
+              ),
+            ),
+          );
 
     return Scaffold(
       // The app bar below is left to inherit `bandBackground`/
@@ -132,28 +178,7 @@ class BrandScaffold extends StatelessWidget {
       // expression here, since they're already identical by construction
       // (see theme.dart's `BandColors` extension).
       backgroundColor: colorScheme.surfaceContainerLow,
-      appBar: appBar ??
-          AppBar(
-            title: title,
-            leading: leading,
-            automaticallyImplyLeading: automaticallyImplyLeading,
-            actions: actions,
-            bottom: bandBottom,
-            // Decided once here, not per screen (docs/design-audit.md: Daily
-            // Test results showed "an opaque orange app bar with a hard edge
-            // appears on scroll but is absent at scroll-top" — content
-            // scrolling under the band must look the same at rest and mid-
-            // scroll, not gain a new edge). The band already has a permanent
-            // separation from the body via bandBackground/bandForeground
-            // alone (a hard, un-blurred color cut, not a gradient — visible
-            // at every scroll position because it's the app bar's own
-            // bottom edge, not scroll-triggered) — the default Material
-            // scrolled-under shadow would only add a second, redundant edge
-            // signal on top of that, so it's turned off explicitly rather
-            // than left to the inherited default. A custom [appBar] (see
-            // its own doc comment) makes this same call for itself.
-            scrolledUnderElevation: 0,
-          ),
+      appBar: band,
       // No local card-theme override here anymore (docs/design-audit.md §5
       // D1, closed): every screen is on this neutral body now, so the
       // card treatment that used to be scoped to this widget's own subtree

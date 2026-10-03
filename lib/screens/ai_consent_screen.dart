@@ -9,6 +9,7 @@ import '../utils/app_links.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/legal_link.dart';
+import '../utils/content_width.dart';
 
 /// The one-time permission screen for sending Topic Practice answers to a
 /// third-party AI provider (App Review guideline 5.1.2(i)). Pops `true` on
@@ -31,8 +32,8 @@ class AiConsentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context);
     final body = theme.textTheme.bodyMedium;
 
     return BrandScaffold(

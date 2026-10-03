@@ -14,6 +14,7 @@ import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import 'results_screen.dart';
+import '../utils/content_width.dart';
 
 class PracticeScreen extends StatefulWidget {
   final Topic topic;
@@ -158,8 +159,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context);
     final total = widget.practiceSet.items.length;
     final item = widget.practiceSet.items[_currentIndex];
 

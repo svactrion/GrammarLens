@@ -6,6 +6,7 @@ import '../models/user_profile.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_carousel.dart';
 import '../widgets/brand_scaffold.dart';
+import '../utils/content_width.dart';
 
 /// The one-line privacy statement under the goal options. Public so a test
 /// can pin the wording to what the app actually does.
@@ -60,7 +61,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.06).clamp(20.0, 32.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context,
+        base: (width * 0.06).clamp(20.0, 32.0));
 
     return BrandScaffold(
       title: const PageTitle('Let\'s get started'),
