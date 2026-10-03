@@ -8,6 +8,7 @@ import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/monthly_medal.dart';
+import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
@@ -228,6 +229,9 @@ void main() {
       await tester.scrollUntilVisible(
           find.byKey(SettingsScreen.debugRowKey), 300,
           scrollable: find.byType(Scrollable).first);
+      // Wholly on screen: scrolling stops once any of it shows.
+      await tester.ensureVisible(find.byKey(SettingsScreen.debugRowKey));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(SettingsScreen.debugRowKey));
       await tester.pumpAndSettle();
       expect(find.byType(DebugPanelScreen), findsOneWidget);
@@ -256,10 +260,11 @@ void main() {
     );
 
     expect(find.text('Monthly medals'), findsOneWidget);
-    // Batch 5 (N17): no month has a medal yet, so only the Welcome row says
-    // "Not earned"; the months below are rows of their own.
-    expect(find.text('Not earned'), findsOneWidget);
-    expect(find.text('Earned'), findsNothing);
+    // Batch 5 (N34): nothing earned yet; the shelf holds the faded Welcome
+    // badge and the running month.
+    expect(
+        find.text('Your medals will appear here once earned.'), findsOneWidget);
+    expect(find.text(MonthlyMedalCollection.inProgress), findsOneWidget);
     expect(
       find.bySemanticsLabel('Welcome badge, locked.'),
       findsOneWidget,

@@ -73,35 +73,36 @@ void main() {
     await tester.pumpWidget(const MonthlyMedalPreview());
     await tester.pumpAndSettle();
 
-    // Batch 5 (N17): the running month lights its tiers as they become
-    // certain, so the header no longer tells "no history" apart; the
-    // History heading does.
+    // Batch 5 (N34): the shelf says each month's tier in its slot's
+    // semantics; a past month without a medal is not on the shelf.
+    Finder slot(String outcome) =>
+        find.bySemanticsLabel(RegExp('2026, .*, $outcome'));
     expect(
-      find.text('History'),
+      slot('(Bronze|Silver|Gold) medal\\.'),
       findsNothing,
-      reason: 'In progress starts with no finalized history',
+      reason: 'In progress starts with no finalized month',
     );
 
     await selectScenario(tester, 'In progress', 'Bronze finalized');
-    expect(find.textContaining('Bronze medal'), findsWidgets);
+    expect(slot('Bronze medal\\.'), findsOneWidget);
 
     await selectScenario(tester, 'Bronze finalized', 'Silver finalized');
-    expect(find.textContaining('Silver medal'), findsWidgets);
+    expect(slot('Silver medal\\.'), findsOneWidget);
 
     await selectScenario(tester, 'Silver finalized', 'Gold finalized');
-    expect(find.textContaining('Gold medal'), findsWidgets);
+    expect(slot('Gold medal\\.'), findsOneWidget);
 
-    // "No medal" also happens to be this scenario's own dropdown label, so
-    // it legitimately renders twice (the selected field plus the frozen
-    // history row) — assert presence, not an exact count.
+    // Last month frozen as "No medal": not on the shelf, only the running
+    // month is.
     await selectScenario(tester, 'Gold finalized', 'No medal');
-    expect(find.text('No medal'), findsWidgets);
+    expect(find.bySemanticsLabel(RegExp('^August 2026')), findsNothing);
+    expect(find.bySemanticsLabel(RegExp('^September 2026, .*in progress')),
+        findsOneWidget);
 
     await selectScenario(tester, 'No medal', 'Multiple months');
-    expect(find.textContaining('Gold medal'), findsWidgets);
-    expect(find.textContaining('Silver medal'), findsWidgets);
-    expect(find.textContaining('Bronze medal'), findsWidgets);
-    expect(find.text('No medal'), findsWidgets);
+    expect(slot('Gold medal\\.'), findsOneWidget);
+    expect(slot('Silver medal\\.'), findsOneWidget);
+    expect(slot('Bronze medal\\.'), findsOneWidget);
   });
 
   for (final textSize in ['Small', 'Medium', 'Large']) {

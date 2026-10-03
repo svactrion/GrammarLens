@@ -58,8 +58,8 @@ enum _MedalPreviewScenario {
   ),
   noMedal(
     'No medal',
-    'Last month finalized below Bronze and frozen as "No medal" rather '
-        'than omitted, plus this month already under way.',
+    'Last month finalized below Bronze and frozen as "No medal": not on '
+        'the shelf (N34), so only this month, under way, shows.',
   ),
   history(
     'Multiple months',

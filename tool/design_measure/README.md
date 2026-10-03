@@ -338,8 +338,11 @@ against Batch 6's numbers, `docs/design/batch5/card/`).
 DESIGN_MEASURE_OUT=build/design_measure/batch5_profile flutter test tool/design_measure/batch5/profile_render_test.dart
 ```
 
-Step 4 (N17): the real `MonthlyMedalCollection` with sample months, 320 /
-375 / 430 pt, light and dark, three text sizes, then
+Correction round step 6 (N33, N34; replaced step 4's N17 rows): the real
+`MonthlyMedalCollection`, the shelf and the threshold bar, in three cases
+(only the running month; the Welcome badge and three months; twelve
+months), 320 / 375 / 430 pt, light and dark, the twelve months at 320 in
+three text sizes, and the medal detail open on a whole screen; then
 `batch5_sheet.py profile` (`docs/design/batch5/profile/`).
 
 ```bash

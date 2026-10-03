@@ -20,7 +20,8 @@ labels_real: build/design_measure/batch5_labels_real (label_real_render_test.dar
          -> labels_real/: the five labels at 320 / 375 / 430, 320 pt text sizes,
          375 pt dark, numbers.
 profile: build/design_measure/batch5_profile (profile_render_test.dart) ->
-         profile/: profile_<mode>_medium.jpg, profile_320_textsizes.jpg, numbers.
+         profile/: shelf_<empty|three|twelve>.jpg (light over dark),
+         shelf_twelve_320_textsizes.jpg, detail_<october|running>.jpg, numbers.
 welcome: build/design_measure/batch5_welcome (welcome_result_test.dart) ->
          welcome_result_scrolltop.jpg (each screen at its scroll top).
 
@@ -170,16 +171,23 @@ def card() -> None:
 
 
 def profile() -> None:
-    """Batch 5 step 4 (N17): the real collection (profile_render_test.dart)."""
+    """Batch 5 step 6 (N33, N34): the shelf and the detail (profile_render_test.dart)."""
     src, out = BUILD / "batch5_profile", OUT / "profile"
     out.mkdir(parents=True, exist_ok=True)
-    for mode in ("light", "dark"):
-        cells = [[trim(Image.open(src / f"profile_{w}_{mode}_medium.png")) for w in (320, 375, 430)]]
-        grid(cells, [f"{w} pt, Medium, {mode}" for w in (320, 375, 430)], 0.5).save(
-            out / f"profile_{mode}_medium.jpg", quality=84)
-    cells = [[trim(Image.open(src / f"profile_320_light_{s}.png")) for s in ("small", "medium", "large")]]
+    for old in out.glob("profile_*.jpg"):
+        old.unlink()
+    widths = (320, 375, 430)
+    for case in ("empty", "three", "twelve"):
+        cells = [[trim(Image.open(src / f"profile_{case}_{w}_{m}_medium.png")) for w in widths]
+                 for m in ("light", "dark")]
+        grid(cells, [f"{w} pt, Medium" for w in widths], 0.5).save(out / f"shelf_{case}.jpg", quality=84)
+    cells = [[trim(Image.open(src / f"profile_twelve_320_light_{s}.png")) for s in ("small", "medium", "large")]]
     grid(cells, [f"320 pt, {s}, light" for s in ("Small", "Medium", "Large")], 0.5).save(
-        out / "profile_320_textsizes.jpg", quality=84)
+        out / "shelf_twelve_320_textsizes.jpg", quality=84)
+    for which in ("october", "running"):
+        cells = [[Image.open(src / f"profile_detail_{which}_{w}_{m}.png") for w in widths]
+                 for m in ("light", "dark")]
+        grid(cells, [f"{w} pt" for w in widths], 0.4).save(out / f"detail_{which}.jpg", quality=84)
     shutil.copy(src / "profile_numbers.txt", out)
 
 
