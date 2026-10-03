@@ -39,6 +39,9 @@ import 'daily_test_screen.dart';
 import 'premium_screen.dart';
 import 'topic_practice_screen.dart';
 import 'weak_spot_detail_screen.dart';
+import '../widgets/medal_celebration.dart';
+import '../widgets/monthly_climb/climb_debug_milestone.dart';
+import '../widgets/monthly_climb/climb_debug_theme.dart';
 
 /// Home as a "today" screen, not a menu (PRD v2 §13.5). Replaces the old
 /// mode-selection Home once Streak Mode and Voice Practice were removed and
@@ -221,6 +224,13 @@ class _HomeScreenState extends State<HomeScreen>
   final ClimbDebugMonthCardValue? _debugMonthCard = ClimbDebugMonthCard.value;
   bool _debugMonthCardReplayed = false;
 
+  /// `CLIMB_DEBUG_MILESTONE` on a tier (debug builds only, N22): the
+  /// celebration over Home, once per Home (every launch and hot restart),
+  /// after the month card if one replays. Reads and writes no record and
+  /// sends no event. A save point value plays in the scene itself.
+  final ClimbDebugMilestoneValue? _debugMilestone = ClimbDebugMilestone.value;
+  bool _debugMilestoneReplayed = false;
+
   bool get _sendMonthEvents =>
       _debugMonthCard == null || ClimbDebugMonthCard.sendsEvents;
 
@@ -308,6 +318,11 @@ class _HomeScreenState extends State<HomeScreen>
         if (mounted) _presentMonthCard();
       });
     }
+    if (_debugMilestone?.tier != null && !_debugMilestoneReplayed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _presentDebugMilestone();
+      });
+    }
     // Home may just have become visible again (a route above it closed).
     if (_day0PaywallPending && _day0PaywallReady) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -325,6 +340,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (!oldWidget.active && widget.active) {
       _showDay0Paywall();
       _presentMonthCard();
+      _presentDebugMilestone();
     }
   }
 
@@ -463,6 +479,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (!mounted || generation != _climbLoadGeneration) return;
       }
       if (_pendingMonthCard != null) _presentMonthCard();
+      _presentDebugMilestone();
       // A step is now animating and its end opens the paywall; with none (an
       // all-skipped test, or a step that belongs to another month) Home is
       // simply loaded.
@@ -609,6 +626,35 @@ class _HomeScreenState extends State<HomeScreen>
     } finally {
       _monthCardShowing = false;
     }
+    _presentDebugMilestone();
+  }
+
+  /// `CLIMB_DEBUG_MILESTONE`'s tier celebration, when Home can show it:
+  /// loaded, visible, not under the splash, after any month card and its
+  /// zoom. The current month and its theme, or `CLIMB_DEBUG_THEME`'s.
+  Future<void> _presentDebugMilestone() async {
+    final tier = _debugMilestone?.tier;
+    if (tier == null || _debugMilestoneReplayed || !mounted) return;
+    if (_climbSteps == null ||
+        _pendingMonthCard != null ||
+        _monthCardShowing ||
+        _zoom.active ||
+        !_homeVisible ||
+        LaunchSplashScope.coveringOf(context)) {
+      return;
+    }
+    _debugMilestoneReplayed = true;
+    final theme = ClimbDebugTheme.value ?? _climbTheme;
+    final month = widget.clock().month;
+    await Navigator.of(context).push(PageRouteBuilder<void>(
+      opaque: false,
+      pageBuilder: (routeContext, _, __) => MedalCelebration.tier(
+        tier: tier,
+        theme: theme,
+        month: month,
+        onClose: () => Navigator.of(routeContext).pop(),
+      ),
+    ));
   }
 
   /// M21: scrolls Home so the Today card's last

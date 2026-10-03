@@ -17,7 +17,6 @@ import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/confetti_burst.dart';
-import '../widgets/medal_badge.dart';
 import '../widgets/medal_celebration.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
@@ -391,23 +390,26 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       ],
     );
     if (celebration == null) return scaffold;
+    void close() => setState(() => _celebration = null);
+    const key = ValueKey('medal_celebration');
     return Stack(children: [
       scaffold,
       Positioned.fill(
-        child: MedalCelebration(
-          key: const ValueKey('medal_celebration'),
-          medal: celebration.medal(),
-          title: celebration.title,
-          subtitle: celebration.subtitle,
-          onClose: () => setState(() => _celebration = null),
-        ),
+        child: celebration.tier == null
+            ? MedalCelebration.welcome(key: key, onClose: close)
+            : MedalCelebration.tier(
+                key: key,
+                tier: celebration.tier!,
+                theme: celebration.theme!,
+                month: celebration.month,
+                onClose: close),
       ),
     ]);
   }
 }
 
-/// What the celebration shows (N15): the Welcome badge with its existing
-/// copy, or a tier with the month and its theme.
+/// Which celebration shows (N15): the Welcome badge, or a tier with its
+/// month and that month's theme.
 class _Celebration {
   final MedalTier? tier;
   final ClimbTheme? theme;
@@ -420,27 +422,6 @@ class _Celebration {
 
   const _Celebration.tier(
       MedalTier this.tier, ClimbTheme this.theme, this.month);
-
-  static const _months = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July', //
-    'August', 'September', 'October', 'November', 'December',
-  ];
-
-  Widget medal() => tier == null
-      ? const MedalBadge.welcome(disc: MedalCelebration.disc)
-      : MedalBadge.monthly(
-          themeId: theme!.id, tier: tier!, disc: MedalCelebration.disc);
-
-  // The Welcome copy is the old card's, kept word for word; it is
-  // audience-neutral (no "first test" language), since a pre-existing v2
-  // user earns the same badge on their first Daily Test after updating.
-  String get title =>
-      tier == null ? 'Welcome to the climb' : '${tier!.label} secured';
-
-  String get subtitle => tier == null
-      ? "Answer at least one question a day to keep moving "
-          "up this month's mountain."
-      : '${_months[month - 1]} · ${theme!.name}';
 }
 
 const _fallbackComment = "Not quite — here's the correct answer.";

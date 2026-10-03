@@ -8,6 +8,7 @@ import '../../models/climb_theme.dart';
 import '../avatar_tile.dart';
 import 'climb_camera.dart';
 import 'climb_debug_day.dart';
+import 'climb_debug_milestone.dart';
 import 'climb_debug_theme.dart';
 import 'climb_route.dart';
 import 'climb_save_point_table.dart';
@@ -158,11 +159,27 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   ClimbTheme get _theme => ClimbDebugTheme.value ?? widget.theme;
 
   int get _shownSteps =>
-      (ClimbDebugDay.value ?? widget.completedDays).clamp(0, widget.days);
+      (_debugMilestoneStep ?? ClimbDebugDay.value ?? widget.completedDays)
+          .clamp(0, widget.days);
+
+  /// `CLIMB_DEBUG_MILESTONE` on a save point (debug builds only): the step
+  /// the scene shows, first the one before the save point's, then, once
+  /// [_debugHop] has run, the save point's own. Display only.
+  int? _debugMilestoneStep;
+  Timer? _debugHopTimer;
+
+  /// How long the debug hop waits after the scene is shown without a zoom,
+  /// so Home has settled when it plays.
+  static const _debugHopDelay = Duration(milliseconds: 600);
 
   @override
   void initState() {
     super.initState();
+    final milestone = ClimbDebugMilestone.value?.savePoint;
+    if (milestone != null) {
+      _debugMilestoneStep = milestone.reachedOn(widget.days) - 1;
+      _scheduleDebugHop();
+    }
     _route = ClimbRoute(widget.days);
     _from = _to = _shownSteps.toDouble();
     _motion = AnimationController(
@@ -224,6 +241,27 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     }, onError: (_) {});
   }
 
+  /// `CLIMB_DEBUG_MILESTONE`: hops onto the save point once no zoom runs
+  /// (the label is not shown during one), as a Daily Test's step would.
+  void _scheduleDebugHop() {
+    if (_debugHopTimer != null || widget.zoom != null) return;
+    final milestone = ClimbDebugMilestone.value?.savePoint;
+    if (milestone == null) return;
+    _debugHopTimer = Timer(_debugHopDelay, () {
+      if (!mounted) return;
+      setState(() => _debugMilestoneStep = milestone.reachedOn(widget.days));
+      _from = _day;
+      _to = _shownSteps.toDouble();
+      if (_reduceMotion) {
+        _from = _to;
+        _motion.value = 1;
+        WidgetsBinding.instance.addPostFrameCallback((_) => _motionEnded());
+      } else {
+        _motion.forward(from: 0).then((_) => _motionEnded());
+      }
+    });
+  }
+
   /// N6, N19: the label of the furthest save point in [clearings], once.
   /// None during a zoom: the label stands in the daily framing.
   void _showLabel(Set<String> clearings) {
@@ -283,6 +321,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   @override
   void didUpdateWidget(MonthlyMountain oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.zoom != null && widget.zoom == null) _scheduleDebugHop();
     if (oldWidget.theme != widget.theme) {
       // Another theme can draw another set of objects (the flag): states
       // follow at once, without a fade.
@@ -321,6 +360,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     _fade.dispose();
     _label.dispose();
     _labelTimer?.cancel();
+    _debugHopTimer?.cancel();
     super.dispose();
   }
 

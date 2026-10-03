@@ -185,6 +185,39 @@ flutter run --dart-define=CLIMB_DEBUG_THEME=glacier_peak --dart-define=CLIMB_DEB
 - **Profile and release builds ignore it:** it is guarded by
   `kDebugMode`.
 
+## Checking a milestone on a device
+
+In a debug build Home can play a milestone on every launch and hot
+restart (`ClimbDebugMilestone`, Batch 5, N13, N22):
+
+```bash
+flutter run --dart-define=CLIMB_DEBUG_MILESTONE=silver
+```
+
+```bash
+flutter run --dart-define=CLIMB_DEBUG_MILESTONE=halfway_hut
+```
+
+- **The values:** `bronze`, `silver`, `gold` open the celebration layer
+  over Home for the current month and its theme; `first_camp`,
+  `halfway_hut`, `mountain_spring`, `high_camp`, `summit` mount the scene
+  one step before that save point's step (the flag's for `summit`) and
+  hop onto it about 0.6 s after Home shows, so the light-up and the label
+  play.
+- **With the others:** `CLIMB_DEBUG_THEME` picks the theme (the medal and
+  the scene); a save point value takes the place of `CLIMB_DEBUG_DAY` in
+  the scene; with `CLIMB_DEBUG_MONTH_CARD` the card and its zoom come
+  first, then the milestone (a hop waits for the zoom to end).
+- **What it leaves alone:** no stored record is read or written beyond
+  Home's own load, and no event is sent (the real ones come only from a
+  saved Daily Test).
+- **Profile and release builds ignore it:** it is guarded by
+  `kDebugMode`. A hot restart replays it; a resume does not.
+
+```bash
+flutter run --dart-define=CLIMB_DEBUG_THEME=red_canyon --dart-define=CLIMB_DEBUG_MILESTONE=summit
+```
+
 ## How the trail is found (`trail.py`)
 
 1. **Mask.** Lab colour distance under 14 from the trail's own colour,

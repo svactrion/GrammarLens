@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../models/climb_theme.dart';
+import '../models/medal_tier.dart';
 import 'confetti_burst.dart';
+import 'medal_badge.dart';
 
 /// The medal celebration (Batch 5, N15): a layer over the Daily Test
 /// result screen, opened the moment the test is saved, for a tier just
@@ -31,6 +34,41 @@ class MedalCelebration extends StatefulWidget {
   static const disc = 112.0;
 
   static const closeHint = 'Tap to continue';
+
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June', 'July', //
+    'August', 'September', 'October', 'November', 'December',
+  ];
+
+  /// A tier's celebration (N15): "{Tier} secured", "{Month} · {Theme}".
+  static MedalCelebration tier({
+    Key? key,
+    required MedalTier tier,
+    required ClimbTheme theme,
+    required int month,
+    required VoidCallback onClose,
+  }) =>
+      MedalCelebration(
+        key: key,
+        medal: MedalBadge.monthly(themeId: theme.id, tier: tier, disc: disc),
+        title: '${tier.label} secured',
+        subtitle: '${_months[month - 1]} · ${theme.name}',
+        onClose: onClose,
+      );
+
+  /// The Welcome badge's celebration, with the copy of the card it
+  /// replaces, word for word: audience-neutral (no "first test" language),
+  /// since a pre-existing v2 user earns the same badge on their first Daily
+  /// Test after updating.
+  static MedalCelebration welcome({Key? key, required VoidCallback onClose}) =>
+      MedalCelebration(
+        key: key,
+        medal: const MedalBadge.welcome(disc: disc),
+        title: 'Welcome to the climb',
+        subtitle: "Answer at least one question a day to keep moving "
+            "up this month's mountain.",
+        onClose: onClose,
+      );
 
   static const fadeIn = Duration(milliseconds: 200);
 
