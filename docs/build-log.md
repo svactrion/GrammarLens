@@ -8198,3 +8198,20 @@ On branch `1.1.0-design`; not pushed. No `lib/` or `assets/` change.
   required).
 - **[Waiting]** Ahmet's answers to the report's §6 questions. No fix and
   no screenshot started.
+
+## 2026-10-03 (1.1.0 release preparation — P1: a maximum content width on iPad)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Docs only.
+
+- **[Product — owner] P1.** On iPad the content is centred and capped at
+  a maximum width; iPhone does not change. *Why* (the iPad report,
+  `docs/design/release-1.1.0/ipad-and-screenshots-report.md`): the app had
+  no iPad layout rule; every screen stretched to the full width, the
+  mountain window became a 976 × 350 pt strip at 13 in, the scene image
+  was upscaled 1.40×, the result screen's lines held 132–139 characters.
+  *Rejected:* shipping as it is; releasing for iPhone only (1.0.0 is in
+  review with iPad support; once it is approved and released, iPad
+  support cannot be removed).
+- **[Release]** Manual release is selected in App Store Connect for 1.0.0
+  (Ahmet verified, 2026-10-03).
