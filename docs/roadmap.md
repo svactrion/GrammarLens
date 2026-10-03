@@ -176,12 +176,14 @@ D1–D6 in the side-tracks file.)*
 - **Development of 1.1.0 is done (Ahmet, 2026-10-03); what remains is
   release preparation.** Nothing below is done yet:
   - Required:
-    - [ ] App Store screenshots (iPhone and iPad) — **draft, waiting for
-          approval** (2026-10-04): nine frames per device (P4), captured
-          from the real app in the simulator (P5) with
-          `tool/screenshots/capture.sh`, framed in the 1.0.0 style;
-          captions and typeface open
-          (`design/release-1.1.0/screenshots/README.md`);
+    - [ ] App Store screenshots (iPhone and iPad) — **waiting for final
+          approval** (2026-10-04): nine frames per device in P7's order
+          and captions, captured from the real app in the simulator (P5)
+          with `tool/screenshots/capture.sh`, framed in the 1.0.0 style in
+          Nunito Sans 800 (P8). Open: the Gold frame (03) celebrates
+          October while 02 and 08 show October at 149 points
+          (`design/release-1.1.0/screenshots/README.md`, "Review of the
+          set");
     - [ ] the iPad check — **waiting for simulator verification.** Report
           2026-10-03 (`design/release-1.1.0/ipad-and-screenshots-report.md`);
           P1 built 2026-10-03 (`3400766`): on iPad the content column is

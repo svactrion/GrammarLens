@@ -8350,3 +8350,45 @@ On branch `1.1.0-design`; not pushed. Docs only. Owner decisions (Ahmet,
 - **P8.** Titles stay in Nunito Sans 800. Raw captures leave the
   repository (one command makes them); the framed set and the overview
   stay.
+
+## 2026-10-04 (1.1.0 release preparation — the screenshot set in P7's order; waiting for final approval)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Commits]** `7b8a5e6` (P7, P8), `a8b4b0c` (the set, the tools, the
+  sample collection's change), and this one.
+- **[Frames]** P7's order and captions; files renamed to it
+  (`01-result` … `09-welcome`).
+  - 02: the hop onto Halfway Hut replayed from the debug panel, taken
+    while the "Halfway Hut" label shows; the driver measures Home at rest
+    and scrolls to the smallest offset whose bottom edge falls in a gap
+    with the whole mountain card in view (iPhone 3.4 pt, iPad 0).
+  - 06: the first question with "eating" typed and the real iOS keyboard
+    up. Found: `flutter_driver`'s text-entry emulation stands in for iOS
+    text input, so no keyboard opens while it types, and on a first
+    keyboard iOS shows its "slide to type" introduction over it. Now:
+    type, unfocus, emulation off, tap again (a new connection, to iOS);
+    the introduction is marked as shown on the simulator
+    (`DidShowContinuousPathIntroduction`).
+  - 07 and 08: the sample collection's last month is the month card's
+    Gold summary (theme, tier, steps, points), the same function.
+  - 02 and 08: the sample collection's running month is the stored
+    progress (read only), so Profile shows Home's days and points.
+    Changes P6's "no stored record read" to "only the running month's
+    progress read"; nothing is written, no event is sent.
+  - 08: ten slots (Welcome, eight finished months, the running month):
+    5 + 5 on the iPhone, 8 + 2 on the iPad. On the iPad the whole of
+    Profile fits the screen, so it cannot be scrolled to the shelf.
+- **[Not fixed — found in the review]** The Gold frame (03) reads "Gold
+  medal earned · October" while 02 and 08 put October at 149 points (Gold
+  is 233). The debug replay celebrates the running month, and Gold is out
+  of reach by step 15. Frame 01's last explanation runs under the result
+  screen's fixed footer (the screen's design, as in 1.0.0).
+- **[P8]** Raw captures leave the repository: `capture.sh` writes them to
+  `build/screenshots/raw/` (git-ignored); `frame.py` clears its output
+  folders first, so no frame of an earlier order lingers.
+- **[Size]** The set in the repository: 10 MB (iPhone 5.3 MB, iPad
+  4.3 MB, overview 0.4 MB), down from 26.8 MB with the raw captures.
+- **[Tests]** 1501 pass (`test/debug_sample_collection_test.dart` now 7);
+  `flutter analyze` clean.
+- **[Waiting]** Ahmet's final approval of the set; the Gold frame's month.
