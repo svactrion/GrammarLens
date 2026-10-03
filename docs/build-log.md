@@ -7991,3 +7991,61 @@ not pushed. Docs only. Full text: `docs/1.1.0-design-side-tracks.md`,
 - **[Accepted]** The 320 pt "Summit" label over the avatar.
 - **[Release checklist]** Register the new custom dimensions before the
   release; merge Settings' Developer and Debug sections.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 correction round built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Decisions
+N28–N36 (entry above).
+
+- **[Commits]** `fd215e4` (decisions), `34b0a7a` (N31, N32), `a343d29`
+  (N35), `c05ab32` (N28, N29, N36), `e45be5b` (N30), `37f8f87` (N33,
+  N34), and this one.
+- **[N31, N32 — steps]** Each save point is pinned to step round(its arc
+  share × days), strictly increasing and never on the last two steps; the
+  days between pinned steps are even by arc. The climb ends at the flag's
+  point (96.35 % of the trail, 3.65 % unused);
+  `ClimbRoute.endsAtFlagSetting` switches back to the trail's tip. Steps
+  that changed: C4 23 → 24 (28 days), C3 20 → 21 (30 days). Neighbour
+  gaps against the even gap, ending at the flag: 0.863–1.125 (28 days),
+  0.927–1.117 (29), 0.948–1.156 (30), 0.956–1.038 (31); within the STOP
+  limits (0.75–1.35). `docs/design/batch5/steps/`.
+- **[N35 — signpost]** Moved 4 px away from the trail inside C5's
+  clearing (the smallest shift of 49 searched); `check_theme.py
+  --signpost` passes on all eight images. Ratio 0.95 kept.
+- **[N28, N29, N36 — celebration]** Dark layer, a 144 pt medal, a glow
+  and 12 rays in the tier's colour (turning a sixth of a turn over 12 s,
+  then still), light text, "{Tier} medal earned"; shrink-and-fade close
+  (220 ms), fade only under Reduce Motion (no confetti, no turning). On
+  short screens the group scales down (about 0.89 at 320 × 568). "Start
+  my climb" has no confetti; its label and behaviour are unchanged. The
+  medal assets went to 512 px (528.9 KB, was 374.2 KB) so the 162 pt
+  canvas is sharp at 3x.
+- **[N30 — month card]** The medal centred and large, by screen height:
+  88 pt (740 pt and up), 70 pt (640–739; at 375 × 667 the fullest card
+  fits 88 / 80 / 70 by text size, so 70), 48 pt below. At 320 × 568 no
+  disc fits without scrolling (none down to 40 pt): 48 pt, and the card
+  scrolls. `docs/design/batch5/card/month_card_disc.txt`.
+- **[N33, N34 — Profile]** A shelf: the Welcome badge, then one medal per
+  month oldest to newest (the highest tier, the month's theme); the
+  running month marked "In progress", its theme's Bronze faded until a
+  tier; past months without a medal left off. A tap shows the medal at
+  144 pt with month, theme, tier, steps (n / N) and points; a tap anywhere
+  closes it. The running month's bar writes Bronze / Silver / Gold and
+  their thresholds under the marks, and the score, from
+  `MonthlyMedalRules`. `docs/design/batch5/profile/`.
+- **[Debug panel]** New tests drive the correction round through it:
+  the pinned steps in the scene, the last day at the flag, the card's
+  medal from `summary_gold`, a Gold milestone under Reduce Motion.
+- **[Test changes]** The default test screen for Home's card tests went
+  from 375 × 812 to 430 × 932: with the larger medal, the test font
+  (wider than the app's) makes the fullest card scroll at 375 × 812, and
+  a drag on a scrolling sheet scrolls instead of closing. Screen-specific
+  tests pass their own size.
+- **[Known flaws]** 320 × 568: the card scrolls, so a swipe down scrolls
+  it instead of closing it. The resting avatar overlaps the C5 signpost
+  on the step it passes it (29–31-day months, 21 % of the signpost's box
+  under the art's box; the avatar in front). The 320 pt "Summit" label
+  over the avatar (accepted).
+- **[Tests]** 1485 pass (1467 before the round); `flutter analyze`
+  clean.
+- **[Not checked]** On a device; frame times and memory not measured.

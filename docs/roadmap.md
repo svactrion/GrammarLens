@@ -108,17 +108,33 @@ D1–D6 in the side-tracks file.)*
       (`docs/design/batch5/batch0-report.md`); decisions N15–N26
       (2026-10-03). **Built 2026-10-03, awaiting device verification**
       (build log 2026-10-03, "Batch 5 built"); not merged into `1.1.0`.
-      Built: the medals as 384 px assets (+384.2 KB), the month card's
-      48 pt medal, Profile's per-month rows, the celebration layer (Welcome
-      moved into it), save point names and their label, the C5 signpost,
-      `save_point_reached` / `medal_tier_reached`,
-      `CLIMB_DEBUG_MILESTONE`. Known limits:
+      First device check 2026-10-03 (iPhone 14 Plus, profile build, debug
+      panel) → decisions N28–N36; **correction round built 2026-10-03,
+      awaiting device verification** (build log 2026-10-03, "Batch 5
+      correction round built").
+      Built: the medals as 512 px assets (528.9 KB; N23's 384 px were
+      374.2 KB), the month card's medal large and centred (88 / 70 / 48 pt
+      by screen height, N30), Profile's shelf with a tap detail and the
+      thresholds under the bar (N33, N34), the celebration layer (dark,
+      glow and rays, shrink-and-fade close, N28; Welcome moved into it),
+      save points pinned to steps and the climb ending at the flag (N31,
+      N32), save point names and their label, the C5 signpost (moved 4 px
+      inside its clearing, N35), `save_point_reached` /
+      `medal_tier_reached`, `CLIMB_DEBUG_MILESTONE`, the debug panel
+      (N27). Known limits:
   - [ ] stars unreadable below 48 pt, "WELCOME" below 96 pt;
   - [ ] Red Canyon's mountain on the Bronze body: the closest colours;
   - [ ] Ember Peak's smoke partly behind the stars;
   - [ ] the signpost's thin margin; it grazes the trail's edge on Glacier
         (light and dark) and Canyon dark (at most 2.7 pt² on screen);
-  - [ ] 320 pt: Summit's label covers the avatar at Medium and Large;
+  - [ ] 320 pt: Summit's label covers the avatar at Medium and Large
+        (accepted by the owner, 2026-10-03: a known flaw);
+  - [ ] 320 × 568: no medal disc lets the fullest month card fit without
+        scrolling (48 pt chosen); while it scrolls, a swipe down scrolls
+        the card instead of closing it;
+  - [ ] the resting avatar overlaps the C5 signpost on the step it passes
+        it (29–31-day months: 21 % of the signpost's box under the art's
+        box; the avatar is drawn in front);
   - [ ] the two new events not seen in DebugView; `save_point` and `step`
         to register;
   - [ ] the device checklist (build log). *(Was:

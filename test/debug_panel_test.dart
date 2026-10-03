@@ -9,6 +9,9 @@ import 'package:grammar_lens/screens/debug_panel_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
+import 'package:grammar_lens/models/medal_tier.dart';
+import 'package:grammar_lens/widgets/confetti_burst.dart';
+import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/medal_celebration.dart';
 import 'package:grammar_lens/widgets/month_card_sheet.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_controls.dart';
@@ -16,6 +19,9 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_debug_day.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_milestone.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_month_card.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_theme.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_trail_table.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
@@ -299,6 +305,86 @@ void main() {
       }
       expect(storage.calls, before);
       expect(sink.events, isEmpty);
+    });
+  });
+
+  // Batch 5's correction round (N28, N30, N31, N32), reached from the
+  // panel as the device check will reach it.
+  group('the correction round through the panel', () {
+    final mountain = find.byType(MonthlyMountain);
+    String sceneLabel(WidgetTester tester) =>
+        tester.getSemantics(mountain).getSemanticsData().label;
+
+    testWidgets(
+        'N31, N32: each save point on its pinned step; the last day at the '
+        'flag', (tester) async {
+      await pumpHome(tester, _RecordingStorage()..usedBefore = false);
+      expect(ClimbRoute.endsAtFlag, isTrue);
+      for (final p in ClimbSavePoints.all) {
+        expect(
+            sceneLabel(tester),
+            contains('${p.name} at step '
+                '${climbSavePointStepsToFlag[30]![p.clearing] ?? 30}'));
+      }
+      for (final (day, arc) in [
+        for (final p in ClimbSavePoints.all)
+          (p.reachedOn(30), climbSavePointArcs[p.clearing] ?? climbFlagArc),
+        (30, climbFlagArc),
+      ]) {
+        ClimbDebugDay.runtime = day;
+        await tester.pump();
+        expect(sceneLabel(tester), contains('$day of 30 steps'));
+        expect(ClimbRoute(30).arcAt(day.toDouble()), closeTo(arc, 1e-5),
+            reason: 'day $day');
+      }
+      ClimbDebugDay.runtime = -1;
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('N30: summary_gold shows the medal large and centred',
+        (tester) async {
+      await pumpHome(tester, _RecordingStorage()..usedBefore = false);
+      ClimbDebugControls.instance
+          .playMonthCard(ClimbDebugMonthCardValue.summaryGold);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      final medal = find.byKey(MonthCardSheet.medalKey);
+      expect(medal, findsOneWidget);
+      final badge = tester.widget<MedalBadge>(
+          find.descendant(of: medal, matching: find.byType(MedalBadge)));
+      expect(badge.disc, MonthCardSheet.medalDiscFor(932));
+      expect(tester.getCenter(medal).dx, closeTo(430 / 2, 1));
+      await tester.tapAt(const Offset(20, 120));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('N28 under Reduce Motion: gold, no confetti, a fade-only close',
+        (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      await pumpHome(tester, _RecordingStorage()..usedBefore = false);
+      ClimbDebugControls.instance.playMilestone(ClimbDebugMilestoneValue.values
+          .firstWhere((v) => v.tier == MedalTier.gold));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Gold medal earned'), findsOneWidget);
+      expect(find.byType(ConfettiBurst), findsNothing);
+      await tester.tap(find.byType(MedalCelebration));
+      await tester.pump(); // the close's ticker starts
+      await tester.pump(MedalCelebration.close ~/ 2);
+      expect(
+          tester
+              .widget<Transform>(find.byKey(MedalCelebration.scaleKey))
+              .transform
+              .entry(0, 0),
+          1.0);
+      expect(
+          tester.widget<Opacity>(find.byKey(MedalCelebration.fadeKey)).opacity,
+          inExclusiveRange(0, 1));
+      await tester.pumpAndSettle();
+      expect(find.byType(MedalCelebration), findsNothing);
     });
   });
 
