@@ -135,36 +135,39 @@ def _rows(path: Path) -> dict[tuple[str, str, str, str], list[str]]:
 
 
 def card() -> None:
-    """Batch 5 step 3 (N16): the real month card with the 48 pt medal, from
+    """Batch 5 (N16, N30, N37): the real month card, from
     month_card_real_render_test.dart run with DESIGN_MEASURE_CARD_SCREENS=
     320x568,375x812,430x932,375x667 into build/design_measure/batch5_card;
-    compared with Batch 6's numbers (docs/design/batch6/card/)."""
+    compared with Batch 6's numbers (docs/design/batch6/card/) and N30's
+    (month_card_real_numbers_N30.txt, kept when N37 replaced them)."""
     src, out = BUILD / "batch5_card", OUT / "card"
     out.mkdir(parents=True, exist_ok=True)
     new_file = src / "month_card_real_numbers_320x568_375x812_430x932_375x667.txt"
     shutil.copy(new_file, out)
     old = _rows(T.REPO / "docs/design/batch6/card/month_card_real_numbers.txt")
     old.update(_rows(T.REPO / "docs/design/batch6/card/month_card_real_numbers_375x667.txt"))
-    # N16's numbers (48 pt medal in a row), kept when N30 replaced them.
-    n16 = _rows(out / "month_card_real_numbers_N16.txt")
+    n30 = _rows(out / "month_card_real_numbers_N30.txt")
     new = _rows(new_file)
-    lines = ["Batch 5 (N16, N30): the real month card on the real Home after the M21 scroll: Batch 6",
-             "(40 pt medal in a row) -> N16 (48 pt in a row) -> N30 (centred, 88 / 70 / 48 pt by screen",
-             "height). Light (dark is identical). Sheet height in points; window = the mountain above",
-             "the sheet (of 350 pt).", "",
-             "card     screen    text    sheet B6 -> N16 -> N30       scrolls B6/N16/N30   window B6 -> N30"]
+    lines = ["Batch 5 (N30, N37): the real month card on the real Home after the M21 scroll: Batch 6",
+             "(40 pt medal in a row) -> N30 (centred, 88 / 70 / 48 pt by screen height) -> N37",
+             "(112 / 70 / 48 pt). Sheet height in points; window = the mountain above the sheet (of",
+             "350 pt); START = the K-c avatar above the sheet. Dark lays out the same:",
+             f"{'yes' if all(new[k][5:] == new[(k[0], k[1], 'light', k[3])][5:] for k in new if k[2] == 'dark') else 'NO'}.", "",
+             "card     screen    text    sheet B6 -> N30 -> N37       scrolls B6/N30/N37   window B6 -> N30 -> N37        START N30/N37"]
     for key, f in new.items():
         if key[2] != "light" or key not in old:
             continue
-        o, m = old[key], n16.get(key, old[key])
+        o, m = old[key], n30.get(key, old[key])
         lines.append(f"{key[0]:8} {key[1]:9} {key[3]:7} {float(o[5]):6.1f} -> {float(m[5]):6.1f} -> {float(f[5]):6.1f}"
-                     f"     {o[10]}/{m[10]}/{f[10]:3}            {o[13]} -> {f[13]}")
+                     f"     {o[10]}/{m[10]}/{f[10]:3}            {o[13]:>5} -> {m[13]:>5} -> {f[13]:>5} {f[14] + ' %)':>8}"
+                     f"        {m[-1]}/{f[-1]}")
     (out / "card_compare.txt").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
-    screens = (320, 375, 430)
+    # 375 × 667 under its own name (month_card_real_render_test.dart).
+    screens = {"320": "320 x 568", "375x667": "375 x 667", "375": "375 x 812", "430": "430 x 932"}
     for kind in ("summary", "fresh"):
         cells = [[Image.open(src / f"card_{kind}_{w}_{m}_medium.png") for w in screens] for m in ("light", "dark")]
-        grid(cells, [f"{w} pt, Medium" for w in screens], 0.5).save(out / f"overview_{kind}.jpg", quality=84)
+        grid(cells, [f"{n}, Medium" for n in screens.values()], 0.5).save(out / f"overview_{kind}.jpg", quality=84)
     cells = [[Image.open(src / f"card_summary_320_light_{s}.png") for s in ("small", "medium", "large")]]
     grid(cells, [f"320 x 568, {s}" for s in ("Small", "Medium", "Large")], 0.5).save(
         out / "summary_320_textsizes.jpg", quality=84)

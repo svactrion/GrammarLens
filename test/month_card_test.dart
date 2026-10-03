@@ -53,14 +53,18 @@ void main() {
       expect(badge.asset, MedalArt.monthly('green_slope', MedalTier.silver));
       // N30: by the screen's height (the test screen is 932 pt tall).
       expect(badge.disc, MonthCardSheet.medalDiscFor(932));
-      expect(MonthCardSheet.medalDiscRegular, 88);
+      expect(MonthCardSheet.medalDiscRegular, 112);
       expect(badge.earned, isTrue);
     });
 
-    test('N30: the disc by screen height: 88 ordinary, 70 at 667, 48 at 568',
-        () {
-      expect(MonthCardSheet.medalDiscFor(932), 88);
-      expect(MonthCardSheet.medalDiscFor(812), 88);
+    test(
+        'N37: the disc by screen height: 112 from 740 pt, 70 at 667, 48 at '
+        '568', () {
+      expect(MonthCardSheet.medalDiscFor(932), 112);
+      expect(MonthCardSheet.medalDiscFor(812), 112);
+      expect(MonthCardSheet.medalDiscFor(740), 112);
+      expect(MonthCardSheet.medalDiscFor(739), 70);
+      expect(MonthCardSheet.medalDiscCompact, lessThanOrEqualTo(88));
       expect(MonthCardSheet.medalDiscFor(667), 70);
       expect(MonthCardSheet.medalDiscFor(568), 48);
     });

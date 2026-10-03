@@ -48,19 +48,21 @@ class MonthCardSheet extends StatelessWidget {
   static const nearMissKey = ValueKey('month_card_near_miss');
   static const medalKey = ValueKey('month_card_medal');
 
-  /// N30: the medal large in the card's centre. 88 pt on ordinary screens
-  /// ([medalDiscRegular]); on shorter ones the largest disc with which the
-  /// fullest summary card does not scroll at any of the three text sizes
-  /// ([medalDiscCompact] at 375 × 667, [medalDiscSmall] at 320 × 568),
-  /// chosen by tool/design_measure/batch5/month_card_disc_test.dart.
+  /// N30, N37: the medal large in the card's centre. 112 pt on screens
+  /// 740 pt tall and up ([medalDiscRegular]); on 640–739 pt screens the
+  /// largest disc, no larger than 88 pt, with which the fullest summary
+  /// card does not scroll at any of the three text sizes
+  /// ([medalDiscCompact]); 48 pt below ([medalDiscSmall]). Chosen by
+  /// tool/design_measure/batch5/month_card_disc_test.dart.
   ///
-  /// Measured (docs/design/batch5/card/month_card_disc.txt): at 375 × 667
-  /// the card fits up to 88 / 80 / 70 pt at Small / Medium / Large, so
-  /// 70. At 320 × 568 no disc down to 40 pt fits (the card without a medal
-  /// is already 279 / 289 / 300 pt of 319.5); 48 pt, the stars'
-  /// readability floor (N20), keeps the overflow smallest among readable
-  /// discs: a known flaw, the card scrolls there.
-  static const medalDiscRegular = 88.0;
+  /// Measured (docs/design/batch5/card/month_card_disc.txt): at 375 × 812
+  /// and 430 × 932 the card fits 112 pt at all three sizes. At 375 × 667
+  /// it fits up to 88 / 80 / 70 pt at Small / Medium / Large, so 70. At
+  /// 320 × 568 no disc down to 40 pt fits (the card without a medal is
+  /// already 279 / 289 / 300 pt of 319.5); 48 pt, the stars' readability
+  /// floor (N20), keeps the overflow smallest among readable discs: an
+  /// accepted known flaw, the card scrolls there.
+  static const medalDiscRegular = 112.0;
   static const medalDiscCompact = 70.0;
   static const medalDiscSmall = 48.0;
 

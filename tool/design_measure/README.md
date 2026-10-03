@@ -390,8 +390,12 @@ nothing; then `tool/scene_art/batch5_sheet.py steps`.
 DESIGN_MEASURE_OUT=docs/design/batch5/card flutter test tool/design_measure/batch5/month_card_disc_test.dart
 ```
 
-Step 5 (N30): the fullest summary card's height by medal disc at four
-screens and three text sizes, and the largest disc that does not scroll
-(`month_card_disc.txt`). Then the real card on the real Home with Batch
-6's `month_card_real_render_test.dart` (four screens) and
-`batch5_sheet.py card` (Batch 6 → N16 → N30 in `card_compare.txt`).
+Step 5 (N30), redone for N37: the fullest summary card's height by
+medal disc at four screens and three text sizes, and the largest disc up
+to N37's cap (112 pt from 740 pt tall, 88 pt from 640, 48 pt below) that
+does not scroll (`month_card_disc.txt`; N30's run kept as
+`month_card_disc_N30.txt`). Then the real card on the real Home with
+Batch 6's `month_card_real_render_test.dart` (four screens; 375 × 667's
+images are named `375x667` so they do not overwrite 375 × 812's) and
+`batch5_sheet.py card` (Batch 6 → N30 → N37 in `card_compare.txt`; N30's
+numbers kept as `month_card_real_numbers_N30.txt`).

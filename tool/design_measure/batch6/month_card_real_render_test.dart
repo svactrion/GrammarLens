@@ -131,7 +131,11 @@ void main() {
     for (final (w, h, top, bottom) in _screens) {
       for (final b in Brightness.values) {
         for (final size in AppTextSize.values) {
-          final name = 'card_${card}_${w.toInt()}_${b.name}_${size.name}';
+          // By width; a second screen of the same width (375 × 667) by
+          // width and height, so it does not overwrite 375 × 812's image.
+          final screen =
+              h == 667 ? '${w.toInt()}x${h.toInt()}' : '${w.toInt()}';
+          final name = 'card_${card}_${screen}_${b.name}_${size.name}';
           testWidgets(name, (tester) async {
             tester.view.physicalSize = Size(w, h) * 2;
             tester.view.devicePixelRatio = 2;

@@ -1,4 +1,4 @@
-// Batch 5 step 5 (N30): the largest medal disc with which the fullest
+// Batch 5 (N30, N37): the largest medal disc with which the fullest
 // summary month card does not scroll, per screen and text size. The real
 // MonthCardSheet (Silver, the near-miss line, the next month) laid out at
 // the screen's width with the app's theme (text size only through
@@ -49,12 +49,13 @@ void main() {
   setUpAll(loadFont);
   tearDown(() => MonthCardSheet.debugMedalDiscOverride = null);
   tearDownAll(() => File('${outDir()}/month_card_disc.txt').writeAsStringSync([
-        'Batch 5 step 5 (N30): the fullest summary card\'s height (= the '
+        'Batch 5 (N30, N37): the fullest summary card\'s height (= the '
             'sheet\'s) by medal disc, against the sheet\'s limit (9/16 of the '
-            'screen). Points. Largest fitting: the largest disc whose card '
-            'is not taller than the limit.',
+            'screen). Points. Largest fitting: the largest disc, up to N37\'s '
+            'cap (112 pt from 740 pt tall; 88 pt from 640; 48 pt below), '
+            'whose card is not taller than the limit.',
         '',
-        'screen   text    limit   at 88   at 64   at 48   largest fitting',
+        'screen   text    limit   at 112  at 88   at 64   at 48   cap  largest fitting',
         ...rows,
       ].join('\n')));
 
@@ -89,10 +90,16 @@ void main() {
         }
 
         final limit = screen.height * 9 / 16;
-        final h88 = await heightAt(88), h64 = await heightAt(64);
-        final h48 = await heightAt(48);
+        final h112 = await heightAt(112), h88 = await heightAt(88);
+        final h64 = await heightAt(64), h48 = await heightAt(48);
+        // N37: 112 pt from 740 pt; at most 88 pt from 640; 48 pt below.
+        final cap = screen.height >= 740
+            ? 112.0
+            : screen.height >= 640
+                ? 88.0
+                : 48.0;
         double? best;
-        for (var d = 88.0; d >= 40; d -= 2) {
+        for (var d = cap; d >= 40; d -= 2) {
           if (await heightAt(d) <= limit) {
             best = d;
             break;
@@ -100,7 +107,8 @@ void main() {
         }
         String f(double v) => v.toStringAsFixed(1).padLeft(6);
         rows.add('${name.padRight(8)} ${size.name.padRight(6)}  ${f(limit)}  '
-            '${f(h88)}  ${f(h64)}  ${f(h48)}   ${best == null ? 'none' : best.toStringAsFixed(0)}');
+            '${f(h112)}  ${f(h88)}  ${f(h64)}  ${f(h48)}  ${cap.toStringAsFixed(0).padLeft(3)}  '
+            '${best == null ? 'none' : best.toStringAsFixed(0)}');
       });
     }
   }
