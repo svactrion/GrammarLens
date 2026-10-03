@@ -50,6 +50,17 @@ void main() {
     expect({byArea[2].$2, byArea[3].$2}, {'campfire', 'fountain'});
   });
 
+  test('N11, N18: one decoration, the signpost on C5 at the rule\'s 0.95', () {
+    expect(climbDecorTable, hasLength(1));
+    final (clearing, object, _, _, _, _, ratio) = climbDecorTable.single;
+    expect(clearing, 'C5');
+    expect(object, 'signpost');
+    expect(ratio, 0.95);
+    expect(climbObjectAspects['signpost'], isNotNull);
+    expect([for (final p in ClimbSavePoints.all) p.clearing],
+        isNot(contains('C5')));
+  });
+
   test('the flag stands on C6, the clearing under the summit, left of B6', () {
     expect(ClimbSavePoints.flag.clearing, 'C6');
     expect(ClimbSavePoints.flag.object, 'summit_flag');

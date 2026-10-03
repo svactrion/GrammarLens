@@ -46,6 +46,20 @@ changed, pixels within MAX_BLUR_DIFF). Exit code 1 if any fails. Writes
 docs/design/batch6/blur/blur_check.txt.
 
     build/scene_art_venv/bin/python tool/scene_art/check_theme.py --blur
+
+**Batch 5, N18: the C5 signpost.** With `--signpost` it checks, in each
+theme image (all eight sources when none are given), that the signpost
+where the app draws it (assets/climb/objects/signpost.webp, the
+placement's ratio) touches none of that image's own trail near C5. Exit
+code 1 if any pixel touches. Writes docs/design/batch5/signpost/
+signpost_check.txt and signpost_check.jpg (trail magenta, signpost
+outline green, contact red).
+
+    build/scene_art_venv/bin/python tool/scene_art/check_theme.py --signpost
+
+`--signpost-break` runs its deliberate breaks in memory (ratio 1.0, 0.90,
+moved 20 px down: each must touch; the placed signpost on Green must not)
+and writes signpost_check_break.txt.
 """
 
 from __future__ import annotations
@@ -290,9 +304,127 @@ def check_blur() -> int:
     return 1 if failed else 0
 
 
+# --signpost (Batch 5, N18): the C5 signpost, decoration placed by the save
+# points' rule on Green's trail mask, must touch no trail in any theme.
+SIGNPOST_IMAGES = [f"{t}/background_{m}.png" for t in ("green", "ember", "glacier", "canyon")
+                   for m in ("light", "dark")]
+# The local trail colour cut: the extraction's own ΔE (trail.py), on the
+# image's trail colour around C5 (the median at Green's centre line there).
+SIGNPOST_DELTA_E = 14.0
+SIGNPOST_WINDOW = 300  # px at 2172 around C5's centre
+SIGNPOST_ALPHA = 25  # the placement rule's cut (place_save_points.py)
+
+
+def signpost_shape(size, ratio=None, dy=0) -> np.ndarray:
+    """The signpost's visible pixels (alpha > 25) where the app draws it,
+    at the reference's size: the asset, the placement's ratio (or
+    [ratio]), the base 0.25 of C5's height below its centre."""
+    import json
+
+    W, H = size
+    p = json.loads((T.REPO / "docs/design/scene-art/stage2/placement.json").read_text())["decor"][0]
+    (cx, cy), (bw, bh) = p["center_norm"], p["box_norm"]
+    src = Image.open(T.REPO / "assets/climb/objects/signpost.webp").convert("RGBA")
+    wpx = bw * (ratio or p["ratio"]) * W
+    im = src.resize((round(wpx), round(wpx * src.height / src.width)), Image.LANCZOS)
+    left, top = round(cx * W - im.width / 2), round((cy + p["base_drop"] * bh) * H - im.height) + dy
+    out = np.zeros((H, W), bool)
+    out[top:top + im.height, left:left + im.width] = np.asarray(im)[..., 3] > SIGNPOST_ALPHA
+    return out
+
+
+def local_trail(ref: Reference, lab: np.ndarray, box) -> np.ndarray:
+    """The image's own trail near C5: pixels within ΔE 14 of its trail
+    colour there, opened by 2 px, the regions that Green's centre line runs
+    through. Checked per image, so a theme whose trail edge sits closer to
+    the clearing than Green's shows it."""
+    x0, y0, x1, y1 = box
+    inside = np.array([(x, y) for x, y in ref.points if x0 <= x < x1 and y0 <= y < y1])
+    colour = np.median(sample(lab, inside), 0)
+    near = np.linalg.norm(lab[y0:y1, x0:x1] - colour, axis=2) < SIGNPOST_DELTA_E
+    near = ndimage.binary_opening(near, iterations=2)
+    labels, _ = ndimage.label(near)
+    keep = set(int(labels[int(y) - y0, int(x) - x0]) for x, y in inside) - {0}
+    out = np.zeros(lab.shape[:2], bool)
+    out[y0:y1, x0:x1] = np.isin(labels, list(keep))
+    return out
+
+
+def check_signpost(names: list[str]) -> int:
+    import json
+
+    ref = Reference()
+    W, H = ref.size
+    p = json.loads((T.REPO / "docs/design/scene-art/stage2/placement.json").read_text())["decor"][0]
+    cx, cy = p["center_norm"][0] * W, p["center_norm"][1] * H
+    box = (int(cx - SIGNPOST_WINDOW), int(cy - SIGNPOST_WINDOW), int(cx + SIGNPOST_WINDOW), int(cy + SIGNPOST_WINDOW))
+    shape = signpost_shape(ref.size)
+    # A pixel at 2172 is 430 × 1.1 ÷ 2172 pt wide on the widest phone.
+    pt = 391.3 * 1.1 / W
+    lines = ["Batch 5 N18: does the C5 signpost touch the trail? (check_theme.py --signpost)",
+             f"signpost: {p['object']} on {p['clearing']} at ratio {p['ratio']}, {int(shape.sum())} visible px "
+             f"(alpha > {SIGNPOST_ALPHA}) at {W} px; trail: each image's own, within ΔE {SIGNPOST_DELTA_E:g} of its "
+             f"trail colour near C5. Pass: 0 px.",
+             f"1 px at {W} is {pt:.3f} pt on a 430 pt phone ({pt * pt:.3f} pt² of area).", ""]
+    failed, tiles = False, []
+    for n in names:
+        lab = lab_of(T.SOURCE / n, ref.size)
+        trail = local_trail(ref, lab, box)
+        contact = trail & shape
+        k = int(contact.sum())
+        failed |= k > 0
+        lines.append(f"{'ok  ' if k == 0 else 'FAIL'} {n}: {k} px of the signpost on the trail"
+                     + ("" if k == 0 else f" ({k * pt * pt:.2f} pt² at 430 pt)"))
+        im = np.asarray(Image.open(T.SOURCE / n).convert("RGB").resize(ref.size, Image.LANCZOS)).copy()
+        im[trail] = (im[trail] * 0.5 + np.array([255, 0, 255]) * 0.5).astype(np.uint8)
+        im[shape & ~ndimage.binary_erosion(shape)] = (0, 255, 0)
+        im[ndimage.binary_dilation(contact, iterations=2)] = (255, 0, 0)
+        tiles.append(Image.fromarray(im).crop(box).resize((300, 300), Image.LANCZOS))
+    out = T.REPO / "docs/design/batch5/signpost"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "signpost_check.txt").write_text("\n".join(lines) + "\n")
+    sheet = Image.new("RGB", (300 * 4 + 30, 300 * ((len(tiles) + 3) // 4) + 10 * ((len(tiles) - 1) // 4)), "white")
+    for i, t in enumerate(tiles):
+        sheet.paste(t, ((i % 4) * 310, (i // 4) * 310))
+    sheet.save(out / "signpost_check.jpg", quality=85)
+    print("\n".join(lines))
+    return 1 if failed else 0
+
+
+def check_signpost_breaks() -> int:
+    """The signpost check's deliberate breaks, in memory: on Green's light
+    image, the signpost at ratio 1.0, at 0.90 and moved 20 px down must
+    each touch the trail. Exit code 1 if a break goes unseen."""
+    ref = Reference()
+    W, H = ref.size
+    import json
+
+    p = json.loads((T.REPO / "docs/design/scene-art/stage2/placement.json").read_text())["decor"][0]
+    cx, cy = p["center_norm"][0] * W, p["center_norm"][1] * H
+    box = (int(cx - SIGNPOST_WINDOW), int(cy - SIGNPOST_WINDOW), int(cx + SIGNPOST_WINDOW), int(cy + SIGNPOST_WINDOW))
+    trail = local_trail(ref, lab_of(T.SOURCE / REFERENCE, ref.size), box)
+    lines = ["Batch 5 N18: the signpost check's deliberate breaks (green/background_light.png); each must touch.", ""]
+    missed = False
+    for label, kw in (("ratio 1.0", {"ratio": 1.0}), ("ratio 0.90", {"ratio": 0.9}), ("moved 20 px down", {"dy": 20}),
+                      ("as placed (control)", {})):
+        k = int((trail & signpost_shape(ref.size, **kw)).sum())
+        control = not kw
+        ok = (k == 0) if control else (k > 0)
+        missed |= not ok
+        lines.append(f"{'ok  ' if ok else 'MISS'} {label}: {k} px on the trail")
+    out = T.REPO / "docs/design/batch5/signpost"
+    (out / "signpost_check_break.txt").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+    return 1 if missed else 0
+
+
 def main(argv: list[str]) -> int:
+    if argv == ["--signpost-break"]:
+        return check_signpost_breaks()
     if argv == ["--blur"]:
         return check_blur()
+    if argv[:1] == ["--signpost"]:
+        return check_signpost(argv[1:] or SIGNPOST_IMAGES)
     names = argv or ["green/background_dark.png"]
     images = []
     for n in names:

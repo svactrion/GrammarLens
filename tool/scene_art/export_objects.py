@@ -3,7 +3,8 @@ assets, the campfire's flame layer, and the dark-mode filter.
 
     build/scene_art_venv/bin/python tool/scene_art/export_objects.py
 
-For each object in docs/design/scene-art/source/objects/:
+For each object in docs/design/scene-art/source/objects/ (the save points,
+the summit flag and, since Batch 5, the C5 signpost):
 1. Stray pixels away from the body are zeroed: any alpha > 0 outside the
    largest 8-connected alpha > 0 region (Batch 0 found 12 invisible
    alpha = 1 pixels at the canvas corners, `avatar_16`'s class).
@@ -40,7 +41,9 @@ from skimage.color import rgb2hsv
 
 import trail as T
 
-OBJECTS = ("campfire", "tent", "fountain", "cabin", "summit_flag")
+# The signpost (Batch 5, N11, N18) is decoration on C5, not a save point:
+# no flame, no pennant, always drawn lit.
+OBJECTS = ("campfire", "tent", "fountain", "cabin", "summit_flag", "signpost")
 # The largest object on screen is about 40 pt wide (C1 at 430 pt, 1.1×),
 # 120 px at 3x; 192 px leaves room for a closer framing.
 WIDTH = 192

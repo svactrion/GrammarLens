@@ -22,6 +22,13 @@ const climbSavePointBaseDrop = 0.25;
 /// month's last step.
 const climbFlag = ('C6', 'summit_flag', 0.43080, 0.20530, 0.05340, 0.01730, 1.00);
 
+/// Decoration (Batch 5, N11, N18): objects on a clearing that are not save
+/// points, in the same fields as [climbSavePointTable]; never reached, never
+/// named, always drawn lit.
+const climbDecorTable = <(String, String, double, double, double, double, double)>[
+  ('C5', 'signpost', 0.63310, 0.28250, 0.08470, 0.02590, 0.95),
+];
+
 /// The flag's pennant's median luminance (Rec. 709 on sRGB, 0–1): a theme
 /// that recolours it (G10) scales its colour by each pixel's luminance over this.
 const climbPennantLuminance = 0.5645;
@@ -33,6 +40,7 @@ const climbObjectAspects = <String, double>{
   'fountain': 0.82292,
   'cabin': 0.74479,
   'summit_flag': 1.29688,
+  'signpost': 1.13542,
 };
 
 /// Dark mode (G6): per-channel gain, dark ÷ light, of the clearings' ground

@@ -66,6 +66,22 @@ String generateClimbSavePointTable() {
         '${_f(fc[0])}, ${_f(fc[1])}, ${_f(fb[0])}, ${_f(fb[1])}, '
         '${_f(flag['ratio'] as num, 2)});')
     ..writeln()
+    ..writeln('/// Decoration (Batch 5, N11, N18): objects on a clearing that '
+        'are not save')
+    ..writeln('/// points, in the same fields as [climbSavePointTable]; never '
+        'reached, never')
+    ..writeln('/// named, always drawn lit.')
+    ..writeln('const climbDecorTable = <(String, String, double, double, '
+        'double, double, double)>[');
+  for (final p in (placement['decor'] as List? ?? const []).cast<Map>()) {
+    final c = (p['center_norm'] as List).cast<num>();
+    final b = (p['box_norm'] as List).cast<num>();
+    out.writeln("  ('${p['clearing']}', '${p['object']}', ${_f(c[0])}, "
+        '${_f(c[1])}, ${_f(b[0])}, ${_f(b[1])}, ${_f(p['ratio'] as num, 2)}),');
+  }
+  out
+    ..writeln('];')
+    ..writeln()
     ..writeln(
         "/// The flag's pennant's median luminance (Rec. 709 on sRGB, 0–1): "
         'a theme')

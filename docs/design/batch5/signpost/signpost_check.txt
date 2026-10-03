@@ -1,0 +1,12 @@
+Batch 5 N18: does the C5 signpost touch the trail? (check_theme.py --signpost)
+signpost: signpost on C5 at ratio 0.95, 16321 visible px (alpha > 25) at 2172 px; trail: each image's own, within ΔE 14 of its trail colour near C5. Pass: 0 px.
+1 px at 2172 is 0.198 pt on a 430 pt phone (0.039 pt² of area).
+
+ok   green/background_light.png: 0 px of the signpost on the trail
+ok   green/background_dark.png: 0 px of the signpost on the trail
+ok   ember/background_light.png: 0 px of the signpost on the trail
+ok   ember/background_dark.png: 0 px of the signpost on the trail
+FAIL glacier/background_light.png: 36 px of the signpost on the trail (1.41 pt² at 430 pt)
+FAIL glacier/background_dark.png: 69 px of the signpost on the trail (2.71 pt² at 430 pt)
+ok   canyon/background_light.png: 0 px of the signpost on the trail
+FAIL canyon/background_dark.png: 5 px of the signpost on the trail (0.20 pt² at 430 pt)

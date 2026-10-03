@@ -1,0 +1,6 @@
+Batch 5 N18: the signpost check's deliberate breaks (green/background_light.png); each must touch.
+
+ok   ratio 1.0: 35 px on the trail
+ok   ratio 0.90: 3 px on the trail
+ok   moved 20 px down: 278 px on the trail
+ok   as placed (control): 0 px on the trail

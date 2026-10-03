@@ -49,9 +49,12 @@ flutter:
     - assets/climb/ember_peak/
     - assets/climb/glacier_peak/
     - assets/climb/red_canyon/
-    # The save point objects and the summit flag, shared by every theme,
-    # from tool/scene_art/export_objects.py.
+    # The save point objects, the summit flag and the C5 signpost, shared
+    # by every theme, from tool/scene_art/export_objects.py.
     - assets/climb/objects/
+    # The medals (Batch 5, N1–N3, N23): 12 monthly (theme × tier) and the
+    # Welcome badge, composed by tool/medals/export_medal_assets.py.
+    - assets/medals/
   fonts:
     - family: NunitoSans
       fonts:

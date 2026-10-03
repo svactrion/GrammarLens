@@ -107,9 +107,9 @@ Stage 1's real-Home renders as JPEGs and an overview
 build/scene_art_venv/bin/python tool/scene_art/export_objects.py
 ```
 
-Stage 2: the save point objects and the summit flag,
-`assets/climb/objects/<name>.webp` (192 px wide, WebP quality 90, alpha
-kept lossless).
+Stage 2: the save point objects and the summit flag, and since Batch 5
+the C5 signpost (decoration, N11, N18), `assets/climb/objects/<name>.webp`
+(192 px wide, WebP quality 90, alpha kept lossless).
 - **Cleaning:** invisible stray pixels are zeroed, before and after the
   resize.
 - **Flame layer:** `campfire_flame.webp`, the flame only, by a colour
@@ -134,6 +134,9 @@ Stage 2: where the save points and the summit flag stand
 (`docs/design/scene-art/stage2/placement.json`).
 - **Assignment:** G9's, with each object's largest width ratio (≤ 1.0)
   that keeps its shape off the trail.
+- **Decoration (Batch 5):** the signpost on C5 by the same rule, written
+  as `decor`; the rule gives 0.95 (1.0 touches the trail by 15 px and 0.90
+  by 3 on Green). The table's `climbDecorTable`.
 - **Alternatives:** every other assignment, measured.
 - **Generated table:** the script writes
   `lib/widgets/monthly_climb/climb_save_point_table.dart`;
@@ -204,12 +207,25 @@ flutter run --dart-define=CLIMB_DEBUG_THEME=glacier_peak --dart-define=CLIMB_DEB
 build/scene_art_venv/bin/python tool/scene_art/batch5_signpost.py
 ```
 
-The C5 signpost (N11): exported like the save point objects but into
-`build/scene_art/batch5/` (no asset is added), placed on C5 by the save
+The C5 signpost (N11), as measured in Batch 0: exported like the save
+point objects but into `build/scene_art/batch5/` (the app's asset now comes
+from `export_objects.py`), placed on C5 by the save
 points' rule with every ratio's trail contact listed, rendered in the four
 themes, light and dark, with its colour separation from the ground
 (`docs/design/batch5/signpost/`). `placement.json` is read by
 `tool/design_measure/batch5/save_point_numbers_test.dart`.
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/check_theme.py --signpost
+```
+
+N18: the signpost where the app draws it must touch none of each theme
+image's own trail near C5 (all eight sources). **Result 2026-10-03:**
+Green and Ember pass; Glacier light (36 px), Glacier dark (69 px) and
+Canyon dark (5 px) fail: the signpost's stones graze the trail's edge,
+which sits a few pixels closer to C5 there than on Green (at most
+2.7 pt² on a 430 pt phone). `--signpost-break` runs its deliberate breaks
+in memory. Outputs: `docs/design/batch5/signpost/signpost_check*`.
 
 ```bash
 build/scene_art_venv/bin/python tool/scene_art/batch5_sheet.py sites

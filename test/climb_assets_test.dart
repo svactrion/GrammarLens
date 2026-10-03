@@ -27,6 +27,8 @@ void main() {
     'assets/climb/objects/fountain.webp',
     'assets/climb/objects/summit_flag.webp',
     'assets/climb/objects/tent.webp',
+    // Batch 5 (N11, N18): decoration on C5, not a save point.
+    'assets/climb/objects/signpost.webp',
   ];
   // Not an object: the campfire's flame only, drawn over it (G6, G8).
   const flame = 'assets/climb/objects/campfire_flame.webp';
@@ -53,6 +55,32 @@ void main() {
           flame,
           ...flagParts,
         });
+  });
+
+  // Batch 5 (N1–N3, N23): the composed medals, 384 px WebP from
+  // tool/medals/export_medal_assets.py (its --check compares them with the
+  // sources).
+  final medals = [
+    for (final theme in [
+      'green_slope',
+      'ember_peak',
+      'glacier_peak',
+      'red_canyon'
+    ])
+      for (final tier in ['bronze', 'silver', 'gold'])
+        'assets/medals/medal_${theme}_$tier.webp',
+    'assets/medals/medal_welcome.webp',
+  ];
+
+  test('the bundle holds the 13 medals and nothing else under assets/medals/',
+      () async {
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    expect(
+        manifest
+            .listAssets()
+            .where((path) => path.startsWith('assets/medals/'))
+            .toSet(),
+        medals.toSet());
   });
 
   Future<ui.Image> decode(String path) async {
@@ -107,6 +135,15 @@ void main() {
         sizes.add(size);
       }
       expect(sizes, hasLength(1), reason: 'regions of sizes $sizes');
+    });
+  }
+
+  for (final path in medals) {
+    test('$path: 384 × 384, decodes, under 48 KB', () async {
+      final image = await decode(path);
+      expect(image.width, 384);
+      expect(image.height, 384);
+      expect((await rootBundle.load(path)).lengthInBytes, lessThan(48 * 1024));
     });
   }
 

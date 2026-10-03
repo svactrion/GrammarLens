@@ -1,0 +1,15 @@
+Batch 5: the medal assets against their sources (export_medal_assets.py --check)
+
+ok   assets/medals/medal_green_slope_gold.webp: same bytes as the export makes now
+ok   assets/medals/medal_green_slope_silver.webp: same bytes as the export makes now
+ok   assets/medals/medal_green_slope_bronze.webp: same bytes as the export makes now
+ok   assets/medals/medal_ember_peak_gold.webp: same bytes as the export makes now
+ok   assets/medals/medal_ember_peak_silver.webp: same bytes as the export makes now
+ok   assets/medals/medal_ember_peak_bronze.webp: same bytes as the export makes now
+ok   assets/medals/medal_glacier_peak_gold.webp: same bytes as the export makes now
+ok   assets/medals/medal_glacier_peak_silver.webp: same bytes as the export makes now
+ok   assets/medals/medal_glacier_peak_bronze.webp: same bytes as the export makes now
+ok   assets/medals/medal_red_canyon_gold.webp: same bytes as the export makes now
+ok   assets/medals/medal_red_canyon_silver.webp: same bytes as the export makes now
+ok   assets/medals/medal_red_canyon_bronze.webp: same bytes as the export makes now
+ok   assets/medals/medal_welcome.webp: same bytes as the export makes now

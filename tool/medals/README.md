@@ -54,6 +54,26 @@ output size in px (default 768). It writes 13 files:
 The run is deterministic: two runs give byte-identical files (checked
 2026-10-02 with Pillow 11.3.0 and NumPy 2.0.2, Python 3.9.6, about 2 s).
 
+## App assets (Batch 5, N23)
+
+```bash
+build/scene_art_venv/bin/python tool/medals/export_medal_assets.py
+```
+
+Runs `build_medals.py` at 384 px into a temporary folder and writes the
+13 medals as `assets/medals/<name>.webp` (WebP quality 90, alpha lossless,
+method 6; 374.2 KB in all, `docs/design/batch5/assets/medal_export.txt`).
+384 px covers the largest medal the app draws, the celebration's 112 pt
+disc (its canvas is 126 pt, 378 px at 3x).
+
+```bash
+build/scene_art_venv/bin/python tool/medals/export_medal_assets.py --check
+```
+
+After a source change: compares the committed assets with what the
+sources make now (same bytes, or pixels within 2); exit code 1 when one
+is stale or missing (`medal_check.txt`).
+
 ## Measuring (Batch 5 Batch 0)
 
 ```bash

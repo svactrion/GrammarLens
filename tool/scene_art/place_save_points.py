@@ -29,6 +29,10 @@ its base on no flat ground; that spot is in no clearing,
 stage2/fix_flag_clearings.txt). The first fix put it on C5 by a label
 mix-up; the owner meant C6 from the start (2026-10-01).
 
+DECOR (Batch 5, N11, N18): the C5 signpost, decoration rather than a save
+point, by the same rule; the rule gives 0.95 (1.0 touches the trail by 15
+px and 0.90 by 3: a thin margin, docs/design/batch5/signpost/).
+
 Writes docs/design/scene-art/stage2/placement.json (read by
 tool/climb_table/climb_save_point_generator.dart).
 """
@@ -51,6 +55,9 @@ BASE_DROP = 0.25
 RATIOS = (1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5)
 ALPHA = 25
 FLAG_CLEARING = 6
+# Batch 5 (N11, N18): decoration, not save points. Placed by the same rule;
+# never "reached", never named, always drawn lit.
+DECOR = {5: "signpost"}
 
 
 def fit(mask, clearing, name, size) -> dict:
@@ -91,11 +98,18 @@ def main() -> None:
     flag = {"clearing": f"C{FLAG_CLEARING}", "object": "summit_flag", "ratio": f["ratio"],
             "base_drop": BASE_DROP, "center_norm": c["center_norm"],
             "box_norm": c["box_norm"], "area_px": c["area_px"]}
+    decor = []
+    for i, name in DECOR.items():
+        c = clearings[i - 1]
+        f = fit(t.mask, c, name, (W, H))
+        decor.append({"clearing": f"C{i}", "object": name, "ratio": f["ratio"],
+                      "base_drop": BASE_DROP, "center_norm": c["center_norm"],
+                      "box_norm": c["box_norm"], "area_px": c["area_px"]})
     out = {"generator": "tool/scene_art/place_save_points.py", "image_size_px": [W, H],
-           "save_points": points, "flag": flag, "alternatives": alternatives}
+           "save_points": points, "flag": flag, "decor": decor, "alternatives": alternatives}
     path = T.REPO / "docs/design/scene-art/stage2/placement.json"
     path.write_text(json.dumps(out, indent=1) + "\n")
-    print(json.dumps({k: out[k] for k in ("save_points", "flag")}, indent=1))
+    print(json.dumps({k: out[k] for k in ("save_points", "flag", "decor")}, indent=1))
     for alt in alternatives:
         print(alt["assignment"], alt["width_px"])
 

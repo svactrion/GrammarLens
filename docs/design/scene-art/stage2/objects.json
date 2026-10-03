@@ -114,6 +114,24 @@
    },
    "pennant_share_of_body": 0.3049,
    "pennant_luminance": 0.5645
+  },
+  "signpost": {
+   "asset": "assets/climb/objects/signpost.webp",
+   "source_crop_px": [
+    323,
+    317,
+    939,
+    1016
+   ],
+   "stray_pixels_zeroed": 291,
+   "ringing_pixels_zeroed_after_resize": 0,
+   "size_px": [
+    192,
+    218
+   ],
+   "aspect_h_over_w": 1.13542,
+   "bytes": 9980,
+   "flame_threshold_pixels": 773
   }
  },
  "dark_gain": {
@@ -138,5 +156,5 @@
    0.8091
   ]
  },
- "total_bytes": 55164
+ "total_bytes": 65144
 }
