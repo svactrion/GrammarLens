@@ -268,6 +268,30 @@ theme. After the code is merged, `theme_id` and the case parameter are
 registered as event-scoped custom dimensions (§9); registration is not
 retroactive.
 
+#### Monthly milestones (Batch 5, decision N21, owner 2026-10-03) — planned, not implemented
+
+`docs/1.1.0-design-side-tracks.md`, N12, N21, N24. Both are sent from the
+Daily Test result screen after a durable save, next to
+`daily_test_completed` (whose `set_source` / `set_date` are not touched),
+computed from the set's month: "after" is the month's progress read after
+the save, "before" is "after" minus this completion. A set completes once
+and the score only grows, so each fires at most once per save point or
+tier per month with no new record (N24). Neither is sent for a set whose
+month is already finalized, nor by the `CLIMB_DEBUG_MILESTONE` replay.
+
+| Event | Params | Fired |
+|---|---|---|
+| `save_point_reached` | `theme_id` (the set's month), `save_point` = `first_camp` / `halfway_hut` / `mountain_spring` / `high_camp` / `summit`, `step` (int), `days_in_month` (int) | When the completion's step reaches the save point's step for that month (the flag, `summit`, on the month's last step). The C5 signpost is decoration and sends none. |
+| `medal_tier_reached` | `theme_id`, `tier` = `bronze` / `silver` / `gold` (reused from E4, same meaning: a tier earned), `day_of_month` (int, the set's day), `days_in_month` (int), `active_days` (int, steps so far), `rule_version` (int) | When the month's tier rises with this completion. One completion is worth at most 10 points and each band is at least 70, so at most one tier at a time. |
+
+N21 changes Batch 6's accepted deviation ("`theme_id` only on
+`mode_selected`") for these two events. To register after the merge:
+dimensions `save_point`, `step`; `theme_id`, `tier`, `day_of_month`,
+`days_in_month`, `rule_version` (dimensions) and `active_days` (metric)
+are registered or already planned. No separate events for the
+celebration or the label: they follow from these (see "Events
+considered and not proposed").
+
 ### Events considered and not proposed
 
 - **`climb_step_earned`** — redundant with E1's `step_earned`.

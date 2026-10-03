@@ -76,5 +76,7 @@ bytes and error at 256 / 384 / 512 px (also written to
 - The stars stand above the body's disc (up to 5.6 % of its diameter);
   the Welcome ribbon crosses the round outline at the top corners but stays
   inside the disc's bounding square (`docs/design/batch5/medal_assets.txt`).
-- The font's licence: the TTF carries its copyright and an OFL 1.1 pointer
-  in its name table, but the OFL text itself is not in the repository.
+- The font's licence: SIL Open Font License 1.1, copyright 2020 The
+  Poppins Project Authors. The licence text sits beside the font,
+  `docs/design/medals/source/extras/OFL.txt` (N26); keep the two together
+  if the font moves. The baked-in "WELCOME" carries no licence duty.

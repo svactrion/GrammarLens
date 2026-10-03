@@ -7824,3 +7824,36 @@ Report: `docs/design/batch5/batch0-report.md`.
   place, label placement and timing, month card medal size, Profile
   layout, events, debug define, assets, signpost size, OFL text, G1).
 - **[Tests]** 1343 pass; `flutter analyze` clean.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 decisions N15–N26; build started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date at
+`8301088`); not pushed. Full text and reasons:
+`docs/1.1.0-design-side-tracks.md`, "Decisions after Batch 5's Batch 0".
+
+- **[Product — owner] N15** the celebration is an overlay over the result
+  screen, opened when the test is saved; medal and confetti at the
+  opening; one tap closes it; no confetti under Reduce Motion. The Welcome
+  badge moves into it; the old card under the results goes. *Why:* that
+  card sat 980–1954 pt below the fold and its confetti was the exit.
+- **[Product — owner] N16** the month card's medal disc is 48 pt; the
+  2.2 pt it adds at 320 × 568 Large comes from the card's gaps or is a
+  known flaw; the card gets last month's theme.
+- **[Product — owner] N17** Profile: one row per month, the running month
+  on top marked in progress, tiers lit as they become certain; the Gold
+  ladder and N10's faded look stay.
+- **[Product — owner] N18** signpost at the rule's 0.95; the theme check
+  verifies it touches no trail in the four themes; the wood is mid brown,
+  not dark (corrects N11).
+- **[Product — owner] N19** the label above the object and the avatar,
+  below the top band where it would touch it; 200 ms / 2.5 s / 400 ms,
+  3 s without animation under Reduce Motion. *Rejected:* above the object
+  only (43 of 45 cases covered the avatar's head).
+- **[Product — owner] N20** readability floors in pt. **N21** events
+  `save_point_reached`, `medal_tier_reached`, `tier` reused, both with
+  `theme_id`. **N22** `CLIMB_DEBUG_MILESTONE`, eight values, debug only.
+  **N23** assets 384 px WebP q90 (512 above a 128 pt medal). **N24** no
+  new record for "once per month"; a late completion of an
+  already-finalized month is not celebrated and shows no label. **N25**
+  sources 97.51 MB, G1 looked at before the next theme. **N26** the OFL
+  text beside the font.
