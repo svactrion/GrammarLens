@@ -23,6 +23,7 @@ import 'utils/app_messenger.dart';
 import 'utils/debug_tools.dart';
 import 'utils/loading_view.dart';
 import 'widgets/floating_nav_shell.dart';
+import 'widgets/monthly_climb/climb_debug_controls.dart';
 
 class GrammarLensApp extends StatefulWidget {
   /// Optional overrides exist so tests can observe launch/resume behavior
@@ -98,10 +99,16 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     _loadTextSize();
     _loadProfile();
     if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.addListener(_onDebugPlay);
+    }
   }
 
   @override
   void dispose() {
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.removeListener(_onDebugPlay);
+    }
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -195,6 +202,35 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     } catch (_) {
       // No persisted override (or storage unavailable) — leave unset.
     }
+  }
+
+  /// N27: a replay asked for from the debug panel plays on Home, so the
+  /// app shows the Home tab; Home takes the replay once it is visible.
+  void _onDebugPlay() {
+    if (ClimbDebugControls.instance.pending != null && _profile != null) {
+      _switchTab(0);
+    }
+  }
+
+  /// N27: the debug panel's "Reset local data". The whole local database
+  /// goes (`StorageService.resetAllLocalData`), and the app's in-memory
+  /// state returns to a first launch: no profile (so the first-launch
+  /// flow), the default appearance and text size, the Home tab, no
+  /// entitlement override. The panel's own theme and day settings stay
+  /// (memory only, debug tools).
+  Future<void> _resetLocalData() async {
+    await _storageService.resetAllLocalData();
+    await _subscriptionService.setDebugAccessOverride(null);
+    if (!mounted) return;
+    setState(() {
+      _profile = null;
+      _themeMode = AppThemeMode.system;
+      _textSize = AppTextSize.medium;
+      _tabIndex = 0;
+      _initialPendingClimb = null;
+      _offerDay0Paywall = false;
+      _firstRunZoom = false;
+    });
   }
 
   void _setThemeMode(AppThemeMode mode) {
@@ -382,6 +418,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               // callback itself is harmless either way, since it's never
               // invoked unless that section rendered in the first place.
               onResetOnboarding: () => setState(() => _profile = null),
+              onResetLocalData: _resetLocalData,
             ),
           ];
 

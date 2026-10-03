@@ -18,14 +18,15 @@ void main() {
     ClimbDebugDay.valueForTesting = null;
   });
 
-  test('profile and release ignore it: only a debug build applies it', () {
+  test('release ignores it (N27): debug and profile builds apply it', () {
     for (final theme in ClimbThemes.all) {
-      expect(ClimbDebugTheme.resolve(debug: false, defined: theme.id), isNull);
-      expect(ClimbDebugTheme.resolve(debug: true, defined: theme.id), theme);
+      expect(
+          ClimbDebugTheme.resolve(enabled: false, defined: theme.id), isNull);
+      expect(ClimbDebugTheme.resolve(enabled: true, defined: theme.id), theme);
     }
-    expect(ClimbDebugTheme.resolve(debug: true, defined: ''), isNull);
+    expect(ClimbDebugTheme.resolve(enabled: true, defined: ''), isNull);
     // An unknown id has no effect (it does not fall back to Green Slope).
-    expect(ClimbDebugTheme.resolve(debug: true, defined: 'ember'), isNull);
+    expect(ClimbDebugTheme.resolve(enabled: true, defined: 'ember'), isNull);
   });
 
   test('the test suite runs without the define', () {

@@ -20,6 +20,7 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/screens/debug_panel_screen.dart';
 
 import 'support/recording_analytics_sink.dart';
 
@@ -216,6 +217,32 @@ void main() {
     await tester.tap(find.text('Large'));
     await tester.pump();
     expect(selected, AppTextSize.large);
+  });
+
+  group('N27: the Debug row', () {
+    tearDown(() => DebugTools.enabledForTesting = true);
+
+    testWidgets('debug and profile builds: at the bottom, opens the panel',
+        (tester) async {
+      await pumpSettings(tester);
+      await tester.scrollUntilVisible(
+          find.byKey(SettingsScreen.debugRowKey), 300,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.byKey(SettingsScreen.debugRowKey));
+      await tester.pumpAndSettle();
+      expect(find.byType(DebugPanelScreen), findsOneWidget);
+    });
+
+    testWidgets('a release build: no Debug row', (tester) async {
+      DebugTools.enabledForTesting = false;
+      await pumpSettings(tester);
+      await tester.scrollUntilVisible(find.text('Credits'), 300,
+          scrollable: find.byType(Scrollable).first);
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+      expect(find.byKey(SettingsScreen.debugRowKey), findsNothing);
+      expect(find.text('Debug'), findsNothing);
+    });
   });
 
   testWidgets(

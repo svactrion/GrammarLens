@@ -54,8 +54,11 @@ abstract final class ClimbDebugMonthCard {
       resolve(enabled: !kReleaseMode, defined: _forTesting ?? _defined);
 
   /// Whether the replay sends its events (off by default, M18).
-  static bool get sendsEvents =>
-      value != null && (_eventsForTesting ?? _eventsDefined);
+  static bool get sendsEvents => value != null && eventsOptIn;
+
+  /// `CLIMB_DEBUG_MONTH_CARD_EVENTS`: the opt-in for a replay's events, the
+  /// define's or the panel's (N27).
+  static bool get eventsOptIn => _eventsForTesting ?? _eventsDefined;
 
   /// [defined] ('' when not set) applies only when [enabled] (not release)
   /// and only when it names a value.

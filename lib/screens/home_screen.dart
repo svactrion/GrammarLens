@@ -42,6 +42,8 @@ import 'weak_spot_detail_screen.dart';
 import '../widgets/medal_celebration.dart';
 import '../widgets/monthly_climb/climb_debug_milestone.dart';
 import '../widgets/monthly_climb/climb_debug_theme.dart';
+import '../widgets/monthly_climb/climb_debug_controls.dart';
+import '../widgets/monthly_climb/climb_save_points.dart';
 
 /// Home as a "today" screen, not a menu (PRD v2 §13.5). Replaces the old
 /// mode-selection Home once Streak Mode and Voice Practice were removed and
@@ -234,6 +236,14 @@ class _HomeScreenState extends State<HomeScreen>
   bool get _sendMonthEvents =>
       _debugMonthCard == null || ClimbDebugMonthCard.sendsEvents;
 
+  /// The debug panel (N27): whether the waiting and the open month card
+  /// are its replays, which read and write no record and send events only
+  /// with the `CLIMB_DEBUG_MONTH_CARD_EVENTS` opt-in.
+  bool _pendingCardIsReplay = false;
+
+  /// A save point replay from the panel, handed to the scene.
+  ({ClimbSavePoint point, int id})? _debugHop;
+
   /// How long the month card has been open in the foreground
   /// (`month_card_dismissed`'s `open_ms`): counting stops while the app is
   /// in the background, so a card left open overnight does not read as
@@ -290,10 +300,16 @@ class _HomeScreenState extends State<HomeScreen>
     _loadTodaysDailyTest();
     _loadClimb();
     _loadWeakSpots();
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.addListener(_onDebugPlay);
+    }
   }
 
   @override
   void dispose() {
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.removeListener(_onDebugPlay);
+    }
     WidgetsBinding.instance.removeObserver(this);
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     _day0PaywallTimer?.cancel();
@@ -323,6 +339,10 @@ class _HomeScreenState extends State<HomeScreen>
         if (mounted) _presentDebugMilestone();
       });
     }
+    if (ClimbDebugControls.available &&
+        ClimbDebugControls.instance.pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onDebugPlay());
+    }
     // Home may just have become visible again (a route above it closed).
     if (_day0PaywallPending && _day0PaywallReady) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -341,6 +361,8 @@ class _HomeScreenState extends State<HomeScreen>
       _showDay0Paywall();
       _presentMonthCard();
       _presentDebugMilestone();
+      // After the frame: this runs while the shell is building.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onDebugPlay());
     }
   }
 
@@ -518,8 +540,8 @@ class _HomeScreenState extends State<HomeScreen>
   /// Plays a zoom on the month drawn with [themeId], claiming [flag] as it
   /// starts (M6: never twice; null for the debug replay, which claims
   /// nothing), and reports how it ended (M19).
-  Future<void> _runZoom(
-      ClimbZoomTrigger trigger, String? flag, String themeId) async {
+  Future<void> _runZoom(ClimbZoomTrigger trigger, String? flag, String themeId,
+      {bool replay = false}) async {
     final outcome = await _zoom.run(
         trigger: trigger,
         reduceMotion: MediaQuery.disableAnimationsOf(context),
@@ -527,7 +549,8 @@ class _HomeScreenState extends State<HomeScreen>
             ? () async => true
             : () => widget.storageService.claimOneTimeFlag(flag));
     // Null: it had already played and did not run, so nothing ended.
-    if (outcome == null || !_sendMonthEvents) return;
+    final send = replay ? ClimbDebugMonthCard.eventsOptIn : _sendMonthEvents;
+    if (outcome == null || !send) return;
     unawaited(widget.analyticsService.monthZoomEnded(
         themeId: themeId,
         outcome: outcome.wireName,
@@ -583,13 +606,17 @@ class _HomeScreenState extends State<HomeScreen>
     }
     _monthCardShowing = true;
     _pendingMonthCard = null;
+    // A replay: from the define (every launch) or from the panel (N27).
+    final replay = _debugMonthCard != null || _pendingCardIsReplay;
+    _pendingCardIsReplay = false;
+    final send = _pendingCardEvents(replay);
     try {
       // K-c behind the sheet (again, if a Daily Test released it).
       _zoom.hold(ClimbZoomTrigger.monthChange);
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
       _scrollForMonthCard();
-      if (_sendMonthEvents) {
+      if (send) {
         unawaited(widget.analyticsService.monthCardShown(
             themeId: card.theme.id,
             variant: card.variant.wireName,
@@ -604,7 +631,6 @@ class _HomeScreenState extends State<HomeScreen>
       if (!mounted) return;
       // All three ways of closing count as seen (M6), recorded on closing:
       // a card open when the app is closed shows again.
-      final replay = _debugMonthCard != null;
       if (!replay) {
         try {
           await MonthTransition.markSeen(
@@ -612,7 +638,7 @@ class _HomeScreenState extends State<HomeScreen>
         } catch (_) {}
         if (!mounted) return;
       }
-      if (_sendMonthEvents) {
+      if (send) {
         unawaited(widget.analyticsService.monthCardDismissed(
             themeId: card.theme.id,
             variant: card.variant.wireName,
@@ -622,11 +648,98 @@ class _HomeScreenState extends State<HomeScreen>
       await _runZoom(
           ClimbZoomTrigger.monthChange,
           replay ? null : StorageService.monthZoomFlag(card.year, card.month),
-          card.theme.id);
+          card.theme.id,
+          replay: replay && _debugMonthCard == null);
     } finally {
       _monthCardShowing = false;
     }
     _presentDebugMilestone();
+    _onDebugPlay();
+  }
+
+  /// Whether the month card about to open sends its events: a real card
+  /// does; a replay only with the opt-in (M18).
+  bool _pendingCardEvents(bool replay) {
+    if (!replay) return true;
+    return _debugMonthCard != null
+        ? ClimbDebugMonthCard.sendsEvents
+        : ClimbDebugMonthCard.eventsOptIn;
+  }
+
+  /// The debug panel asked for a replay (N27): Home takes it once it is
+  /// visible, after anything it is already showing. A milestone or a month
+  /// card, with sample data; no record is read or written beyond Home's
+  /// own load, and no event is sent (the month card's opt-in aside).
+  void _onDebugPlay() {
+    if (!mounted || !ClimbDebugControls.available) return;
+    final controls = ClimbDebugControls.instance;
+    if (controls.pending == null) return;
+    if (_climbSteps == null ||
+        _monthCardShowing ||
+        _zoom.active ||
+        !_homeVisible ||
+        LaunchSplashScope.coveringOf(context)) {
+      // Tried again when Home is shown (didChangeDependencies, didUpdateWidget).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && controls.pending != null && _homeVisible) {
+          Future<void>.delayed(const Duration(milliseconds: 100), _onDebugPlay);
+        }
+      });
+      return;
+    }
+    final play = controls.takePlay()!;
+    final milestone = play.milestone;
+    if (milestone != null) {
+      final tier = milestone.tier;
+      if (tier != null) {
+        _pushTierCelebration(tier);
+      } else {
+        _scrollMountainIntoView();
+        setState(() => _debugHop = (point: milestone.savePoint!, id: play.id));
+      }
+      return;
+    }
+    final value = play.monthCard!;
+    if (value == ClimbDebugMonthCardValue.firstRun) {
+      _zoom.hold(ClimbZoomTrigger.firstRun);
+      _scrollMountainIntoView();
+      unawaited(_runZoom(ClimbZoomTrigger.firstRun, null, _monthThemeId,
+          replay: true));
+      return;
+    }
+    final card = ClimbDebugMonthCard.sample(value, widget.clock());
+    if (card == null) return;
+    _pendingMonthCard = card;
+    _pendingCardIsReplay = true;
+    _zoom.hold(ClimbZoomTrigger.monthChange);
+    _presentMonthCard();
+  }
+
+  void _scrollMountainIntoView() {
+    final mountainContext = _mountainKey.currentContext;
+    if (mountainContext == null || !mountainContext.mounted) return;
+    unawaited(Scrollable.ensureVisible(mountainContext,
+        alignment: 0.35,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 250)));
+  }
+
+  /// A tier's celebration over Home, for the current month and its theme
+  /// (or `CLIMB_DEBUG_THEME`'s): the define's launch replay and the
+  /// panel's.
+  Future<void> _pushTierCelebration(MedalTier tier) {
+    final theme = ClimbDebugTheme.value ?? _climbTheme;
+    final month = widget.clock().month;
+    return Navigator.of(context).push(PageRouteBuilder<void>(
+      opaque: false,
+      pageBuilder: (routeContext, _, __) => MedalCelebration.tier(
+        tier: tier,
+        theme: theme,
+        month: month,
+        onClose: () => Navigator.of(routeContext).pop(),
+      ),
+    ));
   }
 
   /// `CLIMB_DEBUG_MILESTONE`'s tier celebration, when Home can show it:
@@ -644,17 +757,7 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
     _debugMilestoneReplayed = true;
-    final theme = ClimbDebugTheme.value ?? _climbTheme;
-    final month = widget.clock().month;
-    await Navigator.of(context).push(PageRouteBuilder<void>(
-      opaque: false,
-      pageBuilder: (routeContext, _, __) => MedalCelebration.tier(
-        tier: tier,
-        theme: theme,
-        month: month,
-        onClose: () => Navigator.of(routeContext).pop(),
-      ),
-    ));
+    await _pushTierCelebration(tier);
   }
 
   /// M21: scrolls Home so the Today card's last
@@ -1126,6 +1229,7 @@ class _HomeScreenState extends State<HomeScreen>
                   onMotionEnd: _onMountainMotionEnd,
                   zoom: _zoom.active ? _zoom.progress : null,
                   zoomCrossFade: _zoom.crossFade,
+                  debugHop: _debugHop,
                   labelAvoid: (width) => ClimbCard.chipRects(context,
                       width: width,
                       month: _climbMonth,

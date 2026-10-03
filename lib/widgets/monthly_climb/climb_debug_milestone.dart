@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../models/medal_tier.dart';
+import '../../utils/debug_tools.dart';
 import 'climb_save_points.dart';
 
 /// What `CLIMB_DEBUG_MILESTONE` plays (Batch 5, N13, N22).
@@ -33,7 +34,8 @@ enum ClimbDebugMilestoneValue {
           .firstWhere((p) => p.eventId == wireName);
 }
 
-/// Debug builds only: `--dart-define=CLIMB_DEBUG_MILESTONE=<bronze|silver|
+/// Debug and profile builds only (N22, widened by N27):
+/// `--dart-define=CLIMB_DEBUG_MILESTONE=<bronze|silver|
 /// gold|first_camp|halfway_hut|mountain_spring|high_camp|summit>` plays a
 /// milestone on every launch and hot restart, so the celebration and the
 /// save point label can be checked on a device without earning them.
@@ -46,29 +48,33 @@ enum ClimbDebugMilestoneValue {
 ///   runs, so the light-up and the label play. For the scene it takes the
 ///   place of `CLIMB_DEBUG_DAY`; `CLIMB_DEBUG_THEME` still picks the theme.
 ///
+/// The debug panel plays the same milestones while the app runs (N27,
+/// `ClimbDebugControls`).
+///
 /// Display only: it reads and writes no stored record and sends no event.
-/// In profile and release builds [kDebugMode] is the constant false, so
-/// [value] is always null there and the define has no effect.
+/// In release builds [kReleaseMode] is the constant true, so [value] is
+/// always null there and the define has no effect.
 abstract final class ClimbDebugMilestone {
   static const _defined = String.fromEnvironment('CLIMB_DEBUG_MILESTONE');
 
   static String? _forTesting;
 
   /// Stands in for the define in tests, which cannot pass one. Still
-  /// ignored outside debug builds.
+  /// ignored in release builds.
   @visibleForTesting
   static set valueForTesting(String? value) => _forTesting = value;
 
   /// The milestone to play, or null.
-  static ClimbDebugMilestoneValue? get value =>
-      resolve(debug: kDebugMode, defined: _forTesting ?? _defined);
+  static ClimbDebugMilestoneValue? get value => resolve(
+      enabled: !kReleaseMode && DebugTools.enabledForTesting,
+      defined: _forTesting ?? _defined);
 
-  /// [defined] ('' when not set) applies only when [debug] and only when it
-  /// names a value.
+  /// [defined] ('' when not set) applies only when [enabled] (not release)
+  /// and only when it names a value.
   @visibleForTesting
   static ClimbDebugMilestoneValue? resolve(
-      {required bool debug, required String defined}) {
-    if (!debug || defined.isEmpty) return null;
+      {required bool enabled, required String defined}) {
+    if (!enabled || defined.isEmpty) return null;
     for (final v in ClimbDebugMilestoneValue.values) {
       if (v.wireName == defined) return v;
     }

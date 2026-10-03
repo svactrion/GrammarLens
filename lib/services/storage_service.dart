@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
+import 'package:flutter/foundation.dart'
+    show kDebugMode, kReleaseMode, visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -1464,6 +1465,28 @@ class StorageService {
     final rows = await db.query('one_time_flags',
         columns: ['key'], where: 'key = ?', whereArgs: [key], limit: 1);
     return rows.isNotEmpty;
+  }
+
+  /// The debug panel's "Reset local data" (Batch 5, N27): closes and
+  /// deletes this app's whole SQLite database, so the next read finds a
+  /// fresh one and the app is back to its first launch. Every table goes:
+  /// the profile (name, avatar, goal), Daily Test sets and their answers,
+  /// mistakes and practice counts, the climb's ledger, the month themes,
+  /// medals and the Welcome badge, the one-time flags (first-day paywall,
+  /// zooms, month cards), AI consent, appearance and text size, practice
+  /// and review settings, usage counters, the debug entitlement override
+  /// and the anonymous device id the proxy counts quota by.
+  ///
+  /// Nothing outside this database is touched: RevenueCat's purchase
+  /// state (kept by the App Store and RevenueCat's own SDK storage),
+  /// Firebase's app instance and Crashlytics, and the shared Daily Test
+  /// sets on the proxy. A no-op in release builds.
+  Future<void> resetAllLocalData() async {
+    if (kReleaseMode || !DebugTools.enabledForTesting) return;
+    final db = _db;
+    _db = null;
+    await db?.close();
+    await deleteDatabase(join(await getDatabasesPath(), _dbName));
   }
 
   /// Whether this device used the Monthly Climb in a month before

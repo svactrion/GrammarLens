@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
 import 'package:flutter/material.dart';
 
 import '../models/app_theme_mode.dart';
@@ -24,6 +24,7 @@ import 'avatar_picker_screen.dart';
 import 'credits_screen.dart';
 import 'data_screen.dart';
 import 'theme_preview_screen.dart';
+import 'debug_panel_screen.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
 /// a UI-layer concept only. [SubscriptionService.debugAccessOverride]
@@ -69,6 +70,14 @@ class SettingsScreen extends StatefulWidget {
   /// from the "Developer" section below, itself `if (kDebugMode)`-gated.
   final VoidCallback onResetOnboarding;
 
+  /// N27: the debug panel's "Reset local data": deletes the local database
+  /// and puts the app back at its first launch. Reached only from the
+  /// panel, which a release build does not have.
+  final Future<void> Function()? onResetLocalData;
+
+  /// The "Debug" row (N27).
+  static const debugRowKey = ValueKey('settings_debug_row');
+
   SettingsScreen({
     super.key,
     required this.active,
@@ -80,6 +89,7 @@ class SettingsScreen extends StatefulWidget {
     required this.storageService,
     required this.onProfileUpdated,
     required this.onResetOnboarding,
+    this.onResetLocalData,
     SubscriptionService? subscriptionService,
     AnalyticsService? analyticsService,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
@@ -611,6 +621,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
+          // N27: the debug panel, in debug and profile builds; a release
+          // build compiles it out (kReleaseMode is a constant there).
+          if (!kReleaseMode && DebugTools.enabledForTesting) ...[
+            const SizedBox(height: 24),
+            _NavRow.icon(
+              key: SettingsScreen.debugRowKey,
+              icon: Icons.bug_report_outlined,
+              label: 'Debug',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => DebugPanelScreen(
+                    onResetLocalData:
+                        widget.onResetLocalData ?? () async {}),
+              )),
+            ),
+          ],
         ],
       ),
     );
@@ -652,6 +677,7 @@ class _NavRow extends StatelessWidget {
   /// A row led by an [icon], centered in the same 52 pt box the avatar row's
   /// tile occupies so every label starts at the same x.
   _NavRow.icon({
+    super.key,
     required IconData icon,
     required this.label,
     required this.onTap,

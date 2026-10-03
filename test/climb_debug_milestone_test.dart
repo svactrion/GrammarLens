@@ -42,10 +42,13 @@ void main() {
     ClimbDebugDay.valueForTesting = null;
   });
 
-  test('debug only; the eight values; unknown or unset is nothing', () {
+  test(
+      'debug and profile only (N27); the eight values; unknown or unset is nothing',
+      () {
     for (final v in ClimbDebugMilestoneValue.values) {
-      expect(ClimbDebugMilestone.resolve(debug: true, defined: v.wireName), v);
-      expect(ClimbDebugMilestone.resolve(debug: false, defined: v.wireName),
+      expect(
+          ClimbDebugMilestone.resolve(enabled: true, defined: v.wireName), v);
+      expect(ClimbDebugMilestone.resolve(enabled: false, defined: v.wireName),
           isNull);
     }
     expect(ClimbDebugMilestoneValue.values.map((v) => v.wireName), [
@@ -58,9 +61,9 @@ void main() {
       'high_camp',
       'summit',
     ]);
-    expect(ClimbDebugMilestone.resolve(debug: true, defined: ''), isNull);
-    expect(
-        ClimbDebugMilestone.resolve(debug: true, defined: 'platinum'), isNull);
+    expect(ClimbDebugMilestone.resolve(enabled: true, defined: ''), isNull);
+    expect(ClimbDebugMilestone.resolve(enabled: true, defined: 'platinum'),
+        isNull);
   });
 
   test('the test suite runs without the define', () {

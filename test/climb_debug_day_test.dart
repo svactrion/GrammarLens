@@ -12,14 +12,14 @@ import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 void main() {
   tearDown(() => ClimbDebugDay.valueForTesting = null);
 
-  test('profile and release ignore it: only a debug build applies the day', () {
+  test('release ignores it (N27): debug and profile builds apply the day', () {
     for (final day in [0, 1, 15, 31]) {
-      expect(ClimbDebugDay.resolve(debug: false, defined: day), isNull);
-      expect(ClimbDebugDay.resolve(debug: true, defined: day), day);
+      expect(ClimbDebugDay.resolve(enabled: false, defined: day), isNull);
+      expect(ClimbDebugDay.resolve(enabled: true, defined: day), day);
     }
     // Not defined (−1): nothing, in any build.
-    expect(ClimbDebugDay.resolve(debug: true, defined: -1), isNull);
-    expect(ClimbDebugDay.resolve(debug: false, defined: -1), isNull);
+    expect(ClimbDebugDay.resolve(enabled: true, defined: -1), isNull);
+    expect(ClimbDebugDay.resolve(enabled: false, defined: -1), isNull);
   });
 
   test('the test suite runs without the define', () {

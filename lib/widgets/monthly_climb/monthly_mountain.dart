@@ -7,6 +7,7 @@ import '../../models/avatar.dart';
 import '../../models/climb_theme.dart';
 import '../avatar_tile.dart';
 import 'climb_camera.dart';
+import 'climb_debug_controls.dart';
 import 'climb_debug_day.dart';
 import 'climb_debug_milestone.dart';
 import 'climb_debug_theme.dart';
@@ -93,6 +94,11 @@ class MonthlyMountain extends StatefulWidget {
   /// it; the chips are never hidden. Null: none.
   final List<Rect> Function(double width)? labelAvoid;
 
+  /// The debug panel's save point replay (N27): a new [id] mounts the scene
+  /// one step before [point]'s step and hops onto it, as
+  /// `CLIMB_DEBUG_MILESTONE` does at launch. Display only.
+  final ({ClimbSavePoint point, int id})? debugHop;
+
   const MonthlyMountain(
       {super.key,
       required this.days,
@@ -103,7 +109,8 @@ class MonthlyMountain extends StatefulWidget {
       this.onMotionEnd,
       this.zoom,
       this.zoomCrossFade = false,
-      this.labelAvoid});
+      this.labelAvoid,
+      this.debugHop});
 
   /// The repaint boundary around the scene (tests count its paints).
   static const sceneKey = ValueKey('climb_scene_layer');
@@ -175,10 +182,15 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   @override
   void initState() {
     super.initState();
-    final milestone = ClimbDebugMilestone.value?.savePoint;
-    if (milestone != null) {
-      _debugMilestoneStep = milestone.reachedOn(widget.days) - 1;
+    _debugHopTarget =
+        widget.debugHop?.point ?? ClimbDebugMilestone.value?.savePoint;
+    if (_debugHopTarget case final target?) {
+      _debugMilestoneStep = target.reachedOn(widget.days) - 1;
       _scheduleDebugHop();
+    }
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.settingsRevision
+          .addListener(_onDebugSettingsChanged);
     }
     _route = ClimbRoute(widget.days);
     _from = _to = _shownSteps.toDouble();
@@ -245,7 +257,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   /// (the label is not shown during one), as a Daily Test's step would.
   void _scheduleDebugHop() {
     if (_debugHopTimer != null || widget.zoom != null) return;
-    final milestone = ClimbDebugMilestone.value?.savePoint;
+    final milestone = _debugHopTarget;
     if (milestone == null) return;
     _debugHopTimer = Timer(_debugHopDelay, () {
       if (!mounted) return;
@@ -260,6 +272,48 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         _motion.forward(from: 0).then((_) => _motionEnded());
       }
     });
+  }
+
+  /// The save point a debug hop goes to (the define's or the panel's).
+  ClimbSavePoint? _debugHopTarget;
+
+  /// Shows the scene's current step at once: no hop, no fade, no label.
+  void _jumpToShownStep() {
+    _motion.value = 1;
+    _from = _to = _shownSteps.toDouble();
+    _fade.stop();
+    _label.stop();
+    _labelTimer?.cancel();
+    _labelled = null;
+    _fading.clear();
+    _lit
+      ..clear()
+      ..addAll(_reached());
+  }
+
+  /// The debug panel changed the day or the theme (N27): the latest
+  /// setting wins over a debug hop, and the scene shows it at once.
+  void _onDebugSettingsChanged() {
+    if (!mounted) return;
+    _debugHopTimer?.cancel();
+    _debugHopTimer = null;
+    setState(() {
+      _debugMilestoneStep = null;
+      _debugHopTarget = null;
+      _jumpToShownStep();
+    });
+  }
+
+  /// The panel's save point replay: one step before, then the hop.
+  void _startDebugHop(ClimbSavePoint point) {
+    _debugHopTimer?.cancel();
+    _debugHopTimer = null;
+    setState(() {
+      _debugHopTarget = point;
+      _debugMilestoneStep = point.reachedOn(widget.days) - 1;
+      _jumpToShownStep();
+    });
+    _scheduleDebugHop();
   }
 
   /// N6, N19: the label of the furthest save point in [clearings], once.
@@ -322,6 +376,12 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   void didUpdateWidget(MonthlyMountain oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.zoom != null && widget.zoom == null) _scheduleDebugHop();
+    final hop = widget.debugHop;
+    if (hop != null && hop.id != oldWidget.debugHop?.id) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _startDebugHop(hop.point);
+      });
+    }
     if (oldWidget.theme != widget.theme) {
       // Another theme can draw another set of objects (the flag): states
       // follow at once, without a fade.
@@ -361,6 +421,10 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     _label.dispose();
     _labelTimer?.cancel();
     _debugHopTimer?.cancel();
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.settingsRevision
+          .removeListener(_onDebugSettingsChanged);
+    }
     super.dispose();
   }
 
