@@ -11,19 +11,31 @@ import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/debug_panel_screen.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
+import 'package:grammar_lens/services/monthly_medal_rules.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/debug_sample_collection.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_debug_month_card.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 
 import 'support/recording_analytics_sink.dart';
 
-/// Any medal read or write fails the test: the sample collection must not
-/// touch storage.
+/// Any medal read or write fails the test, except the running month's
+/// progress, the one record the sample collection reads.
 class _UntouchedStorage extends StorageService {
+  static final running = MonthlyMedalProgress(
+      year: 2026,
+      month: 11,
+      score: 131,
+      maxScore: MonthlyMedalRules.maxScore(2026, 11),
+      activeDays: 14,
+      correct: 0,
+      wrong: 0,
+      skipped: 0);
   final calls = <String>[];
+  bool sampleMode = false;
   Never _no(String name) {
     calls.add(name);
     throw StateError('storage touched: $name');
@@ -33,8 +45,14 @@ class _UntouchedStorage extends StorageService {
   Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async =>
       _no('finalizePastMedalMonths');
   @override
-  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() async =>
-      _no('getCurrentMonthlyMedalProgress');
+  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() async {
+    if (sampleMode) {
+      calls.add('getCurrentMonthlyMedalProgress');
+      return running;
+    }
+    return _no('getCurrentMonthlyMedalProgress');
+  }
+
   @override
   Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async =>
       _no('getMonthlyMedalResults');
@@ -56,20 +74,44 @@ void main() {
   });
 
   test(
-      'the sample: the Welcome badge, seven finished months in all four '
-      'themes and every tier, and the running month', () {
+      'the sample: the Welcome badge, eight finished months in all four '
+      'themes and every tier, and the running month (ten slots: no medal '
+      'alone on a row of five or eight)', () {
     final s = DebugSampleCollection.sample(now);
-    expect(s.results, hasLength(7));
+    expect(s.results, hasLength(8));
+    final slots = 1 + s.results.length + 1;
+    expect(slots % 5, isNot(1));
+    expect(slots % 8, isNot(1));
     expect(s.progress.year, 2026);
     expect(s.progress.month, 11);
     expect(s.results.first.month, 10);
-    expect(s.results.last.month, 4);
+    expect(s.results.last.month, 3);
     expect({for (final r in s.results) r.tier},
         {MedalTier.bronze, MedalTier.silver, MedalTier.gold});
     expect(s.themeIds.values.toSet(), {for (final t in ClimbThemes.all) t.id});
     expect(s.themeIds[(2026, 11)], ClimbThemeRotation.shownFor(2026, 11).id);
-    expect(s.welcomeBadge.earnedAt.isBefore(DateTime(2026, 4, 30)), isTrue);
+    expect(s.welcomeBadge.earnedAt.isBefore(DateTime(2026, 3, 31)), isTrue);
     expect(s.progress.score < s.progress.maxScore, isTrue);
+  });
+
+  test('last month is the month card\'s Gold summary', () {
+    final card =
+        ClimbDebugMonthCard.sample(ClimbDebugMonthCardValue.summaryGold, now)!;
+    final last = DebugSampleCollection.sample(now).results.first;
+    final s = DebugSampleCollection.sample(now);
+    expect((last.year, last.month), (card.previousYear, card.previousMonth));
+    expect(last.tier, card.tier);
+    expect(last.tier, MedalTier.gold);
+    expect(last.score, card.score);
+    expect(last.activeDays, card.steps);
+    expect(s.themeIds[(last.year, last.month)], card.previousTheme.id);
+    expect(s.themeIds[(2026, 11)], card.theme.id);
+  });
+
+  test('the running month is the stored progress when given', () {
+    final s =
+        DebugSampleCollection.sample(now, progress: _UntouchedStorage.running);
+    expect(s.progress, same(_UntouchedStorage.running));
   });
 
   test('off by default, and never on where the debug tools are off', () {
@@ -81,11 +123,12 @@ void main() {
   });
 
   Future<(_UntouchedStorage, RecordingAnalyticsSink)> pumpProfile(
-      WidgetTester tester) async {
+      WidgetTester tester,
+      {bool sampleMode = false}) async {
     tester.view.physicalSize = const Size(430, 2400) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
-    final storage = _UntouchedStorage();
+    final storage = _UntouchedStorage()..sampleMode = sampleMode;
     final sink = RecordingAnalyticsSink();
     await tester.pumpWidget(MaterialApp(
       theme: buildAppTheme(Brightness.light),
@@ -108,12 +151,15 @@ void main() {
   }
 
   testWidgets(
-      'on: Profile shows the sample on the shelf, reads and writes no stored '
-      'medal record and sends no event', (tester) async {
+      'on: Profile shows the sample on the shelf with the stored running '
+      'month, reads no other medal record, writes none and sends no event',
+      (tester) async {
     DebugSampleCollection.runtime = true;
-    final (storage, sink) = await pumpProfile(tester);
-    expect(storage.calls, isEmpty);
+    final (storage, sink) = await pumpProfile(tester, sampleMode: true);
+    expect(storage.calls, ['getCurrentMonthlyMedalProgress']);
     expect(sink.events, isEmpty);
+    expect(
+        find.text('${_UntouchedStorage.running.score} points'), findsOneWidget);
     expect(find.byType(MonthlyMedalCollection), findsOneWidget);
     expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsOneWidget);
     for (final r in DebugSampleCollection.sample(now).results) {

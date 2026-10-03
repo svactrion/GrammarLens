@@ -167,11 +167,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadMedals() async {
     final generation = ++_medalsGeneration;
-    // P6: the debug panel's sample collection, instead of storage. Nothing
-    // is finalized or read, and no view is reported.
+    // P6: the debug panel's sample collection, instead of storage. Only the
+    // running month's progress is read (so it matches Home); nothing is
+    // finalized or written, and no view is reported.
     if (DebugSampleCollection.enabled) {
-      final sample = DebugSampleCollection.current();
-      if (!mounted) return;
+      MonthlyMedalProgress? progress;
+      try {
+        progress = await widget.storageService.getCurrentMonthlyMedalProgress();
+      } catch (_) {
+        progress = null;
+      }
+      if (!mounted || generation != _medalsGeneration) return;
+      final sample = DebugSampleCollection.current(progress: progress);
       setState(() {
         _medalThemeIds = sample.themeIds;
         _medalProgress = sample.progress;

@@ -14,13 +14,15 @@
 # (9:41, full battery, full signal), removes the app (a fresh install, so
 # the seeded data is the only data), runs `flutter drive` (a debug build)
 # with capture_app.dart and capture_driver.dart, and writes the raw PNGs
-# to docs/design/release-1.1.0/screenshots/raw/<device>/. Then
+# to build/screenshots/raw/<device>/ (not kept in the repository, P8). Then
 # frame.py builds the framed set and the overview.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 RUNTIME="${SIM_RUNTIME:-iOS 26.5}"
 OUT=docs/design/release-1.1.0/screenshots
+# P8: the raw captures stay out of the repository (build/ is ignored).
+RAW=build/screenshots/raw
 BUNDLE=com.ahmettayfur.grammarlens
 typeset -A SIMS
 SIMS=(iphone "${IPHONE_SIM:-iPhone 17 Pro Max}" ipad "${IPAD_SIM:-iPad Pro 13-inch (M5)}")
@@ -46,6 +48,10 @@ for device in "${devices[@]}"; do
   # in English; takes effect after a restart.
   xcrun simctl spawn "$udid" defaults write -g AppleLanguages -array en-US
   xcrun simctl spawn "$udid" defaults write -g AppleLocale -string en_US
+  # The keyboard's one-time "slide to type" introduction would cover the
+  # keyboard in frame 06: marked as already shown.
+  xcrun simctl spawn "$udid" defaults write com.apple.Preferences \
+    DidShowContinuousPathIntroduction -bool true
   xcrun simctl shutdown "$udid"
   xcrun simctl boot "$udid"
   xcrun simctl bootstatus "$udid" -b >/dev/null
@@ -55,15 +61,15 @@ for device in "${devices[@]}"; do
     --cellularMode active --cellularBars 4 \
     --batteryState discharging --batteryLevel 100
   xcrun simctl uninstall "$udid" "$BUNDLE" 2>/dev/null || true
-  rm -rf "$OUT/raw/$device"
+  rm -rf "$RAW/$device"
   # Frames 01-08 on seeded data.
-  SCREENSHOT_UDID="$udid" SCREENSHOT_OUT="$OUT/raw/$device" \
+  SCREENSHOT_UDID="$udid" SCREENSHOT_OUT="$RAW/$device" \
     flutter drive --no-pub -d "$udid" \
       --driver=tool/screenshots/capture_driver.dart \
       --target=tool/screenshots/capture_app.dart
   # Frame 09: Welcome on a fresh install.
   xcrun simctl uninstall "$udid" "$BUNDLE" 2>/dev/null || true
-  SCREENSHOT_UDID="$udid" SCREENSHOT_OUT="$OUT/raw/$device" \
+  SCREENSHOT_UDID="$udid" SCREENSHOT_OUT="$RAW/$device" \
     flutter drive --no-pub -d "$udid" --dart-define=CAPTURE_WELCOME=true \
       --driver=tool/screenshots/capture_driver.dart \
       --target=tool/screenshots/capture_app.dart

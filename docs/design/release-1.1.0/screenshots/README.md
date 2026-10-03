@@ -1,11 +1,11 @@
 # 1.1.0 App Store screenshots — draft
 
-**Draft, waiting for Ahmet's approval** (captions, typeface, the frames).
-Not uploaded anywhere.
+**Waiting for Ahmet's final approval.** Not uploaded anywhere.
 
-Decisions: P4 (nine frames, their order), P5 (the real app in the
-simulator, light mode, status bar 9:41 with full battery and signal), P6
-(the debug panel's sample collection) — `docs/roadmap.md`, under P1.
+Decisions: P4 (nine frames), P5 (the real app in the simulator, light
+mode, status bar 9:41 with full battery and signal), P6 (the debug panel's
+sample collection), P7 (the order and captions), P8 (Nunito Sans 800; raw
+captures not kept) — `docs/roadmap.md`, under P1.
 
 ## Make the whole set again
 
@@ -23,7 +23,8 @@ iPhone and then the iPad simulator it:
 3. runs `flutter drive` (a debug build) with
    `tool/screenshots/capture_app.dart` on the simulator and
    `tool/screenshots/capture_driver.dart` on the Mac, which taps through
-   the app and saves frames 01–08 with `xcrun simctl io … screenshot`;
+   the app and saves frames 01–08 with `xcrun simctl io … screenshot` to
+   `build/screenshots/raw/<device>/` (git-ignored: P8);
 4. removes the app again and runs a second, unseeded `flutter drive`
    (`--dart-define=CAPTURE_WELCOME=true`) for frame 09, Welcome;
 5. frames everything with `tool/screenshots/frame.py`.
@@ -55,22 +56,73 @@ raw captures after a caption change (`tool/screenshots/captions.json`).
 - Before frame 08, turns the debug tools off and rebuilds the screen
   (`release_look`): Profile then shows what a release build shows (no
   Developer section), while keeping the sample shelf.
+- Answers `first_correct` (the first question's right answer, typed in
+  frame 06) and `answers` (today's five, the first wrong) for the driver.
 
 ### Every frame is automatic
 
-| # | Frame | How the driver gets there |
-|---|---|---|
-| 01 | Daily Test result with explanations | Answers today's test live (the first answer wrong, the other four right), then the result screen |
-| 02 | Home, the mountain | "See your climb": the avatar hops onto Halfway Hut (Green Slope, mid-month); Home scrolled back to the top |
-| 03 | A question | Opens today's Daily Test (first question, empty answer) |
-| 04 | Gold celebration | Debug panel → Milestones → gold |
-| 05 | Review | The Review tab |
-| 06 | Weak spot detail | Review → the first weak spot (today's wrong answer) |
-| 07 | Month card, summary, Gold | Debug panel → Month card → summary_gold |
-| 08 | Medal collection | Debug panel → Sample collection on → Profile, scrolled to "Medal collection" |
-| 09 | Welcome | A fresh install, no data |
+P7's order. File names follow it (`01-result.png` … `09-welcome.png`).
+
+| # | Frame | Caption | How the driver gets there |
+|---|---|---|---|
+| 01 | Daily Test result with explanations | Every answer explained | Answers today's test live (the first answer wrong, the other four right), then the result screen |
+| 02 | Home, the mountain | Climb a new mountain each month | After the live test the avatar is on Halfway Hut (Green Slope, step 15 of 31). Home is measured at rest, and the smallest scroll is chosen at which the screen's bottom edge falls in a gap between items with the whole mountain card in view; the hop onto Halfway Hut is then replayed from the debug panel and the frame taken while its "Halfway Hut" label shows, at that scroll |
+| 03 | Gold celebration | Earn medals as you climb | Debug panel → Milestones → gold |
+| 04 | Review | Your weak spots, tracked | The Review tab |
+| 05 | Weak spot detail | Practice what you got wrong | Review → the first weak spot (today's wrong answer) |
+| 06 | A question | A new test every day | Today's first question with its right answer ("eating") typed and the on-screen keyboard up (see below) |
+| 07 | Month card, summary, Gold | Your month at a glance | Debug panel → Month card → summary_gold |
+| 08 | Medal collection | Collect every mountain | Debug panel → Sample collection on → Profile, scrolled to "Medal collection" where the screen is too short for all of Profile |
+| 09 | Welcome | Start in under a minute | A fresh install, no data |
 
 No frame needs a manual step.
+
+**The keyboard (06).** `flutter_driver` types through its own text-entry
+emulation, which stands in for iOS's text input, so no keyboard opens
+while it types. The driver types the answer, unfocuses the field (the
+capture app's `unfocus` request), turns the emulation off and taps the
+field again: the field opens a new input connection, now to iOS, and the
+real keyboard comes up on the typed text. `capture.sh` marks iOS's
+one-time "slide to type" introduction as already shown on the simulator
+(`DidShowContinuousPathIntroduction`), or it would cover the keyboard.
+
+**Frames that agree.** The sample collection (P6) takes last month from
+the month card's Gold summary (theme, tier, steps, points), so 07 and 08
+show the same September medal; and its running month is the stored one,
+so 08's "This month" shows the same days and points as Home in 02.
+
+## Review of the set (2026-10-04)
+
+Checked on the captures of the last run, both devices:
+
+- **Numbers that agree:** Home (02) at step 15 of 31 in October, Green
+  Slope; Profile (08) "This month" 149 points and 15 active days (the
+  stored month, the same as Home's); the month card (07) and the shelf
+  (08) both show September as Gold on its theme, 26 steps, 237 points;
+  Review (04) and the weak spot (05) both "1 time · last seen today" for
+  today's wrong answer.
+- **One that does not:** the Gold celebration (03) reads "Gold medal
+  earned · October · Green Slope", while 02 and 08 show October at 149
+  points (Bronze, Gold is 233). The debug replay always celebrates the
+  running month, and by step 15 Gold is out of reach (at most 150
+  points). Not fixed: it needs a change to the app or a different
+  storyline (to be decided).
+- **Cut text:** none at a frame's bottom edge in 02 (the edge falls in a
+  gap: iPhone scrolled 3.4 pt, iPad not at all). In 01 the last visible
+  explanation runs under the result screen's fixed footer: the screen's
+  own design, as in 1.0.0. Items behind the frosted nav bar (02, 04, 08)
+  show through it, softened, as in the app.
+- **Shelf rows:** ten slots, 5 + 5 on the iPhone, 8 + 2 on the iPad: no
+  medal alone on a row.
+- **Profile on the iPad (08):** the whole of Profile fits the screen, so
+  it cannot be scrolled to the shelf as on the iPhone; it shows the
+  profile fields above the shelf.
+- **Developer-only items:** none (08 is taken after `release_look`; the
+  Debug row and the Developer section are not on any frame).
+- **Personal data:** none; the learner is the fictional "Sam", no device
+  id, no real name.
+- **Status bar:** 9:41, full battery, full signal on every frame; the
+  iPad's date reads "Sun Oct 4", the day of the run.
 
 ## The frame style
 
@@ -93,40 +145,21 @@ eight committed images (its docstring lists every number): the cream
 gradient, the orange dash, the dark title (one line, or two when long),
 the phone with its bezel, rim, side buttons, Dynamic Island and shadow.
 **Difference:** the 1.0.0 titles look like Nunito (rounded); only the
-app's Nunito Sans is in the repository, used at weight 800 (question 1).
+app's Nunito Sans is in the repository, used at weight 800 (kept by
+P8).
 
 ## Captions
 
-The eight 1.0.0 captions, exactly:
-
-1. Every answer explained
-2. A new test every day
-3. Your weak spots, tracked
-4. Your climb, your streak
-5. Practice what you got wrong
-6. See your progress after every test
-7. Start in under a minute
-8. Pick a buddy, set your goal
-
-In this draft (`tool/screenshots/captions.json`): kept for unchanged
-screens — 01 "Every answer explained", 03 "A new test every day",
-05 "Your weak spots, tracked", 06 "Practice what you got wrong",
-09 "Start in under a minute". **Proposed** for the new frames (drafts;
-the final words are Ahmet's):
-
-| Frame | Proposal | Alternatives |
-|---|---|---|
-| 02 Home, the mountain | A new mountain every month | Climb a little every day |
-| 04 Gold celebration | Earn a medal every month | Go for Gold |
-| 07 Month card | Your month at a glance | See how your month went |
-| 08 Medal collection | Collect every mountain | A medal for every month |
-
-"Your climb, your streak" (1.0.0's Home) is not reused: the app has no
-streak. "See your progress after every test" and "Pick a buddy, set your
-goal" belonged to frames P4 dropped.
+P7 (Ahmet, 2026-10-04), in `tool/screenshots/captions.json`; see the table
+above. The eight 1.0.0 captions, for the record: "Every answer
+explained", "A new test every day", "Your weak spots, tracked", "Your
+climb, your streak", "Practice what you got wrong", "See your progress
+after every test", "Start in under a minute", "Pick a buddy, set your
+goal".
 
 ## Folders
 
-- `raw/iphone/`, `raw/ipad/`: the simulator's own screenshots, unchanged.
-- `iphone/`, `ipad/`: the framed draft set, at the App Store's size.
+- `iphone/`, `ipad/`: the framed set, at the App Store's size.
+- The simulator's own screenshots are not kept here (P8):
+  `tool/screenshots/capture.sh` writes them to `build/screenshots/raw/`.
 - `overview.jpg`: every frame, reduced.

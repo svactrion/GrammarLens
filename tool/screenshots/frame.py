@@ -3,8 +3,8 @@ in the style of the 1.0.0 set and writes an overview.
 
     build/scene_art_venv/bin/python tool/screenshots/frame.py
 
-Reads docs/design/release-1.1.0/screenshots/raw/<device>/NN-<name>.png
-(capture.sh) and tool/screenshots/captions.json; writes
+Reads build/screenshots/raw/<device>/NN-<name>.png (capture.sh; raw
+captures are not kept in the repository, P8) and tool/screenshots/captions.json; writes
 docs/design/release-1.1.0/screenshots/<device>/NN-<name>.png at the raw
 capture's own size (the App Store size: iPhone 6.9" 1320 x 2868, iPad 13"
 2064 x 2752) and overview.jpg (every frame, reduced).
@@ -40,6 +40,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 REPO = Path(__file__).resolve().parents[2]
 SHOTS = REPO / "docs/design/release-1.1.0/screenshots"
+RAW = REPO / "build/screenshots/raw"
 FONT = REPO / "assets/fonts/NunitoSans-Variable.ttf"
 CAPTIONS = json.loads((Path(__file__).parent / "captions.json").read_text())
 
@@ -185,10 +186,13 @@ def overview(paths: dict[str, list[Path]]) -> Image.Image:
 def main() -> None:
     written: dict[str, list[Path]] = {}
     for device in ("iphone", "ipad"):
-        raws = sorted((SHOTS / "raw" / device).glob("*.png"))
+        raws = sorted((RAW / device).glob("*.png"))
         if not raws:
             continue
         (SHOTS / device).mkdir(parents=True, exist_ok=True)
+        # Frames from an earlier order or naming do not linger.
+        for old in (SHOTS / device).glob("*.png"):
+            old.unlink()
         for raw in raws:
             name = raw.stem
             out = SHOTS / device / f"{name}.png"

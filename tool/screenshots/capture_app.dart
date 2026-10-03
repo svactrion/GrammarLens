@@ -145,7 +145,18 @@ const _welcomeOnly = bool.fromEnvironment('CAPTURE_WELCOME');
 Future<void> main() async {
   enableFlutterDriverExtension(handler: (request) async {
     if (request == 'answers') return jsonEncode(_todayAnswers);
+    // Frame 06 shows the first question with its right answer typed.
+    if (request == 'first_correct') {
+      return kDayZeroQuestions.first.correctAnswer;
+    }
     if (request == 'mode') return _welcomeOnly ? 'welcome' : 'full';
+    // The driver switches between flutter_driver's text-entry emulation and
+    // the real iOS keyboard (frame 06): a field opens its text input
+    // connection, to whichever is active, only when it gains focus.
+    if (request == 'unfocus') {
+      FocusManager.instance.primaryFocus?.unfocus();
+      return 'ok';
+    }
     if (request == 'release_look') {
       // From here on the screens show what a release build shows (no
       // Developer section on Profile). The screens are rebuilt, not
