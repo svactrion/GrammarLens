@@ -8089,3 +8089,42 @@ round's device check".
   The faded unearned Welcome badge on the shelf is deliberate.
 - **[Tests]** 1487 pass (1485 before); `flutter analyze` clean.
 - **[Not checked]** On a device.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 and the debug panel done; merged into 1.1.0)
+
+On branch `1.1.0-design`, then `1.1.0` fast-forwarded to it; not pushed.
+
+- **[Done]** Batch 5 (N1–N38) and the debug panel (N27). Decisions:
+  `docs/1.1.0-design-side-tracks.md`, "Batch 5 closed".
+- **[Device check scope — Ahmet, iPhone 14 Plus, profile build, debug
+  panel]** The whole checklist seen and approved: the celebrations, the
+  save points and the summit, the signpost, the month card with the
+  112 pt medal, Profile's shelf and headings, dark mode, Reduce Motion,
+  the first-day flow. No item-by-item notes were kept. Other screen sizes
+  were verified only by renders and tests.
+- **[N37 confirmed]** The 112 pt medal accepted on the device. Known
+  result: at 430 × 932, while the card is open, the avatar on START is
+  under the sheet.
+- **[Still open]**
+  - frame times and memory not measured on a device;
+  - the events (Batch 6's and Batch 5's) not seen in DebugView;
+  - the Firebase custom dimensions to register before the release; the
+    developer-traffic filter not set up;
+  - the source images at 97.51 MB (G1), handled before the next theme;
+  - 320 × 568: the summary card scrolls, and a downward drag does not
+    close it while it scrolls;
+  - 320 pt: the "Summit" label covers the avatar;
+  - 29–31-day months: the avatar is drawn over the C5 signpost on one
+    step;
+  - the stars unreadable below 48 pt, "WELCOME" below 96 pt;
+  - Settings' two developer sections (Developer, Debug) not merged.
+- **[1.2 notes, unchanged]** The summit challenge, the rest day, the
+  reachable-tier hint, a tapped object's name, a paywall button on the
+  month card, the monthly report, the mid-month return card
+  (`roadmap.md`, "Parked for 1.2").
+- **[Next]** Release preparation: App Store screenshots and case-study
+  images (the result screen, Profile, the month card and Home changed).
+  Batch 7 (environment motion) is not required for 1.1.0; the decision is
+  Ahmet's.
+- **[Merge]** Full suite and `flutter analyze` run before the merge;
+  `1.1.0` fast-forwarded (`git merge --ff-only`) to `1.1.0-design`.

@@ -13,12 +13,13 @@ The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
 that say "v3" are kept as written.
 
-### 1.1.0 side tracks (design) — defined 2026-09-26, not started
+### 1.1.0 side tracks (design) — defined 2026-09-26
 
 Decisions and reasons: [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md).
 Client-side only, no API cost; does not hold back the shared Daily Test, and
 any batch not ready moves to the next version. Built after the `main` merge,
-one tested commit per batch. Nothing below is started.
+one tested commit per batch. (Written 2026-09-26, when nothing below was
+started; each batch's line has its status.)
 
 *(Owner, 2026-09-30, `build-log.md` "1.1.0 ships with the full scope":
 for 1.1.0 this is overridden. 1.1.0 does not ship before Batches 4–6 are
@@ -101,53 +102,50 @@ D1–D6 in the side-tracks file.)*
       per theme; the flag in all four themes; CLIMB_DEBUG_THEME. *(Was:
       layer slot infrastructure, a ridge/summit silhouette slot and four
       code-drawn summits, replaced by scene art.)*
-- [ ] Batch 5 — themed medals (12 composed images + the Welcome badge),
-      save point names and labels, the tier celebration, the C5 signpost.
-      Decisions N1–N14 (2026-10-02, `1.1.0-design-side-tracks.md`, "Batch
-      5"); Batch 0 report written 2026-10-02
-      (`docs/design/batch5/batch0-report.md`); decisions N15–N26
-      (2026-10-03). **Built 2026-10-03, awaiting device verification**
-      (build log 2026-10-03, "Batch 5 built"); not merged into `1.1.0`.
-      First device check 2026-10-03 (iPhone 14 Plus, profile build, debug
-      panel) → decisions N28–N36; **correction round built 2026-10-03,
-      awaiting device verification** (build log 2026-10-03, "Batch 5
-      correction round built"). Second device check 2026-10-03 → N37,
-      N38, N32 confirmed; built, **awaiting device verification** (build
-      log 2026-10-03, "Batch 5 N37, N38 built").
-      Built: the medals as 512 px assets (528.9 KB; N23's 384 px were
-      374.2 KB), the month card's medal large and centred (112 / 70 /
-      48 pt by screen height, N30, N37), Profile's "Medal collection"
-      shelf with a tap detail and the "This month" bar with its thresholds
-      (N33, N34, N38), the celebration layer (dark,
-      glow and rays, shrink-and-fade close, N28; Welcome moved into it),
-      save points pinned to steps and the climb ending at the flag (N31,
-      N32), save point names and their label, the C5 signpost (moved 4 px
-      inside its clearing, N35), `save_point_reached` /
-      `medal_tier_reached`, `CLIMB_DEBUG_MILESTONE`, the debug panel
-      (N27). Known limits:
-  - [ ] stars unreadable below 48 pt, "WELCOME" below 96 pt;
-  - [ ] Red Canyon's mountain on the Bronze body: the closest colours;
-  - [ ] Ember Peak's smoke partly behind the stars;
-  - [ ] the signpost's thin margin; it grazes the trail's edge on Glacier
-        (light and dark) and Canyon dark (at most 2.7 pt² on screen);
-  - [ ] 320 pt: Summit's label covers the avatar at Medium and Large
-        (accepted by the owner, 2026-10-03: a known flaw);
-  - [ ] 320 × 568: no medal disc lets the fullest month card fit without
-        scrolling (48 pt chosen); while it scrolls, a swipe down scrolls
-        the card instead of closing it (the button and a tap outside
-        close it). Accepted by the owner, 2026-10-03 (N37 entry);
-  - [ ] the unearned Welcome badge stays faded on the shelf: a deliberate
-        choice (owner, 2026-10-03);
-  - [ ] the resting avatar overlaps the C5 signpost on the step it passes
-        it (29–31-day months: 21 % of the signpost's box under the art's
-        box; the avatar is drawn in front);
-  - [ ] the two new events not seen in DebugView; `save_point` and `step`
-        to register;
-  - [ ] the device checklist (build log). *(Was:
-      "themed medal: body, emblem, month label", replaced by N1–N3.)*
-      Device checklist additions (Batch 6, M8, M15): the month transition
-      card with the new medals; review the near-miss threshold (5 points)
-      if the rule changes
+- [x] Batch 5 — themed medals (12 composed images + the Welcome badge),
+      save point names and labels, the tier celebration, the C5 signpost;
+      and the in-app debug panel (N27). **Done 2026-10-03, verified on
+      device, merged into `1.1.0`** by fast-forward (build log 2026-10-03,
+      "Batch 5 and the debug panel done"). Decisions N1–N38 in
+      `1.1.0-design-side-tracks.md` ("Batch 5" and the two device-check
+      sections); Batch 0 report `docs/design/batch5/batch0-report.md`.
+      Built: the medals as 512 px assets (528.9 KB), the celebration layer
+      (dark, glow and rays, shrink-and-fade close; Welcome moved into it;
+      "{Tier} medal earned"), save points pinned to steps and the climb
+      ending at the flag, save point names and their label, the C5
+      signpost, the month card's medal large and centred (112 / 70 / 48 pt
+      by screen height), Profile's "Medal collection" shelf with a tap
+      detail and the "This month" bar with its thresholds,
+      `save_point_reached` / `medal_tier_reached`,
+      `CLIMB_DEBUG_MILESTONE`, the debug panel (theme, day, milestones,
+      month cards, reset).
+      **Device check scope (Ahmet, iPhone 14 Plus, profile build, with the
+      debug panel):** the whole checklist was seen and approved — the
+      celebrations, the save points and the summit, the signpost, the
+      month card with the 112 pt medal, Profile's shelf and headings, dark
+      mode, Reduce Motion, the first-day flow. No item-by-item notes were
+      kept. Other screen sizes were verified only by renders and tests.
+      N37 confirmed: the 112 pt medal on the month card was accepted on
+      the device; its known result: at 430 × 932, while the card is open,
+      the avatar on START is under the sheet. Still open:
+  - [ ] frame times and memory: not measured on a device;
+  - [ ] the events (Batch 6's and Batch 5's): not seen in DebugView;
+  - [ ] the Firebase custom dimensions to register before the release; the
+        developer-traffic filter not set up;
+  - [ ] the source images are 97.51 MB (G1): handled before the next
+        theme (entry below);
+  - [ ] 320 × 568: the summary card scrolls, and while it scrolls a
+        downward drag does not close it;
+  - [ ] 320 pt: the "Summit" label covers the avatar;
+  - [ ] 29–31-day months: on one step the avatar is drawn over the C5
+        signpost;
+  - [ ] the stars are unreadable below 48 pt, "WELCOME" below 96 pt;
+  - [ ] Settings' two developer sections (Developer, Debug) not merged.
+      Recorded earlier and unchanged (artwork notes from the Batch 5
+      build): Red Canyon's mountain on the Bronze body has the closest
+      colours; Ember Peak's smoke is partly behind the stars; the
+      signpost's margin to the trail is thin. The faded unearned Welcome
+      badge on the shelf is deliberate (owner).
 - [x] Batch 6 — month transition card and measurement events; after the
       card, once a month, a zoom from the whole mountain to the avatar.
       **Done 2026-10-02, verified on device, merged into `1.1.0`** by
@@ -175,9 +173,10 @@ D1–D6 in the side-tracks file.)*
   - [ ] the Firebase developer-traffic filter (1.1.0 release checklist);
   - [ ] pre-release check: Home's plaque and the month card may appear in
         App Store screenshots and case-study images
-- **Next: Batch 5 (medals).** Its device checklist keeps the two Batch 6
-  items above (the month card with the new medals; reviewing the
-  near-miss threshold).
+- **Next: release preparation.** App Store screenshots and case-study
+  images: the result screen, Profile, the month card and Home have
+  changed. Batch 7 (environment motion) is not required for 1.1.0; the
+  decision is Ahmet's.
 - [ ] G1 review (scene art; Batch 5 N25, 2026-10-03): the source images
       in the repository are **97.51 MB** (28 files: 86.10 MB scene art,
       11.41 MB medals), against G1's 100 MB review line. Looked at again
