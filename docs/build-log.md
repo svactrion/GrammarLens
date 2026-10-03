@@ -8285,3 +8285,50 @@ not pushed. Docs only. Owner decisions (Ahmet, 2026-10-03), recorded in
   and signal.
 - **P6.** A debug-panel "sample collection" view: Profile's shelf with
   sample months, no stored record written; for screenshots only.
+
+## 2026-10-04 (1.1.0 release preparation — P2, P6 built; the screenshot set drafted; waiting for the owner)
+
+On branch `1.1.0-design` (`1.1.0` merged in first on 2026-10-03: already
+up to date); not merged, not pushed.
+
+- **[Commits]** `eae456e` (P2–P6, docs), `267fbd0` (P2), `ce37761` (P6),
+  `1c965e4` (screenshots: tools, raw captures, draft set), and this one.
+- **[P2 built]** On an iPad the floating nav pill spans the 640 pt column;
+  on an iPhone it keeps its 16 pt from each edge. iPhone proof: 466
+  renders at 320 × 568, 375 × 667, 375 × 812 and 430 × 932 before and
+  after, all identical pixel for pixel
+  (`docs/design/release-1.1.0/p2/iphone_before_after.txt`); iPad renders of
+  the tab screens in `p2/ipad/`.
+- **[P6 built]** Settings → Debug → "Sample collection": Profile's shelf
+  shows the Welcome badge, seven finished months across the four themes
+  and every tier, and the running month, relative to today. Memory only;
+  no stored medal record read or written, no finalization, no
+  `profile_medals_viewed`. Debug and profile builds only. Tests:
+  `test/debug_sample_collection_test.dart` (5). The debug panel test now
+  scrolls the reset button wholly into view (the panel grew by a row).
+- **[Screenshots]** `tool/screenshots/capture.sh` makes the whole set in
+  one command (about 45 minutes): iPhone 17 Pro Max (1320 × 2868, the
+  6.9" slot) and iPad Pro 13-inch (M5) (2064 × 2752, 13"), iOS 26.5,
+  English (US), light, status bar 9:41 with full battery and signal; a
+  fresh install per run; `flutter drive` with a target that seeds a
+  fictional learner ("Sam") and starts the real app without Firebase or
+  RevenueCat, every analytics event dropped and no network call; a driver
+  that taps through the frames and saves each with `simctl io
+  screenshot`. All nine frames are automatic, none manual. Welcome comes
+  from a second, unseeded run. Home's clock is today at 9:41 so the
+  greeting matches the status bar.
+- **[Frame tool]** The 1.0.0 set's own tool was not found. Two earlier
+  Codex iterations from 2026-09-24 are in `~/Documents/Codex/2026-09-24/`
+  but draw other styles and depend on files outside the repository; not
+  copied in. `tool/screenshots/frame.py` rebuilds the style from
+  measurements of the committed images. Difference: Nunito Sans weight
+  800 instead of the rounded face 1.0.0's titles appear to use.
+- **[Added]** `flutter_driver` (SDK) as a dev dependency, for the capture
+  only.
+- **[Size]** The draft adds 26.8 MB of images (raw 15 MB, framed 11.3 MB,
+  overview 0.4 MB); with G1's 97.51 MB of sources the repository's images
+  pass 120 MB (G1's review line is now 200 MB).
+- **[Simulators changed]** Both simulators are now English (US) with the
+  status bar override in place (simulator settings only).
+- **[Tests]** 1499 pass; `flutter analyze` clean.
+- **[Waiting]** Ahmet: captions, typeface, the frames.
