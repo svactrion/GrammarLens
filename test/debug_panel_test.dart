@@ -216,7 +216,7 @@ void main() {
           ClimbDebugControls.instance.playMilestone(v);
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
-          expect(find.text('${v.tier!.label} secured'), findsOneWidget);
+          expect(find.text('${v.tier!.label} medal earned'), findsOneWidget);
           await tester.tap(find.byType(MedalCelebration));
           await tester.pumpAndSettle();
           expect(find.byType(MedalCelebration), findsNothing);
@@ -351,7 +351,7 @@ void main() {
             () => Future<void>.delayed(const Duration(milliseconds: 20)));
         await tester.pump(const Duration(milliseconds: 100));
       }
-      expect(find.text('Gold secured'), findsOneWidget);
+      expect(find.text('Gold medal earned'), findsOneWidget);
       expect(ClimbDebugControls.instance.pending, isNull);
       await tester.tap(find.byType(MedalCelebration));
       await tester.pump(const Duration(milliseconds: 400));

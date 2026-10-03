@@ -220,9 +220,8 @@ void main() {
 
   group('Day-0 climb', () {
     testWidgets(
-        'Start my climb: the confetti plays on the results for its whole '
-        'run, then Home mounts before the step and the pawn climbs to it',
-        (tester) async {
+        'Start my climb (N36: no confetti of its own): Home mounts before '
+        'the step and the pawn climbs to it', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
@@ -232,14 +231,8 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('Start my climb'));
       await tester.pump();
-      // Nothing overlaps: the burst is on the results, Home is not built yet.
-      expect(burst, findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 1000));
-      expect(burst, findsOneWidget);
-      expect(resultsTitle, findsOneWidget);
-      expect(mountain, findsNothing);
+      expect(burst, findsNothing);
 
-      await tester.pump(const Duration(milliseconds: 900));
       // Batch 6 (M14): the first run's zoom (pause + 1.8 s) comes first.
       final seen = await observeHome(tester, frames: 200);
       await tester.pumpAndSettle();
@@ -301,8 +294,8 @@ void main() {
     });
 
     testWidgets(
-        'a slow save keeps the way out disabled until it lands, then Start '
-        'my climb plays the confetti and Home shows the saved step',
+        'a slow save keeps the way out disabled until it lands, then the '
+        'celebration, and Start my climb takes Home to the saved step',
         (tester) async {
       storage.saveGate = Completer<void>();
       await pumpApp(tester);
@@ -344,8 +337,8 @@ void main() {
       await tester.pump();
       await tester.tap(climb);
       await tester.pump();
-      expect(burst, findsOneWidget);
-      expect(mountain, findsNothing);
+      // N36: no confetti of its own.
+      expect(burst, findsNothing);
       final seen = await observeHome(tester, frames: 200);
       await tester.pumpAndSettle();
 
@@ -565,7 +558,8 @@ void main() {
         await tester.pumpAndSettle();
       }
       final order = <String>[];
-      // 1. The celebration, over the results, with its own burst.
+      // 1. The celebration, over the results, with its own burst (the
+      // first day's only confetti).
       expect(celebrationFinder, findsOneWidget);
       expect(resultsTitle, findsOneWidget);
       expect(mountain, findsNothing);
@@ -578,7 +572,8 @@ void main() {
       order.add('results');
       await tester.tap(find.text('Start my climb'));
       await tester.pump();
-      expect(burst, findsOneWidget, reason: 'the button keeps its burst');
+      // N36: one confetti on the first day, the layer's; none here.
+      expect(burst, findsNothing);
       order.add('start my climb');
       await untilMountain(tester);
       order.add('home');

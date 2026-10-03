@@ -57,7 +57,7 @@ void main() {
         });
   });
 
-  // Batch 5 (N1–N3, N23): the composed medals, 384 px WebP from
+  // Batch 5 (N1–N3, N23, N28): the composed medals, 512 px WebP from
   // tool/medals/export_medal_assets.py (its --check compares them with the
   // sources).
   final medals = [
@@ -139,10 +139,10 @@ void main() {
   }
 
   for (final path in medals) {
-    test('$path: 384 × 384, decodes, under 48 KB', () async {
+    test('$path: 512 × 512, decodes, under 48 KB', () async {
       final image = await decode(path);
-      expect(image.width, 384);
-      expect(image.height, 384);
+      expect(image.width, 512);
+      expect(image.height, 512);
       expect((await rootBundle.load(path)).lengthInBytes, lessThan(48 * 1024));
     });
   }

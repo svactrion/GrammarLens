@@ -9,10 +9,11 @@ each as assets/medals/<name>.webp: lossy WebP quality QUALITY, alpha
 lossless (libwebp's default), method 6. 13 files: medal_<theme>_<tier> for
 the four theme ids and three tiers, and medal_welcome.
 
-SIZE (N23): 384 px. The largest medal the app draws is the celebration's,
-a 112 pt disc, whose square canvas is 112 × 768 / 681.95 = 126 pt, 378 px
-at 3x (docs/design/batch5/medal_assets.txt); 384 covers it. A medal above
-128 pt would need 512.
+SIZE (N23, N28): 512 px. The largest medal the app draws is the
+celebration's, a 144 pt disc since N28 (the medal large in the middle),
+whose square canvas is 144 × 768 / 681.95 = 162 pt, 486 px at 3x
+(docs/design/batch5/medal_assets.txt); 512 covers it. N23's 384 px covered
+the earlier 112 pt disc (126 pt canvas) and is too small above 128 pt.
 
 --check: makes the 13 again from the current sources and compares them
 with the committed assets: the same bytes, or (another libwebp) pixels
@@ -36,7 +37,7 @@ REPO = Path(__file__).resolve().parents[2]
 SOURCE = REPO / "docs/design/medals/source"
 ASSETS = REPO / "assets/medals"
 OUT = REPO / "docs/design/batch5/assets"
-SIZE = 384
+SIZE = 512
 QUALITY = 90
 MAX_DIFF = 2
 THEMES = ("green_slope", "ember_peak", "glacier_peak", "red_canyon")

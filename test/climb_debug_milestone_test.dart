@@ -95,7 +95,7 @@ void main() {
       await pumpHome(tester, storage, sink: sink);
       await tester.pump(const Duration(milliseconds: 300));
       expect(celebration, findsOneWidget);
-      expect(find.text('Silver secured'), findsOneWidget);
+      expect(find.text('Silver medal earned'), findsOneWidget);
       expect(find.text('November · Ember Peak'), findsOneWidget);
       expect(
           tester

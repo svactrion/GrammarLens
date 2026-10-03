@@ -609,8 +609,9 @@ void main() {
   }
 
   testWidgets(
-      'a badge earned from Home: Start my climb plays the confetti on the '
-      'results, and only then does Home animate the step', (tester) async {
+      'a badge earned from Home: the celebration first, then Start my climb '
+      '(no confetti of its own, N36) and Home animates the step',
+      (tester) async {
     final storage = _FakeStorageService()
       ..steps = 8
       ..welcomeBadge = true
@@ -644,17 +645,10 @@ void main() {
     expect(find.text('Start my climb'), findsOneWidget);
     expect(find.text('See your climb'), findsNothing);
 
+    // N36: no confetti of its own; the results pop and Home steps.
     await tester.tap(find.text('Start my climb'));
     await tester.pump();
-    expect(find.byType(ConfettiBurst), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 1000));
-    // Still on the results, with the mountain not yet moved.
-    expect(find.byType(DailyTestResultScreen), findsOneWidget);
-    expect(find.byType(ConfettiBurst), findsOneWidget);
-    expect(tester.widget<MonthlyMountain>(mountain).completedDays, 8);
-    expect(pawnTop(), oldTop);
-
-    await tester.pump(const Duration(milliseconds: 900));
+    expect(find.byType(ConfettiBurst), findsNothing);
     for (var i = 0;
         i < 60 && tester.widget<MonthlyMountain>(mountain).completedDays == 8;
         i++) {

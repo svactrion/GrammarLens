@@ -16,7 +16,6 @@ import '../utils/answer_matching.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/confetti_burst.dart';
 import '../widgets/medal_celebration.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
@@ -60,12 +59,6 @@ class DailyTestResultScreen extends StatefulWidget {
   State<DailyTestResultScreen> createState() => _DailyTestResultScreenState();
 }
 
-/// The longest the screen waits for the confetti to finish before it moves on
-/// anyway. The burst takes 1.8 s ([ConfettiBurst.duration]); this only matters
-/// if something stops its animation (a paused ticker, a torn-down overlay), so
-/// a stuck burst can never trap the user on this screen.
-const Duration _climbFallback = Duration(milliseconds: 2500);
-
 class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   late final DailyTestCompletion _completion;
   List<DailyTestAnswerResult> get _results => _completion.results;
@@ -87,18 +80,9 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   /// relaunch never plays it again.
   _Celebration? _celebration;
 
-  /// The "Start my climb" button was tapped. From then on the button is
-  /// disabled, the confetti plays on this screen for its whole run, and only
-  /// then does the screen move on ([_leave]), so the two never overlap.
-  bool _climbStarted = false;
-
-  /// [_leave] has run: the screen is left at most once, whatever combination of
-  /// finished burst, fallback timer and taps gets there.
+  /// [_leave] has run: the screen is left at most once, whatever taps get
+  /// there.
   bool _left = false;
-
-  OverlayEntry? _confettiEntry;
-  Timer? _fallbackTimer;
-  final _climbButtonKey = GlobalKey();
 
   /// Guards `daily_test_completed`/Welcome analytics to at most once per
   /// screen instance, on top of `_saveCompletion`'s own already-completed
@@ -165,75 +149,17 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     }
   }
 
-  /// "Start my climb": the badge is earned and the user chose to move on. The
-  /// confetti plays here, on the results, for its whole run, and [_leave] runs
-  /// when it ends. Where there is no confetti (reduced motion, no overlay to
-  /// draw on) the screen is left at once.
-  void _startClimb() {
-    if (_climbStarted) return;
-    setState(() => _climbStarted = true);
-    if (!_playConfetti()) {
-      _leave();
-      return;
-    }
-    _fallbackTimer = Timer(_climbFallback, _leave);
-  }
-
-  /// Throws the confetti from the top of the button into an overlay above the
-  /// screen, about 1.8 s, in the theme's colors. False when it was not played:
-  /// never under reduced motion (the card alone is the celebration then).
-  bool _playConfetti() {
-    if (MediaQuery.disableAnimationsOf(context)) return false;
-    final overlay = Overlay.maybeOf(context);
-    final button = _climbButtonKey.currentContext?.findRenderObject();
-    if (overlay == null || button is! RenderBox || !button.hasSize) {
-      return false;
-    }
-    final overlayBox = overlay.context.findRenderObject() as RenderBox;
-    final origin = overlayBox.globalToLocal(
-      button.localToGlobal(Offset(button.size.width / 2, 0)),
-    );
-    final colors = Theme.of(context).colorScheme;
-    final entry = OverlayEntry(
-      builder: (_) => ConfettiBurst(
-        origin: origin,
-        colors: [colors.primary, colors.secondary, colors.tertiary],
-        onFinished: _leave,
-      ),
-    );
-    _confettiEntry = entry;
-    overlay.insert(entry);
-    return true;
-  }
-
-  void _removeConfetti() {
-    final entry = _confettiEntry;
-    if (entry == null) return;
-    _confettiEntry = null;
-    entry.remove();
-    entry.dispose();
-  }
-
   /// The way out: pops this route, or, for the Day-0 flow (not a route), calls
   /// [DailyTestResultScreen.onDone]. At most once.
   void _leave() {
     if (_left || !mounted) return;
     _left = true;
-    _fallbackTimer?.cancel();
-    _removeConfetti();
     final onDone = widget.onDone;
     if (onDone != null) {
       onDone();
     } else {
       Navigator.of(context).pop();
     }
-  }
-
-  @override
-  void dispose() {
-    _fallbackTimer?.cancel();
-    _removeConfetti();
-    super.dispose();
   }
 
   /// Analytics for a save that just succeeded (docs/analytics-plan.md E1/E3):
@@ -313,8 +239,9 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     }
     if (_showWelcomeCelebration) {
       return FilledButton(
-        key: _climbButtonKey,
-        onPressed: _climbStarted ? null : _startClimb,
+        // N36: no exit confetti any more (the celebration is in the
+        // layer); the label and the way on stay.
+        onPressed: _leave,
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [

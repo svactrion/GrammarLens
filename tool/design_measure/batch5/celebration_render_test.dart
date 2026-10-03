@@ -1,4 +1,4 @@
-// Batch 5 step 5 (N15): the real MedalCelebration over the real Daily Test
+// Batch 5 step 5 (N15; N28 since the device check): the real MedalCelebration over the real Daily Test
 // result screen, for the Welcome badge and for each tier (October 2026,
 // Green Slope; Silver also on Ember Peak), at 320 × 568, 375 × 812 and
 // 430 × 932, light and dark, Small / Medium / Large (buildAppTheme
@@ -81,7 +81,8 @@ void main() {
   tearDownAll(() => File('$out/celebration_numbers.txt').writeAsStringSync([
         'Batch 5 step 5 (N15): the celebration layer over the real result '
             'screen. The card\'s height and its top and bottom room on the '
-            'screen (safe areas included in the screen). Points.',
+            'screen (safe areas included in the screen). Points. Since N28 '
+            '"card" is the group of the medal, its rays and the text.',
         '',
         'what            screen    text    card h   room above  room below',
         ...rows,
@@ -139,9 +140,12 @@ void main() {
             await tester.pumpAndSettle();
             expect(find.byType(MedalCelebration), findsOneWidget);
             expect(tester.takeException(), isNull);
-            final card = tester.getRect(find.descendant(
-                of: find.byType(MedalCelebration),
-                matching: find.byType(Card)));
+            // N28: the group of medal and text (no card any more).
+            final card = tester.getRect(find
+                .descendant(
+                    of: find.byType(MedalCelebration),
+                    matching: find.byType(Column))
+                .first);
             if (b == Brightness.light) {
               String f(double v) => v.toStringAsFixed(1).padLeft(7);
               rows.add('${what.padRight(15)} ${screen.padRight(9)} '

@@ -60,11 +60,12 @@ The run is deterministic: two runs give byte-identical files (checked
 build/scene_art_venv/bin/python tool/medals/export_medal_assets.py
 ```
 
-Runs `build_medals.py` at 384 px into a temporary folder and writes the
+Runs `build_medals.py` at 512 px into a temporary folder and writes the
 13 medals as `assets/medals/<name>.webp` (WebP quality 90, alpha lossless,
-method 6; 374.2 KB in all, `docs/design/batch5/assets/medal_export.txt`).
-384 px covers the largest medal the app draws, the celebration's 112 pt
-disc (its canvas is 126 pt, 378 px at 3x).
+method 6; see `docs/design/batch5/assets/medal_export.txt` for the bytes).
+512 px covers the largest medal the app draws, the celebration's 144 pt
+disc since N28 (its canvas is 162 pt, 486 px at 3x); 384 px (N23) covered
+the earlier 112 pt disc.
 
 ```bash
 build/scene_art_venv/bin/python tool/medals/export_medal_assets.py --check

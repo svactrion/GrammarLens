@@ -690,8 +690,8 @@ void main() {
           tester.getTopLeft(find.byWidget(e.widget))
       ];
       expect(after, before);
-      // The four results and the layer's own card.
-      expect(find.byType(Card), findsNWidgets(5));
+      // The four results; the layer has no card (N28).
+      expect(find.byType(Card), findsNWidgets(4));
       final medal = tester.widget<MedalBadge>(find.descendant(
           of: celebrationFinder, matching: find.byType(MedalBadge)));
       expect(medal.asset, MedalArt.welcome);
@@ -1063,7 +1063,7 @@ void main() {
     expect(left, 1);
   });
 
-  group('Welcome confetti (on the button tap, overlay, no package)', () {
+  group('N28, N36: the celebration layer and "Start my climb" (Batch 5)', () {
     final burst = find.byType(ConfettiBurst);
     final button = find.byType(FilledButton);
     var left = 0;
@@ -1120,9 +1120,8 @@ void main() {
     }
 
     testWidgets(
-        'N15: earning the badge opens the celebration with one burst from '
-        'its medal; once it is closed nothing plays until the button',
-        (tester) async {
+        'earning the badge opens the layer with one burst from its medal; '
+        'once it is closed nothing plays', (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       await tester.pumpWidget(MaterialApp(
@@ -1146,7 +1145,6 @@ void main() {
       expect(origin.dx, closeTo(medal.center.dx, 1));
       expect(origin.dy, closeTo(medal.center.dy, 1));
       await tester.pumpAndSettle();
-
       await closeCelebration(tester);
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 500));
@@ -1156,170 +1154,130 @@ void main() {
     });
 
     testWidgets(
-        'tapping "Start my climb" throws one burst from the top of the '
-        'button, plays it for its whole 1.8 s, and only then leaves',
+        'N36: "Start my climb" plays no confetti: it leaves at once, once',
         (tester) async {
       tallView(tester);
       await pumpEarned(tester);
-
+      expect(find.text('Start my climb'), findsOneWidget);
       await tester.tap(find.text('Start my climb'));
       await tester.pump();
-      expect(burst, findsOneWidget);
-      expect(ConfettiBurst.duration, const Duration(milliseconds: 1800));
-      final origin = tester.widget<ConfettiBurst>(burst).origin;
-      final rect = tester.getRect(button);
-      expect(origin.dx, closeTo(rect.center.dx, 1));
-      expect(origin.dy, closeTo(rect.top, 1));
-
-      await tester.pump(const Duration(milliseconds: 950));
-      expect(burst, findsOneWidget, reason: 'still playing at 1.0 s');
-      expect(left, 0, reason: 'the screen stays for the whole burst');
-      await tester.pump(const Duration(milliseconds: 900));
-      expect(burst, findsNothing, reason: 'finished by 1.9 s');
-      expect(left, 1);
-    });
-
-    testWidgets(
-        'the button is disabled once tapped: a second tap neither plays a '
-        'second burst nor leaves twice', (tester) async {
-      tallView(tester);
-      await pumpEarned(tester);
-
-      await tester.tap(find.text('Start my climb'));
-      await tester.pump();
-      expect(tester.widget<FilledButton>(button).onPressed, isNull);
-      await tester.tap(button, warnIfMissed: false);
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(button, warnIfMissed: false);
-      await tester.pump();
-      expect(burst, findsOneWidget);
-
-      await tester.pump(const Duration(seconds: 3));
       expect(burst, findsNothing);
       expect(left, 1);
-    });
-
-    testWidgets(
-        'a burst that never finishes cannot trap the user: about 2.5 s '
-        'after the tap the screen leaves anyway', (tester) async {
-      tallView(tester);
-      // Tickers muted: the burst's animation never advances, only the timer.
-      await pumpEarned(tester, muteTickers: true);
-
-      await tester.tap(find.text('Start my climb'));
-      await tester.pump();
-      expect(burst, findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 2400));
-      expect(burst, findsOneWidget);
-      expect(left, 0);
-
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(left, 1);
-      expect(burst, findsNothing);
-    });
-
-    testWidgets(
-        'a finished burst and the fallback timer together leave only once',
-        (tester) async {
-      tallView(tester);
-      await pumpEarned(tester);
-
-      await tester.tap(find.text('Start my climb'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1900));
-      expect(left, 1);
+      await tester.tap(button, warnIfMissed: false);
       await tester.pump(const Duration(seconds: 3));
       expect(left, 1);
-      expect(tester.takeException(), isNull);
     });
 
-    testWidgets("it uses the theme's own colors, light and dark",
-        (tester) async {
+    testWidgets(
+        'N28: the dark layer, the medal large in the middle, light text; the '
+        'same in light and dark mode', (tester) async {
       tallView(tester);
-      for (final brightness in Brightness.values) {
-        await pumpEarned(tester, brightness: brightness);
-        await tester.tap(find.text('Start my climb'));
-        await tester.pump();
-        final scheme = buildAppTheme(brightness).colorScheme;
-
-        expect(tester.widget<ConfettiBurst>(burst).colors,
-            [scheme.primary, scheme.secondary, scheme.tertiary]);
+      for (final b in Brightness.values) {
+        await pumpEarned(tester, brightness: b, keepCelebration: true);
+        final material = tester.widget<Material>(find
+            .descendant(of: celebrationFinder, matching: find.byType(Material))
+            .first);
+        expect(material.color, MedalCelebration.scrim);
+        expect(
+            tester
+                .widget<MedalBadge>(find.descendant(
+                    of: celebrationFinder, matching: find.byType(MedalBadge)))
+                .disc,
+            MedalCelebration.disc);
+        final title = tester.widget<Text>(find.text('Welcome to the climb'));
+        expect(title.style!.color, Colors.white);
+        final rays = tester.widget<CustomPaint>(find.descendant(
+            of: celebrationFinder,
+            matching: find.byWidgetPredicate(
+                (w) => w is CustomPaint && w.painter is CelebrationRays)));
+        expect((rays.painter! as CelebrationRays).colour,
+            MedalCelebration.welcomeOrange);
         await tester.pumpWidget(const SizedBox());
-        await tester.pump(const Duration(seconds: 3));
       }
     });
 
+    testWidgets('N28: the rays turn slowly for a while, then rest',
+        (tester) async {
+      tallView(tester);
+      await pumpEarned(tester, keepCelebration: true);
+      double turn() => (tester
+              .widget<CustomPaint>(find.descendant(
+                  of: celebrationFinder,
+                  matching: find.byWidgetPredicate(
+                      (w) => w is CustomPaint && w.painter is CelebrationRays)))
+              .painter! as CelebrationRays)
+          .turn;
+      // pumpAndSettle in pumpEarned ran them to the end: they rest there.
+      expect(turn(), closeTo(MedalCelebration.raysAngle, 1e-9));
+      expect(tester.hasRunningAnimations, isFalse);
+    });
+
+    testWidgets('N28: the close is a short shrink and fade', (tester) async {
+      tallView(tester);
+      await pumpEarned(tester, keepCelebration: true);
+      await tester.tap(celebrationFinder);
+      await tester.pump();
+      await tester.pump(MedalCelebration.close ~/ 2);
+      final opacity =
+          tester.widget<Opacity>(find.byKey(MedalCelebration.fadeKey));
+      expect(opacity.opacity, inExclusiveRange(0, 1));
+      final scale =
+          tester.widget<Transform>(find.byKey(MedalCelebration.scaleKey));
+      expect(scale.transform.entry(0, 0), lessThan(1));
+      await tester.pump(MedalCelebration.close);
+      await tester.pump();
+      expect(celebrationFinder, findsNothing);
+      expect(find.text('Start my climb'), findsOneWidget);
+    });
+
     testWidgets(
-        'reduced motion: no confetti at all, the celebration simply appears, '
-        'and the button leaves at once', (tester) async {
+        'Reduce Motion: no confetti, no fade in, no turning; the close is a '
+        'fade only; the button leaves at once', (tester) async {
       tallView(tester);
       reduceMotion(tester, true);
       await pumpEarned(tester, keepCelebration: true);
-
-      // At once: no fade, no burst.
       expect(celebrationFinder, findsOneWidget);
-      final fade = tester.widget<FadeTransition>(find
-          .descendant(
-              of: celebrationFinder, matching: find.byType(FadeTransition))
-          .first);
-      expect(fade.opacity.value, 1);
       expect(burst, findsNothing);
-      await closeCelebration(tester);
-
+      expect(tester.hasRunningAnimations, isFalse);
+      final opacity =
+          tester.widget<Opacity>(find.byKey(MedalCelebration.fadeKey));
+      expect(opacity.opacity, 1);
+      await tester.tap(celebrationFinder);
+      await tester.pump();
+      await tester.pump(MedalCelebration.close ~/ 2);
+      expect(
+          tester
+              .widget<Transform>(find.byKey(MedalCelebration.scaleKey))
+              .transform
+              .entry(0, 0),
+          1);
+      await tester.pump(MedalCelebration.close);
+      await tester.pump();
+      expect(celebrationFinder, findsNothing);
       await tester.tap(find.text('Start my climb'));
       await tester.pump();
-
       expect(burst, findsNothing);
       expect(left, 1);
     });
 
     testWidgets(
-        'no badge, no confetti: an ordinary Day-0 result leaves at once from '
-        '"Continue"', (tester) async {
-      storageService.welcomeBadgeJustEarned = false;
-      await tester.pumpWidget(MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: DailyTestResultScreen(
-          dailyTestSet: freshSet(),
-          answers: answers,
-          dailyTestService: dailyTestService,
-          analyticsService: analyticsService,
-          isDay0: true,
-          onDone: () => left++,
-        ),
-      ));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Continue'));
-      await tester.pump();
-
-      expect(burst, findsNothing);
-      expect(left, 1);
-    });
-
-    testWidgets(
-        'a failed first attempt plays nothing; the retry that earns it shows '
-        'the button, and the burst still waits for the tap', (tester) async {
+        'a failed first attempt plays nothing; the retry that earns it opens '
+        'the layer once', (tester) async {
       tallView(tester);
       storageService.failCompletionWith = StateError('disk full');
       await pumpEarned(tester);
       expect(burst, findsNothing);
+      expect(celebrationFinder, findsNothing);
       expect(find.text('Start my climb'), findsNothing);
 
       storageService.failCompletionWith = null;
       await tester.tap(find.text('Try saving again'));
       await tester.pumpAndSettle();
-      // The retry that earns it opens the celebration (N15), once.
       await closeCelebration(tester);
-      expect(burst, findsNothing);
       expect(find.text('Start my climb'), findsOneWidget);
-
-      await tester.tap(find.text('Start my climb'));
-      await tester.pump();
-      expect(burst, findsOneWidget);
     });
 
-    testWidgets('the celebration fades in over 200 ms instead of jumping',
+    testWidgets('the layer fades in over 200 ms instead of jumping',
         (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
@@ -1334,13 +1292,11 @@ void main() {
       ));
       await tester.pump();
       await tester.pump();
-      final fade = tester.widget<FadeTransition>(find
-          .descendant(
-              of: celebrationFinder, matching: find.byType(FadeTransition))
-          .first);
-      expect(fade.opacity.value, lessThan(1));
+      double opacity() =>
+          tester.widget<Opacity>(find.byKey(MedalCelebration.fadeKey)).opacity;
+      expect(opacity(), lessThan(1));
       await tester.pump(MedalCelebration.fadeIn);
-      expect(fade.opacity.value, 1);
+      expect(opacity(), 1);
       await tester.pumpAndSettle();
     });
 
@@ -1364,28 +1320,11 @@ void main() {
         expect(burst, findsNothing);
         expect(celebrationFinder, findsNothing);
       }
-    });
-
-    testWidgets(
-        'leaving the screen mid-burst removes it at once, cancels the '
-        'fallback, and never calls onDone', (tester) async {
-      tallView(tester);
-      await pumpEarned(tester);
-      await tester.tap(find.text('Start my climb'));
-      await tester.pump(const Duration(milliseconds: 500));
-      expect(burst, findsOneWidget);
-
-      await tester.pumpWidget(MaterialApp(home: Container()));
-      await tester.pump();
-      expect(burst, findsNothing);
-      await tester.pump(const Duration(seconds: 3));
       expect(tester.takeException(), isNull);
-      expect(left, 0);
     });
 
-    testWidgets(
-        'from Home: the route is popped only after the burst, and an '
-        'ordinary result pops at once', (tester) async {
+    testWidgets('from Home: "Start my climb" pops the route at once',
+        (tester) async {
       tallView(tester);
       storageService.welcomeBadgeJustEarned = true;
       await tester.pumpWidget(MaterialApp(
@@ -1408,24 +1347,25 @@ void main() {
       ));
       await tester.tap(find.text('open results'));
       await tester.pumpAndSettle();
-      expect(find.text('Daily Test Results'), findsOneWidget);
       await closeCelebration(tester);
-
       await tester.tap(find.text('Start my climb'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1000));
-      expect(find.text('Daily Test Results'), findsOneWidget);
-      expect(burst, findsOneWidget);
-
-      await tester.pump(const Duration(milliseconds: 900));
       await tester.pumpAndSettle();
       expect(find.text('open results'), findsOneWidget);
       expect(find.text('Daily Test Results'), findsNothing);
       expect(burst, findsNothing);
     });
+
+    test('N28: each tier has its glow colour; Welcome the brand orange', () {
+      expect(MedalCelebration.glowFor(MedalTier.gold), MedalCelebration.gold);
+      expect(
+          MedalCelebration.glowFor(MedalTier.silver), MedalCelebration.silver);
+      expect(
+          MedalCelebration.glowFor(MedalTier.bronze), MedalCelebration.copper);
+      expect(MedalCelebration.glowFor(null), MedalCelebration.welcomeOrange);
+    });
   });
 
-  group('N15, N24: a tier secured (Batch 5)', () {
+  group('N15, N24, N29: a tier earned (Batch 5)', () {
     // The fixture's completion: one step, 1 correct + 2 wrong = 4 points.
     DailyTestSet setOn(String day) =>
         DailyTestSet(day: day, questions: questions);
@@ -1455,7 +1395,7 @@ void main() {
         expect(medal.asset, MedalArt.monthly('green_slope', tier));
         expect(medal.earned, isTrue);
 
-        await closeCelebration(tester, title: '${tier.label} secured');
+        await closeCelebration(tester, title: '${tier.label} medal earned');
         expect(find.text('See your climb'), findsOneWidget);
         await tester.pump(const Duration(seconds: 3));
         expect(celebrationFinder, findsNothing);
@@ -1523,7 +1463,7 @@ void main() {
       await pumpResult(tester, setOn('2026-10-20'));
       expect(celebrationFinder, findsOneWidget);
       expect(burst, findsNothing);
-      await closeCelebration(tester, title: 'Bronze secured');
+      await closeCelebration(tester, title: 'Bronze medal earned');
     });
 
     testWidgets('with motion the burst comes from the medal at the opening',
@@ -1544,7 +1484,7 @@ void main() {
       expect(find.descendant(of: celebrationFinder, matching: burst),
           findsOneWidget);
       await tester.pumpAndSettle();
-      await closeCelebration(tester, title: 'Gold secured');
+      await closeCelebration(tester, title: 'Gold medal earned');
     });
   });
 
@@ -1577,7 +1517,7 @@ void main() {
         'rule_version': 1,
       });
       // Not again: the result stays, nothing re-reports.
-      await closeCelebration(tester, title: 'Silver secured');
+      await closeCelebration(tester, title: 'Silver medal earned');
       await tester.pump(const Duration(seconds: 5));
       expect(analyticsSink.named('save_point_reached'), hasLength(1));
       expect(analyticsSink.named('medal_tier_reached'), hasLength(1));
