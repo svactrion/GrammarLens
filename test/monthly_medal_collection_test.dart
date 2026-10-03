@@ -316,6 +316,26 @@ void main() {
     }
   });
 
+  testWidgets(
+      'N38: "This month" labels the bar, under the shelf; the theme with '
+      'the points under the bar', (tester) async {
+    await pumpCollection(tester,
+        width: 375,
+        welcomeBadge: welcomeBadgeFixture,
+        currentProgress: november(score: 80),
+        results: [goldOctober],
+        themeIds: storedThemes);
+    final label = find.byKey(MedalProgressBar.thisMonthKey);
+    expect(tester.widget<Text>(label).data, 'This month');
+    final shelfBottom =
+        tester.getRect(find.byKey(MonthlyMedalCollection.slotKey(2026, 11)));
+    final bar = tester.getRect(find.byType(LinearProgressIndicator));
+    expect(tester.getRect(label).top, greaterThan(shelfBottom.bottom));
+    expect(tester.getRect(label).bottom, lessThan(bar.top));
+    expect(find.text('Ember Peak · 80 / 300 points · 6 active days'),
+        findsOneWidget);
+  });
+
   test('themeFor: stored, else the calendar (running) or Green Slope', () {
     expect(
         MonthlyMedalCollection.themeFor(2027, 1, {(2027, 1): 'glacier_peak'}),

@@ -4,11 +4,11 @@ case    width  text    height
 empty   320    medium  269.2
 empty   375    medium  269.2
 empty   430    medium  269.2
-three   320    medium  370.4
+three   320    medium  389.4
 three   375    medium  269.2
 three   430    medium  269.2
 twelve  320    small   652.6
-twelve  320    medium  673.8
-twelve  320    large   712.0
+twelve  320    medium  692.8
+twelve  320    large   710.0
 twelve  375    medium  572.6
 twelve  430    medium  572.6

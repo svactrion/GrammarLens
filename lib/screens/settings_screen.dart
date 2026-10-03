@@ -398,7 +398,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          const _SectionLabel('Monthly medals'),
+          const _SectionLabel('Medal collection'),
           const SizedBox(height: 8),
           if (_medalsLoading)
             const Center(child: CircularProgressIndicator())
@@ -631,8 +631,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: 'Debug',
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => DebugPanelScreen(
-                    onResetLocalData:
-                        widget.onResetLocalData ?? () async {}),
+                    onResetLocalData: widget.onResetLocalData ?? () async {}),
               )),
             ),
           ],

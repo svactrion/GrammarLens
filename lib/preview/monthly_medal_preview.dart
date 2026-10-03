@@ -343,7 +343,7 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
               onChanged: (value) => setState(() => _welcomeEarned = value),
             ),
             const SizedBox(height: Spacing.xl),
-            Text('Monthly medals',
+            Text('Medal collection',
                 style: Theme.of(context)
                     .textTheme
                     .titleSmall

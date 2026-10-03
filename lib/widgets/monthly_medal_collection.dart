@@ -16,9 +16,10 @@ import 'medal_tier_color.dart';
 /// shelf. Tapping a medal brings it forward, larger, with its month, theme,
 /// tier, steps and points; a tap anywhere closes it ([showMedalDetail]).
 ///
-/// Under the shelf, the running month's bar (N33, [MedalProgressBar]):
-/// each tier's threshold written under its mark and the current score, all
-/// from `MonthlyMedalRules`.
+/// Under the shelf, the running month's bar (N33, [MedalProgressBar]),
+/// labelled "This month" (N38): each tier's threshold written under its
+/// mark and the current score, all from `MonthlyMedalRules`. Profile heads
+/// the section "Medal collection" (N38).
 class MonthlyMedalCollection extends StatelessWidget {
   /// A separate, one-time achievement — not a fourth tier
   /// (docs/prd-gamification.md §M6.5): first on the shelf, faded until
@@ -378,6 +379,11 @@ class MedalProgressBar extends StatelessWidget {
       {super.key, required this.progress, required this.theme});
 
   static const barKey = ValueKey('medal_progress_bar');
+
+  /// N38: the bar's label: it belongs to the running month, the shelf
+  /// above it to every month.
+  static const thisMonth = 'This month';
+  static const thisMonthKey = ValueKey('medal_progress_this_month');
   static ValueKey<String> thresholdKey(MedalTier tier) =>
       ValueKey('medal_threshold_${tier.name}');
   static const scoreKey = ValueKey('medal_progress_score');
@@ -414,7 +420,8 @@ class MedalProgressBar extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Expanded(
-                child: Text('This month · ${theme.name}',
+                child: Text(thisMonth,
+                    key: thisMonthKey,
                     style: t.textTheme.titleSmall
                         ?.copyWith(fontWeight: FontWeight.w700)),
               ),
@@ -483,7 +490,7 @@ class MedalProgressBar extends StatelessWidget {
         }),
         const SizedBox(height: 6),
         Text(
-          '${progress.score} / $max points · '
+          '${theme.name} · ${progress.score} / $max points · '
           '${progress.activeDays} active days',
           style:
               t.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
