@@ -131,7 +131,10 @@ D1–D6 in the side-tracks file.)*
         (accepted by the owner, 2026-10-03: a known flaw);
   - [ ] 320 × 568: no medal disc lets the fullest month card fit without
         scrolling (48 pt chosen); while it scrolls, a swipe down scrolls
-        the card instead of closing it;
+        the card instead of closing it (the button and a tap outside
+        close it). Accepted by the owner, 2026-10-03 (N37 entry);
+  - [ ] the unearned Welcome badge stays faded on the shelf: a deliberate
+        choice (owner, 2026-10-03);
   - [ ] the resting avatar overlaps the C5 signpost on the step it passes
         it (29–31-day months: 21 % of the signpost's box under the art's
         box; the avatar is drawn in front);
@@ -199,6 +202,13 @@ Parked for 1.2 (not 1.1.0):
 - Tapping a save point shows its name (2026-10-02, Batch 5 N6). In 1.1.0
   the name shows only once, when the avatar arrives. Not designed.
 - A save point earns a "rest day" (2026-10-02, Batch 5 N7). Not designed.
+- A summit challenge (2026-10-03, after N32): the part of the trail past
+  the flag, unused since the climb ends at the flag, opened for a user who
+  reaches the flag and earns Gold. Decided on the first month's
+  `save_point_reached` data; the flag's "Summit" name is reconsidered
+  then. Not designed.
+- A button on the month card that leads to the paywall (2026-10-03). The
+  card's layout must be measured again then (N37's discs). Not designed.
 
 ## Launch scope — 2026-09-19
 
