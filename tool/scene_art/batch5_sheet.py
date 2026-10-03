@@ -16,6 +16,9 @@ card:    build/design_measure/batch5_card (Batch 6's month_card_real_render_test
          summary_320_textsizes.jpg, the numbers and card_compare.txt.
 celebration: build/design_measure/batch5_celebration (celebration_render_test.dart)
          -> celebration/: the five cases at 375 pt, 320 pt text sizes, numbers.
+labels_real: build/design_measure/batch5_labels_real (label_real_render_test.dart)
+         -> labels_real/: the five labels at 320 / 375 / 430, 320 pt text sizes,
+         375 pt dark, numbers.
 profile: build/design_measure/batch5_profile (profile_render_test.dart) ->
          profile/: profile_<mode>_medium.jpg, profile_320_textsizes.jpg, numbers.
 welcome: build/design_measure/batch5_welcome (welcome_result_test.dart) ->
@@ -190,6 +193,23 @@ def celebration() -> None:
     shutil.copy(src / "celebration_numbers.txt", out)
 
 
+def labels_real() -> None:
+    """Batch 5 step 6 (N19): the real label on the real Home
+    (label_real_render_test.dart)."""
+    src, out = BUILD / "batch5_labels_real", OUT / "labels_real"
+    out.mkdir(parents=True, exist_ok=True)
+    cells = [[Image.open(src / f"label_{c}_{w}_light_medium.png") for w in (320, 375, 430)] for c, _ in LABELS]
+    grid(cells, [f"{w} pt, Medium, light" for w in (320, 375, 430)], 0.5).save(
+        out / "labels_light_medium.jpg", quality=84)
+    cells = [[Image.open(src / f"label_{c}_320_light_{s}.png") for s in ("small", "medium", "large")]
+             for c, _ in LABELS]
+    grid(cells, [f"320 pt, {s}, light" for s in ("Small", "Medium", "Large")], 0.5).save(
+        out / "labels_320_light_textsizes.jpg", quality=84)
+    cells = [[Image.open(src / f"label_{c}_375_dark_medium.png") for c, _ in LABELS]]
+    grid(cells, [f"{c} {n}" for c, n in LABELS], 0.5).save(out / "labels_375_dark_medium.jpg", quality=84)
+    shutil.copy(src / "save_point_labels_real.txt", out)
+
+
 if __name__ == "__main__":
     {"sites": sites, "labels": labels, "welcome": welcome, "card": card, "profile": profile,
-     "celebration": celebration}[sys.argv[1]]()
+     "celebration": celebration, "labels_real": labels_real}[sys.argv[1]]()

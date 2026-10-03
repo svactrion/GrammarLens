@@ -350,3 +350,12 @@ Step 5 (N15): the real celebration layer over the real result screen
 (Welcome, Bronze, Silver, Gold, Silver on Ember Peak), 320 × 568 /
 375 × 812 / 430 × 932, light and dark, three text sizes, then
 `batch5_sheet.py celebration` (`docs/design/batch5/celebration/`).
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_labels_real flutter test tool/design_measure/batch5/label_real_render_test.dart
+```
+
+Step 6 (N6, N19): the real save point label on the real Home, which is
+given a pending step so it hops onto each save point (the flag on the
+31st); what the label touches; then `batch5_sheet.py labels_real`
+(`docs/design/batch5/labels_real/`).

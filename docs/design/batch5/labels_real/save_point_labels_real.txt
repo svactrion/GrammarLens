@@ -1,0 +1,48 @@
+Batch 5 step 6 (N19): the real label on the real Home, October 2026 (31 days), light. Points. top room: the label's top below the window's top; chips: the month chip's bottom (ClimbCard.chipRects); touches: what the label's box overlaps (the avatar: the share of its art's box covered).
+
+object              step  width text    label w x h     top room  chips  touches
+C1 First Camp        7  320   small   83.4 x 22.0        201.5   45.0  -
+C1 First Camp        7  320   medium  90.4 x 24.0        199.5   48.0  -
+C1 First Camp        7  320   large   97.4 x 26.0        197.5   51.0  -
+C1 First Camp        7  375   small   83.4 x 22.0        196.9   45.0  -
+C1 First Camp        7  375   medium  90.4 x 24.0        194.9   48.0  -
+C1 First Camp        7  375   large   97.4 x 26.0        192.9   51.0  -
+C1 First Camp        7  430   small   83.4 x 22.0        192.7   45.0  -
+C1 First Camp        7  430   medium  90.4 x 24.0        190.7   48.0  -
+C1 First Camp        7  430   large   97.4 x 26.0        188.7   51.0  -
+C2 Halfway Hut      15  320   small   95.7 x 22.0        174.0   45.0  -
+C2 Halfway Hut      15  320   medium  104.0 x 24.0       172.0   48.0  -
+C2 Halfway Hut      15  320   large   112.2 x 26.0       170.0   51.0  -
+C2 Halfway Hut      15  375   small   95.7 x 22.0        196.9   45.0  -
+C2 Halfway Hut      15  375   medium  104.0 x 24.0       194.9   48.0  -
+C2 Halfway Hut      15  375   large   112.2 x 26.0       192.9   51.0  -
+C2 Halfway Hut      15  430   small   95.7 x 22.0        192.7   45.0  -
+C2 Halfway Hut      15  430   medium  104.0 x 24.0       190.7   48.0  -
+C2 Halfway Hut      15  430   large   112.2 x 26.0       188.7   51.0  -
+C3 Mountain Spring  21  320   small   121.5 x 22.0       126.4   45.0  -
+C3 Mountain Spring  21  320   medium  132.3 x 24.0       124.4   48.0  -
+C3 Mountain Spring  21  320   large   143.1 x 26.0       122.4   51.0  -
+C3 Mountain Spring  21  375   small   121.5 x 22.0       154.6   45.0  -
+C3 Mountain Spring  21  375   medium  132.3 x 24.0       152.6   48.0  -
+C3 Mountain Spring  21  375   large   143.1 x 26.0       150.6   51.0  -
+C3 Mountain Spring  21  430   small   121.5 x 22.0       181.1   45.0  -
+C3 Mountain Spring  21  430   medium  132.3 x 24.0       179.1   48.0  -
+C3 Mountain Spring  21  430   large   143.1 x 26.0       177.1   51.0  -
+C4 High Camp        26  320   small   85.3 x 22.0         78.7   45.0  summit_flag
+C4 High Camp        26  320   medium  92.5 x 24.0         76.7   48.0  summit_flag
+C4 High Camp        26  320   large   99.8 x 26.0         74.7   51.0  summit_flag
+C4 High Camp        26  375   small   85.3 x 22.0         98.0   45.0  summit_flag
+C4 High Camp        26  375   medium  92.5 x 24.0         96.0   48.0  summit_flag
+C4 High Camp        26  375   large   99.8 x 26.0         94.0   51.0  summit_flag
+C4 High Camp        26  430   small   85.3 x 22.0        116.2   45.0  summit_flag
+C4 High Camp        26  430   medium  92.5 x 24.0        114.2   48.0  summit_flag
+C4 High Camp        26  430   large   99.8 x 26.0        112.2   51.0  summit_flag
+C6 Summit           31  320   small   63.0 x 22.0         29.6   45.0  -
+C6 Summit           31  320   medium  68.1 x 24.0         52.0   48.0  avatar (60 %)
+C6 Summit           31  320   large   73.1 x 26.0         55.0   51.0  avatar (78 %)
+C6 Summit           31  375   small   63.0 x 22.0         39.9   45.0  -
+C6 Summit           31  375   medium  68.1 x 24.0         37.9   48.0  -
+C6 Summit           31  375   large   73.1 x 26.0         35.9   51.0  -
+C6 Summit           31  430   small   63.0 x 22.0         49.5   45.0  -
+C6 Summit           31  430   medium  68.1 x 24.0         47.5   48.0  -
+C6 Summit           31  430   large   73.1 x 26.0         45.5   51.0  -

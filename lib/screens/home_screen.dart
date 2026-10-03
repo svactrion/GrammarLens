@@ -1080,6 +1080,11 @@ class _HomeScreenState extends State<HomeScreen>
                   onMotionEnd: _onMountainMotionEnd,
                   zoom: _zoom.active ? _zoom.progress : null,
                   zoomCrossFade: _zoom.crossFade,
+                  labelAvoid: (width) => ClimbCard.chipRects(context,
+                      width: width,
+                      month: _climbMonth,
+                      steps: _climbSteps!,
+                      days: days),
                 ),
                 // Under the window, not over the scene (design decision D9).
                 scoreBar: ClimbScoreBar(

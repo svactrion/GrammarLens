@@ -90,6 +90,40 @@ class ClimbCard extends StatelessWidget {
     return height;
   }
 
+  /// The month and step chips' boxes in the mountain window's points, for a
+  /// window [width] wide: the save point label moves below a chip it would
+  /// touch (Batch 5, N19). Each chip is its text in labelLarge bold, 6 pt
+  /// either side and 2 pt above and below, 10 pt in from the window's
+  /// side, its top at the plaque's lower half plus 6 pt.
+  static List<Rect> chipRects(BuildContext context,
+      {required double width,
+      required DateTime month,
+      required int steps,
+      required int days}) {
+    final style = Theme.of(context)
+        .textTheme
+        .labelLarge
+        ?.copyWith(fontWeight: FontWeight.w700);
+    Size measure(String text) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout();
+      final size = Size(painter.width + 12, painter.height + 4);
+      painter.dispose();
+      return size;
+    }
+
+    final top = plaqueHeight(context) / 2 + 6;
+    final monthChip = measure(monthNames[month.month - 1]);
+    final stepsChip = measure('$steps / $days');
+    return [
+      Offset(10, top) & monthChip,
+      Offset(width - 10 - stepsChip.width, top) & stepsChip,
+    ];
+  }
+
   static TextStyle? _plaqueStyle(BuildContext context) => Theme.of(context)
       .textTheme
       .titleMedium

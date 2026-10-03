@@ -32,6 +32,14 @@ class ClimbSavePoint {
 
   String get asset => ClimbSavePoints.assetFor(object);
 
+  /// Its name (Batch 5, N6), the same in every theme: shown in the label
+  /// when the avatar reaches it.
+  String get name => ClimbSavePoints.names[object]!;
+
+  /// The `save_point` value of `save_point_reached` (N21): the name in
+  /// snake case.
+  String get eventId => name.toLowerCase().replaceAll(' ', '_');
+
   /// G8's "reached": the avatar's arc along the trail is at least [arc].
   bool reachedAt(double avatarArc) => avatarArc >= arc - 1e-9;
 
@@ -47,6 +55,16 @@ class ClimbSavePoint {
 
 abstract final class ClimbSavePoints {
   static String assetFor(String object) => 'assets/climb/objects/$object.webp';
+
+  /// N6: the save points' names, by object, the same in all four themes.
+  /// The signpost has none: it is decoration (N11).
+  static const names = {
+    'tent': 'First Camp',
+    'cabin': 'Halfway Hut',
+    'fountain': 'Mountain Spring',
+    'campfire': 'High Camp',
+    'summit_flag': 'Summit',
+  };
 
   /// G10: the flag split in two, for a theme that recolours the pennant:
   /// the pennant alone, and the flag without it (their alphas add up to the
@@ -155,6 +173,14 @@ abstract final class ClimbSavePoints {
         rect: p.rect,
         arc: ClimbRoute.length);
   }();
+
+  /// Decoration (Batch 5, N11, N18): the C5 signpost, from the generated
+  /// table. Not a save point: never reached, never named, no label, always
+  /// drawn lit (in dark mode through the theme's relighting like the rest).
+  static final List<ClimbSavePoint> decor = [
+    for (final (clearing, object, cx, cy, bw, bh, ratio) in climbDecorTable)
+      _place(clearing, object, cx, cy, bw, bh, ratio),
+  ];
 
   // G8: an unreached save point is faded, lower opacity and a slight
   // desaturation; reached, it takes its own colours.

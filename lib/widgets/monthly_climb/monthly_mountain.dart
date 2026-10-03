@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
@@ -27,6 +28,28 @@ class MonthlyMountain extends StatefulWidget {
 
   /// G8: how long a reached save point takes to light, after the hop.
   static const savePointFade = Duration(milliseconds: 400);
+
+  /// N6, N19: the name label of a save point just reached: it fades in
+  /// with the light-up at the hop's end, stays, and fades out. Under
+  /// Reduce Motion it appears and goes without animation and stays
+  /// [labelShownReduceMotion].
+  static const labelFadeIn = Duration(milliseconds: 200);
+  static const labelShown = Duration(milliseconds: 2500);
+  static const labelFadeOut = Duration(milliseconds: 400);
+  static const labelShownReduceMotion = Duration(seconds: 3);
+
+  /// The label's gap above what it stands over, and its inset from the
+  /// window's sides.
+  static const labelGap = 4.0;
+  static const labelInset = 6.0;
+
+  /// The top of an avatar's art in its tile, as a share of the tile: the
+  /// highest of the 16 (alpha > 40; Batch 5 Batch 0 §3). N19 puts the label
+  /// above the object and the avatar together, so the arriving avatar's
+  /// head stays in view.
+  static const avatarArtTop = .045;
+
+  static const labelKey = ValueKey('climb_save_point_label');
 
   /// Scene art G5: faint dots on the days already walked, like a trail
   /// left behind; future days are not marked. **The one switch:** false
@@ -63,6 +86,12 @@ class MonthlyMountain extends StatefulWidget {
   /// over the daily one, instead of the zoom.
   final bool zoomCrossFade;
 
+  /// The boxes the label must not touch, in the window's points, for a
+  /// window of the given width (N19): the card's month and step chips
+  /// (`ClimbCard.chipRects`). A label that would touch one moves down below
+  /// it; the chips are never hidden. Null: none.
+  final List<Rect> Function(double width)? labelAvoid;
+
   const MonthlyMountain(
       {super.key,
       required this.days,
@@ -72,7 +101,8 @@ class MonthlyMountain extends StatefulWidget {
       this.showPassedDayDots = passedDayDots,
       this.onMotionEnd,
       this.zoom,
-      this.zoomCrossFade = false});
+      this.zoomCrossFade = false,
+      this.labelAvoid});
 
   /// The repaint boundary around the scene (tests count its paints).
   static const sceneKey = ValueKey('climb_scene_layer');
@@ -95,6 +125,14 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   /// Save points shown as reached, and those fading in now (by clearing).
   final _lit = <String>{};
   final _fading = <String>{};
+
+  /// N6, N19: the save point whose name label shows now, and its run.
+  late final AnimationController _label;
+  ClimbSavePoint? _labelled;
+
+  /// Under Reduce Motion the label is not animated at all: it shows, and
+  /// this ends it.
+  Timer? _labelTimer;
   late ClimbRoute _route;
   double _from = 0, _to = 0;
   bool _reduceMotion = false;
@@ -131,6 +169,14 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         vsync: this, duration: const Duration(milliseconds: 850), value: 1);
     _fade = AnimationController(
         vsync: this, duration: MonthlyMountain.savePointFade);
+    _label = AnimationController(vsync: this)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed && mounted) {
+          setState(() => _labelled = null);
+        }
+      });
+    // The position the scene mounts at shows no label: only a step taken
+    // while it is shown does (N6).
     _lit.addAll(_reached());
   }
 
@@ -155,6 +201,9 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     final added = reached.difference(_lit).difference(_fading);
     final keep = reached.containsAll(_lit) && reached.containsAll(_fading);
     if (added.isEmpty && keep) return;
+    // A step forward onto a save point: its name, with or without Reduce
+    // Motion. A step back or a new month changes states without one.
+    if (keep) _showLabel(added);
     if (!keep || _reduceMotion) {
       _fade.stop();
       setState(() {
@@ -173,6 +222,42 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         _fading.clear();
       });
     }, onError: (_) {});
+  }
+
+  /// N6, N19: the label of the furthest save point in [clearings], once.
+  /// None during a zoom: the label stands in the daily framing.
+  void _showLabel(Set<String> clearings) {
+    if (widget.zoom != null) return;
+    final reached = [
+      for (final p in _objects)
+        if (clearings.contains(p.clearing)) p
+    ]..sort((a, b) => a.arc.compareTo(b.arc));
+    if (reached.isEmpty) return;
+    setState(() => _labelled = reached.last);
+    _labelTimer?.cancel();
+    if (_reduceMotion) {
+      _label.stop();
+      _labelTimer = Timer(MonthlyMountain.labelShownReduceMotion, () {
+        if (mounted) setState(() => _labelled = null);
+      });
+      return;
+    }
+    _label.duration = MonthlyMountain.labelFadeIn +
+        MonthlyMountain.labelShown +
+        MonthlyMountain.labelFadeOut;
+    _label.forward(from: 0);
+  }
+
+  /// The label's opacity now: in, shown, out; always 1 under Reduce Motion.
+  double get _labelOpacity {
+    if (_reduceMotion) return 1;
+    final t = _label.value * _label.duration!.inMicroseconds;
+    final fadeIn = MonthlyMountain.labelFadeIn.inMicroseconds;
+    final fadeOut = MonthlyMountain.labelFadeOut.inMicroseconds;
+    final total = _label.duration!.inMicroseconds;
+    if (t < fadeIn) return t / fadeIn;
+    if (t > total - fadeOut) return ((total - t) / fadeOut).clamp(0.0, 1.0);
+    return 1;
   }
 
   /// 0 unreached, 1 reached, in between while fading in.
@@ -234,6 +319,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
   void dispose() {
     _motion.dispose();
     _fade.dispose();
+    _label.dispose();
+    _labelTimer?.cancel();
     super.dispose();
   }
 
@@ -248,7 +335,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
         brightness == Brightness.dark ? climbObjectDarkGain[theme.id] : null;
     final savePoints = [
       for (final p in ClimbSavePoints.all)
-        '${p.object} at step ${p.reachedOn(widget.days)}'
+        '${p.name} at step ${p.reachedOn(widget.days)}'
     ].join(', ');
     return Semantics(
       label: '${theme.name}. $_shownSteps of ${widget.days} steps. '
@@ -266,7 +353,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                 color: palette.sky,
                 child: ExcludeSemantics(
                     child: AnimatedBuilder(
-                  animation: Listenable.merge([_motion, _fade]),
+                  animation: Listenable.merge([_motion, _fade, _label]),
                   builder: (context, _) {
                     final pawn = _route.pointAt(_day) * camera.scale;
                     // The camera follows the trail point, not the hop, so
@@ -317,6 +404,17 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                                     for (var d = 0; d < _day; d++)
                                       _route.stepAt(d) * camera.scale
                                   ], color: palette.ink))),
+                                // The C5 signpost (N11, N18): decoration,
+                                // always lit, under the save points.
+                                for (final p in ClimbSavePoints.decor)
+                                  Positioned.fromRect(
+                                      rect: _scaled(p.rect, camera.scale),
+                                      child: ClimbObjectLayer(
+                                          key: ValueKey(
+                                              'climb_decor_${p.clearing}'),
+                                          asset: p.asset,
+                                          matrix: ClimbSavePoints.matrix(
+                                              lit: 1, darkGain: darkGain))),
                                 // The save points and the flag, between the
                                 // dots and the avatar.
                                 for (final p in _objects)
@@ -340,6 +438,37 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                           ),
                         ]);
                     final zoom = widget.zoom;
+                    final labelled = _labelled;
+                    if (zoom == null && labelled != null) {
+                      // N19: in the window's points, above the object and
+                      // the avatar's art together, kept inside the window
+                      // and below the chips' band.
+                      final object =
+                          _scaled(labelled.rect, camera.scale).shift(-offset);
+                      final avatarTop = pawn.dy -
+                          tile * 55 / 58 -
+                          _hopLift(tile) +
+                          MonthlyMountain.avatarArtTop * tile -
+                          offset.dy;
+                      return Stack(children: [
+                        scene(),
+                        Positioned.fill(
+                          child: CustomSingleChildLayout(
+                            delegate: ClimbLabelLayout(
+                                object: object,
+                                avatarTop: avatarTop,
+                                avoid: widget.labelAvoid
+                                        ?.call(constraints.maxWidth) ??
+                                    const []),
+                            child: Opacity(
+                              opacity: _labelOpacity,
+                              child: ClimbSavePointLabel(labelled.name,
+                                  key: MonthlyMountain.labelKey),
+                            ),
+                          ),
+                        ),
+                      ]);
+                    }
                     if (zoom == null) return scene();
                     Matrix4 at(double t) =>
                         ClimbOverview.transform(camera, offset, t);
@@ -420,6 +549,70 @@ class _MonthlyMountainState extends State<MonthlyMountain>
           opacity: lit,
           child: _asset(ClimbSavePoints.flameAsset)),
     ]);
+  }
+}
+
+/// Where a save point's label stands (N19), in the window's points: its
+/// bottom [MonthlyMountain.labelGap] above the object and the avatar's
+/// art together, centred on the object, moved sideways to stay
+/// [MonthlyMountain.labelInset] inside the window; if it would then touch a
+/// box in [avoid] (the chips), just below it.
+class ClimbLabelLayout extends SingleChildLayoutDelegate {
+  final Rect object;
+  final double avatarTop;
+  final List<Rect> avoid;
+
+  const ClimbLabelLayout(
+      {required this.object, required this.avatarTop, this.avoid = const []});
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) =>
+      constraints.loosen();
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    const inset = MonthlyMountain.labelInset, gap = MonthlyMountain.labelGap;
+    final left = (object.center.dx - childSize.width / 2)
+        .clamp(inset, math.max(inset, size.width - inset - childSize.width))
+        .toDouble();
+    var top = math.min(object.top, avatarTop) - gap - childSize.height;
+    top = math.max(top, inset);
+    for (final r in avoid) {
+      if ((Offset(left, top) & childSize).overlaps(r)) {
+        top = math.max(top, r.bottom + gap);
+      }
+    }
+    return Offset(left, top);
+  }
+
+  @override
+  bool shouldRelayout(ClimbLabelLayout old) =>
+      old.object != object ||
+      old.avatarTop != avatarTop ||
+      !listEquals(old.avoid, avoid);
+}
+
+/// A save point's name (N6, N19): an opaque chip in the month and step
+/// chips' style (K4), so it reads over any part of the scene.
+class ClimbSavePointLabel extends StatelessWidget {
+  final String name;
+  const ClimbSavePointLabel(this.name, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = ClimbThemes.greenSlope.paletteFor(theme.brightness);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+          color: palette.sky, borderRadius: BorderRadius.circular(8)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        child: Text(name,
+            maxLines: 1,
+            style: theme.textTheme.labelLarge
+                ?.copyWith(color: palette.ink, fontWeight: FontWeight.w700)),
+      ),
+    );
   }
 }
 
