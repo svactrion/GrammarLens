@@ -1,0 +1,43 @@
+Batch 5 step 2 (N31, N32): pinned steps (tool/design_measure/batch5/step_numbers_test.dart).
+
+Trail 2.4608 image widths; the flag's point at 2.3709 (96.35 % of the trail); ending at the flag leaves 3.65 % of it unused.
+
+Each save point's step: before N31 (even over the whole trail) -> after, ending at the flag (default) | ending at the tip.
+days  C1 First Camp         C2 Halfway Hut        C3 Mountain Spring    C4 High Camp          
+28    7 -> 7 | 6            14 -> 14 | 13         19 -> 19 | 19         23 -> 24 | 23         
+29    7 -> 7 | 6            14 -> 14 | 14         20 -> 20 | 19         24 -> 24 | 23         
+30    7 -> 7 | 7            15 -> 15 | 14         20 -> 21 | 20         25 -> 25 | 24         
+31    7 -> 7 | 7            15 -> 15 | 14         21 -> 21 | 20         26 -> 26 | 25         
+
+Neighbour gaps against the even gap (the climb's length / days):
+days  ending at the flag (min / max)   ending at the tip (min / max)
+28    0.863 / 1.125                    0.903 / 1.067
+29    0.927 / 1.117                    0.883 / 1.122
+30    0.948 / 1.156                    0.952 / 1.114
+31    0.956 / 1.038                    0.921 / 1.078
+
+The resting avatar's tile against the C5 signpost's box (0.5929, 0.2939, 0.6733, 0.3853 image widths): steps that overlap, share of the signpost's box.
+  flag  320 pt, 28 days: 27 (2 %)
+  flag  320 pt, 29 days: 27 (26 %)
+  flag  320 pt, 30 days: 28 (26 %)
+  flag  320 pt, 31 days: 29 (26 %)
+  flag  375 pt, 28 days: 27 (2 %)
+  flag  375 pt, 29 days: 27 (26 %)
+  flag  375 pt, 30 days: 28 (26 %)
+  flag  375 pt, 31 days: 29 (26 %)
+  flag  430 pt, 28 days: 27 (2 %)
+  flag  430 pt, 29 days: 27 (26 %)
+  flag  430 pt, 30 days: 28 (26 %)
+  flag  430 pt, 31 days: 29 (26 %)
+  tip   320 pt, 28 days: 26 (3 %)
+  tip   320 pt, 29 days: 26 (28 %)
+  tip   320 pt, 30 days: 27 (28 %)
+  tip   320 pt, 31 days: 28 (28 %)
+  tip   375 pt, 28 days: 26 (3 %)
+  tip   375 pt, 29 days: 26 (28 %)
+  tip   375 pt, 30 days: 27 (28 %)
+  tip   375 pt, 31 days: 28 (28 %)
+  tip   430 pt, 28 days: 26 (3 %)
+  tip   430 pt, 29 days: 26 (28 %)
+  tip   430 pt, 30 days: 27 (28 %)
+  tip   430 pt, 31 days: 28 (28 %)

@@ -138,6 +138,11 @@ Stage 2: where the save points and the summit flag stand
   as `decor`; the rule gives 0.95 (1.0 touches the trail by 15 px and 0.90
   by 3 on Green). The table's `climbDecorTable`.
 - **Alternatives:** every other assignment, measured.
+- **Pinned steps (Batch 5, N31, N32):** `scripts/generate_climb_trail.sh`
+  also reads `placement.json`: each save point's step (the nearest whole
+  number to its arc share × the days), the arc of every day (even between
+  pinned steps) and the flag's arc, for both endings
+  (`ClimbRoute.endsAtFlagSetting`). Run it after a placement change.
 - **Generated table:** the script writes
   `lib/widgets/monthly_climb/climb_save_point_table.dart`;
   `test/climb_save_point_table_test.dart` fails until it matches.

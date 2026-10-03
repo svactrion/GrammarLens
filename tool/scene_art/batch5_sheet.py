@@ -210,6 +210,20 @@ def labels_real() -> None:
     shutil.copy(src / "save_point_labels_real.txt", out)
 
 
+def steps() -> None:
+    """Batch 5 step 2 (N31, N32): steps_render_test.dart's frames."""
+    src, out = BUILD / "batch5_steps", OUT / "steps"
+    out.mkdir(parents=True, exist_ok=True)
+    names = (("C1", "First Camp"), ("C2", "Halfway Hut"), ("C3", "Mountain Spring"),
+             ("C4", "High Camp"), ("C6", "Summit (last step)"))
+    cells = [[Image.open(src / f"steps_{w}_{c}_375.png") for w in ("before", "after")] for c, _ in names]
+    grid(cells, ["before (even over the whole trail)", "after (N31 pinned, N32 at the flag)"], 0.5).save(
+        out / "steps_before_after_375.jpg", quality=84)
+    cells = [[Image.open(src / f"summit_{e}_{w}.png") for w in (320, 375, 430)] for e in ("flag", "tip")]
+    grid(cells, [f"{w} pt: top ends at the flag, bottom at the tip" for w in (320, 375, 430)], 0.5).save(
+        out / "summit_flag_vs_tip.jpg", quality=84)
+
+
 if __name__ == "__main__":
     {"sites": sites, "labels": labels, "welcome": welcome, "card": card, "profile": profile,
-     "celebration": celebration, "labels_real": labels_real}[sys.argv[1]]()
+     "celebration": celebration, "labels_real": labels_real, "steps": steps}[sys.argv[1]]()

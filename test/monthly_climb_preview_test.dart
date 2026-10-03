@@ -7,19 +7,24 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 void main() {
-  test('Every month walks the image\'s trail, evenly spaced, foot to summit',
-      () {
+  test(
+      'Every month walks the image\'s trail from the foot to the climb\'s '
+      'end (N31, N32)', () {
     for (final days in [28, 29, 30, 31]) {
       final route = ClimbRoute(days);
       expect((route.pointAt(0) - ClimbRoute.foot).distance, lessThan(1e-4));
-      expect((route.pointAt(days.toDouble()) - ClimbRoute.summit).distance,
+      expect(
+          (route.pointAt(days.toDouble()) -
+                  ClimbRoute.at(ClimbRoute.climbLength))
+              .distance,
           lessThan(1e-4));
       for (var day = 1; day <= days; day++) {
-        // Straight-line distance never exceeds the even share along the
-        // trail.
+        // Straight-line distance never exceeds the longest step along the
+        // trail: 1.35 × the even share at most (N31).
         final chord =
             (route.pointAt(day.toDouble()) - route.pointAt(day - 1.0)).distance;
-        expect(chord, lessThanOrEqualTo(ClimbRoute.length / days + 1e-4));
+        expect(chord,
+            lessThanOrEqualTo(ClimbRoute.climbLength / days * 1.35 + 1e-4));
       }
     }
   });

@@ -21,7 +21,8 @@ class ClimbSavePoint {
   final Rect rect;
 
   /// How far along the trail the save point is: the arc length, in image
-  /// widths, of the trail point nearest its clearing's centre.
+  /// widths, of the trail point nearest its clearing's centre (generated,
+  /// `climbSavePointArcs`); the avatar stands there on its step (N31).
   final double arc;
 
   const ClimbSavePoint(
@@ -43,14 +44,9 @@ class ClimbSavePoint {
   /// G8's "reached": the avatar's arc along the trail is at least [arc].
   bool reachedAt(double avatarArc) => avatarArc >= arc - 1e-9;
 
-  /// The first step of a [days]-day month that reaches it.
-  int reachedOn(int days) {
-    final route = ClimbRoute(days);
-    for (var d = 0; d <= days; d++) {
-      if (reachedAt(route.arcAt(d.toDouble()))) return d;
-    }
-    return days;
-  }
+  /// The step of a [days]-day month that reaches it: the step it is
+  /// pinned to (N31); the flag's is the last.
+  int reachedOn(int days) => ClimbRoute.savePointSteps(days)[clearing] ?? days;
 }
 
 abstract final class ClimbSavePoints {
@@ -143,15 +139,7 @@ abstract final class ClimbSavePoints {
     final width = bw * ratio;
     final height = width * climbObjectAspects[object]!;
     final base = (cy + climbSavePointBaseDrop * bh) / climbImageAspect;
-    final centre = Offset(cx, cy / climbImageAspect);
-    var arc = 0.0, nearest = double.infinity;
-    for (var s = 0.0; s <= ClimbRoute.length; s += ClimbRoute.length / 2000) {
-      final d = (ClimbRoute.at(s) - centre).distance;
-      if (d < nearest) {
-        nearest = d;
-        arc = s;
-      }
-    }
+    final arc = climbSavePointArcs[clearing] ?? 0.0;
     return ClimbSavePoint(
         clearing: clearing,
         object: object,
@@ -162,17 +150,21 @@ abstract final class ClimbSavePoints {
 
   /// The flag (the summit_flag asset), in themes that have one
   /// (`ClimbTheme.hasSummitFlag`): the month's goal, on its own clearing
-  /// (C6, under the summit) by the save points' rule, but reached only on
-  /// the month's last step, the summit (its arc is the whole trail's).
-  static final ClimbSavePoint flag = () {
+  /// (C6, under the summit) by the save points' rule, reached only on the
+  /// month's last step: its arc is the climb's end (N32).
+  static ClimbSavePoint get flag =>
+      ClimbRoute.endsAtFlag ? _flagAtFlag ??= _flag() : _flagAtTip ??= _flag();
+  static ClimbSavePoint? _flagAtFlag, _flagAtTip;
+
+  static ClimbSavePoint _flag() {
     final (clearing, object, cx, cy, bw, bh, ratio) = climbFlag;
     final p = _place(clearing, object, cx, cy, bw, bh, ratio);
     return ClimbSavePoint(
         clearing: p.clearing,
         object: p.object,
         rect: p.rect,
-        arc: ClimbRoute.length);
-  }();
+        arc: ClimbRoute.climbLength);
+  }
 
   /// Decoration (Batch 5, N11, N18): the C5 signpost, from the generated
   /// table. Not a save point: never reached, never named, no label, always

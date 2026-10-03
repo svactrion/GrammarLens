@@ -359,3 +359,26 @@ Step 6 (N6, N19): the real save point label on the real Home, which is
 given a pending step so it hops onto each save point (the flag on the
 31st); what the label touches; then `batch5_sheet.py labels_real`
 (`docs/design/batch5/labels_real/`).
+
+## Batch 5 device-check round
+
+```bash
+DESIGN_MEASURE_OUT=docs/design/batch5/steps flutter test tool/design_measure/batch5/step_numbers_test.dart
+```
+
+Step 2 (N31, N32): each save point's step before and after, in both
+endings; the neighbour gaps against the even gap; the flag's arc share;
+the avatar against the C5 signpost (`docs/design/batch5/steps/`).
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_steps STEPS_LABEL=after flutter test tool/design_measure/batch5/steps_render_test.dart
+```
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_steps STEPS_ENDING=flag STEPS_WIDTHS=320,375,430 flutter test tool/design_measure/batch5/steps_render_test.dart
+```
+
+(and `STEPS_ENDING=tip`). The "before" frames come from the same file
+run with `STEPS_LABEL=before` in a worktree at `fd215e4` (the commit
+before N31), with a `steps_render_hooks.dart` whose `setEnding` does
+nothing; then `tool/scene_art/batch5_sheet.py steps`.

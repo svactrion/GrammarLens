@@ -11,10 +11,9 @@ import '../tool/climb_table/climb_trail_generator.dart';
 /// Green Slope's image, never written by hand, and a change to that trail
 /// must not go unnoticed.
 void main() {
-  test('the committed table is exactly what the extracted trail generates',
-      () {
-    expect(File(climbTrailTablePath).readAsStringSync(),
-        generateClimbTrailTable(),
+  test('the committed table is exactly what the extracted trail generates', () {
+    expect(
+        File(climbTrailTablePath).readAsStringSync(), generateClimbTrailTable(),
         reason: 'the extracted trail and the table disagree: run '
             'scripts/generate_climb_trail.sh');
   });
@@ -44,22 +43,43 @@ void main() {
       dist(climbTrail[i - 1], climbTrail[i])
   ].reduce((a, b) => a + b);
 
-  for (final days in [28, 29, 30, 31]) {
-    test('$days-day month: one entry per day, from the foot to the summit',
-        () {
-      final table = climbStepTable[days]!;
-      expect(table, hasLength(days + 1));
-      expect(dist(table.first, climbTrail.first), lessThan(1e-4));
-      expect(dist(table.last, climbTrail.last), lessThan(1e-4));
-      // Evenly spaced by arc length: no straight step is longer than the
-      // even share, and none is under 0.6 of it (the tight B5–B6 wiggle
-      // under the summit shortens the chord most, to 0.65).
-      for (var d = 1; d <= days; d++) {
-        expect(dist(table[d - 1], table[d]), lessThan(length / days + 1e-4),
-            reason: 'day $d');
-        expect(dist(table[d - 1], table[d]), greaterThan(length / days * .6),
-            reason: 'day $d');
-      }
-    });
+  // Batch 5 (N31, N32) replaced the even spacing over the whole trail: each
+  // save point is pinned to a step, the days between pinned steps are even
+  // by arc, and the climb ends at the flag's point (or the trail's tip).
+  for (final (name, arcsByDays, stepsByDays, end) in [
+    (
+      'to the flag',
+      climbStepArcsToFlag,
+      climbSavePointStepsToFlag,
+      climbFlagArc
+    ),
+    ('to the tip', climbStepArcsToTip, climbSavePointStepsToTip, length),
+  ]) {
+    for (final days in [28, 29, 30, 31]) {
+      test(
+          '$days-day month, $name: from the foot to the end, each save '
+          'point on its step, spacing within 0.75–1.35 of even', () {
+        final arcs = arcsByDays[days]!;
+        expect(arcs, hasLength(days + 1));
+        expect(arcs.first, 0);
+        expect(arcs.last, closeTo(end, 1e-5));
+        final steps = stepsByDays[days]!;
+        final ordered = steps.values.toList();
+        for (var k = 1; k < ordered.length; k++) {
+          expect(ordered[k], greaterThan(ordered[k - 1]));
+        }
+        expect(ordered.last, lessThanOrEqualTo(days - 2));
+        for (final MapEntry(key: clearing, value: step) in steps.entries) {
+          expect(arcs[step], closeTo(climbSavePointArcs[clearing]!, 1e-5),
+              reason: clearing);
+          expect(step, (climbSavePointArcs[clearing]! / end * days).round());
+        }
+        final even = end / days;
+        for (var d = 1; d <= days; d++) {
+          final gap = arcs[d] - arcs[d - 1];
+          expect(gap / even, inInclusiveRange(.75, 1.35), reason: 'day $d');
+        }
+      });
+    }
   }
 }

@@ -13,10 +13,15 @@ import 'dart:math' as math;
 const climbTrailTablePath = 'lib/widgets/monthly_climb/climb_trail_table.dart';
 const climbTrailSourcePath = 'docs/design/scene-art/batch0/trail_green.json';
 
+/// The save points' and the flag's clearings (N31, N32).
+const climbTrailPlacementPath = 'docs/design/scene-art/stage2/placement.json';
+
 /// Fixed-point text: stable across runs and platforms.
 String _f(double v, int digits) => v.toStringAsFixed(digits);
 
-String generateClimbTrailTable({String source = climbTrailSourcePath}) {
+String generateClimbTrailTable(
+    {String source = climbTrailSourcePath,
+    String placement = climbTrailPlacementPath}) {
   final json =
       jsonDecode(File(source).readAsStringSync()) as Map<String, dynamic>;
   final size = (json['image_size_px'] as List).cast<num>();
@@ -102,21 +107,127 @@ String generateClimbTrailTable({String source = climbTrailSourcePath}) {
   out
     ..writeln('];')
     ..writeln()
-    ..writeln('/// Where each day of a 28–31-day month stands, normalized like '
-        '[climbTrail],')
-    ..writeln('/// evenly spaced by arc length: entry d is day d, day 0 the '
-        'foot, the last')
-    ..writeln("/// entry the summit. Placing it on screen is the camera's job "
-        '(D3).')
-    ..writeln('const climbStepTable = <int, List<(double, double)>>{');
-  for (var days = 28; days <= 31; days++) {
-    out.writeln('  $days: [');
-    for (var d = 0; d <= days; d++) {
-      final (x, y) = at(cumulative.last * d / days);
-      out.writeln('    (${_f(x, 5)}, ${_f(y, 5)}),');
+    ..writeln();
+
+  // N31: each save point pinned to a step, the avatar on its point on the
+  // trail; N32: the climb ends at the flag's point (or at the trail's tip).
+  // A clearing's point is the trail point nearest its centre: 2000 even
+  // samples of the arc, the rule ClimbSavePoints used.
+  final places =
+      jsonDecode(File(placement).readAsStringSync()) as Map<String, dynamic>;
+  final length = cumulative.last;
+  double nearestArc(List centre) {
+    final cx = (centre[0] as num).toDouble();
+    final cy = (centre[1] as num).toDouble() / aspect;
+    var best = double.infinity, arc = 0.0;
+    for (var i = 0; i <= 2000; i++) {
+      final s = length * i / 2000;
+      final (x, y) = at(s);
+      final d = math.sqrt(math.pow(x - cx, 2) + math.pow(y / aspect - cy, 2));
+      if (d < best) {
+        best = d;
+        arc = s;
+      }
     }
-    out.writeln('  ],');
+    return arc;
   }
-  out.writeln('};');
-  return out.toString();
+
+  final knots = <String, double>{
+    for (final p in (places['save_points'] as List).cast<Map>())
+      p['clearing'] as String: nearestArc(p['center_norm'] as List),
+  };
+  final flag = places['flag'] as Map;
+  final flagArc = nearestArc(flag['center_norm'] as List);
+  out
+    ..writeln('/// N31: the arc, in image widths, of the trail point nearest '
+        'each save')
+    ..writeln("/// point's clearing centre: where the avatar stands on the "
+        "save point's step.")
+    ..writeln('const climbSavePointArcs = <String, double>{');
+  for (final e in knots.entries) {
+    out.writeln("  '${e.key}': ${_f(e.value, 6)},");
+  }
+  out
+    ..writeln('};')
+    ..writeln()
+    ..writeln("/// N32: the arc of the trail point nearest the flag's clearing "
+        "(${flag['clearing']}):")
+    ..writeln('/// where the climb ends unless it runs on to the trail\'s tip.')
+    ..writeln('const climbFlagArc = ${_f(flagArc, 6)};')
+    ..writeln();
+
+  for (final (name, end, note) in [
+    ('ToFlag', flagArc, "the climb ends at the flag's point (N32's default)"),
+    ('ToTip', length, "the climb ends at the trail's tip (before N32)"),
+  ]) {
+    // A save point's step: the nearest whole number to its share of the
+    // climb × the month's days; strictly increasing, never on the month's
+    // last two steps.
+    final steps = <int, Map<String, int>>{};
+    final arcs = <int, List<double>>{};
+    for (var days = 28; days <= 31; days++) {
+      final pinned = {
+        for (final e in knots.entries) e.key: (e.value / end * days).round()
+      };
+      final ordered = pinned.values.toList();
+      for (var i = 1; i < ordered.length; i++) {
+        if (ordered[i] <= ordered[i - 1]) {
+          throw StateError('$name $days days: save points share or reverse '
+              'steps: $pinned');
+        }
+      }
+      if (ordered.last > days - 2) {
+        throw StateError('$name $days days: a save point within the last '
+            'two steps: $pinned');
+      }
+      steps[days] = pinned;
+      // Days between two pinned steps: even by arc between their arcs.
+      final points = <(int, double)>[
+        (0, 0),
+        for (final e in pinned.entries) (e.value, knots[e.key]!),
+        (days, end),
+      ];
+      final list = <double>[];
+      for (var d = 0; d <= days; d++) {
+        var k = 1;
+        while (points[k].$1 < d) {
+          k++;
+        }
+        final (d0, a0) = points[k - 1];
+        final (d1, a1) = points[k];
+        list.add(d1 == d0 ? a1 : a0 + (a1 - a0) * (d - d0) / (d1 - d0));
+      }
+      arcs[days] = list;
+    }
+    out
+      ..writeln('/// The step each save point is pinned to, by month length, '
+          'when $note.')
+      ..writeln('const climbSavePointSteps$name = <int, Map<String, int>>{');
+    for (final e in steps.entries) {
+      out.writeln('  ${e.key}: {${[
+        for (final s in e.value.entries) "'${s.key}': ${s.value}"
+      ].join(', ')}},');
+    }
+    out
+      ..writeln('};')
+      ..writeln()
+      ..writeln('/// Where each day of a 28–31-day month stands, as an arc in '
+          'image widths, when')
+      ..writeln('/// $note: entry d is day d, day 0 the foot. Even by arc '
+          'between two pinned')
+      ..writeln("/// steps (N31). Placing it on screen is the camera's job "
+          '(D3).')
+      ..writeln('const climbStepArcs$name = <int, List<double>>{');
+    for (final e in arcs.entries) {
+      out.writeln('  ${e.key}: [');
+      for (final a in e.value) {
+        out.writeln('    ${_f(a, 6)},');
+      }
+      out.writeln('  ],');
+    }
+    out
+      ..writeln('};')
+      ..writeln();
+  }
+  return '${out.toString().trimRight()}\n';
 }

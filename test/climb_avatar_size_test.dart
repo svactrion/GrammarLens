@@ -53,8 +53,8 @@ void main() {
     });
 
     test(
-        '$width pt: at the summit the avatar shrinks gradually, to the '
-        'floor', () {
+        '$width pt: toward the climb\'s end the avatar shrinks gradually, '
+        'and its footprint fits the trail', () {
       final camera = ClimbCamera(width);
       final base = camera.baseAvatarTile;
       for (var days = 28; days <= 31; days++) {
@@ -63,8 +63,18 @@ void main() {
           for (var d = 0; d <= days; d++)
             camera.avatarTileAt(route.arcAt(d.toDouble()))
         ];
-        // The summit: the floor, not below it.
-        expect(sizes.last, closeTo(base * ClimbCamera.shrinkFloor, 1e-9));
+        // The last step: the size for the climb's end (N32: the flag's
+        // point, 96 % along the trail, so above the floor; the floor at
+        // the trail's tip), and its footprint fits the trail there.
+        expect(sizes.last,
+            closeTo(camera.avatarTileAt(ClimbRoute.climbLength), 1e-9));
+        if (!ClimbRoute.endsAtFlag) {
+          expect(sizes.last, closeTo(base * ClimbCamera.shrinkFloor, 1e-9));
+        }
+        expect(
+            sizes.last * ClimbCamera.footprintShare,
+            lessThanOrEqualTo(
+                ClimbRoute.chordAt(ClimbRoute.climbLength) * camera.scale));
         for (final size in sizes) {
           expect(size, greaterThanOrEqualTo(base * ClimbCamera.shrinkFloor));
         }
@@ -77,7 +87,10 @@ void main() {
           expect(drop, lessThanOrEqualTo(base * .15), reason: 'day $d');
           if (drop > 1e-9) shrinking++;
         }
-        expect(shrinking, greaterThanOrEqualTo(4), reason: '$days days');
+        // Gradual: over several steps (3 or more ending at the flag, 4 or
+        // more at the tip).
+        expect(shrinking, greaterThanOrEqualTo(ClimbRoute.endsAtFlag ? 3 : 4),
+            reason: '$days days');
       }
     });
   }

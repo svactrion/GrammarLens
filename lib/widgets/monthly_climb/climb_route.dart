@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
+
 import 'climb_trail_table.dart';
 
 /// The trail, as painted into the scene's illustration (1.1.0 design,
@@ -11,11 +13,14 @@ import 'climb_trail_table.dart';
 /// length across and down; the image is 1 wide and 1 ÷ [climbImageAspect]
 /// tall ([sceneSize]). Placing it on screen is the camera's job (D3).
 ///
-/// Day d of an N-day month stands at d / N of the trail's length, so steps
-/// are evenly spaced and the last day is the summit. Whole days are read
-/// from the generated [climbStepTable]; a change to the extracted trail
-/// makes `test/climb_trail_table_test.dart` fail until the table is
-/// regenerated (`scripts/generate_climb_trail.sh`).
+/// Day d of an N-day month stands at the arc the generated tables give
+/// (Batch 5, N31): each save point is pinned to one step, on which the
+/// avatar stands exactly at the save point's point on the trail, and the
+/// days between two pinned steps are spread evenly by arc length. The climb
+/// ends at the flag's point (N32) unless [endsAtFlag] is false, when it
+/// runs to the trail's tip as before. A change to the extracted trail or
+/// the clearings makes `test/climb_trail_table_test.dart` fail until the
+/// table is regenerated (`scripts/generate_climb_trail.sh`).
 class ClimbRoute {
   static const sceneSize = Size(1, 1 / climbImageAspect);
 
@@ -38,8 +43,38 @@ class ClimbRoute {
   /// The foot, beside the START flag: day 0.
   static Offset get foot => trail.first;
 
-  /// The trail's end under the snow cap: the last day (Batch 0 decision 5).
+  /// The trail's end under the snow cap.
   static Offset get summit => trail.last;
+
+  /// N32: the climb's last step stands at the flag's point on the trail
+  /// (true) or at the trail's tip (false, the behaviour before N32).
+  /// **The one switch**; the owner chooses on a device.
+  static const endsAtFlagSetting = true;
+
+  static bool? _endsAtFlagForTesting;
+
+  /// Debug builds only: stands in for [endsAtFlagSetting] in tests and
+  /// measuring tools (renders of both endings). Ignored in profile and
+  /// release builds.
+  static set debugEndsAtFlagOverride(bool? value) =>
+      _endsAtFlagForTesting = value;
+
+  /// Whether the climb ends at the flag's point: [endsAtFlagSetting].
+  static bool get endsAtFlag =>
+      (kDebugMode ? _endsAtFlagForTesting : null) ?? endsAtFlagSetting;
+
+  /// How far the climb goes along the trail, in image widths: to the
+  /// flag's point, or the whole trail.
+  /// Read from the generated arcs, so the last step and the flag's
+  /// "reached" agree to the digit.
+  static double get climbLength =>
+      endsAtFlag ? climbFlagArc : climbStepArcsToTip[31]!.last;
+
+  /// The step each save point (by clearing) is pinned to in a [days]-day
+  /// month (N31).
+  static Map<String, int> savePointSteps(int days) => (endsAtFlag
+      ? climbSavePointStepsToFlag
+      : climbSavePointStepsToTip)[days]!;
 
   final int days;
 
@@ -49,19 +84,23 @@ class ClimbRoute {
     }
   }
 
-  /// Where day [day] stands, from the step table, in image widths.
-  Offset stepAt(int day) {
-    final (x, y) = climbStepTable[days]![day.clamp(0, days)];
-    return Offset(x, y / climbImageAspect);
-  }
+  List<double> get _arcs =>
+      (endsAtFlag ? climbStepArcsToFlag : climbStepArcsToTip)[days]!;
+
+  /// Where day [day] stands, in image widths.
+  Offset stepAt(int day) => at(_arcs[day.clamp(0, days)]);
 
   /// How far along the trail [day] is, in image widths; between two days
-  /// for the pawn's motion.
-  double arcAt(double day) => length * day.clamp(0.0, days.toDouble()) / days;
+  /// (the pawn's motion) linear between their arcs.
+  double arcAt(double day) {
+    final d = day.clamp(0.0, days.toDouble());
+    final i = d.floor().clamp(0, days - 1);
+    final arcs = _arcs;
+    return arcs[i] + (arcs[i + 1] - arcs[i]) * (d - i);
+  }
 
   /// Any point along the trail, including between two days (the pawn's
-  /// motion). At whole days it equals [stepAt] to within the table's
-  /// rounding.
+  /// motion). At whole days it equals [stepAt].
   Offset pointAt(double day) => at(arcAt(day));
 
   /// The point [s] image widths along the trail.
