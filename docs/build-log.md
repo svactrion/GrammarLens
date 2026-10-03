@@ -8128,3 +8128,43 @@ On branch `1.1.0-design`, then `1.1.0` fast-forwarded to it; not pushed.
   Ahmet's.
 - **[Merge]** Full suite and `flutter analyze` run before the merge;
   `1.1.0` fast-forwarded (`git merge --ff-only`) to `1.1.0-design`.
+
+## 2026-10-03 (1.1.0 — development done; release preparation starts)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date at
+`82eaf4a`); not pushed. Docs only. Owner decisions (Ahmet, 2026-10-03).
+
+- **[Product] Batch 7 (one-time environment motion) deferred to 1.1.x.**
+  *Why:* its definition was written for the old code-drawn scene; on the
+  illustrated scene it needs a new image layer per theme. The scene
+  already moves (the zoom, the hop, the save points coming alive, the
+  label), and the opening sequence is full.
+- **[Product] G1 rewritten.** 100 MB was not a technical limit but the
+  project's own checkpoint. New rule: if the source images approach
+  200 MB, or the same images start being regenerated often, consider
+  keeping the large files apart (for example Git LFS). Current measure:
+  97.51 MB (Batch 5 N25). This replaces "looked at again past 100 MB" in
+  `1.1.0-design-side-tracks.md` (G1, N25), which is left as written.
+- **[Product] 1.1.0's development is done; release preparation remains.**
+  None of it is done yet (`roadmap.md`, "Development of 1.1.0 is done"):
+  - required: App Store screenshots (iPhone and iPad); the iPad check; an
+    end-to-end pass on a release build; the Firebase custom dimensions
+    registered before the release; version and build number, the What's
+    New text, `1.1.0` merged into `main`; the submission path by 1.0.0's
+    state;
+  - recommended: the events seen in DebugView; the developer-traffic
+    filter; a performance look on a profile build; docs tidy-up;
+  - not waiting for the release: case-study images; Medium posts;
+    Settings' two developer sections merged (this moves that item out of
+    the 1.1.0 release checklist).
+- **[Release] 1.0.0's state.** Resubmitted on 2026-09-28 (the reason for
+  the resubmission is not recorded here); four items are "Waiting for
+  Review": the app version 1.0.0 (build 3), the two subscriptions and the
+  subscription group. Plan: not withdrawn until 1.1.0 is ready. When 1.1.0
+  is ready: if 1.0.0 is approved, it is released and 1.1.0 is submitted as
+  an update; if it is still in review, the submission is withdrawn, the
+  version becomes 1.1.0 and is resubmitted with the new build; if it is
+  rejected, the fix is made inside 1.1.0. This replaces the 2026-09-29
+  plan (an approved 1.0.0 held back, 1.1.0 the first public release).
+  Open checks: the 1.0.0 build works with today's server; manual release
+  is selected in App Store Connect (Ahmet to verify).

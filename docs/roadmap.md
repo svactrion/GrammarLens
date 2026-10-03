@@ -6,8 +6,8 @@
 |---|---|---|
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
-| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0 |
-| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist). **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
+| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0. **Updated (Ahmet, 2026-10-03):** resubmitted 2026-09-28; the app version (build 3), both subscriptions and the subscription group "Waiting for Review"; not withdrawn until 1.1.0 is ready, then: approved → released, 1.1.0 as an update; still in review → withdrawn, the version becomes 1.1.0 with the new build; rejected → fixed inside 1.1.0 (section "1.1.0 side tracks", "1.0.0's state"). Manual release to be verified by Ahmet |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist). **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
@@ -173,15 +173,50 @@ D1–D6 in the side-tracks file.)*
   - [ ] the Firebase developer-traffic filter (1.1.0 release checklist);
   - [ ] pre-release check: Home's plaque and the month card may appear in
         App Store screenshots and case-study images
-- **Next: release preparation.** App Store screenshots and case-study
-  images: the result screen, Profile, the month card and Home have
-  changed. Batch 7 (environment motion) is not required for 1.1.0; the
-  decision is Ahmet's.
-- [ ] G1 review (scene art; Batch 5 N25, 2026-10-03): the source images
-      in the repository are **97.51 MB** (28 files: 86.10 MB scene art,
-      11.41 MB medals), against G1's 100 MB review line. Looked at again
-      before the next theme is added.
-- [ ] Batch 7 — one-time environment motion (may move to the next version)
+- **Development of 1.1.0 is done (Ahmet, 2026-10-03); what remains is
+  release preparation.** Nothing below is done yet:
+  - Required:
+    - [ ] App Store screenshots (iPhone and iPad);
+    - [ ] the iPad check;
+    - [ ] an end-to-end pass on a release build;
+    - [ ] the Firebase custom dimensions registered before the release
+          (1.1.0 release checklist below);
+    - [ ] version and build number, the What's New text, `1.1.0` merged
+          into `main`;
+    - [ ] the submission path, chosen by 1.0.0's state (below).
+  - Recommended:
+    - [ ] the events seen in DebugView;
+    - [ ] the developer-traffic filter;
+    - [ ] a performance look on a profile build;
+    - [ ] docs tidy-up.
+  - Not waiting for the release:
+    - [ ] case-study images;
+    - [ ] Medium posts;
+    - [ ] Settings' two developer sections merged into one.
+- **1.0.0's state and the submission path (Ahmet, 2026-10-03).** 1.0.0
+  was resubmitted on 2026-09-28; four items are "Waiting for Review": the
+  app version 1.0.0 (build 3), the two subscriptions and the subscription
+  group. Plan: it is not withdrawn until 1.1.0 is ready. When 1.1.0 is
+  ready:
+  - 1.0.0 approved: 1.0.0 is released, and 1.1.0 is submitted as an
+    update;
+  - 1.0.0 still in review: the submission is withdrawn, the version
+    becomes 1.1.0 and is resubmitted with the new build;
+  - 1.0.0 rejected: the fix is made inside 1.1.0.
+  Open checks: [ ] the 1.0.0 build works with today's server; [ ] manual
+  release is selected in App Store Connect (Ahmet to verify).
+- [ ] G1 rewritten (Ahmet, 2026-10-03): 100 MB was not a technical
+      limit but the project's own checkpoint. New rule: if the source
+      images approach 200 MB, or the same images start being regenerated
+      often, consider keeping the large files apart (for example Git
+      LFS). Current measure: **97.51 MB** (28 files: 86.10 MB scene art,
+      11.41 MB medals; Batch 5 N25). *(Was: looked at again against a
+      100 MB review line before the next theme is added.)*
+- [ ] Batch 7 — one-time environment motion. **Deferred to 1.1.x
+      (Ahmet, 2026-10-03).** *Why:* its definition was written for the old
+      code-drawn scene; on the illustrated scene it needs a new image layer
+      per theme. The scene already moves (the zoom, the hop, the save
+      points coming alive, the label), and the opening sequence is full.
 - [x] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (Bird, Fox, Panda,
       Sloth), without facing data; the avatar carousel loops in both
       directions — built 2026-09-30, 1156 tests green; device-checked
@@ -2420,7 +2455,8 @@ Owner items before the 1.1.0 build ships (added 2026-09-30):
   is not retroactive.
 - [ ] **Merge Settings' two developer sections** ("Developer", debug only,
   and "Debug", N27's panel, debug and profile) into one (owner,
-  2026-10-03).
+  2026-10-03). *(Later on 2026-10-03, Ahmet: does not wait for the
+  release; see "Development of 1.1.0 is done" at the top.)*
 - [ ] **Firebase developer-traffic filter:** not verified to be set up,
   most likely not set up. Debug (and profile) builds write to the
   production Firebase project (`grammarlens-18d47`; no build-mode gate in
