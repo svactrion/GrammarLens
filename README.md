@@ -196,6 +196,15 @@ They are display-only and never change stored progress, the Daily Test or
 All three combine (for example a month card on Red Canyon, zooming to step
 20). Release builds ignore every one of them.
 
+The same settings can be changed while the app runs from **Settings →
+Debug** (debug and profile builds; not in release): the scene's theme and
+day, the milestones (celebrations, save point steps) and month cards
+replayed on Home, and **Sample collection**, which fills Profile's medal
+shelf with sample months (the Welcome badge, seven finished months across
+the four themes, this month) for screenshots. None of these writes a
+stored record or sends an event; "Reset local data" there is the one
+action that deletes stored data.
+
 #### Visual previews (no build config needed)
 
 `lib/preview/` holds standalone, debug-only entry points for checking a

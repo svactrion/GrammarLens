@@ -170,6 +170,9 @@ void main() {
       await tester.scrollUntilVisible(
           find.byKey(DebugPanelScreen.resetKey), 200,
           scrollable: find.byType(Scrollable).first);
+      // Wholly on screen: the scroll above stops as soon as part of it is.
+      await tester.ensureVisible(find.byKey(DebugPanelScreen.resetKey));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(DebugPanelScreen.resetKey));
       await tester.pumpAndSettle();
       expect(find.text(DebugPanelScreen.resetMessage), findsOneWidget);

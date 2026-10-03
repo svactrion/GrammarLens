@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/climb_theme.dart';
+import '../utils/debug_sample_collection.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/monthly_climb/climb_debug_controls.dart';
 import '../widgets/monthly_climb/climb_debug_day.dart';
@@ -16,6 +17,8 @@ import '../widgets/monthly_climb/climb_debug_theme.dart';
 /// - Milestones and month cards: the panel closes, the app shows Home, and
 ///   Home plays it (`ClimbDebugControls`); the same one can be played again
 ///   and again. No stored record is read or written, no event is sent.
+/// - Sample collection (P6): Profile's shelf shows sample months; memory
+///   only, nothing stored is read or written, no event is sent.
 /// - "Reset local data": after a confirmation, the app's whole local
 ///   database goes ([onResetLocalData]) and the app is back at its first
 ///   launch. The only action here that touches stored data.
@@ -26,6 +29,7 @@ class DebugPanelScreen extends StatefulWidget {
   const DebugPanelScreen({super.key, required this.onResetLocalData});
 
   static const resetKey = ValueKey('debug_reset');
+  static const sampleCollectionKey = ValueKey('debug_sample_collection');
   static const dayRealKey = ValueKey('debug_day_real');
   static const daySliderKey = ValueKey('debug_day_slider');
   static ValueKey<String> themeKey(String id) => ValueKey('debug_theme_$id');
@@ -174,6 +178,18 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
               child: Text(v.wireName),
             ),
         ]),
+        section(
+            'Profile',
+            'For screenshots: the medal shelf shows sample months (the '
+                'Welcome badge, seven finished months, this month). Nothing '
+                'is saved or sent; off when the app is closed.'),
+        SwitchListTile(
+          key: DebugPanelScreen.sampleCollectionKey,
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Sample collection'),
+          value: DebugSampleCollection.runtime,
+          onChanged: (on) => setState(() => DebugSampleCollection.runtime = on),
+        ),
         section(
             'Local data',
             'Deletes this app\'s data on this device and starts again at '

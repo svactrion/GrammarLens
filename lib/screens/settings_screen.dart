@@ -14,6 +14,7 @@ import '../services/medal_finalization.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
+import '../utils/debug_sample_collection.dart';
 import '../utils/debug_tools.dart';
 import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
@@ -166,6 +167,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadMedals() async {
     final generation = ++_medalsGeneration;
+    // P6: the debug panel's sample collection, instead of storage. Nothing
+    // is finalized or read, and no view is reported.
+    if (DebugSampleCollection.enabled) {
+      final sample = DebugSampleCollection.current();
+      if (!mounted) return;
+      setState(() {
+        _medalThemeIds = sample.themeIds;
+        _medalProgress = sample.progress;
+        _medalResults = sample.results;
+        _welcomeBadge = sample.welcomeBadge;
+        _medalsLoading = false;
+        _medalsFailed = false;
+      });
+      return;
+    }
     if (mounted) {
       setState(() {
         _medalsLoading = true;
@@ -629,10 +645,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: SettingsScreen.debugRowKey,
               icon: Icons.bug_report_outlined,
               label: 'Debug',
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              // The panel can switch the sample collection (P6): the
+              // shelf is read again when it closes.
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute(
                 builder: (_) => DebugPanelScreen(
                     onResetLocalData: widget.onResetLocalData ?? () async {}),
-              )),
+              ))
+                  .then((_) {
+                if (mounted) unawaited(_loadMedals());
+              }),
             ),
           ],
         ],
