@@ -8332,3 +8332,21 @@ up to date); not merged, not pushed.
   status bar override in place (simulator settings only).
 - **[Tests]** 1499 pass; `flutter analyze` clean.
 - **[Waiting]** Ahmet: captions, typeface, the frames.
+
+## 2026-10-04 (1.1.0 release preparation — decisions P7, P8)
+
+On branch `1.1.0-design`; not pushed. Docs only. Owner decisions (Ahmet,
+2026-10-04), recorded in `roadmap.md` under P1:
+
+- **P7.** The set's order and captions (updates P4): 1 result "Every
+  answer explained", 2 Home "Climb a new mountain each month", 3 Gold
+  "Earn medals as you climb", 4 Review "Your weak spots, tracked", 5 weak
+  spot "Practice what you got wrong", 6 question "A new test every day",
+  7 month card "Your month at a glance", 8 collection "Collect every
+  mountain", 9 Welcome "Start in under a minute". *Why:* the draft's
+  question frame was nearly empty and among the first three that search
+  shows; the first three now read learn, climb, earn; no repeated
+  "every", no promise of a medal every month.
+- **P8.** Titles stay in Nunito Sans 800. Raw captures leave the
+  repository (one command makes them); the framed set and the overview
+  stay.

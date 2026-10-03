@@ -248,6 +248,21 @@ D1–D6 in the side-tracks file.)*
 - **P6 (Ahmet, 2026-10-03): a "sample collection" view in the debug
   panel** shows Profile's shelf with sample months without writing any
   stored record; for screenshots only.
+- **P7 (Ahmet, 2026-10-04): frame order and captions** (updates P4):
+  (1) the result with explanations, "Every answer explained"; (2) the
+  mountain on Home, "Climb a new mountain each month"; (3) the Gold
+  celebration, "Earn medals as you climb"; (4) Review, "Your weak spots,
+  tracked"; (5) a weak spot's detail, "Practice what you got wrong";
+  (6) a question, "A new test every day"; (7) the month card, "Your month
+  at a glance"; (8) the medal collection, "Collect every mountain";
+  (9) Welcome, "Start in under a minute". *Why:* in the draft the
+  question frame was nearly empty and was one of the three frames search
+  shows; the first three now tell learn, climb, earn. The repeated
+  "every" and the promise of a medal every month are gone (a medal is not
+  guaranteed).
+- **P8 (Ahmet, 2026-10-04): the title typeface stays Nunito Sans 800.**
+  Raw captures are not kept in the repository (one command makes them
+  again); only the framed set and the overview are.
 - [ ] G1 rewritten (Ahmet, 2026-10-03): 100 MB was not a technical
       limit but the project's own checkpoint. New rule: if the source
       images approach 200 MB, or the same images start being regenerated
