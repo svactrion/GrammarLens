@@ -111,11 +111,14 @@ D1–D6 in the side-tracks file.)*
       First device check 2026-10-03 (iPhone 14 Plus, profile build, debug
       panel) → decisions N28–N36; **correction round built 2026-10-03,
       awaiting device verification** (build log 2026-10-03, "Batch 5
-      correction round built").
+      correction round built"). Second device check 2026-10-03 → N37,
+      N38, N32 confirmed; built, **awaiting device verification** (build
+      log 2026-10-03, "Batch 5 N37, N38 built").
       Built: the medals as 512 px assets (528.9 KB; N23's 384 px were
-      374.2 KB), the month card's medal large and centred (88 / 70 / 48 pt
-      by screen height, N30), Profile's shelf with a tap detail and the
-      thresholds under the bar (N33, N34), the celebration layer (dark,
+      374.2 KB), the month card's medal large and centred (112 / 70 /
+      48 pt by screen height, N30, N37), Profile's "Medal collection"
+      shelf with a tap detail and the "This month" bar with its thresholds
+      (N33, N34, N38), the celebration layer (dark,
       glow and rays, shrink-and-fade close, N28; Welcome moved into it),
       save points pinned to steps and the climb ending at the flag (N31,
       N32), save point names and their label, the C5 signpost (moved 4 px

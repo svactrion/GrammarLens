@@ -8049,3 +8049,43 @@ N28–N36 (entry above).
 - **[Tests]** 1485 pass (1467 before the round); `flutter analyze`
   clean.
 - **[Not checked]** On a device; frame times and memory not measured.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 N37, N38 built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Decisions:
+`docs/1.1.0-design-side-tracks.md`, "Decisions after the correction
+round's device check".
+
+- **[Device — Ahmet, iPhone 14 Plus]** The month card's 88 pt medal looked
+  small; its text reads comfortably. The climb ending at the flag (N32)
+  confirmed.
+- **[Commits]** `894aaea` (decisions, 1.2 notes), `734ffc8` (N37),
+  `50d2c35` (N38 and the shelf test), and this one.
+- **[N37 — month card]** 112 pt on screens 740 pt tall and up; 70 pt on
+  640–739 (at 375 × 667 the fullest card fits 88 / 80 / 70 pt at Small /
+  Medium / Large, under N37's 88 pt cap); 48 pt below. Measured on the
+  real card (`docs/design/batch5/card/`): no scrolling at 375 × 812 and
+  430 × 932 in any text size (the sheet 431–452 pt of 457 and 524), so
+  375 × 812 keeps 112 pt. The mountain above the sheet: 375 × 812
+  218 / 207 / 195 → 193 / 182 / 170 pt (55 / 52 / 48 % of the window);
+  430 × 932 324 / 315 / 303 → 298 / 290 / 278 pt (85 / 83 / 79 %), and
+  the avatar on START is now under the sheet there (it was above it).
+  375 × 667 and 320 × 568 unchanged. Light and dark lay out the same.
+- **[Tool fix]** `month_card_real_render_test.dart` named its images by
+  width only, so 375 × 667's overwrote 375 × 812's: N30's "375 pt"
+  overview showed 375 × 667. 375 × 667 now has its own name; the
+  overview shows four screens.
+- **[N38 — Profile]** The section heading "Medal collection"; the bar
+  labelled "This month", the theme moved under the bar with the points
+  (at 320 pt Medium that line wraps to two lines).
+- **[Shelf test]** No test ran the shelf from a Daily Test save; added
+  `test/profile_medal_shelf_end_to_end_test.dart` (real SQLite): the
+  running month's medal is a faded Bronze, then Bronze, Silver and Gold
+  from the save that crosses each threshold (8, 15 and 23 perfect days in
+  a 30-day month). Profile reads the medals when its tab becomes active,
+  so the change shows the first time Profile opens after that save.
+- **[Accepted]** 320 × 568: the summary card scrolls and a downward drag
+  does not close it while it scrolls (the button and a tap outside do).
+  The faded unearned Welcome badge on the shelf is deliberate.
+- **[Tests]** 1487 pass (1485 before); `flutter analyze` clean.
+- **[Not checked]** On a device.
