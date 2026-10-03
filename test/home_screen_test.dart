@@ -27,6 +27,7 @@ import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
+import 'support/celebration_support.dart';
 
 /// The bottom "Premium" upsell row's own label — disambiguated from
 /// `LockedPremiumPill`'s identically-worded "Premium" text (shown on a
@@ -636,6 +637,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
     expect(storage.steps, 9);
+    // Batch 5 (N15): the celebration over the results first; its own
+    // confetti went with it.
+    await closeCelebration(tester);
+    expect(find.byType(ConfettiBurst), findsNothing);
     expect(find.text('Start my climb'), findsOneWidget);
     expect(find.text('See your climb'), findsNothing);
 

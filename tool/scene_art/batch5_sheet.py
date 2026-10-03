@@ -14,6 +14,8 @@ labels:  build/design_measure/batch5_labels (save_point_label_test.dart) ->
 card:    build/design_measure/batch5_card (Batch 6's month_card_real_render_test.dart
          with the four screens) -> card/: overview_summary.jpg, overview_fresh.jpg,
          summary_320_textsizes.jpg, the numbers and card_compare.txt.
+celebration: build/design_measure/batch5_celebration (celebration_render_test.dart)
+         -> celebration/: the five cases at 375 pt, 320 pt text sizes, numbers.
 profile: build/design_measure/batch5_profile (profile_render_test.dart) ->
          profile/: profile_<mode>_medium.jpg, profile_320_textsizes.jpg, numbers.
 welcome: build/design_measure/batch5_welcome (welcome_result_test.dart) ->
@@ -174,5 +176,20 @@ def profile() -> None:
     shutil.copy(src / "profile_numbers.txt", out)
 
 
+def celebration() -> None:
+    """Batch 5 step 5 (N15): the celebration layer (celebration_render_test.dart)."""
+    src, out = BUILD / "batch5_celebration", OUT / "celebration"
+    out.mkdir(parents=True, exist_ok=True)
+    whats = ("welcome", "bronze", "silver", "gold", "silver_ember")
+    for mode in ("light", "dark"):
+        cells = [[Image.open(src / f"celebration_{w}_375x812_{mode}_medium.png") for w in whats]]
+        grid(cells, [f"{w}, 375, {mode}" for w in whats], 0.4).save(out / f"celebration_375_{mode}.jpg", quality=84)
+    cells = [[Image.open(src / f"celebration_silver_320x568_light_{s}.png") for s in ("small", "medium", "large")]]
+    grid(cells, [f"320 x 568, {s}" for s in ("Small", "Medium", "Large")], 0.5).save(
+        out / "celebration_320_textsizes.jpg", quality=84)
+    shutil.copy(src / "celebration_numbers.txt", out)
+
+
 if __name__ == "__main__":
-    {"sites": sites, "labels": labels, "welcome": welcome, "card": card, "profile": profile}[sys.argv[1]]()
+    {"sites": sites, "labels": labels, "welcome": welcome, "card": card, "profile": profile,
+     "celebration": celebration}[sys.argv[1]]()

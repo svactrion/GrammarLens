@@ -3,9 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/daily_test_completion.dart';
+import '../models/climb_theme.dart';
 import '../models/daily_test_set.dart';
+import '../models/medal_tier.dart';
 import '../services/analytics_service.dart';
+import '../services/climb_milestones.dart';
 import '../services/daily_test_service.dart';
+import '../services/monthly_medal_rules.dart';
 import '../services/welcome_badge_rules.dart';
 import '../theme.dart';
 import '../utils/answer_matching.dart';
@@ -13,6 +17,8 @@ import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/confetti_burst.dart';
+import '../widgets/medal_badge.dart';
+import '../widgets/medal_celebration.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
 
@@ -55,9 +61,6 @@ class DailyTestResultScreen extends StatefulWidget {
   State<DailyTestResultScreen> createState() => _DailyTestResultScreenState();
 }
 
-/// How long the Welcome card takes to ease in.
-const Duration _bannerDuration = Duration(milliseconds: 350);
-
 /// The longest the screen waits for the confetti to finish before it moves on
 /// anyway. The burst takes 1.8 s ([ConfettiBurst.duration]); this only matters
 /// if something stops its animation (a paused ticker, a torn-down overlay), so
@@ -74,9 +77,16 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   /// (docs/prd-gamification.md §M6.5) — never re-derived from storage, so
   /// a reopened already-completed set (whose `_saveCompletion` never even
   /// runs, see `initState` below) or a backfilled badge (which this screen
-  /// never earns) cannot show it. It turns the card on and the button into
-  /// "Start my climb"; it does not delay the save or anything else.
+  /// never earns) cannot show it. It opens the celebration and turns the
+  /// button into "Start my climb"; it does not delay the save or anything
+  /// else.
   bool _showWelcomeCelebration = false;
+
+  /// The celebration layer showing now (Batch 5, N15), or null: the Welcome
+  /// badge or a tier just secured, opened when the save lands, closed by
+  /// one tap. Only `_saveCompletion` sets it, so a reopened result or a
+  /// relaunch never plays it again.
+  _Celebration? _celebration;
 
   /// The "Start my climb" button was tapped. From then on the button is
   /// disabled, the confetti plays on this screen for its whole run, and only
@@ -90,11 +100,6 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   OverlayEntry? _confettiEntry;
   Timer? _fallbackTimer;
   final _climbButtonKey = GlobalKey();
-
-  /// Keeps the card's element alive when the list above it changes length (the
-  /// saving bar and the failure text come and go), so it eases in from where it
-  /// was instead of being rebuilt already in its final state.
-  final _cardKey = GlobalKey();
 
   /// Guards `daily_test_completed`/Welcome analytics to at most once per
   /// screen instance, on top of `_saveCompletion`'s own already-completed
@@ -129,7 +134,26 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       _reportCompletion(welcomeBadgeJustEarned);
       widget.onCompletionSaved?.call();
       if (welcomeBadgeJustEarned && mounted) {
-        setState(() => _showWelcomeCelebration = true);
+        setState(() {
+          _showWelcomeCelebration = true;
+          _celebration = const _Celebration.welcome();
+        });
+      } else {
+        // A tier secured with this completion (N8, N15). The Welcome badge
+        // and a tier never come together: the badge is the first step
+        // ever, worth at most 10 points, and Bronze is at least 70.
+        final milestones = await ClimbMilestones.afterCompletion(
+          storage: widget.dailyTestService.storageService,
+          day: _completion.set.day,
+          step: _completion.step,
+          points: MonthlyMedalRules.score(
+              correct: _completion.correct, wrong: _completion.wrong),
+        );
+        final tier = milestones?.tier;
+        if (tier != null && mounted) {
+          setState(() => _celebration =
+              _Celebration.tier(tier, milestones!.theme, milestones.month));
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -286,7 +310,6 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final semantic = theme.extension<SemanticColors>()!;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final hPad = (MediaQuery.sizeOf(context).width * 0.045).clamp(16.0, 28.0);
 
     final correctCount = _results.where((r) => r.isCorrect).length;
@@ -296,7 +319,8 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         ? '$correctCount/$totalCount correct · $skippedCount skipped'
         : '$correctCount/$totalCount correct';
 
-    return BrandScaffold(
+    final celebration = _celebration;
+    final scaffold = BrandScaffold(
       title: const PageTitle('Daily Test Results'),
       bandBottom: ResultScoreBand(text: scoreText),
       // Fixed, like Premium's footer: a hard edge (not a shadow that only
@@ -333,97 +357,59 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
           _QuestionResultCard(result: result, semantic: semantic),
           const SizedBox(height: 14),
         ],
-        // Below the results, so it never pushes them down when the save
-        // lands, and it eases in (size and fade) instead of jumping. Under
-        // reduced motion it simply appears, and without an AnimatedSize at all
-        // (a zero-duration one mutates its own layout). If the list rebuilds
-        // this item later (scrolled away and back) it is created already in
-        // its final state, so nothing replays.
-        if (reduceMotion)
-          KeyedSubtree(
-            key: _cardKey,
-            child: _showWelcomeCelebration
-                ? const _WelcomeBadgeCard()
-                : const SizedBox.shrink(),
-          )
-        else
-          AnimatedSize(
-            key: _cardKey,
-            duration: _bannerDuration,
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: AnimatedOpacity(
-              duration: _bannerDuration,
-              opacity: _showWelcomeCelebration ? 1 : 0,
-              child: _showWelcomeCelebration
-                  ? const _WelcomeBadgeCard()
-                  : const SizedBox(width: double.infinity),
-            ),
-          ),
       ],
     );
+    if (celebration == null) return scaffold;
+    return Stack(children: [
+      scaffold,
+      Positioned.fill(
+        child: MedalCelebration(
+          key: const ValueKey('medal_celebration'),
+          medal: celebration.medal(),
+          title: celebration.title,
+          subtitle: celebration.subtitle,
+          onClose: () => setState(() => _celebration = null),
+        ),
+      ),
+    ]);
   }
 }
 
-/// The one-time Welcome badge win moment (docs/prd-gamification.md §M6.5), a
-/// large card under the results: the badge, its name and what earns the next
-/// step. Copy is deliberately audience-neutral — no "first test" language —
-/// since the same badge, and the same wording, is earned identically by a brand
-/// new user and by a pre-existing v2 user completing their first Daily Test
-/// after updating. Visual is a temporary placeholder; real artwork lands with
-/// the rest of the medal collection's own design pass later.
-class _WelcomeBadgeCard extends StatelessWidget {
-  const _WelcomeBadgeCard();
+/// What the celebration shows (N15): the Welcome badge with its existing
+/// copy, or a tier with the month and its theme.
+class _Celebration {
+  final MedalTier? tier;
+  final ClimbTheme? theme;
+  final int month;
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final onContainer = colorScheme.onSecondaryContainer;
-    return Semantics(
-      liveRegion: true,
-      child: Card(
-        color: colorScheme.secondaryContainer,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-          child: Column(
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: onContainer.withValues(alpha: 0.12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Icon(
-                    Icons.emoji_events_rounded,
-                    color: onContainer,
-                    size: 44,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Welcome to the climb',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: onContainer,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Answer at least one question a day to keep moving "
-                "up this month's mountain.",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(color: onContainer),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  const _Celebration.welcome()
+      : tier = null,
+        theme = null,
+        month = 0;
+
+  const _Celebration.tier(
+      MedalTier this.tier, ClimbTheme this.theme, this.month);
+
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June', 'July', //
+    'August', 'September', 'October', 'November', 'December',
+  ];
+
+  Widget medal() => tier == null
+      ? const MedalBadge.welcome(disc: MedalCelebration.disc)
+      : MedalBadge.monthly(
+          themeId: theme!.id, tier: tier!, disc: MedalCelebration.disc);
+
+  // The Welcome copy is the old card's, kept word for word; it is
+  // audience-neutral (no "first test" language), since a pre-existing v2
+  // user earns the same badge on their first Daily Test after updating.
+  String get title =>
+      tier == null ? 'Welcome to the climb' : '${tier!.label} secured';
+
+  String get subtitle => tier == null
+      ? "Answer at least one question a day to keep moving "
+          "up this month's mountain."
+      : '${_months[month - 1]} · ${theme!.name}';
 }
 
 const _fallbackComment = "Not quite — here's the correct answer.";

@@ -18,6 +18,7 @@ import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
+import 'support/celebration_support.dart';
 import 'support/recording_analytics_sink.dart';
 
 /// The end-to-end regression for the Day-0 climb: the bug lived exactly at
@@ -176,6 +177,10 @@ void main() {
       }
       await tester.pumpAndSettle();
     }
+    // Batch 5 (N15): the answered test earns the Welcome badge, whose
+    // celebration opens over the results the moment the save lands; one
+    // tap closes it and the results, with "Start my climb", show.
+    if (answerFirst) await closeCelebration(tester);
   }
 
   final burst = find.byType(ConfettiBurst);
@@ -330,6 +335,8 @@ void main() {
       storage.saveGate!.complete();
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
+      // The save landed: the Welcome celebration first (N15).
+      await closeCelebration(tester);
       final climb = find.widgetWithText(FilledButton, 'Start my climb');
       expect(tester.widget<FilledButton>(climb).onPressed, isNotNull);
 
@@ -537,6 +544,70 @@ void main() {
         'outcome': 'completed',
         'trigger': 'first_run',
       });
+    });
+
+    testWidgets(
+        'Batch 5 (N15) with M14, end to end: the Welcome celebration over the '
+        'results, then the results, Start my climb, Home, the zoom, the '
+        'step and Premium, in that order', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      for (var i = 0; i < 5; i++) {
+        if (i == 0) {
+          await tester.enterText(find.byType(TextField).first, 'wrong');
+          await tester.pump();
+          await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+        } else {
+          await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+        }
+        await tester.pumpAndSettle();
+      }
+      final order = <String>[];
+      // 1. The celebration, over the results, with its own burst.
+      expect(celebrationFinder, findsOneWidget);
+      expect(resultsTitle, findsOneWidget);
+      expect(mountain, findsNothing);
+      order.add('celebration');
+      await closeCelebration(tester);
+      // 2. The results, their button "Start my climb".
+      expect(resultsTitle, findsOneWidget);
+      expect(
+          find.widgetWithText(FilledButton, 'Start my climb'), findsOneWidget);
+      order.add('results');
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      expect(burst, findsOneWidget, reason: 'the button keeps its burst');
+      order.add('start my climb');
+      await untilMountain(tester);
+      order.add('home');
+      expect(mtn(tester).zoom, isNotNull);
+      expect(mtn(tester).completedDays, 0);
+      var zoomEnded = false, stepped = false;
+      for (var i = 0; i < 400 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        final m = mtn(tester);
+        if (!zoomEnded && m.zoom == null) {
+          zoomEnded = true;
+          order.add('zoom');
+        }
+        if (!stepped && m.completedDays == 1) {
+          stepped = true;
+          order.add('step');
+        }
+      }
+      expect(premium, findsOneWidget);
+      order.add('premium');
+      expect(order, [
+        'celebration',
+        'results',
+        'start my climb',
+        'home',
+        'zoom',
+        'step',
+        'premium',
+      ]);
     });
 
     testWidgets(

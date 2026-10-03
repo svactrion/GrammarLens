@@ -20,6 +20,7 @@ import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 
+import 'support/celebration_support.dart';
 import 'support/recording_analytics_sink.dart';
 
 /// A working (not network-backed) shared Daily Test read, so the Day-0 flow
@@ -310,6 +311,8 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    // Batch 5 (N15): the celebration over the results first.
+    await closeCelebration(tester);
     expect(find.text('Start my climb'), findsOneWidget);
     expect(find.text('Continue'), findsNothing);
     expect(completed, isNull);

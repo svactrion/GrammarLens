@@ -341,3 +341,12 @@ DESIGN_MEASURE_OUT=build/design_measure/batch5_profile flutter test tool/design_
 Step 4 (N17): the real `MonthlyMedalCollection` with sample months, 320 /
 375 / 430 pt, light and dark, three text sizes, then
 `batch5_sheet.py profile` (`docs/design/batch5/profile/`).
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_celebration flutter test tool/design_measure/batch5/celebration_render_test.dart
+```
+
+Step 5 (N15): the real celebration layer over the real result screen
+(Welcome, Bronze, Silver, Gold, Silver on Ember Peak), 320 × 568 /
+375 × 812 / 430 × 932, light and dark, three text sizes, then
+`batch5_sheet.py celebration` (`docs/design/batch5/celebration/`).
