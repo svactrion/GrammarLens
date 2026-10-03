@@ -132,3 +132,34 @@ the cap is narrower than both screens.
 720 pt enlarges the scene again; 560 pt is closer to a phone's proportion
 and leaves more empty space on each side. 640 pt is the widest cap that
 keeps the image at or under its asset size (the limit is 698 pt).
+
+## 6. Simulator checklist (for Ahmet)
+
+On the iPad simulator (13 in, and the mini if possible), a debug or
+profile build so the debug panel is there:
+
+1. Portrait and upside-down portrait: the app does not rotate to
+   landscape; on iPadOS 26, whether the app opens full screen or in a
+   resizable window (`UIRequiresFullScreen` is deprecated there). If it
+   opens in a window narrower than 600 pt, it shows the iPhone layout:
+   say whether that happens.
+2. Home: the 640 pt column centred; the band's title, the greeting and
+   the cards aligned; the nav pill full width with its three tabs over the
+   column (does the wide pill look right?).
+3. The mountain on days 1, 15 and the last day (debug panel: day, theme):
+   sharpness of the scene; the hop and the save point label.
+4. A month card (debug panel: month cards → summary, fresh) and the zoom
+   from K-c: how the blurred sides look in motion.
+5. The celebrations (debug panel: milestones → Welcome, Gold).
+6. Daily Test: question with the keyboard up (the field and buttons stay
+   in the column and above the keyboard), then results.
+7. Topic Practice: list, the length picker sheet (not rendered), a
+   question, results with the offer card.
+8. Review → a weak spot → "Practice this".
+9. Profile: the shelf, the bar, a medal's detail; Settings' lower part;
+   Data and Credits.
+10. Premium (from Home's Premium row): table, plans, the footer's surface
+    full width.
+11. Dialogs (leaving a test, the debug panel's reset): not rendered.
+12. Onboarding and Welcome: debug panel → "Reset local data".
+13. Dark mode and Large text on a few of the above.

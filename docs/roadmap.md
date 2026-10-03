@@ -178,11 +178,14 @@ D1–D6 in the side-tracks file.)*
   - Required:
     - [ ] App Store screenshots (iPhone and iPad) — plan proposed in the
           same report (§4–5), none produced;
-    - [ ] the iPad check — renders and report done, waiting for Ahmet's
-          decisions (2026-10-03,
-          `design/release-1.1.0/ipad-and-screenshots-report.md`: nothing
-          broken; five "ugly" findings with one cause, no max content
-          width on iPad; nothing fixed);
+    - [ ] the iPad check — **waiting for simulator verification.** Report
+          2026-10-03 (`design/release-1.1.0/ipad-and-screenshots-report.md`);
+          P1 built 2026-10-03 (`3400766`): on iPad the content column is
+          centred and capped at 640 pt, iPhones pixel-identical (590 renders
+          before and after). Renders of every screen on three iPads: nothing
+          broken, K-c still ugly (59 % blur)
+          (`design/release-1.1.0/p1/report.md`). Not seen on an iPad or its
+          simulator;
     - [ ] an end-to-end pass on a release build;
     - [ ] the Firebase custom dimensions registered before the release
           (1.1.0 release checklist below);

@@ -8215,3 +8215,49 @@ not pushed. Docs only.
   support cannot be removed).
 - **[Release]** Manual release is selected in App Store Connect for 1.0.0
   (Ahmet verified, 2026-10-03).
+
+## 2026-10-03 (1.1.0 release preparation — P1 built; waiting for the simulator check)
+
+On branch `1.1.0-design`; not merged, not pushed. Report:
+`docs/design/release-1.1.0/p1/report.md`.
+
+- **[Commits]** `1b6d130` (P1 and the manual release, docs), `3400766`
+  (the content width), `ab0b772` (renders, comparison, report), and this
+  one.
+- **[Built]** `lib/utils/content_width.dart`: on a screen whose shortest
+  side is 600 pt or more the content column is centred and capped at
+  `ContentWidth.maxContentWidth` (640 pt); below that nothing changes.
+  `BrandScaffold` applies it to every list screen and moves the band's
+  content in (band colour full width behind it). The screens that lay out
+  their own body (onboarding, Daily Test question and results footer,
+  practice question, Premium, AI consent, avatar picker) and Welcome pass
+  their existing padding line through the rule (each had a raw copy of
+  the padding formula, now gone); the avatar carousel is inset to the
+  column; the nav pill stays full width with its tabs over the column.
+  Unchanged: modal sheets (Material 3 already caps them at 640 pt),
+  dialogs, the celebration and the medal detail (fixed 288 pt), the
+  launch splash, the two plain loading screens.
+- **[iPhone proof]** 590 renders at 320 × 568, 375 × 667, 375 × 812 and
+  430 × 932 (every screen state, light and dark, Medium and Large, plus
+  the Batch 5/6 and Scene Art tools' renders), before (`1b6d130`) and
+  after: all 590 identical pixel for pixel
+  (`docs/design/release-1.1.0/p1/iphone_before_after.txt`). The first
+  comparison showed 15 onboarding images differing; the same code
+  rendered twice differed the same way (onboarding starts on a random
+  avatar), so the tool now fixes the carousel's page, and onboarding's
+  before images were re-made in a worktree at `1b6d130`.
+- **[iPad renders]** 25 states × three iPads × light/dark × Medium/Large =
+  300, no exceptions. Nothing broken; K-c still ugly. The report's five
+  findings: window 2.79 / 2.22 / 1.97 : 1 → 1.83 : 1; the scene 1.40× /
+  1.11× / 0.99× → 0.92× (no enlargement); K-c blur 73 / 66 / 62 % → 59 %;
+  result lines 139–89 → 93 / 80 characters; shelf 8 / 5 everywhere and the
+  avatar picker's neighbours at the column's edges. 560 / 640 / 720 pt for
+  Home: 720 enlarges the scene (1.03×); 640 is the widest cap that does
+  not (limit 698 pt).
+- **[Tests]** 1492 pass (1487 before; `test/content_width_test.dart`
+  added); `flutter analyze` clean.
+- **[Not checked]** An iPad or its simulator; the practice length picker
+  sheet, the dialogs and the loading screens (not rendered); iPadOS 26's
+  windowing.
+- **[Next]** Ahmet's simulator check (`p1/report.md` §6); the roadmap's
+  iPad item stays open until then.
