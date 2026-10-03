@@ -41,7 +41,7 @@ Not from that one place, and why:
 | Daily Test results' fixed footer (`bottomBar`) | The footer's surface and border stay full width | Same, through its existing padding line |
 | Avatar picker's carousel | The carousel is centred, not padded | An inset of `ContentWidth.insetOf` (0 on an iPhone), so its pages are fractions of the column |
 | Welcome | Its own `Scaffold` (D1's full-orange exception) | Its padding line through `ContentWidth.sidePadding` with its own base |
-| Floating nav bar (`FloatingNavShell`, not a scaffold) | The pill is the bar's surface and stays full width (as decided) | Its tab row is inset to the column |
+| Floating nav bar (`FloatingNavShell`, not a scaffold) | The pill is the bar's surface and stays full width (as decided) *(corrected by P2, 2026-10-03: the pill itself is held to the column)* | Its tab row is inset to the column |
 | `ResultScoreBand` | Sits inside the band, which `BrandScaffold` already moves in | Only its base padding, now `ContentWidth.basePadding` |
 | Loading screens of Topic Practice and the weak spot detail (plain `Scaffold` + `LoadingView`) | Not on `BrandScaffold` since 1.0 | Unchanged: a centred spinner and line. Not rendered |
 | Modal sheets (month card, practice length picker), dialogs, the celebration, the medal detail | Material 3 already caps a modal sheet at 640 pt; dialogs have their own width; the celebration and medal detail are a fixed 288 pt group | Unchanged. The practice length picker and the dialogs were not rendered |
@@ -102,7 +102,9 @@ dark). Sheets per screen in [`ipad/`](ipad/), numbers in
 
 Nothing is **broken**. One state stays **ugly**: K-c.
 
-The nav bar: the pill is still full width (as decided), with its three
+*(P2, 2026-10-03, replaces this paragraph: the pill itself is held to the
+column; P1's "full width" assumed a bar docked to the edges.)* The nav
+bar: the pill is still full width (as decided), with its three
 tabs over the 640 pt column; on 13 in that leaves 180 pt of empty
 pill on each side (Q1 below).
 

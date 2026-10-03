@@ -8261,3 +8261,27 @@ On branch `1.1.0-design`; not merged, not pushed. Report:
   windowing.
 - **[Next]** Ahmet's simulator check (`p1/report.md` §6); the roadmap's
   iPad item stays open until then.
+
+## 2026-10-03 (1.1.0 release preparation — decisions P2–P6)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Docs only. Owner decisions (Ahmet, 2026-10-03), recorded in
+`roadmap.md` under P1:
+
+- **P2.** On iPad the floating nav bar itself is held to the 640 pt
+  column. Corrects P1's "the bar stays full width" (written as if the bar
+  were docked); `p1/report.md` is annotated where it said so.
+- **P3.** K-c on iPad (59 % of the window blurred at the zoom's first
+  frame) is a known, accepted flaw; the cap stays 640 pt, the widest that
+  does not enlarge the scene image.
+- **P4.** Nine App Store frames: Daily Test result with explanations,
+  the mountain on Home, a question, the Gold celebration, Review, a weak
+  spot's detail, the month card, the medal collection, Welcome. *Why:*
+  the first three show in search; the core promise first, then the
+  mechanic that brings people back. *Rejected:* the mountain first.
+- **P5.** Captured from the real app in the simulator (debug build,
+  states set with the debug panel), not from the render tool (its text
+  rendering differs). Light mode; status bar fixed at 9:41, full battery
+  and signal.
+- **P6.** A debug-panel "sample collection" view: Profile's shelf with
+  sample months, no stored record written; for screenshots only.

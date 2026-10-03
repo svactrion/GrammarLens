@@ -222,6 +222,28 @@ D1–D6 in the side-tracks file.)*
   characters. *Rejected:* shipping as it is; releasing for iPhone only
   (1.0.0 is in review with iPad support; once it is approved and
   released, iPad support cannot be removed).
+- **P2 (Ahmet, 2026-10-03): on iPad the floating nav bar itself is held
+  to the content column (640 pt).** Corrects P1's "the bar stays full
+  width", which was written as if the bar were docked to the edges; it is
+  a floating pill, so it belongs with the content.
+- **P3 (Ahmet, 2026-10-03): K-c on iPad is a known, accepted flaw.** At
+  the zoom's first frame 59 % of the window is the blurred band. The cap
+  stays at 640 pt, the widest at which the scene image is not enlarged.
+- **P4 (Ahmet, 2026-10-03): the App Store set is nine frames, in this
+  order:** (1) the Daily Test result with explanations, (2) the mountain
+  on Home, (3) a question, (4) the Gold celebration, (5) Review, (6) a
+  weak spot's detail, (7) the month card, (8) the medal collection,
+  (9) Welcome. *Why:* the first three show in search results; first the
+  app's core promise (teaching by explaining the mistake), then the
+  mechanic that brings people back. *Rejected:* the mountain first.
+- **P5 (Ahmet, 2026-10-03): screenshots are captured from the real app in
+  the simulator** (a debug build, states set up with the debug panel); the
+  render tool's output is not used in the store (its text rendering
+  differs from the device's). Light mode. Status bar fixed: 9:41, full
+  battery, full signal.
+- **P6 (Ahmet, 2026-10-03): a "sample collection" view in the debug
+  panel** shows Profile's shelf with sample months without writing any
+  stored record; for screenshots only.
 - [ ] G1 rewritten (Ahmet, 2026-10-03): 100 MB was not a technical
       limit but the project's own checkpoint. New rule: if the source
       images approach 200 MB, or the same images start being regenerated
