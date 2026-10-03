@@ -176,8 +176,13 @@ D1–D6 in the side-tracks file.)*
 - **Development of 1.1.0 is done (Ahmet, 2026-10-03); what remains is
   release preparation.** Nothing below is done yet:
   - Required:
-    - [ ] App Store screenshots (iPhone and iPad);
-    - [ ] the iPad check;
+    - [ ] App Store screenshots (iPhone and iPad) — plan proposed in the
+          same report (§4–5), none produced;
+    - [ ] the iPad check — renders and report done, waiting for Ahmet's
+          decisions (2026-10-03,
+          `design/release-1.1.0/ipad-and-screenshots-report.md`: nothing
+          broken; five "ugly" findings with one cause, no max content
+          width on iPad; nothing fixed);
     - [ ] an end-to-end pass on a release build;
     - [ ] the Firebase custom dimensions registered before the release
           (1.1.0 release checklist below);

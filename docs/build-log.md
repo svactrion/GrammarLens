@@ -8168,3 +8168,33 @@ On branch `1.1.0-design` (`1.1.0` merged in first: already up to date at
   plan (an approved 1.0.0 held back, 1.1.0 the first public release).
   Open checks: the 1.0.0 build works with today's server; manual release
   is selected in App Store Connect (Ahmet to verify).
+
+## 2026-10-03 (1.1.0 release step 1 — iPad check and screenshot plan; waiting for the owner)
+
+On branch `1.1.0-design`; not pushed. No `lib/` or `assets/` change.
+
+- **[Commits]** `097a5fc` (docs: release preparation), `a2674df` (the
+  tool and its outputs), and this one (the report).
+- **[Tool]** `tool/design_measure/release/ipad_render_test.dart` and
+  `tool/scene_art/release_ipad_sheet.py`: 14 states of the screens 1.1.0
+  changed, at 1032 × 1376, 834 × 1194 and 744 × 1133 (2x, portrait, safe
+  areas 24 / 20 pt assumed), light and dark, Medium and Large: 168
+  renders, no framework exception.
+- **[Found]** No iPad layout rule in `lib/` (no max content width). Nothing
+  broken. Ugly: Home's mountain window becomes a strip (976 × 350 pt at
+  13 in, 2.79 : 1) and the scene is upscaled 1.40× (13 in) and 1.11×
+  (11 in) against its 1536 px asset; K-c is 73 % blur at 13 in; the result
+  screen's lines hold 132–139 characters at 13 in; Profile's shelf leaves
+  one medal alone on a row at 13 in with 13 slots; the avatar picker's
+  neighbours sit half off-screen 464 pt from the centre. One proposed fix
+  for all: a centred max content width on iPad. The month card sheet is
+  capped at 640 pt by Material 3 and hides none of the mountain on iPad.
+  Not seen on an iPad or its simulator.
+- **[Screenshots]** 1.0.0: 8 iPhone (only 600 px copies in the
+  repository; originals, framing tool and the 5 iPad screenshots not
+  recorded). For 1.1.0, 01 (result), 04 (Home) and 06 (Welcome card) are
+  outdated; 02, 03, 05, 07, 08 can stay. A 10-frame order is proposed;
+  Apple's sizes read 2026-10-03 (6.9 in or 6.5 in iPhone, 13 in iPad
+  required).
+- **[Waiting]** Ahmet's answers to the report's §6 questions. No fix and
+  no screenshot started.
