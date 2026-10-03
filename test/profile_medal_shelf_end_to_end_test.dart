@@ -96,12 +96,22 @@ void main() {
       ),
     ));
 
+    /// Until Profile's medal read has finished (its spinner gone and the
+    /// shelf drawn): the real database's time varies with the machine's
+    /// load, so no fixed wait. At most 10 s.
     Future<void> settle() async {
-      for (var i = 0; i < 10; i++) {
+      await tester.pump();
+      for (var i = 0; i < 500; i++) {
+        if (find.byType(CircularProgressIndicator).evaluate().isEmpty &&
+            find.byType(MonthlyMedalCollection).evaluate().isNotEmpty) {
+          break;
+        }
         await tester.runAsync(
             () => Future<void>.delayed(const Duration(milliseconds: 20)));
         await tester.pump(const Duration(milliseconds: 50));
       }
+      expect(find.byType(MonthlyMedalCollection), findsOneWidget,
+          reason: "Profile's medals did not load");
     }
 
     /// Leaves Profile's tab and comes back to it, as after a Daily Test.
