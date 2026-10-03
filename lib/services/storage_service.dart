@@ -1271,6 +1271,23 @@ class StorageService {
     return db.transaction((txn) => _resolveClimbMonthTheme(txn, year, month));
   }
 
+  /// Every stored month theme, by (year, month) (Batch 5, N17: Profile
+  /// draws each month's medal in that month's theme). Read only: nothing
+  /// is written. A month with no row is not in the map; a past one reads as
+  /// Green Slope ([resolveClimbMonthTheme]).
+  Future<Map<(int, int), String>> getClimbMonthThemes() async {
+    final db = await _database;
+    final rows =
+        await db.query('climb_month_themes', columns: ['month', 'theme_id']);
+    return {
+      for (final row in rows)
+        (
+          int.parse((row['month'] as String).split('-')[0]),
+          int.parse((row['month'] as String).split('-')[1]),
+        ): row['theme_id'] as String,
+    };
+  }
+
   Future<String> _resolveClimbMonthTheme(
     DatabaseExecutor db,
     int year,

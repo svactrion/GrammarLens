@@ -259,4 +259,20 @@ void main() {
     expect(rows.single['month'], '2026-11');
     expect(rows.single['theme_id'], 'ember_peak');
   });
+
+  test(
+      'getClimbMonthThemes reads every stored month, by (year, month), and '
+      'writes nothing', () async {
+    final storage = StorageService(dbName: path);
+    // November is the current month: its row is written once.
+    await storage.resolveClimbMonthTheme(2026, 11);
+    // A past month: read as Green Slope, not written.
+    await storage.resolveClimbMonthTheme(2026, 9);
+    expect(await storage.getClimbMonthThemes(), {(2026, 11): 'ember_peak'});
+    StorageService.clockForTesting = () => DateTime(2026, 12, 2, 9);
+    await storage.resolveClimbMonthTheme(2026, 12);
+    expect(await storage.getClimbMonthThemes(),
+        {(2026, 11): 'ember_peak', (2026, 12): 'glacier_peak'});
+    expect(await themeRows(), hasLength(2));
+  });
 }

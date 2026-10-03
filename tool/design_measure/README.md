@@ -323,3 +323,21 @@ DESIGN_MEASURE_OUT=build/design_measure/batch5_labels flutter test tool/design_m
 
 Then `tool/scene_art/batch5_sheet.py sites|welcome|labels` makes the
 report's JPEGs and copies the text files into `docs/design/batch5/`.
+
+## Batch 5 build
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_card DESIGN_MEASURE_CARD_SCREENS=320x568,375x812,430x932,375x667 flutter test tool/design_measure/batch6/month_card_real_render_test.dart
+```
+
+Step 3 (N16): the real month card with the 48 pt medal, then
+`tool/scene_art/batch5_sheet.py card` (renders and `card_compare.txt`
+against Batch 6's numbers, `docs/design/batch5/card/`).
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/batch5_profile flutter test tool/design_measure/batch5/profile_render_test.dart
+```
+
+Step 4 (N17): the real `MonthlyMedalCollection` with sample months, 320 /
+375 / 430 pt, light and dark, three text sizes, then
+`batch5_sheet.py profile` (`docs/design/batch5/profile/`).

@@ -73,9 +73,12 @@ void main() {
     await tester.pumpWidget(const MonthlyMedalPreview());
     await tester.pumpAndSettle();
 
+    // Batch 5 (N17): the running month lights its tiers as they become
+    // certain, so the header no longer tells "no history" apart; the
+    // History heading does.
     expect(
-      find.text('Your monthly medals will appear here once earned.'),
-      findsOneWidget,
+      find.text('History'),
+      findsNothing,
       reason: 'In progress starts with no finalized history',
     );
 

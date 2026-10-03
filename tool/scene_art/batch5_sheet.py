@@ -14,6 +14,8 @@ labels:  build/design_measure/batch5_labels (save_point_label_test.dart) ->
 card:    build/design_measure/batch5_card (Batch 6's month_card_real_render_test.dart
          with the four screens) -> card/: overview_summary.jpg, overview_fresh.jpg,
          summary_320_textsizes.jpg, the numbers and card_compare.txt.
+profile: build/design_measure/batch5_profile (profile_render_test.dart) ->
+         profile/: profile_<mode>_medium.jpg, profile_320_textsizes.jpg, numbers.
 welcome: build/design_measure/batch5_welcome (welcome_result_test.dart) ->
          welcome_result_scrolltop.jpg (each screen at its scroll top).
 
@@ -158,5 +160,19 @@ def card() -> None:
         out / "summary_320_textsizes.jpg", quality=84)
 
 
+def profile() -> None:
+    """Batch 5 step 4 (N17): the real collection (profile_render_test.dart)."""
+    src, out = BUILD / "batch5_profile", OUT / "profile"
+    out.mkdir(parents=True, exist_ok=True)
+    for mode in ("light", "dark"):
+        cells = [[trim(Image.open(src / f"profile_{w}_{mode}_medium.png")) for w in (320, 375, 430)]]
+        grid(cells, [f"{w} pt, Medium, {mode}" for w in (320, 375, 430)], 0.5).save(
+            out / f"profile_{mode}_medium.jpg", quality=84)
+    cells = [[trim(Image.open(src / f"profile_320_light_{s}.png")) for s in ("small", "medium", "large")]]
+    grid(cells, [f"320 pt, {s}, light" for s in ("Small", "Medium", "Large")], 0.5).save(
+        out / "profile_320_textsizes.jpg", quality=84)
+    shutil.copy(src / "profile_numbers.txt", out)
+
+
 if __name__ == "__main__":
-    {"sites": sites, "labels": labels, "welcome": welcome, "card": card}[sys.argv[1]]()
+    {"sites": sites, "labels": labels, "welcome": welcome, "card": card, "profile": profile}[sys.argv[1]]()

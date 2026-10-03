@@ -98,6 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   WelcomeBadge? _welcomeBadge;
   MonthlyMedalProgress? _medalProgress;
   List<MonthlyMedalResult> _medalResults = const [];
+  Map<(int, int), String> _medalThemeIds = const {};
   bool _medalsLoading = true;
   bool _medalsFailed = false;
 
@@ -176,8 +177,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.storageService.getMonthlyMedalResults(),
         widget.storageService.getWelcomeBadge(),
       ]);
+      // Each month's theme for its medals (N17). Not part of the reads
+      // above: a theme read that fails draws Green Slope's medals rather
+      // than hiding the collection.
+      Map<(int, int), String> themeIds;
+      try {
+        themeIds = await widget.storageService.getClimbMonthThemes();
+      } catch (_) {
+        themeIds = const {};
+      }
       if (!mounted || generation != _medalsGeneration) return;
       setState(() {
+        _medalThemeIds = themeIds;
         _medalProgress = values[0] as MonthlyMedalProgress;
         _medalResults = values[1] as List<MonthlyMedalResult>;
         _welcomeBadge = values[2] as WelcomeBadge?;
@@ -395,6 +406,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               welcomeBadge: _welcomeBadge,
               currentProgress: _medalProgress,
               results: _medalResults,
+              themeIds: _medalThemeIds,
             ),
           const SizedBox(height: 32),
           const _SectionLabel('Appearance'),

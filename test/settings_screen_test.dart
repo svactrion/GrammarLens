@@ -229,11 +229,9 @@ void main() {
     );
 
     expect(find.text('Monthly medals'), findsOneWidget);
-    // The three tier specimens plus the Welcome badge row all share the
-    // same "Not earned" copy — see MonthlyMedalCollection's own Welcome
-    // row, deliberately worded to match. The semantics label below is
-    // what actually distinguishes the Welcome row from the tier specimens.
-    expect(find.text('Not earned'), findsNWidgets(4));
+    // Batch 5 (N17): no month has a medal yet, so only the Welcome row says
+    // "Not earned"; the months below are rows of their own.
+    expect(find.text('Not earned'), findsOneWidget);
     expect(find.text('Earned'), findsNothing);
     expect(
       find.bySemanticsLabel('Welcome badge, locked.'),

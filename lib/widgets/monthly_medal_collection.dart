@@ -4,78 +4,104 @@ import '../models/climb_theme.dart';
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
 import '../models/welcome_badge.dart';
+import '../services/monthly_medal_rules.dart';
 import 'medal_badge.dart';
 
+/// Profile's medals (Batch 5, N10, N17): the Welcome badge, then one row per
+/// month, each with its own theme's three medals. The running month is on
+/// top, marked in progress, a tier lit the moment the score crosses it
+/// (N8: it is certain from then on); finalized months follow, newest first,
+/// with their frozen tier. A month's tier lights every tier below it too
+/// (docs/prd-gamification.md §M6.2: a Gold month cleared Bronze and Silver);
+/// the rest are faded, not hidden.
 class MonthlyMedalCollection extends StatelessWidget {
   /// A separate, one-time achievement — not a fourth tier. Rendered above
-  /// the Bronze/Silver/Gold row per docs/prd-gamification.md §M6.5/
+  /// the months per docs/prd-gamification.md §M6.5/
   /// docs/gamification-handoff.md §12.4: unlike the monthly tiers, this is
-  /// permanent and never re-earned, so mixing it into the same row would
+  /// permanent and never re-earned, so mixing it into the months would
   /// misrepresent it as something to renew monthly.
   final WelcomeBadge? welcomeBadge;
   final MonthlyMedalProgress? currentProgress;
+
+  /// Finalized months, as stored (newest first is drawn either way).
   final List<MonthlyMedalResult> results;
+
+  /// The stored theme of each month (`StorageService.getClimbMonthThemes`).
+  final Map<(int, int), String> themeIds;
 
   const MonthlyMedalCollection({
     super.key,
     this.welcomeBadge,
     this.currentProgress,
     this.results = const [],
+    this.themeIds = const {},
   });
+
+  /// The running month's medals' disc, a finalized month's, and the
+  /// Welcome badge's in its row (Batch 5 Batch 0 §1: the stars read from
+  /// 48 pt, N20).
+  static const currentDisc = 72.0;
+  static const historyDisc = 48.0;
+  static const welcomeDisc = 64.0;
+
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June', 'July', //
+    'August', 'September', 'October', 'November', 'December',
+  ];
+
+  /// The theme [year]/[month] is drawn in: its stored theme; otherwise
+  /// the running month's calendar theme (Home records it on its first
+  /// view), and Green Slope for a past month (themes were not stored
+  /// before 1.1.0, when Green Slope was the only one).
+  static ClimbTheme themeFor(
+      int year, int month, Map<(int, int), String> themeIds,
+      {bool running = false}) {
+    final stored = themeIds[(year, month)];
+    if (stored != null) return ClimbThemes.byId(stored);
+    return running
+        ? ClimbThemeRotation.shownFor(year, month)
+        : ClimbThemes.greenSlope;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // docs/prd-gamification.md §M6.2: a finalized month's highest tier is a
-    // ladder, not three independent badges — reaching Gold already means
-    // Bronze and Silver were cleared that month too, so the collection
-    // marks every tier at or below the best one ever finalized as earned,
-    // not only the exact tier of whichever result happens to be highest.
-    final highestTier = results
-        .map((result) => result.tier)
-        .whereType<MedalTier>()
-        .fold<MedalTier?>(
-          null,
-          (best, tier) => best == null || tier.index > best.index ? tier : best,
-        );
-    final earnedTiers = highestTier == null
-        ? const <MedalTier>{}
-        : MedalTier.values
-            .where((tier) => tier.index <= highestTier.index)
-            .toSet();
+    final current = currentProgress;
+    final currentTier = current == null
+        ? null
+        : MonthlyMedalRules.tierFor(
+            year: current.year, month: current.month, score: current.score);
+    final finalized = [
+      for (final r in results)
+        if (current == null ||
+            (r.year, r.month) != (current.year, current.month))
+          r
+    ]..sort((a, b) => (b.year * 12 + b.month).compareTo(a.year * 12 + a.month));
+    final anyEarned =
+        currentTier != null || finalized.any((r) => r.tier != null);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _WelcomeBadgeRow(badge: welcomeBadge),
         const SizedBox(height: 20),
         Text(
-          earnedTiers.isEmpty
-              ? 'Your monthly medals will appear here once earned.'
-              : 'Your monthly achievements.',
+          anyEarned
+              ? 'Your monthly achievements.'
+              : 'Your monthly medals will appear here once earned.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < MedalTier.values.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              Expanded(
-                child: _MedalSpecimen(
-                  tier: MedalTier.values[i],
-                  earned: earnedTiers.contains(MedalTier.values[i]),
-                ),
-              ),
-            ],
-          ],
-        ),
-        if (currentProgress case final progress?) ...[
-          const SizedBox(height: 20),
-          _CurrentMonthProgress(progress: progress),
+        if (current != null) ...[
+          const SizedBox(height: 16),
+          _CurrentMonth(
+            progress: current,
+            tier: currentTier,
+            theme:
+                themeFor(current.year, current.month, themeIds, running: true),
+          ),
         ],
-        if (results.isNotEmpty) ...[
+        if (finalized.isNotEmpty) ...[
           const SizedBox(height: 20),
           Text(
             'History',
@@ -83,9 +109,12 @@ class MonthlyMedalCollection extends StatelessWidget {
                 ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          for (final result in results) ...[
-            _MedalHistoryRow(result: result),
-            if (result != results.last) const SizedBox(height: 8),
+          for (final (i, result) in finalized.indexed) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _MedalHistoryRow(
+              result: result,
+              theme: themeFor(result.year, result.month, themeIds),
+            ),
           ],
         ],
       ],
@@ -93,73 +122,63 @@ class MonthlyMedalCollection extends StatelessWidget {
   }
 }
 
+/// A month's three medals in its theme: those up to [tier] earned, the
+/// rest faded (N10).
+class MonthMedals extends StatelessWidget {
+  final ClimbTheme theme;
+  final MedalTier? tier;
+  final double disc;
+
+  const MonthMedals(
+      {super.key, required this.theme, required this.tier, required this.disc});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final t in MedalTier.values) ...[
+            if (t != MedalTier.bronze) SizedBox(width: disc * .12),
+            MedalBadge.monthly(
+              themeId: theme.id,
+              tier: t,
+              disc: disc,
+              earned: tier != null && t.index <= tier!.index,
+            ),
+          ],
+        ],
+      );
+}
+
 /// The one-time Welcome badge (docs/prd-gamification.md §M6.5), always
-/// rendered — locked-and-"Not earned" when [badge] is null, the same
-/// "always visible, lock badge otherwise" language `_MedalSpecimen` below
-/// already uses for the monthly tiers. A horizontal row, not a specimen
-/// circle, so it reads as its own category of thing rather than a fourth
-/// tier. Color/icon are placeholders — see docs/prd-gamification.md §M6.4.
+/// rendered: faded and "Not earned" when [badge] is null. A horizontal
+/// row, so it reads as its own category of thing rather than a month.
 class _WelcomeBadgeRow extends StatelessWidget {
   final WelcomeBadge? badge;
 
   const _WelcomeBadgeRow({required this.badge});
-
-  static const _tint = Color(0xFF4C7EF3);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final earned = badge != null;
-    final iconColor = earned ? _tint : _tint.withValues(alpha: 0.42);
-    final fill = Color.alphaBlend(
-      iconColor.withValues(alpha: earned ? 0.20 : 0.10),
-      scheme.surfaceContainerHigh,
-    );
-
     return Semantics(
       label: 'Welcome badge, ${earned ? 'earned' : 'locked'}.',
       container: true,
       child: ExcludeSemantics(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: fill,
+            color: scheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: iconColor, width: 2),
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(
-                      Icons.emoji_events_rounded,
-                      color: iconColor,
-                      size: 28,
-                    ),
-                    if (!earned)
-                      Align(
-                        alignment: const Alignment(0.9, 0.9),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: scheme.surface,
-                            border: Border.all(color: scheme.outlineVariant),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: Icon(
-                              Icons.lock_rounded,
-                              size: 11,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                MedalBadge.welcome(
+                    disc: MonthlyMedalCollection.welcomeDisc, earned: earned),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -188,19 +207,26 @@ class _WelcomeBadgeRow extends StatelessWidget {
   }
 }
 
-class _CurrentMonthProgress extends StatelessWidget {
+/// The running month (N17): on top, marked in progress, its tiers lit as
+/// they become certain.
+class _CurrentMonth extends StatelessWidget {
   final MonthlyMedalProgress progress;
+  final MedalTier? tier;
+  final ClimbTheme theme;
 
-  const _CurrentMonthProgress({required this.progress});
+  const _CurrentMonth(
+      {required this.progress, required this.tier, required this.theme});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     final value = (progress.score / progress.maxScore).clamp(0.0, 1.0);
     return Semantics(
-      label: 'This month, ${progress.score} of ${progress.maxScore} points, '
-          '${progress.activeDays} active days, in progress.',
+      label: 'This month, ${theme.name}, in progress. '
+          '${progress.score} of ${progress.maxScore} points, '
+          '${progress.activeDays} active days. '
+          '${tier == null ? 'No medal yet.' : '${tier!.label} medal earned.'}',
       container: true,
       child: ExcludeSemantics(
         child: DecoratedBox(
@@ -218,29 +244,36 @@ class _CurrentMonthProgress extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'This month',
-                        style: theme.textTheme.titleSmall
+                        'This month · ${theme.name}',
+                        style: textTheme.titleSmall
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       'In progress',
-                      style: theme.textTheme.labelMedium?.copyWith(
+                      style: textTheme.labelMedium?.copyWith(
                         color: scheme.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                Center(
+                  child: MonthMedals(
+                      theme: theme,
+                      tier: tier,
+                      disc: MonthlyMedalCollection.currentDisc),
+                ),
+                const SizedBox(height: 12),
                 LinearProgressIndicator(value: value),
                 const SizedBox(height: 8),
                 Text(
                   '${progress.score} / ${progress.maxScore} points · '
                   '${progress.activeDays} active days',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+                  style: textTheme.bodySmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -251,115 +284,49 @@ class _CurrentMonthProgress extends StatelessWidget {
   }
 }
 
+/// A finalized month: its frozen tier, never recomputed (a later rule
+/// change cannot touch it).
 class _MedalHistoryRow extends StatelessWidget {
   final MonthlyMedalResult result;
+  final ClimbTheme theme;
 
-  const _MedalHistoryRow({required this.result});
-
-  static const _months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
+  const _MedalHistoryRow({required this.result, required this.theme});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final muted = textTheme.labelSmall
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
+    final month = MonthlyMedalCollection._months[result.month - 1];
     final outcome =
         result.tier == null ? 'No medal' : '${result.tier!.label} medal';
     return Semantics(
-      label: '${_months[result.month - 1]} ${result.year}, $outcome, '
+      label: '$month ${result.year}, ${theme.name}, $outcome, '
           '${result.score} of ${result.maxScore} points.',
       container: true,
       child: ExcludeSemantics(
         child: Row(
           children: [
-            Icon(
-              result.tier == null
-                  ? Icons.lock_outline_rounded
-                  : Icons.workspace_premium_rounded,
-              color: result.tier == null
-                  ? scheme.onSurfaceVariant
-                  : scheme.primary,
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text('$month ${result.year}',
+                      style: textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(outcome, style: muted),
                   Text(
-                    '${_months[result.month - 1]} ${result.year}',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    '${result.score} / ${result.maxScore} points',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
+                      '${theme.name} · ${result.score} / ${result.maxScore} '
+                      'points',
+                      style: muted),
                 ],
               ),
             ),
-            Text(outcome, style: theme.textTheme.labelLarge),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MedalSpecimen extends StatelessWidget {
-  final MedalTier tier;
-  final bool earned;
-
-  const _MedalSpecimen({required this.tier, required this.earned});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return Semantics(
-      label: '${tier.label} medal, ${earned ? 'earned' : 'locked'}.',
-      container: true,
-      child: ExcludeSemantics(
-        child: Column(
-          children: [
-            // The column's width, stars included. Green Slope's medal until
-            // the collection lists each month with its own theme (N17).
-            LayoutBuilder(
-              builder: (context, constraints) => MedalBadge.monthly(
-                themeId: ClimbThemes.greenSlopeId,
-                tier: tier,
-                disc: constraints.maxWidth / (1 + MedalArt.starsAbove),
-                earned: earned,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              tier.label,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelLarge
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              earned ? 'Earned' : 'Not earned',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
+            const SizedBox(width: 8),
+            MonthMedals(
+                theme: theme,
+                tier: result.tier,
+                disc: MonthlyMedalCollection.historyDisc),
           ],
         ),
       ),

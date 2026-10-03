@@ -1,0 +1,12 @@
+Batch 5 step 4 (N17): the real MonthlyMedalCollection at Profile's width (the list's padding: 4.5 % of the width, 16-28 pt). Height in points; light and dark lay out the same.
+
+width  text    height
+320    small   599.0
+320    medium  652.0
+320    large   702.0
+375    small   551.0
+375    medium  595.0
+375    large   654.0
+430    small   551.0
+430    medium  577.0
+430    large   597.0
