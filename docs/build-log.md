@@ -7941,3 +7941,28 @@ On branch `1.1.0-design`; not pushed. Docs only.
   profile". The panel writes no stored record except its reset; replays
   send no events. Changes the earlier rejection of an in-app debug menu
   (Batch 6 discussion, not recorded in the docs).
+
+## 2026-10-03 (1.1.0 design side tracks — N27 debug panel built)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `de123cf` (N27), `6ec005b` (the panel), and this one.
+- **[Built]** Settings' "Debug" row (debug and profile builds; none in
+  release, `!kReleaseMode`) opens a panel: the scene's theme and day
+  (memory only), the eight milestones and five month cards (each closes
+  the panel and plays on Home; repeatable), and "Reset local data
+  (first-day flow)" behind a confirmation. `CLIMB_DEBUG_DAY`, `THEME` and
+  `MILESTONE` now apply in profile builds too (N27 widens M9 and N22);
+  the defines stay as starting values.
+- **[Reset scope]** Deletes the whole local SQLite database (profile,
+  Daily Test sets and answers, mistakes, practice counts, climb ledger,
+  month themes, medals, Welcome badge, one-time flags, AI consent,
+  appearance, text size, settings, usage counters, debug override, the
+  anonymous device id); the app returns to Welcome. Not touched:
+  purchases (App Store / RevenueCat), Firebase's app instance and sent
+  analytics, Crashlytics, the proxy's shared sets.
+- **[Found and fixed while testing]** Home took a replay while the shell
+  was building when its tab became active (a route pushed during build);
+  it now waits for the frame.
+- **[Tests]** 1467 pass (1429 before); `flutter analyze` clean.
+- **[Not checked]** On a device, debug or profile build.

@@ -144,6 +144,52 @@ Stage 2: where the save points and the summit flag stand
 - **Order after a source change:** run `extract_trail.py` and
   `export_objects.py` first, then `scripts/generate_climb_trail.sh`.
 
+## The debug panel (N27)
+
+In debug and profile builds Settings ends with a **Debug** row. Its panel
+changes the settings below while the app runs, with no rebuild:
+
+- **Theme:** the scene's theme, or the month's real one.
+- **Day:** the step the scene shows (0–31), or the real progress.
+- **Milestones:** `bronze`, `silver`, `gold`, `first_camp`,
+  `halfway_hut`, `mountain_spring`, `high_camp`, `summit`.
+- **Month card:** `summary_gold`, `summary_none`, `summary_near`,
+  `fresh`, `first_run`.
+- **Reset local data (first-day flow):** after a confirmation, deletes
+  the app's whole local database and starts again at Welcome.
+
+A milestone or a month card closes the panel and plays on Home at once;
+the same one can be played again. Theme and day last until the app is
+closed (memory only). Nothing the panel does is stored or sent as an
+event, except the reset (it deletes) and the month card's existing
+`CLIMB_DEBUG_MONTH_CARD_EVENTS` opt-in. The `--dart-define` values below
+still apply, as the starting values at launch. A release build has no
+row, no panel and no effect.
+
+To feel the real app's speed, run a profile build on the device:
+
+```bash
+flutter run --profile
+```
+
+Starting values work there too:
+
+```bash
+flutter run --profile --dart-define=CLIMB_DEBUG_THEME=glacier_peak --dart-define=CLIMB_DEBUG_DAY=20
+```
+
+**What "Reset local data" covers.** Every table of the app's SQLite
+database: the profile (name, avatar, goal), Daily Test sets and answers,
+mistakes and practice counts, the climb's ledger, month themes, medals
+and the Welcome badge, the one-time flags (first-day paywall, zooms, month
+cards), AI consent, appearance and text size, practice and review
+settings, usage counters, the debug entitlement override and the
+anonymous device id the proxy counts quota by. **Not covered:** purchases
+(the App Store and RevenueCat's own SDK storage keep them, so a
+subscriber stays one), Firebase's app instance and the analytics already
+sent, Crashlytics, and the shared Daily Test sets on the proxy. The
+panel's own theme and day stay as set.
+
 ## Checking a day on a device
 
 In a debug build the climb scene can show any step of the month instead
@@ -158,8 +204,8 @@ flutter run --dart-define=CLIMB_DEBUG_DAY=15
   summit.
 - **What it leaves alone:** the real progress, the Daily Test, `dayKey`
   and the card's month and step chips.
-- **Profile and release builds ignore it:** it is guarded by
-  `kDebugMode`.
+- **Release builds ignore it** (N27: debug and profile builds apply it;
+  `kReleaseMode`).
 - **Hot restart keeps the define; changing the day needs a new
   `flutter run`.**
 
@@ -182,8 +228,8 @@ flutter run --dart-define=CLIMB_DEBUG_THEME=glacier_peak --dart-define=CLIMB_DEB
 - **What it changes:** the scene only. The month's recorded theme, the
   rotation, the Daily Test and `dayKey` are untouched.
 - **An unknown id has no effect.**
-- **Profile and release builds ignore it:** it is guarded by
-  `kDebugMode`.
+- **Release builds ignore it** (N27: debug and profile builds apply it;
+  `kReleaseMode`).
 
 ## Checking a milestone on a device
 
@@ -211,8 +257,8 @@ flutter run --dart-define=CLIMB_DEBUG_MILESTONE=halfway_hut
 - **What it leaves alone:** no stored record is read or written beyond
   Home's own load, and no event is sent (the real ones come only from a
   saved Daily Test).
-- **Profile and release builds ignore it:** it is guarded by
-  `kDebugMode`. A hot restart replays it; a resume does not.
+- **Release builds ignore it** (N27: debug and profile builds apply it).
+  A hot restart replays it; a resume does not.
 
 ```bash
 flutter run --dart-define=CLIMB_DEBUG_THEME=red_canyon --dart-define=CLIMB_DEBUG_MILESTONE=summit
