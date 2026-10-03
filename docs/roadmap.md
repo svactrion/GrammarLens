@@ -106,7 +106,22 @@ D1–D6 in the side-tracks file.)*
       Decisions N1–N14 (2026-10-02, `1.1.0-design-side-tracks.md`, "Batch
       5"); Batch 0 report written 2026-10-02
       (`docs/design/batch5/batch0-report.md`); decisions N15–N26
-      (2026-10-03); build started. *(Was:
+      (2026-10-03). **Built 2026-10-03, awaiting device verification**
+      (build log 2026-10-03, "Batch 5 built"); not merged into `1.1.0`.
+      Built: the medals as 384 px assets (+384.2 KB), the month card's
+      48 pt medal, Profile's per-month rows, the celebration layer (Welcome
+      moved into it), save point names and their label, the C5 signpost,
+      `save_point_reached` / `medal_tier_reached`,
+      `CLIMB_DEBUG_MILESTONE`. Known limits:
+  - [ ] stars unreadable below 48 pt, "WELCOME" below 96 pt;
+  - [ ] Red Canyon's mountain on the Bronze body: the closest colours;
+  - [ ] Ember Peak's smoke partly behind the stars;
+  - [ ] the signpost's thin margin; it grazes the trail's edge on Glacier
+        (light and dark) and Canyon dark (at most 2.7 pt² on screen);
+  - [ ] 320 pt: Summit's label covers the avatar at Medium and Large;
+  - [ ] the two new events not seen in DebugView; `save_point` and `step`
+        to register;
+  - [ ] the device checklist (build log). *(Was:
       "themed medal: body, emblem, month label", replaced by N1–N3.)*
       Device checklist additions (Batch 6, M8, M15): the month transition
       card with the new medals; review the near-miss threshold (5 points)

@@ -7857,3 +7857,72 @@ On branch `1.1.0-design` (`1.1.0` merged in first: already up to date at
   already-finalized month is not celebrated and shows no label. **N25**
   sources 97.51 MB, G1 looked at before the next theme. **N26** the OFL
   text beside the font.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `a2c0036` (N15–N26), `1f3b076` (assets), `248f799`
+  (medal widget, month card), `a4b0208` (Profile), `896e83a`
+  (celebration), `051cdbf` (names, label, signpost), `efd3308` (events),
+  `740d686` (debug define), and this closing commit.
+- **[Assets]** 13 medals, 384 px WebP q90, 374.2 KB
+  (`tool/medals/export_medal_assets.py`; `--check` compares them with
+  the sources); the signpost, 10.0 KB. Tracked `assets/` 3932.2 →
+  4316.4 KB (+384.2 KB, +9.8 %). 384 px because the largest medal drawn,
+  the celebration's 112 pt disc, needs a 126 pt canvas (≤ 128 pt, N23).
+- **[Built]**
+  - `MedalBadge` draws the composed image (theme × tier, or Welcome); the
+    caller gives the disc; the stars' room is inside the widget; unearned
+    faded 0.5 / 0.6.
+  - Month card (N16): last month's theme (`MonthCardData.previousTheme`),
+    a 48 pt disc; the gaps around the medal row 10 → 8 pt. Measured with
+    the real card: the summary card +6.7 pt everywhere, no scrolling at
+    320 × 568 (317.7 of 319.5 pt at Large), 375 × 812, 430 × 932 and
+    375 × 667; the fresh card unchanged (`docs/design/batch5/card/`).
+  - Profile (N17): one row per month in its own theme, the running month
+    on top marked in progress with tiers lit as they are crossed;
+    finalized months keep their frozen tier; themes read from
+    `climb_month_themes` (`StorageService.getClimbMonthThemes`), Green
+    Slope for a past month without a row.
+  - Celebration (N15, N24): a layer over the result screen when the save
+    lands, medal and confetti at the opening, one tap closes it; under
+    Reduce Motion no fade and no confetti. The Welcome badge moved into
+    it; the old card under the results is gone. "Start my climb" is
+    unchanged (label, its own confetti, then Home), so the first-day
+    chain keeps its order: celebration → results → Start my climb → Home
+    → zoom → step → Premium (an end-to-end test). Detection
+    (`ClimbMilestones`): the set's month after the save minus this
+    completion; nothing for a month already finalized.
+  - Save points (N6, N19): names; the label above the object and the
+    avatar's art, 200 ms / 2.5 s / 400 ms (3 s without animation under
+    Reduce Motion); below a chip it would touch; none during a zoom or on
+    mount. The C5 signpost drawn always lit, no name, no label.
+  - Events (N21): `save_point_reached`, `medal_tier_reached` (both with
+    `theme_id`, `tier` reused), from the result screen after the save.
+  - Debug (N22): `CLIMB_DEBUG_MILESTONE`, eight values, debug builds only.
+- **[Measured]**
+  - Label on the real Home (`docs/design/batch5/labels_real/`): 34 of 45
+    light cases touch nothing; High Camp overlaps the unlit flag's box at
+    every width; Summit at 320 pt Medium / Large moves below the month
+    chip and then covers 60 / 78 % of the avatar art's box.
+  - Signpost (`check_theme.py --signpost`): Green and Ember touch no
+    trail; Glacier light 36 px, Glacier dark 69 px and Canyon dark 5 px
+    at 2172 px graze the trail's edge (at most 2.7 pt² on a 430 pt
+    phone). N18 expected none: reported, the ratio kept at 0.95.
+  - Celebration card 261–316 pt tall, with at least 106 pt above it at
+    320 × 568 (`docs/design/batch5/celebration/`).
+- **[Not measured]** Anything on a device: the medals in dark mode, frame
+  times, the confetti, the timings; the events in DebugView.
+- **[Known limits]**
+  - stars unreadable below 48 pt and "WELCOME" below 96 pt (N20): the
+    Profile Welcome row's 64 pt badge does not read "WELCOME";
+  - Red Canyon's mountain on the Bronze body is the closest colour pair;
+  - Ember Peak's smoke is partly behind the stars;
+  - the signpost's margin is thin (1.0 and 0.90 touch the trail on
+    Green) and it grazes the trail's edge on Glacier and Canyon dark;
+  - 320 pt: Summit's label covers the avatar at Medium and Large text;
+  - Day 0 now has two bursts: the celebration's and "Start my climb"'s.
+- **[Tests]** 1429 pass (1343 before Batch 5); `flutter analyze` clean.
+- **[Visual — pre-release check]** The result screen, Profile and the
+  month card may appear in App Store screenshots and case-study images.
