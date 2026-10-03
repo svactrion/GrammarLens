@@ -1,0 +1,28 @@
+Batch 5 step 3 (N16): the real month card, Batch 6 (40 pt medal) against now (48 pt disc,
+the gaps around the medal row 8 pt). Light (dark is identical). Sheet height in points.
+
+card     screen    text    sheet before  sheet now  change  scrolls before/now
+summary  320×568   small         294.0      300.7    +6.7  no/no
+summary  320×568   medium        302.0      308.7    +6.7  no/no
+summary  320×568   large         311.0      317.7    +6.7  no/no
+summary  375×812   small         328.0      334.7    +6.7  no/no
+summary  375×812   medium        336.0      342.7    +6.7  no/no
+summary  375×812   large         345.0      351.7    +6.7  no/no
+summary  430×932   small         328.0      334.7    +6.7  no/no
+summary  430×932   medium        336.0      342.7    +6.7  no/no
+summary  430×932   large         345.0      351.7    +6.7  no/no
+summary  375×667   small         294.0      300.7    +6.7  no/no
+summary  375×667   medium        302.0      308.7    +6.7  no/no
+summary  375×667   large         311.0      317.7    +6.7  no/no
+fresh    320×568   small         247.0      247.0    +0.0  no/no
+fresh    320×568   medium        280.0      280.0    +0.0  no/no
+fresh    320×568   large         294.0      294.0    +0.0  no/no
+fresh    375×812   small         260.0      260.0    +0.0  no/no
+fresh    375×812   medium        291.0      291.0    +0.0  no/no
+fresh    375×812   large         303.0      303.0    +0.0  no/no
+fresh    430×932   small         260.0      260.0    +0.0  no/no
+fresh    430×932   medium        264.0      264.0    +0.0  no/no
+fresh    430×932   large         269.0      269.0    +0.0  no/no
+fresh    375×667   small         226.0      226.0    +0.0  no/no
+fresh    375×667   medium        257.0      257.0    +0.0  no/no
+fresh    375×667   large         269.0      269.0    +0.0  no/no

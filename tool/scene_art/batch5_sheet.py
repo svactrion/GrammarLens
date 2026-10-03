@@ -11,6 +11,9 @@ labels:  build/design_measure/batch5_labels (save_point_label_test.dart) ->
          labels_A_vs_B_375_light_medium.jpg (the two placements),
          labels_B_light_medium.jpg (placement B at 320 / 375 / 430),
          labels_B_320_light_textsizes.jpg and labels_B_375_dark_medium.jpg.
+card:    build/design_measure/batch5_card (Batch 6's month_card_real_render_test.dart
+         with the four screens) -> card/: overview_summary.jpg, overview_fresh.jpg,
+         summary_320_textsizes.jpg, the numbers and card_compare.txt.
 welcome: build/design_measure/batch5_welcome (welcome_result_test.dart) ->
          welcome_result_scrolltop.jpg (each screen at its scroll top).
 
@@ -114,5 +117,46 @@ def welcome() -> None:
     shutil.copy(src / "welcome_result.txt", out)
 
 
+def _rows(path: Path) -> dict[tuple[str, str, str, str], list[str]]:
+    out = {}
+    for line in path.read_text().splitlines():
+        f = line.split()
+        if f and f[0] in ("summary", "fresh"):
+            out[(f[0], f[1], f[2], f[3])] = f
+    return out
+
+
+def card() -> None:
+    """Batch 5 step 3 (N16): the real month card with the 48 pt medal, from
+    month_card_real_render_test.dart run with DESIGN_MEASURE_CARD_SCREENS=
+    320x568,375x812,430x932,375x667 into build/design_measure/batch5_card;
+    compared with Batch 6's numbers (docs/design/batch6/card/)."""
+    src, out = BUILD / "batch5_card", OUT / "card"
+    out.mkdir(parents=True, exist_ok=True)
+    new_file = src / "month_card_real_numbers_320x568_375x812_430x932_375x667.txt"
+    shutil.copy(new_file, out)
+    old = _rows(T.REPO / "docs/design/batch6/card/month_card_real_numbers.txt")
+    old.update(_rows(T.REPO / "docs/design/batch6/card/month_card_real_numbers_375x667.txt"))
+    new = _rows(new_file)
+    lines = ["Batch 5 step 3 (N16): the real month card, Batch 6 (40 pt medal) against now (48 pt disc,",
+             "the gaps around the medal row 8 pt). Light (dark is identical). Sheet height in points.",
+             "", "card     screen    text    sheet before  sheet now  change  scrolls before/now"]
+    for key, f in new.items():
+        if key[2] != "light" or key not in old:
+            continue
+        o = old[key]
+        lines.append(f"{key[0]:8} {key[1]:9} {key[3]:7} {float(o[5]):11.1f}  {float(f[5]):9.1f}  "
+                     f"{float(f[5]) - float(o[5]):+6.1f}  {o[10]}/{f[10]}")
+    (out / "card_compare.txt").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+    screens = (320, 375, 430)
+    for kind in ("summary", "fresh"):
+        cells = [[Image.open(src / f"card_{kind}_{w}_{m}_medium.png") for w in screens] for m in ("light", "dark")]
+        grid(cells, [f"{w} pt, Medium" for w in screens], 0.5).save(out / f"overview_{kind}.jpg", quality=84)
+    cells = [[Image.open(src / f"card_summary_320_light_{s}.png") for s in ("small", "medium", "large")]]
+    grid(cells, [f"320 x 568, {s}" for s in ("Small", "Medium", "Large")], 0.5).save(
+        out / "summary_320_textsizes.jpg", quality=84)
+
+
 if __name__ == "__main__":
-    {"sites": sites, "labels": labels, "welcome": welcome}[sys.argv[1]]()
+    {"sites": sites, "labels": labels, "welcome": welcome, "card": card}[sys.argv[1]]()

@@ -28,6 +28,11 @@ class MonthCardData {
 
   final MonthCardVariant variant;
 
+  /// The previous month's theme, the one its medal belongs to (Batch 5,
+  /// N16): read from its stored theme record; Green Slope when the card
+  /// has no medal to show.
+  final ClimbTheme previousTheme;
+
   /// The previous calendar month: the summary card's subject.
   final int previousYear, previousMonth;
 
@@ -43,6 +48,7 @@ class MonthCardData {
     required this.month,
     required this.theme,
     required this.variant,
+    this.previousTheme = ClimbThemes.greenSlope,
     required this.previousYear,
     required this.previousMonth,
     this.tier,
@@ -121,11 +127,16 @@ abstract final class MonthTransition {
       final frozen =
           results.where((r) => r.year == py && r.month == pm).firstOrNull;
       if (frozen == null) return null;
+      // A past month: its stored theme, or Green Slope before themes were
+      // stored (nothing is written for it).
+      final previousTheme =
+          ClimbThemes.byId(await storage.resolveClimbMonthTheme(py, pm));
       return MonthCardData(
         year: year,
         month: month,
         theme: theme,
         variant: variant,
+        previousTheme: previousTheme,
         previousYear: py,
         previousMonth: pm,
         tier: frozen.tier,

@@ -107,10 +107,39 @@ void main() {
     expect(card.tier, MedalTier.silver);
     expect((card.steps, card.days, card.score), (24, 31, 228));
     expect(card.nearMiss, (MedalTier.gold, 5));
+    // N16: October's own theme, for the medal.
+    expect(card.previousTheme, ClimbThemes.greenSlope);
     // The card froze October itself and reported it once.
     expect(sink.events.where((e) => e.name == 'medal_month_finalized'),
         hasLength(1));
     expect((await storage.getMonthlyMedalResults()).single.month, 10);
+  });
+
+  test(
+      'N16: the medal\'s theme is last month\'s stored theme, not the '
+      'calendar\'s', () async {
+    // November recorded Ember Peak on its first view; December's card shows
+    // November's medal in Ember Peak, whatever December's theme is.
+    await at(DateTime(2026, 11, 2, 9));
+    await storage.resolveClimbMonthTheme(2026, 11);
+    for (var d = 1; d <= 10; d++) {
+      await entry('2026-11-${d.toString().padLeft(2, '0')}', correct: 5);
+    }
+    final card = await load(DateTime(2026, 12, 1, 8));
+    expect(card!.tier, MedalTier.bronze);
+    expect(card.theme, ClimbThemes.glacierPeak);
+    expect(card.previousTheme, ClimbThemes.emberPeak);
+  });
+
+  test(
+      'N16: a past month with no stored theme (before themes were stored) '
+      'shows Green Slope\'s medal', () async {
+    for (var d = 1; d <= 10; d++) {
+      await entry('2026-09-${d.toString().padLeft(2, '0')}', correct: 5);
+    }
+    final card = await load(DateTime(2026, 10, 3, 9));
+    expect(card!.tier, MedalTier.bronze);
+    expect(card.previousTheme, ClimbThemes.greenSlope);
   });
 
   test('the same month\'s second open shows nothing once dismissed', () async {

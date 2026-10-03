@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
+import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/screens/daily_test_screen.dart';
 import 'package:grammar_lens/screens/home_screen.dart';
 import 'package:grammar_lens/services/month_transition.dart';
+import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/month_card_sheet.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
@@ -38,6 +40,20 @@ void main() {
       final mountain = tester.widget<MonthlyMountain>(_mountain);
       expect(mountain.zoom!.value, 0);
       expect(mountain.theme, ClimbThemes.emberPeak);
+    });
+
+    testWidgets(
+        'N16: the medal is last month\'s theme and tier, a 48 pt disc, '
+        'in the medal row', (tester) async {
+      await pumpHome(tester, CardStorage());
+      final badge = tester.widget<MedalBadge>(find.descendant(
+          of: find.byKey(MonthCardSheet.medalKey),
+          matching: find.byType(MedalBadge)));
+      // October 2026 is Green Slope; the card is November's (Ember Peak).
+      expect(badge.asset, MedalArt.monthly('green_slope', MedalTier.silver));
+      expect(badge.disc, MonthCardSheet.medalDisc);
+      expect(MonthCardSheet.medalDisc, 48);
+      expect(badge.earned, isTrue);
     });
 
     testWidgets('summary without a medal: no medal row; the gap to Bronze',

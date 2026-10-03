@@ -1,0 +1,52 @@
+Batch 6 step B: the real month card over the real Home after the M21 scroll (1 November 2026, Ember Peak). Points.
+sheet: top and height (share of the screen); content: the card's natural height; room: what the sheet gives it (default modal sheet, at most 9/16 of the screen); scroll: content > room; Today: the Today card's height showing between the list top and the tab bar; window: the 350 pt mountain window showing above the sheet (and below the list top); START: the K-c avatar (298.5 pt into the window) above the sheet.
+
+card     screen    mode  text    sheet top  sheet h (share)  content  room   scroll  overflow  Today  window above sheet  START
+summary  320×568   dark  small       267.3     300.7 (53 %)    284.7  300.7      no      none   56.0        106.3 (30 %)  no
+summary  320×568   dark  medium      259.3     308.7 (54 %)    292.7  308.7      no      none   56.0         97.3 (28 %)  no
+summary  320×568   dark  large       250.3     317.7 (56 %)    301.7  317.7      no      none   56.0         87.3 (25 %)  no
+summary  320×568   light small       267.3     300.7 (53 %)    284.7  300.7      no      none   56.0        106.3 (30 %)  no
+summary  320×568   light medium      259.3     308.7 (54 %)    292.7  308.7      no      none   56.0         97.3 (28 %)  no
+summary  320×568   light large       250.3     317.7 (56 %)    301.7  317.7      no      none   56.0         87.3 (25 %)  no
+summary  375×812   dark  small       477.3     334.7 (41 %)    284.7  300.7      no      none   56.0        289.3 (83 %)  no
+summary  375×812   dark  medium      469.3     342.7 (42 %)    292.7  308.7      no      none   56.0        280.3 (80 %)  no
+summary  375×812   dark  large       460.3     351.7 (43 %)    301.7  317.7      no      none   56.0        270.3 (77 %)  no
+summary  375×812   light small       477.3     334.7 (41 %)    284.7  300.7      no      none   56.0        289.3 (83 %)  no
+summary  375×812   light medium      469.3     342.7 (42 %)    292.7  308.7      no      none   56.0        280.3 (80 %)  no
+summary  375×812   light large       460.3     351.7 (43 %)    301.7  317.7      no      none   56.0        270.3 (77 %)  no
+summary  430×932   dark  small       597.3     334.7 (36 %)    284.7  300.7      no      none   58.4       350.0 (100 %)  yes
+summary  430×932   dark  medium      589.3     342.7 (37 %)    292.7  308.7      no      none   56.0       350.0 (100 %)  yes
+summary  430×932   dark  large       580.3     351.7 (38 %)    301.7  317.7      no      none   56.0       350.0 (100 %)  yes
+summary  430×932   light small       597.3     334.7 (36 %)    284.7  300.7      no      none   58.4       350.0 (100 %)  yes
+summary  430×932   light medium      589.3     342.7 (37 %)    292.7  308.7      no      none   56.0       350.0 (100 %)  yes
+summary  430×932   light large       580.3     351.7 (38 %)    301.7  317.7      no      none   56.0       350.0 (100 %)  yes
+summary  375×667   dark  small       366.3     300.7 (45 %)    284.7  300.7      no      none   56.0        205.3 (59 %)  no
+summary  375×667   dark  medium      358.3     308.7 (46 %)    292.7  308.7      no      none   56.0        196.3 (56 %)  no
+summary  375×667   dark  large       349.3     317.7 (48 %)    301.7  317.7      no      none   56.0        186.3 (53 %)  no
+summary  375×667   light small       366.3     300.7 (45 %)    284.7  300.7      no      none   56.0        205.3 (59 %)  no
+summary  375×667   light medium      358.3     308.7 (46 %)    292.7  308.7      no      none   56.0        196.3 (56 %)  no
+summary  375×667   light large       349.3     317.7 (48 %)    301.7  317.7      no      none   56.0        186.3 (53 %)  no
+fresh    320×568   dark  small       321.0     247.0 (43 %)    231.0  247.0      no      none   56.0        160.0 (46 %)  no
+fresh    320×568   dark  medium      288.0     280.0 (49 %)    264.0  280.0      no      none   56.0        126.0 (36 %)  no
+fresh    320×568   dark  large       274.0     294.0 (52 %)    278.0  294.0      no      none   56.0        111.0 (32 %)  no
+fresh    320×568   light small       321.0     247.0 (43 %)    231.0  247.0      no      none   56.0        160.0 (46 %)  no
+fresh    320×568   light medium      288.0     280.0 (49 %)    264.0  280.0      no      none   56.0        126.0 (36 %)  no
+fresh    320×568   light large       274.0     294.0 (52 %)    278.0  294.0      no      none   56.0        111.0 (32 %)  no
+fresh    375×812   dark  small       552.0     260.0 (32 %)    210.0  226.0      no      none   56.0       350.0 (100 %)  yes
+fresh    375×812   dark  medium      521.0     291.0 (36 %)    241.0  257.0      no      none   56.0        332.0 (95 %)  yes
+fresh    375×812   dark  large       509.0     303.0 (37 %)    253.0  269.0      no      none   56.0        319.0 (91 %)  yes
+fresh    375×812   light small       552.0     260.0 (32 %)    210.0  226.0      no      none   56.0       350.0 (100 %)  yes
+fresh    375×812   light medium      521.0     291.0 (36 %)    241.0  257.0      no      none   56.0        332.0 (95 %)  yes
+fresh    375×812   light large       509.0     303.0 (37 %)    253.0  269.0      no      none   56.0        319.0 (91 %)  yes
+fresh    430×932   dark  small       672.0     260.0 (28 %)    210.0  226.0      no      none   58.4       350.0 (100 %)  yes
+fresh    430×932   dark  medium      668.0     264.0 (28 %)    214.0  230.0      no      none   56.0       350.0 (100 %)  yes
+fresh    430×932   dark  large       663.0     269.0 (29 %)    219.0  235.0      no      none   56.0       350.0 (100 %)  yes
+fresh    430×932   light small       672.0     260.0 (28 %)    210.0  226.0      no      none   58.4       350.0 (100 %)  yes
+fresh    430×932   light medium      668.0     264.0 (28 %)    214.0  230.0      no      none   56.0       350.0 (100 %)  yes
+fresh    430×932   light large       663.0     269.0 (29 %)    219.0  235.0      no      none   56.0       350.0 (100 %)  yes
+fresh    375×667   dark  small       441.0     226.0 (34 %)    210.0  226.0      no      none   56.0        280.0 (80 %)  no
+fresh    375×667   dark  medium      410.0     257.0 (39 %)    241.0  257.0      no      none   56.0        248.0 (71 %)  no
+fresh    375×667   dark  large       398.0     269.0 (40 %)    253.0  269.0      no      none   56.0        235.0 (67 %)  no
+fresh    375×667   light small       441.0     226.0 (34 %)    210.0  226.0      no      none   56.0        280.0 (80 %)  no
+fresh    375×667   light medium      410.0     257.0 (39 %)    241.0  257.0      no      none   56.0        248.0 (71 %)  no
+fresh    375×667   light large       398.0     269.0 (40 %)    253.0  269.0      no      none   56.0        235.0 (67 %)  no

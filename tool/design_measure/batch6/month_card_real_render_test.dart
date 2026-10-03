@@ -21,10 +21,12 @@ import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
+import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/models/monthly_medal.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/services/monthly_medal_rules.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/month_card_sheet.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_card.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
@@ -155,6 +157,9 @@ void main() {
                   ClimbThemes.emberPeak.backgroundFor(b),
                   for (final p in ClimbSavePoints.all) p.asset,
                   ClimbSavePoints.assetFor('summit_flag'),
+                  // Batch 5: the medal the card draws (October's theme).
+                  for (final tier in MedalTier.values)
+                    MedalArt.monthly(ClimbThemes.greenSlopeId, tier),
                 ])
                   precacheImage(AssetImage(asset), key.currentContext!),
               ]);

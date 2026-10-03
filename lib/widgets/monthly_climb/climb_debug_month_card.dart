@@ -71,12 +71,17 @@ abstract final class ClimbDebugMonthCard {
 
   /// The sample card for [v] in the month of [now]: last month's numbers
   /// from the medal rules (never hard-coded thresholds), the month's
-  /// calendar theme or `CLIMB_DEBUG_THEME`'s. Null for `first_run`, which
+  /// calendar theme or `CLIMB_DEBUG_THEME`'s (for last month's medal too).
+  /// Null for `first_run`, which
   /// has no card.
   static MonthCardData? sample(ClimbDebugMonthCardValue v, DateTime now) {
     final (py, pm) = MonthTransition.previousMonth(now.year, now.month);
     final theme = ClimbDebugTheme.value ??
         ClimbThemeRotation.shownFor(now.year, now.month);
+    // Last month's medal: `CLIMB_DEBUG_THEME`'s theme too, so each theme's
+    // medal can be checked in the card (Batch 5).
+    final previousTheme =
+        ClimbDebugTheme.value ?? ClimbThemeRotation.shownFor(py, pm);
     final days = DateTime(py, pm + 1, 0).day;
     int threshold(MedalTier t) => MonthlyMedalRules.threshold(py, pm, t);
     MonthCardData summary(int steps, int score) => MonthCardData(
@@ -84,6 +89,7 @@ abstract final class ClimbDebugMonthCard {
           month: now.month,
           theme: theme,
           variant: MonthCardVariant.summary,
+          previousTheme: previousTheme,
           previousYear: py,
           previousMonth: pm,
           tier: MonthlyMedalRules.tierFor(year: py, month: pm, score: score),

@@ -97,6 +97,15 @@ void main() {
       expect(sample(ClimbDebugMonthCardValue.fresh).theme,
           ClimbThemes.glacierPeak);
     });
+    test(
+        'Batch 5: last month\'s medal is its calendar theme, or '
+        'CLIMB_DEBUG_THEME\'s', () {
+      expect(sample(ClimbDebugMonthCardValue.summaryGold).previousTheme,
+          ClimbThemes.greenSlope);
+      ClimbDebugTheme.valueForTesting = 'red_canyon';
+      expect(sample(ClimbDebugMonthCardValue.summaryGold).previousTheme,
+          ClimbThemes.redCanyon);
+    });
   });
 
   group('the replay on Home', () {

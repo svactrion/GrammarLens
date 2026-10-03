@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/climb_theme.dart';
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
 import '../models/welcome_badge.dart';
@@ -334,9 +335,15 @@ class _MedalSpecimen extends StatelessWidget {
       child: ExcludeSemantics(
         child: Column(
           children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: MedalBadge(tier: tier, earned: earned),
+            // The column's width, stars included. Green Slope's medal until
+            // the collection lists each month with its own theme (N17).
+            LayoutBuilder(
+              builder: (context, constraints) => MedalBadge.monthly(
+                themeId: ClimbThemes.greenSlopeId,
+                tier: tier,
+                disc: constraints.maxWidth / (1 + MedalArt.starsAbove),
+                earned: earned,
+              ),
             ),
             const SizedBox(height: 8),
             Text(

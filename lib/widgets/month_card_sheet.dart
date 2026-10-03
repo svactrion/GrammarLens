@@ -47,6 +47,15 @@ class MonthCardSheet extends StatelessWidget {
   static const nearMissKey = ValueKey('month_card_near_miss');
   static const medalKey = ValueKey('month_card_medal');
 
+  /// The medal's disc (Batch 5, N16): 48 pt, the stars' readability floor
+  /// (N20).
+  static const medalDisc = 48.0;
+
+  /// The gaps above and below the medal row: 8 pt, not the card's 10. The
+  /// 48 pt medal and its stars add 10.7 pt; without these 4 the summary card
+  /// scrolled by 2.2 pt at 320 × 568 with Large text (N16).
+  static const medalGap = 8.0;
+
   /// The near-miss line (M15): the gap as a number, no promise of days.
   static String nearMissText(int gap, String tier) =>
       'Just $gap ${gap == 1 ? 'point' : 'points'} from $tier';
@@ -114,10 +123,10 @@ class MonthCardSheet extends StatelessWidget {
     return [
       Semantics(header: true, child: title),
       if (tier != null) ...[
-        const SizedBox(height: 10),
+        const SizedBox(height: medalGap),
         Row(key: medalKey, children: [
-          SizedBox.square(
-              dimension: 40, child: MedalBadge(tier: tier, iconSize: 20)),
+          MedalBadge.monthly(
+              themeId: data.previousTheme.id, tier: tier, disc: medalDisc),
           const SizedBox(width: 10),
           Expanded(
               child: Text('${tier.label} medal',
@@ -125,7 +134,7 @@ class MonthCardSheet extends StatelessWidget {
                       ?.copyWith(fontWeight: FontWeight.w700))),
         ]),
       ],
-      const SizedBox(height: 10),
+      SizedBox(height: tier != null ? medalGap : 10),
       Wrap(spacing: 20, runSpacing: 4, children: [
         stat('${data.steps} / ${data.days}', 'steps'),
         stat('${data.score}', 'points'),
