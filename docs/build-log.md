@@ -7926,3 +7926,18 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
 - **[Tests]** 1429 pass (1343 before Batch 5); `flutter analyze` clean.
 - **[Visual — pre-release check]** The result screen, Profile and the
   month card may appear in App Store screenshots and case-study images.
+
+## 2026-10-03 (1.1.0 design side tracks — N27: an in-app debug panel)
+
+On branch `1.1.0-design`; not pushed. Docs only.
+
+- **[Product — owner] N27.** A "Debug" row at the bottom of Settings
+  opens a panel that changes `CLIMB_DEBUG_DAY`, `CLIMB_DEBUG_THEME`,
+  `CLIMB_DEBUG_MONTH_CARD` and `CLIMB_DEBUG_MILESTONE` at run time, in
+  debug and profile builds; no effect in release. *Why:* every value
+  needed a rebuild (seventeen values, four themes, the day), and a debug
+  build did not feel like the real app. The `--dart-define` values stay
+  as starting values. M9's and N22's "debug only" widens to "debug and
+  profile". The panel writes no stored record except its reset; replays
+  send no events. Changes the earlier rejection of an in-app debug menu
+  (Batch 6 discussion, not recorded in the docs).
