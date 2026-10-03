@@ -8388,7 +8388,7 @@ On branch `1.1.0-design`; not merged, not pushed.
   `build/screenshots/raw/` (git-ignored); `frame.py` clears its output
   folders first, so no frame of an earlier order lingers.
 - **[Size]** The set in the repository: 10 MB (iPhone 5.3 MB, iPad
-  4.3 MB, overview 0.4 MB), down from 26.8 MB with the raw captures.
+  4.3 MB, overview 0.5 MB), down from 26.8 MB with the raw captures.
 - **[Tests]** 1501 pass (`test/debug_sample_collection_test.dart` now 7);
   `flutter analyze` clean.
 - **[Waiting]** Ahmet's final approval of the set; the Gold frame's month.
