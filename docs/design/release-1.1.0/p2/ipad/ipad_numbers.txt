@@ -1,0 +1,100 @@
+1.1.0 release step 2: the iPad check on the real components. Points (1 pt = 2 px on every iPad here). Portrait; safe areas 24 / 20 pt on iPads (assumed). Light mode (dark lays out the same). Exceptions: the framework errors the case raised (overflow and the like); "none" when none.
+
+== iPhone reference (computed, not rendered) ==
+320 pt @2x: window 288.0 × 350 (aspect 0.82:1), image 634 px wide: 0.41× the asset
+375 pt @2x: window 341.3 × 350 (aspect 0.97:1), image 751 px wide: 0.49× the asset
+430 pt @3x: window 391.3 × 350 (aspect 1.12:1), image 1291 px wide: 0.84× the asset
+
+== home_day15 ==
+13in 1032×1376 medium: climb card 640.0 × 421.4 at (196.0, 312.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 642.6 pt; max(0, ...) 642.6
+    exceptions: none
+13in 1032×1376 large: climb card 640.0 × 424.1 at (196.0, 314.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 637.9 pt; max(0, ...) 637.9
+    exceptions: none
+11in 834×1194 medium: climb card 640.0 × 421.4 at (97.0, 312.0) (77 % of the width, 35 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 460.6 pt; max(0, ...) 460.6
+    exceptions: none
+11in 834×1194 large: climb card 640.0 × 424.1 at (97.0, 314.0) (77 % of the width, 36 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 455.9 pt; max(0, ...) 455.9
+    exceptions: none
+mini 744×1133 medium: climb card 640.0 × 421.4 at (52.0, 312.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 399.6 pt; max(0, ...) 399.6
+    exceptions: none
+mini 744×1133 large: climb card 640.0 × 424.1 at (52.0, 314.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 394.9 pt; max(0, ...) 394.9
+    exceptions: none
+
+== card_summary ==
+13in 1032×1376 medium: sheet 640.0 × 427.3 at (196.0, 948.7) (62 % of the width, 31 % of the height); content 391.3 in 407.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (196.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 384.8–647.3, the sheet x 196.0–836.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+13in 1032×1376 large: sheet 640.0 × 438.3 at (196.0, 937.7) (62 % of the width, 32 % of the height); content 402.3 in 418.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (196.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 384.8–647.3, the sheet x 196.0–836.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+11in 834×1194 medium: sheet 640.0 × 427.3 at (97.0, 766.7) (77 % of the width, 36 % of the height); content 391.3 in 407.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (97.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 285.8–548.3, the sheet x 97.0–737.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+11in 834×1194 large: sheet 640.0 × 438.3 at (97.0, 755.7) (77 % of the width, 37 % of the height); content 402.3 in 418.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (97.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 285.8–548.3, the sheet x 97.0–737.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+mini 744×1133 medium: sheet 640.0 × 427.3 at (52.0, 705.7) (86 % of the width, 38 % of the height); content 391.3 in 407.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (52.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 240.8–503.3, the sheet x 52.0–692.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+mini 744×1133 large: sheet 640.0 × 438.3 at (52.0, 694.7) (86 % of the width, 39 % of the height); content 402.3 in 418.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (52.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 240.8–503.3, the sheet x 52.0–692.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+
+== profile ==
+13in 1032×1376 medium: shelf 640.0 × 370.4 at (196.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    exceptions: none
+13in 1032×1376 large: shelf 640.0 × 382.6 at (196.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    exceptions: none
+11in 834×1194 medium: shelf 640.0 × 370.4 at (97.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    exceptions: none
+11in 834×1194 large: shelf 640.0 × 382.6 at (97.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    exceptions: none
+mini 744×1133 medium: shelf 640.0 × 370.4 at (52.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    exceptions: none
+mini 744×1133 large: shelf 640.0 × 382.6 at (52.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    exceptions: none
+
+== review ==
+13in 1032×1376 medium: column reference 640.0 × 142.0 at (196.0, 100.0) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 150.0 at (196.0, 100.0) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 142.0 at (97.0, 100.0) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 150.0 at (97.0, 100.0) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 142.0 at (52.0, 100.0) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 150.0 at (52.0, 100.0) (86 % of the width)
+    exceptions: none
+
+== profile_bottom ==
+13in 1032×1376 medium: column reference 548.0 × 26.0 at (264.0, 416.3) (53 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 548.0 × 29.0 at (264.0, 541.8) (53 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 548.0 × 26.0 at (165.0, 347.8) (66 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 548.0 × 29.0 at (165.0, 472.5) (66 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 548.0 × 26.0 at (120.0, 396.5) (74 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 548.0 × 29.0 at (120.0, 376.6) (74 % of the width)
+    exceptions: none

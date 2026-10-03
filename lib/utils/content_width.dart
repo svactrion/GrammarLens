@@ -4,9 +4,9 @@ import 'package:flutter/widgets.dart';
 
 /// P1 (1.1.0 release preparation): on a wide screen (an iPad) the content
 /// column is centred and capped at [maxContentWidth]; on a narrower screen
-/// (every iPhone) nothing changes. Backgrounds, the top band, the nav bar's
-/// surface and dimming layers stay full width; only what sits on them is
-/// held to the column.
+/// (every iPhone) nothing changes. Backgrounds, the top band and dimming
+/// layers stay full width; only what sits on them is held to the column.
+/// The floating nav bar is held to the column too (P2).
 ///
 /// The one place the rule lives: `BrandScaffold` applies it to every list
 /// screen and to the band, and the screens that lay out their own body

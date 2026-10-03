@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/content_width.dart';
 import 'package:grammar_lens/widgets/brand_scaffold.dart';
+import 'package:grammar_lens/widgets/floating_nav_shell.dart';
 
 /// P1 (1.1.0 release): on an iPad the content column is centred and capped
 /// at [ContentWidth.maxContentWidth]; on an iPhone nothing changes.
@@ -77,5 +78,44 @@ void main() {
         430 - 2 * ContentWidth.basePadding(430));
     expect(
         tester.widget<Scaffold>(find.byType(Scaffold)).appBar, isA<AppBar>());
+  });
+
+  group('P2: the floating nav bar', () {
+    Future<Rect> pill(WidgetTester tester, Size size) async {
+      tester.view.physicalSize = size * 2;
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: FloatingNavShell(
+          body: const SizedBox.expand(),
+          tabs: const [
+            NavShellTab(icon: Icons.home, activeIcon: Icons.home, label: 'A'),
+            NavShellTab(
+                icon: Icons.person, activeIcon: Icons.person, label: 'B'),
+          ],
+          selectedIndex: 0,
+          onTabChange: (_) {},
+        ),
+      ));
+      return tester.getRect(find
+          .descendant(
+              of: find.byType(FloatingNavShell),
+              matching: find.byType(ClipRRect))
+          .first);
+    }
+
+    testWidgets('on a 13-inch iPad the pill spans the content column',
+        (tester) async {
+      final r = await pill(tester, const Size(1032, 1376));
+      expect(r.width, ContentWidth.maxContentWidth);
+      expect(r.center.dx, 1032 / 2);
+    });
+
+    testWidgets('on an iPhone it keeps 16 pt from each edge', (tester) async {
+      final r = await pill(tester, const Size(430, 932));
+      expect(r.left, 16);
+      expect(r.right, 430 - 16);
+    });
   });
 }

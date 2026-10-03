@@ -128,14 +128,18 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
     final unselectedColor =
         theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
+    // P2: on an iPad the pill itself spans the content column; on an
+    // iPhone it keeps its 16 pt from each edge.
+    final side = 16 + ContentWidth.insetOf(context, edge: 16);
+
     return NavBarClearance(
       value: _clearance,
       child: Stack(
         children: [
           widget.body,
           Positioned(
-            left: 16,
-            right: 16,
+            left: side,
+            right: side,
             bottom: 0,
             child: SafeArea(
               key: _barKey,
@@ -167,21 +171,13 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
                           ),
                         ],
                       ),
-                      // P1: the pill stays full width; on an iPad its tabs
-                      // sit over the content column (the pill's 16 pt and
-                      // the row's 8 pt are already in).
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal:
-                                ContentWidth.insetOf(context, edge: 24)),
-                        child: _FloatingNavBar(
-                          tabs: widget.tabs,
-                          selectedIndex: widget.selectedIndex,
-                          onTabChange: widget.onTabChange,
-                          unselectedColor: unselectedColor,
-                          activeColor: colorScheme.secondary,
-                          labelStyle: theme.textTheme.labelMedium,
-                        ),
+                      child: _FloatingNavBar(
+                        tabs: widget.tabs,
+                        selectedIndex: widget.selectedIndex,
+                        onTabChange: widget.onTabChange,
+                        unselectedColor: unselectedColor,
+                        activeColor: colorScheme.secondary,
+                        labelStyle: theme.textTheme.labelMedium,
                       ),
                     ),
                   ),

@@ -28,6 +28,8 @@ comparison):
 writes one sheet per screen (all 25), caps_<case>.jpg (rows 13 in and
 11 in, columns 560 / 640 / 720 pt, light Medium), the 1:1 crops, and the
 numbers files.
+
+    ... release_ipad_sheet.py only home_day15,review   (named cases only)
 """
 
 from __future__ import annotations
@@ -125,6 +127,17 @@ def main(p1: bool = False) -> None:
             shutil.copy(SRC / "caps" / f"ipad_numbers_cap{c}.txt", OUT)
 
 
+def only(cases: list[str]) -> None:
+    """One sheet per named case and the numbers file (P2's nav bar check)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    for case in cases:
+        sheet(case).save(OUT / f"{case}.jpg", quality=80)
+    shutil.copy(SRC / "ipad_numbers.txt", OUT)
+
+
 if __name__ == "__main__":
     import sys
-    main(len(sys.argv) > 1 and sys.argv[1] == "p1")
+    if len(sys.argv) > 2 and sys.argv[1] == "only":
+        only(sys.argv[2].split(","))
+    else:
+        main(len(sys.argv) > 1 and sys.argv[1] == "p1")
