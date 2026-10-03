@@ -399,3 +399,23 @@ Batch 6's `month_card_real_render_test.dart` (four screens; 375 × 667's
 images are named `375x667` so they do not overwrite 375 × 812's) and
 `batch5_sheet.py card` (Batch 6 → N30 → N37 in `card_compare.txt`; N30's
 numbers kept as `month_card_real_numbers_N30.txt`).
+
+## 1.1.0 release: the iPad check
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/ipad flutter test tool/design_measure/release/ipad_render_test.dart
+```
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/release_ipad_sheet.py
+```
+
+The real screens 1.1.0 changed (launch splash, Home on days 1 / 15 / 31,
+the month card, K-c, the save point label, the Welcome and Gold
+celebrations, the Daily Test result, Profile and its medal detail, the
+avatar picker) at 1032 × 1376, 834 × 1194 and 744 × 1133 (2x, portrait),
+light and dark, Medium and Large; `IPAD_CASES` and `IPAD_DEVICES` narrow
+the run. `ipad_numbers.txt` holds the measures; the sheet script writes
+one JPEG per screen and 1:1 crops of the mountain window to
+`docs/design/release-1.1.0/ipad/`
+(`docs/design/release-1.1.0/ipad-and-screenshots-report.md`).
