@@ -18,8 +18,8 @@ abstract final class ContentWidth {
   /// The content column's largest width on a wide screen.
   static const maxContentWidth = 640.0;
 
-  /// For the measuring tools only (the 560 / 640 / 720 pt comparison).
-  @visibleForTesting
+  /// For the measuring tools only (the 560 / 640 / 720 pt comparison);
+  /// null in the app.
   static double? debugMaxContentWidthOverride;
 
   static double get _cap => debugMaxContentWidthOverride ?? maxContentWidth;

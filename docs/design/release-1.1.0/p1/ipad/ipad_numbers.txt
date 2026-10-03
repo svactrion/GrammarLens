@@ -1,0 +1,470 @@
+1.1.0 release step 2: the iPad check on the real components. Points (1 pt = 2 px on every iPad here). Portrait; safe areas 24 / 20 pt on iPads (assumed). Light mode (dark lays out the same). Exceptions: the framework errors the case raised (overflow and the like); "none" when none.
+
+== iPhone reference (computed, not rendered) ==
+320 pt @2x: window 288.0 × 350 (aspect 0.82:1), image 634 px wide: 0.41× the asset
+375 pt @2x: window 341.3 × 350 (aspect 0.97:1), image 751 px wide: 0.49× the asset
+430 pt @3x: window 391.3 × 350 (aspect 1.12:1), image 1291 px wide: 0.84× the asset
+
+== launch ==
+13in 1032×1376 medium: logo 125.0 × 125.0 at (453.5, 586.5); wordmark 1032.0 × 58.0 at (0.0, 731.5); logo is 12.1 % of the width
+    exceptions: none
+13in 1032×1376 large: logo 125.0 × 125.0 at (453.5, 586.5); wordmark 1032.0 × 58.0 at (0.0, 731.5); logo is 12.1 % of the width
+    exceptions: none
+11in 834×1194 medium: logo 125.0 × 125.0 at (354.5, 495.5); wordmark 834.0 × 58.0 at (0.0, 640.5); logo is 15.0 % of the width
+    exceptions: none
+11in 834×1194 large: logo 125.0 × 125.0 at (354.5, 495.5); wordmark 834.0 × 58.0 at (0.0, 640.5); logo is 15.0 % of the width
+    exceptions: none
+mini 744×1133 medium: logo 125.0 × 125.0 at (309.5, 465.0); wordmark 744.0 × 58.0 at (0.0, 610.0); logo is 16.8 % of the width
+    exceptions: none
+mini 744×1133 large: logo 125.0 × 125.0 at (309.5, 465.0); wordmark 744.0 × 58.0 at (0.0, 610.0); logo is 16.8 % of the width
+    exceptions: none
+
+== home_day1 ==
+13in 1032×1376 medium: climb card 640.0 × 421.4 at (196.0, 312.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 1 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 642.6 pt; max(0, ...) 642.6
+    exceptions: none
+13in 1032×1376 large: climb card 640.0 × 424.1 at (196.0, 314.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 1 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 637.9 pt; max(0, ...) 637.9
+    exceptions: none
+11in 834×1194 medium: climb card 640.0 × 421.4 at (97.0, 312.0) (77 % of the width, 35 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 1 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 460.6 pt; max(0, ...) 460.6
+    exceptions: none
+11in 834×1194 large: climb card 640.0 × 424.1 at (97.0, 314.0) (77 % of the width, 36 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 1 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 455.9 pt; max(0, ...) 455.9
+    exceptions: none
+mini 744×1133 medium: climb card 640.0 × 421.4 at (52.0, 312.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 1 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 399.6 pt; max(0, ...) 399.6
+    exceptions: none
+mini 744×1133 large: climb card 640.0 × 424.1 at (52.0, 314.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 1 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 394.9 pt; max(0, ...) 394.9
+    exceptions: none
+
+== home_day15 ==
+13in 1032×1376 medium: climb card 640.0 × 421.4 at (196.0, 312.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 642.6 pt; max(0, ...) 642.6
+    exceptions: none
+13in 1032×1376 large: climb card 640.0 × 424.1 at (196.0, 314.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 637.9 pt; max(0, ...) 637.9
+    exceptions: none
+11in 834×1194 medium: climb card 640.0 × 421.4 at (97.0, 312.0) (77 % of the width, 35 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 460.6 pt; max(0, ...) 460.6
+    exceptions: none
+11in 834×1194 large: climb card 640.0 × 424.1 at (97.0, 314.0) (77 % of the width, 36 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 455.9 pt; max(0, ...) 455.9
+    exceptions: none
+mini 744×1133 medium: climb card 640.0 × 421.4 at (52.0, 312.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 399.6 pt; max(0, ...) 399.6
+    exceptions: none
+mini 744×1133 large: climb card 640.0 × 424.1 at (52.0, 314.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 15 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 394.9 pt; max(0, ...) 394.9
+    exceptions: none
+
+== home_day31 ==
+13in 1032×1376 medium: climb card 640.0 × 421.4 at (196.0, 312.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 29.5 pt on step 31 (4.6 % of the window width; cap 42.3 pt)
+    screen below the card: 642.6 pt; max(0, ...) 642.6
+    exceptions: none
+13in 1032×1376 large: climb card 640.0 × 424.1 at (196.0, 314.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 29.5 pt on step 31 (4.6 % of the window width; cap 42.3 pt)
+    screen below the card: 637.9 pt; max(0, ...) 637.9
+    exceptions: none
+11in 834×1194 medium: climb card 640.0 × 421.4 at (97.0, 312.0) (77 % of the width, 35 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 29.5 pt on step 31 (4.6 % of the window width; cap 42.3 pt)
+    screen below the card: 460.6 pt; max(0, ...) 460.6
+    exceptions: none
+11in 834×1194 large: climb card 640.0 × 424.1 at (97.0, 314.0) (77 % of the width, 36 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 29.5 pt on step 31 (4.6 % of the window width; cap 42.3 pt)
+    screen below the card: 455.9 pt; max(0, ...) 455.9
+    exceptions: none
+mini 744×1133 medium: climb card 640.0 × 421.4 at (52.0, 312.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 29.5 pt on step 31 (4.6 % of the window width; cap 42.3 pt)
+    screen below the card: 399.6 pt; max(0, ...) 399.6
+    exceptions: none
+mini 744×1133 large: climb card 640.0 × 424.1 at (52.0, 314.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 29.5 pt on step 31 (4.6 % of the window width; cap 42.3 pt)
+    screen below the card: 394.9 pt; max(0, ...) 394.9
+    exceptions: none
+
+== card_summary ==
+13in 1032×1376 medium: sheet 640.0 × 427.3 at (196.0, 948.7) (62 % of the width, 31 % of the height); content 391.3 in 407.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (196.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 384.8–647.3, the sheet x 196.0–836.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+13in 1032×1376 large: sheet 640.0 × 438.3 at (196.0, 937.7) (62 % of the width, 32 % of the height); content 402.3 in 418.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (196.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 384.8–647.3, the sheet x 196.0–836.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+11in 834×1194 medium: sheet 640.0 × 427.3 at (97.0, 766.7) (77 % of the width, 36 % of the height); content 391.3 in 407.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (97.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 285.8–548.3, the sheet x 97.0–737.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+11in 834×1194 large: sheet 640.0 × 438.3 at (97.0, 755.7) (77 % of the width, 37 % of the height); content 402.3 in 418.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (97.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 285.8–548.3, the sheet x 97.0–737.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+mini 744×1133 medium: sheet 640.0 × 427.3 at (52.0, 705.7) (86 % of the width, 38 % of the height); content 391.3 in 407.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (52.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 240.8–503.3, the sheet x 52.0–692.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+mini 744×1133 large: sheet 640.0 × 438.3 at (52.0, 694.7) (86 % of the width, 39 % of the height); content 402.3 in 418.3 (scrolls: no)
+    mountain window 640.0 × 350.0 at (52.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 240.8–503.3, the sheet x 52.0–692.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+
+== card_fresh ==
+13in 1032×1376 medium: sheet 640.0 × 250.0 at (196.0, 1126.0) (62 % of the width, 18 % of the height); content 214.0 in 230.0 (scrolls: no)
+    mountain window 640.0 × 350.0 at (196.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 384.8–647.3, the sheet x 196.0–836.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+13in 1032×1376 large: sheet 640.0 × 255.0 at (196.0, 1121.0) (62 % of the width, 19 % of the height); content 219.0 in 235.0 (scrolls: no)
+    mountain window 640.0 × 350.0 at (196.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 384.8–647.3, the sheet x 196.0–836.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+11in 834×1194 medium: sheet 640.0 × 250.0 at (97.0, 944.0) (77 % of the width, 21 % of the height); content 214.0 in 230.0 (scrolls: no)
+    mountain window 640.0 × 350.0 at (97.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 285.8–548.3, the sheet x 97.0–737.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+11in 834×1194 large: sheet 640.0 × 255.0 at (97.0, 939.0) (77 % of the width, 21 % of the height); content 219.0 in 235.0 (scrolls: no)
+    mountain window 640.0 × 350.0 at (97.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 285.8–548.3, the sheet x 97.0–737.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+mini 744×1133 medium: sheet 640.0 × 250.0 at (52.0, 883.0) (86 % of the width, 22 % of the height); content 214.0 in 230.0 (scrolls: no)
+    mountain window 640.0 × 350.0 at (52.0, 330.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 240.8–503.3, the sheet x 52.0–692.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+mini 744×1133 large: sheet 640.0 × 255.0 at (52.0, 878.0) (86 % of the width, 23 % of the height); content 219.0 in 235.0 (scrolls: no)
+    mountain window 640.0 × 350.0 at (52.0, 333.0): 0.0 pt of its 350 under the sheet (0 %); the K-c image spans x 240.8–503.3, the sheet x 52.0–692.0; START (298.5 pt into the window) above the sheet: yes
+    exceptions: none
+
+== kc ==
+13in 1032×1376 medium: zoom progress at capture: 0.000 (0 = K-c)
+    window 640.0 × 350.0 at (196.0, 330.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 188.8 pt each (59 % of the window)
+    exceptions: none
+13in 1032×1376 large: zoom progress at capture: 0.000 (0 = K-c)
+    window 640.0 × 350.0 at (196.0, 333.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 188.8 pt each (59 % of the window)
+    exceptions: none
+11in 834×1194 medium: zoom progress at capture: 0.000 (0 = K-c)
+    window 640.0 × 350.0 at (97.0, 330.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 188.8 pt each (59 % of the window)
+    exceptions: none
+11in 834×1194 large: zoom progress at capture: 0.000 (0 = K-c)
+    window 640.0 × 350.0 at (97.0, 333.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 188.8 pt each (59 % of the window)
+    exceptions: none
+mini 744×1133 medium: zoom progress at capture: 0.000 (0 = K-c)
+    window 640.0 × 350.0 at (52.0, 330.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 188.8 pt each (59 % of the window)
+    exceptions: none
+mini 744×1133 large: zoom progress at capture: 0.000 (0 = K-c)
+    window 640.0 × 350.0 at (52.0, 333.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 188.8 pt each (59 % of the window)
+    exceptions: none
+
+== label ==
+13in 1032×1376 medium: C1 First Camp on step 7: label 90.4 × 24.0 at (693.8, 515.8), 14 % of the 640.0 pt window; text 15.4 pt
+    climb card 640.0 × 421.4 at (196.0, 312.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 7 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 642.6 pt; max(0, ...) 642.6
+    exceptions: none
+13in 1032×1376 large: C1 First Camp on step 7: label 97.4 × 26.0 at (690.3, 516.8), 15 % of the 640.0 pt window; text 16.8 pt
+    climb card 640.0 × 424.1 at (196.0, 314.0) (62 % of the width, 31 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 7 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 637.9 pt; max(0, ...) 637.9
+    exceptions: none
+11in 834×1194 medium: C1 First Camp on step 7: label 90.4 × 24.0 at (594.8, 515.8), 14 % of the 640.0 pt window; text 15.4 pt
+    climb card 640.0 × 421.4 at (97.0, 312.0) (77 % of the width, 35 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 7 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 460.6 pt; max(0, ...) 460.6
+    exceptions: none
+11in 834×1194 large: C1 First Camp on step 7: label 97.4 × 26.0 at (591.3, 516.8), 15 % of the 640.0 pt window; text 16.8 pt
+    climb card 640.0 × 424.1 at (97.0, 314.0) (77 % of the width, 36 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 7 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 455.9 pt; max(0, ...) 455.9
+    exceptions: none
+mini 744×1133 medium: C1 First Camp on step 7: label 90.4 × 24.0 at (549.8, 515.8), 14 % of the 640.0 pt window; text 15.4 pt
+    climb card 640.0 × 421.4 at (52.0, 312.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 7 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 399.6 pt; max(0, ...) 399.6
+    exceptions: none
+mini 744×1133 large: C1 First Camp on step 7: label 97.4 × 26.0 at (546.3, 516.8), 15 % of the 640.0 pt window; text 16.8 pt
+    climb card 640.0 × 424.1 at (52.0, 314.0) (86 % of the width, 37 % of the height); window 640.0 × 350.0 (aspect 1.83:1)
+    image on screen 704.0 × 938.7 pt = 1408 px wide against the 1536 px asset: 0.92× (not upscaled); the window shows 34 % of the image; route length 1732 pt
+    avatar tile 42.3 pt on step 7 (6.6 % of the window width; cap 42.3 pt)
+    screen below the card: 394.9 pt; max(0, ...) 394.9
+    exceptions: none
+
+== cel_welcome ==
+13in 1032×1376 medium: group 288.0 × 447.0 at (372.0, 464.5) (32 % of the height, 28 % of the width); medal 162.2 pt (16 % of the width)
+    exceptions: none
+13in 1032×1376 large: group 288.0 × 460.0 at (372.0, 458.0) (33 % of the height, 28 % of the width); medal 162.2 pt (16 % of the width)
+    exceptions: none
+11in 834×1194 medium: group 288.0 × 447.0 at (273.0, 373.5) (37 % of the height, 35 % of the width); medal 162.2 pt (19 % of the width)
+    exceptions: none
+11in 834×1194 large: group 288.0 × 460.0 at (273.0, 367.0) (39 % of the height, 35 % of the width); medal 162.2 pt (19 % of the width)
+    exceptions: none
+mini 744×1133 medium: group 288.0 × 447.0 at (228.0, 343.0) (39 % of the height, 39 % of the width); medal 162.2 pt (22 % of the width)
+    exceptions: none
+mini 744×1133 large: group 288.0 × 460.0 at (228.0, 336.5) (41 % of the height, 39 % of the width); medal 162.2 pt (22 % of the width)
+    exceptions: none
+
+== cel_gold ==
+13in 1032×1376 medium: group 288.0 × 395.0 at (372.0, 490.5) (29 % of the height, 28 % of the width); medal 162.2 pt (16 % of the width)
+    exceptions: none
+13in 1032×1376 large: group 288.0 × 402.0 at (372.0, 487.0) (29 % of the height, 28 % of the width); medal 162.2 pt (16 % of the width)
+    exceptions: none
+11in 834×1194 medium: group 288.0 × 395.0 at (273.0, 399.5) (33 % of the height, 35 % of the width); medal 162.2 pt (19 % of the width)
+    exceptions: none
+11in 834×1194 large: group 288.0 × 402.0 at (273.0, 396.0) (34 % of the height, 35 % of the width); medal 162.2 pt (19 % of the width)
+    exceptions: none
+mini 744×1133 medium: group 288.0 × 395.0 at (228.0, 369.0) (35 % of the height, 39 % of the width); medal 162.2 pt (22 % of the width)
+    exceptions: none
+mini 744×1133 large: group 288.0 × 402.0 at (228.0, 365.5) (35 % of the height, 39 % of the width); medal 162.2 pt (22 % of the width)
+    exceptions: none
+
+== result ==
+13in 1032×1376 medium: 4 cards; the first 640.0 × 325.0 at (196.0, 156.0) (62 % of the width)
+    explanation text box 604.0 pt wide: 93 characters on a full line
+    exceptions: none
+13in 1032×1376 large: 4 cards; the first 640.0 × 339.0 at (196.0, 156.0) (62 % of the width)
+    explanation text box 604.0 pt wide: 80 characters on a full line
+    exceptions: none
+11in 834×1194 medium: 4 cards; the first 640.0 × 325.0 at (97.0, 156.0) (77 % of the width)
+    explanation text box 604.0 pt wide: 93 characters on a full line
+    exceptions: none
+11in 834×1194 large: 4 cards; the first 640.0 × 339.0 at (97.0, 156.0) (77 % of the width)
+    explanation text box 604.0 pt wide: 80 characters on a full line
+    exceptions: none
+mini 744×1133 medium: 4 cards; the first 640.0 × 325.0 at (52.0, 156.0) (86 % of the width)
+    explanation text box 604.0 pt wide: 93 characters on a full line
+    exceptions: none
+mini 744×1133 large: 3 cards; the first 640.0 × 339.0 at (52.0, 156.0) (86 % of the width)
+    explanation text box 604.0 pt wide: 80 characters on a full line
+    exceptions: none
+
+== profile ==
+13in 1032×1376 medium: shelf 640.0 × 370.4 at (196.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    exceptions: none
+13in 1032×1376 large: shelf 640.0 × 382.6 at (196.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    exceptions: none
+11in 834×1194 medium: shelf 640.0 × 370.4 at (97.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    exceptions: none
+11in 834×1194 large: shelf 640.0 × 382.6 at (97.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    exceptions: none
+mini 744×1133 medium: shelf 640.0 × 370.4 at (52.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    exceptions: none
+mini 744×1133 large: shelf 640.0 × 382.6 at (52.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    exceptions: none
+
+== profile_detail ==
+13in 1032×1376 medium: shelf 640.0 × 370.4 at (196.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    detail 288.0 × 289.1 at (372.0, 543.5) (28 % of the width); medal 162.2 pt
+    exceptions: none
+13in 1032×1376 large: shelf 640.0 × 382.6 at (196.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    detail 288.0 × 301.1 at (372.0, 537.5) (28 % of the width); medal 162.2 pt
+    exceptions: none
+11in 834×1194 medium: shelf 640.0 × 370.4 at (97.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    detail 288.0 × 289.1 at (273.0, 452.5) (35 % of the width); medal 162.2 pt
+    exceptions: none
+11in 834×1194 large: shelf 640.0 × 382.6 at (97.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    detail 288.0 × 301.1 at (273.0, 446.5) (35 % of the width); medal 162.2 pt
+    exceptions: none
+mini 744×1133 medium: shelf 640.0 × 370.4 at (52.0, 454.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 89.1
+    detail 288.0 × 289.1 at (228.0, 422.0) (39 % of the width); medal 162.2 pt
+    exceptions: none
+mini 744×1133 large: shelf 640.0 × 382.6 at (52.0, 465.0); 13 slots (Welcome and 12 months), per row 8 / 5; slot 76.0 × 90.1
+    detail 288.0 × 301.1 at (228.0, 416.0) (39 % of the width); medal 162.2 pt
+    exceptions: none
+
+== avatar_picker ==
+13in 1032×1376 medium: cut by the screen edge: 0 ()
+    3 avatar tiles built, 3 on screen; the largest 160.0 pt (16 % of the width)
+    exceptions: none
+13in 1032×1376 large: cut by the screen edge: 0 ()
+    3 avatar tiles built, 3 on screen; the largest 160.0 pt (16 % of the width)
+    exceptions: none
+11in 834×1194 medium: cut by the screen edge: 0 ()
+    3 avatar tiles built, 3 on screen; the largest 160.0 pt (19 % of the width)
+    exceptions: none
+11in 834×1194 large: cut by the screen edge: 0 ()
+    3 avatar tiles built, 3 on screen; the largest 160.0 pt (19 % of the width)
+    exceptions: none
+mini 744×1133 medium: cut by the screen edge: 2 (116.0 of 128.0 pt shown, 116.0 of 128.0 pt shown)
+    3 avatar tiles built, 3 on screen; the largest 160.0 pt (22 % of the width)
+    exceptions: none
+mini 744×1133 large: cut by the screen edge: 2 (116.0 of 128.0 pt shown, 116.0 of 128.0 pt shown)
+    3 avatar tiles built, 3 on screen; the largest 160.0 pt (22 % of the width)
+    exceptions: none
+
+== welcome ==
+13in 1032×1376 medium: column reference 83.7 × 21.0 at (474.1, 1295.5) (8 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 83.7 × 21.0 at (474.1, 1295.5) (8 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 83.7 × 21.0 at (375.1, 1113.5) (10 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 83.7 × 21.0 at (375.1, 1113.5) (10 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 83.7 × 21.0 at (330.1, 1052.5) (11 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 83.7 × 21.0 at (330.1, 1052.5) (11 % of the width)
+    exceptions: none
+
+== onboarding ==
+13in 1032×1376 medium: column reference 640.0 × 58.0 at (196.0, 289.4) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 61.0 at (196.0, 291.4) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 58.0 at (97.0, 289.4) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 61.0 at (97.0, 291.4) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 58.0 at (52.0, 289.4) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 61.0 at (52.0, 291.4) (86 % of the width)
+    exceptions: none
+
+== daily_test ==
+13in 1032×1376 medium: column reference 640.0 × 58.0 at (196.0, 1210.0) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 61.0 at (196.0, 1207.0) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 58.0 at (97.0, 1028.0) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 61.0 at (97.0, 1025.0) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 58.0 at (52.0, 967.0) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 61.0 at (52.0, 964.0) (86 % of the width)
+    exceptions: none
+
+== topic_list ==
+13in 1032×1376 medium: column reference 640.0 × 112.0 at (196.0, 100.0) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 118.0 at (196.0, 100.0) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 112.0 at (97.0, 100.0) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 118.0 at (97.0, 100.0) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 112.0 at (52.0, 100.0) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 118.0 at (52.0, 100.0) (86 % of the width)
+    exceptions: none
+
+== practice ==
+13in 1032×1376 medium: column reference 640.0 × 58.0 at (196.0, 1210.0) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 61.0 at (196.0, 1207.0) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 58.0 at (97.0, 1028.0) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 61.0 at (97.0, 1025.0) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 58.0 at (52.0, 967.0) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 61.0 at (52.0, 964.0) (86 % of the width)
+    exceptions: none
+
+== practice_results ==
+13in 1032×1376 medium: column reference 640.0 × 215.0 at (196.0, 152.0) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 224.0 at (196.0, 152.0) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 215.0 at (97.0, 152.0) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 224.0 at (97.0, 152.0) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 215.0 at (52.0, 152.0) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 224.0 at (52.0, 152.0) (86 % of the width)
+    exceptions: none
+
+== review ==
+13in 1032×1376 medium: column reference 640.0 × 142.0 at (196.0, 100.0) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 150.0 at (196.0, 100.0) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 142.0 at (97.0, 100.0) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 150.0 at (97.0, 100.0) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 142.0 at (52.0, 100.0) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 150.0 at (52.0, 100.0) (86 % of the width)
+    exceptions: none
+
+== weak_spot ==
+13in 1032×1376 medium: column: (reference not found)
+    exceptions: none
+13in 1032×1376 large: column: (reference not found)
+    exceptions: none
+11in 834×1194 medium: column: (reference not found)
+    exceptions: none
+11in 834×1194 large: column: (reference not found)
+    exceptions: none
+mini 744×1133 medium: column: (reference not found)
+    exceptions: none
+mini 744×1133 large: column: (reference not found)
+    exceptions: none
+
+== profile_bottom ==
+13in 1032×1376 medium: column reference 548.0 × 26.0 at (264.0, 416.3) (53 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 548.0 × 29.0 at (264.0, 541.8) (53 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 548.0 × 26.0 at (165.0, 347.8) (66 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 548.0 × 29.0 at (165.0, 472.5) (66 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 548.0 × 26.0 at (120.0, 396.5) (74 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 548.0 × 29.0 at (120.0, 376.6) (74 % of the width)
+    exceptions: none
+
+== premium ==
+13in 1032×1376 medium: column: (reference not found)
+    exceptions: none
+13in 1032×1376 large: column: (reference not found)
+    exceptions: none
+11in 834×1194 medium: column: (reference not found)
+    exceptions: none
+11in 834×1194 large: column: (reference not found)
+    exceptions: none
+mini 744×1133 medium: column: (reference not found)
+    exceptions: none
+mini 744×1133 large: column: (reference not found)
+    exceptions: none
+
+== ai_consent ==
+13in 1032×1376 medium: column reference 640.0 × 52.0 at (196.0, 1225.0) (62 % of the width)
+    exceptions: none
+13in 1032×1376 large: column reference 640.0 × 52.0 at (196.0, 1223.0) (62 % of the width)
+    exceptions: none
+11in 834×1194 medium: column reference 640.0 × 52.0 at (97.0, 1043.0) (77 % of the width)
+    exceptions: none
+11in 834×1194 large: column reference 640.0 × 52.0 at (97.0, 1041.0) (77 % of the width)
+    exceptions: none
+mini 744×1133 medium: column reference 640.0 × 52.0 at (52.0, 982.0) (86 % of the width)
+    exceptions: none
+mini 744×1133 large: column reference 640.0 × 52.0 at (52.0, 980.0) (86 % of the width)
+    exceptions: none

@@ -419,3 +419,17 @@ the run. `ipad_numbers.txt` holds the measures; the sheet script writes
 one JPEG per screen and 1:1 crops of the mountain window to
 `docs/design/release-1.1.0/ipad/`
 (`docs/design/release-1.1.0/ipad-and-screenshots-report.md`).
+
+## 1.1.0 release: P1, the iPad content width
+
+The same tool now covers every screen (25 states) and, with
+`IPAD_DEVICES=iphone320,iphone375se,iphone375,iphone430`, the four iPhone
+screens; `IPAD_CAP` (560, 640, 720) overrides `ContentWidth`'s cap for a
+run. The iPhone renders before and after a change are compared pixel by
+pixel with:
+
+```bash
+build/scene_art_venv/bin/python tool/scene_art/release_p1_compare.py build/design_measure/p1_before build/design_measure/p1_after
+```
+
+Commands and results: `docs/design/release-1.1.0/p1/report.md`.

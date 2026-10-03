@@ -13,6 +13,21 @@ docs/design/release-1.1.0/ipad/ (or IPAD_OUT):
   Medium) cut out at the device's own pixels, to judge the image's
   sharpness;
 - ipad_numbers.txt copied.
+
+P1 (after the content width; every screen, and the 560 / 640 / 720 pt
+comparison):
+
+    DESIGN_MEASURE_OUT=build/design_measure/ipad_p1 \\
+      flutter test tool/design_measure/release/ipad_render_test.dart
+    for c in 560 640 720; do DESIGN_MEASURE_OUT=build/design_measure/ipad_p1/caps \\
+      IPAD_CAP=$c IPAD_CASES=home_day15,home_day31,kc IPAD_DEVICES=13in,11in \\
+      flutter test tool/design_measure/release/ipad_render_test.dart; done
+    IPAD_IN=build/design_measure/ipad_p1 IPAD_OUT=docs/design/release-1.1.0/p1/ipad \\
+      build/scene_art_venv/bin/python tool/scene_art/release_ipad_sheet.py p1
+
+writes one sheet per screen (all 25), caps_<case>.jpg (rows 13 in and
+11 in, columns 560 / 640 / 720 pt, light Medium), the 1:1 crops, and the
+numbers files.
 """
 
 from __future__ import annotations
@@ -31,6 +46,9 @@ OUT = Path(os.environ.get("IPAD_OUT", T.REPO / "docs/design/release-1.1.0/ipad")
 
 CASES = ("launch", "home_day1", "home_day15", "home_day31", "card_summary", "card_fresh", "kc", "label",
          "cel_welcome", "cel_gold", "result", "profile", "profile_detail", "avatar_picker")
+P1_CASES = CASES + ("welcome", "onboarding", "daily_test", "topic_list", "practice", "practice_results", "review",
+                    "weak_spot", "profile_bottom", "premium", "ai_consent")
+CAPS = (560, 640, 720)
 DEVICES = (("13in", "13 in, 1032 × 1376"), ("11in", "11 in, 834 × 1194"), ("mini", "mini, 744 × 1133"))
 COLUMNS = (("light", "medium"), ("light", "large"), ("dark", "medium"), ("dark", "large"))
 SCALE = 0.15
@@ -63,22 +81,50 @@ def sheet(case: str) -> Image.Image:
     return out
 
 
-def scene_1to1() -> None:
-    """The mountain window at device pixels: the window is at (28, 312 + 18)
+def scene_1to1(p1: bool = False) -> None:
+    """The mountain window at device pixels: the window is at (left, 312 + 18)
     pt with Medium text (ipad_numbers.txt), 350 pt tall."""
-    for d, width in (("13in", 976), ("11in", 778), ("mini", 688)):
+    windows = ((("13in", 196, 640), ("11in", 97, 640), ("mini", 52, 640)) if p1 else
+               (("13in", 28, 976), ("11in", 28, 778), ("mini", 28, 688)))
+    for d, left, width in windows:
         im = Image.open(SRC / f"ipad_home_day15_{d}_light_medium.png").convert("RGB")
-        box = (28 * 2, 330 * 2, (28 + width) * 2, (330 + 350) * 2)
+        box = (left * 2, 330 * 2, (left + width) * 2, (330 + 350) * 2)
         im.crop(box).save(OUT / f"scene_1to1_{d}.jpg", quality=88)
 
 
-def main() -> None:
+def caps(case: str) -> Image.Image:
+    cells = [[Image.open(SRC / "caps" / f"ipad_{case}_{d}_light_medium_cap{c}.png").convert("RGB") for c in CAPS]
+             for d in ("13in", "11in")]
+    cells = [[c.resize((round(c.width * 0.25), round(c.height * 0.25)), Image.LANCZOS) for c in row] for row in cells]
+    col_w = max(c.width for row in cells for c in row)
+    heights = [max(c.height for c in row) for row in cells]
+    W = SIDE + len(CAPS) * (col_w + GAP) + GAP
+    out = Image.new("RGB", (W, HEAD + sum(heights) + GAP * 3), (255, 255, 255))
+    d = ImageDraw.Draw(out)
+    for i, c in enumerate(CAPS):
+        d.text((SIDE + GAP + i * (col_w + GAP), 8), f"{c} pt", fill=(30, 30, 30), font=font(18))
+    y = HEAD + GAP
+    for r, row in enumerate(cells):
+        d.text((GAP, y), DEVICES[r][1], fill=(30, 30, 30), font=font(16))
+        for i, c in enumerate(row):
+            out.paste(c, (SIDE + GAP + i * (col_w + GAP), y))
+        y += heights[r] + GAP
+    return out
+
+
+def main(p1: bool = False) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    for case in CASES:
+    for case in P1_CASES if p1 else CASES:
         sheet(case).save(OUT / f"{case}.jpg", quality=80)
-    scene_1to1()
+    scene_1to1(p1)
     shutil.copy(SRC / "ipad_numbers.txt", OUT)
+    if p1:
+        for case in ("home_day15", "home_day31", "kc"):
+            caps(case).save(OUT / f"caps_{case}.jpg", quality=82)
+        for c in CAPS:
+            shutil.copy(SRC / "caps" / f"ipad_numbers_cap{c}.txt", OUT)
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(len(sys.argv) > 1 and sys.argv[1] == "p1")

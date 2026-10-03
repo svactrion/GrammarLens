@@ -1,0 +1,64 @@
+1.1.0 release step 2: the iPad check on the real components. Points (1 pt = 2 px on every iPad here). Portrait; safe areas 24 / 20 pt on iPads (assumed). Light mode (dark lays out the same). Exceptions: the framework errors the case raised (overflow and the like); "none" when none.
+
+== iPhone reference (computed, not rendered) ==
+320 pt @2x: window 288.0 × 350 (aspect 0.82:1), image 634 px wide: 0.41× the asset
+375 pt @2x: window 341.3 × 350 (aspect 0.97:1), image 751 px wide: 0.49× the asset
+430 pt @3x: window 391.3 × 350 (aspect 1.12:1), image 1291 px wide: 0.84× the asset
+
+== home_day15 ==
+13in 1032×1376 medium: climb card 560.0 × 421.4 at (236.0, 312.0) (54 % of the width, 31 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 42.3 pt on step 15 (7.6 % of the window width; cap 42.3 pt)
+    screen below the card: 642.6 pt; max(0, ...) 642.6
+    exceptions: none
+13in 1032×1376 large: climb card 560.0 × 424.1 at (236.0, 314.0) (54 % of the width, 31 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 42.3 pt on step 15 (7.6 % of the window width; cap 42.3 pt)
+    screen below the card: 637.9 pt; max(0, ...) 637.9
+    exceptions: none
+11in 834×1194 medium: climb card 560.0 × 421.4 at (137.0, 312.0) (67 % of the width, 35 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 42.3 pt on step 15 (7.6 % of the window width; cap 42.3 pt)
+    screen below the card: 460.6 pt; max(0, ...) 460.6
+    exceptions: none
+11in 834×1194 large: climb card 560.0 × 424.1 at (137.0, 314.0) (67 % of the width, 36 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 42.3 pt on step 15 (7.6 % of the window width; cap 42.3 pt)
+    screen below the card: 455.9 pt; max(0, ...) 455.9
+    exceptions: none
+
+== home_day31 ==
+13in 1032×1376 medium: climb card 560.0 × 421.4 at (236.0, 312.0) (54 % of the width, 31 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 29.5 pt on step 31 (5.3 % of the window width; cap 42.3 pt)
+    screen below the card: 642.6 pt; max(0, ...) 642.6
+    exceptions: none
+13in 1032×1376 large: climb card 560.0 × 424.1 at (236.0, 314.0) (54 % of the width, 31 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 29.5 pt on step 31 (5.3 % of the window width; cap 42.3 pt)
+    screen below the card: 637.9 pt; max(0, ...) 637.9
+    exceptions: none
+11in 834×1194 medium: climb card 560.0 × 421.4 at (137.0, 312.0) (67 % of the width, 35 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 29.5 pt on step 31 (5.3 % of the window width; cap 42.3 pt)
+    screen below the card: 460.6 pt; max(0, ...) 460.6
+    exceptions: none
+11in 834×1194 large: climb card 560.0 × 424.1 at (137.0, 314.0) (67 % of the width, 36 % of the height); window 560.0 × 350.0 (aspect 1.60:1)
+    image on screen 616.0 × 821.3 pt = 1232 px wide against the 1536 px asset: 0.80× (not upscaled); the window shows 39 % of the image; route length 1516 pt
+    avatar tile 29.5 pt on step 31 (5.3 % of the window width; cap 42.3 pt)
+    screen below the card: 455.9 pt; max(0, ...) 455.9
+    exceptions: none
+
+== kc ==
+13in 1032×1376 medium: zoom progress at capture: 0.000 (0 = K-c)
+    window 560.0 × 350.0 at (236.0, 330.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 148.8 pt each (53 % of the window)
+    exceptions: none
+13in 1032×1376 large: zoom progress at capture: 0.000 (0 = K-c)
+    window 560.0 × 350.0 at (236.0, 333.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 148.8 pt each (53 % of the window)
+    exceptions: none
+11in 834×1194 medium: zoom progress at capture: 0.000 (0 = K-c)
+    window 560.0 × 350.0 at (137.0, 330.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 148.8 pt each (53 % of the window)
+    exceptions: none
+11in 834×1194 large: zoom progress at capture: 0.000 (0 = K-c)
+    window 560.0 × 350.0 at (137.0, 333.0); K-c image 262.5 × 350.0 pt (0.34 × the asset in px); side bands 148.8 pt each (53 % of the window)
+    exceptions: none

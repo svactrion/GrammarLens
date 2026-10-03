@@ -78,6 +78,7 @@ import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/monthly_medal_rules.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/utils/content_width.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/floating_nav_shell.dart';
 import 'package:grammar_lens/widgets/launch_splash.dart';
@@ -345,23 +346,31 @@ void main() {
         ..addAll(rows[c]!)
         ..add('');
     }
-    File('$out/ipad_numbers.txt').writeAsStringSync(lines.join('\n'));
+    final cap = Platform.environment['IPAD_CAP'];
+    File('$out/ipad_numbers${cap == null ? '' : '_cap$cap'}.txt')
+        .writeAsStringSync(lines.join('\n'));
   });
 
   final cases = _env('IPAD_CASES') ?? _allCases;
   final devices = _env('IPAD_DEVICES') ?? _ipads;
+  // IPAD_CAP: P1's content width for this run (ContentWidth's own when
+  // unset), added to the file names; for the 560 / 640 / 720 comparison.
+  final cap = double.tryParse(Platform.environment['IPAD_CAP'] ?? '');
   for (final c in cases) {
     for (final d in devices) {
       final (w, h, dpr, safeTop, safeBottom) = _allDevices[d]!;
       for (final b in Brightness.values) {
         for (final size in [AppTextSize.medium, AppTextSize.large]) {
-          final name = 'ipad_${c}_${d}_${b.name}_${size.name}';
+          final name = 'ipad_${c}_${d}_${b.name}_${size.name}'
+              '${cap == null ? '' : '_cap${cap.toInt()}'}';
           testWidgets(name, (tester) async {
             tester.view.physicalSize = Size(w, h) * dpr;
             tester.view.devicePixelRatio = dpr;
             tester.view.padding =
                 FakeViewPadding(top: safeTop * dpr, bottom: safeBottom * dpr);
             addTearDown(tester.view.reset);
+            ContentWidth.debugMaxContentWidthOverride = cap;
+            addTearDown(() => ContentWidth.debugMaxContentWidthOverride = null);
             final key = GlobalKey();
             final notes = <String>[];
             MaterialApp app(Widget home) => MaterialApp(
@@ -812,8 +821,11 @@ void main() {
             }
             notes.add(
                 'exceptions: ${exceptions.isEmpty ? 'none' : exceptions.map((e) => e.toString().split('\n').first).join('; ')}');
-            if (b == Brightness.light) {
+            // Dark lays out the same: its row is kept only when it raised
+            // an exception.
+            if (b == Brightness.light || exceptions.isNotEmpty) {
               rows.putIfAbsent(c, () => []).add(
+                  '${b == Brightness.dark ? '(dark) ' : ''}'
                   '$d ${w.toInt()}×${h.toInt()} ${size.name}: ${notes.join('\n    ')}');
             }
             await _writePng(tester, key, '$out/$name.png', dpr);
