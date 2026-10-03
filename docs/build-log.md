@@ -7966,3 +7966,28 @@ On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
   it now waits for the frame.
 - **[Tests]** 1467 pass (1429 before); `flutter analyze` clean.
 - **[Not checked]** On a device, debug or profile build.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 device check; decisions N28–N36)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Docs only. Full text: `docs/1.1.0-design-side-tracks.md`,
+"Decisions after Batch 5's device check".
+
+- **[Device — Ahmet, iPhone 14 Plus, profile build, debug panel]** The
+  celebration layer was seen; the confetti and the one-tap close work.
+- **[Product — owner]** N28 the celebration: dark screen, a large medal
+  with a glow and slowly turning rays in the tier's colour, light text,
+  a shrink-and-fade close (fade only under Reduce Motion). N29 "{Tier}
+  medal earned". N30 month card: the medal large and centred (88 pt
+  target; the largest that does not scroll at 375 × 667), steps and
+  points side by side under it. N31 each save point pinned to a step,
+  the avatar standing on its point; steps between save points even by
+  arc. N32 the climb ends at the flag (a constant restores the trail's
+  tip). N33 Profile's bar: thresholds under the marks, the current score.
+  N34 Profile: a shelf of one medal per month (highest tier, the month's
+  theme), Welcome first, oldest to newest, the running month in progress,
+  tap for a detail. N35 the signpost moves inside C5 until the theme check
+  passes on all eight images. N36 no exit confetti on "Start my climb".
+- **[Accepted]** The 320 pt "Summit" label over the avatar.
+- **[Release checklist]** Register the new custom dimensions before the
+  release; merge Settings' Developer and Debug sections.

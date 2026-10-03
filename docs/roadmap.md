@@ -2385,6 +2385,14 @@ Owner items before the 1.1.0 build ships (added 2026-09-30):
 - [ ] **DebugView:** `set_source = shared` on a normal day and `fallback`
   with the app opened on a new day in airplane mode; `set_date` present
   (`docs/analytics-plan.md` §6).
+- [ ] **Register the climb's new custom dimensions before the build
+  ships** (owner, 2026-10-03): `save_point`, `step` (Batch 5, N21) and
+  Batch 6's `theme_id`, `variant`, `medal_tier`, `near_miss_shown`,
+  `trigger` and metric `open_ms` (`docs/analytics-plan.md`). Registration
+  is not retroactive.
+- [ ] **Merge Settings' two developer sections** ("Developer", debug only,
+  and "Debug", N27's panel, debug and profile) into one (owner,
+  2026-10-03).
 - [ ] **Firebase developer-traffic filter:** not verified to be set up,
   most likely not set up. Debug (and profile) builds write to the
   production Firebase project (`grammarlens-18d47`; no build-mode gate in
