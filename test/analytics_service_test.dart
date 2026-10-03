@@ -157,6 +157,39 @@ void main() {
       });
     });
 
+    test('save_point_reached carries theme, save point, step and days (N21)',
+        () async {
+      await service.savePointReached(
+          themeId: 'glacier_peak',
+          savePoint: 'halfway_hut',
+          step: 15,
+          daysInMonth: 31);
+      expectOnly('save_point_reached', {
+        'theme_id': 'glacier_peak',
+        'save_point': 'halfway_hut',
+        'step': 15,
+        'days_in_month': 31,
+      });
+    });
+
+    test('medal_tier_reached reuses tier and carries theme_id (N21)', () async {
+      await service.medalTierReached(
+          themeId: 'red_canyon',
+          tier: MedalTier.silver,
+          dayOfMonth: 19,
+          daysInMonth: 31,
+          activeDays: 16,
+          ruleVersion: 1);
+      expectOnly('medal_tier_reached', {
+        'theme_id': 'red_canyon',
+        'tier': 'silver',
+        'day_of_month': 19,
+        'days_in_month': 31,
+        'active_days': 16,
+        'rule_version': 1,
+      });
+    });
+
     test('practice_completed carries only topic_id and question_count',
         () async {
       await service.practiceCompleted(topicId: 'articles', questionCount: 5);
@@ -454,12 +487,24 @@ void main() {
           themeId: 'glacier_peak',
           outcome: 'reduce_motion',
           trigger: 'month_change');
+      await service.savePointReached(
+          themeId: 'red_canyon',
+          savePoint: 'mountain_spring',
+          step: 21,
+          daysInMonth: 31);
+      await service.medalTierReached(
+          themeId: 'red_canyon',
+          tier: MedalTier.gold,
+          dayOfMonth: 31,
+          daysInMonth: 31,
+          activeDays: 31,
+          ruleVersion: 1);
       await service.setTextSizeProperty(AppTextSize.large);
       await service.setFirstStepDayOfMonth(31);
 
       final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
       final reserved = RegExp(r'^(firebase_|google_|ga_|_)');
-      expect(sink.events, hasLength(20));
+      expect(sink.events, hasLength(22));
       for (final event in sink.events) {
         expect(event.name.length, lessThanOrEqualTo(40), reason: event.name);
         expect(nameRule.hasMatch(event.name), isTrue, reason: event.name);

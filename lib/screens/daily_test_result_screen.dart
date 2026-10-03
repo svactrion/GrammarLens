@@ -138,22 +138,24 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
           _showWelcomeCelebration = true;
           _celebration = const _Celebration.welcome();
         });
-      } else {
-        // A tier secured with this completion (N8, N15). The Welcome badge
-        // and a tier never come together: the badge is the first step
-        // ever, worth at most 10 points, and Bronze is at least 70.
-        final milestones = await ClimbMilestones.afterCompletion(
-          storage: widget.dailyTestService.storageService,
-          day: _completion.set.day,
-          step: _completion.step,
-          points: MonthlyMedalRules.score(
-              correct: _completion.correct, wrong: _completion.wrong),
-        );
-        final tier = milestones?.tier;
-        if (tier != null && mounted) {
-          setState(() => _celebration =
-              _Celebration.tier(tier, milestones!.theme, milestones.month));
-        }
+      }
+      // What this completion reached in its month (N12, N15, N24): its
+      // events, and a tier's celebration. The Welcome badge and a tier
+      // never come together: the badge is the first step ever, worth at
+      // most 10 points, and Bronze is at least 70; nor does that first
+      // step reach a save point (the first is on step 7).
+      final milestones = await ClimbMilestones.afterCompletion(
+        storage: widget.dailyTestService.storageService,
+        day: _completion.set.day,
+        step: _completion.step,
+        points: MonthlyMedalRules.score(
+            correct: _completion.correct, wrong: _completion.wrong),
+      );
+      if (milestones != null) _reportMilestones(milestones);
+      final tier = milestones?.tier;
+      if (tier != null && !welcomeBadgeJustEarned && mounted) {
+        setState(() => _celebration =
+            _Celebration.tier(tier, milestones!.theme, milestones.month));
       }
     } catch (e) {
       if (!mounted) return;
@@ -263,6 +265,35 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       daysInMonth: DateTime(ledgerDay.year, ledgerDay.month + 1, 0).day,
     ));
     unawaited(analytics.setFirstStepDayOfMonth(ledgerDay.day));
+  }
+
+  /// `save_point_reached` and `medal_tier_reached` (N21) for what this
+  /// completion reached: after the durable save, once per screen instance
+  /// (only `_saveCompletion` calls it, after a success). The theme is the
+  /// set's month's.
+  void _reportMilestones(ClimbMilestones milestones) {
+    final analytics = widget.analyticsService;
+    final days = DateTime(milestones.year, milestones.month + 1, 0).day;
+    for (final p in milestones.savePoints) {
+      unawaited(analytics.savePointReached(
+        themeId: milestones.theme.id,
+        savePoint: p.eventId,
+        step: p.reachedOn(days),
+        daysInMonth: days,
+      ));
+    }
+    final tier = milestones.tier;
+    if (tier == null) return;
+    final ledgerDay = DateTime.tryParse(_completion.set.day);
+    if (ledgerDay == null) return;
+    unawaited(analytics.medalTierReached(
+      themeId: milestones.theme.id,
+      tier: tier,
+      dayOfMonth: ledgerDay.day,
+      daysInMonth: days,
+      activeDays: milestones.steps,
+      ruleVersion: MonthlyMedalRules.ruleVersion,
+    ));
   }
 
   /// What the one primary button says and does, from the screen's own state.

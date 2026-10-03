@@ -268,7 +268,7 @@ theme. After the code is merged, `theme_id` and the case parameter are
 registered as event-scoped custom dimensions (§9); registration is not
 retroactive.
 
-#### Monthly milestones (Batch 5, decision N21, owner 2026-10-03) — planned, not implemented
+#### Monthly milestones (Batch 5, decision N21, owner 2026-10-03) — implemented 2026-10-03, not seen in DebugView
 
 `docs/1.1.0-design-side-tracks.md`, N12, N21, N24. Both are sent from the
 Daily Test result screen after a durable save, next to
@@ -283,6 +283,14 @@ month is already finalized, nor by the `CLIMB_DEBUG_MILESTONE` replay.
 |---|---|---|
 | `save_point_reached` | `theme_id` (the set's month), `save_point` = `first_camp` / `halfway_hut` / `mountain_spring` / `high_camp` / `summit`, `step` (int), `days_in_month` (int) | When the completion's step reaches the save point's step for that month (the flag, `summit`, on the month's last step). The C5 signpost is decoration and sends none. |
 | `medal_tier_reached` | `theme_id`, `tier` = `bronze` / `silver` / `gold` (reused from E4, same meaning: a tier earned), `day_of_month` (int, the set's day), `days_in_month` (int), `active_days` (int, steps so far), `rule_version` (int) | When the month's tier rises with this completion. One completion is worth at most 10 points and each band is at least 70, so at most one tier at a time. |
+
+Built in `AnalyticsService.savePointReached` and `medalTierReached`, sent
+by `DailyTestResultScreen._reportMilestones` from `ClimbMilestones`
+(`lib/services/climb_milestones.dart`). Tests:
+`test/analytics_service_test.dart` (exact keys; the all-events limits
+test now covers 22 events) and `test/daily_test_result_screen_test.dart`
+(each once with the set's month and theme; the flag as `summit`; none for
+a finalized month, a reopened result or a failed save).
 
 N21 changes Batch 6's accepted deviation ("`theme_id` only on
 `mode_selected`") for these two events. To register after the merge:

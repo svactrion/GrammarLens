@@ -327,6 +327,48 @@ class AnalyticsService {
     });
   }
 
+  /// The avatar reached a save point (Batch 5, N12, N21): the completion
+  /// whose step reaches it, sent once per save point per month after a
+  /// durable save, never for a month already finalized (N24). [savePoint]
+  /// is the name in snake case (`first_camp` … `summit`); [step] the
+  /// month's step it was reached on.
+  Future<void> savePointReached({
+    required String themeId,
+    required String savePoint,
+    required int step,
+    required int daysInMonth,
+  }) {
+    return _logEvent('save_point_reached', {
+      'theme_id': themeId,
+      'save_point': savePoint,
+      'step': step,
+      'days_in_month': daysInMonth,
+    });
+  }
+
+  /// A tier became certain this month (Batch 5, N12, N21): the completion
+  /// whose points cross its threshold, once per tier per month, never for a
+  /// month already finalized (N24). [tier] reuses E4's parameter and
+  /// meaning (a tier earned). [dayOfMonth] is the set's day; [activeDays]
+  /// the month's steps so far.
+  Future<void> medalTierReached({
+    required String themeId,
+    required MedalTier tier,
+    required int dayOfMonth,
+    required int daysInMonth,
+    required int activeDays,
+    required int ruleVersion,
+  }) {
+    return _logEvent('medal_tier_reached', {
+      'theme_id': themeId,
+      'tier': tier.name,
+      'day_of_month': dayOfMonth,
+      'days_in_month': daysInMonth,
+      'active_days': activeDays,
+      'rule_version': ruleVersion,
+    });
+  }
+
   /// A past month's medal result was frozen (docs/analytics-plan.md E4).
   /// [tier] is `none` below Bronze. [scorePct] is the score as a whole
   /// percentage of the month's maximum; [monthsAgo] is how many months

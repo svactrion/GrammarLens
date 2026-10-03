@@ -1548,6 +1548,92 @@ void main() {
     });
   });
 
+  group('N21: save_point_reached and medal_tier_reached (Batch 5)', () {
+    DailyTestSet setOn(String day) =>
+        DailyTestSet(day: day, questions: questions);
+    void monthAfter({required int steps, required int score}) =>
+        storageService.monthAfter =
+            (steps: steps, correct: score ~/ 2, wrong: score % 2, skipped: 0);
+
+    testWidgets(
+        'one completion that reaches a save point and crosses a tier sends '
+        'one of each, with the set\'s month and theme', (tester) async {
+      // October 2026 (31 days, Green Slope): Halfway Hut on step 15, Silver
+      // at 155.
+      monthAfter(steps: 15, score: 155);
+      await pumpResult(tester, setOn('2026-10-20'));
+      expect(analyticsSink.named('save_point_reached').single.parameters, {
+        'theme_id': 'green_slope',
+        'save_point': 'halfway_hut',
+        'step': 15,
+        'days_in_month': 31,
+      });
+      expect(analyticsSink.named('medal_tier_reached').single.parameters, {
+        'theme_id': 'green_slope',
+        'tier': 'silver',
+        'day_of_month': 20,
+        'days_in_month': 31,
+        'active_days': 15,
+        'rule_version': 1,
+      });
+      // Not again: the result stays, nothing re-reports.
+      await closeCelebration(tester, title: 'Silver secured');
+      await tester.pump(const Duration(seconds: 5));
+      expect(analyticsSink.named('save_point_reached'), hasLength(1));
+      expect(analyticsSink.named('medal_tier_reached'), hasLength(1));
+    });
+
+    testWidgets('the flag: summit on the month\'s last step, Ember Peak',
+        (tester) async {
+      monthAfter(steps: 30, score: 100);
+      await pumpResult(tester, setOn('2026-11-30'));
+      expect(analyticsSink.named('save_point_reached').single.parameters, {
+        'theme_id': 'ember_peak',
+        'save_point': 'summit',
+        'step': 30,
+        'days_in_month': 30,
+      });
+      expect(analyticsSink.named('medal_tier_reached'), isEmpty);
+    });
+
+    testWidgets('a step that reaches nothing and crosses nothing sends neither',
+        (tester) async {
+      monthAfter(steps: 9, score: 40);
+      await pumpResult(tester, setOn('2026-10-20'));
+      expect(analyticsSink.named('daily_test_completed'), hasLength(1));
+      expect(analyticsSink.named('save_point_reached'), isEmpty);
+      expect(analyticsSink.named('medal_tier_reached'), isEmpty);
+    });
+
+    testWidgets('N24: none for a late completion of a finalized month',
+        (tester) async {
+      monthAfter(steps: 15, score: 155);
+      storageService.finalized.add((2026, 10));
+      await pumpResult(tester, setOn('2026-10-31'));
+      expect(analyticsSink.named('daily_test_completed'), hasLength(1));
+      expect(analyticsSink.named('save_point_reached'), isEmpty);
+      expect(analyticsSink.named('medal_tier_reached'), isEmpty);
+    });
+
+    testWidgets('none for a reopened result, none for a failed save',
+        (tester) async {
+      monthAfter(steps: 15, score: 155);
+      await pumpResult(
+          tester,
+          DailyTestSet(
+              day: '2026-10-20',
+              questions: questions,
+              completedAt: DateTime(2026, 10, 20),
+              answers: answers));
+      expect(analyticsSink.named('save_point_reached'), isEmpty);
+      await tester.pumpWidget(const SizedBox());
+      storageService.failCompletionWith = StateError('disk full');
+      await pumpResult(tester, setOn('2026-10-20'));
+      expect(analyticsSink.named('save_point_reached'), isEmpty);
+      expect(analyticsSink.named('medal_tier_reached'), isEmpty);
+    });
+  });
+
   group('the confetti itself', () {
     test('the same seed always gives the same fan, another seed another', () {
       final a = buildConfettiParticles(seed: 5);
