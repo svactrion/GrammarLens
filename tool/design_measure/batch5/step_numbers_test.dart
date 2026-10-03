@@ -87,7 +87,8 @@ void main() {
       'The resting avatar\'s tile against the C5 signpost\'s box '
           '(${sign.left.toStringAsFixed(4)}, ${sign.top.toStringAsFixed(4)}, '
           '${sign.right.toStringAsFixed(4)}, ${sign.bottom.toStringAsFixed(4)} '
-          'image widths): steps that overlap, share of the signpost\'s box.',
+          'image widths): steps whose tile overlaps it, the share of the signpost\'s box under '
+          'the tile and under the avatar art\'s box.',
     ]);
     for (final atFlag in [true, false]) {
       ClimbRoute.debugEndsAtFlagOverride = atFlag;
@@ -104,8 +105,19 @@ void main() {
                 p.dx - tile / 2, p.dy - tile * 55 / 58, tile, tile);
             final i = r.intersect(sign);
             if (i.width > 0 && i.height > 0) {
-              hits.add(
-                  '$d (${(i.width * i.height * 100 / (sign.width * sign.height)).round()} %)');
+              // And the art's own box (the largest of the 16 avatars:
+              // 0.063–0.965 across, 0.045–0.957 down the tile).
+              final art = Rect.fromLTRB(
+                  r.left + .063 * tile,
+                  r.top + .045 * tile,
+                  r.left + .965 * tile,
+                  r.top + .957 * tile);
+              final j = art.intersect(sign);
+              int share(Rect x) => x.width > 0 && x.height > 0
+                  ? (x.width * x.height * 100 / (sign.width * sign.height))
+                      .round()
+                  : 0;
+              hits.add('$d (tile ${share(i)} %, art ${share(j)} %)');
             }
           }
           lines.add('  ${atFlag ? 'flag' : 'tip '}  $screen pt, $days days: '

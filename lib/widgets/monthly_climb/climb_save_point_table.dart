@@ -26,7 +26,7 @@ const climbFlag = ('C6', 'summit_flag', 0.43080, 0.20530, 0.05340, 0.01730, 1.00
 /// points, in the same fields as [climbSavePointTable]; never reached, never
 /// named, always drawn lit.
 const climbDecorTable = <(String, String, double, double, double, double, double)>[
-  ('C5', 'signpost', 0.63310, 0.28250, 0.08470, 0.02590, 0.95),
+  ('C5', 'signpost', 0.63494, 0.28250, 0.08470, 0.02590, 0.95),
 ];
 
 /// The flag's pennant's median luminance (Rec. 709 on sRGB, 0–1): a theme

@@ -57,9 +57,10 @@ outline green, contact red).
 
     build/scene_art_venv/bin/python tool/scene_art/check_theme.py --signpost
 
-`--signpost-break` runs its deliberate breaks in memory (ratio 1.0, 0.90,
-moved 20 px down: each must touch; the placed signpost on Green must not)
-and writes signpost_check_break.txt.
+`--signpost-break` runs its deliberate breaks in memory on
+glacier/background_dark.png (back at the clearing's centre without N35's
+shift, and moved 20 px down: each must touch; as placed it must not) and
+writes signpost_check_break.txt.
 """
 
 from __future__ import annotations
@@ -318,16 +319,24 @@ SIGNPOST_ALPHA = 25  # the placement rule's cut (place_save_points.py)
 def signpost_shape(size, ratio=None, dy=0) -> np.ndarray:
     """The signpost's visible pixels (alpha > 25) where the app draws it,
     at the reference's size: the asset, the placement's ratio (or
-    [ratio]), the base 0.25 of C5's height below its centre."""
+    [ratio]) and centre, the base 0.25 of C5's height below that centre."""
     import json
 
-    W, H = size
     p = json.loads((T.REPO / "docs/design/scene-art/stage2/placement.json").read_text())["decor"][0]
-    (cx, cy), (bw, bh) = p["center_norm"], p["box_norm"]
+    return signpost_shape_at(size, ratio or p["ratio"], p["center_norm"], p["box_norm"], p["base_drop"], dy=dy)
+
+
+def signpost_shape_at(size, ratio, centre, box, base_drop, dx=0, dy=0) -> np.ndarray:
+    """The signpost's visible pixels with its centre at [centre]
+    (normalized) moved by [dx], [dy] px, sized [ratio] of the clearing's
+    width [box][0]."""
+    W, H = size
+    (cx, cy), (bw, bh) = centre, box
     src = Image.open(T.REPO / "assets/climb/objects/signpost.webp").convert("RGBA")
-    wpx = bw * (ratio or p["ratio"]) * W
+    wpx = bw * ratio * W
     im = src.resize((round(wpx), round(wpx * src.height / src.width)), Image.LANCZOS)
-    left, top = round(cx * W - im.width / 2), round((cy + p["base_drop"] * bh) * H - im.height) + dy
+    left = round(cx * W - im.width / 2) + dx
+    top = round((cy + base_drop * bh) * H - im.height) + dy
     out = np.zeros((H, W), bool)
     out[top:top + im.height, left:left + im.width] = np.asarray(im)[..., 3] > SIGNPOST_ALPHA
     return out
@@ -392,24 +401,30 @@ def check_signpost(names: list[str]) -> int:
 
 
 def check_signpost_breaks() -> int:
-    """The signpost check's deliberate breaks, in memory: on Green's light
-    image, the signpost at ratio 1.0, at 0.90 and moved 20 px down must
-    each touch the trail. Exit code 1 if a break goes unseen."""
-    ref = Reference()
-    W, H = ref.size
+    """The signpost check's deliberate breaks, in memory, on the image that
+    touched most before N35 (glacier/background_dark.png): the signpost back
+    at its clearing's centre (without N35's shift) and moved 20 px down must
+    each touch the trail; as placed it must not. Exit code 1 if a break goes
+    unseen."""
     import json
 
+    image = "glacier/background_dark.png"
+    ref = Reference()
+    W, H = ref.size
     p = json.loads((T.REPO / "docs/design/scene-art/stage2/placement.json").read_text())["decor"][0]
     cx, cy = p["center_norm"][0] * W, p["center_norm"][1] * H
     box = (int(cx - SIGNPOST_WINDOW), int(cy - SIGNPOST_WINDOW), int(cx + SIGNPOST_WINDOW), int(cy + SIGNPOST_WINDOW))
-    trail = local_trail(ref, lab_of(T.SOURCE / REFERENCE, ref.size), box)
-    lines = ["Batch 5 N18: the signpost check's deliberate breaks (green/background_light.png); each must touch.", ""]
+    trail = local_trail(ref, lab_of(T.SOURCE / image, ref.size), box)
+    sx, sy = p.get("shift_px", [0, 0])
+    lines = [f"Batch 5 N18, N35: the signpost check's deliberate breaks ({image}).", ""]
     missed = False
-    for label, kw in (("ratio 1.0", {"ratio": 1.0}), ("ratio 0.90", {"ratio": 0.9}), ("moved 20 px down", {"dy": 20}),
-                      ("as placed (control)", {})):
-        k = int((trail & signpost_shape(ref.size, **kw)).sum())
-        control = not kw
-        ok = (k == 0) if control else (k > 0)
+    for label, kw, must_touch in (
+            (f"at the clearing's centre (shift {-sx}, {-sy} px undone)", {"dx": -sx, "dy": -sy}, True),
+            ("moved 20 px down", {"dy": 20}, True),
+            ("as placed (control)", {}, False)):
+        shape = signpost_shape_at(ref.size, p["ratio"], p["center_norm"], p["box_norm"], p["base_drop"], **kw)
+        k = int((trail & shape).sum())
+        ok = (k > 0) == must_touch
         missed |= not ok
         lines.append(f"{'ok  ' if ok else 'MISS'} {label}: {k} px on the trail")
     out = T.REPO / "docs/design/batch5/signpost"

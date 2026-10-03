@@ -222,6 +222,8 @@ def steps() -> None:
     cells = [[Image.open(src / f"summit_{e}_{w}.png") for w in (320, 375, 430)] for e in ("flag", "tip")]
     grid(cells, [f"{w} pt: top ends at the flag, bottom at the tip" for w in (320, 375, 430)], 0.5).save(
         out / "summit_flag_vs_tip.jpg", quality=84)
+    # N35: the avatar on the step it passes the C5 signpost (29 of 31).
+    Image.open(src / "steps_after_C5_375.png").convert("RGB").save(out / "avatar_at_signpost_375.jpg", quality=86)
 
 
 if __name__ == "__main__":

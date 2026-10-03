@@ -6,7 +6,7 @@ ok   green/background_light.png: 0 px of the signpost on the trail
 ok   green/background_dark.png: 0 px of the signpost on the trail
 ok   ember/background_light.png: 0 px of the signpost on the trail
 ok   ember/background_dark.png: 0 px of the signpost on the trail
-FAIL glacier/background_light.png: 36 px of the signpost on the trail (1.41 pt² at 430 pt)
-FAIL glacier/background_dark.png: 69 px of the signpost on the trail (2.71 pt² at 430 pt)
+ok   glacier/background_light.png: 0 px of the signpost on the trail
+ok   glacier/background_dark.png: 0 px of the signpost on the trail
 ok   canyon/background_light.png: 0 px of the signpost on the trail
-FAIL canyon/background_dark.png: 5 px of the signpost on the trail (0.20 pt² at 430 pt)
+ok   canyon/background_dark.png: 0 px of the signpost on the trail

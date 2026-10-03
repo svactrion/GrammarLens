@@ -40,6 +40,8 @@ void main() {
   final cases = <(String, int)>[
     if (ending == null)
       for (final p in ClimbSavePoints.all) (p.clearing, p.reachedOn(31)),
+    // The C5 signpost: the step the avatar passes it on (29 of 31).
+    if (ending == null) ('C5', 29),
     ('C6', 31),
   ];
   for (final screen in widths) {

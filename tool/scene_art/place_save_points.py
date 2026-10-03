@@ -74,6 +74,46 @@ def fit(mask, clearing, name, size) -> dict:
     raise SystemExit(f"{name} does not fit its clearing")
 
 
+# N35 (Batch 5): the signpost keeps its ratio and moves, inside its
+# clearing, until it touches the trail in none of the eight theme images.
+# The shifts tried: every whole px within SHIFT_RADIUS (at 2172), nearest
+# first; the base (the object's bottom centre) must stay inside the
+# clearing's ellipse.
+SHIFT_RADIUS = 60
+THEME_IMAGES = [f"{t}/background_{m}.png" for t in ("green", "ember", "glacier", "canyon")
+                for m in ("light", "dark")]
+
+
+def shift_off_trails(t, clearing, ratio, size) -> tuple[int, int, int]:
+    """The smallest (dx, dy), in px at 2172, that keeps the decoration's
+    shape off every theme image's own trail near the clearing
+    (check_theme.local_trail) and off Green's trail mask, with its base
+    inside the clearing. (0, 0) if it already is. Raises if none within
+    SHIFT_RADIUS."""
+    import check_theme as C
+
+    W, H = size
+    ref = C.Reference()
+    (cx, cy), (bw, bh) = clearing["center_norm"], clearing["box_norm"]
+    box = (int(cx * W - C.SIGNPOST_WINDOW), int(cy * H - C.SIGNPOST_WINDOW),
+           int(cx * W + C.SIGNPOST_WINDOW), int(cy * H + C.SIGNPOST_WINDOW))
+    trails = [t.mask] + [C.local_trail(ref, C.lab_of(T.SOURCE / n, ref.size), box) for n in THEME_IMAGES]
+    shifts = sorted(((dx, dy) for dx in range(-SHIFT_RADIUS, SHIFT_RADIUS + 1)
+                     for dy in range(-SHIFT_RADIUS, SHIFT_RADIUS + 1)
+                     if dx * dx + dy * dy <= SHIFT_RADIUS ** 2),
+                    key=lambda d: (d[0] ** 2 + d[1] ** 2, d))
+    base_x, base_y = cx * W, (cy + BASE_DROP * bh) * H
+    for n, (dx, dy) in enumerate(shifts, 1):
+        bx, by = base_x + dx, base_y + dy
+        if ((bx / W - cx) / (bw / 2)) ** 2 + ((by / H - cy) / (bh / 2)) ** 2 > 1:
+            continue
+        shape = C.signpost_shape_at(ref.size, ratio, clearing["center_norm"], clearing["box_norm"],
+                                    BASE_DROP, dx=dx, dy=dy)
+        if not any((m & shape).any() for m in trails):
+            return dx, dy, n
+    raise SystemExit("no shift within SHIFT_RADIUS keeps the decoration off every trail")
+
+
 def main() -> None:
     t = T.extract(T.SOURCE / "green/background_light.png")
     W, H = t.size
@@ -102,8 +142,13 @@ def main() -> None:
     for i, name in DECOR.items():
         c = clearings[i - 1]
         f = fit(t.mask, c, name, (W, H))
+        dx, dy, searched = shift_off_trails(t, c, f["ratio"], (W, H))
+        (cx, cy) = c["center_norm"]
         decor.append({"clearing": f"C{i}", "object": name, "ratio": f["ratio"],
-                      "base_drop": BASE_DROP, "center_norm": c["center_norm"],
+                      "base_drop": BASE_DROP,
+                      "center_norm": [round(cx + dx / W, 5), round(cy + dy / H, 5)],
+                      "clearing_center_norm": c["center_norm"], "shift_px": [dx, dy],
+                      "shifts_searched": searched,
                       "box_norm": c["box_norm"], "area_px": c["area_px"]})
     out = {"generator": "tool/scene_art/place_save_points.py", "image_size_px": [W, H],
            "save_points": points, "flag": flag, "decor": decor, "alternatives": alternatives}

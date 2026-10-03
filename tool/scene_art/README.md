@@ -304,12 +304,13 @@ build/scene_art_venv/bin/python tool/scene_art/check_theme.py --signpost
 ```
 
 N18: the signpost where the app draws it must touch none of each theme
-image's own trail near C5 (all eight sources). **Result 2026-10-03:**
-Green and Ember pass; Glacier light (36 px), Glacier dark (69 px) and
-Canyon dark (5 px) fail: the signpost's stones graze the trail's edge,
-which sits a few pixels closer to C5 there than on Green (at most
-2.7 pt² on a 430 pt phone). `--signpost-break` runs its deliberate breaks
-in memory. Outputs: `docs/design/batch5/signpost/signpost_check*`.
+image's own trail near C5 (all eight sources). **Result 2026-10-03, after
+N35:** all eight pass. Before N35, Glacier light (36 px), Glacier dark
+(69 px) and Canyon dark (5 px) grazed the trail's edge; `place_save_points.py`
+now moves the signpost, ratio kept, by the smallest shift inside C5 that
+clears every image (`shift_px` in `placement.json`: 4 px right at 2172,
+about 0.8 pt at 430 pt). `--signpost-break` runs its deliberate breaks in
+memory. Outputs: `docs/design/batch5/signpost/signpost_check*`.
 
 ```bash
 build/scene_art_venv/bin/python tool/scene_art/batch5_sheet.py sites
