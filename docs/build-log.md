@@ -8511,3 +8511,22 @@ On branch `1.1.0-design`; not merged, not pushed. Docs only:
   answers themselves are not in the repository; Ahmet confirms them in
   the form.
 - **[Tests]** 1504 pass; `flutter analyze` clean.
+
+## 2026-10-04 (1.1.0 release candidate — decisions P10, P11; three acceptances)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only. Owner
+decisions (Ahmet, 2026-10-04), recorded in `roadmap.md` under P8:
+
+- **[Product — owner] P10.** The fallback pool is filled before the
+  release. *Why:* it has 0 sets, so every day the shared set cannot be
+  read shows the day-0 questions again.
+- **[Product — owner] P11.** Debug and profile builds send no analytics
+  events by default; one explicit setting turns them on for a DebugView
+  check. *Why:* they write to the production Firebase project, and GA4's
+  developer-traffic filter only removes devices flagged in debug mode.
+  *Rejected:* relying on the filter alone.
+- **[Accepted — owner]** Release without a look on a real iPad (verified
+  in the simulator; the window behaviour on the newest iPadOS not
+  verified); build number 4 (`1.1.0+4`); `1.1.0` merged into `main` after
+  the TestFlight round.
+- **[Tests]** 1504 pass; `flutter analyze` clean (docs only).

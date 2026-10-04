@@ -290,7 +290,7 @@ D1–D6 in the side-tracks file.)*
           P1 built 2026-10-03 (`3400766`), P2 `267fbd0`; iPhones
           pixel-identical (590 and 466 renders before and after); K-c on
           iPad accepted (P3);
-    - [ ] the fallback pool filled (1.1.0 release checklist below):
+    - [ ] the fallback pool filled (P10; 1.1.0 release checklist below):
           `assets/daily_test_fallback/pool.json` still has 0 sets
           (checked 2026-10-04), so every fallback day shows the day-0
           questions. *(Added 2026-10-04: it was on the release checklist
@@ -304,11 +304,14 @@ D1–D6 in the side-tracks file.)*
           version line in Settings), so only `pubspec.yaml` changed;
     - [ ] the What's New text and the listing changes (draft:
           `design/release-1.1.0/store-copy.md`; the final text is Ahmet's);
-    - [ ] `1.1.0` merged into `main` (Ahmet's decision);
+    - [ ] `1.1.0` merged into `main` — after the TestFlight round
+          (accepted 2026-10-04);
+    - [ ] analytics off by default outside release builds (P11);
     - [ ] the submission path, chosen by 1.0.0's state (below).
   - Recommended:
     - [ ] the events seen in DebugView;
-    - [ ] the developer-traffic filter;
+    - [ ] the developer-traffic filter (still useful for debug-mode
+          devices; no longer the only guard once P11 is built);
     - [ ] a performance look on a profile build;
     - [x] docs tidy-up — 2026-10-04: this roadmap's 1.1.0 summary
           ("1.1.0 — release candidate"), stale ticks corrected, `prd.md`'s
@@ -384,6 +387,21 @@ D1–D6 in the side-tracks file.)*
 - **P8 (Ahmet, 2026-10-04): the title typeface stays Nunito Sans 800.**
   Raw captures are not kept in the repository (one command makes them
   again); only the framed set and the overview are.
+- **P10 (Ahmet, 2026-10-04): the fallback pool is filled before the
+  release.** *Why:* the pool has 0 sets, so on every day the shared set
+  cannot be read the day-0 questions are shown again. Filled the
+  documented way (C2: 7 live v2 sets, exported read-only from KV with
+  `scripts/fallback_pool.sh`, the proxy's gate at export, the owner's
+  review).
+- **P11 (Ahmet, 2026-10-04): builds other than release (debug, profile)
+  send no analytics events by default; one explicit setting turns them on
+  for a DebugView check.** *Why:* these builds write to the production
+  Firebase project, and GA4's developer-traffic filter only removes
+  devices flagged in debug mode. *Rejected:* relying on the filter alone.
+- **Accepted (Ahmet, 2026-10-04):** releasing without a look on a real
+  iPad (verified in the simulator; the window behaviour on the newest
+  iPadOS is not verified); build number 4; `1.1.0` merged into `main`
+  after the TestFlight round.
 - [ ] G1 rewritten (Ahmet, 2026-10-03): 100 MB was not a technical
       limit but the project's own checkpoint. New rule: if the source
       images approach 200 MB, or the same images start being regenerated
