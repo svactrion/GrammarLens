@@ -61,9 +61,12 @@ as recorded in each batch's line below):
 **Moved out of 1.1.0:**
 
 - **1.1.x:** Batch 7, one-time environment motion (Ahmet, 2026-10-03).
-- **After 1.1.0, version not set:** the shared Daily Test's separate check
-  call and repairs (P7a–c, Path A, 2026-09-29); merging Settings' two
-  developer sections (debug builds only; not user-visible).
+- **The first job after 1.1.0 (P14, Ahmet, 2026-10-04):** other
+  accepted answers on the live shared sets, generated and delivered on the
+  server side, independent of an app release (the deferred second-model
+  check call, P7a–c, or a new version of the generation rules).
+- **After 1.1.0, version not set:** merging Settings' two developer
+  sections (debug builds only; not user-visible).
 - **1.2:** the items under "Parked for 1.2" below (a "see the mountain"
   button, a monthly learning report, a mid-month return card, a
   "reachable tier" hint, tapping a save point, a save point rest day, a
@@ -96,6 +99,17 @@ below with its source):
   without scrolling (open since 1.0.0).
 - The shared sets have no second-model check before publishing (Path A);
   the "Also correct" line's wording is a placeholder.
+- Answers are graded by plain text matching, and the live shared sets
+  carry no `acceptedAnswers` (P12): a right or defensible answer the key
+  does not name is "Needs work" and goes into the error profile. In the
+  owner's review of 35 live questions this was 6. Contractions (`'m` /
+  `am`) and spelling variants (`neighbourhood` / `neighborhood`) are not
+  normalized. The fallback pool's known cases are corrected (P13); the
+  live sets wait for P14.
+- `validateSharedSet` checks the structure, not the grammar: an
+  `error_correction` sentence that is already correct, a hint that
+  contradicts the key, or a predicted "wrong" answer that is right all
+  pass it (P12).
 - Not measured: frame times and memory on a device.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
@@ -395,12 +409,38 @@ D1–D6 in the side-tracks file.)*
   cannot be read the day-0 questions are shown again. Filled the
   documented way (C2: 7 live v2 sets, exported read-only from KV with
   `scripts/fallback_pool.sh`, the proxy's gate at export, the owner's
-  review).
+  review; with the owner's corrections, P13).
 - **P11 (Ahmet, 2026-10-04): builds other than release (debug, profile)
   send no analytics events by default; one explicit setting turns them on
   for a DebugView check.** *Why:* these builds write to the production
   Firebase project, and GA4's developer-traffic filter only removes
   devices flagged in debug mode. *Rejected:* relying on the filter alone.
+- **P12 (finding, the owner's review, 2026-10-04).** The app grades a
+  Daily Test answer by plain text matching (`checkDailyTestAnswer`: case,
+  surrounding spaces and one final `.`/`!`/`?` ignored; contractions,
+  inner punctuation and spelling variants not), and the live shared sets
+  carry no `acceptedAnswers`. In 6 of the 35 reviewed questions (the 7
+  live v2 sets of 29 September – 5 October) a right or defensible answer
+  is graded "Needs work" and written into the error profile.
+  `validateSharedSet` checks the structure, not the grammar. The same flaw
+  applies to the live daily sets.
+- **P13 (Ahmet, 2026-10-04): owner corrections for the fallback pool.**
+  The corrections live in a recorded file
+  (`tool/fallback_pool/corrections.json`); the export tool applies them
+  and validates the result again. The pool's provenance (C2, build log
+  2026-09-30) becomes "live-generated, validator-passed, owner-reviewed
+  and owner-corrected". The decision that only the check call writes
+  `acceptedAnswers` (`1.1.0-shared-daily-test-quality.md` §8.1) is
+  extended to the owner's corrections of the fallback pool.
+- **P14 (Ahmet, 2026-10-04): the first job after 1.1.0** (server side,
+  independent of an app release): other accepted answers on the live
+  sets, generated and delivered (the deferred second-model check, P7a–c,
+  or a new version of the generation rules). Notes for the generation
+  rules: a hint must not contradict the key; an `error_correction`
+  context must really be wrong; in "said that … will" items the context
+  must force the past; spelling variants (e.g. `neighbourhood` /
+  `neighborhood`) and contractions (`'m` / `am`) must be handled in
+  grading.
 - **Accepted (Ahmet, 2026-10-04):** releasing without a look on a real
   iPad (verified in the simulator; the window behaviour on the newest
   iPadOS is not verified); build number 4; `1.1.0` merged into `main`
@@ -2639,7 +2679,8 @@ Owner items before the 1.1.0 build ships (added 2026-09-30):
   scope, parameter `set_date`, event `daily_test_completed`) before the
   build ships: registration is not retroactive (`docs/analytics-plan.md`
   §9).
-- [ ] **Fallback pool filled:** 7 live v2 sets exported, reviewed and
+- [ ] **Fallback pool filled:** 7 live v2 sets exported, reviewed,
+  corrected (P13, `tool/fallback_pool/corrections.json`) and
   committed with `scripts/fallback_pool.sh` (build log 2026-09-30); until
   then every fallback day shows the day-0 questions. *(2026-10-04: still
   open; the asset has 0 sets.)*

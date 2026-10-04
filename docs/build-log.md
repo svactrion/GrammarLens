@@ -6375,6 +6375,8 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   (prompt v2, `claude-sonnet-5-5` at `low`, passed the gate), exported from
   KV and reviewed by the owner; no separate API call. When committed they are
   recorded here as "live-generated, validator-passed, owner-reviewed".
+  *(P13, 2026-10-04: "live-generated, validator-passed, owner-reviewed and
+  owner-corrected".)*
 - **[Engineering — C2 pool, app side]** `FallbackPool`
   (`lib/data/fallback_pool.dart`) reads `assets/daily_test_fallback/pool.json`
   (`{"formatVersion": 1, "sets": [{"questions": [...]}]}`) once and picks a set
@@ -8571,3 +8573,28 @@ On branch `1.1.0-design`; not merged, not pushed.
   project" tests in `analytics_service_test.dart` now stop at the gate
   instead of reaching Firebase's plugin. 1513 pass; `flutter analyze`
   clean.
+
+## 2026-10-04 (1.1.0 release candidate — decisions P12, P13, P14: the Daily Test's answer key)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only. Recorded in
+`roadmap.md` under P11:
+
+- **[Finding — owner review] P12.** Grading is plain text matching and the
+  live shared sets carry no `acceptedAnswers`: in 6 of the 35 reviewed live
+  questions (29 September – 5 October) a right or defensible answer is
+  "Needs work" and goes into the error profile. `validateSharedSet` checks
+  the structure, not the grammar. The live daily sets have the same flaw.
+  Added to the known flaws.
+- **[Product — owner] P13.** The fallback pool gets owner corrections: a
+  recorded file the export tool applies and validates again. The pool's
+  provenance becomes "live-generated, validator-passed, owner-reviewed and
+  owner-corrected" (C2 entry above annotated). The "only the check call
+  writes `acceptedAnswers`" decision is extended to these corrections
+  (`1.1.0-shared-daily-test-quality.md` §8.1).
+- **[Product — owner] P14.** The first job after 1.1.0, on the server side
+  and independent of an app release: other accepted answers on the live
+  sets (the deferred check call, P7a–c, or new generation rules). Notes:
+  a hint must not contradict the key; an `error_correction` context must
+  really be wrong; "said that … will" contexts must force the past;
+  spelling variants and contractions handled in grading.
+- **[Tests]** 1513 pass; `flutter analyze` clean (docs only).
