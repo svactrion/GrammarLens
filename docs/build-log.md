@@ -8643,3 +8643,56 @@ not part of this commit.
   leaves the set out; every accepted answer in the shipped asset grades as
   `accepted`); red when `fromJson` stops reading the field.
   1518 pass (1513 + 5); `flutter analyze` clean.
+
+## 2026-10-04 (1.1.0 release candidate — P13: the owner's corrections and the pool's dates)
+
+On branch `1.1.0-design`; not merged, not pushed. Commit `804858b`
+(`tool/fallback_pool/corrections.json` only; the pool asset and the review
+were generated but left uncommitted for the owner's review). Record added
+afterwards.
+
+- **[Data — owner] Dates:** 2026-09-30 – 2026-10-06 (7 live v2 sets).
+  2026-09-29 is left out: its question 1's sentence ("…but a technician was
+  on holiday") is already correct, so it cannot be corrected.
+- **[Data — owner] Five corrections** (by date and question number):
+  2026-09-30 q3 hint removed (it contradicted the key), "'m cooking" moved
+  from the predicted wrong answers to `acceptedAnswers`; 2026-10-01 q3
+  "his"; 2026-10-02 q5 "I have run marathons since I was twenty.";
+  2026-10-05 q2 "The flat has sun in the living room all afternoon." moved
+  from the predicted wrong answers to `acceptedAnswers`; 2026-10-05 q4 three
+  accepted answers (the present perfect continuous, and both forms with the
+  US spelling "neighborhood"). Both removals left 2 predicted wrong answers,
+  the gate's minimum. The `reason` texts were drafted by Claude.
+- **[Engineering]** `6a1ccb1`: the review's correction line quotes the
+  answers (answers ending in a full stop ran into the separator).
+- **[Tests]** 1518 pass; `flutter analyze` clean; the build's app-side asset
+  test 46 of 46.
+
+## 2026-10-04 (1.1.0 release candidate — the fallback pool final: owner approval, ten corrections)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Verified — owner] The fallback pool is approved** (Ahmet,
+  2026-10-04). Ahmet reviewed the 35 questions of the live sets; seven
+  corrections came out of that review (the five above, and 2026-10-06 q1
+  "I have read this newspaper since I was a teenager." and q4 "must", the
+  key being "have to"); then three more for consistency with them:
+  2026-10-03 q2 "'re cleaning" (like "'m cooking"), 2026-10-02 q2 and
+  2026-10-05 q3 "have to" (like "must"). **Ten corrections in all**, all
+  `acceptedAnswers` additions except the two moves and the one hint removal
+  above. The 2026-09-29 set is left out (its question 1's context was
+  already correct).
+- **[Decision — owner]** The "said that … will" items stay as they are, as
+  the textbook rule; noted for P14 (the context must force the past).
+- **[Decision — owner]** More than two accepted answers on one question
+  are allowed in owner corrections (the check call's cap of 2, quality
+  report §8.2, does not apply).
+- **[Known limit]** On an accepted answer the result card shows "Also
+  correct: …" with the question's explanation, which explains the key only
+  (e.g. "his" is followed by "We use 'the' because …").
+- **[Data]** `assets/daily_test_fallback/pool.json`: 7 sets
+  (2026-09-30 – 2026-10-06 as fb01–fb07), 10 owner corrections;
+  `tool/fallback_pool/review.md` regenerated. Provenance:
+  "live-generated, validator-passed, owner-reviewed and owner-corrected".
+- **[Tests]** 1518 pass; `flutter analyze` clean; the build's app-side
+  asset test 46 of 46.
