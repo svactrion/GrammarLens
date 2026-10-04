@@ -298,7 +298,10 @@ D1–D6 in the side-tracks file.)*
     - [ ] an end-to-end pass on a release build (TestFlight);
     - [ ] the Firebase custom dimensions registered before the release
           (1.1.0 release checklist below);
-    - [ ] version and build number;
+    - [x] version and build number — `1.1.0+4` (2026-10-04; was
+          `1.0.0+3`). The build number is above every build uploaded so
+          far (1–3, all 1.0.0); the app shows its version nowhere (no
+          version line in Settings), so only `pubspec.yaml` changed;
     - [ ] the What's New text and the listing changes (draft:
           `design/release-1.1.0/store-copy.md`; the final text is Ahmet's);
     - [ ] `1.1.0` merged into `main` (Ahmet's decision);

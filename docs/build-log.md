@@ -8468,3 +8468,23 @@ On branch `1.1.0-design`; not merged, not pushed. Docs only.
   `proxy/wrangler.jsonc` has `SHARED_DAILY_TEST_ENABLED` `"true"`; the
   deployed value was not checked from here.
 - **[Tests]** 1504 pass; `flutter analyze` clean (docs only).
+
+## 2026-10-04 (1.1.0 release candidate — step 2: version 1.1.0+4)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Release]** `pubspec.yaml` `1.0.0+3` → `1.1.0+4`. *Why 4:* the last
+  build uploaded to App Store Connect is `1.0.0+3` (builds 1–3, all
+  1.0.0; build-log 2026-09-24); a new version could start its own build
+  numbers, but if 1.0.0's submission is withdrawn and the version becomes
+  1.1.0 (the roadmap's submission path), one rising number avoids any
+  question.
+- **[Checked]** Where the version appears: `Info.plist` reads
+  `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)`, which Flutter writes
+  from `pubspec.yaml` into the git-ignored `ios/Flutter/Generated.xcconfig`
+  at build time. The app shows no version anywhere (no `package_info_plus`,
+  no version line in Settings or Credits). `MARKETING_VERSION = 1.0` in the
+  Xcode project belongs to the `RunnerTests` target, not the app. Not built
+  as an IPA here, so the archived `CFBundleShortVersionString` /
+  `CFBundleVersion` are not read back yet (do it at the release build).
+- **[Tests]** 1504 pass; `flutter analyze` clean.
