@@ -569,8 +569,28 @@ Nothing is marked complete unless the record says so.
   generator first, which gives a first data point.
 - **README refresh with current launch screenshots** (3–4 images, compressed,
   in `docs/screenshots/`); add the App Store badge and link only after the app
-  is released.
-- **Free practice quota model — undecided** (recorded 2026-09-24). Options:
+  is released. *(2026-10-04: done on `1.1.0-design` with four 1.1.0 release
+  candidate frames, 600 px wide, in `screenshots/1.1.0/` next to the 1.0.0
+  set; the README is rebuilt around three decisions (build log 2026-10-04).
+  The App Store badge still waits for the release.)*
+- **README: full GitHub URLs back to relative links once 1.1.0 is on
+  `main`** (recorded 2026-10-04). The README commit meant for a cherry-pick
+  onto `main` links to five places that exist only on `1.1.0-design` with
+  full `https://github.com/svactrion/GrammarLens/blob/1.1.0-design/...` URLs:
+  the roadmap's "1.1.0 — release candidate" and "Known flaws shipping in
+  1.1.0", and the build log's 2026-10-04 entries (P12–P14, the free practice
+  limit's rationale). When `1.1.0` is merged into `main`, make them relative.
+- **Small debt: the "not configured" message names the README** (recorded
+  2026-10-04). `ClaudeService._send` (`lib/services/claude_service.dart`)
+  says "See the "Local setup" section in README.md.", and
+  `test/claude_service_config_test.dart` expects `README` in it. Local setup
+  moved to `docs/development.md` on 2026-10-04; the README keeps a one-line
+  pointer, so the message still leads there. Fix: name
+  `docs/development.md` in the message and the test (a `lib/` change, not
+  done in the docs-only README work).
+- **Free practice quota model — undecided** (recorded 2026-09-24; why
+  the current limit is 1 was recorded after the fact on 2026-10-04: build
+  log, "Free practice limit: rationale recorded after the fact"). Options:
   1/day (current), every 3 days, a token earned through completed Daily
   Tests, an allowance per mistake. Decide with 4 weeks of data: share of free
   users who use the daily session, and conversion of practice users vs
@@ -680,7 +700,15 @@ as each one lands, with literal status words (see above):
   economics (PRD v2 §13.7, the session cap, the margin numbers above) are
   still unmeasured estimates until then. Persistent-storage options are
   proposed in PRD v2 §13.10 (recommended: Workers Analytics Engine) and none
-  is built. Two pre-existing proxy `console.error` calls (Anthropic's raw
+  is built. **Decision (Ahmet, 2026-10-04): no persistent storage for now.**
+  The measure of real cost is the monthly usage in the Anthropic Console;
+  the shared Daily Test is one call a day, a fixed item, so the total minus
+  that item is the cost of practice sessions. Workers Analytics Engine
+  stays as the job for when real users arrive. Accepted: only the total is
+  visible, not the split per session; Workers Logs is not persistent
+  (3 days on Workers Free per Cloudflare's Workers Logs page, read
+  2026-10-04; the account's own setting not verified). Build log
+  2026-10-04 (token cost data: no persistent storage for now). Two pre-existing proxy `console.error` calls (Anthropic's raw
   error body on a non-200, and the JSON parse exception on unusable
   content) could echo response text; **fixed 2026-09-21** (see the failure-log
   entry below).
@@ -2654,8 +2682,8 @@ actually exists):
 #### TestFlight pre-submission checklist
 
 Open items to run on a TestFlight build before submitting for review
-(build it only after `./scripts/preflight.sh` passes; README "Local setup",
-step 5):
+(build it only after `./scripts/preflight.sh` passes; `docs/development.md`
+"Local setup", step 5; moved from the README on 2026-10-04):
 
 *(2026-09-24: build 3 was submitted with these items as listed below.)*
 
@@ -2910,6 +2938,10 @@ building it.
 ### 5. Rewarded video gate on streak (free tier)
 
 ### 6. Cost measurement, resolve open decisions §7.1 / §7.2
+
+*(2026-10-04: cost is read from the Anthropic Console's monthly usage; no
+persistent token log until real users arrive. "Proxy token logging" under
+Launch scope, and build log 2026-10-04.)*
 
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.

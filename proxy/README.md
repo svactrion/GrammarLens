@@ -32,8 +32,8 @@ client (`src/anthropic.ts` maps everything to a generic `upstream_error`).
 1. `npm install`
 2. Copy `.dev.vars.example` to `.dev.vars` and fill in a real Anthropic API
    key (`.dev.vars` is gitignored). `APP_TOKEN` can be any string locally —
-   it just has to match what the Flutter app sends (see the repo root
-   README's "Local setup").
+   it just has to match what the Flutter app sends (see "Local setup" in
+   `docs/development.md`).
 3. `npm run dev` — starts `wrangler dev` on `http://localhost:8787`, with a
    local (not production) KV namespace, so quota counters here never touch
    the real deployed ones.

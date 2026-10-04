@@ -8722,3 +8722,85 @@ On branch `1.1.0-design`; not merged, not pushed.
   preparation list and the 1.1.0 release checklist; the release
   candidate summary no longer says the pool ships empty.
 - **[Tests]** 1520 pass (1518 + 2); `flutter analyze` clean.
+
+## 2026-10-04 (README rebuilt around three decisions; local setup moved)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only, no `lib/`,
+`proxy/` code or test changed.
+
+- **[Product — owner] Why.** The README is the first page a hiring manager
+  for a PM role reads, in about two minutes. It used to open with eight
+  1.0.0 screenshots and a long feature list, and ended in a 150-line local
+  setup guide. It now leads with status, four 1.1.0 screenshots and three
+  decisions, each with its problem, decision, cost and evidence:
+  1. one shared Daily Test per date instead of one per device (cost);
+  2. the "Practice this" paywall gap and the free quota (one Daily Test
+     and one 3-question practice session a day);
+  3. the known flaw: plain text matching grades right answers as wrong on
+     the live sets (P12), not fixed (P14).
+  Every number in the cards comes from the docs and is labelled measured or
+  estimate. One figure was corrected against the record before drafting:
+  the owner's review found 6 of 35 live questions with a right answer
+  graded wrong; "10" is the number of fallback pool corrections (7 from
+  that review, 3 for consistency), not of findings.
+- **[Engineering] Why three commits.** The README commit is cherry-picked
+  onto `main` by the owner, so it holds only `README.md` and the four
+  600 px screenshots (`screenshots/1.1.0/`): the full-size App Store set in
+  `docs/design/release-1.1.0/screenshots/` is not on `main`. In that commit
+  the local setup stays in the README, text unchanged, in a collapsed block
+  at the end, and links to sections that exist only on `1.1.0-design` are
+  full GitHub URLs (checked with `git cat-file -e main:<path>` for files,
+  and by heading for sections). The second commit, which stays on the
+  branch, moves the setup to `docs/development.md` (text unchanged,
+  headings one level up) and updates the references in `scripts/dev.sh`,
+  `scripts/preflight.sh`, `proxy/README.md` and `docs/analytics-plan.md`.
+  This third commit holds the roadmap and the build log.
+- **[Known limit]** `ClaudeService`'s "not configured" message still names
+  the README's "Local setup" (`lib/` not touched); the README's pointer
+  line leads on to `docs/development.md`. Roadmap, "Post-launch tasks":
+  the message fix and turning the full URLs back to relative links once
+  1.1.0 is on `main`.
+
+## 2026-10-04 (Free practice limit: rationale recorded after the fact)
+
+Docs only. **Recorded after the fact:** the limit of one free "Practice
+this" session a day was set on 2026-09-15 (entry "free-tier 'Practice
+this' leak — diagnosis + fix") without a written reason for the number.
+
+- **[Product — owner, stated 2026-10-04]** The limit is 1 to cap the cost
+  of each free user (a free user who takes the Daily Test and the practice
+  session every day costs about $1.72–1.86 a month on 1.0.0, `prd-v2.md`
+  §13.7, part estimate) and to point anyone who wants more practice to
+  Premium.
+- The quota model stays open: it is re-evaluated with four weeks of data
+  (roadmap, "Post-launch tasks", "Free practice quota model").
+- `case-study-material.md` §2 no longer marks the number as not in the
+  record; it cites this entry and says it was written after the fact.
+
+## 2026-10-04 (token cost data: no persistent storage for now)
+
+Docs only; no code changed.
+
+- **[Product — owner] Decision.** No persistent storage for token cost data
+  for now. The measure of real cost is the monthly usage in the Anthropic
+  Console. The shared Daily Test is one call a day, so it is a fixed item;
+  the total minus that item is the cost of practice sessions. Workers
+  Analytics Engine (PRD v2 §13.10, the option recommended there) stays as
+  the job for when real users arrive.
+- **[Product — owner] Reasons.** There are no users today, so there is no
+  data to lose. §13.10's proposal was written (2026-09-21) while every
+  device generated its own Daily Test.
+- **[Accepted cost]** Only the total is visible, not the split per session
+  or per operation. Workers Logs is not persistent: retention is 3 days on
+  Workers Free and 7 days on Workers Paid (Cloudflare, "Workers Logs" page,
+  pricing section, read 2026-10-04). The proxy is on Workers Free (entry
+  2026-09-26, owner decisions); the retention shown in this account's
+  dashboard was not checked (not verified).
+- **[Note — from the record]** The legacy route
+  (`POST /v1/generate-daily-test`) still generates one set per 1.0.0 device
+  per active day (2026-09-26, Option A); while 1.0.0 devices are in use,
+  those calls are also in the Console total
+  (`1.1.0-shared-daily-test.md` §10, option 3: a separate key for the cron
+  would split shared and legacy spend; not built).
+- **[Docs]** `roadmap.md` ("Proxy token logging"; "6. Cost measurement")
+  and `prd-v2.md` §13.10 carry a note; the earlier text is kept.
