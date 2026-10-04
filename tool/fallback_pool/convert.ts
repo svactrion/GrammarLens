@@ -318,10 +318,10 @@ export function poolPrefix(index: number): string {
 function correctionSummary(correction: Correction): string {
   const changes = [
     ...(correction.removeHint ? ['hint removed'] : []),
-    ...(correction.removeWrongAnswers ?? []).map((a) => `predicted wrong removed: ${a}`),
-    ...(correction.addAcceptedAnswers ?? []).map((a) => `accepted added: ${a}`),
+    ...(correction.removeWrongAnswers ?? []).map((a) => `predicted wrong removed: "${a}"`),
+    ...(correction.addAcceptedAnswers ?? []).map((a) => `accepted added: "${a}"`),
   ];
-  return `${changes.join('; ')}. ${correction.reason}`;
+  return `${changes.join('; ')} — ${correction.reason}`;
 }
 
 /** Question texts and answers only, one section per set, with each owner

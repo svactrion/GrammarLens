@@ -196,7 +196,7 @@ test('the review shows the correction, its reason and the accepted answers', () 
   assert.match(review, /\*\*Also accepted:\*\* 's going/);
   assert.match(
     review,
-    /\*Owner correction:\* hint removed; predicted wrong removed: 's going; accepted added: 's going\. The hint contradicts the key\./,
+    /\*Owner correction:\* hint removed; predicted wrong removed: "'s going"; accepted added: "'s going" — The hint contradicts the key\./,
   );
   assert.equal(review.match(/Owner correction/g)?.length, 1);
   assert.match(review, /do not edit by hand:\ncorrections go in `tool\/fallback_pool\/corrections\.json`/);
