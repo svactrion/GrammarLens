@@ -8488,3 +8488,26 @@ On branch `1.1.0-design`; not merged, not pushed.
   as an IPA here, so the archived `CFBundleShortVersionString` /
   `CFBundleVersion` are not read back yet (do it at the release build).
 - **[Tests]** 1504 pass; `flutter analyze` clean.
+
+## 2026-10-04 (1.1.0 release candidate — step 3: store copy draft)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only:
+`docs/design/release-1.1.0/store-copy.md`.
+
+- **[Found]** 1.0.0's description, promotional text, keywords and
+  subtitle are not in the repository (entered in App Store Connect only).
+- **[Draft]** What's New for 1.1.0, short and longer, only from what
+  ships; it applies only if 1.0.0 is released first (on path 2, 1.1.0 is
+  the first version and has no What's New). A promotional text, a
+  description section for the Mountain of Learning, and lines to check in
+  the live description ("generated for you" would now be wrong; "Monthly
+  Climb" is "Mountain of Learning" on screen). Keywords not proposed
+  without the live list. Apple's character limits are from memory, to be
+  confirmed in the form.
+- **[App Privacy]** No change needed, by comparing the data flows of
+  `509f94d` (`1.0.0+3`) and now: no new runtime SDK, `Info.plist`
+  unchanged, the Daily Test request now sends less (no device id), the
+  new analytics are usage data of the type already covered. The 1.0.0
+  answers themselves are not in the repository; Ahmet confirms them in
+  the form.
+- **[Tests]** 1504 pass; `flutter analyze` clean.
