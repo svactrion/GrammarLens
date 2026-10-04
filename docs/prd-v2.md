@@ -824,6 +824,13 @@ needs a paid plan and a query tool; (3) a daily aggregate in KV or D1 —
 smallest storage but needs new counter code and loses raw per-call detail.
 Any of these would only ever hold the same non-personal fields.
 
+*(Decision, 2026-10-04: none of the three is built for now. The measure of
+real cost is the monthly usage in the Anthropic Console; the shared Daily
+Test is one call a day, a fixed item, and the rest of the total is practice
+sessions. Workers Analytics Engine stays the choice for when real users
+arrive. This section was written while every device generated its own Daily
+Test. `docs/build-log.md`, 2026-10-04.)*
+
 ### 13.11 Age and occupation removed from the profile (2026-09-21)
 
 The optional Age and Occupation fields on Profile are removed: UI, model and

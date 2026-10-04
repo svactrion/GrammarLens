@@ -700,7 +700,15 @@ as each one lands, with literal status words (see above):
   economics (PRD v2 §13.7, the session cap, the margin numbers above) are
   still unmeasured estimates until then. Persistent-storage options are
   proposed in PRD v2 §13.10 (recommended: Workers Analytics Engine) and none
-  is built. Two pre-existing proxy `console.error` calls (Anthropic's raw
+  is built. **Decision (Ahmet, 2026-10-04): no persistent storage for now.**
+  The measure of real cost is the monthly usage in the Anthropic Console;
+  the shared Daily Test is one call a day, a fixed item, so the total minus
+  that item is the cost of practice sessions. Workers Analytics Engine
+  stays as the job for when real users arrive. Accepted: only the total is
+  visible, not the split per session; Workers Logs is not persistent
+  (3 days on Workers Free per Cloudflare's Workers Logs page, read
+  2026-10-04; the account's own setting not verified). Build log
+  2026-10-04 (token cost data: no persistent storage for now). Two pre-existing proxy `console.error` calls (Anthropic's raw
   error body on a non-200, and the JSON parse exception on unusable
   content) could echo response text; **fixed 2026-09-21** (see the failure-log
   entry below).
@@ -2930,6 +2938,10 @@ building it.
 ### 5. Rewarded video gate on streak (free tier)
 
 ### 6. Cost measurement, resolve open decisions §7.1 / §7.2
+
+*(2026-10-04: cost is read from the Anthropic Console's monthly usage; no
+persistent token log until real users arrive. "Proxy token logging" under
+Launch scope, and build log 2026-10-04.)*
 
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.

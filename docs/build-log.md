@@ -8776,3 +8776,31 @@ this' leak — diagnosis + fix") without a written reason for the number.
   (roadmap, "Post-launch tasks", "Free practice quota model").
 - `case-study-material.md` §2 no longer marks the number as not in the
   record; it cites this entry and says it was written after the fact.
+
+## 2026-10-04 (token cost data: no persistent storage for now)
+
+Docs only; no code changed.
+
+- **[Product — owner] Decision.** No persistent storage for token cost data
+  for now. The measure of real cost is the monthly usage in the Anthropic
+  Console. The shared Daily Test is one call a day, so it is a fixed item;
+  the total minus that item is the cost of practice sessions. Workers
+  Analytics Engine (PRD v2 §13.10, the option recommended there) stays as
+  the job for when real users arrive.
+- **[Product — owner] Reasons.** There are no users today, so there is no
+  data to lose. §13.10's proposal was written (2026-09-21) while every
+  device generated its own Daily Test.
+- **[Accepted cost]** Only the total is visible, not the split per session
+  or per operation. Workers Logs is not persistent: retention is 3 days on
+  Workers Free and 7 days on Workers Paid (Cloudflare, "Workers Logs" page,
+  pricing section, read 2026-10-04). The proxy is on Workers Free (entry
+  2026-09-26, owner decisions); the retention shown in this account's
+  dashboard was not checked (not verified).
+- **[Note — from the record]** The legacy route
+  (`POST /v1/generate-daily-test`) still generates one set per 1.0.0 device
+  per active day (2026-09-26, Option A); while 1.0.0 devices are in use,
+  those calls are also in the Console total
+  (`1.1.0-shared-daily-test.md` §10, option 3: a separate key for the cron
+  would split shared and legacy spend; not built).
+- **[Docs]** `roadmap.md` ("Proxy token logging"; "6. Cost measurement")
+  and `prd-v2.md` §13.10 carry a note; the earlier text is kept.
