@@ -8405,3 +8405,35 @@ On branch `1.1.0-design`; not pushed. Docs only.
   *Rejected:* leaving it; reshooting at a month's end. *Accepted:* frame
   1's last explanation under the fixed footer; the iPad's frame 8 showing
   the whole of Profile.
+
+## 2026-10-04 (1.1.0 release preparation — P9 built; the set regenerated; waiting for final approval)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Commits]** `92615db` (P9), `410beac` (the replay option, tests, the
+  set), and this one.
+- **[Built]** Debug panel → Milestones → "Celebrate last month" (debug
+  and profile builds, memory only): a replayed tier's celebration names
+  last month and its theme, taken from the month card's `summary_gold`
+  sample (`ClimbDebugMonthCard`), the same source as the month card and
+  the sample collection's last month. The real celebration (the result
+  screen) is untouched.
+- **[Tests]** The replay with the switch on: last month and its theme,
+  the matching medal, no record read or written, no event; the result
+  screen's real Gold celebration with the switch on still names the
+  set's own month; the panel switch (off by default, never on when the
+  debug tools are off). Two existing panel tests now scroll their button
+  wholly into view first (the panel grew by a row). 1504 pass; `flutter
+  analyze` clean.
+- **[Set]** Regenerated for both devices with `tool/screenshots/capture.sh`.
+  Frame 03 now reads "Gold medal earned · September · Green Slope".
+  Checked: 02 October, Green Slope, 15 of 31; 03 September, Green Slope,
+  Gold; 07 September, Green Slope, Gold, 26 of 30 steps, 237 points (next:
+  October, Green Slope); 08 September Gold on the shelf, October 149
+  points and 15 active days. September and October are both Green Slope
+  by the rotation (October 2026 is its first month; earlier months are
+  Green Slope). Observation, not changed: the shelf's sample months
+  February–August carry the other themes (P6's sample), which a real
+  user could not have before October 2026. Every frame except 03 and 09
+  (Welcome animates) came out byte-identical to the previous run.
+- **[Waiting]** Ahmet's final approval of the set.

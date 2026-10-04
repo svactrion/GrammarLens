@@ -180,8 +180,8 @@ D1–D6 in the side-tracks file.)*
           approval** (2026-10-04): nine frames per device in P7's order
           and captions, captured from the real app in the simulator (P5)
           with `tool/screenshots/capture.sh`, framed in the 1.0.0 style in
-          Nunito Sans 800 (P8). Open: the Gold frame (03) celebrates
-          October while 02 and 08 show October at 149 points
+          Nunito Sans 800 (P8); frame 03 celebrates September's Gold
+          (P9), and frames 02, 03, 07 and 08 agree
           (`design/release-1.1.0/screenshots/README.md`, "Review of the
           set");
     - [ ] the iPad check — **waiting for simulator verification.** Report
