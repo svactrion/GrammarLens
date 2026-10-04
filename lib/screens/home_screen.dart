@@ -727,10 +727,17 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// A tier's celebration over Home, for the current month and its theme
   /// (or `CLIMB_DEBUG_THEME`'s): the define's launch replay and the
-  /// panel's.
+  /// panel's. With the panel's "Celebrate last month" (P9), for last month
+  /// and its theme, from the month card's `summary_gold` sample.
   Future<void> _pushTierCelebration(MedalTier tier) {
-    final theme = ClimbDebugTheme.value ?? _climbTheme;
-    final month = widget.clock().month;
+    var theme = ClimbDebugTheme.value ?? _climbTheme;
+    var month = widget.clock().month;
+    if (ClimbDebugMilestone.celebratesLastMonth) {
+      final card = ClimbDebugMonthCard.sample(
+          ClimbDebugMonthCardValue.summaryGold, widget.clock())!;
+      theme = card.previousTheme;
+      month = card.previousMonth;
+    }
     return Navigator.of(context).push(PageRouteBuilder<void>(
       opaque: false,
       pageBuilder: (routeContext, _, __) => MedalCelebration.tier(

@@ -64,6 +64,18 @@ abstract final class ClimbDebugMilestone {
   @visibleForTesting
   static set valueForTesting(String? value) => _forTesting = value;
 
+  /// The debug panel's "Celebrate last month" (P9, for the App Store
+  /// screenshots), in memory only: a replayed tier's celebration names last
+  /// month and its theme, the same month and theme as the month card's
+  /// `summary_gold` sample (`ClimbDebugMonthCard`) and the sample
+  /// collection. Off: the current month, as before.
+  static bool lastMonthRuntime = false;
+
+  /// Whether a replayed tier's celebration is for last month. Never in a
+  /// release build; never for a celebration the app shows for real.
+  static bool get celebratesLastMonth =>
+      !kReleaseMode && DebugTools.enabledForTesting && lastMonthRuntime;
+
   /// The milestone to play, or null.
   static ClimbDebugMilestoneValue? get value => resolve(
       enabled: !kReleaseMode && DebugTools.enabledForTesting,

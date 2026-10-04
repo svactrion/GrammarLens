@@ -20,6 +20,7 @@ import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/medal_celebration.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_debug_milestone.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
 
 import 'support/celebration_support.dart';
@@ -1372,6 +1373,26 @@ void main() {
     void monthAfter(int score) => storageService.monthAfter =
         (steps: 15, correct: score ~/ 2, wrong: score % 2, skipped: 0);
     final burst = find.byType(ConfettiBurst);
+
+    testWidgets(
+        'P9: the debug panel\'s "Celebrate last month" does not touch a '
+        'real celebration: it still names the set\'s own month and theme',
+        (tester) async {
+      ClimbDebugMilestone.lastMonthRuntime = true;
+      addTearDown(() => ClimbDebugMilestone.lastMonthRuntime = false);
+      monthAfter(MonthlyMedalRules.threshold(2026, 10, MedalTier.gold));
+      await pumpResult(tester, setOn('2026-10-20'));
+      expect(
+          find.descendant(
+              of: celebrationFinder,
+              matching: find.text('October · Green Slope')),
+          findsOneWidget);
+      final medal = tester.widget<MedalBadge>(find.descendant(
+          of: celebrationFinder, matching: find.byType(MedalBadge)));
+      expect(medal.asset, MedalArt.monthly('green_slope', MedalTier.gold));
+      await closeCelebration(tester, title: 'Gold medal earned');
+      await tester.pump(const Duration(seconds: 3));
+    });
 
     for (final tier in MedalTier.values) {
       testWidgets(

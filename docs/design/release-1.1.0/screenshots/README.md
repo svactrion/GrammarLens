@@ -67,7 +67,7 @@ P7's order. File names follow it (`01-result.png` … `09-welcome.png`).
 |---|---|---|---|
 | 01 | Daily Test result with explanations | Every answer explained | Answers today's test live (the first answer wrong, the other four right), then the result screen |
 | 02 | Home, the mountain | Climb a new mountain each month | After the live test the avatar is on Halfway Hut (Green Slope, step 15 of 31). Home is measured at rest, and the smallest scroll is chosen at which the screen's bottom edge falls in a gap between items with the whole mountain card in view; the hop onto Halfway Hut is then replayed from the debug panel and the frame taken while its "Halfway Hut" label shows, at that scroll |
-| 03 | Gold celebration | Earn medals as you climb | Debug panel → Milestones → gold |
+| 03 | Last month's Gold celebration (P9) | Earn medals as you climb | Debug panel → "Celebrate last month" on → Milestones → gold: "Gold medal earned · September", the month and theme of the month card's summary |
 | 04 | Review | Your weak spots, tracked | The Review tab |
 | 05 | Weak spot detail | Practice what you got wrong | Review → the first weak spot (today's wrong answer) |
 | 06 | A question | A new test every day | Today's first question with its right answer ("eating") typed and the on-screen keyboard up (see below) |
@@ -86,41 +86,48 @@ real keyboard comes up on the typed text. `capture.sh` marks iOS's
 one-time "slide to type" introduction as already shown on the simulator
 (`DidShowContinuousPathIntroduction`), or it would cover the keyboard.
 
-**Frames that agree.** The sample collection (P6) takes last month from
-the month card's Gold summary (theme, tier, steps, points), so 07 and 08
-show the same September medal; and its running month is the stored one,
-so 08's "This month" shows the same days and points as Home in 02.
+**Frames that agree.** One source, the month card's `summary_gold`
+sample (`ClimbDebugMonthCard`), gives last month to three frames: the
+replayed celebration (03, with the panel's "Celebrate last month", P9),
+the month card (07) and the sample collection's last month (08), so all
+three show the same September, theme and Gold medal. The sample
+collection's running month is the stored one, so 08's "This month" shows
+the same days and points as Home in 02.
 
-## Review of the set (2026-10-04)
+## Review of the set (2026-10-04, after P9)
 
 Checked on the captures of the last run, both devices:
 
-- **Numbers that agree:** Home (02) at step 15 of 31 in October, Green
-  Slope; Profile (08) "This month" 149 points and 15 active days (the
-  stored month, the same as Home's); the month card (07) and the shelf
-  (08) both show September as Gold on its theme, 26 steps, 237 points;
-  Review (04) and the weak spot (05) both "1 time · last seen today" for
-  today's wrong answer.
-- **One that does not:** the Gold celebration (03) reads "Gold medal
-  earned · October · Green Slope", while 02 and 08 show October at 149
-  points (Bronze, Gold is 233). The debug replay always celebrates the
-  running month, and by step 15 Gold is out of reach (at most 150
-  points). Not fixed: it needs a change to the app or a different
-  storyline (to be decided).
+- **Frames 2, 3, 7 and 8 agree.**
+
+  | | Month | Theme | Tier | Steps | Points |
+  |---|---|---|---|---|---|
+  | 02 Home | October | Green Slope | — (Bronze reached) | 15 of 31 | — |
+  | 03 celebration | September | Green Slope | Gold | — | — |
+  | 07 month card | September (next: October, Green Slope) | Green Slope | Gold | 26 of 30 | 237 |
+  | 08 shelf, last month | September | Green Slope | Gold | 26 (its detail) | 237 (its detail) |
+  | 08 "This month" | October | Green Slope | (Bronze) | 15 active days | 149 |
+
+  September and October are both Green Slope by the app's own rotation:
+  October 2026 is its first month, and every month before it is Green
+  Slope (`ClimbThemeRotation`).
+- **Also agree:** Review (04) and the weak spot (05), "1 time · last seen
+  today" for today's wrong answer; the question (06) is that same first
+  question, with its right answer typed.
+- **The shelf's earlier months** (February–August) carry the four themes
+  and every tier, as P6 asked for the sample; by the rotation above a real
+  user could only have Green Slope before October 2026. Illustrative, not
+  changed.
 - **Cut text:** none at a frame's bottom edge in 02 (the edge falls in a
   gap: iPhone scrolled 3.4 pt, iPad not at all). In 01 the last visible
-  explanation runs under the result screen's fixed footer: the screen's
-  own design, as in 1.0.0. Items behind the frosted nav bar (02, 04, 08)
-  show through it, softened, as in the app.
-- **Shelf rows:** ten slots, 5 + 5 on the iPhone, 8 + 2 on the iPad: no
-  medal alone on a row.
+  explanation runs under the result screen's fixed footer (accepted, P9).
+  Items behind the frosted nav bar (02, 04, 08) show through it,
+  softened, as in the app.
+- **Shelf rows:** ten slots, 5 + 5 on the iPhone, 8 + 2 on the iPad.
 - **Profile on the iPad (08):** the whole of Profile fits the screen, so
-  it cannot be scrolled to the shelf as on the iPhone; it shows the
-  profile fields above the shelf.
-- **Developer-only items:** none (08 is taken after `release_look`; the
-  Debug row and the Developer section are not on any frame).
-- **Personal data:** none; the learner is the fictional "Sam", no device
-  id, no real name.
+  there is nothing to scroll (accepted, P9).
+- **Developer-only items:** none on any frame.
+- **Personal data:** none; the learner is the fictional "Sam".
 - **Status bar:** 9:41, full battery, full signal on every frame; the
   iPad's date reads "Sun Oct 4", the day of the run.
 

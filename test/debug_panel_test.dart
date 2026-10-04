@@ -51,6 +51,7 @@ class _RecordingStorage extends CardStorage {
 /// The debug panel (Batch 5, N27).
 void main() {
   tearDown(() {
+    ClimbDebugMilestone.lastMonthRuntime = false;
     ClimbDebugTheme.runtime = null;
     ClimbDebugDay.runtime = null;
     ClimbDebugControls.instance.resetForTesting();
@@ -138,6 +139,10 @@ void main() {
       testWidgets('${v.wireName}: closes the panel and asks Home to play it',
           (tester) async {
         await pumpPanel(tester);
+        // Wholly on screen: the panel is taller than the test's screen.
+        await tester
+            .ensureVisible(find.byKey(DebugPanelScreen.milestoneKey(v)));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(DebugPanelScreen.milestoneKey(v)));
         await tester.pumpAndSettle();
         expect(find.byType(DebugPanelScreen), findsNothing);
@@ -234,6 +239,57 @@ void main() {
         expect(sink.events, isEmpty);
       });
     }
+
+    testWidgets(
+        'P9: "Celebrate last month": a replayed tier names last month and '
+        'its theme, from the month card\'s summary_gold sample; no record, '
+        'no event', (tester) async {
+      ClimbDebugMilestone.lastMonthRuntime = true;
+      addTearDown(() => ClimbDebugMilestone.lastMonthRuntime = false);
+      final sink = RecordingAnalyticsSink();
+      final storage = _RecordingStorage()..usedBefore = false;
+      await pumpHome(tester, storage, sink: sink);
+      final before = [...storage.calls];
+      final card = ClimbDebugMonthCard.sample(
+          ClimbDebugMonthCardValue.summaryGold, DateTime(2026, 11, 1, 9))!;
+      expect(card.previousMonth, 10);
+      ClimbDebugControls.instance.playMilestone(ClimbDebugMilestoneValue.gold);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Gold medal earned'), findsOneWidget);
+      expect(find.text('October · ${card.previousTheme.name}'), findsOneWidget);
+      final medal = tester.widget<MedalBadge>(find.descendant(
+          of: find.byType(MedalCelebration),
+          matching: find.byType(MedalBadge)));
+      expect(
+          medal.asset, MedalArt.monthly(card.previousTheme.id, MedalTier.gold));
+      await tester.tap(find.byType(MedalCelebration));
+      await tester.pumpAndSettle();
+      expect(storage.calls, before);
+      expect(sink.events, isEmpty);
+    });
+
+    testWidgets('the panel\'s switch sets it, in memory only; off by default',
+        (tester) async {
+      expect(ClimbDebugMilestone.celebratesLastMonth, isFalse);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: DebugPanelScreen(onResetLocalData: () async {}),
+      ));
+      final toggle = find.byKey(DebugPanelScreen.celebrateLastMonthKey);
+      await tester.scrollUntilVisible(toggle, 200);
+      await tester.ensureVisible(toggle);
+      await tester.pumpAndSettle();
+      await tester.tap(toggle);
+      await tester.pump();
+      expect(ClimbDebugMilestone.celebratesLastMonth, isTrue);
+      DebugTools.enabledForTesting = false;
+      expect(ClimbDebugMilestone.celebratesLastMonth, isFalse);
+      DebugTools.enabledForTesting = true;
+      await tester.tap(toggle);
+      await tester.pump();
+      expect(ClimbDebugMilestone.lastMonthRuntime, isFalse);
+    });
 
     for (final v
         in ClimbDebugMilestoneValue.values.where((v) => v.tier == null)) {

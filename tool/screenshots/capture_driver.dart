@@ -240,8 +240,12 @@ Future<void> main() async {
   });
   await _wait(3000);
 
-  // 03: the Gold celebration, replayed from the debug panel.
+  // 03: last month's Gold celebration (P9), replayed from the debug panel
+  // with "Celebrate last month" on: September, as the month card (07) and
+  // the shelf (08) show it.
   await _openDebugPanel();
+  await _panelTap(find.byValueKey('debug_celebrate_last_month'));
+  await _wait(400);
   await _panelTap(find.byValueKey('debug_milestone_gold'));
   await _driver.waitFor(find.text('Tap to continue'),
       timeout: const Duration(seconds: 20));

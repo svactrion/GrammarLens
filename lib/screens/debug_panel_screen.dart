@@ -30,6 +30,7 @@ class DebugPanelScreen extends StatefulWidget {
 
   static const resetKey = ValueKey('debug_reset');
   static const sampleCollectionKey = ValueKey('debug_sample_collection');
+  static const celebrateLastMonthKey = ValueKey('debug_celebrate_last_month');
   static const dayRealKey = ValueKey('debug_day_real');
   static const daySliderKey = ValueKey('debug_day_slider');
   static ValueKey<String> themeKey(String id) => ValueKey('debug_theme_$id');
@@ -161,6 +162,16 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
             'Milestones',
             'Closes the panel and plays it on Home: a tier\'s celebration, '
                 'or the step onto a save point and its label.'),
+        SwitchListTile(
+          key: DebugPanelScreen.celebrateLastMonthKey,
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Celebrate last month'),
+          subtitle: const Text('A tier\'s celebration names last month and '
+              'its theme, as the month card does.'),
+          value: ClimbDebugMilestone.lastMonthRuntime,
+          onChanged: (on) =>
+              setState(() => ClimbDebugMilestone.lastMonthRuntime = on),
+        ),
         Wrap(spacing: 8, runSpacing: 8, children: [
           for (final v in ClimbDebugMilestoneValue.values)
             OutlinedButton(
