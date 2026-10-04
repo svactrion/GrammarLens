@@ -8392,3 +8392,16 @@ On branch `1.1.0-design`; not merged, not pushed.
 - **[Tests]** 1501 pass (`test/debug_sample_collection_test.dart` now 7);
   `flutter analyze` clean.
 - **[Waiting]** Ahmet's final approval of the set; the Gold frame's month.
+
+## 2026-10-04 (1.1.0 release preparation — decision P9)
+
+On branch `1.1.0-design`; not pushed. Docs only.
+
+- **[Product — owner] P9.** Frame 3 shows last month's Gold celebration
+  ("Gold medal earned · September"). *Why:* the draft celebrated October,
+  which Home and Profile show at 149 points; Gold is out of reach by the
+  15th. Story: Gold in September (3), the month card sums September up
+  (7), September's Gold on the shelf (8), October's climb goes on (2).
+  *Rejected:* leaving it; reshooting at a month's end. *Accepted:* frame
+  1's last explanation under the fixed footer; the iPad's frame 8 showing
+  the whole of Profile.

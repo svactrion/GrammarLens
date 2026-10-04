@@ -262,6 +262,15 @@ D1–D6 in the side-tracks file.)*
   shows; the first three now tell learn, climb, earn. The repeated
   "every" and the promise of a medal every month are gone (a medal is not
   guaranteed).
+- **P9 (Ahmet, 2026-10-04): frame 3 celebrates last month's Gold**
+  ("Gold medal earned · September"). *Why:* the draft celebrated Gold for
+  October, while Home and Profile show October at 149 points, and Gold
+  cannot be reached by the 15th. The story now: Gold earned in September
+  (frame 3), the month card sums September up (7), September's Gold sits
+  on the shelf (8), October's climb goes on (2). *Rejected:* leaving it;
+  shooting the set again at the end of a month. *Accepted:* in frame 1 the
+  last explanation runs under the fixed footer (the screen's design, as in
+  1.0.0); on the iPad, frame 8 shows the whole of Profile, which fits.
 - **P8 (Ahmet, 2026-10-04): the title typeface stays Nunito Sans 800.**
   Raw captures are not kept in the repository (one command makes them
   again); only the framed set and the overview are.
