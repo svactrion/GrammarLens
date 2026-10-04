@@ -352,8 +352,8 @@ void main() {
       expect(raw['formatVersion'], FallbackPool.formatVersion);
     });
 
-    test('holds no sets yet, or the owner\'s 7', () {
-      expect(rawSets.length, anyOf(0, 7));
+    test('holds exactly the owner\'s 7 sets (P10)', () {
+      expect(rawSets, hasLength(7));
     });
 
     test('every set passes the check: none would be silently left out', () {
@@ -383,13 +383,18 @@ void main() {
     });
 
     test(
-        'every accepted answer grades as accepted, and no predicted wrong '
-        'answer does', () {
+        'every accepted answer grades as accepted and counts as correct, and '
+        'no predicted wrong answer does', () {
       final parsed =
           FallbackPool.parse(File(FallbackPool.assetPath).readAsStringSync());
-      for (final q in parsed.expand((set) => set)) {
+      final questions = parsed.expand((set) => set).toList();
+      expect(questions.where((q) => q.acceptedAnswers.isNotEmpty), isNotEmpty,
+          reason: 'the owner corrections (P13) add accepted answers');
+      for (final q in questions) {
         for (final answer in q.acceptedAnswers) {
           expect(checkDailyTestAnswer(q, answer).kind, AnswerMatchKind.accepted,
+              reason: '${q.item.id}: $answer');
+          expect(DailyTestAnswerResult.from(q, answer).isCorrect, isTrue,
               reason: '${q.item.id}: $answer');
         }
         for (final wrong in q.commonWrongAnswers) {
@@ -404,6 +409,26 @@ void main() {
       TestWidgetsFlutterBinding.ensureInitialized();
       final sets = await FallbackPool().sets();
       expect(sets, hasLength(rawSets.length));
+    });
+
+    test(
+        'seven consecutive days get seven different pool sets from it, never '
+        'the day-0 questions', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final pool = FallbackPool();
+      final dayZero = kDayZeroQuestions.map((q) => q.item.id).toSet();
+      final firstIds = <String>[];
+      for (var d = 0; d < 7; d++) {
+        final day = DateTime.utc(2026, 10, 10 + d).toIso8601String();
+        final questions = await pool.questionsFor(day.substring(0, 10));
+        expect(questions.map((q) => q.item.id).toSet().intersection(dayZero),
+            isEmpty);
+        firstIds.add(questions.first.item.id);
+      }
+      expect(firstIds.toSet(), hasLength(7));
+      for (final id in firstIds) {
+        expect(id, matches(RegExp(r'^fb0[1-7]_1$')));
+      }
     });
   });
 

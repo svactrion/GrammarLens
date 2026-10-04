@@ -64,6 +64,20 @@ else
   check_release_config_value "APP_TOKEN"
 fi
 
+# The Daily Test's fallback pool (roadmap P10): with fewer sets every day the
+# shared set cannot be read shows the same questions again, and with none the
+# day-0 questions. `plutil` (macOS, where release builds are taken) reads JSON
+# and prints an array's length.
+fallback_pool_file="assets/daily_test_fallback/pool.json"
+fallback_pool_sets=$(plutil -extract sets raw -o - "$fallback_pool_file" 2>/dev/null || true)
+if [[ "$fallback_pool_sets" == "7" ]]; then
+  echo "✓ $fallback_pool_file has 7 sets"
+else
+  echo "✗ $fallback_pool_file has ${fallback_pool_sets:-no readable} sets, needs 7 —" \
+    "build it with scripts/fallback_pool.sh build <7 dates> before a release build."
+  failed=1
+fi
+
 # Flutter bundles every file directly inside a registered asset folder
 # (assets/avatars/, assets/icons/), including the Finder metadata macOS drops
 # there. It is gitignored, so only a build taken on a Mac that has them

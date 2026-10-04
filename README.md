@@ -180,8 +180,10 @@ telling you to do the below.
 5. **Run `./scripts/preflight.sh` before every `flutter build ipa`** (so
    before every TestFlight or App Store build). It checks that pre-launch
    requirements which are easy to forget mid-build — `AppLinks`' Privacy
-   Policy/Terms URLs, and `config/prod.json`'s proxy URL/app token — are
-   actually set, and exits non-zero naming exactly what's missing if not.
+   Policy/Terms URLs, `config/prod.json`'s proxy URL/app token, and the
+   Daily Test fallback pool's 7 sets (`assets/daily_test_fallback/pool.json`)
+   — are actually set, and exits non-zero naming exactly what's missing if
+   not.
    It also deletes any macOS `.DS_Store` file under `assets/` and lists
    what it deleted: Flutter bundles every file in a registered asset
    folder, so these would otherwise ship inside the app. More checks land

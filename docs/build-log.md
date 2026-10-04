@@ -8696,3 +8696,29 @@ On branch `1.1.0-design`; not merged, not pushed.
   "live-generated, validator-passed, owner-reviewed and owner-corrected".
 - **[Tests]** 1518 pass; `flutter analyze` clean; the build's app-side
   asset test 46 of 46.
+
+## 2026-10-04 (1.1.0 release candidate — the fallback pool guarded: exactly 7 sets)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Engineering — tests]** `fallback_pool_test.dart`: the shipped asset
+  must hold exactly 7 sets (was 0 or 7); every accepted answer in it grades
+  as `accepted` **and** counts as correct, and at least one exists; seven
+  consecutive days get seven different pool sets from the shipped asset,
+  never the day-0 questions. `daily_test_service_test.dart`: with the
+  shipped asset (the service's default pool), a failed shared read gives a
+  pool set (`fbNN_*`, `fallback`), not the day-0 questions, and the next
+  day a different one. All four red with an empty asset. Already there
+  (synthetic pools): "with a pool, a failed read gives the pool set the
+  date rotates to, marked fallback; another date gets another set",
+  "seven consecutive days get seven different sets, then it repeats", and
+  the P13 group "a matching answer grades as accepted and counts as
+  correct".
+- **[Engineering — release gate]** `scripts/preflight.sh` fails unless
+  `assets/daily_test_fallback/pool.json` has 7 sets (`plutil -extract sets
+  raw`, macOS); checked with the real asset (pass), an empty pool and an
+  unreadable file (both fail, exit 1). README's preflight line updated.
+- **[Docs]** `roadmap.md`: the fallback pool ticked in the release
+  preparation list and the 1.1.0 release checklist; the release
+  candidate summary no longer says the pool ships empty.
+- **[Tests]** 1520 pass (1518 + 2); `flutter analyze` clean.

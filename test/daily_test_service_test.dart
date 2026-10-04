@@ -297,6 +297,35 @@ void main() {
     });
 
     test(
+        'with the shipped pool asset, a failed read gives a pool set, not the '
+        'day-0 questions, and the next day gets a different one', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final service = DailyTestService(
+        claudeService: claudeService,
+        storageService: storageService,
+      );
+      claudeService.failuresLeft = 2;
+      final dayZero = kDayZeroQuestions.map((q) => q.item.id).toSet();
+
+      StorageService.clockForTesting = () => DateTime(2026, 10, 12, 9);
+      final first = await service.getTodaysSet();
+      StorageService.clockForTesting = () => DateTime(2026, 10, 13, 9);
+      final second = await service.getTodaysSet();
+
+      for (final set in [first, second]) {
+        expect(set.source, DailyTestSource.fallback);
+        expect(set.questions, hasLength(5));
+        expect(
+            set.questions.map((q) => q.item.id).toSet().intersection(dayZero),
+            isEmpty);
+        expect(set.questions.first.item.id, matches(RegExp(r'^fb0[1-7]_1$')));
+      }
+      expect(
+          first.questions.first.item.id, isNot(second.questions.first.item.id));
+      expect(claudeService.readCount, 2);
+    });
+
+    test(
         'a local storage failure is the one error that reaches the caller, '
         'and it is not remembered: the next open is a fresh attempt', () async {
       final failing = DailyTestService(
