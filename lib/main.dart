@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
@@ -7,6 +8,7 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
+import 'services/analytics_service.dart';
 import 'services/subscription_service.dart';
 import 'utils/app_orientation.dart';
 import 'utils/early_error_reporting.dart';
@@ -78,6 +80,17 @@ Future<void> _initializeFirebase(EarlyErrorReporting earlyErrors) async {
     // stay off; nothing else about the app depends on them.
     earlyErrors.abandon();
     return;
+  }
+  // P11: a debug or profile build collects nothing, Firebase's automatic
+  // events included, unless built with ANALYTICS_DEBUG_EVENTS=true; a
+  // release build sets it on (Firebase's default), which also undoes a
+  // switch left off on a device by a debug build. Crashlytics' own
+  // collection switch is separate and not changed here.
+  try {
+    await FirebaseAnalytics.instance
+        .setAnalyticsCollectionEnabled(AnalyticsGate.enabled);
+  } catch (_) {
+    // Best effort, like every analytics call.
   }
   earlyErrors.handOver(
     onFlutterError: FirebaseCrashlytics.instance.recordFlutterFatalError,

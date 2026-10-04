@@ -306,7 +306,10 @@ D1–D6 in the side-tracks file.)*
           `design/release-1.1.0/store-copy.md`; the final text is Ahmet's);
     - [ ] `1.1.0` merged into `main` — after the TestFlight round
           (accepted 2026-10-04);
-    - [ ] analytics off by default outside release builds (P11);
+    - [x] analytics off by default outside release builds (P11) — built
+          2026-10-04: `AnalyticsGate`, opt-in
+          `--dart-define=ANALYTICS_DEBUG_EVENTS=true`; automated tests
+          only, not yet seen on a device;
     - [ ] the submission path, chosen by 1.0.0's state (below).
   - Recommended:
     - [ ] the events seen in DebugView;

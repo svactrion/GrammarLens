@@ -503,6 +503,17 @@ out of reports.
 field and does not block collection (§1.4); do not regenerate the plist for
 it.
 
+**Before anything: builds other than release send nothing by default
+(P11, 2026-10-04).** A debug or profile build drops every app event and
+user property and turns Firebase's collection off (automatic events such
+as `first_open` and `session_start` included), unless it was built with
+`--dart-define=ANALYTICS_DEBUG_EVENTS=true`. Every build command in this
+section therefore needs that define, or DebugView stays empty. A release
+build always sends, with or without it. The rule is `AnalyticsGate` in
+`lib/services/analytics_service.dart`; README, "Analytics in debug and
+profile builds". A month-card replay sends events only with both
+`CLIMB_DEBUG_MONTH_CARD_EVENTS=true` and `ANALYTICS_DEBUG_EVENTS=true`.
+
 **Step 1 — find the device.**
 
 ```bash
@@ -515,7 +526,7 @@ non-debug build (debug Flutter builds cannot be launched from the home screen
 on iOS 14+):
 
 ```bash
-flutter build ios --profile --dart-define-from-file=config/prod.json
+flutter build ios --profile --dart-define-from-file=config/prod.json --dart-define=ANALYTICS_DEBUG_EVENTS=true
 ```
 
 ```bash
@@ -545,7 +556,7 @@ run; that does not matter for a one-time flag-setting launch.
 physical-device command (not `scripts/dev.sh`):
 
 ```bash
-flutter run --dart-define-from-file=config/prod.json -d <DEVICE>
+flutter run --dart-define-from-file=config/prod.json --dart-define=ANALYTICS_DEBUG_EVENTS=true -d <DEVICE>
 ```
 
 **Step 4 — watch events.** Firebase console → Analytics → DebugView, pick the
@@ -568,7 +579,10 @@ xcrun devicectl device process launch --device <DEVICE> --terminate-existing com
 
 Caveats: events sent in debug mode are included in the daily BigQuery export
 by default, so configure a developer-traffic data filter in the Analytics
-property before relying on exported data. Console log lines are not a substitute: DebugView is the authority.
+property before relying on exported data. Since P11, a build without
+`ANALYTICS_DEBUG_EVENTS=true` sends nothing at all, so the filter only has
+to catch the builds made with it (which are the ones in debug mode
+anyway). Console log lines are not a substitute: DebugView is the authority.
 
 ---
 

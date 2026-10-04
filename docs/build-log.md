@@ -8530,3 +8530,44 @@ decisions (Ahmet, 2026-10-04), recorded in `roadmap.md` under P8:
   verified); build number 4 (`1.1.0+4`); `1.1.0` merged into `main` after
   the TestFlight round.
 - **[Tests]** 1504 pass; `flutter analyze` clean (docs only).
+
+## 2026-10-04 (1.1.0 release candidate — P11 built: no analytics outside release builds by default)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Engineering]** `AnalyticsGate` (`lib/services/analytics_service.dart`):
+  `enabled = kReleaseMode || ANALYTICS_DEBUG_EVENTS`, a compile-time
+  constant. Applied in two spots that read the same constant:
+  - `AnalyticsService`'s default sink is now
+    `GatedAnalyticsSink(FirebaseAnalyticsSink(), enabled: AnalyticsGate.enabled)`:
+    the app's events and user properties are dropped when it is off.
+    Tests that pass their own sink are unaffected.
+  - `main()` calls `FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(AnalyticsGate.enabled)`
+    right after `Firebase.initializeApp`, so Firebase's automatic events
+    (`first_open`, `session_start`, ...) stop too. Without this, a debug
+    install would still add users and sessions to the retention reports.
+- **[Release builds]** Events and user properties pass as before. The one
+  new call is `setAnalyticsCollectionEnabled(true)`, which is Firebase's
+  default (no `FIREBASE_ANALYTICS_COLLECTION_ENABLED` key in `Info.plist`),
+  so no user's collection changes. Where it does make a difference: a
+  device where a debug build left the switch off (Firebase stores it on
+  the device) gets it back on.
+- **[Not verified, no device run]** Whether Firebase's automatic events
+  on the very first launch of a fresh debug install go out before the
+  switch is turned off (Firebase configures, and may log `first_open`,
+  inside `initializeApp`); from the second launch the stored "off" applies
+  from start-up. Whether Crashlytics' crash reports in debug and profile
+  builds lose their analytics breadcrumbs, or Crashlytics' crash-free
+  statistics change for those builds. Crashlytics' own collection switch
+  is not touched.
+- **[Docs]** README "Analytics in debug and profile builds";
+  `analytics-plan.md` §6: the define on every build command there, and
+  `CLIMB_DEBUG_MONTH_CARD_EVENTS` now needs it too.
+- **[Tests]** `test/analytics_gate_test.dart` (9): release sends with or
+  without the opt-in, debug/profile sends nothing by default, the opt-in
+  sends; events and user properties through the gated sink in each case;
+  this test run is gated off; `main()` and the default sink use the gate
+  (source checks). The existing "does not throw without a Firebase
+  project" tests in `analytics_service_test.dart` now stop at the gate
+  instead of reaching Firebase's plugin. 1513 pass; `flutter analyze`
+  clean.

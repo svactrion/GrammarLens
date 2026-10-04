@@ -201,10 +201,34 @@ They are display-only and never change stored progress, the Daily Test or
 | `CLIMB_DEBUG_DAY=<n>` | debug | The scene shows step n of the month (avatar, passed-day dots, save points). The card's month and step chips keep the real numbers. |
 | `CLIMB_DEBUG_THEME=<id>` | debug | The scene shows that theme (`green_slope`, `ember_peak`, `glacier_peak`, `red_canyon`) in any month. |
 | `CLIMB_DEBUG_MONTH_CARD=<value>` | debug **and profile** | Replays the month transition card with sample data on every launch and hot restart, then the month-change zoom: `summary_gold`, `summary_none`, `summary_near` (Silver, the near-miss line), `fresh` (the fresh-start card), or `first_run` (no card, the first run's zoom). It never reads or writes the stored "seen" records and sends no analytics events. Works in profile builds so the zoom's frame times can be measured there. |
-| `CLIMB_DEBUG_MONTH_CARD_EVENTS=true` | with the one above | Lets the replay send its `month_card_shown`, `month_card_dismissed` and `month_zoom_ended` events, for a DebugView check. Off by default: debug and profile builds write to the production Firebase project. |
+| `CLIMB_DEBUG_MONTH_CARD_EVENTS=true` | with the one above | Lets the replay send its `month_card_shown`, `month_card_dismissed` and `month_zoom_ended` events, for a DebugView check. Off by default: debug and profile builds write to the production Firebase project. Needs `ANALYTICS_DEBUG_EVENTS=true` as well (below). |
 
 All three combine (for example a month card on Red Canyon, zooming to step
 20). Release builds ignore every one of them.
+
+#### Analytics in debug and profile builds
+
+Debug and profile builds send **no analytics** by default (roadmap P11):
+none of the app's events or user properties, and Firebase's own automatic
+events (`first_open`, `session_start`, ...) are switched off too, because
+these builds write to the production Firebase project. Release builds
+always send; the define does nothing there.
+
+| Define | Builds | What it does |
+|---|---|---|
+| `ANALYTICS_DEBUG_EVENTS=true` | debug **and profile** | Turns analytics on for that build, for a DebugView check (`docs/analytics-plan.md` §6). |
+
+For example, the profile build that `docs/analytics-plan.md` §6 installs
+on a device:
+
+```bash
+flutter build ios --profile --dart-define-from-file=config/prod.json --dart-define=ANALYTICS_DEBUG_EVENTS=true
+```
+
+The rule lives in `AnalyticsGate` (`lib/services/analytics_service.dart`).
+Crashlytics is not affected. A build without the define also leaves
+Firebase's collection switch off on that device; the next build with the
+define, or any release build, turns it back on.
 
 The same settings can be changed while the app runs from **Settings →
 Debug** (debug and profile builds; not in release): the scene's theme and

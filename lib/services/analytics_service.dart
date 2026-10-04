@@ -1,4 +1,5 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 
 import '../models/app_text_size.dart';
 import '../models/medal_tier.dart';
@@ -29,6 +30,54 @@ class FirebaseAnalyticsSink implements AnalyticsSink {
   }
 }
 
+/// Whether this build sends analytics at all (roadmap P11): a release build
+/// always does; a debug or profile build does not, unless it was built with
+/// `--dart-define=ANALYTICS_DEBUG_EVENTS=true` for a DebugView check. Those
+/// builds write to the production Firebase project, and GA4's
+/// developer-traffic filter only removes devices flagged in debug mode, so
+/// without this their events would count as real ones.
+///
+/// The one place the rule lives: [GatedAnalyticsSink] drops this app's own
+/// events and user properties by it, and `main()` hands it to Firebase's
+/// collection switch so Firebase's automatic events (`first_open`,
+/// `session_start`, ...) stop too. Crashlytics is not touched.
+abstract final class AnalyticsGate {
+  /// The explicit opt-in for a debug or profile build.
+  static const bool debugEventsOptIn =
+      bool.fromEnvironment('ANALYTICS_DEBUG_EVENTS');
+
+  /// This build's answer: a compile-time constant (true in every release
+  /// build, whatever the defines).
+  static const bool enabled = kReleaseMode || debugEventsOptIn;
+
+  /// The rule itself, for tests: [enabled] is `isEnabled()` with this
+  /// build's constants.
+  static bool isEnabled({
+    bool releaseMode = kReleaseMode,
+    bool optIn = debugEventsOptIn,
+  }) =>
+      releaseMode || optIn;
+}
+
+/// Passes events and user properties to [inner] only when [enabled]
+/// ([AnalyticsGate]); otherwise drops them silently.
+class GatedAnalyticsSink implements AnalyticsSink {
+  const GatedAnalyticsSink(this.inner, {required this.enabled});
+
+  final AnalyticsSink inner;
+  final bool enabled;
+
+  @override
+  Future<void> logEvent(String name, Map<String, Object>? parameters) async {
+    if (enabled) await inner.logEvent(name, parameters);
+  }
+
+  @override
+  Future<void> setUserProperty(String name, String? value) async {
+    if (enabled) await inner.setUserProperty(name, value);
+  }
+}
+
 /// Minimal local event logging (PRD v2 §9's "measurement approach for
 /// launch") plus crash reporting, both anonymous and device-based — no
 /// account/login involved, so this doesn't touch the guest-first identity
@@ -54,7 +103,8 @@ enum AiConsentSource {
 
 class AnalyticsService {
   AnalyticsService({
-    AnalyticsSink sink = const FirebaseAnalyticsSink(),
+    AnalyticsSink sink = const GatedAnalyticsSink(FirebaseAnalyticsSink(),
+        enabled: AnalyticsGate.enabled),
     DateTime Function() clock = DateTime.now,
   })  : _sink = sink,
         _clock = clock;
