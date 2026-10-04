@@ -8598,3 +8598,48 @@ On branch `1.1.0-design`; not merged, not pushed. Docs only. Recorded in
   really be wrong; "said that … will" contexts must force the past;
   spelling variants and contractions handled in grading.
 - **[Tests]** 1513 pass; `flutter analyze` clean (docs only).
+
+## 2026-10-04 (1.1.0 release candidate — P13 built: owner corrections for the fallback pool)
+
+On branch `1.1.0-design`; not merged, not pushed. The pool asset itself is
+not part of this commit.
+
+- **[Engineering — tool]** `tool/fallback_pool/corrections.json`
+  (`{"formatVersion": 1, "corrections": [...]}`, committed empty here). Each
+  correction names its set by **publication date** and its question by
+  **number** (from 1, `review.md`'s numbering, the order the gate returns),
+  never by `fbNN` (those follow the dates chosen), and carries a `reason`.
+  Operations: `addAcceptedAnswers`, `removeWrongAnswers`, `removeHint`.
+  `convert.ts` applies them after the gate, then runs the corrected set
+  through `validateSharedSet` again (so a removal below 2 predicted wrong
+  answers fails) and checks every accepted answer with the check call's
+  alternative rules (quality report §8.2: not blank, ≤ 300 characters, not
+  the key, not the `error_correction` sentence, not a predicted wrong
+  answer, no two alike; all as graded). §8.2's cap of 2 entries is **not**
+  applied to owner corrections (it is the checker's "tests more than one
+  thing" signal; an owner may list spelling variants). A correction that
+  matches no question (a date outside the build, a number past the set, a
+  missing hint, a wrong answer not found exactly once), an unknown field, a
+  missing reason, or one question corrected twice: nothing is written. The
+  pool keeps `acceptedAnswers` on a question only when some were added.
+  `review.md` shows "Also accepted" and an "Owner correction" line (the
+  changes and the reason) per question; its header now says corrections go
+  in `corrections.json`. `export.ts` reads the file (required).
+- **[Engineering — app]** No logic change: `DailyTestQuestion.fromJson`
+  already reads `acceptedAnswers` and the pool's load check already makes
+  every predicted wrong answer reach its own comment. Doc comments updated
+  (`daily_test_question.dart`, `answer_matching.dart`,
+  `fallback_pool.dart`).
+- **[Tests]** Converter 13 → 39 (`node:test`): the operations, the review
+  lines, three accepted answers allowed, 9 correction problems, 12 file
+  problems, the committed file reads. 8 of 8 deliberate breakages red
+  (re-validation skipped, accepted-answer rules skipped, unmatched
+  correction ignored, a missing wrong answer or hint ignored, accepted
+  answers dropped from the output, no review line, duplicates allowed).
+  `tsc` strict on the three tool files: clean. Flutter: +5 in
+  `fallback_pool_test.dart` (a pool's `acceptedAnswers` are read; a
+  matching answer is `accepted` and counts as correct, in the score and not
+  in the errors; an accepted answer that is also a predicted wrong one
+  leaves the set out; every accepted answer in the shipped asset grades as
+  `accepted`); red when `fromJson` stops reading the field.
+  1518 pass (1513 + 5); `flutter analyze` clean.

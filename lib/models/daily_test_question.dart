@@ -53,9 +53,11 @@ class DailyTestQuestion {
 
   /// Other answers that are also right, besides [correctAnswer] — added to a
   /// shared set by the proxy's check call (docs/1.1.0-shared-daily-test-quality.md
-  /// §8). Empty for every set today: day 0, the fallback, legacy generated
-  /// sets and shared sets before that check exists carry none, and a
-  /// question without alternatives grades exactly as it always did.
+  /// §8), and to a fallback pool question by the owner's corrections
+  /// (`tool/fallback_pool/corrections.json`, roadmap P13). Empty everywhere
+  /// else: day 0, legacy generated sets and shared sets before that check
+  /// exists carry none, and a question without alternatives grades exactly
+  /// as it always did.
   final List<String> acceptedAnswers;
 
   DailyTestQuestion({

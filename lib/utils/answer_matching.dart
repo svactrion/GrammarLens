@@ -96,9 +96,10 @@ enum AnswerMatchKind {
   /// alternative the shared set's check marked as also right — exactly or
   /// once keyboard variants are folded. Counts as correct; callers show the
   /// key alongside it ([AnswerMatchResult.acceptedAnswer] is the alternative
-  /// that matched). Only reachable when a set carries alternatives, which no
+  /// that matched). Only reachable when a set carries alternatives: no shared
   /// set does before the proxy's check call (docs/1.1.0-shared-daily-test-quality.md
-  /// §8, §16.4).
+  /// §8, §16.4); fallback pool questions can, from the owner's corrections
+  /// (roadmap P13).
   accepted,
 
   /// Matched one of the question's predicted [CommonWrongAnswer]s — show

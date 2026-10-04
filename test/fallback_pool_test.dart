@@ -6,7 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/data/fallback_pool.dart';
+import 'package:grammar_lens/models/daily_test_completion.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
+import 'package:grammar_lens/utils/answer_matching.dart';
 
 /// A question in the asset's shape, valid unless a test changes it.
 Map<String, dynamic> _question(String id, String topicId,
@@ -258,6 +260,10 @@ void main() {
         'blank_correct_answer',
         (s) => (s['questions'] as List)[0]['correctAnswer'] = ' . '
       ),
+      'an accepted answer that is also a predicted wrong answer': (
+        'wrong_answer_matches_correct',
+        (s) => (s['questions'] as List)[0]['acceptedAnswers'] = ['is going']
+      ),
     };
     broken.forEach((name, rule) {
       final (code, breakIt) = rule;
@@ -278,6 +284,55 @@ void main() {
         }
         final sets = FallbackPool.parse(_pool([bad, _set('fb02')]));
         expect(sets.single.first.item.id, 'fb02_1');
+      });
+    });
+
+    group('acceptedAnswers (owner corrections, roadmap P13)', () {
+      List<DailyTestQuestion> withAccepted() {
+        final set = _set('fb01');
+        (set['questions'] as List)[0]['acceptedAnswers'] = [
+          "'s going",
+          'does go',
+        ];
+        return FallbackPool.parse(_pool([set])).single;
+      }
+
+      test('are read from the pool asset', () {
+        final questions = withAccepted();
+        expect(questions[0].acceptedAnswers, ["'s going", 'does go']);
+        expect(
+            questions.skip(1).every((q) => q.acceptedAnswers.isEmpty), isTrue);
+      });
+
+      test('a matching answer grades as accepted and counts as correct', () {
+        final question = withAccepted()[0];
+        for (final answer in ["'s going", 'Does go.', '  DOES   GO ']) {
+          final match = checkDailyTestAnswer(question, answer);
+          expect(match.kind, AnswerMatchKind.accepted, reason: answer);
+          final result = DailyTestAnswerResult.from(question, answer);
+          expect(result.isCorrect, isTrue, reason: answer);
+        }
+        expect(checkDailyTestAnswer(question, 'goes').kind,
+            AnswerMatchKind.correct);
+        expect(checkDailyTestAnswer(question, 'go').kind,
+            AnswerMatchKind.commonWrong);
+        expect(checkDailyTestAnswer(question, 'went').kind,
+            AnswerMatchKind.fallback);
+      });
+
+      test('an accepted answer counts in the score and never in the errors',
+          () {
+        final questions = withAccepted();
+        final answers = {
+          for (final q in questions) q.item.id: q.correctAnswer,
+          questions[0].item.id: 'does go',
+        };
+        expect(computeDailyTestScore(questions, answers).correct, 5);
+        final results = [
+          for (final q in questions)
+            DailyTestAnswerResult.from(q, answers[q.item.id]),
+        ];
+        expect(results.where((r) => !r.isCorrect), isEmpty);
       });
     });
 
@@ -324,6 +379,24 @@ void main() {
     test('sets carry no origin fields (date, generatedAt, attempt, ...)', () {
       for (final set in rawSets) {
         expect(set.keys.toSet(), {'questions'});
+      }
+    });
+
+    test(
+        'every accepted answer grades as accepted, and no predicted wrong '
+        'answer does', () {
+      final parsed =
+          FallbackPool.parse(File(FallbackPool.assetPath).readAsStringSync());
+      for (final q in parsed.expand((set) => set)) {
+        for (final answer in q.acceptedAnswers) {
+          expect(checkDailyTestAnswer(q, answer).kind, AnswerMatchKind.accepted,
+              reason: '${q.item.id}: $answer');
+        }
+        for (final wrong in q.commonWrongAnswers) {
+          expect(checkDailyTestAnswer(q, wrong.answer).kind,
+              AnswerMatchKind.commonWrong,
+              reason: '${q.item.id}: ${wrong.answer}');
+        }
       }
     });
 

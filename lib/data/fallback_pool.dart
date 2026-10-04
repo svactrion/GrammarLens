@@ -16,8 +16,9 @@ import 'day_zero_daily_test.dart';
 ///
 /// The pool's content is sets the live cron published (prompt v2, generator
 /// `claude-sonnet-5-5` at `low` effort, passed the proxy's gate), exported
-/// from KV and reviewed by the owner: `scripts/fallback_pool.sh` writes the
-/// asset. Until that happens the asset holds no sets and every fallback day
+/// from KV, reviewed and corrected by the owner (other accepted answers, a
+/// predicted wrong answer or a hint removed; roadmap P13):
+/// `scripts/fallback_pool.sh` writes the asset. Until that happens the asset holds no sets and every fallback day
 /// gets the day-0 questions.
 class FallbackPool {
   static const String assetPath = 'assets/daily_test_fallback/pool.json';
