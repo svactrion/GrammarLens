@@ -490,7 +490,7 @@ UDID from step 1.
 **Every device command here uses `config/prod.json`.** `config/dev.json`
 points `PROXY_BASE_URL` at `localhost`, which on a physical device means the
 device itself, so every proxy call would fail; and `scripts/dev.sh` is
-simulator-only for the same reason (README, Local setup, "Physical device").
+simulator-only for the same reason (`docs/development.md`, Local setup, "Physical device").
 A device run therefore talks to the real proxy and the real Firebase project:
 use only your own test device, expect real (small) generation cost, and rely
 on DebugView's debug flag plus a developer-traffic filter to keep test events
@@ -510,8 +510,8 @@ as `first_open` and `session_start` included), unless it was built with
 `--dart-define=ANALYTICS_DEBUG_EVENTS=true`. Every build command in this
 section therefore needs that define, or DebugView stays empty. A release
 build always sends, with or without it. The rule is `AnalyticsGate` in
-`lib/services/analytics_service.dart`; README, "Analytics in debug and
-profile builds". A month-card replay sends events only with both
+`lib/services/analytics_service.dart`; `docs/development.md`, "Analytics in
+debug and profile builds". A month-card replay sends events only with both
 `CLIMB_DEBUG_MONTH_CARD_EVENTS=true` and `ANALYTICS_DEBUG_EVENTS=true`.
 
 **Step 1 — find the device.**
@@ -549,10 +549,10 @@ disable argument is passed.
 Alternative for the same one-time step: open `ios/Runner.xcworkspace`, Product
 → Scheme → Edit Scheme → Run → Arguments → add the flag(s), and run once
 from Xcode on the device. Xcode runs do not pass `--dart-define` values
-(README's Local setup section), so the app will not reach the proxy in that
+(`docs/development.md`, Local setup), so the app will not reach the proxy in that
 run; that does not matter for a one-time flag-setting launch.
 
-**Step 3 — day-to-day runs.** With the flag persisted, use the README's
+**Step 3 — day-to-day runs.** With the flag persisted, use `docs/development.md`'s
 physical-device command (not `scripts/dev.sh`):
 
 ```bash

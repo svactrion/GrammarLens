@@ -2,8 +2,8 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-# Pre-launch checks before taking a release/submission build (see README's
-# "Local setup" section: run this before `flutter build ipa`). More
+# Pre-launch checks before taking a release/submission build (see "Local
+# setup" in docs/development.md: run this before `flutter build ipa`). More
 # pre-launch gates land here over time rather than each living as its own
 # separate script.
 
