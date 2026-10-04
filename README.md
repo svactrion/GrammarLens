@@ -2,7 +2,7 @@
 
 **An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
-> **Status:** 1.0.0 submitted for App Store review on 24 September 2026. Not yet approved.
+> **Status (4 October 2026):** 1.0.0 is waiting for App Store review (resubmitted on 28 September 2026; not approved yet). 1.1.0 is a release candidate: development is done, not yet submitted. What ships in it and its known flaws: [`docs/roadmap.md`](docs/roadmap.md), "1.1.0 — release candidate".
 
 <p>
   <img src="screenshots/1.0.0/01-results-explained.png" width="200" alt="Daily Test results: each answer comes with a one-sentence explanation">
@@ -21,19 +21,29 @@
 
 - **Daily Test** (free): five questions a day, graded on the device, with a
   short explanation for every answer. The first day's test is a fixed,
-  hand-written set; later days are generated. Wrong answers feed a personal
-  error profile that Review shows as weak spots.
+  hand-written set. From 1.1.0, every user gets the same set on a given
+  date (generated once a day on the server); if it cannot be read, a set
+  bundled with the app is shown. (1.0.0 generated a set per device.) Wrong
+  answers feed a personal error profile that Review shows as weak spots.
 - **Topic Practice** (Premium): AI-generated question sets on a chosen topic,
   graded by AI with plain-language feedback. The app asks permission before
   practice answers are sent to the AI provider. Free users get one short
   session a day, started from a weak spot in Review. Plans, prices and trial
   lengths are loaded live from the store, not written in the app.
-- **Monthly Climb**: each answered Daily Test moves your avatar one step up a
-  monthly mountain, and a month's score earns a Bronze, Silver or Gold medal
-  in Profile.
+- **Monthly Climb** ("Mountain of Learning" on Home): each answered Daily
+  Test moves your avatar one step up a monthly mountain, and a month's score
+  earns a Bronze, Silver or Gold medal in Profile. In 1.1.0: four illustrated
+  mountain themes, one per month; save points along the trail; themed
+  medals, a celebration when a tier is reached and a medal collection in
+  Profile; a card that sums up the month when a new one starts.
+- **iPad** (1.1.0): the same single-column layout, centred and capped at
+  640 pt; portrait only.
 
 Known debts and open checks are listed in [`docs/roadmap.md`](docs/roadmap.md)
-("Post-launch tasks" and the TestFlight checklist).
+("1.1.0 — release candidate", "Post-launch tasks" and the TestFlight and
+1.1.0 release checklists). The screenshots above are 1.0.0's; the 1.1.0
+App Store set is in
+[`docs/design/release-1.1.0/screenshots/`](docs/design/release-1.1.0/screenshots/).
 
 ## Case study
 
@@ -46,8 +56,8 @@ the [case study](https://ahmettayfur.com/products/grammarlens/case-study).
 |---|---|---|---|
 | v1 — MVP | July 2026 | One-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026 | v2.1: free/paid split; v2.2: structure and visual pass; the API proxy; subscriptions | Not released |
-| 1.0.0 | Sep 2026 | First App Store release: v2 plus Monthly Climb | Submitted for review 24 Sep 2026 (build 3); not yet approved; manual release |
-| 1.1.0 | Next | Monthly themes, trail and environment fixes | Planned, not started |
+| 1.0.0 | Sep 2026 | First App Store release: v2 plus Monthly Climb | Submitted for review 24 Sep 2026 (build 3), resubmitted 28 Sep 2026; not yet approved; manual release |
+| 1.1.0 | Oct 2026 | Shared Daily Test (one set per date for everyone); four monthly mountain themes, save points, themed medals and a medal collection, the month card; launch screen; four new avatars; iPad layout | Release candidate, not submitted |
 
 <details>
 <summary><strong>v1 (MVP) screenshots</strong></summary>

@@ -7,11 +7,96 @@
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
 | 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0. **Updated (Ahmet, 2026-10-03):** resubmitted 2026-09-28; the app version (build 3), both subscriptions and the subscription group "Waiting for Review"; not withdrawn until 1.1.0 is ready, then: approved → released, 1.1.0 as an update; still in review → withdrawn, the version becomes 1.1.0 with the new build; rejected → fixed inside 1.1.0 (section "1.1.0 side tracks", "1.0.0's state"). Manual release selected (Ahmet verified, 2026-10-03) |
-| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist). **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Release candidate (2026-10-04): what ships, what waits and the known flaws are in "1.1.0 — release candidate" below.** Screenshots approved and the iPad simulator check done (Ahmet, 2026-10-04); the other release items are open. Not submitted. **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist). **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
 that say "v3" are kept as written.
+
+### 1.1.0 — release candidate (2026-10-04)
+
+A summary of the sections below; where they differ, the dated entries are
+the record. Not submitted to App Store review; `main` does not have it.
+
+**What ships in 1.1.0** (code on `1.1.0`, automated tests; device checks
+as recorded in each batch's line below):
+
+- **Shared Daily Test.** One set per date for every user, read from
+  `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback);
+  `acceptedAnswers` graded as correct, with the "Also correct: …" line on
+  the result card. The client never calls the per-device generation route.
+  The fallback is a bundled pool; **it ships empty unless the owner's
+  export is committed first**, and an empty pool falls back to the day-0
+  questions (release checklist below).
+- **Mountain of Learning** (Home's Monthly Climb, renamed on screen): four
+  illustrated themes in light and dark (Green Slope, Ember Peak, Glacier
+  Peak, Red Canyon), one per month by a fixed rotation starting with Green
+  Slope in October 2026; the trail taken from the image; save points
+  (First Camp, Halfway Hut, Mountain Spring, High Camp) and the Summit flag
+  that light up when reached, with their names shown on arrival; the C5
+  signpost.
+- **Medals and the collection.** Themed medals (12: theme × tier) and the
+  Welcome badge; a celebration when a tier is reached; Profile's "Medal
+  collection" shelf with a detail per medal and a "This month" bar with
+  the thresholds.
+- **Month transition.** A month card (last month's summary, or a fresh
+  start) and, once a month, a zoom from the whole mountain to the avatar.
+- **Launch screen** with the logo and wordmark animation (cold start only;
+  static with Reduce Motion).
+- **Four new avatars** (Bird, Fox, Panda, Sloth); the avatar carousel
+  loops.
+- **iPad layout.** The content column is centred and capped at 640 pt, the
+  floating nav bar held to it (P1, P2); iPhones unchanged.
+- **Fixes and clean-ups:** Home's greeting no longer loses the user's name
+  at 320 pt; unfinished Daily Test sets older than 7 days are deleted at
+  launch; the unreachable "Today's limit reached" screen is removed.
+- **Analytics:** `set_source` (`shared` / `fallback`) and `set_date` on
+  `daily_test_completed`, `theme_id` on `mode_selected` (Daily Test),
+  `month_card_shown`, `month_card_dismissed`, `month_zoom_ended`,
+  `save_point_reached`, `medal_tier_reached` (`analytics-plan.md`). Not yet
+  seen in DebugView; their new dimensions not yet registered.
+- Debug and profile builds only (not in a release build): the in-app debug
+  panel (Settings → Debug) and the sample collection.
+
+**Moved out of 1.1.0:**
+
+- **1.1.x:** Batch 7, one-time environment motion (Ahmet, 2026-10-03).
+- **After 1.1.0, version not set:** the shared Daily Test's separate check
+  call and repairs (P7a–c, Path A, 2026-09-29); merging Settings' two
+  developer sections (debug builds only; not user-visible).
+- **1.2:** the items under "Parked for 1.2" below (a "see the mountain"
+  button, a monthly learning report, a mid-month return card, a
+  "reachable tier" hint, tapping a save point, a save point rest day, a
+  summit challenge, a month-card button to the paywall).
+- **Later, not scheduled:** the items in `1.1.0-design-side-tracks.md`,
+  "Deferred to a later version" (the lens transition on the launch screen,
+  a fifth theme, remote themes, earned avatars, and others).
+
+**Known flaws shipping in 1.1.0** (accepted or not fixed; each is recorded
+below with its source):
+
+- iPad: at the month-change zoom's first frame 59 % of the mountain window
+  is the blurred band (P3, accepted). Not seen on a real iPad; on iPadOS 26
+  `UIRequiresFullScreen` is deprecated and whether the app opens full
+  screen or in a window was not recorded.
+- While the month card is open, the avatar on START is under the sheet at
+  320 pt, 375 × 667 and 430 × 932.
+- If the first-launch flow is quit half way, the first run's zoom does not
+  play.
+- 320 × 568: the month card's summary scrolls, and while it scrolls a
+  downward drag does not close it.
+- 320 pt: the "Summit" label covers the avatar.
+- 29–31-day months: on one step the avatar is drawn over the C5 signpost.
+- The medal's stars are unreadable below 48 pt, "WELCOME" below 96 pt.
+- The seam between the sharp scene and the blurred K-c backdrop (accepted
+  on the device).
+- The launch screen follows the system appearance, not the in-app theme
+  setting (since 1.0.0).
+- Premium at 375 × 667: the plan cards do not clear the fixed footer
+  without scrolling (open since 1.0.0).
+- The shared sets have no second-model check before publishing (Path A);
+  the "Also correct" line's wording is a placeholder.
+- Not measured: frame times and memory on a device.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
 
@@ -26,9 +111,15 @@ for 1.1.0 this is overridden. 1.1.0 does not ship before Batches 4–6 are
 done; Batch 7 may move. Batch 3 is split into 3a (study) and 3b; decisions
 D1–D6 in the side-tracks file.)*
 
-- [ ] Batch 0 — read-only check report (no code), including how medal
+- [x] Batch 0 — read-only check report (no code), including how medal
       thresholds (points), the daily question count and blank answers work
-- [ ] Batch 1 — launch screen
+      — done 2026-09-27 (`1.1.0-design-batch0-report.md`; decisions in
+      `1.1.0-design-side-tracks.md`, "Decisions after Batch 0")
+- [x] Batch 1 — launch screen — built 2026-09-27, seen on a device by the
+      owner (duration kept at 1.2 s, size +25 %), in `1.1.0`
+      (`build-log.md`, 2026-09-27, "Batch 1" and "Batch 1 follow-up";
+      `1.1.0-design-side-tracks.md`, "Launch screen"). *(Corrected
+      2026-10-04: these two lines were never ticked.)*
 - [x] Batch 2 — theme data model, theme id stored with the month, migration,
       rotation, Green Slope as data (no visible change) — done 2026-09-27,
       with [Q] from one constant; 929 tests green
@@ -49,7 +140,9 @@ D1–D6 in the side-tracks file.)*
       layered mountain, turned step pills, Green Slope's pine and shrub, the
       climb card (frame, plaque, month and steps on sky chips)
       (`docs/design/batch3c/report.md`)
-- [ ] Scene art (2026-10-01, S1–S5 in `docs/1.1.0-design-side-tracks.md`):
+- [x] Scene art (2026-10-01, S1–S5 in `docs/1.1.0-design-side-tracks.md`)
+      — done: Stage 1, Stage 2, and the other themes' images in Batch 4
+      (ticked 2026-10-04):
       the coded mountain of Batch 3c is replaced by ChatGPT illustrations
       (Green light and dark ready, volcanic light only and temporary); the
       trail comes from the image, its steps from the extracted center line.
@@ -84,10 +177,12 @@ D1–D6 in the side-tracks file.)*
         summit suits it; D2 retired (G4, G6, G8, G9). The other themes'
         images, volcanic included (its resolution is too low and it has no
         dark version), stay open
-- [ ] Batch 3d — stop markers become "save points": now the save point
-      objects (campfire, tent, fountain, cabin) on 4 of the image's 6
-      clearings (S3; which 4 is open; weekly days and D2 retired). Planned,
-      not started (`docs/1.1.0-design-side-tracks.md`, G3, S3)
+- [x] ~~Batch 3d — stop markers become "save points"~~ — superseded, not
+      built as its own batch (2026-10-04): the save point objects came in
+      Scene Art Stage 2 (C1–C4, G8, G9), their steps, names and label in
+      Batch 5 (its line below). *(Was: the save point objects (campfire, tent,
+      fountain, cabin) on 4 of the image's 6 clearings (S3; which 4 is
+      open; weekly days and D2 retired). Planned, not started.)*
 - [x] Home greeting: the user's name is never lost (at 320 pt it was lost for
       every name since 1.0.0) — done, verified on device, merged into
       `1.1.0` (2026-09-30, fast-forward to `69bef5f`; 1120 tests green on
@@ -174,35 +269,47 @@ D1–D6 in the side-tracks file.)*
   - [ ] pre-release check: Home's plaque and the month card may appear in
         App Store screenshots and case-study images
 - **Development of 1.1.0 is done (Ahmet, 2026-10-03); what remains is
-  release preparation.** Nothing below is done yet:
+  release preparation.** *(Updated 2026-10-04: the screenshots and the
+  iPad check are done; everything else here is open.)*
   - Required:
-    - [ ] App Store screenshots (iPhone and iPad) — **waiting for final
-          approval** (2026-10-04): nine frames per device in P7's order
-          and captions, captured from the real app in the simulator (P5)
-          with `tool/screenshots/capture.sh`, framed in the 1.0.0 style in
-          Nunito Sans 800 (P8); frame 03 celebrates September's Gold
-          (P9), and frames 02, 03, 07 and 08 agree
-          (`design/release-1.1.0/screenshots/README.md`, "Review of the
-          set");
-    - [ ] the iPad check — **waiting for simulator verification.** Report
+    - [x] App Store screenshots (iPhone and iPad) — **approved by Ahmet
+          (2026-10-04)**: the set of P4–P9, nine frames per device, iPhone
+          6.9" (1320 × 2868) and iPad 13" (2064 × 2752), in P7's order and
+          captions, captured from the real app in the simulator (P5) with
+          `tool/screenshots/capture.sh`, framed in the 1.0.0 style in
+          Nunito Sans 800 (P8); frame 03 celebrates September's Gold (P9)
+          (`design/release-1.1.0/screenshots/README.md`). Not yet uploaded
+          to App Store Connect (Ahmet);
+    - [x] the iPad check — **done in the simulator (Ahmet, 2026-10-04)**:
+          Ahmet went through the iPad layout (P1–P3) on the iPad Pro 13"
+          simulator in a debug build and reported no problem. Not checked
+          on a real iPad; no item-by-item notes were kept against
+          `p1/report.md` §6, so its open questions (the iPadOS 26 window,
+          the iPad mini) have no recorded answer. Earlier: report
           2026-10-03 (`design/release-1.1.0/ipad-and-screenshots-report.md`);
-          P1 built 2026-10-03 (`3400766`): on iPad the content column is
-          centred and capped at 640 pt, iPhones pixel-identical (590 renders
-          before and after). Renders of every screen on three iPads: nothing
-          broken, K-c still ugly (59 % blur)
-          (`design/release-1.1.0/p1/report.md`). Not seen on an iPad or its
-          simulator;
-    - [ ] an end-to-end pass on a release build;
+          P1 built 2026-10-03 (`3400766`), P2 `267fbd0`; iPhones
+          pixel-identical (590 and 466 renders before and after); K-c on
+          iPad accepted (P3);
+    - [ ] the fallback pool filled (1.1.0 release checklist below):
+          `assets/daily_test_fallback/pool.json` still has 0 sets
+          (checked 2026-10-04), so every fallback day shows the day-0
+          questions. *(Added 2026-10-04: it was on the release checklist
+          but missing from this list.)*
+    - [ ] an end-to-end pass on a release build (TestFlight);
     - [ ] the Firebase custom dimensions registered before the release
           (1.1.0 release checklist below);
-    - [ ] version and build number, the What's New text, `1.1.0` merged
-          into `main`;
+    - [ ] version and build number;
+    - [ ] the What's New text and the listing changes (draft:
+          `design/release-1.1.0/store-copy.md`; the final text is Ahmet's);
+    - [ ] `1.1.0` merged into `main` (Ahmet's decision);
     - [ ] the submission path, chosen by 1.0.0's state (below).
   - Recommended:
     - [ ] the events seen in DebugView;
     - [ ] the developer-traffic filter;
     - [ ] a performance look on a profile build;
-    - [ ] docs tidy-up.
+    - [x] docs tidy-up — 2026-10-04: this roadmap's 1.1.0 summary
+          ("1.1.0 — release candidate"), stale ticks corrected, `prd.md`'s
+          status note, README's status, feature list and version table.
   - Not waiting for the release:
     - [ ] case-study images;
     - [ ] Medium posts;
@@ -2510,10 +2617,13 @@ Owner items before the 1.1.0 build ships (added 2026-09-30):
   §9).
 - [ ] **Fallback pool filled:** 7 live v2 sets exported, reviewed and
   committed with `scripts/fallback_pool.sh` (build log 2026-09-30); until
-  then every fallback day shows the day-0 questions.
+  then every fallback day shows the day-0 questions. *(2026-10-04: still
+  open; the asset has 0 sets.)*
 - [ ] **`SHARED_DAILY_TEST_ENABLED` is `"true"`** and has been for at least
   3–4 days before release, so dates up to local tomorrow are published
-  (quality report §16.4, open point 2).
+  (quality report §16.4, open point 2). *(2026-10-04: `proxy/wrangler.jsonc` has
+  `"true"`, unchanged since the 2026-09-29 revert (`7323075`); the deployed
+  value and the published dates were not checked from here.)*
 - [ ] **DebugView:** `set_source = shared` on a normal day and `fallback`
   with the app opened on a new day in airplane mode; `set_date` present
   (`docs/analytics-plan.md` §6).

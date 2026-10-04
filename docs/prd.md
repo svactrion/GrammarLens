@@ -5,6 +5,19 @@
 **Date:** July 2026
 **Status:** Approved for build
 
+> **Status note (2026-10-04):** this is the July 2026 MVP PRD, kept as
+> written; it does not describe the current app. The MVP scope below was
+> built and tested with users (see §2.2 and `build-log.md`). Later scope:
+> `prd-v2.md` (v2: Daily Test, Premium, subscriptions) and
+> `prd-gamification.md` (Monthly Climb). Shipped and planned versions:
+> 1.0.0 is waiting for App Store review (resubmitted 2026-09-28); 1.1.0 is
+> a release candidate, not submitted. One line below is out of date:
+> "Gamification, streaks, leagues" (§5, out of scope) — a monthly climb
+> with medals shipped in 1.0.0 and grew in 1.1.0; streaks and leagues are
+> still not built. What 1.1.0 contains,
+> what moved to 1.1.x and 1.2, and its known flaws: `roadmap.md`, "1.1.0 —
+> release candidate".
+
 ---
 
 ## 1. Problem Statement

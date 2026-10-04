@@ -1,6 +1,8 @@
-# 1.1.0 App Store screenshots — draft
+# 1.1.0 App Store screenshots
 
-**Waiting for Ahmet's final approval.** Not uploaded anywhere.
+**Approved by Ahmet (2026-10-04)**: the set of P4–P9, nine frames each
+for iPhone 6.9" and iPad 13". Not uploaded to App Store Connect yet
+(Ahmet's step).
 
 Decisions: P4 (nine frames), P5 (the real app in the simulator, light
 mode, status bar 9:41 with full battery and signal), P6 (the debug panel's

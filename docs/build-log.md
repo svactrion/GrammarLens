@@ -8437,3 +8437,34 @@ On branch `1.1.0-design`; not merged, not pushed.
   user could not have before October 2026. Every frame except 03 and 09
   (Welcome animates) came out byte-identical to the previous run.
 - **[Waiting]** Ahmet's final approval of the set.
+
+## 2026-10-04 (1.1.0 release candidate — step 1: verification records, docs tidy-up)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only.
+
+- **[Verified — owner] The App Store screenshot set is approved** (Ahmet,
+  2026-10-04): the set of P4–P9, nine frames each for iPhone 6.9" and
+  iPad 13". Not uploaded to App Store Connect yet.
+- **[Verified — owner, simulator] The iPad layout (P1–P3).** Ahmet went
+  through it on the iPad Pro 13" simulator in a debug build and reported
+  no problem. Not seen on a real iPad. No item-by-item notes against
+  `p1/report.md` §6 were kept, so the iPadOS 26 window question and the
+  iPad mini have no recorded answer.
+- **[Docs]** `roadmap.md`: a "1.1.0 — release candidate" summary (what
+  ships, what moved to 1.1.x / after 1.1.0 / 1.2 / later, the known
+  flaws); the release preparation list updated (screenshots and the iPad
+  check ticked; the fallback pool added, since it was on the release
+  checklist but missing from that list; "version and build number", "the
+  What's New text" and "merged into `main`" split into three lines);
+  stale ticks corrected: Batch 0 and Batch 1 were done on 2026-09-27 but
+  never ticked, the scene art parent item was done through Batch 4, and
+  Batch 3d was superseded by Scene Art Stage 2 and Batch 5.
+  `prd.md`: a status note (an MVP document kept as written; where the
+  current scope lives). README: status, the Daily Test's shared set, the
+  1.1.0 climb and iPad lines, the version table (1.1.0 was "Planned, not
+  started"). The screenshots README now says approved.
+- **[Found]** `assets/daily_test_fallback/pool.json` still has 0 sets: a
+  1.1.0 built today shows the day-0 questions on every fallback day.
+  `proxy/wrangler.jsonc` has `SHARED_DAILY_TEST_ENABLED` `"true"`; the
+  deployed value was not checked from here.
+- **[Tests]** 1504 pass; `flutter analyze` clean (docs only).
