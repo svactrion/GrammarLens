@@ -1,4 +1,42 @@
 {
   "formatVersion": 1,
-  "corrections": []
+  "corrections": [
+    {
+      "date": "2026-09-30",
+      "question": 3,
+      "reason": "The hint ('one verb form, not two words') contradicts the two-word key, and the contraction is correct after 'I'.",
+      "removeHint": true,
+      "removeWrongAnswers": ["'m cooking"],
+      "addAcceptedAnswers": ["'m cooking"]
+    },
+    {
+      "date": "2026-10-01",
+      "question": 3,
+      "reason": "The instruction asks for one word, not an article, and 'his salary' is correct.",
+      "addAcceptedAnswers": ["his"]
+    },
+    {
+      "date": "2026-10-02",
+      "question": 5,
+      "reason": "The present perfect simple is also correct with 'since' here.",
+      "addAcceptedAnswers": ["I have run marathons since I was twenty."]
+    },
+    {
+      "date": "2026-10-05",
+      "question": 2,
+      "reason": "'Has sun' (sunlight, uncountable) is a correct and natural correction.",
+      "removeWrongAnswers": ["The flat has sun in the living room all afternoon."],
+      "addAcceptedAnswers": ["The flat has sun in the living room all afternoon."]
+    },
+    {
+      "date": "2026-10-05",
+      "question": 4,
+      "reason": "The present perfect continuous is also correct, and the US spelling 'neighborhood' is not a grammar mistake.",
+      "addAcceptedAnswers": [
+        "We have been living in this neighbourhood since 2018.",
+        "We have lived in this neighborhood since 2018.",
+        "We have been living in this neighborhood since 2018."
+      ]
+    }
+  ]
 }
