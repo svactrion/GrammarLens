@@ -155,17 +155,47 @@ Package: `docs/design/1.2.0-additional/`; Batch 0 report
   O5 (Daily Test keeps "Finish"), O6 (Topic Practice answers: 2,000
   characters, the count past 1,800), O12 (fill in the blank starts at one
   line, the other types at two), the mockup's orange primary action.
-- **For the Onboarding batch (not built):** the name stays **required**;
-  the learning goal goes to analytics as the `learning_goal` user property
-  (Batch 0 report §3d, option B), with the privacy policy, the on-screen
-  privacy texts, `analytics-plan.md` and the App Privacy answers updated
-  with it.
+- **Onboarding:** built in Batch 11 (2026-10-05), awaiting the device
+  check. Two steps after Welcome (O7); the name stays **required** (the
+  brief's optional name is not applied), at most 40 characters in
+  onboarding and Profile (O2); the goal is optional (`skipped`) and goes
+  to analytics as the `learning_goal` user property (Batch 0 report §3d,
+  option B). The on-screen privacy texts and `analytics-plan.md` are
+  updated; the rest is in the checklist below.
+- **Question V2 revision (owner, after the Batch 10 device check):** a
+  capital at the start of each sentence for sentence answers (not fill in
+  the blank); autocorrect stays off.
 - **Redeem code: deferred** (owner, 2026-10-05). Apple subscription offer
   codes work without any in-app UI (App Store account settings, or the
   redemption URL). For the first campaign the paywall gets "Have a code?"
   → `Purchases.presentCodeRedemptionSheet()`. **Never a code check of our
   own** (App Review 3.1.1).
 - **For the Paywall batch:** the trial-eligibility fix (Known flaws above).
+
+#### 1.2.0 pre-release checklist (owner's tasks; not done)
+
+- [ ] **Firebase:** register `learning_goal` as a **user-scoped custom
+  dimension** (`analytics-plan.md` §9) before 1.2.0 ships; registration is
+  not retroactive.
+- [ ] **Privacy policy** (the site repository): the live page (last updated
+  22 September 2026) says "Your name, your learning goal, your avatar and
+  your entire practice history — including the Daily Test — stay on your
+  phone", and that none of the on-device list "is ever sent anywhere".
+  Proposed:
+  - In the on-device paragraph: "Your name, your avatar and your entire
+    practice history — including the Daily Test — stay on your phone."
+  - Remove "Your stated learning goal" from "What stays on your device
+    only".
+  - Add to the analytics section: "The learning goal you choose during
+    onboarding (exam prep, work, everyday confidence, or skipped) is sent
+    with the app's usage analytics, never with your name. It helps us
+    decide what to improve; it does not change your lessons."
+  - Update "Last updated".
+- [ ] **App Store Connect, App Privacy** for the 1.2.0 submission: review
+  the answers with the goal now collected through Firebase Analytics (a
+  survey-like answer about the user's purpose; the category, and whether
+  it is linked to the user, to be decided against the existing Firebase
+  answers, which are not in this repository).
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
 

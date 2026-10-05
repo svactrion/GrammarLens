@@ -10343,3 +10343,210 @@ schema. Home, Review, Profile and Topic Practice are not touched.
     scroll bar;
   - the orange Next and the disabled Back in both themes;
   - Large text at 320 pt (or the smallest phone available).
+
+## 2026-10-05 (1.2.0 additional screens — Batch 11: two-step onboarding; a Question V2 revision; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner approved Batch 10 (Question V2)
+on the device.**
+
+Unchanged: routing, premium/quota checks, AI/proxy calls, the AI
+permission mechanism, the Day-0 flow (the bundled set before the profile,
+the climb, the first-day paywall, `onboarding_completed`'s moment, the
+one-time flags), the existing analytics events, the storage schema (one
+new stored value). Welcome, Home, Review and Topic Practice are not
+touched; Profile only gets the name limit.
+
+- **[A] Question V2 revision (owner).** A capital at the start of each
+  sentence (`TextCapitalization.sentences`) for sentence writing and error
+  correction, on both screens; fill in the blank stays without (its word
+  usually goes into the middle of a sentence). Autocorrect, suggestions and
+  smart punctuation stay off (O4). **Grading ignores case already:** the
+  Daily Test's `normalizeAnswer` lowercases (`answer_matching.dart:21`,
+  `answer_matching_test` "matching is case-insensitive"); Topic Practice
+  is graded by the model, and a capital at a sentence's start is correct
+  English.
+- **[Product — owner] Decisions.**
+  - **The name stays required.** The brief's "the name is optional" is not
+    applied: Continue is disabled while the name is empty or only spaces;
+    Profile still refuses an empty name.
+  - O2: a name has at most 40 characters, in onboarding and Profile, with
+    no visible counter.
+  - O7: Welcome is unchanged; the two steps follow it.
+  - **The goal goes to analytics** (Batch 0 report §3d, option B).
+  - O1: no screen-only `muted` / `info`.
+- **[Why the goal is sent now]** The question personalizes nothing. Until
+  now it was stored on the device and read by nothing, so it told nobody
+  anything; the package's copy ("Your answer helps us decide what to
+  improve next") would have been untrue. The owner chose to send it as one
+  closed-vocabulary user property, `learning_goal` = `exam_prep` / `work`
+  / `general` / `skipped`, set once as onboarding completes and before
+  `onboarding_completed`. No new event or provider; the name and free
+  text are never sent. Installs that finished onboarding earlier are not
+  back-filled: their `general` cannot be told apart from a choice.
+- **[Engineering] What changed.**
+  - `learning_goal.dart`: `learningGoalSkipped` (`'skipped'`), a fourth
+    stored value in the existing `learning_goal TEXT NOT NULL` column (no
+    schema change, no migration); `fromStored` reads it as null; anything
+    else unknown keeps `general`, as builds before 1.2.0 will read
+    `skipped`. Labels: "General fluency" → "Everyday confidence" (stored
+    value still `general`), and the descriptions follow the mockup.
+  - `user_profile.dart`: `learningGoal` is nullable (null = skipped);
+    `maxNameLength = 40`.
+  - `analytics_service.dart`: `setLearningGoalProperty`; set in
+    `first_launch_flow.dart` right after the profile is saved, before
+    `onboardingCompleted()`.
+  - `avatar_carousel.dart`: optional `neighborScale` / `neighborOpacity`
+    (defaults unchanged, so Profile's picker does not move) and an
+    optional Previous/Next line with the caption "Name · N / 16"
+    (44 pt targets, 220 ms ease-out, none with reduce motion).
+  - `onboarding_screen.dart`: two steps inside the one screen, so
+    `FirstLaunchFlow` keeps its single onboarding step and nothing is
+    saved before the end (a back gesture on step 2 goes to step 1).
+    - Step 1: the wordmark and "Step 1 of 2" with a two-part bar; the
+      heading; the carousel (150 pt tiles, .72 / .48 neighbours, a warm
+      glow behind, the Previous/Next line); the name card (radius 22,
+      padding 19, 15 under 360 pt; field ≥ 52, radius 13, 40 characters,
+      no counter, the Q3 edge); Continue.
+    - Step 2: Back and "Step 2 of 2"; the companion at 48 pt with "One more
+      thing, {name}."; the heading; three radio cards (radius 21, 12
+      apart, ≥ 91 tall, 40 pt icon tile; selected: a 2 pt link-coloured
+      edge on the info surface); the privacy line and "How AI feedback
+      uses your answers"; Start my first test (disabled until a goal is
+      chosen); Skip goal & start.
+    - Main actions: brandOrange / onOrange, ≥ 54 tall, radius 17, 900, no
+      edge; disabled: the app's pairing. Title 29 / 900 at Medium (the
+      theme's 26 scaled, so it follows the text size); text wraps, no
+      ellipsis.
+    - "Your data & AI": a dialog (focus moves in, "Got it" autofocused,
+      the page behind blocked, focus back on the link when it closes).
+      Information only: it writes no AI permission and logs no
+      `ai_consent_result`; Topic Practice still asks on its own
+      (`ai_consent_screen.dart`).
+  - `settings_screen.dart`: the name field takes the 40-character limit.
+- **[Copy] Old → new**
+  - Onboarding title: "Let's get started" → step titles "Meet your learning
+    companion." / "What brings you to English?", with "A little practice.
+    Every day." / "Help shape GrammarLens" above them.
+  - New: "Five questions a day. A small step forward, together." ("Five"
+    from `DailyTestSet.questionCount`), "Swipe to choose · Change it later
+    in Profile", "A nickname is fine. It stays on this device.", "One more
+    thing, {name}.", "Start my first test", "Skip goal & start", "How AI
+    feedback uses your answers", the sheet's four rows, "Step N of 2".
+  - "Why are you learning English?" / "This helps us suggest where to
+    start." → "What brings you to English?" / "Choose what matters most to
+    you. Your answer helps us decide what to improve next."
+  - Privacy line: "Your name and goal stay on this device. If you use Topic
+    Practice, your answers are sent to Anthropic (Claude) to give you
+    feedback, and we ask first. Usage and crash data is collected." → "Your
+    name stays on this device. Your goal is sent with app usage data, never
+    with your name. Usage and crash data is collected." The AI sentence
+    moved into "Your data & AI": "If you use Topic Practice, your answers
+    are sent to Anthropic (Claude) to give you feedback. We ask for your
+    permission first."; and "Your learning goal: Sent with app usage data,
+    never with your name, to help us decide what to improve. It does not
+    personalize your lessons."
+  - AI permission screen, "What is never sent": "Your name, your learning
+    goal or your avatar. Daily Test answers stay on your device." → "Your
+    name or your avatar. Daily Test answers stay on your device." (The
+    goal never goes to Anthropic either; the line was removed because it
+    reads as "never sent anywhere".)
+  - The goal "General fluency" / "Everyday confidence, no specific goal" →
+    "Everyday confidence" / "General fluency, no specific goal"; "IELTS,
+    TOEFL, or another English exam" and "Emails, meetings, and
+    professional English" lose their serial commas.
+- **[Deliberate departures from the mockup]**
+  - The name is required: no "Optional" tag, no "You can continue without
+    a name."
+  - The wordmark is one colour: the mockup's orange "Lens" is 2.27:1 on
+    the page, under 3:1 even for large text.
+  - "Anonymous" is not used: Firebase links the property to its app
+    instance id, so the copy says "never with your name" instead.
+  - The name field's edge is Q3's `inputBorder`, not the mockup's `line`.
+  - The caption counts all 16 companions ("Fox · 14 / 16"), not the
+    mockup's three; the carousel loops as before.
+  - The companion tile is the app's square avatar art at 150 pt, not a
+    150 × 165 frame.
+  - The radio mark is a Material icon (the app's icon family), not a
+    browser radio.
+  - "Got it" is the app's navy button (an information action, not the
+    step's main action).
+  - The privacy line keeps the facts that are true now (above), not the
+    mockup's two short sentences.
+- **[Tests]** `flutter analyze` clean; **1,686 passed, 0 failed** (1,659
+  after Batch 10).
+  - New (27 cases):
+    - `question_v2_test`: capitals by type with autocorrect off (1); the
+      Daily Test case also checks capitalisation.
+    - `onboarding_screen_test`, rewritten (13 definitions, 20 cases, real
+      font): the carousel above the name, no Done; every avatar reached
+      with Next, the caption, the chosen ID saved; a swipe changes the
+      saved avatar; an untouched carousel still saves one; the name
+      required (empty, spaces) and Continue orange, ≥ 54, radius 17; trim,
+      Unicode, 40 characters and no counter; the keyboard: field and
+      Continue above it; step 2 copy (the old line gone, no "suggest");
+      no default goal, Start disabled until chosen, checked semantics,
+      cards ≥ 91; Skip → null / `skipped`; Back keeps name, companion and
+      goal; the privacy line and the sheet's facts; 320 / 360 / 390 /
+      430 pt × Large × light/dark, keyboard open on step 1, no overflow or
+      ellipsis.
+    - `first_launch_flow_test` (7): `learning_goal` for each of the four
+      values, set once, with `onboarding_completed` once and no name in
+      any event parameter or user property; a chosen goal then Skip stores
+      `skipped`; "Got it" writes no permission and logs no
+      `ai_consent_result`, focus in and back; leaving half way saves no
+      profile, logs nothing, and the next launch starts at Welcome.
+    - `analytics_service_test` (1): the four values, nothing else written.
+    - `user_profile_test` (3): `skipped` round trip; every goal keeps its
+      stored value; unknown or missing reads `general`.
+  - Changed, with the reason:
+    - `first_launch_flow_test`, `first_launch_climb_test`: the onboarding
+      helper takes the second step (Continue, the goal, "Start my first
+      test"); their assertions are unchanged, so the Day-0 order, climb,
+      paywall and zoom are checked as before.
+    - `widget_test`: "requires both a name and a goal before continuing" →
+      a name for Continue, then a goal for Start (Skip present); the
+      privacy-note test goes to step 2 first.
+    - `onboarding_screen_test`: its five tests are kept in the rewrite
+      except the privacy note's old wording.
+    - `ai_consent_screen_test`: the "What is never sent" text, and no
+      "learning goal" on the screen.
+    - `profile_layout_test`: "no length limit" → at most 40, no counter,
+      the capped name kept whole and wrapping.
+    - `analytics_service_test`'s Firebase-limits test also sets
+      `learning_goal`.
+  - "Completed onboarding is not shown again" is the existing rule (a
+    saved profile is the gate, `user_profile.dart`); covered by the
+    existing app tests, unchanged.
+- **[Renders]** `tool/design_measure/v120/onboarding_render_test.dart` →
+  `docs/design/1.2.0-additional/batch11/`: both steps at 390 pt, step 1
+  with a 336 pt keyboard, the sheet, and 320 pt at Large (step 1 with a
+  260 pt keyboard, step 2), light and dark, real font.
+- **[Acceptance checklist, "Onboarding"]** T = automated test; D = waits
+  for the device; not applied = owner decision.
+  - Every companion swipeable, the centre larger, the ID saved — T.
+  - Empty name → Continue works; nameless greeting — **not applied** (the
+    name is required, owner); Unicode names kept — T.
+  - Name keyboard: field and Continue reachable — T (fixed insets) + D.
+  - Back between steps keeps name/companion/goal — T.
+  - No default goal; skipping stored separately — T.
+  - No personalisation promise — T.
+  - The research data flow checked; the privacy text matches — done in
+    the app (T); the privacy policy and App Privacy are the owner's tasks
+    (roadmap, 1.2.0 pre-release checklist).
+  - No new telemetry provider; no name or answer sent — T.
+  - The AI sheet does not replace the permission — T.
+  - Completion and reopening: the onboarding records right — T.
+  - Test already done: no new right or session — T (existing Day-0 tests;
+    the flow is unchanged).
+- **[Not measured]** On a device:
+  - the carousel at 150 pt: the drag, the snap, the Previous/Next move and
+    the haptic; the warm glow in both themes;
+  - typing the name with the keyboard open (the question and Continue in
+    view), a Turkish name;
+  - step 2's cards in both themes, the selected edge, Skip;
+  - the sheet: opening, "Got it", where the focus lands;
+  - the whole first launch once more: Welcome → two steps → the Day-0
+    test → the climb → the first-day paywall;
+  - Large text at the smallest phone available;
+  - the sentence capital in Practice and the Daily Test, and none in fill
+    in the blank.

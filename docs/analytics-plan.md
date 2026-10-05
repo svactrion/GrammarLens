@@ -328,6 +328,25 @@ paywall funnel by `source` and `plan` (§5).
 |---|---|---|
 | `first_step_dom` | Day of month (`"1"`–`"31"`) on which the user earned their first ever step | Exactly once, at the moment E3 fires (`welcomeBadgeJustEarned`) |
 | `text_size` | `small` / `medium` / `large` | At startup after the stored value is loaded, and on each change (E6) |
+| `learning_goal` | `exam_prep` / `work` / `general` / `skipped` | **Added 1.2.0 (owner, 2026-10-05).** Once, as onboarding completes, just before `onboarding_completed` (so that event carries it). Not set for installs that finished onboarding earlier (see below) |
+
+**`learning_goal` (1.2.0).** The onboarding goal question personalizes
+nothing; it is asked to understand who uses the app and to decide what to
+improve (additional screens package, Batch 0 report §3d, option B, chosen
+by the owner). Until 1.2.0 the goal never left the device, so the question
+answered nothing. Rules:
+
+- One closed value per install; `skipped` is its own value, never counted
+  as `general` ("Skip goal & start").
+- Set by `AnalyticsService.setLearningGoalProperty` in `FirstLaunchFlow`;
+  the only call site. No new event.
+- Not back-filled: an install that finished onboarding before 1.2.0 has a
+  stored `general` that cannot be told apart from a choice (the question
+  was required then and "General fluency" was one of three answers), so it
+  reports nothing rather than a guess.
+- The name is never sent with it, nor anywhere else (§4).
+- Register `learning_goal` as a user-scoped custom dimension before 1.2.0
+  ships (§9); registration is not retroactive.
 
 `first_step_dom` is what makes the Welcome assumption testable: the
 hypothesis is that a badge on day one helps **mid-month starters** — the
@@ -360,12 +379,17 @@ first four weeks.
 ## 4. Privacy rules
 
 **Never sent, in any event or user property:** question text, answer text,
-correct answers, the user's name, learning goal, avatar,
+correct answers, the user's name, avatar,
 any device identifier of our own (`getOrCreateDeviceId` is the proxy's
 quota key and stays out of Firebase), and free text of any kind.
 
 **Allowed:** counts, tiers, percentages, rule versions, day-of-month, and
-fixed-vocabulary strings. Every string value in §2/§3 comes from a closed
+fixed-vocabulary strings. **Since 1.2.0 the learning goal is sent** as the
+`learning_goal` user property (§3), a closed four-value vocabulary; it was
+on the never-sent list until then. What this changed outside this file:
+the onboarding privacy line, the AI permission screen's "What is never
+sent", the privacy policy and the App Store privacy answers (roadmap, 1.2.0
+pre-release checklist). Every string value in §2/§3 comes from a closed
 enum (`tier`, `cta`, `size`, `previous`), so nothing user-typed can leak
 through a parameter. Existing `topic_id` is a topic enum name, also closed.
 
@@ -388,7 +412,7 @@ Limits below are from Google Analytics help
 | Parameters per event | 25 | Max is 6 (E4) |
 | Parameter name length | 40 chars | Pass |
 | Parameter value length | 100 chars | All values are short enums/ints |
-| User properties | 25 max; name ≤ 24 chars; value ≤ 36 chars | 2 properties; names 14 and 9 chars; values ≤ 6 chars |
+| User properties | 25 max; name ≤ 24 chars; value ≤ 36 chars | 3 properties (1.2.0: `learning_goal`); names 14, 9 and 13 chars; values ≤ 9 chars |
 | Distinct events per app | 500 | 9 existing + 6 proposed = 15 |
 
 Not verified from the fetched page (check in the console before relying on
@@ -701,6 +725,7 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 |---|---|---|---|
 | First step day of month | `first_step_dom` | User | `1`–`31` |
 | Text size | `text_size` | User | `small` / `medium` / `large` |
+| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `general` / `skipped` — **1.2.0, not registered yet** |
 
 ### Event-scoped custom dimensions
 
