@@ -74,8 +74,10 @@ class AvatarCarousel extends StatefulWidget {
   final double neighborOpacity;
 
   /// Adds a line under the carousel: Previous and Next buttons (44 pt
-  /// targets, so choosing never needs a drag) around "Name · N / total",
-  /// which says in words which avatar is selected. Off by default.
+  /// targets, so choosing never needs a drag) around the selected
+  /// companion's name, which says in words which one is selected. No
+  /// position: the carousel loops, so "N / total" meant nothing (owner,
+  /// after Batch 11). Off by default.
   final bool showNavigation;
 
   const AvatarCarousel({
@@ -213,9 +215,10 @@ class _AvatarCarouselState extends State<AvatarCarousel>
                 constraints: const BoxConstraints(minWidth: 125),
                 child: Semantics(
                   liveRegion: true,
+                  label: '${avatar.semanticLabel}, selected',
+                  excludeSemantics: true,
                   child: Text(
-                    '${avatar.semanticLabel} · ${avatar.index} / '
-                    '${Avatar.count}',
+                    avatar.semanticLabel,
                     key: AvatarCarousel.captionKey,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.labelMedium
