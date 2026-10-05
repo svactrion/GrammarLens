@@ -158,9 +158,10 @@ void main() {
       tester.widget<Text>(find.byKey(SettingsScreen.nameKey)).data!;
 
   testWidgets(
-      'the page title (34 / 900 / 1.10 / -1.1 at Medium) and its line, in '
-      'the page', (tester) async {
-    await pump(tester);
+      'the page title (34 / 900 / 1.10 / -1.1 at Small, where the brief\'s '
+      'sizes are since the final pass) and its line, in the page',
+      (tester) async {
+    await pump(tester, textSize: AppTextSize.small);
     final title = tester.widget<Text>(find.text('Profile').first);
     expect(title.style!.fontSize, 34);
     expect(title.style!.fontWeight, FontWeight.w900);

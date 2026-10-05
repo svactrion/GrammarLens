@@ -183,12 +183,13 @@ extension AppTextWeight on TextStyle {
       );
 }
 
-/// The brief's text sizes are what the default text size (Medium) renders
-/// (owner decision Q5, 2026-10-05): the theme's base size is the brief's
-/// size divided by Medium's scale factor, so Medium shows exactly the
-/// brief's numbers and Small/Large keep their existing ratios to it.
-double _briefSize(double sizeAtMedium) =>
-    sizeAtMedium / AppTextSize.medium.scaleFactor;
+/// The brief's text sizes are what Small renders. Q5 (2026-10-05) put them
+/// at Medium; the final pass (owner) moved the scale one step up, so the
+/// brief's numbers are now at Small (the old Medium) and the default,
+/// Medium, is the old Large. The theme's base size is the brief's size
+/// divided by Small's scale factor.
+double _briefSize(double sizeAtSmall) =>
+    sizeAtSmall / AppTextSize.small.scaleFactor;
 
 // Brand mark (see widgets/brand_mark.dart) — the loupe's glass and glint
 // are fixed identity colors, not theme roles: unlike everything else in
@@ -691,7 +692,7 @@ ThemeData buildAppTheme(
   // weight: the bundled variable font's default instance is ExtraLight
   // (200), so a weight left to chance is worth ruling out even though
   // Flutter resolves an unset weight to 400 (measured, build-log
-  // 2026-10-05). Sizes from the brief go through [_briefSize] (Q5); the
+  // 2026-10-05). Sizes from the brief go through [_briefSize] (at Small); the
   // styles the brief does not cover keep their earlier base size.
   TextStyle style(
     TextStyle? from,

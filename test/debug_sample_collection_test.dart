@@ -186,6 +186,9 @@ void main() {
     ));
     final toggle = find.byKey(DebugPanelScreen.sampleCollectionKey);
     await tester.scrollUntilVisible(toggle, 200);
+    // At the default text size the switch can stop part way in view.
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
     await tester.tap(toggle);
     await tester.pump();
     expect(DebugSampleCollection.runtime, isTrue);

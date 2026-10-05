@@ -145,7 +145,7 @@ class QuestionView extends StatefulWidget {
   /// below this the answer drops to one line (see the class comment).
   static const double minQuestionHeight = 72;
 
-  /// The answer field's text: 16 at Medium on 25 pt lines (the brief).
+  /// The answer field's text: 16 at Small on 25 pt lines (the brief).
   static TextStyle answerStyle(ThemeData theme) =>
       theme.textTheme.bodyLarge!.copyWith(
         color: theme.colorScheme.onSurface,
@@ -168,7 +168,7 @@ class QuestionView extends StatefulWidget {
 
   /// The answer field's height at its minimum lines, from the style and the
   /// text scaler: lines × line height and the padding, plus 1 pt for the
-  /// font's rounding (measured: 74 pt for two lines at Medium).
+  /// font's rounding (measured: 74 pt for two lines at Small, the old Medium).
   static double answerMinHeight(
       ThemeData theme, TextScaler scaler, PracticeItemType type,
       {bool compact = false}) {

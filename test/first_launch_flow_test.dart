@@ -619,6 +619,11 @@ void main() {
         if (goal == null) {
           await tester.tap(find.text('Skip goal & start'));
         } else {
+          // The test font is wider than Nunito Sans: at the default size
+          // the last goal sits under the fixed footer here (not with the
+          // real font), so it is scrolled into view first.
+          await tester.ensureVisible(find.byKey(OnboardingScreen.goalKey(goal)));
+          await tester.pumpAndSettle();
           await tester.tap(find.byKey(OnboardingScreen.goalKey(goal)));
           await tester.pump();
           await tester

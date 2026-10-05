@@ -130,8 +130,9 @@ void main() {
 
   testWidgets(
       'the header: back, "Premium access", the title (32 / 900 / 1.10 / -1.0 '
-      'at Medium) and its line', (tester) async {
-    await pump(tester);
+      'at Small, where the brief\'s sizes are since the final pass) and its '
+      'line', (tester) async {
+    await pump(tester, textSize: AppTextSize.small);
     expect(find.byType(BackButton), findsOneWidget);
     expect(find.text('Premium access'), findsOneWidget);
     final title = tester.widget<Text>(find.text('Topic Practice'));

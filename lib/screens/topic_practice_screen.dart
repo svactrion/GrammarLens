@@ -137,7 +137,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
 }
 
 /// The page header (1.2.0 mockup): the back button and the "Premium
-/// access" label on one row, then the title (32 / 900 at Medium) and its
+/// access" label on one row, then the title (32 / 900 at Small) and its
 /// line.
 class _Header extends StatelessWidget {
   final ThemeData theme;
