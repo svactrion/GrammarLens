@@ -36,11 +36,20 @@ import 'locked_premium_pill.dart';
 /// `topic.title` — and moving the explanation to its own line in the
 /// body, never standing in for the title. The topic-name subtitle is
 /// shown only when it says something the title doesn't already.
+///
+/// 1.2.0 look (the brief's weak spot tile, Review's list in the mockup): a
+/// list card (radius 22, padding 17) with the topic, when shown, as a small
+/// eyebrow in linkAndActive above the title; the title in 17/800 and free
+/// to wrap rather than cut off; the explanation as a muted excerpt; and the
+/// frequency stat on the info surface. Texts are unchanged.
 class WeakSpotCard extends StatelessWidget {
   final Topic topic;
   final WeakSpot spot;
   final bool locked;
   final VoidCallback onTap;
+
+  /// The brief's list card radius.
+  static const _radius = 22.0;
 
   const WeakSpotCard({
     super.key,
@@ -64,44 +73,47 @@ class WeakSpotCard extends StatelessWidget {
     final explanation = spot.latestExplanation;
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_radius),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_radius),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(17),
           child: Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.bodyLarge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     if (topicSubtitle != null) ...[
-                      const SizedBox(height: 4),
                       Text(
                         topicSubtitle,
-                        style:
-                            theme.textTheme.bodySmall?.copyWith(color: muted),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.secondary,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
                       ),
+                      const SizedBox(height: 7),
                     ],
+                    Text(title, style: theme.textTheme.titleMedium),
                     if (explanation != null) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Text(
                         explanation,
-                        style: theme.textTheme.bodyMedium,
+                        style:
+                            theme.textTheme.bodySmall?.copyWith(color: muted),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
+                        horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
@@ -110,8 +122,8 @@ class WeakSpotCard extends StatelessWidget {
                       ),
                       child: Text(
                         formatFrequencyStat(spot.frequency, spot.lastSeen),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
                           color: colorScheme.onSecondaryContainer,
                         ),
                       ),
@@ -119,7 +131,7 @@ class WeakSpotCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               locked
                   ? const LockedPremiumPill()
                   : Icon(Icons.chevron_right_rounded, color: muted),
