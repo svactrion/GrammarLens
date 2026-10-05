@@ -237,7 +237,7 @@ void main() {
     // PracticeStepFooter), so this taps the outlined Skip button beside it
     // instead, same as a real user would.
     for (var i = 0; i < DailyTestSet.questionCount; i++) {
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
       await tester.pumpAndSettle();
     }
   }
@@ -307,7 +307,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
     await tester.pumpAndSettle();
     for (var i = 1; i < DailyTestSet.questionCount; i++) {
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
       await tester.pumpAndSettle();
     }
 
@@ -410,7 +410,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
     await tester.pumpAndSettle();
     for (var i = 1; i < DailyTestSet.questionCount; i++) {
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+      await tester.tap(find.widgetWithText(TextButton, 'Skip'));
       await tester.pumpAndSettle();
     }
     await tapResultButton(tester, 'Continue');
@@ -565,7 +565,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Next'));
       await tester.pumpAndSettle();
       for (var i = 1; i < DailyTestSet.questionCount; i++) {
-        await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
         await tester.pumpAndSettle();
       }
 

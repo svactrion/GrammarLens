@@ -173,7 +173,7 @@ void main() {
         await tester.pump();
         await tester.tap(find.widgetWithText(FilledButton, 'Next'));
       } else {
-        await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
       }
       await tester.pumpAndSettle();
     }
@@ -306,7 +306,7 @@ void main() {
           await tester.pump();
           await tester.tap(find.widgetWithText(FilledButton, 'Next'));
         } else {
-          await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
         }
         // The last tap opens the result screen, whose saving progress bar
         // never settles, so plain pumps from here on.
@@ -553,7 +553,7 @@ void main() {
           await tester.pump();
           await tester.tap(find.widgetWithText(FilledButton, 'Next'));
         } else {
-          await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
         }
         await tester.pumpAndSettle();
       }

@@ -51,9 +51,9 @@ class BrandScaffold extends StatelessWidget {
 
   /// A fully custom app bar, replacing the one this widget would otherwise
   /// build from [title]/[leading]/[actions]/[bandBottom] (all ignored when
-  /// this is set) — the question screens' `QuestionAppBar` is the reason
-  /// this exists: its own Back/Close/progress-row layout has nothing in
-  /// common with a plain title bar. The custom app bar owns its own
+  /// this is set) — e.g. a zero-height app bar for a screen whose header is
+  /// in the page (the question screens, Topic Practice). The custom app bar
+  /// owns its own
   /// `scrolledUnderElevation`/colors; this widget still supplies the
   /// neutral body around it either way.
   final PreferredSizeWidget? appBar;

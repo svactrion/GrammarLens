@@ -4,128 +4,117 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/question_app_bar.dart';
 
-/// Covers the button-layout batch's explicit requirement: the title must
-/// not shift sideways between question 1 (no valid Back destination) and
-/// question 2 (Back becomes usable). Before this batch, Back lived in the
-/// bottom footer and was omitted outright on question 1 rather than shown
-/// disabled — omitting it shrank the app bar's leading slot, which shifted
-/// the centered title's on-screen x position the moment Back appeared on
-/// question 2. HeaderIconButton's `visible` flag fixes this by
-/// always reserving Back's exact footprint, whether or not it's usable
-/// right now.
+/// The question screens' header (Question V2, the additional screens
+/// package). The title must not shift sideways between question 1 (no
+/// previous question) and question 2: Back keeps its 44 × 44 slot on
+/// question 1, now shown disabled instead of hidden.
 void main() {
   Future<void> pump(
     WidgetTester tester, {
-    required bool showBack,
+    required bool canGoBack,
+    String title = 'Articles',
+    VoidCallback? onBack,
+    VoidCallback? onClose,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(Brightness.light),
         home: Scaffold(
-          appBar: QuestionAppBar(
-            title: 'Articles',
-            currentIndex: showBack ? 1 : 0,
-            total: 5,
-            showBack: showBack,
-            onBack: () {},
-            onClose: () {},
+          body: Column(
+            children: [
+              QuestionHeader(
+                title: title,
+                subtitle: 'Practice',
+                onBack: canGoBack ? (onBack ?? () {}) : null,
+                onClose: onClose ?? () {},
+              ),
+            ],
           ),
-          body: const SizedBox.shrink(),
         ),
       ),
     );
   }
 
+  IconButton backButton(WidgetTester tester) =>
+      tester.widget<IconButton>(find.descendant(
+          of: find.byKey(QuestionHeader.backKey),
+          matching: find.byType(IconButton)));
+
   testWidgets(
-      "the title's center x is identical on question 1 (Back hidden) and "
-      'question 2 (Back visible)', (tester) async {
-    await pump(tester, showBack: false);
+      "the title's center x is identical on question 1 (Back disabled) and "
+      'question 2 (Back enabled)', (tester) async {
+    await pump(tester, canGoBack: false);
     final centerOnQ1 = tester.getCenter(find.text('Articles')).dx;
 
-    await pump(tester, showBack: true);
+    await pump(tester, canGoBack: true);
     final centerOnQ2 = tester.getCenter(find.text('Articles')).dx;
 
     expect(centerOnQ2, centerOnQ1);
   });
 
+  testWidgets('on question 1 Back is in its place, disabled', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await pump(tester, canGoBack: false);
+
+    expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
+    expect(backButton(tester).onPressed, isNull);
+    expect(
+      tester.getSemantics(find.descendant(
+          of: find.byKey(QuestionHeader.backKey),
+          matching: find.byType(IconButton))),
+      matchesSemantics(
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: false,
+        tooltip: 'Previous question',
+      ),
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('Back and Close are both 44 × 44', (tester) async {
+    await pump(tester, canGoBack: true);
+
+    expect(tester.getSize(find.byKey(QuestionHeader.backKey)),
+        const Size(HeaderIconButton.size, HeaderIconButton.size));
+    expect(tester.getSize(find.byKey(QuestionHeader.closeKey)),
+        const Size(HeaderIconButton.size, HeaderIconButton.size));
+    expect(HeaderIconButton.size, 44);
+  });
+
   testWidgets(
-      'Back reserves its 40x40 footprint even when hidden on question 1',
+      'no counter or progress bar in the header: the counter is in the '
+      'question card (docs/design-audit.md, Batch 0 item 7: one, not two)',
       (tester) async {
-    await pump(tester, showBack: false);
-
-    // No tappable Back button — but HeaderIconButton still occupies
-    // the same box, invisible rather than absent.
-    expect(find.byIcon(Icons.arrow_back_rounded), findsNothing);
-    expect(
-      tester
-          .widget<SizedBox>(
-            find
-                .ancestor(
-                  of: find.byIcon(Icons.close_rounded),
-                  matching: find.byType(SizedBox),
-                )
-                .first,
-          )
-          .width,
-      HeaderIconButton.size,
-    );
-  });
-
-  testWidgets('Back and Close are both 40x40', (tester) async {
-    await pump(tester, showBack: true);
-
-    final backSize = tester.getSize(find.byIcon(Icons.arrow_back_rounded));
-    final closeSize = tester.getSize(find.byIcon(Icons.close_rounded));
-
-    // The icons themselves are drawn smaller than the 40x40 touch target
-    // (see HeaderIconButton) — what must match is each button's own
-    // full SizedBox footprint, not the icon glyph size.
-    Size buttonSize(Finder icon) => tester.getSize(
-          find.ancestor(of: icon, matching: find.byType(SizedBox)).first,
-        );
-
-    expect(
-      buttonSize(find.byIcon(Icons.arrow_back_rounded)),
-      const Size(HeaderIconButton.size, HeaderIconButton.size),
-    );
-    expect(
-      buttonSize(find.byIcon(Icons.close_rounded)),
-      const Size(HeaderIconButton.size, HeaderIconButton.size),
-    );
-    // Sanity: the icon glyphs themselves are non-empty and equal-sized to
-    // each other, even though smaller than their touch targets.
-    expect(backSize, closeSize);
-  });
-
-  testWidgets(
-      'shows only the N / total counter — no progress bar duplicating it '
-      '(docs/design-audit.md, Batch 0 item 7)', (tester) async {
-    await pump(tester, showBack: true);
+    await pump(tester, canGoBack: true);
 
     expect(find.byType(LinearProgressIndicator), findsNothing);
-    expect(find.text('2 / 5'), findsOneWidget);
+    expect(find.textContaining(' / '), findsNothing);
+  });
+
+  testWidgets('a long title wraps, never cut off with an ellipsis',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 600) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    const long = 'Modal verbs for past deduction and speculation';
+    await pump(tester, canGoBack: true, title: long);
+
+    final text = tester.widget<Text>(find.text(long));
+    expect(text.maxLines, isNull);
+    expect(text.overflow, isNull);
+    expect(tester.getSize(find.text(long)).height, greaterThan(30));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('tapping Back and Close fire their own callbacks',
       (tester) async {
     var backTapped = false;
     var closeTapped = false;
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: Scaffold(
-          appBar: QuestionAppBar(
-            title: 'Articles',
-            currentIndex: 1,
-            total: 5,
-            showBack: true,
-            onBack: () => backTapped = true,
-            onClose: () => closeTapped = true,
-          ),
-          body: const SizedBox.shrink(),
-        ),
-      ),
-    );
+    await pump(tester,
+        canGoBack: true,
+        onBack: () => backTapped = true,
+        onClose: () => closeTapped = true);
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     expect(backTapped, isTrue);
