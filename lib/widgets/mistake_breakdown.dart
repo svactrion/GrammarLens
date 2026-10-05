@@ -130,11 +130,9 @@ class _LabeledBox extends StatelessWidget {
         children: [
           Text(
             label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: labelColor,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
-            ),
+            style: theme.textTheme.labelSmall
+                ?.withWeight(FontWeight.w700)
+                .copyWith(color: labelColor, letterSpacing: 0.6),
           ),
           const SizedBox(height: 4),
           Text(

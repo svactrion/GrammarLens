@@ -10,6 +10,7 @@ import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/legal_link.dart';
 import '../utils/content_width.dart';
+import '../theme.dart';
 
 /// The one-time permission screen for sending Topic Practice answers to a
 /// third-party AI provider (App Review guideline 5.1.2(i)). Pops `true` on
@@ -52,7 +53,7 @@ class AiConsentScreen extends StatelessWidget {
                     child: Text(
                       'Feedback on your answers',
                       style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -126,8 +127,7 @@ class _Section extends StatelessWidget {
             header: true,
             child: Text(
               heading,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700),
             ),
           ),
           const SizedBox(height: 4),

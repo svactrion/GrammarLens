@@ -15,6 +15,7 @@ import '../widgets/question_app_bar.dart';
 import '../utils/debug_tools.dart';
 import 'daily_test_result_screen.dart';
 import '../utils/content_width.dart';
+import '../theme.dart';
 
 /// One-question-at-a-time flow over today's cached Daily Test set (PRD v2
 /// §12.2, §12.5). Deliberately mirrors PracticeScreen's layout — same
@@ -324,10 +325,9 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                 children: [
                   Text(
                     _itemLabel(item.type),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colorScheme.secondary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: theme.textTheme.labelLarge
+                        ?.withWeight(FontWeight.w600)
+                        .copyWith(color: colorScheme.secondary),
                   ),
                   if (item.context != null &&
                       item.context!.trim().isNotEmpty) ...[
@@ -340,8 +340,8 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                     const SizedBox(height: 14),
                   Text(
                     item.instruction,
-                    style: theme.textTheme.bodyLarge
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style:
+                        theme.textTheme.bodyLarge?.withWeight(FontWeight.w700),
                   ),
                   if (item.hint != null) ...[
                     const SizedBox(height: 8),

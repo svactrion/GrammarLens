@@ -284,10 +284,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
             const SizedBox(width: 4),
             Text(
               _sortOrder.label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: colorScheme.secondary,
-                fontWeight: FontWeight.w800,
-              ),
+              style: theme.textTheme.labelMedium
+                  ?.withWeight(FontWeight.w800)
+                  .copyWith(color: colorScheme.secondary),
             ),
           ],
         ),
@@ -378,10 +377,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         padding: const EdgeInsets.only(bottom: 3),
                         child: Text(
                           '$total',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: theme.textTheme.bodySmall
+                              ?.withWeight(FontWeight.w600)
+                              .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                       ),
                     ],
@@ -473,11 +471,9 @@ class DailyPracticeCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'YOUR DAILY PRACTICE',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: ink,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1,
-                    ),
+                    style: theme.textTheme.labelSmall
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: ink, letterSpacing: 1),
                   ),
                 ),
                 Icon(Icons.auto_awesome_rounded, size: 19, color: ink),
@@ -488,8 +484,7 @@ class DailyPracticeCard extends StatelessWidget {
               title,
               style: (available
                       ? theme.textTheme.headlineSmall
-                      : theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w900))
+                      : theme.textTheme.titleLarge?.withWeight(FontWeight.w900))
                   ?.copyWith(color: ink),
             ),
             const SizedBox(height: 8),
@@ -509,10 +504,9 @@ class DailyPracticeCard extends StatelessWidget {
                 Flexible(
                   child: Text(
                     status,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: ink,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: theme.textTheme.labelMedium
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: ink),
                   ),
                 ),
               ],
@@ -521,10 +515,9 @@ class DailyPracticeCard extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 'Want more practice today?',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: ink,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: theme.textTheme.bodySmall
+                    ?.withWeight(FontWeight.w700)
+                    .copyWith(color: ink),
               ),
               const SizedBox(height: 10),
               // brandOrange with onOrange text: 6.93:1 (light), 7.71:1

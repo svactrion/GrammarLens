@@ -15,6 +15,7 @@ import 'climb_route.dart';
 import 'climb_save_point_table.dart';
 import 'climb_save_points.dart';
 import 'climb_zoom.dart';
+import '../../theme.dart';
 
 /// The Monthly Climb scene (1.1.0 design, scene art S1–S2): the theme's
 /// illustration, with the trail painted in, and the avatar on its step.
@@ -714,7 +715,8 @@ class ClimbSavePointLabel extends StatelessWidget {
         child: Text(name,
             maxLines: 1,
             style: theme.textTheme.labelLarge
-                ?.copyWith(color: palette.ink, fontWeight: FontWeight.w700)),
+                ?.withWeight(FontWeight.w700)
+                .copyWith(color: palette.ink)),
       ),
     );
   }

@@ -13,6 +13,7 @@ import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/legal_link.dart';
 import '../utils/content_width.dart';
+import '../theme.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error }
 
@@ -315,9 +316,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Text(
                       'Unlock personalized feedback',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: theme.textTheme.titleLarge
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -332,10 +332,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Center(
                       child: Text(
                         "What's free, trial, and paid",
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.secondary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: theme.textTheme.bodySmall
+                            ?.withWeight(FontWeight.w600)
+                            .copyWith(color: colorScheme.secondary),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -817,8 +816,8 @@ double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   return painter.width;
 }
 
-const TextStyle _freeValueStyle =
-    TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+final TextStyle _freeValueStyle =
+    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
 
 /// The Free/Premium comparison table. The Premium column reads as one
 /// continuous, rounded, highlighted strip running from the header down to
@@ -1030,8 +1029,8 @@ const double _labelCellRightPadding = 8;
 const double _labelCellHorizontalPadding =
     _labelCellLeftPadding + _labelCellRightPadding;
 
-const TextStyle _headerStyle =
-    TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+final TextStyle _headerStyle =
+    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
 
 /// The comparison table's fallback when its three columns do not fit (see
 /// [_ComparisonTable]): the same four rows, the same Free/Premium facts, laid
@@ -1309,11 +1308,11 @@ class _ComparisonRowLine extends StatelessWidget {
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: theme.textTheme.bodySmall
+                            ?.withWeight(FontWeight.w700)
+                            .copyWith(
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant),
                       )
                     : _ComparisonCell(
                         included: row.free,
@@ -1417,11 +1416,8 @@ class _ComparisonCell extends StatelessWidget {
           ? Icon(Icons.check_rounded, size: 20, color: includedColor)
           : Text(
               '—',
-              style: TextStyle(
-                color: dashColor,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: dashColor, fontSize: 16)
+                  .withWeight(FontWeight.w600),
             ),
     );
   }
@@ -1443,10 +1439,11 @@ class _Badge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.withWeight(FontWeight.w600)
+            .copyWith(color: colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -1573,18 +1570,16 @@ class _PlanCard extends StatelessWidget {
                     ],
                     Text(
                       label,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                      ),
+                      style: theme.textTheme.labelLarge
+                          ?.withWeight(FontWeight.w700)
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       pricing.bigAmount,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                      ),
+                      style: theme.textTheme.titleMedium
+                          ?.withWeight(FontWeight.w700)
+                          .copyWith(color: colorScheme.onSurface),
                     ),
                     const SizedBox(height: 2),
                     Text(

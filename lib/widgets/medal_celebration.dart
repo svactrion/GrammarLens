@@ -6,6 +6,7 @@ import '../models/climb_theme.dart';
 import '../models/medal_tier.dart';
 import 'confetti_burst.dart';
 import 'medal_badge.dart';
+import '../theme.dart';
 
 /// The medal celebration (Batch 5, N15, N28): a layer over the Daily Test
 /// result screen, opened the moment the test is saved, for a tier just
@@ -249,10 +250,9 @@ class _MedalCelebrationState extends State<MedalCelebration>
                           Text(
                             widget.title,
                             textAlign: TextAlign.center,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
+                            style: theme.textTheme.titleLarge
+                                ?.withWeight(FontWeight.w800)
+                                .copyWith(color: Colors.white),
                           ),
                           const SizedBox(height: 6),
                           Text(
@@ -265,10 +265,10 @@ class _MedalCelebrationState extends State<MedalCelebration>
                           Text(
                             MedalCelebration.closeHint,
                             textAlign: TextAlign.center,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: .6),
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: theme.textTheme.labelMedium
+                                ?.withWeight(FontWeight.w700)
+                                .copyWith(
+                                    color: Colors.white.withValues(alpha: .6)),
                           ),
                         ],
                       ),

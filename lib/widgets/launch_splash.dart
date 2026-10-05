@@ -315,14 +315,13 @@ class _LaunchSplashState extends State<LaunchSplash>
                         // natural line height, and the 1.2.0 type scale
                         // sets explicit line heights on every style.
                         style: TextStyle(
-                          fontFamily:
-                              theme.textTheme.headlineLarge?.fontFamily,
-                          fontSize: LaunchSplashLayout.wordmarkFontSize,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing:
-                              LaunchSplashLayout.wordmarkLetterSpacing,
-                          color: colorScheme.onSurface,
-                        ),
+                                fontFamily:
+                                    theme.textTheme.headlineLarge?.fontFamily,
+                                fontSize: LaunchSplashLayout.wordmarkFontSize,
+                                letterSpacing:
+                                    LaunchSplashLayout.wordmarkLetterSpacing,
+                                color: colorScheme.onSurface)
+                            .withWeight(FontWeight.w700),
                       ),
                     ),
                   ),

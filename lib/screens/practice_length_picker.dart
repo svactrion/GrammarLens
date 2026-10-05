@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../models/practice_length.dart';
 import '../spacing.dart';
+import '../theme.dart';
 
 /// The largest [PracticeLength.questionCount] — the dial's "full circle"
 /// reference. Computed from the enum so it stays correct if a length is
@@ -129,8 +130,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
             const SizedBox(height: Spacing.lg),
             Text(
               'How many questions?',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleLarge?.withWeight(FontWeight.w600),
             ),
             const SizedBox(height: Spacing.lg),
             _SelectionCard(selected: _selected, reduceMotion: reduceMotion),
@@ -237,14 +237,14 @@ class _LengthLabelRow extends StatelessWidget {
                     child: Text(
                       key: ValueKey('lengthLabel_${values[i].name}'),
                       '${values[i].questionCount}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: values[i] == selected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                        color: values[i] == selected
-                            ? colorScheme.secondary
-                            : colorScheme.onSurfaceVariant,
-                      ),
+                      style: theme.textTheme.bodyMedium
+                          ?.withWeight(values[i] == selected
+                              ? FontWeight.w700
+                              : FontWeight.w600)
+                          .copyWith(
+                              color: values[i] == selected
+                                  ? colorScheme.secondary
+                                  : colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -308,11 +308,8 @@ class _SelectionCard extends StatelessWidget {
                 children: [
                   Text(
                     selected.label,
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
-                      color: onCard,
-                    ),
+                    style: TextStyle(fontSize: 19, color: onCard)
+                        .withWeight(FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -436,11 +433,8 @@ class _LengthDialState extends State<_LengthDial>
             child: Text(
               '${widget.questionCount}',
               key: ValueKey(widget.questionCount),
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
+              style: TextStyle(fontSize: 28, color: textColor)
+                  .withWeight(FontWeight.w700),
             ),
           ),
         ],

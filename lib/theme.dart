@@ -159,6 +159,30 @@ const double appButtonRadius = 14;
 /// The text field's corner radius (the brief: 18).
 const double appInputRadius = 18;
 
+/// The one way to give text a weight in this app (1.2.0 Batch 6).
+///
+/// The bundled font is a variable font (`NunitoSans-Variable.ttf`, `wght`
+/// 200–1000, default instance ExtraLight 200). On an iOS device
+/// `FontWeight` alone does not move its `wght` axis: the owner's check of
+/// the Theme Preview weight table (2026-10-05) showed every `FontWeight`
+/// row at one width, the default instance thickened synthetically, while
+/// `FontVariation('wght', n)` rows grew. The test engine resolves both, so
+/// tests never showed it. Every weight therefore sets both together,
+/// through [AppTextWeight.withWeight]; a raw `fontWeight:` anywhere else in
+/// `lib/` fails `test/font_weight_guard_test.dart`, because once the theme
+/// carries `wght`, a local weight without its own `wght` is drawn at the
+/// theme's.
+List<FontVariation> wghtFor(FontWeight weight) =>
+    [FontVariation('wght', weight.value.toDouble())];
+
+extension AppTextWeight on TextStyle {
+  /// This style at [weight]: `fontWeight` and the matching `wght` axis.
+  TextStyle withWeight(FontWeight weight) => copyWith(
+        fontWeight: weight, // font-weight-guard: the helper itself
+        fontVariations: wghtFor(weight),
+      );
+}
+
 /// The brief's text sizes are what the default text size (Medium) renders
 /// (owner decision Q5, 2026-10-05): the theme's base size is the brief's
 /// size divided by Medium's scale factor, so Medium shows exactly the
@@ -635,12 +659,8 @@ ThemeData buildAppTheme(
     double? height, {
     double? letterSpacing,
   }) =>
-      (from ?? const TextStyle()).copyWith(
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-        height: height,
-        letterSpacing: letterSpacing,
-      );
+      (from ?? const TextStyle()).withWeight(fontWeight).copyWith(
+          fontSize: fontSize, height: height, letterSpacing: letterSpacing);
   final m = base.textTheme;
   final materialTextTheme = m.copyWith(
     // Not in the brief: Material sizes, weight made explicit.

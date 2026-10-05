@@ -7,6 +7,7 @@ import '../services/month_transition.dart';
 import 'avatar_tile.dart';
 import 'medal_badge.dart';
 import 'monthly_climb/climb_card.dart';
+import '../theme.dart';
 
 /// How the month card was closed (Batch 6, M6). The names are
 /// `month_card_dismissed`'s `method` values (M19).
@@ -137,13 +138,11 @@ class MonthCardSheet extends StatelessWidget {
     final next = ClimbCard.monthNames[data.month - 1];
     final title = Text('Your $month climb',
         textAlign: TextAlign.center,
-        style:
-            theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800));
+        style: theme.textTheme.titleLarge?.withWeight(FontWeight.w800));
     Widget stat(String value, String label) => Text.rich(TextSpan(children: [
           TextSpan(
               text: value,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800)),
+              style: theme.textTheme.titleMedium?.withWeight(FontWeight.w800)),
           TextSpan(
               text: ' $label',
               style: theme.textTheme.bodySmall?.copyWith(color: muted)),
@@ -162,8 +161,7 @@ class MonthCardSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text('${tier.label} medal',
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+              style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700)),
         ]),
       ],
       const SizedBox(height: 10),
@@ -188,8 +186,7 @@ class MonthCardSheet extends StatelessWidget {
       const SizedBox(height: 12),
       Text('Next: $next · ${data.theme.name}',
           textAlign: TextAlign.center,
-          style: theme.textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700)),
+          style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700)),
     ];
   }
 
@@ -208,12 +205,11 @@ class MonthCardSheet extends StatelessWidget {
             Semantics(
               header: true,
               child: Text('A new mountain awaits',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w800)),
+                  style:
+                      theme.textTheme.titleLarge?.withWeight(FontWeight.w800)),
             ),
             Text(data.theme.name,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+                style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700)),
           ]),
         ),
       ]),

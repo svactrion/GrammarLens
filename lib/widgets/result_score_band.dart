@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/content_width.dart';
+import '../theme.dart';
 
 /// The score line on a results screen's band — `BrandScaffold`'s
 /// `bandBottom` slot, first used here (docs/design-audit.md §5 D1 Batch 4).
@@ -35,10 +36,9 @@ class ResultScoreBand extends StatelessWidget implements PreferredSizeWidget {
           text,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w700,
-          ),
+          style: theme.textTheme.headlineSmall
+              ?.withWeight(FontWeight.w700)
+              .copyWith(color: fg),
         ),
       ),
     );

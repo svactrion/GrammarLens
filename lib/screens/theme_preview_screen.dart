@@ -127,10 +127,9 @@ class _SectionLabel extends StatelessWidget {
     final theme = Theme.of(context);
     return Text(
       text,
-      style: theme.textTheme.labelLarge?.copyWith(
-        color: theme.colorScheme.secondary,
-        fontWeight: FontWeight.w700,
-      ),
+      style: theme.textTheme.labelLarge
+          ?.withWeight(FontWeight.w700)
+          .copyWith(color: theme.colorScheme.secondary),
     );
   }
 }
@@ -230,8 +229,7 @@ class _ColorRoleTile extends StatelessWidget {
           const SizedBox(height: Spacing.xs),
           Text(
             name,
-            style: theme.textTheme.labelSmall
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.labelSmall?.withWeight(FontWeight.w600),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -271,7 +269,7 @@ class _SemanticColorRow extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: onBackground, fontWeight: FontWeight.w700),
+        style: TextStyle(color: onBackground).withWeight(FontWeight.w700),
       ),
     );
   }
@@ -385,7 +383,12 @@ class _FontWeightTable extends StatelessWidget {
           color: theme.colorScheme.onSurface,
         );
     final columns = <(String, TextStyle Function(int))>[
-      ('FontWeight', (w) => base().copyWith(fontWeight: _weight(w))),
+      // Raw on purpose: the samples the device check reads.
+      (
+        'FontWeight',
+        (w) => base()
+            .copyWith(fontWeight: _weight(w)) // font-weight-guard: raw sample
+      ),
       (
         'FontVariation',
         (w) => base()
@@ -394,7 +397,7 @@ class _FontWeightTable extends StatelessWidget {
       (
         'Both',
         (w) => base().copyWith(
-            fontWeight: _weight(w),
+            fontWeight: _weight(w), // font-weight-guard: raw sample
             fontVariations: [FontVariation('wght', w.toDouble())])
       ),
     ];

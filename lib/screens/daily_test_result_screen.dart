@@ -425,10 +425,9 @@ class _QuestionResultCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: onBackground,
-                  ),
+                  style: theme.textTheme.labelLarge
+                      ?.withWeight(FontWeight.w600)
+                      .copyWith(color: onBackground),
                 ),
               ],
             ),

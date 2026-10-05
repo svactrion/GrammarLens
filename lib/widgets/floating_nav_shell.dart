@@ -261,10 +261,9 @@ class _NavTab extends StatelessWidget {
               // as color marks the selected tab.
               Text(
                 data.label,
-                style: labelStyle?.copyWith(
-                  color: color,
-                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
-                ),
+                style: labelStyle
+                    ?.withWeight(active ? FontWeight.w800 : FontWeight.w600)
+                    .copyWith(color: color),
               ),
             ],
           ),

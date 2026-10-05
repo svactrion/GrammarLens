@@ -135,8 +135,7 @@ class _DataScreenState extends State<DataScreen> {
       children: [
         Text(
           'AI feedback',
-          style:
-              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700),
         ),
         const SizedBox(height: 4),
         Text(
@@ -157,8 +156,7 @@ class _DataScreenState extends State<DataScreen> {
         const SizedBox(height: 24),
         Text(
           'Reset progress',
-          style:
-              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700),
         ),
         const SizedBox(height: 4),
         Text(

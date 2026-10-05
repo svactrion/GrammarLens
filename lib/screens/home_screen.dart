@@ -1153,18 +1153,18 @@ class _HomeScreenState extends State<HomeScreen>
                   // the 20 pt section titles, below the name (24) and the
                   // brand (34). Derived from titleLarge so it follows the
                   // text size setting.
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: (theme.textTheme.titleLarge?.fontSize ?? 20) *
-                        HomeScreen.greetingScale,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.3,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  nameStyle: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    color: colorScheme.onSurface,
-                  ),
+                  style: theme.textTheme.titleLarge
+                      ?.withWeight(FontWeight.w600)
+                      .copyWith(
+                          fontSize:
+                              (theme.textTheme.titleLarge?.fontSize ?? 20) *
+                                  HomeScreen.greetingScale,
+                          letterSpacing: -0.3,
+                          color: colorScheme.onSurfaceVariant),
+                  nameStyle: theme.textTheme.headlineSmall
+                      ?.withWeight(FontWeight.w900)
+                      .copyWith(
+                          letterSpacing: -0.5, color: colorScheme.onSurface),
                 ),
               ),
               // 8 pt (the mockup's 6, was 12): at 320 pt and Large text
@@ -1412,10 +1412,9 @@ class _CountBadge extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: colorScheme.onSecondaryContainer,
-        ),
+        style: theme.textTheme.labelSmall
+            ?.withWeight(FontWeight.w800)
+            .copyWith(color: colorScheme.onSecondaryContainer),
       ),
     );
   }
@@ -1507,8 +1506,9 @@ class _DailyTestCard extends StatelessWidget {
               runSpacing: 4,
               children: [
                 Text('DAILY TEST',
-                    style: small?.copyWith(
-                        fontWeight: FontWeight.w800, letterSpacing: 0.8)),
+                    style: small
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(letterSpacing: 0.8)),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1692,11 +1692,10 @@ class _TopicTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           topic.title,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            height: 1.25,
-                            color: colorScheme.onSurface,
-                          ),
+                          style: theme.textTheme.titleSmall
+                              ?.withWeight(FontWeight.w800)
+                              .copyWith(
+                                  height: 1.25, color: colorScheme.onSurface),
                         ),
                       ),
                       const SizedBox(width: 5),

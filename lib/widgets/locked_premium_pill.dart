@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 
 /// The trailing "this needs Premium" affordance on a locked card (Home's
 /// Topic Practice card, a locked weak-spot row) — same slot both card types
@@ -42,10 +43,9 @@ class LockedPremiumPill extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             'Premium',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: link,
-              fontWeight: FontWeight.w800,
-            ),
+            style: theme.textTheme.labelSmall
+                ?.withWeight(FontWeight.w800)
+                .copyWith(color: link),
           ),
           if (showChevron) ...[
             const SizedBox(width: 2),

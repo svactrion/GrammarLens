@@ -4,6 +4,7 @@ import '../models/error_entry.dart';
 import '../models/topic.dart';
 import '../utils/text_format.dart';
 import 'locked_premium_pill.dart';
+import '../theme.dart';
 
 /// A weak spot's card, shared by Home's "Your weak spots" section and
 /// Review's list — previously two separate, drifted copies of the same
@@ -100,11 +101,11 @@ class WeakSpotCard extends StatelessWidget {
                     if (topicSubtitle != null) ...[
                       Text(
                         topicSubtitle,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.secondary,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                        ),
+                        style: theme.textTheme.labelSmall
+                            ?.withWeight(FontWeight.w800)
+                            .copyWith(
+                                color: colorScheme.secondary,
+                                letterSpacing: 0.8),
                       ),
                       const SizedBox(height: 7),
                     ],
@@ -131,10 +132,9 @@ class WeakSpotCard extends StatelessWidget {
                       ),
                       child: Text(
                         formatFrequencyStat(spot.frequency, spot.lastSeen),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSecondaryContainer,
-                        ),
+                        style: theme.textTheme.labelSmall
+                            ?.withWeight(FontWeight.w800)
+                            .copyWith(color: colorScheme.onSecondaryContainer),
                       ),
                     ),
                   ],
@@ -178,11 +178,9 @@ class WeakSpotCard extends StatelessWidget {
                 if (topicSubtitle != null) ...[
                   Text(
                     topicSubtitle,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: link,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                    ),
+                    style: theme.textTheme.labelSmall
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: link, letterSpacing: 0.8),
                   ),
                   const SizedBox(height: 7),
                 ],
@@ -190,10 +188,9 @@ class WeakSpotCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   formatFrequencyStat(spot.frequency, spot.lastSeen),
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: theme.textTheme.labelMedium
+                      ?.withWeight(FontWeight.w600)
+                      .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 // The brief's link row: at least 44 pt tall.
                 ConstrainedBox(

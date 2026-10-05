@@ -7,6 +7,7 @@ import '../models/welcome_badge.dart';
 import '../services/monthly_medal_rules.dart';
 import 'medal_badge.dart';
 import 'medal_tier_color.dart';
+import '../theme.dart';
 
 /// Profile's medals (Batch 5, N10, N33, N34): a shelf, the medals side by
 /// side. The Welcome badge first, then the months oldest to newest, one
@@ -240,16 +241,16 @@ class _Slot extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+                  style:
+                      theme.textTheme.labelSmall?.withWeight(FontWeight.w700)),
               if (mark != null)
                 Text(mark!,
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700)),
+                    style: theme.textTheme.labelSmall
+                        ?.withWeight(FontWeight.w700)
+                        .copyWith(color: theme.colorScheme.primary)),
             ]),
           ),
         ),
@@ -342,9 +343,9 @@ Future<void> showMedalDetail(BuildContext context,
                       child: Text(line,
                           textAlign: TextAlign.center,
                           style: i == 0
-                              ? theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white)
+                              ? theme.textTheme.titleLarge
+                                  ?.withWeight(FontWeight.w800)
+                                  .copyWith(color: Colors.white)
                               : theme.textTheme.bodyLarge?.copyWith(
                                   color: Colors.white.withValues(alpha: .86))),
                     ),
@@ -422,14 +423,14 @@ class MedalProgressBar extends StatelessWidget {
               Expanded(
                 child: Text(thisMonth,
                     key: thisMonthKey,
-                    style: t.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                    style: t.textTheme.titleSmall?.withWeight(FontWeight.w700)),
               ),
               const SizedBox(width: 8),
               Text('${progress.score} points',
                   key: scoreKey,
-                  style: t.textTheme.titleSmall?.copyWith(
-                      color: scheme.primary, fontWeight: FontWeight.w800)),
+                  style: t.textTheme.titleSmall
+                      ?.withWeight(FontWeight.w800)
+                      .copyWith(color: scheme.primary)),
             ]),
         const SizedBox(height: 10),
         LayoutBuilder(builder: (context, constraints) {
@@ -471,11 +472,10 @@ class MedalProgressBar extends StatelessWidget {
                     Text(tier.label,
                         textAlign: TextAlign.center,
                         maxLines: 1,
-                        style: labelStyle?.copyWith(
-                            fontWeight:
-                                reached != null && tier.index <= reached.index
-                                    ? FontWeight.w800
-                                    : FontWeight.w500)),
+                        style: labelStyle?.withWeight(
+                            reached != null && tier.index <= reached.index
+                                ? FontWeight.w800
+                                : FontWeight.w500)),
                     Text('$v',
                         key: thresholdKey(tier),
                         textAlign: TextAlign.center,

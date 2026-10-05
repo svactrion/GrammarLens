@@ -347,7 +347,7 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
                 style: Theme.of(context)
                     .textTheme
                     .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+                    ?.withWeight(FontWeight.w700)),
             const SizedBox(height: Spacing.sm),
             MonthlyMedalCollection(
               welcomeBadge: _welcomeEarned ? _welcomeBadgeFixture : null,

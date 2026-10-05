@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 
 /// A thin, opinionated wrapper around [SegmentedButton] — used everywhere
 /// in this app instead of the raw widget, so every segmented control
@@ -84,10 +85,8 @@ class AppSegmentedButton<T> extends StatelessWidget {
                     ? colorScheme.onSecondaryContainer
                     : colorScheme.onSurfaceVariant),
             textStyle: WidgetStateProperty.resolveWith((states) =>
-                label?.copyWith(
-                    fontWeight: isSelected(states)
-                        ? FontWeight.w800
-                        : FontWeight.w700)),
+                label?.withWeight(
+                    isSelected(states) ? FontWeight.w800 : FontWeight.w700)),
           ),
         ),
       ),

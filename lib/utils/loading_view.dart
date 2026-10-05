@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 
 /// Full-screen, clearly-visible loading state shown while a practice set is
 /// generating or while submitted answers are being evaluated.
@@ -78,10 +79,9 @@ class _LoadingViewState extends State<LoadingView>
               Text(
                 widget.message,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: theme.textTheme.titleMedium
+                    ?.withWeight(FontWeight.w600)
+                    .copyWith(color: foreground),
               ),
             ],
           ),

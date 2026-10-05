@@ -15,6 +15,7 @@ import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import 'results_screen.dart';
 import '../utils/content_width.dart';
+import '../theme.dart';
 
 class PracticeScreen extends StatefulWidget {
   final Topic topic;
@@ -213,10 +214,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           children: [
                             Text(
                               _itemLabel(item.type),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: theme.textTheme.labelLarge
+                                  ?.withWeight(FontWeight.w600)
+                                  .copyWith(color: colorScheme.secondary),
                             ),
                             if (item.context != null &&
                                 item.context!.trim().isNotEmpty) ...[
@@ -232,7 +232,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                             Text(
                               item.instruction,
                               style: theme.textTheme.bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
+                                  ?.withWeight(FontWeight.w700),
                             ),
                             if (item.hint != null) ...[
                               const SizedBox(height: 8),

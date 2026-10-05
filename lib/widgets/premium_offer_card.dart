@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../utils/premium_copy.dart';
+import '../theme.dart';
 
 /// The Premium offer at the end of a free user's practice results, shown
 /// once today's free practice is used up (`ResultsScreen` decides when).
@@ -60,8 +61,7 @@ class PremiumOfferCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Keep practicing',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge?.withWeight(FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Text(
@@ -156,8 +156,7 @@ class _BenefitTile extends StatelessWidget {
             children: [
               Text(
                 benefit.title,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700),
               ),
               const SizedBox(height: 2),
               Text(
@@ -190,10 +189,9 @@ class _PremiumChip extends StatelessWidget {
       ),
       child: Text(
         'PREMIUM',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: colorScheme.onSecondaryContainer,
-          fontWeight: FontWeight.w700,
-        ),
+        style: theme.textTheme.labelSmall
+            ?.withWeight(FontWeight.w700)
+            .copyWith(color: colorScheme.onSecondaryContainer),
       ),
     );
   }

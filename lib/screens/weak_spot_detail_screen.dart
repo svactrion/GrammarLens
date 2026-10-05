@@ -16,6 +16,7 @@ import '../widgets/section_title.dart';
 import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
 import 'premium_screen.dart';
+import '../theme.dart';
 
 /// Shown before targeted practice starts (Iteration 1 P0, from user testing:
 /// tapping a weak spot used to jump straight into fresh questions with no
@@ -169,11 +170,9 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
         if (!ruleRepeatsTopic) ...[
           Text(
             widget.topic.title,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.secondary,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-            ),
+            style: theme.textTheme.labelSmall
+                ?.withWeight(FontWeight.w800)
+                .copyWith(color: colorScheme.secondary, letterSpacing: 0.8),
           ),
           const SizedBox(height: 7),
         ],
@@ -197,10 +196,9 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
             ),
             child: Text(
               formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: colorScheme.onSecondaryContainer,
-              ),
+              style: theme.textTheme.labelSmall
+                  ?.withWeight(FontWeight.w800)
+                  .copyWith(color: colorScheme.onSecondaryContainer),
             ),
           ),
         ),
@@ -255,10 +253,9 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'Saved feedback',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: colorScheme.secondary,
-                              fontWeight: FontWeight.w800,
-                            ),
+                            style: theme.textTheme.labelMedium
+                                ?.withWeight(FontWeight.w800)
+                                .copyWith(color: colorScheme.secondary),
                           ),
                         ],
                       ),

@@ -186,14 +186,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
                               : item.isCorrect
                                   ? 'Correct'
                                   : 'Needs work',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: item.isSkipped
-                                ? semantic.onSkippedBackground
-                                : item.isCorrect
-                                    ? semantic.onCorrectBackground
-                                    : semantic.onIncorrectBackground,
-                          ),
+                          style: theme.textTheme.labelLarge
+                              ?.withWeight(FontWeight.w600)
+                              .copyWith(
+                                  color: item.isSkipped
+                                      ? semantic.onSkippedBackground
+                                      : item.isCorrect
+                                          ? semantic.onCorrectBackground
+                                          : semantic.onIncorrectBackground),
                         ),
                       ),
                     ],

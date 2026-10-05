@@ -27,6 +27,7 @@ import 'credits_screen.dart';
 import 'data_screen.dart';
 import 'theme_preview_screen.dart';
 import 'debug_panel_screen.dart';
+import '../theme.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
 /// a UI-layer concept only. [SubscriptionService.debugAccessOverride]
@@ -504,7 +505,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'Entitlement override',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -549,7 +550,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'First-launch flow',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -586,7 +587,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'Preview paywall pricing',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -618,7 +619,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'Theme preview',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(

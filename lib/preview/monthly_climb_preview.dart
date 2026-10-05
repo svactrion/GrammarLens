@@ -51,8 +51,9 @@ class _MonthlyClimbPreviewState extends State<MonthlyClimbPreview> {
                       icon: Icon(_dark ? Icons.light_mode : Icons.dark_mode))
                 ]),
             children: [
-              const Text('Green Slope',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+              Text('Green Slope',
+                  style: const TextStyle(fontSize: 24)
+                      .withWeight(FontWeight.w700)),
               const SizedBox(height: Spacing.sm),
               const Text('Visual preview · sample progress'),
               const SizedBox(height: Spacing.lg),

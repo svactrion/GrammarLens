@@ -7,6 +7,7 @@ import '../utils/page_title.dart';
 import '../widgets/avatar_carousel.dart';
 import '../widgets/brand_scaffold.dart';
 import '../utils/content_width.dart';
+import '../theme.dart';
 
 /// Shared between this screen's centered avatar and Settings' own small
 /// preview row (`settings_screen.dart`), for the Settings → picker → back
@@ -160,7 +161,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                     Text(
                       'Pick your study buddy',
                       style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 32),
                     // P1: the carousel is as wide as the content column on

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 
 /// A plain (unbordered) 40x40 icon button — the Back (top-left) and Close
 /// (top-right) affordances on a question screen's app bar. Single back-
@@ -120,7 +121,8 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: theme.textTheme.titleLarge
-            ?.copyWith(color: appBarFg, fontWeight: FontWeight.w600),
+            ?.withWeight(FontWeight.w600)
+            .copyWith(color: appBarFg),
       ),
       actions: [
         Padding(
@@ -147,7 +149,8 @@ class QuestionAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Text(
               '${currentIndex + 1} / $total',
               style: theme.textTheme.labelLarge
-                  ?.copyWith(fontWeight: FontWeight.w700, color: appBarFg),
+                  ?.withWeight(FontWeight.w700)
+                  .copyWith(color: appBarFg),
             ),
           ),
         ),

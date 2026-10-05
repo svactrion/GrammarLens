@@ -94,7 +94,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       'What should we call you?',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -109,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       'Why are you learning English?',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -267,10 +267,9 @@ class _GoalOption extends StatelessWidget {
                   children: [
                     Text(
                       goal.label,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
+                      style: theme.textTheme.titleSmall
+                          ?.withWeight(FontWeight.w700)
+                          .copyWith(color: titleColor),
                     ),
                     const SizedBox(height: 2),
                     Text(

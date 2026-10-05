@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/medal_tier.dart';
 import '../medal_tier_color.dart';
+import '../../theme.dart';
 
 /// The month's score against the medal thresholds: a strip of its own inside
 /// the mountain card, under the mountain window (design decision D9), so it
@@ -121,15 +122,15 @@ class ClimbScoreBar extends StatelessWidget {
                           maxLines: 1,
                           // The metal color stays on the tick: as small text
                           // it would be too faint (gold on a light surface).
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color:
-                                reached != null && tier.index <= reached.index
-                                    ? scheme.onSurface
-                                    : scheme.onSurfaceVariant,
-                            fontWeight: reached == tier
-                                ? FontWeight.w800
-                                : FontWeight.w600,
-                          ),
+                          style: theme.textTheme.labelSmall
+                              ?.withWeight(reached == tier
+                                  ? FontWeight.w800
+                                  : FontWeight.w600)
+                              .copyWith(
+                                  color: reached != null &&
+                                          tier.index <= reached.index
+                                      ? scheme.onSurface
+                                      : scheme.onSurfaceVariant),
                         ),
                       ),
                   ]),

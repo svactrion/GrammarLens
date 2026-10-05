@@ -95,10 +95,8 @@ class ClimbCard extends StatelessWidget {
       required DateTime month,
       required int steps,
       required int days}) {
-    final style = Theme.of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(fontWeight: FontWeight.w700);
+    final style =
+        Theme.of(context).textTheme.labelLarge?.withWeight(FontWeight.w700);
     Size measure(String text) {
       final painter = TextPainter(
         text: TextSpan(text: text, style: style),
@@ -123,12 +121,8 @@ class ClimbCard extends StatelessWidget {
   /// spacing −0.3 (16 pt at the default text size: `bodyLarge`'s size).
   static TextStyle? _plaqueStyle(BuildContext context) {
     final theme = Theme.of(context);
-    return theme.textTheme.bodyLarge?.copyWith(
-      fontWeight: FontWeight.w900,
-      height: 1.25,
-      letterSpacing: -0.3,
-      color: theme.colorScheme.onSurface,
-    );
+    return theme.textTheme.bodyLarge?.withWeight(FontWeight.w900).copyWith(
+        height: 1.25, letterSpacing: -0.3, color: theme.colorScheme.onSurface);
   }
 
   @override
@@ -140,7 +134,8 @@ class ClimbCard extends StatelessWidget {
     final palette = ClimbThemes.greenSlope.paletteFor(theme.brightness);
     final plaqueH = plaqueHeight(context);
     final labelStyle = theme.textTheme.labelLarge
-        ?.copyWith(color: palette.ink, fontWeight: FontWeight.w700);
+        ?.withWeight(FontWeight.w700)
+        .copyWith(color: palette.ink);
 
     Widget chip(Widget child) => DecoratedBox(
           decoration: BoxDecoration(

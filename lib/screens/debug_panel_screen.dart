@@ -8,6 +8,7 @@ import '../widgets/monthly_climb/climb_debug_day.dart';
 import '../widgets/monthly_climb/climb_debug_milestone.dart';
 import '../widgets/monthly_climb/climb_debug_month_card.dart';
 import '../widgets/monthly_climb/climb_debug_theme.dart';
+import '../theme.dart';
 
 /// The debug panel (Batch 5, N27): the `CLIMB_DEBUG_*` settings changed
 /// while the app runs, in debug and profile builds. Opened from Settings'
@@ -105,8 +106,7 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+                style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700)),
             const SizedBox(height: 2),
             Text(note, style: muted),
           ]),

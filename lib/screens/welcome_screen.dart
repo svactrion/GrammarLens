@@ -7,6 +7,7 @@ import '../spacing.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/launch_splash.dart';
 import '../utils/content_width.dart';
+import '../theme.dart';
 
 // Ambient background decoration for this screen only — not reused
 // elsewhere, so (unlike BrandMark's glass/glint) these stay local rather
@@ -227,12 +228,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     child: Text(
                       'GrammarLens',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.5,
-                        color: appBarFg,
-                      ),
+                      style: theme.textTheme.headlineLarge
+                          ?.withWeight(FontWeight.w700)
+                          .copyWith(
+                              fontSize: 34,
+                              letterSpacing: -0.5,
+                              color: appBarFg),
                     ),
                   ),
                   const SizedBox(height: Spacing.lg),
