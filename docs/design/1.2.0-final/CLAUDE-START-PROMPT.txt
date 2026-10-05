@@ -1,0 +1,8 @@
+Bu klasördeki GrammarLens ek tasarımlarını mevcut Flutter projesine uygula. Önce README.md, CLAUDE-CODE-BRIEF.md ve ACCEPTANCE-CHECKLIST.md dosyalarını oku, sonra mevcut bileşenleri ve veri modelini incele.
+
+Kapsam: Premium Review Suggested Focus kartı, Profile > Data ve sade Profile > Credits.
+Suggested Focus yalnızca Premium kullanıcıya görünür ve Saved weak spots içindeki en yüksek count değerli kaydı seçer. Eşitlikte en yeni lastSeen, sonra kararlı ID kullan. Kullanıcının liste sıralaması bu seçimi etkilemesin. Count değerlerini yeni bir anlamda toplama veya değiştirme.
+Premium üst kartının genişliği, yüksekliği, padding'i ve dış boşlukları canlı Free Review kartıyla aynı olsun; ayrı ve daha büyük bir Premium kart üretme. Aynı kart kabını paylaş ve farklı ekran/text scale koşullarında iki görünümün ölçülerini karşılaştır. Free günlük hak mantığını koru.
+Credits'te görsel, hero ve büyük rozet kullanma; eser, yazar, uyarlama atfı ve iki lisans/kaynak bağlantısını derli toplu göster. Data görünümü onaylandığı şekilde kalsın; gerçek izin ve sıfırlama servislerini koru.
+
+HTML'ler görsel referanstır, WebView olarak kullanma. Metinlerde son brief, ölçülerde canlı ortak tasarım sistemi ve Free kart kabı önceliklidir. Örnek verileri üretime hardcode etme. Yeni AI çağrısı, backend, entitlement veya analitik sistemi ekleme. Mevcut değişikliklerimi koru. Anlamlı testleri ve gerekli kontrolleri çalıştır; yapılan değişiklikleri, doğrulanan davranışları ve varsa kalan engelleri raporla.
