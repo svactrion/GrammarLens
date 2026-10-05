@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
+import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 
@@ -319,6 +320,22 @@ void main() {
       expect(sink.events.single.parameters!['tier'], 'none');
     });
 
+    test(
+        'learning_goal is a user property with one of four closed values, '
+        'and nothing else is written', () async {
+      final values = <LearningGoal?, String>{
+        LearningGoal.examPrep: 'exam_prep',
+        LearningGoal.work: 'work',
+        LearningGoal.general: 'general',
+        null: 'skipped',
+      };
+      for (final MapEntry(key: goal, value: value) in values.entries) {
+        await service.setLearningGoalProperty(goal);
+        expect(sink.userProperties, {'learning_goal': value});
+      }
+      expect(sink.events, isEmpty);
+    });
+
     test('first_step_dom is a user property, stored as a string', () async {
       await service.setFirstStepDayOfMonth(24);
       expect(sink.events, isEmpty);
@@ -501,6 +518,8 @@ void main() {
           ruleVersion: 1);
       await service.setTextSizeProperty(AppTextSize.large);
       await service.setFirstStepDayOfMonth(31);
+      await service.setLearningGoalProperty(LearningGoal.examPrep);
+      await service.setLearningGoalProperty(null);
 
       final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
       final reserved = RegExp(r'^(firebase_|google_|ga_|_)');

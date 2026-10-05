@@ -2,6 +2,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 
 import '../models/app_text_size.dart';
+import '../models/learning_goal.dart';
 import '../models/medal_tier.dart';
 
 /// Where [AnalyticsService] hands finished events. `FirebaseAnalytics.instance`
@@ -508,6 +509,15 @@ class AnalyticsService {
   /// after they are set and cannot be reconstructed later.
   Future<void> setFirstStepDayOfMonth(int dayOfMonth) {
     return _setUserProperty('first_step_dom', dayOfMonth.toString());
+  }
+
+  /// User property `learning_goal`: `exam_prep` / `work` / `general` /
+  /// `skipped`, the onboarding answer (1.2.0). Set once, as onboarding
+  /// completes and before `onboarding_completed`, so that event carries it.
+  /// Not set for installs that finished onboarding earlier: their stored
+  /// `general` cannot be told apart from a choice.
+  Future<void> setLearningGoalProperty(LearningGoal? goal) {
+    return _setUserProperty('learning_goal', learningGoalValue(goal));
   }
 
   Future<void> _logEvent(String name, [Map<String, Object>? parameters]) async {

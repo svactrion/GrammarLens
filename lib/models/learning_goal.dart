@@ -1,7 +1,15 @@
-/// Why the user is learning English, captured once during onboarding
-/// (PRD v2 §4). Feeds topic suggestions later — see the onboarding rationale
-/// for why it is the one profile question worth asking up front.
+/// Why the user is learning English, asked once during onboarding (PRD v2
+/// §4). It personalizes nothing: it is asked to understand who uses the app
+/// and what to improve next (the 1.2.0 additional screens package), and it
+/// is reported as the `learning_goal` analytics user property
+/// (docs/analytics-plan.md §3). Optional: a skipped goal is stored as
+/// [learningGoalSkipped] and read back as null, never as [general].
 enum LearningGoal { examPrep, work, general }
+
+/// The stored and reported value of a skipped goal: a fourth value in the
+/// `learning_goal` column (no schema change). Builds before 1.2.0 read it,
+/// like any unknown value, as [LearningGoal.general].
+const String learningGoalSkipped = 'skipped';
 
 extension LearningGoalInfo on LearningGoal {
   String get label {
@@ -11,18 +19,18 @@ extension LearningGoalInfo on LearningGoal {
       case LearningGoal.work:
         return 'Work';
       case LearningGoal.general:
-        return 'General fluency';
+        return 'Everyday confidence';
     }
   }
 
   String get description {
     switch (this) {
       case LearningGoal.examPrep:
-        return 'IELTS, TOEFL, or another English exam';
+        return 'IELTS, TOEFL or another English exam';
       case LearningGoal.work:
-        return 'Emails, meetings, and professional English';
+        return 'Emails, meetings and professional English';
       case LearningGoal.general:
-        return 'Everyday confidence, no specific goal';
+        return 'General fluency, no specific goal';
     }
   }
 
@@ -38,6 +46,11 @@ extension LearningGoalInfo on LearningGoal {
     }
   }
 
+  /// The goal as stored, or null for [learningGoalSkipped]. Anything else
+  /// unknown (or a missing value) keeps [fromJson]'s `general`.
+  static LearningGoal? fromStored(String? value) =>
+      value == learningGoalSkipped ? null : fromJson(value);
+
   String toJson() {
     switch (this) {
       case LearningGoal.examPrep:
@@ -49,3 +62,8 @@ extension LearningGoalInfo on LearningGoal {
     }
   }
 }
+
+/// The stored and reported value of an optional goal: its own value, or
+/// [learningGoalSkipped].
+String learningGoalValue(LearningGoal? goal) =>
+    goal?.toJson() ?? learningGoalSkipped;
