@@ -211,13 +211,22 @@ picker, the loading view, the medal celebration. Rendered and reviewed
 in `docs/design/1.2.0/final-pass/`; findings in the build log; nothing
 changed there beyond the heading weights.
 
-**Open decisions for the owner:** the filled-button colour rule (the
-inventory is in the final-pass build log entry); Welcome's wordmark in
-dark mode (proposal: two colours there, one colour in light); the
-paywall footer at 375 × 667 with the new Large (0.349 of the screen,
-over the "a third" rule; not solvable without smaller text).
+**Decided 2026-10-06 (owner):** the button rule (built), two colours on
+dark Welcome (built), the paywall footer at 375 × 667 new Large accepted
+as an exception.
 
 **Deferred:** redeem codes (above).
+
+#### 1.2.0 final screens (2026-10-06)
+
+Package `docs/design/1.2.0-final/`; results in its
+`ACCEPTANCE-RESULTS.md`; build log 2026-10-06. Built, **awaiting the
+device check**: the button rule (A1), dark Welcome's wordmark (A2), the
+final-pass fixes (A3), Premium Review's Suggested Focus (B), Data (C),
+Credits (D). Accepted exception: the paywall footer at 375 × 667, new
+Large (0.349 of the screen). Open for the owner: nothing blocking;
+"practice history" in the reset copy may be read as including the Daily
+Test (kept by the reset; wording unchanged).
 
 #### Three problems from 1.1.0, solved in 1.2.0
 
@@ -262,6 +271,11 @@ carried over now.
   version.
 - [ ] **Device check of the final pass:** see the build log's final-pass
   entry, "Not measured".
+- [ ] **Device check of the final screens** (build log 2026-10-06, "Not
+  measured"), Premium Review with a Premium account included.
+- [ ] **Privacy policy wording:** the app now says "practice sessions"
+  send answers to Anthropic (Topic Practice and weak spot practice);
+  check the policy says the same.
 - [ ] **App Store Connect, App Privacy** for the 1.2.0 submission: review
   the answers with the goal now collected through Firebase Analytics (a
   survey-like answer about the user's purpose; the category, and whether

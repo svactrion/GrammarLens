@@ -10934,3 +10934,161 @@ the pubspec version.
   above the nav bar; a message with the keyboard open on Profile; the
   "Profile → Data" arrow glyph on AI consent (missing in the test
   renderer).
+
+## 2026-10-06 (1.2.0 final screens: closing fixes, Premium Review Suggested Focus, Data, Credits; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Package: `docs/design/1.2.0-final/`
+(committed as delivered; the pre-commit hook passed, no `--no-verify`).
+Acceptance, item by item: `docs/design/1.2.0-final/ACCEPTANCE-RESULTS.md`.
+
+Unchanged: the free daily allowance and its counting, the consent
+mechanism, the reset scope, subscriptions, routing, the storage schema,
+analytics events, AI/proxy calls. No migration, no new event, no new
+call.
+
+**Owner decisions (2026-10-06):**
+- The paywall footer at 375 × 667 with the new Large (0.349 of the
+  screen, over the "a third" rule) is an **accepted exception**.
+- Welcome in dark mode: the two-colour wordmark; light keeps one colour.
+- The button rule: orange = a screen's one main forward action on a
+  neutral surface; navy = actions on an orange surface and secondary,
+  helper and exit actions; red = destructive. Exceptions: AI consent's
+  "Agree and continue" stays navy (consent is not nudged); "Back to
+  topics" and "Back to Home" stay navy (exits).
+- Suggested Focus uses the app's navy (the Free "used" card's), not the
+  package's #183854 / #203D57; American spelling ("Practice").
+- Review top card height (asked during this batch): **Premium takes Free
+  available's height; Free used keeps its own.** The two live Free cards
+  were never equal (measured: available 199–240 pt, used 260–328 pt, the
+  used card 59–110 pt taller at the same width and size), so "all three
+  equal" and "the live Free size unchanged" could not both hold.
+
+**Part A — closing fixes**
+- **A1 buttons** (`forwardButtonStyle`, one shared style: brandOrange,
+  onOrange label, no navy edge): Review's empty "Go to Daily Test", the
+  length picker's "Start N questions", Daily Test results' "Start my
+  climb" / "See your climb", the weak spot's "Practice this" / "Start
+  free practice" / "Practice with Premium". Unchanged and navy: "Back to
+  Home", the day-0 "Continue" (not in the list), "Try saving again",
+  retries, AI consent. Test: `button_rule_test` (16).
+- **A2 Welcome dark:** two-colour wordmark, page colour #151517.
+- **A3:**
+  - Card frames: **correction of the 2026-10-05 finding.** The results,
+    Daily Test results and weak spot cards are already the theme's card
+    (1 px `outlineVariant`, elevation 2). The "heavy dark outline" in the
+    final-pass renders is how the test renderer draws a Material
+    elevation shadow; Profile's device-approved card shows the same rim in
+    the renders. No change.
+  - Results: "Back to topics" in a fixed `BrandBottomBar` (shared with
+    Daily Test results); navy, filled or outlined under the offer card;
+    messages float above it (test `results_footer_test`).
+  - Length picker: the sheet is the card surface (was white); the empty
+    track is `outline`, 3.32:1 light / 4.50:1 dark (was 1.03:1); the
+    selected length (titleLarge 800) and its line (bodySmall) follow the
+    text size (were a fixed 19 and 13).
+  - Loading: `PageLoading` keeps the page's own header (Topic Practice's
+    back tile and title; the weak spot's title) instead of a centred app
+    bar title.
+  - AI consent: the Privacy Policy link starts at the text edge
+    (`LegalLink.flush`), 44 pt target.
+  - Device check only: AI consent's "Profile → Data" arrow glyph.
+
+**Part B — Premium Review, Suggested Focus**
+- **Weak spot identity (verified):** a weak spot is a
+  `GROUP BY topic_id, error_type` of saved mistakes
+  (`StorageService.getWeakSpots`): count = `COUNT(*)` (`frequency`), last
+  seen = `MAX(timestamp)`, stable id = (topicId, errorType), unique per
+  group. The list reads at most 10; the suggestion reads all
+  (`StorageService.allWeakSpots`).
+- Rule (`suggestedFocus`, pure): highest count → newest known last seen
+  (before 2000 counts as unknown) → smallest id; a count under 1 is never
+  chosen.
+- Card: the shared `ReviewTopCard` shell (Free available, Free used,
+  Premium); Premium is at least as tall as the Free available content at
+  the same width and text size (`MatchHeight`), grows only for its own
+  text (a long title wraps, never cut). Navy, the dark edge, "SUGGESTED
+  FOCUS", the record's title, "Saved N times · Most repeated" ("Saved 1
+  time"), an orange "Practice this weak spot".
+- **Deviation:** the CTA opens the chosen weak spot's own screen, whose
+  "Practice this" runs `launchPracticeSet` unchanged (permission, picker,
+  quota, generation); the mockup does the same with a dialog. A double tap
+  opens it once.
+- States: no card until the entitlement answers; loading keeps the card's
+  place (eyebrow and a progress mark, no topic or count); a failed read
+  says "Your suggestion could not be loaded." with Try again; Premium with
+  no weak spot gets "Your next step starts with practice." / "As you
+  practice, …" / "Explore Topic Practice" (the existing Topic Practice
+  screen); Free's empty state is unchanged. A reload keeps the list on
+  screen, so the scroll position and the sort survive a return.
+
+**Part C — Data**
+- **Permission wording (verified):** a weak spot's "Practice this" /
+  "Start free practice" goes through the same `launchPracticeSet` →
+  `ensureAiConsent` and sends the same data as Topic Practice, so the
+  brief's "Topic Practice …" was incomplete:
+
+  | Brief / before | Now |
+  |---|---|
+  | "Topic Practice sends your typed answers and questions to Anthropic (Claude) to create feedback." | "Practice sessions send your typed answers and the questions to Anthropic (Claude) to create feedback." |
+  | "On · Required for Topic Practice" | "On · Required for practice sessions" |
+  | "Off · Topic Practice needs permission" | "Off · Practice sessions need permission" |
+  | (live) "Topic Practice will ask again." | "Practice sessions will ask again." |
+  | (live) "Send my practice answers to Anthropic (Claude)" / "Needed for Topic Practice. Daily Test works without it." | "Allow AI feedback" / the state line / "Daily Test works without this permission." |
+- **Reset scope (verified, no contradiction):** `resetProgressData`
+  deletes `error_entries` (every saved mistake, so every weak spot,
+  Daily Test ones included) and `topic_practice_stats` (practice counts).
+  It keeps the profile (name, goal, avatar), theme, text size, consent,
+  Daily Test sets and completions, the climb, medals, the Welcome badge,
+  one-time flags and today's quotas. Grey area, not changed: "practice
+  history" may be read as including the Daily Test, which is kept.
+- Copy: "Reset progress?" → "Reset your progress?"; the dialog text → the
+  brief's two lines; "Cancel" / "Reset" → "Keep my progress" / "Reset
+  progress data"; "Clears practice history and weak spots. …" → "Clear
+  your practice history and saved weak spots." + "Your name, goal and
+  theme stay as they are."
+- The page's reset button is low-intensity: an `error` tint (8 %) over the
+  card, a 40 % edge, an `error` label (5.47:1 light, 7.61:1 dark; the edge
+  2.07 / 2.63:1, the label naming the button). The dialog's confirm stays
+  full red. A second tap cannot stack a second dialog.
+- New: a yes that could not be saved shows off with "Could not save this
+  setting. Please try again." (the switch reads the stored decision back;
+  the consent flow itself is unchanged).
+- Review refreshes when its tab is shown again (existing behaviour).
+
+**Part D — Credits:** back tile, "Credits", "Artwork and attribution.";
+one card: "Avatar illustrations", "Adapted from Cute Animal 3D Icons by
+Tran Mau Tri Tam, via Figma Community. Licensed under CC BY 4.0.", then
+"Figma file" and "CC BY 4.0 license" rows with the existing URLs; no raw
+URL in the text, no artwork. A link that cannot open says "Could not open
+…" (`openLegalLink`, which now also catches a launcher error).
+
+**Shared pieces:** `PageBackButton` / `PageHeader` (Topic Practice, Data,
+Credits), `BrandBottomBar`, `PageLoading`, `ReviewTopCard` /
+`MatchHeight`, `forwardButtonStyle`, `LegalLinkRow`.
+
+**Tests changed, with reasons:**
+- `data_screen_test`: the brief's copy and the reset button's new type
+  (outlined, low-intensity; the old "destructive role" check now checks
+  the tint, edge and label); the confirm is found inside the dialog (the
+  page's button has the same label). Intent unchanged.
+- `credits_screen_test`: rewritten for the brief's copy (the old sentence
+  with raw URLs is gone by design); adds no-artwork, URL, error and
+  overflow checks.
+- `button_edge_test`: Data's page reset leaves the filled-button list;
+  the orange forward style joins it. Same rule.
+- `brand_wordmark_test`: + Welcome light/dark.
+- New: `button_rule_test`, `results_footer_test`,
+  `practice_length_picker_surface_test`, `page_loading_test`,
+  `legal_link_alignment_test`, `data_screen_final_test`,
+  `suggested_focus_test`, `review_suggested_focus_test`.
+
+**[Tests]** `flutter analyze` clean; **1,850 passed, 0 failed** (1,730
+after the final pass). Sweep (`final_screens_render_test`, 630 cases;
+`final_pass_render_test` for the Part A screens, 330): no layout
+exception. Renders: `docs/design/1.2.0-final/renders/`.
+
+**[Not measured]** On a device: Premium Review (needs a Premium account
+or the debug override) with a real weak spot set; the Data switch with
+the system permission screen; the reset; both Credits links in Safari;
+the dark Welcome; the AI consent arrow glyph; the new orange buttons in
+both themes.
