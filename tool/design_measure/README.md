@@ -458,3 +458,15 @@ month's detail and the name being edited. `DESIGN_MEASURE_WIDTHS`,
 `DESIGN_MEASURE_NAME` and `DESIGN_MEASURE_HISTORY=1` (three finished
 months and the Welcome badge) change the case. The card edges look darker
 than on a device: the test engine draws `Card`'s elevation shadow harder.
+
+## 1.2.0 Batch 9: Topic Practice
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/v120_topics flutter test tool/design_measure/v120/topic_render_test.dart
+```
+
+The real Topic Practice screen, the whole page, light and dark.
+`DESIGN_MEASURE_WIDTHS`, `DESIGN_MEASURE_SIZES`, `DESIGN_MEASURE_MODES`
+change the case; `DESIGN_MEASURE_STARTED=1` gives two topics a history. The
+"→" in two descriptions draws as a box here: the test engine has no font
+fallback (iOS falls back to the system font).

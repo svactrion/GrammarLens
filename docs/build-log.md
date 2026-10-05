@@ -10032,3 +10032,124 @@ the question screen and Topic Practice are not touched.
   - "Reset progress data" and the reset dialog in dark mode;
   - the tab fade (as approved after Batch 6);
   - the medal detail as before Batch 7.
+
+## 2026-10-05 (1.2.0 redesign — Batch 9: the Review card's slide, Topic Practice; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner approved Batch 7 and its five
+corrections on the device** (the keyboard and nav bar, the earlier medal
+detail, the segments, the destructive button, the tab fade-through).
+
+State, routing, premium/quota checks, AI/proxy calls, the storage schema,
+analytics event definitions and gamification math are unchanged. The
+question screen files are not touched.
+
+- **[A] Home's "Go to Review" card slides; every other switch fades**
+  (owner decision, made precise after Batch 8: the horizontal slide only
+  for that card; the nav bar and Review's "Go to Daily Test" keep the
+  220 ms fade-through).
+  - **One switcher, two looks.** `TabSwitcher` replaces the
+    `IndexedStack` + `TabFadeThrough` pair and is built on Batch 7's
+    `TabSlideSwitcher` (`29d9ef7`): each tab in a fixed keyed slot,
+    `Offstage` when not in view, so State, scroll position and data are
+    kept as in an `IndexedStack`. The look is chosen per switch:
+    `_switchTab(index, transition:)` in app.dart, fade by default; only
+    Home's `onGoToReview` passes `TabTransition.slide`.
+  - **Fade** (unchanged from Batch 6): 220 ms `easeOut`, the new tab from
+    0.98 scale, the old tab at once.
+  - **Slide: 320 ms, `Curves.easeOutCubic`** (Batch 7's was 500 ms with
+    the iOS route's curves, which the owner found exaggerated). Both tabs
+    move a full width together: Home leaves to the left, Review comes in
+    from the right. The nav bar does not move and shows Review at once;
+    taps on Home while it leaves are swallowed.
+  - A nav bar tap during the slide stops it and fades to the tab tapped.
+    Reduce motion: every switch immediate. No edge swipe back. Analytics
+    and routing unchanged (a tab switch fires no event, as before).
+  - Tests (`tab_switcher_test.dart`, grown from Batch 6's
+    `tab_fade_through_test.dart`, renamed with the widget): the values;
+    the fade (opacity mid-way, the old tab hidden at once, no sideways
+    move); the slide (both positions at 160 ms from the curve); State and
+    scroll kept through both; reduce motion for both; a nav bar tap
+    mid-slide; swallowed taps; the bar still; and in the full app: the
+    nav bar → fade, Home's card → slide with Review coming in from the
+    right, Review's "Go to Daily Test" → fade.
+- **[B] Topic Practice matches the mockup** (`topic_practice_screen.dart`;
+  the owner approved the screen on 2026-10-05). Presentation only:
+  `launchPracticeSet` (picker, consent, quota, generation), the loading
+  state and the stats read on return are as they were.
+  - **Header** in the page: Flutter's `BackButton` drawn as the mockup's
+    44 pt bordered tile (radius 14), the "Premium access" label (brand
+    orange, onOrange text, a check, 11 / 800, radius 9), the title
+    "Topic Practice" (`headlineLarge`, 32 / 900 / 1.10 / −1.0 at Medium)
+    and "Choose a topic to work on.". The app bar is the status bar only;
+    no nav bar on this screen.
+  - **"Premium access" is a status, not a control** (N19): no tap
+    target, no paywall or lock on this screen. Who may open the screen is
+    decided before it opens (Home's guard), and `launchPracticeSet` still
+    checks entitlement and quota on every start.
+  - **The list:** `SectionTitle('Grammar topics')` with "N topics" from
+    `kTopics.length`; one card per `kTopics` entry, nothing hidden. A card
+    is one tap target: the 38 × 38 icon tile (subtle surface, radius 12,
+    the topic's own icon in the link colour), the title (`titleMedium`
+    17 / 800, −0.25), the description (13 / 400), the status (11 / 600)
+    and a link-coloured chevron; padding 15 × 17, radius 22, 12 apart.
+    Long text wraps; no ellipsis anywhere.
+  - **Status (N18, Q8):** "Not started yet" with no history, otherwise
+    `formatTopicStatsLine(practiced, weakSpotCount)`, as before. The
+    activity bar and its "Practice activity level" label are gone; no
+    score, percentage, streak or level.
+  - **Length picker:** the title "How many questions?" at the brief's 800
+    (was 600, `practice_length_picker.dart`); layout unchanged, the slider
+    and dial stay #B4C8FF in dark mode.
+  - No search or filter.
+- **[Copy] Old → new**
+  - App bar title "Topic Practice" → the page title "Topic Practice".
+  - New: "Choose a topic to work on.", "Premium access", "Grammar
+    topics", "N topics" (with "1 topic" for one).
+  - "Not started yet": same words, no longer italic. The stats line
+    ("N practiced · N weak spots") is unchanged.
+  - Removed: the activity bar's semantics label "Practice activity
+    level".
+  - Unchanged: the topic titles and descriptions, "Preparing your
+    questions…", "How many questions?".
+- **[Deliberate departures from the mockup]**
+  - The topic descriptions stay `kTopics`' own, not the mockup's shorter
+    lines: `proxy/src/topics.ts` mirrors them exactly and builds the AI
+    prompt from its copy, so changing the client's would break that mirror
+    and changing both would change the prompts.
+  - The back button is Flutter's `BackButton` (its "Back" tooltip and the
+    platform's back icon: a chevron on iOS), not the mockup's arrow: it is
+    the control the app's tests and assistive technology already know.
+  - "Grammar topics" is the app's `SectionTitle` (20 / 800), not the
+    mockup's 16.
+  - The status icon is an outline circle before the first practice and a
+    check circle after (the mockup shows only the first).
+  - The mockup's narrow-screen tweaks (a 35 pt tile, a 16 pt title) are
+    not applied; sizes follow the text size setting.
+  - No intermediate "Start practice" dialog: the mockup's dialog is a demo
+    link, as the brief says.
+  - The generating state is unchanged (a plain app bar over the loading
+    view).
+- **[Tests]** `flutter analyze` clean; **1,630 passed, 0 failed** (1,609
+  after Batch 8).
+  - New: `topic_practice_screen_test.dart` (13: the header's style; every
+    topic in order with the real count; both status states and no bar;
+    one tap target per card; a tap opens the existing length picker; no
+    paywall or lock, the label not tappable; stats read again after a
+    practice set; 320 / 390 / 430 pt × Large × light and dark with long
+    stats, no overflow or ellipsis); the picker title's weight;
+    `tab_switcher_test.dart` (above).
+  - Changed, with the reason:
+    - `tab_fade_through_test.dart` → `tab_switcher_test.dart`: the widget
+      it tested became `TabSwitcher`; its fade checks are kept, the slide
+      and wiring checks added.
+    - `practice_launch_consent_test.dart`, `practice_launch_daily_cap_test.dart`,
+      `practice_launch_free_tier_test.dart`: they tapped "the first topic
+      card" as `find.byType(InkWell).first`, which is now the back button;
+      they find the card by its key. Their assertions are unchanged.
+- **[Renders]** `docs/design/1.2.0/batch9/topics_390_light_dark_started.jpg`
+  (390 pt, light, dark, and light with two topics practised; real font).
+- **[Not measured]** On a device:
+  - the card's slide (320 ms) and a nav bar tap during it;
+  - Topic Practice in both themes, the back tile, the iOS swipe back,
+    long titles at Large text, the generating state;
+  - the length picker's title.
