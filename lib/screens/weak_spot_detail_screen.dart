@@ -374,6 +374,7 @@ class _PracticeAction extends StatelessWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onLockedTap,
+              style: forwardButtonStyle(context),
               icon: const Icon(Icons.lock_rounded, size: 17),
               label: const Text('Practice with Premium'),
             ),
@@ -393,6 +394,7 @@ class _PracticeAction extends StatelessWidget {
           width: double.infinity,
           child: FilledButton(
             onPressed: onPractice,
+            style: forwardButtonStyle(context),
             child: Row(
               children: [
                 Expanded(

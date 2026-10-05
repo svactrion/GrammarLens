@@ -178,6 +178,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
+                style: forwardButtonStyle(context),
                 onPressed: () => Navigator.of(context).pop(_selected),
                 child: Text('Start ${_selected.questionCount} questions'),
               ),

@@ -342,6 +342,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     'will show up here.',
                 ctaLabel: 'Go to Daily Test',
                 onCta: widget.onGoToPractice,
+                ctaStyle: forwardButtonStyle(context),
               ),
             ),
           );

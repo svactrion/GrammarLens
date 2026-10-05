@@ -272,6 +272,24 @@ ButtonStyle destructiveButtonStyle(ColorScheme colorScheme) =>
       foregroundColor: colorScheme.onDestructive,
     ).copyWith(side: const WidgetStatePropertyAll(BorderSide.none));
 
+/// The filled button of a screen's one main forward action, on a neutral
+/// surface (owner's button rule, 2026-10-06): brandOrange with its onOrange
+/// label (6.93:1 light, 7.71:1 dark), the disabled pairing, and no edge.
+/// The theme's filled button stays navy for actions on an orange surface
+/// and for secondary, helper and exit actions; [destructiveButtonStyle]
+/// for destructive ones. Like the red button, it drops the dark mode
+/// #5C7CFA edge, which belongs to the navy fill only.
+ButtonStyle forwardButtonStyle(BuildContext context) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final palette = AppPalette.of(context);
+  return FilledButton.styleFrom(
+    backgroundColor: colorScheme.primary,
+    foregroundColor: colorScheme.onPrimary,
+    disabledBackgroundColor: palette.disabledFill,
+    disabledForegroundColor: palette.disabledLabel,
+  ).copyWith(side: const WidgetStatePropertyAll(BorderSide.none));
+}
+
 /// Semantic feedback colors for the results screen, kept out of
 /// [ColorScheme] (which only has roles for the brand palette) via Flutter's
 /// [ThemeExtension] mechanism — the idiomatic way to add app-specific theme

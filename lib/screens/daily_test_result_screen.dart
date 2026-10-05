@@ -243,6 +243,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         // N36: no exit confetti any more (the celebration is in the
         // layer); the label and the way on stay.
         onPressed: _leave,
+        style: forwardButtonStyle(context),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -253,11 +254,17 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         ),
       );
     }
+    final seeClimb = !widget.isDay0 &&
+        !widget.dailyTestSet.isCompleted &&
+        _completion.step > 0;
     return FilledButton(
       onPressed: _leave,
+      // The way on to the climb is the screen's forward action (orange);
+      // "Back to Home" is an exit and stays navy (owner's button rule).
+      style: seeClimb ? forwardButtonStyle(context) : null,
       child: Text(widget.isDay0
           ? 'Continue'
-          : !widget.dailyTestSet.isCompleted && _completion.step > 0
+          : seeClimb
               ? 'See your climb'
               : 'Back to Home'),
     );
