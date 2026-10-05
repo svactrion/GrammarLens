@@ -9621,3 +9621,107 @@ question screen, Profile and Topic Practice are not touched.
   - the navy card and its orange button in both themes;
   - the hero's shadow in light mode, which is subtle at 16 %;
   - the Home weak spot cards and the call-out's ripple.
+
+## 2026-10-05 (1.2.0 redesign — Batch 6: the font weight fix, the hero's shadow, tab transitions; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 5 on the device and
+approved** the Review used card, Home's weak spot cards and the call-out.
+
+State, routing, premium/quota checks, AI/proxy calls, storage, event
+definitions and gamification math are unchanged.
+
+- **[1] Font weight: H1 confirmed on the device, and fixed.**
+  - **Diagnosis, in order** (Batch 5):
+    - H2 (a local style lighter than the theme) was ruled out: the
+      headings resolved to 800–900 from the theme.
+    - H3 (rasterization or letter spacing) was not supported: "GrammarLens"
+      at 34 / 900 / −1.4 measures 215.4 in both the mockup and Flutter.
+    - H1 was left.
+  - **Device evidence (owner, iPhone 14 Plus, debug build, the Theme
+    Preview weight table).** The "FontWeight only" column kept one
+    thickness and width from 200 to 900, while "FontVariation only" and
+    "both" grew row by row. On iOS, `FontWeight` does not drive
+    `NunitoSans-Variable.ttf`'s `wght` axis. All text was the default
+    instance (ExtraLight 200) with synthetic thickening, and has been
+    since 1.0.0. The test engine resolves weights, so no test could show
+    it.
+  - **Fix:**
+    - `wghtFor()` and `TextStyle.withWeight()` in `theme.dart` set
+      `fontWeight` and `FontVariation('wght', n)` together.
+    - Every text theme style is built through it.
+    - So is every local weight in `lib/`: **87 call sites in 35 files,
+      36 `lib/` files in all** with `theme.dart`.
+    - Converted by a script that rewrites `copyWith(…, fontWeight: X, …)`
+      / `TextStyle(…, fontWeight: X, …)` into `….withWeight(X)…`, keeping
+      the other arguments. Two `const` declarations became `final`; one
+      `const Text` lost its `const`.
+  - **Question-screen exception (owner-approved).** Only the weight token
+    changed on six lines:
+    - `practice_screen.dart:217, :235`;
+    - `daily_test_screen.dart:328, :344`;
+    - `question_app_bar.dart:122, :150`.
+
+    The owner extended the original three: `:235`, `:344` and `:150` were
+    the instruction (w700) and the counter (w700), and unconverted the
+    instruction would have dropped to 400. Each of the three files also
+    needed `import '../theme.dart';` for the helper. They render with
+    their intended weights, unchanged.
+  - **Kept raw, marked:** the Theme Preview table's FontWeight and "both"
+    samples, which are what the device check reads.
+  - **(f) Styles with no weight:**
+    - the `Text` styles in `daily_test_screen`, `practice_length_picker`
+      and the preview's width labels take the ambient `bodyMedium` weight
+      together with its `wght` (tested);
+    - Premium's text measuring merges the ambient style, and its styles
+      carry `wght`;
+    - the only one that would not inherit is a measuring fallback in
+      `premium_screen.dart` used only without a theme.
+  - **(h) No existing test changed.** The test engine already drew real
+    weights. The overflow tests at 320 / 390 / 430 pt with Large text
+    pass, and so do real-font renders of Home (390 light and dark, 320
+    Large) and Review.
+  - **Guard:** `test/font_weight_guard_test.dart`:
+    - no raw `fontWeight:` in `lib/` outside the marked lines; checked to
+      fail on a new raw override;
+    - every text theme style's `wght` equals its weight, in both themes and
+      all text sizes;
+    - `withWeight` sets both;
+    - an unweighted `Text` style inherits a matching pair.
+  - **Roadmap:** a known issue, the same bug in 1.0.0 and 1.1.0; carrying
+    the fix into 1.1.0 is the owner's decision, not done now.
+- **[2] Home's hero: stronger in light, brighter in dark.** The owner did
+  not notice the light shadow. Before → after:
+  - **Light backlight:** `#483018` 16 % → **30 %**, its centre lower (0.12
+    → 0.25).
+  - **New light ground shadow** (`AppPalette.heroGround`): a blurred
+    ellipse under the hero, 88 × 16 pt, `#483018` at **32 %**, σ 6. Its
+    visible blur reaches about 2 pt past the square's sides and about 8 pt
+    below it: inside the 8 pt gap to the greeting and the 12 pt gap to the
+    card, and well inside the screen (tested at 320 and 430 pt, Large).
+  - **Dark glow:** `#FF8A3D` 22 % → **30 %**; no ground shadow in dark.
+  - Static. Beside the `Hero`, not in it.
+  - Real-font before/after renders at 390 pt, light and dark, were
+    compared.
+- **[3] Tab switches fade through.** `TabFadeThrough` wraps the shell's
+  `IndexedStack`, so every switch gets it: the nav bar, Home's call-out
+  and Review's "Go to Daily Test".
+  - The tab being shown fades in and settles from **0.98 scale over
+    220 ms, `Curves.easeOut`**. The tab being left goes at once, so two
+    tabs are never drawn together.
+  - Nothing is rebuilt: State, scroll position and loaded data are kept
+    (tested with the same State object and the same scroll offset).
+  - The nav bar's selection updates at once. A second switch
+    mid-transition restarts it for the new tab. With reduce motion it is
+    immediate.
+  - A tab switch fires no analytics event, before or after.
+- **[Tests]** `flutter analyze` clean; **1,576 passed, 0 failed** (1,568
+  before this batch).
+  - New: `font_weight_guard_test.dart` (4) and `tab_fade_through_test.dart`
+    (4). The hero test now also covers the ground shadow.
+  - No existing assertion changed.
+- **[Not measured]** On a device:
+  - the headings and body text at their real weights (and any line that
+    now wraps differently because the text is wider: the widget tests'
+    overflow checks use the test font, which is wider still);
+  - the hero in light and dark;
+  - the tab fade's feel.
