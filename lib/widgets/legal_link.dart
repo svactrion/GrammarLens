@@ -13,7 +13,13 @@ class LegalLink extends StatelessWidget {
   final String label;
   final String url;
 
-  const LegalLink({super.key, required this.label, required this.url});
+  /// No side padding, so the label starts at the text edge above it (a link
+  /// under a paragraph, final screens A3); the target stays at least 44 pt
+  /// tall and wide.
+  final bool flush;
+
+  const LegalLink(
+      {super.key, required this.label, required this.url, this.flush = false});
 
   Future<void> _open() async {
     final uri = Uri.parse(url);
@@ -31,6 +37,9 @@ class LegalLink extends StatelessWidget {
       // colorScheme.primary, which is the page's own orange in light mode.
       style: TextButton.styleFrom(
         foregroundColor: Theme.of(context).colorScheme.secondary,
+        padding: flush ? EdgeInsets.zero : null,
+        minimumSize: flush ? const Size(44, 44) : null,
+        tapTargetSize: flush ? MaterialTapTargetSize.shrinkWrap : null,
       ),
       onPressed: url.isEmpty ? null : _open,
       child: Text(label),

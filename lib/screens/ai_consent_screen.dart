@@ -96,6 +96,7 @@ class AiConsentScreen extends StatelessWidget {
                     child: LegalLink(
                       label: 'Privacy Policy',
                       url: AppLinks.privacyPolicyUrl,
+                      flush: true,
                     ),
                   ),
                 ],
