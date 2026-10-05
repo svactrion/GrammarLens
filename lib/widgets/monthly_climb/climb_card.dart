@@ -60,10 +60,13 @@ class ClimbCard extends StatelessWidget {
   /// The frame's and the plaque's edge width (the brief: 1.5).
   static const outlineWidth = 1.5;
 
-  /// The plaque's padding inside its edge (the brief: 8 above and below,
-  /// 16 at the sides).
+  /// The plaque's padding inside its edge: the brief's 8 above and below;
+  /// 28 at the sides, 12 more than the brief's 16 (owner, 2026-10-05: a
+  /// wider plaque). Measured at 320 pt (a 292 pt card): 234.5 pt wide at
+  /// Large text, 289.0 pt at Large with a 1.3x system text size, so it
+  /// stays on one line; 32 would reach 297 pt there.
   static const _plaquePadding =
-      EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+      EdgeInsets.symmetric(horizontal: 28, vertical: 8);
 
   static const plaqueKey = ValueKey('climb_card_plaque');
   static const monthKey = ValueKey('climb_card_month');
