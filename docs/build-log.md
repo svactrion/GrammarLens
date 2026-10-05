@@ -10472,9 +10472,9 @@ touched; Profile only gets the name limit.
     step's main action).
   - The privacy line keeps the facts that are true now (above), not the
     mockup's two short sentences.
-- **[Tests]** `flutter analyze` clean; **1,686 passed, 0 failed** (1,659
+- **[Tests]** `flutter analyze` clean; **1,687 passed, 0 failed** (1,659
   after Batch 10).
-  - New (27 cases):
+  - New (28 cases):
     - `question_v2_test`: capitals by type with autocorrect off (1); the
       Daily Test case also checks capitalisation.
     - `onboarding_screen_test`, rewritten (13 definitions, 20 cases, real
@@ -10514,9 +10514,11 @@ touched; Profile only gets the name limit.
       the capped name kept whole and wrapping.
     - `analytics_service_test`'s Firebase-limits test also sets
       `learning_goal`.
+    - `app_resume_test` (1): a finished onboarding with the goal skipped
+      opens Home, not Welcome, and a launch sets no `learning_goal`.
   - "Completed onboarding is not shown again" is the existing rule (a
-    saved profile is the gate, `user_profile.dart`); covered by the
-    existing app tests, unchanged.
+    saved profile is the gate, `user_profile.dart`), now also checked with
+    a skipped goal (above).
 - **[Renders]** `tool/design_measure/v120/onboarding_render_test.dart` →
   `docs/design/1.2.0-additional/batch11/`: both steps at 390 pt, step 1
   with a 336 pt keyboard, the sheet, and 320 pt at Large (step 1 with a

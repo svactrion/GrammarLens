@@ -31,9 +31,11 @@ class _CountingStorage extends StorageService {
     return 0;
   }
 
+  LearningGoal? goal = LearningGoal.general;
+
   @override
   Future<UserProfile?> getUserProfile() async =>
-      const UserProfile(name: 'Ada', learningGoal: LearningGoal.general);
+      UserProfile(name: 'Ada', learningGoal: goal);
 
   @override
   Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async {
@@ -149,5 +151,24 @@ void main() {
     expect(storage.climbReads, launch.climb + 1);
     // The cleanup is launch-only: a resume never runs it again.
     expect(storage.staleCleanups, 1);
+  });
+
+  testWidgets(
+      'a finished onboarding, even with the goal skipped, opens Home, not '
+      'Welcome, and a launch sets no learning_goal (it is set once, at '
+      'onboarding)', (tester) async {
+    final sink = RecordingAnalyticsSink();
+    final storage = _CountingStorage()..goal = null;
+    await tester.pumpWidget(GrammarLensApp(
+      storageService: storage,
+      analyticsService: AnalyticsService(sink: sink),
+      clock: () => DateTime(2026, 1, 1, 9),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(_greeting('Good morning, Ada'), findsOneWidget);
+    expect(find.text('Get started'), findsNothing);
+    expect(sink.userProperties.containsKey('learning_goal'), isFalse);
+    expect(sink.named('onboarding_completed'), isEmpty);
   });
 }
