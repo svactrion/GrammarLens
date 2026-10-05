@@ -1,6 +1,7 @@
 // Additional screens Batch 12: the 1.2.0 paywall with the real font, light
 // and dark: annual selected, monthly selected, the comparison open, and the
-// not-eligible wording. Prices are the live App Store prices with the
+// not-eligible wording; Batch 13 adds Large text at 390 and 375 × 667 (the
+// footer's rhythm). Prices are the live App Store prices with the
 // configured trials (annual 1 week, monthly 3 days); nothing from the store.
 //
 //   DESIGN_MEASURE_OUT=build/design_measure/v120_paywall \
@@ -11,6 +12,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/user_profile.dart';
@@ -75,16 +77,36 @@ typedef _Case = ({
   bool compare,
   TrialEligibility eligibility,
   double scrollTo,
+  AppTextSize text,
 });
 
 const List<_Case> _cases = [
+  (
+    name: '390_annual_large',
+    size: Size(390, 844),
+    monthly: false,
+    compare: false,
+    eligibility: TrialEligibility.eligible,
+    scrollTo: 0,
+    text: AppTextSize.large
+  ),
+  (
+    name: '375x667_annual_large',
+    size: Size(375, 667),
+    monthly: false,
+    compare: false,
+    eligibility: TrialEligibility.eligible,
+    scrollTo: 0,
+    text: AppTextSize.large
+  ),
   (
     name: '390_annual',
     size: Size(390, 844),
     monthly: false,
     compare: false,
     eligibility: TrialEligibility.eligible,
-    scrollTo: 0
+    scrollTo: 0,
+    text: AppTextSize.medium,
   ),
   (
     name: '390_annual_cards',
@@ -92,7 +114,8 @@ const List<_Case> _cases = [
     monthly: false,
     compare: false,
     eligibility: TrialEligibility.eligible,
-    scrollTo: 400
+    scrollTo: 400,
+    text: AppTextSize.medium,
   ),
   (
     name: '390_monthly_cards',
@@ -100,7 +123,8 @@ const List<_Case> _cases = [
     monthly: true,
     compare: false,
     eligibility: TrialEligibility.eligible,
-    scrollTo: 400
+    scrollTo: 400,
+    text: AppTextSize.medium,
   ),
   (
     name: '390_compare_open',
@@ -108,7 +132,8 @@ const List<_Case> _cases = [
     monthly: false,
     compare: true,
     eligibility: TrialEligibility.eligible,
-    scrollTo: 330
+    scrollTo: 330,
+    text: AppTextSize.medium,
   ),
   (
     name: '390_not_eligible_cards',
@@ -116,7 +141,8 @@ const List<_Case> _cases = [
     monthly: false,
     compare: false,
     eligibility: TrialEligibility.ineligible,
-    scrollTo: 400
+    scrollTo: 400,
+    text: AppTextSize.medium,
   ),
   (
     name: '375x667_annual',
@@ -124,7 +150,8 @@ const List<_Case> _cases = [
     monthly: false,
     compare: false,
     eligibility: TrialEligibility.eligible,
-    scrollTo: 0
+    scrollTo: 0,
+    text: AppTextSize.medium,
   ),
 ];
 
@@ -149,7 +176,7 @@ void main() {
           key: key,
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: buildAppTheme(b),
+            theme: buildAppTheme(b, textSize: c.text),
             home: PremiumScreen(
               storageService: _Storage(),
               analyticsService: AnalyticsService(),

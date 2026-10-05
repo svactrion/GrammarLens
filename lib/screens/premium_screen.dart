@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../data/topics.dart';
@@ -839,24 +840,38 @@ class _FooterLinks extends StatelessWidget {
   final bool restoring;
   final VoidCallback onRestore;
 
-  const _FooterLinks({required this.restoring, required this.onRestore});
+  /// In the footer: the row is only [_footerRowHeight] tall and each
+  /// target reaches 44 pt upward, into the terms above (see [_TapArea]).
+  final bool compact;
+
+  const _FooterLinks({
+    required this.restoring,
+    required this.onRestore,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     // The three at the mockup's 11 / 700, so they share one row on a phone.
-    return TextButtonTheme(
+    final row = TextButtonTheme(
       data: TextButtonThemeData(
         style: _footerTextButtonStyle.copyWith(
           textStyle: WidgetStatePropertyAll(
               theme.textTheme.labelSmall?.withWeight(FontWeight.w700)),
+          minimumSize: compact
+              ? const WidgetStatePropertyAll(Size(44, _footerRowHeight))
+              : null,
         ),
       ),
       child: Wrap(
         alignment: WrapAlignment.center,
+        // When the three wrap (narrow or large text), a second row's
+        // targets reach up into this gap (see below).
+        runSpacing: compact ? _footerTargetHeight - _footerRowHeight : 0,
         children: [
-          TextButton(
+          _link(TextButton(
             key: PremiumScreen.restoreKey,
             // Required wherever a subscription is sold (App Store), in
             // every state, whether or not prices loaded.
@@ -865,13 +880,108 @@ class _FooterLinks extends StatelessWidget {
               foregroundColor: colorScheme.secondary,
             ),
             child: Text(restoring ? 'Restoring…' : 'Restore Purchases'),
-          ),
-          const LegalLink(label: 'Terms of Service', url: AppLinks.termsUrl),
-          const LegalLink(
-              label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
+          )),
+          _link(const LegalLink(
+              label: 'Terms of Service', url: AppLinks.termsUrl)),
+          _link(const LegalLink(
+              label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl)),
         ],
       ),
     );
+    // The whole row reaches up over the terms (for the first row); each
+    // link reaches up into the run gap (for a second row, if any).
+    return compact ? _RowTapArea(child: row) : row;
+  }
+
+  Widget _link(Widget button) =>
+      compact ? _TapArea(extendUp: true, child: button) : button;
+}
+
+/// The footer's text rows (the links, "Maybe later") are drawn this tall,
+/// so the gaps between them match the gap above them (owner, after
+/// Batch 12); [_TapArea] keeps each target 44 pt.
+const double _footerRowHeight = 30;
+
+/// Keeps a short footer button's target [_footerTargetHeight] tall by
+/// taking taps in the empty or non-interactive space right above
+/// ([extendUp]) or below it: the links take the renewal terms' lower edge
+/// and the small gap above them (or the gap between two rows when they
+/// wrap); "Maybe later" takes the empty margin under it. A tap there is
+/// handed on as if it landed on the nearest edge, so the button under that
+/// point gets it; the drawn size, and so the visible rhythm, does not
+/// change. A tap is only seen where every ancestor contains it: the links'
+/// row passes the space above itself through with [_RowTapArea], and the
+/// bottom margin is a spacer inside the footer's column.
+class _TapArea extends SingleChildRenderObjectWidget {
+  final bool extendUp;
+
+  const _TapArea({required this.extendUp, required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderTapArea(extendUp);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderTapArea renderObject) {
+    renderObject.extendUp = extendUp;
+  }
+}
+
+class _RenderTapArea extends RenderProxyBox {
+  _RenderTapArea(this.extendUp);
+
+  bool extendUp;
+
+  double get _extension =>
+      (_footerTargetHeight - size.height).clamp(0, _footerTargetHeight);
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final top = extendUp ? -_extension : 0.0;
+    final bottom = size.height + (extendUp ? 0 : _extension);
+    if (position.dx < 0 ||
+        position.dx >= size.width ||
+        position.dy < top ||
+        position.dy >= bottom) {
+      return false;
+    }
+    final inside = Offset(
+        position.dx, position.dy.clamp(0.5, size.height - 0.5).toDouble());
+    if (child != null && child!.hitTest(result, position: inside)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
+  }
+}
+
+/// Lets taps in the [_footerTargetHeight] − [_footerRowHeight] points above
+/// the links' row reach the links themselves (their own [_TapArea]s decide
+/// which one); a [Wrap] alone ignores any point outside its box.
+class _RowTapArea extends SingleChildRenderObjectWidget {
+  const _RowTapArea({required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderRowTapArea();
+}
+
+class _RenderRowTapArea extends RenderProxyBox {
+  static const double _reach = _footerTargetHeight - _footerRowHeight;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (position.dy >= 0) return super.hitTest(result, position: position);
+    if (position.dy < -_reach ||
+        position.dx < 0 ||
+        position.dx >= size.width ||
+        child == null) {
+      return false;
+    }
+    if (child!.hitTestChildren(result, position: position)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
   }
 }
 
@@ -945,10 +1055,13 @@ class _PremiumFooter extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
+        // The bottom inset is a spacer inside the column instead, so
+        // "Maybe later"'s target can reach into it.
+        bottom: false,
         child: _capped(
           Padding(
             padding:
-                EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 4),
+                EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1003,19 +1116,40 @@ class _PremiumFooter extends StatelessWidget {
                     ),
                   ),
                 ],
-                if (showLinks)
-                  _FooterLinks(restoring: restoring, onRestore: onRestore),
+                // One rhythm under the button: the terms, the links and
+                // "Maybe later" each about 14 pt apart (owner, after Batch
+                // 12; "Maybe later" used to sit 27.5 pt under the links).
+                if (showLinks) ...[
+                  const SizedBox(height: 7),
+                  _FooterLinks(
+                      restoring: restoring,
+                      onRestore: onRestore,
+                      compact: true),
+                ],
                 if (showMaybeLater)
-                  Center(
-                    child: TextButton(
-                      style: _footerTextButtonStyle.copyWith(
-                        foregroundColor: WidgetStatePropertyAll(
-                            colorScheme.onSurfaceVariant),
+                  _TapArea(
+                    extendUp: false,
+                    child: Center(
+                      child: TextButton(
+                        style: _footerTextButtonStyle.copyWith(
+                          minimumSize: const WidgetStatePropertyAll(
+                              Size(44, _footerRowHeight)),
+                          foregroundColor: WidgetStatePropertyAll(
+                              colorScheme.onSurfaceVariant),
+                        ),
+                        onPressed: onMaybeLater,
+                        child: const Text('Maybe later'),
                       ),
-                      onPressed: onMaybeLater,
-                      child: const Text('Maybe later'),
                     ),
                   ),
+                // The bottom margin: the home indicator's inset plus 4, and
+                // never less than "Maybe later"'s target needs below it.
+                SizedBox(
+                  height: (MediaQuery.paddingOf(context).bottom + 4)
+                      .clamp(_footerTargetHeight - _footerRowHeight,
+                          double.infinity)
+                      .toDouble(),
+                ),
               ],
             ),
           ),

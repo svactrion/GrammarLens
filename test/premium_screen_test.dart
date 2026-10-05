@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart' show HitTestResult;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
@@ -1975,9 +1976,31 @@ void main() {
         })> measure(WidgetTester tester) async {
       final disclosureFinder = find.textContaining('auto-renews');
       // A text button's tappable area is the ink well inside it.
-      Rect target(String label) => tester.getRect(find.descendant(
-          of: find.widgetWithText(TextButton, label),
-          matching: find.byType(InkWell)));
+      // Since the 2026-10-05 footer rhythm (Batch 13) a footer text button
+      // is drawn 30 pt tall and its target reaches 44 pt into the space
+      // around it, so the target is found by hit-testing, not by the ink
+      // well's box.
+      Rect target(String label) {
+        final button = find.widgetWithText(TextButton, label);
+        final renderButton = tester.renderObject(button);
+        final box = tester.getRect(button);
+        bool hits(double y) {
+          final result = HitTestResult();
+          tester.binding.hitTestInView(
+              result, Offset(box.center.dx, y), tester.view.viewId);
+          return result.path.any((e) => e.target == renderButton);
+        }
+
+        var top = box.center.dy, bottom = box.center.dy;
+        while (hits(top - .5)) {
+          top -= .5;
+        }
+        while (hits(bottom + .5)) {
+          bottom += .5;
+        }
+        return Rect.fromLTRB(box.left, top, box.right, bottom + .5);
+      }
+
       return (
         footer: tester.getRect(find.byKey(const Key('premiumFooter'))),
         scrollRegion: tester.getRect(find.ancestor(
@@ -2102,15 +2125,18 @@ void main() {
       // Button to disclosure: a small gap, never more than 6 pt.
       expect(m.disclosure.top - m.cta.bottom, inInclusiveRange(0, 6));
       // Disclosure to the links row, and the links row to "Maybe later":
-      // the targets are stacked with no space between them.
+      // the targets are stacked with no space between them. Since Batch 13
+      // the links' targets reach up over the (non-interactive) disclosure's
+      // lower edge, so they may start above its bottom: still no dead gap.
       final linksTop = m.privacyTarget.top;
-      expect(linksTop - m.disclosure.bottom, inInclusiveRange(0, 1));
+      expect(linksTop - m.disclosure.bottom, inInclusiveRange(-14, 1));
       expect(m.maybeLaterTarget.top - m.privacyTarget.bottom,
           inInclusiveRange(0, 1));
       // Padding above the button and under "Maybe later".
       expect(m.cta.top - m.footer.top, lessThanOrEqualTo(8));
       expect(m.footer.bottom - m.maybeLaterTarget.bottom, lessThanOrEqualTo(4));
-      // The whole footer, 375x667 Medium: 196 pt (218 before).
+      // The whole footer, 375x667 Medium: 165 pt since Batch 13 (176 in
+      // Batch 12, 196 before 1.2.0, 218 before that).
       expect(m.footer.height, lessThanOrEqualTo(196));
     });
 
@@ -2538,6 +2564,65 @@ void main() {
       await scrollAndTap(tester, find.text('Monthly'));
       expect(ctaLabel(tester), 'Subscribe for €4.99 per month',
           reason: 'the monthly product has no introductory offer');
+    });
+
+    testWidgets(
+        'footer rhythm (Batch 13): the terms, the links and "Maybe later" '
+        'sit about 14 pt apart, while a tap up to 44 pt still reaches each '
+        'button: above Restore (over the terms) and below "Maybe later"',
+        (tester) async {
+      var done = false;
+      final service = _FakeSubscriptionService(
+          offering: _offeringWithBothPlans(), restoreResult: true);
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      tester.view.padding = const FakeViewPadding(top: 47 * 3, bottom: 34 * 3);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => PremiumScreen(
+                    storageService: _FakeStorageServiceForAvatar(),
+                    analyticsService: _FakeAnalyticsService(),
+                    analyticsSource: AnalyticsService.paywallSourceHome,
+                    subscriptionService: service,
+                    onDone: () => done = true,
+                  ),
+                )),
+                child: const Text('open premium'),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open premium'));
+      await tester.pumpAndSettle();
+      final terms = tester.getRect(find.textContaining('auto-renews'));
+      final links = tester.getRect(find.text('Terms of Service'));
+      final later = tester.getRect(find.text('Maybe later'));
+      expect(links.top - terms.bottom, inInclusiveRange(12, 16));
+      expect(later.top - links.bottom, inInclusiveRange(10, 16));
+
+      // 13 pt above Restore's drawn button: over the terms' lower edge.
+      final restore = tester.getRect(find.byKey(PremiumScreen.restoreKey));
+      await tester.tapAt(Offset(restore.center.dx, restore.top - 13));
+      await tester.pumpAndSettle();
+      expect(find.text('Purchases restored — full access is active.'),
+          findsOneWidget);
+
+      // 13 pt below "Maybe later"'s drawn button: the empty margin.
+      final laterButton = tester.getRect(find.ancestor(
+          of: find.text('Maybe later'), matching: find.byType(TextButton)));
+      expect(laterButton.height, lessThan(44));
+      await tester
+          .tapAt(Offset(laterButton.center.dx, laterButton.bottom + 13));
+      await tester.pumpAndSettle();
+      expect(done, isTrue);
+      expect(find.byType(PremiumScreen), findsNothing);
     });
 
     testWidgets('a second tap while purchasing sends no second request',
