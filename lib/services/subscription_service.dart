@@ -7,7 +7,17 @@ import '../utils/debug_tools.dart';
 
 /// Outcome of a purchase attempt, for a future paywall screen to react to
 /// without needing to know RevenueCat's own exception/error-code shape.
-enum PurchaseOutcome { success, failure, cancelled }
+///
+/// [pending]: the store accepted the request but has not charged yet (Ask
+/// to Buy, or a payment that needs approval). Not a failure and not access:
+/// the entitlement arrives through [SubscriptionService.addAccessListener]
+/// if and when it is approved (owner decision O10).
+enum PurchaseOutcome { success, failure, cancelled, pending }
+
+/// Whether this user can get a product's introductory offer (its free
+/// trial), from RevenueCat's eligibility check. [unknown] covers a failed
+/// or unconfigured check: a paywall must then promise no trial.
+enum TrialEligibility { eligible, ineligible, unknown }
 
 /// Called with the current [SubscriptionService.hasFullAccess]-equivalent
 /// value whenever it changes — see [SubscriptionService.addAccessListener].
@@ -112,9 +122,14 @@ class SubscriptionService {
       await Purchases.purchase(PurchaseParams.package(package));
       return PurchaseOutcome.success;
     } on PlatformException catch (e) {
-      final cancelled = PurchasesErrorHelper.getErrorCode(e) ==
-          PurchasesErrorCode.purchaseCancelledError;
-      return cancelled ? PurchaseOutcome.cancelled : PurchaseOutcome.failure;
+      final code = PurchasesErrorHelper.getErrorCode(e);
+      if (code == PurchasesErrorCode.purchaseCancelledError) {
+        return PurchaseOutcome.cancelled;
+      }
+      if (code == PurchasesErrorCode.paymentPendingError) {
+        return PurchaseOutcome.pending;
+      }
+      return PurchaseOutcome.failure;
     } catch (_) {
       return PurchaseOutcome.failure;
     }
@@ -152,6 +167,43 @@ class SubscriptionService {
       return offerings.current;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Whether this user can get each product's introductory offer, by
+  /// product id. A product's `introductoryPrice` only says the offer exists;
+  /// StoreKit grants it once per subscription group, so a user who already
+  /// had a trial is not eligible (build log 2026-09-17). RevenueCat's own
+  /// advice for an undetermined answer is to show the regular price, so
+  /// anything short of a clear answer is [TrialEligibility.unknown]:
+  /// not configured, a failed call, or RevenueCat's own "unknown".
+  /// "No intro offer exists" is [TrialEligibility.ineligible].
+  ///
+  /// With [debugFixtureOffering] on (debug builds' pricing preview), every
+  /// product is eligible, so the preview shows the trial wording.
+  Future<Map<String, TrialEligibility>> checkTrialEligibility(
+      List<String> productIds) async {
+    if (debugFixtureOffering != null) {
+      return {for (final id in productIds) id: TrialEligibility.eligible};
+    }
+    final unknown = {for (final id in productIds) id: TrialEligibility.unknown};
+    if (!_configured || productIds.isEmpty) return unknown;
+    try {
+      final result =
+          await Purchases.checkTrialOrIntroductoryPriceEligibility(productIds);
+      return {
+        for (final id in productIds)
+          id: switch (result[id]?.status) {
+            IntroEligibilityStatus.introEligibilityStatusEligible =>
+              TrialEligibility.eligible,
+            IntroEligibilityStatus.introEligibilityStatusIneligible ||
+            IntroEligibilityStatus.introEligibilityStatusNoIntroOfferExists =>
+              TrialEligibility.ineligible,
+            _ => TrialEligibility.unknown,
+          },
+      };
+    } catch (_) {
+      return unknown;
     }
   }
 
