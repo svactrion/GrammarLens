@@ -135,6 +135,10 @@ class HomeScreen extends StatefulWidget {
   /// the old whole-card tap target).
   static const monthCardTodayPeek = 66.0;
 
+  /// The greeting word's size relative to a section title (titleLarge):
+  /// 22 pt at the default text size.
+  static const greetingScale = 1.1;
+
   /// The Daily Test card, for tests that measure or tap it.
   static const dailyTestCardKey = ValueKey('home_daily_test_card');
 
@@ -1124,8 +1128,17 @@ class _HomeScreenState extends State<HomeScreen>
                 child: HomeGreeting(
                   word: timeOfDayGreeting(widget.clock()),
                   name: widget.userName,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  // 22 pt at Medium (owner, after Batch 3: larger): above
+                  // the 20 pt section titles, below the name (24) and the
+                  // brand (34). Derived from titleLarge so it follows the
+                  // text size setting.
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: (theme.textTheme.titleLarge?.fontSize ?? 20) *
+                        HomeScreen.greetingScale,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                   nameStyle: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
@@ -1133,7 +1146,10 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              // 8 pt (the mockup's 6, was 12): at 320 pt and Large text
+              // "Good afternoon," (172.2 pt) then fits beside the hero
+              // (176 pt) instead of breaking by a fraction of a point.
+              const SizedBox(width: 8),
               _HeroButton(avatar: widget.avatar, onTap: widget.onAvatarTap),
             ],
           ),

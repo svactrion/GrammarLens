@@ -1361,6 +1361,39 @@ void main() {
     });
   });
 
+  testWidgets(
+      'the greeting word is larger than a section title and smaller than '
+      'the name and the brand (owner, after Batch 3)', (tester) async {
+    await pumpHome(tester);
+    double size(Finder f) => tester.widget<Text>(f).style!.fontSize!;
+    final greeting = size(find.text('Good morning,'));
+    final name = size(find.text('Ada'));
+    final brand = size(find.text('GrammarLens'));
+    final section = size(find.text('Topic practice'));
+    expect(greeting, closeTo(section * HomeScreen.greetingScale, .01));
+    expect(greeting, greaterThan(section));
+    expect(greeting, lessThan(name));
+    expect(greeting, lessThan(brand));
+  });
+
+  testWidgets('320 pt, Large text: a long name wraps under the greeting',
+      (tester) async {
+    await pumpHome(tester,
+        size: const Size(320, 844),
+        textSize: AppTextSize.large,
+        userName: 'Maximiliana Alexandra Konstantinopoulou');
+    expect(tester.takeException(), isNull);
+    final name = find.text('Maximiliana Alexandra Konstantinopoulou');
+    final paragraph = tester.renderObject<RenderParagraph>(name);
+    expect(paragraph.didExceedMaxLines, isFalse);
+    // More than one line: it wraps instead of running under the hero.
+    final lineHeight = tester.widget<Text>(name).style!.fontSize! *
+        tester.widget<Text>(name).style!.height!;
+    expect(tester.getSize(name).height, greaterThan(lineHeight * 1.5));
+    expect(tester.getRect(name).right,
+        lessThanOrEqualTo(tester.getRect(find.byType(AvatarTile)).left));
+  });
+
   testWidgets('the weak spots heading counts the weak spots shown',
       (tester) async {
     await pumpHome(tester,
