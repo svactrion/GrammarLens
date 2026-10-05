@@ -140,6 +140,9 @@ class HomeScreen extends StatefulWidget {
   /// 22 pt at the default text size.
   static const greetingScale = 1.1;
 
+  /// The soft light behind the hero, for tests.
+  static const heroBacklightKey = ValueKey('home_hero_backlight');
+
   /// The Review call-out's tap target, for tests.
   static const reviewCalloutKey = ValueKey('home_review_callout');
 
@@ -1320,6 +1323,7 @@ class _HeroButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backlight = AppPalette.of(context).heroBacklight;
     // A node of its own (container): without it the label and the button
     // flag would merge into the Home list's node above.
     return Semantics(
@@ -1332,12 +1336,40 @@ class _HeroButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(_size / 2 * 0.6),
         ),
         onTap: onTap,
-        // `homeAvatarHeroTag` is its own tag, distinct from Settings'
-        // `avatarHeroTag` — see that constant's doc comment for why sharing
-        // one tag across both entry points would crash.
-        child: Hero(
-          tag: homeAvatarHeroTag,
-          child: AvatarTile(avatar: avatar, radius: _size / 2),
+        child: SizedBox.square(
+          dimension: _size,
+          child: Stack(children: [
+            // The backlight (owner, Batch 5): a radial gradient inside the
+            // hero's own square, fading to nothing at its edge, so it is
+            // never clipped by the screen edge and never reaches the
+            // greeting. Behind the Hero, not in it, so the flight to the
+            // picker carries only the avatar.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  key: HomeScreen.heroBacklightKey,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      center: const Alignment(0, .12),
+                      radius: .5,
+                      colors: [
+                        backlight,
+                        backlight.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // `homeAvatarHeroTag` is its own tag, distinct from Settings'
+            // `avatarHeroTag` — see that constant's doc comment for why
+            // sharing one tag across both entry points would crash.
+            Hero(
+              tag: homeAvatarHeroTag,
+              child: AvatarTile(avatar: avatar, radius: _size / 2),
+            ),
+          ]),
         ),
       ),
     );

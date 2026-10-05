@@ -361,6 +361,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// pairing itself.
   final Color brandTint;
 
+  /// The soft light behind Home's hero (owner, 1.2.0 Batch 5), the centre
+  /// of a radial gradient that fades out within the hero's square: in light
+  /// mode a shadow in the card shadow's brown (#483018 at 16 %), in dark
+  /// mode a warm glow in the dark brand orange (#FF8A3D at 22 %).
+  final Color heroBacklight;
+
   /// The brief's card and navigation bar shadows.
   final List<BoxShadow> cardShadow;
   final List<BoxShadow> navShadow;
@@ -377,6 +383,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.inputBorder,
     required this.pathOutline,
     required this.brandTint,
+    required this.heroBacklight,
     required this.cardShadow,
     required this.navShadow,
   });
@@ -405,6 +412,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     inputBorder: const Color(0xFF8E8577),
     pathOutline: const Color(0xFFA59F98),
     brandTint: const Color(0x66FAF3EC),
+    heroBacklight: _lightShadowBase.withValues(alpha: .16),
     cardShadow: [
       BoxShadow(
         color: _lightShadowBase.withValues(alpha: .10),
@@ -433,6 +441,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     inputBorder: const Color(0xFF85818B),
     pathOutline: const Color(0xFF777581),
     brandTint: const Color(0x66FAF3EC),
+    heroBacklight: _darkPrimary.withValues(alpha: .22),
     cardShadow: [
       BoxShadow(
         color: _darkShadowBase.withValues(alpha: .17),
@@ -462,6 +471,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? inputBorder,
     Color? pathOutline,
     Color? brandTint,
+    Color? heroBacklight,
     List<BoxShadow>? cardShadow,
     List<BoxShadow>? navShadow,
   }) {
@@ -477,6 +487,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       inputBorder: inputBorder ?? this.inputBorder,
       pathOutline: pathOutline ?? this.pathOutline,
       brandTint: brandTint ?? this.brandTint,
+      heroBacklight: heroBacklight ?? this.heroBacklight,
       cardShadow: cardShadow ?? this.cardShadow,
       navShadow: navShadow ?? this.navShadow,
     );
@@ -497,6 +508,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       inputBorder: Color.lerp(inputBorder, other.inputBorder, t)!,
       pathOutline: Color.lerp(pathOutline, other.pathOutline, t)!,
       brandTint: Color.lerp(brandTint, other.brandTint, t)!,
+      heroBacklight: Color.lerp(heroBacklight, other.heroBacklight, t)!,
       cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t)!,
       navShadow: BoxShadow.lerpList(navShadow, other.navShadow, t)!,
     );

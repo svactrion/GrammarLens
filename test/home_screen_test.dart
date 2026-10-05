@@ -851,6 +851,37 @@ void main() {
     semantics.dispose();
   });
 
+  for (final brightness in Brightness.values) {
+    testWidgets(
+        'the hero\'s backlight (owner, Batch 5): the palette colour, inside '
+        'the hero\'s square, clear of the greeting, ${brightness.name}',
+        (tester) async {
+      for (final width in [320.0, 430.0]) {
+        await pumpHome(tester,
+            brightness: brightness,
+            size: Size(width, 844),
+            textSize: AppTextSize.large);
+        final light = find.byKey(HomeScreen.heroBacklightKey);
+        final context = tester.element(light);
+        final gradient =
+            (tester.widget<DecoratedBox>(light).decoration as BoxDecoration)
+                .gradient! as RadialGradient;
+        expect(gradient.colors.first, AppPalette.of(context).heroBacklight);
+        expect(gradient.colors.last.a, 0);
+        final rect = tester.getRect(light);
+        final hero = tester.getRect(find.byType(AvatarTile));
+        expect(rect, hero, reason: 'the hero\'s own square');
+        expect(rect.right, lessThanOrEqualTo(width));
+        expect(tester.getRect(find.byType(HomeGreeting)).right,
+            lessThanOrEqualTo(rect.left));
+        // Behind the Hero, not inside it: the flight carries the avatar only.
+        expect(find.descendant(of: find.byType(Hero), matching: light),
+            findsNothing);
+        expect(tester.takeException(), isNull);
+      }
+    });
+  }
+
   testWidgets('tapping the avatar calls onAvatarTap', (tester) async {
     var tapped = false;
     await pumpHome(tester, onAvatarTap: () => tapped = true);
