@@ -600,6 +600,11 @@ class StorageService {
     await batch.commit(noResult: true);
   }
 
+  /// A [getWeakSpots] limit that reads every saved weak spot: Premium
+  /// Review's Suggested Focus is chosen from all of them, not from the ten
+  /// the list shows.
+  static const int allWeakSpots = 1000000000;
+
   Future<List<WeakSpot>> getWeakSpots({
     int limit = 10,
     ReviewSortOrder sortOrder = ReviewSortOrder.recent,
