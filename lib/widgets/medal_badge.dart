@@ -44,6 +44,10 @@ class MedalBadge extends StatelessWidget {
 
   final bool earned;
 
+  /// An unearned medal's opacity: [unearnedOpacity] unless the caller asks
+  /// for another (Profile's running month, [MonthlyMedalCollection]).
+  final double fadedOpacity;
+
   /// Whether the stars' room is reserved above the disc (a monthly medal).
   final bool _stars;
 
@@ -53,6 +57,7 @@ class MedalBadge extends StatelessWidget {
     required MedalTier tier,
     required this.disc,
     this.earned = true,
+    this.fadedOpacity = unearnedOpacity,
   })  : asset = MedalArt.monthly(themeId, tier),
         _stars = true;
 
@@ -60,6 +65,7 @@ class MedalBadge extends StatelessWidget {
     super.key,
     required this.disc,
     this.earned = true,
+    this.fadedOpacity = unearnedOpacity,
   })  : asset = MedalArt.welcome,
         _stars = false;
 
@@ -73,8 +79,11 @@ class MedalBadge extends StatelessWidget {
 
   /// The colour matrix of an unearned medal (Flutter's 5 × 4): toward the
   /// Rec. 709 grey by 1 − [unearnedSaturation], at [unearnedOpacity].
-  static List<double> get unearnedMatrix {
-    const s = unearnedSaturation, a = unearnedOpacity;
+  static List<double> get unearnedMatrix => fadedMatrix(unearnedOpacity);
+
+  /// [unearnedMatrix] at opacity [a].
+  static List<double> fadedMatrix(double a) {
+    const s = unearnedSaturation;
     const lr = .2126, lg = .7152, lb = .0722;
     List<double> row(double r0, double g0, double b0) => [
           (1 - s) * lr + s * r0,
@@ -104,7 +113,8 @@ class MedalBadge extends StatelessWidget {
         gaplessPlayback: true);
     if (!earned) {
       image = ColorFiltered(
-          colorFilter: ColorFilter.matrix(unearnedMatrix), child: image);
+          colorFilter: ColorFilter.matrix(fadedMatrix(fadedOpacity)),
+          child: image);
     }
     // The disc sits at the box's bottom; the canvas is centred on it and
     // its transparent margin may reach past the box (nothing visible does).
