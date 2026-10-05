@@ -57,9 +57,6 @@ void main() {
   // DESIGN_MEASURE_PENNANT (RRGGBB): a candidate pennant colour for a
   // theme that recolours it (G10), added to the file name.
   final pennantEnv = Platform.environment['DESIGN_MEASURE_PENNANT'];
-  // DESIGN_MEASURE_PLAQUE_SHARE: the plaque's radius share
-  // (ClimbCard.plaqueRadiusShare), added to the file name (Batch 6).
-  final plaqueEnv = Platform.environment['DESIGN_MEASURE_PLAQUE_SHARE'];
   final pennant = pennantEnv == null
       ? null
       : Color(0xFF000000 | int.parse(pennantEnv, radix: 16));
@@ -72,15 +69,11 @@ void main() {
       for (final day in days) {
         final suffix = (strength == null ? '' : '_strength$strength') +
             (monthEnv == null ? '' : '_$monthEnv') +
-            (pennantEnv == null ? '' : '_pennant$pennantEnv') +
-            (plaqueEnv == null ? '' : '_plaque$plaqueEnv');
+            (pennantEnv == null ? '' : '_pennant$pennantEnv');
         final file = 'home_${screen.toInt()}_${b.name}_day$day$suffix.png';
         testWidgets(file, (tester) async {
           ClimbSavePoints.debugDarkFilterStrengthOverride = strength;
           ClimbSavePoints.debugPennantColorOverride = pennant;
-          ClimbCard.debugPlaqueRadiusShareOverride =
-              plaqueEnv == null ? null : double.parse(plaqueEnv);
-          addTearDown(() => ClimbCard.debugPlaqueRadiusShareOverride = null);
           addTearDown(() => ClimbSavePoints.debugPennantColorOverride = null);
           addTearDown(
               () => ClimbSavePoints.debugDarkFilterStrengthOverride = null);

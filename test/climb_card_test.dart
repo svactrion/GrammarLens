@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
@@ -103,105 +102,57 @@ void main() {
     }
   });
 
-  group('the plaque\'s rounded corners (Batch 6 Batch 0, step 2)', () {
+  // 1.2.0 Batch 2 (owner decision Q16): the stadium plaque replaces the
+  // trail sign, whose corner-radius tests went with it.
+  for (final b in Brightness.values) {
     testWidgets(
-        'its radius is derived from the frame\'s, which stays at the '
-        'pre-1.2.0 card radius', (tester) async {
-      await tester.pumpWidget(_card(Brightness.light));
-      final shape = (tester
-              .widget<DecoratedBox>(find.byKey(ClimbCard.plaqueKey))
-              .decoration as ShapeDecoration)
-          .shape as TrailSignBorder;
-      expect(shape.radius, ClimbCard.frameRadius * ClimbCard.plaqueRadiusShare);
-      // 1.2.0 Batch 1: the app's card radius moved to 24; the mountain card
-      // keeps 20 until the plaque's redesign (Q16).
-      expect(ClimbCard.frameRadius, 20);
-    });
-
-    testWidgets('0.7 asks 14 pt, and every corner gets it at every text size',
-        (tester) async {
-      expect(ClimbCard.frameRadius * ClimbCard.plaqueRadiusShare,
-          closeTo(14, 1e-9));
-      for (final size in AppTextSize.values) {
-        late double h;
-        await tester.pumpWidget(MaterialApp(
-            key: ValueKey(size),
-            theme: buildAppTheme(Brightness.light, textSize: size),
-            home: Builder(builder: (context) {
-              h = ClimbCard.plaqueHeight(context);
-              return const SizedBox();
-            })));
-        final c = TrailSignBorder.corners(Rect.fromLTWH(0, 0, 200, h));
-        expect(TrailSignBorder.fittedRadius(c[0], c[5], c[4], 14),
-            closeTo(14, 1e-9),
-            reason: size.name);
-        expect(TrailSignBorder.fittedRadius(c[5], c[0], c[1], 14),
-            closeTo(14, 1e-9),
-            reason: size.name);
-      }
+        'Q16: the plaque is a stadium on the card surface with a 1.5 pt '
+        'path outline, its title textPrimary 900, ${b.name}', (tester) async {
+      await tester.pumpWidget(_card(b));
+      final context = tester.element(find.byType(ClimbCard));
+      final theme = Theme.of(context);
+      final plaque = tester
+          .widget<DecoratedBox>(find.byKey(ClimbCard.plaqueKey))
+          .decoration as ShapeDecoration;
+      expect(plaque.color, theme.colorScheme.surfaceContainerHigh);
+      final shape = plaque.shape as StadiumBorder;
+      expect(shape.side.color, AppPalette.of(context).pathOutline);
+      expect(shape.side.width, 1.5);
+      final title = tester.widget<Text>(find.text('Mountain of Learning'));
+      expect(title.style!.fontWeight, FontWeight.w900);
+      expect(title.style!.color, theme.colorScheme.onSurface);
     });
 
     testWidgets(
-        'the measuring override changes the radius; unset, the share '
-        'is the constant', (tester) async {
-      addTearDown(() => ClimbCard.debugPlaqueRadiusShareOverride = null);
-      ClimbCard.debugPlaqueRadiusShareOverride = .4;
-      await tester.pumpWidget(_card(Brightness.light));
-      TrailSignBorder shape() => (tester
-              .widget<DecoratedBox>(find.byKey(ClimbCard.plaqueKey))
-              .decoration as ShapeDecoration)
-          .shape as TrailSignBorder;
-      expect(shape().radius, closeTo(8, 1e-9));
-      ClimbCard.debugPlaqueRadiusShareOverride = null;
-      await tester.pumpWidget(_card(Brightness.dark));
-      expect(shape().radius, closeTo(14, 1e-9));
+        'Q16: the frame has the same 1.5 pt path outline and the list card '
+        'radius, ${b.name}', (tester) async {
+      await tester.pumpWidget(_card(b));
+      final context = tester.element(find.byType(ClimbCard));
+      final frame = tester
+          .widgetList<DecoratedBox>(find.descendant(
+              of: find.byType(ClimbCard), matching: find.byType(DecoratedBox)))
+          .map((d) => d.decoration)
+          .whereType<BoxDecoration>()
+          .firstWhere((d) => d.border != null);
+      final side = (frame.border! as Border).top;
+      expect(side.color, AppPalette.of(context).pathOutline);
+      expect(side.width, 1.5);
+      expect(frame.borderRadius, BorderRadius.circular(22));
+      expect(ClimbCard.frameRadius, 22);
     });
+  }
 
-    const rect = Rect.fromLTWH(0, 0, 220, 36);
-    // Half of a point's angle: atan((height / 2) / depth).
-    final tipHalf = math.atan(1 / (2 * TrailSignBorder.pointDepth));
-
-    test(
-        'the sharp sign reaches the rect\'s ends; the rounded one keeps its '
-        'silhouette and pulls its points in by r (1 / sin(half) − 1)', () {
-      const side = BorderSide();
-      final sharp = const TrailSignBorder(side).getOuterPath(rect).getBounds();
-      expect(sharp.left, closeTo(rect.left, 1e-9));
-      expect(sharp.right, closeTo(rect.right, 1e-9));
-      const r = 8.0;
-      final rounded = const TrailSignBorder(side, radius: r).getOuterPath(rect);
-      // The outline's own extent, sampled (`getBounds` counts the arcs'
-      // control points).
-      final xs = <double>[], ys = <double>[];
-      for (final m in rounded.computeMetrics()) {
-        for (var d = 0.0; d <= m.length; d += .01) {
-          final p = m.getTangentForOffset(d)!.position;
-          xs.add(p.dx);
-          ys.add(p.dy);
-        }
-      }
-      final pullIn = r * (1 / math.sin(tipHalf) - 1);
-      expect(xs.reduce(math.min), closeTo(rect.left + pullIn, .01));
-      expect(xs.reduce(math.max), closeTo(rect.right - pullIn, .01));
-      expect(ys.reduce(math.min), closeTo(rect.top, .01));
-      expect(ys.reduce(math.max), closeTo(rect.bottom, .01));
-      // No point of the sharp sign's corners is inside the rounded one, and
-      // the text area (between the points' inner ends) is.
-      for (final c in TrailSignBorder.corners(rect)) {
-        expect(rounded.contains(c), isFalse, reason: '$c');
-      }
-      final inset = rect.height * TrailSignBorder.pointDepth;
-      expect(rounded.contains(Offset(inset + 1, 1.5)), isTrue);
-      expect(rounded.contains(Offset(rect.right - inset - 1, 34.5)), isTrue);
-    });
-
-    test('a radius too large for an edge is fitted to half of it', () {
-      final c = TrailSignBorder.corners(rect);
-      final edge = (c[0] - c[5]).distance;
-      final fitted = TrailSignBorder.fittedRadius(c[0], c[5], c[4], 100);
-      expect(fitted / math.tan(tipHalf), closeTo(edge / 2, 1e-9));
-      expect(
-          TrailSignBorder.fittedRadius(c[0], c[5], c[4], 8), closeTo(8, 1e-9));
-    });
+  testWidgets('the plaque sits centred on the frame\'s top line',
+      (tester) async {
+    await tester.pumpWidget(_card(Brightness.light));
+    final plaque = tester.getRect(find.byKey(ClimbCard.plaqueKey));
+    final card = tester.getRect(find.byType(ClimbCard));
+    expect(
+        plaque.height,
+        closeTo(ClimbCard.plaqueHeight(tester.element(find.byType(ClimbCard))),
+            .01));
+    // The frame starts half a plaque below the card's top.
+    expect(plaque.center.dy - card.top, closeTo(plaque.height / 2, .01));
+    expect(plaque.center.dx, closeTo(card.center.dx, .01));
   });
 }

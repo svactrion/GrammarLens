@@ -163,8 +163,12 @@ Batch 3a geometry and measuring rules.
 DESIGN_MEASURE_OUT=docs/design/batch6/plaque flutter test tool/design_measure/batch6/plaque_numbers_test.dart
 ```
 
-Batch 6 Batch 0, step 2 (`docs/design/batch6/batch0-report.md`): the
-plaque's rounded corners. Per text size, the plaque's height, the asked
+**Removed in 1.2.0 Batch 2** (owner decision Q16: the stadium plaque
+replaced the trail sign, so `TrailSignBorder` and `plaqueRadiusShare` are
+gone, and so are this tool and `tool/scene_art/batch6_plaque_sheet.py`;
+both are in git history before the 1.2.0 Batch 2 commits). Kept here as
+the record of what it measured: Batch 6 Batch 0, step 2
+(`docs/design/batch6/batch0-report.md`): the plaque's rounded corners. Per text size, the plaque's height, the asked
 radius (`ClimbCard.frameRadius × plaqueRadiusShare`), the radius each
 corner gets, and the largest share that no corner fits down
 (`plaque_numbers.txt`). The before/after images come from

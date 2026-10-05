@@ -159,11 +159,6 @@ const double appButtonRadius = 14;
 /// The text field's corner radius (the brief: 18).
 const double appInputRadius = 18;
 
-/// `titleMedium`'s size before 1.2.0 (16) over its size now
-/// (`_briefSize(17)`), for text held to its pre-1.2.0 metrics until its own
-/// redesign batch: the mountain plaque (`ClimbCard`, owner decision Q16).
-const double preRedesignTitleMediumRatio = 16 / (17 / 1.1);
-
 /// The brief's text sizes are what the default text size (Medium) renders
 /// (owner decision Q5, 2026-10-05): the theme's base size is the brief's
 /// size divided by Medium's scale factor, so Medium shows exactly the
