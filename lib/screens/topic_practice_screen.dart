@@ -8,7 +8,6 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/loading_view.dart';
-import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import '../theme.dart';
 import '../widgets/brand_scaffold.dart';
@@ -79,18 +78,24 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
     );
   }
 
+  PreferredSizeWidget get _statusBarOnly => AppBar(
+        toolbarHeight: 0,
+        automaticallyImplyLeading: false,
+        scrolledUnderElevation: 0,
+      );
+
   @override
   Widget build(BuildContext context) {
-    // Not migrated onto BrandScaffold — LoadingView fills the whole screen
-    // with its own scaffold-colored background (still the pre-D1 band
-    // color everywhere) and is explicitly Batch 3's job, not this one's.
+    final theme = Theme.of(context);
+    // The page's own header stays while the set is generated (final
+    // screens A3; was a centred app bar title the page does not have).
     if (_generating) {
-      return Scaffold(
-        appBar: AppBar(title: const PageTitle('Topic Practice')),
-        body: const LoadingView(message: 'Preparing your questions…'),
+      return PageLoading(
+        appBar: _statusBarOnly,
+        header: _Header(theme: theme),
+        message: 'Preparing your questions…',
       );
     }
-    final theme = Theme.of(context);
     return FutureBuilder<Map<String, TopicStats>>(
       future: _statsFuture,
       builder: (context, snapshot) {
@@ -98,11 +103,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
         return BrandScaffold(
           // The status bar's height only: the back button, the title and
           // its line are in the page (the 1.2.0 mockup), as on Review.
-          appBar: AppBar(
-            toolbarHeight: 0,
-            automaticallyImplyLeading: false,
-            scrolledUnderElevation: 0,
-          ),
+          appBar: _statusBarOnly,
           children: [
             _Header(theme: theme),
             const SizedBox(height: 22),

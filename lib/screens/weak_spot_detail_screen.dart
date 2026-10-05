@@ -7,7 +7,6 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/loading_view.dart';
-import '../utils/page_title.dart';
 import '../utils/premium_copy.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
@@ -150,16 +149,20 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
     // sentence when they would only repeat it.
     final ruleRepeatsTopic = ruleTitle == widget.topic.title;
     final theme = Theme.of(context);
-    // Not migrated onto BrandScaffold — LoadingView fills the whole screen
-    // with its own scaffold-colored background (still the pre-D1 band
-    // color everywhere) and is explicitly Batch 3's job, not this one's.
+    final colorScheme = theme.colorScheme;
+    // The page's own header stays while the set is generated (final
+    // screens A3): the back button in the app bar and the weak spot's
+    // title in the page, as below; was a centred app bar title.
     if (_generating) {
-      return Scaffold(
-        appBar: AppBar(title: PageTitle(widget.topic.title)),
-        body: const LoadingView(message: 'Preparing your questions…'),
+      return PageLoading(
+        header: Text(
+          ruleTitle,
+          style: theme.textTheme.headlineMedium
+              ?.copyWith(color: colorScheme.onSurface),
+        ),
+        message: 'Preparing your questions…',
       );
     }
-    final colorScheme = theme.colorScheme;
     // 1.2.0 (brief, "Review"; Q14: still a pushed screen, restyled): the
     // topic as a small eyebrow, the weak spot's name as the page's title,
     // then its frequency on the info surface. The topic is named once: when

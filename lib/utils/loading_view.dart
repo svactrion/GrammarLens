@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../widgets/brand_scaffold.dart';
+import 'content_width.dart';
 
 /// Full-screen, clearly-visible loading state shown while a practice set is
 /// generating or while submitted answers are being evaluated.
@@ -85,6 +87,45 @@ class _LoadingViewState extends State<LoadingView>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A page's loading state with the page's own header kept in place (final
+/// screens A3): [header] at the top of the page, as the loaded page draws
+/// it, and [LoadingView] under it. Replaces a centred app bar title that
+/// the loaded page does not have, so nothing jumps when it arrives.
+class PageLoading extends StatelessWidget {
+  /// The status bar only, for a page whose back button is in the page
+  /// (Topic Practice); null for `BrandScaffold`'s own app bar with just its
+  /// back button (the weak spot detail).
+  final PreferredSizeWidget? appBar;
+  final Widget header;
+  final String message;
+
+  const PageLoading({
+    super.key,
+    this.appBar,
+    required this.header,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hPad = ContentWidth.sidePaddingOf(context);
+    return BrandScaffold(
+      appBar: appBar,
+      title: appBar == null ? const SizedBox.shrink() : null,
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            header,
+            Expanded(child: LoadingView(message: message)),
+          ],
         ),
       ),
     );
