@@ -117,6 +117,19 @@ below with its source):
   its start is awkward. Recorded 2026-10-05 (owner); also in 1.1.0. To be
   fixed together with the question screen work, which is outside the
   1.2.0 redesign's scope (its keyboard behaviour is designed separately).
+- **Text is drawn too thin on iOS (since 1.0.0).** The bundled font is a
+  variable font (`assets/fonts/NunitoSans-Variable.ttf`, default instance
+  ExtraLight 200), and on an iOS device `FontWeight` alone does not move
+  its `wght` axis. Every weight is drawn as ExtraLight with synthetic
+  thickening. Confirmed on the owner's iPhone 14 Plus with the Theme
+  Preview weight table (2026-10-05); the test engine resolves weights, so
+  no test showed it.
+  - 1.0.0 and 1.1.0 have it: the same font, no `FontVariation` anywhere.
+  - **Fixed in 1.2.0:** every weight also sets `FontVariation('wght', n)`
+    through `TextStyle.withWeight`, guarded by
+    `test/font_weight_guard_test.dart`; build log 2026-10-05, Batch 6.
+  - **Whether to carry the fix into 1.1.0 is the owner's decision; it is
+    not carried over now.**
 - Not measured: frame times and memory on a device.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
