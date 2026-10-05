@@ -9334,3 +9334,156 @@ layouts are not touched.
   - the month card's peek during the zoom;
   - VoiceOver order;
   - the Home screenshots for the App Store, which change.
+
+## 2026-10-05 (1.2.0 redesign — Batch 4: Home revisions and Review; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 3 on a device and
+approved its copy list and deliberate deviations,** including the Review
+call-out showing only to free users who have weak spots.
+
+Visual only, plus one read. State, routing, the premium/quota checks and
+how the quota is spent, AI/proxy calls, storage, analytics events and
+gamification math are unchanged. The question screen, Profile and Topic
+Practice are not touched.
+
+- **[Home revisions — owner device feedback]**
+  1. **The hero's edit badge is gone.** Tapping the avatar still opens the
+     picker with the Hero flight, and "Change your avatar" is still its
+     label.
+     - *Found while testing this:* Batch 3's `Semantics(button, label)` on
+       the hero, `Semantics(header)` on the brand and the same on
+       `SectionTitle` had no `container`. Their flags and labels merged
+       into the enclosing node (a whole list item) instead of marking
+       their own widget. All three now form their own node.
+  2. **The score box shows its label above the value.**
+     - Done: "correct" over "N/M". Not started, for the same layout:
+       "questions" over the count.
+     - The label goes from `labelSmall` (11 at Medium) to `labelMedium`
+       (12/700), one step up. The value stays `headlineMedium` (26/900).
+  3. **The greeting line is larger: 22 pt at Medium** (`titleLarge` ×
+     1.1, weight 600, textSecondary; 20 / 22 / 24 at Small / Medium /
+     Large). It sits above the 20 pt section titles and below the name
+     (24) and the brand (34).
+     - With the real font, "Good afternoon," measures 172.2 pt at Large.
+       So the gap to the hero goes from 12 to 8 pt (the mockup's 6), and
+       it fits beside the hero at 320 pt (176 pt).
+     - Tests check the size order and a long name wrapping at 320 pt,
+       Large.
+  4. **The weak spots badge shows the real total.**
+     - The source is `StorageService.getTopicStats()`, an existing read:
+       its per-topic `COUNT(DISTINCT error_type)` is the same grouping
+       `getWeakSpots` uses, so the sum is the number of weak spots.
+     - No new storage code and no writes. If the read fails, the badge
+       falls back to the cards shown.
+     - Home still shows at most three cards.
+- **[Review]**
+  - **Header.** "Review" (34/900, −1.1) and "Turn your mistakes into
+    progress." sit in the page; the app bar is the status bar's height.
+  - **`DailyPracticeCard`, free users only (Q13).**
+    - *Available:* brandOrange with onOrange text in both themes, the
+      eyebrow "YOUR DAILY PRACTICE", the remaining count and a check icon.
+    - *Used today:* the subtle surface with a border, its own text and a
+      clock icon, and no free-practice call to action.
+    - **N1:** it reads the existing `getFreePracticeCountForToday()`
+      against `freeDailyPracticeLimit`, plus the entitlement. The reads
+      happen on load, when the tab becomes visible, when a weak spot's
+      screen closes, and on an entitlement change.
+    - The card only shows the allowance. It is still spent only when
+      `launchPracticeSet` generates a set; opening a weak spot spends
+      nothing (tested).
+    - The card is hidden until the first read answers, so it never shows
+      the wrong state.
+  - **List.**
+    - The heading is "Saved weak spots" with the total (the same
+      `getTopicStats` read).
+    - The sort control moved from the app bar to the heading. The orders
+      and their storage are unchanged.
+    - The cards are Batch 2's `WeakSpotCard`, unlocked as before.
+  - **Empty.** No allowance card (there is nothing to spend it on), and a
+    way back to the Daily Test: the Home tab, as before. The loading
+    state and the error with Retry keep their behaviour, under the
+    header.
+- **[Weak spot detail]** Still a pushed screen (Q14), restyled.
+  - **Layout:**
+    - the topic as an eyebrow, left out when it would repeat the title;
+    - the weak spot's name as the title (26/900);
+    - the frequency on the info surface;
+    - the recap in a "Saved feedback" panel;
+    - "Recent mistakes" as a `SectionTitle` over the same mistake cards.
+  - **Buttons by allowance state (N3):**
+    - a free user with the allowance left: "Start free practice", with
+      the existing "1 free practice today" under it;
+    - used up: "Practice with Premium", the same paywall entry, source
+      and quota-exhausted event, with the existing used-today message;
+    - premium: "Practice this", unchanged.
+  - The generating screen still replaces the page, so the action cannot
+    start twice.
+- **[Copy] Old → new** (new texts from the mockup's Review tab):
+  - **Review:**
+    - The title "Review" moved from the app bar into the page.
+    - New: "Turn your mistakes into progress."
+    - New: "YOUR DAILY PRACTICE" · "One weak spot. One step forward." ·
+      "Choose any saved weak spot below. Practice for free and get AI
+      feedback." · "1 free practice available today".
+    - New (used state): "Today’s practice is complete." · "Keep reviewing
+      your saved feedback. Your next free practice is available
+      tomorrow." · "Next free practice tomorrow".
+    - New: "Saved weak spots" and its count; sort tooltip "Sort weak
+      spots". The sort labels are unchanged.
+    - Empty: "Practice a topic and your mistakes will show up here." →
+      "Mistakes from your Daily Test and practice will show up here.";
+      "Start practicing" → "Go to Daily Test". "No weak spots yet." is
+      unchanged.
+  - **Detail:**
+    - The topic's name is no longer the app bar title. It shows as the
+      eyebrow (when it differs), and the rule's name, a small line before,
+      is now the title.
+    - New: "Saved feedback".
+    - Free user's button: "Practice this" → "Start free practice".
+    - Used-up state: the muted "Practice this" row with the Premium tag →
+      a "Practice with Premium" button; the message under it is
+      unchanged.
+    - Unchanged: "Recent mistakes", "Practice this" (premium), "1 free
+      practice today".
+- **[Deliberate deviations from the mockup]**
+  - **Spelling:** "Practise" → "Practice", the app's American spelling.
+  - **The used card has no Premium link.** The way to Premium stays on
+    each weak spot's screen ("Practice with Premium").
+  - **The count shows the total, while the list shows up to 10** (the
+    existing `getWeakSpots` default); unchanged behaviour.
+  - **The detail stays a pushed page, not a sheet (Q14).** The mockup
+    sheet's footnotes ("Use today’s free practice on this weak spot.",
+    "Your next free practice is available tomorrow.") are replaced by the
+    existing captions, as N3 asked.
+  - **The cards keep Batch 2's single frequency badge**, not the mockup's
+    split count and date.
+  - **The empty state's button switches to the Home tab**, where the Daily
+    Test card is; it does not open the test (no new route).
+- **[Owner decision recorded]** The length picker's slider and dial stay
+  on the link colour in dark mode (from Batch 3; no code change).
+- **[Tests]** `flutter analyze` clean; **1,559 passed, 0 failed** (1,532
+  before this batch).
+  - **New:**
+    - `review_screen_test.dart` (23): the card available, used (no free
+      CTA, its own icon) and hidden for premium; re-read on tab return and
+      after the detail closes; a trial hiding it live; the empty state;
+      the list and its total; the stored sort order and a new choice being
+      saved; no overflow at 320 / 390 / 430 pt, Large text, light and
+      dark, both states.
+    - `home_screen_test`: no edit badge, and the "Change your avatar"
+      control opens the picker; the score box order and label size; the
+      greeting size order; a long name wrapping at 320 pt, Large; the
+      badge showing 7 with three cards.
+  - **Changed:**
+    - The Home test fake's `getWeakSpots` now honours its limit, and its
+      `getTopicStats` can answer.
+    - `weak_spot_detail_screen_test` (3): the button labels; the
+      exhausted case asserts "Practice with Premium" instead of
+      `LockedPremiumPill`.
+    - `practice_launch_free_tier_test` (2) and
+      `practice_launch_consent_test` (the helper used by 8 cases): finders
+      only, for the free user's new label. Their assertions on generation,
+      quota, consent and routing are unchanged.
+- **[Not measured]** On a device: the two card states in both themes, the
+  sort menu in the list heading, the detail screen's new header with the
+  back button, and the larger greeting next to the hero.
