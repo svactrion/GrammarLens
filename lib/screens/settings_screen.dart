@@ -403,9 +403,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       textScaler: MediaQuery.textScalerOf(context),
       maxLines: 1,
     )..layout();
-    // The control's 4 pt inset each side; per segment, Material's 12 pt
-    // padding each side, the 18 pt icon and its 8 pt gap.
-    final segment = (width - 8) / 3;
+    // Per segment (a third of the control): Material's 12 pt padding each
+    // side, the 18 pt icon and its 8 pt gap.
+    final segment = width / 3;
     final fits = label.width + 18 + 8 + 24 <= segment;
     label.dispose();
     return fits;

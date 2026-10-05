@@ -11,6 +11,7 @@ import 'package:grammar_lens/models/welcome_badge.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/app_segmented_button.dart';
 
 /// 1.2.0 Batch 7: inside the Appearance card the theme control is narrower
 /// than before, and at 320 pt "System" broke mid-word beside its icon. The
@@ -88,4 +89,52 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets(
+      'Batch 8: each segment, the selected one included, fills its whole '
+      'cell: the full height of the control and a third of its width',
+      (tester) async {
+    for (final b in Brightness.values) {
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(b),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 300,
+              child: AppSegmentedButton<int>(
+                segments: const [
+                  ButtonSegment(value: 0, label: Text('Small')),
+                  ButtonSegment(value: 1, label: Text('Medium')),
+                  ButtonSegment(value: 2, label: Text('Large')),
+                ],
+                selected: const {1},
+                onSelectionChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ));
+      final control = tester.getRect(find.byType(SegmentedButton<int>));
+      // At least 48 pt (more when the label needs it, e.g. Large text).
+      expect(control.height, greaterThanOrEqualTo(AppSegmentedButton.height));
+      expect(AppSegmentedButton.height, greaterThanOrEqualTo(44));
+      final cells = tester
+          .widgetList(find.descendant(
+              of: find.byType(SegmentedButton<int>),
+              matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)))
+          .toList();
+      expect(cells, hasLength(3));
+      for (final (i, cell) in cells.indexed) {
+        final r = tester.getRect(find.byWidget(cell));
+        expect(r.height, control.height, reason: '$i');
+        expect(r.top, control.top, reason: '$i');
+        expect(r.width, closeTo(control.width / 3, .5), reason: '$i');
+        // Painted to its own edges: no padded tap target around it.
+        expect(
+            (cell as ButtonStyleButton).style?.tapTargetSize ??
+                MaterialTapTargetSize.shrinkWrap,
+            MaterialTapTargetSize.shrinkWrap);
+      }
+    }
+  });
 }
