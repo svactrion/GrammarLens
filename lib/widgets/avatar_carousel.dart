@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../models/avatar.dart';
+import '../theme.dart';
 import 'avatar_tile.dart';
 
 /// The avatar-picking carousel — this batch's replacement for the old
@@ -67,6 +68,16 @@ class AvatarCarousel extends StatefulWidget {
   /// [centerRadius].
   final double viewportFraction;
 
+  /// How small and faint the neighbours are (1.2.0 onboarding: .72 / .48).
+  /// The defaults are the values every earlier caller has used.
+  final double neighborScale;
+  final double neighborOpacity;
+
+  /// Adds a line under the carousel: Previous and Next buttons (44 pt
+  /// targets, so choosing never needs a drag) around "Name · N / total",
+  /// which says in words which avatar is selected. Off by default.
+  final bool showNavigation;
+
   const AvatarCarousel({
     super.key,
     required this.initialAvatar,
@@ -74,7 +85,18 @@ class AvatarCarousel extends StatefulWidget {
     this.centerTileBuilder,
     this.centerRadius = 56,
     this.viewportFraction = 0.45,
+    this.neighborScale = 0.8,
+    this.neighborOpacity = 0.5,
+    this.showNavigation = false,
   });
+
+  static const previousKey = ValueKey('avatar_carousel_previous');
+  static const nextKey = ValueKey('avatar_carousel_next');
+  static const captionKey = ValueKey('avatar_carousel_caption');
+
+  /// A Previous/Next tap's move: 220 ms ease-out (the brief), none with
+  /// reduce motion.
+  static const Duration stepDuration = Duration(milliseconds: 220);
 
   @override
   State<AvatarCarousel> createState() => _AvatarCarouselState();
@@ -87,8 +109,6 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   // radius — a paint-time transform doesn't clip a page to its own layout
   // bounds by default, which is exactly what lets a scaled-down neighbor
   // spill past its slot's edge into view.
-  static const double _neighborScale = 0.8;
-  static const double _neighborOpacity = 0.5;
   // Extra height beyond the tile's own diameter — just enough slack for
   // the settle "pop" (scales up to 1.06x) and the ground shadow's blur to
   // paint without visibly clipping against this box's own edge.
@@ -124,8 +144,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
     ]).animate(_popController);
   }
 
-  static Avatar _avatarAt(int rawPage) =>
-      Avatar.values[rawPage % Avatar.count];
+  static Avatar _avatarAt(int rawPage) => Avatar.values[rawPage % Avatar.count];
 
   @override
   void dispose() {
@@ -157,8 +176,69 @@ class _AvatarCarouselState extends State<AvatarCarousel>
     return false;
   }
 
+  /// Moves one avatar to either side; the settle that follows reports it
+  /// like a drag would.
+  void _step(int delta) {
+    final target = _settledIndex + delta;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pageController.jumpToPage(target);
+    } else {
+      _pageController.animateToPage(target,
+          duration: AvatarCarousel.stepDuration, curve: Curves.easeOut);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final carousel = _buildCarousel();
+    if (!widget.showNavigation) return carousel;
+    final theme = Theme.of(context);
+    final avatar = _avatarAt(_settledIndex);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        carousel,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              key: AvatarCarousel.previousKey,
+              tooltip: 'Previous companion',
+              onPressed: () => _step(-1),
+              icon: const Icon(Icons.chevron_left_rounded),
+            ),
+            const SizedBox(width: 9),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 125),
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    '${avatar.semanticLabel} · ${avatar.index} / '
+                    '${Avatar.count}',
+                    key: AvatarCarousel.captionKey,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: theme.colorScheme.onSurface),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 9),
+            IconButton(
+              key: AvatarCarousel.nextKey,
+              tooltip: 'Next companion',
+              onPressed: () => _step(1),
+              icon: const Icon(Icons.chevron_right_rounded),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCarousel() {
     final boxHeight = widget.centerRadius * 2 * _verticalSlack;
 
     return SizedBox(
@@ -175,8 +255,8 @@ class _AvatarCarouselState extends State<AvatarCarousel>
             index: index,
             settledIndex: _settledIndex,
             radius: widget.centerRadius,
-            neighborScale: _neighborScale,
-            neighborOpacity: _neighborOpacity,
+            neighborScale: widget.neighborScale,
+            neighborOpacity: widget.neighborOpacity,
             centerTileBuilder: widget.centerTileBuilder,
           ),
         ),
