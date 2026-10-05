@@ -421,7 +421,7 @@ class DailyPracticeCard extends StatelessWidget {
         ? 'One weak spot. One step forward.'
         : 'Today’s practice is complete.';
     final description = available
-        ? 'Choose any saved weak spot below. Practice it for free and get AI '
+        ? 'Choose any saved weak spot below. Practice for free and get AI '
             'feedback.'
         : 'Keep reviewing your saved feedback. Your next free practice is '
             'available tomorrow.';
