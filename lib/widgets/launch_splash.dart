@@ -309,7 +309,14 @@ class _LaunchSplashState extends State<LaunchSplash>
                         maxLines: 1,
                         // A logotype, not body text: fixed like the logo.
                         textScaler: TextScaler.noScaling,
-                        style: theme.textTheme.headlineLarge?.copyWith(
+                        // Its own style, not a copy of a text theme style:
+                        // the logotype's measured height
+                        // ([LaunchSplashLayout.wordmarkHeight]) is the font's
+                        // natural line height, and the 1.2.0 type scale
+                        // sets explicit line heights on every style.
+                        style: TextStyle(
+                          fontFamily:
+                              theme.textTheme.headlineLarge?.fontFamily,
                           fontSize: LaunchSplashLayout.wordmarkFontSize,
                           fontWeight: FontWeight.w700,
                           letterSpacing:

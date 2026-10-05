@@ -166,7 +166,8 @@ void main() {
             tester.getRect(find.widgetWithText(FilledButton, 'Reset'));
         expect(cancel.bottom, lessThan(reset.top));
         expect(cancel.width, reset.width);
-        expect(cancel.height, 52);
+        // The app's button height (48 since 1.2.0, 52 before).
+        expect(cancel.height, 48);
       });
     });
   }

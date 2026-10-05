@@ -51,9 +51,12 @@ class ClimbCard extends StatelessWidget {
     'August', 'September', 'October', 'November', 'December',
   ];
 
-  /// The frame's corner radius: the app's card radius (B-polish
-  /// `CardThemeData`).
-  static const frameRadius = appCardRadius;
+  /// The frame's corner radius: 20, the app's card radius before 1.2.0
+  /// (B-polish `CardThemeData`). 1.2.0 raised the card radius to 24
+  /// ([appCardRadius]); the frame and the plaque derived from it keep 20
+  /// until the plaque's own redesign (owner decision Q16, a later batch),
+  /// so the theme batch leaves the mountain card exactly as it was.
+  static const frameRadius = 20.0;
 
   /// The plaque's corner radius as a share of [frameRadius]: every corner
   /// of the trail sign, its two points included, is rounded with
@@ -124,10 +127,20 @@ class ClimbCard extends StatelessWidget {
     ];
   }
 
-  static TextStyle? _plaqueStyle(BuildContext context) => Theme.of(context)
-      .textTheme
-      .titleMedium
-      ?.copyWith(fontWeight: FontWeight.w700);
+  /// The plaque's text, held to its pre-1.2.0 metrics (Material's
+  /// titleMedium: 16 pt × the text size, line height 1.35, letter spacing
+  /// 0.15) until the plaque's redesign (Q16): its height, and so its 14 pt
+  /// corners, stay as the owner approved them at every text size.
+  static TextStyle? _plaqueStyle(BuildContext context) {
+    final style = Theme.of(context).textTheme.titleMedium;
+    final size = style?.fontSize;
+    return style?.copyWith(
+      fontSize: size == null ? null : size * preRedesignTitleMediumRatio,
+      fontWeight: FontWeight.w700,
+      height: 1.35,
+      letterSpacing: 0.15,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

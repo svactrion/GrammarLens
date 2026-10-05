@@ -11,19 +11,31 @@ import 'models/app_text_size.dart';
 // transparent below so elevation only ever adds a plain shadow, never a
 // color wash.
 //
-// Role mapping, deliberately non-standard M3 usage per product direction:
-// - `primary` (vivid orange) is the app's BRAND/BACKGROUND color — scaffold
-//   and app bar in light mode. It is NOT used for buttons.
-// - `secondary` (deep parliament/royal blue) is the ACTION/ACCENT color —
-//   buttons, the selected nav item, progress/"correct" highlights.
-// - `surfaceContainerLow` is the warm "paper" card color that floats on top
-//   of the orange page.
+// Role mapping, deliberately non-standard M3 usage per product direction.
+// The values are the 1.2.0 redesign's tokens (docs/design/1.2.0/
+// CLAUDE-CODE-BRIEF.md, design-tokens.json; mapping in batch0-report.md
+// §1.1). The token name each role carries is noted on its constant.
+// - `primary` (vivid orange, brandOrange) is the BRAND color, used for a few
+//   meaningful surfaces (the Daily Test card, counters, labels), always with
+//   the dark `onPrimary` — in dark mode too. It is no longer a page or app
+//   bar color, and it is NOT used for buttons.
+// - `secondary` (linkAndActive) is the LINK/ACTIVE color — text buttons,
+//   the selected nav item, focus, section accents. The same navy as the
+//   button in light mode; a light blue in dark mode.
+// - The filled button's own color (primaryButton, navy in both themes) is
+//   not a ColorScheme role: it lives in [AppPalette].
+// - `surfaceContainerLow` is the page (pageBackground), `surfaceContainerHigh`
+//   the card (cardSurface) and `surfaceContainerHighest` the subtle tile and
+//   input fill (subtleSurface). In light mode the card is lighter than the
+//   page, so these three do not follow M3's light-mode tone order; they are
+//   named by role, not by tone.
 // Every text/background pairing below is picked for contrast, not just
 // hue — see the inline notes on the orange roles, where a vivid enough
-// orange to read as "confident" already rules out white text.
+// orange to read as "confident" already rules out white text. Measured
+// ratios for every token pair: batch0-report.md §3.
 
-// Primary / brand — vivid, warm, saturated orange. Page + app bar
-// background in light mode. #FF7A1A has a relative luminance of ~0.35, so
+// Primary / brand (brandOrange / onOrange) — vivid, warm, saturated orange.
+// #FF7A1A has a relative luminance of ~0.35, so
 // white text on it only hits ~2.6:1 contrast (fails) while a warm near-black
 // hits ~6.9:1 (comfortably passes) — hence a dark "on" color, not white.
 const Color _lightPrimary = Color(0xFFFF7A1A);
@@ -31,8 +43,8 @@ const Color _lightOnPrimary = Color(0xFF241200);
 const Color _lightPrimaryContainer = Color(0xFFFFA64D);
 const Color _lightOnPrimaryContainer = Color(0xFF241200);
 
-// Secondary / accent — deep, saturated parliament/royal blue. Buttons,
-// selected nav item, progress/"correct" chips.
+// Secondary (linkAndActive) — deep, saturated parliament/royal blue. In
+// light mode it is also the button color (AppPalette.button).
 const Color _lightSecondary = Color(0xFF0D3B8F);
 const Color _lightOnSecondary = Color(0xFFFFFFFF);
 
@@ -42,6 +54,7 @@ const Color _lightOnSecondary = Color(0xFFFFFFFF);
 // buttons' selected fill, Premium's icon circles, the Review frequency
 // pill, the weak-spot detail pill) — docs/design-audit.md S2/D2. Every one
 // of those now derives from this single navy family.
+// infoSurface / onInfo.
 const Color _lightSecondaryContainer = Color(0xFFD7E1FA);
 const Color _lightOnSecondaryContainer = Color(0xFF0A2E70);
 
@@ -55,36 +68,39 @@ const Color _lightOnErrorContainer = Color(0xFF410002);
 const Color _destructive = Color(0xFFDC3232);
 const Color _onDestructive = Color(0xFFFFFFFF);
 
-// Neutrals — warm-tinted "paper" family for cards/inputs, kept far enough
-// from white that it visibly separates from a pure-white nav bar, and far
-// enough from the orange page that text stays dark-on-light throughout.
+// Neutrals — the warm ivory "paper" family. Page, card and tile are the
+// tokens pageBackground, cardSurface and subtleSurface; text is
+// textPrimary / textSecondary; `outlineVariant` is the card border token.
 const Color _lightSurface = Color(0xFFFFFFFF);
-const Color _lightOnSurface = Color(0xFF1B1B1F);
-const Color _lightOnSurfaceVariant = Color(0xFF46464F);
+const Color _lightOnSurface = Color(0xFF1B1B1F); // textPrimary
+const Color _lightOnSurfaceVariant = Color(0xFF46464F); // textSecondary
 const Color _lightSurfaceDim = Color(0xFFE8DDCF);
 const Color _lightSurfaceBright = Color(0xFFFFFFFF);
 const Color _lightSurfaceContainerLowest = Color(0xFFFFFFFF);
-const Color _lightSurfaceContainerLow = Color(0xFFFAF3EC);
+const Color _lightSurfaceContainerLow = Color(0xFFF3EFE6); // pageBackground
 const Color _lightSurfaceContainer = Color(0xFFF3ECE3);
-const Color _lightSurfaceContainerHigh = Color(0xFFEDE4D8);
-const Color _lightSurfaceContainerHighest = Color(0xFFE7DCCD);
+const Color _lightSurfaceContainerHigh = Color(0xFFFFFBF4); // cardSurface
+const Color _lightSurfaceContainerHighest = Color(0xFFF6F0E5); // subtleSurface
 const Color _lightOutline = Color(0xFF8A8A93);
-const Color _lightOutlineVariant = Color(0xFFDED3C2);
+const Color _lightOutlineVariant = Color(0xFFDED5C6); // border
 const Color _lightInverseSurface = Color(0xFF2F2F33);
 const Color _lightOnInverseSurface = Color(0xFFF2F2F5);
 
-// Dark theme — a full orange page background reads harsh/muddy at low
-// brightness, so dark mode keeps a true near-black neutral for scaffold/app
-// bar and reserves orange for accents (topic icon, chips) exactly like the
-// light theme reserves it there too — only the *background* role changes.
+// Dark theme — a near-black neutral page. Orange is a surface here too
+// (the 1.2.0 brief), on the same few meaningful elements as in light mode,
+// and always with the dark #241200 text: light text on #FF8A3D measures
+// 1.99:1 (#F0ECE7) and 2.35:1 (white), the dark text 7.71:1.
 const Color _darkPrimary = Color(0xFFFF8A3D);
-const Color _darkOnPrimary = Color(0xFF3D1300);
+const Color _darkOnPrimary = Color(0xFF241200);
 const Color _darkPrimaryContainer = Color(0xFFC1440E);
 const Color _darkOnPrimaryContainer = Color(0xFFFFE3C7);
 
-const Color _darkSecondary = Color(0xFF5C7CFA);
-const Color _darkOnSecondary = Color(0xFF04123A);
-const Color _darkSecondaryContainer = Color(0xFF1A3FA0);
+// linkAndActive is a light blue in dark mode, not the button's navy: the
+// navy is 1.48:1 on the dark card and would not read as a link. As a fill
+// (the length picker's slider) it pairs with a dark navy label, 7.72:1.
+const Color _darkSecondary = Color(0xFFB4C8FF);
+const Color _darkOnSecondary = Color(0xFF0A2E70);
+const Color _darkSecondaryContainer = Color(0xFF243859);
 const Color _darkOnSecondaryContainer = Color(0xFFD8E1FF);
 
 const Color _darkError = Color(0xFFFFB4AB);
@@ -93,17 +109,17 @@ const Color _darkErrorContainer = Color(0xFF93000A);
 const Color _darkOnErrorContainer = Color(0xFFFFDAD6);
 
 const Color _darkSurface = Color(0xFF121212);
-const Color _darkOnSurface = Color(0xFFE4E2E6);
-const Color _darkOnSurfaceVariant = Color(0xFFC9C5D0);
+const Color _darkOnSurface = Color(0xFFF0ECE7); // textPrimary
+const Color _darkOnSurfaceVariant = Color(0xFFC9C5D0); // textSecondary
 const Color _darkSurfaceDim = Color(0xFF121212);
 const Color _darkSurfaceBright = Color(0xFF38373C);
 const Color _darkSurfaceContainerLowest = Color(0xFF0B0B0D);
-const Color _darkSurfaceContainerLow = Color(0xFF1C1B1F);
+const Color _darkSurfaceContainerLow = Color(0xFF151517); // pageBackground
 const Color _darkSurfaceContainer = Color(0xFF201F23);
-const Color _darkSurfaceContainerHigh = Color(0xFF2B2A2F);
-const Color _darkSurfaceContainerHighest = Color(0xFF36353A);
+const Color _darkSurfaceContainerHigh = Color(0xFF252528); // cardSurface
+const Color _darkSurfaceContainerHighest = Color(0xFF303034); // subtleSurface
 const Color _darkOutline = Color(0xFF8D8A93);
-const Color _darkOutlineVariant = Color(0xFF444349);
+const Color _darkOutlineVariant = Color(0xFF45454D); // border
 const Color _darkInverseSurface = Color(0xFFE4E2E6);
 const Color _darkOnInverseSurface = Color(0xFF1B1B1F);
 
@@ -134,16 +150,43 @@ const Color appDarkPrimary = _darkPrimary;
 
 /// The app-wide card's corner radius (`cardTheme` below), for widgets that
 /// draw a card-like frame themselves (the Monthly Climb card, `ClimbCard`).
-const double appCardRadius = 20;
+/// The brief's large card radius (24); list cards use 22.
+const double appCardRadius = 24;
+
+/// The filled and outlined buttons' corner radius (the brief: 14–15).
+const double appButtonRadius = 14;
+
+/// The text field's corner radius (the brief: 18).
+const double appInputRadius = 18;
+
+/// `titleMedium`'s size before 1.2.0 (16) over its size now
+/// (`_briefSize(17)`), for text held to its pre-1.2.0 metrics until its own
+/// redesign batch: the mountain plaque (`ClimbCard`, owner decision Q16).
+const double preRedesignTitleMediumRatio = 16 / (17 / 1.1);
+
+/// The brief's text sizes are what the default text size (Medium) renders
+/// (owner decision Q5, 2026-10-05): the theme's base size is the brief's
+/// size divided by Medium's scale factor, so Medium shows exactly the
+/// brief's numbers and Small/Large keep their existing ratios to it.
+double _briefSize(double sizeAtMedium) =>
+    sizeAtMedium / AppTextSize.medium.scaleFactor;
 
 // Brand mark (see widgets/brand_mark.dart) — the loupe's glass and glint
 // are fixed identity colors, not theme roles: unlike everything else in
 // this file they don't change with light/dark mode (the mark's rim does —
-// it uses colorScheme.secondary directly). Public and named here, rather
+// see [brandMarkRim] below). Public and named here, rather
 // than embedded as hex in the widget, so the mark's palette stays defined
 // in one place alongside the rest of the brand system.
 const Color brandMarkGlass = Color(0xFFFFF6EC);
 const Color brandMarkGlint = Color(0xFFFFCDA3);
+
+/// The brand mark's rim. It used to read `colorScheme.secondary`, which was
+/// #0D3B8F in light mode and #5C7CFA in dark; 1.2.0 turned dark
+/// `secondary` into the link color (#B4C8FF), and the logo is not a link.
+/// The two earlier values are kept here so the mark, the launch screen and
+/// its committed launch images stay exactly as they were.
+Color brandMarkRim(Brightness brightness) =>
+    brightness == Brightness.dark ? const Color(0xFF5C7CFA) : _lightSecondary;
 
 /// The avatar presentation's ground shadow (see `widgets/avatar_tile.dart`)
 /// — a soft ellipse painted beneath the avatar illustration instead of a
@@ -162,41 +205,18 @@ const Color brandMarkGlint = Color(0xFFFFCDA3);
 /// against a near-black background. [avatarGroundShadowOpacity] pairs
 /// each color with the alpha that lands both themes at a comparable
 /// ~1.4–1.6 contrast ratio against their own body — light black at 20%,
-/// dark white at 11%.
+/// dark white at 11%. (Measured on the pre-1.2.0 body; on the 1.2.0 page,
+/// `#F3EFE6` / `#151517`, the same alphas measure 1.60 and 1.36.)
 Color avatarGroundShadowColor(Brightness brightness) =>
     brightness == Brightness.dark ? Colors.white : Colors.black;
 
 double avatarGroundShadowOpacity(Brightness brightness) =>
     brightness == Brightness.dark ? 0.11 : 0.20;
 
-/// D1's header-band colors (docs/design-audit.md §5), read as an
-/// extension on [ColorScheme] rather than a new field: the band's own
-/// color is not a single role but this `isDark ? X : Y` expression, and
-/// this extension is the *one* place that expression lives. Both
-/// [buildAppTheme] (today's full-screen scaffold/app-bar background, for
-/// every screen not yet migrated onto [BrandScaffold]) and
-/// `BrandScaffold` itself read from here — reverting D1 (or changing what
-/// "neutral" means in dark mode) is a one-line change in this extension,
-/// not a per-call-site sweep, but it is a code change, not a single
-/// token/value swap, since the band was never one role to begin with.
-///
-/// No button shares the band's orange any more: dialog "Cancel" buttons used
-/// to be filled `primary`/`onPrimary` (bit-for-bit the band's orange in light
-/// mode), and are neutral `onSurface` text buttons now — see
-/// `DestructiveDialogActions`.
-extension BandColors on ColorScheme {
-  /// The header band's background — orange (`primary`) in light mode, the
-  /// neutral `surface` in dark mode. Dark mode never uses orange as a
-  /// surface (docs/design-audit.md §5 D1's dark-mode decision).
-  Color get bandBackground => brightness == Brightness.dark ? surface : primary;
-
-  /// The band's title/icon color, paired with [bandBackground].
-  /// Light: `onPrimary` on `primary`, ~6.93:1. Dark: `onSurface` on
-  /// `surface`, ~14.56:1. Both computed directly (WCAG relative
-  /// luminance), comfortably clearing AA for either text or UI components.
-  Color get bandForeground =>
-      brightness == Brightness.dark ? onSurface : onPrimary;
-}
+// The header band (D1, docs/design-audit.md §5: an orange band in light
+// mode over a neutral body) was removed in the 1.2.0 redesign: every screen
+// sits on the page color, and the app bar is the page color with
+// `onSurface` content. Welcome sets its own orange (welcome_screen.dart).
 
 /// The one place a destructive action's colors live (Reset progress, Leave):
 /// a filled button in [destructive] with [onDestructive] text. Not a
@@ -301,6 +321,166 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
   }
 }
 
+/// The 1.2.0 redesign's tokens that have no [ColorScheme] role
+/// (batch0-report.md §1.1): the filled button (the same navy in both
+/// themes, unlike `secondary`), the navigation bar, the text field's edge,
+/// the mountain path's outline, the disabled button and the two shadows.
+/// Read with `Theme.of(context).extension<AppPalette>()!` or [AppPalette.of].
+@immutable
+class AppPalette extends ThemeExtension<AppPalette> {
+  /// primaryButton / onPrimaryButton.
+  final Color button;
+  final Color onButton;
+
+  /// A 1 px edge around the filled button, or null for none. Dark mode only
+  /// (owner decision Q1): the navy fill is 1.28–1.77:1 against the dark
+  /// surfaces, so its edge disappears; #5C7CFA measures 4.16:1 on the card,
+  /// 4.97:1 on the page and 3.58:1 on the subtle surface.
+  final Color? buttonEdge;
+
+  /// The disabled filled button (owner decision Q4, the mockup's values).
+  /// Inactive controls are exempt from WCAG contrast; the light label is
+  /// 4.10:1 on its fill, the dark one 5.15:1.
+  final Color disabledFill;
+  final Color disabledLabel;
+
+  /// navigationSurface / navigationBorder.
+  final Color navSurface;
+  final Color navBorder;
+
+  /// The text field's edge (owner decision Q3): 3.53:1 on the light card
+  /// and 3.17:1 on the light page; 4.01:1 on the dark card. The mockup's
+  /// lighter edge was under 3:1 in both themes.
+  final Color inputBorder;
+
+  /// The mountain path's frame and title plate outline (1.5 px).
+  final Color pathOutline;
+
+  /// The brief's card and navigation bar shadows.
+  final List<BoxShadow> cardShadow;
+  final List<BoxShadow> navShadow;
+
+  const AppPalette({
+    required this.button,
+    required this.onButton,
+    required this.buttonEdge,
+    required this.disabledFill,
+    required this.disabledLabel,
+    required this.navSurface,
+    required this.navBorder,
+    required this.inputBorder,
+    required this.pathOutline,
+    required this.cardShadow,
+    required this.navShadow,
+  });
+
+  static AppPalette of(BuildContext context) =>
+      Theme.of(context).extension<AppPalette>()!;
+
+  // The shadows' base colors: a warm brown in light mode, black in dark.
+  static const Color _lightShadowBase = Color(0xFF483018);
+  static const Color _darkShadowBase = Color(0xFF000000);
+
+  static final light = AppPalette(
+    button: _lightSecondary,
+    onButton: _lightOnSecondary,
+    buttonEdge: null,
+    disabledFill: const Color(0xFFE4DDD2),
+    disabledLabel: const Color(0xFF6D6860),
+    navSurface: const Color(0xFFFFFCF7),
+    navBorder: const Color(0xFFD2C6B4),
+    inputBorder: const Color(0xFF8E8577),
+    pathOutline: const Color(0xFFA59F98),
+    cardShadow: [
+      BoxShadow(
+        color: _lightShadowBase.withValues(alpha: .10),
+        offset: const Offset(0, 5),
+        blurRadius: 18,
+      ),
+    ],
+    navShadow: [
+      BoxShadow(
+        color: _lightShadowBase.withValues(alpha: .15),
+        offset: const Offset(0, 6),
+        blurRadius: 22,
+      ),
+    ],
+  );
+
+  static final dark = AppPalette(
+    button: _lightSecondary,
+    onButton: _lightOnSecondary,
+    buttonEdge: const Color(0xFF5C7CFA),
+    disabledFill: const Color(0xFF36363B),
+    disabledLabel: const Color(0xFFACA8B2),
+    navSurface: const Color(0xFF2D2D32),
+    navBorder: const Color(0xFF595961),
+    inputBorder: const Color(0xFF85818B),
+    pathOutline: const Color(0xFF777581),
+    cardShadow: [
+      BoxShadow(
+        color: _darkShadowBase.withValues(alpha: .17),
+        offset: const Offset(0, 5),
+        blurRadius: 18,
+      ),
+    ],
+    navShadow: [
+      BoxShadow(
+        color: _darkShadowBase.withValues(alpha: .33),
+        offset: const Offset(0, 6),
+        blurRadius: 22,
+      ),
+    ],
+  );
+
+  @override
+  AppPalette copyWith({
+    Color? button,
+    Color? onButton,
+    Color? buttonEdge,
+    Color? disabledFill,
+    Color? disabledLabel,
+    Color? navSurface,
+    Color? navBorder,
+    Color? inputBorder,
+    Color? pathOutline,
+    List<BoxShadow>? cardShadow,
+    List<BoxShadow>? navShadow,
+  }) {
+    return AppPalette(
+      button: button ?? this.button,
+      onButton: onButton ?? this.onButton,
+      buttonEdge: buttonEdge ?? this.buttonEdge,
+      disabledFill: disabledFill ?? this.disabledFill,
+      disabledLabel: disabledLabel ?? this.disabledLabel,
+      navSurface: navSurface ?? this.navSurface,
+      navBorder: navBorder ?? this.navBorder,
+      inputBorder: inputBorder ?? this.inputBorder,
+      pathOutline: pathOutline ?? this.pathOutline,
+      cardShadow: cardShadow ?? this.cardShadow,
+      navShadow: navShadow ?? this.navShadow,
+    );
+  }
+
+  @override
+  AppPalette lerp(ThemeExtension<AppPalette>? other, double t) {
+    if (other is! AppPalette) return this;
+    return AppPalette(
+      button: Color.lerp(button, other.button, t)!,
+      onButton: Color.lerp(onButton, other.onButton, t)!,
+      buttonEdge: Color.lerp(buttonEdge, other.buttonEdge, t),
+      disabledFill: Color.lerp(disabledFill, other.disabledFill, t)!,
+      disabledLabel: Color.lerp(disabledLabel, other.disabledLabel, t)!,
+      navSurface: Color.lerp(navSurface, other.navSurface, t)!,
+      navBorder: Color.lerp(navBorder, other.navBorder, t)!,
+      inputBorder: Color.lerp(inputBorder, other.inputBorder, t)!,
+      pathOutline: Color.lerp(pathOutline, other.pathOutline, t)!,
+      cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t)!,
+      navShadow: BoxShadow.lerpList(navShadow, other.navShadow, t)!,
+    );
+  }
+}
+
 ColorScheme _buildColorScheme(Brightness brightness) {
   if (brightness == Brightness.dark) {
     return const ColorScheme(
@@ -384,50 +564,91 @@ ColorScheme _buildColorScheme(Brightness brightness) {
   );
 }
 
+/// The dark filled button's edge (Q1), none while disabled. Built once:
+/// a `resolveWith` closure made per [buildAppTheme] call would make two
+/// otherwise identical themes unequal, and `MaterialApp` would animate
+/// between them on every rebuild.
+final WidgetStateProperty<BorderSide?> _darkButtonEdge =
+    WidgetStateProperty.resolveWith(
+  (states) => states.contains(WidgetState.disabled)
+      ? null
+      : BorderSide(color: AppPalette.dark.buttonEdge!),
+);
+
 ThemeData buildAppTheme(
   Brightness brightness, {
   AppTextSize textSize = AppTextSize.medium,
 }) {
   final colorScheme = _buildColorScheme(brightness);
   final isDark = brightness == Brightness.dark;
+  final palette = isDark ? AppPalette.dark : AppPalette.light;
   final base = ThemeData(
     colorScheme: colorScheme,
     useMaterial3: true,
     brightness: brightness,
   );
 
-  // Comfortable line height across the board (practice screen especially
-  // reads as cramped without it) — a height multiplier on top of the M3
-  // type scale rather than custom font sizes.
-  TextStyle materialStyle(TextStyle? style, double fontSize) =>
-      (style ?? const TextStyle()).copyWith(fontSize: fontSize);
-  final materialTextTheme = base.textTheme.copyWith(
-    displayLarge: materialStyle(base.textTheme.displayLarge, 57),
-    displayMedium: materialStyle(base.textTheme.displayMedium, 45),
-    displaySmall: materialStyle(base.textTheme.displaySmall, 36),
-    headlineLarge: materialStyle(base.textTheme.headlineLarge, 32),
-    headlineMedium: materialStyle(base.textTheme.headlineMedium, 28),
-    headlineSmall: materialStyle(base.textTheme.headlineSmall, 24),
-    titleLarge: materialStyle(base.textTheme.titleLarge, 22),
-    titleMedium: materialStyle(base.textTheme.titleMedium, 16),
-    titleSmall: materialStyle(base.textTheme.titleSmall, 14),
-    bodyLarge: materialStyle(base.textTheme.bodyLarge, 16),
-    bodyMedium: materialStyle(base.textTheme.bodyMedium, 14),
-    bodySmall: materialStyle(base.textTheme.bodySmall, 12),
-    labelLarge: materialStyle(base.textTheme.labelLarge, 14),
-    labelMedium: materialStyle(base.textTheme.labelMedium, 12),
-    labelSmall: materialStyle(base.textTheme.labelSmall, 11),
-  );
-  final comfortableTextTheme = materialTextTheme.copyWith(
-    headlineSmall: materialTextTheme.headlineSmall?.copyWith(height: 1.3),
-    titleLarge: materialTextTheme.titleLarge?.copyWith(height: 1.3),
-    titleMedium: materialTextTheme.titleMedium?.copyWith(height: 1.35),
-    titleSmall: materialTextTheme.titleSmall?.copyWith(height: 1.35),
-    bodyLarge: materialTextTheme.bodyLarge?.copyWith(height: 1.5),
-    bodyMedium: materialTextTheme.bodyMedium?.copyWith(height: 1.5),
-    bodySmall: materialTextTheme.bodySmall?.copyWith(height: 1.45),
-    labelLarge:
-        materialTextTheme.labelLarge?.copyWith(height: 1.3, letterSpacing: 0.1),
+  // The 1.2.0 type scale (batch0-report.md §1.3). Every style names its
+  // weight: the bundled variable font's default instance is ExtraLight
+  // (200), so a weight left to chance is worth ruling out even though
+  // Flutter resolves an unset weight to 400 (measured, build-log
+  // 2026-10-05). Sizes from the brief go through [_briefSize] (Q5); the
+  // styles the brief does not cover keep their earlier base size.
+  TextStyle style(
+    TextStyle? from,
+    double fontSize,
+    FontWeight fontWeight,
+    double? height, {
+    double? letterSpacing,
+  }) =>
+      (from ?? const TextStyle()).copyWith(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        height: height,
+        letterSpacing: letterSpacing,
+      );
+  final m = base.textTheme;
+  final materialTextTheme = m.copyWith(
+    // Not in the brief: Material sizes, weight made explicit.
+    displayLarge: style(m.displayLarge, 57, FontWeight.w400, null),
+    displayMedium: style(m.displayMedium, 45, FontWeight.w400, null),
+    // Home brand and the Review/Profile page titles (34/900).
+    displaySmall: style(m.displaySmall, _briefSize(34), FontWeight.w900, 1.10,
+        letterSpacing: -1.1),
+    // The Topic page title (32/900).
+    headlineLarge: style(m.headlineLarge, _briefSize(32), FontWeight.w900, 1.10,
+        letterSpacing: -1.0),
+    // The question screen's topic title (26/900).
+    headlineMedium: style(
+        m.headlineMedium, _briefSize(26), FontWeight.w900, 1.12,
+        letterSpacing: -0.65),
+    // A main card's title (23–25/900).
+    headlineSmall: style(m.headlineSmall, _briefSize(24), FontWeight.w900, 1.17,
+        letterSpacing: -0.55),
+    // A section title (20–21/800).
+    titleLarge: style(m.titleLarge, _briefSize(20), FontWeight.w800, 1.2,
+        letterSpacing: -0.4),
+    // A topic or weak spot card's title (17–18/800).
+    titleMedium: style(m.titleMedium, _briefSize(17), FontWeight.w800, 1.23,
+        letterSpacing: -0.25),
+    // Not in the brief: the earlier size and weight, now explicit.
+    titleSmall: style(m.titleSmall, 14, FontWeight.w500, 1.35),
+    // The question scenario (16/400/1.55).
+    bodyLarge: style(m.bodyLarge, _briefSize(16), FontWeight.w400, 1.55,
+        letterSpacing: 0),
+    // Body and description text (13–14/400).
+    bodyMedium: style(m.bodyMedium, _briefSize(14), FontWeight.w400, 1.45,
+        letterSpacing: 0),
+    bodySmall: style(m.bodySmall, _briefSize(13), FontWeight.w400, 1.45,
+        letterSpacing: 0),
+    // Buttons (14–15/800).
+    labelLarge: style(m.labelLarge, _briefSize(14), FontWeight.w800, 1.3,
+        letterSpacing: 0),
+    // Small meta (11–12/600–800).
+    labelMedium: style(m.labelMedium, _briefSize(12), FontWeight.w700, 1.4,
+        letterSpacing: 0),
+    labelSmall: style(m.labelSmall, _briefSize(11), FontWeight.w600, 1.4,
+        letterSpacing: 0),
   );
   TextStyle? scaled(TextStyle? style) {
     final fontSize = style?.fontSize;
@@ -439,23 +660,23 @@ ThemeData buildAppTheme(
   // TextTheme.apply asserts when even one platform-provided style has no
   // explicit fontSize. Scale only defined Material styles and leave any
   // intentionally incomplete fallback style alone.
-  final textTheme = comfortableTextTheme
+  final textTheme = materialTextTheme
       .copyWith(
-        displayLarge: scaled(comfortableTextTheme.displayLarge),
-        displayMedium: scaled(comfortableTextTheme.displayMedium),
-        displaySmall: scaled(comfortableTextTheme.displaySmall),
-        headlineLarge: scaled(comfortableTextTheme.headlineLarge),
-        headlineMedium: scaled(comfortableTextTheme.headlineMedium),
-        headlineSmall: scaled(comfortableTextTheme.headlineSmall),
-        titleLarge: scaled(comfortableTextTheme.titleLarge),
-        titleMedium: scaled(comfortableTextTheme.titleMedium),
-        titleSmall: scaled(comfortableTextTheme.titleSmall),
-        bodyLarge: scaled(comfortableTextTheme.bodyLarge),
-        bodyMedium: scaled(comfortableTextTheme.bodyMedium),
-        bodySmall: scaled(comfortableTextTheme.bodySmall),
-        labelLarge: scaled(comfortableTextTheme.labelLarge),
-        labelMedium: scaled(comfortableTextTheme.labelMedium),
-        labelSmall: scaled(comfortableTextTheme.labelSmall),
+        displayLarge: scaled(materialTextTheme.displayLarge),
+        displayMedium: scaled(materialTextTheme.displayMedium),
+        displaySmall: scaled(materialTextTheme.displaySmall),
+        headlineLarge: scaled(materialTextTheme.headlineLarge),
+        headlineMedium: scaled(materialTextTheme.headlineMedium),
+        headlineSmall: scaled(materialTextTheme.headlineSmall),
+        titleLarge: scaled(materialTextTheme.titleLarge),
+        titleMedium: scaled(materialTextTheme.titleMedium),
+        titleSmall: scaled(materialTextTheme.titleSmall),
+        bodyLarge: scaled(materialTextTheme.bodyLarge),
+        bodyMedium: scaled(materialTextTheme.bodyMedium),
+        bodySmall: scaled(materialTextTheme.bodySmall),
+        labelLarge: scaled(materialTextTheme.labelLarge),
+        labelMedium: scaled(materialTextTheme.labelMedium),
+        labelSmall: scaled(materialTextTheme.labelSmall),
       )
       .apply(
         // Bundled rather than fetched at runtime: typography stays identical
@@ -464,27 +685,29 @@ ThemeData buildAppTheme(
         fontFamily: 'NunitoSans',
       );
 
-  // Light mode: the page and app bar sit directly on the brand orange, with
-  // `onPrimary` (dark, contrast-checked above) for title/back-button/icons.
-  // Dark mode keeps a neutral near-black page (see the dark-palette note
-  // above) so app bar foreground is the ordinary light `onSurface`. Same
-  // expression `BandColors.bandBackground`/`bandForeground` reads for
-  // `BrandScaffold` (docs/design-audit.md §5 D1) — this is the whole-screen
-  // default for every screen not yet migrated onto that widget; screens
-  // that have migrated override `Scaffold.backgroundColor` to the neutral
-  // body color but leave the app bar to inherit these same colors.
-  final scaffoldBg = colorScheme.bandBackground;
-  final appBarFg = colorScheme.bandForeground;
+  // No header band any more (1.2.0): the scaffold and the app bar are the
+  // page color, and the app bar's content is the ordinary `onSurface`.
+  // Widgets that read `appBarTheme.foregroundColor` for text sitting on the
+  // page (page titles, the loading view, the nav bar's unselected items)
+  // therefore get textPrimary.
+  final pageBg = colorScheme.surfaceContainerLow;
+  final pageFg = colorScheme.onSurface;
+
+  final buttonShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(appButtonRadius),
+  );
+  final buttonEdge = isDark ? _darkButtonEdge : null;
 
   return base.copyWith(
     textTheme: textTheme,
     extensions: <ThemeExtension<dynamic>>[
       isDark ? SemanticColors.dark : SemanticColors.light,
+      palette,
     ],
-    scaffoldBackgroundColor: scaffoldBg,
+    scaffoldBackgroundColor: pageBg,
     appBarTheme: AppBarTheme(
-      backgroundColor: scaffoldBg,
-      foregroundColor: appBarFg,
+      backgroundColor: pageBg,
+      foregroundColor: pageFg,
       surfaceTintColor: colorScheme.surfaceTint,
       elevation: 0,
       scrolledUnderElevation: 2,
@@ -494,107 +717,87 @@ ThemeData buildAppTheme(
       // and every other screen's title goes through `PageTitle` (see
       // utils/page_title.dart) for the shared second-tier size/weight.
       centerTitle: true,
-      titleTextStyle: textTheme.titleLarge
-          ?.copyWith(fontWeight: FontWeight.w600, color: appBarFg),
+      titleTextStyle: textTheme.titleLarge?.copyWith(color: pageFg),
     ),
     cardTheme: CardThemeData(
-      // The app-wide card treatment (docs/design-audit.md §5 D1, closed):
-      // every screen is now on `BrandScaffold`'s neutral body (Welcome is
-      // the one deliberate exception, and never uses `Card`), so there's
-      // exactly one card language, not the scoped-override-during-
-      // migration split this used to require. `BrandScaffold` previously
-      // carried a local `Theme` copy of these exact values for its own
-      // subtree while migration was still in progress; that override is
-      // gone now that there's nothing left for it to be scoped against.
+      // The 1.2.0 card (owner decision Q2): the cardSurface fill, a 1 px
+      // `border` token edge and a soft shadow. The edge is 1.41:1 against
+      // the light card and 1.61:1 against the dark one, so the shadow does
+      // part of the separating; to be judged on the device, and interactive
+      // cards go back to `outline` if it reads too faint.
       //
-      // `surfaceContainerHigh`, one step up from the body's own
-      // `surfaceContainerLow` — a card the same color as the body it sits
-      // on would separate by shadow alone, measured directly (see the
-      // border note below) to not hold up in dark mode.
+      // `Card` draws a Material elevation shadow and cannot take the
+      // brief's exact shadow (offset 0,5, blur 18); elevation 2 in the
+      // brief's shadow color is the nearest Material equivalent. The exact
+      // shadow is `AppPalette.cardShadow`, for cards drawn by hand.
       color: colorScheme.surfaceContainerHigh,
-      // 1dp, not M3's level-3 (6dp) this app used before D1: back when
-      // shadow was the only separation signal (full-orange/near-black
-      // scaffold), 6dp was deliberately heavier than the M3 default to
-      // read as "lifted" at all. The border below is now the primary,
-      // theme-consistent signal, so elevation is a light lift rather than
-      // dominant depth — measured directly: the previous 6dp shadow was
-      // ~1.73:1 against the body in light mode but only ~1.06:1 in dark
-      // (docs/build-log.md, 2026-09-09), i.e. it was never reliable in
-      // both themes to begin with.
-      elevation: 1,
-      // `outline`, not `outlineVariant` (this app's usual divider/border
-      // role) — tried `outlineVariant` first and measured it directly
-      // on-device: ~1.34:1 against the body in light mode, genuinely hard
-      // to see, not just a borderline number on paper. `outline` measures
-      // ~3.11:1 (body) / ~2.72:1 (card) in light, ~5.05:1 / ~4.20:1 in
-      // dark — comfortably legible in both, still an existing role.
+      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(appCardRadius),
-        side: BorderSide(color: colorScheme.outline),
+        side: BorderSide(color: colorScheme.outlineVariant),
       ),
       surfaceTintColor: colorScheme.surfaceTint,
-      shadowColor: colorScheme.shadow,
+      shadowColor: palette.cardShadow.first.color.withValues(alpha: 1),
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
     ),
     filledButtonTheme: FilledButtonThemeData(
-      // Explicit colors: M3's default FilledButton pulls colorScheme.primary,
-      // which is now the page-background orange, not the button color.
+      // Explicit colors: M3's default FilledButton pulls colorScheme.primary
+      // (the brand orange). The button is primaryButton in both themes,
+      // with a 1 px edge in dark mode only (Q1); a disabled button has no
+      // edge.
       style: FilledButton.styleFrom(
-        backgroundColor: colorScheme.secondary,
-        foregroundColor: colorScheme.onSecondary,
-        minimumSize: const Size.fromHeight(52),
+        backgroundColor: palette.button,
+        foregroundColor: palette.onButton,
+        disabledBackgroundColor: palette.disabledFill,
+        disabledForegroundColor: palette.disabledLabel,
+        minimumSize: const Size.fromHeight(48),
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: textTheme.labelLarge
-            ?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
-      ),
+        shape: buttonShape,
+        textStyle: textTheme.labelLarge,
+      ).copyWith(side: buttonEdge),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: colorScheme.secondary,
-        minimumSize: const Size.fromHeight(52),
+        minimumSize: const Size.fromHeight(48),
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: buttonShape,
         side: BorderSide(color: colorScheme.secondary),
-        textStyle: textTheme.labelLarge
-            ?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: textTheme.labelLarge,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      // Explicit color for the same reason FilledButton/OutlinedButton
-      // need one above: M3's default TextButton foreground is
-      // colorScheme.primary, which in light mode *is* the page's own
-      // vivid-orange background — an unstyled TextButton renders
-      // orange-on-orange and disappears. Several call sites (Restore
-      // Purchases, Skip, "Maybe later") had been patching this
-      // individually; centralizing it here means any new TextButton gets
-      // a readable color by default, in both themes, without repeating
-      // the fix.
-      style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
+      // Explicit color: M3's default TextButton foreground is
+      // colorScheme.primary, the brand orange, which is not a text color
+      // on the page (2.27:1). linkAndActive instead, in both themes.
+      style: TextButton.styleFrom(
+        foregroundColor: colorScheme.secondary,
+        textStyle: textTheme.labelLarge,
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(appInputRadius),
         borderSide: BorderSide.none,
       ),
+      // The field's edge reaches 3:1 against the card and the page (Q3).
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(appInputRadius),
+        borderSide: BorderSide(color: palette.inputBorder),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(appInputRadius),
         borderSide: BorderSide(color: colorScheme.secondary, width: 2),
       ),
       hintStyle:
           textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
     ),
-    // Bottom nav is a custom widget (`_FloatingNavBar` in app.dart), styled
-    // directly from `colorScheme` there — no NavigationBarThemeData needed
-    // here.
+    // Bottom nav is a custom widget (`FloatingNavShell`), styled directly
+    // from the theme there — no NavigationBarThemeData needed here.
     snackBarTheme: SnackBarThemeData(
       backgroundColor: colorScheme.inverseSurface,
       contentTextStyle:

@@ -97,7 +97,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     // P1: held to the centred content column on an iPad (`ContentWidth`).
     final hPad = ContentWidth.sidePadding(
         size, (size.width * 0.08).clamp(24.0, 40.0).toDouble());
-    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+    // Welcome's own colors, set here rather than inherited: until 1.2.0 the
+    // scaffold color was D1's header band (orange in light mode, neutral in
+    // dark), and Welcome — D1's one full-orange exception — simply took it.
+    // The band is gone and the scaffold is now the page color, so the look
+    // is pinned explicitly: brand orange with its dark `onPrimary` in light
+    // mode, the neutral `surface` with `onSurface` in dark, as before.
+    final isDark = theme.brightness == Brightness.dark;
+    final background = isDark ? colorScheme.surface : colorScheme.primary;
+    final appBarFg = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
 
     // The decorative artwork below (mark, rings, background blobs, twinkle
     // dots) is specified against a 390x844 reference canvas; scaling it by
@@ -125,6 +133,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final ctaProgress = _ctaProgress ?? const AlwaysStoppedAnimation(1.0);
 
     return Scaffold(
+      backgroundColor: background,
       body: Stack(
         fit: StackFit.expand,
         children: [

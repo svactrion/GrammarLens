@@ -2022,7 +2022,7 @@ void main() {
           reason: 'the disclosure sentence is never cut off');
       // The footer was tightened without shrinking any target: the legal links
       // and "Maybe later" are at least 44 pt tall, and the purchase button
-      // keeps its 52.
+      // keeps the app's button height (48 since 1.2.0, 52 before).
       for (final entry in {
         'the Privacy Policy link': m.privacyTarget as Rect,
         'the Terms of Service link': m.termsTarget as Rect,
@@ -2033,7 +2033,7 @@ void main() {
         expect(entry.value.width, greaterThanOrEqualTo(44),
             reason: '${entry.key} is at least 44 pt wide');
       }
-      expect((m.cta as Rect).height, greaterThanOrEqualTo(52));
+      expect((m.cta as Rect).height, greaterThanOrEqualTo(48));
     }
 
     // The two sizes the owner asked for, at the sizes the app offers: on an
@@ -2355,26 +2355,29 @@ void main() {
       (393, 1.1),
       (414, 1.1),
       (430, 1.1),
+      (360, 1.15),
       (375, 1.15),
       (390, 1.15),
       (393, 1.15),
       (414, 1.15),
       (430, 1.15),
+      (393, 1.3),
       (414, 1.3),
       (430, 1.3),
     ];
     // Sizes where the previous table cut a label to two lines with an
-    // ellipsis (320 @1x and 393 @1.3x among them) plus every size beyond.
+    // ellipsis (320 @1x among them) plus every size beyond. 1.2.0 Batch 1:
+    // the type scale's smaller default text (batch0-report.md Q5) fits the
+    // labels at 360 @1.15x and 393 @1.3x, so those two moved to keepTable;
+    // the rule itself is unchanged.
     const nowStacked = <(double, double)>[
       (320, 1.0),
       (320, 1.1),
       (320, 1.15),
-      (360, 1.15),
       (320, 1.3),
       (360, 1.3),
       (375, 1.3),
       (390, 1.3),
-      (393, 1.3),
       (375, 1.5),
       (393, 1.5),
       (430, 1.5),

@@ -105,17 +105,17 @@ void main() {
 
   group('the plaque\'s rounded corners (Batch 6 Batch 0, step 2)', () {
     testWidgets(
-        'its radius is derived from the frame\'s, which is the app\'s card '
-        'radius', (tester) async {
+        'its radius is derived from the frame\'s, which stays at the '
+        'pre-1.2.0 card radius', (tester) async {
       await tester.pumpWidget(_card(Brightness.light));
       final shape = (tester
               .widget<DecoratedBox>(find.byKey(ClimbCard.plaqueKey))
               .decoration as ShapeDecoration)
           .shape as TrailSignBorder;
       expect(shape.radius, ClimbCard.frameRadius * ClimbCard.plaqueRadiusShare);
-      final card = Theme.of(tester.element(find.byType(ClimbCard))).cardTheme;
-      expect((card.shape! as RoundedRectangleBorder).borderRadius,
-          BorderRadius.circular(ClimbCard.frameRadius));
+      // 1.2.0 Batch 1: the app's card radius moved to 24; the mountain card
+      // keeps 20 until the plaque's redesign (Q16).
+      expect(ClimbCard.frameRadius, 20);
     });
 
     testWidgets('0.7 asks 14 pt, and every corner gets it at every text size',

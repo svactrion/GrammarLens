@@ -52,8 +52,9 @@ void main() {
         buildAppTheme(Brightness.light).colorScheme.surfaceContainerLow);
     expect(colors['dark'],
         buildAppTheme(Brightness.dark).colorScheme.surfaceContainerLow);
-    expect(colors['any'], const Color(0xFFFAF3EC));
-    expect(colors['dark'], const Color(0xFF1C1B1F));
+    // pageBackground since 1.2.0 (#FAF3EC / #1C1B1F before).
+    expect(colors['any'], const Color(0xFFF3EFE6));
+    expect(colors['dark'], const Color(0xFF151517));
   });
 
   test('the launch storyboard uses the LaunchBackground color', () {
