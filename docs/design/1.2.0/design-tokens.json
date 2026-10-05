@@ -1,0 +1,94 @@
+{
+  "fontFamily": "Nunito Sans",
+  "units": "Flutter logical pixels; reference values",
+  "colors": {
+    "light": {
+      "background": "#F3EFE6",
+      "card": "#FFFBF4",
+      "tile": "#F6F0E5",
+      "text": "#1B1B1F",
+      "muted": "#46464F",
+      "brand": "#FF7A1A",
+      "onBrand": "#241200",
+      "button": "#0D3B8F",
+      "onButton": "#FFFFFF",
+      "link": "#0D3B8F",
+      "info": "#D7E1FA",
+      "onInfo": "#0A2E70",
+      "border": "#DED5C6",
+      "nav": "#FFFCF7",
+      "navBorder": "#D2C6B4"
+    },
+    "dark": {
+      "background": "#151517",
+      "card": "#252528",
+      "tile": "#303034",
+      "text": "#F0ECE7",
+      "muted": "#C9C5D0",
+      "brand": "#FF8A3D",
+      "onBrand": "#241200",
+      "button": "#0D3B8F",
+      "onButton": "#FFFFFF",
+      "link": "#B4C8FF",
+      "info": "#243859",
+      "onInfo": "#D8E1FF",
+      "border": "#45454D",
+      "nav": "#2D2D32",
+      "navBorder": "#595961"
+    }
+  },
+  "spacing": {
+    "page": 18,
+    "narrowPage": 14,
+    "sectionGap": 24,
+    "listGap": 12,
+    "cardPadding": 18
+  },
+  "radius": {
+    "card": 24,
+    "listCard": 22,
+    "input": 18,
+    "button": 14,
+    "navbar": 29
+  },
+  "minimumTargets": {
+    "primaryButtonHeight": 48,
+    "iconButton": 44
+  },
+  "typography": {
+    "pageTitle": {
+      "size": 34,
+      "weight": 900,
+      "height": 1.1,
+      "letterSpacing": -1.1
+    },
+    "sectionTitle": {
+      "size": 20,
+      "weight": 800,
+      "height": 1.2
+    },
+    "cardTitle": {
+      "size": 17,
+      "weight": 800,
+      "height": 1.23
+    },
+    "body": {
+      "size": 14,
+      "weight": 400,
+      "height": 1.45
+    },
+    "questionBody": {
+      "size": 16,
+      "weight": 400,
+      "height": 1.55
+    },
+    "button": {
+      "size": 14,
+      "weight": 800
+    },
+    "metadata": {
+      "size": 11,
+      "weight": 600
+    }
+  }
+}
