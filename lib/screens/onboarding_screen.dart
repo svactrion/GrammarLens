@@ -566,9 +566,9 @@ class _NameCard extends StatelessWidget {
                   null,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.done,
-              // Room under the field so the card's line and, below the
-              // scroll area, Continue come into view with it.
-              scrollPadding: const EdgeInsets.fromLTRB(20, 20, 20, 60),
+              // Room above for the question and below for the card's line,
+              // when the keyboard opens and the field scrolls into view.
+              scrollPadding: const EdgeInsets.fromLTRB(20, 56, 20, 60),
               style: theme.textTheme.bodyLarge
                   ?.copyWith(color: colorScheme.onSurface),
               decoration: InputDecoration(
