@@ -11,6 +11,7 @@ import '../utils/loading_view.dart';
 import '../utils/text_format.dart';
 import '../theme.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/page_header.dart';
 import '../widgets/section_title.dart';
 import 'practice_launch.dart';
 
@@ -151,23 +152,11 @@ class _Header extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            // Flutter's own BackButton (its "Back" label and platform icon),
-            // drawn as the mockup's 44 pt bordered tile.
-            BackButton(
-              style: IconButton.styleFrom(
-                fixedSize: const Size(44, 44),
-                minimumSize: const Size(44, 44),
-                backgroundColor: scheme.surfaceContainerHigh,
-                foregroundColor: scheme.onSurface,
-                side: BorderSide(color: scheme.outlineVariant),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-            const Spacer(),
-            const _AccessLabel(),
+            PageBackButton(),
+            Spacer(),
+            _AccessLabel(),
           ],
         ),
         const SizedBox(height: 18),
