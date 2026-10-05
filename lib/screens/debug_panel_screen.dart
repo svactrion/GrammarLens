@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/climb_theme.dart';
 import '../utils/debug_sample_collection.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/brand_wordmark.dart';
 import '../widgets/monthly_climb/climb_debug_controls.dart';
 import '../widgets/monthly_climb/climb_debug_day.dart';
 import '../widgets/monthly_climb/climb_debug_milestone.dart';
@@ -20,6 +21,8 @@ import '../theme.dart';
 ///   and again. No stored record is read or written, no event is sent.
 /// - Sample collection (P6): Profile's shelf shows sample months; memory
 ///   only, nothing stored is read or written, no event is sent.
+/// - Two-colour wordmark (2026-10-05 trial): every [BrandWordmark] shows
+///   "Lens" in the brand orange at once; memory only.
 /// - "Reset local data": after a confirmation, the app's whole local
 ///   database goes ([onResetLocalData]) and the app is back at its first
 ///   launch. The only action here that touches stored data.
@@ -31,6 +34,7 @@ class DebugPanelScreen extends StatefulWidget {
 
   static const resetKey = ValueKey('debug_reset');
   static const sampleCollectionKey = ValueKey('debug_sample_collection');
+  static const twoColourWordmarkKey = ValueKey('debug_two_colour_wordmark');
   static const celebrateLastMonthKey = ValueKey('debug_celebrate_last_month');
   static const dayRealKey = ValueKey('debug_day_real');
   static const daySliderKey = ValueKey('debug_day_slider');
@@ -200,6 +204,19 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
           title: const Text('Sample collection'),
           value: DebugSampleCollection.runtime,
           onChanged: (on) => setState(() => DebugSampleCollection.runtime = on),
+        ),
+        section(
+            'Brand',
+            'A trial: "Grammar" in the text colour and "Lens" in the brand '
+                'orange, on Home, onboarding and the paywall at once. Not '
+                'the launch screen or Welcome. Off when the app is closed.'),
+        SwitchListTile(
+          key: DebugPanelScreen.twoColourWordmarkKey,
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Two-colour wordmark'),
+          value: DebugTwoColourWordmark.runtime.value,
+          onChanged: (on) =>
+              setState(() => DebugTwoColourWordmark.runtime.value = on),
         ),
         section(
             'Local data',

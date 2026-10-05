@@ -9,6 +9,7 @@ import '../utils/content_width.dart';
 import '../widgets/avatar_carousel.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/brand_wordmark.dart';
 
 /// The short privacy line under the goal options. Public so a test can pin
 /// the wording to what the app actually does: the name never leaves the
@@ -419,8 +420,7 @@ class _StepHeader extends StatelessWidget {
                     icon: const Icon(Icons.arrow_back_rounded, size: 21),
                   )
                 else
-                  Text(
-                    'GrammarLens',
+                  BrandWordmark(
                     style: theme.textTheme.titleLarge
                         ?.withWeight(FontWeight.w900)
                         .copyWith(

@@ -27,6 +27,7 @@ import '../utils/greeting.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/brand_wordmark.dart';
 import '../widgets/section_title.dart';
 import '../widgets/home_greeting.dart';
 import '../widgets/launch_splash.dart';
@@ -1126,8 +1127,7 @@ class _HomeScreenState extends State<HomeScreen>
           Semantics(
             container: true,
             header: true,
-            child: Text(
-              'GrammarLens',
+            child: BrandWordmark(
               style: theme.textTheme.displaySmall?.copyWith(
                 letterSpacing: -1.4,
                 color: colorScheme.onSurface,

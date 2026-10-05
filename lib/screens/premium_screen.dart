@@ -12,6 +12,7 @@ import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/brand_wordmark.dart';
 import '../widgets/legal_link.dart';
 import '../utils/content_width.dart';
 import '../theme.dart';
@@ -573,8 +574,7 @@ class _TopBar extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              'GrammarLens',
+            child: BrandWordmark(
               style: theme.textTheme.titleMedium
                   ?.withWeight(FontWeight.w900)
                   .copyWith(color: colorScheme.onSurface, letterSpacing: -.5),
