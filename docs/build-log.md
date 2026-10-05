@@ -8994,3 +8994,173 @@ changed.
 - **[Not measured]** Anything on a device: the card shadow's strength
   (elevation 2 approximates the brief), the dark button edge, the font
   weights 400 / 800 / 900, and how the smaller body text reads.
+
+## 2026-10-05 (1.2.0 redesign — Batch 2: shared components; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **Batch 1 was approved on a device by the
+owner** (iPhone 14 Plus, light and dark): the body text reads well; the
+card edge with elevation 2 separates enough, so Q2 is closed and there is
+no return to `outline`; the dark button edge works; Premium looks right.
+
+Visual only. State, routing, premium/quota checks, AI/proxy calls,
+storage, analytics and gamification math are unchanged. The Home, Review,
+Profile and Topic layouts and all copy are unchanged. The question screen
+is not touched.
+
+- **[Decisions this replaces]**
+  1. **The frosted-glass nav bar** (roadmap, "Home + nav bar revision
+     round"s): a translucent tint over a 24 pt blur, radius 32. Replaced
+     by **Q17**: a solid `navigationSurface` bar with a 1 pt
+     `navigationBorder` edge, the brief's nav shadow and radius 29.
+     Unselected items are textPrimary (Q6); the selected item is
+     linkAndActive, its label 800 instead of 600, so weight marks it as
+     well as colour.
+     - *Why:* the brief specifies a solid bar.
+     - *Why it matters:* the label contrast on a solid surface is fixed
+       and measurable (8.08–16.78:1). Through the glass it depended on
+       whatever scrolled behind.
+     - `NavBarClearance` still measures the laid-out bar every frame.
+  2. **The trail-sign plaque** (2026-10-02, corner radius 0.7 × the frame
+     = 14 pt). Replaced by **Q16**: a stadium plaque on the neutral card
+     surface with a 1.5 pt `AppPalette.pathOutline` edge, its title
+     16/900 in textPrimary.
+     - The frame gets the same 1.5 pt edge and the list card radius (22).
+     - *Why:* the brief describes a rounded, outlined plate bound to the
+       map's top edge on a neutral surface; no colour comes from the
+       month's map theme.
+     - The Batch 1 holds go: the frame no longer stays at 20, and the
+       plaque's text no longer keeps its pre-1.2.0 metrics.
+     - The game engine, scoring, motion and zoom are unchanged.
+- **[Engineering] What changed.**
+  - `climb_card.dart`: Q16. `TrailSignBorder`, `plaqueRadiusShare` and
+    its debug override are removed. With them go the two measuring tools
+    that existed only to measure them
+    (`tool/design_measure/batch6/plaque_numbers_test.dart`,
+    `tool/scene_art/batch6_plaque_sheet.py`) and the plaque-share hook in
+    `tool/design_measure/scene_art/home_render_test.dart`. The tools
+    README notes the removal; the Batch 6 report's numbers stay as
+    recorded.
+  - `floating_nav_shell.dart`: Q17, plus `FloatingNavShell.barKey`.
+  - New `widgets/section_title.dart`: 20/800 textPrimary with header
+    semantics. It replaces Home's and Profile's private `_SectionLabel`s
+    (14/700 in `secondary`).
+  - `weak_spot_card.dart`: a list card (radius 22, padding 17).
+    - The topic, when shown, becomes a linkAndActive eyebrow above the
+      title. Its text is not uppercased, so the copy is unchanged.
+    - The title is 17/800 and wraps instead of ending in an ellipsis.
+    - The explanation is a muted two-line excerpt; the frequency stat sits
+      on the info surface.
+  - `app_segmented_button.dart`: a subtle tile (radius 14, 4 pt inset),
+    no outline. The selected segment is the info surface with an 800
+    label, the others textSecondary 700. Segments are at least 44 pt tall.
+  - `locked_premium_pill.dart`: no fill or outline; the lock, "Premium"
+    in 11/800 and the chevron are all linkAndActive.
+  - `theme.dart`: `AppPalette.of` falls back to the palette for the
+    theme's brightness when a theme has none.
+  - `onboarding_screen.dart`: see the `secondary` scan below.
+- **[Scan] `secondary` / `onSecondary` / `secondaryContainer` in `lib/`.**
+  Dark `secondary` is the link colour (`#B4C8FF`) since Batch 1.
+  - **(a) Link or active state, correct.** 18 uses:
+    - `theme.dart`: outlined button foreground and side, text button,
+      focused input border;
+    - `loading_view.dart:74` (accent icon);
+    - `practice_screen.dart:217` and `daily_test_screen.dart:328` (item
+      type label; question screen, out of scope);
+    - `practice_length_picker.dart:245` (selected length label);
+    - `premium_screen.dart:336` (caption), `:1537` (selected plan
+      border), `:1604` (check icon);
+    - `legal_link.dart:33`;
+    - `floating_nav_shell.dart` (active item);
+    - `weak_spot_card.dart` (eyebrow);
+    - `locked_premium_pill.dart`;
+    - the debug-only `theme_preview_screen.dart` swatches.
+  - **The info surface (`secondaryContainer` / `onSecondaryContainer`)**
+    is the brief's infoSurface / onInfo in both themes, so it did not turn
+    light blue. That covers the length picker's selection card and dial
+    track and text, Premium's comparison strip and marks, the weak spot
+    detail pill, the segmented control, the weak spot badge,
+    `premium_offer_card.dart` and the theme preview.
+  - **(b) Fills that turned light blue in dark mode:**
+    - **`onboarding_screen.dart:216, 236`, the selected goal card:**
+      rebound to `AppPalette.button` / `onButton`, plus the dark `#5C7CFA`
+      button edge. Dark mode is now a navy fill with white text and a
+      `#5C7CFA` edge (the fill is 1.77:1 on the dark page, the edge
+      4.97:1). Before 1.2.0 it was a `#5C7CFA` fill with `#04123A` text.
+      Light mode is unchanged.
+    - **`practice_length_picker.dart:141, 143, 144, 148, 408`, the
+      slider's active track, thumb and tick marks, the thumb's chevron and
+      the dial's fill: not rebound, owner decision needed.**
+      - The navy measures **1.91:1** against the dark sheet
+        (`surfaceContainerLowest` `#0B0B0D`), so the thumb would vanish,
+        and **1.14:1** against the dark info card the dial sits on.
+      - The current link colour measures 11.84:1 and 7.09:1. The
+        pre-1.2.0 `#5C7CFA` would measure 5.35:1 and 3.20:1.
+    - **`topic_practice_screen.dart:211`, the activity bar's fill:** left
+      alone. The bar is removed in the Topic Practice batch (Q8).
+- **[Scan] Heading styles with a local `fontWeight`.** A
+  `textTheme.display*/headline*/title*.copyWith(fontWeight: …)` overrides
+  the theme's weight. There are 39. Below: `file:line`, style, the local
+  weight → the brief's weight. To be fixed in each screen's batch, not
+  here.
+  - **Lower than the brief:**
+    - `home_screen.dart`: `:1073` headlineLarge w800 → 900 (the brand),
+      `:1104` headlineSmall w700 → 900 (the greeting), `:1354` and
+      `:1430` titleMedium w700 → 800;
+    - `ai_consent_screen.dart:54` titleLarge w700 → 800;
+    - `avatar_picker_screen.dart:162` titleMedium w700 → 800;
+    - `onboarding_screen.dart:96, 111` titleMedium w700 → 800;
+    - `practice_length_picker.dart:132` titleLarge w600 → 800;
+    - `premium_screen.dart:318` titleLarge w700 → 800, `:1584`
+      titleMedium w700 → 800;
+    - `weak_spot_detail_screen.dart:400` titleMedium w700 → 800;
+    - `welcome_screen.dart:230` headlineLarge w700 → 900;
+    - `loading_view.dart:81` titleMedium w600 → 800;
+    - `premium_offer_card.dart:63` titleLarge w700 → 800;
+    - `question_app_bar.dart:122` titleLarge w600 → 800 (out of scope);
+    - `result_score_band.dart:38` headlineSmall w700 → 900.
+  - **Equal to the brief (redundant):**
+    - `medal_celebration.dart:252` titleLarge w800;
+    - `month_card_sheet.dart:141, 211` titleLarge w800, `:145`
+      titleMedium w800;
+    - `monthly_medal_collection.dart:345` titleLarge w800.
+  - **`titleSmall`, a style the brief does not cover** (theme w500),
+    overridden to w700 / w600 / w800:
+    - `ai_consent_screen.dart:129`;
+    - `data_screen.dart:139, 161`;
+    - `onboarding_screen.dart:270`;
+    - `settings_screen.dart:506, 551, 588, 620` (debug section);
+    - `weak_spot_detail_screen.dart:172` (w600);
+    - `month_card_sheet.dart:165, 191, 215`;
+    - `monthly_medal_collection.dart:425` (w700), `:431` (w800);
+    - `premium_offer_card.dart:159`;
+    - `debug_panel_screen.dart:108`;
+    - `preview/monthly_medal_preview.dart:348`.
+  - Deliberately fixed and not counted: the launch wordmark (a logotype,
+    w700, pinned in Batch 1) and the plaque (900 from the brief).
+- **[Note] Test counts.** The Batch 0 report's 1,126 counts `test(` /
+  `testWidgets(` calls in the source; many sit inside loops over themes,
+  sizes and text scales. That is why `flutter test` runs 1,520 test cases.
+- **[Tests]** `flutter analyze` clean; **1,520 passed, 0 failed**.
+  Behaviour tests are unchanged, except that two found the nav bar by its
+  old widget type; only their finder changed, their assertions did not:
+  - `floating_nav_shell_test` (the clearance test: `BackdropFilter` →
+    `FloatingNavShell.barKey`);
+  - `content_width_test` (P2's pill: `ClipRRect` → `barKey`, 2 cases).
+
+  `climb_card_test`:
+  - removed: 5 cases about the trail sign (the radius derived from the
+    frame, 0.7 asking 14 pt at every text size, the measuring override,
+    the sign's geometry and the radius fitting);
+  - added: 5 cases (the stadium's surface, edge and title, and the frame's
+    edge and radius, in both themes; the plaque centred on the frame's top
+    line).
+
+  The "Skip" `OutlinedButton` finders and the `question_app_bar` tests are
+  untouched.
+- **[Not done here]** Q18's padding (14 under 360 pt, 18 above) changes
+  every screen's side padding (`ContentWidth.basePadding`); it was not in
+  this batch's list.
+- **[Not measured]** On a device: the nav bar's shadow and edge in both
+  themes, the plaque at 320 pt with Large text and a large system text
+  size, the segmented control's selected state, and the onboarding
+  selected goal in dark mode.
