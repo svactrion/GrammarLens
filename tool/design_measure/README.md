@@ -437,3 +437,24 @@ build/scene_art_venv/bin/python tool/scene_art/release_p1_compare.py build/desig
 ```
 
 Commands and results: `docs/design/release-1.1.0/p1/report.md`.
+
+## 1.2.0 Batch 7: Home's hero and Profile
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/v120_hero DESIGN_MEASURE_TAG=after flutter test tool/design_measure/v120/hero_render_test.dart
+```
+
+Home's hero at 390 × 844 with the real font and avatar, light and dark:
+the hero's square plus 28 pt, and the header. `DESIGN_MEASURE_TAG` names
+the run (`before` was taken at `efa5b54`).
+
+```bash
+DESIGN_MEASURE_OUT=build/design_measure/v120_profile flutter test tool/design_measure/v120/profile_render_test.dart
+```
+
+The real Profile in the nav shell, the whole page, then the running
+month's detail and the name being edited. `DESIGN_MEASURE_WIDTHS`,
+`DESIGN_MEASURE_SIZES`, `DESIGN_MEASURE_MODES`, `DESIGN_MEASURE_SCORE`,
+`DESIGN_MEASURE_NAME` and `DESIGN_MEASURE_HISTORY=1` (three finished
+months and the Welcome badge) change the case. The card edges look darker
+than on a device: the test engine draws `Card`'s elevation shadow harder.

@@ -9725,3 +9725,209 @@ definitions and gamification math are unchanged.
     overflow checks use the test font, which is wider still);
   - the hero in light and dark;
   - the tab fade's feel.
+
+## 2026-10-05 (1.2.0 redesign — Batch 7: the hero's shadow, the tab slide, Profile; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 6 on the device and
+approved** the font weights (they match the mockup), Large text (no
+shifting) and the question screen.
+
+State, routing, premium/quota checks, AI/proxy calls, the storage schema,
+analytics event definitions and medal/score math are unchanged. The
+question screen and Topic Practice are not touched.
+
+- **[A1] Home's hero in light mode: one ground shadow** (owner: only the
+  shadow under the feet). Before → after:
+  - The round backlight (#483018 at 30 %, a radial gradient in the hero's
+    square) is gone in light mode (`AppPalette.heroBacklight` is null
+    there).
+  - The ground ellipse is now the only shadow: **80 × 16 pt, #483018 at
+    45 %, σ 5, 4 pt above the square's bottom** (was 88 × 16, 32 %, σ 6).
+    Its visible blur stays inside the square's sides and about 6 pt below
+    it (tested at 320 and 430 pt, Large).
+  - It used to sit on top of the avatar's own ellipse (`AvatarTile`, black
+    at 20 %, 70 × 17 pt, σ 8.6). A new `AvatarTile.groundShadow` flag
+    leaves that one out under Home's light hero, so the feet get one
+    shadow. Everywhere else the avatar keeps it.
+  - Dark mode is unchanged: the glow (#FF8A3D at 30 %) and the avatar's
+    own ellipse. Real-font renders at 390 pt: dark is pixel-identical,
+    light differs only around the hero
+    (`docs/design/1.2.0/batch7/hero_390_light_before_after.jpg`).
+- **[A2] Tab switches slide like a pushed page** (owner: the transition
+  Premium opens with). `TabSlideSwitcher` replaces Batch 6's
+  `TabFadeThrough` over the `IndexedStack`.
+  - **Values, from the iOS page route** (`CupertinoPageTransitionsBuilder`,
+    the platform default for `MaterialPageRoute` on iOS, which pushes
+    Premium): 500 ms; the new tab from a full width away with
+    `Curves.fastEaseInToSlowEaseOut`; the old one a third of the width the
+    other way with `Curves.linearToEaseOut`. The route's edge shadow is not
+    copied.
+  - Direction by tab order: to a tab on the right the content comes in from
+    the right and the old leaves to the left; to the left, the mirror image.
+  - It does the stack's job itself, since a slide draws two tabs: each tab
+    has a fixed keyed slot and is `Offstage` when not in view (laid out,
+    State and tickers kept, not painted, not hit, not in semantics; test
+    finders skip it, as with an `IndexedStack`). Nothing is rebuilt; State,
+    scroll position and data are kept (tested).
+  - The nav bar does not move and its selection changes at once. Taps on
+    the tab being left are swallowed during the slide. A second switch
+    mid-slide starts from the tab selected last and lands on the tab
+    tapped. Reduce motion: immediate. No edge swipe back.
+  - Every switch goes through it: the nav bar, Home's Review call-out and
+    Review's "Go to Daily Test".
+- **[B] Profile matches the mockup** (`settings_screen.dart`,
+  `monthly_medal_collection.dart`, `medal_badge.dart`). Presentation only:
+  `_loadMedals`, the analytics view, the save path and the developer
+  sections are as they were.
+  - **Header** in the page, as on Review: "Profile" (`displaySmall`, 34 /
+    900 / 1.10 / −1.1 at Medium) and "Your journey, your way.". The app bar
+    is the status bar's height only.
+  - **Identity card**: "Your companion", the hero centred in a 158 × 158
+    box (the `Hero` to the picker kept, tag `avatarHeroTag`), "Change your
+    avatar ›"; under a rule, "Your name", the name and "Edit".
+  - **N8, the name in place**: Edit opens the field (focused, starting
+    from the saved name), Save and Cancel in the same card. Save is off for
+    an empty or blank name (`_canSaveProfile`, unchanged), as is the
+    keyboard's Done. Cancel puts the saved name back and returns the focus
+    to Edit. No length limit; a long name wraps. UI state only.
+  - **Medal collection (Q7)**: a horizontal strip with no card, disc or
+    fill behind the medals (78 pt discs in 92 pt slots, 16 pt apart). **The
+    running month first, then the finished months newest to oldest, the
+    Welcome badge last. This replaces N34** (Welcome first, then oldest to
+    newest): the owner's Q7 decision (2026-10-05), so the month being
+    climbed is where the eye starts and the history reads back in time.
+    The running month without a tier shows its theme's Bronze at **.38**
+    opacity (`MonthlyMedalCollection.runningFade`; other unearned medals
+    keep .5); its label and "In progress" are not faded. "N earned" beside
+    the title: the Welcome badge and every month with a tier, the running
+    month included once it has one.
+  - **N10, a medal's detail**: `showMedalDetail` kept, now a card: a close
+    button, the medal at 156 pt, the month (or "Welcome"), "Earned" / "Not
+    earned yet" with an icon, then the theme and tier, steps and points,
+    and for the running month the next medal ("Reach T points to earn X."
+    and, in bold, "N points to go."). **240 ms**: the card fades in
+    (`easeOut`) and the medal grows from .5 (`easeOut`); with reduce motion
+    it only fades. The focus moves to the close button and comes back to
+    the medal that opened it. A tap outside closes it.
+  - **N9, the progress card**, its own card under the strip: "‹Month›
+    progress", the theme and active days, the points in an orange label,
+    "Next medal ‹Tier›" with "score / threshold pts" and the bar towards
+    it, the line under it, the three thresholds with their tier dots, and
+    "Monthly total: score / max points". Every number from
+    `MonthlyMedalRules` (`nextTier`, `threshold`, `maxScore`) and
+    `MonthlyMedalProgress`; no rule added. Four states:
+    - before Bronze: "N points to your first monthly medal";
+    - Bronze: "Bronze earned · N points to Silver";
+    - Silver: "Silver earned · N points to Gold";
+    - Gold: "Top medal Gold", "score / max pts", a full bar and "Gold
+      earned. That's this month's top medal." No count is ever negative
+      (`nextTier` is always above the score; tested for two months).
+    It replaces the shelf's "This month" bar (N33, N38).
+  - **Appearance** is a card: "Theme" and "Text size" with icons, the
+    Batch 2 segments, and "A little practice, every day.". Inside the card
+    the theme control is 34 pt narrower, and at 320 pt "System" broke
+    mid-word beside its icon; the icons now show only while the longest
+    label fits beside one (measured with the real font: none at 320 pt,
+    kept at 390 and 430 pt).
+  - **App information**: Data and Credits in a card, each a 64 pt link row
+    with a 34 pt icon tile, opening their screens as before. The Developer
+    section and the Debug row are unchanged (debug builds only).
+  - Not built (mockup preview tools): the collection picker and the sample
+    past months.
+- **[Copy] Old → new**
+  - Profile title: the app bar "Profile" → the page title "Profile"; new
+    "Your journey, your way.".
+  - The section title "Profile" and the label "Avatar" → gone; new "Your
+    companion".
+  - "Change avatar" → "Change your avatar".
+  - "Name" (label) → "Your name"; new "Edit", "Cancel". "Save", "Saving…"
+    and the field's hint "Your name" are unchanged.
+  - Snackbar "Profile saved." → "Name saved".
+  - "Your medals. Tap one to see its month." / "Your medals will appear
+    here once earned." → gone; new "N earned".
+  - The bar's "This month", "N points", "‹Tier›" / "T" and "‹Theme› ·
+    N / M points · N active days" → the progress card's "‹Month›
+    progress", "‹Theme› · N active day(s)", "N" + "points" (or "point"),
+    "Next medal ‹Tier›" / "Top medal Gold", "N / T pts", the four lines
+    above, "‹Tier›" + "T pts", "Monthly total: N / M points". Its
+    semantics label begins "‹Month› progress" instead of "This month".
+  - Medal detail: the month as the title, then the theme · tier · steps ·
+    points lines → title, new "Earned" / "Not earned yet", "‹Theme› ·
+    ‹Tier› medal[ · in progress]", "N / D steps · N points", new "Reach T
+    points to earn ‹Tier›." and "N points to go."; "No medal yet · in
+    progress" → the status line. Welcome: "Welcome to the climb" →
+    "Welcome", new "The beginning of your journey."; "Earned in ‹Month
+    Year›" unchanged; its "Not earned yet" line → the status line. New:
+    the close button's "Close" tooltip.
+  - New: "Theme", "A little practice, every day.", "App information".
+  - Unchanged: "Medal collection", "In progress", the slot labels ("Oct
+    2026", "Welcome"), "Appearance", "Text size", the segment labels,
+    "Data", "Credits", "Retry medal history", the slots' semantics labels.
+- **[Deliberate departures from the mockup]**
+  - Cards are the theme's `Card` (Q2: border token and elevation), not the
+    mockup's CSS shadow; the name field is the app's input (radius 18, the
+    Q3 edge), not the mockup's 12 pt tile field.
+  - The running month's faded medal is also desaturated (N10's fade),
+    not only at .38.
+  - The detail is a centred card, not a sheet placed near the medal.
+  - "Name saved" is the app's snackbar, not a line in the card.
+  - The tier dots use the app's tier colours (`medal_tier_color.dart`).
+  - The small 11–12 pt meta text scales with Small / Medium / Large.
+  - The theme segments lose their icons where a label would break.
+  - The progress lines after Bronze ("‹Tier› earned · N points to …") and
+    at Gold are proposals: the mockup shows only the before-Bronze state.
+  - The tab slide has no edge shadow.
+- **[Tests]** `flutter analyze` clean; **1,612 passed, 0 failed** (1,576
+  after Batch 6).
+  - **New:** `tab_slide_switcher_test.dart` (9: the route values, both
+    directions with positions at 250 ms, State and scroll kept, reduce
+    motion, a second switch mid-slide, swallowed taps, the nav bar still);
+    `profile_layout_test.dart` (18: the header style, the identity card and
+    its Hero, N8 Save / Cancel / empty / blank / a long name, the medals
+    from real data, the cards and the Data and Credits rows, 320 / 390 /
+    430 pt × Large × light and dark with a long name and the editor open,
+    clearing the nav bar at three widths); `profile_theme_segments_test.dart`
+    (5, real font); in `monthly_medal_collection_test.dart`: Q7's order,
+    no background, the .38 fade with full-strength text, `earnedCount`,
+    240 ms and reduce motion, focus in and back, the running month's
+    detail before Bronze / past Bronze / at Gold, the progress card's four
+    states for two months (thresholds from the rule, no negative), its
+    head and orange label, and its place under the strip;
+    `avatar_tile_test.dart` (the `groundShadow` flag).
+  - **Changed, with the reason:**
+    - `tab_fade_through_test.dart` → `tab_slide_switcher_test.dart`: the
+      transition it tested is replaced (A2).
+    - `home_screen_test.dart`, the hero backlight test: light mode has no
+      backlight now (A1); it checks the single ground shadow and the
+      avatar's ellipse being off there, dark as before.
+    - `monthly_medal_collection_test.dart`: N34's order test → Q7's; the
+      caption checks removed (the caption is gone); `shelf().first/last`
+      swapped where the order moved Welcome to the end; the detail lines
+      updated to the new copy; the N33 / N38 bar tests replaced by the
+      progress card's; "fits 320 pt" now checks one scrolling row.
+    - `settings_screen_test.dart`: five tests open Edit before using the
+      name field (it is behind Edit now; the assertions are unchanged);
+      the empty-collection caption → "0 earned"; the medal race test finds
+      the score by "Monthly total: …" instead of the old bar line; the
+      avatar round-trip test checks the closed name row instead of a Save
+      button that is no longer on screen; the section order test uses the
+      new labels and includes the progress card.
+    - `debug_sample_collection_test.dart`: the running month's points are
+      found on the progress card ("Monthly total: …") instead of the bar's
+      "N points".
+  - Not a test change: the nav bar's own row overflows by 4 pt at 320 pt
+    with Large text **in the test font** (wider than Nunito Sans), so
+    Profile's overflow sweep runs without the shell; the real-font renders
+    at 320 pt Large show no overflow.
+- **[Renders]** `tool/design_measure/v120/` (README):
+  `docs/design/1.2.0/batch7/profile_390_light_dark_detail_edit.jpg`.
+- **[Not measured]** On a device:
+  - the light hero's shadow strength;
+  - the tab slide's feel (500 ms, as Premium's push), a quick second tap,
+    and that each tab's scroll position survives;
+  - Profile's cards, the 158 pt hero and its flight to the picker and
+    back, the name editor with the keyboard, the strip's scrolling, the
+    medal detail with and without Reduce Motion;
+  - on Home in light mode, the end of the flight back from the picker: the
+    flying avatar brings its own ellipse and lands on the hero's ground
+    shadow, so two shadows may show for a moment.
