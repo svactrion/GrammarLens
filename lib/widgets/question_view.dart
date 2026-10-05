@@ -86,9 +86,11 @@ String questionTypeLabel(PracticeItemType type) {
 /// below are never pushed out. A question taller than its share (a long
 /// question, a small phone, large text, the keyboard open) scrolls in its
 /// own card, with a scroll bar and a fade that shows there is more. The
-/// text is never shrunk or cut. When even the minimums do not fit (a tiny
-/// height), the question keeps a peek of [minQuestionHeight] and the answer
-/// takes what is left, scrolling inside itself: nothing overflows.
+/// text is never shrunk or cut. When the answer's minimum would leave the
+/// question less than [minQuestionHeight] (a tiny height: a small phone,
+/// large text and the keyboard), the answer starts at one line for every
+/// type and the question keeps what is left, scrolling in its card;
+/// "Read full question" closes the keyboard to show it. Nothing overflows.
 ///
 /// The page itself does not scroll, so the keyboard can never drag the
 /// question out of view to show the caret; only the answer field scrolls to
@@ -130,17 +132,18 @@ class QuestionView extends StatefulWidget {
   static const moreBelowKey = ValueKey('question_more_below');
 
   /// Space between the question card and "Your answer", and between that
-  /// line and the field.
-  static const double questionGap = 12;
-  static const double headGap = 4;
+  /// line and the field. The line itself is 44 tall (the control's target),
+  /// its text centred, so these are smaller than the mockup's 12 and 4
+  /// around its 29 pt line: the visible spacing is about the same.
+  static const double questionGap = 4;
+  static const double headGap = 0;
 
   /// "Your answer" and its control: a 44 pt target.
   static const double headHeight = 44;
 
-  /// The least of the question the answer may squeeze it to: about its
-  /// label and a line, still scrollable in its card (or 40 % of the area
-  /// when even that is more).
-  static const double minQuestionHeight = 48;
+  /// The least of the question the answer's full minimum may leave it;
+  /// below this the answer drops to one line (see the class comment).
+  static const double minQuestionHeight = 72;
 
   /// The answer field's text: 16 at Medium on 25 pt lines (the brief).
   static TextStyle answerStyle(ThemeData theme) =>
@@ -154,17 +157,20 @@ class QuestionView extends StatefulWidget {
 
   /// Fill in the blank starts at one line, the full-sentence types at two
   /// (owner decision O12); every type wraps and grows.
-  static int minLinesFor(PracticeItemType type) =>
-      type == PracticeItemType.fillInBlank ? 1 : 2;
+  static int minLinesFor(PracticeItemType type, {bool compact = false}) =>
+      compact || type == PracticeItemType.fillInBlank ? 1 : 2;
 
   /// The answer field's height at its minimum lines, from the style and the
-  /// text scaler: lines × line height, the padding and the 2 pt focused
-  /// edge on each side, plus a little room for the font's rounding.
+  /// text scaler: lines × line height and the padding, plus 1 pt for the
+  /// font's rounding (measured: 74 pt for two lines at Medium).
   static double answerMinHeight(
-      ThemeData theme, TextScaler scaler, PracticeItemType type) {
+      ThemeData theme, TextScaler scaler, PracticeItemType type,
+      {bool compact = false}) {
     final style = answerStyle(theme);
     final line = scaler.scale(style.fontSize!) * style.height!;
-    return minLinesFor(type) * line + answerPadding.vertical + 4 + 2;
+    return minLinesFor(type, compact: compact) * line +
+        answerPadding.vertical +
+        1;
   }
 
   @override
@@ -230,8 +236,6 @@ class _QuestionViewState extends State<QuestionView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scaler = MediaQuery.textScalerOf(context);
-    final answerMin =
-        QuestionView.answerMinHeight(theme, scaler, widget.item.type);
     SchedulerBinding.instance
         .addPostFrameCallback((_) => _checkQuestionMetrics());
 
@@ -244,14 +248,30 @@ class _QuestionViewState extends State<QuestionView> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
           widget.horizontalPadding, 14, widget.horizontalPadding, 12),
-      child: CustomMultiChildLayout(
-        delegate: _QuestionLayoutDelegate(answerMin: answerMin),
-        children: [
-          LayoutId(id: _Slot.question, child: _questionCard(theme)),
-          LayoutId(id: _Slot.head, child: head),
-          LayoutId(id: _Slot.answer, child: _answerField(theme)),
-        ],
-      ),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final type = widget.item.type;
+        final room = constraints.maxHeight -
+            QuestionView.questionGap -
+            QuestionView.headHeight -
+            QuestionView.headGap;
+        final compact =
+            room - QuestionView.answerMinHeight(theme, scaler, type) <
+                QuestionView.minQuestionHeight;
+        return CustomMultiChildLayout(
+          delegate: _QuestionLayoutDelegate(
+              answerMin: QuestionView.answerMinHeight(theme, scaler, type,
+                  compact: compact)),
+          children: [
+            LayoutId(id: _Slot.question, child: _questionCard(theme)),
+            LayoutId(id: _Slot.head, child: head),
+            LayoutId(
+                id: _Slot.answer,
+                child: _answerField(theme,
+                    minLines:
+                        QuestionView.minLinesFor(type, compact: compact))),
+          ],
+        );
+      }),
     );
   }
 
@@ -309,7 +329,7 @@ class _QuestionViewState extends State<QuestionView> {
     );
   }
 
-  Widget _answerField(ThemeData theme) {
+  Widget _answerField(ThemeData theme, {required int minLines}) {
     final colorScheme = theme.colorScheme;
     final palette = AppPalette.of(context);
     final radius = BorderRadius.circular(17);
@@ -333,7 +353,7 @@ class _QuestionViewState extends State<QuestionView> {
         // line): words wrap, Return adds a line and never submits.
         keyboardType: TextInputType.multiline,
         textInputAction: TextInputAction.newline,
-        minLines: QuestionView.minLinesFor(widget.item.type),
+        minLines: minLines,
         maxLines: null,
         maxLength: maxLength,
         // The keyboard must not fix the learner's mistake: a corrected
@@ -531,7 +551,8 @@ class _MoreBelow extends StatelessWidget {
     return Container(
       key: QuestionView.moreBelowKey,
       height: 30,
-      alignment: Alignment.bottomCenter,
+      alignment: Alignment.bottomRight,
+      padding: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -551,7 +572,8 @@ class _MoreBelow extends StatelessWidget {
 enum _Slot { question, head, answer }
 
 /// Lays out the question first, capped so the answer keeps [answerMin];
-/// then "Your answer"; then the answer in whatever height is left.
+/// then "Your answer"; then the answer in whatever height is left (never
+/// less than [answerMin] while the area holds it).
 class _QuestionLayoutDelegate extends MultiChildLayoutDelegate {
   final double answerMin;
 
@@ -562,7 +584,7 @@ class _QuestionLayoutDelegate extends MultiChildLayoutDelegate {
     final width = size.width;
     final head = layoutChild(_Slot.head, BoxConstraints.tightFor(width: width));
     final questionCap = math.max(
-        math.min(QuestionView.minQuestionHeight, size.height * .4),
+        0.0,
         size.height -
             QuestionView.questionGap -
             head.height -
