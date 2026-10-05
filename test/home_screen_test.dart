@@ -987,6 +987,17 @@ void main() {
           findsOneWidget);
       expect(find.descendant(of: card, matching: find.text('questions')),
           findsOneWidget);
+      // The same order as the done state: the label above the number.
+      expect(
+          tester
+              .getRect(
+                  find.descendant(of: card, matching: find.text('questions')))
+              .bottom,
+          lessThanOrEqualTo(tester
+              .getRect(find.descendant(
+                  of: card,
+                  matching: find.text('${DailyTestSet.questionCount}')))
+              .top));
       expect(find.descendant(of: card, matching: find.text('Review results')),
           findsNothing);
       expect(
@@ -1019,6 +1030,15 @@ void main() {
           findsOneWidget);
       expect(find.text('Start daily test'), findsNothing);
       expect(find.text('Review results'), findsOneWidget);
+      // The label above the value, one step larger than the card's 11 pt
+      // labels (owner, after Batch 3).
+      final label = find.descendant(of: card, matching: find.text('correct'));
+      final value = find.descendant(of: card, matching: find.text('3/5'));
+      expect(tester.getRect(label).bottom,
+          lessThanOrEqualTo(tester.getRect(value).top));
+      final theme = Theme.of(tester.element(card));
+      expect(tester.widget<Text>(label).style!.fontSize,
+          theme.textTheme.labelMedium!.fontSize);
     });
 
     testWidgets(

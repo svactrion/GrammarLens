@@ -1476,15 +1476,19 @@ class _DailyTestCard extends StatelessWidget {
                     color: palette.brandTint,
                     borderRadius: BorderRadius.circular(16),
                   ),
+                  // The label above the value (owner, after Batch 3), in
+                  // labelMedium (12/700 at Medium), one step up from the
+                  // card's 11 pt labels; the value in headlineMedium.
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      Text(unit,
+                          style: theme.textTheme.labelMedium
+                              ?.copyWith(color: ink)),
+                      const SizedBox(height: 6),
                       Text(amount,
                           style: theme.textTheme.headlineMedium
                               ?.copyWith(color: ink, height: 1)),
-                      const SizedBox(height: 6),
-                      Text(unit,
-                          style: small?.copyWith(fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
