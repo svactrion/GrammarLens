@@ -176,7 +176,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Practice this'));
+      // 1.2.0 (N3): the free user's button is "Start free practice".
+      await tester.tap(find.text('Start free practice'));
       await tester.pumpAndSettle();
 
       expect(find.text('How many questions?'), findsNothing);
@@ -238,11 +239,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // No enabled "Practice this" FilledButton at all in this state.
-      expect(find.widgetWithText(FilledButton, 'Practice this'), findsNothing);
-      expect(find.text('Practice this'), findsOneWidget);
+      // No free-practice button at all in this state; 1.2.0 (N3): the way
+      // on is "Practice with Premium".
+      expect(find.text('Start free practice'), findsNothing);
+      expect(find.text('Practice with Premium'), findsOneWidget);
 
-      await tester.tap(find.text('Practice this'));
+      await tester.tap(find.text('Practice with Premium'));
       await tester.pumpAndSettle();
 
       expect(claude.generateCalls, 0);

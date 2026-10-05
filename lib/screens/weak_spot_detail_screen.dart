@@ -12,7 +12,7 @@ import '../utils/premium_copy.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/locked_premium_pill.dart';
+import '../widgets/section_title.dart';
 import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
 import 'premium_screen.dart';
@@ -158,32 +158,52 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
         body: const LoadingView(message: 'Preparing your questions…'),
       );
     }
+    final colorScheme = theme.colorScheme;
+    // 1.2.0 (brief, "Review"; Q14: still a pushed screen, restyled): the
+    // topic as a small eyebrow, the weak spot's name as the page's title,
+    // then its frequency on the info surface. The topic is named once: when
+    // the rule title is the topic's own name, the eyebrow is left out.
     return BrandScaffold(
-      title: PageTitle(widget.topic.title),
+      title: const SizedBox.shrink(),
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.secondaryContainer,
-            borderRadius: BorderRadius.circular(10),
+        if (!ruleRepeatsTopic) ...[
+          Text(
+            widget.topic.title,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colorScheme.secondary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
           ),
+          const SizedBox(height: 7),
+        ],
+        Semantics(
+          container: true,
+          header: true,
           child: Text(
-            formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSecondaryContainer,
+            ruleTitle,
+            style: theme.textTheme.headlineMedium
+                ?.copyWith(color: colorScheme.onSurface),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: colorScheme.onSecondaryContainer,
+              ),
             ),
           ),
         ),
-        if (!ruleRepeatsTopic) ...[
-          const SizedBox(height: 8),
-          Text(
-            ruleTitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
         const SizedBox(height: 20),
         FutureBuilder<List<ErrorEntry>>(
           future: _mistakes,
@@ -216,42 +236,59 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          recap ??
-                              (ruleRepeatsTopic
-                                  ? 'You\'ve had trouble with $ruleTitle. '
-                                      'Practicing it again will help '
-                                      'reinforce it.'
-                                  : 'You\'ve had trouble with $ruleTitle in '
-                                      '${widget.topic.title}. Practicing it '
-                                      'again will help reinforce it.'),
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                        if (mistakes.isNotEmpty &&
-                            mistakes.first.rule != null) ...[
-                          const SizedBox(height: 8),
+                // The brief's "Saved feedback" panel: the subtle surface with
+                // a small link-coloured label above the recorded feedback.
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.chat_bubble_outline_rounded,
+                              size: 15, color: colorScheme.secondary),
+                          const SizedBox(width: 6),
                           Text(
-                            humanizeSlug(mistakes.first.rule!),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                            'Saved feedback',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: colorScheme.secondary,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 9),
+                      Text(
+                        recap ??
+                            (ruleRepeatsTopic
+                                ? 'You\'ve had trouble with $ruleTitle. '
+                                    'Practicing it again will help '
+                                    'reinforce it.'
+                                : 'You\'ve had trouble with $ruleTitle in '
+                                    '${widget.topic.title}. Practicing it '
+                                    'again will help reinforce it.'),
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                      if (mistakes.isNotEmpty &&
+                          mistakes.first.rule != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          humanizeSlug(mistakes.first.rule!),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  'Recent mistakes',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+                const SectionTitle('Recent mistakes'),
                 const SizedBox(height: 12),
                 if (mistakes.isEmpty)
                   const EmptyState(
@@ -328,94 +365,61 @@ class _PracticeAction extends StatelessWidget {
 
     final remaining =
         StorageService.freeDailyPracticeLimit - freePracticeUsedToday;
-    if (!hasFullAccess && remaining <= 0) {
-      return _LockedPracticeRow(onTap: onLockedTap);
-    }
-
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    if (!hasFullAccess && remaining <= 0) {
+      // Used up today (N3): no free-practice button. The way on is
+      // Premium, through the same paywall entry as before, with the same
+      // message about today's free practice.
+      return Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onLockedTap,
+              icon: const Icon(Icons.lock_rounded, size: 17),
+              label: const Text('Practice with Premium'),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            freePracticeUsedMessage,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
+          ),
+        ],
+      );
+    }
     return Column(
       children: [
-        // Premium has no caption at all — no quota to name (PRD v2 §12.2,
-        // and this batch's own "unlimited" ban: the honest thing to say
-        // about a premium session here is nothing, not an inflated claim).
-        if (!hasFullAccess) ...[
-          Text(
-            '$remaining free practice${remaining == 1 ? '' : 's'} today',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 8),
-        ],
         SizedBox(
           width: double.infinity,
           child: FilledButton(
             onPressed: onPractice,
-            child: const Text('Practice this'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// The exhausted-quota state — the exact visual language Home's locked
-/// Topic Practice card already uses (`_PracticeModeCard` in
-/// home_screen.dart): a muted icon avatar, a muted title, a subtitle
-/// explaining why, and the shared [LockedPremiumPill] trailing it. Same
-/// widget shape as that card, not a new "locked" treatment invented for
-/// this screen. Still a real tap target, not a disabled button — tapping
-/// opens Premium instead of generating.
-class _LockedPracticeRow extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _LockedPracticeRow({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final muted = colorScheme.onSurfaceVariant;
-
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                foregroundColor: muted,
-                child: const Icon(Icons.edit_note_rounded, size: 26),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Practice this',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: muted,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      freePracticeUsedMessage,
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                    ),
-                  ],
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                      hasFullAccess ? 'Practice this' : 'Start free practice'),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const LockedPremiumPill(),
-            ],
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_rounded, size: 17),
+              ],
+            ),
           ),
         ),
-      ),
+        // Premium has no caption at all — no quota to name (PRD v2 §12.2,
+        // and this batch's own "unlimited" ban: the honest thing to say
+        // about a premium session here is nothing, not an inflated claim).
+        if (!hasFullAccess) ...[
+          const SizedBox(height: 10),
+          Text(
+            '$remaining free practice${remaining == 1 ? '' : 's'} today',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
+          ),
+        ],
+      ],
     );
   }
 }

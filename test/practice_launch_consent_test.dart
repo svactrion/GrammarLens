@@ -165,8 +165,11 @@ void main() {
             analyticsService: AnalyticsService(),
             subscriptionService: _Subscription(hasAccess: premium),
           ),
-      start: (tester) async =>
-          tester.tap(find.widgetWithText(FilledButton, 'Practice this')),
+      // 1.2.0 (N3): a free user's button says "Start free practice", a
+      // premium user's still "Practice this".
+      start: (tester) async => tester.tap(find.byWidgetPredicate((w) =>
+          w is Text &&
+          (w.data == 'Practice this' || w.data == 'Start free practice'))),
     ),
   };
 
