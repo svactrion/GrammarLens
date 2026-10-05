@@ -133,4 +133,37 @@ void main() {
 
     expect(clearance, NavBarClearance.fallback);
   });
+
+  testWidgets(
+      'Batch 8: a keyboard inset does not move the bar; a tab\'s own field '
+      'is kept above the keyboard by its Scaffold', (tester) async {
+    tester.view.physicalSize = const Size(390, 844) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: FloatingNavShell(
+        body: Scaffold(
+          body: ListView(children: [
+            const SizedBox(height: 600),
+            const TextField(key: ValueKey('field')),
+            const SizedBox(height: 600),
+          ]),
+        ),
+        tabs: const [
+          NavShellTab(icon: Icons.home, activeIcon: Icons.home, label: 'Home'),
+          NavShellTab(
+              icon: Icons.person, activeIcon: Icons.person, label: 'Profile'),
+        ],
+        selectedIndex: 0,
+        onTabChange: (_) {},
+      ),
+    ));
+    final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+    await tester.showKeyboard(find.byKey(const ValueKey('field')));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 336 * 3);
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(FloatingNavShell.barKey)), bar);
+    expect(tester.getRect(find.byKey(const ValueKey('field'))).bottom,
+        lessThanOrEqualTo(844 - 336.0));
+  });
 }

@@ -424,13 +424,13 @@ class _GrammarLensAppState extends State<GrammarLensApp>
             ),
           ];
 
-          return Scaffold(
-            body: FloatingNavShell(
-              body: TabSlideSwitcher(index: _tabIndex, children: screens),
-              tabs: _navTabs,
-              selectedIndex: _tabIndex,
-              onTabChange: _switchTab,
-            ),
+          // The shell brings its own Scaffold (see FloatingNavShell: it
+          // must not resize for the keyboard).
+          return FloatingNavShell(
+            body: TabSlideSwitcher(index: _tabIndex, children: screens),
+            tabs: _navTabs,
+            selectedIndex: _tabIndex,
+            onTabChange: _switchTab,
           );
         },
       ),

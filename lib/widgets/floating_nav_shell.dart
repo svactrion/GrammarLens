@@ -77,6 +77,16 @@ class NavShellTab {
 /// "Home + nav bar revision round"s). Unselected items are textPrimary
 /// (Q6), the selected item linkAndActive.
 ///
+/// The shell is its own root [Scaffold], with `resizeToAvoidBottomInset`
+/// off (1.2.0 Batch 8, owner: the bar rose with the keyboard while editing
+/// the name on Profile). Before, app.dart's Scaffold around the shell
+/// resized for the keyboard, shrinking this `Stack` by the keyboard's
+/// height, and the bar, pinned to the Stack's bottom, rode up above the
+/// keyboard. Now the Stack keeps the screen's height, so the bar stays where
+/// it is and the keyboard covers it. The keyboard inset still reaches the
+/// tab screens: their own Scaffolds (`BrandScaffold`) resize their content,
+/// so a focused field and its buttons stay in view on every tab.
+///
 /// Also the single source of [NavBarClearance] (see its own doc comment):
 /// measures the bar's real rendered height via a `GlobalKey` after every
 /// frame that could change it (a font-scale change, say) instead of
@@ -137,41 +147,44 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
     // iPhone it keeps its 16 pt from each edge.
     final side = 16 + ContentWidth.insetOf(context, edge: 16);
 
-    return NavBarClearance(
-      value: _clearance,
-      child: Stack(
-        children: [
-          widget.body,
-          Positioned(
-            left: side,
-            right: side,
-            bottom: 0,
-            child: SafeArea(
-              key: _barKey,
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: DecoratedBox(
-                  key: FloatingNavShell.barKey,
-                  decoration: BoxDecoration(
-                    color: palette.navSurface,
-                    borderRadius: BorderRadius.circular(_radius),
-                    border: Border.all(color: palette.navBorder),
-                    boxShadow: palette.navShadow,
-                  ),
-                  child: _FloatingNavBar(
-                    tabs: widget.tabs,
-                    selectedIndex: widget.selectedIndex,
-                    onTabChange: widget.onTabChange,
-                    unselectedColor: colorScheme.onSurface,
-                    activeColor: colorScheme.secondary,
-                    labelStyle: theme.textTheme.labelSmall,
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: NavBarClearance(
+        value: _clearance,
+        child: Stack(
+          children: [
+            widget.body,
+            Positioned(
+              left: side,
+              right: side,
+              bottom: 0,
+              child: SafeArea(
+                key: _barKey,
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DecoratedBox(
+                    key: FloatingNavShell.barKey,
+                    decoration: BoxDecoration(
+                      color: palette.navSurface,
+                      borderRadius: BorderRadius.circular(_radius),
+                      border: Border.all(color: palette.navBorder),
+                      boxShadow: palette.navShadow,
+                    ),
+                    child: _FloatingNavBar(
+                      tabs: widget.tabs,
+                      selectedIndex: widget.selectedIndex,
+                      onTabChange: widget.onTabChange,
+                      unselectedColor: colorScheme.onSurface,
+                      activeColor: colorScheme.secondary,
+                      labelStyle: theme.textTheme.labelSmall,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

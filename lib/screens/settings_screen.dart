@@ -1032,6 +1032,11 @@ class _IdentityCard extends StatelessWidget {
                         child: TextField(
                           controller: controller,
                           autofocus: true,
+                          // When the keyboard opens the list scrolls the
+                          // field into view; the extra bottom room brings
+                          // the Cancel row under it into view too.
+                          scrollPadding:
+                              const EdgeInsets.fromLTRB(20, 20, 20, 88),
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.done,
                           decoration:

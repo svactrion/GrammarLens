@@ -447,4 +447,34 @@ void main() {
       expect(credits.bottom, lessThanOrEqualTo(bar.top));
     });
   }
+
+  testWidgets(
+      'Batch 8: with the keyboard open the nav bar stays put (behind the '
+      'keyboard); the name field, Save and Cancel stay in view',
+      (tester) async {
+    await pump(tester, width: 390);
+    final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    // The keyboard: 336 pt, the iPhone 14 Plus portrait keyboard's height.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 336 * 3);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+
+    expect(tester.getRect(find.byKey(FloatingNavShell.barKey)), bar);
+    expect(bar.top, greaterThan(844 - 336.0),
+        reason: 'the bar is where the keyboard is, so the keyboard hides it');
+    final keyboardTop = 844 - 336.0;
+    for (final f in [
+      find.byType(TextField),
+      find.widgetWithText(FilledButton, 'Save'),
+      find.text('Cancel'),
+    ]) {
+      final r = tester.getRect(f);
+      expect(r.bottom, lessThanOrEqualTo(keyboardTop), reason: '$f');
+      expect(r.top, greaterThanOrEqualTo(0), reason: '$f');
+    }
+    expect(tester.takeException(), isNull);
+  });
 }
