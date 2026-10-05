@@ -130,7 +130,8 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
             const SizedBox(height: Spacing.lg),
             Text(
               'How many questions?',
-              style: theme.textTheme.titleLarge?.withWeight(FontWeight.w600),
+              // The brief's 800 (1.2.0 Batch 9; was 600).
+              style: theme.textTheme.titleLarge?.withWeight(FontWeight.w800),
             ),
             const SizedBox(height: Spacing.lg),
             _SelectionCard(selected: _selected, reduceMotion: reduceMotion),
