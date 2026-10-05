@@ -877,6 +877,21 @@ void main() {
         // Behind the Hero, not inside it: the flight carries the avatar only.
         expect(find.descendant(of: find.byType(Hero), matching: light),
             findsNothing);
+        // Batch 6: light mode adds a ground shadow under the hero; its
+        // visible blur (about 2 sigma, 12 pt) stays clear of the greeting
+        // and inside the screen. Dark mode has none (the glow does it).
+        final ground = find.byKey(HomeScreen.heroGroundKey);
+        if (brightness == Brightness.light) {
+          final g = tester.getRect(ground).inflate(12);
+          expect(g.left,
+              greaterThan(tester.getRect(find.byType(HomeGreeting)).right));
+          expect(g.right, lessThanOrEqualTo(width));
+          expect(find.descendant(of: find.byType(Hero), matching: ground),
+              findsNothing);
+          expect(AppPalette.of(context).heroGround, isNotNull);
+        } else {
+          expect(ground, findsNothing);
+        }
         expect(tester.takeException(), isNull);
       }
     });

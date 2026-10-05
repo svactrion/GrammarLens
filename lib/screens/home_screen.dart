@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
@@ -139,6 +140,9 @@ class HomeScreen extends StatefulWidget {
   /// The greeting word's size relative to a section title (titleLarge):
   /// 22 pt at the default text size.
   static const greetingScale = 1.1;
+
+  /// Light mode's ground shadow under the hero, for tests.
+  static const heroGroundKey = ValueKey('home_hero_ground');
 
   /// The soft light behind the hero, for tests.
   static const heroBacklightKey = ValueKey('home_hero_backlight');
@@ -1321,9 +1325,16 @@ class _HeroButton extends StatelessWidget {
   /// The brief's 108 pt hero; AvatarTile is sized by half its side.
   static const _size = 108.0;
 
+  /// Light mode's ground shadow under the hero.
+  static const _groundWidth = 88.0;
+  static const _groundHeight = 16.0;
+  static const _groundBlur = 6.0;
+
   @override
   Widget build(BuildContext context) {
-    final backlight = AppPalette.of(context).heroBacklight;
+    final palette = AppPalette.of(context);
+    final backlight = palette.heroBacklight;
+    final ground = palette.heroGround;
     // A node of its own (container): without it the label and the button
     // flag would merge into the Home list's node above.
     return Semantics(
@@ -1338,7 +1349,7 @@ class _HeroButton extends StatelessWidget {
         onTap: onTap,
         child: SizedBox.square(
           dimension: _size,
-          child: Stack(children: [
+          child: Stack(clipBehavior: Clip.none, children: [
             // The backlight (owner, Batch 5): a radial gradient inside the
             // hero's own square, fading to nothing at its edge, so it is
             // never clipped by the screen edge and never reaches the
@@ -1351,7 +1362,7 @@ class _HeroButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
-                      center: const Alignment(0, .12),
+                      center: const Alignment(0, .25),
                       radius: .5,
                       colors: [
                         backlight,
@@ -1362,6 +1373,34 @@ class _HeroButton extends StatelessWidget {
                 ),
               ),
             ),
+            // Light mode's ground shadow (Batch 6): a blurred ellipse under
+            // the hero, 88 x 16 pt, its visible blur (about 2 sigma) a couple
+            // of points past the square's sides and about 8 pt below it —
+            // inside the 8 pt gap to the greeting, the 12 pt gap to the
+            // Daily Test card, and well inside the screen.
+            if (ground != null)
+              Positioned(
+                key: HomeScreen.heroGroundKey,
+                left: (_size - _groundWidth) / 2,
+                bottom: 4,
+                width: _groundWidth,
+                height: _groundHeight,
+                child: IgnorePointer(
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(
+                        sigmaX: _groundBlur, sigmaY: _groundBlur),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: ground,
+                        borderRadius: const BorderRadius.all(
+                          Radius.elliptical(
+                              _groundWidth / 2, _groundHeight / 2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             // `homeAvatarHeroTag` is its own tag, distinct from Settings'
             // `avatarHeroTag` — see that constant's doc comment for why
             // sharing one tag across both entry points would crash.
