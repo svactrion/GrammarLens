@@ -159,76 +159,89 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final hPad = _sidePadding(context);
     final narrow = width < 360;
-    return Column(
+    // A tap anywhere outside the name field closes the keyboard and keeps
+    // the name, so the companions can be looked at again in full (owner,
+    // after Batch 11). Buttons and the carousel's drag still win their own
+    // gestures; a tap never changes the companion.
+    return GestureDetector(
       key: const ValueKey('onboarding_step_1'),
-      children: [
-        const _StepHeader(step: 1, onBack: null),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _Heading(
-                  eyebrow: 'A little practice. Every day.',
-                  title: 'Meet your learning companion.',
-                  subtitle: '${_countWord(DailyTestSet.questionCount)} '
-                      'questions a day. A small step forward, together.',
-                ),
-                const SizedBox(height: 10),
-                // The warm glow behind the selected companion.
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0, -.1),
-                      radius: .55,
-                      colors: [palette.warm, palette.warm.withValues(alpha: 0)],
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Column(
+        children: [
+          const _StepHeader(step: 1, onBack: null),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Heading(
+                    eyebrow: 'A little practice. Every day.',
+                    title: 'Meet your learning companion.',
+                    subtitle: '${_countWord(DailyTestSet.questionCount)} '
+                        'questions a day. A small step forward, together.',
+                  ),
+                  const SizedBox(height: 10),
+                  // The warm glow behind the selected companion.
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(0, -.1),
+                        radius: .55,
+                        colors: [
+                          palette.warm,
+                          palette.warm.withValues(alpha: 0)
+                        ],
+                      ),
+                    ),
+                    child: AvatarCarousel(
+                      initialAvatar: _selectedAvatar,
+                      onSettled: (avatar) =>
+                          setState(() => _selectedAvatar = avatar),
+                      centerRadius: 75,
+                      // 150 pt tiles 18 apart, as wide as the screen allows.
+                      viewportFraction: (168 / width).clamp(0.3, 1.0),
+                      neighborScale: .72,
+                      neighborOpacity: .48,
+                      showNavigation: true,
                     ),
                   ),
-                  child: AvatarCarousel(
-                    initialAvatar: _selectedAvatar,
-                    onSettled: (avatar) =>
-                        setState(() => _selectedAvatar = avatar),
-                    centerRadius: 75,
-                    // 150 pt tiles 18 apart, as wide as the screen allows.
-                    viewportFraction: (168 / width).clamp(0.3, 1.0),
-                    neighborScale: .72,
-                    neighborOpacity: .48,
-                    showNavigation: true,
+                  Text(
+                    'Swipe to choose · Change it later in Profile',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall
+                        ?.withWeight(FontWeight.w400)
+                        .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
-                ),
-                Text(
-                  'Swipe to choose · Change it later in Profile',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall
-                      ?.withWeight(FontWeight.w400)
-                      .copyWith(color: colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: hPad),
-                  child: _NameCard(
-                    controller: _nameController,
-                    padding: narrow ? 15 : 19,
-                    onChanged: () => setState(() {}),
-                    onSubmitted: _continue,
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
+                    child: _NameCard(
+                      controller: _nameController,
+                      padding: narrow ? 15 : 19,
+                      onChanged: () => setState(() {}),
+                      // The keyboard's Done only closes the keyboard; the next
+                      // step is reached with Continue alone.
+                      onSubmitted: () => FocusScope.of(context).unfocus(),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        _BottomActions(
-          horizontalPadding: hPad,
-          children: [
-            _PrimaryCta(
-              buttonKey: OnboardingScreen.continueKey,
-              label: 'Continue',
-              onPressed: _canContinue ? _continue : null,
-            ),
-          ],
-        ),
-      ],
+          _BottomActions(
+            horizontalPadding: hPad,
+            children: [
+              _PrimaryCta(
+                buttonKey: OnboardingScreen.continueKey,
+                label: 'Continue',
+                onPressed: _canContinue ? _continue : null,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

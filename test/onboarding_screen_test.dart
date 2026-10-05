@@ -93,17 +93,18 @@ void main() {
 
     testWidgets(
         'every avatar is reachable with Next (16, then the loop back), the '
-        'caption names it, and the one chosen is the one saved',
+        'caption names it with no position, and the one chosen is saved',
         (tester) async {
       UserProfile? completed;
       await pump(tester, onComplete: (p) => completed = p);
       final seen = <String>{};
       for (var i = 0; i < Avatar.count; i++) {
         seen.add(centeredAvatarLabel(tester));
+        // Only the name: the carousel loops, so a position meant nothing.
         final caption =
-            tester.widget<Text>(find.byKey(AvatarCarousel.captionKey)).data!;
-        expect(caption, startsWith('${centeredAvatarLabel(tester)} · '));
-        expect(caption, endsWith(' / ${Avatar.count}'));
+            tester.widget<Text>(find.byKey(AvatarCarousel.captionKey)).data;
+        expect(caption, centeredAvatarLabel(tester));
+        expect(find.bySemanticsLabel('$caption, selected'), findsOneWidget);
         await tester.tap(find.byKey(AvatarCarousel.nextKey));
         await tester.pumpAndSettle();
       }
@@ -180,6 +181,59 @@ void main() {
       await toGoalStep(tester, name: '  Çağrı İnce Öztürk  ');
       await chooseGoalAndStart(tester);
       expect(completed!.name, 'Çağrı İnce Öztürk');
+    });
+
+    testWidgets(
+        'a tap outside the name field closes the keyboard, keeps the name and '
+        'the companion, and leaves step 1', (tester) async {
+      await pump(tester, keyboard: 336);
+      await tester.tap(find.byKey(OnboardingScreen.nameFieldKey));
+      await enterName(tester, 'Ada');
+      await tester.pumpAndSettle();
+      final companion = centeredAvatarLabel(tester);
+      expect(tester.testTextInput.isVisible, isTrue);
+
+      // The companion area and the heading: no control there.
+      await tester.tapAt(tester.getCenter(find.byType(PageView)));
+      await tester.pumpAndSettle();
+      expect(tester.testTextInput.isVisible, isFalse);
+      await tester.tap(find.text('Meet your learning companion.'));
+      await tester.pumpAndSettle();
+      expect(centeredAvatarLabel(tester), companion);
+      expect(
+          tester
+              .widget<TextField>(find.byKey(OnboardingScreen.nameFieldKey))
+              .controller!
+              .text,
+          'Ada');
+      expect(find.text('Step 1 of 2'), findsOneWidget);
+
+      // With the keyboard closed the carousel works as before.
+      await tester.tap(find.byKey(AvatarCarousel.nextKey));
+      await tester.pumpAndSettle();
+      final next = centeredAvatarLabel(tester);
+      expect(next, isNot(companion));
+      await tester.drag(find.byType(PageView), const Offset(300, 0));
+      await tester.pumpAndSettle();
+      expect(centeredAvatarLabel(tester), isNot(next));
+    });
+
+    testWidgets(
+        "the keyboard's Done closes the keyboard only; Continue is the one way "
+        'to step 2', (tester) async {
+      UserProfile? completed;
+      await pump(tester, keyboard: 336, onComplete: (p) => completed = p);
+      await tester.tap(find.byKey(OnboardingScreen.nameFieldKey));
+      await enterName(tester, 'Ada');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(tester.testTextInput.isVisible, isFalse);
+      expect(find.text('Step 1 of 2'), findsOneWidget);
+      expect(completed, isNull);
+
+      await tester.tap(continueButton());
+      await tester.pumpAndSettle();
+      expect(find.text('Step 2 of 2'), findsOneWidget);
     });
 
     testWidgets(
