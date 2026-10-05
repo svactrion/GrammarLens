@@ -17,7 +17,7 @@ const String avatarHeroTag = 'profile-avatar';
 /// Shared between this screen's centered avatar and Home's own greeting
 /// avatar (`home_screen.dart`), for the Home → picker → back flight.
 /// Deliberately a *different* tag from [avatarHeroTag], not reused: both
-/// Home and Settings live inside the same `TabSlideSwitcher` in `app.dart`
+/// Home and Settings live inside the same `IndexedStack` in `app.dart`
 /// (every tab stays mounted, not just the visible one), so if both routes
 /// used the same tag, two `Hero`s with an identical tag would be mounted
 /// simultaneously the moment either one pushes this screen — Flutter

@@ -58,7 +58,7 @@ class AppMessenger {
   /// Clears any message currently showing or queued. Called by
   /// [navigatorObserver] on every Navigator route change; app.dart also
   /// calls this directly on a bottom-nav tab switch, since that's an
-  /// `TabSlideSwitcher` swap, not a Navigator route change the observer below
+  /// `IndexedStack` swap, not a Navigator route change the observer below
   /// would ever see.
   static void clear() {
     key.currentState?.clearSnackBars();
