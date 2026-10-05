@@ -27,6 +27,12 @@ import 'package:flutter/material.dart';
 /// [SegmentedButtonThemeData] — both are constructor parameters, not style
 /// properties — which is why this app uses a wrapper widget rather than a
 /// shared style object.
+///
+/// 1.2.0 look (the brief's Profile controls): the segments sit in a subtle
+/// tile (radius 14, 4 pt inset) with no outline; the selected segment is
+/// the info surface with its label in 800, the others transparent with a
+/// textSecondary label in 700 — weight, not only color, marks the choice.
+/// Each segment is at least 44 pt tall.
 class AppSegmentedButton<T> extends StatelessWidget {
   final List<ButtonSegment<T>> segments;
   final Set<T> selected;
@@ -41,12 +47,50 @@ class AppSegmentedButton<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<T>(
-      segments: segments,
-      selected: selected,
-      onSelectionChanged: onSelectionChanged,
-      showSelectedIcon: false,
-      expandedInsets: EdgeInsets.zero,
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final label = theme.textTheme.labelMedium;
+    bool isSelected(Set<WidgetState> states) =>
+        states.contains(WidgetState.selected);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: SegmentedButton<T>(
+          segments: segments,
+          selected: selected,
+          onSelectionChanged: onSelectionChanged,
+          showSelectedIcon: false,
+          expandedInsets: EdgeInsets.zero,
+          style: ButtonStyle(
+            minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+            side: const WidgetStatePropertyAll(BorderSide.none),
+            shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10))),
+            backgroundColor: WidgetStateProperty.resolveWith((states) =>
+                isSelected(states)
+                    ? colorScheme.secondaryContainer
+                    : Colors.transparent),
+            foregroundColor: WidgetStateProperty.resolveWith((states) =>
+                isSelected(states)
+                    ? colorScheme.onSecondaryContainer
+                    : colorScheme.onSurfaceVariant),
+            iconColor: WidgetStateProperty.resolveWith((states) =>
+                isSelected(states)
+                    ? colorScheme.onSecondaryContainer
+                    : colorScheme.onSurfaceVariant),
+            textStyle: WidgetStateProperty.resolveWith((states) =>
+                label?.copyWith(
+                    fontWeight: isSelected(states)
+                        ? FontWeight.w800
+                        : FontWeight.w700)),
+          ),
+        ),
+      ),
     );
   }
 }
