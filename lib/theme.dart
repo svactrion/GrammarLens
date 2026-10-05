@@ -320,7 +320,7 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
 /// (batch0-report.md §1.1): the filled button (the same navy in both
 /// themes, unlike `secondary`), the navigation bar, the text field's edge,
 /// the mountain path's outline, the disabled button and the two shadows.
-/// Read with `Theme.of(context).extension<AppPalette>()!` or [AppPalette.of].
+/// Read with [AppPalette.of].
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
   /// primaryButton / onPrimaryButton.
@@ -369,8 +369,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.navShadow,
   });
 
-  static AppPalette of(BuildContext context) =>
-      Theme.of(context).extension<AppPalette>()!;
+  /// The theme's palette; under a theme without one (a widget pumped in
+  /// isolation under a plain `ThemeData`), the palette for its brightness.
+  static AppPalette of(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.extension<AppPalette>() ??
+        (theme.brightness == Brightness.dark ? dark : light);
+  }
 
   // The shadows' base colors: a warm brown in light mode, black in dark.
   static const Color _lightShadowBase = Color(0xFF483018);

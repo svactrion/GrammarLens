@@ -80,7 +80,8 @@ void main() {
     await tester.pump();
 
     final lastItemBottom = tester.getBottomLeft(find.text('Item 29')).dy;
-    final barTop = tester.getTopLeft(find.byType(BackdropFilter)).dy;
+    // 1.2.0 (Q17): the bar is a solid box, no longer a BackdropFilter.
+    final barTop = tester.getTopLeft(find.byKey(FloatingNavShell.barKey)).dy;
 
     expect(
       lastItemBottom,

@@ -98,11 +98,8 @@ void main() {
           onTabChange: (_) {},
         ),
       ));
-      return tester.getRect(find
-          .descendant(
-              of: find.byType(FloatingNavShell),
-              matching: find.byType(ClipRRect))
-          .first);
+      // 1.2.0 (Q17): the bar is a solid box, no longer clipped glass.
+      return tester.getRect(find.byKey(FloatingNavShell.barKey));
     }
 
     testWidgets('on a 13-inch iPad the pill spans the content column',

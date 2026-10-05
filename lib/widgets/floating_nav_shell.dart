@@ -1,7 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
+import '../theme.dart';
 import '../utils/content_width.dart';
 
 /// How much bottom padding a scrollable tab screen needs to reserve so its
@@ -63,8 +62,7 @@ class NavShellTab {
   final String label;
 }
 
-/// The floating, frosted-glass bottom nav bar (see docs/roadmap.md's "Home
-/// + nav bar revision round"s for how this look was arrived at) as a
+/// The floating bottom nav bar as a
 /// `Stack`, not `Scaffold.bottomNavigationBar` — that slot wraps its child
 /// in an opaque `Material` spanning the full screen width regardless of
 /// what's inside it, which painted a solid strip behind the pill's rounded
@@ -72,6 +70,12 @@ class NavShellTab {
 /// `Stack` with the bar as a `Positioned` overlay has no such slot: nothing
 /// paints outside the pill's own bounds, and [body] genuinely continues
 /// underneath it, Instagram-style.
+///
+/// 1.2.0 (owner decision Q17): a solid bar — `AppPalette.navSurface`, a
+/// 1 pt `navBorder` edge, the brief's nav shadow and radius 29 — replaces
+/// the frosted glass (a translucent tint over a blur, from the roadmap's
+/// "Home + nav bar revision round"s). Unselected items are textPrimary
+/// (Q6), the selected item linkAndActive.
 ///
 /// Also the single source of [NavBarClearance] (see its own doc comment):
 /// measures the bar's real rendered height via a `GlobalKey` after every
@@ -86,6 +90,9 @@ class FloatingNavShell extends StatefulWidget {
     required this.onTabChange,
   });
 
+  /// The bar itself (its decorated box), for tests that measure it.
+  static const barKey = ValueKey('floating_nav_bar');
+
   /// Typically an `IndexedStack` of the app's tab screens.
   final Widget body;
   final List<NavShellTab> tabs;
@@ -97,6 +104,9 @@ class FloatingNavShell extends StatefulWidget {
 }
 
 class _FloatingNavShellState extends State<FloatingNavShell> {
+  /// The bar's corner radius (the brief: 29).
+  static const _radius = 29.0;
+
   final _barKey = GlobalKey();
   double _clearance = NavBarClearance.fallback;
 
@@ -121,12 +131,7 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    // Same contrast-checked color the app bar uses for content sitting
-    // directly on the orange (light) / near-black (dark) scaffold — see
-    // theme.dart's `appBarFg` for the reasoning.
-    final unselectedColor =
-        theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+    final palette = AppPalette.of(context);
 
     // P2: on an iPad the pill itself spans the content column; on an
     // iPhone it keeps its 16 pt from each edge.
@@ -146,40 +151,21 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
               top: false,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        // Frosted glass: a translucent surface tint over
-                        // the blur, not a solid fill — content scrolling
-                        // behind the pill should still read through it,
-                        // softened.
-                        color: colorScheme.surfaceContainerLow
-                            .withValues(alpha: isDark ? 0.55 : 0.68),
-                        borderRadius: BorderRadius.circular(32),
-                        border: Border.all(
-                          color:
-                              colorScheme.outlineVariant.withValues(alpha: 0.5),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withValues(alpha: 0.18),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: _FloatingNavBar(
-                        tabs: widget.tabs,
-                        selectedIndex: widget.selectedIndex,
-                        onTabChange: widget.onTabChange,
-                        unselectedColor: unselectedColor,
-                        activeColor: colorScheme.secondary,
-                        labelStyle: theme.textTheme.labelMedium,
-                      ),
-                    ),
+                child: DecoratedBox(
+                  key: FloatingNavShell.barKey,
+                  decoration: BoxDecoration(
+                    color: palette.navSurface,
+                    borderRadius: BorderRadius.circular(_radius),
+                    border: Border.all(color: palette.navBorder),
+                    boxShadow: palette.navShadow,
+                  ),
+                  child: _FloatingNavBar(
+                    tabs: widget.tabs,
+                    selectedIndex: widget.selectedIndex,
+                    onTabChange: widget.onTabChange,
+                    unselectedColor: colorScheme.onSurface,
+                    activeColor: colorScheme.secondary,
+                    labelStyle: theme.textTheme.labelSmall,
                   ),
                 ),
               ),
@@ -270,12 +256,14 @@ class _NavTab extends StatelessWidget {
             children: [
               Icon(active ? data.activeIcon : data.icon,
                   size: 24, color: color),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
+              // The brief's 11/600 label, 800 when selected: weight as well
+              // as color marks the selected tab.
               Text(
                 data.label,
                 style: labelStyle?.copyWith(
                   color: color,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
             ],
