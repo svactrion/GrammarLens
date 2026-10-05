@@ -1325,10 +1325,13 @@ class _HeroButton extends StatelessWidget {
   /// The brief's 108 pt hero; AvatarTile is sized by half its side.
   static const _size = 108.0;
 
-  /// Light mode's ground shadow under the hero.
-  static const _groundWidth = 88.0;
+  /// Light mode's ground shadow under the hero (Batch 7): the only shadow
+  /// there, so it is drawn darker and tighter than Batch 6's 88 x 16 pt at
+  /// 32 % with sigma 6, which sat on top of the avatar's own ellipse.
+  static const _groundWidth = 80.0;
   static const _groundHeight = 16.0;
-  static const _groundBlur = 6.0;
+  static const _groundBlur = 5.0;
+  static const _groundBottom = 4.0;
 
   @override
   Widget build(BuildContext context) {
@@ -1350,39 +1353,43 @@ class _HeroButton extends StatelessWidget {
         child: SizedBox.square(
           dimension: _size,
           child: Stack(clipBehavior: Clip.none, children: [
-            // The backlight (owner, Batch 5): a radial gradient inside the
-            // hero's own square, fading to nothing at its edge, so it is
+            // Dark mode's glow (owner, Batch 5–6): a radial gradient inside
+            // the hero's own square, fading to nothing at its edge, so it is
             // never clipped by the screen edge and never reaches the
-            // greeting. Behind the Hero, not in it, so the flight to the
+            // greeting. Light mode has none since Batch 7: only the ground
+            // shadow below. Behind the Hero, not in it, so the flight to the
             // picker carries only the avatar.
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  key: HomeScreen.heroBacklightKey,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      center: const Alignment(0, .25),
-                      radius: .5,
-                      colors: [
-                        backlight,
-                        backlight.withValues(alpha: 0),
-                      ],
+            if (backlight != null)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    key: HomeScreen.heroBacklightKey,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        center: const Alignment(0, .25),
+                        radius: .5,
+                        colors: [
+                          backlight,
+                          backlight.withValues(alpha: 0),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            // Light mode's ground shadow (Batch 6): a blurred ellipse under
-            // the hero, 88 x 16 pt, its visible blur (about 2 sigma) a couple
-            // of points past the square's sides and about 8 pt below it —
-            // inside the 8 pt gap to the greeting, the 12 pt gap to the
-            // Daily Test card, and well inside the screen.
+            // Light mode's ground shadow (Batch 6, stronger in Batch 7): a
+            // blurred ellipse under the hero's feet, 80 x 16 pt, its visible
+            // blur (about 2 sigma) inside the square's sides and about 6 pt
+            // below it — inside the 8 pt gap to the greeting, the 12 pt gap
+            // to the Daily Test card, and well inside the screen. It replaces
+            // the avatar's own ellipse here (`groundShadow: false` below),
+            // so the feet get one shadow, not two.
             if (ground != null)
               Positioned(
                 key: HomeScreen.heroGroundKey,
                 left: (_size - _groundWidth) / 2,
-                bottom: 4,
+                bottom: _groundBottom,
                 width: _groundWidth,
                 height: _groundHeight,
                 child: IgnorePointer(
@@ -1406,7 +1413,11 @@ class _HeroButton extends StatelessWidget {
             // sharing one tag across both entry points would crash.
             Hero(
               tag: homeAvatarHeroTag,
-              child: AvatarTile(avatar: avatar, radius: _size / 2),
+              child: AvatarTile(
+                avatar: avatar,
+                radius: _size / 2,
+                groundShadow: ground == null,
+              ),
             ),
           ]),
         ),

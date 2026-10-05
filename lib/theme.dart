@@ -385,15 +385,16 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// pairing itself.
   final Color brandTint;
 
-  /// The soft light behind Home's hero, the centre of a radial gradient
-  /// that fades out within the hero's square: in light mode a shadow in the
-  /// card shadow's brown (#483018 at 30 %), in dark mode a warm glow in the
-  /// dark brand orange (#FF8A3D at 30 %). Batch 5 had 16 % / 22 %; the
-  /// owner did not see the light one on the device (Batch 6).
-  final Color heroBacklight;
+  /// The warm glow behind Home's hero in dark mode, the centre of a radial
+  /// gradient that fades out within the hero's square: the dark brand
+  /// orange (#FF8A3D at 30 %, Batch 6). Null in light mode: the owner kept
+  /// only the ground shadow there (Batch 7; Batch 5–6 had #483018 at
+  /// 16 % / 30 % behind the hero).
+  final Color? heroBacklight;
 
-  /// A soft ground shadow under Home's hero, light mode only (#483018 at
-  /// 32 %, Batch 6); null in dark mode, where the glow does that job.
+  /// The ground shadow under Home's hero, light mode only (#483018 at 45 %,
+  /// Batch 7; 32 % in Batch 6, when it overlapped the avatar's own ellipse
+  /// and the backlight); null in dark mode, where the glow does that job.
   final Color? heroGround;
 
   /// The brief's card and navigation bar shadows.
@@ -442,8 +443,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     inputBorder: const Color(0xFF8E8577),
     pathOutline: const Color(0xFFA59F98),
     brandTint: const Color(0x66FAF3EC),
-    heroBacklight: _lightShadowBase.withValues(alpha: .30),
-    heroGround: _lightShadowBase.withValues(alpha: .32),
+    heroBacklight: null,
+    heroGround: _lightShadowBase.withValues(alpha: .45),
     cardShadow: [
       BoxShadow(
         color: _lightShadowBase.withValues(alpha: .10),
@@ -542,7 +543,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       inputBorder: Color.lerp(inputBorder, other.inputBorder, t)!,
       pathOutline: Color.lerp(pathOutline, other.pathOutline, t)!,
       brandTint: Color.lerp(brandTint, other.brandTint, t)!,
-      heroBacklight: Color.lerp(heroBacklight, other.heroBacklight, t)!,
+      heroBacklight: Color.lerp(heroBacklight, other.heroBacklight, t),
       heroGround: Color.lerp(heroGround, other.heroGround, t),
       cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t)!,
       navShadow: BoxShadow.lerpList(navShadow, other.navShadow, t)!,

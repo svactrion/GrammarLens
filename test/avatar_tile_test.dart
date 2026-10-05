@@ -70,4 +70,29 @@ void main() {
     expect(imageRect.width, radius * 2);
     expect(imageRect.height, radius * 2);
   });
+
+  testWidgets(
+      'groundShadow false leaves the ellipse out and keeps the size '
+      '(Home\'s light hero draws its own, 1.2.0 Batch 7)', (tester) async {
+    for (final shadow in [true, false]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: AvatarTile(
+                  avatar: Avatar.values.first,
+                  radius: 30,
+                  groundShadow: shadow),
+            ),
+          ),
+        ),
+      );
+      expect(
+          find.descendant(
+              of: find.byType(AvatarTile),
+              matching: find.byType(ImageFiltered)),
+          shadow ? findsOneWidget : findsNothing);
+      expect(tester.getSize(find.byType(AvatarTile)), const Size(60, 60));
+    }
+  });
 }

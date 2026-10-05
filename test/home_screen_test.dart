@@ -853,44 +853,58 @@ void main() {
 
   for (final brightness in Brightness.values) {
     testWidgets(
-        'the hero\'s backlight (owner, Batch 5): the palette colour, inside '
-        'the hero\'s square, clear of the greeting, ${brightness.name}',
-        (tester) async {
+        'the hero\'s backlight (owner, Batch 5; dark only since Batch 7): the '
+        'palette colour, inside the hero\'s square, clear of the greeting; '
+        'light mode\'s one ground shadow, ${brightness.name}', (tester) async {
       for (final width in [320.0, 430.0]) {
         await pumpHome(tester,
             brightness: brightness,
             size: Size(width, 844),
             textSize: AppTextSize.large);
+        final heroTile = find.descendant(
+            of: find.byType(Hero), matching: find.byType(AvatarTile));
+        final hero = tester.getRect(heroTile);
+        final context = tester.element(heroTile);
         final light = find.byKey(HomeScreen.heroBacklightKey);
-        final context = tester.element(light);
-        final gradient =
-            (tester.widget<DecoratedBox>(light).decoration as BoxDecoration)
-                .gradient! as RadialGradient;
-        expect(gradient.colors.first, AppPalette.of(context).heroBacklight);
-        expect(gradient.colors.last.a, 0);
-        final rect = tester.getRect(light);
-        final hero = tester.getRect(find.byType(AvatarTile));
-        expect(rect, hero, reason: 'the hero\'s own square');
-        expect(rect.right, lessThanOrEqualTo(width));
-        expect(tester.getRect(find.byType(HomeGreeting)).right,
-            lessThanOrEqualTo(rect.left));
-        // Behind the Hero, not inside it: the flight carries the avatar only.
-        expect(find.descendant(of: find.byType(Hero), matching: light),
-            findsNothing);
-        // Batch 6: light mode adds a ground shadow under the hero; its
-        // visible blur (about 2 sigma, 12 pt) stays clear of the greeting
-        // and inside the screen. Dark mode has none (the glow does it).
         final ground = find.byKey(HomeScreen.heroGroundKey);
-        if (brightness == Brightness.light) {
-          final g = tester.getRect(ground).inflate(12);
-          expect(g.left,
+        if (brightness == Brightness.dark) {
+          final gradient =
+              (tester.widget<DecoratedBox>(light).decoration as BoxDecoration)
+                  .gradient! as RadialGradient;
+          expect(gradient.colors.first, AppPalette.of(context).heroBacklight);
+          expect(gradient.colors.last.a, 0);
+          final rect = tester.getRect(light);
+          expect(rect, hero, reason: 'the hero\'s own square');
+          expect(rect.right, lessThanOrEqualTo(width));
+          expect(tester.getRect(find.byType(HomeGreeting)).right,
+              lessThanOrEqualTo(rect.left));
+          // Behind the Hero, not inside it: the flight carries the avatar
+          // only.
+          expect(find.descendant(of: find.byType(Hero), matching: light),
+              findsNothing);
+          // No ground shadow in dark (the glow does it); the avatar keeps
+          // its own ellipse.
+          expect(ground, findsNothing);
+          expect(tester.widget<AvatarTile>(heroTile).groundShadow, isTrue);
+        } else {
+          // Batch 7 (owner): light mode keeps only the ground shadow.
+          expect(light, findsNothing);
+          expect(AppPalette.of(context).heroBacklight, isNull);
+          // Its visible blur (about 2 sigma, 10 pt; 12 checked) stays clear
+          // of the greeting and inside the screen, under the hero's feet.
+          final g = tester.getRect(ground);
+          expect(g.inflate(12).left,
               greaterThan(tester.getRect(find.byType(HomeGreeting)).right));
-          expect(g.right, lessThanOrEqualTo(width));
+          expect(g.inflate(12).right, lessThanOrEqualTo(width));
+          expect(g.left, greaterThanOrEqualTo(hero.left));
+          expect(g.right, lessThanOrEqualTo(hero.right));
+          expect(g.bottom, lessThanOrEqualTo(hero.bottom));
           expect(find.descendant(of: find.byType(Hero), matching: ground),
               findsNothing);
           expect(AppPalette.of(context).heroGround, isNotNull);
-        } else {
-          expect(ground, findsNothing);
+          // One shadow at the feet, not two: the avatar's own ellipse is
+          // left out here.
+          expect(tester.widget<AvatarTile>(heroTile).groundShadow, isFalse);
         }
         expect(tester.takeException(), isNull);
       }
