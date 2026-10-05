@@ -77,8 +77,8 @@ class AiConsentScreen extends StatelessWidget {
                   ),
                   const _Section(
                     heading: 'What is never sent',
-                    text: 'Your name, your learning goal or your avatar. Daily '
-                        'Test answers stay on your device.',
+                    text: 'Your name or your avatar. Daily Test answers stay '
+                        'on your device.',
                   ),
                   const SizedBox(height: 16),
                   Text(

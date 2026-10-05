@@ -157,10 +157,14 @@ void main() {
   Future<void> completeOnboarding(WidgetTester tester) async {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
+    // Two steps (1.2.0): the name, then the goal.
     await tester.enterText(find.byType(TextField), 'Ada');
-    await tester.tap(find.text('Exam prep'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Exam prep'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Start my first test'));
     await tester.pumpAndSettle();
   }
 

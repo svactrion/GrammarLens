@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/screens/onboarding_screen.dart';
 
 import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
@@ -88,6 +89,16 @@ class _FakeStorageService extends StorageService {
   Future<AiConsent?> getAiConsent() async {
     aiConsentRead = true;
     return null;
+  }
+
+  /// AI permission decisions written; onboarding's information sheet must
+  /// never write one.
+  int aiConsentWrites = 0;
+
+  @override
+  Future<void> setAiConsent(
+      {required bool granted, DateTime? decidedAt}) async {
+    aiConsentWrites++;
   }
 
   /// What was written, in order: `seed` for a bundled set, `profile`.
@@ -223,10 +234,14 @@ void main() {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
 
+    // Two steps (1.2.0): the name, then the goal.
     await tester.enterText(find.byType(TextField), 'Ada');
-    await tester.tap(find.text('Exam prep'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Exam prep'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Start my first test'));
     await tester.pumpAndSettle();
   }
 
@@ -573,6 +588,132 @@ void main() {
       expect(event.parameters!['set_source'], 'bundled');
       expect(event.parameters!['day0'], 1);
       expect(event.parameters!['correct_count'], 1);
+    });
+  });
+
+  group('two-step onboarding (1.2.0)', () {
+    Future<void> toGoalStep(WidgetTester tester, {String name = 'Ada'}) async {
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), name);
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+    }
+
+    final cases = <String, LearningGoal?>{
+      'exam_prep': LearningGoal.examPrep,
+      'work': LearningGoal.work,
+      'general': LearningGoal.general,
+      'skipped': null,
+    };
+    for (final MapEntry(key: value, value: goal) in cases.entries) {
+      testWidgets(
+          'learning_goal = $value, set once before onboarding_completed; the '
+          'name is in no analytics call', (tester) async {
+        final sink = RecordingAnalyticsSink();
+        await pumpFlow(tester,
+            analytics: AnalyticsService(sink: sink),
+            onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+        await toGoalStep(tester, name: 'Zeynep Ünlü');
+        if (goal == null) {
+          await tester.tap(find.text('Skip goal & start'));
+        } else {
+          await tester.tap(find.byKey(OnboardingScreen.goalKey(goal)));
+          await tester.pump();
+          await tester
+              .tap(find.widgetWithText(FilledButton, 'Start my first test'));
+        }
+        await tester.pumpAndSettle();
+
+        expect(sink.userProperties['learning_goal'], value);
+        expect(
+            sink.userPropertyWrites.where((n) => n == 'learning_goal').length,
+            1);
+        expect(sink.named('onboarding_completed'), hasLength(1));
+        expect(storageService.savedProfile!.learningGoal, goal);
+        expect(storageService.savedProfile!.toMap()['learning_goal'], value);
+        // Nothing user-typed anywhere: no event parameter and no user
+        // property carries the name.
+        for (final e in sink.events) {
+          for (final v in (e.parameters ?? const {}).values) {
+            expect('$v'.contains('Zeynep'), isFalse, reason: e.name);
+          }
+        }
+        for (final v in sink.userProperties.values) {
+          expect('$v'.contains('Zeynep'), isFalse);
+        }
+      });
+    }
+
+    testWidgets(
+        'a chosen goal then "Skip goal & start" stores skipped, not the '
+        'choice and not general', (tester) async {
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+      await toGoalStep(tester);
+      await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
+      await tester.pump();
+      await tester.tap(find.text('Skip goal & start'));
+      await tester.pumpAndSettle();
+      expect(storageService.savedProfile!.learningGoal, isNull);
+      expect(storageService.savedProfile!.toMap()['learning_goal'], 'skipped');
+    });
+
+    testWidgets(
+        '"Your data & AI": "Got it" only closes it; no AI permission is '
+        'written or reported, and the link has the focus again',
+        (tester) async {
+      final sink = RecordingAnalyticsSink();
+      await pumpFlow(tester,
+          analytics: AnalyticsService(sink: sink),
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+      await toGoalStep(tester);
+      await tester.ensureVisible(find.byKey(OnboardingScreen.dataLinkKey));
+      await tester.tap(find.byKey(OnboardingScreen.dataLinkKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your data & AI'), findsOneWidget);
+      final gotIt = find.byKey(OnboardingScreen.gotItKey);
+      expect(Focus.of(tester.element(find.text('Got it'))).hasFocus, isTrue,
+          reason: 'the focus moves into the sheet');
+      await tester.tap(gotIt);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your data & AI'), findsNothing);
+      expect(storageService.aiConsentWrites, 0);
+      expect(sink.named('ai_consent_result'), isEmpty);
+      expect(
+          Focus.of(tester
+                  .element(find.text('How AI feedback uses your answers')))
+              .hasFocus,
+          isTrue);
+    });
+
+    testWidgets(
+        'leaving before the end saves nothing: no profile, no '
+        'onboarding_completed, and the next launch starts at Welcome again',
+        (tester) async {
+      final sink = RecordingAnalyticsSink();
+      var completed = false;
+      await pumpFlow(tester,
+          analytics: AnalyticsService(sink: sink),
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) =>
+              completed = true);
+      await toGoalStep(tester);
+      await tester.tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.work)));
+      await tester.pump();
+
+      // The app goes away here.
+      await tester.pumpWidget(const SizedBox());
+      expect(storageService.savedProfile, isNull);
+      expect(completed, isFalse);
+      expect(sink.named('onboarding_completed'), isEmpty);
+      expect(sink.userProperties.containsKey('learning_goal'), isFalse);
+
+      await pumpFlow(tester,
+          onComplete: (p, {pendingClimb, dayZeroCompleted = false}) {});
+      expect(find.text('Get started'), findsOneWidget);
     });
   });
 }
