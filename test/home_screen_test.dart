@@ -1254,6 +1254,29 @@ void main() {
   });
 
   group('weak spots (PRD v2 §13.5 item 4)', () {
+    testWidgets(
+        'the action is a label of the card\'s one tap target: a tap on the '
+        'title does the same (free: the paywall), with no button inside',
+        (tester) async {
+      final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
+      await pumpHome(tester, storageService: storage);
+      final card = find.byType(WeakSpotCard);
+      expect(
+          find.descendant(
+              of: card,
+              matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)),
+          findsNothing);
+      await tester.ensureVisible(find.text('Missing Article'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Missing Article'));
+      await tester.pumpAndSettle();
+      expect(
+          tester
+              .widget<PremiumScreen>(find.byType(PremiumScreen))
+              .sourceContext,
+          'Missing Article');
+    });
+
     testWidgets('no section at all when there are none — no empty state',
         (tester) async {
       await pumpHome(tester, storageService: _FakeStorageService());
@@ -1276,20 +1299,16 @@ void main() {
           .jumpTo(550);
       await tester.pumpAndSettle();
       expect(find.text('Your weak spots'), findsOneWidget);
-      expect(
-        find.text('You left out "the" before a specific noun.'),
-        findsOneWidget,
-      );
+      // 1.2.0 Batch 5: Home's card is the mockup's — no excerpt; its action
+      // line says "Practice this" for a premium user.
+      expect(find.text('Practice this'), findsOneWidget);
       expect(find.byIcon(Icons.lock_rounded), findsNothing);
 
-      await tester.ensureVisible(
-          find.text('You left out "the" before a specific noun.'));
+      await tester.ensureVisible(find.text('Practice this'));
       // 1.2.0: Home is longer; the scroll ensureVisible makes has to be
       // drawn before the tap lands on the card.
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.text('You left out "the" before a specific noun.'),
-      );
+      await tester.tap(find.text('Practice this'));
       await tester.pumpAndSettle();
 
       expect(find.byType(WeakSpotDetailScreen), findsOneWidget);
@@ -1307,15 +1326,14 @@ void main() {
           .jumpTo(550);
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.lock_rounded), findsWidgets);
+      // 1.2.0 Batch 5: the mockup's action line for a free user.
+      expect(find.text('Practice with Premium'), findsOneWidget);
 
-      await tester.ensureVisible(
-          find.text('You left out "the" before a specific noun.'));
+      await tester.ensureVisible(find.text('Practice with Premium'));
       // 1.2.0: Home is longer; the scroll ensureVisible makes has to be
       // drawn before the tap lands on the card.
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.text('You left out "the" before a specific noun.'),
-      );
+      await tester.tap(find.text('Practice with Premium'));
       await tester.pumpAndSettle();
 
       expect(find.byType(WeakSpotDetailScreen), findsNothing);

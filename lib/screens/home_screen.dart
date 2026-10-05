@@ -1216,6 +1216,9 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 spot: spot,
                 locked: !_hasFullAccess,
+                // The mockup's Home card with its action line (owner,
+                // Batch 5); the same tap as before.
+                withAction: true,
                 onTap: () => _openWeakSpot(context, spot),
               ),
               if (spot != _weakSpots.last) const SizedBox(height: 12),

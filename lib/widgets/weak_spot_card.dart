@@ -42,11 +42,18 @@ import 'locked_premium_pill.dart';
 /// eyebrow in linkAndActive above the title; the title in 17/800 and free
 /// to wrap rather than cut off; the explanation as a muted excerpt; and the
 /// frequency stat on the info surface. Texts are unchanged.
+///
+/// [withAction] (Home since 1.2.0 Batch 5, the mockup's Home card): no
+/// excerpt and no trailing chevron or tag; the frequency as a muted line,
+/// then the card's action as its last line — "Practice with Premium" with
+/// a lock when [locked], "Practice this" otherwise. The action is a label
+/// of the card's one tap target ([onTap]), not a second button.
 class WeakSpotCard extends StatelessWidget {
   final Topic topic;
   final WeakSpot spot;
   final bool locked;
   final VoidCallback onTap;
+  final bool withAction;
 
   /// The brief's list card radius.
   static const _radius = 22.0;
@@ -57,10 +64,12 @@ class WeakSpotCard extends StatelessWidget {
     required this.spot,
     this.locked = false,
     required this.onTap,
+    this.withAction = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (withAction) return _buildWithAction(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final muted = colorScheme.onSurfaceVariant;
@@ -136,6 +145,79 @@ class WeakSpotCard extends StatelessWidget {
                   ? const LockedPremiumPill()
                   : Icon(Icons.chevron_right_rounded, color: muted),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWithAction(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final link = colorScheme.secondary;
+    final title = humanizeSlug(spot.errorType);
+    final topicSubtitle = topic.title != title ? topic.title : null;
+    final action = locked ? 'Practice with Premium' : 'Practice this';
+
+    return Semantics(
+      container: true,
+      button: true,
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(_radius),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(17, 17, 17, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (topicSubtitle != null) ...[
+                  Text(
+                    topicSubtitle,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: link,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                ],
+                Text(title, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 6),
+                Text(
+                  formatFrequencyStat(spot.frequency, spot.lastSeen),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                // The brief's link row: at least 44 pt tall.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 44),
+                  child: Row(
+                    children: [
+                      if (locked) ...[
+                        Icon(Icons.lock_rounded, size: 15, color: link),
+                        const SizedBox(width: 6),
+                      ],
+                      Flexible(
+                        child: Text(
+                          action,
+                          style:
+                              theme.textTheme.labelLarge?.copyWith(color: link),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.arrow_forward_rounded, size: 15, color: link),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
