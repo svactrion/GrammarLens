@@ -44,6 +44,10 @@ class NavBarClearance extends InheritedWidget {
   /// no longer trusted as the real answer anywhere.
   static const fallback = 110.0;
 
+  /// The breathing room [value] adds above the bar's top edge. Also the gap
+  /// `AppMessenger` keeps between a message and the bar or the keyboard.
+  static const gap = 16.0;
+
   @override
   bool updateShouldNotify(NavBarClearance oldWidget) =>
       value != oldWidget.value;
@@ -103,6 +107,16 @@ class FloatingNavShell extends StatefulWidget {
   /// The bar itself (its decorated box), for tests that measure it.
   static const barKey = ValueKey('floating_nav_bar');
 
+  /// The [NavBarClearance] of the shell on screen, or null when there is
+  /// none: no shell, or a route covers it. `AppMessenger` keeps its
+  /// messages above the bar with it.
+  static double? get visibleClearance {
+    for (final state in _FloatingNavShellState._mounted) {
+      if (state._route?.isCurrent ?? true) return state._clearance;
+    }
+    return null;
+  }
+
   /// The app's tab screens (`TabSwitcher`).
   final Widget body;
   final List<NavShellTab> tabs;
@@ -117,15 +131,36 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
   /// The bar's corner radius (the brief: 29).
   static const _radius = 29.0;
 
+  static final Set<_FloatingNavShellState> _mounted = {};
+
   final _barKey = GlobalKey();
   double _clearance = NavBarClearance.fallback;
+  ModalRoute<Object?>? _route;
+
+  @override
+  void initState() {
+    super.initState();
+    _mounted.add(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _route = ModalRoute.of(context);
+  }
+
+  @override
+  void dispose() {
+    _mounted.remove(this);
+    super.dispose();
+  }
 
   void _measure() {
     final box = _barKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
     // A little breathing room past the bar's own top edge — the point is
     // content can scroll clearly past the bar, not stop flush against it.
-    final next = box.size.height + 16;
+    final next = box.size.height + NavBarClearance.gap;
     if ((next - _clearance).abs() > 0.5) {
       setState(() => _clearance = next);
     }
