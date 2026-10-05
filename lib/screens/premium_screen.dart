@@ -417,16 +417,24 @@ class _SupportingLine extends StatelessWidget {
     final theme = Theme.of(context);
     final style = theme.textTheme.bodyMedium!
         .copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.5);
-    final line =
-        MediaQuery.textScalerOf(context).scale(style.fontSize!) * style.height!;
+    // Two lines as the engine draws them, not fontSize × height × 2: with a
+    // fractional font size the two differ by a fraction of a point, and a
+    // weak spot's one-line text would then not take the default's place.
+    final painter = TextPainter(
+      text: TextSpan(text: 'A\nA', style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final twoLines = painter.height;
+    painter.dispose();
     return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: line * 2),
+      constraints: BoxConstraints(minHeight: twoLines),
       child: Text(text, textAlign: TextAlign.center, style: style),
     );
   }
 }
 
-/// 28 / 900 at Medium (the theme's 26 / 900 question title scaled, so it
+/// 28 / 900 at Small (the theme's 26 / 900 question title scaled, so it
 /// follows the text size), 26 under 360 pt.
 TextStyle _headlineStyle(ThemeData theme, double width) {
   final base = theme.textTheme.headlineMedium!;

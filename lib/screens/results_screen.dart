@@ -146,7 +146,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         : '${result.correctCount}/${result.totalCount} correct';
     return BrandScaffold(
       title: const PageTitle('Results'),
-      bandBottom: ResultScoreBand(text: scoreText),
+      bandBottom: ResultScoreBand.sized(context, text: scoreText),
       children: [
         for (final item in result.feedback) ...[
           Card(

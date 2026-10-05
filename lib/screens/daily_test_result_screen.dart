@@ -281,7 +281,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     final celebration = _celebration;
     final scaffold = BrandScaffold(
       title: const PageTitle('Daily Test Results'),
-      bandBottom: ResultScoreBand(text: scoreText),
+      bandBottom: ResultScoreBand.sized(context, text: scoreText),
       // Fixed, like Premium's footer: a hard edge (not a shadow that only
       // appears once scrolled) between the results and the one button.
       bottomBar: DecoratedBox(

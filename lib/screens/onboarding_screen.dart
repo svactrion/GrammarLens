@@ -404,36 +404,50 @@ class _StepHeader extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(hPad, 4, hPad, 0),
       child: Column(
         children: [
+          // A Wrap, not a Row: "Step N of 2" stays at the end of the line
+          // while it fits beside the wordmark and moves under it when it
+          // does not (a narrow screen at a large text size), instead of
+          // overflowing.
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
-            child: Row(
-              children: [
-                if (onBack != null)
-                  IconButton(
-                    key: OnboardingScreen.backKey,
-                    tooltip: 'Back',
-                    onPressed: onBack,
-                    style: IconButton.styleFrom(
-                      minimumSize: const Size(44, 44),
-                      foregroundColor: colorScheme.onSurface,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    if (onBack != null)
+                      IconButton(
+                        key: OnboardingScreen.backKey,
+                        tooltip: 'Back',
+                        onPressed: onBack,
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(44, 44),
+                          foregroundColor: colorScheme.onSurface,
+                        ),
+                        icon: const Icon(Icons.arrow_back_rounded, size: 21),
+                      )
+                    else
+                      BrandWordmark(
+                        style: theme.textTheme.titleLarge
+                            ?.withWeight(FontWeight.w900)
+                            .copyWith(
+                                color: colorScheme.onSurface,
+                                letterSpacing: -.6),
+                      ),
+                    Text(
+                      'Step $step of 2',
+                      style: theme.textTheme.labelSmall
+                          ?.withWeight(FontWeight.w700)
+                          .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
-                    icon: const Icon(Icons.arrow_back_rounded, size: 21),
-                  )
-                else
-                  BrandWordmark(
-                    style: theme.textTheme.titleLarge
-                        ?.withWeight(FontWeight.w900)
-                        .copyWith(
-                            color: colorScheme.onSurface, letterSpacing: -.6),
-                  ),
-                const Spacer(),
-                Text(
-                  'Step $step of 2',
-                  style: theme.textTheme.labelSmall
-                      ?.withWeight(FontWeight.w700)
-                      .copyWith(color: colorScheme.onSurfaceVariant),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
           Padding(

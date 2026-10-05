@@ -1153,7 +1153,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: HomeGreeting(
                   word: timeOfDayGreeting(widget.clock()),
                   name: widget.userName,
-                  // 22 pt at Medium (owner, after Batch 3: larger): above
+                  // 22 pt at Small (owner, after Batch 3: larger): above
                   // the 20 pt section titles, below the name (24) and the
                   // brand (34). Derived from titleLarge so it follows the
                   // text size setting.
@@ -1570,49 +1570,71 @@ class _DailyTestCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title,
-                          style: theme.textTheme.headlineSmall
-                              ?.copyWith(color: ink)),
-                      const SizedBox(height: 7),
-                      Text(description,
-                          style:
-                              theme.textTheme.bodySmall?.copyWith(color: ink)),
-                    ],
-                  ),
+            LayoutBuilder(builder: (context, constraints) {
+              final titleStyle =
+                  theme.textTheme.headlineSmall?.copyWith(color: ink);
+              final unitStyle =
+                  theme.textTheme.labelMedium?.copyWith(color: ink);
+              final amountStyle = theme.textTheme.headlineMedium
+                  ?.copyWith(color: ink, height: 1);
+              final copy = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: titleStyle),
+                  const SizedBox(height: 7),
+                  Text(description,
+                      style: theme.textTheme.bodySmall?.copyWith(color: ink)),
+                ],
+              );
+              final stat = Container(
+                constraints: const BoxConstraints(minWidth: 67),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                decoration: BoxDecoration(
+                  color: palette.brandTint,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(width: 10),
-                Container(
-                  constraints: const BoxConstraints(minWidth: 67),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: palette.brandTint,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  // The label above the value (owner, after Batch 3), in
-                  // labelMedium (12/700 at Medium), one step up from the
-                  // card's 11 pt labels; the value in headlineMedium.
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(unit,
-                          style: theme.textTheme.labelMedium
-                              ?.copyWith(color: ink)),
-                      const SizedBox(height: 6),
-                      Text(amount,
-                          style: theme.textTheme.headlineMedium
-                              ?.copyWith(color: ink, height: 1)),
-                    ],
-                  ),
+                // The label above the value (owner, after Batch 3), in
+                // labelMedium, one step up from the card's 11 pt labels;
+                // the value in headlineMedium.
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(unit, style: unitStyle),
+                    const SizedBox(height: 6),
+                    Text(amount, style: amountStyle),
+                  ],
                 ),
-              ],
-            ),
+              );
+              // Side by side while the title's longest word still fits
+              // next to the box; otherwise (a narrow screen with a large
+              // system text size) the box goes under the copy instead of
+              // squeezing the title to nothing and overflowing.
+              final scaler = MediaQuery.textScalerOf(context);
+              final statWidth = 20 +
+                  [
+                    67.0 - 20,
+                    _textWidth(unit, unitStyle, scaler),
+                    _textWidth(amount, amountStyle, scaler),
+                  ].reduce((a, b) => a > b ? a : b);
+              final longestWord = title
+                  .split(' ')
+                  .map((w) => _textWidth(w, titleStyle, scaler))
+                  .reduce((a, b) => a > b ? a : b);
+              if (statWidth + 10 + longestWord <= constraints.maxWidth) {
+                return Row(
+                  children: [
+                    Expanded(child: copy),
+                    const SizedBox(width: 10),
+                    stat,
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [copy, const SizedBox(height: 10), stat],
+              );
+            }),
             const SizedBox(height: 14),
             FilledButton(
               onPressed: completed ? () => onViewResult(set) : onStart,
@@ -1838,4 +1860,17 @@ class _ReviewCallout extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The width [text] takes on one line in [style].
+double _textWidth(String text, TextStyle? style, TextScaler scaler) {
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: style),
+    textDirection: TextDirection.ltr,
+    textScaler: scaler,
+    maxLines: 1,
+  )..layout();
+  final width = painter.width;
+  painter.dispose();
+  return width;
 }

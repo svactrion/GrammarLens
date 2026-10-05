@@ -254,17 +254,23 @@ class _FloatingNavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          // Flexible: each tab keeps its own width while the three fit;
+          // when they do not (a narrow screen with a very large text size),
+          // a tab gets an equal share and its label wraps instead of the
+          // row overflowing.
           for (var i = 0; i < tabs.length; i++)
-            _NavTab(
-              data: tabs[i],
-              active: i == selectedIndex,
-              unselectedColor: unselectedColor,
-              activeColor: activeColor,
-              labelStyle: labelStyle,
-              onTap: () {
-                if (i != selectedIndex) HapticFeedback.selectionClick();
-                onTabChange(i);
-              },
+            Flexible(
+              child: _NavTab(
+                data: tabs[i],
+                active: i == selectedIndex,
+                unselectedColor: unselectedColor,
+                activeColor: activeColor,
+                labelStyle: labelStyle,
+                onTap: () {
+                  if (i != selectedIndex) HapticFeedback.selectionClick();
+                  onTabChange(i);
+                },
+              ),
             ),
         ],
       ),
@@ -309,6 +315,7 @@ class _NavTab extends StatelessWidget {
               // as color marks the selected tab.
               Text(
                 data.label,
+                textAlign: TextAlign.center,
                 style: labelStyle
                     ?.withWeight(active ? FontWeight.w800 : FontWeight.w600)
                     .copyWith(color: color),
