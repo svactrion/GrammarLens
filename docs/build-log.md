@@ -9487,3 +9487,137 @@ Practice are not touched.
 - **[Not measured]** On a device: the two card states in both themes, the
   sort menu in the list heading, the detail screen's new header with the
   back button, and the larger greeting next to the hero.
+
+## 2026-10-05 (1.2.0 redesign — Batch 5: owner device feedback on Home and Review; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 4 on an iPhone 14
+Plus (release build); its copy was approved.** Five items, each in its
+own commit(s).
+
+Visual only, plus one new analytics value (below). State, routing,
+premium/quota checks and how the quota is spent, AI/proxy calls,
+storage, event definitions and gamification math are unchanged. The
+question screen, Profile and Topic Practice are not touched.
+
+- **[1] Headings look thin on the device: diagnosis. Status: waiting for
+  the device.**
+  - **Observation (owner):** "GrammarLens", the Review title and the card
+    titles look lighter than the mockup's 900.
+  - **H2, ruled out:** a local style lighter than the theme. With the
+    real Home and Review rendered, the resolved styles are:
+    - "GrammarLens" 34 / w900 / −1.4;
+    - "Review" 34 / w900;
+    - the Daily Test and Review card titles 24 / w900; the used card's
+      title 20 / w900;
+    - the section titles 20 / w800; the weak spot titles 17 / w800;
+    - "Mountain of Learning" 16 / w900.
+
+    All are NunitoSans, from the theme, with no `fontVariations`.
+  - **H3, not supported:** a rasterization or letter-spacing difference.
+    The same text at the same settings has the same width in both
+    renderers: "GrammarLens" at 34 / 900 / −1.4 is 215.4 px in the mockup
+    (browser, Google Fonts Nunito Sans, measured with the DOM) and
+    215.4 pt in Flutter (the bundled font, test engine).
+  - **H1, plausible, needs the device:** iOS may not drive the variable
+    font's `wght` axis from `FontWeight`.
+    - Measured in the test engine: when a weight is requested above the
+      instance being used, Skia adds synthetic bold. Weight 800 with
+      `wght` 600 has the advance widths of 600 and 10 % more ink.
+    - If iOS ignores `FontWeight`, every heading is drawn from the file's
+      default instance, ExtraLight (200), thickened synthetically. That
+      would look exactly like what the owner describes.
+  - **(c) done:** the debug-only Theme Preview has a weight table. Rows
+    200 / 400 / 600 / 700 / 800 / 900; columns `FontWeight` only,
+    `FontVariation` only, both; each sample with its measured width.
+    - The test engine gives the same width in all three columns, growing
+      with the weight.
+    - On the device, a `FontWeight` column that stays at one width
+      confirms H1.
+    - It is reached from Settings → Developer, which only debug builds
+      show. Text rendering is the same in a debug build on the same phone.
+  - **(b) on hold (owner).** Putting `fontVariations` in the text theme
+    means every local `copyWith(fontWeight: …)` (85 in 36 files) must go
+    through one helper. Otherwise the theme's `wght` wins: measured, 600 +
+    `wght` 800 renders at 800. Three of those overrides are in
+    question-screen files. The owner chose to check the table on the
+    device first. The requested "fontWeight and fontVariations match"
+    test belongs to (b) and waits with it.
+- **[2] Review's "used today" card is navy and offers Premium.**
+  - `AppPalette.button` (`#0D3B8F`) with white text, 10.30:1; secondary
+    text `#DFE8FA` (new `AppPalette.onButtonMuted`), 8.37:1.
+  - In dark mode the button's `#5C7CFA` edge: the navy is 1.77:1 on the
+    dark page, the edge 4.97:1.
+  - New: "Want more practice today?" and an orange "See Premium" button.
+    - brandOrange with onOrange text: 6.93:1 light, 7.71:1 dark. Its
+      edge against the navy: 3.95:1 light, 4.39:1 dark.
+    - The dark button's blue edge is set off explicitly (a null side falls
+      through to the theme).
+    - It opens the existing Premium screen, and the entitlement is read
+      again when it closes.
+  - The available state stays orange. The states differ in text and icon
+    too. Premium users still don't see the card.
+  - **Analytics (owner's choice):** a new value of the existing
+    `paywall_viewed` `source`: `review_quota`
+    (`AnalyticsService.paywallSourceReviewQuota`). It keeps this entry
+    point apart from `weak_spot_quota`. No new event or parameter;
+    `analytics-plan.md` lists it.
+  - **Copy:** the proposal is kept. "See Premium" names what opens, and
+    "Want more practice today?" makes no claim about how much (Premium is
+    10 sessions a day).
+- **[3] Home's Review call-out is one tap target.**
+  - One `InkWell` in one semantics button. "Go to Review" is now its label
+    in the link colour, not a `TextButton`, so there is no button inside a
+    button.
+  - Taps at the corners and the centre all switch to Review (tested).
+- **[4] Home's weak spot cards follow the mockup.**
+  - A `withAction` variant of `WeakSpotCard`, Home only: the topic
+    eyebrow when it differs, the title, the frequency as a muted line, and
+    the action line.
+    - A free user: a lock and "Practice with Premium".
+    - A premium user: "Practice this".
+  - No excerpt, no trailing chevron or tag. The action is part of the
+    card's one tap target, so the tap does what it did: free → the paywall
+    naming the weak spot (source `home`); premium → the weak spot's
+    screen.
+  - Review's cards are unchanged.
+- **[5] A soft backlight behind Home's hero.**
+  - Light: the card shadow brown `#483018` at 16 %. Dark: a warm glow,
+    `#FF8A3D` at 22 % (`AppPalette.heroBacklight`). Static.
+  - A radial gradient inside the hero's 108 pt square, fading out at its
+    edge, so nothing clips it and it never reaches the greeting.
+  - Behind the `Hero`, so the flight to the picker carries only the
+    avatar.
+- **[Copy] Old → new:**
+  - Review, used card: new "Want more practice today?" and "See Premium".
+  - Home weak spot cards:
+    - the excerpt is no longer shown on Home;
+    - the frequency is a plain line instead of a badge;
+    - new action line: "Practice with Premium" (free), "Practice this"
+      (premium); the Premium tag on these cards is gone;
+    - Review unchanged.
+  - Home Review call-out: "Go to Review" is the same text, now a label
+    rather than a button.
+- **[Tests]** `flutter analyze` clean; **1,568 passed, 0 failed** (1,559
+  before this batch).
+  - **New:**
+    - the Theme Preview weight table (rows, columns, matching values);
+    - the used card: navy, white text and the dark edge in both themes;
+      See Premium opening Premium with `review_quota`;
+    - the Home call-out: five tap points, one semantics button, nothing
+      tappable inside;
+    - the Home weak spot card: a tap on the title opens the same paywall,
+      and there is no button inside;
+    - the hero backlight: colour, bounds and clear of the greeting at 320
+      and 430 pt, Large, both themes; not inside the `Hero`.
+  - **Changed:**
+    - `review_screen_test`, the used card's "no button" check: it used
+      `find.byType(ButtonStyleButton)`, which matches no subtype, so it
+      passed without checking anything. It now matches subtypes and
+      expects exactly the See Premium button.
+    - Two Home weak spot tests tap the action line instead of the excerpt
+      the Home card no longer shows. The outcomes asserted are unchanged.
+- **[Not measured]** On a device:
+  - the weight table (H1);
+  - the navy card and its orange button in both themes;
+  - the hero's shadow in light mode, which is subtle at 16 %;
+  - the Home weak spot cards and the call-out's ripple.
