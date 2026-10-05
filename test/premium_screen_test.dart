@@ -2343,6 +2343,7 @@ void main() {
     // lines; anywhere a label would be cut off with an ellipsis, stacked.
     // Sizes with no clipping keep the existing table unchanged.
     const keepTable = <(double, double)>[
+      (320, 1.0),
       (360, 1.0),
       (375, 1.0),
       (390, 1.0),
@@ -2369,9 +2370,9 @@ void main() {
     // ellipsis (320 @1x among them) plus every size beyond. 1.2.0 Batch 1:
     // the type scale's smaller default text (batch0-report.md Q5) fits the
     // labels at 360 @1.15x and 393 @1.3x, so those two moved to keepTable;
-    // the rule itself is unchanged.
+    // the rule itself is unchanged. 1.2.0 Q18: the 14 pt side padding below
+    // 360 pt (16 before) gives the table room to fit at 320 @1x too.
     const nowStacked = <(double, double)>[
-      (320, 1.0),
       (320, 1.1),
       (320, 1.15),
       (320, 1.3),

@@ -80,7 +80,7 @@ class BrandScaffold extends StatelessWidget {
   final bool isTabRoot;
 
   /// Overrides the default responsive horizontal padding
-  /// (`(width * 0.045).clamp(16, 28)`, Home's existing formula) — null uses
+  /// (`ContentWidth.basePadding`: 14 pt below 360 pt wide, 18 above) — null uses
   /// that default.
   final double? horizontalPadding;
 

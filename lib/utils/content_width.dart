@@ -24,9 +24,18 @@ abstract final class ContentWidth {
 
   static double get _cap => debugMaxContentWidthOverride ?? maxContentWidth;
 
-  /// The screen-edge padding most screens use: 4.5 % of the width, 16-28 pt.
+  /// Below this width a screen is narrow and gets [narrowPadding].
+  static const narrowWidth = 360.0;
+
+  /// The brief's horizontal page padding (owner decision Q18).
+  static const narrowPadding = 14.0;
+  static const regularPadding = 18.0;
+
+  /// The screen-edge padding most screens use (1.2.0, Q18): 14 pt below
+  /// [narrowWidth], 18 pt from it up. Until 1.2.0 it was 4.5 % of the
+  /// width, 16–28 pt.
   static double basePadding(double width) =>
-      (width * 0.045).clamp(16.0, 28.0).toDouble();
+      width < narrowWidth ? narrowPadding : regularPadding;
 
   /// The padding on each side for a screen of [size] whose own padding is
   /// [base]: [base] on a narrow screen; on a wide one, at least what keeps
