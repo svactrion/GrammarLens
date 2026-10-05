@@ -10871,3 +10871,66 @@ schema, every other analytics event, every other screen.
     paywall (Debug → Brand);
   - an Ask to Buy purchase in the sandbox: the `pending` event in
     DebugView, and no second event when it is approved.
+
+## 2026-10-05 (1.2.0 — final pass: wordmark, headings, messages, text size, button inventory, renders; awaiting the device check)
+
+On branch `1.2.0`; not pushed. The owner approved every screen of both
+design packages on the device. Unchanged: state, routing, premium/quota,
+AI/proxy, the storage schema, analytics event definitions, game math,
+the pubspec version.
+
+- **[1] Two-colour wordmark, permanent.** `BrandWordmark` always draws
+  "Lens" in `colorScheme.primary`; the debug switch and its state are
+  removed. The launch splash's wordmark is drawn by Flutter and the iOS
+  launch image is the logo only (checked), so the splash is two-colour
+  too; layout, size and animation unchanged. Welcome keeps one colour.
+  **Proposal (not built):** two colours on Welcome in dark mode only
+  (#FF8A3D on #121212, 7.9:1); light stays one colour (1.00:1).
+- **[2] Thin headings** (all `withWeight`): Welcome title 700→900,
+  results score band 700→900, loading message 600→800, AI consent title,
+  avatar picker heading, premium offer card title 700→800, the length
+  picker's selected length (a raw 19 pt style) 600→800. Left as approved:
+  Home's greeting (600) and the question sentence (700). Not touched
+  (the brief gives no target): the 16 `titleSmall` overrides in
+  ai_consent, data (2), debug panel, home, onboarding (2), premium (2),
+  settings (4), month card (3), medal preview.
+- **[4b] Messages.** Root cause: the tab screens' messages are shown by
+  the nav shell's root Scaffold, whose bar is a Stack overlay Flutter
+  does not see — present since the floating bar, not caused by Batch 8;
+  Batch 8 added that the Scaffold ignores the keyboard. `AppMessenger`
+  now gives a tab-screen message a bottom margin from
+  `NavBarClearance` (gap 16) or the keyboard + 16 while a field has
+  focus, deciding one frame later when the keyboard is up (Profile's
+  Save closes the editor). All 13 message calls go through
+  `AppMessenger`. Results' bottom bar: still clear. Paywall: the button
+  and renewal terms are never covered; Restore/Terms/Privacy and "Maybe
+  later" are (pre-existing; reported, not changed). Dismiss target ≥ 44.
+  Limit: a keyboard opened or closed while a message shows does not move
+  it (tab screens only).
+- **[4c] Text size.** Small/Medium/Large = 1.1/1.2/1.31 (Large: the same
+  ratio, 1.2 × 1.2/1.1). Brief sizes at Small (replaces Q5). Layouts made
+  to wrap: Home's Daily Test count box, nav tabs (Flexible), onboarding
+  header (Wrap), results score band (grows); the paywall's supporting
+  line measures two drawn lines. Real-font sweep
+  (`tool/design_measure/v120/text_size_sweep_test.dart`, 5 sizes × 3
+  text sizes × 2 modes): no exception, no ellipsis except the intended
+  two-line weak-spot excerpt, plaque/nav labels/segments one line, answer
+  and name fields above the keyboard. **Rule broken, not solved:** the
+  paywall footer at 375 × 667 Large is 0.349 of the screen (0.462 at 1.6×
+  system text); 320 × 568 is 0.40 at every size.
+- **[Tests changed, with reasons]** `brand_wordmark_test` (switch tests
+  removed; permanent two-colour and splash tests added; guard kept);
+  `profile_layout_test`, `topic_practice_screen_test` (brief sizes at
+  Small); `premium_screen_test` (footer-share tests at Small/Medium = old
+  sizes; new Large test records 0.349/0.462); `first_launch_flow_test`,
+  `debug_sample_collection_test` (`ensureVisible` before a tap: the test
+  font is wider); new `app_messenger_position_test` (9).
+- **[Tests]** `flutter analyze` clean; **1,730 passed, 0 failed**.
+- **[3, 4] Button inventory and final-pass findings:** in the session
+  report; renders in `docs/design/1.2.0/final-pass/` (default-medium/ for
+  the approved screens at the new default).
+- **[Not measured]** On a device: the wordmark in both themes incl. the
+  launch screen; the new default and Large on every screen; "Name saved"
+  above the nav bar; a message with the keyboard open on Profile; the
+  "Profile → Data" arrow glyph on AI consent (missing in the test
+  renderer).

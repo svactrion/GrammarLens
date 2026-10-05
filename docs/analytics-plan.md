@@ -190,6 +190,8 @@ event only says "opened Profile". Its value grows after the first month-end.
 | Fired | `_setTextSize` in `lib/app.dart:118`, only when the value actually changes. |
 | Answers | Is Medium (1.10×) the right default? The direction of change is the signal: many Medium→Large means the default is too small; many Medium→Small means it is too big. |
 
+**1.2.0 (final pass, 2026-10-05): the scale behind the names moved one step up.** Small / Medium / Large were 1.0 / 1.1 / 1.2 and are 1.1 / 1.2 / 1.31; the parameter values and the user property keep their names (no migration). Read `text_size` and E6 per app version: `medium` before 1.2.0 is today's `small`, `large` before 1.2.0 is today's `medium`.
+
 ### E7 — `ai_consent_result` (priority: must have, compliance; added 2026-09-22)
 
 | | |

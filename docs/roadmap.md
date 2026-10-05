@@ -185,6 +185,51 @@ Package: `docs/design/1.2.0-additional/`; Batch 0 report
   companion caption is the name only; a tap outside the name field or the
   keyboard's Done closes the keyboard and never moves on.
 
+#### 1.2.0 status after the final pass (2026-10-05)
+
+**Approved by the owner on the device** (both design packages): Home,
+Review, Profile, Topic Practice, Question V2, the two-step onboarding and
+the paywall. The final pass (build log 2026-10-05, "final pass") then
+changed, **without a device check yet**:
+
+- the two-colour wordmark ("Lens" brandOrange) on Home, onboarding, the
+  paywall and the launch screen, in every build; Welcome stays one colour;
+- the default text size: the scale moved one step up (Small 1.1, Medium
+  1.2, the default, Large 1.31); the brief's sizes are now at Small
+  (replaces Q5);
+- messages (snackbars) above the nav bar on tab screens and above the
+  keyboard while editing;
+- the remaining thin headings (Welcome, the results score, the loading
+  message, AI consent, the avatar picker, the premium offer card, the
+  length picker's selected length);
+- layouts that wrap instead of overflowing at the larger sizes (Home's
+  Daily Test card, the nav bar, the onboarding header, the results score).
+
+**Not designed in 1.2.0 (no mockup):** Welcome, the results screens, the
+weak spot detail, AI consent, Data, Credits, the avatar picker, the length
+picker, the loading view, the medal celebration. Rendered and reviewed
+in `docs/design/1.2.0/final-pass/`; findings in the build log; nothing
+changed there beyond the heading weights.
+
+**Open decisions for the owner:** the filled-button colour rule (the
+inventory is in the final-pass build log entry); Welcome's wordmark in
+dark mode (proposal: two colours there, one colour in light); the
+paywall footer at 375 × 667 with the new Large (0.349 of the screen,
+over the "a third" rule; not solvable without smaller text).
+
+**Deferred:** redeem codes (above).
+
+#### Three problems from 1.1.0, solved in 1.2.0
+
+| Problem (1.0.0 and 1.1.0 have it) | 1.2.0 fix | Verified |
+|---|---|---|
+| **Text drawn too thin on iOS.** The variable font's `wght` axis is not moved by `FontWeight`, so everything was ExtraLight with synthetic thickening. | Every weight also sets `FontVariation('wght', n)` through `TextStyle.withWeight`; guarded by `test/font_weight_guard_test.dart` (Batch 6). | On the device: the owner approved the weights after Batch 6 (build log, Batch 7). |
+| **The answer field scrolls sideways.** A one-line `TextField` on both question screens hid long answers. | Question V2: a multiline field that wraps, grows, then scrolls inside itself (Batch 10). | On the device: Question V2 approved by the owner (build log, Batch 11). |
+| **The paywall promises a trial to everyone.** No eligibility check; "Start free trial" always. | Eligibility per product; a trial is named only when the selected product has one and the user is eligible; unknown → no promise (Batch 12). | Automated tests only; **the sandbox check (an account that already had a trial) is open.** |
+
+Whether any of the three goes into 1.1.0 is the owner's decision; none is
+carried over now.
+
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
 - [ ] **Firebase:** register `learning_goal` as a **user-scoped custom
@@ -208,7 +253,15 @@ Package: `docs/design/1.2.0-additional/`; Batch 0 report
   subscription's review screenshot shows the paywall; replace it with the
   1.2.0 paywall.
 - [ ] **App Store screenshots:** any that show the paywall, onboarding or a
-  question screen are redone for 1.2.0.
+  question screen are redone for 1.2.0. **Since the final pass, all of
+  them:** the default text size is larger on every screen, and the
+  wordmark is two-coloured (Home, onboarding, the paywall, the launch
+  screen). The case-study images too.
+- [ ] **Analytics reading:** `text_size` keeps its values but `medium`
+  now means the old Large (`analytics-plan.md`, E6); compare per app
+  version.
+- [ ] **Device check of the final pass:** see the build log's final-pass
+  entry, "Not measured".
 - [ ] **App Store Connect, App Privacy** for the 1.2.0 submission: review
   the answers with the goal now collected through Firebase Analytics (a
   survey-like answer about the user's purpose; the category, and whether
