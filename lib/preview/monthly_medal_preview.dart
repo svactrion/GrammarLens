@@ -354,6 +354,15 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
               currentProgress: fixtures.currentProgress,
               results: fixtures.results,
             ),
+            if (fixtures.currentProgress case final progress?) ...[
+              const SizedBox(height: Spacing.sm),
+              MonthlyProgressCard(
+                progress: progress,
+                theme: MonthlyMedalCollection.themeFor(
+                    progress.year, progress.month, const {},
+                    running: true),
+              ),
+            ],
           ],
         );
       }),

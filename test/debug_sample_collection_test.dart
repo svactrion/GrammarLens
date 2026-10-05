@@ -158,8 +158,12 @@ void main() {
     final (storage, sink) = await pumpProfile(tester, sampleMode: true);
     expect(storage.calls, ['getCurrentMonthlyMedalProgress']);
     expect(sink.events, isEmpty);
+    // The running month's points, now on the progress card (1.2.0 Batch 7;
+    // it was the bar's "N points" label).
     expect(
-        find.text('${_UntouchedStorage.running.score} points'), findsOneWidget);
+        find.textContaining(
+            'Monthly total: ${_UntouchedStorage.running.score} / '),
+        findsOneWidget);
     expect(find.byType(MonthlyMedalCollection), findsOneWidget);
     expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsOneWidget);
     for (final r in DebugSampleCollection.sample(now).results) {

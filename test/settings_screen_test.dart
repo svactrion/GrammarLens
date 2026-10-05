@@ -179,8 +179,18 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('pre-fills the current name from the profile', (tester) async {
+  Future<void> tapEdit(WidgetTester tester) async {
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+      'shows the current name, and Edit pre-fills the field with it (N8: '
+      'the field is behind Edit since 1.2.0)', (tester) async {
     await pumpSettings(tester);
+    expect(tester.widget<Text>(find.byKey(SettingsScreen.nameKey)).data, 'Ada');
+    expect(find.byType(TextField), findsNothing);
+    await tapEdit(tester);
     expect(find.widgetWithText(TextField, 'Ada'), findsOneWidget);
   });
 
@@ -201,7 +211,8 @@ void main() {
 
     expect(find.textContaining('Age'), findsNothing);
     expect(find.textContaining('Occupation'), findsNothing);
-    // The one editable field left in the form is the name.
+    // The one editable field left in the form is the name (behind Edit).
+    await tapEdit(tester);
     expect(find.byType(TextField), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Ada'), findsOneWidget);
   });
@@ -260,10 +271,10 @@ void main() {
     );
 
     expect(find.text('Medal collection'), findsOneWidget);
-    // Batch 5 (N34): nothing earned yet; the shelf holds the faded Welcome
-    // badge and the running month.
-    expect(
-        find.text('Your medals will appear here once earned.'), findsOneWidget);
+    // Nothing earned yet (1.2.0: the count beside the title replaced the
+    // "Your medals will appear here once earned." caption); the strip holds
+    // the running month and the faded Welcome badge.
+    expect(find.text('0 earned'), findsOneWidget);
     expect(find.text(MonthlyMedalCollection.inProgress), findsOneWidget);
     expect(
       find.bySemanticsLabel('Welcome badge, locked.'),
@@ -308,7 +319,7 @@ void main() {
         );
 
     // No scrolling needed anywhere below — the viewport above is tall
-    // enough that "This month" is always already on screen.
+    // enough that the progress card is always already on screen.
 
     // initState's own call (index 0, issued regardless of `active`).
     // Resolved immediately with a baseline so the screen reaches a
@@ -318,7 +329,7 @@ void main() {
     storage.resultsCompleters[0].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.textContaining(' · 10 / 300 points · 0 active days'),
+    expect(find.text('Monthly total: 10 / 300 points'),
         findsOneWidget);
 
     // Tab re-entry #1 (`false` -> `true`, the only transition that
@@ -339,7 +350,7 @@ void main() {
     storage.resultsCompleters[2].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.textContaining(' · 90 / 300 points · 0 active days'),
+    expect(find.text('Monthly total: 90 / 300 points'),
         findsOneWidget);
 
     // ...then the older, now-stale read (#1) resolves after it. Without
@@ -351,12 +362,12 @@ void main() {
     await tester.pump();
 
     expect(
-      find.textContaining(' · 90 / 300 points · 0 active days'),
+      find.text('Monthly total: 90 / 300 points'),
       findsOneWidget,
       reason: 'the more-recently-started read must still win',
     );
     expect(
-      find.textContaining(' · 40 / 300 points · 0 active days'),
+      find.text('Monthly total: 40 / 300 points'),
       findsNothing,
       reason: 'a stale read finishing later must not overwrite a newer one',
     );
@@ -364,6 +375,7 @@ void main() {
 
   testWidgets('Save is disabled once the name is cleared', (tester) async {
     await pumpSettings(tester);
+    await tapEdit(tester);
     FilledButton saveButton() =>
         tester.widget(find.widgetWithText(FilledButton, 'Save'));
 
@@ -461,16 +473,17 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    // The Save button was never touched — this is the point of the
-    // decoupling.
-    expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+    // The name was never touched — this is the point of the decoupling:
+    // the name row is still closed, showing the saved name.
+    expect(find.byType(TextField), findsNothing);
+    expect(tester.widget<Text>(find.byKey(SettingsScreen.nameKey)).data, 'Ada');
     final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
     expect(tile.avatar, saved!.avatar);
   });
 
   testWidgets(
-      'sections appear in order: avatar, name, medals, appearance, data, '
-      'credits, developer', (tester) async {
+      'sections appear in order: avatar, name, medals, progress, appearance, '
+      'data, credits, developer', (tester) async {
     await pumpSettings(tester);
     // Tall enough that the lazy list builds every section at once, so their
     // positions can be compared in one frame.
@@ -483,9 +496,11 @@ void main() {
     }
 
     final ordered = [
-      top(find.text('Change avatar')),
-      top(find.text('Name')),
+      top(find.text('Your companion')),
+      top(find.text('Change your avatar')),
+      top(find.text('Your name')),
       top(find.text('Medal collection')),
+      top(find.byKey(MonthlyProgressCard.cardKey)),
       top(find.text('Appearance')),
       top(find.text('Data')),
       top(find.text('Credits')),
