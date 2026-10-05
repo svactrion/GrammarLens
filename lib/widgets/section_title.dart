@@ -13,7 +13,10 @@ class SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // A node of its own (container), so the header flag stays on the title
+    // instead of merging into the enclosing node.
     return Semantics(
+      container: true,
       header: true,
       child: Text(
         text,
