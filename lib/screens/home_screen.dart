@@ -23,6 +23,7 @@ import '../utils/greeting.dart';
 import '../utils/text_format.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/section_title.dart';
 import '../widgets/home_greeting.dart';
 import '../widgets/launch_splash.dart';
 import '../widgets/locked_premium_pill.dart';
@@ -1145,7 +1146,7 @@ class _HomeScreenState extends State<HomeScreen>
             ],
           ),
           const SizedBox(height: 24),
-          const _SectionLabel('Today'),
+          const SectionTitle('Today'),
           const SizedBox(height: 8),
           _TodayCard(
             key: _todayKey,
@@ -1172,7 +1173,7 @@ class _HomeScreenState extends State<HomeScreen>
           // that's supposed to lead with what's actually there.
           if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
             const SizedBox(height: 24),
-            const _SectionLabel('Your weak spots'),
+            const SectionTitle('Your weak spots'),
             const SizedBox(height: 8),
             for (final spot in _weakSpots) ...[
               WeakSpotCard(
@@ -1265,24 +1266,6 @@ class _HomeScreenState extends State<HomeScreen>
               onPressed: _loadClimb, child: const Text('Retry progress')),
         ],
       ],
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      text,
-      style: theme.textTheme.labelLarge?.copyWith(
-        color: theme.colorScheme.secondary,
-        fontWeight: FontWeight.w700,
-      ),
     );
   }
 }

@@ -20,6 +20,7 @@ import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/section_title.dart';
 import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
 import 'credits_screen.dart';
@@ -374,7 +375,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const PageTitle('Profile'),
         isTabRoot: true,
         children: [
-          const _SectionLabel('Profile'),
+          const SectionTitle('Profile'),
           const SizedBox(height: 8),
           // No Card wrap (docs/design-audit.md, Batch 0 item 8): this
           // isn't a single tappable target the way Home's cards are, so
@@ -421,7 +422,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          const _SectionLabel('Medal collection'),
+          const SectionTitle('Medal collection'),
           const SizedBox(height: 8),
           if (_medalsLoading)
             const Center(child: CircularProgressIndicator())
@@ -442,7 +443,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               themeIds: _medalThemeIds,
             ),
           const SizedBox(height: 32),
-          const _SectionLabel('Appearance'),
+          const SectionTitle('Appearance'),
           const SizedBox(height: 8),
           AppSegmentedButton<AppThemeMode>(
             segments: const [
@@ -492,7 +493,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           if (kDebugMode && DebugTools.enabledForTesting) ...[
             const SizedBox(height: 32),
-            const _SectionLabel('Developer'),
+            const SectionTitle('Developer'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -665,24 +666,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      text,
-      style: theme.textTheme.labelLarge?.copyWith(
-        color: theme.colorScheme.secondary,
-        fontWeight: FontWeight.w700,
       ),
     );
   }
