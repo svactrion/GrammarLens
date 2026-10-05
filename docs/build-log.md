@@ -10153,3 +10153,193 @@ question screen files are not touched.
   - Topic Practice in both themes, the back tile, the iOS swipe back,
     long titles at Large text, the generating state;
   - the length picker's title.
+
+## 2026-10-05 (1.2.0 additional screens — Batch 10: Question V2; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Package `docs/design/1.2.0-additional/`
+(`5caf517`), Batch 0 report `ebd9b6c`. The question screen files were
+opened for this batch only (the earlier "do not touch" rule is lifted for
+it).
+
+Unchanged: when answers are graded, the Skip rule, session lengths, the
+result screens, the daily free right, quota use, AI/proxy calls, the Daily
+Test's local grading, answer matching, analytics events and the storage
+schema. Home, Review, Profile and Topic Practice are not touched.
+
+- **[Product — owner] Decisions** (numbers from the Batch 0 report's §9):
+  - O1: no screen-only `muted` / `info` overrides; `warm` / `onWarm` are
+    added (`AppPalette`, no user yet).
+  - O4: autocorrect, suggestions and smart punctuation stay off; the
+    brief's "normal platform behaviour" covers Return, IME composing and
+    selection only.
+  - O5: the Daily Test's last button stays "Finish"; Topic Practice
+    "Submit".
+  - O6: a Topic Practice answer has at most 2,000 characters (the proxy's
+    `MAX_TEXT_LENGTH`); the count shows only past 1,800.
+  - O12: fill in the blank starts at one line, the other types at two;
+    every type wraps and grows.
+  - The primary action takes the mockup's colour.
+  - Recorded for later batches (not built): the onboarding name stays
+    required; the goal goes to analytics as `learning_goal` (option B);
+    redeem code deferred; the paywall's trial-eligibility fix belongs to
+    the Paywall batch (`roadmap.md`).
+- **[Engineering] The cause of the sideways scroll:** both answer
+  `TextField`s set no `maxLines`, so they were the default single line.
+  Now `keyboardType: multiline`, `textInputAction: newline`, `minLines` 1
+  or 2 by type, `maxLines: null` inside a bounded box.
+- **[Engineering] What changed.**
+  - `lib/widgets/question_view.dart` (new), shared by both screens:
+    - `AnswerDrafts`: one `TextEditingController` per question ID (as
+      before), plus one `FocusNode` and one answer `ScrollController` per
+      session, made once. The single answer field keeps its focus node and
+      only swaps its controller, so an open keyboard stays open on Next
+      and Back; the field's scroll offset is saved per ID and put back.
+    - `QuestionView`: the question card, "Your answer" with the keyboard
+      control, the answer field, laid out by a `CustomMultiChildLayout`:
+      the question gets its whole height while the answer keeps its
+      minimum lines; the answer grows into the rest and then scrolls
+      inside itself. A question that does not fit scrolls in its card,
+      with a visible scroll bar and a fade with a chevron. When the
+      answer's minimum would leave the question under 72 pt, the answer
+      starts at one line for every type. The page never scrolls.
+    - "Review answer" (or "Read full question" when the question does not
+      fit) appears while the answer has focus and only unfocuses it.
+  - `lib/widgets/question_app_bar.dart`: `QuestionHeader` (in the page,
+    not an app bar) replaces `QuestionAppBar`: Back, the title (17 / 900,
+    wraps), an optional subtitle, Close, over a 1 px `border` line.
+    `HeaderIconButton` is 44 × 44 (was 40), the card surface, radius 13;
+    with no callback it is drawn disabled at 40 % in the same place (was
+    invisible).
+  - `lib/widgets/practice_step_footer.dart`: a card-surface bar with a top
+    line; Skip a link-coloured `TextButton` (was an `OutlinedButton` 100
+    wide), at least 63 wide; the primary action brandOrange with onOrange
+    text at 900, no edge, 48 tall (was the navy theme button, 52); 10 pt
+    apart (was 12).
+  - `practice_screen.dart`, `daily_test_screen.dart`: a zero-height app
+    bar, the header, `QuestionView`, the footer. Back is disabled on the
+    first question and while submitting; a second tap on Submit/Finish
+    does nothing (`_submitting` / `_finishing` guards); Submit closes the
+    keyboard. The Daily Test shows the same header while loading or on an
+    error (was a separate close-only app bar).
+  - `lib/theme.dart`: `AppPalette.warm` / `onWarm`.
+- **[Colours on the question screen]**
+
+  | Element | Colour |
+  |---|---|
+  | Next / Submit / Finish | brandOrange `#FF7A1A` / `#FF8A3D`, text `#241200` (6.93 / 7.71:1), no edge |
+  | Disabled primary | `disabledFill` / `disabledLabel` (as every disabled button) |
+  | Skip, "Review answer", "Read full question", the type label | linkAndActive (`secondary`, `#0D3B8F` / `#B4C8FF`) |
+  | Counter pill | brandOrange, `#241200` text |
+  | Back / Close tiles | cardSurface, textPrimary icon |
+  | Answer edge | `inputBorder` (Q3) 1.5 pt; linkAndActive 2 pt while typing |
+  | Exit dialog | unchanged (`DestructiveDialogActions`) |
+
+- **[Copy] Old → new**
+  - New: "Your answer" (label), "Write your answer…" (placeholder, was
+    "Your answer"), "Review answer", "Read full question", the header
+    subtitle "Practice" (Topic Practice only).
+  - The counter "N / total" moved from under the app bar into the card.
+  - Unchanged: the type labels, "Skip", "Next", "Submit", "Finish", the
+    exit dialogs, "Reviewing your answers…", "Preparing today's test…".
+- **[Deliberate departures from the mockup]**
+  - **Subtitle "Practice", not "Topic Practice":** the screen is also a
+    free user's daily weak-spot practice, and the paywall tells them Topic
+    Practice is premium. The Daily Test has no subtitle.
+  - **No "Rewrite" label:** the data has three types; their labels stay.
+  - **The answer edge is Q3's `inputBorder`** (3:1), not the mockup's
+    `border` line (1.41:1).
+  - **The answer line is 44 pt tall** (its control's target) with gaps of
+    4 and 0 instead of the mockup's 29 pt line with 12 and 4: about the
+    same visible spacing.
+  - **The keyboard control shows only while typing** (the mockup always
+    shows it): without the keyboard it would do nothing.
+  - **Autocapitalisation stays off** (the mockup's textarea has
+    `autocapitalize="sentences"`), with O4.
+  - **The exit dialog's copy is unchanged** ("Your progress will be
+    lost."), not the mockup's "You can keep editing…".
+  - Next is 48 tall (the mockup's 45, per the brief).
+- **[Tests]** `flutter analyze` clean; **1,659 passed, 0 failed** (1,630
+  after Batch 9).
+  - New: `test/question_v2_test.dart` (19 definitions, 26 cases; real
+    font): multiline for every type with its minimum lines; a long answer
+    wraps with no horizontal scroll; growth, shrinking and inner scrolling
+    with the question and actions in place; Return makes no submission and
+    a line break stays; empty/whitespace keeps Next disabled; emoji and
+    line breaks reach scoring as typed; the 2,000 cap and the counter past
+    1,800; text, selection and scroll offset across Next → Back → Next;
+    Back disabled on question 1 and never leaving; no scoring request from
+    moving, focus or the keyboard control; "Review answer"; a short
+    question whole at 390 × 844 with a 336 pt keyboard; a long question at
+    320 × 568, Large, 260 pt keyboard: scrolls in its card, the fade, "Read
+    full question" closes the keyboard; 320 / 360 / 390 / 430 pt × Large ×
+    light/dark with the keyboard open: Skip, Next and the field above the
+    keyboard, no exception; no second scoring request; answers kept after
+    a failed submission; the Daily Test's field, "Finish", no read on
+    moving, no double finish. Also 2 colour tests in
+    `practice_step_footer_test` and a wrap test in
+    `question_app_bar_test`.
+  - Behaviour tests: no assertion changed. Finder-only changes (Skip is
+    now a `TextButton`, `find.widgetWithText(OutlinedButton, 'Skip')` →
+    `TextButton`): `daily_test_screen_test` (2), `first_launch_flow_test`
+    (4), `first_launch_climb_test` (3), `practice_screen_keyboard_test`
+    (1), `practice_step_footer_test` (5).
+  - Look tests updated, with the reason:
+    - `practice_step_footer_test`: "Skip is an outlined button" → a text
+      button; "52 tall, 12 apart" → 48 and 10, Skip at least 63 wide; the
+      disabled pairing is read from the footer's own style (it no longer
+      uses the theme's navy button).
+    - `question_app_bar_test`, rewritten for `QuestionHeader`: the title's
+      centre on question 1 and 2 (kept); "Back reserves its 40 × 40
+      footprint when hidden" → Back in place, disabled, with its
+      semantics; "40 × 40" → 44 × 44; "only the N / total counter" → no
+      counter in the header (it is in the card); the callbacks (kept).
+  - The existing keyboard tests (`practice_screen_keyboard_test`) pass
+    unchanged, including "no scrollable ancestor" and "the question's
+    position is unaffected by the keyboard".
+- **[Renders]** Real font, `tool/design_measure/v120/question_render_test.dart`
+  (the keyboard drawn as a grey box): `docs/design/1.2.0-additional/batch10/`.
+  Measured: the rewrite example is whole (0 pt hidden of 177) at 390 × 844
+  with a 291 or 336 pt keyboard; at 375 × 667 with 260 pt, 97 of 177 pt
+  scroll in the card; the long question at 360 × 740 with 300 pt, 199 of
+  312; at 320 × 568 Large with 260 pt, 347 of 378, the answer at one line
+  (51 pt).
+- **[Acceptance checklist, "Soru V2"]** T = verified by an automated test;
+  D = waits for the device; N/A = cannot apply.
+  - Real system keyboard, no mock keyboard — T (no keyboard widget in the
+    app); the real keyboard itself D.
+  - Rewrite answer wraps, no single line/horizontal scroll — T.
+  - Starts at 2 lines, grows, shrinks — T (fill in the blank at 1, O12).
+  - Scrolls inside past the limit; question and actions stay — T.
+  - Selecting/correcting the first word, copy/paste, editing the middle —
+    D.
+  - Return adds a line, no Next/Submit — T; IME composing — D.
+  - Short/medium question whole with a standard keyboard — T at 390 × 844
+    with 336 pt (and a render); the real keyboard height D.
+  - Small screen + long question: readable, scrollable, "Read full
+    question", no overflow/ellipsis — T.
+  - Done/Review answer closes the keyboard and keeps the answer — T for
+    "Review answer"; the keyboard's own Done key D.
+  - Next → Back → Next keeps answers by ID — T (with selection and
+    scroll).
+  - Back disabled on question 1, never leaves the session — T.
+  - × separate, confirmation kept — T (existing dialog tests).
+  - Empty, whitespace, very long, line breaks, emoji — T.
+  - Skip, Submit/Finish on the last, session lengths — T (existing).
+  - No extra AI request, points or quota from moving or focus — T.
+  - Loading/failure: no double submission, text kept — T.
+  - Suggestion bar, keyboard heights, large text — T at fixed heights;
+    the real suggestion bar D; **rotation N/A** (portrait only).
+  - Android keyboard — **N/A** (iOS only).
+- **[Not measured]** On a device (iPhone 14 Plus, and a small phone if
+  available):
+  - the real keyboard's height with autocorrect off (is the suggestion bar
+    there?), and whether the rewrite question is whole above it;
+  - typing a three-line correction, moving the caret to the first word,
+    selecting and pasting, deleting back to one line;
+  - the Turkish keyboard's composing and the emoji keyboard;
+  - Next and Back with the keyboard open: it stays open, the caret where
+    it was;
+  - "Review answer" / "Read full question", the question's fade and
+    scroll bar;
+  - the orange Next and the disabled Back in both themes;
+  - Large text at 320 pt (or the smallest phone available).

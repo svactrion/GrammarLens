@@ -114,9 +114,21 @@ below with its source):
   one line, the answer field scrolls sideways instead of wrapping (the
   `TextField` in `practice_screen.dart` and `daily_test_screen.dart` is
   single-line). The user cannot see the whole answer, and getting back to
-  its start is awkward. Recorded 2026-10-05 (owner); also in 1.1.0. To be
-  fixed together with the question screen work, which is outside the
-  1.2.0 redesign's scope (its keyboard behaviour is designed separately).
+  its start is awkward. Recorded 2026-10-05 (owner); also in 1.1.0.
+  - **Fixed in 1.2.0 (Question V2, additional screens Batch 10,
+    2026-10-05):** the answer field is multiline on both screens; it wraps,
+    grows and then scrolls inside itself. Build log 2026-10-05, Batch 10.
+    Automated tests and real-font renders only; **the device check is
+    open.**
+  - **Whether to carry the fix into 1.1.0 is the owner's decision; it is
+    not carried over now.**
+- **The paywall does not check trial eligibility** (1.0.0 and 1.1.0 have
+  it too). With no introductory price the disclosure still says "Free
+  trial" (`premium_screen.dart`, `_disclosureText`), the button always
+  reads "Start free trial", and `checkTrialOrIntroductoryPriceEligibility`
+  is never called, so a user who already used a trial is still promised
+  one. Found in the additional screens Batch 0 report (§4a); **to be fixed
+  in the Paywall batch** (owner, 2026-10-05).
 - **Text is drawn too thin on iOS (since 1.0.0).** The bundled font is a
   variable font (`assets/fonts/NunitoSans-Variable.ttf`, default instance
   ExtraLight 200), and on an iOS device `FontWeight` alone does not move
@@ -131,6 +143,29 @@ below with its source):
   - **Whether to carry the fix into 1.1.0 is the owner's decision; it is
     not carried over now.**
 - Not measured: frame times and memory on a device.
+
+### 1.2.0 additional screens (Paywall, Onboarding, Question V2) — owner decisions 2026-10-05
+
+Package: `docs/design/1.2.0-additional/`; Batch 0 report
+`batch0-report.md` there. Order: Question V2 → Onboarding → Paywall.
+
+- **Question V2:** built in Batch 10 (2026-10-05), awaiting the device
+  check. Decisions O1 (no screen-only muted/info overrides; warm/onWarm
+  added), O4 (autocorrect, suggestions and smart punctuation stay off),
+  O5 (Daily Test keeps "Finish"), O6 (Topic Practice answers: 2,000
+  characters, the count past 1,800), O12 (fill in the blank starts at one
+  line, the other types at two), the mockup's orange primary action.
+- **For the Onboarding batch (not built):** the name stays **required**;
+  the learning goal goes to analytics as the `learning_goal` user property
+  (Batch 0 report §3d, option B), with the privacy policy, the on-screen
+  privacy texts, `analytics-plan.md` and the App Privacy answers updated
+  with it.
+- **Redeem code: deferred** (owner, 2026-10-05). Apple subscription offer
+  codes work without any in-app UI (App Store account settings, or the
+  redemption URL). For the first campaign the paywall gets "Have a code?"
+  → `Purchases.presentCodeRedemptionSheet()`. **Never a code check of our
+  own** (App Review 3.1.1).
+- **For the Paywall batch:** the trial-eligibility fix (Known flaws above).
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
 
