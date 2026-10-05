@@ -408,6 +408,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// and the backlight); null in dark mode, where the glow does that job.
   final Color? heroGround;
 
+  /// A warm, low-emphasis surface and its text (the additional screens
+  /// package's `warm` / `onWarm`, owner decision O1): 7.96:1 (light) and
+  /// 7.82:1 (dark).
+  final Color warm;
+  final Color onWarm;
+
   /// The brief's card and navigation bar shadows.
   final List<BoxShadow> cardShadow;
   final List<BoxShadow> navShadow;
@@ -426,6 +432,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.brandTint,
     required this.heroBacklight,
     required this.heroGround,
+    required this.warm,
+    required this.onWarm,
     required this.cardShadow,
     required this.navShadow,
   });
@@ -456,6 +464,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brandTint: const Color(0x66FAF3EC),
     heroBacklight: null,
     heroGround: _lightShadowBase.withValues(alpha: .45),
+    warm: const Color(0xFFFFE5CC),
+    onWarm: const Color(0xFF713306),
     cardShadow: [
       BoxShadow(
         color: _lightShadowBase.withValues(alpha: .10),
@@ -486,6 +496,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brandTint: const Color(0x66FAF3EC),
     heroBacklight: _darkPrimary.withValues(alpha: .30),
     heroGround: null,
+    warm: const Color(0xFF442E21),
+    onWarm: const Color(0xFFFFBE88),
     cardShadow: [
       BoxShadow(
         color: _darkShadowBase.withValues(alpha: .17),
@@ -517,6 +529,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? brandTint,
     Color? heroBacklight,
     Color? heroGround,
+    Color? warm,
+    Color? onWarm,
     List<BoxShadow>? cardShadow,
     List<BoxShadow>? navShadow,
   }) {
@@ -534,6 +548,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       brandTint: brandTint ?? this.brandTint,
       heroBacklight: heroBacklight ?? this.heroBacklight,
       heroGround: heroGround ?? this.heroGround,
+      warm: warm ?? this.warm,
+      onWarm: onWarm ?? this.onWarm,
       cardShadow: cardShadow ?? this.cardShadow,
       navShadow: navShadow ?? this.navShadow,
     );
@@ -556,6 +572,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       brandTint: Color.lerp(brandTint, other.brandTint, t)!,
       heroBacklight: Color.lerp(heroBacklight, other.heroBacklight, t),
       heroGround: Color.lerp(heroGround, other.heroGround, t),
+      warm: Color.lerp(warm, other.warm, t)!,
+      onWarm: Color.lerp(onWarm, other.onWarm, t)!,
       cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t)!,
       navShadow: BoxShadow.lerpList(navShadow, other.navShadow, t)!,
     );
