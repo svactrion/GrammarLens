@@ -227,6 +227,28 @@ void main() {
     });
 
     testWidgets(
+        'sentence answers start with a capital, a blank does not; the '
+        'keyboard still corrects nothing (O4)', (tester) async {
+      await _pumpPractice(tester);
+      for (final item in _practiceSet.items) {
+        final field = _textField(tester);
+        expect(
+            field.textCapitalization,
+            item.type == PracticeItemType.fillInBlank
+                ? TextCapitalization.none
+                : TextCapitalization.sentences,
+            reason: item.id);
+        expect(field.autocorrect, isFalse);
+        expect(field.enableSuggestions, isFalse);
+        expect(field.smartQuotesType, SmartQuotesType.disabled);
+        expect(field.smartDashesType, SmartDashesType.disabled);
+        if (item == _practiceSet.items.last) break;
+        await tester.tap(_skip);
+        await tester.pumpAndSettle();
+      }
+    });
+
+    testWidgets(
         'a long answer wraps onto more lines and never scrolls sideways',
         (tester) async {
       await _pumpPractice(tester);
@@ -588,9 +610,12 @@ void main() {
       expect(_textField(tester).minLines, 1);
       expect(_textField(tester).maxLength, isNull);
       expect(_textField(tester).autocorrect, isFalse);
+      expect(_textField(tester).textCapitalization, TextCapitalization.none);
       await tester.tap(_skip);
       await tester.pumpAndSettle();
       expect(_textField(tester).minLines, 2);
+      expect(
+          _textField(tester).textCapitalization, TextCapitalization.sentences);
       expect(find.widgetWithText(FilledButton, 'Finish'), findsOneWidget);
     });
 

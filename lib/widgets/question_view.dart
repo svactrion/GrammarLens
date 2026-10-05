@@ -160,6 +160,12 @@ class QuestionView extends StatefulWidget {
   static int minLinesFor(PracticeItemType type, {bool compact = false}) =>
       compact || type == PracticeItemType.fillInBlank ? 1 : 2;
 
+  /// Sentence answers start with a capital; a blank's word does not.
+  static TextCapitalization capitalizationFor(PracticeItemType type) =>
+      type == PracticeItemType.fillInBlank
+          ? TextCapitalization.none
+          : TextCapitalization.sentences;
+
   /// The answer field's height at its minimum lines, from the style and the
   /// text scaler: lines × line height and the padding, plus 1 pt for the
   /// font's rounding (measured: 74 pt for two lines at Medium).
@@ -363,6 +369,11 @@ class _QuestionViewState extends State<QuestionView> {
         enableSuggestions: false,
         smartQuotesType: SmartQuotesType.disabled,
         smartDashesType: SmartDashesType.disabled,
+        // A capital at the start of each sentence for the types answered
+        // with a sentence (owner, after Batch 10); not for fill in the
+        // blank, whose answer usually goes into the middle of one. Grading
+        // ignores case either way (`normalizeAnswer` lowercases).
+        textCapitalization: QuestionView.capitalizationFor(widget.item.type),
         decoration: InputDecoration(
           hintText: 'Write your answer…',
           filled: true,
