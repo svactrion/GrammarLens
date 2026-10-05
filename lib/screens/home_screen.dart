@@ -1095,6 +1095,7 @@ class _HomeScreenState extends State<HomeScreen>
         // mountain retains the pre-completion position and can be revealed.
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Semantics(
+            container: true,
             header: true,
             child: Text(
               'GrammarLens',
@@ -1268,8 +1269,9 @@ class _HomeScreenState extends State<HomeScreen>
 }
 
 /// The avatar beside the greeting (the brief's hero picker): the user's
-/// avatar with a small edit badge, opening the avatar picker. A Hero, so
-/// it flies to the picker's centred avatar and back.
+/// avatar, opening the avatar picker. A Hero, so it flies to the picker's
+/// centred avatar and back. No edit badge (owner, after the Batch 3 device
+/// check): the avatar alone is the control, named "Change your avatar".
 class _HeroButton extends StatelessWidget {
   final Avatar? avatar;
   final VoidCallback? onTap;
@@ -1281,8 +1283,10 @@ class _HeroButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    // A node of its own (container): without it the label and the button
+    // flag would merge into the Home list's node above.
     return Semantics(
+      container: true,
       button: true,
       label: 'Change your avatar',
       child: InkWell(
@@ -1291,32 +1295,12 @@ class _HeroButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(_size / 2 * 0.6),
         ),
         onTap: onTap,
-        child: SizedBox.square(
-          dimension: _size,
-          child: Stack(children: [
-            // `homeAvatarHeroTag` is its own tag, distinct from Settings'
-            // `avatarHeroTag` — see that constant's doc comment for why
-            // sharing one tag across both entry points would crash.
-            Hero(
-              tag: homeAvatarHeroTag,
-              child: AvatarTile(avatar: avatar, radius: _size / 2),
-            ),
-            PositionedDirectional(
-              end: 0,
-              bottom: 8,
-              child: Container(
-                width: 23,
-                height: 23,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: colorScheme.outlineVariant),
-                ),
-                child: Icon(Icons.edit_rounded,
-                    size: 12, color: colorScheme.onSurface),
-              ),
-            ),
-          ]),
+        // `homeAvatarHeroTag` is its own tag, distinct from Settings'
+        // `avatarHeroTag` — see that constant's doc comment for why sharing
+        // one tag across both entry points would crash.
+        child: Hero(
+          tag: homeAvatarHeroTag,
+          child: AvatarTile(avatar: avatar, radius: _size / 2),
         ),
       ),
     );

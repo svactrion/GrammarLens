@@ -826,6 +826,21 @@ void main() {
     expect(avatarRect.right, greaterThan(screenWidth - 60));
   });
 
+  testWidgets(
+      'no edit badge on the hero (owner, after Batch 3); the avatar itself is '
+      'the "Change your avatar" control', (tester) async {
+    final semantics = tester.ensureSemantics();
+    var tapped = false;
+    await pumpHome(tester, onAvatarTap: () => tapped = true);
+
+    expect(find.byIcon(Icons.edit_rounded), findsNothing);
+    expect(find.bySemanticsLabel('Change your avatar'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Change your avatar'));
+    await tester.pump();
+    expect(tapped, isTrue);
+    semantics.dispose();
+  });
+
   testWidgets('tapping the avatar calls onAvatarTap', (tester) async {
     var tapped = false;
     await pumpHome(tester, onAvatarTap: () => tapped = true);
