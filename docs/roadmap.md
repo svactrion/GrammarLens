@@ -127,8 +127,15 @@ below with its source):
   trial" (`premium_screen.dart`, `_disclosureText`), the button always
   reads "Start free trial", and `checkTrialOrIntroductoryPriceEligibility`
   is never called, so a user who already used a trial is still promised
-  one. Found in the additional screens Batch 0 report (§4a); **to be fixed
-  in the Paywall batch** (owner, 2026-10-05).
+  one. Found in the additional screens Batch 0 report (§4a).
+  - **Fixed in 1.2.0 (the paywall, additional screens Batch 12,
+    2026-10-05):** eligibility is checked per product; a trial is named
+    only when the selected product has one and the user is eligible;
+    otherwise the price and period; unknown eligibility promises no trial.
+    Build log 2026-10-05, Batch 12. Automated tests only; **sandbox check
+    open.**
+  - **Whether to carry the fix into 1.1.0 is the owner's decision; it is
+    not carried over now.**
 - **Text is drawn too thin on iOS (since 1.0.0).** The bundled font is a
   variable font (`assets/fonts/NunitoSans-Variable.ttf`, default instance
   ExtraLight 200), and on an iOS device `FontWeight` alone does not move
@@ -170,7 +177,13 @@ Package: `docs/design/1.2.0-additional/`; Batch 0 report
   redemption URL). For the first campaign the paywall gets "Have a code?"
   → `Purchases.presentCodeRedemptionSheet()`. **Never a code check of our
   own** (App Review 3.1.1).
-- **For the Paywall batch:** the trial-eligibility fix (Known flaws above).
+- **Paywall:** built in Batch 12 (2026-10-05), awaiting the device and
+  sandbox check: the mockup's layout, the trial-eligibility fix (Known
+  flaws above), a pending purchase (O10), three companions (O11). Redeem
+  codes deferred.
+- **Onboarding revision (owner, after the Batch 11 device check):** the
+  companion caption is the name only; a tap outside the name field or the
+  keyboard's Done closes the keyboard and never moves on.
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
@@ -191,6 +204,11 @@ Package: `docs/design/1.2.0-additional/`; Batch 0 report
     with the app's usage analytics, never with your name. It helps us
     decide what to improve; it does not change your lessons."
   - Update "Last updated".
+- [ ] **App Store Connect, subscription review screenshot:** each
+  subscription's review screenshot shows the paywall; replace it with the
+  1.2.0 paywall.
+- [ ] **App Store screenshots:** any that show the paywall, onboarding or a
+  question screen are redone for 1.2.0.
 - [ ] **App Store Connect, App Privacy** for the 1.2.0 submission: review
   the answers with the goal now collected through Firebase Analytics (a
   survey-like answer about the user's purpose; the category, and whether

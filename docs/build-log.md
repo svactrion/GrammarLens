@@ -10552,3 +10552,228 @@ touched; Profile only gets the name limit.
   - Large text at the smallest phone available;
   - the sentence capital in Practice and the Daily Test, and none in fill
     in the blank.
+
+## 2026-10-05 (1.2.0 additional screens — Batch 12: the paywall and the trial-eligibility fix; onboarding revisions; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 11 on the device** and
+asked for two onboarding changes (part A).
+
+Unchanged: the subscription service's purchase and entitlement logic
+(only an eligibility query and a `pending` outcome added), quota, AI/proxy
+calls, the storage schema, analytics event definitions, routing, the Day-0
+paywall and its one-time flag, `premium_offer_card` and the Home/Review
+Premium entries. No other screen changes.
+
+- **[A] Onboarding (owner, after the device check).**
+  1. The caption under the companion is its name only ("Fox", was "Fox ·
+     14 / 16"): the carousel loops, so a position meant nothing. Screen
+     readers hear "Fox, selected".
+  2. On step 1 a tap anywhere outside the name field closes the keyboard
+     and keeps the name and the companion; the keyboard's Done only closes
+     the keyboard (it used to move to step 2). Continue is the only way on,
+     so the companions can be looked at again after typing. With the
+     keyboard closed the carousel's drag and Previous/Next work as before;
+     a tap never changes the companion.
+- **[Product — owner] Paywall decisions.**
+  - **Redeem codes deferred:** no "Have a code?" and no code sheet. Apple
+    offer codes work without any in-app UI (App Store account settings or
+    the redemption URL); when the first campaign comes, "Have a code?"
+    opens `presentCodeRedemptionSheet()`. Never a code check of the app's
+    own (App Review 3.1.1).
+  - O1: no screen-only `muted` / `info`; `warm` / `onWarm` are used (the
+    Premium label, the saving badge).
+  - O10: a pending purchase (Ask to Buy) has its own outcome and message.
+  - O11: three companions, the user's in the middle.
+  - Premium is capped at 5 sessions a day (`dailySessionLimit`); the page
+    says so and never "unlimited".
+  - The purchase button is the mockup's orange.
+- **[Fixed] The trial promise (since 1.0.0; 1.1.0 has it too).** The button
+  always read "Start free trial", the terms said "Free trial" even for a
+  product with no introductory offer, and eligibility was never checked,
+  so a user who had already had a trial (StoreKit grants one per
+  subscription group) was still promised one.
+  - `SubscriptionService.checkTrialEligibility` asks RevenueCat
+    (`Purchases.checkTrialOrIntroductoryPriceEligibility`, verified in the
+    `purchases_flutter` 10.10.1 source) per product: eligible; ineligible
+    (also "no intro offer exists"); unknown (not configured, a failed
+    call, or RevenueCat's own unknown, for which RevenueCat advises the
+    regular price). The debug pricing preview counts as eligible.
+  - The button, the plan cards and the terms all come from one object per
+    plan (`_PlanTerms`), from the store product and the eligibility, so
+    they always describe the same selected plan:
+
+    | State | Button | Terms under it | Card detail |
+    |---|---|---|---|
+    | Eligible + intro offer | "Start my 7-day free trial" (the product's own length; a week shows as 7 days) | "7 days free, then $49.99 per year, auto-renews unless cancelled." | "7-day free trial" |
+    | Not eligible, or no intro offer | "Subscribe for $49.99 per year" | "$49.99 per year, auto-renews unless cancelled." | "Billed yearly" / "Billed monthly" |
+    | Eligibility unknown | "Continue with Annual" / "Continue with Monthly" | "$49.99 per year, auto-renews unless cancelled." | "Billed yearly" / "Billed monthly" |
+
+    Every price, currency, period and length is the store's (the table's
+    numbers are the live prices with the configured trials).
+  - After a purchase: "Trial started — Topic Practice is unlocked." only
+    when a trial was named; otherwise "Premium is active — Topic Practice
+    is unlocked."
+- **[Engineering] What changed.**
+  - `subscription_service.dart`: `TrialEligibility`, `checkTrialEligibility`;
+    `PurchaseOutcome.pending` for `paymentPendingError`.
+  - `premium_screen.dart`, rebuilt to the mockup:
+    - "GrammarLens" and Close (44 pt) in the page; the companion group
+      (124 pt centre, 66 pt sides by fixed offsets from the user's avatar,
+      no `Hero`, dropped under 700 pt tall as before); "GRAMMARLENS
+      PREMIUM" on warm; the headline 28 / 900 (26 under 360 pt) scaled from
+      the theme; the supporting line (a weak spot's "Practice …" as
+      before), at least two lines tall so every entry point lays out the
+      same.
+    - Three benefits in one card (radius 23).
+    - "Compare Free & Premium" (closed by default, a 44 pt target with its
+      expanded state for screen readers) opens the existing comparison
+      table unchanged, with its narrow-screen rule.
+    - "Choose your plan": Annual and Monthly stacked, radio cards (radius
+      19, ≥ 87 tall, 10 apart; selected: 2 pt link edge on the info
+      surface, a filled radio mark); the total price big with "per year" /
+      "per month"; the saving from the two prices on warm.
+    - The fixed footer: the result of the last purchase or restore; the
+      orange button (≥ 52, radius 17, an arrow, no navy edge); the terms;
+      Restore Purchases, Terms of Service and Privacy Policy on one row
+      (11 / 700, 44 pt targets); "Maybe later". Page edge 20 (15 under
+      360 pt).
+    - Kept: the legal links move to the end of the body when screen height
+      / text scale < 400; at those sizes the footer is also capped at half
+      the screen and scrolls inside itself (375 × 667 at 3x was 73 % of the
+      screen, now 49 %).
+    - A second tap while purchasing sends nothing (`_startPurchase`
+      returns early); Restore ignores a second tap while restoring.
+    - A pending purchase logs `purchase_started` and no `purchase_result`
+      (it has no result yet); the event's vocabulary is unchanged.
+- **[Copy] Old → new**
+  - "Premium" (app bar) → "GrammarLens" in the page; new "GRAMMARLENS
+    PREMIUM".
+  - "Unlock personalized feedback" → "Turn your mistakes into progress."
+  - "Practice the mistakes you actually make." → "Focused practice.
+    Personal feedback. A little more confidence, every day." ("Practice
+    {weak spot}." unchanged).
+  - New benefits: "Understand your mistakes — AI feedback on every topic
+    you practice, not just your free daily practice." / "Practice your weak
+    spots — Go beyond your one free daily practice." / "Every topic, your
+    own pace — All 5 topics · 3, 5 or 10 questions · up to 5 sessions a
+    day." (counts from `kTopics`, `PracticeLength`,
+    `freeDailyPracticeLimit`, `dailySessionLimit`). The mockup's "AI
+    feedback explains what to improve." is not used: it read as AI being
+    Premium-only.
+  - "What's free, trial, and paid" (under the table) → "Compare Free &
+    Premium" (above it).
+  - New: "Choose your plan".
+  - Plan cards: "$7.49 / month" + "Billed $89.99 annually." → "$89.99" +
+    "per year" + the trial or "Billed yearly"; "$9.99 / month" + "Billed
+    monthly." → "$9.99" + "per month" + the trial or "Billed monthly".
+  - Button and terms: see the table above (was "Start free trial" and "7-day
+    free trial, then $89.99 / year, auto-renews unless cancelled.").
+  - "Something went wrong and the trial couldn't start." → "…and the
+    purchase couldn't start." New pending message: "Waiting for approval —
+    Premium starts once the purchase is approved. No charge until then."
+  - Unchanged: "Restore Purchases", the restore results, "Purchase
+    cancelled — no charge was made.", "Maybe later", "Continue", "Trial
+    pricing isn't available right now", "Try again", the table.
+- **[Deliberate departures from the mockup]**
+  - No "Have a code?" (deferred).
+  - "Terms of Service" and "Privacy Policy" in full, not "Terms" /
+    "Privacy": the same links as before, and the footer tests keep them.
+  - "Restore Purchases" keeps its title case.
+  - The wordmark is one colour (orange "Lens" is 2.27:1).
+  - The companions are the app's square avatar art (124 / 66 pt), not
+    66 × 76 frames.
+  - The not-eligible button names the price ("Subscribe for $49.99 per
+    year") rather than the mockup's "Continue with Monthly", which the app
+    keeps for the unknown case.
+  - The terms are one sentence ("…, auto-renews unless cancelled."), not
+    the mockup's two lines.
+  - The plan cards come after the benefits and the comparison toggle, so at
+    393 × 852 they are no longer in view without scrolling (the button and
+    the terms are, in the fixed footer).
+- **[Tests]** `flutter analyze` clean; **1,712 passed, 0 failed** (1,687
+  after Batch 11).
+  - New (25): part A (2: a tap outside closes the keyboard and keeps the
+    name and companion, the carousel works after; Done only closes the
+    keyboard). The paywall (23): not eligible (no trial anywhere, price and
+    period for both plans); unknown (neutral button, no trial); eligible
+    with no intro offer; other prices, euros and a two-week trial (nothing
+    hardcoded); a double tap sends one request; pending (its message, no
+    `purchase_result`); a purchase with no trial says Premium is active;
+    restore found / not found; no code link or field, no "unlimited", the
+    cap stated; benefits true to the tiers; `paywall_viewed` with all six
+    sources; the centre companion for three avatars (124 / 66); 320 × 568,
+    360 × 740, 375 × 667, 390 × 844, 430 × 932 × Large × light/dark with
+    the comparison open (no overflow, nothing cut, button and terms on the
+    first screen).
+  - Changed, with the reason (`premium_screen_test`):
+    - **Interaction only, assertions unchanged:** the table tests open
+      "Compare Free & Premium" first (the table, the PREMIUM header at
+      1.3x/2x, the free-value column ×6, the FREE header's centre, the
+      strip fill ×2, the stacked layout group); where the footer scrolls
+      (2x, 3x) `scrollUntilVisible` names the body's scrollable; purchase
+      tests tap the button by key.
+    - The table listing scopes "Practice your weak spots" to the table (a
+      benefit has the same name).
+    - The table's sizes: 320 @1x, 360 @1.15x and 393 @1.3x move from
+      "keeps the table" to "stacks": the mockup's 20 pt page edge (18
+      before; 15 under 360, 14 before) narrows the table by 4 pt; the rule
+      (a table only where no label is cut) is unchanged.
+    - New copy: the headline tests; "annual is preselected" (new wording,
+      radio semantics); switching to Monthly (button, price and terms
+      together); the annual card's big figure is the total (the brief);
+      the $4.16 regression looks up "$49.99" (the savings assertion is
+      unchanged); the monthly card; the success "Continue" test.
+    - Stacked cards: "share bounds" → same width and left edge, 10 apart,
+      ≥ 87, stable on selection; "the selected card keeps the card fill" →
+      the selected card takes the info surface (the brief) with a 2 pt
+      edge and a filled radio mark.
+    - The companion group: five → three (O11), in all five hero tests.
+    - "What's free, trial, and paid renders below the table" → the
+      comparison toggle opens and closes, with its expanded state.
+    - "At 393 × 852 the plan cards are fully visible above the footer" →
+      the button and terms are on the first screen and the cards are
+      reachable (the mockup puts the companions and the benefits first).
+    - 375 × 667 Medium/Large: the footer and text-area assertions are
+      unchanged (footer 176 pt, under the 31 %); "the whole table and the
+      top of the plan cards are in view" → the headline and the benefits
+      are; Restore Purchases is in the footer now.
+    - The weak-spot geometry test reads the new headline; its geometry
+      assertions are unchanged (the supporting line keeps two lines).
+  - `onboarding_screen_test`: the caption is the name, with "…, selected"
+    for screen readers.
+  - `button_edge_test` (Batch 8) passes: the orange buttons have no edge.
+- **[Renders]** `tool/design_measure/v120/paywall_render_test.dart` →
+  `docs/design/1.2.0-additional/batch12/`: 390 pt annual, the plan cards
+  with annual and with monthly selected, the comparison open, not
+  eligible; 375 × 667; light and dark, real font.
+- **[Acceptance checklist, "Paywall"]** T = automated test; D = device or
+  sandbox; deferred = owner decision.
+  - The user's companion always in the middle; no fixed Sloth — T.
+  - Free weak-spot right and real Premium benefits — T.
+  - Plan change updates price, period, button and terms together — T.
+  - Price/currency and trial eligibility from the store; nothing
+    hardcoded — T with fakes; the real store D (sandbox).
+  - Success / cancel / error / pending and restore with the real service —
+    T with fakes; D (sandbox, Ask to Buy).
+  - Terms/Privacy open the real pages; close and "Maybe later" return — T
+    (existing); the pages themselves D.
+  - The code sheet with the keyboard; the page behind blocked — deferred.
+  - Empty / loading / invalid / expired / used / ineligible / network
+    states of a code — deferred.
+  - The real source of codes decided; no fake check in the app — decided
+    (Apple offer codes; nothing in the app); T (no code UI).
+  - Offer terms and free period shown before confirming — deferred
+    (Apple's sheet when it comes).
+  - Closing the code sheet keeps the plan — deferred.
+- **[Not measured]** On a device / in the sandbox:
+  - a sandbox account that never had a trial: "Start my 7-day free trial",
+    the annual purchase sheet's trial; then Monthly ("3-day");
+  - a sandbox account that already had one: "Subscribe for …", no trial
+    anywhere;
+  - eligibility "unknown" in the real SDK (e.g. offline at open);
+  - Ask to Buy in the sandbox: the pending message, then approval arriving
+    through the entitlement listener (Home, Review);
+  - cancel, a failed payment, Restore with and without a purchase;
+  - the page in both themes on the iPhone 14 Plus and at 375 × 667, Large
+    text, the comparison open and closed;
+  - the two onboarding changes: a tap outside the name, the Done key.
