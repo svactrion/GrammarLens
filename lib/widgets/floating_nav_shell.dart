@@ -103,7 +103,7 @@ class FloatingNavShell extends StatefulWidget {
   /// The bar itself (its decorated box), for tests that measure it.
   static const barKey = ValueKey('floating_nav_bar');
 
-  /// Typically an `IndexedStack` of the app's tab screens.
+  /// The app's tab screens (`TabSwitcher`).
   final Widget body;
   final List<NavShellTab> tabs;
   final int selectedIndex;
