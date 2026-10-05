@@ -293,8 +293,8 @@ void main() {
 
   for (final reduceMotion in [false, true]) {
     testWidgets(
-        'N10: a tap opens the detail with the month, its status, theme, tier, '
-        'steps and points; a tap outside closes it'
+        'N34: a tap opens the detail with the month, theme, tier, steps and '
+        'points; a tap outside closes it'
         '${reduceMotion ? ' (Reduce Motion)' : ''}', (tester) async {
       await pumpCollection(tester,
           reduceMotion: reduceMotion,
@@ -309,8 +309,8 @@ void main() {
       expect(detail, findsOneWidget);
       for (final line in [
         'October 2026',
-        'Earned',
-        'Red Canyon · Gold medal',
+        'Red Canyon',
+        'Gold medal',
         '10 / 31 steps · 251 points',
       ]) {
         expect(find.descendant(of: detail, matching: find.text(line)),
@@ -322,83 +322,15 @@ void main() {
       expect(big.disc, MonthlyMedalCollection.detailDisc);
       expect(big.asset, contains('medal_red_canyon_gold'));
 
-      // A tap outside the card: the screen's corner.
+      // A tap outside the medal: the screen's corner.
       await tester.tapAt(const Offset(4, 4));
       await tester.pumpAndSettle();
       expect(find.byKey(MonthlyMedalCollection.detailKey), findsNothing);
     });
   }
 
-  for (final reduceMotion in [false, true]) {
-    testWidgets(
-        'N10: the medal grows in over 240 ms ease-out; with Reduce Motion it '
-        'does not move (fade only)${reduceMotion ? ' (Reduce Motion)' : ''}',
-        (tester) async {
-      await pumpCollection(tester,
-          reduceMotion: reduceMotion,
-          results: [goldOctober],
-          themeIds: storedThemes);
-      await tester.tap(find.byKey(MonthlyMedalCollection.slotKey(2026, 10)));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 120));
-      final detail = find.byKey(MonthlyMedalCollection.detailKey);
-      final grow = find.descendant(
-          of: detail,
-          matching: find.ancestor(
-              of: find.byType(MedalBadge),
-              matching: find.byType(ScaleTransition)));
-      if (reduceMotion) {
-        expect(grow, findsNothing);
-      } else {
-        final scale = tester.widget<ScaleTransition>(grow.first).scale.value;
-        expect(scale, closeTo(.5 + .5 * Curves.easeOut.transform(.5), .02));
-      }
-      final route = ModalRoute.of(tester.element(detail))!;
-      expect(route.transitionDuration, const Duration(milliseconds: 240));
-      await tester.pump(const Duration(milliseconds: 130));
-      await tester.pump();
-      if (!reduceMotion) {
-        expect(tester.widget<ScaleTransition>(grow.first).scale.value, 1);
-      }
-      expect(route.animation!.status, AnimationStatus.completed);
-    });
-  }
-
-  testWidgets(
-      'N10: the focus moves into the detail and comes back to the medal that '
-      'opened it', (tester) async {
-    await pumpCollection(tester,
-        results: [goldOctober], themeIds: storedThemes);
-    final slot = find.byKey(MonthlyMedalCollection.slotKey(2026, 10));
-    await tester.tap(slot);
-    await tester.pumpAndSettle();
-    final detail = find.byKey(MonthlyMedalCollection.detailKey);
-    final focused = FocusManager.instance.primaryFocus!.context!;
-    expect(
-        find.descendant(
-            of: detail,
-            matching: find.byWidgetPredicate(
-                (w) => identical(w, focused.widget),
-                skipOffstage: false)),
-        findsWidgets,
-        reason: 'the focus is inside the detail');
-
-    await tester.tap(find.byTooltip('Close'));
-    await tester.pumpAndSettle();
-    expect(detail, findsNothing);
-    final back = FocusManager.instance.primaryFocus!.context!;
-    expect(
-        find.descendant(
-            of: slot,
-            matching: find.byWidgetPredicate((w) => identical(w, back.widget))),
-        findsOneWidget,
-        reason: 'the focus is back on the slot');
-  });
-
   testWidgets('the running month and the Welcome badge have their details',
       (tester) async {
-    final silver = MonthlyMedalRules.threshold(2026, 11, MedalTier.silver);
-    final bronze = MonthlyMedalRules.threshold(2026, 11, MedalTier.bronze);
     await pumpCollection(tester,
         welcomeBadge: welcomeBadgeFixture,
         currentProgress: november(score: 42),
@@ -408,11 +340,9 @@ void main() {
     var detail = find.byKey(MonthlyMedalCollection.detailKey);
     for (final line in [
       'November 2026',
-      'Not earned yet',
-      'Ember Peak · in progress',
+      'Ember Peak',
+      'No medal yet · in progress',
       '6 / 30 steps · 42 points',
-      'Reach $bronze points to earn Bronze.',
-      '${bronze - 42} points to go.',
     ]) {
       expect(find.descendant(of: detail, matching: find.text(line)),
           findsOneWidget,
@@ -421,55 +351,13 @@ void main() {
     await tester.tapAt(const Offset(4, 4));
     await tester.pumpAndSettle();
 
-    // Past Bronze: earned, the next medal is Silver.
-    await pumpCollection(tester,
-        currentProgress: november(score: bronze + 3), themeIds: storedThemes);
-    await tester.tap(find.byKey(MonthlyMedalCollection.slotKey(2026, 11)));
-    await tester.pumpAndSettle();
-    detail = find.byKey(MonthlyMedalCollection.detailKey);
-    for (final line in [
-      'Earned',
-      'Ember Peak · Bronze medal · in progress',
-      'Reach $silver points to earn Silver.',
-      '${silver - bronze - 3} points to go.',
-    ]) {
-      expect(find.descendant(of: detail, matching: find.text(line)),
-          findsOneWidget,
-          reason: line);
-    }
-    await tester.tapAt(const Offset(4, 4));
-    await tester.pumpAndSettle();
-
-    // At Gold: no next medal, nothing to go.
-    await pumpCollection(tester,
-        currentProgress: november(score: 300), themeIds: storedThemes);
-    await tester.tap(find.byKey(MonthlyMedalCollection.slotKey(2026, 11)));
-    await tester.pumpAndSettle();
-    detail = find.byKey(MonthlyMedalCollection.detailKey);
-    expect(find.descendant(of: detail, matching: find.textContaining('to go')),
-        findsNothing);
-    expect(find.descendant(of: detail, matching: find.textContaining('Reach')),
-        findsNothing);
-    await tester.tapAt(const Offset(4, 4));
-    await tester.pumpAndSettle();
-
-    await pumpCollection(tester,
-        welcomeBadge: welcomeBadgeFixture,
-        currentProgress: november(score: 42),
-        themeIds: storedThemes);
     await tester.tap(find.byKey(MonthlyMedalCollection.welcomeSlotKey));
     await tester.pumpAndSettle();
     detail = find.byKey(MonthlyMedalCollection.detailKey);
-    for (final line in [
-      'Welcome',
-      'Earned',
-      'The beginning of your journey.',
-      'Earned in August 2026',
-    ]) {
-      expect(find.descendant(of: detail, matching: find.text(line)),
-          findsOneWidget,
-          reason: line);
-    }
+    expect(
+        find.descendant(
+            of: detail, matching: find.text('Earned in August 2026')),
+        findsOneWidget);
   });
 
   group('N9: the progress card', () {

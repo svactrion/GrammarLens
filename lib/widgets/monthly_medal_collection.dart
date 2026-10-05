@@ -16,8 +16,10 @@ import '../theme.dart';
 /// Welcome badge last (Q7, which replaced N34's Welcome-first, oldest-first
 /// order). The running month is marked in progress; with no tier yet it
 /// shows its theme's Bronze at [runningFade]. A past month without a medal
-/// is not on the strip. Tapping a medal opens its detail
-/// ([showMedalDetail]).
+/// is not on the strip. Tapping a medal brings it forward, larger, with its
+/// month, theme, tier, steps and points; a tap anywhere closes it
+/// ([showMedalDetail], unchanged since Batch 5: the owner kept it, 1.2.0
+/// Batch 8).
 ///
 /// The running month's progress is a separate card under the strip,
 /// [MonthlyProgressCard] (N9). Profile heads the section "Medal collection"
@@ -43,11 +45,11 @@ class MonthlyMedalCollection extends StatelessWidget {
     this.themeIds = const {},
   });
 
-  /// A medal's disc on the strip and in its detail (the mockup's 86 pt and
-  /// 170 pt art boxes, whose circle crop shows a disc of about 92 % of the
-  /// box).
+  /// A medal's disc on the strip (the mockup's 86 pt art box, whose circle
+  /// crop shows a disc of about 92 % of it) and in its detail (the
+  /// celebration's, N28; the detail is as before 1.2.0 Batch 7).
   static const shelfDisc = 78.0;
-  static const detailDisc = 156.0;
+  static const detailDisc = 144.0;
 
   /// A slot's width (the mockup's 92 pt) and the gap between slots.
   static const slotWidth = 92.0;
@@ -181,54 +183,39 @@ class ShelfMonth {
 
   String get outcome => tier == null ? 'No medal yet' : '${tier!.label} medal';
 
-  /// The medal shown: the tier reached, or the theme's Bronze faded to
-  /// [MonthlyMedalCollection.runningFade].
-  MedalBadge medal(double disc) => MedalBadge.monthly(
+  /// The medal shown: the tier reached, or the theme's Bronze faded (on
+  /// the strip to [MonthlyMedalCollection.runningFade], in the detail to
+  /// [MedalBadge.unearnedOpacity], as before 1.2.0 Batch 7).
+  MedalBadge medal(double disc,
+          {double fadedOpacity = MedalBadge.unearnedOpacity}) =>
+      MedalBadge.monthly(
         themeId: theme.id,
         tier: tier ?? MedalTier.bronze,
         disc: disc,
         earned: tier != null,
-        fadedOpacity: MonthlyMedalCollection.runningFade,
+        fadedOpacity: fadedOpacity,
       );
 
-  /// The detail's lines under the title and the status; for the running
-  /// month below Gold, the next medal's threshold too.
+  /// The detail's lines under the medal (N34).
   List<String> get details => [
-        // The status line above already says "Not earned yet".
-        [
-          theme.name,
-          if (tier != null) outcome,
-          if (running) 'in progress',
-        ].join(' · '),
-        '$steps / $days steps · ${_points(score)}',
-        if (_next case (final tier, _))
-          'Reach ${MonthlyMedalRules.threshold(year, month, tier)} points to '
-              'earn ${tier.label}.',
+        name,
+        theme.name,
+        running ? '$outcome · in progress' : outcome,
+        '$steps / $days steps · $score points',
       ];
-
-  /// The detail's bold last line: the points still missing to the next
-  /// medal, for the running month below Gold; otherwise null.
-  String? get toGo => switch (_next) {
-        (_, final gap) => '${_points(gap)} to go.',
-        null => null,
-      };
-
-  (MedalTier, int)? get _next =>
-      running ? MonthlyMedalRules.nextTier(year, month, score) : null;
 }
 
 /// "1 point", "7 points".
 String _points(int n) => n == 1 ? '1 point' : '$n points';
 
 /// A strip slot: the medal, its disc on a common baseline, the label under
-/// it and, for the running month, the in-progress mark. Tappable; it takes
-/// the focus while its detail is open, so the focus comes back to it.
-class _Slot extends StatefulWidget {
+/// it and, for the running month, the in-progress mark. Tappable.
+class _Slot extends StatelessWidget {
   final Widget medal;
   final String label;
   final String? mark;
   final String semantics;
-  final void Function(FocusNode opener) onTap;
+  final VoidCallback onTap;
 
   const _Slot({
     super.key,
@@ -240,30 +227,16 @@ class _Slot extends StatefulWidget {
   });
 
   @override
-  State<_Slot> createState() => _SlotState();
-}
-
-class _SlotState extends State<_Slot> {
-  final _focus = FocusNode(debugLabel: 'medal slot');
-
-  @override
-  void dispose() {
-    _focus.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final box = MedalBadge.boxFor(MonthlyMedalCollection.shelfDisc);
     return Semantics(
       button: true,
-      label: widget.semantics,
+      label: semantics,
       excludeSemantics: true,
       child: InkWell(
-        focusNode: _focus,
         borderRadius: BorderRadius.circular(12),
-        onTap: () => widget.onTap(_focus),
+        onTap: onTap,
         child: SizedBox(
           width: MonthlyMedalCollection.slotWidth,
           child: Padding(
@@ -271,19 +244,18 @@ class _SlotState extends State<_Slot> {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               SizedBox(
                 height: box.height,
-                child: Align(
-                    alignment: Alignment.bottomCenter, child: widget.medal),
+                child: Align(alignment: Alignment.bottomCenter, child: medal),
               ),
               const SizedBox(height: 8),
-              Text(widget.label,
+              Text(label,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall
                       ?.withWeight(FontWeight.w800)
                       .copyWith(color: theme.colorScheme.onSurface)),
-              if (widget.mark != null)
+              if (mark != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
-                  child: Text(widget.mark!,
+                  child: Text(mark!,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant)),
@@ -310,18 +282,16 @@ class _WelcomeSlot extends StatelessWidget {
           disc: MonthlyMedalCollection.shelfDisc, earned: earned),
       label: 'Welcome',
       semantics: 'Welcome badge, ${earned ? 'earned' : 'locked'}.',
-      onTap: (opener) => showMedalDetail(
+      onTap: () => showMedalDetail(
         context,
-        opener: opener,
         medal: MedalBadge.welcome(
             disc: MonthlyMedalCollection.detailDisc, earned: earned),
-        title: 'Welcome',
-        earned: earned,
         lines: [
-          'The beginning of your journey.',
-          if (at != null)
-            'Earned in ${MonthlyMedalCollection.months[at.month - 1]} '
-                '${at.year}',
+          'Welcome to the climb',
+          at == null
+              ? 'Not earned yet'
+              : 'Earned in ${MonthlyMedalCollection.months[at.month - 1]} '
+                  '${at.year}',
         ],
       ),
     );
@@ -337,184 +307,76 @@ class _MonthSlot extends StatelessWidget {
     final m = month;
     return _Slot(
       key: MonthlyMedalCollection.slotKey(m.year, m.month),
-      medal: m.medal(MonthlyMedalCollection.shelfDisc),
+      medal: m.medal(MonthlyMedalCollection.shelfDisc,
+          fadedOpacity: MonthlyMedalCollection.runningFade),
       label: m.label,
       mark: m.running ? MonthlyMedalCollection.inProgress : null,
       semantics: '${m.name}, ${m.theme.name}, ${m.outcome}'
           '${m.running ? ', in progress' : ''}.',
-      onTap: (opener) => showMedalDetail(context,
-          opener: opener,
-          medal: m.medal(MonthlyMedalCollection.detailDisc),
-          title: m.name,
-          earned: m.tier != null,
-          lines: m.details,
-          emphasis: m.toGo),
+      onTap: () => showMedalDetail(context,
+          medal: m.medal(MonthlyMedalCollection.detailDisc), lines: m.details),
     );
   }
 }
 
-/// N10: a medal's detail, a card over the dimmed screen (the 1.2.0
-/// mockup's layout): the medal large, [title] (the month, or "Welcome"),
-/// whether it is earned, [lines] (the theme and tier, steps and points,
-/// and for the running month the next medal) and [emphasis] in bold (the
-/// points still to go). A tap outside it or its close button closes it.
-///
-/// The medal grows in over 240 ms ease-out while the card fades in; under
-/// Reduce Motion it only fades. The focus moves to the close button inside
-/// and, when it closes, back to [opener] (the slot that opened it).
-Future<void> showMedalDetail(
-  BuildContext context, {
-  required Widget medal,
-  required String title,
-  required bool earned,
-  List<String> lines = const [],
-  String? emphasis,
-  FocusNode? opener,
-}) async {
+/// N10 / N34 (as before 1.2.0 Batch 7; the owner kept this detail): the
+/// medal brought forward, larger, over a darkened screen, with
+/// [lines] under it (the first as its title); a tap anywhere closes it. It
+/// grows in and out with a fade; under Reduce Motion it only fades.
+Future<void> showMedalDetail(BuildContext context,
+    {required Widget medal, required List<String> lines}) {
   final reduceMotion = MediaQuery.disableAnimationsOf(context);
-  opener?.requestFocus();
-  await showGeneralDialog<void>(
+  return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Close',
-    barrierColor: const Color(0x8010121B),
-    transitionDuration: const Duration(milliseconds: 240),
-    pageBuilder: (dialogContext, animation, __) => _MedalDetail(
-      animation: reduceMotion ? null : animation,
-      medal: medal,
-      title: title,
-      earned: earned,
-      lines: lines,
-      emphasis: emphasis,
-    ),
-    transitionBuilder: (context, animation, _, child) => FadeTransition(
-        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-        child: child),
-  );
-  if (opener != null && opener.context != null && opener.context!.mounted) {
-    opener.requestFocus();
-  }
-}
-
-class _MedalDetail extends StatelessWidget {
-  /// The route's animation, driving the medal's growth; null under Reduce
-  /// Motion.
-  final Animation<double>? animation;
-  final Widget medal;
-  final String title;
-  final bool earned;
-  final List<String> lines;
-  final String? emphasis;
-
-  const _MedalDetail({
-    required this.animation,
-    required this.medal,
-    required this.title,
-    required this.earned,
-    required this.lines,
-    required this.emphasis,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final palette = AppPalette.of(context);
-    final grow = animation;
-    return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(appCardRadius),
-                boxShadow: palette.cardShadow,
-              ),
-              child: Material(
+    barrierColor: const Color(0xD9080A10),
+    transitionDuration: const Duration(milliseconds: 200),
+    pageBuilder: (dialogContext, _, __) {
+      final theme = Theme.of(dialogContext);
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => Navigator.of(dialogContext).pop(),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(
                 key: MonthlyMedalCollection.detailKey,
-                color: scheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(appCardRadius),
-                clipBehavior: Clip.antiAlias,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(22),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        autofocus: true,
-                        tooltip: 'Close',
-                        style: IconButton.styleFrom(
-                          backgroundColor: scheme.surfaceContainerHighest,
-                          foregroundColor: scheme.onSurface,
-                          minimumSize: const Size(44, 44),
-                        ),
-                        icon: const Icon(Icons.close_rounded, size: 20),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                    ExcludeSemantics(
-                      child: grow == null
-                          ? medal
-                          : ScaleTransition(
-                              scale: Tween(begin: .5, end: 1.0).animate(
-                                  CurvedAnimation(
-                                      parent: grow, curve: Curves.easeOut)),
-                              child: medal,
-                            ),
-                    ),
-                    const SizedBox(height: 22),
-                    Semantics(
-                      header: true,
-                      child: Text(title,
+                width: MonthlyMedalCollection.detailDisc * 2,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  medal,
+                  const SizedBox(height: 16),
+                  for (final (i, line) in lines.indexed)
+                    Padding(
+                      padding: EdgeInsets.only(top: i == 0 ? 0 : 4),
+                      child: Text(line,
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineSmall
-                              ?.copyWith(color: scheme.onSurface)),
+                          style: i == 0
+                              ? theme.textTheme.titleLarge
+                                  ?.withWeight(FontWeight.w800)
+                                  .copyWith(color: Colors.white)
+                              : theme.textTheme.bodyLarge?.copyWith(
+                                  color: Colors.white.withValues(alpha: .86))),
                     ),
-                    const SizedBox(height: 8),
-                    Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(
-                          earned
-                              ? Icons.check_circle_rounded
-                              : Icons.hourglass_empty_rounded,
-                          size: 15,
-                          color: scheme.secondary),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(earned ? 'Earned' : 'Not earned yet',
-                            style: theme.textTheme.labelMedium
-                                ?.withWeight(FontWeight.w800)
-                                .copyWith(color: scheme.secondary)),
-                      ),
-                    ]),
-                    const SizedBox(height: 8),
-                    for (final line in lines)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(line,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium
-                                ?.copyWith(color: scheme.onSurfaceVariant)),
-                      ),
-                    if (emphasis != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(emphasis!,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium
-                                ?.withWeight(FontWeight.w800)
-                                .copyWith(color: scheme.onSurface)),
-                      ),
-                  ]),
-                ),
+                ]),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+    transitionBuilder: (context, animation, _, child) {
+      final faded = FadeTransition(opacity: animation, child: child);
+      if (reduceMotion) return faded;
+      return ScaleTransition(
+        scale: Tween(begin: .8, end: 1.0)
+            .animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+        child: faded,
+      );
+    },
+  );
 }
 
 /// N9: the running month's progress, a card of its own under the strip.
