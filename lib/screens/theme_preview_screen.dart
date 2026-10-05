@@ -34,6 +34,10 @@ class ThemePreviewScreen extends StatelessWidget {
           NavBarClearance.of(context),
         ),
         children: [
+          const _SectionLabel('Font weights (1.2.0: does iOS drive wght?)'),
+          const SizedBox(height: Spacing.sm),
+          const _FontWeightTable(),
+          const SizedBox(height: Spacing.xxl),
           const _SectionLabel('Color roles'),
           const SizedBox(height: Spacing.sm),
           _ColorRoleGrid(colorScheme: colorScheme),
@@ -351,6 +355,104 @@ class _ComponentGallery extends StatelessWidget {
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// The bundled variable font at each weight, three ways: `FontWeight` only
+/// (what the app's text uses), the `wght` axis only (`FontVariation`), and
+/// both. Each sample shows its laid-out width. In the test engine all three
+/// columns match and the width grows with the weight (build-log 2026-10-05,
+/// Batch 0 §4). If a device shows the `FontWeight` column at one width on
+/// every row while the other two grow, `FontWeight` does not drive the
+/// variable font there (hypothesis H1, 1.2.0 Batch 5): those rows are the
+/// file's default instance (ExtraLight, 200), thickened synthetically.
+class _FontWeightTable extends StatelessWidget {
+  const _FontWeightTable();
+
+  static const _weights = [200, 400, 600, 700, 800, 900];
+  static const _sample = 'GrammarLens';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final family = theme.textTheme.bodyMedium?.fontFamily;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    TextStyle base() => TextStyle(
+          fontFamily: family,
+          fontSize: 18,
+          color: theme.colorScheme.onSurface,
+        );
+    final columns = <(String, TextStyle Function(int))>[
+      ('FontWeight', (w) => base().copyWith(fontWeight: _weight(w))),
+      (
+        'FontVariation',
+        (w) => base()
+            .copyWith(fontVariations: [FontVariation('wght', w.toDouble())])
+      ),
+      (
+        'Both',
+        (w) => base().copyWith(
+            fontWeight: _weight(w),
+            fontVariations: [FontVariation('wght', w.toDouble())])
+      ),
+    ];
+    final header = theme.textTheme.labelSmall?.copyWith(color: muted);
+    return Table(
+      columnWidths: const {0: IntrinsicColumnWidth()},
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        TableRow(children: [
+          Text('wght', style: header),
+          for (final (name, _) in columns) Text(name, style: header),
+        ]),
+        for (final w in _weights)
+          TableRow(children: [
+            Padding(
+              padding: const EdgeInsets.only(right: Spacing.sm),
+              child: Text('$w', style: header),
+            ),
+            for (final (_, style) in columns)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: _Sample(text: _sample, style: style(w), muted: muted),
+              ),
+          ]),
+      ],
+    );
+  }
+
+  static FontWeight _weight(int value) =>
+      FontWeight.values.firstWhere((w) => w.value == value);
+}
+
+class _Sample extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final Color muted;
+
+  const _Sample({required this.text, required this.style, required this.muted});
+
+  @override
+  Widget build(BuildContext context) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: Directionality.of(context),
+      textScaler: TextScaler.noScaling,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(text, style: style, textScaler: TextScaler.noScaling),
+        ),
+        Text('${width.toStringAsFixed(1)} pt',
+            style: TextStyle(fontSize: 10, color: muted)),
       ],
     );
   }
