@@ -9164,3 +9164,173 @@ is not touched.
   themes, the plaque at 320 pt with Large text and a large system text
   size, the segmented control's selected state, and the onboarding
   selected goal in dark mode.
+
+## 2026-10-05 (1.2.0 redesign — Batch 3: Home; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **Batch 1 and Batch 2 were approved on a
+device by the owner** (the nav bar, the plaque, the segmented controls, the
+weak spot card).
+
+Presentation only. State, routing, premium/quota checks, AI/proxy calls,
+storage, analytics events, the Daily Test logic and gamification math are
+unchanged. The question screen, Review, Profile and Topic Practice
+layouts are not touched.
+
+- **[Product — owner] Decisions recorded with this batch.**
+  - **The length picker in dark mode:** its slider and dial stay on the
+    link colour `#B4C8FF`. The navy would measure 1.91:1 on the dark sheet
+    and 1.14:1 on the dark info card (Batch 2 scan). No code change.
+  - **Q18:** `ContentWidth.basePadding` is 14 pt below 360 pt wide and
+    18 pt above. This is the one place every screen's side padding comes
+    from; it was 4.5 % of the width, clamped to 16–28 pt.
+  - **A wider plaque** (owner feedback after Batch 2): its side padding
+    goes from 16 to 28 pt. Measured at 320 pt, where the card is 292 pt
+    wide: 234.5 pt at Large text and 289.0 pt at Large with a 1.3x system
+    text size, so it stays on one line. 32 pt would reach 297 pt there.
+- **[Decisions this replaces]**
+  1. **The combined "Today" card** (PRD v2 §13.5 item 2). Before: one
+     whole-card tap target with a small icon, the title "Daily Test" or
+     "Today's test: N/M correct", and a one-line description, under a
+     "Today" label.
+     - Now a separate orange card. It has two states: not started (the
+       real question count, "Start daily test") and done (the real score,
+       "Review results"). Its navy button is the only tap target and
+       calls the same `onStart` / `onViewResult`.
+     - *Why:* the brief and the approved mockup; one clear action instead
+       of a whole card that did two different things.
+     - `HomeScreen.monthCardTodayPeek` goes from 56 to 66. The month card
+       has to leave the entry visible, and the entry is now the button
+       (48) plus the card padding below it (18). A test measures this.
+  2. **Home's Premium row** (PRD v2 §13.5 item 5: "Premium · Unlock
+     targeted practice on your weak spots", free users).
+     - Replaced (Q15) by a call-out to Review's free daily practice,
+       which switches to the Review tab (`HomeScreen.onGoToReview`, wired
+       in `app.dart`).
+     - It shows only for free users who have weak spots (see the
+       deviations below).
+     - *Why:* the brief ends Home with what a free user can do today
+       instead of a second sales line.
+     - Free users still reach the paywall from Home through the locked
+       topic strip and the locked weak spots. `paywallSourceHome` and the
+       events are unchanged.
+  3. **The single "Topic Practice" card** becomes a "Topic practice"
+     section: a sideways strip of the real `kTopics` and "Explore all
+     topics". Every one of them calls the existing `_openTopicPractice`
+     (Q9; free users get the paywall as before), with no scroll arrows
+     (Q10).
+- **[Engineering] What changed.**
+  - `home_screen.dart`:
+    - the brand and greeting sit in the page and scroll with it, and the
+      app bar is the status bar's height;
+    - the greeting is two lines, the name 900 and free to wrap;
+    - the hero is 108 pt (was 60) with an edit badge;
+    - `_DailyTestCard`, `_TopicStrip`, `_TopicTile`, `_SectionHeader`,
+      `_CountBadge`, `_ReviewCallout`, `_HeroButton`;
+    - `HomeScreen.dailyTestCardKey`, `onGoToReview`;
+    - `_TodayCard`, `_PracticeModeCard` and `_PremiumRow` are removed.
+    - The Home-local weights from the Batch 2 scan are gone with the code
+      that held them: `:1073` brand w800 → the theme's 900; `:1104`
+      greeting w700 → 900; `:1354`, `:1430` titleMedium w700 → removed.
+  - `home_greeting.dart`: the optional `nameStyle` two-line mode.
+  - `locked_premium_pill.dart`: `showChevron`.
+  - `theme.dart`: `AppPalette.brandTint`.
+  - `app.dart`: wires `onGoToReview` to the Review tab.
+  - **Layout fix found by the tests:** at 320 pt with a 2x system text
+    size, the card's label row ("DAILY TEST" + "Free every day")
+    overflowed by 69 pt. It is now a `Wrap` with a flexible label.
+- **[Copy] Old → new** (new texts from the mockup's Home tab; **for the
+  owner's approval**):
+  - Section label "Today" → *(removed)*.
+  - The card's label → "DAILY TEST" and "✓ Free every day" *(new)*.
+  - Card title "Daily Test" → "Your next step." (not started); "Today's
+    test: N/M correct" → "Daily test complete." (done).
+  - Description "Today's 5-question warm-up is ready — free, always." →
+    "Take today’s test and move your hero forward."; "New test tomorrow.
+    Tap to see today's result again." → "New test tomorrow. Review today’s
+    answers."
+  - Score box *(new)*: "5" / "questions" (not started), "N/M" / "correct"
+    (done).
+  - Button *(new)*: "Start daily test" / "Review results".
+  - Card "Topic Practice" → section title "Topic practice"; descriptions
+    "Deep grammar practice with plain-language feedback." / "Try it free,
+    then continue with a subscription." → "Pick a topic. Build confidence
+    where you need it."; "Explore all topics" *(new)*; the topic tiles use
+    the existing `kTopics` titles.
+  - Weak spots badge *(new)*: "1 weak spot" / "N weak spots" (the mockup
+    says "1 topic").
+  - Premium row "Premium" / "Unlock targeted practice on your weak spots"
+    → *(removed)*. Review call-out *(new)*: "One free practice. Every
+    day." / "Choose one weak spot in Review. Get AI feedback on your
+    answers." / "Go to Review".
+  - Hero semantics label *(new)*: "Change your avatar".
+  - Unchanged: "GrammarLens", the greeting text, "Your weak spots", the
+    Premium tag text "Premium".
+- **[Deliberate deviations from the mockup]**
+  - **The weak spots badge** says "weak spots", not "topic": an entry is
+    an error type, and two can share a topic. It counts the entries Home
+    shows, which Home caps at 3 (`getWeakSpots(limit: 3)`), so with more
+    than three it says "3 weak spots".
+  - **The Review call-out shows only for a free user who has weak
+    spots.** Premium users have no quota to describe (as Q13 decides for
+    Review). Without a weak spot there is nothing to choose, so the
+    call-out would promise something the user cannot do yet.
+  - **A topic tile opens the Topic Practice screen**, not the mockup's
+    per-topic Premium dialog (Q9).
+  - **The weak spot cards keep Batch 2's Premium tag** instead of the
+    mockup's "Practice with Premium" link (copy unchanged).
+  - **Icons are Material equivalents of the mockup's Lucide icons:**
+    edit, check, arrow_forward, north_east, auto_awesome and each topic's
+    existing icon.
+  - **Shadows are the theme's elevation 2** (Q2, approved), not the
+    mockup's CSS shadow.
+  - **The score number is `headlineMedium`** (26 at Medium), not 29; the
+    card title is `headlineSmall` (24), not 25. Both are the nearest
+    type-scale styles.
+  - **The brand stays outside the app bar,** and the app bar is the status
+    bar's height, so content scrolls under it.
+- **[Tests]** `flutter analyze` clean; **1,532 passed, 0 failed** (1,520
+  before this batch).
+  - **New and replacement tests in `home_screen_test`:**
+    - the Daily Test card: not started (real count, no progress bar, the
+      button opens the Daily Test); done (the real score, "Review
+      results", tomorrow's line); the button calls `onViewResult`; only
+      the button is the entry; orange with onOrange text in both themes
+      and a navy button; the peek equals the button plus the padding;
+    - the analytics entry through the button;
+    - the card at full content width at 320 / 390 / 430;
+    - the strip: the real topics, not the mockup's; free → Premium screen
+      for a topic and for "Explore all topics"; premium → Topic Practice
+      for both; a live entitlement change; a sideways drag leaves the page
+      where it is;
+    - the order: card, mountain, topics, weak spots, call-out;
+    - the Review call-out: shown for a free user with weak spots and
+      switches the tab; hidden for premium; hidden without weak spots;
+      no Premium row;
+    - the count badge;
+    - no overflow scrolling top to bottom at 320 / 390 / 430 pt, Large
+      text, light and dark, with a long name: the greeting and the hero do
+      not overlap, the whole name shows, and the last item comes into
+      view.
+  - **Removed (replaced by the above):**
+    - the three "Today" tests;
+    - "shows the Topic Practice card"; the full-width card test (old
+      padding formula); the old order test; the three Topic Practice card
+      tests;
+    - the four Premium row tests.
+  - **Finder changes only, assertions unchanged:**
+    - "Daily Test" → "Start daily test" and "N/M correct" → "Review
+      results": `home_screen_test` (×6), `home_daily_test_service_test`
+      (×6), `first_launch_climb_test` (×1), `app_resume_test` (×1);
+    - `month_card_test`: the card by `dailyTestCardKey`, and the tap on
+      the button;
+    - `home_day0_paywall_test`: the Premium row → "Explore all topics",
+      still asserting `mode_selected: premium` and source `home`;
+    - "Topic Practice" → "Topic practice" in two scrolling tests;
+    - two weak spot taps now pump after `ensureVisible` (Home got longer).
+- **[Not measured]** On a device:
+  - the orange card and the edit badge in dark mode;
+  - the topic strip's swipe next to the page scroll;
+  - the larger hero's flight to the avatar picker;
+  - the month card's peek during the zoom;
+  - VoiceOver order;
+  - the Home screenshots for the App Store, which change.
