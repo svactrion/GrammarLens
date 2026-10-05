@@ -185,3 +185,33 @@ class BrandScaffold extends StatelessWidget {
     );
   }
 }
+
+/// The fixed area under a results screen's list ([BrandScaffold.bottomBar]):
+/// the page colour, a hard top edge (not a shadow that only appears once
+/// scrolled), the bottom safe area and the page's side padding. Shared by
+/// Daily Test results and Topic Practice results so the one button sits in
+/// the same place on both.
+class BrandBottomBar extends StatelessWidget {
+  final Widget child;
+
+  const BrandBottomBar({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hPad = ContentWidth.sidePaddingOf(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+          child: SizedBox(width: double.infinity, child: child),
+        ),
+      ),
+    );
+  }
+}

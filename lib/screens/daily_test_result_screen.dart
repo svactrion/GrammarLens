@@ -19,7 +19,6 @@ import '../widgets/brand_scaffold.dart';
 import '../widgets/medal_celebration.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
-import '../utils/content_width.dart';
 
 /// Shown after the last Daily Test question. Grading is entirely local —
 /// [checkDailyTestAnswer] against the answer key the data layer generated
@@ -273,10 +272,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final semantic = theme.extension<SemanticColors>()!;
-    // P1: held to the centred content column on an iPad (`ContentWidth`).
-    final hPad = ContentWidth.sidePaddingOf(context);
 
     final correctCount = _results.where((r) => r.isCorrect).length;
     final skippedCount = _results.where((r) => r.isSkipped).length;
@@ -291,22 +287,9 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       bandBottom: ResultScoreBand.sized(context, text: scoreText),
       // Fixed, like Premium's footer: a hard edge (not a shadow that only
       // appears once scrolled) between the results and the one button.
-      bottomBar: DecoratedBox(
+      bottomBar: BrandBottomBar(
         key: const Key('resultFooter'),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: _primaryButton(),
-            ),
-          ),
-        ),
+        child: _primaryButton(),
       ),
       children: [
         // A slot of its own height, so the results do not shift by the bar's
