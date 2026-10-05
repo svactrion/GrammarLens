@@ -169,10 +169,7 @@ class _DataScreenState extends State<DataScreen> {
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.destructive,
-              foregroundColor: colorScheme.onDestructive,
-            ),
+            style: destructiveButtonStyle(colorScheme),
             onPressed: _resetting ? null : _confirmResetData,
             child: Text(_resetting ? 'Resetting…' : 'Reset progress data'),
           ),

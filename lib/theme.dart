@@ -260,6 +260,17 @@ extension DestructiveColors on ColorScheme {
   Color get onDestructive => _onDestructive;
 }
 
+/// A destructive filled button's style: [DestructiveColors.destructive]
+/// with its label colour and no edge. The theme's filled button carries the
+/// dark mode #5C7CFA edge (Q1), which belongs to the navy fill only; a red
+/// button inherited it in dark mode (owner, 1.2.0 Batch 8), so the edge is
+/// set off here.
+ButtonStyle destructiveButtonStyle(ColorScheme colorScheme) =>
+    FilledButton.styleFrom(
+      backgroundColor: colorScheme.destructive,
+      foregroundColor: colorScheme.onDestructive,
+    ).copyWith(side: const WidgetStatePropertyAll(BorderSide.none));
+
 /// Semantic feedback colors for the results screen, kept out of
 /// [ColorScheme] (which only has roles for the brand palette) via Flutter's
 /// [ThemeExtension] mechanism — the idiomatic way to add app-specific theme
