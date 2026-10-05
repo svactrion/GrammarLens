@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
@@ -219,6 +220,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   bool _loadingWeakSpots = true;
   List<WeakSpot> _weakSpots = const [];
+
+  /// How many weak spots there are in all; Home shows at most three
+  /// ([_weakSpots]). Read from `getTopicStats` (distinct error types per
+  /// topic, the same grouping `getWeakSpots` uses), falling back to the
+  /// number shown if that read fails.
+  int _weakSpotTotal = 0;
 
   /// Batch 6: the zoom from the whole mountain (K-c) to the daily framing,
   /// after the month card or on the first run.
@@ -898,9 +905,17 @@ class _HomeScreenState extends State<HomeScreen>
         limit: 3,
         sortOrder: ReviewSortOrder.frequent,
       );
+      int? total;
+      try {
+        final stats = await widget.storageService.getTopicStats();
+        total = stats.values.fold<int>(0, (sum, s) => sum + s.weakSpotCount);
+      } catch (_) {
+        // The count is a label; the cards still show.
+      }
       if (!mounted) return;
       setState(() {
         _weakSpots = spots;
+        _weakSpotTotal = math.max(total ?? 0, spots.length);
         _loadingWeakSpots = false;
       });
     } catch (_) {
@@ -1184,9 +1199,9 @@ class _HomeScreenState extends State<HomeScreen>
             _SectionHeader(
               title: 'Your weak spots',
               trailing: _CountBadge(
-                _weakSpots.length == 1
+                _weakSpotTotal == 1
                     ? '1 weak spot'
-                    : '${_weakSpots.length} weak spots',
+                    : '$_weakSpotTotal weak spots',
               ),
             ),
             const SizedBox(height: 12),

@@ -13,6 +13,7 @@ import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
+import 'package:grammar_lens/models/topic_stats.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
 import 'package:grammar_lens/screens/daily_test_result_screen.dart';
 import 'package:grammar_lens/screens/daily_test_screen.dart';
@@ -30,6 +31,7 @@ import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
+import 'package:grammar_lens/widgets/weak_spot_card.dart';
 import 'support/celebration_support.dart';
 
 /// Records `modeSelected` calls instead of the real (best-effort, silently
@@ -99,6 +101,10 @@ class _FakeSubscriptionService extends SubscriptionService {
 class _FakeStorageService extends StorageService {
   DailyTestSet? todaysDailyTest;
   List<WeakSpot> weakSpots = const [];
+
+  /// What `getTopicStats` answers (Home's weak spot total); empty by
+  /// default, so the total falls back to the cards shown.
+  Map<String, TopicStats> topicStats = const {};
   int steps = 0;
   int correct = 0;
   int wrong = 0;
@@ -164,7 +170,10 @@ class _FakeStorageService extends StorageService {
     int limit = 10,
     ReviewSortOrder sortOrder = ReviewSortOrder.recent,
   }) async =>
-      weakSpots;
+      weakSpots.take(limit).toList();
+
+  @override
+  Future<Map<String, TopicStats>> getTopicStats() async => topicStats;
 }
 
 DailyTestSet _completedDailyTestSet(
@@ -1392,6 +1401,23 @@ void main() {
     expect(tester.getSize(name).height, greaterThan(lineHeight * 1.5));
     expect(tester.getRect(name).right,
         lessThanOrEqualTo(tester.getRect(find.byType(AvatarTile)).left));
+  });
+
+  testWidgets(
+      'the weak spots badge shows the real total, while Home shows at most '
+      'three cards (owner, after Batch 3)', (tester) async {
+    final storage = _FakeStorageService()
+      ..weakSpots = [
+        for (var i = 0; i < 7; i++) _weakSpot(frequency: 7 - i),
+      ]
+      ..topicStats = const {
+        'articles': TopicStats(practiced: 10, weakSpotCount: 4),
+        'modalVerbs': TopicStats(practiced: 5, weakSpotCount: 3),
+        'tenseSelection': TopicStats(practiced: 2, weakSpotCount: 0),
+      };
+    await pumpHome(tester, storageService: storage);
+    expect(find.text('7 weak spots'), findsOneWidget);
+    expect(find.byType(WeakSpotCard), findsNWidgets(3));
   });
 
   testWidgets('the weak spots heading counts the weak spots shown',
