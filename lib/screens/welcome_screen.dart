@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../spacing.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/brand_wordmark.dart';
 import '../widgets/launch_splash.dart';
 import '../utils/content_width.dart';
 import '../theme.dart';
@@ -104,8 +105,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     // The band is gone and the scaffold is now the page color, so the look
     // is pinned explicitly: brand orange with its dark `onPrimary` in light
     // mode, the neutral `surface` with `onSurface` in dark, as before.
+    // Dark: the page colour (`surfaceContainerLow`, #151517), like every
+    // other page since 1.2.0 (it was `surface`, #121212; final screens A2).
     final isDark = theme.brightness == Brightness.dark;
-    final background = isDark ? colorScheme.surface : colorScheme.primary;
+    final background =
+        isDark ? colorScheme.surfaceContainerLow : colorScheme.primary;
     final appBarFg = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
 
     // The decorative artwork below (mark, rings, background blobs, twinkle
@@ -127,6 +131,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final markSize = 172.0 * elementScale;
     final markBoxSize = 200.0 * elementScale;
     final ringSize = 116.0 * elementScale;
+
+    final titleStyle = theme.textTheme.headlineLarge
+        ?.withWeight(FontWeight.w900)
+        .copyWith(fontSize: 34, letterSpacing: -0.5, color: appBarFg);
 
     final titleProgress = _titleProgress ?? const AlwaysStoppedAnimation(1.0);
     final subtitleProgress =
@@ -225,16 +233,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   const SizedBox(height: Spacing.xl),
                   _FadeSlideIn(
                     progress: titleProgress,
-                    child: Text(
-                      'GrammarLens',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineLarge
-                          ?.withWeight(FontWeight.w900)
-                          .copyWith(
-                              fontSize: 34,
-                              letterSpacing: -0.5,
-                              color: appBarFg),
-                    ),
+                    // The two-colour wordmark in dark mode (owner, 2026-10-06);
+                    // one colour in light mode, whose page is the brand
+                    // orange itself (an orange "Lens" there is 1.00:1).
+                    child: isDark
+                        ? BrandWordmark(
+                            style: titleStyle, textAlign: TextAlign.center)
+                        : Text(
+                            BrandWordmark.text,
+                            textAlign: TextAlign.center,
+                            style: titleStyle,
+                          ),
                   ),
                   const SizedBox(height: Spacing.lg),
                   _FadeSlideIn(

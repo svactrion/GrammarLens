@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/screens/welcome_screen.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/brand_wordmark.dart';
 import 'package:grammar_lens/widgets/launch_splash.dart';
@@ -86,6 +87,34 @@ void main() {
           buildAppTheme(brightness).colorScheme.primary);
       expect((paragraph(tester).text as TextSpan).style!.color,
           buildAppTheme(brightness).colorScheme.onSurface);
+    });
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+        'Welcome (owner, 2026-10-06): two colours on the page colour in '
+        'dark mode, one colour on the brand orange in light mode '
+        '(${brightness.name})', (tester) async {
+      final theme = buildAppTheme(brightness);
+      await tester.pumpWidget(MaterialApp(
+        theme: theme,
+        home: MediaQuery(
+          data: const MediaQueryData(
+              size: Size(390, 844), disableAnimations: true),
+          child: WelcomeScreen(onGetStarted: () {}),
+        ),
+      ));
+      await tester.pump(const Duration(seconds: 2));
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      if (brightness == Brightness.dark) {
+        expect(scaffold.backgroundColor, const Color(0xFF151517));
+        expect(leaves(tester).map((s) => s.text), ['Grammar', 'Lens']);
+        expect(leaves(tester)[1].style!.color, theme.colorScheme.primary);
+      } else {
+        expect(scaffold.backgroundColor, theme.colorScheme.primary);
+        expect(find.byType(BrandWordmark), findsNothing);
+        expect(find.text('GrammarLens'), findsOneWidget);
+      }
     });
   }
 
