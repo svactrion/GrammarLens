@@ -15,8 +15,8 @@ Görsel referans: `index.html`. Kaynak: `source/grammarlens-five-screens.html`. 
 | Home | Ayrı turuncu daily test kartı + klasik, patikaya bitişik yuvarlak başlık | Kullanıcı tarafından onaylandı |
 | Review | Günlük ücretsiz pratik hakkı + kaydedilmiş weak spot kartları | Kullanıcı tarafından onaylandı |
 | Profile | Ortalanmış büyük hero + arka plansız yatay madalya koleksiyonu + ayrı ilerleme kartı | Kullanıcı tarafından onaylandı |
-| Soru | Tek soru kartı, iki adımlı yönerge, yakındaki çok satırlı cevap | Kullanıcının beşli çalışmaya dahil ettiği son referans; ayrı bir revizyon talebi yok |
-| Topic Practice | Kompakt beş konu kartı; premium kullanıcı görünümü | Yeni taslak, açık onay bekliyor |
+| Soru | Tek soru kartı, iki adımlı yönerge, yakındaki çok satırlı cevap | 1.2.0 kapsamı dışında, klavye davranışı ayrıca tasarlanacak |
+| Topic Practice | Kompakt beş konu kartı; premium kullanıcı görünümü | Kullanıcı tarafından onaylandı (5 Ekim 2026) |
 
 Reddedilmiş birleşik Home kartlarını veya eski renk alternatiflerini uygulama. Topic taslağını üretime taşımadan önce kullanıcı bu görünümü değerlendirsin; diğer ekranların çalışmasına bu yüzden ara vermek gerekmez.
 
