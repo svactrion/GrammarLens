@@ -146,7 +146,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(InkWell).first);
+      await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
       await tester.pumpAndSettle();
 
       expect(find.text('How many questions?'), findsNothing);
@@ -210,7 +210,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(InkWell).first);
+      await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
       await tester.pumpAndSettle();
 
       expect(claude.generateCalls, 0);
@@ -272,7 +272,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(InkWell).first);
+    await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
     await tester.pumpAndSettle();
 
     // Full access still gets the length picker, unchanged from before this
