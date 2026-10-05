@@ -53,7 +53,7 @@ changed. Line numbers below are from that starting point.
 | `session_completed` (renamed `practice_completed`, §8) | `topic_id`, `question_count` | `lib/screens/results_screen.dart:45` (**Topic Practice only**) |
 | `free_practice_used` | none | `lib/screens/practice_launch.dart:147` |
 | `free_practice_quota_exhausted` | none | `lib/screens/practice_launch.dart:73`, `lib/screens/weak_spot_detail_screen.dart:127` |
-| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8) | `lib/screens/premium_screen.dart:128` |
+| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `review_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8; `review_quota`, Review's "used today" card, added 2026-10-05 in 1.2.0 Batch 5: a new value of the existing parameter, no new event) | `lib/screens/premium_screen.dart:128` |
 | `paywall_dismissed` | `source`, `method` = `close_button` / `maybe_later` / `system_back` | `premium_screen.dart:229`, `:270` |
 | `purchase_started` | `plan` = `monthly` / `annual` | `premium_screen.dart:176` |
 | `purchase_result` | `plan`, `outcome` = `success` / `cancelled` / `error` | `premium_screen.dart:197` |
@@ -721,7 +721,7 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 | Previous text size | `previous` | Event | `text_size_changed` |
 | Mode | `mode` | Event | `mode_selected` (existing) |
 | Topic | `topic_id` | Event | `practice_completed` (existing) |
-| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing; `home` / `weak_spot_quota` / `practice_launch` / `day0_after_climb` / `practice_result`; `day0_after_climb` added 2026-09-22 and replacing the old `onboarding`, `practice_result` added 2026-09-23), `ai_consent_result` (`practice_launch` / `data_settings`) |
+| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing; `home` / `weak_spot_quota` / `review_quota` / `practice_launch` / `day0_after_climb` / `practice_result`; `day0_after_climb` added 2026-09-22 and replacing the old `onboarding`, `practice_result` added 2026-09-23, `review_quota` added 2026-10-05), `ai_consent_result` (`practice_launch` / `data_settings`) |
 | Paywall dismiss method | `method` | Event | `paywall_dismissed` (existing) |
 | Plan | `plan` | Event | `purchase_started`, `purchase_result` (existing) |
 | Purchase / consent outcome | `outcome` | Event | `purchase_result` (existing), `ai_consent_result` (`granted` / `declined` / `revoked`) |

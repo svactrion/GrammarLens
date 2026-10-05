@@ -327,6 +327,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color button;
   final Color onButton;
 
+  /// Secondary text on a primaryButton-coloured surface (Review's "used
+  /// today" card): the mockup's #DFE8FA, 8.37:1 on the navy.
+  final Color onButtonMuted;
+
   /// A 1 px edge around the filled button, or null for none. Dark mode only
   /// (owner decision Q1): the navy fill is 1.28–1.77:1 against the dark
   /// surfaces, so its edge disappears; #5C7CFA measures 4.16:1 on the card,
@@ -364,6 +368,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   const AppPalette({
     required this.button,
     required this.onButton,
+    required this.onButtonMuted,
     required this.buttonEdge,
     required this.disabledFill,
     required this.disabledLabel,
@@ -391,6 +396,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   static final light = AppPalette(
     button: _lightSecondary,
     onButton: _lightOnSecondary,
+    onButtonMuted: const Color(0xFFDFE8FA),
     buttonEdge: null,
     disabledFill: const Color(0xFFE4DDD2),
     disabledLabel: const Color(0xFF6D6860),
@@ -418,6 +424,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   static final dark = AppPalette(
     button: _lightSecondary,
     onButton: _lightOnSecondary,
+    onButtonMuted: const Color(0xFFDFE8FA),
     buttonEdge: const Color(0xFF5C7CFA),
     disabledFill: const Color(0xFF36363B),
     disabledLabel: const Color(0xFFACA8B2),
@@ -446,6 +453,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   AppPalette copyWith({
     Color? button,
     Color? onButton,
+    Color? onButtonMuted,
     Color? buttonEdge,
     Color? disabledFill,
     Color? disabledLabel,
@@ -460,6 +468,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     return AppPalette(
       button: button ?? this.button,
       onButton: onButton ?? this.onButton,
+      onButtonMuted: onButtonMuted ?? this.onButtonMuted,
       buttonEdge: buttonEdge ?? this.buttonEdge,
       disabledFill: disabledFill ?? this.disabledFill,
       disabledLabel: disabledLabel ?? this.disabledLabel,
@@ -479,6 +488,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     return AppPalette(
       button: Color.lerp(button, other.button, t)!,
       onButton: Color.lerp(onButton, other.onButton, t)!,
+      onButtonMuted: Color.lerp(onButtonMuted, other.onButtonMuted, t)!,
       buttonEdge: Color.lerp(buttonEdge, other.buttonEdge, t),
       disabledFill: Color.lerp(disabledFill, other.disabledFill, t)!,
       disabledLabel: Color.lerp(disabledLabel, other.disabledLabel, t)!,

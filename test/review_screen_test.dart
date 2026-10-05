@@ -5,6 +5,7 @@ import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
+import 'package:grammar_lens/screens/premium_screen.dart';
 import 'package:grammar_lens/screens/review_screen.dart';
 import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
@@ -165,9 +166,14 @@ void main() {
       expect(find.text('Next free practice tomorrow'), findsOneWidget);
       expect(find.textContaining('available today'), findsNothing);
       expect(find.text('Start free practice'), findsNothing);
+      // 1.2.0 Batch 5: its one button is "See Premium", never a free one.
       expect(
-          find.descendant(of: card, matching: find.byType(ButtonStyleButton)),
-          findsNothing);
+          find.descendant(
+              of: card,
+              matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)),
+          findsOneWidget);
+      expect(find.descendant(of: card, matching: find.text('See Premium')),
+          findsOneWidget);
       // Not by color alone: the icon differs too.
       expect(
           find.descendant(
@@ -177,6 +183,56 @@ void main() {
           find.descendant(
               of: card, matching: find.byIcon(Icons.check_circle_rounded)),
           findsNothing);
+    });
+
+    for (final brightness in Brightness.values) {
+      testWidgets(
+          'used today: navy with white text, the dark button edge in dark '
+          'mode, an orange "See Premium" (${brightness.name})', (tester) async {
+        await pump(tester,
+            brightness: brightness,
+            storage: _Storage(
+                weakSpots: _twoSpots,
+                freePracticeCount: StorageService.freeDailyPracticeLimit));
+        final card = find.byKey(DailyPracticeCard.usedKey);
+        final context = tester.element(card);
+        final palette = AppPalette.of(context);
+        final scheme = Theme.of(context).colorScheme;
+        final material = tester.widget<Card>(card);
+        expect(material.color, palette.button);
+        final side = (material.shape! as RoundedRectangleBorder).side;
+        if (brightness == Brightness.dark) {
+          expect(side.color, palette.buttonEdge);
+        } else {
+          expect(side, BorderSide.none);
+        }
+        expect(
+            tester
+                .widget<Text>(find.text('Today’s practice is complete.'))
+                .style!
+                .color,
+            palette.onButton);
+        final cta = tester.widget<FilledButton>(find.ancestor(
+            of: find.text('See Premium'), matching: find.byType(FilledButton)));
+        expect(cta.style!.backgroundColor!.resolve({}), scheme.primary);
+        expect(cta.style!.foregroundColor!.resolve({}), scheme.onPrimary);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets(
+        'used today: "See Premium" opens the existing Premium screen with '
+        'the review_quota source', (tester) async {
+      await pump(tester,
+          storage: _Storage(
+              weakSpots: _twoSpots,
+              freePracticeCount: StorageService.freeDailyPracticeLimit));
+      await tester.tap(find.text('See Premium'));
+      await tester.pumpAndSettle();
+      final premium = tester.widget<PremiumScreen>(find.byType(PremiumScreen));
+      expect(
+          premium.analyticsSource, AnalyticsService.paywallSourceReviewQuota);
+      expect(AnalyticsService.paywallSourceReviewQuota, 'review_quota');
     });
 
     testWidgets('hidden for a premium user (Q13)', (tester) async {

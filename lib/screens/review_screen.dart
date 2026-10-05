@@ -15,6 +15,7 @@ import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/section_title.dart';
 import '../widgets/weak_spot_card.dart';
+import 'premium_screen.dart';
 import 'weak_spot_detail_screen.dart';
 
 /// Resurfaces the user's weak spots and lets them launch a freshly
@@ -190,6 +191,23 @@ class _ReviewScreenState extends State<ReviewScreen> {
     _loadStatus();
   }
 
+  /// The used card's "See Premium": the existing Premium screen, with its
+  /// own paywall source (`review_quota`); the entitlement is read again when
+  /// it closes, so a purchase hides the card.
+  Future<void> _openPremium() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PremiumScreen(
+          storageService: widget.storageService,
+          analyticsService: widget.analyticsService,
+          analyticsSource: AnalyticsService.paywallSourceReviewQuota,
+          subscriptionService: widget.subscriptionService,
+        ),
+      ),
+    );
+    _loadStatus();
+  }
+
   /// The page header (1.2.0 brief, "Review"): the title and its line, in
   /// the page rather than the app bar, so they scroll with the list.
   Widget _header(ThemeData theme) {
@@ -342,7 +360,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
             // Q13: free users only; premium has no allowance to describe.
             if (_statusLoaded && !_hasFullAccess) ...[
               const SizedBox(height: 20),
-              DailyPracticeCard(remaining: remaining),
+              DailyPracticeCard(
+                remaining: remaining,
+                onSeePremium: _openPremium,
+              ),
             ],
             const SizedBox(height: 23),
             Row(
@@ -393,16 +414,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
 /// only). Two states that differ in text and icon as well as color:
 /// - available: brandOrange with onOrange text in both themes, saying any
 ///   saved weak spot below can take it;
-/// - used today: the subtle surface with a border, and no free-practice
-///   call to action — it says when the next one comes. Practicing with
-///   Premium and reading saved feedback stay where they are (a weak spot's
-///   own screen).
+/// - used today (owner, Batch 5): the button navy (`AppPalette.button`)
+///   with white text, and in dark mode the button's #5C7CFA edge (the navy
+///   is 1.77:1 on the dark page). No free-practice call to action: it says
+///   when the next one comes, then offers Premium with an orange button
+///   ([onSeePremium], the existing Premium screen).
 class DailyPracticeCard extends StatelessWidget {
   /// Free practices left today (`freeDailyPracticeLimit` minus today's
   /// count); 0 or less is "used today".
   final int remaining;
 
-  const DailyPracticeCard({super.key, required this.remaining});
+  /// Opens the Premium screen; shown only in the used state.
+  final VoidCallback? onSeePremium;
+
+  const DailyPracticeCard(
+      {super.key, required this.remaining, this.onSeePremium});
 
   static const availableKey = ValueKey('review_daily_practice_available');
   static const usedKey = ValueKey('review_daily_practice_used');
@@ -411,11 +437,11 @@ class DailyPracticeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final palette = AppPalette.of(context);
     final available = remaining > 0;
-    final ink = available ? colorScheme.onPrimary : colorScheme.onSurface;
-    final muted =
-        available ? colorScheme.onPrimary : colorScheme.onSurfaceVariant;
-    final footColor = available ? colorScheme.onPrimary : colorScheme.secondary;
+    final ink = available ? colorScheme.onPrimary : palette.onButton;
+    final muted = available ? colorScheme.onPrimary : palette.onButtonMuted;
+    final edge = available ? null : palette.buttonEdge;
 
     final title = available
         ? 'One weak spot. One step forward.'
@@ -432,14 +458,10 @@ class DailyPracticeCard extends StatelessWidget {
 
     return Card(
       key: available ? availableKey : usedKey,
-      color:
-          available ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-      elevation: available ? null : 0,
+      color: available ? colorScheme.primary : palette.button,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(appCardRadius),
-        side: available
-            ? BorderSide.none
-            : BorderSide(color: colorScheme.outlineVariant),
+        side: edge == null ? BorderSide.none : BorderSide(color: edge),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -481,20 +503,49 @@ class DailyPracticeCard extends StatelessWidget {
                       ? Icons.check_circle_rounded
                       : Icons.schedule_rounded,
                   size: 15,
-                  color: footColor,
+                  color: ink,
                 ),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     status,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: footColor,
+                      color: ink,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
               ],
             ),
+            if (!available) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Want more practice today?',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              // brandOrange with onOrange text: 6.93:1 (light), 7.71:1
+              // (dark); its edge against the navy card 3.95 / 4.39:1.
+              FilledButton(
+                onPressed: onSeePremium,
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  // Not the dark button's blue edge: this is not the navy
+                  // button, and its own edge already measures above.
+                ).copyWith(side: const WidgetStatePropertyAll(BorderSide.none)),
+                child: const Row(
+                  children: [
+                    Expanded(child: Text('See Premium')),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_rounded, size: 17),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

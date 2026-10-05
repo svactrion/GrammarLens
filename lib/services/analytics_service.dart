@@ -265,6 +265,11 @@ class AnalyticsService {
   /// opens by itself once, after the first climb.
   static const String paywallSourceHome = 'home';
   static const String paywallSourceWeakSpotQuota = 'weak_spot_quota';
+
+  /// Review's daily practice card once today's free practice is used
+  /// (1.2.0 Batch 5): a different entry point from [paywallSourceWeakSpotQuota]
+  /// (a weak spot's own screen), kept apart in the data.
+  static const String paywallSourceReviewQuota = 'review_quota';
   static const String paywallSourcePracticeLaunch = 'practice_launch';
   static const String paywallSourcePracticeResult = 'practice_result';
 
