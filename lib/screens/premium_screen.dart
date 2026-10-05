@@ -2050,7 +2050,7 @@ class _UnavailableCard extends StatelessWidget {
     required this.onRetry,
   });
 
-  static const _message = "Trial pricing isn't available right now";
+  static const _message = "Prices aren't available right now";
 
   /// A TextButton's own horizontal padding is 12 on each side and its
   /// minimum width 64; the label is measured, not guessed, so this follows

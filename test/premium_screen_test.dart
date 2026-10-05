@@ -482,7 +482,7 @@ void main() {
     // (see docs/roadmap.md) — getOfferings() fails safe to null there too,
     // so this is the state real testing on-device is expected to hit.
     expect(
-      find.text("Trial pricing isn't available right now"),
+      find.text("Prices aren't available right now"),
       findsOneWidget,
     );
     expect(find.text('Start free trial'), findsNothing);
@@ -580,7 +580,7 @@ void main() {
       await tester.tap(retry);
       await tester.pumpAndSettle();
       expect(
-        find.text("Trial pricing isn't available right now"),
+        find.text("Prices aren't available right now"),
         findsOneWidget,
       );
       semantics.dispose();
@@ -780,7 +780,7 @@ void main() {
       await scrollToEnd(tester);
 
       expect(
-        find.text("Trial pricing isn't available right now"),
+        find.text("Prices aren't available right now"),
         findsOneWidget,
       );
       expect(find.text('Monthly'), findsNothing);
@@ -2327,7 +2327,7 @@ void main() {
         await tester.scrollUntilVisible(card, 300,
             scrollable: find.byType(Scrollable).first);
         final message = find.descendant(
-            of: card, matching: find.textContaining("Trial pricing"));
+            of: card, matching: find.textContaining("Prices aren't"));
         final retry =
             find.descendant(of: card, matching: find.text('Try again'));
         expect(tester.takeException(), isNull);
