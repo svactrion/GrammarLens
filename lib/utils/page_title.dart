@@ -6,6 +6,12 @@ import 'package:flutter/material.dart';
 /// or weight, and so a long topic name ("Gerund vs. Infinitive") degrades to
 /// an ellipsis instead of wrapping or overflowing the app bar on narrow
 /// phones.
+///
+/// 1.2.0: the theme's `headlineMedium` (26/900 at the default text size)
+/// on the page-colored app bar. The brief's larger page titles (34/900,
+/// `displaySmall`) belong to titles that sit in the page body, which the
+/// screen batches introduce; in a centered one-line app bar title they
+/// would cut "Topic Practice" short on a 320 pt screen.
 class PageTitle extends StatelessWidget {
   final String text;
 
@@ -20,10 +26,7 @@ class PageTitle extends StatelessWidget {
       text,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.headlineMedium?.copyWith(
-        fontWeight: FontWeight.w700,
-        color: foreground,
-      ),
+      style: theme.textTheme.headlineMedium?.copyWith(color: foreground),
     );
   }
 }
