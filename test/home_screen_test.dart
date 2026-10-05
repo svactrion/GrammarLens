@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:flutter/rendering.dart' show RenderParagraph;
+import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/daily_test_question.dart';
@@ -28,21 +31,6 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
 import 'support/celebration_support.dart';
-
-/// The bottom "Premium" upsell row's own label — disambiguated from
-/// `LockedPremiumPill`'s identically-worded "Premium" text (shown on a
-/// locked Topic Practice card, docs/design-audit.md Batch 0 item 3) by
-/// anchoring on the row's own description line, which only ever sits next
-/// to the row's label, never the pill's.
-Finder _premiumRowLabel() => find.descendant(
-      of: find
-          .ancestor(
-            of: find.text('Unlock targeted practice on your weak spots'),
-            matching: find.byType(Column),
-          )
-          .first,
-      matching: find.text('Premium'),
-    );
 
 /// Records `modeSelected` calls instead of the real (best-effort, silently
 /// swallowed) Firebase call, so a test can assert which Home entry point a
@@ -225,6 +213,7 @@ void main() {
     String userName = 'Ada',
     Avatar? avatar,
     VoidCallback? onAvatarTap,
+    VoidCallback? onGoToReview,
     AnalyticsService? analyticsService,
     ClaudeService? claudeService,
     SubscriptionService? subscriptionService,
@@ -235,6 +224,7 @@ void main() {
     double textScale = 1,
     bool reduceMotion = false,
     bool active = true,
+    AppTextSize textSize = AppTextSize.medium,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = size * 3.0;
@@ -249,7 +239,7 @@ void main() {
         // theme registers it, MaterialApp's default doesn't (same fix
         // first_launch_flow_test.dart already needed for the same
         // screen).
-        theme: buildAppTheme(brightness),
+        theme: buildAppTheme(brightness, textSize: textSize),
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
             textScaler: TextScaler.linear(textScale),
@@ -267,6 +257,7 @@ void main() {
           subscriptionService:
               subscriptionService ?? _FakeSubscriptionService(),
           onAvatarTap: onAvatarTap,
+          onGoToReview: onGoToReview,
           // Fixed at a mid-morning instant by default so the greeting text
           // this file asserts on doesn't depend on when the suite happens
           // to run — timeOfDayGreeting's own boundary tests live in
@@ -303,12 +294,12 @@ void main() {
       expect(mountain.completedDays, 28);
       expect(find.text('28 / 28'), findsOneWidget);
       for (var i = 0;
-          i < 20 && find.text('Topic Practice').evaluate().isEmpty;
+          i < 20 && find.text('Topic practice').evaluate().isEmpty;
           i++) {
         outer.jumpTo(outer.pixels + 200);
         await tester.pumpAndSettle();
       }
-      expect(find.text('Topic Practice'), findsOneWidget);
+      expect(find.text('Topic practice'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -403,7 +394,7 @@ void main() {
       await tester.dragFrom(tester.getCenter(mountain), const Offset(0, -140));
       await tester.pumpAndSettle();
       expect(outer.pixels, greaterThan(pageBefore));
-      expect(find.text('Topic Practice').hitTestable(), findsOneWidget);
+      expect(find.text('Topic practice').hitTestable(), findsOneWidget);
       expect(find.textContaining('Answer at least'), findsNothing);
       expect(find.textContaining('Your climb starts'), findsNothing);
       await tester.ensureVisible(find.text('8 / 31'));
@@ -430,7 +421,7 @@ void main() {
             questions: _completedDailyTestSet(correct: 0, total: 5).questions);
       final claude = _CountingClaudeService();
       await pumpHome(tester, storageService: storage, claudeService: claude);
-      await tester.tap(find.text('Daily Test'));
+      await tester.tap(find.text('Start daily test'));
       await tester.pumpAndSettle();
       if (answer.isNotEmpty) {
         await tester.enterText(find.byType(TextField).first, answer);
@@ -461,9 +452,9 @@ void main() {
               .widget<MonthlyMountain>(find.byType(MonthlyMountain))
               .completedDays,
           answer.isEmpty ? 0 : 1);
-      await tester.ensureVisible(find.textContaining('0/5 correct'));
+      await tester.ensureVisible(find.text('Review results'));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('0/5 correct'));
+      await tester.tap(find.text('Review results'));
       await tester.pumpAndSettle();
       expect(find.byType(DailyTestResultScreen), findsOneWidget);
       tester.state<NavigatorState>(find.byType(Navigator)).pop();
@@ -497,7 +488,7 @@ void main() {
           day: '2026-01-01',
           questions: _completedDailyTestSet(correct: 0, total: 1).questions);
     await pumpHome(tester, storageService: storage);
-    await tester.tap(find.text('Daily Test'));
+    await tester.tap(find.text('Start daily test'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'wrong');
     await tester.pump();
@@ -549,7 +540,7 @@ void main() {
             .top!;
         final oldTop = pawnTop();
         final oldState = tester.state(mountain);
-        await tester.tap(find.text('Daily Test'));
+        await tester.tap(find.text('Start daily test'));
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField).first, 'wrong');
         await tester.pump();
@@ -594,9 +585,9 @@ void main() {
           // (design decision D8: 14 units, 10.2 pt with the camera).
           expect(middleTop, lessThan((startTop + endTop) / 2 - 8));
         }
-        await tester.ensureVisible(find.textContaining('0/1 correct'));
+        await tester.ensureVisible(find.text('Review results'));
         await tester.pumpAndSettle();
-        await tester.tap(find.textContaining('0/1 correct'));
+        await tester.tap(find.text('Review results'));
         await tester.pumpAndSettle();
         await tester.scrollUntilVisible(find.text('Back to Home'), 250,
             scrollable: find.byType(Scrollable).last);
@@ -630,7 +621,7 @@ void main() {
             .last)
         .top!;
     final oldTop = pawnTop();
-    await tester.tap(find.text('Daily Test'));
+    await tester.tap(find.text('Start daily test'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'wrong');
     await tester.pump();
@@ -778,7 +769,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(_greeting('Good morning, Ada'), findsOneWidget);
     expect(find.textContaining('New test tomorrow'), findsNothing);
-    expect(find.textContaining("Today's 5-question warm-up"), findsOneWidget);
+    expect(find.text('Start daily test'), findsOneWidget);
   });
 
   testWidgets('greets the user by their onboarding name', (tester) async {
@@ -963,42 +954,66 @@ void main() {
     });
   });
 
-  group('Today (Daily Test state, PRD v2 §13.5 item 2)', () {
-    testWidgets('not yet done: shows an invitation, tapping opens Daily Test',
-        (tester) async {
+  // 1.2.0 Batch 3: the Daily Test card (brief, "Home"; batch0-report.md
+  // §6 N4). These replace the old whole-card "Today" tests: the entry is the
+  // card's button now, with the same two handlers behind it.
+  group('Daily Test card (1.2.0)', () {
+    testWidgets(
+        'not started: the real question count and "Start daily test", no '
+        'progress bar; the button opens the Daily Test', (tester) async {
       await pumpHome(tester, storageService: _FakeStorageService());
+      final card = find.byKey(HomeScreen.dailyTestCardKey);
 
-      expect(find.text('Daily Test'), findsOneWidget);
+      expect(find.descendant(of: card, matching: find.text('Your next step.')),
+          findsOneWidget);
       expect(
-        find.textContaining("ready — free, always"),
-        findsOneWidget,
-      );
+          find.descendant(
+              of: card, matching: find.text('${DailyTestSet.questionCount}')),
+          findsOneWidget);
+      expect(find.descendant(of: card, matching: find.text('questions')),
+          findsOneWidget);
+      expect(find.descendant(of: card, matching: find.text('Review results')),
+          findsNothing);
+      expect(
+          find.descendant(
+              of: card, matching: find.byType(LinearProgressIndicator)),
+          findsNothing);
 
-      await tester.tap(find.text('Daily Test'));
+      await tester.tap(find.text('Start daily test'));
       await tester.pumpAndSettle();
-
       expect(find.byType(DailyTestScreen), findsOneWidget);
     });
 
     testWidgets(
-        'done: shows the score and "new test tomorrow", not the '
-        'invitation', (tester) async {
+        'done: the real score, "Review results" and tomorrow\'s line, not '
+        'the invitation', (tester) async {
       final storage = _FakeStorageService()
         ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
       await pumpHome(tester, storageService: storage);
+      final card = find.byKey(HomeScreen.dailyTestCardKey);
 
-      expect(find.textContaining('3/5 correct'), findsOneWidget);
-      expect(find.textContaining('New test tomorrow'), findsOneWidget);
-      expect(find.text('Daily Test'), findsNothing);
+      expect(find.descendant(of: card, matching: find.text('3/5')),
+          findsOneWidget);
+      expect(find.descendant(of: card, matching: find.text('correct')),
+          findsOneWidget);
+      expect(
+          find.descendant(
+              of: card,
+              matching:
+                  find.text('New test tomorrow. Review today’s answers.')),
+          findsOneWidget);
+      expect(find.text('Start daily test'), findsNothing);
+      expect(find.text('Review results'), findsOneWidget);
     });
 
-    testWidgets('done: tapping it views the result again, not a new test',
-        (tester) async {
+    testWidgets(
+        'done: the button views the result again (onViewResult), not a new '
+        'test', (tester) async {
       final storage = _FakeStorageService()
         ..todaysDailyTest = _completedDailyTestSet(correct: 2, total: 5);
       await pumpHome(tester, storageService: storage);
 
-      await tester.tap(find.textContaining('2/5 correct'));
+      await tester.tap(find.text('Review results'));
       await tester.pumpAndSettle();
 
       expect(find.byType(DailyTestResultScreen), findsOneWidget);
@@ -1007,47 +1022,48 @@ void main() {
       // recomputed from nothing.
       expect(find.textContaining('2/5 correct'), findsOneWidget);
     });
-  });
 
-  testWidgets('shows the Topic Practice card', (tester) async {
-    await pumpHome(tester);
-    expect(find.text('Topic Practice'), findsOneWidget);
-    // Streak Mode and Voice Practice were removed from Home entirely (App
-    // Store completeness risk at the time; both were also later dropped
-    // from the Premium screen itself — PRD v2 §13.4, nothing unbuilt gets
-    // sold) — see docs/roadmap.md.
-    expect(find.text('Streak Mode'), findsNothing);
-    expect(find.text('Voice Practice'), findsNothing);
-  });
+    testWidgets(
+        'only the button is the entry: a tap on the card\'s text does '
+        'nothing', (tester) async {
+      final analyticsService = _RecordingAnalyticsService();
+      await pumpHome(tester, analyticsService: analyticsService);
+      await tester.tap(find.text('Your next step.'));
+      await tester.pumpAndSettle();
+      expect(analyticsService.modesSelected, isEmpty);
+      expect(find.byType(DailyTestScreen), findsNothing);
+    });
 
-  testWidgets(
-      'the Today card and Topic Practice card are both full-width, not '
-      'grid tiles', (tester) async {
-    await pumpHome(tester);
-    expect(find.byType(GridView), findsNothing);
+    testWidgets(
+        'the card is orange with onOrange text in both themes, the button '
+        'the app\'s navy', (tester) async {
+      for (final brightness in Brightness.values) {
+        await pumpHome(tester, brightness: brightness);
+        final card = find.byKey(HomeScreen.dailyTestCardKey);
+        final theme = Theme.of(tester.element(card));
+        final material = tester.widget<Card>(
+            find.descendant(of: card, matching: find.byType(Card)));
+        expect(material.color, theme.colorScheme.primary,
+            reason: '$brightness');
+        final title = tester.widget<Text>(find.text('Your next step.'));
+        expect(title.style!.color, theme.colorScheme.onPrimary,
+            reason: '$brightness: dark text on orange, never white');
+        expect(find.descendant(of: card, matching: find.byType(FilledButton)),
+            findsOneWidget);
+      }
+    });
 
-    final width = tester.view.physicalSize.width / tester.view.devicePixelRatio;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
-    for (final title in ['Daily Test', 'Topic Practice']) {
-      final cardRect = tester.getRect(
-        find.ancestor(of: find.text(title), matching: find.byType(Card)),
-      );
-      expect(cardRect.left, closeTo(hPad, 1));
-      expect(cardRect.right, closeTo(width - hPad, 1));
-    }
-  });
-
-  testWidgets(
-      'stacks in order: Today, then Topic Practice, then the Premium row',
-      (tester) async {
-    await pumpHome(tester);
-
-    final todayTop = tester.getTopLeft(find.text('Daily Test')).dy;
-    final topicTop = tester.getTopLeft(find.text('Topic Practice')).dy;
-    final premiumTop = tester.getTopLeft(_premiumRowLabel()).dy;
-
-    expect(topicTop, greaterThan(todayTop));
-    expect(premiumTop, greaterThan(topicTop));
+    testWidgets(
+        'the month card peek (M21) is the button and the padding below it',
+        (tester) async {
+      await pumpHome(tester);
+      final card = tester.getRect(find.byKey(HomeScreen.dailyTestCardKey));
+      final button = tester.getRect(find.ancestor(
+          of: find.text('Start daily test'),
+          matching: find.byType(FilledButton)));
+      expect(
+          card.bottom - button.top, closeTo(HomeScreen.monthCardTodayPeek, 1));
+    });
   });
 
   testWidgets(
@@ -1056,52 +1072,140 @@ void main() {
     final analyticsService = _RecordingAnalyticsService();
     await pumpHome(tester, analyticsService: analyticsService);
 
-    await tester.tap(find.text('Daily Test'));
+    await tester.tap(find.text('Start daily test'));
     await tester.pump();
 
     expect(analyticsService.modesSelected, [AnalyticsService.modeDailyTest]);
   });
 
-  testWidgets(
-      'Topic Practice opens the existing MVP loop when the entitlement is '
-      'active', (tester) async {
-    await pumpHome(
-      tester,
-      subscriptionService: _FakeSubscriptionService(hasAccess: true),
-    );
-    await tester.tap(find.text('Topic Practice'));
-    await tester.pumpAndSettle();
-    expect(find.byType(TopicPracticeScreen), findsOneWidget);
+  testWidgets('the Daily Test card spans the content width (page padding, Q18)',
+      (tester) async {
+    for (final width in [320.0, 390.0, 430.0]) {
+      await pumpHome(tester, size: Size(width, 844));
+      final hPad = width < 360 ? 14.0 : 18.0;
+      final card = tester.getRect(find.byKey(HomeScreen.dailyTestCardKey));
+      expect(card.left, closeTo(hPad, 1), reason: '$width');
+      expect(card.right, closeTo(width - hPad, 1), reason: '$width');
+    }
+  });
+
+  group('Topic practice strip (1.2.0, Q9, Q10)', () {
+    Future<void> revealStrip(WidgetTester tester) async {
+      await tester.ensureVisible(find.text('Explore all topics'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows the real topics, not the mockup\'s examples',
+        (tester) async {
+      await pumpHome(tester);
+      await revealStrip(tester);
+      for (final topic in kTopics) {
+        expect(find.text(topic.title), findsOneWidget, reason: topic.title);
+      }
+      expect(find.text('Tenses'), findsNothing);
+      expect(find.text('Prepositions'), findsNothing);
+      // Streak Mode and Voice Practice stay gone from Home.
+      expect(find.text('Streak Mode'), findsNothing);
+      expect(find.text('Voice Practice'), findsNothing);
+    });
+
+    testWidgets(
+        'a free user: the heading carries the Premium tag, and a topic opens '
+        'the Premium screen, not Topic Practice', (tester) async {
+      await pumpHome(tester); // default fake: hasAccess: false
+      await revealStrip(tester);
+      expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
+
+      await tester.tap(find.text(kTopics.first.title));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TopicPracticeScreen), findsNothing);
+      expect(find.byType(PremiumScreen), findsOneWidget);
+    });
+
+    testWidgets('a free user: "Explore all topics" opens the Premium screen',
+        (tester) async {
+      await pumpHome(tester);
+      await revealStrip(tester);
+      await tester.tap(find.text('Explore all topics'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PremiumScreen), findsOneWidget);
+    });
+
+    testWidgets(
+        'a premium user: a topic and "Explore all topics" open the existing '
+        'Topic Practice screen; no Premium tag', (tester) async {
+      await pumpHome(
+        tester,
+        subscriptionService: _FakeSubscriptionService(hasAccess: true),
+      );
+      await revealStrip(tester);
+      expect(find.byIcon(Icons.lock_rounded), findsNothing);
+
+      await tester.tap(find.text(kTopics.first.title));
+      await tester.pumpAndSettle();
+      expect(find.byType(TopicPracticeScreen), findsOneWidget);
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Explore all topics'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TopicPracticeScreen), findsOneWidget);
+    });
+
+    testWidgets(
+        'reacts live to an entitlement change — a trial starting unlocks the '
+        'strip without rebuilding the screen', (tester) async {
+      final subscriptionService = _FakeSubscriptionService();
+      await pumpHome(tester, subscriptionService: subscriptionService);
+      await revealStrip(tester);
+      expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
+
+      subscriptionService.emitAccessChange(true);
+      await tester.pump();
+      expect(find.byIcon(Icons.lock_rounded), findsNothing);
+
+      await tester.tap(find.text(kTopics.first.title));
+      await tester.pumpAndSettle();
+      expect(find.byType(TopicPracticeScreen), findsOneWidget);
+    });
+
+    testWidgets('the strip scrolls sideways and leaves the page where it is',
+        (tester) async {
+      await pumpHome(tester);
+      await revealStrip(tester);
+      final page =
+          tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+      final pageBefore = page.pixels;
+      final strip = find.descendant(
+          of: find.byKey(const ValueKey('home_topic_strip')),
+          matching: find.byType(Scrollable));
+      final stripPosition = tester.state<ScrollableState>(strip).position;
+
+      await tester.drag(find.text(kTopics.first.title), const Offset(-200, 0));
+      await tester.pumpAndSettle();
+
+      expect(stripPosition.pixels, greaterThan(0));
+      expect(page.pixels, pageBefore);
+    });
   });
 
   testWidgets(
-      'Topic Practice shows locked and opens the Premium screen instead, '
-      'with no entitlement active (PRD v2 §12.2/§12.3)', (tester) async {
-    await pumpHome(tester); // default fake: hasAccess: false
-    expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
+      'stacks in order: the Daily Test card, the mountain, Topic practice, '
+      'the weak spots, the Review call-out', (tester) async {
+    final storage = _FakeStorageService()..weakSpots = [_weakSpot()];
+    await pumpHome(tester, storageService: storage);
+    double top(Finder f) => tester.getTopLeft(f).dy;
 
-    await tester.tap(find.text('Topic Practice'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(TopicPracticeScreen), findsNothing);
-    expect(find.byType(PremiumScreen), findsOneWidget);
-  });
-
-  testWidgets(
-      'reacts live to an entitlement change — a trial starting unlocks the '
-      'card without rebuilding the screen', (tester) async {
-    final subscriptionService = _FakeSubscriptionService();
-    await pumpHome(tester, subscriptionService: subscriptionService);
-    expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
-
-    subscriptionService.emitAccessChange(true);
-    await tester.pump();
-
-    expect(find.byIcon(Icons.lock_rounded), findsNothing);
-
-    await tester.tap(find.text('Topic Practice'));
-    await tester.pumpAndSettle();
-    expect(find.byType(TopicPracticeScreen), findsOneWidget);
+    final daily = top(find.byKey(HomeScreen.dailyTestCardKey));
+    final mountain = top(find.byType(MonthlyMountain));
+    final topics = top(find.text('Topic practice'));
+    final weak = top(find.text('Your weak spots'));
+    final review = top(find.text('One free practice. Every day.'));
+    expect(mountain, greaterThan(daily));
+    expect(topics, greaterThan(mountain));
+    expect(weak, greaterThan(topics));
+    expect(review, greaterThan(weak));
   });
 
   group('weak spots (PRD v2 §13.5 item 4)', () {
@@ -1135,6 +1239,9 @@ void main() {
 
       await tester.ensureVisible(
           find.text('You left out "the" before a specific noun.'));
+      // 1.2.0: Home is longer; the scroll ensureVisible makes has to be
+      // drawn before the tap lands on the card.
+      await tester.pumpAndSettle();
       await tester.tap(
         find.text('You left out "the" before a specific noun.'),
       );
@@ -1158,6 +1265,9 @@ void main() {
 
       await tester.ensureVisible(
           find.text('You left out "the" before a specific noun.'));
+      // 1.2.0: Home is longer; the scroll ensureVisible makes has to be
+      // drawn before the tap lands on the card.
+      await tester.pumpAndSettle();
       await tester.tap(
         find.text('You left out "the" before a specific noun.'),
       );
@@ -1171,50 +1281,100 @@ void main() {
     });
   });
 
-  group('Premium row (PRD v2 §13.5 item 5)', () {
-    testWidgets('shown for a free user, opens the Premium screen',
+  // 1.2.0 (owner decision Q15): the Premium row that used to end Home is
+  // gone; a pointer to Review's free daily practice takes its place.
+  group('Review call-out (1.2.0, Q15)', () {
+    testWidgets('no Premium row any more, for a free user either',
         (tester) async {
-      await pumpHome(tester);
-      await tester.tap(_premiumRowLabel());
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()]);
+      expect(find.text('Unlock targeted practice on your weak spots'),
+          findsNothing);
+    });
+
+    testWidgets(
+        'a free user with weak spots: shown, and it switches to the Review '
+        'tab', (tester) async {
+      var toReview = 0;
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
+          onGoToReview: () => toReview++);
+      final link = find.text('Go to Review');
+      await tester.ensureVisible(link);
       await tester.pumpAndSettle();
-      expect(find.byType(PremiumScreen), findsOneWidget);
+      expect(find.text('One free practice. Every day.'), findsOneWidget);
+
+      await tester.tap(link);
+      await tester.pumpAndSettle();
+      expect(toReview, 1);
+      // A tab switch, not a pushed route.
+      expect(find.byType(PremiumScreen), findsNothing);
     });
 
-    testWidgets(
-        'not shown once the entitlement is active — no repeated '
-        'upsell to someone already subscribed', (tester) async {
-      await pumpHome(
-        tester,
-        subscriptionService: _FakeSubscriptionService(hasAccess: true),
-      );
-      expect(
-        find.text('Unlock targeted practice on your weak spots'),
-        findsNothing,
-      );
-    });
-
-    testWidgets('states what it offers, not just the word "Premium"',
+    testWidgets('not shown to a premium user (no quota to describe)',
         (tester) async {
-      await pumpHome(tester);
-      expect(
-        find.text('Unlock targeted practice on your weak spots'),
-        findsOneWidget,
-      );
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
+          subscriptionService: _FakeSubscriptionService(hasAccess: true));
+      expect(find.text('One free practice. Every day.'), findsNothing);
     });
 
-    testWidgets(
-        'text color is the scaffold foreground, not the low-contrast '
-        'onSurfaceVariant meant for a surface background — this row sits '
-        'directly on the orange scaffold in light mode', (tester) async {
-      await pumpHome(tester);
-
-      final theme = Theme.of(tester.element(_premiumRowLabel()));
-      final expectedFg =
-          theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
-
-      final style = tester.widget<Text>(_premiumRowLabel()).style;
-      expect(style?.color, expectedFg);
-      expect(style?.color, isNot(theme.colorScheme.onSurfaceVariant));
+    testWidgets('not shown when there is no weak spot to choose',
+        (tester) async {
+      await pumpHome(tester, storageService: _FakeStorageService());
+      expect(find.text('One free practice. Every day.'), findsNothing);
     });
   });
+
+  testWidgets('the weak spots heading counts the weak spots shown',
+      (tester) async {
+    await pumpHome(tester,
+        storageService: _FakeStorageService()
+          ..weakSpots = [_weakSpot(), _weakSpot(topicId: 'modalVerbs')]);
+    expect(find.text('2 weak spots'), findsOneWidget);
+  });
+
+  // 1.2.0 Batch 3: no overflow anywhere on Home at the three widths, the
+  // largest app text size, in both themes; and the greeting row's 1.1.0
+  // fix (the name never lost at 320 pt) holds with the larger hero.
+  for (final width in [320.0, 390.0, 430.0]) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+          '${width.toInt()} pt, Large text, ${brightness.name}: no overflow '
+          'from top to bottom', (tester) async {
+        await pumpHome(tester,
+            size: Size(width, 844),
+            brightness: brightness,
+            textSize: AppTextSize.large,
+            storageService: _FakeStorageService()
+              ..weakSpots = [_weakSpot(), _weakSpot(topicId: 'modalVerbs')],
+            userName: 'Maximiliana Alexandra');
+        expect(tester.takeException(), isNull);
+
+        // The greeting and the hero share a row without overlapping, and
+        // the whole name is there.
+        final greeting = tester.getRect(find.byType(HomeGreeting));
+        final hero = tester.getRect(find.byType(AvatarTile).first);
+        expect(greeting.right, lessThanOrEqualTo(hero.left));
+        expect(hero.right, lessThanOrEqualTo(width));
+        expect(find.text('Maximiliana Alexandra'), findsOneWidget);
+        final name = tester
+            .renderObject<RenderParagraph>(find.text('Maximiliana Alexandra'));
+        expect(name.didExceedMaxLines, isFalse);
+
+        final page = tester
+            .state<ScrollableState>(find.byType(Scrollable).first)
+            .position;
+        while (page.pixels < page.maxScrollExtent) {
+          page.jumpTo(
+              (page.pixels + 300).clamp(0.0, page.maxScrollExtent).toDouble());
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull, reason: 'at ${page.pixels}');
+        }
+        // The last thing on Home scrolls fully into view.
+        expect(tester.getRect(find.text('Go to Review')).bottom,
+            lessThanOrEqualTo(844));
+      });
+    }
+  }
 }

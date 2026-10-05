@@ -650,7 +650,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 25));
       }
       expect(mtn(tester).zoom!.value, greaterThan(0));
-      final today = find.textContaining("Today's test");
+      final today = find.text('Review results');
       await tester.ensureVisible(today);
       await tester.pump();
       expect(mtn(tester).zoom, isNotNull);

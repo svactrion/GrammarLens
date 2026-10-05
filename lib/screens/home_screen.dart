@@ -11,6 +11,7 @@ import '../models/error_entry.dart';
 import '../models/medal_tier.dart';
 import '../models/pending_climb.dart';
 import '../models/review_sort_order.dart';
+import '../models/topic.dart';
 import '../services/analytics_service.dart';
 import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
@@ -18,6 +19,7 @@ import '../services/month_transition.dart';
 import '../services/monthly_medal_rules.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
+import '../theme.dart';
 import '../utils/answer_matching.dart';
 import '../utils/greeting.dart';
 import '../utils/text_format.dart';
@@ -65,6 +67,11 @@ class HomeScreen extends StatefulWidget {
   // switch lives in app.dart's State, not here, so this is a hook rather
   // than HomeScreen owning navigation itself.
   final VoidCallback? onAvatarTap;
+
+  /// Switches the bottom-nav to the Review tab (the Review call-out that
+  /// ends Home for a free user, 1.2.0 Q15). Nullable for the same reason as
+  /// [onAvatarTap]: the tab switch lives in app.dart.
+  final VoidCallback? onGoToReview;
   // Test-only clock seam (defaults to the real DateTime.now) — the
   // time-of-day greeting's boundary tests need to construct exact
   // 04:59/05:00-style instants, not depend on whatever time the suite
@@ -109,6 +116,7 @@ class HomeScreen extends StatefulWidget {
     required this.analyticsService,
     SubscriptionService? subscriptionService,
     this.onAvatarTap,
+    this.onGoToReview,
     this.initialPendingClimb,
     this.onInitialPendingClimbTaken,
     this.offerDay0Paywall = false,
@@ -122,7 +130,13 @@ class HomeScreen extends StatefulWidget {
   /// Batch 6, M21: before the month card opens, Home scrolls until the
   /// Today card's last this-many points still show, so the Daily Test's
   /// entry stays on screen (and tappable) through the zoom that follows.
-  static const monthCardTodayPeek = 56.0;
+  /// 1.2.0: the entry is the card's button, not the whole card, so this is
+  /// the button and the card's padding below it, 48 + 18 (it was 56 for
+  /// the old whole-card tap target).
+  static const monthCardTodayPeek = 66.0;
+
+  /// The Daily Test card, for tests that measure or tap it.
+  static const dailyTestCardKey = ValueKey('home_daily_test_card');
 
   /// The clock the month card's open time is measured with; a test seam,
   /// like `StorageService.clockForTesting`. Never assigned outside a test.
@@ -1064,35 +1078,43 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
 
+    // 1.2.0 Home (docs/design/1.2.0/CLAUDE-CODE-BRIEF.md, "Home"): the
+    // brand and the greeting sit in the page and scroll with it, so the app
+    // bar is only the status bar's height (page-coloured; content passes
+    // under it).
     return BrandScaffold(
       isTabRoot: true,
-      title: Text(
-        'GrammarLens',
-        style: theme.textTheme.headlineLarge?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: appBarFg,
-        ),
+      appBar: AppBar(
+        toolbarHeight: 0,
+        automaticallyImplyLeading: false,
+        scrolledUnderElevation: 0,
       ),
       children: [
         // Keep the small Home body mounted while covered/scrolled so the
         // mountain retains the pre-completion position and can be revealed.
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Semantics(
+            header: true,
+            child: Text(
+              'GrammarLens',
+              style: theme.textTheme.displaySmall?.copyWith(
+                letterSpacing: -1.4,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
           // PRD v2 §11: an avatar next to the greeting, not floating
           // elsewhere on the page, so it reads as "whose home screen this
           // is" rather than a decorative icon. Greeting leads on the left,
-          // avatar pinned to the far right edge (trailing, not centered
-          // against the text) — `spaceBetween` with a `Flexible` (not
-          // `Expanded`) text so the avatar always lands flush against the
-          // trailing edge regardless of how short the greeting is, while a
-          // long name never pushes the avatar off the visible row.
-          // HomeGreeting is at most two lines, each capped at one line with
-          // an ellipsis, which also keeps this row safe at large Dynamic
-          // Type sizes: it never wraps into the avatar or grows without
-          // bound; the avatar's own size never changes with text scale, and
-          // the `Row` (no fixed height) grows to fit whichever of the two is
-          // taller, so nothing clips vertically either.
+          // avatar pinned to the far right edge — `spaceBetween` with a
+          // `Flexible` (not `Expanded`) text so the avatar always lands
+          // flush against the trailing edge while a long name never pushes
+          // it off the row. The greeting is two lines ("Good evening," over
+          // the name, the brief's layout); the name wraps rather than being
+          // cut off, and the `Row` (no fixed height) grows to fit whichever
+          // of the two is taller.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -1101,80 +1123,56 @@ class _HomeScreenState extends State<HomeScreen>
                 child: HomeGreeting(
                   word: timeOfDayGreeting(widget.clock()),
                   name: widget.userName,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: appBarFg,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  nameStyle: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              // PRD v2 §11's natural follow-up: the avatar is the user's
-              // own identity marker, and Settings is where it (and the
-              // rest of the profile) is edited — tapping it jumps there
-              // directly instead of requiring the Settings tab first.
-              // Enlarged from the original radius: 22 (a 44pt tile — this
-              // batch's own instruction to make it more prominent as the
-              // "whose home screen this is" marker); 44pt was already
-              // exactly at the ≥44pt touch-target minimum, so growing it
-              // only makes that minimum more comfortably exceeded, never
-              // at risk. This row lives in Home's own scrollable body
-              // (BrandScaffold's `children`), not its app bar/band, so the
-              // band's height is untouched by this change — confirmed by
-              // reading BrandScaffold itself, not assumed.
-              InkWell(
-                // Matches AvatarTile's own corner rounding at radius: 30
-                // (radius * 0.6) — a circular ripple would visibly mismatch
-                // the tile's now-square shape.
-                customBorder: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                onTap: widget.onAvatarTap,
-                // Hero, not just AvatarTile: `app.dart`'s onAvatarTap now
-                // pushes AvatarPickerScreen directly (a real route push, not
-                // the tab switch this used to be), so this flies to the
-                // carousel's centered avatar there and back. `homeAvatarHeroTag`
-                // is its own tag, distinct from Settings' `avatarHeroTag` —
-                // see that constant's own doc comment for why sharing one tag
-                // across both entry points would crash (both routes' Heroes
-                // stay mounted simultaneously, since Home and Settings are
-                // both permanently alive inside app.dart's IndexedStack).
-                child: Hero(
-                  tag: homeAvatarHeroTag,
-                  child: AvatarTile(avatar: widget.avatar, radius: 30),
-                ),
-              ),
+              _HeroButton(avatar: widget.avatar, onTap: widget.onAvatarTap),
             ],
           ),
-          const SizedBox(height: 24),
-          const SectionTitle('Today'),
-          const SizedBox(height: 8),
-          _TodayCard(
-            key: _todayKey,
-            loading: _loadingToday,
-            dailyTestSet: _todaysDailyTest,
-            onStart: () => _openDailyTest(context),
-            onViewResult: (set) => _openDailyTestResult(context, set),
-          ),
           const SizedBox(height: 12),
+          KeyedSubtree(
+            key: HomeScreen.dailyTestCardKey,
+            child: _DailyTestCard(
+              key: _todayKey,
+              loading: _loadingToday,
+              dailyTestSet: _todaysDailyTest,
+              onStart: () => _openDailyTest(context),
+              onViewResult: (set) => _openDailyTestResult(context, set),
+            ),
+          ),
+          const SizedBox(height: 24),
           _buildClimb(context),
           const SizedBox(height: 24),
-          _PracticeModeCard(
-            icon: Icons.school_rounded,
-            title: 'Topic Practice',
-            description: _hasFullAccess
-                ? 'Deep grammar practice with plain-language feedback.'
-                : 'Try it free, then continue with a subscription.',
-            locked: !_hasFullAccess,
-            onTap: () => _openTopicPractice(context),
+          _SectionHeader(
+            title: 'Topic practice',
+            trailing: _hasFullAccess
+                ? null
+                : const LockedPremiumPill(showChevron: false),
           ),
+          const SizedBox(height: 12),
+          _TopicStrip(onOpen: () => _openTopicPractice(context)),
           // Deliberately no empty state here (PRD v2 §13.5 item 4) — the
           // Review tab already covers "no weak spots yet", and repeating
           // that message on Home too would just be noise on a screen
           // that's supposed to lead with what's actually there.
           if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
             const SizedBox(height: 24),
-            const SectionTitle('Your weak spots'),
-            const SizedBox(height: 8),
+            _SectionHeader(
+              title: 'Your weak spots',
+              trailing: _CountBadge(
+                _weakSpots.length == 1
+                    ? '1 weak spot'
+                    : '${_weakSpots.length} weak spots',
+              ),
+            ),
+            const SizedBox(height: 12),
             for (final spot in _weakSpots) ...[
               WeakSpotCard(
                 topic: kTopics.firstWhere(
@@ -1185,17 +1183,16 @@ class _HomeScreenState extends State<HomeScreen>
                 locked: !_hasFullAccess,
                 onTap: () => _openWeakSpot(context, spot),
               ),
-              if (spot != _weakSpots.last) const SizedBox(height: 10),
+              if (spot != _weakSpots.last) const SizedBox(height: 12),
             ],
-          ],
-          // Quiet by design (PRD v2 §13.5 item 5) — a plain row, not the
-          // solid-fill banner this used to be, and only for a free user:
-          // someone already on a trial or subscribed doesn't need the
-          // upsell repeated at them. Must never outweigh the Today card
-          // above, which is why this has no Card/fill of its own.
-          if (!_hasFullAccess) ...[
-            const SizedBox(height: 8),
-            _PremiumRow(onTap: () => _openPremium(context)),
+            // 1.2.0 (owner decision Q15): the quiet Premium row that used to
+            // end Home is replaced by a pointer to Review's free daily
+            // practice. Free users only (premium has no quota to describe),
+            // and only when there is a weak spot to choose.
+            if (!_hasFullAccess) ...[
+              const SizedBox(height: 16),
+              _ReviewCallout(onTap: widget.onGoToReview),
+            ],
           ],
         ]),
       ],
@@ -1270,21 +1267,124 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-/// The largest, topmost block (PRD v2 §13.5 item 2) — Daily Test's actual
-/// state, read from what's already cached rather than a new tracking
-/// mechanism: [DailyTestSet.completedAt] (has today's test been finished)
-/// and [DailyTestSet.answers] (what the score was, persisted alongside it
-/// — see docs/build-log.md for why that had to be added). Shares
-/// `_PracticeModeCard`'s icon+title+description card shape rather than
-/// inventing a new one; taller than that card simply because it carries
-/// more content, not a different visual treatment.
-class _TodayCard extends StatelessWidget {
+/// The avatar beside the greeting (the brief's hero picker): the user's
+/// avatar with a small edit badge, opening the avatar picker. A Hero, so
+/// it flies to the picker's centred avatar and back.
+class _HeroButton extends StatelessWidget {
+  final Avatar? avatar;
+  final VoidCallback? onTap;
+
+  const _HeroButton({required this.avatar, required this.onTap});
+
+  /// The brief's 108 pt hero; AvatarTile is sized by half its side.
+  static const _size = 108.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: 'Change your avatar',
+      child: InkWell(
+        // Matches AvatarTile's own corner rounding (radius * 0.6).
+        customBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_size / 2 * 0.6),
+        ),
+        onTap: onTap,
+        child: SizedBox.square(
+          dimension: _size,
+          child: Stack(children: [
+            // `homeAvatarHeroTag` is its own tag, distinct from Settings'
+            // `avatarHeroTag` — see that constant's doc comment for why
+            // sharing one tag across both entry points would crash.
+            Hero(
+              tag: homeAvatarHeroTag,
+              child: AvatarTile(avatar: avatar, radius: _size / 2),
+            ),
+            PositionedDirectional(
+              end: 0,
+              bottom: 8,
+              child: Container(
+                width: 23,
+                height: 23,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Icon(Icons.edit_rounded,
+                    size: 12, color: colorScheme.onSurface),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// A section's title with an optional tag at its end.
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final Widget? trailing;
+
+  const _SectionHeader({required this.title, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: SectionTitle(title)),
+        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+      ],
+    );
+  }
+}
+
+/// A small count on the info surface (the weak spots heading).
+class _CountBadge extends StatelessWidget {
+  final String text;
+
+  const _CountBadge(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: colorScheme.onSecondaryContainer,
+        ),
+      ),
+    );
+  }
+}
+
+/// The Daily Test card (PRD v2 §13.5 item 2; 1.2.0 brief, "Home"): its own
+/// orange card, separate from the mountain. Two states only, read from what
+/// is already cached ([DailyTestSet.isCompleted] and the persisted
+/// [DailyTestSet.answers]): not started — the question count and "Start
+/// daily test"; done — the real score and "Review results". No progress bar.
+/// The navy button is the card's one tap target and calls the same two
+/// handlers the whole card used to.
+///
+/// Text on the orange is `onPrimary` (#241200) in both themes: light text
+/// on the dark-mode orange measures under 2.4:1.
+class _DailyTestCard extends StatelessWidget {
   final bool loading;
   final DailyTestSet? dailyTestSet;
   final VoidCallback onStart;
   final ValueChanged<DailyTestSet> onViewResult;
 
-  const _TodayCard({
+  const _DailyTestCard({
     super.key,
     required this.loading,
     required this.dailyTestSet,
@@ -1296,158 +1396,259 @@ class _TodayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final muted = colorScheme.onSurfaceVariant;
-    final set = dailyTestSet;
-    final completed = set != null && set.isCompleted;
+    final palette = AppPalette.of(context);
+    final ink = colorScheme.onPrimary;
+    final shape = RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(appCardRadius));
 
     if (loading) {
-      return const Card(
+      return Card(
+        color: colorScheme.primary,
+        shape: shape,
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Center(
             child: SizedBox(
               height: 24,
               width: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(strokeWidth: 2, color: ink),
             ),
           ),
         ),
       );
     }
 
-    String title;
-    String description;
+    final set = dailyTestSet;
+    final completed = set != null && set.isCompleted;
+    final String title, description, amount, unit, action;
     if (completed) {
       final score = computeDailyTestScore(set.questions, set.answers ?? {});
-      title = 'Today\'s test: ${score.correct}/${score.total} correct';
-      description = 'New test tomorrow. Tap to see today\'s result again.';
+      title = 'Daily test complete.';
+      description = 'New test tomorrow. Review today’s answers.';
+      amount = '${score.correct}/${score.total}';
+      unit = 'correct';
+      action = 'Review results';
     } else {
-      title = 'Daily Test';
-      description = "Today's ${DailyTestSet.questionCount}-question warm-up "
-          'is ready — free, always.';
+      title = 'Your next step.';
+      description = 'Take today’s test and move your hero forward.';
+      amount = '${set?.questions.length ?? DailyTestSet.questionCount}';
+      unit = 'questions';
+      action = 'Start daily test';
     }
+    final small = theme.textTheme.labelSmall?.copyWith(color: ink);
 
     return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: completed ? () => onViewResult(set) : onStart,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: colorScheme.primaryContainer,
-                foregroundColor: colorScheme.onPrimaryContainer,
-                child: Icon(
-                  completed ? Icons.check_circle_rounded : Icons.today_rounded,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      color: colorScheme.primary,
+      shape: shape,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // A Wrap, not a Row: at a large text size on a narrow screen
+            // "Free every day" moves under the label instead of overflowing.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Text('DAILY TEST',
+                    style: small?.copyWith(
+                        fontWeight: FontWeight.w800, letterSpacing: 0.8)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                    ),
+                    Icon(Icons.check_rounded, size: 13, color: ink),
+                    const SizedBox(width: 4),
+                    Flexible(child: Text('Free every day', style: small)),
                   ],
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: theme.textTheme.headlineSmall
+                              ?.copyWith(color: ink)),
+                      const SizedBox(height: 7),
+                      Text(description,
+                          style:
+                              theme.textTheme.bodySmall?.copyWith(color: ink)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 67),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: palette.brandTint,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(amount,
+                          style: theme.textTheme.headlineMedium
+                              ?.copyWith(color: ink, height: 1)),
+                      const SizedBox(height: 6),
+                      Text(unit,
+                          style: small?.copyWith(fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: completed ? () => onViewResult(set) : onStart,
+              child: Row(
+                children: [
+                  Expanded(child: Text(action)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_rounded, size: 17),
+                ],
               ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: muted),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// The single mode-selection card: a full-width row rather than the
-/// icon-on-top grid tile this used to be alongside Streak Mode and Voice
-/// Practice — with only one real mode left, a lone icon-on-top tile in a
-/// now-empty 2-column grid would read as a layout bug, not a deliberate
-/// choice.
-class _PracticeModeCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  // Same lock-icon visual language the old Voice Practice grid tile used
-  // (muted icon-avatar fill + a small lock glyph) before Streak/Voice were
-  // removed from Home — reused here for Topic Practice's entitlement gate
-  // (PRD v2 §12.2/§12.3) rather than inventing a new "locked" treatment.
-  final bool locked;
-  final VoidCallback onTap;
+/// Topic Practice on Home (1.2.0 brief): one card with a line of copy, a
+/// sideways strip of the real topics ([kTopics]) and "Explore all topics".
+/// Every tile and the link open the existing Topic Practice screen through
+/// [onOpen] — the same entry point the old single card used, so a free
+/// user still gets the paywall there (owner decisions Q9, Q10: no new
+/// route, no scroll arrows). The strip scrolls sideways only.
+class _TopicStrip extends StatelessWidget {
+  final VoidCallback onOpen;
 
-  const _PracticeModeCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    this.locked = false,
-    required this.onTap,
-  });
+  const _TopicStrip({required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final muted = colorScheme.onSurfaceVariant;
-    final iconBg = locked
-        ? colorScheme.surfaceContainerHighest
-        : colorScheme.primaryContainer;
-    final iconFg = locked ? muted : colorScheme.onPrimaryContainer;
-
     return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: iconBg,
-                foregroundColor: iconFg,
-                child: Icon(icon, size: 26),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 18, bottom: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Text(
+                'Pick a topic. Build confidence where you need it.',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            SingleChildScrollView(
+              key: _topicStripKey,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(18, 15, 18, 8),
+              // Every tile as tall as the tallest: a long topic name at a
+              // large text size wraps instead of being cut off.
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: locked ? muted : null,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                    ),
+                    for (final topic in kTopics) ...[
+                      _TopicTile(topic: topic, onTap: onOpen),
+                      if (topic != kTopics.last) const SizedBox(width: 10),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              locked
-                  ? MediaQuery.textScalerOf(context).scale(14) > 20
-                      ? Icon(Icons.lock_rounded,
-                          color: muted, semanticLabel: 'Premium')
-                      : const LockedPremiumPill()
-                  : Icon(Icons.chevron_right_rounded, color: muted),
-            ],
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: TextButton.icon(
+                  onPressed: onOpen,
+                  iconAlignment: IconAlignment.end,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 15),
+                  label: const Text('Explore all topics'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+const _topicStripKey = ValueKey('home_topic_strip');
+
+class _TopicTile extends StatelessWidget {
+  final Topic topic;
+  final VoidCallback onTap;
+
+  const _TopicTile({required this.topic, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final link = colorScheme.secondary;
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(15),
+      side: BorderSide(color: colorScheme.outlineVariant),
+    );
+    return SizedBox(
+      width: 146,
+      child: Material(
+        color: colorScheme.surfaceContainerHighest,
+        shape: shape,
+        child: InkWell(
+          customBorder: shape,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 118),
+            child: Padding(
+              padding: const EdgeInsets.all(13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(topic.icon, size: 21, color: link),
+                  const SizedBox(height: 14),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          topic.title,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            height: 1.25,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Icon(Icons.north_east_rounded, size: 14, color: link),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -1455,61 +1656,59 @@ class _PracticeModeCard extends StatelessWidget {
   }
 }
 
-/// A quiet row (PRD v2 §13.5 item 5) — deliberately not a Card, not
-/// filled, no elevation, so it can never outweigh the Today card or Topic
-/// Practice above it. Replaces what used to be a solid deep-blue banner;
-/// that treatment made sense when Premium was one of only three things on
-/// the screen; it doesn't once Home actually leads with real data. Only
-/// shown to a user without full access — see the build() call site.
-///
-/// Text color reuses `theme.appBarTheme.foregroundColor` (the band's own
-/// foreground, docs/design-audit.md §5 D1) — a leftover from when this row
-/// sat directly on the vivid-orange scaffold and `onSurfaceVariant`
-/// measured ~3.6:1 there (failing AA). Since Home migrated onto
-/// `BrandScaffold`, this row sits on the neutral body instead, where
-/// `onSurfaceVariant` would work fine again — but the band foreground is
-/// still comfortably legible here too (very dark on near-white in light
-/// mode), so it was left as-is rather than switched for its own sake;
-/// revisit if a future batch has a real reason to.
-class _PremiumRow extends StatelessWidget {
-  final VoidCallback onTap;
+/// The end of Home for a free user (1.2.0, owner decision Q15), replacing
+/// the quiet Premium row: one free weak spot practice a day lives in
+/// Review, and this switches to the Review tab.
+class _ReviewCallout extends StatelessWidget {
+  final VoidCallback? onTap;
 
-  const _PremiumRow({required this.onTap});
+  const _ReviewCallout({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fg = theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-        child: Row(
-          children: [
-            Icon(Icons.workspace_premium_outlined, size: 20, color: fg),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Premium',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: fg, fontWeight: FontWeight.w600),
+    final colorScheme = theme.colorScheme;
+    final onInfo = colorScheme.onSecondaryContainer;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(15, 15, 15, 4),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(Icons.auto_awesome_rounded, size: 19, color: onInfo),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('One free practice. Every day.',
+                    style: theme.textTheme.labelLarge?.copyWith(color: onInfo)),
+                const SizedBox(height: 5),
+                Text(
+                  'Choose one weak spot in Review.\n'
+                  'Get AI feedback on your answers.',
+                  style: theme.textTheme.bodySmall?.copyWith(color: onInfo),
+                ),
+                TextButton.icon(
+                  onPressed: onTap,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 44),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Unlock targeted practice on your weak spots',
-                    style: theme.textTheme.bodySmall?.copyWith(color: fg),
-                  ),
-                ],
-              ),
+                  iconAlignment: IconAlignment.end,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 15),
+                  label: const Text('Go to Review'),
+                ),
+              ],
             ),
-            Icon(Icons.chevron_right_rounded, size: 18, color: fg),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

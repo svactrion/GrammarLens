@@ -225,14 +225,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
       expect(_sheet, findsNothing);
       expect(tester.widget<MonthlyMountain>(_mountain).zoom, isNotNull);
-      final today = tester.getRect(find
-          .ancestor(of: find.text('Daily Test'), matching: find.byType(Card))
-          .first);
+      final today = tester.getRect(find.byKey(HomeScreen.dailyTestCardKey));
       final list = tester.getRect(find.byType(Scrollable).first);
       final shown = today.bottom - list.top;
       expect(shown, greaterThanOrEqualTo(HomeScreen.monthCardTodayPeek - .5));
-      // Tap the part that shows.
-      await tester.tapAt(Offset(today.center.dx, today.bottom - shown / 2));
+      // 1.2.0: the entry is the card's button, and it is in the part that
+      // shows.
+      final button = tester.getRect(find.text('Start daily test'));
+      expect(button.top, greaterThanOrEqualTo(list.top));
+      await tester.tapAt(button.center);
       // The tap reached the Today card: the Daily Test opens (its route is
       // pushed; its own layout is not this test's subject) and the zoom
       // jumps to its end (M16).
@@ -374,10 +375,8 @@ void main() {
         'zoom ended: the Daily Test opened; mode_selected carries '
         'the month\'s theme', (tester) async {
       final sink = await zoomUntilEnd(tester, during: () async {
-        final today = tester.getRect(find
-            .ancestor(of: find.text('Daily Test'), matching: find.byType(Card))
-            .first);
-        await tester.tapAt(Offset(today.center.dx, today.bottom - 20));
+        // 1.2.0: the entry is the Daily Test card's button.
+        await tester.tapAt(tester.getCenter(find.text('Start daily test')));
       });
       expect(ended(sink)!['outcome'], 'daily_test_opened');
       expect(named(sink, 'mode_selected').single.parameters,

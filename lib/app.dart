@@ -388,6 +388,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               firstRunZoom: _firstRunZoom,
               onFirstRunZoomTaken: () => _firstRunZoom = false,
               onAvatarTap: () => _openAvatarPickerFromHome(context),
+              onGoToReview: () => _switchTab(1),
             ),
             ReviewScreen(
               claudeService: _claudeService,

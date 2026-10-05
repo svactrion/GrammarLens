@@ -140,7 +140,7 @@ void main() {
     expect(_greeting('Good morning, Ada'), findsOneWidget);
     expect(_greeting('Good evening, Ada'), findsNothing);
     expect(find.textContaining('New test tomorrow'), findsNothing);
-    expect(find.textContaining("Today's 5-question warm-up"), findsOneWidget);
+    expect(find.text('Start daily test'), findsOneWidget);
 
     // One resume, one of each job — no doubled work between the app-level
     // observer (finalization) and Home's (day/greeting/climb).

@@ -136,7 +136,7 @@ void main() {
     claude.gate = Completer<void>();
     await pumpHome(tester);
 
-    await tester.tap(find.text('Daily Test'));
+    await tester.tap(find.text('Start daily test'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(claude.readCalls, 1);
@@ -148,7 +148,7 @@ void main() {
     await tester.tap(find.text('Leave'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
-    await tester.tap(find.text('Daily Test'));
+    await tester.tap(find.text('Start daily test'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(claude.readCalls, 1, reason: 'joined, not asked again');
@@ -164,7 +164,7 @@ void main() {
       'the same service: one more request, stored for tomorrow',
       (tester) async {
     await pumpHome(tester);
-    await tester.tap(find.text('Daily Test'));
+    await tester.tap(find.text('Start daily test'));
     await tester.pumpAndSettle();
     expect(claude.readCalls, 1);
 
@@ -189,7 +189,7 @@ void main() {
       'viewing the finished result again asks for nothing more: tomorrow '
       'already has its set', (tester) async {
     await pumpHome(tester);
-    await tester.tap(find.text('Daily Test'));
+    await tester.tap(find.text('Start daily test'));
     await tester.pumpAndSettle();
     for (var i = 0; i < 5; i++) {
       await tester.tap(find.text('Skip'));
@@ -199,9 +199,9 @@ void main() {
 
     tester.state<NavigatorState>(find.byType(Navigator)).pop();
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.textContaining('0/5 correct'));
+    await tester.ensureVisible(find.text('Review results'));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('0/5 correct'));
+    await tester.tap(find.text('Review results'));
     await tester.pumpAndSettle();
     expect(find.text('Daily Test Results'), findsOneWidget);
 
