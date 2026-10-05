@@ -319,7 +319,9 @@ final List<_Screen> _screens = [
         ),
     after: (tester) async {
       await tester.tap(find.text('open'));
-      await tester.pump(const Duration(seconds: 1));
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
     },
   ),
   (

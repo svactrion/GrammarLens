@@ -310,7 +310,7 @@ class _SelectionCard extends StatelessWidget {
                   Text(
                     selected.label,
                     style: TextStyle(fontSize: 19, color: onCard)
-                        .withWeight(FontWeight.w600),
+                        .withWeight(FontWeight.w800),
                   ),
                   const SizedBox(height: 2),
                   Text(
