@@ -60,7 +60,8 @@ Future<PracticeLength?> showPracticeLengthPicker({
   return showModalBottomSheet<PracticeLength>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: colorScheme.surfaceContainerLowest,
+    // The palette's card surface (final screens A3; was pure white).
+    backgroundColor: colorScheme.surfaceContainerHigh,
     // A pure black scrim over the orange page reads as a muddy brown
     // (docs/design-audit.md §2) — tinted off the page's own foreground
     // color instead, at a mid opacity.
@@ -140,10 +141,14 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                 trackHeight: 8,
                 trackShape: const RoundedRectSliderTrackShape(),
                 activeTrackColor: colorScheme.secondary,
-                inactiveTrackColor: colorScheme.surfaceContainerHigh,
+                // The empty part of the track (final screens A3): `outline`,
+                // 3.32:1 on the light sheet and 4.50:1 on the dark one (it
+                // was the sheet's own colour, 1.03:1). Its stop dots take
+                // the sheet colour, the same contrast the other way round.
+                inactiveTrackColor: colorScheme.outline,
                 thumbColor: colorScheme.secondary,
                 activeTickMarkColor: colorScheme.onSecondary,
-                inactiveTickMarkColor: colorScheme.outline,
+                inactiveTickMarkColor: colorScheme.surfaceContainerHigh,
                 thumbShape: _DragHandleThumbShape(
                   radius: _kSliderThumbRadius,
                   chevronColor: colorScheme.onSecondary,
@@ -269,7 +274,8 @@ class _SelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final onCard = colorScheme.onSecondaryContainer;
 
     return Container(
@@ -308,15 +314,18 @@ class _SelectionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Theme styles, so both follow the text size setting
+                  // (final screens A3; were a fixed 19 and 13).
                   Text(
                     selected.label,
-                    style: TextStyle(fontSize: 19, color: onCard)
-                        .withWeight(FontWeight.w800),
+                    style: theme.textTheme.titleLarge
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: onCard),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     selected.description,
-                    style: TextStyle(fontSize: 13, color: onCard),
+                    style: theme.textTheme.bodySmall?.copyWith(color: onCard),
                   ),
                 ],
               ),
