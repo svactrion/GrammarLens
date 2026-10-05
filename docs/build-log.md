@@ -8804,3 +8804,193 @@ Docs only; no code changed.
   would split shared and legacy spend; not built).
 - **[Docs]** `roadmap.md` ("Proxy token logging"; "6. Cost measurement")
   and `prd-v2.md` §13.10 carry a note; the earlier text is kept.
+
+## 2026-10-05 (1.2.0 redesign — Batch 0 report; owner decisions Q1–Q18)
+
+On branch `1.2.0`; not pushed. Batch 0 (read and measure, no code):
+`docs/design/1.2.0/batch0-report.md` (`f2b99f1`). The design package is
+`d26579e`. That commit was made with `--no-verify`, once, with the owner's
+approval: the local PII hook matched a short pattern by chance inside
+base64 PNG data. Every match was checked to be inside a `data:image`
+payload; the commit body records the bypass.
+
+- **[Product — owner] Scope.** Home, Review, Profile and Topic Practice
+  (Topic Practice approved 2026-10-05). **The question screen is out of
+  scope:** no layout or structure change in `practice_screen.dart`,
+  `daily_test_screen.dart`, `question_app_bar.dart` or
+  `practice_step_footer.dart`. They only inherit the new theme tokens.
+  The report's Batch 6 is postponed, and Q11 / Q12 stay open. Its
+  keyboard behaviour is to be designed separately. A known issue was
+  added to the roadmap: the single-line answer field scrolls sideways.
+- **[Product — owner] Decisions** (numbers from the report's §10):
+  - Q1: the dark primary button is `#0D3B8F` with a 1 px `#5C7CFA` edge,
+    dark mode only.
+  - Q2: cards use the brief's `border` and shadow; to be judged on the
+    device, and if too faint, interactive cards go back to `outline`.
+  - Q3: the input edge is `#8E8577` (light) / `#85818B` (dark).
+  - Q4: disabled buttons use the mockup's colours.
+  - Q5: the brief's text sizes are what Medium renders; the base size is
+    the brief's size ÷ 1.1.
+  - Q6: the mockup's `#241200` "ink" is not a text colour.
+  - Q7: medals newest first, Welcome last; this replaces N34.
+  - Q8: the topic activity bar goes.
+  - Q9: Home's topic tiles open the existing Topic Practice screen (no new
+    route).
+  - Q10: no arrows under the topic strip.
+  - Q13: no allowance card for premium users.
+  - Q14: weak spot detail stays a pushed screen.
+  - Q15: Home's Premium row is replaced by a Review call-out; the event
+    and source are unchanged.
+  - Q16: the stadium plaque with a 1.5 px outline replaces the 2026-10-02
+    trail sign.
+  - Q17: a solid nav bar replaces the frosted glass.
+  - Q18: horizontal padding is 14 under 360 pt wide, 18 above.
+
+## 2026-10-05 (1.2.0 redesign — Batch 1: theme and typography; awaiting the device check)
+
+On branch `1.2.0`; not pushed (the owner pushes after the device check).
+Visual only: no state, routing, premium or quota check, AI/proxy call,
+storage schema, analytics event or gamification math changed. No
+screen layout, shared component structure, nav bar, plaque or copy
+changed.
+
+- **[Decisions this replaces]** Each is replaced by the 1.2.0 brief
+  (`docs/design/1.2.0/CLAUDE-CODE-BRIEF.md`), approved by the owner.
+  1. **The orange header band (D1, `BandColors.bandBackground` /
+     `bandForeground`).**
+     - *Why it existed:* it kept the brand orange in view after the
+       full-orange scaffold was dropped.
+     - *Why it goes:* the brief keeps orange for a few meaningful elements
+       (the Daily Test card, the Review allowance, the question counter,
+       Profile's points, the Topic access label) instead of a full-width
+       bar. The app bar and scaffold are now the page colour with
+       `onSurface` content.
+     - The `BandColors` extension is removed. Welcome, D1's full-orange
+       exception, used to inherit the band through the scaffold colour; it
+       now sets its own orange (light) and neutral `surface` (dark), so it
+       looks as it did.
+  2. **The orange primary button.** It already stopped being one in v2.2
+     (FilledButton → `secondary`). The brief makes the button the navy
+     `#0D3B8F` with white text in both themes. The button moved out of
+     `ColorScheme` into `AppPalette.button`, because dark `secondary` is
+     now the link colour (`#B4C8FF`). Before, the dark button was `#5C7CFA`
+     with `#04123A` text.
+  3. **"Dark mode never uses orange as a surface" (D1).**
+     - The brief puts orange surfaces in dark mode too, always with the
+       dark `#241200` text: 7.71:1 on `#FF8A3D`. Light text measures
+       1.99:1 (`#F0ECE7`) and 2.35:1 (white), so the dark text is the only
+       legible choice.
+     - Dark `onPrimary` moves from `#3D1300` to `#241200`. No orange
+       surface is added in this batch.
+  4. **The card rule: `outline` border plus elevation 1, radius 20.**
+     - *The old rule:* a 1 px `outline` border with a black elevation 1
+       and radius 20. It was chosen because `outlineVariant` measured
+       1.34:1 and was hard to see on the device.
+     - *The new rule (Q2):* a 1 px `border` token edge (`outlineVariant`,
+       `#DED5C6` / `#45454D`) and a shadow in the brief's colour, radius
+       24. The edge is 1.41:1 (light) and 1.61:1 (dark) against the card;
+       the shadow does part of the separating.
+     - `Card` cannot take the brief's exact shadow (offset 0,5, blur 18),
+       so it uses elevation 2 in the brief's shadow colour (`#483018`
+       light, black dark). The exact shadows are `AppPalette.cardShadow` /
+       `navShadow`, for hand-drawn cards in later batches.
+     - **To judge on the device.**
+- **[Engineering] What changed.**
+  - **`lib/theme.dart`: colours (batch0-report.md §1.1).** Only `primary`
+    (brandOrange) keeps its role meaning. The others:
+
+    | Role | Token | Light | Dark |
+    |---|---|---|---|
+    | `surfaceContainerLow` | page | `#F3EFE6` | `#151517` |
+    | `surfaceContainerHigh` | card | `#FFFBF4` | `#252528` |
+    | `surfaceContainerHighest` | subtle | `#F6F0E5` | `#303034` |
+    | `onSurface` | textPrimary | `#1B1B1F` | `#F0ECE7` |
+    | `secondary` | linkAndActive | `#0D3B8F` | `#B4C8FF`, with `onSecondary` `#0A2E70` |
+    | `secondaryContainer` | info | `#D7E1FA` | `#243859` |
+    | `outlineVariant` | border | `#DED5C6` | `#45454D` |
+
+  - **`lib/theme.dart`: `AppPalette`** (a new `ThemeExtension`): the
+    button, its dark edge, the disabled colours, nav surface and border,
+    the input edge, the path outline and the two shadows.
+  - **`lib/theme.dart`: components.**
+    - Buttons: radius 14, minimum height 48 (was 52), label `labelLarge`
+      (14/800 at Medium; the label used to be a fixed 16/600 that ignored
+      the text size).
+    - Inputs: radius 18 and the Q3 edge.
+    - Cards: as above.
+    - App bar: the page colour with `onSurface`.
+  - **`lib/theme.dart`: type scale (report §1.3, Q5).** Every style now
+    names its weight. Sizes: brand/page title 34/900 (`displaySmall`),
+    Topic title 32/900, question title 26/900, card title 24/900, section
+    20/800, list card title 17/800, scenario 16/400, body 14/400 and
+    13/400, button 14/800, meta 12/700 and 11/600. Line heights and
+    letter spacing come from the brief.
+  - `lib/widgets/brand_scaffold.dart`: the band is gone (colours from
+    `appBarTheme`; the `bandBottom` parameter keeps its name).
+  - `lib/utils/page_title.dart`: the theme's weight (900) instead of
+    w700.
+  - `lib/screens/welcome_screen.dart`: its colours are pinned explicitly.
+- **[Engineering] Kept as they were on purpose** (outside the batch's
+  file list, each changed only to undo a side effect of the theme):
+  - **The brand mark's rim.** It read `colorScheme.secondary`, so the
+    dark rim would have turned `#B4C8FF` and changed the logo and the
+    committed launch images (`launch_image_test` caught it). Its two
+    earlier colours are now `brandMarkRim()`.
+  - **The launch splash wordmark.** It inherited `headlineLarge`'s line
+    height; the new 1.10 shrank it from 58 to 47 pt and moved the
+    approved launch layout. It now has its own style at the font's
+    natural line height.
+  - **The mountain card and its plaque** (`ClimbCard`). The frame stays
+    at radius 20 instead of following the card's 24, and the plaque's
+    text keeps its pre-1.2.0 metrics, so its owner-approved 14 pt corners
+    fit at every text size. Both are redone with the plaque (Q16).
+  - **The iOS launch background** (`LaunchBackground.colorset`) is now
+    `#F3EFE6` / `#151517`. It has to equal the first frame's page colour,
+    or the app flashes at launch.
+  - **`PracticeStepFooter`** no longer styles its button itself
+    (`secondary` would have made the dark button light blue). It takes
+    the theme's button, colours only; no layout change.
+- **[Measured]**
+  - **A theme equality bug.** A per-call `resolveWith` closure for the
+    dark button edge made two identical dark themes unequal, so
+    `MaterialApp` animated between them; `monthly_climb_preview_test`
+    caught it. The edge property is now built once.
+  - **Font.** A `TextStyle` without a weight renders identically to w400
+    (same width and ink), not at the variable font's default 200.
+  - **Weightless `TextStyle`s in `lib/`:** 3, all left as they are:
+    - `daily_test_screen.dart:289` (debug error text);
+    - `practice_length_picker.dart:320`;
+    - `premium_screen.dart:1726` (a measuring fallback, unused while a
+      theme exists).
+
+    The first two are `Text` styles and take their weight from the
+    ambient `DefaultTextStyle` (`bodyMedium`, w400).
+- **[Tests]** `flutter analyze` clean; **1,520 passed, 0 failed** (the
+  same count as before the batch). Behaviour tests unchanged. Updated
+  look assertions, 14 test cases:
+  - `practice_step_footer_test`, the disabled pairing (1): it now reads
+    the theme's button style.
+  - `climb_card_test`, the frame radius (1): the frame is 20, no longer
+    the card radius.
+  - `data_screen_test`, Cancel height (2): 52 → 48.
+  - `premium_screen_test`, the purchase button height (5): ≥ 52 → ≥ 48.
+  - `premium_screen_test`, the table or stacked layout (4): the measured
+    rule is unchanged, but with the smaller default text 360 pt @1.15x
+    and 393 pt @1.3x now fit the table.
+  - `launch_background_test`, the hex constants (1).
+- **[Side effects on screens without a mockup]**
+  - **Every screen:** text is about 9 % smaller at the default Medium
+    (body 14 instead of 15.4), and titles, buttons and segmented controls
+    are heavier (800–900).
+  - **Premium and Data:** buttons are 48 tall; the comparison table stays
+    a table at two more sizes.
+  - **Results and Daily Test result:** the score line in the app bar is
+    no longer on orange.
+  - **Onboarding:** in dark mode the selected goal is light blue with
+    navy text (was `#5C7CFA` with `#04123A`). In light mode, unselected
+    goals have the page colour as their fill, so their 1.5 px `outline`
+    edge (2.98:1 on the page) is what separates them.
+  - **Welcome:** no change.
+- **[Not measured]** Anything on a device: the card shadow's strength
+  (elevation 2 approximates the brief), the dark button edge, the font
+  weights 400 / 800 / 900, and how the smaller body text reads.
