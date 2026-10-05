@@ -10,9 +10,11 @@ import 'package:grammar_lens/widgets/destructive_dialog_actions.dart';
 
 /// 1.2.0 Batch 8 (owner): the dark mode #5C7CFA edge (Q1) belongs to the
 /// navy filled button only. A filled button with any other fill — the
-/// destructive red (Data's "Reset progress data", the confirm dialogs), the
-/// orange "See Premium" on Review's used card — has no edge. In light mode
-/// no filled button has one.
+/// destructive red (the confirm dialogs), the orange "See Premium" on
+/// Review's used card, the orange forward action (`forwardButtonStyle`,
+/// final screens A1) — has no edge. In light mode no filled button has one.
+/// (Data's own "Reset progress data" is a low-intensity outlined button
+/// since the final screens, brief §3; its dialog's confirm is the red one.)
 class _Storage extends StorageService {
   @override
   Future<AiConsent?> getAiConsent() async => null;
@@ -55,6 +57,13 @@ void main() {
         home: Scaffold(
           body: ListView(children: [
             FilledButton(onPressed: () {}, child: const Text('Navy')),
+            Builder(
+              builder: (context) => FilledButton(
+                onPressed: () {},
+                style: forwardButtonStyle(context),
+                child: const Text('Forward'),
+              ),
+            ),
             DestructiveDialogActions(
               cancelLabel: 'Cancel',
               confirmLabel: 'Delete',
@@ -70,12 +79,7 @@ void main() {
       await tester.pumpAndSettle();
       final buttons = _buttons(tester);
       final labels = [for (final (l, _, _) in buttons) l];
-      for (final label in [
-        'Navy',
-        'Delete',
-        'See Premium',
-        'Reset progress data'
-      ]) {
+      for (final label in ['Navy', 'Forward', 'Delete', 'See Premium']) {
         expect(labels, contains(label));
       }
       final palette = AppPalette.of(tester.element(find.text('Navy')));
@@ -93,7 +97,7 @@ void main() {
       Color? fillOf(String l) => buttons.firstWhere((x) => x.$1 == l).$2;
       expect(fillOf('Navy'), palette.button);
       expect(fillOf('Delete'), scheme.destructive);
-      expect(fillOf('Reset progress data'), scheme.destructive);
+      expect(fillOf('Forward'), scheme.primary);
       expect(fillOf('See Premium'), scheme.primary);
     });
   }
