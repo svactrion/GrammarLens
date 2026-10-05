@@ -351,6 +351,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// The mountain path's frame and title plate outline (1.5 px).
   final Color pathOutline;
 
+  /// A translucent cream panel on a brandOrange surface (the Home Daily
+  /// Test card's question count / score box, the mockup's #FAF3EC at 40 %);
+  /// its text stays onOrange. The same in both themes, like the orange text
+  /// pairing itself.
+  final Color brandTint;
+
   /// The brief's card and navigation bar shadows.
   final List<BoxShadow> cardShadow;
   final List<BoxShadow> navShadow;
@@ -365,6 +371,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.navBorder,
     required this.inputBorder,
     required this.pathOutline,
+    required this.brandTint,
     required this.cardShadow,
     required this.navShadow,
   });
@@ -391,6 +398,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     navBorder: const Color(0xFFD2C6B4),
     inputBorder: const Color(0xFF8E8577),
     pathOutline: const Color(0xFFA59F98),
+    brandTint: const Color(0x66FAF3EC),
     cardShadow: [
       BoxShadow(
         color: _lightShadowBase.withValues(alpha: .10),
@@ -417,6 +425,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     navBorder: const Color(0xFF595961),
     inputBorder: const Color(0xFF85818B),
     pathOutline: const Color(0xFF777581),
+    brandTint: const Color(0x66FAF3EC),
     cardShadow: [
       BoxShadow(
         color: _darkShadowBase.withValues(alpha: .17),
@@ -444,6 +453,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? navBorder,
     Color? inputBorder,
     Color? pathOutline,
+    Color? brandTint,
     List<BoxShadow>? cardShadow,
     List<BoxShadow>? navShadow,
   }) {
@@ -457,6 +467,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       navBorder: navBorder ?? this.navBorder,
       inputBorder: inputBorder ?? this.inputBorder,
       pathOutline: pathOutline ?? this.pathOutline,
+      brandTint: brandTint ?? this.brandTint,
       cardShadow: cardShadow ?? this.cardShadow,
       navShadow: navShadow ?? this.navShadow,
     );
@@ -475,6 +486,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       navBorder: Color.lerp(navBorder, other.navBorder, t)!,
       inputBorder: Color.lerp(inputBorder, other.inputBorder, t)!,
       pathOutline: Color.lerp(pathOutline, other.pathOutline, t)!,
+      brandTint: Color.lerp(brandTint, other.brandTint, t)!,
       cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t)!,
       navShadow: BoxShadow.lerpList(navShadow, other.navShadow, t)!,
     );

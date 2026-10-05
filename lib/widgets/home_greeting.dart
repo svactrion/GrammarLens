@@ -14,13 +14,22 @@ import 'package:flutter/material.dart';
 /// - The name keeps the user's text size; it is shortened with "…" only if
 ///   it is longer than a whole line, so it is never lost entirely.
 /// - An empty name shows the greeting word alone.
+///
+/// With [nameStyle] (Home since 1.2.0, the brief's greeting): always two
+/// lines, "Good evening," in [style] above the name in [nameStyle]. The
+/// name wraps rather than being shortened, so a long name is never cut off.
 class HomeGreeting extends StatelessWidget {
   final String word;
   final String name;
   final TextStyle? style;
+  final TextStyle? nameStyle;
 
   const HomeGreeting(
-      {super.key, required this.word, required this.name, this.style});
+      {super.key,
+      required this.word,
+      required this.name,
+      this.style,
+      this.nameStyle});
 
   /// What is shown, and what VoiceOver reads, however it is laid out.
   String get text => name.isEmpty ? word : '$word, $name';
@@ -30,25 +39,41 @@ class HomeGreeting extends StatelessWidget {
     return Semantics(
       label: text,
       excludeSemantics: true,
-      child: LayoutBuilder(builder: (context, constraints) {
-        if (name.isEmpty || _fitsOneLine(context, constraints.maxWidth)) {
-          return Text(text,
-              maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
-        }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: Text('$word,', maxLines: 1, style: style),
-            ),
-            Text(name,
-                maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
-          ],
-        );
-      }),
+      child: nameStyle != null
+          ? _stacked()
+          : LayoutBuilder(builder: (context, constraints) {
+              if (name.isEmpty || _fitsOneLine(context, constraints.maxWidth)) {
+                return Text(text,
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: style);
+              }
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('$word,', maxLines: 1, style: style),
+                  ),
+                  Text(name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: style),
+                ],
+              );
+            }),
+    );
+  }
+
+  Widget _stacked() {
+    if (name.isEmpty) return Text(word, style: style);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$word,', style: style),
+        Text(name, style: nameStyle),
+      ],
     );
   }
 

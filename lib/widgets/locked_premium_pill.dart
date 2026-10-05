@@ -22,7 +22,11 @@ import 'package:flutter/material.dart';
 /// the label in 11/800 and the chevron, all in linkAndActive (≥ 9.2:1 on
 /// the card in both themes). The label's text is unchanged.
 class LockedPremiumPill extends StatelessWidget {
-  const LockedPremiumPill({super.key});
+  /// False for the tag on a section heading (Home's "Topic practice"), which
+  /// is not itself a tap target; the card it labels is.
+  final bool showChevron;
+
+  const LockedPremiumPill({super.key, this.showChevron = true});
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +47,10 @@ class LockedPremiumPill extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(width: 2),
-          Icon(Icons.chevron_right_rounded, size: 14, color: link),
+          if (showChevron) ...[
+            const SizedBox(width: 2),
+            Icon(Icons.chevron_right_rounded, size: 14, color: link),
+          ],
         ],
       ),
     );
