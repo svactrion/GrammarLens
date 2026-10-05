@@ -280,20 +280,23 @@ void main() {
       });
     }
 
-    testWidgets('no length limit: a long name is kept whole and wraps',
-        (tester) async {
+    testWidgets(
+        'at most 40 characters (O2, as in onboarding), no counter; the '
+        'name is kept whole and wraps', (tester) async {
       final storage = await pump(tester, width: 320);
       await tester.tap(find.text('Edit'));
       await tester.pumpAndSettle();
-      expect(
-          tester.widget<TextField>(find.byType(TextField)).maxLength, isNull);
+      expect(tester.widget<TextField>(find.byType(TextField)).maxLength,
+          UserProfile.maxNameLength);
       await tester.enterText(find.byType(TextField), _longName);
       await tester.pump();
+      expect(find.textContaining('/ 40'), findsNothing);
+      final capped = _longName.substring(0, 40).trim();
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
-      expect(storage.saved.single.name, _longName);
+      expect(storage.saved.single.name, capped);
       final name = tester.widget<Text>(find.byKey(SettingsScreen.nameKey));
-      expect(name.data, _longName);
+      expect(name.data, capped);
       expect(name.maxLines, isNull);
       expect(name.overflow, isNull);
       final line = tester.widget<Text>(find.text('Your name')).style!;

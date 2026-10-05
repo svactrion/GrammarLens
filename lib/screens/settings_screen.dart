@@ -1039,6 +1039,13 @@ class _IdentityCard extends StatelessWidget {
                               const EdgeInsets.fromLTRB(20, 20, 20, 88),
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.done,
+                          // The same limit as onboarding (O2), no counter.
+                          maxLength: UserProfile.maxNameLength,
+                          buildCounter: (_,
+                                  {required currentLength,
+                                  required isFocused,
+                                  required maxLength}) =>
+                              null,
                           decoration:
                               const InputDecoration(hintText: 'Your name'),
                           onChanged: (_) => onChanged(),
