@@ -327,9 +327,11 @@ final List<_Screen> _screens = [
   (
     name: 'loading',
     scrolls: false,
-    build: () => Scaffold(
-          appBar: AppBar(title: const Text('Topic Practice')),
-          body: const LoadingView(message: 'Preparing your questions…'),
+    // The weak spot detail's loading (final screens A3: the page's own
+    // header, not a centred app bar title).
+    build: () => const PageLoading(
+          header: Text('Missing Article'),
+          message: 'Preparing your questions…',
         ),
     after: null,
   ),
