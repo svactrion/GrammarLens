@@ -10777,3 +10777,97 @@ Premium entries. No other screen changes.
   - the page in both themes on the iPhone 14 Plus and at 375 × 667, Large
     text, the comparison open and closed;
   - the two onboarding changes: a tap outside the name, the Done key.
+
+## 2026-10-05 (1.2.0 additional screens — Batch 13: paywall footer rhythm, copy, pending analytics, wordmark trial; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner approved Batch 12 on the
+device.** Decision: the paywall's section order stays the mockup's
+(companions → headline → benefits → Compare → plans); the plan cards being
+below the first screen at Large text is accepted.
+
+Unchanged: subscription logic, entitlement, quota, routing, the storage
+schema, every other analytics event, every other screen.
+
+- **[1] Paywall: one rhythm in the footer.**
+  - **Before** (measured, real font): the button → terms 6 pt, terms →
+    links 14.5 pt, links → "Maybe later" 27.5 pt, "Maybe later" → screen
+    bottom 17 pt (375 × 667) / 51 pt (390 × 844, 34 pt home indicator).
+    Each text button was a 44 pt box with its label centred, so two stacked
+    targets always put ~27 pt between their labels.
+  - **Now:** the links and "Maybe later" are drawn 30 pt tall and keep a
+    44 pt target by taking taps in the space next to them that nothing
+    else uses (`_TapArea`): the links reach 14 pt up, over the terms' lower
+    edge and the 7 pt gap above them (and, when the three wrap, into the
+    14 pt gap between rows); "Maybe later" reaches 14 pt down into the
+    bottom margin, which is now a spacer inside the footer (the home
+    indicator's inset + 4, at least 14). A tap there goes to the button
+    under it. The targets stay edge to edge, none overlapping another.
+
+    | | 390 × 844 Medium | 390 Large | 375 × 667 Medium | 375 × 667 Large |
+    |---|---|---|---|---|
+    | Footer height | 210 → 189 | 211 → 190 | 176 → 165 | 196 → 185 |
+    | Terms → links | 14.5 | 13.5 | 14.5 | 13.5 |
+    | Links → "Maybe later" | 27.5 → 13.5 | 25.5 → 11.5 | 27.5 → 13.5 | 25.5 → 11.5 |
+    | "Maybe later" → screen bottom | 51 → 44 | 50 → 43 | 17 → 20 | 16 → 19 |
+    | Targets (links, "Maybe later") | 44 × 44 | 44 | 44 | 44 |
+
+    At 390 pt the space under "Maybe later" is mostly the home indicator
+    (34 pt); its target reaches 10 pt into that zone, its text does not.
+    At 320 × 568 the links wrap to two rows; every target is still 44 pt.
+  - Tests: the footer test measures a target by hit-testing instead of the
+    ink well's box (the assertion, ≥ 44 pt, is unchanged); "links
+    directly under the disclosure" allows the links' target to start up to
+    14 pt over the (non-interactive) terms. New: the gaps and a tap 13 pt
+    above Restore (over the terms) and 13 pt below "Maybe later" reach
+    their buttons. A measuring tool
+    (`tool/design_measure/v120/paywall_footer_measure_test.dart`) and
+    renders at 390 and 375 × 667, Medium and Large, light and dark:
+    `docs/design/1.2.0-additional/batch13/`.
+- **[2] Paywall copy:** "Trial pricing isn't available right now" →
+  "Prices aren't available right now" (a trial is no longer promised to
+  everyone). Tests: the four finders.
+- **[3] Analytics: `purchase_result` outcome `pending`.** Ask to Buy or a
+  deferred payment now logs `purchase_result` with `outcome = pending`
+  (Batch 12 logged none); no new event or parameter. **No double count:**
+  an approval that comes later reaches the app only as an entitlement
+  change (RevenueCat's customer info → Home's and Review's access
+  listeners), and nothing logs `purchase_result` there, so one attempt is
+  one event; an approved pending purchase stays `pending` in analytics
+  (RevenueCat records the transaction). `analytics-plan.md` updated.
+  Tests: the parameter test for `pending`; the paywall's pending test
+  expects one `purchase_result` with `pending`.
+- **[4] Debug: a two-colour wordmark trial.**
+  - `BrandWordmark` (new, `lib/widgets/brand_wordmark.dart`) draws every
+    in-app "GrammarLens": Home's title, the onboarding header, the paywall
+    header. The debug panel's "Two-colour wordmark" (section "Brand", off
+    by default, memory only, debug and profile builds like the panel) turns
+    "Lens" brandOrange (`colorScheme.primary`, #FF7A1A / #FF8A3D) on all of
+    them at once, through a `ValueNotifier`, with no restart. Size, weight,
+    letter spacing and width are the same (only a colour span); a screen
+    reader hears "GrammarLens". In a release build it is always off.
+  - Left alone: the launch screen and its iOS image (decision); Welcome,
+    whose light page is the brand orange itself (an orange "Lens" there
+    measures 1.00:1 and would vanish); the theme preview's font sample.
+  - Contrast (information; a logotype is exempt from WCAG contrast):
+
+    | | Light page #F3EFE6 | Light card #FFFBF4 | Dark page #151517 | Dark card #252528 |
+    |---|---|---|---|---|
+    | "Lens" (brandOrange) | 2.27:1 | 2.53:1 | 7.78:1 | 6.52:1 |
+    | "Grammar" (textPrimary) | 14.96:1 | 16.64:1 | 15.51:1 | 13.00:1 |
+
+    The three wordmarks sit on the page colour.
+  - Tests (`brand_wordmark_test`, 7): off by default, one span, light and
+    dark; on: "Grammar" inherits the text colour, "Lens" brandOrange, same
+    width, one word for screen readers, and back off without a restart;
+    a release build ignores the switch; the panel's switch drives a
+    wordmark already on screen; every on-screen "GrammarLens" in `lib/`
+    goes through the widget except the allowed files.
+- **[Tests]** `flutter analyze` clean; **1,721 passed, 0 failed** (1,712
+  after Batch 12).
+- **[Not measured]** On a device:
+  - the paywall footer at 390 pt and on a small phone: the spacing, and
+    tapping just above Restore/Terms/Privacy and just below "Maybe later";
+  - the two-colour wordmark in both themes on Home, onboarding and the
+    paywall (Debug → Brand);
+  - an Ask to Buy purchase in the sandbox: the `pending` event in
+    DebugView, and no second event when it is approved.
