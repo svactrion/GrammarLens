@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/avatar.dart';
 import '../models/learning_goal.dart';
 import '../models/user_profile.dart';
+import '../theme.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_carousel.dart';
 import '../widgets/brand_scaffold.dart';
@@ -213,7 +214,14 @@ class _GoalOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final onAccent = colorScheme.onSecondary;
+    // The selected card is a filled, button-like surface: the app's button
+    // colors (`AppPalette`), not `secondary`, which 1.2.0 made the dark
+    // link color (#B4C8FF). In dark mode it also takes the button's
+    // #5C7CFA edge (owner decision Q1): the navy fill alone is 1.77:1
+    // against the dark page.
+    final palette = AppPalette.of(context);
+    final onAccent = palette.onButton;
+    final selectedEdge = palette.buttonEdge;
     final titleColor = selected ? onAccent : colorScheme.onSurface;
     final subtitleColor = selected ? onAccent : colorScheme.onSurfaceVariant;
     final iconColor = selected ? onAccent : colorScheme.onSurfaceVariant;
@@ -233,7 +241,7 @@ class _GoalOption extends StatelessWidget {
     );
 
     return Material(
-      color: selected ? colorScheme.secondary : unselectedBackground,
+      color: selected ? palette.button : unselectedBackground,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -243,7 +251,11 @@ class _GoalOption extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: selected ? null : unselectedBorder,
+            border: selected
+                ? (selectedEdge == null
+                    ? null
+                    : Border.all(color: selectedEdge))
+                : unselectedBorder,
           ),
           child: Row(
             children: [
