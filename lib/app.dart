@@ -23,6 +23,7 @@ import 'utils/app_messenger.dart';
 import 'utils/debug_tools.dart';
 import 'utils/loading_view.dart';
 import 'widgets/floating_nav_shell.dart';
+import 'widgets/tab_fade_through.dart';
 import 'widgets/monthly_climb/climb_debug_controls.dart';
 
 class GrammarLensApp extends StatefulWidget {
@@ -425,7 +426,10 @@ class _GrammarLensAppState extends State<GrammarLensApp>
 
           return Scaffold(
             body: FloatingNavShell(
-              body: IndexedStack(index: _tabIndex, children: screens),
+              body: TabFadeThrough(
+                index: _tabIndex,
+                child: IndexedStack(index: _tabIndex, children: screens),
+              ),
               tabs: _navTabs,
               selectedIndex: _tabIndex,
               onTabChange: _switchTab,
