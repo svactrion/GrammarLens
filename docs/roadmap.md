@@ -110,6 +110,13 @@ below with its source):
   `error_correction` sentence that is already correct, a hint that
   contradicts the key, or a predicted "wrong" answer that is right all
   pass it (P12).
+- Question screen (Practice and Daily Test): when an answer is longer than
+  one line, the answer field scrolls sideways instead of wrapping (the
+  `TextField` in `practice_screen.dart` and `daily_test_screen.dart` is
+  single-line). The user cannot see the whole answer, and getting back to
+  its start is awkward. Recorded 2026-10-05 (owner); also in 1.1.0. To be
+  fixed together with the question screen work, which is outside the
+  1.2.0 redesign's scope (its keyboard behaviour is designed separately).
 - Not measured: frame times and memory on a device.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
