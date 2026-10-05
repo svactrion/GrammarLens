@@ -9931,3 +9931,104 @@ question screen and Topic Practice are not touched.
   - on Home in light mode, the end of the flight back from the picker: the
     flying avatar brings its own ellipse and lands on the hero's ground
     shadow, so two shadows may show for a moment.
+
+## 2026-10-05 (1.2.0 redesign — Batch 8: owner device feedback on Batch 7; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 7 on an iPhone 14
+Plus** and asked for five corrections, each in its own commit. No new
+screen. State, routing, premium/quota checks, AI/proxy calls, the storage
+schema, analytics event definitions and medal/score math are unchanged;
+the question screen and Topic Practice are not touched.
+
+- **[1] The nav bar rose with the keyboard** (editing the name on Profile).
+  - **Cause:** not the shell reading `viewInsets`. app.dart wrapped the
+    shell in a `Scaffold` with the default `resizeToAvoidBottomInset:
+    true`; with the keyboard open it shrank its body, the shell's `Stack`,
+    by the keyboard's height, and the bar, `Positioned` at the Stack's
+    bottom, moved up with it.
+  - **Fix, in the shell only:** `FloatingNavShell` is now its own root
+    `Scaffold` with `resizeToAvoidBottomInset: false` (app.dart's Scaffold
+    is gone). The bar keeps its place and the keyboard covers it. The
+    inset still reaches each tab's own Scaffold (`BrandScaffold`), which
+    resizes its list, so a focused field on any tab stays in view (Home and
+    Review have no text field today). The name field's scroll padding
+    (88 pt below) also brings the Cancel row into view.
+  - Tests: Profile with a 336 pt keyboard inset (the bar's rect unchanged,
+    under the keyboard's top; the field, Save and Cancel above it); the
+    shell alone with a field in a tab.
+- **[2] The medal detail is back to its pre-Batch 7 form.**
+  `showMedalDetail` is as at `efa5b54`: the medal at 144 pt over the
+  darkened screen, the month, theme, outcome and steps · points lines (the
+  Welcome badge: "Welcome to the climb" and "Earned in …" / "Not earned
+  yet"), a tap anywhere closes it, 200 ms, .8 → 1 `easeOut`, fade only with
+  reduce motion. Batch 7's card, its texts ("Earned" / "Not earned yet" as
+  a status, "Reach T points to earn …", "N points to go.", "The beginning
+  of your journey.", the close button) and its focus handling are removed.
+  The detail's unearned medal is again at .5. **Kept from Batch 7:** the
+  strip (no background, Q7's order, the running month at .38), "N earned"
+  and the separate progress card.
+  - **Why:** the owner preferred the earlier detail on the device.
+  - Tests: Batch 7's detail tests (240 ms, focus, the new lines) are
+    replaced by the pre-Batch 7 ones, as written at `efa5b54`.
+- **[3] Appearance segments: the selected fill covers its cell.**
+  - **Cause:** the control was a tile with a 4 pt inset around a
+    `SegmentedButton` whose segments used Material's padded tap target:
+    each cell was 48 pt tall, the segment painted 40 pt in it, so the blue
+    box sat inside a larger cell.
+  - **Fix (`AppSegmentedButton`, so Theme and Text size alike):** the
+    control is the tile itself (radius 14, no inset); the segments are at
+    least 48 pt tall, set through the density (+8 pt; `SegmentedButton`
+    does not pass `minimumSize` to its segments) with the tap target
+    shrink-wrapped; the cells sit edge to edge. The selected fill meets
+    the tile's edges and takes its 14 pt corners at either end; a middle
+    fill has square corners (`SegmentedButton` clips rectangles to the
+    control's shape). The 320 pt rule (no theme icons where a label would
+    break) is kept, now measured against a third of the full width.
+  - Renders, light and dark, before / after:
+    `docs/design/1.2.0/batch8/segments_390_before_after_light_dark.jpg`.
+  - Test: every segment, the selected one included, is the control's full
+    height and a third of its width, in both themes.
+- **[4] No navy edge on non-navy buttons in dark mode.** The theme's filled
+  button carries the #5C7CFA edge (Q1) in dark mode; any `FilledButton`
+  with another fill inherited it unless it turned it off.
+  - **Scan** (every `FilledButton` in `lib/`):
+    - had the edge, now none: Data's "Reset progress data" and the confirm
+      button of `DestructiveDialogActions` (the reset confirmation, and
+      the question screens' leave dialog, which use the shared widget; no
+      question-screen file changed). Both use the new
+      `destructiveButtonStyle()` in `theme.dart`;
+    - already none: Review's orange "See Premium" (Batch 5);
+    - the navy fill, the edge correct: all the others, among them Home's
+      Daily Test button, Welcome's "Get started", Onboarding's "Continue",
+      the profile Save, Premium, results, the debug panel's tonal button
+      (the theme's navy too). Onboarding's selected goal and Review's used
+      card are navy surfaces, not buttons, and keep their deliberate edge.
+  - Test: `button_edge_test.dart`: in dark mode only navy-filled buttons
+    have the edge (the theme's button, the dialog's Delete, the orange See
+    Premium, Data's reset), none in light; checked to fail without the fix.
+- **[5] Tab switches fade through again.** `TabFadeThrough` over the
+  `IndexedStack` and its tests are restored as at `efa5b54` (220 ms
+  `easeOut`, the new tab fades in from 0.98, the old one goes at once;
+  immediate with reduce motion; the nav bar's selection at once; every
+  switch: the nav bar, Home's call-out, Review's "Go to Daily Test").
+  `TabSlideSwitcher` and its tests are removed, and the comments that
+  named it say `IndexedStack` again.
+  - **Why:** on the device the owner found the 500 ms horizontal slide
+    exaggerated for tabs.
+- **[Copy]** Back to the pre-Batch 7 detail texts (item 2); nothing else.
+- **[Tests]** `flutter analyze` clean; **1,609 passed, 0 failed** (1,612
+  after Batch 7).
+  - New: the keyboard tests (2), the segment cell test (1),
+    `button_edge_test.dart` (2).
+  - Restored as at `efa5b54`: `tab_fade_through_test.dart` (4) and the
+    medal detail tests; removed: `tab_slide_switcher_test.dart` (9) and
+    Batch 7's detail tests.
+  - Changed: none of the behaviour tests.
+  - A lint fix in the keyboard tests went in its own commit.
+- **[Not measured]** On a device:
+  - the name editor with the keyboard: the bar hidden, the field and its
+    buttons in view, the page after the keyboard closes;
+  - the segments' look in both themes;
+  - "Reset progress data" and the reset dialog in dark mode;
+  - the tab fade (as approved after Batch 6);
+  - the medal detail as before Batch 7.
