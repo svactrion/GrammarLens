@@ -23,7 +23,7 @@ import 'utils/app_messenger.dart';
 import 'utils/debug_tools.dart';
 import 'utils/loading_view.dart';
 import 'widgets/floating_nav_shell.dart';
-import 'widgets/tab_fade_through.dart';
+import 'widgets/tab_slide_switcher.dart';
 import 'widgets/monthly_climb/climb_debug_controls.dart';
 
 class GrammarLensApp extends StatefulWidget {
@@ -253,7 +253,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   /// Every bottom-nav tab switch goes through this instead of setting
   /// `_tabIndex` directly, so a message left showing on the tab being left
   /// (e.g. an error banner) doesn't visually follow the user to the next
-  /// one — this is an `IndexedStack` swap, not a Navigator route change,
+  /// one — this is a `TabSlideSwitcher` swap, not a Navigator route change,
   /// so `AppMessenger.navigatorObserver` never sees it and can't clear it
   /// on its own.
   void _switchTab(int index) {
@@ -292,9 +292,9 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   /// Home's avatar now opens the same full-screen picker Settings does,
   /// via a real route push (not `_switchTab`) so the `Hero` flight in
   /// `HomeScreen`/`AvatarPickerScreen` has an actual route transition to
-  /// animate across — a tab switch is an `IndexedStack` swap, which Hero
-  /// cannot animate through at all: it has no push/pop transition for a
-  /// flight to run during. `MediaQuery.disableAnimationsOf` is checked
+  /// animate across — a tab switch is a `TabSlideSwitcher` swap, which Hero
+  /// cannot animate through at all: it is not a route, so there is no
+  /// push/pop for a flight to run during. `MediaQuery.disableAnimationsOf` is checked
   /// explicitly, the same manual-gating pattern this app already uses
   /// everywhere else motion appears (e.g. `AvatarCarousel`'s own pop
   /// animation) — Flutter's route transitions don't automatically shorten
@@ -396,7 +396,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               storageService: _storageService,
               analyticsService: _analyticsService,
               subscriptionService: _subscriptionService,
-              // IndexedStack keeps this screen's State alive across tab
+              // TabSlideSwitcher keeps this screen's State alive across tab
               // switches instead of recreating it, so initState alone won't
               // pick up errors saved while a different tab (e.g. after a
               // Home practice session) was active. Passing whether this tab
@@ -426,10 +426,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
 
           return Scaffold(
             body: FloatingNavShell(
-              body: TabFadeThrough(
-                index: _tabIndex,
-                child: IndexedStack(index: _tabIndex, children: screens),
-              ),
+              body: TabSlideSwitcher(index: _tabIndex, children: screens),
               tabs: _navTabs,
               selectedIndex: _tabIndex,
               onTabChange: _switchTab,
