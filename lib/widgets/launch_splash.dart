@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../theme.dart';
 import 'brand_mark.dart';
+import 'brand_wordmark.dart';
 
 /// Geometry of the launch splash, shared with the iOS static launch screen.
 ///
@@ -302,8 +303,7 @@ class _LaunchSplashState extends State<LaunchSplash>
                       opacity: _reduceMotion
                           ? kAlwaysCompleteAnimation
                           : _wordmarkOpacity,
-                      child: Text(
-                        'GrammarLens',
+                      child: BrandWordmark(
                         textAlign: TextAlign.center,
                         textDirection: TextDirection.ltr,
                         maxLines: 1,
