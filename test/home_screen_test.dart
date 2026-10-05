@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter/rendering.dart' show RenderParagraph;
@@ -1353,6 +1354,53 @@ void main() {
       expect(toReview, 1);
       // A tab switch, not a pushed route.
       expect(find.byType(PremiumScreen), findsNothing);
+    });
+
+    testWidgets(
+        'the whole card is the tap target (owner, Batch 5): any point of it '
+        'switches to Review', (tester) async {
+      var toReview = 0;
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
+          onGoToReview: () => toReview++);
+      final card = find.byKey(HomeScreen.reviewCalloutKey);
+      await tester.ensureVisible(card);
+      await tester.pumpAndSettle();
+      final rect = tester.getRect(card);
+      final points = [
+        rect.topLeft + const Offset(6, 6),
+        rect.topRight + const Offset(-6, 6),
+        rect.center,
+        rect.bottomLeft + const Offset(6, -6),
+        rect.bottomRight + const Offset(-6, -6),
+      ];
+      for (final point in points) {
+        await tester.tapAt(point);
+        await tester.pumpAndSettle();
+      }
+      expect(toReview, points.length);
+    });
+
+    testWidgets(
+        'one semantics button, no button inside it, labelled by its text',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpHome(tester,
+          storageService: _FakeStorageService()..weakSpots = [_weakSpot()],
+          onGoToReview: () {});
+      final card = find.byKey(HomeScreen.reviewCalloutKey);
+      expect(
+          find.descendant(
+              of: card,
+              matching: find.byWidgetPredicate(
+                  (w) => w is ButtonStyleButton || w is InkWell)),
+          findsNothing);
+      final data = tester.getSemantics(card).getSemanticsData();
+      expect(data.flagsCollection.isButton, isTrue);
+      expect(data.hasAction(SemanticsAction.tap), isTrue);
+      expect(data.label, contains('One free practice. Every day.'));
+      expect(data.label, contains('Go to Review'));
+      semantics.dispose();
     });
 
     testWidgets('not shown to a premium user (no quota to describe)',

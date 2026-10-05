@@ -140,6 +140,9 @@ class HomeScreen extends StatefulWidget {
   /// 22 pt at the default text size.
   static const greetingScale = 1.1;
 
+  /// The Review call-out's tap target, for tests.
+  static const reviewCalloutKey = ValueKey('home_review_callout');
+
   /// The Daily Test card, for tests that measure or tap it.
   static const dailyTestCardKey = ValueKey('home_daily_test_card');
 
@@ -1677,57 +1680,77 @@ class _TopicTile extends StatelessWidget {
 
 /// The end of Home for a free user (1.2.0, owner decision Q15), replacing
 /// the quiet Premium row: one free weak spot practice a day lives in
-/// Review, and this switches to the Review tab.
+/// Review, and this switches to the Review tab. The whole card is the one
+/// tap target and one semantics button (owner, Batch 5); "Go to Review" is
+/// its label, not a second button.
 class _ReviewCallout extends StatelessWidget {
   final VoidCallback? onTap;
 
   const _ReviewCallout({required this.onTap});
+
+  static const _radius = 18.0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final onInfo = colorScheme.onSecondaryContainer;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(15, 15, 15, 4),
-      decoration: BoxDecoration(
+    final link = colorScheme.secondary;
+    return Semantics(
+      container: true,
+      button: true,
+      child: Material(
         color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Icon(Icons.auto_awesome_rounded, size: 19, color: onInfo),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
+        borderRadius: BorderRadius.circular(_radius),
+        child: InkWell(
+          key: HomeScreen.reviewCalloutKey,
+          borderRadius: BorderRadius.circular(_radius),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('One free practice. Every day.',
-                    style: theme.textTheme.labelLarge?.copyWith(color: onInfo)),
-                const SizedBox(height: 5),
-                Text(
-                  'Choose one weak spot in Review.\n'
-                  'Get AI feedback on your answers.',
-                  style: theme.textTheme.bodySmall?.copyWith(color: onInfo),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child:
+                      Icon(Icons.auto_awesome_rounded, size: 19, color: onInfo),
                 ),
-                TextButton.icon(
-                  onPressed: onTap,
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(0, 44),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('One free practice. Every day.',
+                          style: theme.textTheme.labelLarge
+                              ?.copyWith(color: onInfo)),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Choose one weak spot in Review.\n'
+                        'Get AI feedback on your answers.',
+                        style:
+                            theme.textTheme.bodySmall?.copyWith(color: onInfo),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text('Go to Review',
+                                style: theme.textTheme.labelLarge
+                                    ?.copyWith(color: link)),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(Icons.arrow_forward_rounded,
+                              size: 15, color: link),
+                        ],
+                      ),
+                    ],
                   ),
-                  iconAlignment: IconAlignment.end,
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 15),
-                  label: const Text('Go to Review'),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
