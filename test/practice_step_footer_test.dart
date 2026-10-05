@@ -112,13 +112,17 @@ void main() {
     final button =
         tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Next'));
     final theme = buildAppTheme(Brightness.light);
-    final resolved =
-        button.style!.backgroundColor!.resolve({WidgetState.disabled});
-    final resolvedFg =
-        button.style!.foregroundColor!.resolve({WidgetState.disabled});
+    final palette = theme.extension<AppPalette>()!;
+    // 1.2.0: the footer no longer styles the button itself; the app's
+    // filled button theme carries the explicit disabled pairing.
+    expect(button.style, isNull);
+    final style = theme.filledButtonTheme.style!;
+    final resolved = style.backgroundColor!.resolve({WidgetState.disabled});
+    final resolvedFg = style.foregroundColor!.resolve({WidgetState.disabled});
 
-    expect(resolved, theme.colorScheme.surfaceContainerHighest);
-    expect(resolvedFg, theme.colorScheme.onSurfaceVariant);
+    expect(resolved, palette.disabledFill);
+    expect(resolvedFg, palette.disabledLabel);
+    expect(resolved!.a, 1.0, reason: 'opaque, not a translucent overlay');
     // Specifically not the page's own orange or a translucent variant of
     // it — the failure mode this guards against.
     expect(resolved, isNot(theme.colorScheme.primary));

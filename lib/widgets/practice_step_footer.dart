@@ -38,8 +38,6 @@ class PracticeStepFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Row(
       children: [
         SizedBox(
@@ -54,17 +52,12 @@ class PracticeStepFooter extends StatelessWidget {
         Expanded(
           child: SizedBox(
             height: _height,
+            // Colors from the app's filled button theme, enabled and
+            // disabled (1.2.0: primaryButton, and the opaque disabled
+            // pairing in `AppPalette`) — never M3's translucent default,
+            // which made onboarding's disabled Continue nearly invisible.
             child: FilledButton(
               onPressed: primaryEnabled ? onPrimary : null,
-              style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.secondary,
-                foregroundColor: colorScheme.onSecondary,
-                // Same neutral, opaque pairing _PracticeModeCard already
-                // uses for its locked state — proven legible on this
-                // app's orange scaffold, not a new color decision.
-                disabledBackgroundColor: colorScheme.surfaceContainerHighest,
-                disabledForegroundColor: colorScheme.onSurfaceVariant,
-              ),
               child: Text(primaryLabel),
             ),
           ),
