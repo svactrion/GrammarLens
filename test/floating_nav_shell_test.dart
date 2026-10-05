@@ -143,10 +143,10 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: FloatingNavShell(
         body: Scaffold(
-          body: ListView(children: [
-            const SizedBox(height: 600),
-            const TextField(key: ValueKey('field')),
-            const SizedBox(height: 600),
+          body: ListView(children: const [
+            SizedBox(height: 600),
+            TextField(key: ValueKey('field')),
+            SizedBox(height: 600),
           ]),
         ),
         tabs: const [

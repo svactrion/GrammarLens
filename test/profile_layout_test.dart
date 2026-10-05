@@ -465,7 +465,7 @@ void main() {
     expect(tester.getRect(find.byKey(FloatingNavShell.barKey)), bar);
     expect(bar.top, greaterThan(844 - 336.0),
         reason: 'the bar is where the keyboard is, so the keyboard hides it');
-    final keyboardTop = 844 - 336.0;
+    const keyboardTop = 844 - 336.0;
     for (final f in [
       find.byType(TextField),
       find.widgetWithText(FilledButton, 'Save'),
