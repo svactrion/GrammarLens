@@ -2562,7 +2562,8 @@ void main() {
 
     testWidgets(
         'a pending purchase (Ask to Buy) has its own message, opens nothing '
-        'and logs no purchase_result yet (O10)', (tester) async {
+        'and logs purchase_result with outcome pending, once (O10)',
+        (tester) async {
       final analytics = _FakeAnalyticsService();
       await pumpPremium(
           tester,
@@ -2576,8 +2577,11 @@ void main() {
       expect(find.textContaining("couldn't start"), findsNothing);
       expect(find.textContaining('unlocked'), findsNothing);
       expect(analytics.calls.map((c) => c.name), contains('purchase_started'));
-      expect(
-          analytics.calls.where((c) => c.name == 'purchase_result'), isEmpty);
+      final results =
+          analytics.calls.where((c) => c.name == 'purchase_result').toList();
+      expect(results, hasLength(1));
+      expect(results.single.parameters,
+          {'plan': AnalyticsService.planAnnual, 'outcome': 'pending'});
       expect(find.text('Maybe later'), findsOneWidget);
     });
 

@@ -56,7 +56,7 @@ changed. Line numbers below are from that starting point.
 | `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `review_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8; `review_quota`, Review's "used today" card, added 2026-10-05 in 1.2.0 Batch 5: a new value of the existing parameter, no new event) | `lib/screens/premium_screen.dart:128` |
 | `paywall_dismissed` | `source`, `method` = `close_button` / `maybe_later` / `system_back` | `premium_screen.dart:229`, `:270` |
 | `purchase_started` | `plan` = `monthly` / `annual` | `premium_screen.dart:176` |
-| `purchase_result` | `plan`, `outcome` = `success` / `cancelled` / `error` | `premium_screen.dart` (`_startPurchase`). 1.2.0: a **pending** purchase (Ask to Buy) logs no `purchase_result` — it has no result yet; the vocabulary is unchanged (O10) |
+| `purchase_result` | `plan`, `outcome` = `success` / `cancelled` / `error` / `pending` | `premium_screen.dart` (`_startPurchase`). **1.2.0 (owner, 2026-10-05):** `pending` = Ask to Buy or a deferred payment, waiting for approval (O10); no new event or parameter. An approval that comes later reaches the app only as an entitlement change and logs nothing, so each attempt is counted once; a pending purchase that is later approved stays `pending` in analytics (RevenueCat records the transaction itself) |
 
 ### Gaps that matter for this plan
 

@@ -196,17 +196,16 @@ class _PremiumScreenState extends State<PremiumScreen> {
         PurchaseOutcome.failure => _PurchaseState.error,
       };
     });
-    // A pending purchase has no result yet (O10): `purchase_result` keeps its
-    // three outcomes, and a later approval arrives as an entitlement change.
+    // A pending purchase (Ask to Buy) is its own outcome (O10). Its later
+    // approval arrives as an entitlement change and logs no second
+    // purchase_result, so one attempt is counted once.
     final outcomeId = switch (outcome) {
       PurchaseOutcome.success => 'success',
       PurchaseOutcome.cancelled => 'cancelled',
       PurchaseOutcome.failure => 'error',
-      PurchaseOutcome.pending => null,
+      PurchaseOutcome.pending => 'pending',
     };
-    if (outcomeId != null) {
-      widget.analyticsService.purchaseResult(plan: plan, outcome: outcomeId);
-    }
+    widget.analyticsService.purchaseResult(plan: plan, outcome: outcomeId);
   }
 
   Future<void> _restore() async {

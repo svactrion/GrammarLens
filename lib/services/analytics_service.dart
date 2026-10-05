@@ -322,9 +322,11 @@ class AnalyticsService {
   }
 
   /// How a purchase attempt ended — [outcome] is `'success'`,
-  /// `'cancelled'`, or `'error'` (`PurchaseOutcome.failure`'s own event
+  /// `'cancelled'`, `'error'` (`PurchaseOutcome.failure`'s own event
   /// name here, matching the wording used everywhere else this outcome is
-  /// shown to the user rather than the enum's internal Dart name).
+  /// shown to the user rather than the enum's internal Dart name), or
+  /// `'pending'` (1.2.0: Ask to Buy or a deferred payment, waiting for
+  /// approval; an approval that comes later is not logged again).
   Future<void> purchaseResult({
     required String plan,
     required String outcome,

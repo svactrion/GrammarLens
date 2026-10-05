@@ -241,6 +241,19 @@ void main() {
       expectOnly('purchase_started', {'plan': 'annual'});
     });
 
+    test(
+        'purchase_result: a pending purchase is its own outcome value, with '
+        'the same two parameters (1.2.0)', () async {
+      await service.purchaseResult(
+        plan: AnalyticsService.planAnnual,
+        outcome: 'pending',
+      );
+      expectOnly('purchase_result', {
+        'plan': 'annual',
+        'outcome': 'pending',
+      });
+    });
+
     test('purchase_result carries only plan and outcome', () async {
       await service.purchaseResult(
         plan: AnalyticsService.planMonthly,
