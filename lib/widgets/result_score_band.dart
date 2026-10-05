@@ -37,7 +37,7 @@ class ResultScoreBand extends StatelessWidget implements PreferredSizeWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.headlineSmall
-              ?.withWeight(FontWeight.w700)
+              ?.withWeight(FontWeight.w900)
               .copyWith(color: fg),
         ),
       ),

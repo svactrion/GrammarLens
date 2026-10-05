@@ -229,7 +229,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       'GrammarLens',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineLarge
-                          ?.withWeight(FontWeight.w700)
+                          ?.withWeight(FontWeight.w900)
                           .copyWith(
                               fontSize: 34,
                               letterSpacing: -0.5,

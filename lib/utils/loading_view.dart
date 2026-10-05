@@ -80,7 +80,7 @@ class _LoadingViewState extends State<LoadingView>
                 widget.message,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium
-                    ?.withWeight(FontWeight.w600)
+                    ?.withWeight(FontWeight.w800)
                     .copyWith(color: foreground),
               ),
             ],

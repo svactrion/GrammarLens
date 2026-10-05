@@ -53,7 +53,7 @@ class AiConsentScreen extends StatelessWidget {
                     child: Text(
                       'Feedback on your answers',
                       style: theme.textTheme.titleLarge
-                          ?.withWeight(FontWeight.w700),
+                          ?.withWeight(FontWeight.w800),
                     ),
                   ),
                   const SizedBox(height: 8),

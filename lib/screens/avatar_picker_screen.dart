@@ -161,7 +161,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                     Text(
                       'Pick your study buddy',
                       style: theme.textTheme.titleMedium
-                          ?.withWeight(FontWeight.w700),
+                          ?.withWeight(FontWeight.w800),
                     ),
                     const SizedBox(height: 32),
                     // P1: the carousel is as wide as the content column on

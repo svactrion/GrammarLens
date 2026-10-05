@@ -61,7 +61,7 @@ class PremiumOfferCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Keep practicing',
-              style: theme.textTheme.titleLarge?.withWeight(FontWeight.w700),
+              style: theme.textTheme.titleLarge?.withWeight(FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
