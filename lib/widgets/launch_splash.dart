@@ -19,7 +19,8 @@ class LaunchSplashLayout {
   /// Size of the splash relative to its first version (logo 100 pt,
   /// wordmark 34 pt). The owner asked for 1.4 after the device check; 1.25
   /// is the largest that keeps 24 pt on each side of the wordmark at 320 pt
-  /// wide (the wordmark is 216.7 pt wide at 1.0, so 270.9 pt at 1.25).
+  /// wide (the wordmark is 215.4 pt wide at 1.0 in 900 with Home's spacing, so 269.2 pt
+  /// at 1.25).
   static const double scale = 1.25;
 
   /// The logo's box, in logical points (BrandMark's 100-unit space, scaled).
@@ -31,9 +32,15 @@ class LaunchSplashLayout {
   /// Space between the logo's box and the wordmark.
   static const double wordmarkGap = 16 * scale;
 
-  /// The wordmark's font size and letter spacing.
+  /// The wordmark's font size and letter spacing. The spacing is Home's
+  /// brand ratio (−1.4 at its 34 pt brief size), so the two read as one
+  /// logotype (final pass, owner: the splash was thinner than Home's; it
+  /// had been 700 with −0.5 per 34 pt).
   static const double wordmarkFontSize = 34 * scale;
-  static const double wordmarkLetterSpacing = -0.5 * scale;
+  static const double wordmarkLetterSpacing = -1.4 * scale;
+
+  /// The wordmark's weight: Home's brand weight (the brief's 900).
+  static const FontWeight wordmarkWeight = FontWeight.w900;
 
   /// The wordmark's height in NunitoSans at [wordmarkFontSize] (measured;
   /// `test/launch_gate_test.dart` checks it with the bundled font).
@@ -321,7 +328,7 @@ class _LaunchSplashState extends State<LaunchSplash>
                                 letterSpacing:
                                     LaunchSplashLayout.wordmarkLetterSpacing,
                                 color: colorScheme.onSurface)
-                            .withWeight(FontWeight.w700),
+                            .withWeight(LaunchSplashLayout.wordmarkWeight),
                       ),
                     ),
                   ),

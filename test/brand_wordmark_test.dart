@@ -90,6 +90,27 @@ void main() {
     });
   }
 
+  testWidgets(
+      'the launch screen\'s wordmark has Home\'s weight, wght and letter '
+      'spacing ratio (final pass, owner)', (tester) async {
+    final home = buildAppTheme(Brightness.light)
+        .textTheme
+        .displaySmall!
+        .copyWith(letterSpacing: -1.4);
+    await tester.pumpWidget(const MediaQuery(
+      data: MediaQueryData(size: Size(390, 844)),
+      child: LaunchSplash(),
+    ));
+    await tester.pump(LaunchTiming.intro);
+    final splash = (paragraph(tester).text as TextSpan).style!;
+    expect(splash.fontWeight, home.fontWeight);
+    expect(splash.fontWeight, FontWeight.w900);
+    expect(splash.fontVariations, home.fontVariations);
+    // Home's ratio at the brief's 34 pt: -1.4 / 34.
+    expect(splash.letterSpacing! / splash.fontSize!,
+        closeTo(-1.4 / 34, 0.0001));
+  });
+
   for (final brightness in Brightness.values) {
     testWidgets(
         'Welcome (owner, 2026-10-06): two colours on the page colour in '

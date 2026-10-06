@@ -11092,3 +11092,34 @@ or the debug override) with a real weak spot set; the Data switch with
 the system permission screen; the reset; both Credits links in Safari;
 the dark Welcome; the AI consent arrow glyph; the new orange buttons in
 both themes.
+
+## 2026-10-06 (1.2.0 — the launch screen's wordmark at Home's weight; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Only `launch_splash.dart`; nothing else, no
+behaviour change, the iOS launch image untouched.
+
+- **Cause:** the splash draws its wordmark in a style of its own (a
+  logotype, fixed like the logo, pinned in Batch 1) at weight **700**
+  with −0.5 spacing per 34 pt, while Home's `BrandWordmark` uses
+  `displaySmall` at **900** (`wght` 900) with −1.4. It went through
+  `withWeight()` correctly; the value was simply lighter. Resolved,
+  side by side (real font):
+
+  | | size | weight / `wght` | letter spacing | width |
+  |---|---|---|---|---|
+  | Home, Small / Medium / Large | 34 / 37.1 / 40.5 | 900 / 900 | −1.4 | 215.4 / 236.3 / 259.4 |
+  | Splash before | 42.5 | 700 / 700 | −0.625 (−0.015 × size) | 270.9 |
+  | Splash now | 42.5 | 900 / 900 | −1.75 (−0.041 × size, Home's ratio at 34 pt) | 269.2 |
+- **Fix:** weight 900 and Home's spacing ratio, still through
+  `BrandWordmark` (it already was). Size stays 42.5 pt: at 900 with
+  Home's spacing the wordmark is 1.7 pt narrower than before, so 320 pt
+  keeps its 24 pt margins (25.4 pt). Height, gap and centering are
+  unchanged (the existing layout and gate tests pass unmodified).
+  Durations, curves and Reduce Motion unchanged.
+- **Test:** `brand_wordmark_test`: the splash's weight, `wght` and
+  spacing ratio equal Home's. Renders, before and after, light and dark:
+  `docs/design/1.2.0-final/splash/`.
+- **[Tests]** `flutter analyze` clean; full suite **1,851 passed, 0 failed** (1,850 before).
+- **[Not measured]** On a device: the splash at 320 pt and with the larger
+  system text; the hand-over to the first screen (the splash ignores text
+  size, so nothing there should move).
