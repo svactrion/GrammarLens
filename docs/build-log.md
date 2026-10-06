@@ -11224,3 +11224,101 @@ logic.
   storefront prices and a non-USD storefront (the line's currency and
   locale formatting); VoiceOver reading the new label; the card at the
   system's largest text size.
+
+## 2026-10-06 (1.2.0 visual assets — Batch 0 decisions and Batch 1: the screenshots' seeded learner, free and premium)
+
+**Batch 0** (read and measured; report in the session, decisions by Ahmet
+the same day):
+
+- **Reuse the 1.1.0 pipeline** (`tool/screenshots/`: `capture.sh`,
+  `capture_app.dart`, `capture_driver.dart`, `frame.py`). `screenshots/1.0.0/`
+  holds only eight 600 × 1298 README copies (the 6.5" aspect), no iPad set
+  and no framing tool; the 1.1.0 framer rebuilt that style and is the only
+  one in the repository.
+- **iPhone slot 6.5"** (1284 × 2778, an iPhone 14 Plus simulator), not
+  6.9": 1.0.0 used it, and App Store Connect needs 6.5" only when 6.9" is
+  missing. If a 6.9" slot is already filled in App Store Connect it must be
+  replaced or cleared, or large iPhones keep the old set. The frame draws
+  the 14 Plus's notch, not a Dynamic Island. **iPad 13"** (2064 × 2752,
+  iPad Pro 13-inch (M5) simulator): the app is a native iPad app (portrait,
+  full screen, a centred column capped at 640 pt), and the frames show it
+  that way.
+- **Simulator, not the owner's iPhone:** the status bar can be fixed
+  (`simctl status_bar`), and the device holds real data.
+- **The paywall** is captured in the simulator with the debug price fixture
+  (`buildDebugFixtureOffering`: $5.99 / 3 days, $49.99 / 1 week, both
+  eligible), so the trial line shows. RevenueCat in the simulator was not
+  tried. The owner's open sandbox check on the device is the comparison;
+  if they differ, the device wins. Paywall images go only to
+  `subscription-review/` (one per subscription), never to the store set.
+- **Order (owner, after the report):** iPhone 1 result, 2 Home (Glacier +
+  Fox), 3 Question V2, 4 Review (free), 5 weak spot + "Practice this",
+  6 Review (premium, Suggested Focus; **on hold** until Suggested Focus is
+  checked on a device, owner approves at the final export), 7 Profile and
+  the medal collection, 8 onboarding's goal step. No celebration frame.
+  iPad: 5 frames, free. Review and Home, free and premium, also go to
+  `case-study/`.
+- **README:** the 1.2.0 hero and four frames on top; the 1.0.0 gallery
+  stays below, labelled as a past version (the app's history is part of
+  the case study).
+- **Folders:** `screenshots/1.2.0/{store/iphone,store/ipad,subscription-review,readme,case-study}`;
+  raw captures stay in `build/` (1.1.0's P8).
+- **Final export after the device check** of the final pass and final
+  screens; capturing may start before it (the run is one command).
+
+**Batch 1: the seeded learner.**
+
+- **`tool/screenshots/seed.dart`** (new): the seed moved out of
+  `capture_app.dart` so a test can run it (`capture_app.dart` imports
+  `flutter_driver`). Sam (made up), the **Fox**, exam prep.
+- **Glacier Peak** by the simplest path that keeps Home and Profile in
+  agreement: the month's **theme record**. The seed sets
+  `StorageService.themeForNewMonthForTesting` to Glacier Peak before the
+  month's first completion, which writes the month's record once; Home
+  (`resolveClimbMonthTheme`) and Profile (`getClimbMonthThemes`) both read
+  it. Not `CLIMB_DEBUG_THEME`: it is display-only (Profile's medals keep
+  the recorded theme) and the driver's `release_look` step switches it
+  off. The rotation itself is not changed.
+- **Medal history:** the three months before the current one end on
+  Bronze, Silver, Gold (with the run in October: July, August,
+  September), each the middle of its tier's band, written as ordinary
+  Daily Test completions and frozen by the app's own
+  `finalizePastMedalMonths`. The tiers, names and medal art are the
+  app's. Those months have no theme record, so they read as Green Slope,
+  as on a real install. The current month continues (one step short of
+  Halfway Hut, today's test live), as in 1.1.0. The debug panel's sample
+  collection is no longer used.
+- **Weak spots:** Modal Verbs three times (was once) and Tense Selection
+  once, so Premium Review's Suggested Focus has one clear first choice;
+  today's live wrong answer adds Gerund vs. Infinitive.
+- **Free and premium:** `--dart-define=CAPTURE_PREMIUM=true` stores the
+  debug entitlement override (`StorageService.setDebugAccessOverride`),
+  which the app applies at launch (`_loadDebugAccessOverride`). Debug
+  builds only; **no `lib/` change was needed.**
+- **Nothing opens over Home:** besides the day-0 paywall and the first-run
+  zoom, the seed now also claims the current month's zoom and month card
+  (September is a finished month, so October's card would show).
+- **The paywall's fixture** is switched on in `capture_app.dart` for every
+  run.
+- **For Batch 2:** `release_look` (hides Profile's Developer section) also
+  ends Premium and the price fixture, so premium frames and the paywall
+  must be taken before it. The driver's finders are 1.1.0's and are not
+  updated yet.
+- **Why it cannot reach a release build:** the files are under `tool/`
+  and run only as a `flutter drive` target (a debug build); release builds
+  start from `lib/main.dart`. Every switch they use (entitlement
+  override, price fixture, theme seam) is gated by `kDebugMode` or is a
+  test seam, and nothing in `lib/` imports `tool/`, now guarded by a test.
+- **[Tests]** New `test/tool_import_guard_test.dart`: no `import`,
+  `export` or `part` in `lib/` names `tool/`, the capture or seed files,
+  or `package:flutter_driver` (the pattern was checked on sample lines).
+  New `test/screenshot_seed_test.dart` (real SQLite, 9 tests): the
+  learner; this month recorded as Glacier Peak and past months not; July
+  to September Bronze, Silver, Gold and nothing left for the launch
+  finalization; the January wrap into the previous year; one step short
+  of Halfway Hut, today untaken, and today's result crossing no
+  threshold; Suggested Focus is Modal Verbs ×3; the four one-time records
+  claimed; free stores no override, premium stores one; an existing
+  install is left alone. `flutter analyze` clean; full suite 1,880 passed.
+- **[Not measured]** The capture run itself (Batch 2): the seeded app on
+  the simulators, the driver against the 1.2.0 screens.
