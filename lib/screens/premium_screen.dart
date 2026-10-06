@@ -15,6 +15,7 @@ import '../widgets/brand_scaffold.dart';
 import '../widgets/brand_wordmark.dart';
 import '../widgets/legal_link.dart';
 import '../utils/content_width.dart';
+import '../utils/monthly_equivalent.dart';
 import '../theme.dart';
 
 enum _PurchaseState { idle, purchasing, success, cancelled, error, pending }
@@ -172,6 +173,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         label: label,
         eligibility: _eligibility[package.storeProduct.identifier] ??
             TrialEligibility.unknown,
+        locale: View.of(context).platformDispatcher.locale.toString(),
       );
 
   Future<void> _startPurchase() async {
@@ -361,6 +363,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         annual: _termsFor(annual, 'Annual'),
                         monthly: _termsFor(monthly, 'Monthly'),
                         savingsLabel: _savingsLabel(monthly, annual),
+                        referencePrice: _referencePrice(
+                            monthly,
+                            annual,
+                            View.of(context)
+                                .platformDispatcher
+                                .locale
+                                .toString()),
                         selected: _selectedPeriod,
                         onChanged: (period) =>
                             setState(() => _selectedPeriod = period),
@@ -458,6 +467,23 @@ String? _savingsLabel(Package monthlyPackage, Package annualPackage) {
   return savings > 0 ? 'Save ${savings.floor()}%' : null;
 }
 
+/// Twelve months of the monthly plan, shown struck through on the annual
+/// card, only when the saving badge shows too (otherwise it would compare
+/// against nothing); null when either is missing or it cannot be formatted.
+String? _referencePrice(
+    Package monthlyPackage, Package annualPackage, String locale) {
+  if (_savingsLabel(monthlyPackage, annualPackage) == null) return null;
+  // An annual price that is not a price (0) is no reference to strike
+  // against, whatever the badge says.
+  if (annualPackage.storeProduct.price <= 0) return null;
+  final product = monthlyPackage.storeProduct;
+  return twelveMonthsPrice(
+    monthlyPrice: product.price,
+    currencyCode: product.currencyCode,
+    locale: locale,
+  );
+}
+
 /// What one plan says, everywhere it is said (its card, the button, the
 /// renewal terms), from the store product and this user's eligibility.
 class _PlanTerms {
@@ -475,6 +501,11 @@ class _PlanTerms {
   final String? trialSpan;
   final TrialEligibility eligibility;
 
+  /// A yearly plan's price over twelve months ("$4.17"), computed from the
+  /// store price (see [monthlyEquivalent]); null on any other plan, and when
+  /// it cannot be worked out.
+  final String? monthlyEquivalentPrice;
+
   const _PlanTerms({
     required this.label,
     required this.price,
@@ -482,10 +513,13 @@ class _PlanTerms {
     required this.trialLength,
     required this.trialSpan,
     required this.eligibility,
+    this.monthlyEquivalentPrice,
   });
 
   factory _PlanTerms.of(Package package,
-      {required String label, required TrialEligibility eligibility}) {
+      {required String label,
+      required TrialEligibility eligibility,
+      required String locale}) {
     final product = package.storeProduct;
     final intro = product.introductoryPrice;
     String? length;
@@ -495,14 +529,29 @@ class _PlanTerms {
       length = _hyphenatedDuration(count, unit);
       span = _durationSpan(count, unit);
     }
+    final period = _formatSubscriptionPeriod(product.subscriptionPeriod);
     return _PlanTerms(
       label: label,
       price: product.priceString,
-      period: _formatSubscriptionPeriod(product.subscriptionPeriod),
+      period: period,
       trialLength: length,
       trialSpan: span,
       eligibility: eligibility,
+      monthlyEquivalentPrice: period == 'year'
+          ? monthlyEquivalent(
+              annualPrice: product.price,
+              currencyCode: product.currencyCode,
+              locale: locale,
+            )
+          : null,
     );
+  }
+
+  /// The annual card's small extra line, "≈ $4.17 per month"; null when
+  /// there is none.
+  String? get monthlyEquivalentLine {
+    final value = monthlyEquivalentPrice;
+    return value == null ? null : '≈ $value per month';
   }
 
   bool get hasTrial => trialLength != null;
@@ -2013,6 +2062,7 @@ class _PlanCards extends StatelessWidget {
   final _PlanTerms annual;
   final _PlanTerms monthly;
   final String? savingsLabel;
+  final String? referencePrice;
   final _PlanPeriod selected;
   final ValueChanged<_PlanPeriod> onChanged;
 
@@ -2020,6 +2070,7 @@ class _PlanCards extends StatelessWidget {
     required this.annual,
     required this.monthly,
     required this.savingsLabel,
+    required this.referencePrice,
     required this.selected,
     required this.onChanged,
   });
@@ -2032,6 +2083,7 @@ class _PlanCards extends StatelessWidget {
         _PlanCard(
           terms: annual,
           savingsLabel: savingsLabel,
+          referencePrice: referencePrice,
           selected: selected == _PlanPeriod.annual,
           onTap: () => onChanged(_PlanPeriod.annual),
         ),
@@ -2053,12 +2105,17 @@ class _PlanCards extends StatelessWidget {
 class _PlanCard extends StatelessWidget {
   final _PlanTerms terms;
   final String? savingsLabel;
+
+  /// Twelve months of the monthly plan ("$71.88"), struck through above the
+  /// price; only on the annual card and only with a saving badge.
+  final String? referencePrice;
   final bool selected;
   final VoidCallback onTap;
 
   const _PlanCard({
     required this.terms,
     required this.savingsLabel,
+    this.referencePrice,
     required this.selected,
     required this.onTap,
   });
@@ -2083,8 +2140,11 @@ class _PlanCard extends StatelessWidget {
       selected: selected,
       container: true,
       excludeSemantics: true,
-      label: '${terms.label} plan, ${terms.pricePerPeriod}, ${terms.detail}'
-          '${savings != null ? ', $savings' : ''}',
+      label: '${terms.label} plan, ${terms.pricePerPeriod}'
+          '${terms.monthlyEquivalentPrice != null ? ', approximately ${terms.monthlyEquivalentPrice} per month' : ''}'
+          ', ${terms.detail}'
+          '${savings != null ? ', $savings' : ''}'
+          '${referencePrice != null ? ', twelve months of the monthly plan cost $referencePrice' : ''}',
       child: Material(
         color: selected
             ? colorScheme.secondaryContainer
@@ -2139,6 +2199,10 @@ class _PlanCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(terms.detail, style: muted),
+                      // Same style as the detail line: never more prominent
+                      // than the billed price (App Store 3.1.2).
+                      if (terms.monthlyEquivalentLine case final line?)
+                        Text(line, style: muted),
                     ],
                   ),
                 ),
@@ -2146,6 +2210,14 @@ class _PlanCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (referencePrice != null)
+                      Text(
+                        referencePrice!,
+                        style: muted?.copyWith(
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: muted.color,
+                        ),
+                      ),
                     Text(
                       terms.price,
                       style: theme.textTheme.titleLarge

@@ -1,6 +1,7 @@
 // Additional screens Batch 12: the 1.2.0 paywall with the real font, light
 // and dark: annual selected, monthly selected, the comparison open, and the
-// not-eligible wording; Batch 13 adds Large text at 390 and 375 × 667 (the
+// not-eligible wording; the annual card's monthly line and struck reference
+// price (1.2.0, batch14) are in every annual-card render; Batch 13 adds Large text at 390 and 375 × 667 (the
 // footer's rhythm). Prices are the live App Store prices with the
 // configured trials (annual 1 week, monthly 3 days); nothing from the store.
 //
@@ -143,6 +144,24 @@ const List<_Case> _cases = [
     eligibility: TrialEligibility.ineligible,
     scrollTo: 400,
     text: AppTextSize.medium,
+  ),
+  (
+    name: '375x667_cards_large',
+    size: Size(375, 667),
+    monthly: false,
+    compare: false,
+    eligibility: TrialEligibility.eligible,
+    scrollTo: 600,
+    text: AppTextSize.large,
+  ),
+  (
+    name: '375x667_not_eligible_cards_large',
+    size: Size(375, 667),
+    monthly: false,
+    compare: false,
+    eligibility: TrialEligibility.ineligible,
+    scrollTo: 600,
+    text: AppTextSize.large,
   ),
   (
     name: '375x667_annual',

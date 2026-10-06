@@ -2137,8 +2137,8 @@ void main() {
         expect(m.footer.height / 667,
             closeTo(systemScale == 1 ? 0.349 : 0.462, 0.01));
         // The text area above: 362 pt at 1x (385+ at Small and Medium).
-        expect(m.scrollRegion.height,
-            greaterThan(systemScale == 1 ? 355 : 285));
+        expect(
+            m.scrollRegion.height, greaterThan(systemScale == 1 ? 355 : 285));
       });
     }
 
@@ -2873,6 +2873,227 @@ void main() {
       }
     }
   });
+
+  group('the annual card\'s monthly equivalent and reference price (1.2.0)',
+      () {
+    Finder inCard(String key, Finder matching) =>
+        find.descendant(of: find.byKey(ValueKey(key)), matching: matching);
+    Finder inAnnual(String text) => inCard('planCard_Annual', find.text(text));
+    Finder inMonthly(String text) =>
+        inCard('planCard_Monthly', find.text(text));
+
+    /// Every struck-through text on the screen.
+    List<String> struckTexts(WidgetTester tester) => [
+          for (final t in tester.widgetList<Text>(find.byType(Text)))
+            if (t.style?.decoration == TextDecoration.lineThrough) t.data!,
+        ];
+
+    testWidgets(
+        'the annual card shows "≈ \$4.17 per month" under its detail line, '
+        'rounded half up (not RevenueCat\'s truncated 4.16), and the monthly '
+        'card shows no such line', (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+      expect(find.textContaining('4.16'), findsNothing);
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('planCard_Monthly')),
+              matching: find.textContaining('≈')),
+          findsNothing);
+      // Under the detail line, in the left column, in the same style.
+      final detail = tester.getRect(inAnnual('Billed yearly'));
+      final line = tester.getRect(inAnnual('≈ \$4.17 per month'));
+      expect(line.top, greaterThanOrEqualTo(detail.bottom - 1));
+      expect(line.left, detail.left);
+      expect(line.right, lessThan(tester.getRect(inAnnual('\$49.99')).left));
+      final detailStyle = tester.widget<Text>(inAnnual('Billed yearly')).style!;
+      final lineStyle =
+          tester.widget<Text>(inAnnual('≈ \$4.17 per month')).style!;
+      expect(lineStyle, detailStyle);
+      final perYear = tester.widget<Text>(inAnnual('per year')).style!;
+      expect(lineStyle.fontSize, perYear.fontSize);
+      expect(lineStyle.fontWeight, perYear.fontWeight);
+      expect(lineStyle.color, perYear.color);
+    });
+
+    testWidgets(
+        'the reference price is twelve monthly payments (\$71.88), struck '
+        'through above the big price, smaller and as muted as "per year"; '
+        'the monthly card has none', (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+
+      expect(inAnnual('\$71.88'), findsOneWidget);
+      expect(inMonthly('\$71.88'), findsNothing);
+      final strike = tester.widget<Text>(inAnnual('\$71.88')).style!;
+      final price = tester.widget<Text>(inAnnual('\$49.99')).style!;
+      final perYear = tester.widget<Text>(inAnnual('per year')).style!;
+      expect(strike.decoration, TextDecoration.lineThrough);
+      expect(strike.decorationColor, strike.color);
+      expect(strike.color, perYear.color);
+      expect(strike.fontSize, perYear.fontSize);
+      expect(strike.fontWeight, perYear.fontWeight);
+      expect(strike.fontSize!, lessThan(price.fontSize!));
+      // Order in the right column: reference, big price, "per year"; the
+      // column is as wide as the big price (it does not widen).
+      final strikeRect = tester.getRect(inAnnual('\$71.88'));
+      final priceRect = tester.getRect(inAnnual('\$49.99'));
+      final perYearRect = tester.getRect(inAnnual('per year'));
+      expect(strikeRect.bottom, lessThanOrEqualTo(priceRect.top + 1));
+      expect(priceRect.bottom, lessThanOrEqualTo(perYearRect.top + 1));
+      expect(strikeRect.width, lessThanOrEqualTo(priceRect.width));
+      // The billed price stays the most prominent one.
+      expect(price.fontSize!, greaterThan(perYear.fontSize!));
+    });
+
+    testWidgets(
+        'the detail line, the button, the terms and the badge are the same '
+        'with and without a trial; the new lines change none of them',
+        (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+      expect(inAnnual('7-day free trial'), findsOneWidget);
+      expect(inAnnual('Billed yearly'), findsNothing);
+      expect(inAnnual('Save 24%'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start my 7-day free trial'),
+          findsOneWidget);
+      expect(
+          find.text('7 days free, then \$89.99 per year, auto-renews unless '
+              'cancelled.'),
+          findsOneWidget);
+      // 89.99 / 12 = 7.4991..., 12 × 9.99 = 119.88.
+      expect(inAnnual('≈ \$7.50 per month'), findsOneWidget);
+      expect(inAnnual('\$119.88'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithRealLivePrices(),
+              eligibility: TrialEligibility.ineligible));
+      expect(inAnnual('Billed yearly'), findsOneWidget);
+      expect(inAnnual('Save 30%'), findsOneWidget);
+      expect(find.text('Subscribe for \$49.99 per year'), findsOneWidget);
+      expect(find.text('\$49.99 per year, auto-renews unless cancelled.'),
+          findsOneWidget);
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+      expect(inAnnual('\$71.88'), findsOneWidget);
+    });
+
+    testWidgets(
+        'no saving badge (the annual plan costs the same as twelve months): '
+        'no struck price; the monthly equivalent stays', (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(monthly: 4.00, annual: 48.00)));
+      expect(find.textContaining('Save'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(inAnnual('≈ \$4.00 per month'), findsOneWidget);
+    });
+
+    testWidgets('no monthly price: no badge and no struck price',
+        (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(monthly: 0, annual: 49.99)));
+      expect(find.textContaining('Save'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+    });
+
+    testWidgets('no currency, or no annual price: neither line, no error',
+        (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(
+                  monthly: 5.99, annual: 49.99, currency: '')));
+      expect(find.textContaining('≈'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox());
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(monthly: 5.99, annual: 0)));
+      expect(find.textContaining('≈'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+        'the card\'s spoken label says what both figures are: about \$4.17 '
+        'a month, and that \$71.88 is twelve months of the monthly plan',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+      final label = tester
+          .getSemantics(find.byKey(const ValueKey('planCard_Annual')))
+          .label;
+      expect(label, contains('Annual plan, \$49.99 per year'));
+      expect(label, contains('approximately \$4.17 per month'));
+      expect(label, contains('twelve months of the monthly plan cost \$71.88'));
+      expect(label, contains('Save 30%'));
+      final monthlyLabel = tester
+          .getSemantics(find.byKey(const ValueKey('planCard_Monthly')))
+          .label;
+      expect(monthlyLabel, isNot(contains('approximately')));
+      expect(monthlyLabel, isNot(contains('twelve months')));
+      semantics.dispose();
+    });
+
+    testWidgets('the debug price preview shows both lines', (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: buildDebugFixtureOffering()));
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+      expect(inAnnual('\$71.88'), findsOneWidget);
+    });
+
+    testWidgets('euros come from the product, not from a hardcoded symbol',
+        (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringInEuros()));
+      // 39.99 / 12 = 3.3325, 12 × 4.99 = 59.88.
+      expect(find.textContaining('3.33 per month'), findsOneWidget);
+      expect(find.textContaining('59.88'), findsOneWidget);
+      expect(find.textContaining('\$3.33'), findsNothing);
+    });
+  });
+}
+
+/// Both plans at the given prices, in [currency] (an empty code is a store
+/// product with no usable currency).
+Offering _offeringWithPrices({
+  required double monthly,
+  required double annual,
+  String currency = 'USD',
+}) {
+  const context = PresentedOfferingContext('default', null, null);
+  String label(double v) => '\$${v.toStringAsFixed(2)}';
+  final monthlyPackage = Package(
+    '\$rc_monthly',
+    PackageType.monthly,
+    StoreProduct('grammarlens_premium_monthly', '', 'Monthly', monthly,
+        label(monthly), currency,
+        subscriptionPeriod: 'P1M'),
+    context,
+  );
+  final annualPackage = Package(
+    '\$rc_annual',
+    PackageType.annual,
+    StoreProduct('grammarlens_premium_annual', '', 'Annual', annual,
+        label(annual), currency,
+        subscriptionPeriod: 'P1Y'),
+    context,
+  );
+  return Offering('default', '', const {}, [monthlyPackage, annualPackage],
+      monthly: monthlyPackage, annual: annualPackage);
 }
 
 Offering _offeringWithBothPlans() {
