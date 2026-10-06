@@ -11123,3 +11123,104 @@ behaviour change, the iOS launch image untouched.
 - **[Not measured]** On a device: the splash at 320 pt and with the larger
   system text; the hand-over to the first screen (the splash ignores text
   size, so nothing there should move).
+
+## 2026-10-06 (1.2.0 — the paywall's annual card: the monthly equivalent and a struck reference price are back; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Changed: the annual plan card in
+`premium_screen.dart`, a new helper (`lib/utils/monthly_equivalent.dart`)
+and a new direct dependency, `intl`. Not touched: the button text, the
+renewal terms, the "Save %" badge and its maths, the card's other texts,
+colours, the rest of the layout, analytics, purchase and eligibility
+logic.
+
+- **Why it was gone.** 1.0.0 and 1.1.0 showed the yearly price as a
+  per-month figure in large type. The 1.2.0 mockup shows the annual
+  *total* large ("annual total big", Batch 0 report §4a "Plans"), and
+  Batch 12 followed it, so the per-month figure disappeared. The owner
+  does not want that, so it comes back, small.
+- **What comes back (owner decisions, 2026-10-06).**
+  1. **"≈ $4.17 per month"**, annual card only, in the left column on its
+     own line under the detail line, in the same muted style
+     (`labelSmall`, w600, `onSurfaceVariant`) as the detail and "per year".
+     The detail line is unchanged with and without a trial ("7-day free
+     trial" / "Billed yearly"). The line may wrap; the left column already
+     wraps.
+  2. **A struck-through reference price** above the big price in the right
+     column (order: reference, big price, "per year"): twelve times the
+     *monthly* product's price ("$71.88"), same muted style plus
+     `lineThrough` in the same colour. Shown only when the "Save %" badge is
+     shown too (and the annual price is a price); no badge, no monthly
+     price or a formatting failure means no struck price.
+  3. The billed price stays the most prominent price on the card (App Store
+     3.1.2): neither new line is larger, bolder or higher in contrast than
+     "per year".
+- **Why the left column (a measured change of plan).** The first placement
+  was the right column under "per year", as first decided. Measured with
+  the real font it widened the right column ("≈ $4.17 per month" is far
+  wider than "$49.99") and squeezed the left one: at 320 pt the card grew
+  16–20 pt and wrapped, at 1.3x system text +28 pt, and at 3x the row
+  **overflowed** (21 and 64 px; 6 existing tests failed). The left column
+  has room and wraps by design, so the line moved there; the right column
+  now has the same width as before. The owner's fallback (appending it to
+  the detail line) was not needed.
+- **Maths.** Computed from the store, never hardcoded: annual
+  `StoreProduct.price` / 12 and monthly price × 12, in the product's
+  `currencyCode`, formatted with `intl` for the device locale
+  (`View.of(context).platformDispatcher.locale`; an unknown locale falls
+  back to `en_US`). **Rounding: half up, in integer minor units**, so
+  49.99 / 12 = 4.1658 shows "$4.17" and 59.99 / 12 shows "$5.00"; the
+  number of decimals is `NumberFormat.simpleCurrency`'s (JPY 0, KWD 3).
+  RevenueCat's `pricePerMonthString` is not used: it truncates (4.16), the
+  same cause as the 2026-09-17 badge bug ("Save 30%" logic is unchanged,
+  and still comes from the two raw prices). Price 0, no currency, a
+  failing formatter: the line is not shown, never an error or a wrong
+  figure.
+- **`intl` added** (`^0.20.3`, a direct dependency; it was not in the
+  pubspec or the lock). `pubspec.lock` changed by that one entry only; no
+  other package was added or moved.
+- **Semantics.** The annual card's label now reads, e.g., "Annual plan,
+  $49.99 per year, approximately $4.17 per month, 7-day free trial,
+  Save 30%, twelve months of the monthly plan cost $71.88". The struck
+  price is described as the cost of paying monthly for twelve months, not
+  as a "before discount" price. The monthly card's label is unchanged.
+- **Measured** (real font, 375 / 390 / 320 pt, Large = the app's Large
+  text size, x = system text scale on top; annual card height without →
+  with the two new lines; `tool/design_measure/v120/paywall_monthly_line_measure_test.dart`):
+
+  | Screen, text | Card | Footer | Right column | Overflow | Line wraps |
+  |---|---|---|---|---|---|
+  | 390×844 Medium | 87 → 94 | 190 → 190 | 68.4 → 68.4 | none | no |
+  | 390×844 Large | 87 → 99 | 213 → 213 | 74.9 → 74.9 | none | no |
+  | 375×667 Medium | 87 → 94 | 185 → 185 | 68.4 → 68.4 | none | no |
+  | 375×667 Large | 87 → 99 | 233 → 233 | 74.9 → 74.9 | none | no |
+  | 320×568 Medium | 87 → 94 | 229 → 229 | 68.4 → 68.4 | none | no |
+  | 320×568 Large | 87 → 99 | 247 → 247 | 74.9 → 74.9 | none | no |
+  | 390×844 Medium, x1.3 | 91 → 113 | 265 → 265 | 89.8 → 89.8 | none | no |
+  | 390×844 Medium, x2 | 193 → 261 | 449 → 449 | 139.8 → 139.8 | none | yes |
+  | 390×844 Medium, x3 | 650 → 950 | 398.5 → 398.5 | 211.1 → 211.1 | none | yes |
+  | 375×667 Large, x3 | 1425 → 2030 | 323.5 → 323.5 | 230.8 → 230.8 | none | yes |
+
+  The footer does not change anywhere, so the accepted 0.349 exception
+  (375 × 667, Large) is not made worse. At the normal sizes the card grows
+  by 7 (Medium) to 12 pt (Large). At x2 and x3 the cards were already
+  very tall before the change (the right column's width squeezes the left
+  one at those scales); the new line wraps there and the card grows
+  further, with no overflow. The tool is kept: its siblings live in this
+  folder.
+- **Renders** (real font; trial and no trial; light and dark; Medium at 390
+  and Large at 375 × 667): `docs/design/1.2.0-additional/batch14/`.
+- **[Tests]** `flutter analyze` clean. New: `monthly_equivalent_test`
+  (rounding boundaries 49.99 → 4.17, 59.99 → 5.00, an exact half, JPY, KWD,
+  a German locale, unusable input, 5.99 × 12 = 71.88) and 10 in
+  `premium_screen_test`: the line is on the annual card and not on the
+  monthly one, its place and style; the struck price (71.88), its style
+  and order, the right column not wider than the price; the detail line,
+  the button, the terms and the badge identical with and without a trial;
+  no badge → no struck price; no monthly price, no currency or a zero
+  annual price → no line and no error; the Semantics label; the debug
+  price preview shows both; euros. The 6 tests that failed with the first
+  placement pass again.
+- **[Not measured]** On a device or in the sandbox: the card with the real
+  storefront prices and a non-USD storefront (the line's currency and
+  locale formatting); VoiceOver reading the new label; the card at the
+  system's largest text size.

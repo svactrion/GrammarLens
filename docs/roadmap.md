@@ -215,6 +215,16 @@ changed there beyond the heading weights.
 dark Welcome (built), the paywall footer at 375 × 667 new Large accepted
 as an exception.
 
+**Paywall annual card (owner, 2026-10-06):** the yearly price's monthly
+equivalent ("≈ $4.17 per month", rounded half up from the store price,
+never RevenueCat's truncated string) is back as a small muted line in the
+annual card's left column, and a struck-through twelve-month monthly
+price ("$71.88") sits above the big price when the "Save %" badge shows.
+It was dropped in Batch 12 by following the mockup's "annual total big".
+Measured, built and tested (build log 2026-10-06); adds `intl` as a
+dependency. **Device and sandbox check open** (a non-USD storefront,
+VoiceOver, the largest text size).
+
 **Deferred:** redeem codes (above).
 
 #### 1.2.0 final screens (2026-10-06)
@@ -241,7 +251,7 @@ carried over now.
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
-- [ ] **Firebase:** register `learning_goal` as a **user-scoped custom
+- [x] **Firebase:** register `learning_goal` as a **user-scoped custom
   dimension** (`analytics-plan.md` §9) before 1.2.0 ships; registration is
   not retroactive.
 - [ ] **Privacy policy** (the site repository): the live page (last updated

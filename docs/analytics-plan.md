@@ -727,7 +727,7 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 |---|---|---|---|
 | First step day of month | `first_step_dom` | User | `1`–`31` |
 | Text size | `text_size` | User | `small` / `medium` / `large` |
-| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `general` / `skipped` — **1.2.0, not registered yet** |
+| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `general` / `skipped` — **1.2.0, registered 2026-10-06** |
 
 ### Event-scoped custom dimensions
 
