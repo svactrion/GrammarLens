@@ -11322,3 +11322,145 @@ the same day):
   install is left alone. `flutter analyze` clean; full suite 1,880 passed.
 - **[Not measured]** The capture run itself (Batch 2): the seeded app on
   the simulators, the driver against the 1.2.0 screens.
+- **Past months' themes (owner, after Batch 1):** July, August and
+  September are now recorded with three different themes, none of them
+  Glacier Peak (this month's alone): Green Slope, Ember Peak, Red Canyon,
+  so Profile's shelf shows three themes' medals. Still no `lib/` change:
+  storage writes a month's record only while it is the current month, so
+  each past month is seeded with `StorageService.clockForTesting` inside
+  it and `themeForNewMonthForTesting` naming its theme, then both seams
+  are put back (`try`/`finally`). The theme test now expects all four
+  records (and the January wrap's four); a new test checks the clock is
+  restored. Full suite 1,881 passed, `flutter analyze` clean.
+
+## 2026-10-06 (1.2.0 visual assets — Batch 2: the driver on the 1.2.0 screens, the first raw capture; not framed)
+
+- **Simulator:** an "iPhone 14 Plus" on iOS 26.5 created
+  (`B20149D8-71AC-47EF-A018-AA187F194833`); the iPad stays the iPad Pro
+  13-inch (M5). `capture.sh` now runs three fresh installs on the iPhone
+  (free, `CAPTURE_PREMIUM`, `CAPTURE_WELCOME`) and one on the iPad (free),
+  and writes `build/screenshots/1.2.0/raw/<device>/`; framing is a
+  separate step.
+- **`capture_driver.dart` rewritten for 1.2.0** (the owner's order):
+  01 result, 02 Home (Halfway Hut label, replayed from the debug panel),
+  03 question with the keyboard, 04 Review free, 05 weak spot (free:
+  "Start free practice"; premium run: "Practice this", both kept for the
+  owner's choice), 06 Review premium (Suggested Focus), 07 Profile and the
+  medal collection (after `release_look`: no Developer section), 08
+  onboarding's goal step (Sam, the Fox found by stepping the carousel,
+  Exam prep chosen). Case study: `home-free`, `home-premium` (Review free
+  and premium are 04 and 06). Subscription review: `paywall-annual`,
+  `paywall-monthly`, taken before `release_look`.
+- **First run hung** on "tap planCard_Monthly" for over 20 minutes (owner
+  stopped it): the plan cards were below the fold and the tap had no
+  timeout. Fixed: the paywall is scrolled to "Choose your plan" before
+  both shots (prices, trial wording and the purchase button in one
+  frame), and every driver call that can wait has a 20 s timeout (2 min
+  for the connection and the first frame), so a stuck step fails the run.
+- **"Slide to type"** covered the keyboard in 03 on the new simulator:
+  the keyboard reads `com.apple.keyboard.preferences`, and `capture.sh`
+  wrote only `com.apple.Preferences`; it now writes both.
+- **Home's crop:** 1.1.0's rule (the whole mountain card above the nav
+  bar, the bottom edge in a gap) scrolls the 1.2.0 iPhone Home by
+  240.7 pt and cuts the Daily Test card at the top. Two more crops are
+  captured for the owner's choice: `home-free-top` (no scroll) and
+  `home-free-card-top` (the card at the top). The iPad needs 26.7 pt.
+- **Second run:** exit 0, 15 iPhone (1284 × 2778) and 9 iPad
+  (2064 × 2752) frames. Every frame opened and checked: only the made-up
+  "Sam"; status bar 9:41, full signal and battery; no version number, no
+  debug banner, no Developer section (07 on both devices).
+- **Found:**
+  - the simulator's PNGs **have an alpha channel**; the export must
+    flatten them (`frame.py` already converts to RGB; the subscription
+    review images are raw and need it too);
+  - **iPad:** the status bar shows the run's real date ("Tue Oct 6"), and
+    every iPad frame has iPadOS 26's **window resize handle** in the
+    bottom-right corner: the app runs as a resizable window, the open
+    1.1.0 question about the deprecated `UIRequiresFullScreen`;
+  - the paywall shots show the foot of the headline under the top bar
+    (the screen cannot scroll further);
+  - 07 on the iPhone: the medal row scrolls sideways, July is cut at the
+    right edge and the Welcome badge is off screen; the iPad shows all
+    five.
+
+## 2026-10-07 (1.2.0 visual assets — Batch 3: the owner's crops, the framed store set, subscription review images)
+
+**Owner's decisions on the raw frames:** store 02 is the top of Home
+with the Halfway Hut label (iPhone and iPad); the case study's free and
+premium Home use the mountain card at the top (`home-free`,
+`home-premium`); 05 is the free detail ("Start free practice"), the
+premium one ("Practice this") goes to the case study; the iPad's resize
+handle is painted over; the iPad's real date stays; the paywall
+headline's edge is accepted. Also: 07 framed higher (Fox and name card,
+shelf, October progress; Appearance out of frame) and the iPad's 07 from
+the top; 03 types "to eat", as 01 shows.
+
+- **Driver:** 03 types today's first answer (`answers.first`), so the
+  frame matches 01's "You wrote: to eat" (the `first_correct` request is
+  gone). 1.1.0's "clean Home scroll" is removed; Home is taken at its top
+  (02) and with the mountain card at the top (`home-free`,
+  `home-premium`). The debug panel's replay scrolls Home to the avatar,
+  so the driver scrolls Home back to its top once the label is up, then
+  takes 02 within the label's 2.7 s. 07: from Profile's top, scrolled
+  only until `MonthlyProgressCard` ends 20 pt above the nav bar (iPhone:
+  207.4 pt; iPad: 0, all of it fits). On the iPhone the Fox's ears are
+  cut at the top and the top edge of the theme buttons shows under the
+  nav bar: the Fox card, the shelf and the progress card do not all fit
+  on 926 pt; this is the most even split.
+- **`capture.sh`:** `RUNS` (default `free premium welcome`) limits the
+  runs; only the runs taken replace their frames (the whole-folder delete
+  is gone). Used here to retake the iPhone's free run after the 02 fix.
+- **`frame.py` for 1.2.0:** writes `screenshots/1.2.0/store/iphone` (8),
+  `store/ipad` (5) and `subscription-review` (2), and `overview.jpg`.
+  - **06 is written as `06-review-premium-ON-HOLD.png`** until the owner
+    approves it after Suggested Focus is checked on a device.
+  - **iPhone 14 Plus notch** drawn instead of 1.1.0's Dynamic Island
+    (about 162 × 33 pt, lower corners rounded; an approximation).
+  - **iPad resize handle** (iPadOS 26, system chrome): a mid-grey neutral
+    core in the corner triangle, grown by 2 px, each pixel filled with the
+    mean of the first clear pixels to its left and above. Checked on page
+    and keyboard backgrounds; a first version also caught the keyboard
+    dismiss icon's black chevron and was narrowed. On the keyboard frame a
+    faint trace stays at the key panel's edge, inside the area the frame's
+    rounded corner cuts off. The iPadOS 26 window itself is now an open
+    roadmap item.
+  - **Every PNG is RGB:** the simulator's captures carry an alpha channel;
+    the store frames and the two subscription review images are written
+    without it (`sips -g hasAlpha`: no, all 15).
+- **Captions** (`captions.json`): 01 "Every answer explained", 02 "Climb
+  a new mountain each month", 03 "A new test every day", 04 "Your weak
+  spots, tracked", 05 "Practice what you got wrong", 06 "Premium shows
+  your next focus" (proposed, owner to approve), 07 "Collect every
+  mountain", 08 "Set your goal in a minute". iPad: 01–04 as the iPhone,
+  05 "Collect every mountain".
+- **Checked:** every store and subscription review PNG opened: only the
+  made-up "Sam", status bar 9:41 with full signal and battery, no version
+  number, no debug banner, no Developer section, no resize handle on the
+  iPad frames. Sizes 1284 × 2778 (iPhone) and 2064 × 2752 (iPad).
+- **Owner's corrections after the framed set (2026-10-07):**
+  - **The notch** was drawn as a pill pushed above the screen's edge, so
+    its rounded top stuck out past the bezel. Now (`draw_notch`): 161 × 32
+    pt on the 428 pt screen (the 13/14 notch, 26.8 mm on a 71.3 mm wide
+    screen), centred; its top flat on the screen's top edge (and 2 px into
+    the bezel, which closes a 1 px line the screen's rounded paste
+    position left); lower corners 19 pt; 6 pt concave fillets where it
+    meets the edge; drawn 4× and reduced. Measured on the raw status bar:
+    the time ends at 77 pt and the icons start at 324 pt; the notch spans
+    133.5–294.5 pt. Checked at 100 % on all eight iPhone frames (and both
+    corners at 400 % on one).
+  - **07 (iPhone):** back to "Medal collection" at the top, the Fox card
+    out of frame (the notch cut the Fox's head). The iPad's 07 unchanged
+    (from the top).
+  - **02 (iPhone):** "Topic practice" fell across the screen's bottom
+    edge under the nav bar. The driver now measures, with Home at its top,
+    whether a heading crosses the bottom edge and, if so, scrolls just far
+    enough for the whole heading to show between the nav bar and the edge
+    (iPhone: heading 910.7–936.7 pt, edge 926, nav bar bottom 880:
+    scrolled 14.7 pt; the wordmark stays clear of the status bar). The
+    iPad needs no scroll. Checked on the framed image: the heading and its
+    "Premium" pill are whole inside the screen's rounded corner.
+  - Retaken with `RUNS=free … iphone`; the whole set reframed. Every PNG
+    opened again; all 15 RGB, no alpha.
+  - **Seen, not changed (owner's call):** the iPad's 02 also has a card
+    title ("Gerund vs. Infinitive") across its bottom edge under the nav
+    bar; the correction asked for the iPhone only.

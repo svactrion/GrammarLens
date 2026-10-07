@@ -276,6 +276,15 @@ carried over now.
   them:** the default text size is larger on every screen, and the
   wordmark is two-coloured (Home, onboarding, the paywall, the launch
   screen). The case-study images too.
+- [ ] **iPad on iPadOS 26: the app opens as a resizable window.** Seen in
+  the 1.2.0 screenshot captures (iPad Pro 13-inch (M5) simulator, iOS
+  26.5, 2026-10-06): every frame has the system's window resize handle in
+  the bottom-right corner, so `UIRequiresFullScreen` (deprecated in
+  iPadOS 26) no longer keeps the app full screen. **Not checked:** how the
+  app behaves in a narrow window (below the 640 pt column, iPhone-like
+  widths, landscape-shaped windows on a portrait-only app), on the
+  simulator or a real iPad. The store frames paint the handle over
+  (system chrome, owner decision, build log 2026-10-07).
 - [ ] **Analytics reading:** `text_size` keeps its values but `medium`
   now means the old Large (`analytics-plan.md`, E6); compare per app
   version.
