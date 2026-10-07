@@ -87,7 +87,15 @@ def gradient(w: int, h: int) -> Image.Image:
 
 
 def case_size(im: Image.Image) -> Image.Image:
-    return im.convert("RGB").resize((CASE_W, CASE_H), Image.LANCZOS)
+    """[im] at 600 x 1298: scaled to 600 wide, then the height cut evenly
+    at the top and bottom. The iPhone 17 Pro Max's 1320 x 2868 is a touch
+    taller than 600 x 1298 (1304 at 600 wide), so about 3 px go from each
+    end instead of the image being squeezed."""
+    im = im.convert("RGB")
+    h = round(im.height * CASE_W / im.width)
+    im = im.resize((CASE_W, h), Image.LANCZOS)
+    cut = (h - CASE_H) // 2
+    return im.crop((0, cut, CASE_W, cut + CASE_H))
 
 
 def phone(store_png: Path) -> Image.Image:
@@ -201,7 +209,7 @@ def main() -> None:
     save(hero(), OUT / "readme/hero.png")
     for name in ("04-review", "05-weak-spot", "07-collection", "08-goal"):
         im = Image.open(STORE / f"{name}.png")
-        save(im.resize((CASE_W, CASE_H), Image.LANCZOS), OUT / f"readme/{name}.png")
+        save(case_size(im), OUT / f"readme/{name}.png")
 
     case = OUT / "case-study"
     for name, raw in CASE.items():

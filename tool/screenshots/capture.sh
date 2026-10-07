@@ -7,7 +7,8 @@
 #   RUNS=free tool/screenshots/capture.sh iphone   # some runs only
 #
 # Simulators (override with IPHONE_SIM / IPAD_SIM, a name or a UDID):
-#   iPhone 14 Plus         -> 1284 x 2778, App Store 6.5"
+#   iPhone 17 Pro Max      -> 1320 x 2868, App Store 6.9" (also covers
+#                             6.5"; owner, 2026-10-07)
 #   iPad Pro 13-inch (M5)  -> 2064 x 2752, App Store 13"
 # on the runtime in SIM_RUNTIME (default iOS 26.5).
 #
@@ -22,7 +23,11 @@
 # RUNS (default "free premium welcome practice") limits the runs; the iPad has
 # free. Only the runs taken replace their frames.
 # Raw PNGs go to build/screenshots/1.2.0/raw/<device>/ (not kept in the
-# repository).
+# repository). The subscription review captures (paywall-annual,
+# paywall-monthly) compared with the sandbox paywall are the iPhone 14
+# Plus's, kept in raw/iphone-6.5/; an iPhone run here writes new ones to
+# raw/iphone/, which frame.py does not use (assets.py's case-study
+# comparison does).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -31,7 +36,7 @@ RAW=build/screenshots/1.2.0/raw
 RUNS=(${=RUNS:-free premium welcome practice})
 BUNDLE=com.ahmettayfur.grammarlens
 typeset -A SIMS
-SIMS=(iphone "${IPHONE_SIM:-iPhone 14 Plus}" ipad "${IPAD_SIM:-iPad Pro 13-inch (M5)}")
+SIMS=(iphone "${IPHONE_SIM:-iPhone 17 Pro Max}" ipad "${IPAD_SIM:-iPad Pro 13-inch (M5)}")
 
 udid_for() {
   # A UDID as given, or the available device of that exact name on RUNTIME.
