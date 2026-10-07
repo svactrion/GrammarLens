@@ -4,14 +4,18 @@
 
 **Status (4 October 2026):** 1.0.0 is in App Store review (resubmitted 28 September 2026); 1.1.0 is a release candidate, not submitted ([roadmap](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/roadmap.md), "1.1.0 — release candidate").
 
-<p>
-  <img src="screenshots/1.1.0/01-result.png" width="200" alt="Daily Test result: every answer with a one-sentence explanation">
-  <img src="screenshots/1.1.0/04-review.png" width="200" alt="Review: weak spots listed by topic">
-  <img src="screenshots/1.1.0/02-home.png" width="200" alt="Home: the avatar on this month's mountain">
-  <img src="screenshots/1.1.0/08-collection.png" width="200" alt="Profile: the medal collection">
+<p align="center">
+  <img src="screenshots/1.2.0/readme/hero.png" width="820" alt="Three iPhones: Home with this month's mountain, a Daily Test result with every answer explained, and a Daily Test question">
 </p>
 
-*Screenshots: 1.1.0 release candidate, not yet on the App Store.*
+<p align="center">
+  <img src="screenshots/1.2.0/readme/04-review.png" width="190" alt="Review: saved weak spots by topic, with today's free practice">
+  <img src="screenshots/1.2.0/readme/05-weak-spot.png" width="190" alt="A weak spot's detail: the saved mistake, its correction and a free practice">
+  <img src="screenshots/1.2.0/readme/07-collection.png" width="190" alt="Profile: the medal collection and this month's progress">
+  <img src="screenshots/1.2.0/readme/08-goal.png" width="190" alt="Onboarding: choosing a learning goal">
+</p>
+
+*Screenshots: 1.2.0, in development, not yet on the App Store. The learner is made up ("Sam"). Earlier versions are under "Version history" below.*
 
 ## What it does
 
@@ -58,9 +62,19 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 | v2 | Aug–Sep 2026 | Free/paid split, structure and visual pass, API proxy, subscriptions | Not released |
 | 1.0.0 | Sep 2026 | v2 plus Monthly Climb | In App Store review (resubmitted 28 Sep 2026) |
 | 1.1.0 | Oct 2026 | Shared Daily Test; mountain themes, medals and collection; launch screen; new avatars; iPad layout | Release candidate, not submitted |
+| 1.2.0 | Oct 2026 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; new paywall with trial eligibility; multiline answers | In development, not submitted |
 
 <details>
-<summary><strong>1.0.0 screenshots</strong></summary>
+<summary><strong>Previous version: 1.1.0 screenshots</strong> (release candidate, not released)</summary>
+
+| Result | Home | Review | Medal collection |
+|---|---|---|---|
+| ![Daily Test result: every answer with a one-sentence explanation](screenshots/1.1.0/01-result.png) | ![Home: the avatar on this month's mountain](screenshots/1.1.0/02-home.png) | ![Review: weak spots listed by topic](screenshots/1.1.0/04-review.png) | ![Profile: the medal collection](screenshots/1.1.0/08-collection.png) |
+
+</details>
+
+<details>
+<summary><strong>Previous version: 1.0.0 screenshots</strong> (submitted to the App Store, September 2026)</summary>
 
 | Results | Question | Review | Home |
 |---|---|---|---|
