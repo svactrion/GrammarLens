@@ -28,7 +28,10 @@ comparisons, read only).
 Version 1.2.0, English (U.S.). Upload in this order (the first three
 appear in search).
 
-### iPhone 6.5" Display (1284 × 2778)
+### iPhone 6.9" Display (1320 × 2868)
+
+Taken on the iPhone 17 Pro Max simulator, framed with its Dynamic Island
+(owner, 2026-10-07; build log).
 
 | Order | File | Caption on the image |
 |---|---|---|
@@ -41,9 +44,10 @@ appear in search).
 | 7 | `store/iphone/07-collection.png` | Collect every mountain |
 | 8 | `store/iphone/08-goal.png` | Set your goal in a minute |
 
-If an iPhone 6.9" set is already in App Store Connect, clear it (or
-replace it): with no 6.9" set, App Store Connect scales the 6.5" set for
-the larger iPhones; with an old one, they keep showing it.
+No separate 6.5" set is uploaded: App Store Connect uses the 6.9" set for
+the 6.5" display too. If an older iPhone set (6.9" or 6.5") is already in
+App Store Connect, replace the 6.9" one with this set and clear the 6.5"
+one, or those iPhones keep showing it.
 
 ### iPad 13" Display (2064 × 2752)
 
@@ -62,7 +66,9 @@ the larger iPhones; with an old one, they keep showing it.
 | Annual, $49.99, 1-week free trial | `grammarlens_premium_annual` | `subscription-review/annual.png` (annual selected, "Start my 7-day free trial") |
 | Monthly, $5.99, 3-day free trial | `grammarlens_premium_monthly` | `subscription-review/monthly.png` (monthly selected, "Start my 3-day free trial") |
 
-1284 × 2778 (an accepted iPhone size), unframed. Taken with the debug
+1284 × 2778 (an accepted iPhone size, iPhone 14 Plus simulator),
+unframed. Not retaken with the 6.9" set: review only, and these are the
+images compared with the sandbox paywall. Taken with the debug
 price fixture (the real prices and trial lengths, eligible). Before
 uploading they were compared with the sandbox paywall on the owner's
 iPhone (2026-10-07): the same prices, "≈ $4.17 per month", the struck
@@ -72,6 +78,9 @@ iPhone (2026-10-07): the same prices, "≈ $4.17 per month", the struck
 
 - `readme/`: the GitHub README's hero (1800 × 1100) and four frames
   (600 × 1298).
+- The 600 × 1298 images are scaled to 600 wide and cut evenly at the top
+  and bottom (the 6.9" capture is about 6 px taller at that width), not
+  squeezed.
 - `case-study/`: for ahmettayfur.com, not copied there (the owner's step).
   - Same names and size as the site's current images (600 × 1298 webp,
     raw app screens): `daily-test-explanation`, `day0-1-test`,
