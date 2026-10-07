@@ -1,6 +1,8 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 
 import '../models/app_text_size.dart';
+import '../models/learning_goal.dart';
 import '../models/medal_tier.dart';
 
 /// Where [AnalyticsService] hands finished events. `FirebaseAnalytics.instance`
@@ -29,6 +31,54 @@ class FirebaseAnalyticsSink implements AnalyticsSink {
   }
 }
 
+/// Whether this build sends analytics at all (roadmap P11): a release build
+/// always does; a debug or profile build does not, unless it was built with
+/// `--dart-define=ANALYTICS_DEBUG_EVENTS=true` for a DebugView check. Those
+/// builds write to the production Firebase project, and GA4's
+/// developer-traffic filter only removes devices flagged in debug mode, so
+/// without this their events would count as real ones.
+///
+/// The one place the rule lives: [GatedAnalyticsSink] drops this app's own
+/// events and user properties by it, and `main()` hands it to Firebase's
+/// collection switch so Firebase's automatic events (`first_open`,
+/// `session_start`, ...) stop too. Crashlytics is not touched.
+abstract final class AnalyticsGate {
+  /// The explicit opt-in for a debug or profile build.
+  static const bool debugEventsOptIn =
+      bool.fromEnvironment('ANALYTICS_DEBUG_EVENTS');
+
+  /// This build's answer: a compile-time constant (true in every release
+  /// build, whatever the defines).
+  static const bool enabled = kReleaseMode || debugEventsOptIn;
+
+  /// The rule itself, for tests: [enabled] is `isEnabled()` with this
+  /// build's constants.
+  static bool isEnabled({
+    bool releaseMode = kReleaseMode,
+    bool optIn = debugEventsOptIn,
+  }) =>
+      releaseMode || optIn;
+}
+
+/// Passes events and user properties to [inner] only when [enabled]
+/// ([AnalyticsGate]); otherwise drops them silently.
+class GatedAnalyticsSink implements AnalyticsSink {
+  const GatedAnalyticsSink(this.inner, {required this.enabled});
+
+  final AnalyticsSink inner;
+  final bool enabled;
+
+  @override
+  Future<void> logEvent(String name, Map<String, Object>? parameters) async {
+    if (enabled) await inner.logEvent(name, parameters);
+  }
+
+  @override
+  Future<void> setUserProperty(String name, String? value) async {
+    if (enabled) await inner.setUserProperty(name, value);
+  }
+}
+
 /// Minimal local event logging (PRD v2 §9's "measurement approach for
 /// launch") plus crash reporting, both anonymous and device-based — no
 /// account/login involved, so this doesn't touch the guest-first identity
@@ -54,7 +104,8 @@ enum AiConsentSource {
 
 class AnalyticsService {
   AnalyticsService({
-    AnalyticsSink sink = const FirebaseAnalyticsSink(),
+    AnalyticsSink sink = const GatedAnalyticsSink(FirebaseAnalyticsSink(),
+        enabled: AnalyticsGate.enabled),
     DateTime Function() clock = DateTime.now,
   })  : _sink = sink,
         _clock = clock;
@@ -100,8 +151,63 @@ class AnalyticsService {
     return _logEvent('onboarding_completed');
   }
 
-  Future<void> modeSelected(String mode) {
-    return _logEvent('mode_selected', {'mode': mode});
+  /// [themeId] (Batch 6, M19): the month's theme, sent only with
+  /// [modeDailyTest], the Daily Test's start. The theme follows a global
+  /// calendar, so the other events derive it from their date.
+  Future<void> modeSelected(String mode, {String? themeId}) {
+    return _logEvent('mode_selected', {
+      'mode': mode,
+      if (themeId != null && mode == modeDailyTest) 'theme_id': themeId,
+    });
+  }
+
+  /// The month transition card was shown (Batch 6, M19): the new month's
+  /// [themeId], the [variant] (`summary` / `fresh`), last month's
+  /// [medalTier] (null: `none`, also on the fresh-start card) and whether
+  /// the near-miss line was shown.
+  Future<void> monthCardShown({
+    required String themeId,
+    required String variant,
+    required MedalTier? medalTier,
+    required bool nearMissShown,
+  }) {
+    return _logEvent('month_card_shown', {
+      'theme_id': themeId,
+      'variant': variant,
+      'medal_tier': medalTier?.name ?? 'none',
+      'near_miss_shown': nearMissShown ? 1 : 0,
+    });
+  }
+
+  /// The month card was closed by [method] (`button` / `drag` / `barrier`)
+  /// after [openMs] milliseconds on screen in the foreground.
+  Future<void> monthCardDismissed({
+    required String themeId,
+    required String variant,
+    required String method,
+    required int openMs,
+  }) {
+    return _logEvent('month_card_dismissed', {
+      'theme_id': themeId,
+      'variant': variant,
+      'method': method,
+      'open_ms': openMs,
+    });
+  }
+
+  /// A zoom from the whole mountain to the daily framing ended (M16, M19):
+  /// [outcome] `completed` / `skipped` / `reduce_motion` /
+  /// `daily_test_opened`; [trigger] `month_change` / `first_run`.
+  Future<void> monthZoomEnded({
+    required String themeId,
+    required String outcome,
+    required String trigger,
+  }) {
+    return _logEvent('month_zoom_ended', {
+      'theme_id': themeId,
+      'outcome': outcome,
+      'trigger': trigger,
+    });
   }
 
   /// A Topic Practice session reached its results screen. Named
@@ -160,6 +266,11 @@ class AnalyticsService {
   /// opens by itself once, after the first climb.
   static const String paywallSourceHome = 'home';
   static const String paywallSourceWeakSpotQuota = 'weak_spot_quota';
+
+  /// Review's daily practice card once today's free practice is used
+  /// (1.2.0 Batch 5): a different entry point from [paywallSourceWeakSpotQuota]
+  /// (a weak spot's own screen), kept apart in the data.
+  static const String paywallSourceReviewQuota = 'review_quota';
   static const String paywallSourcePracticeLaunch = 'practice_launch';
   static const String paywallSourcePracticeResult = 'practice_result';
 
@@ -211,9 +322,11 @@ class AnalyticsService {
   }
 
   /// How a purchase attempt ended — [outcome] is `'success'`,
-  /// `'cancelled'`, or `'error'` (`PurchaseOutcome.failure`'s own event
+  /// `'cancelled'`, `'error'` (`PurchaseOutcome.failure`'s own event
   /// name here, matching the wording used everywhere else this outcome is
-  /// shown to the user rather than the enum's internal Dart name).
+  /// shown to the user rather than the enum's internal Dart name), or
+  /// `'pending'` (1.2.0: Ask to Buy or a deferred payment, waiting for
+  /// approval; an approval that comes later is not logged again).
   Future<void> purchaseResult({
     required String plan,
     required String outcome,
@@ -227,8 +340,14 @@ class AnalyticsService {
   /// that eventually succeeds twice, or for a reopened finished result.
   /// Counts only; no question or answer text. Booleans go out as `0`/`1`
   /// because Firebase parameters are strings or numbers. [setSource] is
-  /// `bundled` for the fixed first-day set and `generated` for a model-written
-  /// one (`DailyTestSource.name`), so completion can be read per source.
+  /// `DailyTestSource.name`: `shared` for the date's shared set, `fallback`
+  /// when it could not be read, `bundled` for the fixed first-day set and
+  /// `generated` for a set cached by 1.0.0's per-device generation — so
+  /// completion, and how often the fallback is shown, can be read per
+  /// source. [setDate] is the set's own day (`YYYY-MM-DD`, the local day key
+  /// it was loaded for): everyone gets the same shared set on a date, so
+  /// completions per `set_date` show whether one set was too hard or had a
+  /// broken key (docs/1.1.0-shared-daily-test.md §9).
   Future<void> dailyTestCompleted({
     required int correctCount,
     required int wrongCount,
@@ -236,6 +355,7 @@ class AnalyticsService {
     required bool stepEarned,
     required bool day0,
     required String setSource,
+    required String setDate,
   }) {
     return _logEvent('daily_test_completed', {
       'correct_count': correctCount,
@@ -244,6 +364,7 @@ class AnalyticsService {
       'step_earned': stepEarned ? 1 : 0,
       'day0': day0 ? 1 : 0,
       'set_source': setSource,
+      'set_date': setDate,
     });
   }
 
@@ -261,6 +382,48 @@ class AnalyticsService {
       'rule_version': ruleVersion,
       'day_of_month': dayOfMonth,
       'days_in_month': daysInMonth,
+    });
+  }
+
+  /// The avatar reached a save point (Batch 5, N12, N21): the completion
+  /// whose step reaches it, sent once per save point per month after a
+  /// durable save, never for a month already finalized (N24). [savePoint]
+  /// is the name in snake case (`first_camp` … `summit`); [step] the
+  /// month's step it was reached on.
+  Future<void> savePointReached({
+    required String themeId,
+    required String savePoint,
+    required int step,
+    required int daysInMonth,
+  }) {
+    return _logEvent('save_point_reached', {
+      'theme_id': themeId,
+      'save_point': savePoint,
+      'step': step,
+      'days_in_month': daysInMonth,
+    });
+  }
+
+  /// A tier became certain this month (Batch 5, N12, N21): the completion
+  /// whose points cross its threshold, once per tier per month, never for a
+  /// month already finalized (N24). [tier] reuses E4's parameter and
+  /// meaning (a tier earned). [dayOfMonth] is the set's day; [activeDays]
+  /// the month's steps so far.
+  Future<void> medalTierReached({
+    required String themeId,
+    required MedalTier tier,
+    required int dayOfMonth,
+    required int daysInMonth,
+    required int activeDays,
+    required int ruleVersion,
+  }) {
+    return _logEvent('medal_tier_reached', {
+      'theme_id': themeId,
+      'tier': tier.name,
+      'day_of_month': dayOfMonth,
+      'days_in_month': daysInMonth,
+      'active_days': activeDays,
+      'rule_version': ruleVersion,
     });
   }
 
@@ -348,6 +511,15 @@ class AnalyticsService {
   /// after they are set and cannot be reconstructed later.
   Future<void> setFirstStepDayOfMonth(int dayOfMonth) {
     return _setUserProperty('first_step_dom', dayOfMonth.toString());
+  }
+
+  /// User property `learning_goal`: `exam_prep` / `work` / `general` /
+  /// `skipped`, the onboarding answer (1.2.0). Set once, as onboarding
+  /// completes and before `onboarding_completed`, so that event carries it.
+  /// Not set for installs that finished onboarding earlier: their stored
+  /// `general` cannot be told apart from a choice.
+  Future<void> setLearningGoalProperty(LearningGoal? goal) {
+    return _setUserProperty('learning_goal', learningGoalValue(goal));
   }
 
   Future<void> _logEvent(String name, [Map<String, Object>? parameters]) async {

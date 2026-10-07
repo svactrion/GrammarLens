@@ -1,0 +1,96 @@
+Batch 5 Batch 0 §3: N6's label prototype over the real Home, October 2026 (31 days), light (layout is the same in dark). Points.
+label: its size; moved: how far it was moved sideways to stay 6.0 pt inside the window (0 = centred on the object); top room: the label's top below the window's top; touches: what the label's box overlaps (chips = the month and step chips with their padding; avatar = the avatar art's visible box in its tile, the largest of the 16 avatars; signpost = the C5 signpost's box, drawn there once N11 is built).
+
+Placement A: the label's bottom 4.0 pt above the object (N6 as written). B: 4.0 pt above the object and the avatar's art together. Both centred on the object, then moved sideways.
+
+p  object             step  width text    label w x h     moved   top room  touches
+A  C1 First Camp        7  320   small   83.4 x 22.0       -4.0     216.8  avatar (46 % of its art box)
+B  C1 First Camp        7  320   small   83.4 x 22.0       -4.0     201.5  -
+A  C1 First Camp        7  320   medium  90.4 x 24.0       -7.5     214.8  avatar (46 % of its art box)
+B  C1 First Camp        7  320   medium  90.4 x 24.0       -7.5     199.5  -
+A  C1 First Camp        7  320   large   97.4 x 26.0      -11.1     212.8  avatar (46 % of its art box)
+B  C1 First Camp        7  320   large   97.4 x 26.0      -11.1     197.5  -
+A  C1 First Camp        7  375   small   83.4 x 22.0        0.0     215.1  avatar (44 % of its art box)
+B  C1 First Camp        7  375   small   83.4 x 22.0        0.0     196.9  -
+A  C1 First Camp        7  375   medium  90.4 x 24.0        0.0     213.1  avatar (48 % of its art box)
+B  C1 First Camp        7  375   medium  90.4 x 24.0        0.0     194.9  -
+A  C1 First Camp        7  375   large   97.4 x 26.0       -3.0     211.1  avatar (48 % of its art box)
+B  C1 First Camp        7  375   large   97.4 x 26.0       -3.0     192.9  -
+A  C1 First Camp        7  430   small   83.4 x 22.0        0.0     213.5  avatar (37 % of its art box)
+B  C1 First Camp        7  430   small   83.4 x 22.0        0.0     192.7  -
+A  C1 First Camp        7  430   medium  90.4 x 24.0        0.0     211.5  avatar (42 % of its art box)
+B  C1 First Camp        7  430   medium  90.4 x 24.0        0.0     190.7  -
+A  C1 First Camp        7  430   large   97.4 x 26.0        0.0     209.5  avatar (47 % of its art box)
+B  C1 First Camp        7  430   large   97.4 x 26.0        0.0     188.7  -
+A  C2 Halfway Hut      15  320   small   95.7 x 22.0        0.0     188.4  avatar (42 % of its art box)
+B  C2 Halfway Hut      15  320   small   95.7 x 22.0        0.0     174.0  -
+A  C2 Halfway Hut      15  320   medium  104.0 x 24.0       0.0     186.4  avatar (42 % of its art box)
+B  C2 Halfway Hut      15  320   medium  104.0 x 24.0       0.0     172.0  -
+A  C2 Halfway Hut      15  320   large   112.2 x 26.0       0.8     184.4  avatar (42 % of its art box)
+B  C2 Halfway Hut      15  320   large   112.2 x 26.0       0.8     170.0  -
+A  C2 Halfway Hut      15  375   small   95.7 x 22.0        0.0     214.1  avatar (38 % of its art box)
+B  C2 Halfway Hut      15  375   small   95.7 x 22.0        0.0     196.9  -
+A  C2 Halfway Hut      15  375   medium  104.0 x 24.0       0.0     212.1  avatar (44 % of its art box)
+B  C2 Halfway Hut      15  375   medium  104.0 x 24.0       0.0     194.9  -
+A  C2 Halfway Hut      15  375   large   112.2 x 26.0       0.0     210.1  avatar (45 % of its art box)
+B  C2 Halfway Hut      15  375   large   112.2 x 26.0       0.0     192.9  -
+A  C2 Halfway Hut      15  430   small   95.7 x 22.0        0.0     212.3  avatar (29 % of its art box)
+B  C2 Halfway Hut      15  430   small   95.7 x 22.0        0.0     192.7  -
+A  C2 Halfway Hut      15  430   medium  104.0 x 24.0       0.0     210.3  avatar (35 % of its art box)
+B  C2 Halfway Hut      15  430   medium  104.0 x 24.0       0.0     190.7  -
+A  C2 Halfway Hut      15  430   large   112.2 x 26.0       0.0     208.3  avatar (41 % of its art box)
+B  C2 Halfway Hut      15  430   large   112.2 x 26.0       0.0     188.7  -
+A  C3 Mountain Spring  21  320   small   121.5 x 22.0       0.0     147.7  avatar (70 % of its art box)
+B  C3 Mountain Spring  21  320   small   121.5 x 22.0       0.0     126.4  -
+A  C3 Mountain Spring  21  320   medium  132.3 x 24.0       0.0     145.7  avatar (70 % of its art box)
+B  C3 Mountain Spring  21  320   medium  132.3 x 24.0       0.0     124.4  -
+A  C3 Mountain Spring  21  320   large   143.1 x 26.0      -3.4     143.7  avatar (70 % of its art box)
+B  C3 Mountain Spring  21  320   large   143.1 x 26.0      -3.4     122.4  -
+A  C3 Mountain Spring  21  375   small   121.5 x 22.0       0.0     179.8  avatar (72 % of its art box)
+B  C3 Mountain Spring  21  375   small   121.5 x 22.0       0.0     154.6  -
+A  C3 Mountain Spring  21  375   medium  132.3 x 24.0       0.0     177.8  avatar (72 % of its art box)
+B  C3 Mountain Spring  21  375   medium  132.3 x 24.0       0.0     152.6  -
+A  C3 Mountain Spring  21  375   large   143.1 x 26.0       0.0     175.8  avatar (72 % of its art box)
+B  C3 Mountain Spring  21  375   large   143.1 x 26.0       0.0     150.6  -
+A  C3 Mountain Spring  21  430   small   121.5 x 22.0       0.0     210.0  avatar (65 % of its art box)
+B  C3 Mountain Spring  21  430   small   121.5 x 22.0       0.0     181.1  -
+A  C3 Mountain Spring  21  430   medium  132.3 x 24.0       0.0     208.0  avatar (71 % of its art box)
+B  C3 Mountain Spring  21  430   medium  132.3 x 24.0       0.0     179.1  -
+A  C3 Mountain Spring  21  430   large   143.1 x 26.0       0.0     206.0  avatar (74 % of its art box)
+B  C3 Mountain Spring  21  430   large   143.1 x 26.0       0.0     177.1  -
+A  C4 High Camp        26  320   small   85.3 x 22.0        0.0     102.6  avatar (56 % of its art box)
+B  C4 High Camp        26  320   small   85.3 x 22.0        0.0      78.7  summit_flag
+A  C4 High Camp        26  320   medium  92.5 x 24.0        0.0     100.6  avatar (68 % of its art box)
+B  C4 High Camp        26  320   medium  92.5 x 24.0        0.0      76.7  summit_flag
+A  C4 High Camp        26  320   large   99.8 x 26.0        0.0      98.6  avatar (80 % of its art box)
+B  C4 High Camp        26  320   large   99.8 x 26.0        0.0      74.7  summit_flag
+A  C4 High Camp        26  375   small   85.3 x 22.0        0.0     126.4  avatar (32 % of its art box)
+B  C4 High Camp        26  375   small   85.3 x 22.0        0.0      98.0  summit_flag
+A  C4 High Camp        26  375   medium  92.5 x 24.0        0.0     124.4  avatar (45 % of its art box)
+B  C4 High Camp        26  375   medium  92.5 x 24.0        0.0      96.0  summit_flag
+A  C4 High Camp        26  375   large   99.8 x 26.0        0.0     122.4  avatar (56 % of its art box)
+B  C4 High Camp        26  375   large   99.8 x 26.0        0.0      94.0  summit_flag
+A  C4 High Camp        26  430   small   85.3 x 22.0        0.0     148.7  avatar (15 % of its art box)
+B  C4 High Camp        26  430   small   85.3 x 22.0        0.0     116.2  summit_flag
+A  C4 High Camp        26  430   medium  92.5 x 24.0        0.0     146.7  avatar (24 % of its art box)
+B  C4 High Camp        26  430   medium  92.5 x 24.0        0.0     114.2  summit_flag
+A  C4 High Camp        26  430   large   99.8 x 26.0        0.0     144.7  avatar (35 % of its art box)
+B  C4 High Camp        26  430   large   99.8 x 26.0        0.0     112.2  summit_flag
+A  C6 Summit           31  320   small   63.0 x 22.0        0.0      40.6  avatar (20 % of its art box)
+B  C6 Summit           31  320   small   63.0 x 22.0        0.0      29.6  -
+A  C6 Summit           31  320   medium  68.1 x 24.0        0.0      38.6  month chip, avatar (28 % of its art box)
+B  C6 Summit           31  320   medium  68.1 x 24.0        0.0      27.6  month chip
+A  C6 Summit           31  320   large   73.1 x 26.0        0.0      36.6  month chip, avatar (37 % of its art box)
+B  C6 Summit           31  320   large   73.1 x 26.0        0.0      25.6  month chip
+A  C6 Summit           31  375   small   63.0 x 22.0        0.0      52.9  avatar (5 % of its art box)
+B  C6 Summit           31  375   small   63.0 x 22.0        0.0      39.9  -
+A  C6 Summit           31  375   medium  68.1 x 24.0        0.0      50.9  avatar (12 % of its art box)
+B  C6 Summit           31  375   medium  68.1 x 24.0        0.0      37.9  -
+A  C6 Summit           31  375   large   73.1 x 26.0        0.0      48.9  avatar (20 % of its art box)
+B  C6 Summit           31  375   large   73.1 x 26.0        0.0      35.9  -
+A  C6 Summit           31  430   small   63.0 x 22.0        0.0      64.5  -
+B  C6 Summit           31  430   small   63.0 x 22.0        0.0      49.5  -
+A  C6 Summit           31  430   medium  68.1 x 24.0        0.0      62.5  -
+B  C6 Summit           31  430   medium  68.1 x 24.0        0.0      47.5  -
+A  C6 Summit           31  430   large   73.1 x 26.0        0.0      60.5  avatar (6 % of its art box)
+B  C6 Summit           31  430   large   73.1 x 26.0        0.0      45.5  -

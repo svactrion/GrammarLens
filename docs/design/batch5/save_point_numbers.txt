@@ -1,0 +1,32 @@
+Batch 5 Batch 0 §3-§4: save points, the flag and the C5 signpost on the product's route and camera (tool/design_measure/batch5/save_point_numbers_test.dart).
+
+Step each is reached on (ClimbSavePoint.reachedOn; C5 by the same rule, nearest trail point to the clearing's centre):
+days  C1 tent  C2 cabin  C3 fountain  C4 campfire  C5 signpost  C6 flag
+28    7        14        19           23           26           28   (C5 is 2 step(s) before the summit)
+29    7        14        20           24           27           29   (C5 is 2 step(s) before the summit)
+30    7        15        20           25           28           30   (C5 is 2 step(s) before the summit)
+31    7        15        21           26           29           31   (C5 is 2 step(s) before the summit)
+
+C5 arc: 2.2270 image widths of 2.4608 (90.5 %).
+Signpost box (image widths): left 0.5929, top 0.2939, right 0.6733, bottom 0.3853.
+
+The resting avatar's tile against the signpost's box: the steps whose tile overlaps it, with the share of the signpost's box covered (boxes, not pixels; the avatar is drawn above the objects).
+  320 pt, 28 days: 25 (10 %)
+  320 pt, 29 days: 26 (17 %)
+  320 pt, 30 days: 27 (24 %)
+  320 pt, 31 days: 28 (27 %)
+  375 pt, 28 days: 25 (10 %)
+  375 pt, 29 days: 26 (17 %)
+  375 pt, 30 days: 27 (24 %)
+  375 pt, 31 days: 28 (27 %)
+  430 pt, 28 days: 25 (10 %)
+  430 pt, 29 days: 26 (17 %)
+  430 pt, 30 days: 27 (24 %)
+  430 pt, 31 days: 28 (27 %)
+
+For scale, the same for the save points and the flag at 375 pt (steps that overlap, any month length 28-31):
+  C1 tent: 30:7 (0 %), 31:7 (3 %)
+  C2 cabin: 28:13 (11 %), 30:14 (11 %)
+  C3 fountain: 29:19 (5 %), 30:20 (3 %)
+  C4 campfire: 31:25 (9 %)
+  C6 summit_flag: 28:27 (7 %), 29:28 (5 %), 30:29 (2 %)

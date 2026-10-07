@@ -1,0 +1,31 @@
+Batch 6 step 5 stop condition: the Daily Test entry after the scroll (real Home, light; points).
+visible area: from the list's top to the floating tab bar's top. Today: the Today card's visible height / its height. Window: the mountain window shown above Batch 0's fullest summary-card sheet. START: the K-c avatar above that sheet.
+
+screen    text    scroll  visible area  Today visible  window above sheet  START
+320×568   small   card      76.0–479.0    0.0 / 113.0        155.5 (44 %)  no
+320×568   small   peek      76.0–479.0   56.0 / 113.0         87.5 (25 %)  no
+320×568   small   today     76.0–479.0  113.0 / 113.0          30.5 (9 %)  no
+320×568   medium  card      76.0–477.0    0.0 / 121.0        154.5 (44 %)  no
+320×568   medium  peek      76.0–477.0   56.0 / 121.0         86.5 (25 %)  no
+320×568   medium  today     76.0–477.0  121.0 / 121.0          21.5 (6 %)  no
+320×568   large   card      76.0–476.0    0.0 / 129.0        153.5 (44 %)  no
+320×568   large   peek      76.0–476.0   56.0 / 129.0         85.5 (24 %)  no
+320×568   large   today     76.0–476.0  129.0 / 129.0          12.5 (4 %)  no
+375×812   small   card     103.0–689.0     0.0 / 96.0        265.0 (76 %)  no
+375×812   small   peek     103.0–689.0    56.0 / 96.0        197.0 (56 %)  no
+375×812   small   today    103.0–689.0    96.0 / 96.0        157.0 (45 %)  no
+375×812   medium  card     103.0–687.0    0.0 / 102.0        253.0 (72 %)  no
+375×812   medium  peek     103.0–687.0   56.0 / 102.0        185.0 (53 %)  no
+375×812   medium  today    103.0–687.0  102.0 / 102.0        139.0 (40 %)  no
+375×812   large   card     103.0–686.0    0.0 / 108.0        240.0 (69 %)  no
+375×812   large   peek     103.0–686.0   56.0 / 108.0        172.0 (49 %)  no
+375×812   large   today    103.0–686.0  108.0 / 108.0        120.0 (34 %)  no
+430×932   small   card     115.0–809.0    58.4 / 96.0        302.6 (86 %)  yes
+430×932   small   peek     115.0–809.0    96.0 / 96.0        234.6 (67 %)  no
+430×932   small   today    115.0–809.0    96.0 / 96.0        265.0 (76 %)  no
+430×932   medium  card     115.0–807.0   43.6 / 102.0        305.4 (87 %)  yes
+430×932   medium  peek     115.0–807.0  102.0 / 102.0        237.4 (68 %)  no
+430×932   medium  today    115.0–807.0  102.0 / 102.0        247.0 (71 %)  no
+430×932   large   card     115.0–806.0   29.9 / 108.0        306.1 (87 %)  yes
+430×932   large   peek     115.0–806.0   97.9 / 108.0        238.1 (68 %)  no
+430×932   large   today    115.0–806.0  108.0 / 108.0        228.0 (65 %)  no

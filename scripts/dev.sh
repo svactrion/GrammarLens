@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Runs the app against a locally-running proxy (see proxy/README.md),
-# using config/dev.json for the proxy URL/app token (see README's "Local
-# setup" section). The Anthropic API key itself never comes back into the
+# using config/dev.json for the proxy URL/app token (see "Local setup" in
+# docs/development.md). The Anthropic API key itself never comes back into the
 # client — it's a Worker secret, set once via `wrangler secret put` (or
 # `.dev.vars` locally, see proxy/README.md).
 #
@@ -12,7 +12,7 @@ set -euo pipefail
 # `npm run dev` you started yourself in proxy/, doesn't spawn a second
 # one), and stops the one it started on exit. If dev.json's
 # PROXY_BASE_URL is ever pointed at something other than localhost (e.g.
-# the live proxy, for a one-off test against it — see README), this
+# the live proxy, for a one-off test against it — see docs/development.md), this
 # skips starting a local proxy instead of spawning one nothing will use.
 # cd's to the repo root first so this works regardless of the caller's
 # current directory.

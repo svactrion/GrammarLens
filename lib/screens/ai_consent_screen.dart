@@ -9,6 +9,8 @@ import '../utils/app_links.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/legal_link.dart';
+import '../utils/content_width.dart';
+import '../theme.dart';
 
 /// The one-time permission screen for sending Topic Practice answers to a
 /// third-party AI provider (App Review guideline 5.1.2(i)). Pops `true` on
@@ -31,8 +33,8 @@ class AiConsentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context);
     final body = theme.textTheme.bodyMedium;
 
     return BrandScaffold(
@@ -51,7 +53,7 @@ class AiConsentScreen extends StatelessWidget {
                     child: Text(
                       'Feedback on your answers',
                       style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w800),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -75,8 +77,8 @@ class AiConsentScreen extends StatelessWidget {
                   ),
                   const _Section(
                     heading: 'What is never sent',
-                    text: 'Your name, your learning goal or your avatar. Daily '
-                        'Test answers stay on your device.',
+                    text: 'Your name or your avatar. Daily Test answers stay '
+                        'on your device.',
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -94,6 +96,7 @@ class AiConsentScreen extends StatelessWidget {
                     child: LegalLink(
                       label: 'Privacy Policy',
                       url: AppLinks.privacyPolicyUrl,
+                      flush: true,
                     ),
                   ),
                 ],
@@ -125,8 +128,7 @@ class _Section extends StatelessWidget {
             header: true,
             child: Text(
               heading,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700),
             ),
           ),
           const SizedBox(height: 4),

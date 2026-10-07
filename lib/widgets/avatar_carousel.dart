@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../models/avatar.dart';
+import '../theme.dart';
 import 'avatar_tile.dart';
 
 /// The avatar-picking carousel — this batch's replacement for the old
@@ -11,6 +12,13 @@ import 'avatar_tile.dart';
 /// Drag until the avatar you want is centered; there is no separate
 /// "confirm" affordance — whichever avatar is centered once the page
 /// settles *is* the selection, reported via [onSettled].
+///
+/// The carousel loops in both directions (Batch 8, 2026-09-30): after the
+/// last avatar comes the first again, and dragging back from the first
+/// reaches the last — no dead end at either side. The [PageView] has no
+/// `itemCount`; a raw page maps to `Avatar.values[rawPage % Avatar.count]`
+/// and starts [_loopOffset] pages in, far enough that neither end of the
+/// int range is reachable by swiping.
 ///
 /// Used inline by both `OnboardingScreen` (embedded above the name field)
 /// and `AvatarPickerScreen` (Settings' own pushed screen) — one widget, so
@@ -60,6 +68,18 @@ class AvatarCarousel extends StatefulWidget {
   /// [centerRadius].
   final double viewportFraction;
 
+  /// How small and faint the neighbours are (1.2.0 onboarding: .72 / .48).
+  /// The defaults are the values every earlier caller has used.
+  final double neighborScale;
+  final double neighborOpacity;
+
+  /// Adds a line under the carousel: Previous and Next buttons (44 pt
+  /// targets, so choosing never needs a drag) around the selected
+  /// companion's name, which says in words which one is selected. No
+  /// position: the carousel loops, so "N / total" meant nothing (owner,
+  /// after Batch 11). Off by default.
+  final bool showNavigation;
+
   const AvatarCarousel({
     super.key,
     required this.initialAvatar,
@@ -67,7 +87,18 @@ class AvatarCarousel extends StatefulWidget {
     this.centerTileBuilder,
     this.centerRadius = 56,
     this.viewportFraction = 0.45,
+    this.neighborScale = 0.8,
+    this.neighborOpacity = 0.5,
+    this.showNavigation = false,
   });
+
+  static const previousKey = ValueKey('avatar_carousel_previous');
+  static const nextKey = ValueKey('avatar_carousel_next');
+  static const captionKey = ValueKey('avatar_carousel_caption');
+
+  /// A Previous/Next tap's move: 220 ms ease-out (the brief), none with
+  /// reduce motion.
+  static const Duration stepDuration = Duration(milliseconds: 220);
 
   @override
   State<AvatarCarousel> createState() => _AvatarCarouselState();
@@ -80,15 +111,22 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   // radius — a paint-time transform doesn't clip a page to its own layout
   // bounds by default, which is exactly what lets a scaled-down neighbor
   // spill past its slot's edge into view.
-  static const double _neighborScale = 0.8;
-  static const double _neighborOpacity = 0.5;
   // Extra height beyond the tile's own diameter — just enough slack for
   // the settle "pop" (scales up to 1.06x) and the ground shadow's blur to
   // paint without visibly clipping against this box's own edge.
   static const double _verticalSlack = 1.12;
   static const Duration _popDuration = Duration(milliseconds: 180);
+  // Where the initial avatar's raw page sits: a whole number of laps in,
+  // so `_loopOffset % Avatar.count == 0` and the first avatar lands on
+  // raw page `_loopOffset` itself.
+  static const int _loopOffset = Avatar.count * 1000;
 
   late final PageController _pageController;
+  // The RAW page index of the settled page, not an avatar index. Each
+  // avatar has many raw pages (one per lap); only the one actually
+  // centered counts as settled, so `centerTileBuilder` (a Hero, in
+  // `AvatarPickerScreen`) wraps exactly one tile even when another copy
+  // of the same avatar is built nearby.
   late int _settledIndex;
   late final AnimationController _popController;
   late final Animation<double> _popAnimation;
@@ -96,7 +134,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
   @override
   void initState() {
     super.initState();
-    _settledIndex = widget.initialAvatar.index - 1;
+    _settledIndex = _loopOffset + widget.initialAvatar.index - 1;
     _pageController = PageController(
       viewportFraction: widget.viewportFraction,
       initialPage: _settledIndex,
@@ -107,6 +145,8 @@ class _AvatarCarouselState extends State<AvatarCarousel>
       TweenSequenceItem(tween: Tween(begin: 1.06, end: 1.0), weight: 1),
     ]).animate(_popController);
   }
+
+  static Avatar _avatarAt(int rawPage) => Avatar.values[rawPage % Avatar.count];
 
   @override
   void dispose() {
@@ -119,20 +159,89 @@ class _AvatarCarouselState extends State<AvatarCarousel>
     if (notification is! ScrollEndNotification) return false;
     final page = _pageController.page;
     if (page == null) return false;
-    final settled = page.round().clamp(0, Avatar.count - 1);
+    final settled = page.round();
     if (settled == _settledIndex) return false;
 
+    final previous = _avatarAt(_settledIndex);
     setState(() => _settledIndex = settled);
+    // A full lap lands on another copy of the same avatar: the settled
+    // page moves (so the Hero follows the centered tile), but the
+    // selection didn't change, so no haptic, pop or callback.
+    final avatar = _avatarAt(settled);
+    if (avatar == previous) return false;
+
     HapticFeedback.selectionClick();
     _popController.duration =
         MediaQuery.disableAnimationsOf(context) ? Duration.zero : _popDuration;
     _popController.forward(from: 0);
-    widget.onSettled(Avatar.values[settled]);
+    widget.onSettled(avatar);
     return false;
+  }
+
+  /// Moves one avatar to either side; the settle that follows reports it
+  /// like a drag would.
+  void _step(int delta) {
+    final target = _settledIndex + delta;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pageController.jumpToPage(target);
+    } else {
+      _pageController.animateToPage(target,
+          duration: AvatarCarousel.stepDuration, curve: Curves.easeOut);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final carousel = _buildCarousel();
+    if (!widget.showNavigation) return carousel;
+    final theme = Theme.of(context);
+    final avatar = _avatarAt(_settledIndex);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        carousel,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              key: AvatarCarousel.previousKey,
+              tooltip: 'Previous companion',
+              onPressed: () => _step(-1),
+              icon: const Icon(Icons.chevron_left_rounded),
+            ),
+            const SizedBox(width: 9),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 125),
+                child: Semantics(
+                  liveRegion: true,
+                  label: '${avatar.semanticLabel}, selected',
+                  excludeSemantics: true,
+                  child: Text(
+                    avatar.semanticLabel,
+                    key: AvatarCarousel.captionKey,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: theme.colorScheme.onSurface),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 9),
+            IconButton(
+              key: AvatarCarousel.nextKey,
+              tooltip: 'Next companion',
+              onPressed: () => _step(1),
+              icon: const Icon(Icons.chevron_right_rounded),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCarousel() {
     final boxHeight = widget.centerRadius * 2 * _verticalSlack;
 
     return SizedBox(
@@ -142,16 +251,15 @@ class _AvatarCarouselState extends State<AvatarCarousel>
         onNotification: _onScrollNotification,
         child: PageView.builder(
           controller: _pageController,
-          itemCount: Avatar.count,
           itemBuilder: (context, index) => _CarouselPage(
-            avatar: Avatar.values[index],
+            avatar: _avatarAt(index),
             pageController: _pageController,
             popAnimation: _popAnimation,
             index: index,
             settledIndex: _settledIndex,
             radius: widget.centerRadius,
-            neighborScale: _neighborScale,
-            neighborOpacity: _neighborOpacity,
+            neighborScale: widget.neighborScale,
+            neighborOpacity: widget.neighborOpacity,
             centerTileBuilder: widget.centerTileBuilder,
           ),
         ),
@@ -168,7 +276,9 @@ class _AvatarCarouselState extends State<AvatarCarousel>
 /// builder above only so [Listenable.merge] has one clear place to
 /// rebuild from — [pageController] (continuous drag) and [popAnimation]
 /// (the brief post-settle bump) are two independent listenables, and this
-/// widget needs both.
+/// widget needs both. [index] and [settledIndex] are both raw page
+/// indices (see `_AvatarCarouselState._settledIndex`), compared as-is —
+/// never reduced modulo [Avatar.count].
 class _CarouselPage extends StatelessWidget {
   final Avatar avatar;
   final PageController pageController;

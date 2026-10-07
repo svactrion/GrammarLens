@@ -1,0 +1,12 @@
+Batch 6 M22: the seam between the sharp image and the blurred backdrop
+(K-c, 430 pt, sheet closed; CIEDE2000 across the edge, median / p95, worse side)
+
+theme          mode   light          medium         strong
+green_slope    light   15.4 /  31.8   14.6 /  27.6   13.4 /  26.7
+ember_peak     light   14.9 /  31.9   13.0 /  44.6   12.1 /  43.0
+glacier_peak   light   12.2 /  26.9   11.3 /  24.2   10.1 /  18.4
+red_canyon     light   13.5 /  31.1   13.1 /  29.0   13.1 /  28.2
+green_slope    dark    11.8 /  25.4   10.8 /  22.7   10.4 /  19.2
+ember_peak     dark     8.9 /  23.9    8.3 /  19.0    7.7 /  17.7
+glacier_peak   dark    11.9 /  32.9   11.7 /  29.3   11.2 /  27.9
+red_canyon     dark    11.7 /  21.3   11.1 /  20.6   10.8 /  29.3

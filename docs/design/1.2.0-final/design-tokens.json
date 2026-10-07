@@ -1,0 +1,57 @@
+{
+  "authority": "Reuse live theme. Review focus dimensions must equal current Free card shell; prototype pixels are not authoritative.",
+  "fontFamily": "Nunito Sans",
+  "light": {
+    "background": "#F3EFE6",
+    "surface": "#FFFBF4",
+    "text": "#1B1B1F",
+    "muted": "#55535D",
+    "border": "#DED5C6",
+    "link": "#0D3B8F",
+    "info": "#EAF0FC",
+    "focus": "#183854",
+    "focusText": "#FFF9F0",
+    "focusMuted": "#D4E0EA",
+    "focusCta": "#FF8A3D",
+    "focusCtaText": "#241200",
+    "danger": "#AF3434",
+    "dangerBorder": "#E6C3BB",
+    "dangerSurface": "#FFF3EE"
+  },
+  "dark": {
+    "background": "#151517",
+    "surface": "#252528",
+    "text": "#F0ECE7",
+    "muted": "#C9C5D0",
+    "border": "#45454D",
+    "link": "#B4C8FF",
+    "info": "#24314A",
+    "focus": "#203D57",
+    "focusText": "#FFF9F0",
+    "focusMuted": "#D4E0EA",
+    "focusCta": "#FF8A3D",
+    "focusCtaText": "#241200",
+    "danger": "#FFAAA1",
+    "dangerBorder": "#724847",
+    "dangerSurface": "#342627"
+  },
+  "spacing": {
+    "pageReview": 18,
+    "pageDataCredits": 20,
+    "panelPadding": 19,
+    "panelGap": 16
+  },
+  "radius": {
+    "panel": 24,
+    "listCard": 22,
+    "button": 14
+  },
+  "reviewTopCard": {
+    "height": "same as live Free Review card",
+    "width": "same as live Free Review card",
+    "padding": "reuse live Free card",
+    "textScale": "shared adaptive sizing for all variants"
+  },
+  "touchTargetMin": 44,
+  "buttonMinHeight": 48
+}

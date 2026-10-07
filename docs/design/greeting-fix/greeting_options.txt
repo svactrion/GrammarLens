@@ -1,0 +1,24 @@
+medium today      9h Ada             drawn=0/3 of "Ada" lines=1 rowHeight=60.0 fontSize=26.4
+medium today     14h Charlotte       drawn=0/9 of "Charlotte" lines=1 rowHeight=60.0 fontSize=26.4
+medium today     14h Mary Anne Smith drawn=0/15 of "Mary Anne Smith" lines=1 rowHeight=60.0 fontSize=26.4
+medium wrap       9h Ada             drawn=3/3 of "Ada" lines=2 rowHeight=68.0 fontSize=26.4
+medium wrap      14h Charlotte       drawn=9/9 of "Charlotte" lines=2 rowHeight=68.0 fontSize=26.4
+medium wrap      14h Mary Anne Smith drawn=15/15 of "Mary Anne Smith" lines=2 rowHeight=68.0 fontSize=26.4
+medium firstName  9h Ada             drawn=0/3 of "Ada" lines=1 rowHeight=60.0 fontSize=26.4
+medium firstName 14h Charlotte       drawn=0/9 of "Charlotte" lines=1 rowHeight=60.0 fontSize=26.4
+medium firstName 14h Mary Anne Smith drawn=0/4 of "Mary" lines=1 rowHeight=60.0 fontSize=26.4
+medium shrink     9h Ada             drawn=3/3 of "Ada" lines=1 rowHeight=60.0 fontSize=23.9
+medium shrink    14h Charlotte       drawn=9/9 of "Charlotte" lines=1 rowHeight=60.0 fontSize=17.8
+medium shrink    14h Mary Anne Smith drawn=15/15 of "Mary Anne Smith" lines=1 rowHeight=60.0 fontSize=13.6
+large  today      9h Ada             drawn=0/3 of "Ada" lines=1 rowHeight=60.0 fontSize=28.8
+large  today     14h Charlotte       drawn=0/9 of "Charlotte" lines=1 rowHeight=60.0 fontSize=28.8
+large  today     14h Mary Anne Smith drawn=0/15 of "Mary Anne Smith" lines=1 rowHeight=60.0 fontSize=28.8
+large  wrap       9h Ada             drawn=3/3 of "Ada" lines=2 rowHeight=74.0 fontSize=28.8
+large  wrap      14h Charlotte       drawn=9/9 of "Charlotte" lines=2 rowHeight=73.9 fontSize=28.7
+large  wrap      14h Mary Anne Smith drawn=11/15 of "Mary Anne Smith" lines=2 rowHeight=73.9 fontSize=28.7
+large  firstName  9h Ada             drawn=0/3 of "Ada" lines=1 rowHeight=60.0 fontSize=28.8
+large  firstName 14h Charlotte       drawn=0/9 of "Charlotte" lines=1 rowHeight=60.0 fontSize=28.8
+large  firstName 14h Mary Anne Smith drawn=0/4 of "Mary" lines=1 rowHeight=60.0 fontSize=28.8
+large  shrink     9h Ada             drawn=3/3 of "Ada" lines=1 rowHeight=60.0 fontSize=23.9
+large  shrink    14h Charlotte       drawn=9/9 of "Charlotte" lines=1 rowHeight=60.0 fontSize=17.8
+large  shrink    14h Mary Anne Smith drawn=15/15 of "Mary Anne Smith" lines=1 rowHeight=60.0 fontSize=13.6

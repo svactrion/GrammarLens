@@ -53,10 +53,10 @@ changed. Line numbers below are from that starting point.
 | `session_completed` (renamed `practice_completed`, §8) | `topic_id`, `question_count` | `lib/screens/results_screen.dart:45` (**Topic Practice only**) |
 | `free_practice_used` | none | `lib/screens/practice_launch.dart:147` |
 | `free_practice_quota_exhausted` | none | `lib/screens/practice_launch.dart:73`, `lib/screens/weak_spot_detail_screen.dart:127` |
-| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8) | `lib/screens/premium_screen.dart:128` |
+| `paywall_viewed` | `source` = `home` / `weak_spot_quota` / `review_quota` / `practice_launch` / `onboarding` (the `onboarding` source was replaced by `day0_after_climb` on 2026-09-22, see §8; `review_quota`, Review's "used today" card, added 2026-10-05 in 1.2.0 Batch 5: a new value of the existing parameter, no new event) | `lib/screens/premium_screen.dart:128` |
 | `paywall_dismissed` | `source`, `method` = `close_button` / `maybe_later` / `system_back` | `premium_screen.dart:229`, `:270` |
 | `purchase_started` | `plan` = `monthly` / `annual` | `premium_screen.dart:176` |
-| `purchase_result` | `plan`, `outcome` = `success` / `cancelled` / `error` | `premium_screen.dart:197` |
+| `purchase_result` | `plan`, `outcome` = `success` / `cancelled` / `error` / `pending` | `premium_screen.dart` (`_startPurchase`). **1.2.0 (owner, 2026-10-05):** `pending` = Ask to Buy or a deferred payment, waiting for approval (O10); no new event or parameter. An approval that comes later reaches the app only as an entitlement change and logs nothing, so each attempt is counted once; a pending purchase that is later approved stays `pending` in analytics (RevenueCat records the transaction itself) |
 
 ### Gaps that matter for this plan
 
@@ -105,9 +105,9 @@ value.
 
 | | |
 |---|---|
-| Params | `correct_count`, `wrong_count`, `skipped_count` (ints; sum is 5 today, computed rather than assumed), `step_earned` (0/1: at least one non-blank answer), `day0` (0/1: completed inside the first-launch flow), `set_source` (`bundled` = the fixed first-day set shipped with the app, `generated` = model-written; added 2026-09-22) |
+| Params | `correct_count`, `wrong_count`, `skipped_count` (ints; sum is 5 today, computed rather than assumed), `step_earned` (0/1: at least one non-blank answer), `day0` (0/1: completed inside the first-launch flow), `set_source` (`bundled` = the fixed first-day set shipped with the app, `generated` = model-written per device by 1.0.0, added 2026-09-22; from 1.1.0 (2026-09-30): `shared` = the date's shared set, `fallback` = the shared set could not be read and a set shipped with the app was shown; 1.1.0 never writes `generated`, which remains for 1.0.0 devices and sets cached before the update), `set_date` (`YYYY-MM-DD`: the set's own day, i.e. the local day key it was loaded for; added 2026-09-30 in 1.1.0) |
 | Fired | In `DailyTestResultScreen._saveCompletion` (`lib/screens/daily_test_result_screen.dart:67-90`), **after** `completeDailyTest` succeeds, and only when the set was not already completed. A failed save that is retried yields one event; reopening a finished result yields none. |
-| Answers | Is the daily habit forming (events/user/week)? What share of tests earn no step (all-skipped)? Does a first-ever (Day-0) test behave differently from later ones, and does the fixed first-day set (`set_source = bundled`) score differently from generated ones? Is scoring "favoring habit over accuracy" (`prd-gamification.md` §M6.1) showing up as a real accuracy spread? |
+| Answers | Is the daily habit forming (events/user/week)? What share of tests earn no step (all-skipped)? Does a first-ever (Day-0) test behave differently from later ones, and does the fixed first-day set (`set_source = bundled`) score differently from generated ones? How often is the fallback shown (`fallback` share of 1.1.0 completions = the health of the shared-set pipeline; `docs/1.1.0-shared-daily-test.md` §9)? Per-date difficulty of the shared set: completions and `correct_count` per `set_date` with `set_source = shared` show a set that was too hard or had a broken key (everyone gets the same set on a date). Is scoring "favoring habit over accuracy" (`prd-gamification.md` §M6.1) showing up as a real accuracy spread? |
 
 ### E2 — `results_cta_tapped` — DROPPED (owner decision, 2026-09-19)
 
@@ -190,6 +190,8 @@ event only says "opened Profile". Its value grows after the first month-end.
 | Fired | `_setTextSize` in `lib/app.dart:118`, only when the value actually changes. |
 | Answers | Is Medium (1.10×) the right default? The direction of change is the signal: many Medium→Large means the default is too small; many Medium→Small means it is too big. |
 
+**1.2.0 (final pass, 2026-10-05): the scale behind the names moved one step up.** Small / Medium / Large were 1.0 / 1.1 / 1.2 and are 1.1 / 1.2 / 1.31; the parameter values and the user property keep their names (no migration). Read `text_size` and E6 per app version: `medium` before 1.2.0 is today's `small`, `large` before 1.2.0 is today's `medium`.
+
 ### E7 — `ai_consent_result` (priority: must have, compliance; added 2026-09-22)
 
 | | |
@@ -221,6 +223,85 @@ meaningful metric is the ratio `practice_result_upsell_tapped` /
 `practice_result_upsell_viewed`, then the funnel from `paywall_viewed`
 (`source = practice_result`) onward.
 
+### 1.1.0 side tracks — planned (1.1.0), not implemented (added 2026-09-26)
+
+Owner decision, recorded in `docs/1.1.0-design-side-tracks.md` ("Measurement").
+**No code exists for either item below**, nothing is registered in Firebase,
+and names and parameters may still change in that file's Batch 6.
+
+| Item | Contract (draft) | Status |
+|---|---|---|
+| `theme_id` parameter | String, the id of the month's theme as stored with that month (`green_slope` / `ember_peak` / `glacier_peak` / `red_canyon`; exact ids are set in Batch 2). Added to the existing Monthly Climb events; candidates: E1 `daily_test_completed`, E3 `welcome_badge_earned`, E4 `medal_month_finalized` (for E4, the finalized month's theme, not the current one). E5 `profile_medals_viewed` spans several months and gets none. | Planned (1.1.0), not implemented |
+| ~~Month transition card event(s)~~ | ~~"Card shown" and "`Start climbing` tapped", each with a case parameter.~~ Replaced by M19 (2026-10-02), below. | Replaced |
+| `theme_id` on `mode_selected` (M19) | Only when `mode = daily_test`: the theme of the month the Daily Test is opened in, from Home. `topic` and `premium` keep no extra parameter. The Day-0 test sends no `mode_selected` (§1, gap 2), so it carries none. | Implemented 2026-10-02 (`AnalyticsService.modeSelected(mode, themeId:)`, Home's `_openDailyTest`); not seen in DebugView; not registered |
+
+#### Month transition (Batch 6, decision M19, owner 2026-10-02) — implemented 2026-10-02, not seen in DebugView
+
+`docs/1.1.0-design-side-tracks.md`, M16–M19. Values are strings or ints;
+booleans as 0/1, as everywhere else.
+
+| Event | Params | Fired |
+|---|---|---|
+| `month_card_shown` | `theme_id` (the new month's), `variant` = `summary` / `fresh`, `medal_tier` = `none` / `bronze` / `silver` / `gold` (last month's; `none` on the fresh-start card), `near_miss_shown` (0/1) | Once per showing of the sheet. A card shown again after the app was closed with it open sends it again. |
+| `month_card_dismissed` | `theme_id`, `variant`, `method` = `button` / `drag` / `barrier`, `open_ms` (int: milliseconds from shown to dismissed) | Once, when the sheet closes by one of the three ways. |
+| `month_zoom_ended` | `theme_id`, `outcome` = `completed` / `skipped` / `reduce_motion` / `daily_test_opened`, `trigger` = `month_change` / `first_run` | Once per zoom. `skipped` = a tap on the mountain; `daily_test_opened` = the zoom jumped to its end because the Daily Test was opened (M16). |
+
+Differences from the Batch 0 report's §8 proposal: `tier` → `medal_tier`
+(its own name, so it is not read together with `medal_month_finalized`'s
+`tier`); `near_miss` → `near_miss_shown`; `month_card_dismissed` gains
+`theme_id` and `variant`; `method` values `swipe` / `outside` → `drag` /
+`barrier`; `outcome` gains `daily_test_opened` (M16). The debug replay
+sends none of these (M18). Built in `AnalyticsService.monthCardShown`,
+`monthCardDismissed` and `monthZoomEnded`, sent from Home; `open_ms` counts
+only foreground time (paused while the app is in the background). Tests:
+`test/analytics_service_test.dart` (exact keys and values; the
+all-events limits test now covers 20 events), `test/month_card_test.dart`
+(each event once; the three methods; the four outcomes on the month
+change), `test/first_launch_climb_test.dart` (the `first_run` trigger's
+outcomes). Accepted (owner, 2026-10-02): `theme_id` is on no other event;
+the theme is derived from the date (global calendar). To register after
+the code is merged:
+dimensions `theme_id`, `variant`, `medal_tier`, `near_miss_shown`,
+`trigger`; metric `open_ms` (`method` and `outcome` are registered).
+
+Why: the monthly themes are a hypothesis about return visits; without
+`theme_id`, a drop in a given month cannot be told apart from that month's
+theme. After the code is merged, `theme_id` and the case parameter are
+registered as event-scoped custom dimensions (§9); registration is not
+retroactive.
+
+#### Monthly milestones (Batch 5, decision N21, owner 2026-10-03) — implemented 2026-10-03, not seen in DebugView
+
+`docs/1.1.0-design-side-tracks.md`, N12, N21, N24. Both are sent from the
+Daily Test result screen after a durable save, next to
+`daily_test_completed` (whose `set_source` / `set_date` are not touched),
+computed from the set's month: "after" is the month's progress read after
+the save, "before" is "after" minus this completion. A set completes once
+and the score only grows, so each fires at most once per save point or
+tier per month with no new record (N24). Neither is sent for a set whose
+month is already finalized, nor by the `CLIMB_DEBUG_MILESTONE` replay.
+
+| Event | Params | Fired |
+|---|---|---|
+| `save_point_reached` | `theme_id` (the set's month), `save_point` = `first_camp` / `halfway_hut` / `mountain_spring` / `high_camp` / `summit`, `step` (int), `days_in_month` (int) | When the completion's step reaches the save point's step for that month (the flag, `summit`, on the month's last step). The C5 signpost is decoration and sends none. |
+| `medal_tier_reached` | `theme_id`, `tier` = `bronze` / `silver` / `gold` (reused from E4, same meaning: a tier earned), `day_of_month` (int, the set's day), `days_in_month` (int), `active_days` (int, steps so far), `rule_version` (int) | When the month's tier rises with this completion. One completion is worth at most 10 points and each band is at least 70, so at most one tier at a time. |
+
+Built in `AnalyticsService.savePointReached` and `medalTierReached`, sent
+by `DailyTestResultScreen._reportMilestones` from `ClimbMilestones`
+(`lib/services/climb_milestones.dart`). Tests:
+`test/analytics_service_test.dart` (exact keys; the all-events limits
+test now covers 22 events) and `test/daily_test_result_screen_test.dart`
+(each once with the set's month and theme; the flag as `summit`; none for
+a finalized month, a reopened result or a failed save).
+
+N21 changes Batch 6's accepted deviation ("`theme_id` only on
+`mode_selected`") for these two events. To register after the merge:
+dimensions `save_point`, `step`; `theme_id`, `tier`, `day_of_month`,
+`days_in_month`, `rule_version` (dimensions) and `active_days` (metric)
+are registered or already planned. No separate events for the
+celebration or the label: they follow from these (see "Events
+considered and not proposed").
+
 ### Events considered and not proposed
 
 - **`climb_step_earned`** — redundant with E1's `step_earned`.
@@ -249,6 +330,25 @@ paywall funnel by `source` and `plan` (§5).
 |---|---|---|
 | `first_step_dom` | Day of month (`"1"`–`"31"`) on which the user earned their first ever step | Exactly once, at the moment E3 fires (`welcomeBadgeJustEarned`) |
 | `text_size` | `small` / `medium` / `large` | At startup after the stored value is loaded, and on each change (E6) |
+| `learning_goal` | `exam_prep` / `work` / `general` / `skipped` | **Added 1.2.0 (owner, 2026-10-05).** Once, as onboarding completes, just before `onboarding_completed` (so that event carries it). Not set for installs that finished onboarding earlier (see below) |
+
+**`learning_goal` (1.2.0).** The onboarding goal question personalizes
+nothing; it is asked to understand who uses the app and to decide what to
+improve (additional screens package, Batch 0 report §3d, option B, chosen
+by the owner). Until 1.2.0 the goal never left the device, so the question
+answered nothing. Rules:
+
+- One closed value per install; `skipped` is its own value, never counted
+  as `general` ("Skip goal & start").
+- Set by `AnalyticsService.setLearningGoalProperty` in `FirstLaunchFlow`;
+  the only call site. No new event.
+- Not back-filled: an install that finished onboarding before 1.2.0 has a
+  stored `general` that cannot be told apart from a choice (the question
+  was required then and "General fluency" was one of three answers), so it
+  reports nothing rather than a guess.
+- The name is never sent with it, nor anywhere else (§4).
+- Register `learning_goal` as a user-scoped custom dimension before 1.2.0
+  ships (§9); registration is not retroactive.
 
 `first_step_dom` is what makes the Welcome assumption testable: the
 hypothesis is that a badge on day one helps **mid-month starters** — the
@@ -281,12 +381,17 @@ first four weeks.
 ## 4. Privacy rules
 
 **Never sent, in any event or user property:** question text, answer text,
-correct answers, the user's name, learning goal, avatar,
+correct answers, the user's name, avatar,
 any device identifier of our own (`getOrCreateDeviceId` is the proxy's
 quota key and stays out of Firebase), and free text of any kind.
 
 **Allowed:** counts, tiers, percentages, rule versions, day-of-month, and
-fixed-vocabulary strings. Every string value in §2/§3 comes from a closed
+fixed-vocabulary strings. **Since 1.2.0 the learning goal is sent** as the
+`learning_goal` user property (§3), a closed four-value vocabulary; it was
+on the never-sent list until then. What this changed outside this file:
+the onboarding privacy line, the AI permission screen's "What is never
+sent", the privacy policy and the App Store privacy answers (roadmap, 1.2.0
+pre-release checklist). Every string value in §2/§3 comes from a closed
 enum (`tier`, `cta`, `size`, `previous`), so nothing user-typed can leak
 through a parameter. Existing `topic_id` is a topic enum name, also closed.
 
@@ -309,7 +414,7 @@ Limits below are from Google Analytics help
 | Parameters per event | 25 | Max is 6 (E4) |
 | Parameter name length | 40 chars | Pass |
 | Parameter value length | 100 chars | All values are short enums/ints |
-| User properties | 25 max; name ≤ 24 chars; value ≤ 36 chars | 2 properties; names 14 and 9 chars; values ≤ 6 chars |
+| User properties | 25 max; name ≤ 24 chars; value ≤ 36 chars | 3 properties (1.2.0: `learning_goal`); names 14, 9 and 13 chars; values ≤ 9 chars |
 | Distinct events per app | 500 | 9 existing + 6 proposed = 15 |
 
 Not verified from the fetched page (check in the console before relying on
@@ -411,7 +516,7 @@ UDID from step 1.
 **Every device command here uses `config/prod.json`.** `config/dev.json`
 points `PROXY_BASE_URL` at `localhost`, which on a physical device means the
 device itself, so every proxy call would fail; and `scripts/dev.sh` is
-simulator-only for the same reason (README, Local setup, "Physical device").
+simulator-only for the same reason (`docs/development.md`, Local setup, "Physical device").
 A device run therefore talks to the real proxy and the real Firebase project:
 use only your own test device, expect real (small) generation cost, and rely
 on DebugView's debug flag plus a developer-traffic filter to keep test events
@@ -423,6 +528,17 @@ out of reports.
 `IS_ANALYTICS_ENABLED = false` value in `GoogleService-Info.plist` is a stale
 field and does not block collection (§1.4); do not regenerate the plist for
 it.
+
+**Before anything: builds other than release send nothing by default
+(P11, 2026-10-04).** A debug or profile build drops every app event and
+user property and turns Firebase's collection off (automatic events such
+as `first_open` and `session_start` included), unless it was built with
+`--dart-define=ANALYTICS_DEBUG_EVENTS=true`. Every build command in this
+section therefore needs that define, or DebugView stays empty. A release
+build always sends, with or without it. The rule is `AnalyticsGate` in
+`lib/services/analytics_service.dart`; `docs/development.md`, "Analytics in
+debug and profile builds". A month-card replay sends events only with both
+`CLIMB_DEBUG_MONTH_CARD_EVENTS=true` and `ANALYTICS_DEBUG_EVENTS=true`.
 
 **Step 1 — find the device.**
 
@@ -436,7 +552,7 @@ non-debug build (debug Flutter builds cannot be launched from the home screen
 on iOS 14+):
 
 ```bash
-flutter build ios --profile --dart-define-from-file=config/prod.json
+flutter build ios --profile --dart-define-from-file=config/prod.json --dart-define=ANALYTICS_DEBUG_EVENTS=true
 ```
 
 ```bash
@@ -459,21 +575,23 @@ disable argument is passed.
 Alternative for the same one-time step: open `ios/Runner.xcworkspace`, Product
 → Scheme → Edit Scheme → Run → Arguments → add the flag(s), and run once
 from Xcode on the device. Xcode runs do not pass `--dart-define` values
-(README's Local setup section), so the app will not reach the proxy in that
+(`docs/development.md`, Local setup), so the app will not reach the proxy in that
 run; that does not matter for a one-time flag-setting launch.
 
-**Step 3 — day-to-day runs.** With the flag persisted, use the README's
+**Step 3 — day-to-day runs.** With the flag persisted, use `docs/development.md`'s
 physical-device command (not `scripts/dev.sh`):
 
 ```bash
-flutter run --dart-define-from-file=config/prod.json -d <DEVICE>
+flutter run --dart-define-from-file=config/prod.json --dart-define=ANALYTICS_DEBUG_EVENTS=true -d <DEVICE>
 ```
 
 **Step 4 — watch events.** Firebase console → Analytics → DebugView, pick the
 device in the top-left selector. Events appear within seconds, with
 parameters expanded. Walk the checklist: complete a Daily Test (E1; also check
 a fresh-install first test for `day0 = 1`, `set_source = bundled` (the
-fixed first-day set; a later day should show `generated`) and E3 + the
+fixed first-day set; a later day should show `shared` on 1.1.0, `generated`
+on 1.0.0), `set_date` equal to the device's local date, and with the app
+opened on a new day in airplane mode `set_source = fallback`, and E3 + the
 `first_step_dom` user property), open Profile (E5), change text size (E6; also the `text_size`
 user property). After the first test's "Start my climb" (or "Continue"), Home climbs and about 600 ms later opens Premium by itself: check `paywall_viewed` with `source = day0_after_climb` and **no** `mode_selected` in between, then `paywall_dismissed` with the same source. It opens once per install; to see it again use Profile → Developer → reset onboarding (debug builds only), which also clears the one-time flag. Launch and resume the app to see E4 trigger (below). E4 needs a past month in the ledger; use a seeded/controlled-clock
 database, since a real month rollover is impractical. Confirm it fires once
@@ -487,7 +605,10 @@ xcrun devicectl device process launch --device <DEVICE> --terminate-existing com
 
 Caveats: events sent in debug mode are included in the daily BigQuery export
 by default, so configure a developer-traffic data filter in the Analytics
-property before relying on exported data. Console log lines are not a substitute: DebugView is the authority.
+property before relying on exported data. Since P11, a build without
+`ANALYTICS_DEBUG_EVENTS=true` sends nothing at all, so the filter only has
+to catch the builds made with it (which are the ones in debug mode
+anyway). Console log lines are not a substitute: DebugView is the authority.
 
 ---
 
@@ -528,7 +649,7 @@ Built in separate commits on `monthly-climb-v2`:
 |---|---|
 | Test seam: `AnalyticsSink` (default Firebase), `AnalyticsService(sink:, clock:)`; `test/support/recording_analytics_sink.dart` | Done. Every event has a test for its exact name and parameter key set; one test checks all 14 events and both user properties against the Firebase limits in §4 and that values are only ints/short strings. |
 | `session_completed` → `practice_completed` | Done (`AnalyticsService.practiceCompleted`). |
-| E1 `daily_test_completed`, E3 `welcome_badge_earned`, user property `first_step_dom` | Done (E1 gained `set_source` on 2026-09-22), in `DailyTestResultScreen._reportCompletion`: once per screen instance, after a durable save; never for a reopened finished result; the Welcome pair and the property fire only when `completeDailyTest` reports a live earn, using the ledger day of the set. `isDay0` is passed by the first-launch flow. |
+| E1 `daily_test_completed`, E3 `welcome_badge_earned`, user property `first_step_dom` | Done (E1 gained `set_source` on 2026-09-22; in 1.1.0 its values `shared` / `fallback` and the `set_date` parameter, 2026-09-30), in `DailyTestResultScreen._reportCompletion`: once per screen instance, after a durable save; never for a reopened finished result; the Welcome pair and the property fire only when `completeDailyTest` reports a live earn, using the ledger day of the set. `isDay0` is passed by the first-launch flow. |
 | E4 `medal_month_finalized` and the finalize timing | Done. `finalizePastMedalMonths` returns the months it newly froze; `finalizePastMedalMonthsAndReport` (`lib/services/medal_finalization.dart`) reports each; it runs at launch and on resume (`lib/app.dart`) and from Profile. Concurrency test: three simultaneous calls freeze and report each month once. |
 | E5 `profile_medals_viewed` | Done, once per session, only when the Profile tab is showing (`AnalyticsService.appPaused`/`appResumed` drive the 30-minute reset). |
 | E6 `text_size_changed`, user property `text_size` | Done in `lib/app.dart`: reported only on a real change; the property is set from the stored value at startup and on change. |
@@ -543,6 +664,8 @@ Built in separate commits on `monthly-climb-v2`:
   `daily_test_completed` has been seen (2026-09-24); a full pass over every
   event is not recorded. Tracked in the TestFlight checklist in
   `docs/roadmap.md` ("What's next" §1).
+- `set_date` (1.1.0, 2026-09-30) is **not registered** as a custom dimension
+  yet (§9); DebugView shows it without registration.
 - The custom dimensions and metrics in §9 are registered: 2 user-scoped
   dimensions, 16 event-scoped dimensions and 8 metrics on 2026-09-21 (the
   event-scoped `size` as "New text size"), plus `set_source` and
@@ -596,7 +719,7 @@ DebugView and BigQuery export show every parameter without registration.
 Limits for a standard property were not verified from Google's help pages
 here (the fetched page did not cover them); I believe they are 50 event-scoped
 dimensions, 25 user-scoped dimensions and 50 custom metrics, and this list
-uses 18, 2 and 8. Check the console's counter as you create them.
+uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the console's counter as you create them.
 
 ### User-scoped custom dimensions
 
@@ -604,6 +727,7 @@ uses 18, 2 and 8. Check the console's counter as you create them.
 |---|---|---|---|
 | First step day of month | `first_step_dom` | User | `1`–`31` |
 | Text size | `text_size` | User | `small` / `medium` / `large` |
+| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `general` / `skipped` — **1.2.0, registered 2026-10-06** |
 
 ### Event-scoped custom dimensions
 
@@ -611,7 +735,8 @@ uses 18, 2 and 8. Check the console's counter as you create them.
 |---|---|---|---|
 | Step earned | `step_earned` | Event | `daily_test_completed` (0/1) |
 | Day 0 | `day0` | Event | `daily_test_completed` (0/1) |
-| Set source | `set_source` | Event | `daily_test_completed` (`bundled` / `generated`; added 2026-09-22) |
+| Set source | `set_source` | Event | `daily_test_completed` (`bundled` / `generated`, added 2026-09-22; `shared` / `fallback` from 1.1.0, 2026-09-30 — new values of a registered dimension need no re-registration) |
+| Set date | `set_date` | Event | `daily_test_completed` (`YYYY-MM-DD`, one value per day; added 2026-09-30 in 1.1.0). **Not registered yet**: register before the 1.1.0 build ships (owner decision 6, `docs/1.1.0-shared-daily-test.md` §13) |
 | Rule version | `rule_version` | Event | `welcome_badge_earned`, `medal_month_finalized` |
 | Day of month | `day_of_month` | Event | `welcome_badge_earned` |
 | Days in month | `days_in_month` | Event | `welcome_badge_earned`, `medal_month_finalized` |
@@ -623,7 +748,7 @@ uses 18, 2 and 8. Check the console's counter as you create them.
 | Previous text size | `previous` | Event | `text_size_changed` |
 | Mode | `mode` | Event | `mode_selected` (existing) |
 | Topic | `topic_id` | Event | `practice_completed` (existing) |
-| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing; `home` / `weak_spot_quota` / `practice_launch` / `day0_after_climb` / `practice_result`; `day0_after_climb` added 2026-09-22 and replacing the old `onboarding`, `practice_result` added 2026-09-23), `ai_consent_result` (`practice_launch` / `data_settings`) |
+| Paywall / consent source | `source` | Event | `paywall_viewed`, `paywall_dismissed` (existing; `home` / `weak_spot_quota` / `review_quota` / `practice_launch` / `day0_after_climb` / `practice_result`; `day0_after_climb` added 2026-09-22 and replacing the old `onboarding`, `practice_result` added 2026-09-23, `review_quota` added 2026-10-05), `ai_consent_result` (`practice_launch` / `data_settings`) |
 | Paywall dismiss method | `method` | Event | `paywall_dismissed` (existing) |
 | Plan | `plan` | Event | `purchase_started`, `purchase_result` (existing) |
 | Purchase / consent outcome | `outcome` | Event | `purchase_result` (existing), `ai_consent_result` (`granted` / `declined` / `revoked`) |

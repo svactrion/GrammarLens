@@ -17,7 +17,7 @@ class BrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rim = Theme.of(context).colorScheme.secondary;
+    final rim = brandMarkRim(Theme.of(context).brightness);
     return CustomPaint(
       size: Size.square(size),
       painter: _BrandMarkPainter(rim: rim),

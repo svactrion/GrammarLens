@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
+import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 
@@ -91,6 +92,105 @@ void main() {
       expectOnly('mode_selected', {'mode': 'daily_test'});
     });
 
+    test('mode_selected carries theme_id only for the Daily Test (M19)',
+        () async {
+      await service.modeSelected(AnalyticsService.modeDailyTest,
+          themeId: 'ember_peak');
+      expectOnly(
+          'mode_selected', {'mode': 'daily_test', 'theme_id': 'ember_peak'});
+      sink.events.clear();
+      await service.modeSelected(AnalyticsService.modeTopic,
+          themeId: 'ember_peak');
+      expectOnly('mode_selected', {'mode': 'topic'});
+    });
+
+    test('month_card_shown carries theme, variant, tier and the 0/1 line',
+        () async {
+      await service.monthCardShown(
+          themeId: 'ember_peak',
+          variant: 'summary',
+          medalTier: MedalTier.silver,
+          nearMissShown: true);
+      expectOnly('month_card_shown', {
+        'theme_id': 'ember_peak',
+        'variant': 'summary',
+        'medal_tier': 'silver',
+        'near_miss_shown': 1,
+      });
+      sink.events.clear();
+      await service.monthCardShown(
+          themeId: 'glacier_peak',
+          variant: 'fresh',
+          medalTier: null,
+          nearMissShown: false);
+      expectOnly('month_card_shown', {
+        'theme_id': 'glacier_peak',
+        'variant': 'fresh',
+        'medal_tier': 'none',
+        'near_miss_shown': 0,
+      });
+    });
+
+    test('month_card_dismissed carries theme, variant, method and open_ms',
+        () async {
+      await service.monthCardDismissed(
+          themeId: 'ember_peak',
+          variant: 'summary',
+          method: 'drag',
+          openMs: 4200);
+      expectOnly('month_card_dismissed', {
+        'theme_id': 'ember_peak',
+        'variant': 'summary',
+        'method': 'drag',
+        'open_ms': 4200,
+      });
+    });
+
+    test('month_zoom_ended carries theme, outcome and trigger', () async {
+      await service.monthZoomEnded(
+          themeId: 'green_slope',
+          outcome: 'daily_test_opened',
+          trigger: 'first_run');
+      expectOnly('month_zoom_ended', {
+        'theme_id': 'green_slope',
+        'outcome': 'daily_test_opened',
+        'trigger': 'first_run',
+      });
+    });
+
+    test('save_point_reached carries theme, save point, step and days (N21)',
+        () async {
+      await service.savePointReached(
+          themeId: 'glacier_peak',
+          savePoint: 'halfway_hut',
+          step: 15,
+          daysInMonth: 31);
+      expectOnly('save_point_reached', {
+        'theme_id': 'glacier_peak',
+        'save_point': 'halfway_hut',
+        'step': 15,
+        'days_in_month': 31,
+      });
+    });
+
+    test('medal_tier_reached reuses tier and carries theme_id (N21)', () async {
+      await service.medalTierReached(
+          themeId: 'red_canyon',
+          tier: MedalTier.silver,
+          dayOfMonth: 19,
+          daysInMonth: 31,
+          activeDays: 16,
+          ruleVersion: 1);
+      expectOnly('medal_tier_reached', {
+        'theme_id': 'red_canyon',
+        'tier': 'silver',
+        'day_of_month': 19,
+        'days_in_month': 31,
+        'active_days': 16,
+        'rule_version': 1,
+      });
+    });
+
     test('practice_completed carries only topic_id and question_count',
         () async {
       await service.practiceCompleted(topicId: 'articles', questionCount: 5);
@@ -141,6 +241,19 @@ void main() {
       expectOnly('purchase_started', {'plan': 'annual'});
     });
 
+    test(
+        'purchase_result: a pending purchase is its own outcome value, with '
+        'the same two parameters (1.2.0)', () async {
+      await service.purchaseResult(
+        plan: AnalyticsService.planAnnual,
+        outcome: 'pending',
+      );
+      expectOnly('purchase_result', {
+        'plan': 'annual',
+        'outcome': 'pending',
+      });
+    });
+
     test('purchase_result carries only plan and outcome', () async {
       await service.purchaseResult(
         plan: AnalyticsService.planMonthly,
@@ -153,15 +266,16 @@ void main() {
     });
 
     test(
-        'daily_test_completed carries counts, two 0/1 flags and the set source',
-        () async {
+        'daily_test_completed carries counts, two 0/1 flags, the set source '
+        'and the set date', () async {
       await service.dailyTestCompleted(
         correctCount: 3,
         wrongCount: 1,
         skippedCount: 1,
         stepEarned: true,
         day0: false,
-        setSource: 'generated',
+        setSource: 'shared',
+        setDate: '2026-10-01',
       );
       expectOnly('daily_test_completed', {
         'correct_count': 3,
@@ -169,7 +283,8 @@ void main() {
         'skipped_count': 1,
         'step_earned': 1,
         'day0': 0,
-        'set_source': 'generated',
+        'set_source': 'shared',
+        'set_date': '2026-10-01',
       });
     });
 
@@ -216,6 +331,22 @@ void main() {
         monthsAgo: 3,
       );
       expect(sink.events.single.parameters!['tier'], 'none');
+    });
+
+    test(
+        'learning_goal is a user property with one of four closed values, '
+        'and nothing else is written', () async {
+      final values = <LearningGoal?, String>{
+        LearningGoal.examPrep: 'exam_prep',
+        LearningGoal.work: 'work',
+        LearningGoal.general: 'general',
+        null: 'skipped',
+      };
+      for (final MapEntry(key: goal, value: value) in values.entries) {
+        await service.setLearningGoalProperty(goal);
+        expect(sink.userProperties, {'learning_goal': value});
+      }
+      expect(sink.events, isEmpty);
     });
 
     test('first_step_dom is a user property, stored as a string', () async {
@@ -343,6 +474,7 @@ void main() {
         stepEarned: true,
         day0: true,
         setSource: 'bundled',
+        setDate: '2026-10-01',
       );
       await service.welcomeBadgeEarned(
         ruleVersion: 1,
@@ -371,12 +503,40 @@ void main() {
         source: AiConsentSource.dataSettings,
         consentVersion: 1,
       );
+      await service.monthCardShown(
+          themeId: 'glacier_peak',
+          variant: 'summary',
+          medalTier: MedalTier.gold,
+          nearMissShown: false);
+      await service.monthCardDismissed(
+          themeId: 'glacier_peak',
+          variant: 'summary',
+          method: 'barrier',
+          openMs: 123456);
+      await service.monthZoomEnded(
+          themeId: 'glacier_peak',
+          outcome: 'reduce_motion',
+          trigger: 'month_change');
+      await service.savePointReached(
+          themeId: 'red_canyon',
+          savePoint: 'mountain_spring',
+          step: 21,
+          daysInMonth: 31);
+      await service.medalTierReached(
+          themeId: 'red_canyon',
+          tier: MedalTier.gold,
+          dayOfMonth: 31,
+          daysInMonth: 31,
+          activeDays: 31,
+          ruleVersion: 1);
       await service.setTextSizeProperty(AppTextSize.large);
       await service.setFirstStepDayOfMonth(31);
+      await service.setLearningGoalProperty(LearningGoal.examPrep);
+      await service.setLearningGoalProperty(null);
 
       final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
       final reserved = RegExp(r'^(firebase_|google_|ga_|_)');
-      expect(sink.events, hasLength(17));
+      expect(sink.events, hasLength(22));
       for (final event in sink.events) {
         expect(event.name.length, lessThanOrEqualTo(40), reason: event.name);
         expect(nameRule.hasMatch(event.name), isTrue, reason: event.name);

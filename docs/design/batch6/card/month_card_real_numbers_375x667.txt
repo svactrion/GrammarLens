@@ -1,0 +1,16 @@
+Batch 6 step B: the real month card over the real Home after the M21 scroll (1 November 2026, Ember Peak). Points.
+sheet: top and height (share of the screen); content: the card's natural height; room: what the sheet gives it (default modal sheet, at most 9/16 of the screen); scroll: content > room; Today: the Today card's height showing between the list top and the tab bar; window: the 350 pt mountain window showing above the sheet (and below the list top); START: the K-c avatar (298.5 pt into the window) above the sheet.
+
+card     screen    mode  text    sheet top  sheet h (share)  content  room   scroll  overflow  Today  window above sheet  START
+summary  375×667   dark  small       373.0     294.0 (44 %)    278.0  294.0      no      none   56.0        212.0 (61 %)  no
+summary  375×667   dark  medium      365.0     302.0 (45 %)    286.0  302.0      no      none   56.0        203.0 (58 %)  no
+summary  375×667   dark  large       356.0     311.0 (47 %)    295.0  311.0      no      none   56.0        193.0 (55 %)  no
+summary  375×667   light small       373.0     294.0 (44 %)    278.0  294.0      no      none   56.0        212.0 (61 %)  no
+summary  375×667   light medium      365.0     302.0 (45 %)    286.0  302.0      no      none   56.0        203.0 (58 %)  no
+summary  375×667   light large       356.0     311.0 (47 %)    295.0  311.0      no      none   56.0        193.0 (55 %)  no
+fresh    375×667   dark  small       441.0     226.0 (34 %)    210.0  226.0      no      none   56.0        280.0 (80 %)  no
+fresh    375×667   dark  medium      410.0     257.0 (39 %)    241.0  257.0      no      none   56.0        248.0 (71 %)  no
+fresh    375×667   dark  large       398.0     269.0 (40 %)    253.0  269.0      no      none   56.0        235.0 (67 %)  no
+fresh    375×667   light small       441.0     226.0 (34 %)    210.0  226.0      no      none   56.0        280.0 (80 %)  no
+fresh    375×667   light medium      410.0     257.0 (39 %)    241.0  257.0      no      none   56.0        248.0 (71 %)  no
+fresh    375×667   light large       398.0     269.0 (40 %)    253.0  269.0      no      none   56.0        235.0 (67 %)  no

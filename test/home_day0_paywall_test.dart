@@ -372,7 +372,9 @@ void main() {
         'mode_selected', (tester) async {
       await pumpHome(tester, offer: false, pending: null);
       await tester.pumpAndSettle();
-      final row = find.textContaining('Premium').first;
+      // 1.2.0 (Q15): Home's Premium row is gone; a free user's way to the
+      // paywall from Home is a locked topic (the Topic practice strip).
+      final row = find.text('Explore all topics');
       await tester.ensureVisible(row);
       await tester.pumpAndSettle();
 

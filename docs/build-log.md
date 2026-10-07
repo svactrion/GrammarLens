@@ -5537,6 +5537,313 @@ code, config or test changed. No client reads the new route yet.
   - The `1.1.0` → `main` merge of the proxy commits (deploy rule, §11) is not
     done.
 
+## 2026-09-26 (1.1.0 design side tracks defined)
+
+- **[Product] 1.1.0 design side tracks defined.** Docs only, on branch
+  `1.1.0-design`; no code, config or test changed, and nothing is
+  implemented. The owner's decisions for the 1.1.0 side work are written into
+  [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md): the launch
+  screen (recorded earlier today, repeated there), four monthly themes that
+  rotate every month (Green Slope, Ember Peak, Glacier Peak, Red Canyon;
+  visual and identity only, the theme id stored with each month), a
+  serpentine trail with medal camps, a one-time month transition card, a
+  "Mountain of Learning" title on Home, 4 new avatars appended as
+  `avatar_13`–`avatar_16`, and `theme_id` plus a transition-card event for
+  analytics. The work is split into Batches 0–8 after the `main` merge;
+  Batch 0 is a read-only check, and every claim about today's code in that
+  file is marked "to be verified in Batch 0".
+- **Rejected, with the reason:**
+  - Seasonal themes: themes rotate by month, and a season does not follow a
+    fixed month order (nor both hemispheres); Glacier Peak therefore carries no
+    winter cues.
+  - Idle sway animation for the avatar: battery use, distraction, and the
+    risk of breaking `pumpAndSettle` in tests.
+  - Spiral trail: steps that fall on the far side of the mountain are hidden
+    or overlap, which makes progress hard to read; the trail is a serpentine
+    with 4–5 legs.
+  - Premium avatars: deferred together with earned avatars; earned avatars are
+    reconsidered after the themes' effect on return visits is measured.
+- **[Open → resolved 2026-09-27]** Medal rule v1 is score-based (ceil
+  25/50/75 % of `daysInMonth × 10` points), while the transition card's
+  "Climb [X] days" line and the medal camps assumed a threshold in days.
+  - *Sub-note, owner decisions 2026-09-27 (docs only, on `1.1.0-design`):*
+    medal camps are dropped; a thin score bar with Bronze/Silver/Gold marks
+    (computed from the code's thresholds) sits under the trail, which keeps
+    showing days. Case (b) of the transition card reads "Answer all [Q]
+    questions on [N] days to earn your first [Theme] medal. Correct answers
+    get you there sooner.", with [N] = ceil(Bronze threshold ÷ [Q]) and a
+    fallback line when [N] exceeds the days left. The Gold line becomes "Can
+    you win Gold again?" (the summit is a day, Gold is a score). The default
+    theme keeps its 1.0 name, Green Slope (draft id `green_slope`), instead of
+    the "Greenway Peak" name first written here, to avoid a possible
+    migration. Batch 0 gains two checks: how a blank answer comes about, and
+    where the daily question count comes from. The rule itself is still to be
+    confirmed against the code in Batch 0.
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 0 decisions)
+
+- **[Product] Owner decisions on the Batch 0 report** (1.1.0 design side
+  tracks). Docs only, on branch `1.1.0-design`; no code, config or test
+  changed. Written into
+  [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md), "Decisions
+  after Batch 0", each with its reason and the report's conflict number
+  ([`1.1.0-design-batch0-report.md`](1.1.0-design-batch0-report.md)).
+  - **The dark mode decision CHANGED.** It was "the scene is the same in light
+    and dark mode" (a cost decision). Now every theme has a light and a dark
+    palette; Green Slope's existing dark palette is kept and is the model;
+    only external WebP layers stay the same in both modes, and the B-polish
+    exception is narrowed to them. Reason: the report showed the dark palette
+    mechanism already exists in the code (C2).
+  - Theme stored in a new `climb_month_themes` table (schema v22 → v23), no
+    backfill; a month without a row is Green Slope (C1). Rotation by global
+    calendar, the same theme for everyone in a month; anchor month open.
+  - Trail: already a serpentine (C3); Batch 3 makes step spacing even (C4;
+    1.0 is still in review, so no user sees steps move) and joins the trail's
+    end with the summit (C5). The four stop markers stay shared, palette-
+    colored and inside the 4–6-object budget (C12).
+  - Home: no separate title row; the header becomes "Mountain of Learning ·
+    [month]" (C6, C7).
+  - [Q] from one source: the medal maximum's `× 10` becomes
+    `questionCount × 2` (same value) and Home's "5-question" copy follows it;
+    one separate small commit (C8).
+  - Month transition card: also checked on return from the background, once
+    per month; it waits for the launch-time month finalization before
+    reading last month's medal (C13, C14).
+  - Launch: `runApp` runs immediately with the animation while Firebase and
+    RevenueCat initialize; Home opens when both are done. The static screen
+    and the animation follow the system appearance, Home the app's theme,
+    with a fade between them (C9, C10).
+  - Batch 0 checklist gains one open item: iOS's minimum supported version
+    and the smallest supported screen.
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 1: launch screen)
+
+On branch `1.1.0-design`; not merged, not pushed. Commits `301bb91` (splash
+and `LaunchGate`), `b14752a` (`runApp` first), `de11c7e` (iOS static launch
+screen), plus this docs commit. **Pending the owner's device check**; the
+final duration is decided after it.
+
+- **[Stop check before any code]** What in `main.dart` ran before `runApp`
+  and depended on Firebase or RevenueCat:
+  1. `Firebase.initializeApp`, then the Crashlytics hooks
+     (`FlutterError.onError`, `PlatformDispatcher.onError`). Moved after
+     `runApp`, errors raised while the splash draws would have gone only to
+     the console.
+  2. `SubscriptionService().initialize()` (`Purchases.configure`, anonymous;
+     no RevenueCat log-in exists). Every other `SubscriptionService` method
+     returns its safe default until `_configured` is set, so a Premium user
+     checked before it would have looked free.
+  3. Not in `main.dart`, but started by the app as soon as it is built:
+     `GrammarLensApp.initState` finalizes medal months and reports
+     `medal_month_finalized` through `FirebaseAnalytics.instance`, and sets
+     the `text_size` user property. Before `Firebase.initializeApp` those calls
+     throw inside `AnalyticsService`'s `try`, so the event would be **dropped
+     silently**, and because finalization is idempotent it would never be sent
+     again.
+
+  **A safe order exists, so the work went ahead:** early error handlers are
+  installed first thing in `main()` and keep every error until Firebase is
+  ready, then hand them to Crashlytics in order (or restore Flutter's
+  defaults if Firebase fails, as before); `runApp` shows `LaunchGate`, which
+  starts Firebase and RevenueCat in parallel (neither depends on the other)
+  and builds `GrammarLensApp` **only after both have finished**. Nothing in the
+  app can therefore reach an unconfigured SDK, and the pre-init error window
+  is smaller than before (it used to include orientation locking and
+  Firebase's own start without any handler).
+- **[Design]** Logo (`BrandMark`) centered 32 pt above the screen's center,
+  "GrammarLens" wordmark 16 pt under the logo's box (34 pt, w700, fixed
+  size). The logo scales 0.92 → 1.0 over 0–600 ms (`easeOutCubic`); the
+  wordmark fades in over 300–800 ms (`easeOut`); the finished frame holds
+  until 1000 ms; the splash then fades out over the app in 200 ms, so Home is
+  fully shown at 1.2 s if launch work is shorter. *Why:* 600 ms is long
+  enough for an 8 % scale change to read as settling rather than a jump; the
+  wordmark starts once the logo is mostly in place; the 200 ms hold lets the
+  full wordmark be read before it leaves. If launch work is longer, the last
+  frame holds and the fade starts when it finishes. Follows the system
+  appearance (colors from `buildAppTheme(platformBrightness)`, background
+  `surfaceContainerLow`), not the in-app theme; the fade covers the change
+  to the app's theme. Cold start only: the gate lives at the root and is not
+  rebuilt on resume. **Reduce Motion:** no animation; the logo stays at 0.92
+  (so there is no jump from the static screen), the wordmark is shown at
+  once, and the app replaces the splash on the next frame after launch work.
+- **[Measured] Launch work (Firebase + RevenueCat, in parallel):**
+  - Debug, iPhone 17 Pro simulator (iOS 26.5), 7 cold starts: 245 ms (first,
+    with the debugger attached), then 182, 126, 121, 121, 120, 162 ms.
+  - Profile, iPhone (iOS 27.0, over Wi-Fi), 4 cold starts: 13, 12, 13,
+    11 ms. (Two more attempts did not start: the phone was locked.)
+  - Both finish within 1 ms of each other in every run.
+
+  Launch work is far shorter than the intro, so **the splash adds wait
+  time**: Home is fully shown about 1.19 s after the first frame in profile
+  (1.02–1.08 s in debug), where before it followed launch work directly.
+  **Proposed shortest readable variant, ~0.8 s:** logo 0–350 ms, wordmark
+  150–500 ms, hold to 650 ms, 150 ms fade (added wait ~0.79 s). Not applied;
+  decided after the device check.
+- **[iOS static launch screen]** `LaunchImage` (a 1 × 1 transparent
+  placeholder) is replaced by the logo rendered from the app's own
+  `LaunchLogo` widget at 0.92: @1x/@2x/@3x (100/200/300 px), light and dark
+  appearance variants, generated by `scripts/generate_launch_image.sh`. The
+  storyboard centers the 100 × 100 pt image with a centerY constant of
+  −32 pt. **Measurements:** logo box 100 × 100 pt, center (W/2, H/2 − 32); the
+  drawing at 0.92 fills 92 × 92 pt of it; its inked area runs from −32.7 to
+  +39.6 pt around that center. iPhone 17 Pro (402 × 874 pt): box (151, 355) to
+  (251, 455), inked area x 168.3–240.6, y 372.3–444.6 pt. 375 × 667: box
+  (137.5, 251.5) to (237.5, 351.5). 320 × 568: box (110, 202) to (210, 302).
+  Wordmark top at H/2 + 34 pt. On the simulator, burst screenshots of a cold
+  start in both appearances show the logo's pixels at exactly the computed
+  place (x 505–720, y 1117–1332 px at @3x) on the first frames, then growing.
+  `LaunchBackground` is unchanged. **iOS files changed:**
+  `ios/Runner/Base.lproj/LaunchScreen.storyboard`;
+  `ios/Runner/Assets.xcassets/LaunchImage.imageset/` `Contents.json`,
+  `LaunchImage.png`, `LaunchImage@2x.png`, `LaunchImage@3x.png` (replaced),
+  `LaunchImageDark.png`, `LaunchImageDark@2x.png`, `LaunchImageDark@3x.png`
+  (new), `README.md` (Flutter's template note, removed).
+- **[Tests]** 901 passed (883 before): `launch_gate_test.dart` 11 (finite
+  animation with `pumpAndSettle`, first frame = static screen, Reduce Motion,
+  launch work shorter and longer than the intro, failed launch work, no
+  replay on resume, both appearances); `early_error_reporting_test.dart` 3;
+  `launch_image_test.dart` 4 (catalog variants, storyboard geometry, images
+  re-rendered and compared).
+- **[Note]** The profile build used for measuring was installed on the
+  owner's iPhone with `config/prod.json`; it stays there until the next
+  install.
+- **[Open — device check]** No jump from the static screen to the
+  animation on a cold start; light and dark system appearance; Reduce
+  Motion; no splash on return from the background; the fade into an in-app
+  theme that differs from the system; the first-launch Welcome screen,
+  whose own entrance starts under the splash.
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 1 follow-up: size, Welcome timing, decisions)
+
+On branch `1.1.0-design`; not pushed. `1.1.0` was merged into the branch
+first (a merge, not a rebase): "Already up to date", since `1.1.0`'s tip
+`b08a7ca` was already contained. Commits `5ed21d4` (size), `79f161e`
+(Welcome timing), plus this docs commit.
+
+- **[Product] The launch animation stays at 1.2 s.** An owner decision,
+  made after seeing it on a device. Cost: launch work takes 11–13 ms on the
+  phone (profile), so every cold start gets about 1.2 s longer. Ready
+  alternative if "the launch is slow" feedback comes: logo 0–350 ms,
+  wordmark 150–500 ms, last frame held to 650 ms, 150 ms fade (about 0.8 s).
+- **[Product] The launch screen was enlarged, after Ahmet's feedback on the
+  device.** Asked: 40 %. **Applied: 25 %**, because at 1.4 the wordmark
+  is 303.4 pt wide and leaves only 8.3 pt per side on a 320 pt screen; 1.25
+  is the largest scale that keeps the required 24 pt (270.9 pt wide, 24.5 pt
+  per side). Logo box 100 → 125 pt, gap 16 → 20 pt, wordmark 34 → 42.5 pt
+  (58 pt tall); durations and curves unchanged. The logo's center moved from
+  32 to 39 pt above the screen's center, so logo, gap and wordmark (203 pt)
+  are centered. Launch images regenerated (125/250/375 px, light and dark),
+  storyboard size and offset updated. Finished frame, in pt:
+
+  | Screen | Logo box | Wordmark |
+  |---|---|---|
+  | 402 × 874 | x 138.5–263.5, y 335.5–460.5 | x 65.5–336.5, y 480.5–538.5 |
+  | 375 × 667 | x 125–250, y 232–357 | x 52.0–323.0, y 377–435 |
+  | 320 × 568 | x 97.5–222.5, y 182.5–307.5 | x 24.5–295.5, y 327.5–385.5 |
+
+  On the first frame (and the static screen) the logo is drawn at 0.92
+  (115 pt) inside the same box, and the wordmark is not shown.
+- **[Fix] Welcome waits for the splash.** On a first install Welcome was
+  built under the splash and part of its entrance played unseen. `LaunchGate`
+  now tells the app whether the splash still covers it
+  (`LaunchSplashScope`); Welcome draws every motion at its first frame and
+  starts it once the fade has finished. Nothing is held without a gate or
+  after it, so no other screen changes.
+- **[Open — for the owner] Splash → Welcome handoff.** The splash's last
+  frame and Welcome's mark differ: Welcome's mark at rest is 177 pt (402 ×
+  874) or 146 pt (375 × 667, 320 × 568) against the splash's 125 pt, and its
+  center is 98–102 pt higher (402 × 874: y 297 vs 398; 375 × 667: 197 vs 295;
+  320 × 568: 143 vs 245). The background also changes (cream to Welcome's
+  orange in light mode). There is no visible slide, because Welcome's mark
+  starts invisible and fades in over 900 ms, but the logo disappears in one
+  place and reappears larger and higher. Only on a first install. Not
+  changed here (Welcome's design is the owner's). Options: (1) keep it —
+  Welcome's entrance is its own moment and is seen once; (2) a handoff: the
+  splash's logo glides to Welcome's mark (size and place) during its fade,
+  and Welcome shows its mark already in place instead of fading it in;
+  (3) Welcome's mark keeps its entrance but starts from the splash logo's
+  size and place. Recommended: (1) for 1.1.0, (2) if the device check finds
+  the change distracting.
+- **[Product] Rotation anchor:** October 2026 = Green Slope, then Ember Peak
+  (November), Glacier Peak (December), Red Canyon (January). It follows the
+  global calendar and is a constant in the code, not tied to the release
+  date.
+- **[Answered] iOS minimum version: 15.0** (`IPHONEOS_DEPLOYMENT_TARGET`),
+  so 320 pt wide devices are supported. Vertical additions to Home must be
+  checked on that screen (320 × 568).
+- **[Tests]** 906 passed (901 before): `launch_splash_layout_test.dart` 3
+  (the layout at 402, 375 and 320 pt with the bundled font: block centered,
+  24 pt margins); `welcome_after_splash_test.dart` 2 (Welcome held under the
+  splash and started after the fade; unchanged without a splash).
+
+## 2026-09-27 (1.1.0 design side tracks — Batch 2: theme data model)
+
+On branch `1.1.0-design`; not pushed. `1.1.0` merged first (a merge, not a
+rebase): "Already up to date". Commits `41a807c` (table), `7af4ee5`
+(registry and rotation), `21cdf8e` ([Q] from one constant), plus this docs
+commit. **No visible change.**
+
+- **[Schema] v22 → v23: `climb_month_themes`** (`month` TEXT primary key,
+  `YYYY-MM`; `theme_id` TEXT; `assigned_at` TEXT). An idempotent
+  `CREATE TABLE IF NOT EXISTS` step, like v20 and v22; no backfill.
+  `StorageService.resolveClimbMonthTheme(year, month)`:
+  - a month with a row reads its row;
+  - a past month without a row is `green_slope` (all 1.0 ever showed);
+  - the current month without a row gets one, written once (`INSERT OR
+    IGNORE`) and never changed;
+  - a future month is not written.
+
+  "Current" is the Monthly Climb's own calendar (`clockForTesting`,
+  `_monthKey`), the one medal progress and finalization already use; no new
+  date logic. The only writer today is `completeDailyTest`, in its own
+  transaction (Home was out of scope).
+- **[Data] Themes are data** (`lib/models/climb_theme.dart`): id, name,
+  tagline, light and dark palette, layer image slots, summit, emblem. Green
+  Slope is complete; its palettes are `ClimbPalette.of`'s values moved out of
+  `lib/theme.dart` unchanged (a test pins every value; the scene rendered
+  byte-identical before and after the move, light and dark, 28 and 31
+  days). Ember Peak, Glacier Peak and Red Canyon have their names and
+  taglines and are marked **not ready**. The scene's only change is where
+  its palette comes from.
+- **[Rotation]** Global calendar, anchor constant in code: October 2026 =
+  Green Slope, November Ember Peak, December Glacier Peak, January 2027 Red
+  Canyon, then repeating; earlier months are Green Slope.
+- **[Rule] What is recorded for a month is what the month is shown with.**
+  If the calendar's theme for a new month is not ready, the month is
+  recorded as `green_slope`, because that is what the user sees. *Why:* the
+  record exists to measure themes; a record naming a theme nobody saw would
+  make every later analysis wrong, and it cannot be corrected afterwards
+  because a month's row never changes. If Batch 4 misses 1.1.0, the data
+  stays truthful. **Consequence for measurement:** a month whose scheduled
+  theme was not ready never appears as that theme in the data, it appears
+  as Green Slope. Its scheduled theme can still be recomputed from the
+  month key (the calendar is fixed), which is how "Green Slope by schedule"
+  and "Green Slope by fallback" can be told apart if ever needed. A theme
+  that becomes ready in the middle of a month shows from the next month;
+  the running month keeps its row.
+- **[Follow-up, before any theme is marked ready]** Home's climb load must
+  resolve the month's theme (which records it) and the scene must draw the
+  resolved theme, in the same release. Otherwise a month that is viewed but
+  never completed has no row and reads as Green Slope afterwards.
+- **[Q] from one constant: `DailyTestSet.questionCount` (5).** It sits on
+  the model because the medal rules are imported by storage, which the
+  Daily Test service imports. Readers: generation; the medal maximum, now
+  `days × questionCount × pointsPerCorrect` (still 10 a day, so rule v1 and
+  every threshold are unchanged, which a test checks for 28/29/30/31-day
+  months); and Home's Today card copy. The bundled Day-0 set is checked
+  against it by a test; the proxy's `SHARED_SET_QUESTION_COUNT` stays a
+  separate copy. **Home change:** `lib/screens/home_screen.dart`, `_TodayCard`
+  (lines 861–862), the "5-question" description now interpolates the
+  constant; nothing else in Home changed.
+- **[Tests]** 929 passed (906 before): `storage_service_climb_month_theme_test`
+  10 (migration from a v22 database with climb, medal, badge, flag and
+  profile rows; table shape; replayed migration; read and write rules;
+  completion writes the row); `climb_theme_test` 10 (registry, palettes,
+  rotation and wrap, pre-anchor, not-ready fallback, a stored month
+  unchanged after a theme becomes ready); 3 for [Q]. Two older checks of the
+  schema version moved from 22 to 23.
+- **[Device check]** Home looks the same in light and dark mode.
+
 ## 2026-09-27 (1.1.0 shared Daily Test quality — owner decisions, P4)
 
 Decisions only in this entry; no code changed. The P4 batch 0 report
@@ -5999,3 +6306,5304 @@ not run). Proxy tests 240 → 252 (P5) → 308 (P6) → 330 (E), `tsc` clean (no
   blankless questions sit in sets already rejected for other reasons); V2 and
   V3: 0 of 3 each.
 - **[Tests]** 391 (381 + 10); 16 of 16 deliberate breakages red. Report §16.8.
+
+## 2026-09-30 (1.1.0 shared Daily Test — client C1, not on a device yet)
+
+- **[State at start]** Cron on prompt v2 + `claude-sonnet-5-5` `low` live
+  (version `7e91abd3`); `main` equals the deployed tree (`d49cfb4`).
+- **[Engineering — grading]** `DailyTestQuestion.acceptedAnswers` (lenient
+  parse; written back only when present, so a set without it is stored
+  byte-for-byte as before). `checkDailyTestAnswer` follows the shared order:
+  correct → keyboard variant → accepted (exact, then keyboard variant) →
+  predicted wrong → fallback; `AnswerMatchKind.accepted` counts as correct
+  (score, never "Needs work", never in the error profile). Result card copy
+  for it: `Also correct: "<key>".` before the explanation — a placeholder
+  until the owner picks the copy (report §8.4). No set carries the field yet;
+  it lets P7 turn on server-side without an app update. The Dart side of both
+  proxy fixtures (`answer_normalization.json`, `daily_test_grading.json`) is
+  now a test. Commit `6c07dc2`.
+- **[Engineering — the chain]** `ClaudeService.fetchSharedDailyTest(date)`:
+  `GET /v1/shared-daily-test/{date}`, app token only (no device id, no body),
+  10 s timeout; null on 404, an exception on anything else, including a body
+  that is not a complete set for that date. `generateDailyTestQuestions` is
+  removed, so 1.1.0 has no way to call `POST /v1/generate-daily-test` (a test
+  checks that the path appears nowhere in `lib/`). `DailyTestService`:
+  local cache → the date's shared set (saved as `shared`) → fallback (saved
+  as `fallback`, so the day keeps its questions until midnight). The date is
+  the app's local day key. Single-flight per day kept. After a completion,
+  tomorrow's shared set is read and saved only if found; a 404 or failure
+  writes nothing (never the fallback) and that day's first open tries again.
+  No read on launch or resume (C3 decision). Commit `e61afc6`.
+- **[Deviation — fallback content]** Until C2's 7-set pool the fallback is
+  the bundled day-0 question set, marked `fallback` (not `bundled`), exposed
+  as `DailyTestService.fallbackQuestions` so C2 swaps one getter. A learner
+  who did day 0 and then falls back sees those five questions again. The
+  report's selection rule (first unused pool set) comes with C2.
+- **[Engineering — analytics]** `daily_test_completed`: `set_source` now
+  `shared` / `fallback` too; new `set_date` = the set's own day.
+  `docs/analytics-plan.md` updated; `set_date` must be registered as a custom
+  dimension before release. Commit `0fc07d8`.
+- **[Not changed]** Monthly Climb keys on the set's own day as before; Home and
+  Daily Test visuals unchanged (the unreachable "Today's limit reached" branch
+  in the Daily Test screen is left in place to keep the diff small against
+  `1.1.0-design`; C3 can remove it). The Daily Test still needs no AI consent.
+- **[Tests]** 970 Flutter tests (883 before C1; +87, of which 41 are the
+  two shared fixtures run case by case). 29 of 29 deliberate breakages red: the accepted branch,
+  its keyboard pass, order, counting, JSON write/parse; 404 handling, date
+  check, empty set, timeout (value and which one is used), a device header,
+  the legacy path; no fallback, fallback on 404, fallback not cached or
+  mislabeled, shared mislabeled, cache skipped; prefetch removed, writing the
+  fallback, reading today, ignoring an existing set; single-flight removed;
+  not waiting for a running prefetch; `set_date` missing or wrong,
+  `set_source` constant, the accepted copy dropped.
+- **[Rule — from C1 on]** `1.1.0` now carries `lib/` changes that must not
+  reach `main` before release. Proxy commits made on `1.1.0` are moved to
+  `main` by **cherry-pick**, never by merging `1.1.0` into `main` (this
+  replaces the "merge `1.1.0` into `main`" step of report §13's deploy rule).
+  A proxy deploy is still made from the tree that has every deployed proxy
+  commit.
+
+## 2026-09-30 (1.1.0 shared Daily Test — C1 verified; C2 infrastructure, C3)
+
+- **[Verified — owner, device]** C1: after a completion one
+  `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`,
+  Monthly Climb unaffected.
+- **[Decisions — owner]** C1 deviations 1, 2, 3, 5, 6, 8 accepted. The
+  `acceptedAnswers` card copy stays a placeholder until P7. Registering
+  `set_date` in Firebase is an owner item on the new 1.1.0 release checklist
+  (roadmap). **Fallback pool content:** 7 sets the live cron published
+  (prompt v2, `claude-sonnet-5-5` at `low`, passed the gate), exported from
+  KV and reviewed by the owner; no separate API call. When committed they are
+  recorded here as "live-generated, validator-passed, owner-reviewed".
+  *(P13, 2026-10-04: "live-generated, validator-passed, owner-reviewed and
+  owner-corrected".)*
+- **[Engineering — C2 pool, app side]** `FallbackPool`
+  (`lib/data/fallback_pool.dart`) reads `assets/daily_test_fallback/pool.json`
+  (`{"formatVersion": 1, "sets": [{"questions": [...]}]}`) once and picks a set
+  by date: days since 1970-01-01 modulo the pool size, so a day always gets the
+  same set and 7 sets give one per weekday; a set's origin date plays no part.
+  Each set is checked at load with the gate rules the app depends on (five
+  questions, five distinct catalog topics, unique ids, exactly one blank in
+  `fill_in_blank`, a sentence in `error_correction` that is not the key, 2–3
+  predicted wrong answers that each reach their own comment, a key that grades
+  correct); a bad set is left out. A missing, unreadable, other-version or empty
+  pool gives the day-0 questions, so the Daily Test is never empty. The asset
+  ships with no sets. Commit `dc066b2`.
+- **[Engineering — C2 export, owner's tool]** `scripts/fallback_pool.sh`:
+  `fetch <dates>` runs only `wrangler kv key get --binding DAILY_SETS_KV
+  --remote "set:<date>"` into `tool/fallback_pool/raw/` (git-ignored; a test
+  checks the script has no other KV command); `build <dates>` runs
+  `tool/fallback_pool/convert.ts`: prompt v2, the stored date equals the key,
+  the proxy's own `validateSharedSet` with `dailyPlan(date)` (blank rule
+  included), exactly 7 distinct dates; it drops `date`, `generatedAt`,
+  `attempt`, `promptVersion`, renames ids to `fbNN_i`, writes the asset and
+  `tool/fallback_pool/review.md` (question text and answers only) only if all
+  pass, then runs the app-side asset test; `test` runs the converter's 13
+  `node:test` cases. Checked end to end with 7 synthetic sets: the written
+  asset passed every app-side test. Commit `0dccfff`.
+- **[Deviation — selection]** The report's rule (§5: first unused pool set,
+  then least recently used) is replaced by the owner's date rotation. A
+  learner can meet a pool set they already had: on its own date as the shared
+  set, or a week later as the fallback.
+- **[Engineering — C3]** `StorageService.deleteStaleDailyTestSets` at launch
+  (not on resume): deletes rows never completed whose day is more than 7 days
+  before today; completed rows, the last 7 days, today and tomorrow are kept.
+  Commit `eb0f736`. The Daily Test's "Today's limit reached" state removed
+  (unreachable since C1); `1.1.0-design` does not touch
+  `daily_test_screen.dart`. The error state's copy ("…generating it. Check
+  your connection…") is unchanged although only a local storage failure can
+  reach it now. Commit `a1ee36c`.
+- **[Heads-up — merge with `1.1.0-design`]** That branch moves
+  `DailyTestService.questionCount` to `DailyTestSet.questionCount` and still
+  calls `generateDailyTestQuestions` (removed in C1): expect a small conflict
+  in `daily_test_service.dart` and in tests using the old constant.
+- **[Tests]** 1015 Flutter tests (970 before; +45) and 13 converter tests.
+  33 of 33 deliberate breakages red: rotation (off by one, wall clock), pool
+  ignored, empty pool, unreadable asset, re-read, format version, invalid
+  sets kept, each set rule (count, topics, no blank, two blanks, one
+  underscore, sentence, unchanged, reachability, wrong-answer count), the
+  service ignoring the pool; cleanup (completed deleted, 6 or 8 days, `<=`,
+  not at launch, on resume); converter (v1, date, gate skipped, count,
+  duplicates, ids kept, origin fields kept, explanations in the review); the
+  script writing to KV.
+
+## 2026-09-30 (1.1.0 ships with the full scope; Batch 3a decisions)
+
+Docs only, on branch `1.1.0-design`; no code, config or test changed.
+
+- **[Product — owner] D7. 1.1.0 ships with the full scope:** it does not
+  ship before the theme package (design Batches 4–6) is done. Batch 7
+  (one-time environment motion) may still move to the next version.
+  - **This knowingly overrides**, for this release, the rule "side work
+    never holds back the shared Daily Test"
+    (`1.1.0-design-side-tracks.md`, "Rules").
+  - **Facts:** 1.0.0 is in App Store review and has no users; the app will
+    most likely enter the store with 1.1.0 (roadmap, "Version naming").
+  - **The cost is conditional:** only if 1.0.0 is approved, released and
+    gains users before 1.1.0 do those users stay on the old per-device Daily
+    Test route, which costs per user.
+  - **Why:**
+    - (A) the first store entry comes with a complete, visible package;
+    - (B) one submission cycle instead of two;
+    - (C) the decision and its cost analysis are to be written up in the
+      Medium article and the case study on the personal site.
+  - **Target date:** not set.
+- **[Product — owner] Batch 3a decisions D1–D6**, written with their
+  reasons into `1.1.0-design-side-tracks.md`, "Decisions after Batch 3a":
+  - trail (b) "Wide S" with a steeper first leg, frozen after measured
+    renders (D1);
+  - a stop marker within the month's last 2 steps is not drawn; the summit
+    takes its place (D2);
+  - stop coordinates as a generated, normalized table per month length,
+    checked against the curve by a test, with the camera as its own layer
+    (D3);
+  - no avatar mirroring and no facing data (D4);
+  - mountain framing: a measured comparison in Batch 3b, a ridge/summit
+    silhouette slot in Batch 4, a once-a-month zoom after the month card in
+    Batch 6; a zoom on every open rejected; a "see the mountain" button
+    parked for 1.2 (D5);
+  - the 14 pt shift at 320 pt: diagnosed and fixed in Batch 3b if it comes
+    from this work, otherwise reported separately (D6).
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 3b built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Details,
+measurements and images: `docs/design/batch3b/report.md`, "After".
+
+- **[Decisions — owner]** Approved after the Batch 3b measurements and
+  written into `1.1.0-design-side-tracks.md`:
+  - D1: first leg at 45° from (136, 700), curve frozen;
+  - D5: framing F1, 480 scene units tall at every width;
+  - D6 rewritten: there was no 320 pt shift. Batch 3a's tool applied text
+    size twice, and its §0 carries a correction note;
+  - D4's evidence corrected: only the snail is side-on;
+  - new D8 (hop), D9 (score bar) and D10 (two-row header, which replaces
+    Batch 0 decision 7's one-line format).
+- **[Engineering]**
+  - `tool/design_measure/` reproduces the report. Text size goes only
+    through `buildAppTheme(textSize:)`.
+  - `ClimbRoute` holds the frozen curve, one path for all month lengths
+    with evenly spaced steps, and the flag on the trail's end.
+  - `tool/climb_table/` + `scripts/generate_climb_table.sh` generate
+    `climb_table.dart`: steps and stop markers, normalized to mountain
+    space, D2 applied. A test compares the file with a fresh generation.
+  - `ClimbCamera` (F1).
+  - Hop of 14 units per step, phased on whole days; none with Reduce Motion.
+  - `ClimbScoreBar` under the window; tier colors moved into a shared
+    `MedalTierColor`.
+  - Header "Mountain of Learning" / "\<month\> · n / N steps".
+  - No change to the Daily Test, medal rule v1, `dayKey` or analytics.
+- **[Measured]** Mountain above the fold at 320 × 568:
+  - Medium 79 → 81 pt;
+  - Large 38 → 66 pt;
+  - at 375 × 667 Small 233 → 213 pt (the header is now always two rows).
+
+  Avatar 42.3 pt and one day's step 17.7 pt (30-day month) at every width.
+  At 320 pt these were 52.2 and 24.3.
+- **[Tests]** 1108 passed (1061 before). Deliberate breakages red: curve
+  change vs table, D2 rule loosened, hop phase from the move's start.
+- **[Open — owner]**
+  - Device check: the hop's feel, Reduce Motion, dark mode, the side sky at
+    430 pt.
+  - App Store screenshots and case-study images change.
+  - Merge approval.
+
+- **2026-09-30 — Batch 3b verified on the owner's device and merged into `1.1.0`** by fast-forward (no merge commit; `1.1.0` now at `497b6f9`); 1108 tests green on `1.1.0`.
+
+## 2026-09-30 (Home greeting: the user's name was lost at 320 pt — fixed, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Report:
+`docs/design/greeting-fix/report.md`.
+
+- **[Bug] Root cause.**
+  - The greeting was one line, `Text('$word, $name', maxLines: 1,
+    overflow: ellipsis)`, beside the 60 pt avatar: 216 pt of width on a
+    320 pt screen.
+  - An ellipsis cuts from the end, where the name is. "Good morning, "
+    leaves less room than one letter plus "…" (228 pt at Medium), so the
+    whole name went.
+  - **Every name was lost at 320 pt at the default and Large text sizes.**
+    Across 108 cases (3 widths × 3 text sizes × 3 greetings × 4 names) the
+    name was lost in 30 and cut in 60.
+- **[Bug] Also in 1.0.0.** Measured on `v1.0.0` (`509f94d`, build 3, the
+  build in App Store review): byte-identical results. **If 1.0.0 is
+  released, it ships with this bug.**
+- **[Fix — owner's choice, option A]** `HomeGreeting`:
+  - one line when it fits;
+  - otherwise "Good morning," on the first line (scaled down only if the
+    word alone does not fit) and the name on its own line, at the user's
+    text size, cut with "…" only if longer than a line;
+  - VoiceOver reads one sentence.
+  - Rejected: first name only (it does not fit at 320 pt either) and
+    shrinking the text (it overrides the user's text size).
+- **[Cost — measured]** Mountain above the fold at 320 × 568:
+  - Medium 81 → 73 pt;
+  - Large 66 → 52 pt;
+  - Small 97 → 95 pt.
+
+  With a longer name at 375 × 667: Medium 199 → 191 pt, Large 186 → 172 pt.
+  No change wherever the greeting fits one line.
+- **[Result]** Of the 108 cases:
+  - name lost 30 → **0**;
+  - name in full 18 → **105**.
+
+  The other 3 are a 15-character full name at 320 pt Large, shown as "Mary
+  Anne S…".
+- **[Tests]** 1120 passed (1108 before):
+  - the 108-case regression test, red on the tree before the fix in all 9
+    groups (separate worktree);
+  - 3 VoiceOver tests, red without the single label.
+- **[Open — owner]** Device check and merge approval.
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 3c decisions: mountain redesign)
+
+Docs only, on branch `1.1.0-design`; no code changed.
+
+- **[Product — owner, after the Batch 3b device check]** The mountain is
+  redesigned as a visual layer (`1.1.0-design-side-tracks.md`, "Batch 3c —
+  mountain redesign"). Not touched: the Daily Test data flow, `dayKey`, the
+  medal rule.
+  - a. A thin frame around the card: the B-polish card border.
+  - b. "Mountain of Learning" moves onto a trail-sign plaque centered on the
+    frame's top line, as real text. The header row above the card goes.
+  - c. The month without the year ("September") goes top left inside the
+    frame, the step counter top right. Medals keep month and year.
+  - d. A new trail:
+    - a long low start, then legs that get steeper and shorter up to the
+      summit;
+    - steps evenly spaced;
+    - step markers turned with the trail or round;
+    - stop markers from a fixed table, D2 kept;
+    - side-facing avatars mirrored to their walking direction.
+  - e. A mountain that reads as one:
+    - a summit with sky around it and lighter ridges behind;
+    - flat-color light and shadow, no gradients;
+    - a concave silhouette, shared by all themes.
+  - f. Green Slope's environment items (pine, shrub, wildflower; 4–6
+    objects in the scene).
+  - g. Framing unchanged: a measured comparison with a wider one; the
+    month-change zoom is Batch 6; no zoom on every open.
+- **[Changes earlier decisions]**
+  - D1 (the frozen 45° curve) is reopened. The table machinery (D3) stays.
+  - D4 is reversed: side-facing avatars are mirrored, which needs a facing
+    value per avatar (today only the snail).
+  - D10's two-row header is replaced by (b) and (c).
+- **[Correction — owner, 2026-09-30, after reviewing Batch 3c-A]** The "D4
+  is reversed" line above is withdrawn: D4 stays in force, and no avatar is
+  mirrored. The reversal came from a prompt written without knowledge of D4
+  (K2). Also decided: candidate 1 (K1), with a new acceptance criterion
+  (≥ 17 pt a day and ≥ 5 pt between neighbouring steps at 320 pt, 31 days)
+  and an accepted cost of 3–5 covered days a month. The card shell is
+  accepted if the mountain above the fold at 320 × 568 stays at or above
+  73 pt (default text) and 52 pt (Large) (K3). Sky-colored chips give the
+  month and the counter at least 4.5:1 contrast (K4).
+  `1.1.0-design-side-tracks.md`, "Decisions after Batch 3c-A".
+
+- **2026-09-30 — Home greeting fix verified on the owner's device and merged into `1.1.0`** by fast-forward to `69bef5f` (no merge commit; the Batch 3c-A commits `133c53f` and `baf4eef` stay on `1.1.0-design` only); 1120 tests green on `1.1.0`.
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 3c-B built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Details,
+measurements and renders: `docs/design/batch3c/report.md`, "After: Batch
+3c-B built".
+
+- **[Commits]**
+  - `ccdca12`: `1.1.0` merged in; the `build-log.md` conflict resolved by
+    keeping both entries.
+  - `97d0b16`: K1–K4 in the docs.
+  - `4f6f428`: the 3c-A harness in the repo, reproducing its numbers
+    exactly.
+  - `e351bb1`: the K3 gate.
+  - `1d84b32`: candidate 1's trail and silhouette.
+  - `22e2e23`: turned step pills.
+  - `c5faf8d`: the mountain's layers and tone rule.
+  - `9687363`: pine and shrub.
+  - `08f036c`: `ClimbCard`, with the frame, plaque and chips.
+  - `836e65b`: contrast, VoiceOver and no-mirroring tests.
+  - `2bd9387`: after-build measurements.
+  - `4ed15d7`: the renders.
+  - Plus this docs commit.
+- **[Decisions — owner, after the build]** (`1.1.0-design-side-tracks.md`,
+  G1–G3)
+  - **G1.** The K3 gate is read on the whole window: 109 / 91 pt at 320 ×
+    568 (default / Large) against 73 / 52. Below the chips it is 61 / 40
+    pt, also recorded. *Why:* the thresholds were measured on the whole
+    window, and the chips cover only the sky at its top edge.
+  - **G2.** Green Slope keeps 2 items; the free ground would hold 11 more
+    pines or 19 more shrubs. *Why:* the 4–6 object limit keeps the scene
+    uncluttered. The count is looked at again in Batch 4b, with all four
+    themes.
+  - **G3.** Batch 3d is planned: the stop markers move to the trail's 4
+    turns as "save points", in the same place every month. The weekly days
+    and D2 are then retired. A weekly reward, if one is ever designed,
+    belongs to the calendar (Batch 5). Open: inside or outside the turn.
+- **[Tests removed or changed]**
+  - The two-row header test (D10) is replaced by `home_climb_card_test.dart`
+    (K3).
+  - The preview test pins the new corners and the ~12° start, no longer
+    3b's start and 45°.
+  - The camera test's summit day moves 17 → 19: the new trail's long lower
+    legs reach the height where the flag comes into F1's view later in the
+    month.
+  - Home and first-launch tests find the counter as "n / N". Its VoiceOver
+    label is "n of N steps." (K3), and it sits inside the frame, no longer
+    above it.
+- **[Measured cost]** At 320 pt, 31 days:
+  - a day's step 17.2 → 20.6 pt;
+  - closest neighbouring markers 2.67 → 5.16 pt (K1: ≥ 17 and ≥ 5, pinned
+    by a test);
+  - covered days 2 → 3, and 5 in 30- and 28-day months, the cost K1
+    accepts;
+  - the summit in view from day 17 → 19.
+
+  Mountain above the fold at 320 × 568: 73 → 109 pt (default), 52 → 91 pt
+  (Large).
+- **[Tests]** 1143 passed (1120 before this batch). `flutter analyze` is
+  clean. Deliberate breakages red on backup copies: level pills, a flipped
+  avatar, a 3.78:1 chip.
+- **[Open — owner]** Device check and merge approval.
+
+- **2026-09-30 — Batch 3c-B verified on the owner's device and merged into `1.1.0`** by fast-forward to `0488714` (no merge commit); 1143 tests green on `1.1.0`.
+
+## 2026-09-30 (1.1.0 design side tracks — Batch 8: four new avatars, looping carousel; not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]**
+  - `a75f71f`: four new avatars, `avatar_13`–`avatar_16`.
+  - `3080861`: `AvatarCarousel` loops in both directions.
+  - Plus this docs commit.
+- **[Engineering] Source check, before any conversion.** Four PNGs in the
+  owner's folder (plus a `.DS_Store`), all 1024 × 1024 RGBA, the same
+  soft-clay style as the existing twelve; three carry Figma's export tag,
+  the fox none. Checked against the `avatar_07` precedent: no column or row
+  with alpha over 95% of the image's length, no stripe. What the sources do
+  carry is alpha 1–3 specks outside the body (bird 839 px, panda 801,
+  sloth 382, fox 0), the same invisible class the shipped set already has
+  (`avatar_02` 91 px, `avatar_12` 77); the bird and the sloth also bake in
+  a soft ground shadow, like `avatar_02`/`05`/`06`/`12`. The sloth's
+  shadow runs out to the source's left edge (41 px, alpha ≤ 5).
+- **[Engineering] Pipeline.** Premultiplied Lanczos resize to 508 × 508,
+  lossy WebP quality 90 with a separate `ALPH` chunk (the set's
+  convention); alpha checked by decoding. Alphabetical file order gives
+  13 Bird, 14 Fox, 15 Panda, 16 Sloth. Sizes: 41.3 KB, 43.9 KB, 38.4 KB,
+  114.3 KB. Feet land at y ≈ 452–472 of 508, inside the existing set's
+  428–485, so the fixed ground-shadow placement in `AvatarTile` holds.
+- **[Engineering] `avatar_16` edge fix, the `avatar_01`/`03` way.** After
+  encoding, 21 pixels of the sloth's shadow (left column, alpha ≤ 5) were
+  still on the edge. Decoded, zeroed exactly those 21, re-saved lossless
+  (`exact`); the decoded diff against the lossy encode is those 21 pixels
+  and nothing else. 45.9 KB → 114.3 KB, the tradeoff already accepted for
+  `avatar_01`/`03`. Putting the unfixed lossy file back turns the edges
+  test red.
+- **[Product] Append-only.** The original twelve files, indices and labels
+  are untouched (a test pins all twelve labels in order); `Avatar.count`
+  12 → 16. Credits unchanged: the attribution names the set ("Cute Animal
+  3D Icons" by Tran Mau Tri Tam), not a count. Labels Bird, Fox, Panda,
+  Sloth are for the owner to confirm on a device.
+- **[Decision — owner] The carousel loops in both directions.** After the
+  last avatar comes the first; dragging back from the first reaches the
+  last. *Why:* with a clamped list, whoever starts at either end (and the
+  onboarding start is random) meets a dead end in one direction; a loop
+  removes it, and with sixteen avatars the ends are further apart than
+  before. One widget, so onboarding and Settings' picker both change.
+- **[Engineering] How it loops.** `PageView.builder` without `itemCount`;
+  a raw page maps to `Avatar.values[rawPage % Avatar.count]`, starting at
+  `Avatar.count * 1000 + selected index` (out of reach by swiping).
+  `_settledIndex` keeps the raw page, and "settled" compares raw pages,
+  never modulo: when another copy of the same avatar is built, it must not
+  count as settled, or `centerTileBuilder` would give the same `Hero` tag
+  to two tiles. `onSettled`, the haptic and the pop fire only when the
+  avatar changes; a full lap moves the settled page (the `Hero` follows
+  the centered tile) and nothing else. Geometry and the layout-footprint
+  rule are unchanged.
+- **[Tests]** New: wrap forward from the last and back from the first;
+  every start, one page forward and back; neighbors on both sides of
+  avatars 1 and 16 at mount; a silent full lap; one `Hero` and one
+  selected node while duplicate copies are on screen (viewportFraction
+  0.02); one `Hero` across the seam in the picker; the bundled avatar
+  files equal `Avatar.count`, each 508 × 508 with real decoded alpha.
+  Changed: onboarding's opposite-direction retry (the 2026-09-15 boundary
+  flake workaround) is removed, since one forward drag now changes the
+  avatar from any random start; Settings' autosave test keeps its fixed
+  start for determinism, comment updated. Mutation checks, each red:
+  clamp instead of modulo, modulo by `count - 1`, modulo in "settled",
+  and no same-avatar guard.
+- **[Tests]** 1156 passed (1143 before this batch), full suite three runs
+  in a row, the onboarding/Settings/picker files ten more. `flutter
+  analyze` is clean.
+- **[Visual — pre-release check]** The paywall's hero companions
+  (offsets 2, 4, 6, 8 modulo `Avatar.count`) now draw from sixteen, so
+  for a user whose avatar is 6–12 the companions change. New avatars can
+  appear in onboarding, Home, Settings. App Store screenshots and
+  case-study images that show a carousel end or the paywall hero may
+  differ.
+- **[Open — owner]** Device check (the four labels, the loop in onboarding
+  and Settings) and merge approval.
+
+- **2026-09-30 — Batch 8 device-checked by the owner and merged into `1.1.0`** (`--no-ff`). Checked: all 16 avatars in the picker and onboarding, both loop seams, the Hero back to Home, an existing selection preserved, a silent full lap. Label decision: `avatar_13` stays "Bird".
+
+## 2026-10-01 (1.1.0 design side tracks — scene art decisions; Scene Art Batch 0 started)
+
+Docs and source images only, on branch `1.1.0-design`; no product code
+changed. `1.1.0` merged in first (fast-forward to `b34fd06`, no conflict).
+
+- **[Product — owner, after the Batch 3c-B device check]** The code-drawn
+  mountain looked low-quality next to the avatars. The scene becomes a set
+  of ChatGPT illustrations in the avatars' style
+  (`1.1.0-design-side-tracks.md`, "Scene art (2026-10-01)", S1–S5):
+  - **S1.** Illustrated scene, ~35° oblique camera, 3:4. Replaces Batch 3c
+    e's flat colors and the coded mountain (`ClimbScene` silhouette,
+    layers, environment items).
+  - **S2.** The trail is in the image; code extracts its center line,
+    measures it and spreads 28–31 steps evenly; the avatar scales to fit.
+    Replaces "the trail is drawn in code", K1's curve and D3's table from
+    the curve (now from the extracted polyline). K1's criterion (≥ 17 pt a
+    day, ≥ 5 pt between steps at 320 pt, 31 days) is re-checked.
+  - **S3.** 6 clearings on the bends' outer corners (3 left, 3 right);
+    the save point objects (campfire, tent, fountain, cabin) are separate
+    PNGs placed by code; which 4 clearings is open; summit flag only where
+    the summit suits it (not volcanic); pine and shrub dropped. Makes
+    Batch 3d (G3) concrete.
+  - **S4.** Each theme is a light + dark (starless dusk) pair. Green: both.
+    Volcanic: light only, temporary. Others not produced. One coordinate
+    set for all images (Ahmet's overlay check; to be checked
+    automatically).
+  - **S5.** START word and flag are in the image; no code text.
+- **[Tool — recorded]** Images: ChatGPT image generation, 2026-10-01
+  (Gemini tried and dropped: it could not produce the mountain). Upscale
+  (2×) and background removal by Ahmet. Commercial-use terms and a Credits
+  line are still to be checked (side-tracks, "Production of the
+  artwork").
+- **[Files]** `docs/design/scene-art/source/` (green light/dark and their
+  pre-upscale `raw/`, volcanic light, five objects; byte-identical to the
+  owner's folder) and `docs/design/scene-art/PROMPTS.md`. Not yet app
+  assets.
+- **[Open — not done]** Dark volcanic and the other 3 themes; how the
+  objects read at device size (tent entrance, fountain, cabin; the
+  campfire's smoke after background removal); upscale and background
+  removal checked by Ahmet only.
+- **2026-10-01 — Scene Art Batch 0 report written, not decided**
+  (`docs/design/scene-art/batch0/report.md`; tools in `tool/scene_art/`).
+  - The trail, its 6 bends and the 6 clearings are extracted
+    automatically.
+  - S4 holds on green dark and volcanic light (theme check; a deliberate
+    break fails).
+  - K1 passes at 320 pt with K-b 1.3 and 1.6, but not with K-a (pills
+    kept) or K-c.
+  - The trail is narrower than today's 42 pt avatar in most framings.
+  - The campfire's smoke is gone; the objects' edges are clean.
+  - 1536 px q80 WebP is about 0.64 MB per theme pair.
+  - Ten open questions, each with a recommendation, wait for the owner. No
+    product code changed.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene art decisions G1–G7; Stage 1 started)
+
+Docs only, on branch `1.1.0-design`; `1.1.0` had no new commits to merge.
+
+- **[Product — owner, on Scene Art Batch 0 §6]** Recorded in
+  `1.1.0-design-side-tracks.md`, "Decisions after Scene Art Batch 0":
+  - **G1.** The source images stay in history (30 MB); looked at again
+    near 100 MB.
+  - **G2.** Daily framing K-b 1.3×, with one zoom constant for a K-a
+    comparison on the device. K-c only as the start of the month-change
+    zoom. F1 is replaced.
+  - **G3.** The avatar's shadow fits the trail. It shrinks gradually
+    toward the summit, with a floor; the span and the floor are chosen in
+    the build from the trail's narrowing.
+  - **G4.** Save points on C1–C4; C5 and C6 empty; D2 retired with them
+    (Stage 2).
+  - **G5.** Faint dots on passed days only, behind one setting; the step
+    pills are replaced.
+  - **G6.** Dark-mode object filter from the clearings, with the flame
+    kept out by a colour threshold (Stage 2).
+  - **G7.** S4's note confirmed: the background has its own dark version.
+- **[Changes earlier decisions]** Marked where they were written:
+  - F1;
+  - K1's curve (its criterion stays);
+  - `ClimbScene`'s silhouette and layers;
+  - the environment items;
+  - the code-drawn step markers.
+- **[Product] Until other themes have images, every month shows the Green
+  Slope image.** No other theme is ready, so the rotation already resolves
+  to Green Slope; the record (`climb_month_themes`) is unchanged.
+- **[Open]** Still open from Batch 0 §6, none blocking Stage 1:
+  - the campfire's smoke;
+  - the volcanic resolution;
+  - the theme check's thresholds;
+  - the image tool's terms and Credits.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 1 built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Green
+Slope's illustration replaces the coded mountain. Numbers:
+`docs/design/scene-art/stage1/numbers.txt`. Renders:
+`docs/design/scene-art/stage1/`, starting with `overview.jpg`.
+
+- **[Commits]**
+  - `60db4c0`: decisions G1–G7, replaced decisions marked.
+  - `f52c80a`: the WebP backgrounds (1536 × 2048, q80;
+    `tool/scene_art/export_assets.py`).
+  - `4208c49`: the trail table generated from Batch 0's polyline
+    (`scripts/generate_climb_trail.sh`).
+  - `9803320`: the illustration replaces the coded mountain.
+  - `0f5d13d`: camera K-b 1.3×, following on both axes.
+  - `b02dbf9`: the avatar sized to the trail.
+  - `afbbee6`: passed-day dots.
+  - `35f7e7f`: the dusk image in dark mode.
+  - `1b061fd` and `1f2ad99`: the numbers and renders.
+  - Plus this docs commit.
+- **[Engineering] The trail.** `climb_trail_table.dart` is generated from
+  `docs/design/scene-art/batch0/trail_green.json`: 739 points, the trail's
+  horizontal width at each, and the 28–31-day step table evenly spaced by
+  arc length. The JSON gained `chord_px`; its other fields are unchanged.
+  `ClimbRoute` works in image widths.
+  - D3's test is now the regenerate-and-compare test. It turned red on a
+    backup copy with one table value edited, and again with one JSON point
+    edited.
+- **[Engineering] Camera (G2).** `ClimbCamera.zoom = 1.3` is one constant.
+  The camera follows on both axes and clamps both, so the window never
+  shows past the image. A boundary test checks every twentieth of a day of
+  28–31-day months at three widths.
+  - It turned red on a backup copy without the x clamp, and again without
+    the bottom clamp.
+- **[Product] Avatar (G3), chosen from the trail's narrowing.**
+  - **Base:** the footprint (the ground shadow, 0.65 of the tile) fits the
+    narrowest horizontal width over the trail's first 85 % (121 px of
+    2172), never above 42.3 pt.
+  - **Shrink:** from 85 % of the trail to the summit the size falls
+    linearly to a 0.6 floor. That is the latest start that keeps the
+    footprint inside the trail up to 99 % of its length; only the tip is
+    narrower than the floor.
+  - **Days shrinking:** 27–31 in a 31-day month, 24–28 in a 28-day month.
+  - **Hop:** stays 14/58 of the tile (D8's ratio); Reduce Motion is
+    unchanged.
+  - G3 estimated about 30 / 35 / 40 pt. The built base is 32.1 / 38.0 /
+    42.3: Batch 0's 112 px day-30 width now falls inside the shrink.
+- **[Product] Dots (G5).** 4 pt, 22 % opacity, in the palette's ink, on
+  days 1 to n − 1 (behind the avatar). The switch is
+  `MonthlyMountain.passedDayDots`.
+- **[Product] Light and dark.** The scene follows the app's mode, light or
+  dusk image.
+  - Every month shows Green Slope until other themes have images: none is
+    ready, so the rotation shows and records Green Slope. This is stated
+    in code (`shownFor`, `MonthlyMountain`) and in the side-tracks file.
+- **[Measured]** 31-day month, K-b 1.3×, at 320 / 375 / 430 pt:
+
+  | | 320 | 375 | 430 |
+  |---|---|---|---|
+  | Day step | 29.7 pt | 35.2 pt | 40.4 pt |
+  | Shortest straight step | 23.3 pt | 27.6 pt | 31.7 pt |
+  | Gap between dots | 19.3 pt | 23.6 pt | 27.7 pt |
+  | Avatar, days 0–26 | 32.1 pt | 38.0 pt | 42.3 pt |
+  | Avatar at the summit | 19.3 pt | 22.8 pt | 25.4 pt |
+  | Summit in the window from | day 13 | day 15 | day 20 |
+  | Summit below the chips from | day 16 | day 21 | day 22 |
+  | Share of the image shown | 54 % | 46 % | 40 % |
+
+  - **K1** (320 pt, 31 days): a day's step is 29.7 ≥ 17 pt and the dot
+    gap is 19.3 ≥ 5 pt, both pinned by tests.
+  - **App size:** the assets add 638.1 KB (366 + 272 KB). The code change
+    was not measured with a build. The generated table is 28 KB of Dart
+    source; the coded painter, scene and old tables are removed.
+- **[Tests removed]** 14 tests in total; the reason for each is in the
+  `9803320` commit message.
+  - `climb_scene_test.dart` (6), `climb_environment_test.dart` (3) and
+    `climb_markers_test.dart` (3): the coded mountain, the environment
+    items and the weekly markers are gone.
+  - `climb_table_test.dart` (2): replaced by `climb_trail_table_test.dart`.
+  - Also removed: the pill and F1 cases in the acceptance and camera tests.
+- **[Tests added]** Assets, the trail table, the K-b camera and its
+  bounds, avatar size and shrink, dots, light/dark, chip opacity (K4 over
+  any background). Also K1's dot gap.
+- **[Tests]** 1154 passed (1156 before this stage). `flutter analyze` is
+  clean.
+- **[Visual — pre-release check]** The Home mountain card changes
+  completely: the illustration, the camera, the avatar's size and the
+  dots. App Store screenshots and case-study images that show Home's
+  mountain will differ.
+- **[Open — owner]** The device check, including K-a against K-b by
+  changing `ClimbCamera.zoom`. Then merge approval.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 1 after the device check)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Device — owner]**
+  - The framing was compared at 1.3×, 1.0× and 1.1×; 1.1× is best.
+  - The backgrounds are sharp on the phone.
+  - The dusk (dark) version is very good, better than the light one.
+  - No passed-day dots were seen, on the month's first day after one
+    step.
+- **[Commits]**
+  - `5383c01`: `ClimbCamera.zoom` is 1.1. G2 records the comparison.
+    Measured in a 31-day month at 320 / 375 / 430 pt
+    (`docs/design/scene-art/stage1-device/numbers.txt`):
+    - a day's step: 25.1 / 29.8 / 34.2 pt;
+    - gap between dots: 15.7 / 19.4 / 22.8 pt;
+    - avatar, days 0–26: 27.2 / 32.2 / 36.9 pt;
+    - avatar at the summit: 16.3 / 19.3 / 22.1 pt;
+    - summit in view from day 8 / 13 / 15.
+
+    K1 holds.
+  - `6674980`: `--dart-define=CLIMB_DEBUG_DAY=<n>` shows step n in debug
+    builds only (`kDebugMode`). It is display only: progress, the Daily
+    Test, `dayKey` and the chips are untouched.
+  - `d92ea2c`: **fix**, the dots.
+    - *Root cause:* step 0 (the foot) was left out by Stage 1's design, so
+      n steps gave n − 1 dots, and one step gave none.
+    - *Ruled out (a):* the calendar day. On October 20 one step also gave
+      0 dots, not 19.
+    - *Ruled out (b):* too faint. Nothing was drawn at all.
+    - *Fix:* dots on steps 0 to n − 1, none under the avatar. The
+      reproduction test was red before the fix.
+    - *Measured anyway:* at the current 0.22 opacity a dot is 1.45:1
+      against the trail in light mode and 1.36:1 in dark
+      (`stage1-device/dot_contrast.txt`). Unchanged: the owner decides on
+      the device.
+  - *Correction:* the Stage 1 entry above says "on days 1 to n − 1"; since
+    `d92ea2c` it is steps 0 to n − 1.
+- **[Tests]** 1161 passed. `flutter analyze` is clean.
+- **[Open — owner]** The device check of the dots and their opacity, then
+  merge approval.
+
+- **2026-10-01 — Scene Art Stage 1 verified on the owner's device (1.1× framing; days 2, 15, 27 and 31 through `CLIMB_DEBUG_DAY`; dots at 0.40) and merged into `1.1.0`** by fast-forward to `0740e83` (no merge commit; Scene Art Batch 0 comes with it); 1161 tests green on `1.1.0`.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 2 decisions G8, G9; D2 retired)
+
+Docs only, on branch `1.1.0-design` (at `1.1.0`, `537a68e`).
+
+- **[Product — owner]** Recorded in `1.1.0-design-side-tracks.md`,
+  "Decisions for Scene Art Stage 2":
+  - **G8.** A save point is faded (lower opacity, slight desaturation)
+    until the avatar reaches it, then takes its colours with a short fade
+    when the hop ends; there is no animation with Reduce Motion. The
+    campfire's flame burns only once reached. *Why:* "you took a break
+    here", small rewards through the month.
+  - **G9.** Placement by clearing size: cabin and tent on the largest of
+    C1–C4, campfire and fountain on the smaller ones. This replaces G4's
+    order. A tie is reported with a proposal.
+- **[Changes earlier decisions]** D2 (the day-28 rule) is retired. The
+  save points are reached on days 7–26 (corrected in Stage 2's state commit; first written as 6–25), never within the last 2 steps.
+- **[Roadmap]** Scene Art Batch 0 is marked done. Stage 2 is described;
+  the volcanic theme stays open (its resolution is too low and it has no
+  dark version).
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 2 built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Numbers,
+placement and object data: `docs/design/scene-art/stage2/` (start with
+`overview.jpg`).
+
+- **[Commits]**
+  - `bf49ba4`: G8, G9, D2 retired.
+  - `aa68983`: object assets.
+  - `e003fb4`: placement and the summit flag.
+  - `e931a76`: G8 states.
+  - `ee71470`: G6 dark filter.
+  - `c8418be`: measurements and renders.
+  - Plus this docs commit.
+- **[Engineering] Assets.** `tool/scene_art/export_objects.py` made
+  `assets/climb/objects/`: five objects, 192 px wide, WebP q90 with
+  lossless alpha, 6.7–8.4 KB each, plus `campfire_flame.webp`, 44.1 KB in
+  all.
+  - Zeroed: the 12 invisible alpha = 1 corner pixels, and 29 faint pixels
+    the resize left cut off from the flag.
+  - A test checks that every object is one alpha region.
+- **[Product] Placement (G9).**
+  - Tent C1, cabin C2, fountain C3, campfire C4. The large objects are on
+    the two largest clearings.
+  - *Open choices, measured (`placement.json`, "alternatives"):* this
+    combination keeps each object largest. C3/C4 is a true tie (125 against
+    120 px for either small object); the fountain takes C3.
+  - *Batch 0's width ratio 1.0 covered the trail* (the cabin on C1 by 344
+    px, the fountain on C4 by 44). Each object takes the largest ratio
+    whose shape stays off the trail: tent 0.9, cabin 1.0, fountain 1.0,
+    campfire 0.9.
+  - The table is generated and tested like the trail's. A test checks the
+    objects' and the flag's alpha rows against the trail's runs (new
+    `run_px`).
+- **[Product] Summit flag.** `ClimbTheme.hasSummitFlag`: Green Slope true,
+  the default false. It stands 95 px right of the trail's end (at 2172), on
+  the grass. On the renders the avatar's arm and the flag's stones stand
+  side by side; their boxes overlap by 2.7–3.7 pt of transparent margin.
+- **[Product] States (G8).**
+  - *Unreached:* opacity 0.5 and saturation 0.6, one colour matrix, the
+    flame included.
+  - *Reached:* the avatar's arc is at or past the nearest trail point's.
+    Days in 28 / 29 / 30 / 31-day months:
+    - tent: 7 / 7 / 7 / 7;
+    - cabin: 14 / 14 / 15 / 15;
+    - fountain: 19 / 20 / 20 / 21;
+    - campfire: 23 / 24 / 25 / 26.
+  - *Lighting:* a 400 ms fade when the hop ends; at once with Reduce
+    Motion.
+  - The first docs commit said "days 6–25"; corrected to 7–26.
+- **[Product] Dark mode (G6).**
+  - Gain R 0.4824, G 0.5182, B 0.6714, from the clearings of the app's
+    backgrounds.
+  - *Flame threshold* (campfire only): hue 15–60°, saturation ≥ 0.55,
+    value ≥ 0.90. It also catches the tent's trim, the cabin's knob and
+    the flag's pennant, so it is not applied to them.
+  - *Reached:* the flame layer is drawn unfiltered over the relit fire.
+    *Unreached:* filtered and faded.
+- **[Measured]** At 320 pt on day 31 the flag's top is 46.9 pt into the
+  window, against a chip band ending at 48.0. The flag stands between the
+  chips, 49–69 pt clear across, so there is no overlap. No fix is applied.
+  *If more air is wanted:* move the flag 10 px lower (at 2172), about
+  1.5 pt on screen.
+- **[Size]** +44.1 KB of object assets. The generated tables add the
+  trail's runs (739 pairs) and a 4-entry save point table.
+- **[Tests]** 1191 passed (1161 before this stage). `flutter analyze` is
+  clean.
+  - *Deliberate breaks on backup copies:* a stray corner pixel in the
+    flag; the tent at ratio 1.0 (table and trail tests); the flame layer
+    removed (the dark test).
+- **[Visual — pre-release check]** The save points, the flag and their
+  states change Home's mountain card. App Store screenshots and case-study
+  images will differ.
+- **[Open — owner]**
+  - The device check: the states and the fade, the dark flame, the sizes
+    at 320 pt.
+  - C6's small object (G4).
+  - The volcanic theme: its resolution is too low and it has no dark
+    version.
+
+## 2026-10-01 (1.1.0 design side tracks — Scene Art Stage 2 after the device check)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Device — owner]**
+  - The campfire is right in both modes, its flame exclusion included;
+    unchanged.
+  - In dark mode every other object looked darker than the scene, even on
+    day 31: G6's full filter is too strong.
+  - The flag did not fit beside the summit: its pole leant on the snow cap
+    and the rocks, and its base stood on no flat ground.
+- **[Commits]**
+  - `bdf86af`: **G6 strength.** `ClimbSavePoints.defaultDarkFilterStrength`
+    in `lib/widgets/monthly_climb/climb_save_points.dart`: 0 is the object
+    as it is, 1 the full filter, a linear mix in between. The flame stays
+    outside the filter at any value. Set to **0.6, to be chosen on a
+    device.**
+    - Measured at 375 pt in dark mode (`stage2/fix_dark_strength.txt`,
+      `fix_dark_strength.jpg`):
+
+      | Strength | Cabin against its ground, reached | Fountain, reached − unreached | Campfire, reached − unreached |
+      |---|---|---|---|
+      | 1.0 | −13.9 L* | −0.2 L* | +7.9 L* |
+      | 0.8 | −9.6 L* | +2.9 L* | +8.9 L* |
+      | 0.6 | −5.3 L* | +5.8 L* | +9.8 L* |
+      | 0.4 | −1.2 L* | +8.7 L* | +10.6 L* |
+
+    - At the full filter the fountain looked the same reached and
+      unreached.
+  - `177bdb9`: **the flag moves to C5.** The Stage 2 spot was in no
+    clearing (`stage2/fix_flag_clearings.txt`).
+    - It is placed by the save points' rule at a width ratio of 0.55: 0.6
+      touches the trail by 1 px.
+    - It is faded until the month's last step, then lit with the same fade
+      and Reduce Motion behaviour. In dark mode it takes the theme filter.
+    - G4 is updated. C6 stays empty.
+    - `stage2/numbers.txt` still describes the old flag spot.
+  - Renders: `stage2/fix_*.jpg`, 375 pt, light and dark, days 20, 30, 31.
+    On day 30 the flag is faded, and lit on day 31.
+- **[Tests]** 1206 passed (1191 before). `flutter analyze` is clean.
+- **[Open — owner]** The device check: the dark strength (0.4 / 0.6 /
+  0.8) and the flag on C5.
+
+- **2026-10-01 — Scene Art Stage 2: the flag moves from C5 to C6.**
+  - *Why:* the first fix's C5 came from a label mix-up. Ahmet meant C6
+    from the start: the clearing under the summit, left of bend B6
+    (Batch 0's `verify_trail.jpg`).
+  - *Size:* by the save points' rule it fits at ratio 1.0 of C6's width:
+    116 px at 2172, about 20 pt at 375 pt (on C5 it was 0.55, 101 px,
+    17.5 pt).
+  - *Unchanged:* it is faded until the month's last step, lit on it.
+  - C5 is now empty. C6, left empty at first for being within 3 steps of
+    the summit, takes one object, accepted on the device. G4 is updated.
+  - *Seen on renders:* on day 30 of 31 the avatar stands at B6, just right
+    of the flag; the pennant comes close to its ear but does not cover it.
+
+- **2026-10-01 — Scene Art Stage 2: dark filter strength 0.5, chosen on
+  the device** (`ce05163`).
+  - The full filter (1.0) was too dark. 0.6, 0.4 and 0.5 were tried, and
+    0.5 is used (`ClimbSavePoints.defaultDarkFilterStrength`; G6).
+  - Renders: `stage2/fix2_*.jpg` and `fix2_overview.jpg` (375 pt, light
+    and dark, days 30 and 31). The flag on C6 is faded on day 30 and lit
+    on day 31.
+  - 1206 tests passed; `flutter analyze` is clean.
+
+- **2026-10-01 — Scene Art Stage 2 verified on the owner's device (save points faded and lit, the flag on C6 faded on day 30 and lit on day 31 with no overlap with the avatar, dark filter strength 0.5) and merged into `1.1.0`** by fast-forward to `75d717f` (no merge commit); 1206 tests green on `1.1.0`, `flutter analyze` clean.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 4: three theme images in, checked)
+
+On branch `1.1.0-design` (at `1.1.0`, `a76a4b0`); not pushed.
+
+- **[Files]** Ember Peak, Glacier Peak and Red Canyon backgrounds, light
+  and dark, copied byte-identical to `docs/design/scene-art/source/`
+  (`ember/`, `glacier/`, `canyon/`; no `raw/`).
+  - Each is 2172 × 2896, like Green; light and dark are the same size.
+  - Batch 0's `volcanic/` draft moved to `source/archive/volcanic/` (with
+    a README: the first Ember Peak draft).
+  - `PROMPTS.md` on the Desktop is byte-identical to the repository's, so
+    it is unchanged.
+- **[Engineering] Theme check (`0f087dd`).** The first version failed five
+  of the six; the images are aligned (START flags within 2 px), its Green-
+  tuned detection was not. The check now verifies at Green's positions,
+  and all seven pass (Green dark and the six new):
+
+  | Image | Trail centre | Trail edges | Clearings (max) | Flag |
+  |---|---|---|---|---|
+  | Green dark | 100 % | 100 % | 0.53 | 0 px |
+  | Ember light | 100 % | 100 % | 0.73 | 1 px |
+  | Ember dark | 100 % | 100 % | 0.45 | 0 px |
+  | Glacier light | 100 % | 100 % | 0.40 | 2 px |
+  | Glacier dark | 100 % | 100 % | 0.24 | 2 px |
+  | Canyon light | 100 % | 100 % | 0.40 | 3 px |
+  | Canyon dark | 100 % | 100 % | 0.37 | 2 px |
+
+  Thresholds: ≥ 99 %, ≥ 99 %, ≤ 1.0, ≤ 0.002 h (about 6 px). All four
+  breaks fail (moved 8 and 20 px, scaled 1.5 %, C3 covered).
+- **[G1]** The sources in the repository are now 82 MB, under the 100 MB
+  mark.
+- **[Product — for the owner, not decided] Names and images** (Batch 2's
+  accuracy rule):
+  - *Ember Peak:* basalt, a glowing crater, lava cracks. A small share of
+    the lava pixels is close to the destructive red `#DC3232`: 11 % of
+    them within ΔE2000 10 in light, 21 % in dark (redder there, median ΔE
+    11.4). The Ember constraint in the side-tracks file asks the lava
+    not to be close to it.
+  - *Glacier Peak:* ice and snow. The ground is snow-covered all over; no
+    falling snow is seen, but it may read as winter (the "no season cues"
+    rule).
+  - *Red Canyon:* red rock and mesas.
+
+- **2026-10-02 — Batch 4, step 2: the three themes are in the app.**
+  - **Assets:** `export_assets.py` with Green's settings (1536 px, q80).
+    Green's own files are byte-identical.
+    - Ember Peak 363.1 + 275.6 KB;
+    - Glacier Peak 298.2 + 237.3 KB;
+    - Red Canyon 345.6 + 276.7 KB;
+    - 1.80 MB for the three; 2.43 MB for all four themes' backgrounds.
+  - **Themes:** all four are ready, with their light and dark images.
+    Rotation and names checked against the table and the side-tracks
+    file: October 2026 Green Slope, November Ember Peak, December Glacier
+    Peak, January Red Canyon. No difference.
+    - The palettes now colour only the dots and the loading fill, so the
+      three share Green's.
+  - **Home:** `_loadClimb` resolves the month's theme
+    (`resolveClimbMonthTheme`, which records the current month on its
+    first view, per the Batch 2 note) and passes it to `MonthlyMountain`.
+    If storage fails, the rotation's theme is shown and nothing is
+    recorded.
+  - **Flag (G4):** drawn in all four themes; the field stays.
+  - The temporary "every month shows Green" note is removed from the code
+    and the docs.
+  - **Not yet:** the new themes have no dark-mode object gain (step 3), so
+    their objects are drawn unfiltered in dark mode until then.
+  - 1230 tests pass. Changed: the "only Green is ready" tests, and the
+    November expectations (now Ember Peak). Added: each theme's image per
+    mode, Home's theme per month (recorded, rotation fallback), the flag in
+    every theme.
+
+- **2026-10-02 — Batch 4, step 3: the dark-mode filter per theme.**
+  - `export_objects.py` derives each theme's gain from its own
+    backgrounds' clearings (`stage2/objects.json` `dark_gain`; the table
+    has all four). Green's gain and the object assets are byte-identical.
+  - Gains (R, G, B):
+    - Ember 0.619 / 0.726 / 0.952;
+    - Glacier 0.537 / 0.530 / 0.644;
+    - Canyon 0.599 / 0.615 / 0.809.
+  - At strength 0.5 every theme keeps its unreached state distinguishable
+    (`batch4/dark_filter.txt`). On Glacier the reached cabin is 16.3 L*
+    darker than the snow (recorded).
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 4 built, not on a device yet)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Renders:
+`docs/design/scene-art/batch4/`, starting with `overview.jpg` (the four
+themes side by side, light and dark, day 20 and the last day).
+
+- **[Commits]**
+  - `0f087dd`: the theme check, now at Green's positions.
+  - `1be1d17`: the sources.
+  - `42f8866`: the themes in the app.
+  - `5b3d627`: the dark-mode gain per theme.
+  - `8b615b9`: `CLIMB_DEBUG_THEME`.
+  - Plus the renders and this docs commit.
+- **[Renders]** The real Home at 375 pt, light and dark, days 1, 20 and
+  the last (November 30, December and January 31), for the three new
+  themes, plus Green Slope (October) in the overview.
+  - *Seen:* on Red Canyon in light mode the orange flag on C6 stands on
+    orange rock and is harder to pick out than in the other themes. For
+    the device check.
+- **[Size]** +1.80 MB of backgrounds (Ember 638.7 KB, Glacier 535.5 KB,
+  Canyon 622.3 KB). The objects are shared, and the code change is a few
+  KB. All four themes' backgrounds together are 2.43 MB.
+- **[Tests]** 1235 passed (1206 before Batch 4). `flutter analyze` is
+  clean.
+- **[Visual — pre-release check]** November, December and January now
+  show their own themes on Home. App Store screenshots and case-study
+  images may differ by month.
+- **[Open — owner]**
+  - The device check of the three themes.
+  - The Ember lava against the destructive red (dark mode).
+  - Glacier's snow and the season rule.
+  - Glacier's dark cabin.
+  - Then merge approval.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 4 device check; G10: Red Canyon's pennant is blue)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Device — owner]** Ember, Glacier and Red Canyon are right in both
+  modes. The one problem: Red Canyon's orange pennant on C6 is hard to
+  pick out on its orange rock in light mode.
+- **[Product — owner] G10.** Only in Red Canyon the pennant is blue; the
+  pole, the stones and the other themes stay. An outline was rejected:
+  not enough at about 20 pt faded, and in every theme it would change
+  themes that work.
+- **[Engineering]** `export_objects.py` cuts the pennant by a colour
+  threshold, applied to the flag only (hue 10–40°, saturation ≥ 0.72,
+  value ≥ 0.40, the largest region).
+  - Checked by eye: the whole pennant, shade included; not the pole or
+    the stones.
+  - It writes `summit_flag_pennant.webp` (3.3 KB) and
+    `summit_flag_base.webp` (6.5 KB). Their alphas add up to the flag's.
+  - The other object assets are byte-identical.
+  - Red Canyon draws the base and the pennant through a shading-keeping
+    recolour, both through the same G8 state and 0.5 dark filter.
+    `ClimbTheme.flagPennantColor` is set for Red Canyon only.
+- **[Measured]** ΔE2000 of the pennant against the rock around it, for
+  the faded (day 30) and lit (day 31) flag (`batch4/flag_pennant.txt`):
+
+  | Pennant | Light, faded | Light, lit | Dark, faded | Dark, lit |
+  |---|---|---|---|---|
+  | Dark blue `#1E4FA3` | 26.2 | 54.3 | 14.5 | 28.2 |
+  | Mid blue `#2F7BD8` | 21.7 | 46.5 | 13.6 | 29.6 |
+  | Cyan `#1FB5C9` | 19.0 | 41.7 | 16.4 | 46.1 |
+  | Orange (≈ today) | 8.4 | 8.7 | 10.1 | 24.7 |
+
+  The default is cyan `#1FB5C9`, the best in the weakest shot.
+  `ClimbThemes.redCanyonPennant` changes it.
+- **[Renders]** `batch4/flag_red_canyon_*.jpg` and `flag_overview.jpg`:
+  Red Canyon at 375 pt, light and dark, days 30 (faded) and 31 (lit),
+  with the cyan pennant. 1250 tests pass; `flutter analyze` is clean.
+
+- **2026-10-02 — Batch 4 verified on the owner's device (Ember Peak, Glacier Peak and Red Canyon right in both modes; Red Canyon's cyan pennant, G10, easy to pick out in light mode) and merged into `1.1.0`** by fast-forward to `d403e3f` (no merge commit); 1250 tests green on `1.1.0`, `flutter analyze` clean.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 decisions M1–M9; Batch 0 started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date,
+both at `31cc1d6`); not pushed. Docs only. Full text and reasons:
+`docs/1.1.0-design-side-tracks.md`, "Batch 6 — month transition".
+
+- **[Product — owner] M1 trigger.** The month card shows on the new
+  month's first Home open, before anything else. *Rejected:* after the
+  first Daily Test (the changed mountain and the avatar back on START
+  would go unexplained); a delayed card over a visible Home (reads as a
+  flicker).
+- **[Product — owner] M2 new user.** No card; on the first Home open,
+  once, a zoom from the whole mountain (K-c) to the avatar on START. To be
+  confirmed against the first-launch flow after the Batch 0 report.
+- **[Product — owner] M3 variants.** A summary card if the previous
+  calendar month has at least one step, otherwise a fresh-start card
+  (avatar, warm, no numbers, a clean start rather than "we missed you").
+  One card whatever the number of skipped months, for the month the user
+  is in. Mid-month return card parked for 1.2.
+- **[Product — owner] M4 form.** A bottom sheet over Home, which shows
+  dimmed in the K-c framing.
+- **[Product — owner] M5 content.** Last month's name, the medal (no row
+  if none), steps n / N, points, a near-miss line under a threshold (never
+  after Gold; threshold chosen from the Batch 0 numbers), the new month's
+  theme name, one button. A detailed-statistics button and a premium
+  monthly report parked for 1.2.
+- **[Product — owner] M6 zoom.** After the sheet closes, a short pause,
+  then a zoom from K-c to the daily framing. Home takes touches
+  throughout; a tap on the mountain card jumps to the last frame. Button,
+  swipe down and tap outside all count as "seen". Duration chosen on a
+  device from three values. Reduce Motion: a short cross-fade instead.
+  The card's "seen" is recorded on dismissal (a card open when the app is
+  closed comes back); the zoom's when it starts (it never plays twice).
+- **[Product — owner] M7 measurement.** Three events: card shown
+  (`theme_id`, variant, tier, near-miss line shown), card dismissed
+  (method, time open), zoom ended (completed / skipped / Reduce Motion;
+  month change / first open). Names not fixed.
+- **[Product — owner] M8 Batch 5.** Batch 6 goes first, with today's
+  medals; the card reads tier, thresholds and image from the medal system
+  (no hard-coded numbers, no copied image). Batch 5's device checklist
+  gains "month card with the new medals".
+- **[Product — owner] M9 debug.**
+  `CLIMB_DEBUG_MONTH_CARD=<summary_gold|summary_none|summary_near|fresh|first_run>`,
+  debug builds only (`kDebugMode`), replays sample data on every launch
+  and hot restart, never reads or writes the stored "seen" records. The
+  real trigger is tested with an injected clock.
+- **[Docs]** The side-tracks file's "Month transition card" and
+  "Measurement" sections point to M1–M9, which list what they replace:
+  cases (a)/(b) become the two variants; the card events become M7; the
+  "card comes last" order under the one-time opening motion is replaced
+  by M1. Open for the report: the button's label and action, and whether
+  the [N] goal line and the tagline stay.
+- **[Roadmap]** Parked for 1.2: a monthly learning report (premium
+  candidate, entered from the month card) and a mid-month return card.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 Batch 0, step 2: the plaque's corners rounded, not on a device yet)
+
+On branch `1.1.0-design`; not merged, not pushed. The one product-code
+change of Batch 6's Batch 0 (owner's request).
+
+- **[Design]** The "Mountain of Learning" plaque keeps its "<=>" trail
+  sign silhouette; all six corners, the two points included, are rounded.
+- **[Engineering]**
+  - The card radius is now one constant, `appCardRadius` (20 pt,
+    `lib/theme.dart`), used by `CardThemeData` and by `ClimbCard`'s frame
+    (`ClimbCard.frameRadius`); the frame had its own literal 20.
+  - The plaque's radius is derived from it:
+    `frameRadius × ClimbCard.plaqueRadiusShare`, **the one setting** to
+    try on a device; 0.4 for now, so 8 pt.
+  - `TrailSignBorder` (was the private `_TrailSignBorder`) rounds each
+    corner with a tangent arc and fits a corner down only where the arc
+    would take more than half of an edge, so the silhouette holds at any
+    share. Text padding, the opaque chips and the plaque's place on the
+    frame line are unchanged.
+- **[Measured]** (`docs/design/batch6/plaque/plaque_numbers.txt`) The
+  plaque is 34 / 36 / 38 pt tall at Small / Medium / Large; 8 pt fits
+  every corner unchanged at every size; each point moves in by 2.05 pt.
+  Above a share of 0.70 (Small) to 0.79 (Large) the points would be drawn
+  smaller than asked.
+- **[Renders]** `docs/design/batch6/plaque/plaque_before_after.jpg` and
+  `cards_before_after.jpg`: the real Home at 320 / 375 / 430 pt, light and
+  dark, day 15, before (`ac6c900`) and after.
+- **[Tests]** 1253 pass (3 new: the radius is derived from the frame's,
+  which is the app's card radius; the rounded outline keeps the sign's
+  extent and pulls the points in by r (1 / sin(half) − 1); a too-large
+  radius is fitted to half the edge). No golden files exist; none
+  changed. `flutter analyze` clean.
+- **[Visual — pre-release check]** The plaque shows on Home in App Store
+  screenshots and case-study images.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 Batch 0 report written; waiting for the owner)
+
+On branch `1.1.0-design`; not merged, not pushed. Report:
+`docs/design/batch6/batch0-report.md`; renders and numbers in the same
+folder. Nothing of Batch 6 is built.
+
+- **[Commits]** `ac6c900` (M1–M9 in the docs), `7642fe3` (the plaque's
+  rounded corners, the only `lib/` change), `e2bf3b0` (measuring tools and
+  outputs), plus this report.
+- **[Measured — main findings]**
+  - The default bottom sheet covers the whole mountain window at
+    320 × 568, and all but 0–27 pt of it at 375 × 812 (summary card), with
+    Home at its scroll top. Scrolled so the climb card is at the top first,
+    44 % / 69–76 % / 86–87 % of the window shows at 320 / 375 / 430.
+  - The fullest summary card (321–344 pt) does not fit the 271.5 pt room
+    at 320 × 568 and scrolls; it fits at 375 and 430 at every text size.
+    The fresh-start card fits everywhere. No overflow in 72 renders.
+  - K-c is only 1.21× / 1.43× / 1.64× smaller than the daily framing at
+    320 / 375 / 430 pt and leaves 12.8 / 39.4 / 64.4 pt side bands.
+  - Rule v1 thresholds for 28–31 days; near-miss candidates ≤ 5, ≤ 10 and
+    ≤ 5 % of the maximum show on 6–7 %, 13–14 % and 19–20 % of each tier
+    band. Real score distribution not measured.
+- **[Found in the code]**
+  - Last month's medal is frozen at launch / resume without Home waiting;
+    the card path should call the idempotent finalization itself.
+  - `one_time_flags` has only a claim operation and one key; "seen" needs
+    a read method and per-month keys.
+  - Next tier and gap are not in `MonthlyMedalRules`; a small pure
+    function covers it.
+  - Debug builds send events to the production Firebase project (no
+    build-mode gate); a debug replay would pollute the card events.
+  - `CLIMB_DEBUG_MONTH_CARD` under `kDebugMode` cannot trigger the zoom in
+    the profile build its performance has to be measured in.
+- **[Open — owner]** Q1–Q11 in the report (§11): plaque radius reading,
+  near-miss limit, the button, the old card's [N] line and tagline, sheet
+  room, K-c bands, Daily Test during the zoom, profile builds, debug
+  events and the developer-traffic filter, event names, first-run order.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 decisions M10–M20; build started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Owner's answers to the Batch 0 report's §11; full text and
+reasons in `docs/1.1.0-design-side-tracks.md`, "Decisions after Batch 6's
+Batch 0".
+
+- **[Product — owner]**
+  - M10: Home scrolls the climb card into view before the sheet opens;
+    the summary card is compacted for 320 × 568, or the scroll stays as a
+    written-down flaw.
+  - M11: K-c side bands in one colour per theme and mode, measured from
+    the image's edge (rejected: the window's fill, a blurred copy).
+  - M12: one button, "See the mountain", only closes the sheet.
+  - M13: no [N] goal line; the tagline only on the fresh-start card.
+  - M14: first run: zoom → hop → Premium, never stalling.
+  - M15: near-miss line at a gap of 5 points or less; one constant; never
+    at Gold; the gap as a number, no "one more day".
+  - M16: four zoom outcomes; opening the Daily Test is its own.
+  - M17: `CLIMB_DEBUG_MONTH_CARD` also in profile builds.
+  - M18: the debug replay sends no events; an opt-in define for DebugView.
+  - M19: the three events with their parameters; `theme_id` on the Daily
+    Test start (`mode_selected`, `mode = daily_test`).
+  - M20: the card freezes last month's medal itself; a read method and
+    per-month keys for `one_time_flags`; a next-tier function as the
+    card's only source.
+- **[Plaque — owner]** `plaqueRadiusShare` goes from 0.4 to 0.7 (14 pt).
+- **[Docs]** `analytics-plan.md`: the card events of 2026-09-26 replaced
+  by M19, with the differences from Batch 0 §8; still planned, not built.
+  `roadmap.md`: the Firebase developer-traffic filter under the 1.1.0
+  release checklist (not verified, most likely not set up); Batch 5's
+  device checklist gains the month card with the new medals and a review
+  of the near-miss threshold.
+
+- **2026-10-02 — Batch 6 step 2: the plaque's share 0.4 → 0.7 (14 pt), owner.**
+  `ClimbCard.plaqueRadiusShare` is 0.7. Measured
+  (`docs/design/batch6/plaque/plaque_numbers.txt`): 14 pt fits every
+  corner unchanged at Small / Medium / Large (Small's limit is 0.70, so
+  0.7 is at its edge); each point moves in by 3.58 pt. Comparison of 0.4 /
+  0.7 / 1.0 at 375 pt, light and dark:
+  `docs/design/batch6/plaque/plaque_shares.jpg` (made through a new
+  debug-only `ClimbCard.debugPlaqueRadiusShareOverride`, like
+  `ClimbSavePoints.debugDarkFilterStrengthOverride`, and the render tool's
+  `DESIGN_MEASURE_PLAQUE_SHARE`). 1255 tests pass (2 new).
+
+- **2026-10-02 — Batch 6 step 4: the zoom (not on a device yet).**
+  - `lib/widgets/monthly_climb/climb_zoom.dart`: `ClimbOverview` (K-c: the
+    image fitted to the 350 pt height, centred; its transform to the daily
+    layer) and `ClimbZoomController` (hold K-c; then the claim, a 0.3 s
+    pause and a 1.8 s zoom, `duration` and `pause` named constants;
+    Reduce Motion a 250 ms cross-fade; `skip`, `dailyTestOpened`; four
+    outcomes, M16). A run always completes (skip, Daily Test, "already
+    played", dispose), so a chain waiting on it never stalls.
+  - `MonthlyMountain` draws the scene once in the daily framing behind a
+    `RepaintBoundary`; during a zoom only a `Transform` above it changes.
+    Tested: the boundary is not repainted across the zoom's frames (its
+    symmetric paint count stays); only the layer is reused.
+  - The month and step chips fade in over the zoom's last 15 % (they cover
+    the top of the image in K-c).
+  - M11: band colours per theme and mode measured from the images' side
+    edges (`tool/scene_art/kc_band_colors.py`,
+    `docs/design/batch6/kc_bands.txt`) into `ClimbTheme`; seam ΔE2000
+    (edge rows to the band colour) median 5.9–12.0. The vertical-gradient
+    alternative is only a render: `docs/design/batch6/kc_bands_430_light.jpg`.
+  - Home: tap on the climb card during a run skips it; opening the Daily
+    Test or its result jumps it to the end (M16).
+  - First run (M2, M14): the Home that replaces the first-launch flow
+    holds K-c from its first frame; zoom → Day-0 step → paywall. Tested:
+    the order; a tap skip; the Daily Test result opened during the zoom
+    (after it closes, the step and the paywall follow); Reduce Motion.
+    Flag `first_run_zoom` claimed when it starts; the debug onboarding
+    reset clears it.
+  - Found and fixed while testing: starting a run and choosing the
+    cross-fade did not notify Home, so tap-to-skip was off and Reduce
+    Motion showed the zoom.
+  - Three existing first-launch tests changed on purpose: the hop now
+    comes after the zoom (observed over 200 frames, not 100), and the
+    claimed flags include `first_run_zoom`.
+
+- **2026-10-02 — Batch 6 step 5 stopped at its stop condition (owner's
+  rule): nothing of the month card is built.**
+  - Measured (`docs/design/batch6/scroll/scroll_check.txt`, renders in
+    `scroll_overview.jpg`): with M10's scroll (the climb card at the top
+    of the list), the Today card, the Daily Test's entry, is **entirely
+    off screen at 320 and 375 pt** at every text size (0 pt of 113–129 /
+    96–108 pt). At 430 pt the list cannot scroll that far, and 30–58 pt of
+    it show.
+  - Two other scrolls measured for the owner's decision:
+    - `today` (the Today card at the top): the whole entry shows; the
+      window above Batch 0's summary sheet is 4–9 % at 320 pt, 34–45 % at
+      375, 65–76 % at 430;
+    - `peek` (the Today card's last 56 pt show): 24–25 % / 49–56 % /
+      67–68 %.
+  - These use Batch 0's fullest summary prototype; a compacted card (M10)
+    is shorter, so more of the window would show. Not measured yet.
+  - Waiting for the owner. Steps 5–8 not started.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 decision M21; the rest of the build resumes)
+
+On branch `1.1.0-design` at `d98c083`; not pushed.
+
+- **[Product — owner] M21 (corrects M10).** Before the month card opens,
+  Home scrolls until the Today card's last 56 pt still show. *Why:* with
+  the climb card at the top the Daily Test's entry is off screen at 320
+  and 375 pt (`d98c083`), which breaks reaching the Daily Test during the
+  zoom. *Rejected:* the climb card at the top; the Today card at the top
+  (4–9 % of the mountain at 320 pt). *Known flaw:* at 320 pt about a
+  quarter of the mountain shows with the sheet open.
+- **[Product — owner] Accepted deviations:** `theme_id` only on
+  `mode_selected` (`daily_test`), derivable from the date elsewhere (global
+  calendar); no first-run zoom if the first-launch flow is quit half way;
+  a covered Home pauses the zoom, with no extra outcome.
+
+- **2026-10-02 — Batch 6 step B: the month card (not on a device yet).**
+  - `lib/widgets/month_card_sheet.dart`: `MonthCardSheet` (summary and
+    fresh start) and `showMonthCard`, which reports how it was closed:
+    button, drag or barrier (where the last pointer went down: on the
+    sheet or outside it). Its own drag handle, so the sheet's top is the
+    content's top.
+  - Summary: "Your {Month} climb"; the medal row (the shared
+    `MedalBadge`, now Profile's too; no row without a medal); "n / N
+    steps"; points; "Just {gap} points from {Tier}" from
+    `MonthlyMedalRules.nearMiss`; "Next: {Month} · {Theme}"; "See the
+    mountain". Fresh start: the user's avatar beside "A new mountain
+    awaits" and the theme name; the tagline; "Your avatar is ready at the
+    start."; the same button; no numbers.
+  - `lib/widgets/medal_badge.dart`: Profile's medal circle made public
+    (M8); Profile looks the same (its tests unchanged).
+  - Home: the card is decided inside the climb load, before the new
+    month's mountain is drawn, so the mountain is first drawn in K-c behind
+    it (M1); it opens once Home is visible, the launch splash has gone and
+    no Daily Test runs. Before it opens, Home scrolls until the Today
+    card's last 56 pt show (M21, `HomeScreen.monthCardTodayPeek`). Any
+    close records "seen" and starts the month-change zoom (flag
+    `month_zoom:YYYY-MM` claimed as it starts). Never on the first run's
+    Home (M2).
+  - **Measured** (`docs/design/batch6/card/month_card_real_numbers.txt`,
+    renders in the same folder; light and dark identical):
+
+    | Card | Screen | Sheet (share) S / M / L | Scrolls | Mountain above the sheet S / M / L |
+    |---|---|---|---|---|
+    | Summary | 320 × 568 | 294 / 302 / 311 pt (52–55 %) | no | 32 / 30 / 27 % |
+    | Summary | 375 × 812 | 328 / 336 / 345 (40–42 %) | no | 85 / 82 / 79 % |
+    | Summary | 430 × 932 | 328 / 336 / 345 (35–37 %) | no | 100 % |
+    | Fresh | 320 × 568 | 247 / 280 / 294 (43–52 %) | no | 46 / 36 / 32 % |
+    | Fresh | 375 × 812 | 260 / 291 / 303 (32–37 %) | no | 100 / 95 / 91 % |
+    | Fresh | 430 × 932 | 260 / 264 / 269 (28–29 %) | no | 100 % |
+
+    The Today card's last 56 pt show in every case (58.4 pt at 430 /
+    Small, where the list ends). The avatar on START shows above the sheet
+    at 430 pt (both cards) and at 375 pt for the fresh card only. No
+    overflow in the 36 renders. The first fresh layout (avatar above the
+    title) scrolled at 320 pt Medium and Large (307 / 352 pt against 319.5
+    pt); the avatar now sits beside the title.
+  - **Tests** (`test/month_card_test.dart`, 16): variants end to end
+    (summary; no medal → Bronze gap; Gold → no line; a gap of 6 → no
+    line; fresh with no digits; no card for a user new this month); the
+    three closes each record "seen" and start the zoom; `showMonthCard`
+    reports button / drag / barrier; a card open when the app is closed
+    shows again, and not after it is closed; after closing, the Daily
+    Test entry shows at least 56 pt and a tap on it opens the test during
+    the zoom, at 320, 375 and 430 pt.
+  - *Seen in a test, not a product finding:* `DailyTestScreen` overflows
+    at 320 × 568 under the test font (Ahem, wider than the app's), which
+    is why the entry test checks that the route was pushed rather than
+    laying the screen out. Not checked with the real font.
+
+- **2026-10-02 — Batch 6 step C: the events (not seen in DebugView).**
+  `month_card_shown`, `month_card_dismissed`, `month_zoom_ended` (M19)
+  and `theme_id` on `mode_selected` when `mode = daily_test`
+  (`docs/analytics-plan.md`, "Month transition"). `open_ms` counts only
+  foreground time, through a test clock
+  (`HomeScreen.monthCardClockForTesting`): measured on the first try with a
+  plain `Stopwatch`, which test time does not move. A zoom that had already
+  played (its flag claimed) sends nothing. Tests: each event's exact keys;
+  each once on Home; `button` / `drag` / `barrier`; `completed` /
+  `skipped` / `reduce_motion` / `daily_test_opened` on the month change
+  and on the first run; the limits test covers 20 events.
+
+- **2026-10-02 — Batch 6 step D: `CLIMB_DEBUG_MONTH_CARD` (not on a device yet).**
+  `lib/widgets/monthly_climb/climb_debug_month_card.dart`. Applies when
+  `!kReleaseMode` (debug and profile, M17; the two older defines stay
+  `kDebugMode`). Home replays it once per Home, so on every launch and hot
+  restart, not on resume; the samples come from `MonthlyMedalRules`
+  (Gold + 12; Bronze − 33; Gold − 5 for the near-miss line). The replay
+  never asks storage for the card, never reads or writes a "seen" record
+  (the zoom claims nothing), and sends no `month_*` event unless
+  `CLIMB_DEBUG_MONTH_CARD_EVENTS=true` (M18). `first_run` plays the first
+  run's zoom through the same chain. With `CLIMB_DEBUG_THEME` the card
+  names that theme; with `CLIMB_DEBUG_DAY` the zoom ends on that step.
+  Tests (`test/climb_debug_month_card_test.dart`, 15): the release / debug
+  truth table; samples; each value on Home with no flag access recorded and
+  no event; replay on a new Home, not on resume; the combination with the
+  other two defines; the events opt-in. README: a new "Monthly Climb debug
+  defines" section (the two older defines were only in this log before).
+  The card's test harness moved to `test/support/month_card_support.dart`.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `6fbf2a9` (M10–M20), `89be9a7` (plaque 0.7), `b9f7d88`
+  (detection, flags, next tier), `94d9a88` (zoom, first run), `d98c083`
+  (step 5's stop measurement), `08f4680` (M21), `ada478b` (month card),
+  `fe47227` (events), `d69463f` (debug define), and this closing commit.
+- **[Tests]** 1335 pass (1250 before Batch 6); `flutter analyze` clean.
+- **[Open — owner]** The zoom's duration (1.2 / 1.8 / 2.5 s); single band
+  colour or vertical gradient; the 320 pt flaws (a quarter to a third of
+  the mountain above the sheet; START under the sheet); performance on a
+  device (not measured); DebugView and registering the new parameters;
+  the device checklist; then merge approval.
+- **[Visual — pre-release check]** The plaque's rounder corners and the
+  month card may appear in App Store screenshots and case-study images.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 device check; M22: blurred K-c bands)
+
+On branch `1.1.0-design` at `d723917`; not pushed.
+
+- **[Device — Ahmet, iPhone 14 Plus]** The five `CLIMB_DEBUG_MONTH_CARD`
+  states work. The zoom stays at **1.8 s**. The plaque at 0.7, the fresh
+  card's avatar beside the title and the cards' copy are accepted. The
+  single-colour K-c bands are not liked: on Green Slope they read as a
+  flat greenish strip.
+- **[Product — owner] M22 (replaces M11).** The bands show a pre-made
+  blurred copy of the image. *Rejected:* a live blur (computed on every
+  frame of the zoom).
+- **[Accepted — owner]** The 320 pt flaws are known flaws (only while the
+  sheet is open); `open_ms` counts only foreground time.
+- **[Performance]** Not measured with DevTools; no stutter was reported on
+  the device. Not a measurement.
+- **[Replaced by M22]** The single-colour bands of Batch 6 step 4
+  (`tool/scene_art/kc_band_colors.py`, `docs/design/batch6/kc_bands.txt`,
+  `.json`, `kc_bands_430_light.jpg`) stay as a record.
+
+- **2026-10-02 — Batch 6, M22: the blurred K-c backdrop (not on a device yet).**
+  - `tool/scene_art/export_blur.py`: from each full-resolution source, a
+    192 × 256 px Lanczos copy, a Gaussian blur of sigma `STRENGTH` × width
+    (the one setting: 0.03, so 5.76 px), WebP quality 70. Eight assets,
+    `assets/climb/<theme>/background_<mode>_blur.webp`, **12.0 KB in all**
+    (1.1–1.8 KB each; `docs/design/batch6/blur/blur_assets.txt`).
+  - `ClimbTheme.kcBackdropFor` names it; `MonthlyMountain` draws it, only
+    during a zoom, inside the scaled scene layer behind the sharp image, at
+    `ClimbOverview.backdropRect`: exactly the window at K-c (cover fit). No
+    run-time blur. The daily framing is unchanged (the backdrop lies
+    outside the image's bounds and is not drawn without a zoom). In dark
+    mode it is the dark image's blur; the object filter is untouched.
+  - **Replaced by M22:** `ClimbTheme.kcBandLight` / `kcBandDark` /
+    `kcBandFor` removed; the window's fill is the palette's `sky` again.
+    `tool/scene_art/kc_band_colors.py` and its outputs stay as a record.
+  - `check_theme.py --blur`: each of the eight exists and matches what
+    `export_blur.py` makes now from its source (same bytes, or pixels
+    within 2). All eight pass (`blur_check.txt`). Break check on a backed-up
+    copy: Ember's dark backdrop replaced by the "strong" candidate failed
+    (max pixel difference 36); restored byte-identical, passes again.
+  - **Renders:** `docs/design/batch6/blur/blur_430_light.jpg` and
+    `blur_430_dark.jpg`, K-c at 430 pt with the sheet closed, four themes,
+    strengths light 0.015 / medium 0.03 (in the product) / strong 0.06.
+  - **Seam (reported, nothing added):** the sharp image's edge stays a
+    visible hard line against the backdrop at every strength. CIEDE2000
+    across the edge (4 px each side, row by row; median / 95th percentile,
+    worse side; `blur_seam.txt`): medium 8.3–14.6 / 19.0–44.6; light
+    8.9–15.4; strong 7.7–13.4. A stronger blur lowers it only a little.
+  - Tests: the backdrop is inside the scene's repaint boundary and covers
+    the window at K-c exactly; none without a zoom; no `ImageFiltered` or
+    `BackdropFilter` in it; the eight assets bundled, 192 × 256, under
+    4 KB. The zoom's "scene not repainted" test stays green. 1343 tests
+    pass.
+
+- **2026-10-02 — Batch 6: the month card measured at 375 × 667 (iPhone SE).**
+  The real card on the real Home after the M21 scroll, both cards, three
+  text sizes, light and dark (identical)
+  (`docs/design/batch6/card/month_card_real_numbers_375x667.txt`, renders
+  in `overview_375x667.jpg`, with the M22 backdrop):
+
+  | Card | Sheet S / M / L | Scrolls | Mountain above the sheet S / M / L | Today card's last 56 pt |
+  |---|---|---|---|---|
+  | Summary | 294 / 302 / 311 pt (44–47 %) | no | 61 / 58 / 55 % | on screen |
+  | Fresh | 226 / 257 / 269 pt (34–40 %) | no | 80 / 71 / 67 % | on screen |
+
+  No overflow. The avatar on START (in K-c) is under the sheet with both
+  cards; known, like at 320 pt. Nothing changed.
+  - *Note:* the step B renders for 320 / 375 × 812 / 430 pt in the same
+    folder were made before M22 and show the single-colour bands; their
+    numbers do not depend on the bands.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6: blurred bands built; awaiting their device check)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `56b0edf` (M22 and the device check in the docs),
+  `94ef852` (the blurred backdrop), `cbcb590` (the 375 × 667 measure),
+  and this closing commit.
+- **[Status]** Batch 6 awaits device verification of the blurred K-c
+  bands only (and their strength). Everything else was checked on the
+  device (iPhone 14 Plus). Performance not measured.
+- **[Tests]** 1343 pass; `flutter analyze` clean.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 6 done; merged into 1.1.0)
+
+- **[Device — Ahmet, iPhone 14 Plus]** The blurred K-c bands approved, as
+  seen on **Green Slope in dark mode only**. The other three themes and
+  light mode were verified in renders only
+  (`docs/design/batch6/blur/blur_430_light.jpg`, `blur_430_dark.jpg`),
+  not on a device. Strength stays medium (0.03). The seam between the
+  sharp image and the backdrop (CIEDE2000 median 8.3–14.6) is accepted as
+  a known small flaw.
+- **[Done]** Batch 6 is done. Everything else was device-checked earlier
+  the same day (the five debug states, the 1.8 s zoom, the plaque at 0.7,
+  the cards).
+- **[Still open]**
+  - frame times and memory: not measured on a device (no stutter was
+    reported, which is not a measurement);
+  - the three events and `theme_id`: not yet seen in DebugView, not
+    registered;
+  - at 320 pt and 375 × 667 the avatar on START is under the open sheet;
+  - if the first-launch flow is quit half way, the first run's zoom does
+    not play;
+  - the Firebase developer-traffic filter (release checklist).
+- **[Next]** Batch 5 (medals); its checklist keeps "the month card with
+  the new medals" and "review the near-miss threshold".
+- **[Merge]** `1.1.0` fast-forwarded to `1.1.0-design` (the commit
+  carrying this entry); see the roadmap.
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 5 decisions N1–N14; Batch 0 started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date,
+both at `8301088`); not pushed. Docs only. Full text and reasons:
+`docs/1.1.0-design-side-tracks.md`, "Batch 5 — medals, save point names,
+the C5 signpost". The owner's prompt numbered them R1–R14; they are
+recorded as N1–N14 because R1–R6 already name the Batch 3b report's items.
+
+- **[Product — owner] N1 medal identity: per theme.** Each medal is
+  composed ahead of time from the tier's body, the theme's mountain and
+  stars on the rim (Gold 3, Silver 2, Bronze 1): 4 themes × 3 tiers = 12
+  images. *Rejected:* three generic medals (the collection repeats);
+  twelve separate generations (style drift); a written ribbon (unreadable
+  small). Stars sharp, golden, dark-edged (a soft cream star was lost on
+  Silver). Silver and Bronze are recoloured from the Gold body, same
+  geometry. Replaces "one body + emblem + month label, 7 layered assets".
+- **[Product — owner] N2 Welcome badge.** The same body in beige, a grey
+  stone mountain with an orange START flag, an orange ribbon with
+  "WELCOME" (Poppins Bold, SIL OFL 1.1, baked in), no stars.
+- **[Product — owner] N3 production.** `tool/medals/build_medals.py`
+  composes the images from `docs/design/medals/source/`; the app picks a
+  finished image and never layers one. Composed PNGs are not committed;
+  the app's assets are produced by the tool.
+- **[Product — owner] N4 thresholds unchanged** (25 / 50 / 75 %, rule
+  v1). *Why:* no user score distribution yet; the rule is versioned.
+- **[Product — owner] N5 no proration** for a late starter. 1.2: a
+  "reachable tier" hint.
+- **[Product — owner] N6 save point names**, the same in every theme:
+  tent "First Camp", cabin "Halfway Hut", fountain "Mountain Spring",
+  campfire "High Camp", flag "Summit". When the avatar arrives and the
+  object comes alive, an opaque name label shows above it, stays briefly
+  and fades; no tap; kept inside the card; no animation under Reduce
+  Motion; no day count. *Rejected:* a snackbar (covers Home's bottom
+  items), a popup (interrupts). 1.2: tap a save point to see its name.
+- **[Product — owner] N7 parked for 1.2:** a save point earning a "rest
+  day".
+- **[Product — owner] N8 tier celebration** the moment the score crosses
+  a threshold: medal image and confetti, reusing the Welcome badge's
+  celebration layout; once per tier per month; one tap moves on; no
+  confetti under Reduce Motion. The month card still sums up the month.
+- **[Product — owner] N9 same day:** the celebration first, then on Home
+  the avatar's step and the save point label (exact order after the
+  report).
+- **[Product — owner] N10 collection:** each month with its own theme's
+  medal; "Gold unlocks Bronze and Silver" stays; unearned medals faded
+  (opacity 0.5, saturation 0.6), no new image.
+- **[Product — owner] N11 C5 signpost** (dark wood, no lettering, arrow
+  up-left): decoration, not a save point; no name or label; always lit.
+  Changes G4's "C5 stays empty". *Why:* the empty clearing looked
+  unfinished; a save point there would crowd the last five steps (C5 is
+  reached on step 26 of 28, 29 of 31). It can become a save point later.
+- **[Product — owner] N12** two new events: a save point reached, a tier
+  becoming certain; names after the report. **N13** a `CLIMB_DEBUG_*`-style
+  setting to play the celebration and the label on a device. **N14** no
+  Home shortcut to the medals in 1.1.0.
+- **[Known limits]** Stars unreadable below 48 px and "WELCOME" below
+  96 px; the weakest colour pair is Red Canyon's mountain on Bronze; Ember
+  Peak's smoke is partly behind the stars; the medals on a dark background
+  are not yet checked on a device.
+- **[Roadmap]** Parked for 1.2: the reachable-tier hint (N5), tapping a
+  save point for its name (N6), the rest day (N7).
+
+## 2026-10-02 (1.1.0 design side tracks — Batch 5 Batch 0 report written; waiting for the owner)
+
+On branch `1.1.0-design`; not pushed. No `lib/` or `assets/` change.
+Report: `docs/design/batch5/batch0-report.md`.
+
+- **[Commits]** `2ddef83` (N1–N14), `4a53de9` (the owner's inputs, hashes
+  verified; `build_medals.py` unchanged, 13 medals, byte-identical runs),
+  `065d879` (tools and outputs), and this report.
+- **[Measured]** The Day-0 Welcome card is 980–1954 pt below the fold
+  when it appears, on every screen; N6's label above its object overlaps
+  the arriving avatar in 43 of 45 cases (above object and avatar: none);
+  the month card's 40 pt medal is below the stars' 48 floor, a 48 pt disc
+  makes it scroll 2.2 pt at 320 × 568 Large; the signpost fits C5 at
+  ratio 0.95 only (tent-sized), ΔE2000 ≥ 14.2 from the ground in every
+  theme and mode; C5 is reached on step 26 of 28 and 29 of 31, as N11
+  says; source images total 97.51 MB (G1: 100 MB).
+- **[Open — owner]** Thirteen questions in the report's §9 (celebration
+  place, label placement and timing, month card medal size, Profile
+  layout, events, debug define, assets, signpost size, OFL text, G1).
+- **[Tests]** 1343 pass; `flutter analyze` clean.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 decisions N15–N26; build started)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date at
+`8301088`); not pushed. Full text and reasons:
+`docs/1.1.0-design-side-tracks.md`, "Decisions after Batch 5's Batch 0".
+
+- **[Product — owner] N15** the celebration is an overlay over the result
+  screen, opened when the test is saved; medal and confetti at the
+  opening; one tap closes it; no confetti under Reduce Motion. The Welcome
+  badge moves into it; the old card under the results goes. *Why:* that
+  card sat 980–1954 pt below the fold and its confetti was the exit.
+- **[Product — owner] N16** the month card's medal disc is 48 pt; the
+  2.2 pt it adds at 320 × 568 Large comes from the card's gaps or is a
+  known flaw; the card gets last month's theme.
+- **[Product — owner] N17** Profile: one row per month, the running month
+  on top marked in progress, tiers lit as they become certain; the Gold
+  ladder and N10's faded look stay.
+- **[Product — owner] N18** signpost at the rule's 0.95; the theme check
+  verifies it touches no trail in the four themes; the wood is mid brown,
+  not dark (corrects N11).
+- **[Product — owner] N19** the label above the object and the avatar,
+  below the top band where it would touch it; 200 ms / 2.5 s / 400 ms,
+  3 s without animation under Reduce Motion. *Rejected:* above the object
+  only (43 of 45 cases covered the avatar's head).
+- **[Product — owner] N20** readability floors in pt. **N21** events
+  `save_point_reached`, `medal_tier_reached`, `tier` reused, both with
+  `theme_id`. **N22** `CLIMB_DEBUG_MILESTONE`, eight values, debug only.
+  **N23** assets 384 px WebP q90 (512 above a 128 pt medal). **N24** no
+  new record for "once per month"; a late completion of an
+  already-finalized month is not celebrated and shows no label. **N25**
+  sources 97.51 MB, G1 looked at before the next theme. **N26** the OFL
+  text beside the font.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `a2c0036` (N15–N26), `1f3b076` (assets), `248f799`
+  (medal widget, month card), `a4b0208` (Profile), `896e83a`
+  (celebration), `051cdbf` (names, label, signpost), `efd3308` (events),
+  `740d686` (debug define), and this closing commit.
+- **[Assets]** 13 medals, 384 px WebP q90, 374.2 KB
+  (`tool/medals/export_medal_assets.py`; `--check` compares them with
+  the sources); the signpost, 10.0 KB. Tracked `assets/` 3932.2 →
+  4316.4 KB (+384.2 KB, +9.8 %). 384 px because the largest medal drawn,
+  the celebration's 112 pt disc, needs a 126 pt canvas (≤ 128 pt, N23).
+- **[Built]**
+  - `MedalBadge` draws the composed image (theme × tier, or Welcome); the
+    caller gives the disc; the stars' room is inside the widget; unearned
+    faded 0.5 / 0.6.
+  - Month card (N16): last month's theme (`MonthCardData.previousTheme`),
+    a 48 pt disc; the gaps around the medal row 10 → 8 pt. Measured with
+    the real card: the summary card +6.7 pt everywhere, no scrolling at
+    320 × 568 (317.7 of 319.5 pt at Large), 375 × 812, 430 × 932 and
+    375 × 667; the fresh card unchanged (`docs/design/batch5/card/`).
+  - Profile (N17): one row per month in its own theme, the running month
+    on top marked in progress with tiers lit as they are crossed;
+    finalized months keep their frozen tier; themes read from
+    `climb_month_themes` (`StorageService.getClimbMonthThemes`), Green
+    Slope for a past month without a row.
+  - Celebration (N15, N24): a layer over the result screen when the save
+    lands, medal and confetti at the opening, one tap closes it; under
+    Reduce Motion no fade and no confetti. The Welcome badge moved into
+    it; the old card under the results is gone. "Start my climb" is
+    unchanged (label, its own confetti, then Home), so the first-day
+    chain keeps its order: celebration → results → Start my climb → Home
+    → zoom → step → Premium (an end-to-end test). Detection
+    (`ClimbMilestones`): the set's month after the save minus this
+    completion; nothing for a month already finalized.
+  - Save points (N6, N19): names; the label above the object and the
+    avatar's art, 200 ms / 2.5 s / 400 ms (3 s without animation under
+    Reduce Motion); below a chip it would touch; none during a zoom or on
+    mount. The C5 signpost drawn always lit, no name, no label.
+  - Events (N21): `save_point_reached`, `medal_tier_reached` (both with
+    `theme_id`, `tier` reused), from the result screen after the save.
+  - Debug (N22): `CLIMB_DEBUG_MILESTONE`, eight values, debug builds only.
+- **[Measured]**
+  - Label on the real Home (`docs/design/batch5/labels_real/`): 34 of 45
+    light cases touch nothing; High Camp overlaps the unlit flag's box at
+    every width; Summit at 320 pt Medium / Large moves below the month
+    chip and then covers 60 / 78 % of the avatar art's box.
+  - Signpost (`check_theme.py --signpost`): Green and Ember touch no
+    trail; Glacier light 36 px, Glacier dark 69 px and Canyon dark 5 px
+    at 2172 px graze the trail's edge (at most 2.7 pt² on a 430 pt
+    phone). N18 expected none: reported, the ratio kept at 0.95.
+  - Celebration card 261–316 pt tall, with at least 106 pt above it at
+    320 × 568 (`docs/design/batch5/celebration/`).
+- **[Not measured]** Anything on a device: the medals in dark mode, frame
+  times, the confetti, the timings; the events in DebugView.
+- **[Known limits]**
+  - stars unreadable below 48 pt and "WELCOME" below 96 pt (N20): the
+    Profile Welcome row's 64 pt badge does not read "WELCOME";
+  - Red Canyon's mountain on the Bronze body is the closest colour pair;
+  - Ember Peak's smoke is partly behind the stars;
+  - the signpost's margin is thin (1.0 and 0.90 touch the trail on
+    Green) and it grazes the trail's edge on Glacier and Canyon dark;
+  - 320 pt: Summit's label covers the avatar at Medium and Large text;
+  - Day 0 now has two bursts: the celebration's and "Start my climb"'s.
+- **[Tests]** 1429 pass (1343 before Batch 5); `flutter analyze` clean.
+- **[Visual — pre-release check]** The result screen, Profile and the
+  month card may appear in App Store screenshots and case-study images.
+
+## 2026-10-03 (1.1.0 design side tracks — N27: an in-app debug panel)
+
+On branch `1.1.0-design`; not pushed. Docs only.
+
+- **[Product — owner] N27.** A "Debug" row at the bottom of Settings
+  opens a panel that changes `CLIMB_DEBUG_DAY`, `CLIMB_DEBUG_THEME`,
+  `CLIMB_DEBUG_MONTH_CARD` and `CLIMB_DEBUG_MILESTONE` at run time, in
+  debug and profile builds; no effect in release. *Why:* every value
+  needed a rebuild (seventeen values, four themes, the day), and a debug
+  build did not feel like the real app. The `--dart-define` values stay
+  as starting values. M9's and N22's "debug only" widens to "debug and
+  profile". The panel writes no stored record except its reset; replays
+  send no events. Changes the earlier rejection of an in-app debug menu
+  (Batch 6 discussion, not recorded in the docs).
+
+## 2026-10-03 (1.1.0 design side tracks — N27 debug panel built)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed.
+
+- **[Commits]** `de123cf` (N27), `6ec005b` (the panel), and this one.
+- **[Built]** Settings' "Debug" row (debug and profile builds; none in
+  release, `!kReleaseMode`) opens a panel: the scene's theme and day
+  (memory only), the eight milestones and five month cards (each closes
+  the panel and plays on Home; repeatable), and "Reset local data
+  (first-day flow)" behind a confirmation. `CLIMB_DEBUG_DAY`, `THEME` and
+  `MILESTONE` now apply in profile builds too (N27 widens M9 and N22);
+  the defines stay as starting values.
+- **[Reset scope]** Deletes the whole local SQLite database (profile,
+  Daily Test sets and answers, mistakes, practice counts, climb ledger,
+  month themes, medals, Welcome badge, one-time flags, AI consent,
+  appearance, text size, settings, usage counters, debug override, the
+  anonymous device id); the app returns to Welcome. Not touched:
+  purchases (App Store / RevenueCat), Firebase's app instance and sent
+  analytics, Crashlytics, the proxy's shared sets.
+- **[Found and fixed while testing]** Home took a replay while the shell
+  was building when its tab became active (a route pushed during build);
+  it now waits for the frame.
+- **[Tests]** 1467 pass (1429 before); `flutter analyze` clean.
+- **[Not checked]** On a device, debug or profile build.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 device check; decisions N28–N36)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Docs only. Full text: `docs/1.1.0-design-side-tracks.md`,
+"Decisions after Batch 5's device check".
+
+- **[Device — Ahmet, iPhone 14 Plus, profile build, debug panel]** The
+  celebration layer was seen; the confetti and the one-tap close work.
+- **[Product — owner]** N28 the celebration: dark screen, a large medal
+  with a glow and slowly turning rays in the tier's colour, light text,
+  a shrink-and-fade close (fade only under Reduce Motion). N29 "{Tier}
+  medal earned". N30 month card: the medal large and centred (88 pt
+  target; the largest that does not scroll at 375 × 667), steps and
+  points side by side under it. N31 each save point pinned to a step,
+  the avatar standing on its point; steps between save points even by
+  arc. N32 the climb ends at the flag (a constant restores the trail's
+  tip). N33 Profile's bar: thresholds under the marks, the current score.
+  N34 Profile: a shelf of one medal per month (highest tier, the month's
+  theme), Welcome first, oldest to newest, the running month in progress,
+  tap for a detail. N35 the signpost moves inside C5 until the theme check
+  passes on all eight images. N36 no exit confetti on "Start my climb".
+- **[Accepted]** The 320 pt "Summit" label over the avatar.
+- **[Release checklist]** Register the new custom dimensions before the
+  release; merge Settings' Developer and Debug sections.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 correction round built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Decisions
+N28–N36 (entry above).
+
+- **[Commits]** `fd215e4` (decisions), `34b0a7a` (N31, N32), `a343d29`
+  (N35), `c05ab32` (N28, N29, N36), `e45be5b` (N30), `37f8f87` (N33,
+  N34), and this one.
+- **[N31, N32 — steps]** Each save point is pinned to step round(its arc
+  share × days), strictly increasing and never on the last two steps; the
+  days between pinned steps are even by arc. The climb ends at the flag's
+  point (96.35 % of the trail, 3.65 % unused);
+  `ClimbRoute.endsAtFlagSetting` switches back to the trail's tip. Steps
+  that changed: C4 23 → 24 (28 days), C3 20 → 21 (30 days). Neighbour
+  gaps against the even gap, ending at the flag: 0.863–1.125 (28 days),
+  0.927–1.117 (29), 0.948–1.156 (30), 0.956–1.038 (31); within the STOP
+  limits (0.75–1.35). `docs/design/batch5/steps/`.
+- **[N35 — signpost]** Moved 4 px away from the trail inside C5's
+  clearing (the smallest shift of 49 searched); `check_theme.py
+  --signpost` passes on all eight images. Ratio 0.95 kept.
+- **[N28, N29, N36 — celebration]** Dark layer, a 144 pt medal, a glow
+  and 12 rays in the tier's colour (turning a sixth of a turn over 12 s,
+  then still), light text, "{Tier} medal earned"; shrink-and-fade close
+  (220 ms), fade only under Reduce Motion (no confetti, no turning). On
+  short screens the group scales down (about 0.89 at 320 × 568). "Start
+  my climb" has no confetti; its label and behaviour are unchanged. The
+  medal assets went to 512 px (528.9 KB, was 374.2 KB) so the 162 pt
+  canvas is sharp at 3x.
+- **[N30 — month card]** The medal centred and large, by screen height:
+  88 pt (740 pt and up), 70 pt (640–739; at 375 × 667 the fullest card
+  fits 88 / 80 / 70 by text size, so 70), 48 pt below. At 320 × 568 no
+  disc fits without scrolling (none down to 40 pt): 48 pt, and the card
+  scrolls. `docs/design/batch5/card/month_card_disc.txt`.
+- **[N33, N34 — Profile]** A shelf: the Welcome badge, then one medal per
+  month oldest to newest (the highest tier, the month's theme); the
+  running month marked "In progress", its theme's Bronze faded until a
+  tier; past months without a medal left off. A tap shows the medal at
+  144 pt with month, theme, tier, steps (n / N) and points; a tap anywhere
+  closes it. The running month's bar writes Bronze / Silver / Gold and
+  their thresholds under the marks, and the score, from
+  `MonthlyMedalRules`. `docs/design/batch5/profile/`.
+- **[Debug panel]** New tests drive the correction round through it:
+  the pinned steps in the scene, the last day at the flag, the card's
+  medal from `summary_gold`, a Gold milestone under Reduce Motion.
+- **[Test changes]** The default test screen for Home's card tests went
+  from 375 × 812 to 430 × 932: with the larger medal, the test font
+  (wider than the app's) makes the fullest card scroll at 375 × 812, and
+  a drag on a scrolling sheet scrolls instead of closing. Screen-specific
+  tests pass their own size.
+- **[Known flaws]** 320 × 568: the card scrolls, so a swipe down scrolls
+  it instead of closing it. The resting avatar overlaps the C5 signpost
+  on the step it passes it (29–31-day months, 21 % of the signpost's box
+  under the art's box; the avatar in front). The 320 pt "Summit" label
+  over the avatar (accepted).
+- **[Tests]** 1485 pass (1467 before the round); `flutter analyze`
+  clean.
+- **[Not checked]** On a device; frame times and memory not measured.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 N37, N38 built, awaiting device verification)
+
+On branch `1.1.0-design`; not merged into `1.1.0`, not pushed. Decisions:
+`docs/1.1.0-design-side-tracks.md`, "Decisions after the correction
+round's device check".
+
+- **[Device — Ahmet, iPhone 14 Plus]** The month card's 88 pt medal looked
+  small; its text reads comfortably. The climb ending at the flag (N32)
+  confirmed.
+- **[Commits]** `894aaea` (decisions, 1.2 notes), `734ffc8` (N37),
+  `50d2c35` (N38 and the shelf test), and this one.
+- **[N37 — month card]** 112 pt on screens 740 pt tall and up; 70 pt on
+  640–739 (at 375 × 667 the fullest card fits 88 / 80 / 70 pt at Small /
+  Medium / Large, under N37's 88 pt cap); 48 pt below. Measured on the
+  real card (`docs/design/batch5/card/`): no scrolling at 375 × 812 and
+  430 × 932 in any text size (the sheet 431–452 pt of 457 and 524), so
+  375 × 812 keeps 112 pt. The mountain above the sheet: 375 × 812
+  218 / 207 / 195 → 193 / 182 / 170 pt (55 / 52 / 48 % of the window);
+  430 × 932 324 / 315 / 303 → 298 / 290 / 278 pt (85 / 83 / 79 %), and
+  the avatar on START is now under the sheet there (it was above it).
+  375 × 667 and 320 × 568 unchanged. Light and dark lay out the same.
+- **[Tool fix]** `month_card_real_render_test.dart` named its images by
+  width only, so 375 × 667's overwrote 375 × 812's: N30's "375 pt"
+  overview showed 375 × 667. 375 × 667 now has its own name; the
+  overview shows four screens.
+- **[N38 — Profile]** The section heading "Medal collection"; the bar
+  labelled "This month", the theme moved under the bar with the points
+  (at 320 pt Medium that line wraps to two lines).
+- **[Shelf test]** No test ran the shelf from a Daily Test save; added
+  `test/profile_medal_shelf_end_to_end_test.dart` (real SQLite): the
+  running month's medal is a faded Bronze, then Bronze, Silver and Gold
+  from the save that crosses each threshold (8, 15 and 23 perfect days in
+  a 30-day month). Profile reads the medals when its tab becomes active,
+  so the change shows the first time Profile opens after that save.
+- **[Accepted]** 320 × 568: the summary card scrolls and a downward drag
+  does not close it while it scrolls (the button and a tap outside do).
+  The faded unearned Welcome badge on the shelf is deliberate.
+- **[Tests]** 1487 pass (1485 before); `flutter analyze` clean.
+- **[Not checked]** On a device.
+
+## 2026-10-03 (1.1.0 design side tracks — Batch 5 and the debug panel done; merged into 1.1.0)
+
+On branch `1.1.0-design`, then `1.1.0` fast-forwarded to it; not pushed.
+
+- **[Done]** Batch 5 (N1–N38) and the debug panel (N27). Decisions:
+  `docs/1.1.0-design-side-tracks.md`, "Batch 5 closed".
+- **[Device check scope — Ahmet, iPhone 14 Plus, profile build, debug
+  panel]** The whole checklist seen and approved: the celebrations, the
+  save points and the summit, the signpost, the month card with the
+  112 pt medal, Profile's shelf and headings, dark mode, Reduce Motion,
+  the first-day flow. No item-by-item notes were kept. Other screen sizes
+  were verified only by renders and tests.
+- **[N37 confirmed]** The 112 pt medal accepted on the device. Known
+  result: at 430 × 932, while the card is open, the avatar on START is
+  under the sheet.
+- **[Still open]**
+  - frame times and memory not measured on a device;
+  - the events (Batch 6's and Batch 5's) not seen in DebugView;
+  - the Firebase custom dimensions to register before the release; the
+    developer-traffic filter not set up;
+  - the source images at 97.51 MB (G1), handled before the next theme;
+  - 320 × 568: the summary card scrolls, and a downward drag does not
+    close it while it scrolls;
+  - 320 pt: the "Summit" label covers the avatar;
+  - 29–31-day months: the avatar is drawn over the C5 signpost on one
+    step;
+  - the stars unreadable below 48 pt, "WELCOME" below 96 pt;
+  - Settings' two developer sections (Developer, Debug) not merged.
+- **[1.2 notes, unchanged]** The summit challenge, the rest day, the
+  reachable-tier hint, a tapped object's name, a paywall button on the
+  month card, the monthly report, the mid-month return card
+  (`roadmap.md`, "Parked for 1.2").
+- **[Next]** Release preparation: App Store screenshots and case-study
+  images (the result screen, Profile, the month card and Home changed).
+  Batch 7 (environment motion) is not required for 1.1.0; the decision is
+  Ahmet's.
+- **[Merge]** Full suite and `flutter analyze` run before the merge;
+  `1.1.0` fast-forwarded (`git merge --ff-only`) to `1.1.0-design`.
+
+## 2026-10-03 (1.1.0 — development done; release preparation starts)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date at
+`82eaf4a`); not pushed. Docs only. Owner decisions (Ahmet, 2026-10-03).
+
+- **[Product] Batch 7 (one-time environment motion) deferred to 1.1.x.**
+  *Why:* its definition was written for the old code-drawn scene; on the
+  illustrated scene it needs a new image layer per theme. The scene
+  already moves (the zoom, the hop, the save points coming alive, the
+  label), and the opening sequence is full.
+- **[Product] G1 rewritten.** 100 MB was not a technical limit but the
+  project's own checkpoint. New rule: if the source images approach
+  200 MB, or the same images start being regenerated often, consider
+  keeping the large files apart (for example Git LFS). Current measure:
+  97.51 MB (Batch 5 N25). This replaces "looked at again past 100 MB" in
+  `1.1.0-design-side-tracks.md` (G1, N25), which is left as written.
+- **[Product] 1.1.0's development is done; release preparation remains.**
+  None of it is done yet (`roadmap.md`, "Development of 1.1.0 is done"):
+  - required: App Store screenshots (iPhone and iPad); the iPad check; an
+    end-to-end pass on a release build; the Firebase custom dimensions
+    registered before the release; version and build number, the What's
+    New text, `1.1.0` merged into `main`; the submission path by 1.0.0's
+    state;
+  - recommended: the events seen in DebugView; the developer-traffic
+    filter; a performance look on a profile build; docs tidy-up;
+  - not waiting for the release: case-study images; Medium posts;
+    Settings' two developer sections merged (this moves that item out of
+    the 1.1.0 release checklist).
+- **[Release] 1.0.0's state.** Resubmitted on 2026-09-28 (the reason for
+  the resubmission is not recorded here); four items are "Waiting for
+  Review": the app version 1.0.0 (build 3), the two subscriptions and the
+  subscription group. Plan: not withdrawn until 1.1.0 is ready. When 1.1.0
+  is ready: if 1.0.0 is approved, it is released and 1.1.0 is submitted as
+  an update; if it is still in review, the submission is withdrawn, the
+  version becomes 1.1.0 and is resubmitted with the new build; if it is
+  rejected, the fix is made inside 1.1.0. This replaces the 2026-09-29
+  plan (an approved 1.0.0 held back, 1.1.0 the first public release).
+  Open checks: the 1.0.0 build works with today's server; manual release
+  is selected in App Store Connect (Ahmet to verify).
+
+## 2026-10-03 (1.1.0 release step 1 — iPad check and screenshot plan; waiting for the owner)
+
+On branch `1.1.0-design`; not pushed. No `lib/` or `assets/` change.
+
+- **[Commits]** `097a5fc` (docs: release preparation), `a2674df` (the
+  tool and its outputs), and this one (the report).
+- **[Tool]** `tool/design_measure/release/ipad_render_test.dart` and
+  `tool/scene_art/release_ipad_sheet.py`: 14 states of the screens 1.1.0
+  changed, at 1032 × 1376, 834 × 1194 and 744 × 1133 (2x, portrait, safe
+  areas 24 / 20 pt assumed), light and dark, Medium and Large: 168
+  renders, no framework exception.
+- **[Found]** No iPad layout rule in `lib/` (no max content width). Nothing
+  broken. Ugly: Home's mountain window becomes a strip (976 × 350 pt at
+  13 in, 2.79 : 1) and the scene is upscaled 1.40× (13 in) and 1.11×
+  (11 in) against its 1536 px asset; K-c is 73 % blur at 13 in; the result
+  screen's lines hold 132–139 characters at 13 in; Profile's shelf leaves
+  one medal alone on a row at 13 in with 13 slots; the avatar picker's
+  neighbours sit half off-screen 464 pt from the centre. One proposed fix
+  for all: a centred max content width on iPad. The month card sheet is
+  capped at 640 pt by Material 3 and hides none of the mountain on iPad.
+  Not seen on an iPad or its simulator.
+- **[Screenshots]** 1.0.0: 8 iPhone (only 600 px copies in the
+  repository; originals, framing tool and the 5 iPad screenshots not
+  recorded). For 1.1.0, 01 (result), 04 (Home) and 06 (Welcome card) are
+  outdated; 02, 03, 05, 07, 08 can stay. A 10-frame order is proposed;
+  Apple's sizes read 2026-10-03 (6.9 in or 6.5 in iPhone, 13 in iPad
+  required).
+- **[Waiting]** Ahmet's answers to the report's §6 questions. No fix and
+  no screenshot started.
+
+## 2026-10-03 (1.1.0 release preparation — P1: a maximum content width on iPad)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Docs only.
+
+- **[Product — owner] P1.** On iPad the content is centred and capped at
+  a maximum width; iPhone does not change. *Why* (the iPad report,
+  `docs/design/release-1.1.0/ipad-and-screenshots-report.md`): the app had
+  no iPad layout rule; every screen stretched to the full width, the
+  mountain window became a 976 × 350 pt strip at 13 in, the scene image
+  was upscaled 1.40×, the result screen's lines held 132–139 characters.
+  *Rejected:* shipping as it is; releasing for iPhone only (1.0.0 is in
+  review with iPad support; once it is approved and released, iPad
+  support cannot be removed).
+- **[Release]** Manual release is selected in App Store Connect for 1.0.0
+  (Ahmet verified, 2026-10-03).
+
+## 2026-10-03 (1.1.0 release preparation — P1 built; waiting for the simulator check)
+
+On branch `1.1.0-design`; not merged, not pushed. Report:
+`docs/design/release-1.1.0/p1/report.md`.
+
+- **[Commits]** `1b6d130` (P1 and the manual release, docs), `3400766`
+  (the content width), `ab0b772` (renders, comparison, report), and this
+  one.
+- **[Built]** `lib/utils/content_width.dart`: on a screen whose shortest
+  side is 600 pt or more the content column is centred and capped at
+  `ContentWidth.maxContentWidth` (640 pt); below that nothing changes.
+  `BrandScaffold` applies it to every list screen and moves the band's
+  content in (band colour full width behind it). The screens that lay out
+  their own body (onboarding, Daily Test question and results footer,
+  practice question, Premium, AI consent, avatar picker) and Welcome pass
+  their existing padding line through the rule (each had a raw copy of
+  the padding formula, now gone); the avatar carousel is inset to the
+  column; the nav pill stays full width with its tabs over the column.
+  Unchanged: modal sheets (Material 3 already caps them at 640 pt),
+  dialogs, the celebration and the medal detail (fixed 288 pt), the
+  launch splash, the two plain loading screens.
+- **[iPhone proof]** 590 renders at 320 × 568, 375 × 667, 375 × 812 and
+  430 × 932 (every screen state, light and dark, Medium and Large, plus
+  the Batch 5/6 and Scene Art tools' renders), before (`1b6d130`) and
+  after: all 590 identical pixel for pixel
+  (`docs/design/release-1.1.0/p1/iphone_before_after.txt`). The first
+  comparison showed 15 onboarding images differing; the same code
+  rendered twice differed the same way (onboarding starts on a random
+  avatar), so the tool now fixes the carousel's page, and onboarding's
+  before images were re-made in a worktree at `1b6d130`.
+- **[iPad renders]** 25 states × three iPads × light/dark × Medium/Large =
+  300, no exceptions. Nothing broken; K-c still ugly. The report's five
+  findings: window 2.79 / 2.22 / 1.97 : 1 → 1.83 : 1; the scene 1.40× /
+  1.11× / 0.99× → 0.92× (no enlargement); K-c blur 73 / 66 / 62 % → 59 %;
+  result lines 139–89 → 93 / 80 characters; shelf 8 / 5 everywhere and the
+  avatar picker's neighbours at the column's edges. 560 / 640 / 720 pt for
+  Home: 720 enlarges the scene (1.03×); 640 is the widest cap that does
+  not (limit 698 pt).
+- **[Tests]** 1492 pass (1487 before; `test/content_width_test.dart`
+  added); `flutter analyze` clean.
+- **[Not checked]** An iPad or its simulator; the practice length picker
+  sheet, the dialogs and the loading screens (not rendered); iPadOS 26's
+  windowing.
+- **[Next]** Ahmet's simulator check (`p1/report.md` §6); the roadmap's
+  iPad item stays open until then.
+
+## 2026-10-03 (1.1.0 release preparation — decisions P2–P6)
+
+On branch `1.1.0-design` (`1.1.0` merged in first: already up to date);
+not pushed. Docs only. Owner decisions (Ahmet, 2026-10-03), recorded in
+`roadmap.md` under P1:
+
+- **P2.** On iPad the floating nav bar itself is held to the 640 pt
+  column. Corrects P1's "the bar stays full width" (written as if the bar
+  were docked); `p1/report.md` is annotated where it said so.
+- **P3.** K-c on iPad (59 % of the window blurred at the zoom's first
+  frame) is a known, accepted flaw; the cap stays 640 pt, the widest that
+  does not enlarge the scene image.
+- **P4.** Nine App Store frames: Daily Test result with explanations,
+  the mountain on Home, a question, the Gold celebration, Review, a weak
+  spot's detail, the month card, the medal collection, Welcome. *Why:*
+  the first three show in search; the core promise first, then the
+  mechanic that brings people back. *Rejected:* the mountain first.
+- **P5.** Captured from the real app in the simulator (debug build,
+  states set with the debug panel), not from the render tool (its text
+  rendering differs). Light mode; status bar fixed at 9:41, full battery
+  and signal.
+- **P6.** A debug-panel "sample collection" view: Profile's shelf with
+  sample months, no stored record written; for screenshots only.
+
+## 2026-10-04 (1.1.0 release preparation — P2, P6 built; the screenshot set drafted; waiting for the owner)
+
+On branch `1.1.0-design` (`1.1.0` merged in first on 2026-10-03: already
+up to date); not merged, not pushed.
+
+- **[Commits]** `eae456e` (P2–P6, docs), `267fbd0` (P2), `ce37761` (P6),
+  `1c965e4` (screenshots: tools, raw captures, draft set), and this one.
+- **[P2 built]** On an iPad the floating nav pill spans the 640 pt column;
+  on an iPhone it keeps its 16 pt from each edge. iPhone proof: 466
+  renders at 320 × 568, 375 × 667, 375 × 812 and 430 × 932 before and
+  after, all identical pixel for pixel
+  (`docs/design/release-1.1.0/p2/iphone_before_after.txt`); iPad renders of
+  the tab screens in `p2/ipad/`.
+- **[P6 built]** Settings → Debug → "Sample collection": Profile's shelf
+  shows the Welcome badge, seven finished months across the four themes
+  and every tier, and the running month, relative to today. Memory only;
+  no stored medal record read or written, no finalization, no
+  `profile_medals_viewed`. Debug and profile builds only. Tests:
+  `test/debug_sample_collection_test.dart` (5). The debug panel test now
+  scrolls the reset button wholly into view (the panel grew by a row).
+- **[Screenshots]** `tool/screenshots/capture.sh` makes the whole set in
+  one command (about 45 minutes): iPhone 17 Pro Max (1320 × 2868, the
+  6.9" slot) and iPad Pro 13-inch (M5) (2064 × 2752, 13"), iOS 26.5,
+  English (US), light, status bar 9:41 with full battery and signal; a
+  fresh install per run; `flutter drive` with a target that seeds a
+  fictional learner ("Sam") and starts the real app without Firebase or
+  RevenueCat, every analytics event dropped and no network call; a driver
+  that taps through the frames and saves each with `simctl io
+  screenshot`. All nine frames are automatic, none manual. Welcome comes
+  from a second, unseeded run. Home's clock is today at 9:41 so the
+  greeting matches the status bar.
+- **[Frame tool]** The 1.0.0 set's own tool was not found. Two earlier
+  Codex iterations from 2026-09-24 are in `~/Documents/Codex/2026-09-24/`
+  but draw other styles and depend on files outside the repository; not
+  copied in. `tool/screenshots/frame.py` rebuilds the style from
+  measurements of the committed images. Difference: Nunito Sans weight
+  800 instead of the rounded face 1.0.0's titles appear to use.
+- **[Added]** `flutter_driver` (SDK) as a dev dependency, for the capture
+  only.
+- **[Size]** The draft adds 26.8 MB of images (raw 15 MB, framed 11.3 MB,
+  overview 0.4 MB); with G1's 97.51 MB of sources the repository's images
+  pass 120 MB (G1's review line is now 200 MB).
+- **[Simulators changed]** Both simulators are now English (US) with the
+  status bar override in place (simulator settings only).
+- **[Tests]** 1499 pass; `flutter analyze` clean.
+- **[Waiting]** Ahmet: captions, typeface, the frames.
+
+## 2026-10-04 (1.1.0 release preparation — decisions P7, P8)
+
+On branch `1.1.0-design`; not pushed. Docs only. Owner decisions (Ahmet,
+2026-10-04), recorded in `roadmap.md` under P1:
+
+- **P7.** The set's order and captions (updates P4): 1 result "Every
+  answer explained", 2 Home "Climb a new mountain each month", 3 Gold
+  "Earn medals as you climb", 4 Review "Your weak spots, tracked", 5 weak
+  spot "Practice what you got wrong", 6 question "A new test every day",
+  7 month card "Your month at a glance", 8 collection "Collect every
+  mountain", 9 Welcome "Start in under a minute". *Why:* the draft's
+  question frame was nearly empty and among the first three that search
+  shows; the first three now read learn, climb, earn; no repeated
+  "every", no promise of a medal every month.
+- **P8.** Titles stay in Nunito Sans 800. Raw captures leave the
+  repository (one command makes them); the framed set and the overview
+  stay.
+
+## 2026-10-04 (1.1.0 release preparation — the screenshot set in P7's order; waiting for final approval)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Commits]** `7b8a5e6` (P7, P8), `a8b4b0c` (the set, the tools, the
+  sample collection's change), and this one.
+- **[Frames]** P7's order and captions; files renamed to it
+  (`01-result` … `09-welcome`).
+  - 02: the hop onto Halfway Hut replayed from the debug panel, taken
+    while the "Halfway Hut" label shows; the driver measures Home at rest
+    and scrolls to the smallest offset whose bottom edge falls in a gap
+    with the whole mountain card in view (iPhone 3.4 pt, iPad 0).
+  - 06: the first question with "eating" typed and the real iOS keyboard
+    up. Found: `flutter_driver`'s text-entry emulation stands in for iOS
+    text input, so no keyboard opens while it types, and on a first
+    keyboard iOS shows its "slide to type" introduction over it. Now:
+    type, unfocus, emulation off, tap again (a new connection, to iOS);
+    the introduction is marked as shown on the simulator
+    (`DidShowContinuousPathIntroduction`).
+  - 07 and 08: the sample collection's last month is the month card's
+    Gold summary (theme, tier, steps, points), the same function.
+  - 02 and 08: the sample collection's running month is the stored
+    progress (read only), so Profile shows Home's days and points.
+    Changes P6's "no stored record read" to "only the running month's
+    progress read"; nothing is written, no event is sent.
+  - 08: ten slots (Welcome, eight finished months, the running month):
+    5 + 5 on the iPhone, 8 + 2 on the iPad. On the iPad the whole of
+    Profile fits the screen, so it cannot be scrolled to the shelf.
+- **[Not fixed — found in the review]** The Gold frame (03) reads "Gold
+  medal earned · October" while 02 and 08 put October at 149 points (Gold
+  is 233). The debug replay celebrates the running month, and Gold is out
+  of reach by step 15. Frame 01's last explanation runs under the result
+  screen's fixed footer (the screen's design, as in 1.0.0).
+- **[P8]** Raw captures leave the repository: `capture.sh` writes them to
+  `build/screenshots/raw/` (git-ignored); `frame.py` clears its output
+  folders first, so no frame of an earlier order lingers.
+- **[Size]** The set in the repository: 10 MB (iPhone 5.3 MB, iPad
+  4.3 MB, overview 0.5 MB), down from 26.8 MB with the raw captures.
+- **[Tests]** 1501 pass (`test/debug_sample_collection_test.dart` now 7);
+  `flutter analyze` clean.
+- **[Waiting]** Ahmet's final approval of the set; the Gold frame's month.
+
+## 2026-10-04 (1.1.0 release preparation — decision P9)
+
+On branch `1.1.0-design`; not pushed. Docs only.
+
+- **[Product — owner] P9.** Frame 3 shows last month's Gold celebration
+  ("Gold medal earned · September"). *Why:* the draft celebrated October,
+  which Home and Profile show at 149 points; Gold is out of reach by the
+  15th. Story: Gold in September (3), the month card sums September up
+  (7), September's Gold on the shelf (8), October's climb goes on (2).
+  *Rejected:* leaving it; reshooting at a month's end. *Accepted:* frame
+  1's last explanation under the fixed footer; the iPad's frame 8 showing
+  the whole of Profile.
+
+## 2026-10-04 (1.1.0 release preparation — P9 built; the set regenerated; waiting for final approval)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Commits]** `92615db` (P9), `410beac` (the replay option, tests, the
+  set), and this one.
+- **[Built]** Debug panel → Milestones → "Celebrate last month" (debug
+  and profile builds, memory only): a replayed tier's celebration names
+  last month and its theme, taken from the month card's `summary_gold`
+  sample (`ClimbDebugMonthCard`), the same source as the month card and
+  the sample collection's last month. The real celebration (the result
+  screen) is untouched.
+- **[Tests]** The replay with the switch on: last month and its theme,
+  the matching medal, no record read or written, no event; the result
+  screen's real Gold celebration with the switch on still names the
+  set's own month; the panel switch (off by default, never on when the
+  debug tools are off). Two existing panel tests now scroll their button
+  wholly into view first (the panel grew by a row). 1504 pass; `flutter
+  analyze` clean.
+- **[Set]** Regenerated for both devices with `tool/screenshots/capture.sh`.
+  Frame 03 now reads "Gold medal earned · September · Green Slope".
+  Checked: 02 October, Green Slope, 15 of 31; 03 September, Green Slope,
+  Gold; 07 September, Green Slope, Gold, 26 of 30 steps, 237 points (next:
+  October, Green Slope); 08 September Gold on the shelf, October 149
+  points and 15 active days. September and October are both Green Slope
+  by the rotation (October 2026 is its first month; earlier months are
+  Green Slope). Observation, not changed: the shelf's sample months
+  February–August carry the other themes (P6's sample), which a real
+  user could not have before October 2026. Every frame except 03 and 09
+  (Welcome animates) came out byte-identical to the previous run.
+- **[Waiting]** Ahmet's final approval of the set.
+
+## 2026-10-04 (1.1.0 release candidate — step 1: verification records, docs tidy-up)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only.
+
+- **[Verified — owner] The App Store screenshot set is approved** (Ahmet,
+  2026-10-04): the set of P4–P9, nine frames each for iPhone 6.9" and
+  iPad 13". Not uploaded to App Store Connect yet.
+- **[Verified — owner, simulator] The iPad layout (P1–P3).** Ahmet went
+  through it on the iPad Pro 13" simulator in a debug build and reported
+  no problem. Not seen on a real iPad. No item-by-item notes against
+  `p1/report.md` §6 were kept, so the iPadOS 26 window question and the
+  iPad mini have no recorded answer.
+- **[Docs]** `roadmap.md`: a "1.1.0 — release candidate" summary (what
+  ships, what moved to 1.1.x / after 1.1.0 / 1.2 / later, the known
+  flaws); the release preparation list updated (screenshots and the iPad
+  check ticked; the fallback pool added, since it was on the release
+  checklist but missing from that list; "version and build number", "the
+  What's New text" and "merged into `main`" split into three lines);
+  stale ticks corrected: Batch 0 and Batch 1 were done on 2026-09-27 but
+  never ticked, the scene art parent item was done through Batch 4, and
+  Batch 3d was superseded by Scene Art Stage 2 and Batch 5.
+  `prd.md`: a status note (an MVP document kept as written; where the
+  current scope lives). README: status, the Daily Test's shared set, the
+  1.1.0 climb and iPad lines, the version table (1.1.0 was "Planned, not
+  started"). The screenshots README now says approved.
+- **[Found]** `assets/daily_test_fallback/pool.json` still has 0 sets: a
+  1.1.0 built today shows the day-0 questions on every fallback day.
+  `proxy/wrangler.jsonc` has `SHARED_DAILY_TEST_ENABLED` `"true"`; the
+  deployed value was not checked from here.
+- **[Tests]** 1504 pass; `flutter analyze` clean (docs only).
+
+## 2026-10-04 (1.1.0 release candidate — step 2: version 1.1.0+4)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Release]** `pubspec.yaml` `1.0.0+3` → `1.1.0+4`. *Why 4:* the last
+  build uploaded to App Store Connect is `1.0.0+3` (builds 1–3, all
+  1.0.0; build-log 2026-09-24); a new version could start its own build
+  numbers, but if 1.0.0's submission is withdrawn and the version becomes
+  1.1.0 (the roadmap's submission path), one rising number avoids any
+  question.
+- **[Checked]** Where the version appears: `Info.plist` reads
+  `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)`, which Flutter writes
+  from `pubspec.yaml` into the git-ignored `ios/Flutter/Generated.xcconfig`
+  at build time. The app shows no version anywhere (no `package_info_plus`,
+  no version line in Settings or Credits). `MARKETING_VERSION = 1.0` in the
+  Xcode project belongs to the `RunnerTests` target, not the app. Not built
+  as an IPA here, so the archived `CFBundleShortVersionString` /
+  `CFBundleVersion` are not read back yet (do it at the release build).
+- **[Tests]** 1504 pass; `flutter analyze` clean.
+
+## 2026-10-04 (1.1.0 release candidate — step 3: store copy draft)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only:
+`docs/design/release-1.1.0/store-copy.md`.
+
+- **[Found]** 1.0.0's description, promotional text, keywords and
+  subtitle are not in the repository (entered in App Store Connect only).
+- **[Draft]** What's New for 1.1.0, short and longer, only from what
+  ships; it applies only if 1.0.0 is released first (on path 2, 1.1.0 is
+  the first version and has no What's New). A promotional text, a
+  description section for the Mountain of Learning, and lines to check in
+  the live description ("generated for you" would now be wrong; "Monthly
+  Climb" is "Mountain of Learning" on screen). Keywords not proposed
+  without the live list. Apple's character limits are from memory, to be
+  confirmed in the form.
+- **[App Privacy]** No change needed, by comparing the data flows of
+  `509f94d` (`1.0.0+3`) and now: no new runtime SDK, `Info.plist`
+  unchanged, the Daily Test request now sends less (no device id), the
+  new analytics are usage data of the type already covered. The 1.0.0
+  answers themselves are not in the repository; Ahmet confirms them in
+  the form.
+- **[Tests]** 1504 pass; `flutter analyze` clean.
+
+## 2026-10-04 (1.1.0 release candidate — decisions P10, P11; three acceptances)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only. Owner
+decisions (Ahmet, 2026-10-04), recorded in `roadmap.md` under P8:
+
+- **[Product — owner] P10.** The fallback pool is filled before the
+  release. *Why:* it has 0 sets, so every day the shared set cannot be
+  read shows the day-0 questions again.
+- **[Product — owner] P11.** Debug and profile builds send no analytics
+  events by default; one explicit setting turns them on for a DebugView
+  check. *Why:* they write to the production Firebase project, and GA4's
+  developer-traffic filter only removes devices flagged in debug mode.
+  *Rejected:* relying on the filter alone.
+- **[Accepted — owner]** Release without a look on a real iPad (verified
+  in the simulator; the window behaviour on the newest iPadOS not
+  verified); build number 4 (`1.1.0+4`); `1.1.0` merged into `main` after
+  the TestFlight round.
+- **[Tests]** 1504 pass; `flutter analyze` clean (docs only).
+
+## 2026-10-04 (1.1.0 release candidate — P11 built: no analytics outside release builds by default)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Engineering]** `AnalyticsGate` (`lib/services/analytics_service.dart`):
+  `enabled = kReleaseMode || ANALYTICS_DEBUG_EVENTS`, a compile-time
+  constant. Applied in two spots that read the same constant:
+  - `AnalyticsService`'s default sink is now
+    `GatedAnalyticsSink(FirebaseAnalyticsSink(), enabled: AnalyticsGate.enabled)`:
+    the app's events and user properties are dropped when it is off.
+    Tests that pass their own sink are unaffected.
+  - `main()` calls `FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(AnalyticsGate.enabled)`
+    right after `Firebase.initializeApp`, so Firebase's automatic events
+    (`first_open`, `session_start`, ...) stop too. Without this, a debug
+    install would still add users and sessions to the retention reports.
+- **[Release builds]** Events and user properties pass as before. The one
+  new call is `setAnalyticsCollectionEnabled(true)`, which is Firebase's
+  default (no `FIREBASE_ANALYTICS_COLLECTION_ENABLED` key in `Info.plist`),
+  so no user's collection changes. Where it does make a difference: a
+  device where a debug build left the switch off (Firebase stores it on
+  the device) gets it back on.
+- **[Not verified, no device run]** Whether Firebase's automatic events
+  on the very first launch of a fresh debug install go out before the
+  switch is turned off (Firebase configures, and may log `first_open`,
+  inside `initializeApp`); from the second launch the stored "off" applies
+  from start-up. Whether Crashlytics' crash reports in debug and profile
+  builds lose their analytics breadcrumbs, or Crashlytics' crash-free
+  statistics change for those builds. Crashlytics' own collection switch
+  is not touched.
+- **[Docs]** README "Analytics in debug and profile builds";
+  `analytics-plan.md` §6: the define on every build command there, and
+  `CLIMB_DEBUG_MONTH_CARD_EVENTS` now needs it too.
+- **[Tests]** `test/analytics_gate_test.dart` (9): release sends with or
+  without the opt-in, debug/profile sends nothing by default, the opt-in
+  sends; events and user properties through the gated sink in each case;
+  this test run is gated off; `main()` and the default sink use the gate
+  (source checks). The existing "does not throw without a Firebase
+  project" tests in `analytics_service_test.dart` now stop at the gate
+  instead of reaching Firebase's plugin. 1513 pass; `flutter analyze`
+  clean.
+
+## 2026-10-04 (1.1.0 release candidate — decisions P12, P13, P14: the Daily Test's answer key)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only. Recorded in
+`roadmap.md` under P11:
+
+- **[Finding — owner review] P12.** Grading is plain text matching and the
+  live shared sets carry no `acceptedAnswers`: in 6 of the 35 reviewed live
+  questions (29 September – 5 October) a right or defensible answer is
+  "Needs work" and goes into the error profile. `validateSharedSet` checks
+  the structure, not the grammar. The live daily sets have the same flaw.
+  Added to the known flaws.
+- **[Product — owner] P13.** The fallback pool gets owner corrections: a
+  recorded file the export tool applies and validates again. The pool's
+  provenance becomes "live-generated, validator-passed, owner-reviewed and
+  owner-corrected" (C2 entry above annotated). The "only the check call
+  writes `acceptedAnswers`" decision is extended to these corrections
+  (`1.1.0-shared-daily-test-quality.md` §8.1).
+- **[Product — owner] P14.** The first job after 1.1.0, on the server side
+  and independent of an app release: other accepted answers on the live
+  sets (the deferred check call, P7a–c, or new generation rules). Notes:
+  a hint must not contradict the key; an `error_correction` context must
+  really be wrong; "said that … will" contexts must force the past;
+  spelling variants and contractions handled in grading.
+- **[Tests]** 1513 pass; `flutter analyze` clean (docs only).
+
+## 2026-10-04 (1.1.0 release candidate — P13 built: owner corrections for the fallback pool)
+
+On branch `1.1.0-design`; not merged, not pushed. The pool asset itself is
+not part of this commit.
+
+- **[Engineering — tool]** `tool/fallback_pool/corrections.json`
+  (`{"formatVersion": 1, "corrections": [...]}`, committed empty here). Each
+  correction names its set by **publication date** and its question by
+  **number** (from 1, `review.md`'s numbering, the order the gate returns),
+  never by `fbNN` (those follow the dates chosen), and carries a `reason`.
+  Operations: `addAcceptedAnswers`, `removeWrongAnswers`, `removeHint`.
+  `convert.ts` applies them after the gate, then runs the corrected set
+  through `validateSharedSet` again (so a removal below 2 predicted wrong
+  answers fails) and checks every accepted answer with the check call's
+  alternative rules (quality report §8.2: not blank, ≤ 300 characters, not
+  the key, not the `error_correction` sentence, not a predicted wrong
+  answer, no two alike; all as graded). §8.2's cap of 2 entries is **not**
+  applied to owner corrections (it is the checker's "tests more than one
+  thing" signal; an owner may list spelling variants). A correction that
+  matches no question (a date outside the build, a number past the set, a
+  missing hint, a wrong answer not found exactly once), an unknown field, a
+  missing reason, or one question corrected twice: nothing is written. The
+  pool keeps `acceptedAnswers` on a question only when some were added.
+  `review.md` shows "Also accepted" and an "Owner correction" line (the
+  changes and the reason) per question; its header now says corrections go
+  in `corrections.json`. `export.ts` reads the file (required).
+- **[Engineering — app]** No logic change: `DailyTestQuestion.fromJson`
+  already reads `acceptedAnswers` and the pool's load check already makes
+  every predicted wrong answer reach its own comment. Doc comments updated
+  (`daily_test_question.dart`, `answer_matching.dart`,
+  `fallback_pool.dart`).
+- **[Tests]** Converter 13 → 39 (`node:test`): the operations, the review
+  lines, three accepted answers allowed, 9 correction problems, 12 file
+  problems, the committed file reads. 8 of 8 deliberate breakages red
+  (re-validation skipped, accepted-answer rules skipped, unmatched
+  correction ignored, a missing wrong answer or hint ignored, accepted
+  answers dropped from the output, no review line, duplicates allowed).
+  `tsc` strict on the three tool files: clean. Flutter: +5 in
+  `fallback_pool_test.dart` (a pool's `acceptedAnswers` are read; a
+  matching answer is `accepted` and counts as correct, in the score and not
+  in the errors; an accepted answer that is also a predicted wrong one
+  leaves the set out; every accepted answer in the shipped asset grades as
+  `accepted`); red when `fromJson` stops reading the field.
+  1518 pass (1513 + 5); `flutter analyze` clean.
+
+## 2026-10-04 (1.1.0 release candidate — P13: the owner's corrections and the pool's dates)
+
+On branch `1.1.0-design`; not merged, not pushed. Commit `804858b`
+(`tool/fallback_pool/corrections.json` only; the pool asset and the review
+were generated but left uncommitted for the owner's review). Record added
+afterwards.
+
+- **[Data — owner] Dates:** 2026-09-30 – 2026-10-06 (7 live v2 sets).
+  2026-09-29 is left out: its question 1's sentence ("…but a technician was
+  on holiday") is already correct, so it cannot be corrected.
+- **[Data — owner] Five corrections** (by date and question number):
+  2026-09-30 q3 hint removed (it contradicted the key), "'m cooking" moved
+  from the predicted wrong answers to `acceptedAnswers`; 2026-10-01 q3
+  "his"; 2026-10-02 q5 "I have run marathons since I was twenty.";
+  2026-10-05 q2 "The flat has sun in the living room all afternoon." moved
+  from the predicted wrong answers to `acceptedAnswers`; 2026-10-05 q4 three
+  accepted answers (the present perfect continuous, and both forms with the
+  US spelling "neighborhood"). Both removals left 2 predicted wrong answers,
+  the gate's minimum. The `reason` texts were drafted by Claude.
+- **[Engineering]** `6a1ccb1`: the review's correction line quotes the
+  answers (answers ending in a full stop ran into the separator).
+- **[Tests]** 1518 pass; `flutter analyze` clean; the build's app-side asset
+  test 46 of 46.
+
+## 2026-10-04 (1.1.0 release candidate — the fallback pool final: owner approval, ten corrections)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Verified — owner] The fallback pool is approved** (Ahmet,
+  2026-10-04). Ahmet reviewed the 35 questions of the live sets; seven
+  corrections came out of that review (the five above, and 2026-10-06 q1
+  "I have read this newspaper since I was a teenager." and q4 "must", the
+  key being "have to"); then three more for consistency with them:
+  2026-10-03 q2 "'re cleaning" (like "'m cooking"), 2026-10-02 q2 and
+  2026-10-05 q3 "have to" (like "must"). **Ten corrections in all**, all
+  `acceptedAnswers` additions except the two moves and the one hint removal
+  above. The 2026-09-29 set is left out (its question 1's context was
+  already correct).
+- **[Decision — owner]** The "said that … will" items stay as they are, as
+  the textbook rule; noted for P14 (the context must force the past).
+- **[Decision — owner]** More than two accepted answers on one question
+  are allowed in owner corrections (the check call's cap of 2, quality
+  report §8.2, does not apply).
+- **[Known limit]** On an accepted answer the result card shows "Also
+  correct: …" with the question's explanation, which explains the key only
+  (e.g. "his" is followed by "We use 'the' because …").
+- **[Data]** `assets/daily_test_fallback/pool.json`: 7 sets
+  (2026-09-30 – 2026-10-06 as fb01–fb07), 10 owner corrections;
+  `tool/fallback_pool/review.md` regenerated. Provenance:
+  "live-generated, validator-passed, owner-reviewed and owner-corrected".
+- **[Tests]** 1518 pass; `flutter analyze` clean; the build's app-side
+  asset test 46 of 46.
+
+## 2026-10-04 (1.1.0 release candidate — the fallback pool guarded: exactly 7 sets)
+
+On branch `1.1.0-design`; not merged, not pushed.
+
+- **[Engineering — tests]** `fallback_pool_test.dart`: the shipped asset
+  must hold exactly 7 sets (was 0 or 7); every accepted answer in it grades
+  as `accepted` **and** counts as correct, and at least one exists; seven
+  consecutive days get seven different pool sets from the shipped asset,
+  never the day-0 questions. `daily_test_service_test.dart`: with the
+  shipped asset (the service's default pool), a failed shared read gives a
+  pool set (`fbNN_*`, `fallback`), not the day-0 questions, and the next
+  day a different one. All four red with an empty asset. Already there
+  (synthetic pools): "with a pool, a failed read gives the pool set the
+  date rotates to, marked fallback; another date gets another set",
+  "seven consecutive days get seven different sets, then it repeats", and
+  the P13 group "a matching answer grades as accepted and counts as
+  correct".
+- **[Engineering — release gate]** `scripts/preflight.sh` fails unless
+  `assets/daily_test_fallback/pool.json` has 7 sets (`plutil -extract sets
+  raw`, macOS); checked with the real asset (pass), an empty pool and an
+  unreadable file (both fail, exit 1). README's preflight line updated.
+- **[Docs]** `roadmap.md`: the fallback pool ticked in the release
+  preparation list and the 1.1.0 release checklist; the release
+  candidate summary no longer says the pool ships empty.
+- **[Tests]** 1520 pass (1518 + 2); `flutter analyze` clean.
+
+## 2026-10-04 (README rebuilt around three decisions; local setup moved)
+
+On branch `1.1.0-design`; not merged, not pushed. Docs only, no `lib/`,
+`proxy/` code or test changed.
+
+- **[Product — owner] Why.** The README is the first page a hiring manager
+  for a PM role reads, in about two minutes. It used to open with eight
+  1.0.0 screenshots and a long feature list, and ended in a 150-line local
+  setup guide. It now leads with status, four 1.1.0 screenshots and three
+  decisions, each with its problem, decision, cost and evidence:
+  1. one shared Daily Test per date instead of one per device (cost);
+  2. the "Practice this" paywall gap and the free quota (one Daily Test
+     and one 3-question practice session a day);
+  3. the known flaw: plain text matching grades right answers as wrong on
+     the live sets (P12), not fixed (P14).
+  Every number in the cards comes from the docs and is labelled measured or
+  estimate. One figure was corrected against the record before drafting:
+  the owner's review found 6 of 35 live questions with a right answer
+  graded wrong; "10" is the number of fallback pool corrections (7 from
+  that review, 3 for consistency), not of findings.
+- **[Engineering] Why three commits.** The README commit is cherry-picked
+  onto `main` by the owner, so it holds only `README.md` and the four
+  600 px screenshots (`screenshots/1.1.0/`): the full-size App Store set in
+  `docs/design/release-1.1.0/screenshots/` is not on `main`. In that commit
+  the local setup stays in the README, text unchanged, in a collapsed block
+  at the end, and links to sections that exist only on `1.1.0-design` are
+  full GitHub URLs (checked with `git cat-file -e main:<path>` for files,
+  and by heading for sections). The second commit, which stays on the
+  branch, moves the setup to `docs/development.md` (text unchanged,
+  headings one level up) and updates the references in `scripts/dev.sh`,
+  `scripts/preflight.sh`, `proxy/README.md` and `docs/analytics-plan.md`.
+  This third commit holds the roadmap and the build log.
+- **[Known limit]** `ClaudeService`'s "not configured" message still names
+  the README's "Local setup" (`lib/` not touched); the README's pointer
+  line leads on to `docs/development.md`. Roadmap, "Post-launch tasks":
+  the message fix and turning the full URLs back to relative links once
+  1.1.0 is on `main`.
+
+## 2026-10-04 (Free practice limit: rationale recorded after the fact)
+
+Docs only. **Recorded after the fact:** the limit of one free "Practice
+this" session a day was set on 2026-09-15 (entry "free-tier 'Practice
+this' leak — diagnosis + fix") without a written reason for the number.
+
+- **[Product — owner, stated 2026-10-04]** The limit is 1 to cap the cost
+  of each free user (a free user who takes the Daily Test and the practice
+  session every day costs about $1.72–1.86 a month on 1.0.0, `prd-v2.md`
+  §13.7, part estimate) and to point anyone who wants more practice to
+  Premium.
+- The quota model stays open: it is re-evaluated with four weeks of data
+  (roadmap, "Post-launch tasks", "Free practice quota model").
+- `case-study-material.md` §2 no longer marks the number as not in the
+  record; it cites this entry and says it was written after the fact.
+
+## 2026-10-04 (token cost data: no persistent storage for now)
+
+Docs only; no code changed.
+
+- **[Product — owner] Decision.** No persistent storage for token cost data
+  for now. The measure of real cost is the monthly usage in the Anthropic
+  Console. The shared Daily Test is one call a day, so it is a fixed item;
+  the total minus that item is the cost of practice sessions. Workers
+  Analytics Engine (PRD v2 §13.10, the option recommended there) stays as
+  the job for when real users arrive.
+- **[Product — owner] Reasons.** There are no users today, so there is no
+  data to lose. §13.10's proposal was written (2026-09-21) while every
+  device generated its own Daily Test.
+- **[Accepted cost]** Only the total is visible, not the split per session
+  or per operation. Workers Logs is not persistent: retention is 3 days on
+  Workers Free and 7 days on Workers Paid (Cloudflare, "Workers Logs" page,
+  pricing section, read 2026-10-04). The proxy is on Workers Free (entry
+  2026-09-26, owner decisions); the retention shown in this account's
+  dashboard was not checked (not verified).
+- **[Note — from the record]** The legacy route
+  (`POST /v1/generate-daily-test`) still generates one set per 1.0.0 device
+  per active day (2026-09-26, Option A); while 1.0.0 devices are in use,
+  those calls are also in the Console total
+  (`1.1.0-shared-daily-test.md` §10, option 3: a separate key for the cron
+  would split shared and legacy spend; not built).
+- **[Docs]** `roadmap.md` ("Proxy token logging"; "6. Cost measurement")
+  and `prd-v2.md` §13.10 carry a note; the earlier text is kept.
+
+## 2026-10-05 (1.2.0 redesign — Batch 0 report; owner decisions Q1–Q18)
+
+On branch `1.2.0`; not pushed. Batch 0 (read and measure, no code):
+`docs/design/1.2.0/batch0-report.md` (`f2b99f1`). The design package is
+`d26579e`. That commit was made with `--no-verify`, once, with the owner's
+approval: the local PII hook matched a short pattern by chance inside
+base64 PNG data. Every match was checked to be inside a `data:image`
+payload; the commit body records the bypass.
+
+- **[Product — owner] Scope.** Home, Review, Profile and Topic Practice
+  (Topic Practice approved 2026-10-05). **The question screen is out of
+  scope:** no layout or structure change in `practice_screen.dart`,
+  `daily_test_screen.dart`, `question_app_bar.dart` or
+  `practice_step_footer.dart`. They only inherit the new theme tokens.
+  The report's Batch 6 is postponed, and Q11 / Q12 stay open. Its
+  keyboard behaviour is to be designed separately. A known issue was
+  added to the roadmap: the single-line answer field scrolls sideways.
+- **[Product — owner] Decisions** (numbers from the report's §10):
+  - Q1: the dark primary button is `#0D3B8F` with a 1 px `#5C7CFA` edge,
+    dark mode only.
+  - Q2: cards use the brief's `border` and shadow; to be judged on the
+    device, and if too faint, interactive cards go back to `outline`.
+  - Q3: the input edge is `#8E8577` (light) / `#85818B` (dark).
+  - Q4: disabled buttons use the mockup's colours.
+  - Q5: the brief's text sizes are what Medium renders; the base size is
+    the brief's size ÷ 1.1.
+  - Q6: the mockup's `#241200` "ink" is not a text colour.
+  - Q7: medals newest first, Welcome last; this replaces N34.
+  - Q8: the topic activity bar goes.
+  - Q9: Home's topic tiles open the existing Topic Practice screen (no new
+    route).
+  - Q10: no arrows under the topic strip.
+  - Q13: no allowance card for premium users.
+  - Q14: weak spot detail stays a pushed screen.
+  - Q15: Home's Premium row is replaced by a Review call-out; the event
+    and source are unchanged.
+  - Q16: the stadium plaque with a 1.5 px outline replaces the 2026-10-02
+    trail sign.
+  - Q17: a solid nav bar replaces the frosted glass.
+  - Q18: horizontal padding is 14 under 360 pt wide, 18 above.
+
+## 2026-10-05 (1.2.0 redesign — Batch 1: theme and typography; awaiting the device check)
+
+On branch `1.2.0`; not pushed (the owner pushes after the device check).
+Visual only: no state, routing, premium or quota check, AI/proxy call,
+storage schema, analytics event or gamification math changed. No
+screen layout, shared component structure, nav bar, plaque or copy
+changed.
+
+- **[Decisions this replaces]** Each is replaced by the 1.2.0 brief
+  (`docs/design/1.2.0/CLAUDE-CODE-BRIEF.md`), approved by the owner.
+  1. **The orange header band (D1, `BandColors.bandBackground` /
+     `bandForeground`).**
+     - *Why it existed:* it kept the brand orange in view after the
+       full-orange scaffold was dropped.
+     - *Why it goes:* the brief keeps orange for a few meaningful elements
+       (the Daily Test card, the Review allowance, the question counter,
+       Profile's points, the Topic access label) instead of a full-width
+       bar. The app bar and scaffold are now the page colour with
+       `onSurface` content.
+     - The `BandColors` extension is removed. Welcome, D1's full-orange
+       exception, used to inherit the band through the scaffold colour; it
+       now sets its own orange (light) and neutral `surface` (dark), so it
+       looks as it did.
+  2. **The orange primary button.** It already stopped being one in v2.2
+     (FilledButton → `secondary`). The brief makes the button the navy
+     `#0D3B8F` with white text in both themes. The button moved out of
+     `ColorScheme` into `AppPalette.button`, because dark `secondary` is
+     now the link colour (`#B4C8FF`). Before, the dark button was `#5C7CFA`
+     with `#04123A` text.
+  3. **"Dark mode never uses orange as a surface" (D1).**
+     - The brief puts orange surfaces in dark mode too, always with the
+       dark `#241200` text: 7.71:1 on `#FF8A3D`. Light text measures
+       1.99:1 (`#F0ECE7`) and 2.35:1 (white), so the dark text is the only
+       legible choice.
+     - Dark `onPrimary` moves from `#3D1300` to `#241200`. No orange
+       surface is added in this batch.
+  4. **The card rule: `outline` border plus elevation 1, radius 20.**
+     - *The old rule:* a 1 px `outline` border with a black elevation 1
+       and radius 20. It was chosen because `outlineVariant` measured
+       1.34:1 and was hard to see on the device.
+     - *The new rule (Q2):* a 1 px `border` token edge (`outlineVariant`,
+       `#DED5C6` / `#45454D`) and a shadow in the brief's colour, radius
+       24. The edge is 1.41:1 (light) and 1.61:1 (dark) against the card;
+       the shadow does part of the separating.
+     - `Card` cannot take the brief's exact shadow (offset 0,5, blur 18),
+       so it uses elevation 2 in the brief's shadow colour (`#483018`
+       light, black dark). The exact shadows are `AppPalette.cardShadow` /
+       `navShadow`, for hand-drawn cards in later batches.
+     - **To judge on the device.**
+- **[Engineering] What changed.**
+  - **`lib/theme.dart`: colours (batch0-report.md §1.1).** Only `primary`
+    (brandOrange) keeps its role meaning. The others:
+
+    | Role | Token | Light | Dark |
+    |---|---|---|---|
+    | `surfaceContainerLow` | page | `#F3EFE6` | `#151517` |
+    | `surfaceContainerHigh` | card | `#FFFBF4` | `#252528` |
+    | `surfaceContainerHighest` | subtle | `#F6F0E5` | `#303034` |
+    | `onSurface` | textPrimary | `#1B1B1F` | `#F0ECE7` |
+    | `secondary` | linkAndActive | `#0D3B8F` | `#B4C8FF`, with `onSecondary` `#0A2E70` |
+    | `secondaryContainer` | info | `#D7E1FA` | `#243859` |
+    | `outlineVariant` | border | `#DED5C6` | `#45454D` |
+
+  - **`lib/theme.dart`: `AppPalette`** (a new `ThemeExtension`): the
+    button, its dark edge, the disabled colours, nav surface and border,
+    the input edge, the path outline and the two shadows.
+  - **`lib/theme.dart`: components.**
+    - Buttons: radius 14, minimum height 48 (was 52), label `labelLarge`
+      (14/800 at Medium; the label used to be a fixed 16/600 that ignored
+      the text size).
+    - Inputs: radius 18 and the Q3 edge.
+    - Cards: as above.
+    - App bar: the page colour with `onSurface`.
+  - **`lib/theme.dart`: type scale (report §1.3, Q5).** Every style now
+    names its weight. Sizes: brand/page title 34/900 (`displaySmall`),
+    Topic title 32/900, question title 26/900, card title 24/900, section
+    20/800, list card title 17/800, scenario 16/400, body 14/400 and
+    13/400, button 14/800, meta 12/700 and 11/600. Line heights and
+    letter spacing come from the brief.
+  - `lib/widgets/brand_scaffold.dart`: the band is gone (colours from
+    `appBarTheme`; the `bandBottom` parameter keeps its name).
+  - `lib/utils/page_title.dart`: the theme's weight (900) instead of
+    w700.
+  - `lib/screens/welcome_screen.dart`: its colours are pinned explicitly.
+- **[Engineering] Kept as they were on purpose** (outside the batch's
+  file list, each changed only to undo a side effect of the theme):
+  - **The brand mark's rim.** It read `colorScheme.secondary`, so the
+    dark rim would have turned `#B4C8FF` and changed the logo and the
+    committed launch images (`launch_image_test` caught it). Its two
+    earlier colours are now `brandMarkRim()`.
+  - **The launch splash wordmark.** It inherited `headlineLarge`'s line
+    height; the new 1.10 shrank it from 58 to 47 pt and moved the
+    approved launch layout. It now has its own style at the font's
+    natural line height.
+  - **The mountain card and its plaque** (`ClimbCard`). The frame stays
+    at radius 20 instead of following the card's 24, and the plaque's
+    text keeps its pre-1.2.0 metrics, so its owner-approved 14 pt corners
+    fit at every text size. Both are redone with the plaque (Q16).
+  - **The iOS launch background** (`LaunchBackground.colorset`) is now
+    `#F3EFE6` / `#151517`. It has to equal the first frame's page colour,
+    or the app flashes at launch.
+  - **`PracticeStepFooter`** no longer styles its button itself
+    (`secondary` would have made the dark button light blue). It takes
+    the theme's button, colours only; no layout change.
+- **[Measured]**
+  - **A theme equality bug.** A per-call `resolveWith` closure for the
+    dark button edge made two identical dark themes unequal, so
+    `MaterialApp` animated between them; `monthly_climb_preview_test`
+    caught it. The edge property is now built once.
+  - **Font.** A `TextStyle` without a weight renders identically to w400
+    (same width and ink), not at the variable font's default 200.
+  - **Weightless `TextStyle`s in `lib/`:** 3, all left as they are:
+    - `daily_test_screen.dart:289` (debug error text);
+    - `practice_length_picker.dart:320`;
+    - `premium_screen.dart:1726` (a measuring fallback, unused while a
+      theme exists).
+
+    The first two are `Text` styles and take their weight from the
+    ambient `DefaultTextStyle` (`bodyMedium`, w400).
+- **[Tests]** `flutter analyze` clean; **1,520 passed, 0 failed** (the
+  same count as before the batch). Behaviour tests unchanged. Updated
+  look assertions, 14 test cases:
+  - `practice_step_footer_test`, the disabled pairing (1): it now reads
+    the theme's button style.
+  - `climb_card_test`, the frame radius (1): the frame is 20, no longer
+    the card radius.
+  - `data_screen_test`, Cancel height (2): 52 → 48.
+  - `premium_screen_test`, the purchase button height (5): ≥ 52 → ≥ 48.
+  - `premium_screen_test`, the table or stacked layout (4): the measured
+    rule is unchanged, but with the smaller default text 360 pt @1.15x
+    and 393 pt @1.3x now fit the table.
+  - `launch_background_test`, the hex constants (1).
+- **[Side effects on screens without a mockup]**
+  - **Every screen:** text is about 9 % smaller at the default Medium
+    (body 14 instead of 15.4), and titles, buttons and segmented controls
+    are heavier (800–900).
+  - **Premium and Data:** buttons are 48 tall; the comparison table stays
+    a table at two more sizes.
+  - **Results and Daily Test result:** the score line in the app bar is
+    no longer on orange.
+  - **Onboarding:** in dark mode the selected goal is light blue with
+    navy text (was `#5C7CFA` with `#04123A`). In light mode, unselected
+    goals have the page colour as their fill, so their 1.5 px `outline`
+    edge (2.98:1 on the page) is what separates them.
+  - **Welcome:** no change.
+- **[Not measured]** Anything on a device: the card shadow's strength
+  (elevation 2 approximates the brief), the dark button edge, the font
+  weights 400 / 800 / 900, and how the smaller body text reads.
+
+## 2026-10-05 (1.2.0 redesign — Batch 2: shared components; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **Batch 1 was approved on a device by the
+owner** (iPhone 14 Plus, light and dark): the body text reads well; the
+card edge with elevation 2 separates enough, so Q2 is closed and there is
+no return to `outline`; the dark button edge works; Premium looks right.
+
+Visual only. State, routing, premium/quota checks, AI/proxy calls,
+storage, analytics and gamification math are unchanged. The Home, Review,
+Profile and Topic layouts and all copy are unchanged. The question screen
+is not touched.
+
+- **[Decisions this replaces]**
+  1. **The frosted-glass nav bar** (roadmap, "Home + nav bar revision
+     round"s): a translucent tint over a 24 pt blur, radius 32. Replaced
+     by **Q17**: a solid `navigationSurface` bar with a 1 pt
+     `navigationBorder` edge, the brief's nav shadow and radius 29.
+     Unselected items are textPrimary (Q6); the selected item is
+     linkAndActive, its label 800 instead of 600, so weight marks it as
+     well as colour.
+     - *Why:* the brief specifies a solid bar.
+     - *Why it matters:* the label contrast on a solid surface is fixed
+       and measurable (8.08–16.78:1). Through the glass it depended on
+       whatever scrolled behind.
+     - `NavBarClearance` still measures the laid-out bar every frame.
+  2. **The trail-sign plaque** (2026-10-02, corner radius 0.7 × the frame
+     = 14 pt). Replaced by **Q16**: a stadium plaque on the neutral card
+     surface with a 1.5 pt `AppPalette.pathOutline` edge, its title
+     16/900 in textPrimary.
+     - The frame gets the same 1.5 pt edge and the list card radius (22).
+     - *Why:* the brief describes a rounded, outlined plate bound to the
+       map's top edge on a neutral surface; no colour comes from the
+       month's map theme.
+     - The Batch 1 holds go: the frame no longer stays at 20, and the
+       plaque's text no longer keeps its pre-1.2.0 metrics.
+     - The game engine, scoring, motion and zoom are unchanged.
+- **[Engineering] What changed.**
+  - `climb_card.dart`: Q16. `TrailSignBorder`, `plaqueRadiusShare` and
+    its debug override are removed. With them go the two measuring tools
+    that existed only to measure them
+    (`tool/design_measure/batch6/plaque_numbers_test.dart`,
+    `tool/scene_art/batch6_plaque_sheet.py`) and the plaque-share hook in
+    `tool/design_measure/scene_art/home_render_test.dart`. The tools
+    README notes the removal; the Batch 6 report's numbers stay as
+    recorded.
+  - `floating_nav_shell.dart`: Q17, plus `FloatingNavShell.barKey`.
+  - New `widgets/section_title.dart`: 20/800 textPrimary with header
+    semantics. It replaces Home's and Profile's private `_SectionLabel`s
+    (14/700 in `secondary`).
+  - `weak_spot_card.dart`: a list card (radius 22, padding 17).
+    - The topic, when shown, becomes a linkAndActive eyebrow above the
+      title. Its text is not uppercased, so the copy is unchanged.
+    - The title is 17/800 and wraps instead of ending in an ellipsis.
+    - The explanation is a muted two-line excerpt; the frequency stat sits
+      on the info surface.
+  - `app_segmented_button.dart`: a subtle tile (radius 14, 4 pt inset),
+    no outline. The selected segment is the info surface with an 800
+    label, the others textSecondary 700. Segments are at least 44 pt tall.
+  - `locked_premium_pill.dart`: no fill or outline; the lock, "Premium"
+    in 11/800 and the chevron are all linkAndActive.
+  - `theme.dart`: `AppPalette.of` falls back to the palette for the
+    theme's brightness when a theme has none.
+  - `onboarding_screen.dart`: see the `secondary` scan below.
+- **[Scan] `secondary` / `onSecondary` / `secondaryContainer` in `lib/`.**
+  Dark `secondary` is the link colour (`#B4C8FF`) since Batch 1.
+  - **(a) Link or active state, correct.** 18 uses:
+    - `theme.dart`: outlined button foreground and side, text button,
+      focused input border;
+    - `loading_view.dart:74` (accent icon);
+    - `practice_screen.dart:217` and `daily_test_screen.dart:328` (item
+      type label; question screen, out of scope);
+    - `practice_length_picker.dart:245` (selected length label);
+    - `premium_screen.dart:336` (caption), `:1537` (selected plan
+      border), `:1604` (check icon);
+    - `legal_link.dart:33`;
+    - `floating_nav_shell.dart` (active item);
+    - `weak_spot_card.dart` (eyebrow);
+    - `locked_premium_pill.dart`;
+    - the debug-only `theme_preview_screen.dart` swatches.
+  - **The info surface (`secondaryContainer` / `onSecondaryContainer`)**
+    is the brief's infoSurface / onInfo in both themes, so it did not turn
+    light blue. That covers the length picker's selection card and dial
+    track and text, Premium's comparison strip and marks, the weak spot
+    detail pill, the segmented control, the weak spot badge,
+    `premium_offer_card.dart` and the theme preview.
+  - **(b) Fills that turned light blue in dark mode:**
+    - **`onboarding_screen.dart:216, 236`, the selected goal card:**
+      rebound to `AppPalette.button` / `onButton`, plus the dark `#5C7CFA`
+      button edge. Dark mode is now a navy fill with white text and a
+      `#5C7CFA` edge (the fill is 1.77:1 on the dark page, the edge
+      4.97:1). Before 1.2.0 it was a `#5C7CFA` fill with `#04123A` text.
+      Light mode is unchanged.
+    - **`practice_length_picker.dart:141, 143, 144, 148, 408`, the
+      slider's active track, thumb and tick marks, the thumb's chevron and
+      the dial's fill: not rebound, owner decision needed.**
+      - The navy measures **1.91:1** against the dark sheet
+        (`surfaceContainerLowest` `#0B0B0D`), so the thumb would vanish,
+        and **1.14:1** against the dark info card the dial sits on.
+      - The current link colour measures 11.84:1 and 7.09:1. The
+        pre-1.2.0 `#5C7CFA` would measure 5.35:1 and 3.20:1.
+    - **`topic_practice_screen.dart:211`, the activity bar's fill:** left
+      alone. The bar is removed in the Topic Practice batch (Q8).
+- **[Scan] Heading styles with a local `fontWeight`.** A
+  `textTheme.display*/headline*/title*.copyWith(fontWeight: …)` overrides
+  the theme's weight. There are 39. Below: `file:line`, style, the local
+  weight → the brief's weight. To be fixed in each screen's batch, not
+  here.
+  - **Lower than the brief:**
+    - `home_screen.dart`: `:1073` headlineLarge w800 → 900 (the brand),
+      `:1104` headlineSmall w700 → 900 (the greeting), `:1354` and
+      `:1430` titleMedium w700 → 800;
+    - `ai_consent_screen.dart:54` titleLarge w700 → 800;
+    - `avatar_picker_screen.dart:162` titleMedium w700 → 800;
+    - `onboarding_screen.dart:96, 111` titleMedium w700 → 800;
+    - `practice_length_picker.dart:132` titleLarge w600 → 800;
+    - `premium_screen.dart:318` titleLarge w700 → 800, `:1584`
+      titleMedium w700 → 800;
+    - `weak_spot_detail_screen.dart:400` titleMedium w700 → 800;
+    - `welcome_screen.dart:230` headlineLarge w700 → 900;
+    - `loading_view.dart:81` titleMedium w600 → 800;
+    - `premium_offer_card.dart:63` titleLarge w700 → 800;
+    - `question_app_bar.dart:122` titleLarge w600 → 800 (out of scope);
+    - `result_score_band.dart:38` headlineSmall w700 → 900.
+  - **Equal to the brief (redundant):**
+    - `medal_celebration.dart:252` titleLarge w800;
+    - `month_card_sheet.dart:141, 211` titleLarge w800, `:145`
+      titleMedium w800;
+    - `monthly_medal_collection.dart:345` titleLarge w800.
+  - **`titleSmall`, a style the brief does not cover** (theme w500),
+    overridden to w700 / w600 / w800:
+    - `ai_consent_screen.dart:129`;
+    - `data_screen.dart:139, 161`;
+    - `onboarding_screen.dart:270`;
+    - `settings_screen.dart:506, 551, 588, 620` (debug section);
+    - `weak_spot_detail_screen.dart:172` (w600);
+    - `month_card_sheet.dart:165, 191, 215`;
+    - `monthly_medal_collection.dart:425` (w700), `:431` (w800);
+    - `premium_offer_card.dart:159`;
+    - `debug_panel_screen.dart:108`;
+    - `preview/monthly_medal_preview.dart:348`.
+  - Deliberately fixed and not counted: the launch wordmark (a logotype,
+    w700, pinned in Batch 1) and the plaque (900 from the brief).
+- **[Note] Test counts.** The Batch 0 report's 1,126 counts `test(` /
+  `testWidgets(` calls in the source; many sit inside loops over themes,
+  sizes and text scales. That is why `flutter test` runs 1,520 test cases.
+- **[Tests]** `flutter analyze` clean; **1,520 passed, 0 failed**.
+  Behaviour tests are unchanged, except that two found the nav bar by its
+  old widget type; only their finder changed, their assertions did not:
+  - `floating_nav_shell_test` (the clearance test: `BackdropFilter` →
+    `FloatingNavShell.barKey`);
+  - `content_width_test` (P2's pill: `ClipRRect` → `barKey`, 2 cases).
+
+  `climb_card_test`:
+  - removed: 5 cases about the trail sign (the radius derived from the
+    frame, 0.7 asking 14 pt at every text size, the measuring override,
+    the sign's geometry and the radius fitting);
+  - added: 5 cases (the stadium's surface, edge and title, and the frame's
+    edge and radius, in both themes; the plaque centred on the frame's top
+    line).
+
+  The "Skip" `OutlinedButton` finders and the `question_app_bar` tests are
+  untouched.
+- **[Not done here]** Q18's padding (14 under 360 pt, 18 above) changes
+  every screen's side padding (`ContentWidth.basePadding`); it was not in
+  this batch's list.
+- **[Not measured]** On a device: the nav bar's shadow and edge in both
+  themes, the plaque at 320 pt with Large text and a large system text
+  size, the segmented control's selected state, and the onboarding
+  selected goal in dark mode.
+
+## 2026-10-05 (1.2.0 redesign — Batch 3: Home; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **Batch 1 and Batch 2 were approved on a
+device by the owner** (the nav bar, the plaque, the segmented controls, the
+weak spot card).
+
+Presentation only. State, routing, premium/quota checks, AI/proxy calls,
+storage, analytics events, the Daily Test logic and gamification math are
+unchanged. The question screen, Review, Profile and Topic Practice
+layouts are not touched.
+
+- **[Product — owner] Decisions recorded with this batch.**
+  - **The length picker in dark mode:** its slider and dial stay on the
+    link colour `#B4C8FF`. The navy would measure 1.91:1 on the dark sheet
+    and 1.14:1 on the dark info card (Batch 2 scan). No code change.
+  - **Q18:** `ContentWidth.basePadding` is 14 pt below 360 pt wide and
+    18 pt above. This is the one place every screen's side padding comes
+    from; it was 4.5 % of the width, clamped to 16–28 pt.
+  - **A wider plaque** (owner feedback after Batch 2): its side padding
+    goes from 16 to 28 pt. Measured at 320 pt, where the card is 292 pt
+    wide: 234.5 pt at Large text and 289.0 pt at Large with a 1.3x system
+    text size, so it stays on one line. 32 pt would reach 297 pt there.
+- **[Decisions this replaces]**
+  1. **The combined "Today" card** (PRD v2 §13.5 item 2). Before: one
+     whole-card tap target with a small icon, the title "Daily Test" or
+     "Today's test: N/M correct", and a one-line description, under a
+     "Today" label.
+     - Now a separate orange card. It has two states: not started (the
+       real question count, "Start daily test") and done (the real score,
+       "Review results"). Its navy button is the only tap target and
+       calls the same `onStart` / `onViewResult`.
+     - *Why:* the brief and the approved mockup; one clear action instead
+       of a whole card that did two different things.
+     - `HomeScreen.monthCardTodayPeek` goes from 56 to 66. The month card
+       has to leave the entry visible, and the entry is now the button
+       (48) plus the card padding below it (18). A test measures this.
+  2. **Home's Premium row** (PRD v2 §13.5 item 5: "Premium · Unlock
+     targeted practice on your weak spots", free users).
+     - Replaced (Q15) by a call-out to Review's free daily practice,
+       which switches to the Review tab (`HomeScreen.onGoToReview`, wired
+       in `app.dart`).
+     - It shows only for free users who have weak spots (see the
+       deviations below).
+     - *Why:* the brief ends Home with what a free user can do today
+       instead of a second sales line.
+     - Free users still reach the paywall from Home through the locked
+       topic strip and the locked weak spots. `paywallSourceHome` and the
+       events are unchanged.
+  3. **The single "Topic Practice" card** becomes a "Topic practice"
+     section: a sideways strip of the real `kTopics` and "Explore all
+     topics". Every one of them calls the existing `_openTopicPractice`
+     (Q9; free users get the paywall as before), with no scroll arrows
+     (Q10).
+- **[Engineering] What changed.**
+  - `home_screen.dart`:
+    - the brand and greeting sit in the page and scroll with it, and the
+      app bar is the status bar's height;
+    - the greeting is two lines, the name 900 and free to wrap;
+    - the hero is 108 pt (was 60) with an edit badge;
+    - `_DailyTestCard`, `_TopicStrip`, `_TopicTile`, `_SectionHeader`,
+      `_CountBadge`, `_ReviewCallout`, `_HeroButton`;
+    - `HomeScreen.dailyTestCardKey`, `onGoToReview`;
+    - `_TodayCard`, `_PracticeModeCard` and `_PremiumRow` are removed.
+    - The Home-local weights from the Batch 2 scan are gone with the code
+      that held them: `:1073` brand w800 → the theme's 900; `:1104`
+      greeting w700 → 900; `:1354`, `:1430` titleMedium w700 → removed.
+  - `home_greeting.dart`: the optional `nameStyle` two-line mode.
+  - `locked_premium_pill.dart`: `showChevron`.
+  - `theme.dart`: `AppPalette.brandTint`.
+  - `app.dart`: wires `onGoToReview` to the Review tab.
+  - **Layout fix found by the tests:** at 320 pt with a 2x system text
+    size, the card's label row ("DAILY TEST" + "Free every day")
+    overflowed by 69 pt. It is now a `Wrap` with a flexible label.
+- **[Copy] Old → new** (new texts from the mockup's Home tab; **for the
+  owner's approval**):
+  - Section label "Today" → *(removed)*.
+  - The card's label → "DAILY TEST" and "✓ Free every day" *(new)*.
+  - Card title "Daily Test" → "Your next step." (not started); "Today's
+    test: N/M correct" → "Daily test complete." (done).
+  - Description "Today's 5-question warm-up is ready — free, always." →
+    "Take today’s test and move your hero forward."; "New test tomorrow.
+    Tap to see today's result again." → "New test tomorrow. Review today’s
+    answers."
+  - Score box *(new)*: "5" / "questions" (not started), "N/M" / "correct"
+    (done).
+  - Button *(new)*: "Start daily test" / "Review results".
+  - Card "Topic Practice" → section title "Topic practice"; descriptions
+    "Deep grammar practice with plain-language feedback." / "Try it free,
+    then continue with a subscription." → "Pick a topic. Build confidence
+    where you need it."; "Explore all topics" *(new)*; the topic tiles use
+    the existing `kTopics` titles.
+  - Weak spots badge *(new)*: "1 weak spot" / "N weak spots" (the mockup
+    says "1 topic").
+  - Premium row "Premium" / "Unlock targeted practice on your weak spots"
+    → *(removed)*. Review call-out *(new)*: "One free practice. Every
+    day." / "Choose one weak spot in Review. Get AI feedback on your
+    answers." / "Go to Review".
+  - Hero semantics label *(new)*: "Change your avatar".
+  - Unchanged: "GrammarLens", the greeting text, "Your weak spots", the
+    Premium tag text "Premium".
+- **[Deliberate deviations from the mockup]**
+  - **The weak spots badge** says "weak spots", not "topic": an entry is
+    an error type, and two can share a topic. It counts the entries Home
+    shows, which Home caps at 3 (`getWeakSpots(limit: 3)`), so with more
+    than three it says "3 weak spots".
+  - **The Review call-out shows only for a free user who has weak
+    spots.** Premium users have no quota to describe (as Q13 decides for
+    Review). Without a weak spot there is nothing to choose, so the
+    call-out would promise something the user cannot do yet.
+  - **A topic tile opens the Topic Practice screen**, not the mockup's
+    per-topic Premium dialog (Q9).
+  - **The weak spot cards keep Batch 2's Premium tag** instead of the
+    mockup's "Practice with Premium" link (copy unchanged).
+  - **Icons are Material equivalents of the mockup's Lucide icons:**
+    edit, check, arrow_forward, north_east, auto_awesome and each topic's
+    existing icon.
+  - **Shadows are the theme's elevation 2** (Q2, approved), not the
+    mockup's CSS shadow.
+  - **The score number is `headlineMedium`** (26 at Medium), not 29; the
+    card title is `headlineSmall` (24), not 25. Both are the nearest
+    type-scale styles.
+  - **The brand stays outside the app bar,** and the app bar is the status
+    bar's height, so content scrolls under it.
+- **[Tests]** `flutter analyze` clean; **1,532 passed, 0 failed** (1,520
+  before this batch).
+  - **New and replacement tests in `home_screen_test`:**
+    - the Daily Test card: not started (real count, no progress bar, the
+      button opens the Daily Test); done (the real score, "Review
+      results", tomorrow's line); the button calls `onViewResult`; only
+      the button is the entry; orange with onOrange text in both themes
+      and a navy button; the peek equals the button plus the padding;
+    - the analytics entry through the button;
+    - the card at full content width at 320 / 390 / 430;
+    - the strip: the real topics, not the mockup's; free → Premium screen
+      for a topic and for "Explore all topics"; premium → Topic Practice
+      for both; a live entitlement change; a sideways drag leaves the page
+      where it is;
+    - the order: card, mountain, topics, weak spots, call-out;
+    - the Review call-out: shown for a free user with weak spots and
+      switches the tab; hidden for premium; hidden without weak spots;
+      no Premium row;
+    - the count badge;
+    - no overflow scrolling top to bottom at 320 / 390 / 430 pt, Large
+      text, light and dark, with a long name: the greeting and the hero do
+      not overlap, the whole name shows, and the last item comes into
+      view.
+  - **Removed (replaced by the above):**
+    - the three "Today" tests;
+    - "shows the Topic Practice card"; the full-width card test (old
+      padding formula); the old order test; the three Topic Practice card
+      tests;
+    - the four Premium row tests.
+  - **Finder changes only, assertions unchanged:**
+    - "Daily Test" → "Start daily test" and "N/M correct" → "Review
+      results": `home_screen_test` (×6), `home_daily_test_service_test`
+      (×6), `first_launch_climb_test` (×1), `app_resume_test` (×1);
+    - `month_card_test`: the card by `dailyTestCardKey`, and the tap on
+      the button;
+    - `home_day0_paywall_test`: the Premium row → "Explore all topics",
+      still asserting `mode_selected: premium` and source `home`;
+    - "Topic Practice" → "Topic practice" in two scrolling tests;
+    - two weak spot taps now pump after `ensureVisible` (Home got longer).
+- **[Not measured]** On a device:
+  - the orange card and the edit badge in dark mode;
+  - the topic strip's swipe next to the page scroll;
+  - the larger hero's flight to the avatar picker;
+  - the month card's peek during the zoom;
+  - VoiceOver order;
+  - the Home screenshots for the App Store, which change.
+
+## 2026-10-05 (1.2.0 redesign — Batch 4: Home revisions and Review; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 3 on a device and
+approved its copy list and deliberate deviations,** including the Review
+call-out showing only to free users who have weak spots.
+
+Visual only, plus one read. State, routing, the premium/quota checks and
+how the quota is spent, AI/proxy calls, storage, analytics events and
+gamification math are unchanged. The question screen, Profile and Topic
+Practice are not touched.
+
+- **[Home revisions — owner device feedback]**
+  1. **The hero's edit badge is gone.** Tapping the avatar still opens the
+     picker with the Hero flight, and "Change your avatar" is still its
+     label.
+     - *Found while testing this:* Batch 3's `Semantics(button, label)` on
+       the hero, `Semantics(header)` on the brand and the same on
+       `SectionTitle` had no `container`. Their flags and labels merged
+       into the enclosing node (a whole list item) instead of marking
+       their own widget. All three now form their own node.
+  2. **The score box shows its label above the value.**
+     - Done: "correct" over "N/M". Not started, for the same layout:
+       "questions" over the count.
+     - The label goes from `labelSmall` (11 at Medium) to `labelMedium`
+       (12/700), one step up. The value stays `headlineMedium` (26/900).
+  3. **The greeting line is larger: 22 pt at Medium** (`titleLarge` ×
+     1.1, weight 600, textSecondary; 20 / 22 / 24 at Small / Medium /
+     Large). It sits above the 20 pt section titles and below the name
+     (24) and the brand (34).
+     - With the real font, "Good afternoon," measures 172.2 pt at Large.
+       So the gap to the hero goes from 12 to 8 pt (the mockup's 6), and
+       it fits beside the hero at 320 pt (176 pt).
+     - Tests check the size order and a long name wrapping at 320 pt,
+       Large.
+  4. **The weak spots badge shows the real total.**
+     - The source is `StorageService.getTopicStats()`, an existing read:
+       its per-topic `COUNT(DISTINCT error_type)` is the same grouping
+       `getWeakSpots` uses, so the sum is the number of weak spots.
+     - No new storage code and no writes. If the read fails, the badge
+       falls back to the cards shown.
+     - Home still shows at most three cards.
+- **[Review]**
+  - **Header.** "Review" (34/900, −1.1) and "Turn your mistakes into
+    progress." sit in the page; the app bar is the status bar's height.
+  - **`DailyPracticeCard`, free users only (Q13).**
+    - *Available:* brandOrange with onOrange text in both themes, the
+      eyebrow "YOUR DAILY PRACTICE", the remaining count and a check icon.
+    - *Used today:* the subtle surface with a border, its own text and a
+      clock icon, and no free-practice call to action.
+    - **N1:** it reads the existing `getFreePracticeCountForToday()`
+      against `freeDailyPracticeLimit`, plus the entitlement. The reads
+      happen on load, when the tab becomes visible, when a weak spot's
+      screen closes, and on an entitlement change.
+    - The card only shows the allowance. It is still spent only when
+      `launchPracticeSet` generates a set; opening a weak spot spends
+      nothing (tested).
+    - The card is hidden until the first read answers, so it never shows
+      the wrong state.
+  - **List.**
+    - The heading is "Saved weak spots" with the total (the same
+      `getTopicStats` read).
+    - The sort control moved from the app bar to the heading. The orders
+      and their storage are unchanged.
+    - The cards are Batch 2's `WeakSpotCard`, unlocked as before.
+  - **Empty.** No allowance card (there is nothing to spend it on), and a
+    way back to the Daily Test: the Home tab, as before. The loading
+    state and the error with Retry keep their behaviour, under the
+    header.
+- **[Weak spot detail]** Still a pushed screen (Q14), restyled.
+  - **Layout:**
+    - the topic as an eyebrow, left out when it would repeat the title;
+    - the weak spot's name as the title (26/900);
+    - the frequency on the info surface;
+    - the recap in a "Saved feedback" panel;
+    - "Recent mistakes" as a `SectionTitle` over the same mistake cards.
+  - **Buttons by allowance state (N3):**
+    - a free user with the allowance left: "Start free practice", with
+      the existing "1 free practice today" under it;
+    - used up: "Practice with Premium", the same paywall entry, source
+      and quota-exhausted event, with the existing used-today message;
+    - premium: "Practice this", unchanged.
+  - The generating screen still replaces the page, so the action cannot
+    start twice.
+- **[Copy] Old → new** (new texts from the mockup's Review tab):
+  - **Review:**
+    - The title "Review" moved from the app bar into the page.
+    - New: "Turn your mistakes into progress."
+    - New: "YOUR DAILY PRACTICE" · "One weak spot. One step forward." ·
+      "Choose any saved weak spot below. Practice for free and get AI
+      feedback." · "1 free practice available today".
+    - New (used state): "Today’s practice is complete." · "Keep reviewing
+      your saved feedback. Your next free practice is available
+      tomorrow." · "Next free practice tomorrow".
+    - New: "Saved weak spots" and its count; sort tooltip "Sort weak
+      spots". The sort labels are unchanged.
+    - Empty: "Practice a topic and your mistakes will show up here." →
+      "Mistakes from your Daily Test and practice will show up here.";
+      "Start practicing" → "Go to Daily Test". "No weak spots yet." is
+      unchanged.
+  - **Detail:**
+    - The topic's name is no longer the app bar title. It shows as the
+      eyebrow (when it differs), and the rule's name, a small line before,
+      is now the title.
+    - New: "Saved feedback".
+    - Free user's button: "Practice this" → "Start free practice".
+    - Used-up state: the muted "Practice this" row with the Premium tag →
+      a "Practice with Premium" button; the message under it is
+      unchanged.
+    - Unchanged: "Recent mistakes", "Practice this" (premium), "1 free
+      practice today".
+- **[Deliberate deviations from the mockup]**
+  - **Spelling:** "Practise" → "Practice", the app's American spelling.
+  - **The used card has no Premium link.** The way to Premium stays on
+    each weak spot's screen ("Practice with Premium").
+  - **The count shows the total, while the list shows up to 10** (the
+    existing `getWeakSpots` default); unchanged behaviour.
+  - **The detail stays a pushed page, not a sheet (Q14).** The mockup
+    sheet's footnotes ("Use today’s free practice on this weak spot.",
+    "Your next free practice is available tomorrow.") are replaced by the
+    existing captions, as N3 asked.
+  - **The cards keep Batch 2's single frequency badge**, not the mockup's
+    split count and date.
+  - **The empty state's button switches to the Home tab**, where the Daily
+    Test card is; it does not open the test (no new route).
+- **[Owner decision recorded]** The length picker's slider and dial stay
+  on the link colour in dark mode (from Batch 3; no code change).
+- **[Tests]** `flutter analyze` clean; **1,559 passed, 0 failed** (1,532
+  before this batch).
+  - **New:**
+    - `review_screen_test.dart` (23): the card available, used (no free
+      CTA, its own icon) and hidden for premium; re-read on tab return and
+      after the detail closes; a trial hiding it live; the empty state;
+      the list and its total; the stored sort order and a new choice being
+      saved; no overflow at 320 / 390 / 430 pt, Large text, light and
+      dark, both states.
+    - `home_screen_test`: no edit badge, and the "Change your avatar"
+      control opens the picker; the score box order and label size; the
+      greeting size order; a long name wrapping at 320 pt, Large; the
+      badge showing 7 with three cards.
+  - **Changed:**
+    - The Home test fake's `getWeakSpots` now honours its limit, and its
+      `getTopicStats` can answer.
+    - `weak_spot_detail_screen_test` (3): the button labels; the
+      exhausted case asserts "Practice with Premium" instead of
+      `LockedPremiumPill`.
+    - `practice_launch_free_tier_test` (2) and
+      `practice_launch_consent_test` (the helper used by 8 cases): finders
+      only, for the free user's new label. Their assertions on generation,
+      quota, consent and routing are unchanged.
+- **[Not measured]** On a device: the two card states in both themes, the
+  sort menu in the list heading, the detail screen's new header with the
+  back button, and the larger greeting next to the hero.
+
+## 2026-10-05 (1.2.0 redesign — Batch 5: owner device feedback on Home and Review; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 4 on an iPhone 14
+Plus (release build); its copy was approved.** Five items, each in its
+own commit(s).
+
+Visual only, plus one new analytics value (below). State, routing,
+premium/quota checks and how the quota is spent, AI/proxy calls,
+storage, event definitions and gamification math are unchanged. The
+question screen, Profile and Topic Practice are not touched.
+
+- **[1] Headings look thin on the device: diagnosis. Status: waiting for
+  the device.**
+  - **Observation (owner):** "GrammarLens", the Review title and the card
+    titles look lighter than the mockup's 900.
+  - **H2, ruled out:** a local style lighter than the theme. With the
+    real Home and Review rendered, the resolved styles are:
+    - "GrammarLens" 34 / w900 / −1.4;
+    - "Review" 34 / w900;
+    - the Daily Test and Review card titles 24 / w900; the used card's
+      title 20 / w900;
+    - the section titles 20 / w800; the weak spot titles 17 / w800;
+    - "Mountain of Learning" 16 / w900.
+
+    All are NunitoSans, from the theme, with no `fontVariations`.
+  - **H3, not supported:** a rasterization or letter-spacing difference.
+    The same text at the same settings has the same width in both
+    renderers: "GrammarLens" at 34 / 900 / −1.4 is 215.4 px in the mockup
+    (browser, Google Fonts Nunito Sans, measured with the DOM) and
+    215.4 pt in Flutter (the bundled font, test engine).
+  - **H1, plausible, needs the device:** iOS may not drive the variable
+    font's `wght` axis from `FontWeight`.
+    - Measured in the test engine: when a weight is requested above the
+      instance being used, Skia adds synthetic bold. Weight 800 with
+      `wght` 600 has the advance widths of 600 and 10 % more ink.
+    - If iOS ignores `FontWeight`, every heading is drawn from the file's
+      default instance, ExtraLight (200), thickened synthetically. That
+      would look exactly like what the owner describes.
+  - **(c) done:** the debug-only Theme Preview has a weight table. Rows
+    200 / 400 / 600 / 700 / 800 / 900; columns `FontWeight` only,
+    `FontVariation` only, both; each sample with its measured width.
+    - The test engine gives the same width in all three columns, growing
+      with the weight.
+    - On the device, a `FontWeight` column that stays at one width
+      confirms H1.
+    - It is reached from Settings → Developer, which only debug builds
+      show. Text rendering is the same in a debug build on the same phone.
+  - **(b) on hold (owner).** Putting `fontVariations` in the text theme
+    means every local `copyWith(fontWeight: …)` (85 in 36 files) must go
+    through one helper. Otherwise the theme's `wght` wins: measured, 600 +
+    `wght` 800 renders at 800. Three of those overrides are in
+    question-screen files. The owner chose to check the table on the
+    device first. The requested "fontWeight and fontVariations match"
+    test belongs to (b) and waits with it.
+- **[2] Review's "used today" card is navy and offers Premium.**
+  - `AppPalette.button` (`#0D3B8F`) with white text, 10.30:1; secondary
+    text `#DFE8FA` (new `AppPalette.onButtonMuted`), 8.37:1.
+  - In dark mode the button's `#5C7CFA` edge: the navy is 1.77:1 on the
+    dark page, the edge 4.97:1.
+  - New: "Want more practice today?" and an orange "See Premium" button.
+    - brandOrange with onOrange text: 6.93:1 light, 7.71:1 dark. Its
+      edge against the navy: 3.95:1 light, 4.39:1 dark.
+    - The dark button's blue edge is set off explicitly (a null side falls
+      through to the theme).
+    - It opens the existing Premium screen, and the entitlement is read
+      again when it closes.
+  - The available state stays orange. The states differ in text and icon
+    too. Premium users still don't see the card.
+  - **Analytics (owner's choice):** a new value of the existing
+    `paywall_viewed` `source`: `review_quota`
+    (`AnalyticsService.paywallSourceReviewQuota`). It keeps this entry
+    point apart from `weak_spot_quota`. No new event or parameter;
+    `analytics-plan.md` lists it.
+  - **Copy:** the proposal is kept. "See Premium" names what opens, and
+    "Want more practice today?" makes no claim about how much (Premium is
+    10 sessions a day).
+- **[3] Home's Review call-out is one tap target.**
+  - One `InkWell` in one semantics button. "Go to Review" is now its label
+    in the link colour, not a `TextButton`, so there is no button inside a
+    button.
+  - Taps at the corners and the centre all switch to Review (tested).
+- **[4] Home's weak spot cards follow the mockup.**
+  - A `withAction` variant of `WeakSpotCard`, Home only: the topic
+    eyebrow when it differs, the title, the frequency as a muted line, and
+    the action line.
+    - A free user: a lock and "Practice with Premium".
+    - A premium user: "Practice this".
+  - No excerpt, no trailing chevron or tag. The action is part of the
+    card's one tap target, so the tap does what it did: free → the paywall
+    naming the weak spot (source `home`); premium → the weak spot's
+    screen.
+  - Review's cards are unchanged.
+- **[5] A soft backlight behind Home's hero.**
+  - Light: the card shadow brown `#483018` at 16 %. Dark: a warm glow,
+    `#FF8A3D` at 22 % (`AppPalette.heroBacklight`). Static.
+  - A radial gradient inside the hero's 108 pt square, fading out at its
+    edge, so nothing clips it and it never reaches the greeting.
+  - Behind the `Hero`, so the flight to the picker carries only the
+    avatar.
+- **[Copy] Old → new:**
+  - Review, used card: new "Want more practice today?" and "See Premium".
+  - Home weak spot cards:
+    - the excerpt is no longer shown on Home;
+    - the frequency is a plain line instead of a badge;
+    - new action line: "Practice with Premium" (free), "Practice this"
+      (premium); the Premium tag on these cards is gone;
+    - Review unchanged.
+  - Home Review call-out: "Go to Review" is the same text, now a label
+    rather than a button.
+- **[Tests]** `flutter analyze` clean; **1,568 passed, 0 failed** (1,559
+  before this batch).
+  - **New:**
+    - the Theme Preview weight table (rows, columns, matching values);
+    - the used card: navy, white text and the dark edge in both themes;
+      See Premium opening Premium with `review_quota`;
+    - the Home call-out: five tap points, one semantics button, nothing
+      tappable inside;
+    - the Home weak spot card: a tap on the title opens the same paywall,
+      and there is no button inside;
+    - the hero backlight: colour, bounds and clear of the greeting at 320
+      and 430 pt, Large, both themes; not inside the `Hero`.
+  - **Changed:**
+    - `review_screen_test`, the used card's "no button" check: it used
+      `find.byType(ButtonStyleButton)`, which matches no subtype, so it
+      passed without checking anything. It now matches subtypes and
+      expects exactly the See Premium button.
+    - Two Home weak spot tests tap the action line instead of the excerpt
+      the Home card no longer shows. The outcomes asserted are unchanged.
+- **[Not measured]** On a device:
+  - the weight table (H1);
+  - the navy card and its orange button in both themes;
+  - the hero's shadow in light mode, which is subtle at 16 %;
+  - the Home weak spot cards and the call-out's ripple.
+
+## 2026-10-05 (1.2.0 redesign — Batch 6: the font weight fix, the hero's shadow, tab transitions; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 5 on the device and
+approved** the Review used card, Home's weak spot cards and the call-out.
+
+State, routing, premium/quota checks, AI/proxy calls, storage, event
+definitions and gamification math are unchanged.
+
+- **[1] Font weight: H1 confirmed on the device, and fixed.**
+  - **Diagnosis, in order** (Batch 5):
+    - H2 (a local style lighter than the theme) was ruled out: the
+      headings resolved to 800–900 from the theme.
+    - H3 (rasterization or letter spacing) was not supported: "GrammarLens"
+      at 34 / 900 / −1.4 measures 215.4 in both the mockup and Flutter.
+    - H1 was left.
+  - **Device evidence (owner, iPhone 14 Plus, debug build, the Theme
+    Preview weight table).** The "FontWeight only" column kept one
+    thickness and width from 200 to 900, while "FontVariation only" and
+    "both" grew row by row. On iOS, `FontWeight` does not drive
+    `NunitoSans-Variable.ttf`'s `wght` axis. All text was the default
+    instance (ExtraLight 200) with synthetic thickening, and has been
+    since 1.0.0. The test engine resolves weights, so no test could show
+    it.
+  - **Fix:**
+    - `wghtFor()` and `TextStyle.withWeight()` in `theme.dart` set
+      `fontWeight` and `FontVariation('wght', n)` together.
+    - Every text theme style is built through it.
+    - So is every local weight in `lib/`: **87 call sites in 35 files,
+      36 `lib/` files in all** with `theme.dart`.
+    - Converted by a script that rewrites `copyWith(…, fontWeight: X, …)`
+      / `TextStyle(…, fontWeight: X, …)` into `….withWeight(X)…`, keeping
+      the other arguments. Two `const` declarations became `final`; one
+      `const Text` lost its `const`.
+  - **Question-screen exception (owner-approved).** Only the weight token
+    changed on six lines:
+    - `practice_screen.dart:217, :235`;
+    - `daily_test_screen.dart:328, :344`;
+    - `question_app_bar.dart:122, :150`.
+
+    The owner extended the original three: `:235`, `:344` and `:150` were
+    the instruction (w700) and the counter (w700), and unconverted the
+    instruction would have dropped to 400. Each of the three files also
+    needed `import '../theme.dart';` for the helper. They render with
+    their intended weights, unchanged.
+  - **Kept raw, marked:** the Theme Preview table's FontWeight and "both"
+    samples, which are what the device check reads.
+  - **(f) Styles with no weight:**
+    - the `Text` styles in `daily_test_screen`, `practice_length_picker`
+      and the preview's width labels take the ambient `bodyMedium` weight
+      together with its `wght` (tested);
+    - Premium's text measuring merges the ambient style, and its styles
+      carry `wght`;
+    - the only one that would not inherit is a measuring fallback in
+      `premium_screen.dart` used only without a theme.
+  - **(h) No existing test changed.** The test engine already drew real
+    weights. The overflow tests at 320 / 390 / 430 pt with Large text
+    pass, and so do real-font renders of Home (390 light and dark, 320
+    Large) and Review.
+  - **Guard:** `test/font_weight_guard_test.dart`:
+    - no raw `fontWeight:` in `lib/` outside the marked lines; checked to
+      fail on a new raw override;
+    - every text theme style's `wght` equals its weight, in both themes and
+      all text sizes;
+    - `withWeight` sets both;
+    - an unweighted `Text` style inherits a matching pair.
+  - **Roadmap:** a known issue, the same bug in 1.0.0 and 1.1.0; carrying
+    the fix into 1.1.0 is the owner's decision, not done now.
+- **[2] Home's hero: stronger in light, brighter in dark.** The owner did
+  not notice the light shadow. Before → after:
+  - **Light backlight:** `#483018` 16 % → **30 %**, its centre lower (0.12
+    → 0.25).
+  - **New light ground shadow** (`AppPalette.heroGround`): a blurred
+    ellipse under the hero, 88 × 16 pt, `#483018` at **32 %**, σ 6. Its
+    visible blur reaches about 2 pt past the square's sides and about 8 pt
+    below it: inside the 8 pt gap to the greeting and the 12 pt gap to the
+    card, and well inside the screen (tested at 320 and 430 pt, Large).
+  - **Dark glow:** `#FF8A3D` 22 % → **30 %**; no ground shadow in dark.
+  - Static. Beside the `Hero`, not in it.
+  - Real-font before/after renders at 390 pt, light and dark, were
+    compared.
+- **[3] Tab switches fade through.** `TabFadeThrough` wraps the shell's
+  `IndexedStack`, so every switch gets it: the nav bar, Home's call-out
+  and Review's "Go to Daily Test".
+  - The tab being shown fades in and settles from **0.98 scale over
+    220 ms, `Curves.easeOut`**. The tab being left goes at once, so two
+    tabs are never drawn together.
+  - Nothing is rebuilt: State, scroll position and loaded data are kept
+    (tested with the same State object and the same scroll offset).
+  - The nav bar's selection updates at once. A second switch
+    mid-transition restarts it for the new tab. With reduce motion it is
+    immediate.
+  - A tab switch fires no analytics event, before or after.
+- **[Tests]** `flutter analyze` clean; **1,576 passed, 0 failed** (1,568
+  before this batch).
+  - New: `font_weight_guard_test.dart` (4) and `tab_fade_through_test.dart`
+    (4). The hero test now also covers the ground shadow.
+  - No existing assertion changed.
+- **[Not measured]** On a device:
+  - the headings and body text at their real weights (and any line that
+    now wraps differently because the text is wider: the widget tests'
+    overflow checks use the test font, which is wider still);
+  - the hero in light and dark;
+  - the tab fade's feel.
+
+## 2026-10-05 (1.2.0 redesign — Batch 7: the hero's shadow, the tab slide, Profile; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 6 on the device and
+approved** the font weights (they match the mockup), Large text (no
+shifting) and the question screen.
+
+State, routing, premium/quota checks, AI/proxy calls, the storage schema,
+analytics event definitions and medal/score math are unchanged. The
+question screen and Topic Practice are not touched.
+
+- **[A1] Home's hero in light mode: one ground shadow** (owner: only the
+  shadow under the feet). Before → after:
+  - The round backlight (#483018 at 30 %, a radial gradient in the hero's
+    square) is gone in light mode (`AppPalette.heroBacklight` is null
+    there).
+  - The ground ellipse is now the only shadow: **80 × 16 pt, #483018 at
+    45 %, σ 5, 4 pt above the square's bottom** (was 88 × 16, 32 %, σ 6).
+    Its visible blur stays inside the square's sides and about 6 pt below
+    it (tested at 320 and 430 pt, Large).
+  - It used to sit on top of the avatar's own ellipse (`AvatarTile`, black
+    at 20 %, 70 × 17 pt, σ 8.6). A new `AvatarTile.groundShadow` flag
+    leaves that one out under Home's light hero, so the feet get one
+    shadow. Everywhere else the avatar keeps it.
+  - Dark mode is unchanged: the glow (#FF8A3D at 30 %) and the avatar's
+    own ellipse. Real-font renders at 390 pt: dark is pixel-identical,
+    light differs only around the hero
+    (`docs/design/1.2.0/batch7/hero_390_light_before_after.jpg`).
+- **[A2] Tab switches slide like a pushed page** (owner: the transition
+  Premium opens with). `TabSlideSwitcher` replaces Batch 6's
+  `TabFadeThrough` over the `IndexedStack`.
+  - **Values, from the iOS page route** (`CupertinoPageTransitionsBuilder`,
+    the platform default for `MaterialPageRoute` on iOS, which pushes
+    Premium): 500 ms; the new tab from a full width away with
+    `Curves.fastEaseInToSlowEaseOut`; the old one a third of the width the
+    other way with `Curves.linearToEaseOut`. The route's edge shadow is not
+    copied.
+  - Direction by tab order: to a tab on the right the content comes in from
+    the right and the old leaves to the left; to the left, the mirror image.
+  - It does the stack's job itself, since a slide draws two tabs: each tab
+    has a fixed keyed slot and is `Offstage` when not in view (laid out,
+    State and tickers kept, not painted, not hit, not in semantics; test
+    finders skip it, as with an `IndexedStack`). Nothing is rebuilt; State,
+    scroll position and data are kept (tested).
+  - The nav bar does not move and its selection changes at once. Taps on
+    the tab being left are swallowed during the slide. A second switch
+    mid-slide starts from the tab selected last and lands on the tab
+    tapped. Reduce motion: immediate. No edge swipe back.
+  - Every switch goes through it: the nav bar, Home's Review call-out and
+    Review's "Go to Daily Test".
+- **[B] Profile matches the mockup** (`settings_screen.dart`,
+  `monthly_medal_collection.dart`, `medal_badge.dart`). Presentation only:
+  `_loadMedals`, the analytics view, the save path and the developer
+  sections are as they were.
+  - **Header** in the page, as on Review: "Profile" (`displaySmall`, 34 /
+    900 / 1.10 / −1.1 at Medium) and "Your journey, your way.". The app bar
+    is the status bar's height only.
+  - **Identity card**: "Your companion", the hero centred in a 158 × 158
+    box (the `Hero` to the picker kept, tag `avatarHeroTag`), "Change your
+    avatar ›"; under a rule, "Your name", the name and "Edit".
+  - **N8, the name in place**: Edit opens the field (focused, starting
+    from the saved name), Save and Cancel in the same card. Save is off for
+    an empty or blank name (`_canSaveProfile`, unchanged), as is the
+    keyboard's Done. Cancel puts the saved name back and returns the focus
+    to Edit. No length limit; a long name wraps. UI state only.
+  - **Medal collection (Q7)**: a horizontal strip with no card, disc or
+    fill behind the medals (78 pt discs in 92 pt slots, 16 pt apart). **The
+    running month first, then the finished months newest to oldest, the
+    Welcome badge last. This replaces N34** (Welcome first, then oldest to
+    newest): the owner's Q7 decision (2026-10-05), so the month being
+    climbed is where the eye starts and the history reads back in time.
+    The running month without a tier shows its theme's Bronze at **.38**
+    opacity (`MonthlyMedalCollection.runningFade`; other unearned medals
+    keep .5); its label and "In progress" are not faded. "N earned" beside
+    the title: the Welcome badge and every month with a tier, the running
+    month included once it has one.
+  - **N10, a medal's detail**: `showMedalDetail` kept, now a card: a close
+    button, the medal at 156 pt, the month (or "Welcome"), "Earned" / "Not
+    earned yet" with an icon, then the theme and tier, steps and points,
+    and for the running month the next medal ("Reach T points to earn X."
+    and, in bold, "N points to go."). **240 ms**: the card fades in
+    (`easeOut`) and the medal grows from .5 (`easeOut`); with reduce motion
+    it only fades. The focus moves to the close button and comes back to
+    the medal that opened it. A tap outside closes it.
+  - **N9, the progress card**, its own card under the strip: "‹Month›
+    progress", the theme and active days, the points in an orange label,
+    "Next medal ‹Tier›" with "score / threshold pts" and the bar towards
+    it, the line under it, the three thresholds with their tier dots, and
+    "Monthly total: score / max points". Every number from
+    `MonthlyMedalRules` (`nextTier`, `threshold`, `maxScore`) and
+    `MonthlyMedalProgress`; no rule added. Four states:
+    - before Bronze: "N points to your first monthly medal";
+    - Bronze: "Bronze earned · N points to Silver";
+    - Silver: "Silver earned · N points to Gold";
+    - Gold: "Top medal Gold", "score / max pts", a full bar and "Gold
+      earned. That's this month's top medal." No count is ever negative
+      (`nextTier` is always above the score; tested for two months).
+    It replaces the shelf's "This month" bar (N33, N38).
+  - **Appearance** is a card: "Theme" and "Text size" with icons, the
+    Batch 2 segments, and "A little practice, every day.". Inside the card
+    the theme control is 34 pt narrower, and at 320 pt "System" broke
+    mid-word beside its icon; the icons now show only while the longest
+    label fits beside one (measured with the real font: none at 320 pt,
+    kept at 390 and 430 pt).
+  - **App information**: Data and Credits in a card, each a 64 pt link row
+    with a 34 pt icon tile, opening their screens as before. The Developer
+    section and the Debug row are unchanged (debug builds only).
+  - Not built (mockup preview tools): the collection picker and the sample
+    past months.
+- **[Copy] Old → new**
+  - Profile title: the app bar "Profile" → the page title "Profile"; new
+    "Your journey, your way.".
+  - The section title "Profile" and the label "Avatar" → gone; new "Your
+    companion".
+  - "Change avatar" → "Change your avatar".
+  - "Name" (label) → "Your name"; new "Edit", "Cancel". "Save", "Saving…"
+    and the field's hint "Your name" are unchanged.
+  - Snackbar "Profile saved." → "Name saved".
+  - "Your medals. Tap one to see its month." / "Your medals will appear
+    here once earned." → gone; new "N earned".
+  - The bar's "This month", "N points", "‹Tier›" / "T" and "‹Theme› ·
+    N / M points · N active days" → the progress card's "‹Month›
+    progress", "‹Theme› · N active day(s)", "N" + "points" (or "point"),
+    "Next medal ‹Tier›" / "Top medal Gold", "N / T pts", the four lines
+    above, "‹Tier›" + "T pts", "Monthly total: N / M points". Its
+    semantics label begins "‹Month› progress" instead of "This month".
+  - Medal detail: the month as the title, then the theme · tier · steps ·
+    points lines → title, new "Earned" / "Not earned yet", "‹Theme› ·
+    ‹Tier› medal[ · in progress]", "N / D steps · N points", new "Reach T
+    points to earn ‹Tier›." and "N points to go."; "No medal yet · in
+    progress" → the status line. Welcome: "Welcome to the climb" →
+    "Welcome", new "The beginning of your journey."; "Earned in ‹Month
+    Year›" unchanged; its "Not earned yet" line → the status line. New:
+    the close button's "Close" tooltip.
+  - New: "Theme", "A little practice, every day.", "App information".
+  - Unchanged: "Medal collection", "In progress", the slot labels ("Oct
+    2026", "Welcome"), "Appearance", "Text size", the segment labels,
+    "Data", "Credits", "Retry medal history", the slots' semantics labels.
+- **[Deliberate departures from the mockup]**
+  - Cards are the theme's `Card` (Q2: border token and elevation), not the
+    mockup's CSS shadow; the name field is the app's input (radius 18, the
+    Q3 edge), not the mockup's 12 pt tile field.
+  - The running month's faded medal is also desaturated (N10's fade),
+    not only at .38.
+  - The detail is a centred card, not a sheet placed near the medal.
+  - "Name saved" is the app's snackbar, not a line in the card.
+  - The tier dots use the app's tier colours (`medal_tier_color.dart`).
+  - The small 11–12 pt meta text scales with Small / Medium / Large.
+  - The theme segments lose their icons where a label would break.
+  - The progress lines after Bronze ("‹Tier› earned · N points to …") and
+    at Gold are proposals: the mockup shows only the before-Bronze state.
+  - The tab slide has no edge shadow.
+- **[Tests]** `flutter analyze` clean; **1,612 passed, 0 failed** (1,576
+  after Batch 6).
+  - **New:** `tab_slide_switcher_test.dart` (9: the route values, both
+    directions with positions at 250 ms, State and scroll kept, reduce
+    motion, a second switch mid-slide, swallowed taps, the nav bar still);
+    `profile_layout_test.dart` (18: the header style, the identity card and
+    its Hero, N8 Save / Cancel / empty / blank / a long name, the medals
+    from real data, the cards and the Data and Credits rows, 320 / 390 /
+    430 pt × Large × light and dark with a long name and the editor open,
+    clearing the nav bar at three widths); `profile_theme_segments_test.dart`
+    (5, real font); in `monthly_medal_collection_test.dart`: Q7's order,
+    no background, the .38 fade with full-strength text, `earnedCount`,
+    240 ms and reduce motion, focus in and back, the running month's
+    detail before Bronze / past Bronze / at Gold, the progress card's four
+    states for two months (thresholds from the rule, no negative), its
+    head and orange label, and its place under the strip;
+    `avatar_tile_test.dart` (the `groundShadow` flag).
+  - **Changed, with the reason:**
+    - `tab_fade_through_test.dart` → `tab_slide_switcher_test.dart`: the
+      transition it tested is replaced (A2).
+    - `home_screen_test.dart`, the hero backlight test: light mode has no
+      backlight now (A1); it checks the single ground shadow and the
+      avatar's ellipse being off there, dark as before.
+    - `monthly_medal_collection_test.dart`: N34's order test → Q7's; the
+      caption checks removed (the caption is gone); `shelf().first/last`
+      swapped where the order moved Welcome to the end; the detail lines
+      updated to the new copy; the N33 / N38 bar tests replaced by the
+      progress card's; "fits 320 pt" now checks one scrolling row.
+    - `settings_screen_test.dart`: five tests open Edit before using the
+      name field (it is behind Edit now; the assertions are unchanged);
+      the empty-collection caption → "0 earned"; the medal race test finds
+      the score by "Monthly total: …" instead of the old bar line; the
+      avatar round-trip test checks the closed name row instead of a Save
+      button that is no longer on screen; the section order test uses the
+      new labels and includes the progress card.
+    - `debug_sample_collection_test.dart`: the running month's points are
+      found on the progress card ("Monthly total: …") instead of the bar's
+      "N points".
+  - Not a test change: the nav bar's own row overflows by 4 pt at 320 pt
+    with Large text **in the test font** (wider than Nunito Sans), so
+    Profile's overflow sweep runs without the shell; the real-font renders
+    at 320 pt Large show no overflow.
+- **[Renders]** `tool/design_measure/v120/` (README):
+  `docs/design/1.2.0/batch7/profile_390_light_dark_detail_edit.jpg`.
+- **[Not measured]** On a device:
+  - the light hero's shadow strength;
+  - the tab slide's feel (500 ms, as Premium's push), a quick second tap,
+    and that each tab's scroll position survives;
+  - Profile's cards, the 158 pt hero and its flight to the picker and
+    back, the name editor with the keyboard, the strip's scrolling, the
+    medal detail with and without Reduce Motion;
+  - on Home in light mode, the end of the flight back from the picker: the
+    flying avatar brings its own ellipse and lands on the hero's ground
+    shadow, so two shadows may show for a moment.
+
+## 2026-10-05 (1.2.0 redesign — Batch 8: owner device feedback on Batch 7; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 7 on an iPhone 14
+Plus** and asked for five corrections, each in its own commit. No new
+screen. State, routing, premium/quota checks, AI/proxy calls, the storage
+schema, analytics event definitions and medal/score math are unchanged;
+the question screen and Topic Practice are not touched.
+
+- **[1] The nav bar rose with the keyboard** (editing the name on Profile).
+  - **Cause:** not the shell reading `viewInsets`. app.dart wrapped the
+    shell in a `Scaffold` with the default `resizeToAvoidBottomInset:
+    true`; with the keyboard open it shrank its body, the shell's `Stack`,
+    by the keyboard's height, and the bar, `Positioned` at the Stack's
+    bottom, moved up with it.
+  - **Fix, in the shell only:** `FloatingNavShell` is now its own root
+    `Scaffold` with `resizeToAvoidBottomInset: false` (app.dart's Scaffold
+    is gone). The bar keeps its place and the keyboard covers it. The
+    inset still reaches each tab's own Scaffold (`BrandScaffold`), which
+    resizes its list, so a focused field on any tab stays in view (Home and
+    Review have no text field today). The name field's scroll padding
+    (88 pt below) also brings the Cancel row into view.
+  - Tests: Profile with a 336 pt keyboard inset (the bar's rect unchanged,
+    under the keyboard's top; the field, Save and Cancel above it); the
+    shell alone with a field in a tab.
+- **[2] The medal detail is back to its pre-Batch 7 form.**
+  `showMedalDetail` is as at `efa5b54`: the medal at 144 pt over the
+  darkened screen, the month, theme, outcome and steps · points lines (the
+  Welcome badge: "Welcome to the climb" and "Earned in …" / "Not earned
+  yet"), a tap anywhere closes it, 200 ms, .8 → 1 `easeOut`, fade only with
+  reduce motion. Batch 7's card, its texts ("Earned" / "Not earned yet" as
+  a status, "Reach T points to earn …", "N points to go.", "The beginning
+  of your journey.", the close button) and its focus handling are removed.
+  The detail's unearned medal is again at .5. **Kept from Batch 7:** the
+  strip (no background, Q7's order, the running month at .38), "N earned"
+  and the separate progress card.
+  - **Why:** the owner preferred the earlier detail on the device.
+  - Tests: Batch 7's detail tests (240 ms, focus, the new lines) are
+    replaced by the pre-Batch 7 ones, as written at `efa5b54`.
+- **[3] Appearance segments: the selected fill covers its cell.**
+  - **Cause:** the control was a tile with a 4 pt inset around a
+    `SegmentedButton` whose segments used Material's padded tap target:
+    each cell was 48 pt tall, the segment painted 40 pt in it, so the blue
+    box sat inside a larger cell.
+  - **Fix (`AppSegmentedButton`, so Theme and Text size alike):** the
+    control is the tile itself (radius 14, no inset); the segments are at
+    least 48 pt tall, set through the density (+8 pt; `SegmentedButton`
+    does not pass `minimumSize` to its segments) with the tap target
+    shrink-wrapped; the cells sit edge to edge. The selected fill meets
+    the tile's edges and takes its 14 pt corners at either end; a middle
+    fill has square corners (`SegmentedButton` clips rectangles to the
+    control's shape). The 320 pt rule (no theme icons where a label would
+    break) is kept, now measured against a third of the full width.
+  - Renders, light and dark, before / after:
+    `docs/design/1.2.0/batch8/segments_390_before_after_light_dark.jpg`.
+  - Test: every segment, the selected one included, is the control's full
+    height and a third of its width, in both themes.
+- **[4] No navy edge on non-navy buttons in dark mode.** The theme's filled
+  button carries the #5C7CFA edge (Q1) in dark mode; any `FilledButton`
+  with another fill inherited it unless it turned it off.
+  - **Scan** (every `FilledButton` in `lib/`):
+    - had the edge, now none: Data's "Reset progress data" and the confirm
+      button of `DestructiveDialogActions` (the reset confirmation, and
+      the question screens' leave dialog, which use the shared widget; no
+      question-screen file changed). Both use the new
+      `destructiveButtonStyle()` in `theme.dart`;
+    - already none: Review's orange "See Premium" (Batch 5);
+    - the navy fill, the edge correct: all the others, among them Home's
+      Daily Test button, Welcome's "Get started", Onboarding's "Continue",
+      the profile Save, Premium, results, the debug panel's tonal button
+      (the theme's navy too). Onboarding's selected goal and Review's used
+      card are navy surfaces, not buttons, and keep their deliberate edge.
+  - Test: `button_edge_test.dart`: in dark mode only navy-filled buttons
+    have the edge (the theme's button, the dialog's Delete, the orange See
+    Premium, Data's reset), none in light; checked to fail without the fix.
+- **[5] Tab switches fade through again.** `TabFadeThrough` over the
+  `IndexedStack` and its tests are restored as at `efa5b54` (220 ms
+  `easeOut`, the new tab fades in from 0.98, the old one goes at once;
+  immediate with reduce motion; the nav bar's selection at once; every
+  switch: the nav bar, Home's call-out, Review's "Go to Daily Test").
+  `TabSlideSwitcher` and its tests are removed, and the comments that
+  named it say `IndexedStack` again.
+  - **Why:** on the device the owner found the 500 ms horizontal slide
+    exaggerated for tabs.
+- **[Copy]** Back to the pre-Batch 7 detail texts (item 2); nothing else.
+- **[Tests]** `flutter analyze` clean; **1,609 passed, 0 failed** (1,612
+  after Batch 7).
+  - New: the keyboard tests (2), the segment cell test (1),
+    `button_edge_test.dart` (2).
+  - Restored as at `efa5b54`: `tab_fade_through_test.dart` (4) and the
+    medal detail tests; removed: `tab_slide_switcher_test.dart` (9) and
+    Batch 7's detail tests.
+  - Changed: none of the behaviour tests.
+  - A lint fix in the keyboard tests went in its own commit.
+- **[Not measured]** On a device:
+  - the name editor with the keyboard: the bar hidden, the field and its
+    buttons in view, the page after the keyboard closes;
+  - the segments' look in both themes;
+  - "Reset progress data" and the reset dialog in dark mode;
+  - the tab fade (as approved after Batch 6);
+  - the medal detail as before Batch 7.
+
+## 2026-10-05 (1.2.0 redesign — Batch 9: the Review card's slide, Topic Practice; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner approved Batch 7 and its five
+corrections on the device** (the keyboard and nav bar, the earlier medal
+detail, the segments, the destructive button, the tab fade-through).
+
+State, routing, premium/quota checks, AI/proxy calls, the storage schema,
+analytics event definitions and gamification math are unchanged. The
+question screen files are not touched.
+
+- **[A] Home's "Go to Review" card slides; every other switch fades**
+  (owner decision, made precise after Batch 8: the horizontal slide only
+  for that card; the nav bar and Review's "Go to Daily Test" keep the
+  220 ms fade-through).
+  - **One switcher, two looks.** `TabSwitcher` replaces the
+    `IndexedStack` + `TabFadeThrough` pair and is built on Batch 7's
+    `TabSlideSwitcher` (`29d9ef7`): each tab in a fixed keyed slot,
+    `Offstage` when not in view, so State, scroll position and data are
+    kept as in an `IndexedStack`. The look is chosen per switch:
+    `_switchTab(index, transition:)` in app.dart, fade by default; only
+    Home's `onGoToReview` passes `TabTransition.slide`.
+  - **Fade** (unchanged from Batch 6): 220 ms `easeOut`, the new tab from
+    0.98 scale, the old tab at once.
+  - **Slide: 320 ms, `Curves.easeOutCubic`** (Batch 7's was 500 ms with
+    the iOS route's curves, which the owner found exaggerated). Both tabs
+    move a full width together: Home leaves to the left, Review comes in
+    from the right. The nav bar does not move and shows Review at once;
+    taps on Home while it leaves are swallowed.
+  - A nav bar tap during the slide stops it and fades to the tab tapped.
+    Reduce motion: every switch immediate. No edge swipe back. Analytics
+    and routing unchanged (a tab switch fires no event, as before).
+  - Tests (`tab_switcher_test.dart`, grown from Batch 6's
+    `tab_fade_through_test.dart`, renamed with the widget): the values;
+    the fade (opacity mid-way, the old tab hidden at once, no sideways
+    move); the slide (both positions at 160 ms from the curve); State and
+    scroll kept through both; reduce motion for both; a nav bar tap
+    mid-slide; swallowed taps; the bar still; and in the full app: the
+    nav bar → fade, Home's card → slide with Review coming in from the
+    right, Review's "Go to Daily Test" → fade.
+- **[B] Topic Practice matches the mockup** (`topic_practice_screen.dart`;
+  the owner approved the screen on 2026-10-05). Presentation only:
+  `launchPracticeSet` (picker, consent, quota, generation), the loading
+  state and the stats read on return are as they were.
+  - **Header** in the page: Flutter's `BackButton` drawn as the mockup's
+    44 pt bordered tile (radius 14), the "Premium access" label (brand
+    orange, onOrange text, a check, 11 / 800, radius 9), the title
+    "Topic Practice" (`headlineLarge`, 32 / 900 / 1.10 / −1.0 at Medium)
+    and "Choose a topic to work on.". The app bar is the status bar only;
+    no nav bar on this screen.
+  - **"Premium access" is a status, not a control** (N19): no tap
+    target, no paywall or lock on this screen. Who may open the screen is
+    decided before it opens (Home's guard), and `launchPracticeSet` still
+    checks entitlement and quota on every start.
+  - **The list:** `SectionTitle('Grammar topics')` with "N topics" from
+    `kTopics.length`; one card per `kTopics` entry, nothing hidden. A card
+    is one tap target: the 38 × 38 icon tile (subtle surface, radius 12,
+    the topic's own icon in the link colour), the title (`titleMedium`
+    17 / 800, −0.25), the description (13 / 400), the status (11 / 600)
+    and a link-coloured chevron; padding 15 × 17, radius 22, 12 apart.
+    Long text wraps; no ellipsis anywhere.
+  - **Status (N18, Q8):** "Not started yet" with no history, otherwise
+    `formatTopicStatsLine(practiced, weakSpotCount)`, as before. The
+    activity bar and its "Practice activity level" label are gone; no
+    score, percentage, streak or level.
+  - **Length picker:** the title "How many questions?" at the brief's 800
+    (was 600, `practice_length_picker.dart`); layout unchanged, the slider
+    and dial stay #B4C8FF in dark mode.
+  - No search or filter.
+- **[Copy] Old → new**
+  - App bar title "Topic Practice" → the page title "Topic Practice".
+  - New: "Choose a topic to work on.", "Premium access", "Grammar
+    topics", "N topics" (with "1 topic" for one).
+  - "Not started yet": same words, no longer italic. The stats line
+    ("N practiced · N weak spots") is unchanged.
+  - Removed: the activity bar's semantics label "Practice activity
+    level".
+  - Unchanged: the topic titles and descriptions, "Preparing your
+    questions…", "How many questions?".
+- **[Deliberate departures from the mockup]**
+  - The topic descriptions stay `kTopics`' own, not the mockup's shorter
+    lines: `proxy/src/topics.ts` mirrors them exactly and builds the AI
+    prompt from its copy, so changing the client's would break that mirror
+    and changing both would change the prompts.
+  - The back button is Flutter's `BackButton` (its "Back" tooltip and the
+    platform's back icon: a chevron on iOS), not the mockup's arrow: it is
+    the control the app's tests and assistive technology already know.
+  - "Grammar topics" is the app's `SectionTitle` (20 / 800), not the
+    mockup's 16.
+  - The status icon is an outline circle before the first practice and a
+    check circle after (the mockup shows only the first).
+  - The mockup's narrow-screen tweaks (a 35 pt tile, a 16 pt title) are
+    not applied; sizes follow the text size setting.
+  - No intermediate "Start practice" dialog: the mockup's dialog is a demo
+    link, as the brief says.
+  - The generating state is unchanged (a plain app bar over the loading
+    view).
+- **[Tests]** `flutter analyze` clean; **1,630 passed, 0 failed** (1,609
+  after Batch 8).
+  - New: `topic_practice_screen_test.dart` (13: the header's style; every
+    topic in order with the real count; both status states and no bar;
+    one tap target per card; a tap opens the existing length picker; no
+    paywall or lock, the label not tappable; stats read again after a
+    practice set; 320 / 390 / 430 pt × Large × light and dark with long
+    stats, no overflow or ellipsis); the picker title's weight;
+    `tab_switcher_test.dart` (above).
+  - Changed, with the reason:
+    - `tab_fade_through_test.dart` → `tab_switcher_test.dart`: the widget
+      it tested became `TabSwitcher`; its fade checks are kept, the slide
+      and wiring checks added.
+    - `practice_launch_consent_test.dart`, `practice_launch_daily_cap_test.dart`,
+      `practice_launch_free_tier_test.dart`: they tapped "the first topic
+      card" as `find.byType(InkWell).first`, which is now the back button;
+      they find the card by its key. Their assertions are unchanged.
+- **[Renders]** `docs/design/1.2.0/batch9/topics_390_light_dark_started.jpg`
+  (390 pt, light, dark, and light with two topics practised; real font).
+- **[Not measured]** On a device:
+  - the card's slide (320 ms) and a nav bar tap during it;
+  - Topic Practice in both themes, the back tile, the iOS swipe back,
+    long titles at Large text, the generating state;
+  - the length picker's title.
+
+## 2026-10-05 (1.2.0 additional screens — Batch 10: Question V2; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Package `docs/design/1.2.0-additional/`
+(`5caf517`), Batch 0 report `ebd9b6c`. The question screen files were
+opened for this batch only (the earlier "do not touch" rule is lifted for
+it).
+
+Unchanged: when answers are graded, the Skip rule, session lengths, the
+result screens, the daily free right, quota use, AI/proxy calls, the Daily
+Test's local grading, answer matching, analytics events and the storage
+schema. Home, Review, Profile and Topic Practice are not touched.
+
+- **[Product — owner] Decisions** (numbers from the Batch 0 report's §9):
+  - O1: no screen-only `muted` / `info` overrides; `warm` / `onWarm` are
+    added (`AppPalette`, no user yet).
+  - O4: autocorrect, suggestions and smart punctuation stay off; the
+    brief's "normal platform behaviour" covers Return, IME composing and
+    selection only.
+  - O5: the Daily Test's last button stays "Finish"; Topic Practice
+    "Submit".
+  - O6: a Topic Practice answer has at most 2,000 characters (the proxy's
+    `MAX_TEXT_LENGTH`); the count shows only past 1,800.
+  - O12: fill in the blank starts at one line, the other types at two;
+    every type wraps and grows.
+  - The primary action takes the mockup's colour.
+  - Recorded for later batches (not built): the onboarding name stays
+    required; the goal goes to analytics as `learning_goal` (option B);
+    redeem code deferred; the paywall's trial-eligibility fix belongs to
+    the Paywall batch (`roadmap.md`).
+- **[Engineering] The cause of the sideways scroll:** both answer
+  `TextField`s set no `maxLines`, so they were the default single line.
+  Now `keyboardType: multiline`, `textInputAction: newline`, `minLines` 1
+  or 2 by type, `maxLines: null` inside a bounded box.
+- **[Engineering] What changed.**
+  - `lib/widgets/question_view.dart` (new), shared by both screens:
+    - `AnswerDrafts`: one `TextEditingController` per question ID (as
+      before), plus one `FocusNode` and one answer `ScrollController` per
+      session, made once. The single answer field keeps its focus node and
+      only swaps its controller, so an open keyboard stays open on Next
+      and Back; the field's scroll offset is saved per ID and put back.
+    - `QuestionView`: the question card, "Your answer" with the keyboard
+      control, the answer field, laid out by a `CustomMultiChildLayout`:
+      the question gets its whole height while the answer keeps its
+      minimum lines; the answer grows into the rest and then scrolls
+      inside itself. A question that does not fit scrolls in its card,
+      with a visible scroll bar and a fade with a chevron. When the
+      answer's minimum would leave the question under 72 pt, the answer
+      starts at one line for every type. The page never scrolls.
+    - "Review answer" (or "Read full question" when the question does not
+      fit) appears while the answer has focus and only unfocuses it.
+  - `lib/widgets/question_app_bar.dart`: `QuestionHeader` (in the page,
+    not an app bar) replaces `QuestionAppBar`: Back, the title (17 / 900,
+    wraps), an optional subtitle, Close, over a 1 px `border` line.
+    `HeaderIconButton` is 44 × 44 (was 40), the card surface, radius 13;
+    with no callback it is drawn disabled at 40 % in the same place (was
+    invisible).
+  - `lib/widgets/practice_step_footer.dart`: a card-surface bar with a top
+    line; Skip a link-coloured `TextButton` (was an `OutlinedButton` 100
+    wide), at least 63 wide; the primary action brandOrange with onOrange
+    text at 900, no edge, 48 tall (was the navy theme button, 52); 10 pt
+    apart (was 12).
+  - `practice_screen.dart`, `daily_test_screen.dart`: a zero-height app
+    bar, the header, `QuestionView`, the footer. Back is disabled on the
+    first question and while submitting; a second tap on Submit/Finish
+    does nothing (`_submitting` / `_finishing` guards); Submit closes the
+    keyboard. The Daily Test shows the same header while loading or on an
+    error (was a separate close-only app bar).
+  - `lib/theme.dart`: `AppPalette.warm` / `onWarm`.
+- **[Colours on the question screen]**
+
+  | Element | Colour |
+  |---|---|
+  | Next / Submit / Finish | brandOrange `#FF7A1A` / `#FF8A3D`, text `#241200` (6.93 / 7.71:1), no edge |
+  | Disabled primary | `disabledFill` / `disabledLabel` (as every disabled button) |
+  | Skip, "Review answer", "Read full question", the type label | linkAndActive (`secondary`, `#0D3B8F` / `#B4C8FF`) |
+  | Counter pill | brandOrange, `#241200` text |
+  | Back / Close tiles | cardSurface, textPrimary icon |
+  | Answer edge | `inputBorder` (Q3) 1.5 pt; linkAndActive 2 pt while typing |
+  | Exit dialog | unchanged (`DestructiveDialogActions`) |
+
+- **[Copy] Old → new**
+  - New: "Your answer" (label), "Write your answer…" (placeholder, was
+    "Your answer"), "Review answer", "Read full question", the header
+    subtitle "Practice" (Topic Practice only).
+  - The counter "N / total" moved from under the app bar into the card.
+  - Unchanged: the type labels, "Skip", "Next", "Submit", "Finish", the
+    exit dialogs, "Reviewing your answers…", "Preparing today's test…".
+- **[Deliberate departures from the mockup]**
+  - **Subtitle "Practice", not "Topic Practice":** the screen is also a
+    free user's daily weak-spot practice, and the paywall tells them Topic
+    Practice is premium. The Daily Test has no subtitle.
+  - **No "Rewrite" label:** the data has three types; their labels stay.
+  - **The answer edge is Q3's `inputBorder`** (3:1), not the mockup's
+    `border` line (1.41:1).
+  - **The answer line is 44 pt tall** (its control's target) with gaps of
+    4 and 0 instead of the mockup's 29 pt line with 12 and 4: about the
+    same visible spacing.
+  - **The keyboard control shows only while typing** (the mockup always
+    shows it): without the keyboard it would do nothing.
+  - **Autocapitalisation stays off** (the mockup's textarea has
+    `autocapitalize="sentences"`), with O4.
+  - **The exit dialog's copy is unchanged** ("Your progress will be
+    lost."), not the mockup's "You can keep editing…".
+  - Next is 48 tall (the mockup's 45, per the brief).
+- **[Tests]** `flutter analyze` clean; **1,659 passed, 0 failed** (1,630
+  after Batch 9).
+  - New: `test/question_v2_test.dart` (19 definitions, 26 cases; real
+    font): multiline for every type with its minimum lines; a long answer
+    wraps with no horizontal scroll; growth, shrinking and inner scrolling
+    with the question and actions in place; Return makes no submission and
+    a line break stays; empty/whitespace keeps Next disabled; emoji and
+    line breaks reach scoring as typed; the 2,000 cap and the counter past
+    1,800; text, selection and scroll offset across Next → Back → Next;
+    Back disabled on question 1 and never leaving; no scoring request from
+    moving, focus or the keyboard control; "Review answer"; a short
+    question whole at 390 × 844 with a 336 pt keyboard; a long question at
+    320 × 568, Large, 260 pt keyboard: scrolls in its card, the fade, "Read
+    full question" closes the keyboard; 320 / 360 / 390 / 430 pt × Large ×
+    light/dark with the keyboard open: Skip, Next and the field above the
+    keyboard, no exception; no second scoring request; answers kept after
+    a failed submission; the Daily Test's field, "Finish", no read on
+    moving, no double finish. Also 2 colour tests in
+    `practice_step_footer_test` and a wrap test in
+    `question_app_bar_test`.
+  - Behaviour tests: no assertion changed. Finder-only changes (Skip is
+    now a `TextButton`, `find.widgetWithText(OutlinedButton, 'Skip')` →
+    `TextButton`): `daily_test_screen_test` (2), `first_launch_flow_test`
+    (4), `first_launch_climb_test` (3), `practice_screen_keyboard_test`
+    (1), `practice_step_footer_test` (5).
+  - Look tests updated, with the reason:
+    - `practice_step_footer_test`: "Skip is an outlined button" → a text
+      button; "52 tall, 12 apart" → 48 and 10, Skip at least 63 wide; the
+      disabled pairing is read from the footer's own style (it no longer
+      uses the theme's navy button).
+    - `question_app_bar_test`, rewritten for `QuestionHeader`: the title's
+      centre on question 1 and 2 (kept); "Back reserves its 40 × 40
+      footprint when hidden" → Back in place, disabled, with its
+      semantics; "40 × 40" → 44 × 44; "only the N / total counter" → no
+      counter in the header (it is in the card); the callbacks (kept).
+  - The existing keyboard tests (`practice_screen_keyboard_test`) pass
+    unchanged, including "no scrollable ancestor" and "the question's
+    position is unaffected by the keyboard".
+- **[Renders]** Real font, `tool/design_measure/v120/question_render_test.dart`
+  (the keyboard drawn as a grey box): `docs/design/1.2.0-additional/batch10/`.
+  Measured: the rewrite example is whole (0 pt hidden of 177) at 390 × 844
+  with a 291 or 336 pt keyboard; at 375 × 667 with 260 pt, 97 of 177 pt
+  scroll in the card; the long question at 360 × 740 with 300 pt, 199 of
+  312; at 320 × 568 Large with 260 pt, 347 of 378, the answer at one line
+  (51 pt).
+- **[Acceptance checklist, "Soru V2"]** T = verified by an automated test;
+  D = waits for the device; N/A = cannot apply.
+  - Real system keyboard, no mock keyboard — T (no keyboard widget in the
+    app); the real keyboard itself D.
+  - Rewrite answer wraps, no single line/horizontal scroll — T.
+  - Starts at 2 lines, grows, shrinks — T (fill in the blank at 1, O12).
+  - Scrolls inside past the limit; question and actions stay — T.
+  - Selecting/correcting the first word, copy/paste, editing the middle —
+    D.
+  - Return adds a line, no Next/Submit — T; IME composing — D.
+  - Short/medium question whole with a standard keyboard — T at 390 × 844
+    with 336 pt (and a render); the real keyboard height D.
+  - Small screen + long question: readable, scrollable, "Read full
+    question", no overflow/ellipsis — T.
+  - Done/Review answer closes the keyboard and keeps the answer — T for
+    "Review answer"; the keyboard's own Done key D.
+  - Next → Back → Next keeps answers by ID — T (with selection and
+    scroll).
+  - Back disabled on question 1, never leaves the session — T.
+  - × separate, confirmation kept — T (existing dialog tests).
+  - Empty, whitespace, very long, line breaks, emoji — T.
+  - Skip, Submit/Finish on the last, session lengths — T (existing).
+  - No extra AI request, points or quota from moving or focus — T.
+  - Loading/failure: no double submission, text kept — T.
+  - Suggestion bar, keyboard heights, large text — T at fixed heights;
+    the real suggestion bar D; **rotation N/A** (portrait only).
+  - Android keyboard — **N/A** (iOS only).
+- **[Not measured]** On a device (iPhone 14 Plus, and a small phone if
+  available):
+  - the real keyboard's height with autocorrect off (is the suggestion bar
+    there?), and whether the rewrite question is whole above it;
+  - typing a three-line correction, moving the caret to the first word,
+    selecting and pasting, deleting back to one line;
+  - the Turkish keyboard's composing and the emoji keyboard;
+  - Next and Back with the keyboard open: it stays open, the caret where
+    it was;
+  - "Review answer" / "Read full question", the question's fade and
+    scroll bar;
+  - the orange Next and the disabled Back in both themes;
+  - Large text at 320 pt (or the smallest phone available).
+
+## 2026-10-05 (1.2.0 additional screens — Batch 11: two-step onboarding; a Question V2 revision; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner approved Batch 10 (Question V2)
+on the device.**
+
+Unchanged: routing, premium/quota checks, AI/proxy calls, the AI
+permission mechanism, the Day-0 flow (the bundled set before the profile,
+the climb, the first-day paywall, `onboarding_completed`'s moment, the
+one-time flags), the existing analytics events, the storage schema (one
+new stored value). Welcome, Home, Review and Topic Practice are not
+touched; Profile only gets the name limit.
+
+- **[A] Question V2 revision (owner).** A capital at the start of each
+  sentence (`TextCapitalization.sentences`) for sentence writing and error
+  correction, on both screens; fill in the blank stays without (its word
+  usually goes into the middle of a sentence). Autocorrect, suggestions and
+  smart punctuation stay off (O4). **Grading ignores case already:** the
+  Daily Test's `normalizeAnswer` lowercases (`answer_matching.dart:21`,
+  `answer_matching_test` "matching is case-insensitive"); Topic Practice
+  is graded by the model, and a capital at a sentence's start is correct
+  English.
+- **[Product — owner] Decisions.**
+  - **The name stays required.** The brief's "the name is optional" is not
+    applied: Continue is disabled while the name is empty or only spaces;
+    Profile still refuses an empty name.
+  - O2: a name has at most 40 characters, in onboarding and Profile, with
+    no visible counter.
+  - O7: Welcome is unchanged; the two steps follow it.
+  - **The goal goes to analytics** (Batch 0 report §3d, option B).
+  - O1: no screen-only `muted` / `info`.
+- **[Why the goal is sent now]** The question personalizes nothing. Until
+  now it was stored on the device and read by nothing, so it told nobody
+  anything; the package's copy ("Your answer helps us decide what to
+  improve next") would have been untrue. The owner chose to send it as one
+  closed-vocabulary user property, `learning_goal` = `exam_prep` / `work`
+  / `general` / `skipped`, set once as onboarding completes and before
+  `onboarding_completed`. No new event or provider; the name and free
+  text are never sent. Installs that finished onboarding earlier are not
+  back-filled: their `general` cannot be told apart from a choice.
+- **[Engineering] What changed.**
+  - `learning_goal.dart`: `learningGoalSkipped` (`'skipped'`), a fourth
+    stored value in the existing `learning_goal TEXT NOT NULL` column (no
+    schema change, no migration); `fromStored` reads it as null; anything
+    else unknown keeps `general`, as builds before 1.2.0 will read
+    `skipped`. Labels: "General fluency" → "Everyday confidence" (stored
+    value still `general`), and the descriptions follow the mockup.
+  - `user_profile.dart`: `learningGoal` is nullable (null = skipped);
+    `maxNameLength = 40`.
+  - `analytics_service.dart`: `setLearningGoalProperty`; set in
+    `first_launch_flow.dart` right after the profile is saved, before
+    `onboardingCompleted()`.
+  - `avatar_carousel.dart`: optional `neighborScale` / `neighborOpacity`
+    (defaults unchanged, so Profile's picker does not move) and an
+    optional Previous/Next line with the caption "Name · N / 16"
+    (44 pt targets, 220 ms ease-out, none with reduce motion).
+  - `onboarding_screen.dart`: two steps inside the one screen, so
+    `FirstLaunchFlow` keeps its single onboarding step and nothing is
+    saved before the end (a back gesture on step 2 goes to step 1).
+    - Step 1: the wordmark and "Step 1 of 2" with a two-part bar; the
+      heading; the carousel (150 pt tiles, .72 / .48 neighbours, a warm
+      glow behind, the Previous/Next line); the name card (radius 22,
+      padding 19, 15 under 360 pt; field ≥ 52, radius 13, 40 characters,
+      no counter, the Q3 edge); Continue.
+    - Step 2: Back and "Step 2 of 2"; the companion at 48 pt with "One more
+      thing, {name}."; the heading; three radio cards (radius 21, 12
+      apart, ≥ 91 tall, 40 pt icon tile; selected: a 2 pt link-coloured
+      edge on the info surface); the privacy line and "How AI feedback
+      uses your answers"; Start my first test (disabled until a goal is
+      chosen); Skip goal & start.
+    - Main actions: brandOrange / onOrange, ≥ 54 tall, radius 17, 900, no
+      edge; disabled: the app's pairing. Title 29 / 900 at Medium (the
+      theme's 26 scaled, so it follows the text size); text wraps, no
+      ellipsis.
+    - "Your data & AI": a dialog (focus moves in, "Got it" autofocused,
+      the page behind blocked, focus back on the link when it closes).
+      Information only: it writes no AI permission and logs no
+      `ai_consent_result`; Topic Practice still asks on its own
+      (`ai_consent_screen.dart`).
+  - `settings_screen.dart`: the name field takes the 40-character limit.
+- **[Copy] Old → new**
+  - Onboarding title: "Let's get started" → step titles "Meet your learning
+    companion." / "What brings you to English?", with "A little practice.
+    Every day." / "Help shape GrammarLens" above them.
+  - New: "Five questions a day. A small step forward, together." ("Five"
+    from `DailyTestSet.questionCount`), "Swipe to choose · Change it later
+    in Profile", "A nickname is fine. It stays on this device.", "One more
+    thing, {name}.", "Start my first test", "Skip goal & start", "How AI
+    feedback uses your answers", the sheet's four rows, "Step N of 2".
+  - "Why are you learning English?" / "This helps us suggest where to
+    start." → "What brings you to English?" / "Choose what matters most to
+    you. Your answer helps us decide what to improve next."
+  - Privacy line: "Your name and goal stay on this device. If you use Topic
+    Practice, your answers are sent to Anthropic (Claude) to give you
+    feedback, and we ask first. Usage and crash data is collected." → "Your
+    name stays on this device. Your goal is sent with app usage data, never
+    with your name. Usage and crash data is collected." The AI sentence
+    moved into "Your data & AI": "If you use Topic Practice, your answers
+    are sent to Anthropic (Claude) to give you feedback. We ask for your
+    permission first."; and "Your learning goal: Sent with app usage data,
+    never with your name, to help us decide what to improve. It does not
+    personalize your lessons."
+  - AI permission screen, "What is never sent": "Your name, your learning
+    goal or your avatar. Daily Test answers stay on your device." → "Your
+    name or your avatar. Daily Test answers stay on your device." (The
+    goal never goes to Anthropic either; the line was removed because it
+    reads as "never sent anywhere".)
+  - The goal "General fluency" / "Everyday confidence, no specific goal" →
+    "Everyday confidence" / "General fluency, no specific goal"; "IELTS,
+    TOEFL, or another English exam" and "Emails, meetings, and
+    professional English" lose their serial commas.
+- **[Deliberate departures from the mockup]**
+  - The name is required: no "Optional" tag, no "You can continue without
+    a name."
+  - The wordmark is one colour: the mockup's orange "Lens" is 2.27:1 on
+    the page, under 3:1 even for large text.
+  - "Anonymous" is not used: Firebase links the property to its app
+    instance id, so the copy says "never with your name" instead.
+  - The name field's edge is Q3's `inputBorder`, not the mockup's `line`.
+  - The caption counts all 16 companions ("Fox · 14 / 16"), not the
+    mockup's three; the carousel loops as before.
+  - The companion tile is the app's square avatar art at 150 pt, not a
+    150 × 165 frame.
+  - The radio mark is a Material icon (the app's icon family), not a
+    browser radio.
+  - "Got it" is the app's navy button (an information action, not the
+    step's main action).
+  - The privacy line keeps the facts that are true now (above), not the
+    mockup's two short sentences.
+- **[Tests]** `flutter analyze` clean; **1,687 passed, 0 failed** (1,659
+  after Batch 10).
+  - New (28 cases):
+    - `question_v2_test`: capitals by type with autocorrect off (1); the
+      Daily Test case also checks capitalisation.
+    - `onboarding_screen_test`, rewritten (13 definitions, 20 cases, real
+      font): the carousel above the name, no Done; every avatar reached
+      with Next, the caption, the chosen ID saved; a swipe changes the
+      saved avatar; an untouched carousel still saves one; the name
+      required (empty, spaces) and Continue orange, ≥ 54, radius 17; trim,
+      Unicode, 40 characters and no counter; the keyboard: field and
+      Continue above it; step 2 copy (the old line gone, no "suggest");
+      no default goal, Start disabled until chosen, checked semantics,
+      cards ≥ 91; Skip → null / `skipped`; Back keeps name, companion and
+      goal; the privacy line and the sheet's facts; 320 / 360 / 390 /
+      430 pt × Large × light/dark, keyboard open on step 1, no overflow or
+      ellipsis.
+    - `first_launch_flow_test` (7): `learning_goal` for each of the four
+      values, set once, with `onboarding_completed` once and no name in
+      any event parameter or user property; a chosen goal then Skip stores
+      `skipped`; "Got it" writes no permission and logs no
+      `ai_consent_result`, focus in and back; leaving half way saves no
+      profile, logs nothing, and the next launch starts at Welcome.
+    - `analytics_service_test` (1): the four values, nothing else written.
+    - `user_profile_test` (3): `skipped` round trip; every goal keeps its
+      stored value; unknown or missing reads `general`.
+  - Changed, with the reason:
+    - `first_launch_flow_test`, `first_launch_climb_test`: the onboarding
+      helper takes the second step (Continue, the goal, "Start my first
+      test"); their assertions are unchanged, so the Day-0 order, climb,
+      paywall and zoom are checked as before.
+    - `widget_test`: "requires both a name and a goal before continuing" →
+      a name for Continue, then a goal for Start (Skip present); the
+      privacy-note test goes to step 2 first.
+    - `onboarding_screen_test`: its five tests are kept in the rewrite
+      except the privacy note's old wording.
+    - `ai_consent_screen_test`: the "What is never sent" text, and no
+      "learning goal" on the screen.
+    - `profile_layout_test`: "no length limit" → at most 40, no counter,
+      the capped name kept whole and wrapping.
+    - `analytics_service_test`'s Firebase-limits test also sets
+      `learning_goal`.
+    - `app_resume_test` (1): a finished onboarding with the goal skipped
+      opens Home, not Welcome, and a launch sets no `learning_goal`.
+  - "Completed onboarding is not shown again" is the existing rule (a
+    saved profile is the gate, `user_profile.dart`), now also checked with
+    a skipped goal (above).
+- **[Renders]** `tool/design_measure/v120/onboarding_render_test.dart` →
+  `docs/design/1.2.0-additional/batch11/`: both steps at 390 pt, step 1
+  with a 336 pt keyboard, the sheet, and 320 pt at Large (step 1 with a
+  260 pt keyboard, step 2), light and dark, real font.
+- **[Acceptance checklist, "Onboarding"]** T = automated test; D = waits
+  for the device; not applied = owner decision.
+  - Every companion swipeable, the centre larger, the ID saved — T.
+  - Empty name → Continue works; nameless greeting — **not applied** (the
+    name is required, owner); Unicode names kept — T.
+  - Name keyboard: field and Continue reachable — T (fixed insets) + D.
+  - Back between steps keeps name/companion/goal — T.
+  - No default goal; skipping stored separately — T.
+  - No personalisation promise — T.
+  - The research data flow checked; the privacy text matches — done in
+    the app (T); the privacy policy and App Privacy are the owner's tasks
+    (roadmap, 1.2.0 pre-release checklist).
+  - No new telemetry provider; no name or answer sent — T.
+  - The AI sheet does not replace the permission — T.
+  - Completion and reopening: the onboarding records right — T.
+  - Test already done: no new right or session — T (existing Day-0 tests;
+    the flow is unchanged).
+- **[Not measured]** On a device:
+  - the carousel at 150 pt: the drag, the snap, the Previous/Next move and
+    the haptic; the warm glow in both themes;
+  - typing the name with the keyboard open (the question and Continue in
+    view), a Turkish name;
+  - step 2's cards in both themes, the selected edge, Skip;
+  - the sheet: opening, "Got it", where the focus lands;
+  - the whole first launch once more: Welcome → two steps → the Day-0
+    test → the climb → the first-day paywall;
+  - Large text at the smallest phone available;
+  - the sentence capital in Practice and the Daily Test, and none in fill
+    in the blank.
+
+## 2026-10-05 (1.2.0 additional screens — Batch 12: the paywall and the trial-eligibility fix; onboarding revisions; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner saw Batch 11 on the device** and
+asked for two onboarding changes (part A).
+
+Unchanged: the subscription service's purchase and entitlement logic
+(only an eligibility query and a `pending` outcome added), quota, AI/proxy
+calls, the storage schema, analytics event definitions, routing, the Day-0
+paywall and its one-time flag, `premium_offer_card` and the Home/Review
+Premium entries. No other screen changes.
+
+- **[A] Onboarding (owner, after the device check).**
+  1. The caption under the companion is its name only ("Fox", was "Fox ·
+     14 / 16"): the carousel loops, so a position meant nothing. Screen
+     readers hear "Fox, selected".
+  2. On step 1 a tap anywhere outside the name field closes the keyboard
+     and keeps the name and the companion; the keyboard's Done only closes
+     the keyboard (it used to move to step 2). Continue is the only way on,
+     so the companions can be looked at again after typing. With the
+     keyboard closed the carousel's drag and Previous/Next work as before;
+     a tap never changes the companion.
+- **[Product — owner] Paywall decisions.**
+  - **Redeem codes deferred:** no "Have a code?" and no code sheet. Apple
+    offer codes work without any in-app UI (App Store account settings or
+    the redemption URL); when the first campaign comes, "Have a code?"
+    opens `presentCodeRedemptionSheet()`. Never a code check of the app's
+    own (App Review 3.1.1).
+  - O1: no screen-only `muted` / `info`; `warm` / `onWarm` are used (the
+    Premium label, the saving badge).
+  - O10: a pending purchase (Ask to Buy) has its own outcome and message.
+  - O11: three companions, the user's in the middle.
+  - Premium is capped at 5 sessions a day (`dailySessionLimit`); the page
+    says so and never "unlimited".
+  - The purchase button is the mockup's orange.
+- **[Fixed] The trial promise (since 1.0.0; 1.1.0 has it too).** The button
+  always read "Start free trial", the terms said "Free trial" even for a
+  product with no introductory offer, and eligibility was never checked,
+  so a user who had already had a trial (StoreKit grants one per
+  subscription group) was still promised one.
+  - `SubscriptionService.checkTrialEligibility` asks RevenueCat
+    (`Purchases.checkTrialOrIntroductoryPriceEligibility`, verified in the
+    `purchases_flutter` 10.10.1 source) per product: eligible; ineligible
+    (also "no intro offer exists"); unknown (not configured, a failed
+    call, or RevenueCat's own unknown, for which RevenueCat advises the
+    regular price). The debug pricing preview counts as eligible.
+  - The button, the plan cards and the terms all come from one object per
+    plan (`_PlanTerms`), from the store product and the eligibility, so
+    they always describe the same selected plan:
+
+    | State | Button | Terms under it | Card detail |
+    |---|---|---|---|
+    | Eligible + intro offer | "Start my 7-day free trial" (the product's own length; a week shows as 7 days) | "7 days free, then $49.99 per year, auto-renews unless cancelled." | "7-day free trial" |
+    | Not eligible, or no intro offer | "Subscribe for $49.99 per year" | "$49.99 per year, auto-renews unless cancelled." | "Billed yearly" / "Billed monthly" |
+    | Eligibility unknown | "Continue with Annual" / "Continue with Monthly" | "$49.99 per year, auto-renews unless cancelled." | "Billed yearly" / "Billed monthly" |
+
+    Every price, currency, period and length is the store's (the table's
+    numbers are the live prices with the configured trials).
+  - After a purchase: "Trial started — Topic Practice is unlocked." only
+    when a trial was named; otherwise "Premium is active — Topic Practice
+    is unlocked."
+- **[Engineering] What changed.**
+  - `subscription_service.dart`: `TrialEligibility`, `checkTrialEligibility`;
+    `PurchaseOutcome.pending` for `paymentPendingError`.
+  - `premium_screen.dart`, rebuilt to the mockup:
+    - "GrammarLens" and Close (44 pt) in the page; the companion group
+      (124 pt centre, 66 pt sides by fixed offsets from the user's avatar,
+      no `Hero`, dropped under 700 pt tall as before); "GRAMMARLENS
+      PREMIUM" on warm; the headline 28 / 900 (26 under 360 pt) scaled from
+      the theme; the supporting line (a weak spot's "Practice …" as
+      before), at least two lines tall so every entry point lays out the
+      same.
+    - Three benefits in one card (radius 23).
+    - "Compare Free & Premium" (closed by default, a 44 pt target with its
+      expanded state for screen readers) opens the existing comparison
+      table unchanged, with its narrow-screen rule.
+    - "Choose your plan": Annual and Monthly stacked, radio cards (radius
+      19, ≥ 87 tall, 10 apart; selected: 2 pt link edge on the info
+      surface, a filled radio mark); the total price big with "per year" /
+      "per month"; the saving from the two prices on warm.
+    - The fixed footer: the result of the last purchase or restore; the
+      orange button (≥ 52, radius 17, an arrow, no navy edge); the terms;
+      Restore Purchases, Terms of Service and Privacy Policy on one row
+      (11 / 700, 44 pt targets); "Maybe later". Page edge 20 (15 under
+      360 pt).
+    - Kept: the legal links move to the end of the body when screen height
+      / text scale < 400; at those sizes the footer is also capped at half
+      the screen and scrolls inside itself (375 × 667 at 3x was 73 % of the
+      screen, now 49 %).
+    - A second tap while purchasing sends nothing (`_startPurchase`
+      returns early); Restore ignores a second tap while restoring.
+    - A pending purchase logs `purchase_started` and no `purchase_result`
+      (it has no result yet); the event's vocabulary is unchanged.
+- **[Copy] Old → new**
+  - "Premium" (app bar) → "GrammarLens" in the page; new "GRAMMARLENS
+    PREMIUM".
+  - "Unlock personalized feedback" → "Turn your mistakes into progress."
+  - "Practice the mistakes you actually make." → "Focused practice.
+    Personal feedback. A little more confidence, every day." ("Practice
+    {weak spot}." unchanged).
+  - New benefits: "Understand your mistakes — AI feedback on every topic
+    you practice, not just your free daily practice." / "Practice your weak
+    spots — Go beyond your one free daily practice." / "Every topic, your
+    own pace — All 5 topics · 3, 5 or 10 questions · up to 5 sessions a
+    day." (counts from `kTopics`, `PracticeLength`,
+    `freeDailyPracticeLimit`, `dailySessionLimit`). The mockup's "AI
+    feedback explains what to improve." is not used: it read as AI being
+    Premium-only.
+  - "What's free, trial, and paid" (under the table) → "Compare Free &
+    Premium" (above it).
+  - New: "Choose your plan".
+  - Plan cards: "$7.49 / month" + "Billed $89.99 annually." → "$89.99" +
+    "per year" + the trial or "Billed yearly"; "$9.99 / month" + "Billed
+    monthly." → "$9.99" + "per month" + the trial or "Billed monthly".
+  - Button and terms: see the table above (was "Start free trial" and "7-day
+    free trial, then $89.99 / year, auto-renews unless cancelled.").
+  - "Something went wrong and the trial couldn't start." → "…and the
+    purchase couldn't start." New pending message: "Waiting for approval —
+    Premium starts once the purchase is approved. No charge until then."
+  - Unchanged: "Restore Purchases", the restore results, "Purchase
+    cancelled — no charge was made.", "Maybe later", "Continue", "Trial
+    pricing isn't available right now", "Try again", the table.
+- **[Deliberate departures from the mockup]**
+  - No "Have a code?" (deferred).
+  - "Terms of Service" and "Privacy Policy" in full, not "Terms" /
+    "Privacy": the same links as before, and the footer tests keep them.
+  - "Restore Purchases" keeps its title case.
+  - The wordmark is one colour (orange "Lens" is 2.27:1).
+  - The companions are the app's square avatar art (124 / 66 pt), not
+    66 × 76 frames.
+  - The not-eligible button names the price ("Subscribe for $49.99 per
+    year") rather than the mockup's "Continue with Monthly", which the app
+    keeps for the unknown case.
+  - The terms are one sentence ("…, auto-renews unless cancelled."), not
+    the mockup's two lines.
+  - The plan cards come after the benefits and the comparison toggle, so at
+    393 × 852 they are no longer in view without scrolling (the button and
+    the terms are, in the fixed footer).
+- **[Tests]** `flutter analyze` clean; **1,712 passed, 0 failed** (1,687
+  after Batch 11).
+  - New (25): part A (2: a tap outside closes the keyboard and keeps the
+    name and companion, the carousel works after; Done only closes the
+    keyboard). The paywall (23): not eligible (no trial anywhere, price and
+    period for both plans); unknown (neutral button, no trial); eligible
+    with no intro offer; other prices, euros and a two-week trial (nothing
+    hardcoded); a double tap sends one request; pending (its message, no
+    `purchase_result`); a purchase with no trial says Premium is active;
+    restore found / not found; no code link or field, no "unlimited", the
+    cap stated; benefits true to the tiers; `paywall_viewed` with all six
+    sources; the centre companion for three avatars (124 / 66); 320 × 568,
+    360 × 740, 375 × 667, 390 × 844, 430 × 932 × Large × light/dark with
+    the comparison open (no overflow, nothing cut, button and terms on the
+    first screen).
+  - Changed, with the reason (`premium_screen_test`):
+    - **Interaction only, assertions unchanged:** the table tests open
+      "Compare Free & Premium" first (the table, the PREMIUM header at
+      1.3x/2x, the free-value column ×6, the FREE header's centre, the
+      strip fill ×2, the stacked layout group); where the footer scrolls
+      (2x, 3x) `scrollUntilVisible` names the body's scrollable; purchase
+      tests tap the button by key.
+    - The table listing scopes "Practice your weak spots" to the table (a
+      benefit has the same name).
+    - The table's sizes: 320 @1x, 360 @1.15x and 393 @1.3x move from
+      "keeps the table" to "stacks": the mockup's 20 pt page edge (18
+      before; 15 under 360, 14 before) narrows the table by 4 pt; the rule
+      (a table only where no label is cut) is unchanged.
+    - New copy: the headline tests; "annual is preselected" (new wording,
+      radio semantics); switching to Monthly (button, price and terms
+      together); the annual card's big figure is the total (the brief);
+      the $4.16 regression looks up "$49.99" (the savings assertion is
+      unchanged); the monthly card; the success "Continue" test.
+    - Stacked cards: "share bounds" → same width and left edge, 10 apart,
+      ≥ 87, stable on selection; "the selected card keeps the card fill" →
+      the selected card takes the info surface (the brief) with a 2 pt
+      edge and a filled radio mark.
+    - The companion group: five → three (O11), in all five hero tests.
+    - "What's free, trial, and paid renders below the table" → the
+      comparison toggle opens and closes, with its expanded state.
+    - "At 393 × 852 the plan cards are fully visible above the footer" →
+      the button and terms are on the first screen and the cards are
+      reachable (the mockup puts the companions and the benefits first).
+    - 375 × 667 Medium/Large: the footer and text-area assertions are
+      unchanged (footer 176 pt, under the 31 %); "the whole table and the
+      top of the plan cards are in view" → the headline and the benefits
+      are; Restore Purchases is in the footer now.
+    - The weak-spot geometry test reads the new headline; its geometry
+      assertions are unchanged (the supporting line keeps two lines).
+  - `onboarding_screen_test`: the caption is the name, with "…, selected"
+    for screen readers.
+  - `button_edge_test` (Batch 8) passes: the orange buttons have no edge.
+- **[Renders]** `tool/design_measure/v120/paywall_render_test.dart` →
+  `docs/design/1.2.0-additional/batch12/`: 390 pt annual, the plan cards
+  with annual and with monthly selected, the comparison open, not
+  eligible; 375 × 667; light and dark, real font.
+- **[Acceptance checklist, "Paywall"]** T = automated test; D = device or
+  sandbox; deferred = owner decision.
+  - The user's companion always in the middle; no fixed Sloth — T.
+  - Free weak-spot right and real Premium benefits — T.
+  - Plan change updates price, period, button and terms together — T.
+  - Price/currency and trial eligibility from the store; nothing
+    hardcoded — T with fakes; the real store D (sandbox).
+  - Success / cancel / error / pending and restore with the real service —
+    T with fakes; D (sandbox, Ask to Buy).
+  - Terms/Privacy open the real pages; close and "Maybe later" return — T
+    (existing); the pages themselves D.
+  - The code sheet with the keyboard; the page behind blocked — deferred.
+  - Empty / loading / invalid / expired / used / ineligible / network
+    states of a code — deferred.
+  - The real source of codes decided; no fake check in the app — decided
+    (Apple offer codes; nothing in the app); T (no code UI).
+  - Offer terms and free period shown before confirming — deferred
+    (Apple's sheet when it comes).
+  - Closing the code sheet keeps the plan — deferred.
+- **[Not measured]** On a device / in the sandbox:
+  - a sandbox account that never had a trial: "Start my 7-day free trial",
+    the annual purchase sheet's trial; then Monthly ("3-day");
+  - a sandbox account that already had one: "Subscribe for …", no trial
+    anywhere;
+  - eligibility "unknown" in the real SDK (e.g. offline at open);
+  - Ask to Buy in the sandbox: the pending message, then approval arriving
+    through the entitlement listener (Home, Review);
+  - cancel, a failed payment, Restore with and without a purchase;
+  - the page in both themes on the iPhone 14 Plus and at 375 × 667, Large
+    text, the comparison open and closed;
+  - the two onboarding changes: a tap outside the name, the Done key.
+
+## 2026-10-05 (1.2.0 additional screens — Batch 13: paywall footer rhythm, copy, pending analytics, wordmark trial; awaiting the device check)
+
+On branch `1.2.0`; not pushed. **The owner approved Batch 12 on the
+device.** Decision: the paywall's section order stays the mockup's
+(companions → headline → benefits → Compare → plans); the plan cards being
+below the first screen at Large text is accepted.
+
+Unchanged: subscription logic, entitlement, quota, routing, the storage
+schema, every other analytics event, every other screen.
+
+- **[1] Paywall: one rhythm in the footer.**
+  - **Before** (measured, real font): the button → terms 6 pt, terms →
+    links 14.5 pt, links → "Maybe later" 27.5 pt, "Maybe later" → screen
+    bottom 17 pt (375 × 667) / 51 pt (390 × 844, 34 pt home indicator).
+    Each text button was a 44 pt box with its label centred, so two stacked
+    targets always put ~27 pt between their labels.
+  - **Now:** the links and "Maybe later" are drawn 30 pt tall and keep a
+    44 pt target by taking taps in the space next to them that nothing
+    else uses (`_TapArea`): the links reach 14 pt up, over the terms' lower
+    edge and the 7 pt gap above them (and, when the three wrap, into the
+    14 pt gap between rows); "Maybe later" reaches 14 pt down into the
+    bottom margin, which is now a spacer inside the footer (the home
+    indicator's inset + 4, at least 14). A tap there goes to the button
+    under it. The targets stay edge to edge, none overlapping another.
+
+    | | 390 × 844 Medium | 390 Large | 375 × 667 Medium | 375 × 667 Large |
+    |---|---|---|---|---|
+    | Footer height | 210 → 189 | 211 → 190 | 176 → 165 | 196 → 185 |
+    | Terms → links | 14.5 | 13.5 | 14.5 | 13.5 |
+    | Links → "Maybe later" | 27.5 → 13.5 | 25.5 → 11.5 | 27.5 → 13.5 | 25.5 → 11.5 |
+    | "Maybe later" → screen bottom | 51 → 44 | 50 → 43 | 17 → 20 | 16 → 19 |
+    | Targets (links, "Maybe later") | 44 × 44 | 44 | 44 | 44 |
+
+    At 390 pt the space under "Maybe later" is mostly the home indicator
+    (34 pt); its target reaches 10 pt into that zone, its text does not.
+    At 320 × 568 the links wrap to two rows; every target is still 44 pt.
+  - Tests: the footer test measures a target by hit-testing instead of the
+    ink well's box (the assertion, ≥ 44 pt, is unchanged); "links
+    directly under the disclosure" allows the links' target to start up to
+    14 pt over the (non-interactive) terms. New: the gaps and a tap 13 pt
+    above Restore (over the terms) and 13 pt below "Maybe later" reach
+    their buttons. A measuring tool
+    (`tool/design_measure/v120/paywall_footer_measure_test.dart`) and
+    renders at 390 and 375 × 667, Medium and Large, light and dark:
+    `docs/design/1.2.0-additional/batch13/`.
+- **[2] Paywall copy:** "Trial pricing isn't available right now" →
+  "Prices aren't available right now" (a trial is no longer promised to
+  everyone). Tests: the four finders.
+- **[3] Analytics: `purchase_result` outcome `pending`.** Ask to Buy or a
+  deferred payment now logs `purchase_result` with `outcome = pending`
+  (Batch 12 logged none); no new event or parameter. **No double count:**
+  an approval that comes later reaches the app only as an entitlement
+  change (RevenueCat's customer info → Home's and Review's access
+  listeners), and nothing logs `purchase_result` there, so one attempt is
+  one event; an approved pending purchase stays `pending` in analytics
+  (RevenueCat records the transaction). `analytics-plan.md` updated.
+  Tests: the parameter test for `pending`; the paywall's pending test
+  expects one `purchase_result` with `pending`.
+- **[4] Debug: a two-colour wordmark trial.**
+  - `BrandWordmark` (new, `lib/widgets/brand_wordmark.dart`) draws every
+    in-app "GrammarLens": Home's title, the onboarding header, the paywall
+    header. The debug panel's "Two-colour wordmark" (section "Brand", off
+    by default, memory only, debug and profile builds like the panel) turns
+    "Lens" brandOrange (`colorScheme.primary`, #FF7A1A / #FF8A3D) on all of
+    them at once, through a `ValueNotifier`, with no restart. Size, weight,
+    letter spacing and width are the same (only a colour span); a screen
+    reader hears "GrammarLens". In a release build it is always off.
+  - Left alone: the launch screen and its iOS image (decision); Welcome,
+    whose light page is the brand orange itself (an orange "Lens" there
+    measures 1.00:1 and would vanish); the theme preview's font sample.
+  - Contrast (information; a logotype is exempt from WCAG contrast):
+
+    | | Light page #F3EFE6 | Light card #FFFBF4 | Dark page #151517 | Dark card #252528 |
+    |---|---|---|---|---|
+    | "Lens" (brandOrange) | 2.27:1 | 2.53:1 | 7.78:1 | 6.52:1 |
+    | "Grammar" (textPrimary) | 14.96:1 | 16.64:1 | 15.51:1 | 13.00:1 |
+
+    The three wordmarks sit on the page colour.
+  - Tests (`brand_wordmark_test`, 7): off by default, one span, light and
+    dark; on: "Grammar" inherits the text colour, "Lens" brandOrange, same
+    width, one word for screen readers, and back off without a restart;
+    a release build ignores the switch; the panel's switch drives a
+    wordmark already on screen; every on-screen "GrammarLens" in `lib/`
+    goes through the widget except the allowed files.
+- **[Tests]** `flutter analyze` clean; **1,721 passed, 0 failed** (1,712
+  after Batch 12).
+- **[Not measured]** On a device:
+  - the paywall footer at 390 pt and on a small phone: the spacing, and
+    tapping just above Restore/Terms/Privacy and just below "Maybe later";
+  - the two-colour wordmark in both themes on Home, onboarding and the
+    paywall (Debug → Brand);
+  - an Ask to Buy purchase in the sandbox: the `pending` event in
+    DebugView, and no second event when it is approved.
+
+## 2026-10-05 (1.2.0 — final pass: wordmark, headings, messages, text size, button inventory, renders; awaiting the device check)
+
+On branch `1.2.0`; not pushed. The owner approved every screen of both
+design packages on the device. Unchanged: state, routing, premium/quota,
+AI/proxy, the storage schema, analytics event definitions, game math,
+the pubspec version.
+
+- **[1] Two-colour wordmark, permanent.** `BrandWordmark` always draws
+  "Lens" in `colorScheme.primary`; the debug switch and its state are
+  removed. The launch splash's wordmark is drawn by Flutter and the iOS
+  launch image is the logo only (checked), so the splash is two-colour
+  too; layout, size and animation unchanged. Welcome keeps one colour.
+  **Proposal (not built):** two colours on Welcome in dark mode only
+  (#FF8A3D on #121212, 7.9:1); light stays one colour (1.00:1).
+- **[2] Thin headings** (all `withWeight`): Welcome title 700→900,
+  results score band 700→900, loading message 600→800, AI consent title,
+  avatar picker heading, premium offer card title 700→800, the length
+  picker's selected length (a raw 19 pt style) 600→800. Left as approved:
+  Home's greeting (600) and the question sentence (700). Not touched
+  (the brief gives no target): the 16 `titleSmall` overrides in
+  ai_consent, data (2), debug panel, home, onboarding (2), premium (2),
+  settings (4), month card (3), medal preview.
+- **[4b] Messages.** Root cause: the tab screens' messages are shown by
+  the nav shell's root Scaffold, whose bar is a Stack overlay Flutter
+  does not see — present since the floating bar, not caused by Batch 8;
+  Batch 8 added that the Scaffold ignores the keyboard. `AppMessenger`
+  now gives a tab-screen message a bottom margin from
+  `NavBarClearance` (gap 16) or the keyboard + 16 while a field has
+  focus, deciding one frame later when the keyboard is up (Profile's
+  Save closes the editor). All 13 message calls go through
+  `AppMessenger`. Results' bottom bar: still clear. Paywall: the button
+  and renewal terms are never covered; Restore/Terms/Privacy and "Maybe
+  later" are (pre-existing; reported, not changed). Dismiss target ≥ 44.
+  Limit: a keyboard opened or closed while a message shows does not move
+  it (tab screens only).
+- **[4c] Text size.** Small/Medium/Large = 1.1/1.2/1.31 (Large: the same
+  ratio, 1.2 × 1.2/1.1). Brief sizes at Small (replaces Q5). Layouts made
+  to wrap: Home's Daily Test count box, nav tabs (Flexible), onboarding
+  header (Wrap), results score band (grows); the paywall's supporting
+  line measures two drawn lines. Real-font sweep
+  (`tool/design_measure/v120/text_size_sweep_test.dart`, 5 sizes × 3
+  text sizes × 2 modes): no exception, no ellipsis except the intended
+  two-line weak-spot excerpt, plaque/nav labels/segments one line, answer
+  and name fields above the keyboard. **Rule broken, not solved:** the
+  paywall footer at 375 × 667 Large is 0.349 of the screen (0.462 at 1.6×
+  system text); 320 × 568 is 0.40 at every size.
+- **[Tests changed, with reasons]** `brand_wordmark_test` (switch tests
+  removed; permanent two-colour and splash tests added; guard kept);
+  `profile_layout_test`, `topic_practice_screen_test` (brief sizes at
+  Small); `premium_screen_test` (footer-share tests at Small/Medium = old
+  sizes; new Large test records 0.349/0.462); `first_launch_flow_test`,
+  `debug_sample_collection_test` (`ensureVisible` before a tap: the test
+  font is wider); new `app_messenger_position_test` (9).
+- **[Tests]** `flutter analyze` clean; **1,730 passed, 0 failed**.
+- **[3, 4] Button inventory and final-pass findings:** in the session
+  report; renders in `docs/design/1.2.0/final-pass/` (default-medium/ for
+  the approved screens at the new default).
+- **[Not measured]** On a device: the wordmark in both themes incl. the
+  launch screen; the new default and Large on every screen; "Name saved"
+  above the nav bar; a message with the keyboard open on Profile; the
+  "Profile → Data" arrow glyph on AI consent (missing in the test
+  renderer).
+
+## 2026-10-06 (1.2.0 final screens: closing fixes, Premium Review Suggested Focus, Data, Credits; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Package: `docs/design/1.2.0-final/`
+(committed as delivered; the pre-commit hook passed, no `--no-verify`).
+Acceptance, item by item: `docs/design/1.2.0-final/ACCEPTANCE-RESULTS.md`.
+
+Unchanged: the free daily allowance and its counting, the consent
+mechanism, the reset scope, subscriptions, routing, the storage schema,
+analytics events, AI/proxy calls. No migration, no new event, no new
+call.
+
+**Owner decisions (2026-10-06):**
+- The paywall footer at 375 × 667 with the new Large (0.349 of the
+  screen, over the "a third" rule) is an **accepted exception**.
+- Welcome in dark mode: the two-colour wordmark; light keeps one colour.
+- The button rule: orange = a screen's one main forward action on a
+  neutral surface; navy = actions on an orange surface and secondary,
+  helper and exit actions; red = destructive. Exceptions: AI consent's
+  "Agree and continue" stays navy (consent is not nudged); "Back to
+  topics" and "Back to Home" stay navy (exits).
+- Suggested Focus uses the app's navy (the Free "used" card's), not the
+  package's #183854 / #203D57; American spelling ("Practice").
+- Review top card height (asked during this batch): **Premium takes Free
+  available's height; Free used keeps its own.** The two live Free cards
+  were never equal (measured: available 199–240 pt, used 260–328 pt, the
+  used card 59–110 pt taller at the same width and size), so "all three
+  equal" and "the live Free size unchanged" could not both hold.
+
+**Part A — closing fixes**
+- **A1 buttons** (`forwardButtonStyle`, one shared style: brandOrange,
+  onOrange label, no navy edge): Review's empty "Go to Daily Test", the
+  length picker's "Start N questions", Daily Test results' "Start my
+  climb" / "See your climb", the weak spot's "Practice this" / "Start
+  free practice" / "Practice with Premium". Unchanged and navy: "Back to
+  Home", the day-0 "Continue" (not in the list), "Try saving again",
+  retries, AI consent. Test: `button_rule_test` (16).
+- **A2 Welcome dark:** two-colour wordmark, page colour #151517.
+- **A3:**
+  - Card frames: **correction of the 2026-10-05 finding.** The results,
+    Daily Test results and weak spot cards are already the theme's card
+    (1 px `outlineVariant`, elevation 2). The "heavy dark outline" in the
+    final-pass renders is how the test renderer draws a Material
+    elevation shadow; Profile's device-approved card shows the same rim in
+    the renders. No change.
+  - Results: "Back to topics" in a fixed `BrandBottomBar` (shared with
+    Daily Test results); navy, filled or outlined under the offer card;
+    messages float above it (test `results_footer_test`).
+  - Length picker: the sheet is the card surface (was white); the empty
+    track is `outline`, 3.32:1 light / 4.50:1 dark (was 1.03:1); the
+    selected length (titleLarge 800) and its line (bodySmall) follow the
+    text size (were a fixed 19 and 13).
+  - Loading: `PageLoading` keeps the page's own header (Topic Practice's
+    back tile and title; the weak spot's title) instead of a centred app
+    bar title.
+  - AI consent: the Privacy Policy link starts at the text edge
+    (`LegalLink.flush`), 44 pt target.
+  - Device check only: AI consent's "Profile → Data" arrow glyph.
+
+**Part B — Premium Review, Suggested Focus**
+- **Weak spot identity (verified):** a weak spot is a
+  `GROUP BY topic_id, error_type` of saved mistakes
+  (`StorageService.getWeakSpots`): count = `COUNT(*)` (`frequency`), last
+  seen = `MAX(timestamp)`, stable id = (topicId, errorType), unique per
+  group. The list reads at most 10; the suggestion reads all
+  (`StorageService.allWeakSpots`).
+- Rule (`suggestedFocus`, pure): highest count → newest known last seen
+  (before 2000 counts as unknown) → smallest id; a count under 1 is never
+  chosen.
+- Card: the shared `ReviewTopCard` shell (Free available, Free used,
+  Premium); Premium is at least as tall as the Free available content at
+  the same width and text size (`MatchHeight`), grows only for its own
+  text (a long title wraps, never cut). Navy, the dark edge, "SUGGESTED
+  FOCUS", the record's title, "Saved N times · Most repeated" ("Saved 1
+  time"), an orange "Practice this weak spot".
+- **Deviation:** the CTA opens the chosen weak spot's own screen, whose
+  "Practice this" runs `launchPracticeSet` unchanged (permission, picker,
+  quota, generation); the mockup does the same with a dialog. A double tap
+  opens it once.
+- States: no card until the entitlement answers; loading keeps the card's
+  place (eyebrow and a progress mark, no topic or count); a failed read
+  says "Your suggestion could not be loaded." with Try again; Premium with
+  no weak spot gets "Your next step starts with practice." / "As you
+  practice, …" / "Explore Topic Practice" (the existing Topic Practice
+  screen); Free's empty state is unchanged. A reload keeps the list on
+  screen, so the scroll position and the sort survive a return.
+
+**Part C — Data**
+- **Permission wording (verified):** a weak spot's "Practice this" /
+  "Start free practice" goes through the same `launchPracticeSet` →
+  `ensureAiConsent` and sends the same data as Topic Practice, so the
+  brief's "Topic Practice …" was incomplete:
+
+  | Brief / before | Now |
+  |---|---|
+  | "Topic Practice sends your typed answers and questions to Anthropic (Claude) to create feedback." | "Practice sessions send your typed answers and the questions to Anthropic (Claude) to create feedback." |
+  | "On · Required for Topic Practice" | "On · Required for practice sessions" |
+  | "Off · Topic Practice needs permission" | "Off · Practice sessions need permission" |
+  | (live) "Topic Practice will ask again." | "Practice sessions will ask again." |
+  | (live) "Send my practice answers to Anthropic (Claude)" / "Needed for Topic Practice. Daily Test works without it." | "Allow AI feedback" / the state line / "Daily Test works without this permission." |
+- **Reset scope (verified, no contradiction):** `resetProgressData`
+  deletes `error_entries` (every saved mistake, so every weak spot,
+  Daily Test ones included) and `topic_practice_stats` (practice counts).
+  It keeps the profile (name, goal, avatar), theme, text size, consent,
+  Daily Test sets and completions, the climb, medals, the Welcome badge,
+  one-time flags and today's quotas. Grey area, not changed: "practice
+  history" may be read as including the Daily Test, which is kept.
+- Copy: "Reset progress?" → "Reset your progress?"; the dialog text → the
+  brief's two lines; "Cancel" / "Reset" → "Keep my progress" / "Reset
+  progress data"; "Clears practice history and weak spots. …" → "Clear
+  your practice history and saved weak spots." + "Your name, goal and
+  theme stay as they are."
+- The page's reset button is low-intensity: an `error` tint (8 %) over the
+  card, a 40 % edge, an `error` label (5.47:1 light, 7.61:1 dark; the edge
+  2.07 / 2.63:1, the label naming the button). The dialog's confirm stays
+  full red. A second tap cannot stack a second dialog.
+- New: a yes that could not be saved shows off with "Could not save this
+  setting. Please try again." (the switch reads the stored decision back;
+  the consent flow itself is unchanged).
+- Review refreshes when its tab is shown again (existing behaviour).
+
+**Part D — Credits:** back tile, "Credits", "Artwork and attribution.";
+one card: "Avatar illustrations", "Adapted from Cute Animal 3D Icons by
+Tran Mau Tri Tam, via Figma Community. Licensed under CC BY 4.0.", then
+"Figma file" and "CC BY 4.0 license" rows with the existing URLs; no raw
+URL in the text, no artwork. A link that cannot open says "Could not open
+…" (`openLegalLink`, which now also catches a launcher error).
+
+**Shared pieces:** `PageBackButton` / `PageHeader` (Topic Practice, Data,
+Credits), `BrandBottomBar`, `PageLoading`, `ReviewTopCard` /
+`MatchHeight`, `forwardButtonStyle`, `LegalLinkRow`.
+
+**Tests changed, with reasons:**
+- `data_screen_test`: the brief's copy and the reset button's new type
+  (outlined, low-intensity; the old "destructive role" check now checks
+  the tint, edge and label); the confirm is found inside the dialog (the
+  page's button has the same label). Intent unchanged.
+- `credits_screen_test`: rewritten for the brief's copy (the old sentence
+  with raw URLs is gone by design); adds no-artwork, URL, error and
+  overflow checks.
+- `button_edge_test`: Data's page reset leaves the filled-button list;
+  the orange forward style joins it. Same rule.
+- `brand_wordmark_test`: + Welcome light/dark.
+- New: `button_rule_test`, `results_footer_test`,
+  `practice_length_picker_surface_test`, `page_loading_test`,
+  `legal_link_alignment_test`, `data_screen_final_test`,
+  `suggested_focus_test`, `review_suggested_focus_test`.
+
+**[Tests]** `flutter analyze` clean; **1,850 passed, 0 failed** (1,730
+after the final pass). Sweep (`final_screens_render_test`, 630 cases;
+`final_pass_render_test` for the Part A screens, 330): no layout
+exception. Renders: `docs/design/1.2.0-final/renders/`.
+
+**[Not measured]** On a device: Premium Review (needs a Premium account
+or the debug override) with a real weak spot set; the Data switch with
+the system permission screen; the reset; both Credits links in Safari;
+the dark Welcome; the AI consent arrow glyph; the new orange buttons in
+both themes.
+
+## 2026-10-06 (1.2.0 — the launch screen's wordmark at Home's weight; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Only `launch_splash.dart`; nothing else, no
+behaviour change, the iOS launch image untouched.
+
+- **Cause:** the splash draws its wordmark in a style of its own (a
+  logotype, fixed like the logo, pinned in Batch 1) at weight **700**
+  with −0.5 spacing per 34 pt, while Home's `BrandWordmark` uses
+  `displaySmall` at **900** (`wght` 900) with −1.4. It went through
+  `withWeight()` correctly; the value was simply lighter. Resolved,
+  side by side (real font):
+
+  | | size | weight / `wght` | letter spacing | width |
+  |---|---|---|---|---|
+  | Home, Small / Medium / Large | 34 / 37.1 / 40.5 | 900 / 900 | −1.4 | 215.4 / 236.3 / 259.4 |
+  | Splash before | 42.5 | 700 / 700 | −0.625 (−0.015 × size) | 270.9 |
+  | Splash now | 42.5 | 900 / 900 | −1.75 (−0.041 × size, Home's ratio at 34 pt) | 269.2 |
+- **Fix:** weight 900 and Home's spacing ratio, still through
+  `BrandWordmark` (it already was). Size stays 42.5 pt: at 900 with
+  Home's spacing the wordmark is 1.7 pt narrower than before, so 320 pt
+  keeps its 24 pt margins (25.4 pt). Height, gap and centering are
+  unchanged (the existing layout and gate tests pass unmodified).
+  Durations, curves and Reduce Motion unchanged.
+- **Test:** `brand_wordmark_test`: the splash's weight, `wght` and
+  spacing ratio equal Home's. Renders, before and after, light and dark:
+  `docs/design/1.2.0-final/splash/`.
+- **[Tests]** `flutter analyze` clean; full suite **1,851 passed, 0 failed** (1,850 before).
+- **[Not measured]** On a device: the splash at 320 pt and with the larger
+  system text; the hand-over to the first screen (the splash ignores text
+  size, so nothing there should move).
+
+## 2026-10-06 (1.2.0 — the paywall's annual card: the monthly equivalent and a struck reference price are back; awaiting the device check)
+
+On branch `1.2.0`; not pushed. Changed: the annual plan card in
+`premium_screen.dart`, a new helper (`lib/utils/monthly_equivalent.dart`)
+and a new direct dependency, `intl`. Not touched: the button text, the
+renewal terms, the "Save %" badge and its maths, the card's other texts,
+colours, the rest of the layout, analytics, purchase and eligibility
+logic.
+
+- **Why it was gone.** 1.0.0 and 1.1.0 showed the yearly price as a
+  per-month figure in large type. The 1.2.0 mockup shows the annual
+  *total* large ("annual total big", Batch 0 report §4a "Plans"), and
+  Batch 12 followed it, so the per-month figure disappeared. The owner
+  does not want that, so it comes back, small.
+- **What comes back (owner decisions, 2026-10-06).**
+  1. **"≈ $4.17 per month"**, annual card only, in the left column on its
+     own line under the detail line, in the same muted style
+     (`labelSmall`, w600, `onSurfaceVariant`) as the detail and "per year".
+     The detail line is unchanged with and without a trial ("7-day free
+     trial" / "Billed yearly"). The line may wrap; the left column already
+     wraps.
+  2. **A struck-through reference price** above the big price in the right
+     column (order: reference, big price, "per year"): twelve times the
+     *monthly* product's price ("$71.88"), same muted style plus
+     `lineThrough` in the same colour. Shown only when the "Save %" badge is
+     shown too (and the annual price is a price); no badge, no monthly
+     price or a formatting failure means no struck price.
+  3. The billed price stays the most prominent price on the card (App Store
+     3.1.2): neither new line is larger, bolder or higher in contrast than
+     "per year".
+- **Why the left column (a measured change of plan).** The first placement
+  was the right column under "per year", as first decided. Measured with
+  the real font it widened the right column ("≈ $4.17 per month" is far
+  wider than "$49.99") and squeezed the left one: at 320 pt the card grew
+  16–20 pt and wrapped, at 1.3x system text +28 pt, and at 3x the row
+  **overflowed** (21 and 64 px; 6 existing tests failed). The left column
+  has room and wraps by design, so the line moved there; the right column
+  now has the same width as before. The owner's fallback (appending it to
+  the detail line) was not needed.
+- **Maths.** Computed from the store, never hardcoded: annual
+  `StoreProduct.price` / 12 and monthly price × 12, in the product's
+  `currencyCode`, formatted with `intl` for the device locale
+  (`View.of(context).platformDispatcher.locale`; an unknown locale falls
+  back to `en_US`). **Rounding: half up, in integer minor units**, so
+  49.99 / 12 = 4.1658 shows "$4.17" and 59.99 / 12 shows "$5.00"; the
+  number of decimals is `NumberFormat.simpleCurrency`'s (JPY 0, KWD 3).
+  RevenueCat's `pricePerMonthString` is not used: it truncates (4.16), the
+  same cause as the 2026-09-17 badge bug ("Save 30%" logic is unchanged,
+  and still comes from the two raw prices). Price 0, no currency, a
+  failing formatter: the line is not shown, never an error or a wrong
+  figure.
+- **`intl` added** (`^0.20.3`, a direct dependency; it was not in the
+  pubspec or the lock). `pubspec.lock` changed by that one entry only; no
+  other package was added or moved.
+- **Semantics.** The annual card's label now reads, e.g., "Annual plan,
+  $49.99 per year, approximately $4.17 per month, 7-day free trial,
+  Save 30%, twelve months of the monthly plan cost $71.88". The struck
+  price is described as the cost of paying monthly for twelve months, not
+  as a "before discount" price. The monthly card's label is unchanged.
+- **Measured** (real font, 375 / 390 / 320 pt, Large = the app's Large
+  text size, x = system text scale on top; annual card height without →
+  with the two new lines; `tool/design_measure/v120/paywall_monthly_line_measure_test.dart`):
+
+  | Screen, text | Card | Footer | Right column | Overflow | Line wraps |
+  |---|---|---|---|---|---|
+  | 390×844 Medium | 87 → 94 | 190 → 190 | 68.4 → 68.4 | none | no |
+  | 390×844 Large | 87 → 99 | 213 → 213 | 74.9 → 74.9 | none | no |
+  | 375×667 Medium | 87 → 94 | 185 → 185 | 68.4 → 68.4 | none | no |
+  | 375×667 Large | 87 → 99 | 233 → 233 | 74.9 → 74.9 | none | no |
+  | 320×568 Medium | 87 → 94 | 229 → 229 | 68.4 → 68.4 | none | no |
+  | 320×568 Large | 87 → 99 | 247 → 247 | 74.9 → 74.9 | none | no |
+  | 390×844 Medium, x1.3 | 91 → 113 | 265 → 265 | 89.8 → 89.8 | none | no |
+  | 390×844 Medium, x2 | 193 → 261 | 449 → 449 | 139.8 → 139.8 | none | yes |
+  | 390×844 Medium, x3 | 650 → 950 | 398.5 → 398.5 | 211.1 → 211.1 | none | yes |
+  | 375×667 Large, x3 | 1425 → 2030 | 323.5 → 323.5 | 230.8 → 230.8 | none | yes |
+
+  The footer does not change anywhere, so the accepted 0.349 exception
+  (375 × 667, Large) is not made worse. At the normal sizes the card grows
+  by 7 (Medium) to 12 pt (Large). At x2 and x3 the cards were already
+  very tall before the change (the right column's width squeezes the left
+  one at those scales); the new line wraps there and the card grows
+  further, with no overflow. The tool is kept: its siblings live in this
+  folder.
+- **Renders** (real font; trial and no trial; light and dark; Medium at 390
+  and Large at 375 × 667): `docs/design/1.2.0-additional/batch14/`.
+- **[Tests]** `flutter analyze` clean. New: `monthly_equivalent_test`
+  (rounding boundaries 49.99 → 4.17, 59.99 → 5.00, an exact half, JPY, KWD,
+  a German locale, unusable input, 5.99 × 12 = 71.88) and 10 in
+  `premium_screen_test`: the line is on the annual card and not on the
+  monthly one, its place and style; the struck price (71.88), its style
+  and order, the right column not wider than the price; the detail line,
+  the button, the terms and the badge identical with and without a trial;
+  no badge → no struck price; no monthly price, no currency or a zero
+  annual price → no line and no error; the Semantics label; the debug
+  price preview shows both; euros. The 6 tests that failed with the first
+  placement pass again.
+- **[Not measured]** On a device or in the sandbox: the card with the real
+  storefront prices and a non-USD storefront (the line's currency and
+  locale formatting); VoiceOver reading the new label; the card at the
+  system's largest text size.
+
+## 2026-10-06 (1.2.0 visual assets — Batch 0 decisions and Batch 1: the screenshots' seeded learner, free and premium)
+
+**Batch 0** (read and measured; report in the session, decisions by Ahmet
+the same day):
+
+- **Reuse the 1.1.0 pipeline** (`tool/screenshots/`: `capture.sh`,
+  `capture_app.dart`, `capture_driver.dart`, `frame.py`). `screenshots/1.0.0/`
+  holds only eight 600 × 1298 README copies (the 6.5" aspect), no iPad set
+  and no framing tool; the 1.1.0 framer rebuilt that style and is the only
+  one in the repository.
+- **iPhone slot 6.5"** (1284 × 2778, an iPhone 14 Plus simulator), not
+  6.9": 1.0.0 used it, and App Store Connect needs 6.5" only when 6.9" is
+  missing. If a 6.9" slot is already filled in App Store Connect it must be
+  replaced or cleared, or large iPhones keep the old set. The frame draws
+  the 14 Plus's notch, not a Dynamic Island. **iPad 13"** (2064 × 2752,
+  iPad Pro 13-inch (M5) simulator): the app is a native iPad app (portrait,
+  full screen, a centred column capped at 640 pt), and the frames show it
+  that way.
+- **Simulator, not the owner's iPhone:** the status bar can be fixed
+  (`simctl status_bar`), and the device holds real data.
+- **The paywall** is captured in the simulator with the debug price fixture
+  (`buildDebugFixtureOffering`: $5.99 / 3 days, $49.99 / 1 week, both
+  eligible), so the trial line shows. RevenueCat in the simulator was not
+  tried. The owner's open sandbox check on the device is the comparison;
+  if they differ, the device wins. Paywall images go only to
+  `subscription-review/` (one per subscription), never to the store set.
+- **Order (owner, after the report):** iPhone 1 result, 2 Home (Glacier +
+  Fox), 3 Question V2, 4 Review (free), 5 weak spot + "Practice this",
+  6 Review (premium, Suggested Focus; **on hold** until Suggested Focus is
+  checked on a device, owner approves at the final export), 7 Profile and
+  the medal collection, 8 onboarding's goal step. No celebration frame.
+  iPad: 5 frames, free. Review and Home, free and premium, also go to
+  `case-study/`.
+- **README:** the 1.2.0 hero and four frames on top; the 1.0.0 gallery
+  stays below, labelled as a past version (the app's history is part of
+  the case study).
+- **Folders:** `screenshots/1.2.0/{store/iphone,store/ipad,subscription-review,readme,case-study}`;
+  raw captures stay in `build/` (1.1.0's P8).
+- **Final export after the device check** of the final pass and final
+  screens; capturing may start before it (the run is one command).
+
+**Batch 1: the seeded learner.**
+
+- **`tool/screenshots/seed.dart`** (new): the seed moved out of
+  `capture_app.dart` so a test can run it (`capture_app.dart` imports
+  `flutter_driver`). Sam (made up), the **Fox**, exam prep.
+- **Glacier Peak** by the simplest path that keeps Home and Profile in
+  agreement: the month's **theme record**. The seed sets
+  `StorageService.themeForNewMonthForTesting` to Glacier Peak before the
+  month's first completion, which writes the month's record once; Home
+  (`resolveClimbMonthTheme`) and Profile (`getClimbMonthThemes`) both read
+  it. Not `CLIMB_DEBUG_THEME`: it is display-only (Profile's medals keep
+  the recorded theme) and the driver's `release_look` step switches it
+  off. The rotation itself is not changed.
+- **Medal history:** the three months before the current one end on
+  Bronze, Silver, Gold (with the run in October: July, August,
+  September), each the middle of its tier's band, written as ordinary
+  Daily Test completions and frozen by the app's own
+  `finalizePastMedalMonths`. The tiers, names and medal art are the
+  app's. Those months have no theme record, so they read as Green Slope,
+  as on a real install. The current month continues (one step short of
+  Halfway Hut, today's test live), as in 1.1.0. The debug panel's sample
+  collection is no longer used.
+- **Weak spots:** Modal Verbs three times (was once) and Tense Selection
+  once, so Premium Review's Suggested Focus has one clear first choice;
+  today's live wrong answer adds Gerund vs. Infinitive.
+- **Free and premium:** `--dart-define=CAPTURE_PREMIUM=true` stores the
+  debug entitlement override (`StorageService.setDebugAccessOverride`),
+  which the app applies at launch (`_loadDebugAccessOverride`). Debug
+  builds only; **no `lib/` change was needed.**
+- **Nothing opens over Home:** besides the day-0 paywall and the first-run
+  zoom, the seed now also claims the current month's zoom and month card
+  (September is a finished month, so October's card would show).
+- **The paywall's fixture** is switched on in `capture_app.dart` for every
+  run.
+- **For Batch 2:** `release_look` (hides Profile's Developer section) also
+  ends Premium and the price fixture, so premium frames and the paywall
+  must be taken before it. The driver's finders are 1.1.0's and are not
+  updated yet.
+- **Why it cannot reach a release build:** the files are under `tool/`
+  and run only as a `flutter drive` target (a debug build); release builds
+  start from `lib/main.dart`. Every switch they use (entitlement
+  override, price fixture, theme seam) is gated by `kDebugMode` or is a
+  test seam, and nothing in `lib/` imports `tool/`, now guarded by a test.
+- **[Tests]** New `test/tool_import_guard_test.dart`: no `import`,
+  `export` or `part` in `lib/` names `tool/`, the capture or seed files,
+  or `package:flutter_driver` (the pattern was checked on sample lines).
+  New `test/screenshot_seed_test.dart` (real SQLite, 9 tests): the
+  learner; this month recorded as Glacier Peak and past months not; July
+  to September Bronze, Silver, Gold and nothing left for the launch
+  finalization; the January wrap into the previous year; one step short
+  of Halfway Hut, today untaken, and today's result crossing no
+  threshold; Suggested Focus is Modal Verbs ×3; the four one-time records
+  claimed; free stores no override, premium stores one; an existing
+  install is left alone. `flutter analyze` clean; full suite 1,880 passed.
+- **[Not measured]** The capture run itself (Batch 2): the seeded app on
+  the simulators, the driver against the 1.2.0 screens.
+- **Past months' themes (owner, after Batch 1):** July, August and
+  September are now recorded with three different themes, none of them
+  Glacier Peak (this month's alone): Green Slope, Ember Peak, Red Canyon,
+  so Profile's shelf shows three themes' medals. Still no `lib/` change:
+  storage writes a month's record only while it is the current month, so
+  each past month is seeded with `StorageService.clockForTesting` inside
+  it and `themeForNewMonthForTesting` naming its theme, then both seams
+  are put back (`try`/`finally`). The theme test now expects all four
+  records (and the January wrap's four); a new test checks the clock is
+  restored. Full suite 1,881 passed, `flutter analyze` clean.
+
+## 2026-10-06 (1.2.0 visual assets — Batch 2: the driver on the 1.2.0 screens, the first raw capture; not framed)
+
+- **Simulator:** an "iPhone 14 Plus" on iOS 26.5 created
+  (`B20149D8-71AC-47EF-A018-AA187F194833`); the iPad stays the iPad Pro
+  13-inch (M5). `capture.sh` now runs three fresh installs on the iPhone
+  (free, `CAPTURE_PREMIUM`, `CAPTURE_WELCOME`) and one on the iPad (free),
+  and writes `build/screenshots/1.2.0/raw/<device>/`; framing is a
+  separate step.
+- **`capture_driver.dart` rewritten for 1.2.0** (the owner's order):
+  01 result, 02 Home (Halfway Hut label, replayed from the debug panel),
+  03 question with the keyboard, 04 Review free, 05 weak spot (free:
+  "Start free practice"; premium run: "Practice this", both kept for the
+  owner's choice), 06 Review premium (Suggested Focus), 07 Profile and the
+  medal collection (after `release_look`: no Developer section), 08
+  onboarding's goal step (Sam, the Fox found by stepping the carousel,
+  Exam prep chosen). Case study: `home-free`, `home-premium` (Review free
+  and premium are 04 and 06). Subscription review: `paywall-annual`,
+  `paywall-monthly`, taken before `release_look`.
+- **First run hung** on "tap planCard_Monthly" for over 20 minutes (owner
+  stopped it): the plan cards were below the fold and the tap had no
+  timeout. Fixed: the paywall is scrolled to "Choose your plan" before
+  both shots (prices, trial wording and the purchase button in one
+  frame), and every driver call that can wait has a 20 s timeout (2 min
+  for the connection and the first frame), so a stuck step fails the run.
+- **"Slide to type"** covered the keyboard in 03 on the new simulator:
+  the keyboard reads `com.apple.keyboard.preferences`, and `capture.sh`
+  wrote only `com.apple.Preferences`; it now writes both.
+- **Home's crop:** 1.1.0's rule (the whole mountain card above the nav
+  bar, the bottom edge in a gap) scrolls the 1.2.0 iPhone Home by
+  240.7 pt and cuts the Daily Test card at the top. Two more crops are
+  captured for the owner's choice: `home-free-top` (no scroll) and
+  `home-free-card-top` (the card at the top). The iPad needs 26.7 pt.
+- **Second run:** exit 0, 15 iPhone (1284 × 2778) and 9 iPad
+  (2064 × 2752) frames. Every frame opened and checked: only the made-up
+  "Sam"; status bar 9:41, full signal and battery; no version number, no
+  debug banner, no Developer section (07 on both devices).
+- **Found:**
+  - the simulator's PNGs **have an alpha channel**; the export must
+    flatten them (`frame.py` already converts to RGB; the subscription
+    review images are raw and need it too);
+  - **iPad:** the status bar shows the run's real date ("Tue Oct 6"), and
+    every iPad frame has iPadOS 26's **window resize handle** in the
+    bottom-right corner: the app runs as a resizable window, the open
+    1.1.0 question about the deprecated `UIRequiresFullScreen`;
+  - the paywall shots show the foot of the headline under the top bar
+    (the screen cannot scroll further);
+  - 07 on the iPhone: the medal row scrolls sideways, July is cut at the
+    right edge and the Welcome badge is off screen; the iPad shows all
+    five.
+
+## 2026-10-07 (1.2.0 visual assets — Batch 3: the owner's crops, the framed store set, subscription review images)
+
+**Owner's decisions on the raw frames:** store 02 is the top of Home
+with the Halfway Hut label (iPhone and iPad); the case study's free and
+premium Home use the mountain card at the top (`home-free`,
+`home-premium`); 05 is the free detail ("Start free practice"), the
+premium one ("Practice this") goes to the case study; the iPad's resize
+handle is painted over; the iPad's real date stays; the paywall
+headline's edge is accepted. Also: 07 framed higher (Fox and name card,
+shelf, October progress; Appearance out of frame) and the iPad's 07 from
+the top; 03 types "to eat", as 01 shows.
+
+- **Driver:** 03 types today's first answer (`answers.first`), so the
+  frame matches 01's "You wrote: to eat" (the `first_correct` request is
+  gone). 1.1.0's "clean Home scroll" is removed; Home is taken at its top
+  (02) and with the mountain card at the top (`home-free`,
+  `home-premium`). The debug panel's replay scrolls Home to the avatar,
+  so the driver scrolls Home back to its top once the label is up, then
+  takes 02 within the label's 2.7 s. 07: from Profile's top, scrolled
+  only until `MonthlyProgressCard` ends 20 pt above the nav bar (iPhone:
+  207.4 pt; iPad: 0, all of it fits). On the iPhone the Fox's ears are
+  cut at the top and the top edge of the theme buttons shows under the
+  nav bar: the Fox card, the shelf and the progress card do not all fit
+  on 926 pt; this is the most even split.
+- **`capture.sh`:** `RUNS` (default `free premium welcome`) limits the
+  runs; only the runs taken replace their frames (the whole-folder delete
+  is gone). Used here to retake the iPhone's free run after the 02 fix.
+- **`frame.py` for 1.2.0:** writes `screenshots/1.2.0/store/iphone` (8),
+  `store/ipad` (5) and `subscription-review` (2), and `overview.jpg`.
+  - **06 is written as `06-review-premium-ON-HOLD.png`** until the owner
+    approves it after Suggested Focus is checked on a device.
+  - **iPhone 14 Plus notch** drawn instead of 1.1.0's Dynamic Island
+    (about 162 × 33 pt, lower corners rounded; an approximation).
+  - **iPad resize handle** (iPadOS 26, system chrome): a mid-grey neutral
+    core in the corner triangle, grown by 2 px, each pixel filled with the
+    mean of the first clear pixels to its left and above. Checked on page
+    and keyboard backgrounds; a first version also caught the keyboard
+    dismiss icon's black chevron and was narrowed. On the keyboard frame a
+    faint trace stays at the key panel's edge, inside the area the frame's
+    rounded corner cuts off. The iPadOS 26 window itself is now an open
+    roadmap item.
+  - **Every PNG is RGB:** the simulator's captures carry an alpha channel;
+    the store frames and the two subscription review images are written
+    without it (`sips -g hasAlpha`: no, all 15).
+- **Captions** (`captions.json`): 01 "Every answer explained", 02 "Climb
+  a new mountain each month", 03 "A new test every day", 04 "Your weak
+  spots, tracked", 05 "Practice what you got wrong", 06 "Premium shows
+  your next focus" (proposed, owner to approve), 07 "Collect every
+  mountain", 08 "Set your goal in a minute". iPad: 01–04 as the iPhone,
+  05 "Collect every mountain".
+- **Checked:** every store and subscription review PNG opened: only the
+  made-up "Sam", status bar 9:41 with full signal and battery, no version
+  number, no debug banner, no Developer section, no resize handle on the
+  iPad frames. Sizes 1284 × 2778 (iPhone) and 2064 × 2752 (iPad).
+- **Owner's corrections after the framed set (2026-10-07):**
+  - **The notch** was drawn as a pill pushed above the screen's edge, so
+    its rounded top stuck out past the bezel. Now (`draw_notch`): 161 × 32
+    pt on the 428 pt screen (the 13/14 notch, 26.8 mm on a 71.3 mm wide
+    screen), centred; its top flat on the screen's top edge (and 2 px into
+    the bezel, which closes a 1 px line the screen's rounded paste
+    position left); lower corners 19 pt; 6 pt concave fillets where it
+    meets the edge; drawn 4× and reduced. Measured on the raw status bar:
+    the time ends at 77 pt and the icons start at 324 pt; the notch spans
+    133.5–294.5 pt. Checked at 100 % on all eight iPhone frames (and both
+    corners at 400 % on one).
+  - **07 (iPhone):** back to "Medal collection" at the top, the Fox card
+    out of frame (the notch cut the Fox's head). The iPad's 07 unchanged
+    (from the top).
+  - **02 (iPhone):** "Topic practice" fell across the screen's bottom
+    edge under the nav bar. The driver now measures, with Home at its top,
+    whether a heading crosses the bottom edge and, if so, scrolls just far
+    enough for the whole heading to show between the nav bar and the edge
+    (iPhone: heading 910.7–936.7 pt, edge 926, nav bar bottom 880:
+    scrolled 14.7 pt; the wordmark stays clear of the status bar). The
+    iPad needs no scroll. Checked on the framed image: the heading and its
+    "Premium" pill are whole inside the screen's rounded corner.
+  - Retaken with `RUNS=free … iphone`; the whole set reframed. Every PNG
+    opened again; all 15 RGB, no alpha.
+  - **Seen, not changed (owner's call):** the iPad's 02 also has a card
+    title ("Gerund vs. Infinitive") across its bottom edge under the nav
+    bar; the correction asked for the iPhone only.
+
+## 2026-10-07 (1.2.0 visual assets — Batch 4: iPad 02, README, case-study images, App Store Connect slots)
+
+- **iPad 02:** the bottom-edge rule now covers any line of text, not only
+  "Topic practice": with Home at its top the driver measures the lines
+  near the bottom (section headings, the topic card's text, each weak spot
+  card's title, count line and action) and takes the smallest scroll, up
+  to 40 pt, at which the screen's bottom edge cuts none of them (iPhone
+  14.7 pt as before; iPad 10 pt: "Gerund vs. Infinitive" whole above the
+  edge). Only the iPad's free run was retaken; the set reframed.
+- **Case-study captures** (new runs, iPhone):
+  - the welcome run goes on past 08 through the first day as a new user
+    sees it: `day0-1-test` (the first question), `day0-2-result` (the
+    Welcome celebration over the 4/5 result), `day0-4-paywall` (the day-0
+    paywall, which opens by itself on Home 600 ms after the first climb),
+    `day0-3-climb` (Home after it is closed, the Fox on step 1). This
+    run's month is Glacier Peak too: `capture_app.dart` sets the same
+    theme seam before the first completion;
+  - `CAPTURE_PRACTICE_USED` (`RUNS=practice`): Sam, free, has used today's
+    free practice (`recordFreePracticeStarted`), so Review offers Premium
+    (`review-practice-used`, the site's `practice-offer-card`). It shows
+    2 weak spots: no test is taken in this run.
+- **`tool/screenshots/assets.py`** (new) writes `readme/` and
+  `case-study/`. The site's current case-study images are raw app screens
+  at 600 × 1298 webp, so the new versions are too (from the unframed
+  captures, under the same names); comparisons put two screens side by
+  side under a label. The 1.0.0 side is the site's own image, read from
+  the site repository (read only, never written); its Home greets the
+  owner by his real name, which is blurred. The hero and the OG candidate
+  cut each phone out along its frame outline (frame.py's geometry) and
+  give it its own shadow. The OG candidate reuses the current OG's
+  headline ("Your personal grammar coach"); its subline ("A daily test,
+  every answer explained, and a mountain to climb each month.") is new,
+  for the owner to approve.
+- **README:** the 1.2.0 hero (Result, Home, Question) and four frames
+  (Review, weak spot, collection, goal) on top; the version table gains
+  1.2.0; the 1.1.0 frames move to a "Previous version: 1.1.0" section and
+  the 1.0.0 gallery is labelled "Previous version: 1.0.0"; v2 and v1 stay.
+  06 is not in the README while it is on hold.
+- **App Store Connect slots:** `screenshots/1.2.0/README.md` (which file
+  goes to which slot, in which order; the subscription review images by
+  product).
+- **Checked:** every new image opened (the five iPad frames, the hero and
+  four README frames, the nine single case-study images, the four
+  comparisons, the OG candidate): only the made-up "Sam" (the 1.0.0 name
+  blurred), no version number, no debug banner, no Developer section; all
+  RGB, no alpha, at the sizes above.
+- **After Batch 4 (owner, 2026-10-07):** the OG candidate's subline is
+  approved; `day0-4-paywall` stays as it is (the top of the paywall).
+  `compare-home-free-premium` is dropped: the two Homes differ only in
+  the "Premium" lock and one card's action line, so the pair says
+  nothing. The file is deleted, `assets.py` no longer writes it, and it
+  is gone from `screenshots/1.2.0/README.md` (the `home-free` and
+  `home-premium` captures stay in `build/` and are no longer used).
+  README's status line brought to 7 October: 1.0.0 in review, 1.1.0 a
+  release candidate, 1.2.0 in development with its device checks open,
+  none of them released.
+
+## 2026-10-07 (1.2.0 visual assets — device checks passed, 06 approved, the set final)
+
+- **Device checks (owner, physical iPhone 14 Plus):** Premium Review's
+  Suggested Focus; the sandbox paywall ("≈ $4.17 per month", struck
+  "$71.88", the 7-day / 3-day trial lines, the same as the subscription
+  review images); the final pass (wordmark, default text size); the final
+  screens (button rule, Data, Credits). All passed; no screen changed.
+  Not named in this check and still open: the paywall on a non-USD
+  storefront, with VoiceOver and at the largest text size; dark Welcome's
+  wordmark (A2); an account that already had a trial (eligibility).
+- **06 approved:** `frame.py` writes `06-review-premium.png`; the "on
+  hold" note is gone from the slot table. Reframed: every PNG and
+  `overview.jpg` byte-identical to the committed set (compared by hash),
+  only 06's name changed.
+- **No recapture:** no captured screen changed, so the committed set is
+  final. The main README keeps its four frames (06 not added, owner).
+- Open: uploads to App Store Connect, the case-study images to the site,
+  the iPadOS 26 narrow window, the version bump to 1.2.0 (not started).
+
+## 2026-10-07 (1.2.0 release: version 1.2.0+5, release gates checked; 1.0.0's second rejection, 1.1.0 skipped)
+
+On branch `1.2.0`; not pushed. No IPA built here: the owner builds and
+uploads.
+
+- **[Release — owner] 1.0.0's state.** Rejected a second time on
+  2026-10-06 under Guideline 3.1.2(c): the App Store metadata had no
+  Terms of Use / EULA link. The fix was metadata only, no new build: EULA,
+  Privacy and Terms lines added to the description, answered in
+  Resolution Center and resubmitted the same day. Waiting for review,
+  manual release.
+- **[Product — owner] Plan (replaces roadmap, "1.0.0's state and the
+  submission path", 2026-10-03).** 1.0.0 is not withdrawn. 1.1.0 is
+  skipped: it is never submitted, and everything in it ships in 1.2.0.
+  1.2.0 goes to review as an update once 1.0.0 is approved. Roadmap
+  version table (a 1.2.0 row added), the 1.1.0 release candidate section
+  and the submission path updated; README's status line and version table
+  too (they said "resubmitted 28 September" and "1.1.0 a release
+  candidate").
+- **[Release]** `pubspec.yaml` `1.1.0+4` → `1.2.0+5`. *Why 5:* the highest
+  build in App Store Connect is 3 (`1.0.0+3`; the owner checked the
+  TestFlight tab). `1.1.0+4` was set on 2026-10-04 but never built as an
+  IPA or uploaded, so 4 would also be free; 5 leaves no question.
+- **[Checked] Where the version appears.** Only `pubspec.yaml`:
+  `Info.plist` reads `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)`;
+  the Runner target's `CURRENT_PROJECT_VERSION` is
+  `$(FLUTTER_BUILD_NUMBER)`; `MARKETING_VERSION = 1.0` belongs to
+  `RunnerTests`. The app shows no version (no `package_info_plus`, no
+  version line in Settings or Credits); no test names one.
+- **[Checked] Off in a release build** (each gate a compile-time
+  constant, so the branch is compiled out, not hidden):
+  - the debug panel: `settings_screen.dart` `!kReleaseMode && …` (debug
+    and profile builds only);
+  - the Developer section: `settings_screen.dart` `kDebugMode && …`;
+  - the paywall price fixture: `SubscriptionService.debugFixtureOffering`
+    returns null and its setter does nothing unless
+    `debugModeForTesting` (`kDebugMode && DebugTools.enabledForTesting`);
+  - the debug premium override: the same gate in `SubscriptionService`,
+    and in `StorageService.getDebugAccessOverride` /
+    `setDebugAccessOverride`; `app.dart` loads it only under `kDebugMode`;
+  - `CLIMB_DEBUG_THEME`, `_DAY`, `_MILESTONE`, `_MONTH_CARD` and the
+    panel's controls: `enabled: !kReleaseMode && …`;
+  - the capture tools: `tool/screenshots/capture_app.dart` is its own
+    `flutter drive --target`, debug only; nothing in `lib/` imports
+    `tool/` (`test/tool_import_guard_test.dart`); `flutter_driver` is a
+    dev dependency;
+  - also raw error text on the Daily Test, the local data and onboarding
+    resets, the standalone previews. `test/debug_tools_release_test.dart`
+    covers the release behaviour.
+- **[Checked] Release config.** `config/prod.json` has
+  `PROXY_BASE_URL`, `APP_TOKEN` and `REVENUECAT_API_KEY` set (the
+  RevenueCat key is the `appl_` production key); values not printed.
+  `ITSAppUsesNonExemptEncryption = false`. Flutter 3.44.6, Xcode 27.0.
+- **[Release] Steps for the owner** (as builds 2 and 3): `flutter pub
+  get`, `flutter analyze`, `flutter test`, `./scripts/preflight.sh`, then
+  `flutter build ipa --release --dart-define-from-file=config/prod.json`
+  (no other define; default App Store export; automatic signing, team
+  `37U9L67C2J`). Read back `CFBundleShortVersionString` 1.2.0 and
+  `CFBundleVersion` 5 from
+  `build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/Info.plist`,
+  then upload `build/ios/ipa/grammar_lens.ipa` with Transporter.
+- **[Open]** The TestFlight build and upload (owner). On the TestFlight
+  build: the paywall with an account that already used a trial. Deferred
+  to after the release (owner): the paywall on a non-USD storefront.
+- **[Tests]** `flutter analyze` clean; full suite **1,881 passed, 0
+  failed**.

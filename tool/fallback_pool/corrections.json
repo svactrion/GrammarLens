@@ -1,0 +1,94 @@
+{
+  "formatVersion": 1,
+  "corrections": [
+    {
+      "date": "2026-09-30",
+      "question": 3,
+      "reason": "The hint ('one verb form, not two words') contradicts the two-word key, and the contraction is correct after 'I'.",
+      "removeHint": true,
+      "removeWrongAnswers": [
+        "'m cooking"
+      ],
+      "addAcceptedAnswers": [
+        "'m cooking"
+      ]
+    },
+    {
+      "date": "2026-10-01",
+      "question": 3,
+      "reason": "The instruction asks for one word, not an article, and 'his salary' is correct.",
+      "addAcceptedAnswers": [
+        "his"
+      ]
+    },
+    {
+      "date": "2026-10-02",
+      "question": 2,
+      "reason": "'Have to' is also correct for a strict rule, as with the 'must' correction of 2026-10-06.",
+      "addAcceptedAnswers": [
+        "have to"
+      ]
+    },
+    {
+      "date": "2026-10-02",
+      "question": 5,
+      "reason": "The present perfect simple is also correct with 'since' here.",
+      "addAcceptedAnswers": [
+        "I have run marathons since I was twenty."
+      ]
+    },
+    {
+      "date": "2026-10-03",
+      "question": 2,
+      "reason": "The contraction is correct after 'We', as with the \"'m cooking\" correction.",
+      "addAcceptedAnswers": [
+        "'re cleaning"
+      ]
+    },
+    {
+      "date": "2026-10-05",
+      "question": 2,
+      "reason": "'Has sun' (sunlight, uncountable) is a correct and natural correction.",
+      "removeWrongAnswers": [
+        "The flat has sun in the living room all afternoon."
+      ],
+      "addAcceptedAnswers": [
+        "The flat has sun in the living room all afternoon."
+      ]
+    },
+    {
+      "date": "2026-10-05",
+      "question": 3,
+      "reason": "'Have to' is also correct for a strict rule, as with the 'must' correction of 2026-10-06.",
+      "addAcceptedAnswers": [
+        "have to"
+      ]
+    },
+    {
+      "date": "2026-10-05",
+      "question": 4,
+      "reason": "The present perfect continuous is also correct, and the US spelling 'neighborhood' is not a grammar mistake.",
+      "addAcceptedAnswers": [
+        "We have been living in this neighbourhood since 2018.",
+        "We have lived in this neighborhood since 2018.",
+        "We have been living in this neighborhood since 2018."
+      ]
+    },
+    {
+      "date": "2026-10-06",
+      "question": 1,
+      "reason": "The present perfect simple is also correct.",
+      "addAcceptedAnswers": [
+        "I have read this newspaper since I was a teenager."
+      ]
+    },
+    {
+      "date": "2026-10-06",
+      "question": 4,
+      "reason": "The instruction asks for one modal verb, and 'must' is the most natural answer for a strict rule; the key is 'have to'.",
+      "addAcceptedAnswers": [
+        "must"
+      ]
+    }
+  ]
+}

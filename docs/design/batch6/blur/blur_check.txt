@@ -1,0 +1,10 @@
+Batch 6 M22: the K-c blurred backdrops against their sources
+
+ok   assets/climb/green_slope/background_light_blur.webp: same bytes as export_blur.py makes now
+ok   assets/climb/green_slope/background_dark_blur.webp: same bytes as export_blur.py makes now
+ok   assets/climb/ember_peak/background_light_blur.webp: same bytes as export_blur.py makes now
+ok   assets/climb/ember_peak/background_dark_blur.webp: same bytes as export_blur.py makes now
+ok   assets/climb/glacier_peak/background_light_blur.webp: same bytes as export_blur.py makes now
+ok   assets/climb/glacier_peak/background_dark_blur.webp: same bytes as export_blur.py makes now
+ok   assets/climb/red_canyon/background_light_blur.webp: same bytes as export_blur.py makes now
+ok   assets/climb/red_canyon/background_dark_blur.webp: same bytes as export_blur.py makes now

@@ -3,16 +3,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/daily_test_completion.dart';
+import '../models/climb_theme.dart';
 import '../models/daily_test_set.dart';
+import '../models/medal_tier.dart';
 import '../services/analytics_service.dart';
+import '../services/climb_milestones.dart';
 import '../services/daily_test_service.dart';
+import '../services/monthly_medal_rules.dart';
 import '../services/welcome_badge_rules.dart';
 import '../theme.dart';
 import '../utils/answer_matching.dart';
 import '../utils/app_messenger.dart';
 import '../utils/page_title.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/confetti_burst.dart';
+import '../widgets/medal_celebration.dart';
 import '../widgets/mistake_breakdown.dart';
 import '../widgets/result_score_band.dart';
 
@@ -55,15 +59,6 @@ class DailyTestResultScreen extends StatefulWidget {
   State<DailyTestResultScreen> createState() => _DailyTestResultScreenState();
 }
 
-/// How long the Welcome card takes to ease in.
-const Duration _bannerDuration = Duration(milliseconds: 350);
-
-/// The longest the screen waits for the confetti to finish before it moves on
-/// anyway. The burst takes 1.8 s ([ConfettiBurst.duration]); this only matters
-/// if something stops its animation (a paused ticker, a torn-down overlay), so
-/// a stuck burst can never trap the user on this screen.
-const Duration _climbFallback = Duration(milliseconds: 2500);
-
 class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   late final DailyTestCompletion _completion;
   List<DailyTestAnswerResult> get _results => _completion.results;
@@ -74,27 +69,20 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   /// (docs/prd-gamification.md §M6.5) — never re-derived from storage, so
   /// a reopened already-completed set (whose `_saveCompletion` never even
   /// runs, see `initState` below) or a backfilled badge (which this screen
-  /// never earns) cannot show it. It turns the card on and the button into
-  /// "Start my climb"; it does not delay the save or anything else.
+  /// never earns) cannot show it. It opens the celebration and turns the
+  /// button into "Start my climb"; it does not delay the save or anything
+  /// else.
   bool _showWelcomeCelebration = false;
 
-  /// The "Start my climb" button was tapped. From then on the button is
-  /// disabled, the confetti plays on this screen for its whole run, and only
-  /// then does the screen move on ([_leave]), so the two never overlap.
-  bool _climbStarted = false;
+  /// The celebration layer showing now (Batch 5, N15), or null: the Welcome
+  /// badge or a tier just secured, opened when the save lands, closed by
+  /// one tap. Only `_saveCompletion` sets it, so a reopened result or a
+  /// relaunch never plays it again.
+  _Celebration? _celebration;
 
-  /// [_leave] has run: the screen is left at most once, whatever combination of
-  /// finished burst, fallback timer and taps gets there.
+  /// [_leave] has run: the screen is left at most once, whatever taps get
+  /// there.
   bool _left = false;
-
-  OverlayEntry? _confettiEntry;
-  Timer? _fallbackTimer;
-  final _climbButtonKey = GlobalKey();
-
-  /// Keeps the card's element alive when the list above it changes length (the
-  /// saving bar and the failure text come and go), so it eases in from where it
-  /// was instead of being rebuilt already in its final state.
-  final _cardKey = GlobalKey();
 
   /// Guards `daily_test_completed`/Welcome analytics to at most once per
   /// screen instance, on top of `_saveCompletion`'s own already-completed
@@ -129,7 +117,28 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       _reportCompletion(welcomeBadgeJustEarned);
       widget.onCompletionSaved?.call();
       if (welcomeBadgeJustEarned && mounted) {
-        setState(() => _showWelcomeCelebration = true);
+        setState(() {
+          _showWelcomeCelebration = true;
+          _celebration = const _Celebration.welcome();
+        });
+      }
+      // What this completion reached in its month (N12, N15, N24): its
+      // events, and a tier's celebration. The Welcome badge and a tier
+      // never come together: the badge is the first step ever, worth at
+      // most 10 points, and Bronze is at least 70; nor does that first
+      // step reach a save point (the first is on step 7).
+      final milestones = await ClimbMilestones.afterCompletion(
+        storage: widget.dailyTestService.storageService,
+        day: _completion.set.day,
+        step: _completion.step,
+        points: MonthlyMedalRules.score(
+            correct: _completion.correct, wrong: _completion.wrong),
+      );
+      if (milestones != null) _reportMilestones(milestones);
+      final tier = milestones?.tier;
+      if (tier != null && !welcomeBadgeJustEarned && mounted) {
+        setState(() => _celebration =
+            _Celebration.tier(tier, milestones!.theme, milestones.month));
       }
     } catch (e) {
       if (!mounted) return;
@@ -140,75 +149,17 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     }
   }
 
-  /// "Start my climb": the badge is earned and the user chose to move on. The
-  /// confetti plays here, on the results, for its whole run, and [_leave] runs
-  /// when it ends. Where there is no confetti (reduced motion, no overlay to
-  /// draw on) the screen is left at once.
-  void _startClimb() {
-    if (_climbStarted) return;
-    setState(() => _climbStarted = true);
-    if (!_playConfetti()) {
-      _leave();
-      return;
-    }
-    _fallbackTimer = Timer(_climbFallback, _leave);
-  }
-
-  /// Throws the confetti from the top of the button into an overlay above the
-  /// screen, about 1.8 s, in the theme's colors. False when it was not played:
-  /// never under reduced motion (the card alone is the celebration then).
-  bool _playConfetti() {
-    if (MediaQuery.disableAnimationsOf(context)) return false;
-    final overlay = Overlay.maybeOf(context);
-    final button = _climbButtonKey.currentContext?.findRenderObject();
-    if (overlay == null || button is! RenderBox || !button.hasSize) {
-      return false;
-    }
-    final overlayBox = overlay.context.findRenderObject() as RenderBox;
-    final origin = overlayBox.globalToLocal(
-      button.localToGlobal(Offset(button.size.width / 2, 0)),
-    );
-    final colors = Theme.of(context).colorScheme;
-    final entry = OverlayEntry(
-      builder: (_) => ConfettiBurst(
-        origin: origin,
-        colors: [colors.primary, colors.secondary, colors.tertiary],
-        onFinished: _leave,
-      ),
-    );
-    _confettiEntry = entry;
-    overlay.insert(entry);
-    return true;
-  }
-
-  void _removeConfetti() {
-    final entry = _confettiEntry;
-    if (entry == null) return;
-    _confettiEntry = null;
-    entry.remove();
-    entry.dispose();
-  }
-
   /// The way out: pops this route, or, for the Day-0 flow (not a route), calls
   /// [DailyTestResultScreen.onDone]. At most once.
   void _leave() {
     if (_left || !mounted) return;
     _left = true;
-    _fallbackTimer?.cancel();
-    _removeConfetti();
     final onDone = widget.onDone;
     if (onDone != null) {
       onDone();
     } else {
       Navigator.of(context).pop();
     }
-  }
-
-  @override
-  void dispose() {
-    _fallbackTimer?.cancel();
-    _removeConfetti();
-    super.dispose();
   }
 
   /// Analytics for a save that just succeeded (docs/analytics-plan.md E1/E3):
@@ -226,6 +177,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       stepEarned: _completion.step == 1,
       day0: widget.isDay0,
       setSource: widget.dailyTestSet.source.name,
+      setDate: widget.dailyTestSet.day,
     ));
     if (!welcomeBadgeJustEarned) return;
     // The ledger day, not the wall clock: the same authority the step
@@ -238,6 +190,35 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       daysInMonth: DateTime(ledgerDay.year, ledgerDay.month + 1, 0).day,
     ));
     unawaited(analytics.setFirstStepDayOfMonth(ledgerDay.day));
+  }
+
+  /// `save_point_reached` and `medal_tier_reached` (N21) for what this
+  /// completion reached: after the durable save, once per screen instance
+  /// (only `_saveCompletion` calls it, after a success). The theme is the
+  /// set's month's.
+  void _reportMilestones(ClimbMilestones milestones) {
+    final analytics = widget.analyticsService;
+    final days = DateTime(milestones.year, milestones.month + 1, 0).day;
+    for (final p in milestones.savePoints) {
+      unawaited(analytics.savePointReached(
+        themeId: milestones.theme.id,
+        savePoint: p.eventId,
+        step: p.reachedOn(days),
+        daysInMonth: days,
+      ));
+    }
+    final tier = milestones.tier;
+    if (tier == null) return;
+    final ledgerDay = DateTime.tryParse(_completion.set.day);
+    if (ledgerDay == null) return;
+    unawaited(analytics.medalTierReached(
+      themeId: milestones.theme.id,
+      tier: tier,
+      dayOfMonth: ledgerDay.day,
+      daysInMonth: days,
+      activeDays: milestones.steps,
+      ruleVersion: MonthlyMedalRules.ruleVersion,
+    ));
   }
 
   /// What the one primary button says and does, from the screen's own state.
@@ -258,8 +239,10 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     }
     if (_showWelcomeCelebration) {
       return FilledButton(
-        key: _climbButtonKey,
-        onPressed: _climbStarted ? null : _startClimb,
+        // N36: no exit confetti any more (the celebration is in the
+        // layer); the label and the way on stay.
+        onPressed: _leave,
+        style: forwardButtonStyle(context),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -270,11 +253,17 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         ),
       );
     }
+    final seeClimb = !widget.isDay0 &&
+        !widget.dailyTestSet.isCompleted &&
+        _completion.step > 0;
     return FilledButton(
       onPressed: _leave,
+      // The way on to the climb is the screen's forward action (orange);
+      // "Back to Home" is an exit and stays navy (owner's button rule).
+      style: seeClimb ? forwardButtonStyle(context) : null,
       child: Text(widget.isDay0
           ? 'Continue'
-          : !widget.dailyTestSet.isCompleted && _completion.step > 0
+          : seeClimb
               ? 'See your climb'
               : 'Back to Home'),
     );
@@ -283,10 +272,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final semantic = theme.extension<SemanticColors>()!;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final hPad = (MediaQuery.sizeOf(context).width * 0.045).clamp(16.0, 28.0);
 
     final correctCount = _results.where((r) => r.isCorrect).length;
     final skippedCount = _results.where((r) => r.isSkipped).length;
@@ -295,27 +281,15 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         ? '$correctCount/$totalCount correct · $skippedCount skipped'
         : '$correctCount/$totalCount correct';
 
-    return BrandScaffold(
+    final celebration = _celebration;
+    final scaffold = BrandScaffold(
       title: const PageTitle('Daily Test Results'),
-      bandBottom: ResultScoreBand(text: scoreText),
+      bandBottom: ResultScoreBand.sized(context, text: scoreText),
       // Fixed, like Premium's footer: a hard edge (not a shadow that only
       // appears once scrolled) between the results and the one button.
-      bottomBar: DecoratedBox(
+      bottomBar: BrandBottomBar(
         key: const Key('resultFooter'),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: _primaryButton(),
-            ),
-          ),
-        ),
+        child: _primaryButton(),
       ),
       children: [
         // A slot of its own height, so the results do not shift by the bar's
@@ -332,97 +306,41 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
           _QuestionResultCard(result: result, semantic: semantic),
           const SizedBox(height: 14),
         ],
-        // Below the results, so it never pushes them down when the save
-        // lands, and it eases in (size and fade) instead of jumping. Under
-        // reduced motion it simply appears, and without an AnimatedSize at all
-        // (a zero-duration one mutates its own layout). If the list rebuilds
-        // this item later (scrolled away and back) it is created already in
-        // its final state, so nothing replays.
-        if (reduceMotion)
-          KeyedSubtree(
-            key: _cardKey,
-            child: _showWelcomeCelebration
-                ? const _WelcomeBadgeCard()
-                : const SizedBox.shrink(),
-          )
-        else
-          AnimatedSize(
-            key: _cardKey,
-            duration: _bannerDuration,
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: AnimatedOpacity(
-              duration: _bannerDuration,
-              opacity: _showWelcomeCelebration ? 1 : 0,
-              child: _showWelcomeCelebration
-                  ? const _WelcomeBadgeCard()
-                  : const SizedBox(width: double.infinity),
-            ),
-          ),
       ],
     );
+    if (celebration == null) return scaffold;
+    void close() => setState(() => _celebration = null);
+    const key = ValueKey('medal_celebration');
+    return Stack(children: [
+      scaffold,
+      Positioned.fill(
+        child: celebration.tier == null
+            ? MedalCelebration.welcome(key: key, onClose: close)
+            : MedalCelebration.tier(
+                key: key,
+                tier: celebration.tier!,
+                theme: celebration.theme!,
+                month: celebration.month,
+                onClose: close),
+      ),
+    ]);
   }
 }
 
-/// The one-time Welcome badge win moment (docs/prd-gamification.md §M6.5), a
-/// large card under the results: the badge, its name and what earns the next
-/// step. Copy is deliberately audience-neutral — no "first test" language —
-/// since the same badge, and the same wording, is earned identically by a brand
-/// new user and by a pre-existing v2 user completing their first Daily Test
-/// after updating. Visual is a temporary placeholder; real artwork lands with
-/// the rest of the medal collection's own design pass later.
-class _WelcomeBadgeCard extends StatelessWidget {
-  const _WelcomeBadgeCard();
+/// Which celebration shows (N15): the Welcome badge, or a tier with its
+/// month and that month's theme.
+class _Celebration {
+  final MedalTier? tier;
+  final ClimbTheme? theme;
+  final int month;
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final onContainer = colorScheme.onSecondaryContainer;
-    return Semantics(
-      liveRegion: true,
-      child: Card(
-        color: colorScheme.secondaryContainer,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-          child: Column(
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: onContainer.withValues(alpha: 0.12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Icon(
-                    Icons.emoji_events_rounded,
-                    color: onContainer,
-                    size: 44,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Welcome to the climb',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: onContainer,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Answer at least one question a day to keep moving "
-                "up this month's mountain.",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(color: onContainer),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  const _Celebration.welcome()
+      : tier = null,
+        theme = null,
+        month = 0;
+
+  const _Celebration.tier(
+      MedalTier this.tier, ClimbTheme this.theme, this.month);
 }
 
 const _fallbackComment = "Not quite — here's the correct answer.";
@@ -474,6 +392,12 @@ class _QuestionResultCard extends StatelessWidget {
           result.match?.comment,
           questionExplanation,
         ].whereType<String>().join(' '),
+      // An alternative the set accepts: shown as correct, with the key
+      // named so the learner also sees the form the set expected.
+      AnswerMatchKind.accepted => [
+          'Also correct: "${result.question.correctAnswer}".',
+          questionExplanation,
+        ].whereType<String>().join(' '),
       AnswerMatchKind.fallback => questionExplanation ?? _fallbackComment,
       AnswerMatchKind.correct || null => questionExplanation,
     };
@@ -491,10 +415,9 @@ class _QuestionResultCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: onBackground,
-                  ),
+                  style: theme.textTheme.labelLarge
+                      ?.withWeight(FontWeight.w600)
+                      .copyWith(color: onBackground),
                 ),
               ],
             ),

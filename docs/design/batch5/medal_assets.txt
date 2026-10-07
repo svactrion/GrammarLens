@@ -1,0 +1,52 @@
+Batch 5 Batch 0: the composed medals (tool/medals/medal_assets.py).
+Inputs: build/medals/png, 768 px, from build_medals.py (13 images).
+
+1. Geometry. Body circle = the body source's visible box (alpha > 40),
+scaled to 768 px. Overflow = how far the visible medal (alpha > 40)
+reaches past that box, as a share of the circle's diameter. Box = the
+visible medal's width and height over the circle's diameter. Past the
+disc = the farthest visible pixel beyond the round disc (not its
+bounding square), as a share of the diameter; outside = the share of
+visible pixels outside the disc (what a circular clip would cut).
+
+medal                         circle (px)          overflow top / bottom / left / right   box w x h       past the disc  outside
+medal_green_slope_gold         681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.5 %
+medal_green_slope_silver       681.6 x  682.3       0.038 / 0.001 / 0.000 / 0.000             1.000 x 1.040     0.053         0.3 %
+medal_green_slope_bronze       681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.2 %
+medal_ember_peak_gold          681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.5 %
+medal_ember_peak_silver        681.6 x  682.3       0.038 / 0.001 / 0.000 / 0.000             1.000 x 1.040     0.053         0.3 %
+medal_ember_peak_bronze        681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.2 %
+medal_glacier_peak_gold        681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.5 %
+medal_glacier_peak_silver      681.6 x  682.3       0.038 / 0.001 / 0.000 / 0.000             1.000 x 1.040     0.053         0.3 %
+medal_glacier_peak_bronze      681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.2 %
+medal_red_canyon_gold          681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.5 %
+medal_red_canyon_silver        681.6 x  682.3       0.038 / 0.001 / 0.000 / 0.000             1.000 x 1.040     0.053         0.3 %
+medal_red_canyon_bronze        681.6 x  682.3       0.054 / 0.001 / 0.000 / 0.000             1.000 x 1.056     0.054         0.2 %
+medal_welcome                  681.6 x  682.3       0.000 / 0.001 / 0.000 / 0.000             1.000 x 1.002     0.132         5.7 %
+
+Monthly medals: the stars need up to 0.054 of the diameter above the circle;
+no other side reaches past it (the body's own shadow is inside the box).
+Welcome: the ribbon needs 0.000 above, 0.000 left and 0.000 right of the
+circle's bounding square: it crosses the round outline at the top corners
+(up to 0.132 D past the disc) but stays inside the square.
+Monthly: the stars reach up to 0.054 D past the disc.
+So, for a medal whose circle is D pt across:
+- monthly, circle kept at D: a box 1.000 D wide and 1.056 D tall (stars above);
+- Welcome, circle kept at D: 1.000 D wide and 1.002 D tall;
+- the whole image fitted in a square box S: the circle is 0.947 S (monthly) and 0.998 S (Welcome).
+
+2. App asset candidates: lossy WebP, alpha lossless (libwebp default), method 6.
+error = |WebP - Lanczos PNG at the same size| over pixels with alpha > 0,
+premultiplied, 0-255: mean / 99th percentile.
+
+px    quality  one medal (bytes, min-max)   all 13 (KB)   error mean / p99 (worst medal)
+256        80    12658 - 14904              178.4       2.79 / 22.0
+256        90    16310 - 19256              229.0       2.23 / 20.8
+384        80    20482 - 24406              290.2       2.34 / 18.0
+384        90    26416 - 31534              376.3       1.81 / 16.0
+512        80    28488 - 34160              408.0       1.97 / 16.0
+512        90    37180 - 45530              535.2       1.55 / 14.0
+
+For scale: the 13 composed PNGs at 768 px are 7.46 MB.
+The climb's assets today: 8 backgrounds (1536 x 2048 WebP) and the objects;
+see docs/design/batch5/batch0-report.md section 1 for the bundle total.

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../utils/content_width.dart';
 import 'floating_nav_shell.dart';
 
-/// The D1 hybrid-theme shell (docs/design-audit.md §5, closed): an orange
-/// header band in light mode / neutral band in dark mode (see
-/// [ColorScheme]'s `bandBackground`/`bandForeground` extension in
-/// `theme.dart` — this widget reads those, never its own color), over a
-/// neutral `surfaceContainerLow` body in both themes. Every screen uses
-/// this widget now except Welcome — D1's one deliberate exception, staying
-/// full orange.
+/// The screen shell every screen but Welcome uses: an app bar and a body,
+/// both the page color (`surfaceContainerLow`, pageBackground), in both
+/// themes. Until the 1.2.0 redesign the app bar was D1's header band
+/// (docs/design-audit.md §5): orange in light mode, neutral in dark. The
+/// band is gone; the app bar takes its colors from `appBarTheme`
+/// (`theme.dart`), never its own. Welcome sets its own background.
 ///
 /// Also the single place that solves scroll behavior, safe-area, and
 /// bottom-nav clearance for a D1 screen, so docs/design-audit.md S4 (the
@@ -42,7 +42,7 @@ class BrandScaffold extends StatelessWidget {
           'Provide exactly one of title or appBar',
         );
 
-  /// The band's title widget — a plain [Text] on most screens (often via
+  /// The app bar's title widget — a plain [Text] on most screens (often via
   /// `PageTitle`), but left as a [Widget] since Home's brand wordmark
   /// needs its own explicit style. Mutually exclusive with [appBar],
   /// enforced the same way as [children]/[body] — see that field's doc
@@ -51,9 +51,9 @@ class BrandScaffold extends StatelessWidget {
 
   /// A fully custom app bar, replacing the one this widget would otherwise
   /// build from [title]/[leading]/[actions]/[bandBottom] (all ignored when
-  /// this is set) — the question screens' `QuestionAppBar` is the reason
-  /// this exists: its own Back/Close/progress-row layout has nothing in
-  /// common with a plain title bar. The custom app bar owns its own
+  /// this is set) — e.g. a zero-height app bar for a screen whose header is
+  /// in the page (the question screens, Topic Practice). The custom app bar
+  /// owns its own
   /// `scrolledUnderElevation`/colors; this widget still supplies the
   /// neutral body around it either way.
   final PreferredSizeWidget? appBar;
@@ -68,7 +68,7 @@ class BrandScaffold extends StatelessWidget {
 
   final List<Widget>? actions;
 
-  /// Extra band content below the title — e.g. a results screen's score
+  /// Extra app bar content below the title — e.g. a results screen's score
   /// (Batch 4). Null on every screen that doesn't need it, Home included.
   final PreferredSizeWidget? bandBottom;
 
@@ -80,7 +80,7 @@ class BrandScaffold extends StatelessWidget {
   final bool isTabRoot;
 
   /// Overrides the default responsive horizontal padding
-  /// (`(width * 0.045).clamp(16, 28)`, Home's existing formula) — null uses
+  /// (`ContentWidth.basePadding`: 14 pt below 360 pt wide, 18 above) — null uses
   /// that default.
   final double? horizontalPadding;
 
@@ -103,7 +103,7 @@ class BrandScaffold extends StatelessWidget {
   /// item in a scroll view. Mutually exclusive with [children] — see its
   /// doc comment for the enforced-not-just-documented reasoning; when set,
   /// [controller] and [horizontalPadding] don't apply (the caller owns
-  /// this content's layout entirely). The band and neutral body background
+  /// this content's layout entirely). The app bar and the page background
   /// still apply either way.
   final Widget? body;
 
@@ -118,48 +118,63 @@ class BrandScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final hPad = horizontalPadding ?? (width * 0.045).clamp(16.0, 28.0);
+    final size = MediaQuery.sizeOf(context);
+    // P1: on an iPad the list is held to the centred content column
+    // (`ContentWidth`); on an iPhone this is the padding unchanged.
+    final hPad = ContentWidth.sidePadding(
+        size, horizontalPadding ?? ContentWidth.basePadding(size.width));
     final bottomPadding = bottomBar != null
         ? 16.0
         : isTabRoot
             ? NavBarClearance.of(context)
             : MediaQuery.paddingOf(context).bottom + 16;
 
+    final PreferredSizeWidget bar = appBar ??
+        AppBar(
+          title: title,
+          leading: leading,
+          automaticallyImplyLeading: automaticallyImplyLeading,
+          actions: actions,
+          bottom: bandBottom,
+          // Decided once here, not per screen (docs/design-audit.md: Daily
+          // Test results showed "an opaque orange app bar with a hard edge
+          // appears on scroll but is absent at scroll-top" — content
+          // scrolling under the app bar must look the same at rest and
+          // mid-scroll, not gain a new edge). The app bar is the page
+          // color, so content simply passes under it; the default Material
+          // scrolled-under shadow would add an edge that is absent at
+          // scroll-top, so it's turned off explicitly rather than left to
+          // the inherited default. A custom [appBar] (see its own doc
+          // comment) makes this same call for itself.
+          scrolledUnderElevation: 0,
+        );
+    // P1: on an iPad the app bar stays full width and its content (back,
+    // title, actions, [bandBottom]) moves in to the content column. Not
+    // wrapped at all on an iPhone, so nothing there changes.
+    final bandInset = ContentWidth.insetOf(context,
+        edge: ContentWidth.basePadding(size.width));
+    final PreferredSizeWidget band = bandInset == 0
+        ? bar
+        : PreferredSize(
+            preferredSize: bar.preferredSize,
+            child: ColoredBox(
+              color: theme.appBarTheme.backgroundColor ??
+                  colorScheme.surfaceContainerLow,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: bandInset),
+                child: bar,
+              ),
+            ),
+          );
+
     return Scaffold(
-      // The app bar below is left to inherit `bandBackground`/
-      // `bandForeground` from the theme rather than repeating that
-      // expression here, since they're already identical by construction
-      // (see theme.dart's `BandColors` extension).
+      // The page color; the app bar inherits the same color from
+      // `appBarTheme` rather than repeating it here.
       backgroundColor: colorScheme.surfaceContainerLow,
-      appBar: appBar ??
-          AppBar(
-            title: title,
-            leading: leading,
-            automaticallyImplyLeading: automaticallyImplyLeading,
-            actions: actions,
-            bottom: bandBottom,
-            // Decided once here, not per screen (docs/design-audit.md: Daily
-            // Test results showed "an opaque orange app bar with a hard edge
-            // appears on scroll but is absent at scroll-top" — content
-            // scrolling under the band must look the same at rest and mid-
-            // scroll, not gain a new edge). The band already has a permanent
-            // separation from the body via bandBackground/bandForeground
-            // alone (a hard, un-blurred color cut, not a gradient — visible
-            // at every scroll position because it's the app bar's own
-            // bottom edge, not scroll-triggered) — the default Material
-            // scrolled-under shadow would only add a second, redundant edge
-            // signal on top of that, so it's turned off explicitly rather
-            // than left to the inherited default. A custom [appBar] (see
-            // its own doc comment) makes this same call for itself.
-            scrolledUnderElevation: 0,
-          ),
-      // No local card-theme override here anymore (docs/design-audit.md §5
-      // D1, closed): every screen is on this neutral body now, so the
-      // card treatment that used to be scoped to this widget's own subtree
-      // while migration was in progress is simply the app-wide default —
-      // see `theme.dart`'s `cardTheme` for the current values and the
-      // reasoning behind them.
+      appBar: band,
+      // No local card-theme override: the card treatment is the app-wide
+      // default — see `theme.dart`'s `cardTheme` for the current values
+      // and the reasoning behind them.
       bottomNavigationBar: bottomBar,
       body: body ??
           ListView(
@@ -167,6 +182,36 @@ class BrandScaffold extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(hPad, 20, hPad, bottomPadding),
             children: children!,
           ),
+    );
+  }
+}
+
+/// The fixed area under a results screen's list ([BrandScaffold.bottomBar]):
+/// the page colour, a hard top edge (not a shadow that only appears once
+/// scrolled), the bottom safe area and the page's side padding. Shared by
+/// Daily Test results and Topic Practice results so the one button sits in
+/// the same place on both.
+class BrandBottomBar extends StatelessWidget {
+  final Widget child;
+
+  const BrandBottomBar({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hPad = ContentWidth.sidePaddingOf(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
+          child: SizedBox(width: double.infinity, child: child),
+        ),
+      ),
     );
   }
 }

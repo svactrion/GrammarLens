@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+
+import '../widgets/floating_nav_shell.dart';
 
 /// Every transient status message in the app (errors, and short
 /// confirmations like "Profile saved.") goes through this single helper
@@ -33,14 +36,45 @@ class AppMessenger {
   /// the same message — replaces rather than stacks. A no-op if the
   /// messenger isn't attached yet (shouldn't happen once wired into
   /// `MaterialApp`, but avoids a crash if called before the first frame).
+  ///
+  /// Where it appears ([_bottomMargin]): on a tab screen, above the floating
+  /// nav bar; elsewhere where Flutter puts it (above a `BrandScaffold`'s
+  /// bottom bar, above the keyboard). While the keyboard is up the message
+  /// waits one frame, so a Save that closes the editor (Profile's name)
+  /// places it for the keyboard that is going away, not the one still
+  /// on screen.
   static void show(String message) {
     final messenger = key.currentState;
     if (messenger == null) return;
     messenger.clearSnackBars();
+    if (MediaQuery.viewInsetsOf(messenger.context).bottom > 0) {
+      final generation = _generation;
+      SchedulerBinding.instance
+        ..addPostFrameCallback((_) {
+          if (generation == _generation) _show(message);
+        })
+        ..ensureVisualUpdate();
+    } else {
+      _show(message);
+    }
+  }
+
+  /// Bumped by [clear], so a message waiting for its frame is dropped when
+  /// the screen changes before it shows.
+  static int _generation = 0;
+
+  static void _show(String message) {
+    final messenger = key.currentState;
+    if (messenger == null) return;
+    messenger.clearSnackBars();
+    final bottom = _bottomMargin(messenger.context);
     messenger.showSnackBar(
       SnackBar(
         content: Text(message),
         duration: _duration,
+        margin: bottom == null
+            ? null
+            : EdgeInsets.fromLTRB(_inset.left, _inset.top, _inset.right, bottom),
         // A SnackBar with an action defaults `persist` to true — it would
         // otherwise never auto-dismiss on its own no matter what
         // [_duration] says, which was the original bug: a Dismiss action
@@ -55,12 +89,51 @@ class AppMessenger {
     );
   }
 
+  /// Flutter's own margin for a floating Material 3 SnackBar.
+  static const EdgeInsets _inset = EdgeInsets.fromLTRB(15, 5, 15, 10);
+
+  /// The message's bottom margin, or null for Flutter's own placement.
+  ///
+  /// The tab screens sit in the nav shell's root Scaffold, which shows the
+  /// app's messages. Its bar is a `Stack` overlay, not a Scaffold slot, so
+  /// Flutter does not know it is there and puts a message on top of it;
+  /// and the Scaffold does not resize for the keyboard (Batch 8), so
+  /// Flutter does not lift a message above the keyboard either. Here the
+  /// message's bottom edge goes [NavBarClearance.gap] above the bar's
+  /// measured top ([FloatingNavShell.visibleClearance]), or the same gap
+  /// above the keyboard while a text field has the focus. The margin is
+  /// counted from the safe area's bottom edge, where the Scaffold places a
+  /// floating SnackBar.
+  ///
+  /// A screen without the bar (a pushed route) gets null: its own Scaffold
+  /// already places the message above its bottom bar and the keyboard.
+  static double? _bottomMargin(BuildContext context) {
+    final clearance = FloatingNavShell.visibleClearance;
+    if (clearance == null) return null;
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final aboveKeyboard = keyboard > 0 && _textFieldHasFocus()
+        ? keyboard + NavBarClearance.gap
+        : 0.0;
+    final fromBottom = clearance > aboveKeyboard ? clearance : aboveKeyboard;
+    return (fromBottom - safeBottom).clamp(_inset.bottom, double.infinity);
+  }
+
+  static bool _textFieldHasFocus() {
+    final context = FocusManager.instance.primaryFocus?.context;
+    return context != null &&
+        context.mounted &&
+        (context.widget is EditableText ||
+            context.findAncestorWidgetOfExactType<EditableText>() != null);
+  }
+
   /// Clears any message currently showing or queued. Called by
   /// [navigatorObserver] on every Navigator route change; app.dart also
   /// calls this directly on a bottom-nav tab switch, since that's an
-  /// `IndexedStack` swap, not a Navigator route change the observer below
+  /// `TabSwitcher` swap, not a Navigator route change the observer below
   /// would ever see.
   static void clear() {
+    _generation++;
     key.currentState?.clearSnackBars();
   }
 

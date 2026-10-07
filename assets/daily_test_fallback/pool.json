@@ -1,0 +1,797 @@
+{
+  "formatVersion": 1,
+  "sets": [
+    {
+      "questions": [
+        {
+          "id": "fb01_1",
+          "type": "fill_in_blank",
+          "context": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"",
+          "instruction": "Fill in the blank with the correct form of the verb (buy).",
+          "hint": "Think about what comes after 'afford'.",
+          "topicId": "gerundVsInfinitive",
+          "correctAnswer": "to buy",
+          "explanation": "The verb 'afford' is followed by a to-infinitive, so it's 'afford to buy'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "buying",
+              "comment": "It's tempting because many verbs take -ing, but 'afford' is followed by 'to' plus the base verb."
+            },
+            {
+              "answer": "buy",
+              "comment": "You need 'to' after 'afford'; the bare verb doesn't work here."
+            }
+          ]
+        },
+        {
+          "id": "fb01_2",
+          "type": "fill_in_blank",
+          "context": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"",
+          "instruction": "Fill in the blank with the correct article.",
+          "hint": "The soup has already been mentioned.",
+          "topicId": "articles",
+          "correctAnswer": "the",
+          "explanation": "The soup was just mentioned and is a specific dish, so we use 'the'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "a",
+              "comment": "You might think of 'a soup' as one portion, but this is a specific soup already mentioned, so 'the' is needed."
+            },
+            {
+              "answer": "an",
+              "comment": "'An' is used before vowel sounds, and it's also not right because the soup is a specific one."
+            }
+          ]
+        },
+        {
+          "id": "fb01_3",
+          "type": "fill_in_blank",
+          "context": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"",
+          "instruction": "Fill in the blank with the correct form of the verb (cook).",
+          "topicId": "tenseSelection",
+          "correctAnswer": "am cooking",
+          "explanation": "'Right now' describes an action in progress at the moment of speaking, so we use the present continuous.",
+          "commonWrongAnswers": [
+            {
+              "answer": "cook",
+              "comment": "The simple present is for habits, but 'right now' points to an action happening at this moment."
+            },
+            {
+              "answer": "cooked",
+              "comment": "The past simple describes finished actions, but he is cooking at this moment."
+            }
+          ],
+          "acceptedAnswers": [
+            "'m cooking"
+          ]
+        },
+        {
+          "id": "fb01_4",
+          "type": "error_correction",
+          "context": "Yesterday, the baker told me that he can make a cake for my party.",
+          "instruction": "Rewrite the sentence with the error corrected.",
+          "topicId": "modalPastForms",
+          "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+          "explanation": "After the past verb 'told', reported ability usually shifts 'can' to 'could'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "Yesterday, the baker told me that he would can make a cake for my party.",
+              "comment": "'Would can' isn't possible because two modals can't be used together."
+            },
+            {
+              "answer": "Yesterday, the baker told me that he could made a cake for my party.",
+              "comment": "After 'could' you need the base verb 'make', not the past form."
+            }
+          ]
+        },
+        {
+          "id": "fb01_5",
+          "type": "error_correction",
+          "context": "You must to wash your hands before you touch the food.",
+          "instruction": "Rewrite the sentence with the error corrected.",
+          "topicId": "modalVerbs",
+          "correctAnswer": "You must wash your hands before you touch the food.",
+          "explanation": "Modal verbs like 'must' are followed by the base verb without 'to'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "You must washing your hands before you touch the food.",
+              "comment": "A modal is followed by the base verb, so -ing doesn't fit after 'must'."
+            },
+            {
+              "answer": "You must to wash your hands before touching the food.",
+              "comment": "The 'to' after 'must' is still there; that's the actual mistake, so it needs to go."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "id": "fb02_1",
+          "type": "error_correction",
+          "context": "Last year, the manager promised that the bank will approve my loan.",
+          "instruction": "Rewrite the full sentence with the error corrected.",
+          "topicId": "modalPastForms",
+          "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+          "explanation": "The promise was made in the past, so reported 'will' shifts to 'would': 'promised that the bank would approve'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "Last year, the manager promised that the bank can approve my loan.",
+              "comment": "You changed the modal, but 'can' doesn't fit a past reported promise; 'would' is needed."
+            },
+            {
+              "answer": "Last year, the manager promised that the bank will have approved my loan.",
+              "comment": "This adds a future perfect form; the reported promise simply needs 'would'."
+            },
+            {
+              "answer": "Last year, the manager promised that the bank would to approve my loan.",
+              "comment": "You changed the modal but added 'to'; modals are followed by the bare verb."
+            }
+          ]
+        },
+        {
+          "id": "fb02_2",
+          "type": "error_correction",
+          "context": "You should to check your bank balance before you shop online.",
+          "instruction": "Rewrite the full sentence with the error corrected.",
+          "topicId": "modalVerbs",
+          "correctAnswer": "You should check your bank balance before you shop online.",
+          "explanation": "After a modal like 'should', we use the bare infinitive without 'to': 'should check'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "You should checking your bank balance before you shop online.",
+              "comment": "After 'should' you don't add -ing; use the plain base verb."
+            },
+            {
+              "answer": "You should to checking your bank balance before you shop online.",
+              "comment": "You kept 'to' and added -ing; a modal needs just the base verb."
+            },
+            {
+              "answer": "You should checked your bank balance before you shop online.",
+              "comment": "After a modal the verb stays in its base form, not the past."
+            }
+          ]
+        },
+        {
+          "id": "fb02_3",
+          "type": "fill_in_blank",
+          "context": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.",
+          "instruction": "Fill in the blank with one word.",
+          "topicId": "articles",
+          "correctAnswer": "the",
+          "explanation": "We use 'the' because it's the specific salary of his new job, already clear from context.",
+          "commonWrongAnswers": [
+            {
+              "answer": "a",
+              "comment": "'A' treats the salary as new information, but we know it's the salary of his new job."
+            },
+            {
+              "answer": "an",
+              "comment": "'An' is used before vowel sounds, and this salary is a specific one, so it needs 'the'."
+            }
+          ],
+          "acceptedAnswers": [
+            "his"
+          ]
+        },
+        {
+          "id": "fb02_4",
+          "type": "error_correction",
+          "context": "I pay my rent yesterday, so I have no money left.",
+          "instruction": "Rewrite the full sentence with the error corrected.",
+          "topicId": "tenseSelection",
+          "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+          "explanation": "'Yesterday' points to a finished past time, so we use the past simple: 'paid'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "I have paid my rent yesterday, so I have no money left.",
+              "comment": "Present perfect doesn't go with a finished time like 'yesterday'; use the past simple."
+            },
+            {
+              "answer": "I have paid my rent, so I have no money left yesterday.",
+              "comment": "This moves 'yesterday' to the wrong clause; the paying happened yesterday."
+            },
+            {
+              "answer": "I was paying my rent yesterday, so I have no money left.",
+              "comment": "Past continuous suggests an action in progress; here the payment was a completed event."
+            }
+          ]
+        },
+        {
+          "id": "fb02_5",
+          "type": "fill_in_blank",
+          "context": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)",
+          "instruction": "Fill in the blank with the correct form of the verb.",
+          "topicId": "gerundVsInfinitive",
+          "correctAnswer": "buying",
+          "explanation": "After 'avoid', the next verb takes -ing, so it's 'avoid buying'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "to buy",
+              "comment": "It's tempting because 'decided' takes 'to', but 'avoid' is followed by -ing."
+            },
+            {
+              "answer": "buy",
+              "comment": "The base verb doesn't work after 'avoid'; use the -ing form."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "id": "fb03_1",
+          "type": "error_correction",
+          "context": "The coach said that the team will train at six.",
+          "instruction": "Correct the sentence.",
+          "topicId": "modalPastForms",
+          "correctAnswer": "The coach said that the team would train at six.",
+          "explanation": "After a past reporting verb like 'said', 'will' usually shifts to 'would' in reported speech.",
+          "commonWrongAnswers": [
+            {
+              "answer": "The coach said that the team will trained at six.",
+              "comment": "You added -ed to the verb, but the modal is what needs to change, and the verb after it stays in base form."
+            },
+            {
+              "answer": "The coach said that the team would trained at six.",
+              "comment": "You changed the modal correctly, but a verb after 'would' stays in the base form 'train'."
+            }
+          ]
+        },
+        {
+          "id": "fb03_2",
+          "type": "fill_in_blank",
+          "context": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'",
+          "instruction": "Fill in the blank with one modal verb.",
+          "hint": "Think about a rule that is compulsory.",
+          "topicId": "modalVerbs",
+          "correctAnswer": "must",
+          "explanation": "'Must' expresses a strict rule or obligation, which is what a pool sign like this states.",
+          "commonWrongAnswers": [
+            {
+              "answer": "might",
+              "comment": "It's tempting, but 'might' talks about possibility, not a strict rule."
+            },
+            {
+              "answer": "can",
+              "comment": "You may be thinking of permission, but the sign says the rule is compulsory."
+            }
+          ],
+          "acceptedAnswers": [
+            "have to"
+          ]
+        },
+        {
+          "id": "fb03_3",
+          "type": "fill_in_blank",
+          "context": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)",
+          "instruction": "Write the correct form of the verb.",
+          "hint": "Think about what comes after 'enjoys'.",
+          "topicId": "gerundVsInfinitive",
+          "correctAnswer": "competing",
+          "explanation": "After 'enjoy', the next verb takes -ing, so it's 'enjoys competing'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "to compete",
+              "comment": "You may be thinking of 'want to compete', but 'enjoy' is followed by the -ing form."
+            },
+            {
+              "answer": "compete",
+              "comment": "The base form doesn't work after 'enjoys'; the verb needs -ing."
+            }
+          ]
+        },
+        {
+          "id": "fb03_4",
+          "type": "fill_in_blank",
+          "context": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'",
+          "instruction": "Fill in the blank with the correct article.",
+          "hint": "There is only one goalkeeper for the other team on the pitch.",
+          "topicId": "articles",
+          "correctAnswer": "the",
+          "explanation": "We use 'the' because it's clear which goalkeeper we mean: the one on the other team.",
+          "commonWrongAnswers": [
+            {
+              "answer": "a",
+              "comment": "'A' would suggest any goalkeeper, but here we mean one specific, known player."
+            },
+            {
+              "answer": "an",
+              "comment": "'An' is used before a vowel sound, and it would also make the goalkeeper sound unspecific."
+            }
+          ]
+        },
+        {
+          "id": "fb03_5",
+          "type": "error_correction",
+          "context": "I am running marathons since I was twenty.",
+          "instruction": "Correct the sentence.",
+          "topicId": "tenseSelection",
+          "correctAnswer": "I have been running marathons since I was twenty.",
+          "explanation": "For an action that started in the past and continues now with 'since', we use the present perfect continuous.",
+          "commonWrongAnswers": [
+            {
+              "answer": "I run marathons since I was twenty.",
+              "comment": "The simple present doesn't link a past starting point with 'since'; you need a perfect form."
+            },
+            {
+              "answer": "I was running marathons since I was twenty.",
+              "comment": "The past continuous doesn't connect to the present, but 'since' needs that link."
+            }
+          ],
+          "acceptedAnswers": [
+            "I have run marathons since I was twenty."
+          ]
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "id": "fb04_1",
+          "type": "fill_in_blank",
+          "context": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)",
+          "instruction": "Fill in the blank with the correct article.",
+          "topicId": "articles",
+          "correctAnswer": "a",
+          "explanation": "We mention a recycling bin for the first time and no specific one, so we use 'a' before the consonant sound.",
+          "commonWrongAnswers": [
+            {
+              "answer": "the",
+              "comment": "It's tempting, but 'the' points to a specific bin both people already know, and Maria doesn't know of one."
+            },
+            {
+              "answer": "an",
+              "comment": "You use 'an' before a vowel sound, but 'recycling' starts with a consonant sound, so it's 'a'."
+            }
+          ]
+        },
+        {
+          "id": "fb04_2",
+          "type": "fill_in_blank",
+          "context": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)",
+          "instruction": "Fill in the blank with the correct form of the verb in brackets.",
+          "hint": "(clean)",
+          "topicId": "tenseSelection",
+          "correctAnswer": "are cleaning",
+          "explanation": "'At the moment' shows the action is happening right now, so we use the present continuous: 'are cleaning'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "clean",
+              "comment": "The simple present is for habits, but here the action is happening right now."
+            },
+            {
+              "answer": "cleaned",
+              "comment": "The past simple describes a finished action, but the volunteers are still cleaning now."
+            },
+            {
+              "answer": "are clean",
+              "comment": "You need the -ing form after 'are' to make the present continuous."
+            }
+          ],
+          "acceptedAnswers": [
+            "'re cleaning"
+          ]
+        },
+        {
+          "id": "fb04_3",
+          "type": "error_correction",
+          "context": "Last week, the landlord said that he will install solar panels.",
+          "instruction": "Rewrite the sentence with the error corrected.",
+          "topicId": "modalPastForms",
+          "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+          "explanation": "After the past verb 'said', reported 'will' usually changes to 'would', so it's 'would install'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "Last week, the landlord said that he wills install solar panels.",
+              "comment": "Modal verbs never take -s, so 'wills' is not a correct form."
+            },
+            {
+              "answer": "Last week, the landlord said that he would installed solar panels.",
+              "comment": "After 'would' the verb stays in its base form, so 'install', not 'installed'."
+            }
+          ]
+        },
+        {
+          "id": "fb04_4",
+          "type": "error_correction",
+          "context": "You should to bring your own bag when you go shopping.",
+          "instruction": "Rewrite the sentence with the error corrected.",
+          "topicId": "modalVerbs",
+          "correctAnswer": "You should bring your own bag when you go shopping.",
+          "explanation": "After a modal like 'should', we use the bare verb without 'to', so it's 'should bring'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "You should bringing your own bag when you go shopping.",
+              "comment": "Modals are followed by the base form, not the -ing form."
+            },
+            {
+              "answer": "You should to bring your own bag when you go shopping.",
+              "comment": "This is the original sentence, and 'to' after 'should' is the mistake."
+            },
+            {
+              "answer": "You should brought your own bag when you go shopping.",
+              "comment": "After 'should' you need the base form 'bring', not the past form."
+            }
+          ]
+        },
+        {
+          "id": "fb04_5",
+          "type": "error_correction",
+          "context": "I avoid to drive to work because it pollutes the air.",
+          "instruction": "Rewrite the sentence with the error corrected.",
+          "topicId": "gerundVsInfinitive",
+          "correctAnswer": "I avoid driving to work because it pollutes the air.",
+          "explanation": "After 'avoid', the next verb takes -ing, so it's 'avoid driving'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "I avoid drive to work because it pollutes the air.",
+              "comment": "You need the -ing form directly after 'avoid', so the bare verb 'drive' doesn't work."
+            },
+            {
+              "answer": "I avoid to driving to work because it pollutes the air.",
+              "comment": "You've added -ing but kept 'to'; after 'avoid' just use 'driving'."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "id": "fb05_1",
+          "type": "fill_in_blank",
+          "context": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.",
+          "instruction": "Complete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday.",
+          "hint": "Think about how 'will' changes in reported speech.",
+          "topicId": "modalPastForms",
+          "correctAnswer": "would",
+          "explanation": "In reported speech about the past, 'will' usually changes to 'would', so it's 'they would have'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "will",
+              "comment": "It's tempting to keep the original word, but after 'said' in the past we usually shift it back."
+            },
+            {
+              "answer": "could",
+              "comment": "You're right to use a past modal, but 'could' means ability or possibility, not the future idea of 'will'."
+            },
+            {
+              "answer": "should",
+              "comment": "This sounds past-like, but 'should' adds advice or obligation that the original sentence didn't have."
+            }
+          ]
+        },
+        {
+          "id": "fb05_2",
+          "type": "error_correction",
+          "context": "I have bought these shoes yesterday at the market.",
+          "instruction": "Rewrite the full sentence with the error corrected.",
+          "topicId": "tenseSelection",
+          "correctAnswer": "I bought these shoes yesterday at the market.",
+          "explanation": "With a finished time like 'yesterday', we use the past simple, so it's 'I bought'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "I have bought these shoes at the market yesterday.",
+              "comment": "You moved the words around, but the present perfect still doesn't work with 'yesterday'."
+            },
+            {
+              "answer": "I buy these shoes yesterday at the market.",
+              "comment": "Present simple can't describe a finished action in the past; you need the past form."
+            },
+            {
+              "answer": "I was buying these shoes yesterday at the market.",
+              "comment": "The past continuous suggests an action in progress, but this is a single completed purchase."
+            }
+          ]
+        },
+        {
+          "id": "fb05_3",
+          "type": "fill_in_blank",
+          "context": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.",
+          "instruction": "Fill in the blank with one word.",
+          "topicId": "articles",
+          "correctAnswer": "The",
+          "explanation": "We use 'the' because there is only one bakery next door, so it's clearly identified.",
+          "commonWrongAnswers": [
+            {
+              "answer": "A",
+              "comment": "'A' suggests any bakery, but here both speakers know which single bakery is meant."
+            },
+            {
+              "answer": "An",
+              "comment": "'An' is used before vowel sounds, and 'bakery' starts with a consonant sound; it also isn't specific."
+            }
+          ]
+        },
+        {
+          "id": "fb05_4",
+          "type": "error_correction",
+          "context": "You must to try the jacket on before you buy it.",
+          "instruction": "Rewrite the full sentence with the error corrected.",
+          "topicId": "modalVerbs",
+          "correctAnswer": "You must try the jacket on before you buy it.",
+          "explanation": "Modal verbs like 'must' are followed by the base verb without 'to', so it's 'must try'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "You must to try on the jacket before you buy it.",
+              "comment": "You moved 'on', but 'must' still can't be followed by 'to'."
+            },
+            {
+              "answer": "You must trying the jacket on before you buy it.",
+              "comment": "After a modal we use the plain base verb, not an -ing form."
+            },
+            {
+              "answer": "You must tried the jacket on before you buy it.",
+              "comment": "A modal is followed by the base form, not the past form."
+            }
+          ]
+        },
+        {
+          "id": "fb05_5",
+          "type": "fill_in_blank",
+          "context": "The blender you bought stopped working after two days, so you went back to the store.",
+          "instruction": "Complete the sentence with the correct form of the verb: I decided ___ (ask) for a refund.",
+          "hint": "Think about what comes after 'decide'.",
+          "topicId": "gerundVsInfinitive",
+          "correctAnswer": "to ask",
+          "explanation": "The verb 'decide' is followed by the to-infinitive, so it's 'decided to ask'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "asking",
+              "comment": "Many verbs take -ing, but 'decide' isn't one of them."
+            },
+            {
+              "answer": "ask",
+              "comment": "The bare verb is used after modals, but 'decide' needs 'to' before the verb."
+            },
+            {
+              "answer": "to asking",
+              "comment": "'To' here is part of the infinitive, so the verb stays in its base form."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "id": "fb06_1",
+          "type": "error_correction",
+          "context": "My landlord promised that he will repair the heater.",
+          "instruction": "Correct the sentence by rewriting it in full.",
+          "topicId": "modalPastForms",
+          "correctAnswer": "My landlord promised that he would repair the heater.",
+          "explanation": "After the past verb 'promised', reported speech usually shifts 'will' to 'would', so it's 'he would repair'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "My landlord promised that he is repair the heater.",
+              "comment": "You changed the modal, but 'is' can't be followed by a bare verb here."
+            },
+            {
+              "answer": "My landlord promised that he will to repair the heater.",
+              "comment": "You added 'to' after 'will', but modals take a bare verb and the tense still needs changing."
+            },
+            {
+              "answer": "My landlord promised that he would to repair the heater.",
+              "comment": "You fixed 'would', but a modal is followed by a bare verb, so 'to' is wrong."
+            }
+          ]
+        },
+        {
+          "id": "fb06_2",
+          "type": "error_correction",
+          "context": "The flat has a sun in the living room all afternoon.",
+          "instruction": "Correct the sentence by rewriting it in full.",
+          "topicId": "articles",
+          "correctAnswer": "The flat has the sun in the living room all afternoon.",
+          "explanation": "There is only one sun, so it normally takes 'the', as in 'the sun'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "The flat has an sun in the living room all afternoon.",
+              "comment": "'An' comes before vowel sounds, and 'sun' starts with a consonant sound; it also needs 'the'."
+            },
+            {
+              "answer": "A flat has a sun in the living room all afternoon.",
+              "comment": "You changed the wrong article and left 'a sun' unchanged."
+            }
+          ],
+          "acceptedAnswers": [
+            "The flat has sun in the living room all afternoon."
+          ]
+        },
+        {
+          "id": "fb06_3",
+          "type": "fill_in_blank",
+          "context": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"",
+          "instruction": "Fill in the blank with one modal verb.",
+          "hint": "Think of a strict requirement.",
+          "topicId": "modalVerbs",
+          "correctAnswer": "must",
+          "explanation": "'Must' expresses a strong obligation, which fits a legal requirement before you get the keys.",
+          "commonWrongAnswers": [
+            {
+              "answer": "might",
+              "comment": "'Might' shows a small possibility, not a legal requirement."
+            },
+            {
+              "answer": "could",
+              "comment": "'Could' suggests an option or possibility, but this is an obligation."
+            },
+            {
+              "answer": "can",
+              "comment": "'Can' means ability or permission, which is too weak for a legal requirement."
+            }
+          ],
+          "acceptedAnswers": [
+            "have to"
+          ]
+        },
+        {
+          "id": "fb06_4",
+          "type": "error_correction",
+          "context": "We live in this neighbourhood since 2018.",
+          "instruction": "Correct the sentence by rewriting it in full.",
+          "topicId": "tenseSelection",
+          "correctAnswer": "We have lived in this neighbourhood since 2018.",
+          "explanation": "With 'since' and a situation continuing until now, we use the present perfect: 'have lived'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "We lived in this neighbourhood since 2018.",
+              "comment": "Past simple suggests the situation is finished, but 'since' links the past to now."
+            },
+            {
+              "answer": "We are living in this neighbourhood since 2018.",
+              "comment": "Present continuous doesn't go with 'since'; use the present perfect."
+            },
+            {
+              "answer": "We have live in this neighbourhood since 2018.",
+              "comment": "You used the right idea, but the present perfect needs 'lived', not 'live'."
+            }
+          ],
+          "acceptedAnswers": [
+            "We have been living in this neighbourhood since 2018.",
+            "We have lived in this neighborhood since 2018.",
+            "We have been living in this neighborhood since 2018."
+          ]
+        },
+        {
+          "id": "fb06_5",
+          "type": "fill_in_blank",
+          "context": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)",
+          "instruction": "Fill in the blank with the correct form of the verb.",
+          "hint": "Think about what comes after 'considering'.",
+          "topicId": "gerundVsInfinitive",
+          "correctAnswer": "moving",
+          "explanation": "After 'consider', the next verb takes -ing, so it's 'considering moving'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "to move",
+              "comment": "Many verbs take 'to', but after 'consider' you use the -ing form."
+            },
+            {
+              "answer": "move",
+              "comment": "The bare verb doesn't fit after 'considering'; you need -ing."
+            },
+            {
+              "answer": "moved",
+              "comment": "The past form doesn't work after 'considering'; use the -ing form."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "questions": [
+        {
+          "id": "fb07_1",
+          "type": "error_correction",
+          "context": "I am reading this newspaper since I was a teenager.",
+          "instruction": "Correct the sentence by rewriting it in full.",
+          "hint": "Think about how long the action has been going on.",
+          "topicId": "tenseSelection",
+          "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+          "explanation": "With 'since' and a starting point in the past, we use the present perfect continuous: 'have been reading'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "I read this newspaper since I was a teenager.",
+              "comment": "The simple present doesn't work with 'since' for an action that started in the past and continues now."
+            },
+            {
+              "answer": "I was reading this newspaper since I was a teenager.",
+              "comment": "The past continuous doesn't connect the past to now, so it doesn't fit with 'since'."
+            }
+          ],
+          "acceptedAnswers": [
+            "I have read this newspaper since I was a teenager."
+          ]
+        },
+        {
+          "id": "fb07_2",
+          "type": "fill_in_blank",
+          "context": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"",
+          "instruction": "Write the correct form of the verb (listen).",
+          "hint": "Think about what comes after 'enjoy'.",
+          "topicId": "gerundVsInfinitive",
+          "correctAnswer": "listening",
+          "explanation": "After 'enjoy', the next verb takes -ing, so it's 'enjoy listening'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "to listen",
+              "comment": "It's tempting because many verbs take 'to', but 'enjoy' is followed by the -ing form."
+            },
+            {
+              "answer": "listen",
+              "comment": "The base form doesn't work after 'enjoy'; you need the -ing form."
+            }
+          ]
+        },
+        {
+          "id": "fb07_3",
+          "type": "error_correction",
+          "context": "The presenter said that the show will start at nine.",
+          "instruction": "Correct the sentence by rewriting it in full.",
+          "hint": "Look at the verb after 'said that'.",
+          "topicId": "modalPastForms",
+          "correctAnswer": "The presenter said that the show would start at nine.",
+          "explanation": "After the past verb 'said', reported 'will' usually becomes 'would', so it's 'would start'.",
+          "commonWrongAnswers": [
+            {
+              "answer": "The presenter said that the show will starts at nine.",
+              "comment": "Adding -s after 'will' is a new mistake; modals are followed by the plain verb."
+            },
+            {
+              "answer": "The presenter said that the show would starts at nine.",
+              "comment": "You changed the modal correctly, but 'would' must be followed by the plain verb 'start'."
+            }
+          ]
+        },
+        {
+          "id": "fb07_4",
+          "type": "fill_in_blank",
+          "context": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"",
+          "instruction": "Write the one modal verb that fits best to show a strict rule.",
+          "hint": "Think of an obligation, not a suggestion.",
+          "topicId": "modalVerbs",
+          "correctAnswer": "have to",
+          "explanation": "A rule set by the cinema is an obligation, and 'have to' expresses that clearly.",
+          "commonWrongAnswers": [
+            {
+              "answer": "might",
+              "comment": "'Might' shows possibility, not a rule you are required to follow."
+            },
+            {
+              "answer": "could",
+              "comment": "'Could' shows possibility or ability, not a strict obligation."
+            }
+          ],
+          "acceptedAnswers": [
+            "must"
+          ]
+        },
+        {
+          "id": "fb07_5",
+          "type": "fill_in_blank",
+          "context": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"",
+          "instruction": "Write the correct article.",
+          "hint": "The interview is mentioned for the first time, and 'interview' starts with a vowel sound.",
+          "topicId": "articles",
+          "correctAnswer": "an",
+          "explanation": "The interview is new information, so we use 'a', and 'an' before a vowel sound.",
+          "commonWrongAnswers": [
+            {
+              "answer": "a",
+              "comment": "You chose the right idea, but 'interview' starts with a vowel sound, so it needs 'an'."
+            },
+            {
+              "answer": "the",
+              "comment": "'The' is for something already known, but this interview is mentioned for the first time."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

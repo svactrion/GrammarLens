@@ -1,0 +1,31 @@
+Batch 5 (N30, N37): the real month card on the real Home after the M21 scroll: Batch 6
+(40 pt medal in a row) -> N30 (centred, 88 / 70 / 48 pt by screen height) -> N37
+(112 / 70 / 48 pt). Sheet height in points; window = the mountain above the sheet (of
+350 pt); START = the K-c avatar above the sheet. Dark lays out the same:
+yes.
+
+card     screen    text    sheet B6 -> N30 -> N37       scrolls B6/N30/N37   window B6 -> N30 -> N37        START N30/N37
+summary  320×568   small    294.0 ->  319.5 ->  319.5     no/yes/yes            113.0 ->  87.5 ->  87.5   (25 %)        no/no
+summary  320×568   medium   302.0 ->  319.5 ->  319.5     no/yes/yes            104.0 ->  86.5 ->  86.5   (25 %)        no/no
+summary  320×568   large    311.0 ->  319.5 ->  319.5     no/yes/yes             94.0 ->  85.5 ->  85.5   (24 %)        no/no
+summary  375×812   small    328.0 ->  405.9 ->  431.3     no/no/no             296.0 -> 218.1 -> 192.7   (55 %)        no/no
+summary  375×812   medium   336.0 ->  415.9 ->  441.3     no/no/no             287.0 -> 207.1 -> 181.7   (52 %)        no/no
+summary  375×812   large    345.0 ->  426.9 ->  452.3     no/no/no             277.0 -> 195.1 -> 169.7   (48 %)        no/no
+summary  430×932   small    328.0 ->  405.9 ->  431.3     no/no/no             350.0 -> 323.7 -> 298.3   (85 %)        yes/no
+summary  430×932   medium   336.0 ->  415.9 ->  441.3     no/no/no             350.0 -> 315.1 -> 289.7   (83 %)        yes/no
+summary  430×932   large    345.0 ->  426.9 ->  452.3     no/no/no             350.0 -> 303.1 -> 277.7   (79 %)        yes/no
+summary  375×667   small    294.0 ->  352.9 ->  352.9     no/no/no             212.0 -> 153.1 -> 153.1   (44 %)        no/no
+summary  375×667   medium   302.0 ->  362.9 ->  362.9     no/no/no             203.0 -> 142.1 -> 142.1   (41 %)        no/no
+summary  375×667   large    311.0 ->  373.9 ->  373.9     no/no/no             193.0 -> 130.1 -> 130.1   (37 %)        no/no
+fresh    320×568   small    247.0 ->  247.0 ->  247.0     no/no/no             160.0 -> 160.0 -> 160.0   (46 %)        no/no
+fresh    320×568   medium   280.0 ->  280.0 ->  280.0     no/no/no             126.0 -> 126.0 -> 126.0   (36 %)        no/no
+fresh    320×568   large    294.0 ->  294.0 ->  294.0     no/no/no             111.0 -> 111.0 -> 111.0   (32 %)        no/no
+fresh    375×812   small    260.0 ->  260.0 ->  260.0     no/no/no             350.0 -> 350.0 -> 350.0  (100 %)        yes/yes
+fresh    375×812   medium   291.0 ->  291.0 ->  291.0     no/no/no             332.0 -> 332.0 -> 332.0   (95 %)        yes/yes
+fresh    375×812   large    303.0 ->  303.0 ->  303.0     no/no/no             319.0 -> 319.0 -> 319.0   (91 %)        yes/yes
+fresh    430×932   small    260.0 ->  260.0 ->  260.0     no/no/no             350.0 -> 350.0 -> 350.0  (100 %)        yes/yes
+fresh    430×932   medium   264.0 ->  264.0 ->  264.0     no/no/no             350.0 -> 350.0 -> 350.0  (100 %)        yes/yes
+fresh    430×932   large    269.0 ->  269.0 ->  269.0     no/no/no             350.0 -> 350.0 -> 350.0  (100 %)        yes/yes
+fresh    375×667   small    226.0 ->  226.0 ->  226.0     no/no/no             280.0 -> 280.0 -> 280.0   (80 %)        no/no
+fresh    375×667   medium   257.0 ->  257.0 ->  257.0     no/no/no             248.0 -> 248.0 -> 248.0   (71 %)        no/no
+fresh    375×667   large    269.0 ->  269.0 ->  269.0     no/no/no             235.0 -> 235.0 -> 235.0   (67 %)        no/no

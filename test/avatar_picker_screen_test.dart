@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/screens/avatar_picker_screen.dart';
+import 'package:grammar_lens/widgets/avatar_tile.dart';
 
 void main() {
   testWidgets(
@@ -120,6 +121,54 @@ void main() {
     await tester.pumpAndSettle();
     expect(taggedHeroCount(), 1,
         reason: 'settled on a (possibly different) page — still exactly one');
+  });
+
+  testWidgets(
+      'across the loop seam (last → first, first → last) exactly one Hero '
+      'carries the tag, on the centered avatar', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AvatarPickerScreen(
+          currentAvatar: Avatar.values.last,
+          onAvatarChanged: (_) {},
+          heroTag: avatarHeroTag,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Iterable<Hero> taggedHeroes() => tester
+        .widgetList<Hero>(find.byType(Hero))
+        .where((h) => h.tag == avatarHeroTag);
+    Avatar heroAvatar() => tester
+        .widget<AvatarTile>(find.descendant(
+          of: find.byWidget(taggedHeroes().single),
+          matching: find.byType(AvatarTile),
+        ))
+        .avatar!;
+    // One page, measured on screen rather than derived from the picker's
+    // private viewportFraction.
+    Future<void> dragOnePageTo(Avatar neighbor) async {
+      final from = tester.getCenter(find.byWidget(taggedHeroes().single)).dx;
+      final to = tester
+          .getCenter(find.byWidgetPredicate(
+            (w) => w is AvatarTile && w.avatar == neighbor,
+          ))
+          .dx;
+      await tester.drag(find.byType(PageView), Offset((from - to) * 0.7, 0));
+      await tester.pumpAndSettle();
+    }
+
+    expect(taggedHeroes(), hasLength(1));
+    expect(heroAvatar(), Avatar.values.last);
+
+    await dragOnePageTo(Avatar.values.first);
+    expect(taggedHeroes(), hasLength(1));
+    expect(heroAvatar(), Avatar.values.first);
+
+    await dragOnePageTo(Avatar.values.last);
+    expect(taggedHeroes(), hasLength(1));
+    expect(heroAvatar(), Avatar.values.last);
   });
 
   Future<void> pumpPushed(

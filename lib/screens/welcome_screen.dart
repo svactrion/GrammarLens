@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 
 import '../spacing.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/brand_wordmark.dart';
+import '../widgets/launch_splash.dart';
+import '../utils/content_width.dart';
+import '../theme.dart';
 
 // Ambient background decoration for this screen only — not reused
 // elsewhere, so (unlike BrandMark's glass/glint) these stay local rather
@@ -30,6 +34,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool _reduceMotion = false;
   bool _initialized = false;
 
+  // On a first install this screen is built under the cold-start launch
+  // splash. Every entrance and ambient motion waits (drawn at its first
+  // frame) until the splash's fade has finished, so none of it plays
+  // unseen. Elsewhere (no splash, or already gone) nothing is held.
+  bool _held = false;
+
   AnimationController? _texts;
   Animation<double>? _titleProgress;
   Animation<double>? _subtitleProgress;
@@ -38,6 +48,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final held = LaunchSplashScope.coveringOf(context);
+    if (_initialized && _held && !held) _texts?.forward();
+    _held = held;
     // Decide once, at mount, whether motion is allowed — not re-evaluated
     // reactively on every dependency change. Matches how the decorative
     // child widgets below each decide it once in their own initState.
@@ -53,7 +66,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _titleProgress = _staggered(controller, delay: 450, duration: 700);
     _subtitleProgress = _staggered(controller, delay: 700, duration: 700);
     _ctaProgress = _staggered(controller, delay: 950, duration: 700);
-    controller.forward();
+    if (!_held) controller.forward();
   }
 
   Animation<double> _staggered(
@@ -83,8 +96,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final size = MediaQuery.sizeOf(context);
-    final hPad = (size.width * 0.08).clamp(24.0, 40.0);
-    final appBarFg = theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePadding(
+        size, (size.width * 0.08).clamp(24.0, 40.0).toDouble());
+    // Welcome's own colors, set here rather than inherited: until 1.2.0 the
+    // scaffold color was D1's header band (orange in light mode, neutral in
+    // dark), and Welcome — D1's one full-orange exception — simply took it.
+    // The band is gone and the scaffold is now the page color, so the look
+    // is pinned explicitly: brand orange with its dark `onPrimary` in light
+    // mode, the neutral `surface` with `onSurface` in dark, as before.
+    // Dark: the page colour (`surfaceContainerLow`, #151517), like every
+    // other page since 1.2.0 (it was `surface`, #121212; final screens A2).
+    final isDark = theme.brightness == Brightness.dark;
+    final background =
+        isDark ? colorScheme.surfaceContainerLow : colorScheme.primary;
+    final appBarFg = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
 
     // The decorative artwork below (mark, rings, background blobs, twinkle
     // dots) is specified against a 390x844 reference canvas; scaling it by
@@ -106,12 +132,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final markBoxSize = 200.0 * elementScale;
     final ringSize = 116.0 * elementScale;
 
+    final titleStyle = theme.textTheme.headlineLarge
+        ?.withWeight(FontWeight.w900)
+        .copyWith(fontSize: 34, letterSpacing: -0.5, color: appBarFg);
+
     final titleProgress = _titleProgress ?? const AlwaysStoppedAnimation(1.0);
     final subtitleProgress =
         _subtitleProgress ?? const AlwaysStoppedAnimation(1.0);
     final ctaProgress = _ctaProgress ?? const AlwaysStoppedAnimation(1.0);
 
     return Scaffold(
+      backgroundColor: background,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -122,6 +153,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             driftTo: Offset(28 * sx, -22 * sy),
             duration: const Duration(seconds: 14),
             reduceMotion: _reduceMotion,
+            hold: _held,
             position: (child) =>
                 Positioned(left: -70 * sx, top: 90 * sy, child: child),
           ),
@@ -131,6 +163,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             driftTo: Offset(-24 * sx, 24 * sy),
             duration: const Duration(seconds: 18),
             reduceMotion: _reduceMotion,
+            hold: _held,
             position: (child) =>
                 Positioned(right: -80 * sx, bottom: 120 * sy, child: child),
           ),
@@ -139,6 +172,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             duration: const Duration(milliseconds: 4500),
             delay: Duration.zero,
             reduceMotion: _reduceMotion,
+            hold: _held,
             position: (child) =>
                 Positioned(left: 64 * sx, top: 190 * sy, child: child),
           ),
@@ -147,6 +181,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             duration: const Duration(milliseconds: 5500),
             delay: const Duration(milliseconds: 1200),
             reduceMotion: _reduceMotion,
+            hold: _held,
             position: (child) =>
                 Positioned(right: 56 * sx, top: 300 * sy, child: child),
           ),
@@ -155,6 +190,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             duration: const Duration(milliseconds: 6500),
             delay: const Duration(milliseconds: 2400),
             reduceMotion: _reduceMotion,
+            hold: _held,
             position: (child) =>
                 Positioned(left: 44 * sx, top: 430 * sy, child: child),
           ),
@@ -178,15 +214,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           size: ringSize,
                           delay: const Duration(milliseconds: 1200),
                           reduceMotion: _reduceMotion,
+                          hold: _held,
                         ),
                         _ScanRing(
                           size: ringSize,
                           delay: const Duration(milliseconds: 2900),
                           reduceMotion: _reduceMotion,
+                          hold: _held,
                         ),
                         _AnimatedBrandMark(
                           size: markSize,
                           reduceMotion: _reduceMotion,
+                          hold: _held,
                         ),
                       ],
                     ),
@@ -194,16 +233,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   const SizedBox(height: Spacing.xl),
                   _FadeSlideIn(
                     progress: titleProgress,
-                    child: Text(
-                      'GrammarLens',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.5,
-                        color: appBarFg,
-                      ),
-                    ),
+                    // The two-colour wordmark in dark mode (owner, 2026-10-06);
+                    // one colour in light mode, whose page is the brand
+                    // orange itself (an orange "Lens" there is 1.00:1).
+                    child: isDark
+                        ? BrandWordmark(
+                            style: titleStyle, textAlign: TextAlign.center)
+                        : Text(
+                            BrandWordmark.text,
+                            textAlign: TextAlign.center,
+                            style: titleStyle,
+                          ),
                   ),
                   const SizedBox(height: Spacing.lg),
                   _FadeSlideIn(
@@ -279,7 +319,15 @@ class _AnimatedBrandMark extends StatefulWidget {
   final double size;
   final bool reduceMotion;
 
-  const _AnimatedBrandMark({required this.size, required this.reduceMotion});
+  /// Drawn at its first frame and not started while true (see
+  /// `_WelcomeScreenState._held`).
+  final bool hold;
+
+  const _AnimatedBrandMark({
+    required this.size,
+    required this.reduceMotion,
+    required this.hold,
+  });
 
   @override
   State<_AnimatedBrandMark> createState() => _AnimatedBrandMarkState();
@@ -303,7 +351,7 @@ class _AnimatedBrandMarkState extends State<_AnimatedBrandMark>
     final entrance = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..forward();
+    );
     _entrance = entrance;
     final entranceCurve = CurvedAnimation(
       parent: entrance,
@@ -323,10 +371,21 @@ class _AnimatedBrandMarkState extends State<_AnimatedBrandMark>
     _breatheScale = Tween<double>(begin: 1.0, end: 1.04).animate(
       CurvedAnimation(parent: breathe, curve: Curves.easeInOut),
     );
+    if (!widget.hold) _start();
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedBrandMark oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hold && !widget.hold && _entrance != null) _start();
+  }
+
+  void _start() {
+    _entrance!.forward();
     // Starts after the entrance has already finished (900ms), so the two
     // never fight over the mark's scale.
     _breatheStartTimer = Timer(const Duration(milliseconds: 1400), () {
-      if (mounted) breathe.repeat(reverse: true);
+      if (mounted) _breathe!.repeat(reverse: true);
     });
   }
 
@@ -371,11 +430,13 @@ class _ScanRing extends StatefulWidget {
   final double size;
   final Duration delay;
   final bool reduceMotion;
+  final bool hold;
 
   const _ScanRing({
     required this.size,
     required this.delay,
     required this.reduceMotion,
+    required this.hold,
   });
 
   @override
@@ -401,8 +462,18 @@ class _ScanRingState extends State<_ScanRing>
     final curved = CurvedAnimation(parent: controller, curve: Curves.easeOut);
     _scale = Tween<double>(begin: 0.62, end: 1.85).animate(curved);
     _opacity = Tween<double>(begin: 0.5, end: 0).animate(curved);
+    if (!widget.hold) _start();
+  }
+
+  @override
+  void didUpdateWidget(_ScanRing oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hold && !widget.hold && _controller != null) _start();
+  }
+
+  void _start() {
     _startTimer = Timer(widget.delay, () {
-      if (mounted) controller.repeat();
+      if (mounted) _controller!.repeat();
     });
   }
 
@@ -454,6 +525,7 @@ class _BackgroundBlob extends StatefulWidget {
   final Offset driftTo;
   final Duration duration;
   final bool reduceMotion;
+  final bool hold;
   final Widget Function(Widget child) position;
 
   const _BackgroundBlob({
@@ -462,6 +534,7 @@ class _BackgroundBlob extends StatefulWidget {
     required this.driftTo,
     required this.duration,
     required this.reduceMotion,
+    required this.hold,
     required this.position,
   });
 
@@ -486,7 +559,15 @@ class _BackgroundBlobState extends State<_BackgroundBlob>
     _offset = Tween<Offset>(begin: Offset.zero, end: widget.driftTo).animate(
       CurvedAnimation(parent: controller, curve: Curves.easeInOut),
     );
-    controller.repeat(reverse: true);
+    if (!widget.hold) controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_BackgroundBlob oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hold && !widget.hold) {
+      _controller?.repeat(reverse: true);
+    }
   }
 
   @override
@@ -537,6 +618,7 @@ class _TwinkleDot extends StatefulWidget {
   final Duration duration;
   final Duration delay;
   final bool reduceMotion;
+  final bool hold;
   final Widget Function(Widget child) position;
 
   const _TwinkleDot({
@@ -544,6 +626,7 @@ class _TwinkleDot extends StatefulWidget {
     required this.duration,
     required this.delay,
     required this.reduceMotion,
+    required this.hold,
     required this.position,
   });
 
@@ -570,8 +653,18 @@ class _TwinkleDotState extends State<_TwinkleDot>
     final curved = CurvedAnimation(parent: controller, curve: Curves.easeInOut);
     _opacity = Tween<double>(begin: 0.2, end: 0.95).animate(curved);
     _scale = Tween<double>(begin: 0.85, end: 1.15).animate(curved);
+    if (!widget.hold) _start();
+  }
+
+  @override
+  void didUpdateWidget(_TwinkleDot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hold && !widget.hold && _controller != null) _start();
+  }
+
+  void _start() {
     _startTimer = Timer(widget.delay, () {
-      if (mounted) controller.repeat(reverse: true);
+      if (mounted) _controller!.repeat(reverse: true);
     });
   }
 

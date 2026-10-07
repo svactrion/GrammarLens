@@ -1,0 +1,103 @@
+{
+ "generator": "tool/scene_art/batch5_signpost.py",
+ "clearing": "C5",
+ "object": "signpost",
+ "ratio": 0.95,
+ "base_drop": 0.25,
+ "center_norm": [
+  0.6331,
+  0.2825
+ ],
+ "box_norm": [
+  0.0847,
+  0.0259
+ ],
+ "area_px": 8800,
+ "rect_image_widths": [
+  0.59287,
+  0.29394,
+  0.67333,
+  0.3853
+ ],
+ "asset": {
+  "source_crop_px": [
+   323,
+   317,
+   939,
+   1016
+  ],
+  "stray_pixels_zeroed": 291,
+  "ringing_pixels_zeroed_after_resize": 0,
+  "size_px": [
+   192,
+   218
+  ],
+  "aspect_h_over_w": 1.13542,
+  "bytes": 9980,
+  "alpha_median_inside": 253,
+  "alpha_255_share_inside": 0.0041,
+  "wood_mean_rgb": [
+   168,
+   105,
+   68
+  ],
+  "wood_mean_hsv_value": 0.661
+ },
+ "ratios": [
+  {
+   "ratio": 1.0,
+   "width_px": 184.0,
+   "trail_pixels_covered": 15
+  },
+  {
+   "ratio": 0.95,
+   "width_px": 174.8,
+   "trail_pixels_covered": 0
+  },
+  {
+   "ratio": 0.9,
+   "width_px": 165.6,
+   "trail_pixels_covered": 3
+  },
+  {
+   "ratio": 0.85,
+   "width_px": 156.4,
+   "trail_pixels_covered": 48
+  },
+  {
+   "ratio": 0.8,
+   "width_px": 147.2,
+   "trail_pixels_covered": 134
+  },
+  {
+   "ratio": 0.75,
+   "width_px": 138.0,
+   "trail_pixels_covered": 258
+  },
+  {
+   "ratio": 0.7,
+   "width_px": 128.8,
+   "trail_pixels_covered": 401
+  },
+  {
+   "ratio": 0.65,
+   "width_px": 119.6,
+   "trail_pixels_covered": 505
+  },
+  {
+   "ratio": 0.6,
+   "width_px": 110.4,
+   "trail_pixels_covered": 518
+  },
+  {
+   "ratio": 0.55,
+   "width_px": 101.2,
+   "trail_pixels_covered": 453
+  },
+  {
+   "ratio": 0.5,
+   "width_px": 92.0,
+   "trail_pixels_covered": 367
+  }
+ ]
+}

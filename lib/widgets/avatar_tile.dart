@@ -36,11 +36,21 @@ import '../theme.dart';
 /// placeholder keeps its own filled box instead: it already reads as a
 /// solid UI element (a bordered icon tile), not a floating illustration,
 /// so grounding it the same way would be redundant, not consistent.
+///
+/// [groundShadow] false leaves the ellipse out, for a caller that draws its
+/// own ground under the tile (Home's hero in light mode, 1.2.0 Batch 7):
+/// two ellipses at the same feet would read as a double shadow.
 class AvatarTile extends StatelessWidget {
   final Avatar? avatar;
   final double radius;
+  final bool groundShadow;
 
-  const AvatarTile({super.key, required this.avatar, this.radius = 22});
+  const AvatarTile({
+    super.key,
+    required this.avatar,
+    this.radius = 22,
+    this.groundShadow = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,10 +82,11 @@ class AvatarTile extends StatelessWidget {
           : Stack(
               alignment: Alignment.center,
               children: [
-                Positioned(
-                  bottom: radius * 0.12,
-                  child: _AvatarGroundShadow(radius: radius),
-                ),
+                if (groundShadow)
+                  Positioned(
+                    bottom: radius * 0.12,
+                    child: _AvatarGroundShadow(radius: radius),
+                  ),
                 // Explicit width/height, not left to Stack's loose sizing
                 // of a non-positioned child: without them, RenderImage
                 // falls back to Size.zero for any frame before the asset
@@ -105,7 +116,7 @@ class AvatarTile extends StatelessWidget {
 /// measured per illustration: the bundled avatars share a consistent
 /// composition (a centered character with headroom above and below), so
 /// one general-purpose placement reads correctly across the set without
-/// pixel-tuning each of the twelve individually.
+/// pixel-tuning each one individually.
 class _AvatarGroundShadow extends StatelessWidget {
   final double radius;
 

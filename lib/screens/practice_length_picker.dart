@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../models/practice_length.dart';
 import '../spacing.dart';
+import '../theme.dart';
 
 /// The largest [PracticeLength.questionCount] — the dial's "full circle"
 /// reference. Computed from the enum so it stays correct if a length is
@@ -59,7 +60,8 @@ Future<PracticeLength?> showPracticeLengthPicker({
   return showModalBottomSheet<PracticeLength>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: colorScheme.surfaceContainerLowest,
+    // The palette's card surface (final screens A3; was pure white).
+    backgroundColor: colorScheme.surfaceContainerHigh,
     // A pure black scrim over the orange page reads as a muddy brown
     // (docs/design-audit.md §2) — tinted off the page's own foreground
     // color instead, at a mid opacity.
@@ -129,8 +131,8 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
             const SizedBox(height: Spacing.lg),
             Text(
               'How many questions?',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              // The brief's 800 (1.2.0 Batch 9; was 600).
+              style: theme.textTheme.titleLarge?.withWeight(FontWeight.w800),
             ),
             const SizedBox(height: Spacing.lg),
             _SelectionCard(selected: _selected, reduceMotion: reduceMotion),
@@ -139,10 +141,14 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                 trackHeight: 8,
                 trackShape: const RoundedRectSliderTrackShape(),
                 activeTrackColor: colorScheme.secondary,
-                inactiveTrackColor: colorScheme.surfaceContainerHigh,
+                // The empty part of the track (final screens A3): `outline`,
+                // 3.32:1 on the light sheet and 4.50:1 on the dark one (it
+                // was the sheet's own colour, 1.03:1). Its stop dots take
+                // the sheet colour, the same contrast the other way round.
+                inactiveTrackColor: colorScheme.outline,
                 thumbColor: colorScheme.secondary,
                 activeTickMarkColor: colorScheme.onSecondary,
-                inactiveTickMarkColor: colorScheme.outline,
+                inactiveTickMarkColor: colorScheme.surfaceContainerHigh,
                 thumbShape: _DragHandleThumbShape(
                   radius: _kSliderThumbRadius,
                   chevronColor: colorScheme.onSecondary,
@@ -177,6 +183,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
+                style: forwardButtonStyle(context),
                 onPressed: () => Navigator.of(context).pop(_selected),
                 child: Text('Start ${_selected.questionCount} questions'),
               ),
@@ -237,14 +244,14 @@ class _LengthLabelRow extends StatelessWidget {
                     child: Text(
                       key: ValueKey('lengthLabel_${values[i].name}'),
                       '${values[i].questionCount}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: values[i] == selected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                        color: values[i] == selected
-                            ? colorScheme.secondary
-                            : colorScheme.onSurfaceVariant,
-                      ),
+                      style: theme.textTheme.bodyMedium
+                          ?.withWeight(values[i] == selected
+                              ? FontWeight.w700
+                              : FontWeight.w600)
+                          .copyWith(
+                              color: values[i] == selected
+                                  ? colorScheme.secondary
+                                  : colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -267,7 +274,8 @@ class _SelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final onCard = colorScheme.onSecondaryContainer;
 
     return Container(
@@ -306,18 +314,18 @@ class _SelectionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Theme styles, so both follow the text size setting
+                  // (final screens A3; were a fixed 19 and 13).
                   Text(
                     selected.label,
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
-                      color: onCard,
-                    ),
+                    style: theme.textTheme.titleLarge
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: onCard),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     selected.description,
-                    style: TextStyle(fontSize: 13, color: onCard),
+                    style: theme.textTheme.bodySmall?.copyWith(color: onCard),
                   ),
                 ],
               ),
@@ -436,11 +444,8 @@ class _LengthDialState extends State<_LengthDial>
             child: Text(
               '${widget.questionCount}',
               key: ValueKey(widget.questionCount),
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
+              style: TextStyle(fontSize: 28, color: textColor)
+                  .withWeight(FontWeight.w700),
             ),
           ),
         ],

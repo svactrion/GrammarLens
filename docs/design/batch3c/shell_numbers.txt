@@ -1,0 +1,10 @@
+320 pt small  card 288.0 plaque 211.6×34.0 bottom 34.0 | month/counter row top 40.0 | vertical gap 6.0 | overlap false | side room beside plaque -29.0 | "September · 30 / 30" row fits: true
+375 pt small  card 341.3 plaque 211.6×34.0 bottom 34.0 | month/counter row top 40.0 | vertical gap 6.0 | overlap false | side room beside plaque -2.3 | "September · 30 / 30" row fits: true
+320 pt medium card 288.0 plaque 229.0×36.0 bottom 36.0 | month/counter row top 42.0 | vertical gap 6.0 | overlap false | side room beside plaque -42.9 | "September · 30 / 30" row fits: true
+375 pt medium card 341.3 plaque 229.0×36.0 bottom 36.0 | month/counter row top 42.0 | vertical gap 6.0 | overlap false | side room beside plaque -16.3 | "September · 30 / 30" row fits: true
+320 pt large  card 288.0 plaque 246.4×38.0 bottom 38.0 | month/counter row top 44.0 | vertical gap 6.0 | overlap false | side room beside plaque -56.8 | "September · 30 / 30" row fits: true
+375 pt large  card 341.3 plaque 246.4×38.0 bottom 38.0 | month/counter row top 44.0 | vertical gap 6.0 | overlap false | side room beside plaque -30.2 | "September · 30 / 30" row fits: true
+dark: plaque text onSurface on surfaceContainerHigh 11.06:1; plaque border outline vs card 4.20:1, vs body 5.05:1; month/counter ink on sky 12.36, far 9.09, mid 7.35, body 5.63, shadow 7.83
+dark tones: sky #182327, far #293B39, mid #334A45, body #405C53, shadow #2E463F, crease #38524A, cap #C8C8B9, hill #3B564D, plain #3D584F, pine #263936, trunk #1F2E2E, shrub #324B43
+light: plaque text onSurface on surfaceContainerHigh 13.64:1; plaque border outline vs card 2.72:1, vs body 3.11:1; month/counter ink on sky 10.05, far 8.29, mid 7.31, body 6.22, shadow 3.78
+light tones: sky #EAF0EC, far #D0DED1, mid #C0D2C0, body #ACC4AC, shadow #789B86, crease #95B29B, cap #F5F0DF, hill #9DB9A1, plain #A3BDA5, pine #597769, trunk #3F5950, shrub #83A48E

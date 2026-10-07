@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
@@ -21,6 +21,41 @@ void main() {
     final frame = await codec.getNextFrame();
     return frame.image;
   }
+
+  test('the bundle holds exactly Avatar.count avatar files, no more, no less',
+      () async {
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    final bundled = manifest
+        .listAssets()
+        .where((path) => path.startsWith('assets/avatars/'))
+        .toSet();
+    expect(bundled, Avatar.values.map((a) => a.assetPath).toSet());
+    expect(bundled.length, 16);
+  });
+
+  test('every avatar asset decodes to 508×508 with a real alpha channel',
+      () async {
+    for (final avatar in Avatar.values) {
+      final image = await decodeAsset(avatar.assetPath);
+      expect(image.width, 508, reason: avatar.assetPath);
+      expect(image.height, 508, reason: avatar.assetPath);
+      final bytes = (await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      ))!
+          .buffer
+          .asUint8List();
+      var transparent = 0;
+      var opaque = 0;
+      for (var i = 3; i < bytes.length; i += 4) {
+        if (bytes[i] == 0) transparent++;
+        if (bytes[i] == 255) opaque++;
+      }
+      // Decoded alpha, not the file extension: a flattened (no-alpha)
+      // export would decode fully opaque and fail the first check.
+      expect(transparent, greaterThan(0), reason: avatar.assetPath);
+      expect(opaque, greaterThan(0), reason: avatar.assetPath);
+    }
+  });
 
   test('every avatar asset has a fully transparent 1px edge on all sides',
       () async {

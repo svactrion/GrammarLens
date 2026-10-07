@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
 import 'package:flutter/material.dart';
 
 import '../models/app_theme_mode.dart';
@@ -14,16 +14,19 @@ import '../services/medal_finalization.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
+import '../utils/debug_sample_collection.dart';
 import '../utils/debug_tools.dart';
-import '../utils/page_title.dart';
 import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/section_title.dart';
 import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
 import 'credits_screen.dart';
 import 'data_screen.dart';
 import 'theme_preview_screen.dart';
+import 'debug_panel_screen.dart';
+import '../theme.dart';
 
 /// The three choices shown in Settings' debug-only "Developer" section —
 /// a UI-layer concept only. [SubscriptionService.debugAccessOverride]
@@ -69,6 +72,19 @@ class SettingsScreen extends StatefulWidget {
   /// from the "Developer" section below, itself `if (kDebugMode)`-gated.
   final VoidCallback onResetOnboarding;
 
+  /// N27: the debug panel's "Reset local data": deletes the local database
+  /// and puts the app back at its first launch. Reached only from the
+  /// panel, which a release build does not have.
+  final Future<void> Function()? onResetLocalData;
+
+  /// The "Debug" row (N27).
+  static const debugRowKey = ValueKey('settings_debug_row');
+
+  /// The identity card, the saved name shown in it, and the medal count.
+  static const identityCardKey = ValueKey('settings_identity_card');
+  static const nameKey = ValueKey('settings_name');
+  static const earnedCountKey = ValueKey('settings_medals_earned');
+
   SettingsScreen({
     super.key,
     required this.active,
@@ -80,6 +96,7 @@ class SettingsScreen extends StatefulWidget {
     required this.storageService,
     required this.onProfileUpdated,
     required this.onResetOnboarding,
+    this.onResetLocalData,
     SubscriptionService? subscriptionService,
     AnalyticsService? analyticsService,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
@@ -92,12 +109,18 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
   bool _savingProfile = false;
+
+  /// N8: the name row is open for editing (the field with Save / Cancel).
+  /// UI state only; the name is stored by Save, as before.
+  bool _editingName = false;
+  final _editButtonFocus = FocusNode(debugLabel: 'Edit name');
   bool _resettingOnboarding = false;
   late _DebugAccessChoice _debugAccessChoice;
   late bool _previewPaywallPricing;
   WelcomeBadge? _welcomeBadge;
   MonthlyMedalProgress? _medalProgress;
   List<MonthlyMedalResult> _medalResults = const [];
+  Map<(int, int), String> _medalThemeIds = const {};
   bool _medalsLoading = true;
   bool _medalsFailed = false;
 
@@ -155,6 +178,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadMedals() async {
     final generation = ++_medalsGeneration;
+    // P6: the debug panel's sample collection, instead of storage. Only the
+    // running month's progress is read (so it matches Home); nothing is
+    // finalized or written, and no view is reported.
+    if (DebugSampleCollection.enabled) {
+      MonthlyMedalProgress? progress;
+      try {
+        progress = await widget.storageService.getCurrentMonthlyMedalProgress();
+      } catch (_) {
+        progress = null;
+      }
+      if (!mounted || generation != _medalsGeneration) return;
+      final sample = DebugSampleCollection.current(progress: progress);
+      setState(() {
+        _medalThemeIds = sample.themeIds;
+        _medalProgress = sample.progress;
+        _medalResults = sample.results;
+        _welcomeBadge = sample.welcomeBadge;
+        _medalsLoading = false;
+        _medalsFailed = false;
+      });
+      return;
+    }
     if (mounted) {
       setState(() {
         _medalsLoading = true;
@@ -176,8 +221,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.storageService.getMonthlyMedalResults(),
         widget.storageService.getWelcomeBadge(),
       ]);
+      // Each month's theme for its medals (N17). Not part of the reads
+      // above: a theme read that fails draws Green Slope's medals rather
+      // than hiding the collection.
+      Map<(int, int), String> themeIds;
+      try {
+        themeIds = await widget.storageService.getClimbMonthThemes();
+      } catch (_) {
+        themeIds = const {};
+      }
       if (!mounted || generation != _medalsGeneration) return;
       setState(() {
+        _medalThemeIds = themeIds;
         _medalProgress = values[0] as MonthlyMedalProgress;
         _medalResults = values[1] as List<MonthlyMedalResult>;
         _welcomeBadge = values[2] as WelcomeBadge?;
@@ -237,7 +292,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _editButtonFocus.dispose();
     super.dispose();
+  }
+
+  /// N8: opens the name for editing, starting from the saved name.
+  void _startEditingName() {
+    _nameController.text = widget.profile.name;
+    setState(() => _editingName = true);
+  }
+
+  /// N8: closes the editor and puts the text back to the saved name; the
+  /// focus returns to Edit.
+  void _cancelEditingName() {
+    _nameController.text = widget.profile.name;
+    setState(() => _editingName = false);
+    _editButtonFocus.requestFocus();
   }
 
   bool get _canSaveProfile => _nameController.text.trim().isNotEmpty;
@@ -256,7 +326,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await widget.storageService.saveUserProfile(updated);
       widget.onProfileUpdated(updated);
       if (!mounted) return;
-      AppMessenger.show('Profile saved.');
+      setState(() => _editingName = false);
+      AppMessenger.show('Name saved');
     } catch (e) {
       if (!mounted) return;
       AppMessenger.show('Could not save profile: $e');
@@ -318,67 +389,117 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// Whether the theme segments keep their icons at [width]: only while
+  /// the longest label ("System", in the selected weight) fits beside its
+  /// icon in a third of the control. At 320 pt with Large text inside the
+  /// Appearance card it does not, and a label would break mid-word
+  /// ("Syst-em"); the labels alone carry the choice there.
+  static bool _themeIconsFit(BuildContext context, double width) {
+    final style =
+        Theme.of(context).textTheme.labelMedium?.withWeight(FontWeight.w800);
+    final label = TextPainter(
+      text: TextSpan(text: 'System', style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    // Per segment (a third of the control): Material's 12 pt padding each
+    // side, the 18 pt icon and its 8 pt gap.
+    final segment = width / 3;
+    final fits = label.width + 18 + 8 + 24 <= segment;
+    label.dispose();
+    return fits;
+  }
+
+  /// The page header (1.2.0 mockup, "Profile"): the title and its line in
+  /// the page, so they scroll with it, as on Review.
+  Widget _header(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          container: true,
+          header: true,
+          child: Text(
+            'Profile',
+            style: theme.textTheme.displaySmall
+                ?.copyWith(color: theme.colorScheme.onSurface),
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          'Your journey, your way.',
+          style: theme.textTheme.bodyMedium
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final medals = MonthlyMedalCollection(
+      welcomeBadge: _welcomeBadge,
+      currentProgress: _medalProgress,
+      results: _medalResults,
+      themeIds: _medalThemeIds,
+    );
+    final progress = _medalProgress;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => FocusScope.of(context).unfocus(),
       child: BrandScaffold(
-        title: const PageTitle('Profile'),
+        // The status bar's height only: the header is in the page.
+        appBar: AppBar(
+          toolbarHeight: 0,
+          automaticallyImplyLeading: false,
+          scrolledUnderElevation: 0,
+        ),
         isTabRoot: true,
         children: [
-          const _SectionLabel('Profile'),
-          const SizedBox(height: 8),
-          // No Card wrap (docs/design-audit.md, Batch 0 item 8): this
-          // isn't a single tappable target the way Home's cards are, so
-          // giving it the same card treatment implied a tap that does
-          // nothing. Flush layout, like every other section here — the
-          // section label plus this file's 32px section gap carries the
-          // grouping instead of a container.
-          Text('Avatar', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          // Local stock avatars only (PRD v2 §11) — no upload. Picking one
-          // is a separate screen now (a swipeable carousel,
-          // `AvatarPickerScreen`), not an inline grid here — this row is
-          // just a preview of the current choice plus the way in. `Hero`
-          // ties this tile to the picker's own centered avatar so leaving
-          // that screen visibly flies the choice back here rather than
-          // just popping.
-          _NavRow(
-            onTap: _openAvatarPicker,
-            leading: Hero(
+          _header(theme),
+          const SizedBox(height: 20),
+          _IdentityCard(
+            avatar: Hero(
               tag: avatarHeroTag,
               child: AvatarTile(
                 avatar: widget.profile.avatar ?? _fallbackAvatar,
-                radius: 26,
+                radius: _IdentityCard.heroSize / 2,
               ),
             ),
-            label: 'Change avatar',
-          ),
-          const SizedBox(height: 20),
-          Text('Name', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          TextField(
+            onChangeAvatar: _openAvatarPicker,
+            name: widget.profile.name,
+            editing: _editingName,
             controller: _nameController,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(hintText: 'Your name'),
-            onChanged: (_) => setState(() {}),
+            editButtonFocus: _editButtonFocus,
+            saving: _savingProfile,
+            canSave: _canSaveProfile,
+            onEdit: _startEditingName,
+            onChanged: () => setState(() {}),
+            onSave: _saveProfile,
+            onCancel: _cancelEditingName,
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed:
-                  _canSaveProfile && !_savingProfile ? _saveProfile : null,
-              child: Text(_savingProfile ? 'Saving…' : 'Save'),
-            ),
+          const SizedBox(height: 23),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Expanded(child: SectionTitle('Medal collection')),
+              if (!_medalsLoading && !_medalsFailed) ...[
+                const SizedBox(width: 10),
+                Text(
+                  '${medals.earnedCount} earned',
+                  key: SettingsScreen.earnedCountKey,
+                  style: theme.textTheme.labelMedium
+                      ?.withWeight(FontWeight.w400)
+                      .copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 32),
-          const _SectionLabel('Monthly medals'),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           if (_medalsLoading)
             const Center(child: CircularProgressIndicator())
           else if (_medalsFailed)
@@ -390,64 +511,118 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: const Text('Retry medal history'),
               ),
             )
-          else
-            MonthlyMedalCollection(
-              welcomeBadge: _welcomeBadge,
-              currentProgress: _medalProgress,
-              results: _medalResults,
+          else ...[
+            medals,
+            if (progress != null) ...[
+              const SizedBox(height: 9),
+              MonthlyProgressCard(
+                progress: progress,
+                theme: MonthlyMedalCollection.themeFor(
+                    progress.year, progress.month, _medalThemeIds,
+                    running: true),
+              ),
+            ],
+          ],
+          const SizedBox(height: 23),
+          const SectionTitle('Appearance'),
+          const SizedBox(height: 12),
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(17),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _SettingLabel(
+                      icon: Icons.palette_outlined, text: 'Theme'),
+                  const SizedBox(height: 9),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final icons =
+                          _themeIconsFit(context, constraints.maxWidth);
+                      return AppSegmentedButton<AppThemeMode>(
+                        segments: [
+                          ButtonSegment(
+                            value: AppThemeMode.system,
+                            label: const Text('System'),
+                            icon: icons
+                                ? const Icon(Icons.brightness_auto_rounded)
+                                : null,
+                          ),
+                          ButtonSegment(
+                            value: AppThemeMode.light,
+                            label: const Text('Light'),
+                            icon: icons
+                                ? const Icon(Icons.light_mode_rounded)
+                                : null,
+                          ),
+                          ButtonSegment(
+                            value: AppThemeMode.dark,
+                            label: const Text('Dark'),
+                            icon: icons
+                                ? const Icon(Icons.dark_mode_rounded)
+                                : null,
+                          ),
+                        ],
+                        selected: {widget.themeMode},
+                        onSelectionChanged: (selection) =>
+                            widget.onSelectThemeMode(selection.first),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                  const _SettingLabel(
+                      icon: Icons.text_fields_rounded, text: 'Text size'),
+                  const SizedBox(height: 9),
+                  AppSegmentedButton<AppTextSize>(
+                    segments: const [
+                      ButtonSegment(
+                          value: AppTextSize.small, label: Text('Small')),
+                      ButtonSegment(
+                          value: AppTextSize.medium, label: Text('Medium')),
+                      ButtonSegment(
+                          value: AppTextSize.large, label: Text('Large')),
+                    ],
+                    selected: {widget.textSize},
+                    onSelectionChanged: (selection) =>
+                        widget.onSelectTextSize(selection.first),
+                  ),
+                  const SizedBox(height: 13),
+                  Text(
+                    'A little practice, every day.',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
             ),
-          const SizedBox(height: 32),
-          const _SectionLabel('Appearance'),
-          const SizedBox(height: 8),
-          AppSegmentedButton<AppThemeMode>(
-            segments: const [
-              ButtonSegment(
-                value: AppThemeMode.system,
-                label: Text('System'),
-                icon: Icon(Icons.brightness_auto_rounded),
-              ),
-              ButtonSegment(
-                value: AppThemeMode.light,
-                label: Text('Light'),
-                icon: Icon(Icons.light_mode_rounded),
-              ),
-              ButtonSegment(
-                value: AppThemeMode.dark,
-                label: Text('Dark'),
-                icon: Icon(Icons.dark_mode_rounded),
-              ),
-            ],
-            selected: {widget.themeMode},
-            onSelectionChanged: (selection) =>
-                widget.onSelectThemeMode(selection.first),
           ),
-          const SizedBox(height: 20),
-          Text('Text size', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          AppSegmentedButton<AppTextSize>(
-            segments: const [
-              ButtonSegment(value: AppTextSize.small, label: Text('Small')),
-              ButtonSegment(value: AppTextSize.medium, label: Text('Medium')),
-              ButtonSegment(value: AppTextSize.large, label: Text('Large')),
-            ],
-            selected: {widget.textSize},
-            onSelectionChanged: (selection) =>
-                widget.onSelectTextSize(selection.first),
-          ),
-          const SizedBox(height: 32),
-          _NavRow.icon(
-            icon: Icons.storage_rounded,
-            label: 'Data',
-            onTap: _openData,
-          ),
-          _NavRow.icon(
-            icon: Icons.info_outline_rounded,
-            label: 'Credits',
-            onTap: _openCredits,
+          const SizedBox(height: 23),
+          const SectionTitle('App information'),
+          const SizedBox(height: 12),
+          Card(
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                _NavRow.icon(
+                  icon: Icons.storage_rounded,
+                  label: 'Data',
+                  onTap: _openData,
+                ),
+                Divider(
+                    height: 1, thickness: 1, color: colorScheme.outlineVariant),
+                _NavRow.icon(
+                  icon: Icons.info_outline_rounded,
+                  label: 'Credits',
+                  onTap: _openCredits,
+                ),
+              ],
+            ),
           ),
           if (kDebugMode && DebugTools.enabledForTesting) ...[
             const SizedBox(height: 32),
-            const _SectionLabel('Developer'),
+            const SectionTitle('Developer'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -458,7 +633,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'Entitlement override',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -503,7 +678,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'First-launch flow',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -540,7 +715,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'Preview paywall pricing',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -572,7 +747,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       'Theme preview',
                       style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -599,75 +774,310 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
+          // N27: the debug panel, in debug and profile builds; a release
+          // build compiles it out (kReleaseMode is a constant there).
+          if (!kReleaseMode && DebugTools.enabledForTesting) ...[
+            const SizedBox(height: 24),
+            _NavRow.icon(
+              key: SettingsScreen.debugRowKey,
+              icon: Icons.bug_report_outlined,
+              label: 'Debug',
+              // The panel can switch the sample collection (P6): the
+              // shelf is read again when it closes.
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute(
+                builder: (_) => DebugPanelScreen(
+                    onResetLocalData: widget.onResetLocalData ?? () async {}),
+              ))
+                  .then((_) {
+                if (mounted) unawaited(_loadMedals());
+              }),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  final String text;
+/// A link row that opens another screen (the mockup's "App information"
+/// rows): a 34 pt icon tile in the link colour, a label and a trailing
+/// chevron, at least 64 pt tall.
+class _NavRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  const _SectionLabel(this.text);
+  const _NavRow.icon({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Text(
-      text,
-      style: theme.textTheme.labelLarge?.copyWith(
-        color: theme.colorScheme.secondary,
-        fontWeight: FontWeight.w700,
+    final scheme = theme.colorScheme;
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(icon, size: 19, color: scheme.secondary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(color: scheme.onSurface),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-/// A tappable row that opens another screen: [leading], a label and a
-/// trailing chevron. The look of the avatar row above, shared with the other
-/// rows here that open a screen of their own.
-class _NavRow extends StatelessWidget {
-  final Widget leading;
-  final String label;
-  final VoidCallback onTap;
+/// A setting's label with its icon ("Theme", "Text size").
+class _SettingLabel extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
-  const _NavRow({
-    required this.leading,
-    required this.label,
-    required this.onTap,
-  });
-
-  /// A row led by an [icon], centered in the same 52 pt box the avatar row's
-  /// tile occupies so every label starts at the same x.
-  _NavRow.icon({
-    required IconData icon,
-    required this.label,
-    required this.onTap,
-  }) : leading = SizedBox(
-          width: 52,
-          height: 52,
-          child: Icon(icon, size: 28),
-        );
+  const _SettingLabel({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            leading,
-            const SizedBox(width: 16),
-            Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ],
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall
+                ?.withWeight(FontWeight.w800)
+                .copyWith(color: theme.colorScheme.onSurface),
+          ),
         ),
+      ],
+    );
+  }
+}
+
+/// The identity card (1.2.0 mockup): "Your companion", the hero large and
+/// centred (158 pt), "Change your avatar"; under a rule, "Your name", the
+/// name and Edit. Edit opens the name in place (N8): the field, Save and
+/// Cancel. Save is off while the name is empty or only spaces; Cancel puts
+/// the saved name back. The hero ([avatar]) carries the `Hero` the picker
+/// flies to and from.
+class _IdentityCard extends StatelessWidget {
+  final Widget avatar;
+  final VoidCallback onChangeAvatar;
+  final String name;
+  final bool editing;
+  final TextEditingController controller;
+  final FocusNode editButtonFocus;
+  final bool saving;
+  final bool canSave;
+  final VoidCallback onEdit;
+  final VoidCallback onChanged;
+  final VoidCallback onSave;
+  final VoidCallback onCancel;
+
+  const _IdentityCard({
+    required this.avatar,
+    required this.onChangeAvatar,
+    required this.name,
+    required this.editing,
+    required this.controller,
+    required this.editButtonFocus,
+    required this.saving,
+    required this.canSave,
+    required this.onEdit,
+    required this.onChanged,
+    required this.onSave,
+    required this.onCancel,
+  });
+
+  /// The hero's box (the brief: 158 × 158).
+  static const heroSize = 158.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final link = theme.textTheme.labelLarge
+        ?.withWeight(FontWeight.w800)
+        .copyWith(color: scheme.secondary);
+    final caption = theme.textTheme.labelSmall
+        ?.withWeight(FontWeight.w400)
+        .copyWith(color: scheme.onSurfaceVariant);
+
+    return Card(
+      key: SettingsScreen.identityCardKey,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 22, 18, 13),
+            child: Column(
+              children: [
+                Text(
+                  'Your companion',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(color: scheme.onSurface, letterSpacing: -.2),
+                ),
+                const SizedBox(height: 3),
+                // The picture itself opens the picker too; the labelled
+                // control for assistive technology is the button below.
+                ExcludeSemantics(
+                  child: GestureDetector(
+                    onTap: onChangeAvatar,
+                    child: SizedBox.square(dimension: heroSize, child: avatar),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onChangeAvatar,
+                  style: TextButton.styleFrom(
+                    foregroundColor: scheme.secondary,
+                    minimumSize: const Size(44, 44),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text('Change your avatar',
+                            textAlign: TextAlign.center, style: link),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(Icons.chevron_right_rounded, size: 19),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
+          if (!editing)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 13),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Your name', style: caption),
+                        const SizedBox(height: 2),
+                        Text(
+                          name,
+                          key: SettingsScreen.nameKey,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(color: scheme.onSurface),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton.icon(
+                    focusNode: editButtonFocus,
+                    onPressed: onEdit,
+                    style: TextButton.styleFrom(
+                      foregroundColor: scheme.secondary,
+                      minimumSize: const Size(44, 44),
+                    ),
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: Text('Edit',
+                        style: theme.textTheme.bodySmall
+                            ?.withWeight(FontWeight.w800)
+                            .copyWith(color: scheme.secondary)),
+                  ),
+                ],
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(17, 14, 17, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Your name',
+                      style: theme.textTheme.labelMedium
+                          ?.copyWith(color: scheme.onSurface)),
+                  const SizedBox(height: 7),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          autofocus: true,
+                          // When the keyboard opens the list scrolls the
+                          // field into view; the extra bottom room brings
+                          // the Cancel row under it into view too.
+                          scrollPadding:
+                              const EdgeInsets.fromLTRB(20, 20, 20, 88),
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.done,
+                          // The same limit as onboarding (O2), no counter.
+                          maxLength: UserProfile.maxNameLength,
+                          buildCounter: (_,
+                                  {required currentLength,
+                                  required isFocused,
+                                  required maxLength}) =>
+                              null,
+                          decoration:
+                              const InputDecoration(hintText: 'Your name'),
+                          onChanged: (_) => onChanged(),
+                          onSubmitted: (_) {
+                            if (canSave && !saving) onSave();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        // The theme's buttons are full width; this one sits
+                        // beside the field.
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size(64, 48)),
+                        onPressed: canSave && !saving ? onSave : null,
+                        child: Text(saving ? 'Saving…' : 'Save'),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: saving ? null : onCancel,
+                    style: TextButton.styleFrom(
+                      foregroundColor: scheme.secondary,
+                      minimumSize: const Size(44, 44),
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: Text('Cancel', style: link),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -58,8 +58,8 @@ enum _MedalPreviewScenario {
   ),
   noMedal(
     'No medal',
-    'Last month finalized below Bronze and frozen as "No medal" rather '
-        'than omitted, plus this month already under way.',
+    'Last month finalized below Bronze and frozen as "No medal": not on '
+        'the shelf (N34), so only this month, under way, shows.',
   ),
   history(
     'Multiple months',
@@ -343,17 +343,26 @@ class _MonthlyMedalPreviewState extends State<MonthlyMedalPreview> {
               onChanged: (value) => setState(() => _welcomeEarned = value),
             ),
             const SizedBox(height: Spacing.xl),
-            Text('Monthly medals',
+            Text('Medal collection',
                 style: Theme.of(context)
                     .textTheme
                     .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+                    ?.withWeight(FontWeight.w700)),
             const SizedBox(height: Spacing.sm),
             MonthlyMedalCollection(
               welcomeBadge: _welcomeEarned ? _welcomeBadgeFixture : null,
               currentProgress: fixtures.currentProgress,
               results: fixtures.results,
             ),
+            if (fixtures.currentProgress case final progress?) ...[
+              const SizedBox(height: Spacing.sm),
+              MonthlyProgressCard(
+                progress: progress,
+                theme: MonthlyMedalCollection.themeFor(
+                    progress.year, progress.month, const {},
+                    running: true),
+              ),
+            ],
           ],
         );
       }),

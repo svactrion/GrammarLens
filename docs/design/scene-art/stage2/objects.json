@@ -1,0 +1,160 @@
+{
+ "generator": "tool/scene_art/export_objects.py",
+ "width_px": 192,
+ "quality": 90,
+ "flame_threshold": {
+  "hue_min": 15,
+  "hue_max": 60,
+  "saturation_min": 0.55,
+  "value_min": 0.9
+ },
+ "objects": {
+  "campfire": {
+   "asset": "assets/climb/objects/campfire.webp",
+   "source_crop_px": [
+    691,
+    824,
+    1817,
+    1888
+   ],
+   "stray_pixels_zeroed": 12,
+   "ringing_pixels_zeroed_after_resize": 0,
+   "size_px": [
+    192,
+    181
+   ],
+   "aspect_h_over_w": 0.94271,
+   "bytes": 8458,
+   "flame_threshold_pixels": 206001,
+   "flame_asset": "assets/climb/objects/campfire_flame.webp",
+   "flame_bytes": 6118,
+   "flame_share_of_body": 0.2985
+  },
+  "tent": {
+   "asset": "assets/climb/objects/tent.webp",
+   "source_crop_px": [
+    570,
+    750,
+    1938,
+    1862
+   ],
+   "stray_pixels_zeroed": 0,
+   "ringing_pixels_zeroed_after_resize": 0,
+   "size_px": [
+    192,
+    156
+   ],
+   "aspect_h_over_w": 0.8125,
+   "bytes": 6940,
+   "flame_threshold_pixels": 46947
+  },
+  "fountain": {
+   "asset": "assets/climb/objects/fountain.webp",
+   "source_crop_px": [
+    616,
+    784,
+    1890,
+    1834
+   ],
+   "stray_pixels_zeroed": 12,
+   "ringing_pixels_zeroed_after_resize": 0,
+   "size_px": [
+    192,
+    158
+   ],
+   "aspect_h_over_w": 0.82292,
+   "bytes": 6894,
+   "flame_threshold_pixels": 0
+  },
+  "cabin": {
+   "asset": "assets/climb/objects/cabin.webp",
+   "source_crop_px": [
+    504,
+    718,
+    2022,
+    1848
+   ],
+   "stray_pixels_zeroed": 12,
+   "ringing_pixels_zeroed_after_resize": 0,
+   "size_px": [
+    192,
+    143
+   ],
+   "aspect_h_over_w": 0.74479,
+   "bytes": 8126,
+   "flame_threshold_pixels": 1731
+  },
+  "summit_flag": {
+   "asset": "assets/climb/objects/summit_flag.webp",
+   "source_crop_px": [
+    766,
+    471,
+    1964,
+    2024
+   ],
+   "stray_pixels_zeroed": 12,
+   "ringing_pixels_zeroed_after_resize": 29,
+   "size_px": [
+    192,
+    249
+   ],
+   "aspect_h_over_w": 1.29688,
+   "bytes": 8576,
+   "flame_threshold_pixels": 173616,
+   "pennant_asset": "assets/climb/objects/summit_flag_pennant.webp",
+   "pennant_bytes": 3378,
+   "base_asset": "assets/climb/objects/summit_flag_base.webp",
+   "base_bytes": 6674,
+   "base_specks_zeroed": 82,
+   "pennant_threshold": {
+    "hue_min": 10,
+    "hue_max": 40,
+    "saturation_min": 0.72,
+    "value_min": 0.4
+   },
+   "pennant_share_of_body": 0.3049,
+   "pennant_luminance": 0.5645
+  },
+  "signpost": {
+   "asset": "assets/climb/objects/signpost.webp",
+   "source_crop_px": [
+    323,
+    317,
+    939,
+    1016
+   ],
+   "stray_pixels_zeroed": 291,
+   "ringing_pixels_zeroed_after_resize": 0,
+   "size_px": [
+    192,
+    218
+   ],
+   "aspect_h_over_w": 1.13542,
+   "bytes": 9980,
+   "flame_threshold_pixels": 773
+  }
+ },
+ "dark_gain": {
+  "green_slope": [
+   0.4824,
+   0.5182,
+   0.6714
+  ],
+  "ember_peak": [
+   0.6191,
+   0.726,
+   0.9518
+  ],
+  "glacier_peak": [
+   0.5369,
+   0.53,
+   0.6437
+  ],
+  "red_canyon": [
+   0.5989,
+   0.6145,
+   0.8091
+  ]
+ },
+ "total_bytes": 65144
+}

@@ -1,0 +1,30 @@
+Scene Art Stage 1 — measured on ClimbRoute / ClimbCamera (zoom 1.1), 31-day month unless stated
+trail length 2.4608 image widths; shrink from 0.85 of it to 0.6 of the base; dots 4.0 pt at 0.22
+
+320.0 pt screen, card 288.00 pt (316.8 pt per image width; image 316.8 × 422.4 pt; window shows 75 % of it)
+  a day's step along the trail: 25.1 pt; shortest straight step 19.7 pt; gap between neighbouring dots 15.7 pt
+  avatar: 27.2 pt on days 0–26; shrinking on days 27–31: 25.6 / 23.3 / 21.0 / 18.6 / 16.3 pt; summit (floor) 16.3 pt; hop 6.6 pt on the body
+  the summit (snow cap top) is in the window from day 8, below the chips (~48 pt) from day never; at its highest the window shows the tip 47.9 pt below its top
+  28 days: shrinking from day 24, step 27.8 pt
+  29 days: shrinking from day 25, step 26.9 pt
+  30 days: shrinking from day 26, step 26.0 pt
+
+375.0 pt screen, card 341.25 pt (375.4 pt per image width; image 375.4 × 500.5 pt; window shows 64 % of it)
+  a day's step along the trail: 29.8 pt; shortest straight step 23.4 pt; gap between neighbouring dots 19.4 pt
+  avatar: 32.2 pt on days 0–26; shrinking on days 27–31: 30.4 / 27.6 / 24.8 / 22.1 / 19.3 pt; summit (floor) 19.3 pt; hop 7.8 pt on the body
+  the summit (snow cap top) is in the window from day 13, below the chips (~48 pt) from day 16; at its highest the window shows the tip 56.7 pt below its top
+  28 days: shrinking from day 24, step 33.0 pt
+  29 days: shrinking from day 25, step 31.9 pt
+  30 days: shrinking from day 26, step 30.8 pt
+
+430.0 pt screen, card 391.30 pt (430.4 pt per image width; image 430.4 × 573.9 pt; window shows 55 % of it)
+  a day's step along the trail: 34.2 pt; shortest straight step 26.8 pt; gap between neighbouring dots 22.8 pt
+  avatar: 36.9 pt on days 0–26; shrinking on days 27–31: 34.8 / 31.7 / 28.5 / 25.3 / 22.1 pt; summit (floor) 22.1 pt; hop 8.9 pt on the body
+  the summit (snow cap top) is in the window from day 15, below the chips (~48 pt) from day 20; at its highest the window shows the tip 65.0 pt below its top
+  28 days: shrinking from day 24, step 37.8 pt
+  29 days: shrinking from day 25, step 36.5 pt
+  30 days: shrinking from day 26, step 35.3 pt
+
+assets/climb/green_slope/background_light.webp: 365.9 KB
+assets/climb/green_slope/background_dark.webp: 272.2 KB
+assets added: 638.1 KB

@@ -35,7 +35,8 @@ void main() {
     expect(find.text('Get started'), findsOneWidget);
   });
 
-  testWidgets('onboarding requires both a name and a goal before continuing',
+  testWidgets(
+      'onboarding requires a name to continue, then a goal (or Skip) to start',
       (tester) async {
     await tester.pumpWidget(const GrammarLensApp());
     await tester.pumpAndSettle();
@@ -43,19 +44,25 @@ void main() {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
 
-    FilledButton continueButton() =>
-        tester.widget(find.widgetWithText(FilledButton, 'Continue'));
+    FilledButton button(String label) =>
+        tester.widget(find.widgetWithText(FilledButton, label));
 
-    expect(continueButton().onPressed, isNull);
+    expect(button('Continue').onPressed, isNull);
 
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.pump();
-    expect(continueButton().onPressed, isNull,
+    expect(button('Continue').onPressed, isNotNull);
+
+    // 1.2.0: the goal is its own step after the name.
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    expect(button('Start my first test').onPressed, isNull,
         reason: 'a goal still hasn\'t been picked');
+    expect(find.text('Skip goal & start'), findsOneWidget);
 
     await tester.tap(find.text('Exam prep'));
     await tester.pump();
-    expect(continueButton().onPressed, isNotNull);
+    expect(button('Start my first test').onPressed, isNotNull);
   });
 
   testWidgets(
@@ -66,6 +73,12 @@ void main() {
 
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
+    // On the goal step since 1.2.0.
+    await tester.enterText(find.byType(TextField), 'Ada');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text(onboardingPrivacyNote));
 
     expect(find.text(onboardingPrivacyNote), findsOneWidget);
     expect(find.textContaining('never sent'), findsNothing);

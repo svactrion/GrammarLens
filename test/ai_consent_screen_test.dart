@@ -74,9 +74,12 @@ void main() {
         findsOneWidget);
     expect(find.text('What is never sent'), findsOneWidget);
     expect(
-        find.text('Your name, your learning goal or your avatar. Daily Test '
-            'answers stay on your device.'),
+        find.text('Your name or your avatar. Daily Test answers stay on your '
+            'device.'),
         findsOneWidget);
+    // 1.2.0: the learning goal is an analytics user property now, so this
+    // line no longer lists it (docs/analytics-plan.md §3).
+    expect(find.textContaining('learning goal'), findsNothing);
     expect(
         find.text("Please don't type personal details such as full names, "
             'addresses or contact information into your answers.'),

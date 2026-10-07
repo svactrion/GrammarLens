@@ -2,8 +2,8 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-# Pre-launch checks before taking a release/submission build (see README's
-# "Local setup" section: run this before `flutter build ipa`). More
+# Pre-launch checks before taking a release/submission build (see "Local
+# setup" in docs/development.md: run this before `flutter build ipa`). More
 # pre-launch gates land here over time rather than each living as its own
 # separate script.
 
@@ -62,6 +62,20 @@ if [[ ! -f "$release_config_file" ]]; then
 else
   check_release_config_value "PROXY_BASE_URL"
   check_release_config_value "APP_TOKEN"
+fi
+
+# The Daily Test's fallback pool (roadmap P10): with fewer sets every day the
+# shared set cannot be read shows the same questions again, and with none the
+# day-0 questions. `plutil` (macOS, where release builds are taken) reads JSON
+# and prints an array's length.
+fallback_pool_file="assets/daily_test_fallback/pool.json"
+fallback_pool_sets=$(plutil -extract sets raw -o - "$fallback_pool_file" 2>/dev/null || true)
+if [[ "$fallback_pool_sets" == "7" ]]; then
+  echo "✓ $fallback_pool_file has 7 sets"
+else
+  echo "✗ $fallback_pool_file has ${fallback_pool_sets:-no readable} sets, needs 7 —" \
+    "build it with scripts/fallback_pool.sh build <7 dates> before a release build."
+  failed=1
 fi
 
 # Flutter bundles every file directly inside a registered asset folder

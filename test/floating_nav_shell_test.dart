@@ -80,7 +80,8 @@ void main() {
     await tester.pump();
 
     final lastItemBottom = tester.getBottomLeft(find.text('Item 29')).dy;
-    final barTop = tester.getTopLeft(find.byType(BackdropFilter)).dy;
+    // 1.2.0 (Q17): the bar is a solid box, no longer a BackdropFilter.
+    final barTop = tester.getTopLeft(find.byKey(FloatingNavShell.barKey)).dy;
 
     expect(
       lastItemBottom,
@@ -131,5 +132,38 @@ void main() {
     );
 
     expect(clearance, NavBarClearance.fallback);
+  });
+
+  testWidgets(
+      'Batch 8: a keyboard inset does not move the bar; a tab\'s own field '
+      'is kept above the keyboard by its Scaffold', (tester) async {
+    tester.view.physicalSize = const Size(390, 844) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      home: FloatingNavShell(
+        body: Scaffold(
+          body: ListView(children: const [
+            SizedBox(height: 600),
+            TextField(key: ValueKey('field')),
+            SizedBox(height: 600),
+          ]),
+        ),
+        tabs: const [
+          NavShellTab(icon: Icons.home, activeIcon: Icons.home, label: 'Home'),
+          NavShellTab(
+              icon: Icons.person, activeIcon: Icons.person, label: 'Profile'),
+        ],
+        selectedIndex: 0,
+        onTabChange: (_) {},
+      ),
+    ));
+    final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
+    await tester.showKeyboard(find.byKey(const ValueKey('field')));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 336 * 3);
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byKey(FloatingNavShell.barKey)), bar);
+    expect(tester.getRect(find.byKey(const ValueKey('field'))).bottom,
+        lessThanOrEqualTo(844 - 336.0));
   });
 }

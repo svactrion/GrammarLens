@@ -1,0 +1,88 @@
+{
+  "c1": {
+    "legs bottom→top: angle (length, units)": "12° (260), 30° (238), 40° (217), 50° (196), 73° (171)",
+    "turn radii (units)": "42, 69, 58, 46",
+    "smallest turn radius (units)": "41.9",
+    "trail length (units)": "875.4",
+    "trail samples off the ground": 0,
+    "31 d": {
+      "step spacing (units)": "28.2",
+      "step spacing at 320 pt, F1 / whole (pt)": "20.6 / 13.4",
+      "closest neighbouring steps, gap (pt at F1)": "5.2 (days 7→8)",
+      "closest steps across a turn, gap (pt at F1)": "48.6",
+      "days the resting avatar covers another part of the trail": "3 [6, 7, 23]",
+      "markers (D2 applied)": "day 7 at (251, 667), trail band +5.5; day 14 at (84, 466), trail band +5.0; day 21 at (219, 299), trail band +5.1; day 28 at (183, 192), trail band +4.4"
+    },
+    "30 d": {
+      "step spacing (units)": "29.2",
+      "step spacing at 320 pt, F1 / whole (pt)": "21.3 / 13.8",
+      "closest neighbouring steps, gap (pt at F1)": "5.8 (days 6→7)",
+      "closest steps across a turn, gap (pt at F1)": "49.1",
+      "days the resting avatar covers another part of the trail": "5 [6, 10, 12, 16, 18]",
+      "markers (D2 applied)": "day 7 at (249, 653), trail band +4.3; day 14 at (98, 447), trail band +5.5; day 21 at (211, 290), trail band +4.7"
+    },
+    "29 d": {
+      "step spacing (units)": "30.2",
+      "step spacing at 320 pt, F1 / whole (pt)": "22.0 / 14.3",
+      "closest neighbouring steps, gap (pt at F1)": "6.4 (days 6→7)",
+      "closest steps across a turn, gap (pt at F1)": "40.7",
+      "days the resting avatar covers another part of the trail": "3 [5, 6, 22]",
+      "markers (D2 applied)": "day 7 at (250, 638), trail band +4.9; day 14 at (115, 434), trail band +4.4; day 21 at (198, 273), trail band +4.7"
+    },
+    "28 d": {
+      "step spacing (units)": "31.3",
+      "step spacing at 320 pt, F1 / whole (pt)": "22.8 / 14.8",
+      "closest neighbouring steps, gap (pt at F1)": "7.2 (days 6→7)",
+      "closest steps across a turn, gap (pt at F1)": "42.2",
+      "days the resting avatar covers another part of the trail": "5 [5, 6, 15, 17, 21]",
+      "markers (D2 applied)": "day 7 at (250, 622), trail band +4.7; day 14 at (126, 424), trail band +4.4; day 21 at (183, 256), trail band +4.7"
+    },
+    "environment items": "pine at (300, 556), trail clearance 94.3 units; shrub at (64, 398), trail clearance 85.2 units",
+    "free boxes ≥ 56 × 56 on the ground, x 4–316 (after items)": "3: 76×144 at (8, 492), 64×88 at (212, 456), 76×64 at (240, 564)",
+    "free area left for more items (% of 320 × 740)": "9.1",
+    "markers needing the second pass (top into the sky)": "[]"
+  },
+  "c2": {
+    "legs bottom→top: angle (length, units)": "6° (286), 31° (256), 39° (220), 47° (191), 62° (148), 68° (74)",
+    "turn radii (units)": "38, 69, 56, 40, 26",
+    "smallest turn radius (units)": "26.0",
+    "trail length (units)": "936.1",
+    "trail samples off the ground": 0,
+    "31 d": {
+      "step spacing (units)": "30.2",
+      "step spacing at 320 pt, F1 / whole (pt)": "22.0 / 14.3",
+      "closest neighbouring steps, gap (pt at F1)": "6.0 (days 28→29)",
+      "closest steps across a turn, gap (pt at F1)": "39.0",
+      "days the resting avatar covers another part of the trail": "5 [6, 7, 16, 18, 22]",
+      "markers (D2 applied)": "day 7 at (265, 698), trail band +4.5; day 14 at (101, 477), trail band +5.0; day 21 at (219, 311), trail band +4.9; day 28 at (128, 148), trail band +4.2"
+    },
+    "30 d": {
+      "step spacing (units)": "31.2",
+      "step spacing at 320 pt, F1 / whole (pt)": "22.8 / 14.8",
+      "closest neighbouring steps, gap (pt at F1)": "7.0 (days 6→7)",
+      "closest steps across a turn, gap (pt at F1)": "40.8",
+      "days the resting avatar covers another part of the trail": "5 [6, 10, 12, 16, 22]",
+      "markers (D2 applied)": "day 7 at (266, 682), trail band +5.2; day 14 at (120, 460), trail band +4.4; day 21 at (205, 295), trail band +4.9"
+    },
+    "29 d": {
+      "step spacing (units)": "32.3",
+      "step spacing at 320 pt, F1 / whole (pt)": "23.5 / 15.3",
+      "closest neighbouring steps, gap (pt at F1)": "7.6 (days 6→7)",
+      "closest steps across a turn, gap (pt at F1)": "41.4",
+      "days the resting avatar covers another part of the trail": "4 [6, 15, 17, 21]",
+      "markers (D2 applied)": "day 7 at (266, 665), trail band +5.0; day 14 at (133, 449), trail band +4.5; day 21 at (190, 279), trail band +4.9"
+    },
+    "28 d": {
+      "step spacing (units)": "33.4",
+      "step spacing at 320 pt, F1 / whole (pt)": "24.4 / 15.8",
+      "closest neighbouring steps, gap (pt at F1)": "8.3 (days 6→7)",
+      "closest steps across a turn, gap (pt at F1)": "42.2",
+      "days the resting avatar covers another part of the trail": "6 [5, 6, 11, 15, 16, 20]",
+      "markers (D2 applied)": "day 7 at (266, 646), trail band +5.1; day 14 at (145, 439), trail band +4.5; day 21 at (86, 329), trail band +6.0"
+    },
+    "environment items": "pine at (20, 520), trail clearance 85.0 units; shrub at (28, 418), trail clearance 117.2 units",
+    "free boxes ≥ 56 × 56 on the ground, x 4–316 (after items)": "3: 56×272 at (260, 388), 92×120 at (4, 528), 64×116 at (56, 324)",
+    "free area left for more items (% of 320 × 740)": "14.2",
+    "markers needing the second pass (top into the sky)": "[]"
+  }
+}

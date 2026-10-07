@@ -1,0 +1,4 @@
+31 d: step 20.6 pt, closest neighbouring markers 5.16 pt, covered days 3 [6, 7, 23]
+30 d: step 21.3 pt, closest neighbouring markers 5.83 pt, covered days 5 [6, 10, 12, 16, 18]
+29 d: step 22.0 pt, closest neighbouring markers 6.43 pt, covered days 3 [5, 6, 22]
+28 d: step 22.8 pt, closest neighbouring markers 7.15 pt, covered days 5 [5, 6, 15, 17, 21]

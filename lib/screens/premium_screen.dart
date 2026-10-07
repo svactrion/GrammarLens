@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/practice_length.dart';
 import '../models/user_profile.dart';
@@ -8,71 +10,59 @@ import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
-import '../utils/page_title.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/brand_wordmark.dart';
 import '../widgets/legal_link.dart';
+import '../utils/content_width.dart';
+import '../utils/monthly_equivalent.dart';
+import '../theme.dart';
 
-enum _PurchaseState { idle, purchasing, success, cancelled, error }
+enum _PurchaseState { idle, purchasing, success, cancelled, error, pending }
 
 enum _PlanPeriod { monthly, annual }
 
-/// The single Premium screen (PRD v2 §13.1): explains what's free/trial/paid
-/// and sells the subscription in one place. Replaces two screens that used
-/// to tell a different, incomplete story depending on which one a user
-/// reached — an informational "Early Access" screen (the free/trial/paid
-/// table, no purchase flow) and a separate Paywall (the purchase flow, no
-/// context for what it was selling). "Early Access" never described a real
-/// time-limited campaign and is retired along with the split.
+/// The single Premium screen (PRD v2 §13.1), the 1.2.0 paywall (the
+/// additional screens package): the user's companion between two others,
+/// "Turn your mistakes into progress.", three benefits in one card, the
+/// Free/Premium comparison behind "Compare Free & Premium", the two plans
+/// stacked as radio cards, and a fixed footer with the purchase button, the
+/// renewal terms, Restore Purchases, Terms, Privacy and "Maybe later".
 ///
-/// Layout (the visual-redesign batch, docs/build-log.md same date as this
-/// comment): a scrollable middle (headline, comparison table, plan cards,
-/// Restore Purchases, legal links) plus a *fixed* footer (purchase status,
-/// the primary CTA, the disclosure line, "Maybe later") — the same
-/// scroll-body-plus-fixed-footer shape `AvatarPickerScreen` already uses,
-/// adopted here because the previous single-`ListView` layout never
-/// actually pinned the CTA the way a paywall's primary action should be.
+/// **Prices and trials come only from the store.** Every price, currency,
+/// period and introductory offer is read from RevenueCat's current offering
+/// ([SubscriptionService.getOfferings]), never hardcoded. A trial is only
+/// promised when the selected product has an introductory offer **and**
+/// RevenueCat says this user is eligible for it
+/// ([SubscriptionService.checkTrialEligibility]); otherwise the button and
+/// the terms state the price and period, and when eligibility is unknown
+/// they promise no trial (1.2.0 fix: until then a user who had already used
+/// a trial was still promised one). The button, the plan cards and the
+/// terms always describe the same selected plan.
 ///
-/// Price and trial terms are read live from RevenueCat's current offering
-/// ([SubscriptionService.getOfferings]), never hardcoded, so this screen
-/// can't silently drift from whatever is actually configured in App Store
-/// Connect. As of this commit no RevenueCat/App Store Connect product
-/// exists yet, so that fetch always comes back empty unless Settings'
-/// debug-only "Preview paywall pricing" toggle is on — the "pricing
-/// unavailable" state below, not a crash, is the expected real-device
-/// result without it.
+/// Redeem codes are deferred (owner, 2026-10-05): no "Have a code?" here,
+/// and never a code check of the app's own (App Review 3.1.1).
 class PremiumScreen extends StatefulWidget {
   final SubscriptionService subscriptionService;
 
-  /// Needed only for the hero avatar group's own avatar — this screen
-  /// doesn't receive a `UserProfile`/`Avatar` from any of its four call
-  /// sites today (two of them are plain functions, not widgets already
-  /// holding profile state), so it reads its own copy here rather than
-  /// threading `Avatar?` through four inconsistent call sites. Every call
-  /// site already holds a `StorageService` instance for other reasons
-  /// (confirmed by reading each one, not assumed), so this costs each of
-  /// them one extra named argument, not a new dependency.
+  /// For the hero group's centre avatar, the user's own: none of the call
+  /// sites holds a `UserProfile`, and every one already has a
+  /// `StorageService`.
   final StorageService storageService;
 
   final AnalyticsService analyticsService;
 
   /// Which of `AnalyticsService`'s `paywallSource*` constants this visit
-  /// came from — required, not optional with a guessed default: every
-  /// real call site is one of exactly four known entry points (checked in
-  /// Batch 0), so there is no "unknown" case worth silently falling back
-  /// to.
+  /// came from — required: every call site is a known entry point.
   final String analyticsSource;
 
-  /// Called when the user is done here — either they dismissed via "Maybe
-  /// later," or a trial just started and they tapped "Continue" — right
-  /// before this screen pops itself. Null (the default, and what every entry
-  /// point passes today; the Day-0 flow used to) means there's nothing extra to
-  /// do beyond the pop itself: Home's locked-card tap, its Premium row and the
-  /// first-day paywall all just want to return to whatever pushed this screen.
+  /// Called when the user is done here — "Maybe later", the close button,
+  /// or "Continue" after a purchase — right before this screen pops itself.
+  /// Null at every call site today: they only want the pop.
   final VoidCallback? onDone;
 
   /// The weak spot that prompted this screen. It replaces the supporting
-  /// sentence, keeping the main headline identical across entry points.
+  /// line, keeping the headline identical across entry points.
   final String? sourceContext;
 
   PremiumScreen({
@@ -85,6 +75,14 @@ class PremiumScreen extends StatefulWidget {
     this.sourceContext,
   }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
+  /// The headline, the same from every entry point.
+  static const String headline = 'Turn your mistakes into progress.';
+
+  static const compareToggleKey = ValueKey('premium_compare_toggle');
+  static const ctaKey = ValueKey('premium_cta');
+  static const restoreKey = ValueKey('premium_restore');
+  static const heroKey = ValueKey('premium_hero');
+
   @override
   State<PremiumScreen> createState() => _PremiumScreenState();
 }
@@ -93,32 +91,29 @@ class _PremiumScreenState extends State<PremiumScreen> {
   bool _loadingOffer = true;
   Package? _monthlyPackage;
   Package? _annualPackage;
-  // Annual preselected (PRD v2 §13.3) — it's the plan the "Save X%" badge
-  // and the big/small price split are built to promote.
+
+  /// Trial eligibility by product id; empty until checked, which counts as
+  /// unknown (no trial promised).
+  Map<String, TrialEligibility> _eligibility = const {};
+
+  // Annual preselected (PRD v2 §13.3).
   _PlanPeriod _selectedPeriod = _PlanPeriod.annual;
   _PurchaseState _purchaseState = _PurchaseState.idle;
+
+  /// Whether the last purchase started a trial (the success message says
+  /// so only then).
+  bool _purchasedTrial = false;
   bool _restoring = false;
   String? _restoreMessage;
+  bool _compareOpen = false;
 
-  // Computed once per screen visit (not per rebuild), the same reasoning
-  // SettingsScreen's own `_fallbackAvatar` already uses: a legacy profile
-  // with no avatar yet, or one carrying an id this build doesn't recognize
-  // (Avatar.fromJson returns null either way), shouldn't show a different
-  // random character on every unrelated rebuild — and per this batch's
-  // own instruction, the hero never shows the generic placeholder at all,
-  // so a real fallback avatar is picked up front rather than left null.
+  // Picked once per visit: a legacy profile with no avatar (or an unknown
+  // id) still shows a real companion, the same one on every rebuild.
   late final Avatar _fallbackAvatar = Avatar.random();
-  // Starts as the fallback, not null — the hero has a real avatar to show
-  // from the very first frame, never a placeholder state while the async
-  // storage read is in flight.
   late Avatar _userAvatar = _fallbackAvatar;
 
-  // Set by _dismiss() (covers the X button, "Maybe later," and the
-  // post-success "Continue" alike) before it *ever* triggers a pop —
-  // PopScope's own observer below checks this to tell "this app's code
-  // already accounted for the exit" apart from a system back gesture/
-  // hardware back button, which is the one path that reaches a pop
-  // without going through _dismiss() at all.
+  // Set by _dismiss() before it pops, so the PopScope observer can tell a
+  // button's exit from a system back gesture.
   bool _exitHandled = false;
 
   @override
@@ -131,10 +126,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Future<void> _loadOffer() async {
     final offering = await widget.subscriptionService.getOfferings();
+    final ids = [
+      if (offering?.monthly != null) offering!.monthly!.storeProduct.identifier,
+      if (offering?.annual != null) offering!.annual!.storeProduct.identifier,
+    ];
+    final eligibility = ids.isEmpty
+        ? const <String, TrialEligibility>{}
+        : await widget.subscriptionService.checkTrialEligibility(ids);
     if (!mounted) return;
     setState(() {
       _monthlyPackage = offering?.monthly;
       _annualPackage = offering?.annual;
+      _eligibility = eligibility;
       _loadingOffer = false;
     });
   }
@@ -144,17 +147,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
     try {
       profile = await widget.storageService.getUserProfile();
     } catch (_) {
-      // Fails open to the fallback avatar below — a hero visual is purely
-      // decorative, never worth surfacing a storage error over.
+      // Decorative: falls back to the random companion above.
     }
     if (!mounted) return;
     setState(() => _userAvatar = profile?.avatar ?? _fallbackAvatar);
   }
 
-  /// Both plans need to exist for the picker below to mean anything — a
-  /// one-sided offering (only monthly, or only annual configured) is
-  /// treated the same as no offering at all, the honest "unavailable"
-  /// state rather than a picker with one dead option.
+  /// Both plans must exist for the picker to mean anything; one alone is
+  /// treated as no offering at all.
   bool get _offeringsAvailable =>
       _monthlyPackage != null && _annualPackage != null;
 
@@ -168,9 +168,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
         _PlanPeriod.annual => AnalyticsService.planAnnual,
       };
 
-  Future<void> _startTrial() async {
+  _PlanTerms _termsFor(Package package, String label) => _PlanTerms.of(
+        package,
+        label: label,
+        eligibility: _eligibility[package.storeProduct.identifier] ??
+            TrialEligibility.unknown,
+        locale: View.of(context).platformDispatcher.locale.toString(),
+      );
+
+  Future<void> _startPurchase() async {
+    // One request at a time: a second tap before the first one's frame
+    // disables the button must not open a second purchase.
+    if (_purchaseState == _PurchaseState.purchasing) return;
     final package = _selectedPackage;
     if (package == null) return;
+    final terms = _termsFor(package, '');
     final plan = _selectedPlanAnalyticsId;
     widget.analyticsService.purchaseStarted(plan);
     setState(() {
@@ -180,23 +192,28 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final outcome = await widget.subscriptionService.purchasePackage(package);
     if (!mounted) return;
     setState(() {
-      if (outcome == PurchaseOutcome.success) {
-        _purchaseState = _PurchaseState.success;
-      } else if (outcome == PurchaseOutcome.cancelled) {
-        _purchaseState = _PurchaseState.cancelled;
-      } else {
-        _purchaseState = _PurchaseState.error;
-      }
+      _purchasedTrial = terms.hasTrial;
+      _purchaseState = switch (outcome) {
+        PurchaseOutcome.success => _PurchaseState.success,
+        PurchaseOutcome.cancelled => _PurchaseState.cancelled,
+        PurchaseOutcome.pending => _PurchaseState.pending,
+        PurchaseOutcome.failure => _PurchaseState.error,
+      };
     });
+    // A pending purchase (Ask to Buy) is its own outcome (O10). Its later
+    // approval arrives as an entitlement change and logs no second
+    // purchase_result, so one attempt is counted once.
     final outcomeId = switch (outcome) {
       PurchaseOutcome.success => 'success',
       PurchaseOutcome.cancelled => 'cancelled',
       PurchaseOutcome.failure => 'error',
+      PurchaseOutcome.pending => 'pending',
     };
     widget.analyticsService.purchaseResult(plan: plan, outcome: outcomeId);
   }
 
   Future<void> _restore() async {
+    if (_restoring) return;
     setState(() {
       _restoring = true;
       _restoreMessage = null;
@@ -211,17 +228,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
     });
   }
 
-  /// Shared by "Maybe later," the top-right close button, and the
-  /// post-success "Continue" button — all three mean "I'm done with this
-  /// screen." [dismissMethod] is one of `AnalyticsService`'s
-  /// `paywallDismiss*` constants for the first two (a real abandonment,
-  /// worth logging), or null for "Continue" (a completed purchase, not a
-  /// dismissal — already covered by [purchaseResult]). Sets [_exitHandled]
-  /// unconditionally, before the pop, so the `PopScope` observer below
-  /// never double-logs whichever path actually triggered this. Runs
-  /// [PremiumScreen.onDone] first (e.g. the Day-0 flow's own
-  /// onboarding-completion step) so its side effects are in flight before
-  /// this route disappears, then pops.
+  /// "Maybe later", the close button and the post-purchase "Continue": the
+  /// first two log `paywall_dismissed` with their method, "Continue" does
+  /// not (a purchase is not an abandonment). Runs [PremiumScreen.onDone],
+  /// then pops.
   void _dismiss({String? dismissMethod}) {
     _exitHandled = true;
     if (dismissMethod != null) {
@@ -237,7 +247,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
   String get _supportingText {
     final source = widget.sourceContext?.trim();
     return source == null || source.isEmpty
-        ? 'Practice the mistakes you actually make.'
+        ? 'Focused practice. Personal feedback. A little more confidence, '
+            'every day.'
         : 'Practice $source.';
   }
 
@@ -250,31 +261,23 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final offeringsReady =
         _offeringsAvailable && monthly != null && annual != null;
     final size = MediaQuery.sizeOf(context);
-    final width = size.width;
     final shortScreen = size.height < _shortScreenHeight;
     // The legal links belong in the fixed footer, but the footer grows with
-    // text size, and past a point it would take over the screen. Measured: it
-    // is about 46 pt plus 172 pt per unit of system text scale, so it stays
-    // near or under half the screen exactly while height / scale >= 400
-    // (an iPhone SE at Large text holds up to 1.6x; a 320x568 screen up to
-    // about 1.4x). Beyond that the links go back to the end of the scrolling
-    // body, as before this rule existed.
+    // text size; past height / text scale 400 they go back to the end of the
+    // scrolling body, so the footer never takes over the screen.
     final textScale = MediaQuery.textScalerOf(context).scale(10) / 10;
     final linksInFooter = size.height / textScale >= _minHeightPerTextScale;
-    // Matches BrandScaffold's own responsive horizontal padding formula
-    // (`body:` bypasses it — see that widget's doc comment — so this
-    // screen owns its own padding, same as AvatarPickerScreen already
-    // does for the same reason).
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // The mockup's page edge: 20, 15 under 360 pt (held to the iPad column).
+    final hPad =
+        ContentWidth.sidePaddingOf(context, base: size.width < 360 ? 15 : 20);
+    final selectedTerms = offeringsReady
+        ? _termsFor(_selectedPackage!,
+            _selectedPeriod == _PlanPeriod.annual ? 'Annual' : 'Monthly')
+        : null;
 
     return PopScope(
-      // Observes rather than blocks (canPop stays true): unlike
-      // AvatarPickerScreen's own PopScope, there's no timing-sensitive
-      // side effect that must run *before* the pop here — this only
-      // needs to know, after the fact, whether the pop happened without
-      // going through _dismiss() at all (a system back gesture/hardware
-      // back button), the one path not already tagged with a dismiss
-      // method at its own button.
+      // Observes rather than blocks: a pop that did not go through
+      // _dismiss() is a system back gesture.
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop || _exitHandled) return;
         widget.analyticsService.paywallDismissed(
@@ -283,61 +286,67 @@ class _PremiumScreenState extends State<PremiumScreen> {
         );
       },
       child: BrandScaffold(
-        title: const PageTitle('Premium'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close_rounded),
-            tooltip: 'Close',
-            onPressed: () => _dismiss(
-              dismissMethod: AnalyticsService.paywallDismissCloseButton,
-            ),
-          ),
-        ],
+        // The status bar only: the brand line and Close are in the page.
+        appBar: AppBar(
+          toolbarHeight: 0,
+          automaticallyImplyLeading: false,
+          scrolledUnderElevation: 0,
+        ),
         body: Column(
           children: [
+            _TopBar(
+              horizontalPadding: ContentWidth.sidePaddingOf(context, base: 17),
+              onClose: () => _dismiss(
+                dismissMethod: AnalyticsService.paywallDismissCloseButton,
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 10),
+                padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 16),
                 child: Column(
                   key: const Key('premiumBody'),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Decorative, and 94 pt of a screen that has none to
-                    // spare: dropped where the height is under 700 pt (an
-                    // iPhone SE), so the comparison table and plan cards sit
-                    // that much higher above the fixed footer.
+                    // Decorative, and 133 pt a short screen (an iPhone SE)
+                    // cannot spare: dropped under 700 pt tall.
                     if (!shortScreen) ...[
                       _AvatarHero(centerAvatar: _userAvatar),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 9),
                     ],
-                    Text(
-                      'Unlock personalized feedback',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _supportingText,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 6),
-                    _ComparisonTable(theme: theme, colorScheme: colorScheme),
-                    const SizedBox(height: 4),
-                    Center(
+                    const Center(child: _PremiumLabel()),
+                    const SizedBox(height: 12),
+                    Semantics(
+                      header: true,
                       child: Text(
-                        "What's free, trial, and paid",
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.secondary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        PremiumScreen.headline,
+                        textAlign: TextAlign.center,
+                        style: _headlineStyle(theme, size.width),
                       ),
                     ),
                     const SizedBox(height: 8),
+                    _SupportingLine(text: _supportingText),
+                    const SizedBox(height: 21),
+                    const _BenefitsCard(),
+                    const SizedBox(height: 4),
+                    _CompareToggle(
+                      open: _compareOpen,
+                      onTap: () => setState(() => _compareOpen = !_compareOpen),
+                    ),
+                    if (_compareOpen) ...[
+                      _ComparisonTable(theme: theme, colorScheme: colorScheme),
+                      const SizedBox(height: 16),
+                    ] else
+                      const SizedBox(height: 13),
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        'Choose your plan',
+                        style: theme.textTheme.titleSmall
+                            ?.withWeight(FontWeight.w900)
+                            .copyWith(color: colorScheme.onSurface),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     if (_loadingOffer)
                       _PlanCardsSkeleton(colorScheme: colorScheme)
                     else if (!offeringsReady)
@@ -351,44 +360,28 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       )
                     else
                       _PlanCards(
-                        monthly: monthly,
-                        annual: annual,
+                        annual: _termsFor(annual, 'Annual'),
+                        monthly: _termsFor(monthly, 'Monthly'),
+                        savingsLabel: _savingsLabel(monthly, annual),
+                        referencePrice: _referencePrice(
+                            monthly,
+                            annual,
+                            View.of(context)
+                                .platformDispatcher
+                                .locale
+                                .toString()),
                         selected: _selectedPeriod,
                         onChanged: (period) =>
                             setState(() => _selectedPeriod = period),
-                        theme: theme,
-                        colorScheme: colorScheme,
-                      ),
-                    const SizedBox(height: 16),
-                    // Required by App Store guidelines for any screen that
-                    // sells a subscription, regardless of whether pricing
-                    // itself is currently available — always present, never
-                    // gated on an offering existing.
-                    Center(
-                      child: TextButton(
-                        // No explicit style: theme.dart's textButtonTheme
-                        // now covers the orange-on-orange contrast fix this
-                        // call site used to patch individually.
-                        onPressed: _restoring ? null : _restore,
-                        child: Text(
-                            _restoring ? 'Restoring…' : 'Restore Purchases'),
-                      ),
-                    ),
-                    if (_restoreMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Center(
-                          child: Text(
-                            _restoreMessage!,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(color: colorScheme.onSurfaceVariant),
-                          ),
-                        ),
                       ),
                     if (!linksInFooter) ...[
-                      const SizedBox(height: 8),
-                      const Center(child: _LegalLinks()),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: _FooterLinks(
+                          restoring: _restoring,
+                          onRestore: _restore,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -399,17 +392,19 @@ class _PremiumScreenState extends State<PremiumScreen> {
               loading: _loadingOffer,
               offeringsReady: offeringsReady,
               purchaseState: _purchaseState,
-              disclosureText:
-                  offeringsReady ? _disclosureText(_selectedPackage!) : null,
-              showLegalLinks: linksInFooter,
-              onStartTrial: _startTrial,
+              purchasedTrial: _purchasedTrial,
+              restoreMessage: _restoreMessage,
+              terms: selectedTerms,
+              showLinks: linksInFooter,
+              restoring: _restoring,
+              onRestore: _restore,
+              onPurchase: _startPurchase,
               onContinue: _dismiss,
               onMaybeLater: () => _dismiss(
                 dismissMethod: AnalyticsService.paywallDismissMaybeLater,
               ),
-              theme: theme,
-              colorScheme: colorScheme,
               horizontalPadding: hPad,
+              maxHeight: (size.height - MediaQuery.paddingOf(context).top) * .5,
             ),
           ],
         ),
@@ -418,88 +413,295 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 }
 
-/// Four avatars distinct from [center] and from each other, picked by a
-/// fixed offset from its own index rather than [Avatar.random] — the same
-/// visitor sees the same group every time they open this screen (no
-/// re-roll on every rebuild), and it's trivially testable. Offsets (2, 4,
-/// 6, 8 positions around the 12-avatar cycle) are spread out rather than
-/// adjacent so the four don't cluster right next to the center avatar's
-/// own asset-numbering neighborhood.
+/// The line under the headline, at least two lines tall: the default
+/// line and a weak spot's one-line "Practice …." take the same room, so every
+/// entry point lays the page out the same (the earlier paywall's rule).
+class _SupportingLine extends StatelessWidget {
+  final String text;
+
+  const _SupportingLine({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.textTheme.bodyMedium!
+        .copyWith(color: theme.colorScheme.onSurfaceVariant, height: 1.5);
+    // Two lines as the engine draws them, not fontSize × height × 2: with a
+    // fractional font size the two differ by a fraction of a point, and a
+    // weak spot's one-line text would then not take the default's place.
+    final painter = TextPainter(
+      text: TextSpan(text: 'A\nA', style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final twoLines = painter.height;
+    painter.dispose();
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: twoLines),
+      child: Text(text, textAlign: TextAlign.center, style: style),
+    );
+  }
+}
+
+/// 28 / 900 at Small (the theme's 26 / 900 question title scaled, so it
+/// follows the text size), 26 under 360 pt.
+TextStyle _headlineStyle(ThemeData theme, double width) {
+  final base = theme.textTheme.headlineMedium!;
+  return base.copyWith(
+    fontSize: base.fontSize! * (width < 360 ? 26 : 28) / 26,
+    height: 1.14,
+    letterSpacing: -.7,
+    color: theme.colorScheme.onSurface,
+  );
+}
+
+/// The annual plan's saving against twelve months of the monthly plan, from
+/// the two products' own prices (never the rounded per-month figure), or
+/// null when it does not save anything.
+String? _savingsLabel(Package monthlyPackage, Package annualPackage) {
+  final monthly = monthlyPackage.storeProduct.price;
+  final annual = annualPackage.storeProduct.price;
+  if (monthly <= 0) return null;
+  final yearlyIfMonthly = monthly * 12;
+  final savings = (yearlyIfMonthly - annual) / yearlyIfMonthly * 100;
+  return savings > 0 ? 'Save ${savings.floor()}%' : null;
+}
+
+/// Twelve months of the monthly plan, shown struck through on the annual
+/// card, only when the saving badge shows too (otherwise it would compare
+/// against nothing); null when either is missing or it cannot be formatted.
+String? _referencePrice(
+    Package monthlyPackage, Package annualPackage, String locale) {
+  if (_savingsLabel(monthlyPackage, annualPackage) == null) return null;
+  // An annual price that is not a price (0) is no reference to strike
+  // against, whatever the badge says.
+  if (annualPackage.storeProduct.price <= 0) return null;
+  final product = monthlyPackage.storeProduct;
+  return twelveMonthsPrice(
+    monthlyPrice: product.price,
+    currencyCode: product.currencyCode,
+    locale: locale,
+  );
+}
+
+/// What one plan says, everywhere it is said (its card, the button, the
+/// renewal terms), from the store product and this user's eligibility.
+class _PlanTerms {
+  final String label;
+  final String price;
+
+  /// "year", "month", or "3 months"; null if the store gave no period.
+  final String? period;
+
+  /// The trial's length ("7-day"), only when the product has an
+  /// introductory offer and the user is eligible for it.
+  final String? trialLength;
+
+  /// The same trial as a span of time ("7 days").
+  final String? trialSpan;
+  final TrialEligibility eligibility;
+
+  /// A yearly plan's price over twelve months ("$4.17"), computed from the
+  /// store price (see [monthlyEquivalent]); null on any other plan, and when
+  /// it cannot be worked out.
+  final String? monthlyEquivalentPrice;
+
+  const _PlanTerms({
+    required this.label,
+    required this.price,
+    required this.period,
+    required this.trialLength,
+    required this.trialSpan,
+    required this.eligibility,
+    this.monthlyEquivalentPrice,
+  });
+
+  factory _PlanTerms.of(Package package,
+      {required String label,
+      required TrialEligibility eligibility,
+      required String locale}) {
+    final product = package.storeProduct;
+    final intro = product.introductoryPrice;
+    String? length;
+    String? span;
+    if (intro != null && eligibility == TrialEligibility.eligible) {
+      final (count, unit) = _trialDurationInDays(intro);
+      length = _hyphenatedDuration(count, unit);
+      span = _durationSpan(count, unit);
+    }
+    final period = _formatSubscriptionPeriod(product.subscriptionPeriod);
+    return _PlanTerms(
+      label: label,
+      price: product.priceString,
+      period: period,
+      trialLength: length,
+      trialSpan: span,
+      eligibility: eligibility,
+      monthlyEquivalentPrice: period == 'year'
+          ? monthlyEquivalent(
+              annualPrice: product.price,
+              currencyCode: product.currencyCode,
+              locale: locale,
+            )
+          : null,
+    );
+  }
+
+  /// The annual card's small extra line, "≈ $4.17 per month"; null when
+  /// there is none.
+  String? get monthlyEquivalentLine {
+    final value = monthlyEquivalentPrice;
+    return value == null ? null : '≈ $value per month';
+  }
+
+  bool get hasTrial => trialLength != null;
+
+  /// "$49.99 per year", or the price alone without a period.
+  String get pricePerPeriod => period == null ? price : '$price per $period';
+
+  /// The card's detail line: the trial, or how it is billed.
+  String get detail {
+    if (hasTrial) return '$trialLength free trial';
+    return switch (period) {
+      'year' => 'Billed yearly',
+      'month' => 'Billed monthly',
+      null => 'Billed per period',
+      _ => 'Billed every $period',
+    };
+  }
+
+  /// The purchase button: the trial when there is one for this user; the
+  /// price and period when there is none; neutral when it is unknown.
+  String get cta {
+    if (hasTrial) return 'Start my $trialLength free trial';
+    if (eligibility == TrialEligibility.unknown) return 'Continue with $label';
+    return 'Subscribe for $pricePerPeriod';
+  }
+
+  /// The renewal terms under the button (App Store 3.1.2), always for the
+  /// selected plan: the trial and then the price, or the price alone.
+  String get disclosure => hasTrial
+      ? '$trialSpan free, then $pricePerPeriod, auto-renews unless cancelled.'
+      : '$pricePerPeriod, auto-renews unless cancelled.';
+}
+
+/// "7 days", "1 month": a trial as a span of time.
+String _durationSpan(int count, PeriodUnit unit) {
+  final singular = switch (unit) {
+    PeriodUnit.day => 'day',
+    PeriodUnit.week => 'week',
+    PeriodUnit.month => 'month',
+    PeriodUnit.year => 'year',
+    PeriodUnit.unknown => 'period',
+  };
+  return '$count ${count == 1 ? singular : '${singular}s'}';
+}
+
+/// Below this screen height the decorative companion group is dropped.
+const double _shortScreenHeight = 700;
+
+/// The legal links go in the fixed footer while screen height divided by the
+/// system text scale is at least this many points (see the screen's `build`).
+const double _minHeightPerTextScale = 400;
+
+/// The height of every text-button target in the footer: 44 pt, the
+/// smallest Apple recommends, shrink-wrapped so the drawn button and the
+/// target are the same.
+const double _footerTargetHeight = 44;
+
+final ButtonStyle _footerTextButtonStyle = TextButton.styleFrom(
+  minimumSize: const Size(44, _footerTargetHeight),
+  padding: const EdgeInsets.symmetric(horizontal: 8),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+);
+
+/// "GrammarLens" and Close (44 × 44).
+class _TopBar extends StatelessWidget {
+  final double horizontalPadding;
+  final VoidCallback onClose;
+
+  const _TopBar({required this.horizontalPadding, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 4, horizontalPadding, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: BrandWordmark(
+              style: theme.textTheme.titleMedium
+                  ?.withWeight(FontWeight.w900)
+                  .copyWith(color: colorScheme.onSurface, letterSpacing: -.5),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 22),
+            tooltip: 'Close',
+            color: colorScheme.onSurface,
+            style: IconButton.styleFrom(minimumSize: const Size(44, 44)),
+            onPressed: onClose,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The user's companion in the middle (124 pt) between two others (66 pt),
+/// picked by fixed offsets from its own place in [Avatar.values] (owner
+/// decision O11): the same visitor always sees the same three. Decorative
+/// apart from saying whose companion it is; no `Hero`, so nothing collides
+/// with Home's or Profile's avatar heroes.
 List<Avatar> _otherAvatarsFor(Avatar center) {
-  const offsets = [2, 4, 6, 8];
+  const offsets = [4, 6];
   return offsets
       .map(
           (offset) => Avatar.values[(center.index - 1 + offset) % Avatar.count])
       .toList();
 }
 
-/// The hero visual (this batch): the user's own avatar front-and-center,
-/// two or four smaller companions alongside — "here's your identity among the
-/// set," not a feature illustration. Built from the existing [AvatarTile]
-/// (transparent background + ground shadow already baked in, since the
-/// ring-removal batch) with no [Hero] wrapper at all: this screen has no
-/// push/pop partner to fly to, and wrapping these in `Hero` risked
-/// colliding with Home's or Settings' own avatar Hero tags, both of which
-/// stay mounted at the same time as this screen (see `home_screen.dart`'s
-/// own `homeAvatarHeroTag` doc comment for why that would crash). [centerAvatar]
-/// is never null by the time this builds — [_PremiumScreenState] resolves
-/// a real fallback avatar before this is ever rendered, so there is no
-/// placeholder state here to design for.
 class _AvatarHero extends StatelessWidget {
   final Avatar centerAvatar;
 
   const _AvatarHero({required this.centerAvatar});
 
+  static const double centerSize = 124;
+  static const double sideSize = 66;
+
   @override
   Widget build(BuildContext context) {
     final others = _otherAvatarsFor(centerAvatar);
-    // Keep the user's avatar prominent without fading or overlapping others.
-    // Retain the 90pt hero height so entry-point layout stays consistent.
-    const centerRadius = 38.0;
-    const innerRadius = 26.0;
-    const outerRadius = 21.0;
-    const gap = 8.0;
-    const fiveAvatarWidth =
-        centerRadius * 2 + innerRadius * 4 + outerRadius * 4 + gap * 4;
-
-    // One semantic node for the whole group, not five: the other four
-    // avatars are purely decorative (nothing to tap, nothing individually
-    // meaningful about *which* four they are), so exposing each one to a
-    // screen reader would just be noise. The one thing worth announcing —
-    // whose avatar this is — is stated directly instead.
     return Semantics(
-      label: "Your avatar: ${centerAvatar.semanticLabel}",
+      key: PremiumScreen.heroKey,
+      label: 'Your companion: ${centerAvatar.semanticLabel}',
       container: true,
       child: ExcludeSemantics(
         child: SizedBox(
-          height: 90,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final showOuterPair = constraints.maxWidth >= fiveAvatarWidth;
-              return Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (showOuterPair) ...[
-                        AvatarTile(avatar: others[0], radius: outerRadius),
-                        const SizedBox(width: gap),
-                      ],
-                      AvatarTile(avatar: others[1], radius: innerRadius),
-                      const SizedBox(width: gap),
-                      AvatarTile(avatar: centerAvatar, radius: centerRadius),
-                      const SizedBox(width: gap),
-                      AvatarTile(avatar: others[2], radius: innerRadius),
-                      if (showOuterPair) ...[
-                        const SizedBox(width: gap),
-                        AvatarTile(avatar: others[3], radius: outerRadius),
-                      ],
-                    ],
+          height: centerSize,
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: AvatarTile(avatar: others[0], radius: sideSize / 2),
                   ),
-                ),
-              );
-            },
+                  const SizedBox(width: 8),
+                  AvatarTile(avatar: centerAvatar, radius: centerSize / 2),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: AvatarTile(avatar: others[1], radius: sideSize / 2),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -507,218 +709,180 @@ class _AvatarHero extends StatelessWidget {
   }
 }
 
-/// The App Store's required auto-renewable-subscription disclosure,
-/// compressed to a single sentence (at most two lines once wrapped):
-/// trial length, price + billing period after it, and that it auto-renews
-/// unless cancelled. Reuses [_hyphenatedDuration] and
-/// [_formatSubscriptionPeriod] so every number here still comes from
-/// [package]'s own live StoreKit/RevenueCat data, never hardcoded.
-String _disclosureText(Package package) {
-  final product = package.storeProduct;
-  final trial = product.introductoryPrice;
-  String trialPart;
-  if (trial == null) {
-    trialPart = 'Free trial';
-  } else {
-    final (count, unit) = _trialDurationInDays(trial);
-    trialPart = '${_hyphenatedDuration(count, unit)} free trial';
-  }
-  final billingPeriod = _formatSubscriptionPeriod(product.subscriptionPeriod);
-  final priceStr = billingPeriod == null
-      ? product.priceString
-      : '${product.priceString} / $billingPeriod';
-  return '$trialPart, then $priceStr, auto-renews unless cancelled.';
-}
-
-/// Below this screen height the decorative avatar hero is dropped.
-const double _shortScreenHeight = 700;
-
-/// The legal links go in the fixed footer while screen height divided by the
-/// system text scale is at least this many points (see the screen's `build`).
-const double _minHeightPerTextScale = 400;
-
-/// The height of every text-button target in the footer (the legal links and
-/// "Maybe later"). 44 pt is the smallest target Apple recommends. The default
-/// text button is 40 pt tall inside a 48 pt padded target; shrink-wrapping a 44 pt
-/// minimum makes the target and the drawn button the same 44 pt, so the footer
-/// gets its space back from the gaps around the buttons, not from a target
-/// smaller than 44.
-const double _footerTargetHeight = 44;
-
-/// A text button whose target is exactly [_footerTargetHeight] tall.
-final ButtonStyle _footerTextButtonStyle = TextButton.styleFrom(
-  minimumSize: const Size(64, _footerTargetHeight),
-  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-);
-
-/// Privacy Policy and Terms of Service, side by side (wrapping when narrow).
-class _LegalLinks extends StatelessWidget {
-  const _LegalLinks();
+/// "GRAMMARLENS PREMIUM" on the warm surface.
+class _PremiumLabel extends StatelessWidget {
+  const _PremiumLabel();
 
   @override
   Widget build(BuildContext context) {
-    // The links keep their own colour (`LegalLink` sets it); only the target
-    // size comes from here.
-    return TextButtonTheme(
-      data: TextButtonThemeData(style: _footerTextButtonStyle),
-      child: const Wrap(
-        alignment: WrapAlignment.center,
+    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+      decoration: BoxDecoration(
+        color: palette.warm,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          LegalLink(label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
-          LegalLink(label: 'Terms of Service', url: AppLinks.termsUrl),
+          Icon(Icons.auto_awesome_rounded, size: 13, color: palette.onWarm),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'GRAMMARLENS PREMIUM',
+              style: theme.textTheme.labelSmall
+                  ?.withWeight(FontWeight.w900)
+                  .copyWith(color: palette.onWarm, letterSpacing: 1),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-/// The screen's fixed bottom area — never scrolls away, unlike the
-/// previous single-`ListView` layout. Content varies by state rather than
-/// always showing the same three things:
-///
-/// - **loading**: a disabled CTA with an inline spinner (no disclosure —
-///   there's no price yet to disclose) plus "Maybe later".
-/// - **offerings ready**: the purchase status banner (nothing shown for
-///   idle/purchasing, which already have their own affordance), the CTA
-///   (label/enabled-state driven by [purchaseState]), the disclosure line,
-///   and "Maybe later" — hidden once a trial has actually started, since
-///   the CTA itself becomes "Continue" then and a second identical exit
-///   would be redundant.
-/// - **pricing unavailable**: no CTA and no disclosure, since neither means
-///   anything without a real price, so just "Maybe later" (and the legal
-///   links, when they are in the footer). The retry affordance itself stays
-///   in the scrollable body ([_UnavailableCard]), not duplicated here.
-///
-/// The Privacy Policy and Terms links sit above "Maybe later" whenever the
-/// screen has room for that (see `linksInFooter` in the screen's `build`).
-class _PremiumFooter extends StatelessWidget {
-  final bool loading;
-  final bool offeringsReady;
-  final _PurchaseState purchaseState;
-  final String? disclosureText;
+/// "one" for 1: small counts in words, for the benefit lines.
+String _countWord(int n) {
+  const words = ['no', 'one', 'two', 'three', 'four', 'five'];
+  return n >= 0 && n < words.length ? words[n] : '$n';
+}
 
-  /// Whether the Privacy Policy and Terms links are shown here, above "Maybe
-  /// later", instead of at the end of the scrolling body.
-  final bool showLegalLinks;
-  final VoidCallback onStartTrial;
-  final VoidCallback onContinue;
-  final VoidCallback onMaybeLater;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-  final double horizontalPadding;
+/// The three benefits, true to what each tier really has: a free user has
+/// the Daily Test, AI feedback on one weak-spot practice a day, and Review;
+/// so Premium's lines say "more" and "every topic", never "AI only in
+/// Premium", and the session cap is stated rather than any "unlimited".
+class _BenefitsCard extends StatelessWidget {
+  const _BenefitsCard();
 
-  const _PremiumFooter({
-    super.key,
-    required this.loading,
-    required this.offeringsReady,
-    required this.purchaseState,
-    required this.disclosureText,
-    required this.showLegalLinks,
-    required this.onStartTrial,
-    required this.onContinue,
-    required this.onMaybeLater,
-    required this.theme,
-    required this.colorScheme,
-    required this.horizontalPadding,
-  });
+  static List<(IconData, String, String)> get benefits {
+    const free = StorageService.freeDailyPracticeLimit;
+    final lengthText = _joinWithOr(
+        PracticeLength.values.map((l) => '${l.questionCount}').toList());
+    return [
+      (
+        Icons.chat_bubble_outline_rounded,
+        'Understand your mistakes',
+        'AI feedback on every topic you practice, not just your free daily '
+            'practice.'
+      ),
+      (
+        Icons.track_changes_rounded,
+        'Practice your weak spots',
+        'Go beyond your ${_countWord(free)} free daily '
+            'practice${free == 1 ? '' : 's'}.'
+      ),
+      (
+        Icons.menu_book_rounded,
+        'Every topic, your own pace',
+        'All ${kTopics.length} topics · $lengthText questions · up to '
+            '${StorageService.dailySessionLimit} sessions a day.'
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final showCta = offeringsReady;
-    final showMaybeLater = purchaseState != _PurchaseState.success;
-    return DecoratedBox(
-      // A hard edge (not a shadow/blur) between the scrollable content and
-      // the fixed footer — the same "permanent, not scroll-triggered"
-      // separation BrandScaffold's own band/body boundary already uses,
-      // for the same reason: a shadow that only appears once scrolled
-      // reads as a bug (looks fine at rest, gains an edge mid-scroll).
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final palette = AppPalette.of(context);
+    final items = benefits;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        color: colorScheme.surfaceContainerHigh,
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(23),
+        boxShadow: palette.cardShadow,
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          // Tight on purpose: every button below already has a 44 pt target
-          // of its own, so extra space around the stack would only push the
-          // buttons apart.
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            8,
-            horizontalPadding,
-            4,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (loading) ...[
-                const SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: null,
-                    child: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+      child: Column(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0)
+              Divider(
+                  height: 1, thickness: 1, color: colorScheme.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(items[i].$1,
+                        size: 18, color: colorScheme.secondary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          items[i].$2,
+                          style: theme.textTheme.bodyMedium
+                              ?.withWeight(FontWeight.w800)
+                              .copyWith(
+                                  color: colorScheme.onSurface, height: 1.3),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          items[i].$3,
+                          style: theme.textTheme.labelMedium
+                              ?.withWeight(FontWeight.w400)
+                              .copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  height: 1.4),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 6),
-              ] else if (showCta) ...[
-                _PurchaseStatusBanner(
-                  state: purchaseState,
-                  theme: theme,
-                  colorScheme: colorScheme,
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    // Once the trial has actually started, this button's
-                    // job changes from "start it" to "acknowledge and move
-                    // on" — reusing the same primary button for that
-                    // rather than adding a separate one keeps a single,
-                    // consistent continuation point regardless of outcome.
-                    onPressed: switch (purchaseState) {
-                      _PurchaseState.purchasing => null,
-                      _PurchaseState.success => onContinue,
-                      _ => onStartTrial,
-                    },
-                    child: purchaseState == _PurchaseState.purchasing
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(purchaseState == _PurchaseState.success
-                            ? 'Continue'
-                            : 'Start free trial'),
-                  ),
-                ),
-                // Close to the button it describes.
-                const SizedBox(height: 6),
-                Text(
-                  // Never truncated: the price, period and auto-renewal
-                  // sentence is a required disclosure, so at large text sizes
-                  // it wraps onto more lines and the footer grows instead.
-                  disclosureText!,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
-                ),
-              ],
-              // Required wherever a subscription is sold, so seen without
-              // scrolling, in every state (loading, priced, pricing
-              // unavailable).
-              if (showLegalLinks) const _LegalLinks(),
-              if (showMaybeLater)
-                TextButton(
-                  style: _footerTextButtonStyle.copyWith(
-                    foregroundColor:
-                        WidgetStatePropertyAll(colorScheme.onSurfaceVariant),
-                  ),
-                  onPressed: onMaybeLater,
-                  child: const Text('Maybe later'),
-                ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// "Compare Free & Premium": opens and closes the comparison table below
+/// it. A 44 pt target; screen readers hear whether it is open.
+class _CompareToggle extends StatelessWidget {
+  final bool open;
+  final VoidCallback onTap;
+
+  const _CompareToggle({required this.open, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return MergeSemantics(
+      child: Semantics(
+        expanded: open,
+        child: TextButton(
+          key: PremiumScreen.compareToggleKey,
+          onPressed: onTap,
+          style: TextButton.styleFrom(
+            minimumSize: const Size.fromHeight(44),
+            foregroundColor: colorScheme.secondary,
+            textStyle: theme.textTheme.labelMedium?.withWeight(FontWeight.w800),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Flexible(child: Text('Compare Free & Premium')),
+              const SizedBox(width: 6),
+              Icon(
+                open
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                size: 17,
+              ),
             ],
           ),
         ),
@@ -727,10 +891,449 @@ class _PremiumFooter extends StatelessWidget {
   }
 }
 
-/// One row of the Free/Premium comparison table. [freeLabel] overrides the
-/// usual checkmark/dash with specific text (today, only "1 a day" for the
-/// merged weak-spot row) — null everywhere else, meaning [free] alone
-/// decides the glyph.
+/// Restore Purchases, Terms of Service and Privacy Policy on one row,
+/// wrapping when narrow; each a 44 pt target.
+class _FooterLinks extends StatelessWidget {
+  final bool restoring;
+  final VoidCallback onRestore;
+
+  /// In the footer: the row is only [_footerRowHeight] tall and each
+  /// target reaches 44 pt upward, into the terms above (see [_TapArea]).
+  final bool compact;
+
+  const _FooterLinks({
+    required this.restoring,
+    required this.onRestore,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    // The three at the mockup's 11 / 700, so they share one row on a phone.
+    final row = TextButtonTheme(
+      data: TextButtonThemeData(
+        style: _footerTextButtonStyle.copyWith(
+          textStyle: WidgetStatePropertyAll(
+              theme.textTheme.labelSmall?.withWeight(FontWeight.w700)),
+          minimumSize: compact
+              ? const WidgetStatePropertyAll(Size(44, _footerRowHeight))
+              : null,
+        ),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        // When the three wrap (narrow or large text), a second row's
+        // targets reach up into this gap (see below).
+        runSpacing: compact ? _footerTargetHeight - _footerRowHeight : 0,
+        children: [
+          _link(TextButton(
+            key: PremiumScreen.restoreKey,
+            // Required wherever a subscription is sold (App Store), in
+            // every state, whether or not prices loaded.
+            onPressed: restoring ? null : onRestore,
+            style: TextButton.styleFrom(
+              foregroundColor: colorScheme.secondary,
+            ),
+            child: Text(restoring ? 'Restoring…' : 'Restore Purchases'),
+          )),
+          _link(const LegalLink(
+              label: 'Terms of Service', url: AppLinks.termsUrl)),
+          _link(const LegalLink(
+              label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl)),
+        ],
+      ),
+    );
+    // The whole row reaches up over the terms (for the first row); each
+    // link reaches up into the run gap (for a second row, if any).
+    return compact ? _RowTapArea(child: row) : row;
+  }
+
+  Widget _link(Widget button) =>
+      compact ? _TapArea(extendUp: true, child: button) : button;
+}
+
+/// The footer's text rows (the links, "Maybe later") are drawn this tall,
+/// so the gaps between them match the gap above them (owner, after
+/// Batch 12); [_TapArea] keeps each target 44 pt.
+const double _footerRowHeight = 30;
+
+/// Keeps a short footer button's target [_footerTargetHeight] tall by
+/// taking taps in the empty or non-interactive space right above
+/// ([extendUp]) or below it: the links take the renewal terms' lower edge
+/// and the small gap above them (or the gap between two rows when they
+/// wrap); "Maybe later" takes the empty margin under it. A tap there is
+/// handed on as if it landed on the nearest edge, so the button under that
+/// point gets it; the drawn size, and so the visible rhythm, does not
+/// change. A tap is only seen where every ancestor contains it: the links'
+/// row passes the space above itself through with [_RowTapArea], and the
+/// bottom margin is a spacer inside the footer's column.
+class _TapArea extends SingleChildRenderObjectWidget {
+  final bool extendUp;
+
+  const _TapArea({required this.extendUp, required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderTapArea(extendUp);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderTapArea renderObject) {
+    renderObject.extendUp = extendUp;
+  }
+}
+
+class _RenderTapArea extends RenderProxyBox {
+  _RenderTapArea(this.extendUp);
+
+  bool extendUp;
+
+  double get _extension =>
+      (_footerTargetHeight - size.height).clamp(0, _footerTargetHeight);
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final top = extendUp ? -_extension : 0.0;
+    final bottom = size.height + (extendUp ? 0 : _extension);
+    if (position.dx < 0 ||
+        position.dx >= size.width ||
+        position.dy < top ||
+        position.dy >= bottom) {
+      return false;
+    }
+    final inside = Offset(
+        position.dx, position.dy.clamp(0.5, size.height - 0.5).toDouble());
+    if (child != null && child!.hitTest(result, position: inside)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
+  }
+}
+
+/// Lets taps in the [_footerTargetHeight] − [_footerRowHeight] points above
+/// the links' row reach the links themselves (their own [_TapArea]s decide
+/// which one); a [Wrap] alone ignores any point outside its box.
+class _RowTapArea extends SingleChildRenderObjectWidget {
+  const _RowTapArea({required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderRowTapArea();
+}
+
+class _RenderRowTapArea extends RenderProxyBox {
+  static const double _reach = _footerTargetHeight - _footerRowHeight;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (position.dy >= 0) return super.hitTest(result, position: position);
+    if (position.dy < -_reach ||
+        position.dx < 0 ||
+        position.dx >= size.width ||
+        child == null) {
+      return false;
+    }
+    if (child!.hitTestChildren(result, position: position)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
+  }
+}
+
+/// The fixed bottom area: never scrolls away.
+///
+/// - **loading**: a disabled button with a spinner, then the links and
+///   "Maybe later".
+/// - **prices ready**: the last purchase's or restore's result, the button
+///   (its label from the selected plan's [_PlanTerms]), the renewal terms,
+///   the links, and "Maybe later" (gone once a purchase succeeded: the
+///   button becomes "Continue").
+/// - **prices unavailable**: no button and no terms, which mean nothing
+///   without a price; the links and "Maybe later". The retry is in the
+///   body.
+class _PremiumFooter extends StatelessWidget {
+  final bool loading;
+  final bool offeringsReady;
+  final _PurchaseState purchaseState;
+  final bool purchasedTrial;
+  final String? restoreMessage;
+  final _PlanTerms? terms;
+  final bool showLinks;
+  final bool restoring;
+  final VoidCallback onRestore;
+  final VoidCallback onPurchase;
+  final VoidCallback onContinue;
+  final VoidCallback onMaybeLater;
+  final double horizontalPadding;
+
+  /// Half the screen, applied only when the text is large enough that the
+  /// links have moved to the body (screen height / text scale under 400;
+  /// e.g. 375 × 667 at 2x and 3x). Past it the footer scrolls inside
+  /// itself, the button first, so the body above still has room to scroll.
+  final double maxHeight;
+
+  Widget _capped(Widget content) => showLinks
+      ? content
+      : ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: SingleChildScrollView(child: content),
+        );
+
+  const _PremiumFooter({
+    super.key,
+    required this.loading,
+    required this.offeringsReady,
+    required this.purchaseState,
+    required this.purchasedTrial,
+    required this.restoreMessage,
+    required this.terms,
+    required this.showLinks,
+    required this.restoring,
+    required this.onRestore,
+    required this.onPurchase,
+    required this.onContinue,
+    required this.onMaybeLater,
+    required this.horizontalPadding,
+    required this.maxHeight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final showMaybeLater = purchaseState != _PurchaseState.success;
+    return DecoratedBox(
+      // A permanent edge between the scrolling body and this fixed area.
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        top: false,
+        // The bottom inset is a spacer inside the column instead, so
+        // "Maybe later"'s target can reach into it.
+        bottom: false,
+        child: _capped(
+          Padding(
+            padding:
+                EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _StatusMessage(
+                  state: purchaseState,
+                  purchasedTrial: purchasedTrial,
+                  restoreMessage: restoreMessage,
+                ),
+                if (loading) ...[
+                  const _Cta(
+                    onPressed: null,
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ] else if (offeringsReady && terms != null) ...[
+                  _Cta(
+                    onPressed: switch (purchaseState) {
+                      _PurchaseState.purchasing => null,
+                      _PurchaseState.success => onContinue,
+                      _ => onPurchase,
+                    },
+                    arrow: purchaseState != _PurchaseState.purchasing,
+                    child: purchaseState == _PurchaseState.purchasing
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            purchaseState == _PurchaseState.success
+                                ? 'Continue'
+                                : terms!.cta,
+                            textAlign: TextAlign.center,
+                          ),
+                  ),
+                  const SizedBox(height: 6),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      // Never cut: at large text it wraps and the footer grows.
+                      terms!.disclosure,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall
+                          ?.withWeight(FontWeight.w400)
+                          .copyWith(
+                              color: colorScheme.onSurfaceVariant, height: 1.6),
+                    ),
+                  ),
+                ],
+                // One rhythm under the button: the terms, the links and
+                // "Maybe later" each about 14 pt apart (owner, after Batch
+                // 12; "Maybe later" used to sit 27.5 pt under the links).
+                if (showLinks) ...[
+                  const SizedBox(height: 7),
+                  _FooterLinks(
+                      restoring: restoring,
+                      onRestore: onRestore,
+                      compact: true),
+                ],
+                if (showMaybeLater)
+                  _TapArea(
+                    extendUp: false,
+                    child: Center(
+                      child: TextButton(
+                        style: _footerTextButtonStyle.copyWith(
+                          minimumSize: const WidgetStatePropertyAll(
+                              Size(44, _footerRowHeight)),
+                          foregroundColor: WidgetStatePropertyAll(
+                              colorScheme.onSurfaceVariant),
+                        ),
+                        onPressed: onMaybeLater,
+                        child: const Text('Maybe later'),
+                      ),
+                    ),
+                  ),
+                // The bottom margin: the home indicator's inset plus 4, and
+                // never less than "Maybe later"'s target needs below it.
+                SizedBox(
+                  height: (MediaQuery.paddingOf(context).bottom + 4)
+                      .clamp(_footerTargetHeight - _footerRowHeight,
+                          double.infinity)
+                      .toDouble(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The purchase button: brandOrange with the onOrange text (the mockup's
+/// colour), at least 52 tall, radius 17, an arrow after the label; the
+/// app's opaque disabled pairing; no navy edge (Batch 8).
+class _Cta extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final Widget child;
+  final bool arrow;
+
+  const _Cta(
+      {required this.onPressed, required this.child, this.arrow = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
+    return FilledButton(
+      key: PremiumScreen.ctaKey,
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        disabledBackgroundColor: palette.disabledFill,
+        disabledForegroundColor: palette.disabledLabel,
+        minimumSize: const Size.fromHeight(52),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+        textStyle: theme.textTheme.bodyLarge
+            ?.withWeight(FontWeight.w900)
+            .copyWith(height: 1.3),
+      ).copyWith(side: const WidgetStatePropertyAll(BorderSide.none)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: child),
+          if (arrow) ...[
+            const SizedBox(width: 9),
+            const Icon(Icons.arrow_forward_rounded, size: 17),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The result of the last purchase or restore, above the button; nothing
+/// while idle or purchasing (the button shows that).
+class _StatusMessage extends StatelessWidget {
+  final _PurchaseState state;
+  final bool purchasedTrial;
+  final String? restoreMessage;
+
+  const _StatusMessage({
+    required this.state,
+    required this.purchasedTrial,
+    required this.restoreMessage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final (IconData, String, Color)? content = switch (state) {
+      _PurchaseState.success => (
+          Icons.check_circle_rounded,
+          purchasedTrial
+              ? 'Trial started — Topic Practice is unlocked.'
+              : 'Premium is active — Topic Practice is unlocked.',
+          colorScheme.onSurface,
+        ),
+      _PurchaseState.cancelled => (
+          Icons.info_outline_rounded,
+          'Purchase cancelled — no charge was made.',
+          colorScheme.onSurfaceVariant,
+        ),
+      _PurchaseState.pending => (
+          Icons.hourglass_top_rounded,
+          'Waiting for approval — Premium starts once the purchase is '
+              'approved. No charge until then.',
+          colorScheme.onSurfaceVariant,
+        ),
+      _PurchaseState.error => (
+          Icons.error_outline_rounded,
+          "Something went wrong and the purchase couldn't start. Please try "
+              'again.',
+          colorScheme.error,
+        ),
+      _PurchaseState.idle || _PurchaseState.purchasing => restoreMessage == null
+          ? null
+          : (
+              Icons.info_outline_rounded,
+              restoreMessage!,
+              colorScheme.onSurfaceVariant,
+            ),
+    };
+    if (content == null) return const SizedBox.shrink();
+    final (icon, message, color) = content;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Semantics(
+        liveRegion: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: theme.textTheme.bodySmall?.copyWith(color: color),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ComparisonRow {
   final String label;
   final bool free;
@@ -816,8 +1419,8 @@ double _measureTextWidth(BuildContext context, String text, TextStyle style) {
   return painter.width;
 }
 
-const TextStyle _freeValueStyle =
-    TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+final TextStyle _freeValueStyle =
+    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
 
 /// The Free/Premium comparison table. The Premium column reads as one
 /// continuous, rounded, highlighted strip running from the header down to
@@ -1029,8 +1632,8 @@ const double _labelCellRightPadding = 8;
 const double _labelCellHorizontalPadding =
     _labelCellLeftPadding + _labelCellRightPadding;
 
-const TextStyle _headerStyle =
-    TextStyle(fontSize: 12, fontWeight: FontWeight.w700);
+final TextStyle _headerStyle =
+    const TextStyle(fontSize: 12).withWeight(FontWeight.w700);
 
 /// The comparison table's fallback when its three columns do not fit (see
 /// [_ComparisonTable]): the same four rows, the same Free/Premium facts, laid
@@ -1308,11 +1911,11 @@ class _ComparisonRowLine extends StatelessWidget {
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: theme.textTheme.bodySmall
+                            ?.withWeight(FontWeight.w700)
+                            .copyWith(
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant),
                       )
                     : _ComparisonCell(
                         included: row.free,
@@ -1416,16 +2019,15 @@ class _ComparisonCell extends StatelessWidget {
           ? Icon(Icons.check_rounded, size: 20, color: includedColor)
           : Text(
               '—',
-              style: TextStyle(
-                color: dashColor,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: dashColor, fontSize: 16)
+                  .withWeight(FontWeight.w600),
             ),
     );
   }
 }
 
+/// The plan's saving ("Save 24%"), on the warm surface (the mockup's
+/// colours, O1): onWarm on warm, 7.96:1 (light) and 7.82:1 (dark).
 class _Badge extends StatelessWidget {
   final String label;
 
@@ -1433,176 +2035,202 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final palette = AppPalette.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
+        color: palette.warm,
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.withWeight(FontWeight.w800)
+            .copyWith(color: palette.onWarm),
       ),
     );
   }
 }
 
-/// Two side-by-side selectable plan cards (PRD v2 §13.3). Annual is
-/// preselected and carries the "Save N%" badge; both cards' prices come
-/// from [_planPricing], called once per period.
+/// The two plans stacked as radio cards (the 1.2.0 mockup): Annual (with the
+/// saving, when there is one) above Monthly; annual preselected. Every word
+/// and number comes from [_PlanTerms] and [_savingsLabel], so nothing is
+/// hardcoded and the cards never disagree with the button.
 class _PlanCards extends StatelessWidget {
-  final Package monthly;
-  final Package annual;
+  final _PlanTerms annual;
+  final _PlanTerms monthly;
+  final String? savingsLabel;
+  final String? referencePrice;
   final _PlanPeriod selected;
   final ValueChanged<_PlanPeriod> onChanged;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
 
   const _PlanCards({
-    required this.monthly,
     required this.annual,
+    required this.monthly,
+    required this.savingsLabel,
+    required this.referencePrice,
     required this.selected,
     required this.onChanged,
-    required this.theme,
-    required this.colorScheme,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Only two natural-height cards: measure the taller content, then stretch
-    // both borders to it. No fixed height or vertical flex clips scaled text.
-    return IntrinsicHeight(
-        child: Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: _PlanCard(
-            label: 'Annual',
-            pricing: _planPricing(_PlanPeriod.annual, monthly, annual),
-            selected: selected == _PlanPeriod.annual,
-            onTap: () => onChanged(_PlanPeriod.annual),
-            theme: theme,
-            colorScheme: colorScheme,
-          ),
+        _PlanCard(
+          terms: annual,
+          savingsLabel: savingsLabel,
+          referencePrice: referencePrice,
+          selected: selected == _PlanPeriod.annual,
+          onTap: () => onChanged(_PlanPeriod.annual),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _PlanCard(
-            label: 'Monthly',
-            pricing: _planPricing(_PlanPeriod.monthly, monthly, annual),
-            selected: selected == _PlanPeriod.monthly,
-            onTap: () => onChanged(_PlanPeriod.monthly),
-            theme: theme,
-            colorScheme: colorScheme,
-          ),
+        const SizedBox(height: 10),
+        _PlanCard(
+          terms: monthly,
+          savingsLabel: null,
+          selected: selected == _PlanPeriod.monthly,
+          onTap: () => onChanged(_PlanPeriod.monthly),
         ),
       ],
-    ));
+    );
   }
 }
 
+/// One plan: the radio mark, the name (and the saving), the trial or how it
+/// is billed, and the price with its period. Radius 19, at least 87 tall;
+/// selected: a 2 pt link-coloured edge on the info surface.
 class _PlanCard extends StatelessWidget {
-  final String label;
-  final _PlanPricing pricing;
+  final _PlanTerms terms;
+  final String? savingsLabel;
+
+  /// Twelve months of the monthly plan ("$71.88"), struck through above the
+  /// price; only on the annual card and only with a saving badge.
+  final String? referencePrice;
   final bool selected;
   final VoidCallback onTap;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
 
   const _PlanCard({
-    required this.label,
-    required this.pricing,
+    required this.terms,
+    required this.savingsLabel,
+    this.referencePrice,
     required this.selected,
     required this.onTap,
-    required this.theme,
-    required this.colorScheme,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Fill stays the plain card surface regardless of selection — visual-
-    // polish batch, same date as this comment. It used to switch to
-    // `secondaryContainer` when selected, the same fill the comparison
-    // table's Premium strip uses a few rows above; next to that strip a
-    // selected card and "this is the Premium column" read as the same
-    // signal. Selection is carried entirely by the 2px `secondary` border
-    // (unchanged) plus an explicit check mark below, so it no longer
-    // borrows a color language that means something else on this screen.
-    final borderColor =
-        selected ? colorScheme.secondary : colorScheme.outlineVariant;
-    final savings = pricing.savingsLabel;
-    final borderWidth = selected ? 2.0 : 1.0;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final palette = AppPalette.of(context);
+    final edge = selected ? 2.0 : 1.0;
+    final radius = BorderRadius.circular(19);
+    final savings = savingsLabel;
+    final muted = theme.textTheme.labelSmall
+        ?.withWeight(FontWeight.w600)
+        .copyWith(color: colorScheme.onSurfaceVariant);
 
     return Semantics(
-      key: ValueKey('planCard_$label'),
+      key: ValueKey('planCard_${terms.label}'),
       button: true,
+      inMutuallyExclusiveGroup: true,
+      checked: selected,
       selected: selected,
       container: true,
       excludeSemantics: true,
-      label: '$label plan, ${pricing.bigAmount}, ${pricing.smallDetail}'
-          '${savings != null ? ', $savings' : ''}',
+      label: '${terms.label} plan, ${terms.pricePerPeriod}'
+          '${terms.monthlyEquivalentPrice != null ? ', approximately ${terms.monthlyEquivalentPrice} per month' : ''}'
+          ', ${terms.detail}'
+          '${savings != null ? ', $savings' : ''}'
+          '${referencePrice != null ? ', twelve months of the monthly plan cost $referencePrice' : ''}',
       child: Material(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        color: selected
+            ? colorScheme.secondaryContainer
+            : colorScheme.surfaceContainerHigh,
+        borderRadius: radius,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: radius,
           onTap: onTap,
           child: Container(
-            // Decoration contributes the border to padding. Keep the total
-            // inset stable when selection switches between the two plans.
+            constraints: const BoxConstraints(minHeight: 87),
             padding: EdgeInsets.symmetric(
-                horizontal: 14 - borderWidth, vertical: 12 - borderWidth),
+                horizontal: 14 - edge, vertical: 16 - edge),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor, width: selected ? 2 : 1),
+              borderRadius: radius,
+              border: Border.all(
+                color: selected
+                    ? colorScheme.secondary
+                    : colorScheme.outlineVariant,
+                width: edge,
+              ),
+              boxShadow: selected ? null : palette.cardShadow,
             ),
-            child: Stack(
+            child: Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (savings != null) ...[
-                      _Badge(label: savings),
+                Icon(
+                  selected
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  size: 20,
+                  color: selected
+                      ? colorScheme.secondary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Text(
+                            terms.label,
+                            style: theme.textTheme.titleSmall
+                                ?.withWeight(FontWeight.w900)
+                                .copyWith(color: colorScheme.onSurface),
+                          ),
+                          if (savings != null) _Badge(label: savings),
+                        ],
+                      ),
                       const SizedBox(height: 4),
+                      Text(terms.detail, style: muted),
+                      // Same style as the detail line: never more prominent
+                      // than the billed price (App Store 3.1.2).
+                      if (terms.monthlyEquivalentLine case final line?)
+                        Text(line, style: muted),
                     ],
-                    Text(
-                      label,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (referencePrice != null)
+                      Text(
+                        referencePrice!,
+                        style: muted?.copyWith(
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: muted.color,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      pricing.bigAmount,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                      ),
+                      terms.price,
+                      style: theme.textTheme.titleLarge
+                          ?.withWeight(FontWeight.w900)
+                          .copyWith(
+                              color: colorScheme.onSurface,
+                              height: 1.3,
+                              letterSpacing: -.5),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      pricing.smallDetail,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
+                    if (terms.period != null)
+                      Text('per ${terms.period}', style: muted),
                   ],
                 ),
-                if (selected)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Icon(
-                      Icons.check_circle_rounded,
-                      size: 18,
-                      color: colorScheme.secondary,
-                    ),
-                  ),
               ],
             ),
           ),
@@ -1610,84 +2238,6 @@ class _PlanCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The two numbers shown per plan: a large "big" figure (the annual
-/// plan's own per-month equivalent when annual is selected, or the
-/// monthly product's own price when monthly is selected) and a smaller
-/// detail line underneath (the annual total, or "billed monthly").
-class _PlanPricing {
-  final String bigAmount;
-  final String smallDetail;
-  final String? savingsLabel;
-
-  const _PlanPricing({
-    required this.bigAmount,
-    required this.smallDetail,
-    this.savingsLabel,
-  });
-}
-
-/// Computes [_PlanPricing] entirely from the two real products' own
-/// fields — never a hardcoded number.
-///
-/// The annual plan's monthly-equivalent price ([StoreProduct.pricePerMonth]/
-/// [StoreProduct.pricePerMonthString]) is computed and formatted by
-/// RevenueCat/StoreKit itself from the real annual price, already in the
-/// viewer's own currency — this reads that directly rather than
-/// reimplementing currency formatting by hand (which risks assuming a
-/// "$" prefix that breaks for every other currency).
-///
-/// The savings percentage deliberately does **not** reuse [pricePerMonth]
-/// for its own math (found live on-device, 2026-09-17): StoreKit truncates
-/// that figure to 2 decimals for display (49.99/12 = 4.1658... → "4.16"),
-/// and computing the percentage from the truncated number overstated the
-/// real 30.44% saving as 31%. The percentage below instead compares the
-/// two products' own raw [StoreProduct.price] values directly (annual vs.
-/// 12 × monthly) — full precision, no intermediate rounding — and floors
-/// rather than rounds, so display rounding can never overstate a discount
-/// the user isn't actually getting.
-///
-/// Falls back to the plain annual price (no "per month" figure, no
-/// savings badge) if the SDK doesn't supply a monthly-equivalent for some
-/// reason, rather than inventing one.
-_PlanPricing _planPricing(
-  _PlanPeriod period,
-  Package monthlyPackage,
-  Package annualPackage,
-) {
-  final monthlyProduct = monthlyPackage.storeProduct;
-  final annualProduct = annualPackage.storeProduct;
-
-  if (period == _PlanPeriod.monthly) {
-    return _PlanPricing(
-      bigAmount: '${monthlyProduct.priceString} / month',
-      smallDetail: 'Billed monthly.',
-    );
-  }
-
-  final perMonth = annualProduct.pricePerMonth;
-  final perMonthString = annualProduct.pricePerMonthString;
-  if (perMonth == null || perMonthString == null) {
-    return _PlanPricing(
-      bigAmount: annualProduct.priceString,
-      smallDetail: 'Billed annually.',
-    );
-  }
-
-  String? savingsLabel;
-  if (monthlyProduct.price > 0) {
-    final yearlyIfMonthly = monthlyProduct.price * 12;
-    final savings =
-        (yearlyIfMonthly - annualProduct.price) / yearlyIfMonthly * 100;
-    if (savings > 0) savingsLabel = 'Save ${savings.floor()}%';
-  }
-
-  return _PlanPricing(
-    bigAmount: '$perMonthString / month',
-    smallDetail: 'Billed ${annualProduct.priceString} annually.',
-    savingsLabel: savingsLabel,
-  );
 }
 
 /// Shown when [SubscriptionService.getOfferings] comes back empty — no
@@ -1713,7 +2263,7 @@ class _UnavailableCard extends StatelessWidget {
     required this.onRetry,
   });
 
-  static const _message = "Trial pricing isn't available right now";
+  static const _message = "Prices aren't available right now";
 
   /// A TextButton's own horizontal padding is 12 on each side and its
   /// minimum width 64; the label is measured, not guessed, so this follows
@@ -1794,6 +2344,9 @@ class _UnavailableCard extends StatelessWidget {
 /// muted boxes, not an animated shimmer: this app has no shimmer/skeleton
 /// package today and this batch doesn't add one, so the "skeleton" here is
 /// static shape only.
+
+/// The loading state's placeholder, shaped like the two stacked plan cards
+/// it will become: static muted boxes, no shimmer.
 class _PlanCardsSkeleton extends StatelessWidget {
   final ColorScheme colorScheme;
 
@@ -1809,21 +2362,26 @@ class _PlanCardsSkeleton extends StatelessWidget {
       );
 
   Widget _card() => Container(
-        padding: const EdgeInsets.all(14),
+        constraints: const BoxConstraints(minHeight: 87),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 15),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(16),
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(19),
           border: Border.all(color: colorScheme.outlineVariant),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            _bar(height: 14, width: 56),
-            const SizedBox(height: 10),
-            _bar(height: 20, width: 84),
-            const SizedBox(height: 6),
-            _bar(height: 12, width: 104),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _bar(height: 14, width: 64),
+                const SizedBox(height: 10),
+                _bar(height: 12, width: 104),
+              ],
+            ),
+            const Spacer(),
+            _bar(height: 22, width: 70),
           ],
         ),
       );
@@ -1832,70 +2390,11 @@ class _PlanCardsSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Loading pricing',
-      child: Row(
+      child: Column(
         children: [
-          Expanded(child: _card()),
-          const SizedBox(width: 12),
-          Expanded(child: _card()),
-        ],
-      ),
-    );
-  }
-}
-
-/// Inline result of the last [SubscriptionService.purchasePackage] call —
-/// nothing shown for [_PurchaseState.idle]/[_PurchaseState.purchasing],
-/// since those already have their own affordance (the button itself).
-class _PurchaseStatusBanner extends StatelessWidget {
-  final _PurchaseState state;
-  final ThemeData theme;
-  final ColorScheme colorScheme;
-
-  const _PurchaseStatusBanner({
-    required this.state,
-    required this.theme,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    IconData icon;
-    String message;
-    Color color;
-    switch (state) {
-      case _PurchaseState.success:
-        icon = Icons.check_circle_rounded;
-        message = 'Trial started — Topic Practice is unlocked.';
-        color = colorScheme.primary;
-        break;
-      case _PurchaseState.cancelled:
-        icon = Icons.info_outline_rounded;
-        message = 'Purchase cancelled — no charge was made.';
-        color = colorScheme.onSurfaceVariant;
-        break;
-      case _PurchaseState.error:
-        icon = Icons.error_outline_rounded;
-        message = "Something went wrong and the trial couldn't start. Please "
-            'try again.';
-        color = colorScheme.error;
-        break;
-      case _PurchaseState.idle:
-      case _PurchaseState.purchasing:
-        return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: theme.textTheme.bodySmall?.copyWith(color: color),
-            ),
-          ),
+          _card(),
+          const SizedBox(height: 10),
+          _card(),
         ],
       ),
     );

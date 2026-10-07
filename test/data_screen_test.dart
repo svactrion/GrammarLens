@@ -43,6 +43,20 @@ class _FakeStorageService extends StorageService {
   }
 }
 
+/// Opens the confirmation from the page's reset button.
+Future<void> openReset(WidgetTester tester) async {
+  await tester.ensureVisible(find.byKey(DataScreen.resetKey));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(DataScreen.resetKey));
+  await tester.pumpAndSettle();
+}
+
+/// The dialog's own "Reset progress data" (the page's button has the same
+/// label).
+Finder confirmReset() => find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.widgetWithText(FilledButton, 'Reset progress data'));
+
 void main() {
   Future<void> pumpData(
     WidgetTester tester,
@@ -69,10 +83,12 @@ void main() {
 
     expect(find.text('Data'), findsOneWidget); // page title
     expect(find.text('Reset progress'), findsOneWidget);
-    expect(find.textContaining('Clears practice history and weak spots'),
+    expect(
+        find.text('Clear your practice history and saved weak spots.'),
         findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Reset progress data'),
+    expect(find.text('Your name, goal and theme stay as they are.'),
         findsOneWidget);
+    expect(find.byKey(DataScreen.resetKey), findsOneWidget);
   });
 
   testWidgets('asks for confirmation and Cancel resets nothing',
@@ -80,15 +96,18 @@ void main() {
     final storage = _FakeStorageService();
     await pumpData(tester, storage);
 
-    await tester.tap(find.text('Reset progress data'));
-    await tester.pumpAndSettle();
-    expect(find.text('Reset progress?'), findsOneWidget);
-    expect(find.textContaining('This can\'t be undone.'), findsOneWidget);
+    await openReset(tester);
+    expect(find.text('Reset your progress?'), findsOneWidget);
+    expect(
+        find.text('This clears your practice history and saved weak spots.'),
+        findsOneWidget);
+    expect(find.text('Your name, goal and theme will stay as they are.'),
+        findsOneWidget);
 
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text('Keep my progress'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Reset progress?'), findsNothing);
+    expect(find.text('Reset your progress?'), findsNothing);
     expect(storage.resets, 0);
   });
 
@@ -96,12 +115,11 @@ void main() {
     final storage = _FakeStorageService();
     await pumpData(tester, storage);
 
-    await tester.tap(find.text('Reset progress data'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Reset'));
+    await openReset(tester);
+    await tester.tap(confirmReset());
     await tester.pumpAndSettle();
 
-    expect(find.text('Reset progress?'), findsNothing);
+    expect(find.text('Reset your progress?'), findsNothing);
     expect(storage.resets, 1);
   });
 
@@ -114,15 +132,21 @@ void main() {
       Color? border(ButtonStyleButton b) =>
           b.style?.side?.resolve(const {})?.color;
 
-      testWidgets('the Reset progress data button uses the destructive role',
+      testWidgets(
+          'the page\'s Reset progress data button is low-intensity: an '
+          'error tint, an error edge and an error label (brief §3)',
           (tester) async {
         await pumpData(tester, _FakeStorageService(), brightness: brightness);
         final scheme = buildAppTheme(brightness).colorScheme;
 
-        final button = tester.widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'Reset progress data'));
-        expect(fill(button), scheme.destructive);
-        expect(label(button), scheme.onDestructive);
+        final button =
+            tester.widget<OutlinedButton>(find.byKey(DataScreen.resetKey));
+        final card = scheme.surfaceContainerHigh;
+        expect(label(button), scheme.error);
+        expect(fill(button),
+            Color.alphaBlend(scheme.error.withValues(alpha: 0.08), card));
+        expect(border(button),
+            Color.alphaBlend(scheme.error.withValues(alpha: 0.40), card));
       });
 
       testWidgets(
@@ -131,16 +155,14 @@ void main() {
         await pumpData(tester, _FakeStorageService(), brightness: brightness);
         final scheme = buildAppTheme(brightness).colorScheme;
 
-        await tester.tap(find.text('Reset progress data'));
-        await tester.pumpAndSettle();
+        await openReset(tester);
 
-        final reset = tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Reset'));
+        final reset = tester.widget<FilledButton>(confirmReset());
         expect(fill(reset), scheme.destructive);
         expect(label(reset), scheme.onDestructive);
 
         final cancel = tester.widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Cancel'));
+            find.widgetWithText(OutlinedButton, 'Keep my progress'));
         expect(label(cancel), scheme.onSurface);
         expect(label(cancel), isNot(scheme.primary));
         expect(border(cancel), scheme.onSurfaceVariant);
@@ -157,16 +179,15 @@ void main() {
 
       testWidgets('Cancel stays above Reset, both full width', (tester) async {
         await pumpData(tester, _FakeStorageService(), brightness: brightness);
-        await tester.tap(find.text('Reset progress data'));
-        await tester.pumpAndSettle();
+        await openReset(tester);
 
-        final cancel =
-            tester.getRect(find.widgetWithText(OutlinedButton, 'Cancel'));
-        final reset =
-            tester.getRect(find.widgetWithText(FilledButton, 'Reset'));
+        final cancel = tester
+            .getRect(find.widgetWithText(OutlinedButton, 'Keep my progress'));
+        final reset = tester.getRect(confirmReset());
         expect(cancel.bottom, lessThan(reset.top));
         expect(cancel.width, reset.width);
-        expect(cancel.height, 52);
+        // The app's button height (48 since 1.2.0, 52 before).
+        expect(cancel.height, 48);
       });
     });
   }
@@ -216,10 +237,10 @@ void main() {
       await pumpWithAnalytics(tester, _FakeStorageService());
 
       expect(find.text('AI feedback'), findsOneWidget);
-      expect(find.text('Send my practice answers to Anthropic (Claude)'),
+      expect(find.text('Allow AI feedback'), findsOneWidget);
+      expect(find.text('Off · Practice sessions need permission'),
           findsOneWidget);
-      expect(
-          find.text('Needed for Topic Practice. Daily Test works without it.'),
+      expect(find.text('Daily Test works without this permission.'),
           findsOneWidget);
       expect(tester.getTopLeft(find.text('AI feedback')).dy,
           lessThan(tester.getTopLeft(find.text('Reset progress')).dy));
@@ -301,8 +322,8 @@ void main() {
     });
 
     testWidgets(
-        'switching off takes effect at once with no screen, says Topic '
-        'Practice will ask again, and reports revoked', (tester) async {
+        'switching off takes effect at once with no screen, says practice '
+        'sessions will ask again, and reports revoked', (tester) async {
       final storage = _FakeStorageService()..consent = grant();
       await pumpWithAnalytics(tester, storage);
 
@@ -312,7 +333,7 @@ void main() {
       expect(find.byType(AiConsentScreen), findsNothing);
       expect(switchOn(tester), isFalse);
       expect(storage.consent!.allowsSending, isFalse);
-      expect(find.text('Topic Practice will ask again.'), findsOneWidget);
+      expect(find.text('Practice sessions will ask again.'), findsOneWidget);
       expect(sink.named('ai_consent_result').single.parameters, {
         'outcome': 'revoked',
         'source': 'data_settings',
@@ -340,10 +361,8 @@ void main() {
       final storage = _FakeStorageService()..consent = grant();
       await pumpWithAnalytics(tester, storage);
 
-      await tester.ensureVisible(find.text('Reset progress data'));
-      await tester.tap(find.text('Reset progress data'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Reset'));
+      await openReset(tester);
+      await tester.tap(confirmReset());
       await tester.pumpAndSettle();
 
       expect(storage.resets, 1);

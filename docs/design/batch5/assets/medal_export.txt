@@ -1,0 +1,17 @@
+Batch 5 N23: the medal assets (tool/medals/export_medal_assets.py): 512 x 512 px, WebP q90, alpha lossless, method 6.
+
+assets/medals/medal_green_slope_gold.webp   42078 bytes
+assets/medals/medal_green_slope_silver.webp   37400 bytes
+assets/medals/medal_green_slope_bronze.webp   36628 bytes
+assets/medals/medal_ember_peak_gold.webp   45294 bytes
+assets/medals/medal_ember_peak_silver.webp   40510 bytes
+assets/medals/medal_ember_peak_bronze.webp   39076 bytes
+assets/medals/medal_glacier_peak_gold.webp   43556 bytes
+assets/medals/medal_glacier_peak_silver.webp   37672 bytes
+assets/medals/medal_glacier_peak_bronze.webp   38908 bytes
+assets/medals/medal_red_canyon_gold.webp   44446 bytes
+assets/medals/medal_red_canyon_silver.webp   40952 bytes
+assets/medals/medal_red_canyon_bronze.webp   39010 bytes
+assets/medals/medal_welcome.webp   43396 bytes
+
+13 files, 528926 bytes (528.9 KB).

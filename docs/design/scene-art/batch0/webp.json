@@ -1,0 +1,241 @@
+{
+ "backgrounds": {
+  "green/background_light.png 1086 q70": {
+   "kb": 182.0,
+   "psnr": 36.28,
+   "ssim": 0.9597
+  },
+  "green/background_light.png 1086 q80": {
+   "kb": 238.1,
+   "psnr": 38.46,
+   "ssim": 0.9739
+  },
+  "green/background_light.png 1086 q90": {
+   "kb": 371.3,
+   "psnr": 42.72,
+   "ssim": 0.9882
+  },
+  "green/background_light.png 1174 q70": {
+   "kb": 202.9,
+   "psnr": 36.57,
+   "ssim": 0.9617
+  },
+  "green/background_light.png 1174 q80": {
+   "kb": 261.4,
+   "psnr": 38.62,
+   "ssim": 0.974
+  },
+  "green/background_light.png 1174 q90": {
+   "kb": 413.8,
+   "psnr": 42.9,
+   "ssim": 0.9884
+  },
+  "green/background_light.png 1536 q70": {
+   "kb": 281.5,
+   "psnr": 37.4,
+   "ssim": 0.9656
+  },
+  "green/background_light.png 1536 q80": {
+   "kb": 365.9,
+   "psnr": 39.52,
+   "ssim": 0.9773
+  },
+  "green/background_light.png 1536 q90": {
+   "kb": 586.7,
+   "psnr": 43.54,
+   "ssim": 0.9889
+  },
+  "green/background_light.png 1878 q70": {
+   "kb": 356.1,
+   "psnr": 38.26,
+   "ssim": 0.9698
+  },
+  "green/background_light.png 1878 q80": {
+   "kb": 464.3,
+   "psnr": 40.24,
+   "ssim": 0.9791
+  },
+  "green/background_light.png 1878 q90": {
+   "kb": 752.2,
+   "psnr": 44.1,
+   "ssim": 0.9894
+  },
+  "green/background_light.png 2172 q70": {
+   "kb": 423.3,
+   "psnr": 38.85,
+   "ssim": 0.9724
+  },
+  "green/background_light.png 2172 q80": {
+   "kb": 547.5,
+   "psnr": 40.87,
+   "ssim": 0.9808
+  },
+  "green/background_light.png 2172 q90": {
+   "kb": 898.1,
+   "psnr": 44.42,
+   "ssim": 0.9898
+  },
+  "green/background_dark.png 1086 q70": {
+   "kb": 132.2,
+   "psnr": 37.21,
+   "ssim": 0.9508
+  },
+  "green/background_dark.png 1086 q80": {
+   "kb": 174.6,
+   "psnr": 39.27,
+   "ssim": 0.9669
+  },
+  "green/background_dark.png 1086 q90": {
+   "kb": 296.4,
+   "psnr": 43.43,
+   "ssim": 0.9856
+  },
+  "green/background_dark.png 1174 q70": {
+   "kb": 145.5,
+   "psnr": 37.36,
+   "ssim": 0.9513
+  },
+  "green/background_dark.png 1174 q80": {
+   "kb": 194.5,
+   "psnr": 39.32,
+   "ssim": 0.9668
+  },
+  "green/background_dark.png 1174 q90": {
+   "kb": 329.5,
+   "psnr": 43.62,
+   "ssim": 0.9857
+  },
+  "green/background_dark.png 1536 q70": {
+   "kb": 205.0,
+   "psnr": 38.36,
+   "ssim": 0.9591
+  },
+  "green/background_dark.png 1536 q80": {
+   "kb": 272.2,
+   "psnr": 40.34,
+   "ssim": 0.9721
+  },
+  "green/background_dark.png 1536 q90": {
+   "kb": 447.4,
+   "psnr": 43.98,
+   "ssim": 0.9863
+  },
+  "green/background_dark.png 1878 q70": {
+   "kb": 264.9,
+   "psnr": 39.1,
+   "ssim": 0.9646
+  },
+  "green/background_dark.png 1878 q80": {
+   "kb": 338.9,
+   "psnr": 40.83,
+   "ssim": 0.9742
+  },
+  "green/background_dark.png 1878 q90": {
+   "kb": 571.2,
+   "psnr": 44.67,
+   "ssim": 0.9877
+  },
+  "green/background_dark.png 2172 q70": {
+   "kb": 310.2,
+   "psnr": 39.76,
+   "ssim": 0.9687
+  },
+  "green/background_dark.png 2172 q80": {
+   "kb": 402.8,
+   "psnr": 41.58,
+   "ssim": 0.9776
+  },
+  "green/background_dark.png 2172 q90": {
+   "kb": 676.5,
+   "psnr": 45.06,
+   "ssim": 0.9883
+  },
+  "volcanic/background_light.png 1086 q70": {
+   "kb": 121.9,
+   "psnr": 38.99,
+   "ssim": 0.966
+  },
+  "volcanic/background_light.png 1086 q80": {
+   "kb": 158.3,
+   "psnr": 40.66,
+   "ssim": 0.9757
+  },
+  "volcanic/background_light.png 1086 q90": {
+   "kb": 257.3,
+   "psnr": 43.96,
+   "ssim": 0.9866
+  },
+  "volcanic/background_light.png 1174 q70": {
+   "kb": 133.4,
+   "psnr": 39.46,
+   "ssim": 0.9678
+  },
+  "volcanic/background_light.png 1174 q80": {
+   "kb": 173.6,
+   "psnr": 41.06,
+   "ssim": 0.9767
+  },
+  "volcanic/background_light.png 1174 q90": {
+   "kb": 287.3,
+   "psnr": 44.31,
+   "ssim": 0.9874
+  },
+  "volcanic/background_light.png 1536 q70": {
+   "kb": 181.5,
+   "psnr": 40.81,
+   "ssim": 0.9728
+  },
+  "volcanic/background_light.png 1536 q80": {
+   "kb": 231.8,
+   "psnr": 42.47,
+   "ssim": 0.9803
+  },
+  "volcanic/background_light.png 1536 q90": {
+   "kb": 382.9,
+   "psnr": 45.27,
+   "ssim": 0.9882
+  },
+  "volcanic/background_light.png 1878 q70": {
+   "kb": 230.2,
+   "psnr": 41.67,
+   "ssim": 0.9759
+  },
+  "volcanic/background_light.png 1878 q80": {
+   "kb": 294.2,
+   "psnr": 43.35,
+   "ssim": 0.9824
+  },
+  "volcanic/background_light.png 1878 q90": {
+   "kb": 474.3,
+   "psnr": 45.94,
+   "ssim": 0.9888
+  },
+  "volcanic/background_light.png 2172 q70": {
+   "kb": 271.8,
+   "psnr": 42.59,
+   "ssim": 0.9786
+  },
+  "volcanic/background_light.png 2172 q80": {
+   "kb": 343.7,
+   "psnr": 44.24,
+   "ssim": 0.9841
+  },
+  "volcanic/background_light.png 2172 q90": {
+   "kb": 553.9,
+   "psnr": 46.3,
+   "ssim": 0.9888
+  }
+ },
+ "objects": {
+  "campfire 192": 8.3,
+  "campfire 256": 11.6,
+  "tent 192": 6.7,
+  "tent 256": 9.3,
+  "fountain 192": 6.7,
+  "fountain 256": 9.5,
+  "cabin 192": 7.9,
+  "cabin 256": 11.0,
+  "summit_flag 192": 8.6,
+  "summit_flag 256": 11.7
+ }
+}

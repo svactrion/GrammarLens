@@ -1,0 +1,4 @@
+Placed: pine (300, 556), shrub (64, 398)
+More pines that fit: 11
+More shrubs that fit: 19
+More items, pine and shrub alternating: 19

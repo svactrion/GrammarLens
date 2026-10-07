@@ -1,0 +1,15 @@
+Batch 5 (N30, N37): the fullest summary card's height (= the sheet's) by medal disc, against the sheet's limit (9/16 of the screen). Points. Largest fitting: the largest disc, up to N37's cap (112 pt from 740 pt tall; 88 pt from 640; 48 pt below), whose card is not taller than the limit.
+
+screen   text    limit   at 112  at 88   at 64   at 48   cap  largest fitting
+320x568  small    319.5   397.3   371.9   346.6   329.7   48  none
+320x568  medium   319.5   407.3   381.9   356.6   339.7   48  none
+320x568  large    319.5   418.3   392.9   367.6   350.7   48  none
+375x667  small    375.2   397.3   371.9   346.6   329.7   88  88
+375x667  medium   375.2   407.3   381.9   356.6   339.7   88  80
+375x667  large    375.2   418.3   392.9   367.6   350.7   88  70
+375x812  small    456.8   397.3   371.9   346.6   329.7  112  112
+375x812  medium   456.8   407.3   381.9   356.6   339.7  112  112
+375x812  large    456.8   418.3   392.9   367.6   350.7  112  112
+430x932  small    524.3   397.3   371.9   346.6   329.7  112  112
+430x932  medium   524.3   407.3   381.9   356.6   339.7  112  112
+430x932  large    524.3   418.3   392.9   367.6   350.7  112  112

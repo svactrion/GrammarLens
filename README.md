@@ -2,16 +2,20 @@
 
 **An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
-**Status (4 October 2026):** 1.0.0 is in App Store review (resubmitted 28 September 2026); 1.1.0 is a release candidate, not submitted ([roadmap](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/roadmap.md), "1.1.0 — release candidate").
+**Status (7 October 2026):** 1.0.0 is in App Store review (rejected a second time on 6 October 2026 for a missing Terms of Use / EULA link in the App Store metadata, fixed in the metadata and resubmitted the same day; not yet approved); 1.1.0 is skipped, never submitted, and its content ships in 1.2.0; 1.2.0 (`1.2.0+5`) is on the `1.2.0` branch, its device checks passed, the TestFlight build next, to be submitted as an update once 1.0.0 is approved. The screenshots below are from 1.2.0 ([roadmap](docs/roadmap.md), "1.2.0 pre-release checklist").
 
-<p>
-  <img src="screenshots/1.1.0/01-result.png" width="200" alt="Daily Test result: every answer with a one-sentence explanation">
-  <img src="screenshots/1.1.0/04-review.png" width="200" alt="Review: weak spots listed by topic">
-  <img src="screenshots/1.1.0/02-home.png" width="200" alt="Home: the avatar on this month's mountain">
-  <img src="screenshots/1.1.0/08-collection.png" width="200" alt="Profile: the medal collection">
+<p align="center">
+  <img src="screenshots/1.2.0/readme/hero.png" width="820" alt="Three iPhones: Home with this month's mountain, a Daily Test result with every answer explained, and a Daily Test question">
 </p>
 
-*Screenshots: 1.1.0 release candidate, not yet on the App Store.*
+<p align="center">
+  <img src="screenshots/1.2.0/readme/04-review.png" width="190" alt="Review: saved weak spots by topic, with today's free practice">
+  <img src="screenshots/1.2.0/readme/05-weak-spot.png" width="190" alt="A weak spot's detail: the saved mistake, its correction and a free practice">
+  <img src="screenshots/1.2.0/readme/07-collection.png" width="190" alt="Profile: the medal collection and this month's progress">
+  <img src="screenshots/1.2.0/readme/08-goal.png" width="190" alt="Onboarding: choosing a learning goal">
+</p>
+
+*Screenshots: 1.2.0, not yet on the App Store. The learner is made up ("Sam"). Earlier versions are under "Version history" below.*
 
 ## What it does
 
@@ -33,13 +37,13 @@
 - **Problem:** Review's "Practice this" button had no subscription check, so a free user could start paid-tier practice, bounded only by the 10-a-day cap everyone shared. Found on a device on 15 September 2026; noted and deferred ten days earlier.
 - **Decision:** the check moved into the one function every practice set goes through. Free: one Daily Test and one 3-question practice session a day; the session counts only when generation succeeds.
 - **Cost:** a free user who uses both every day costs ≈ $1.72–1.86 a month on 1.0.0 (Daily Test part measured, practice part an estimate) and pays nothing. The limit is 1 to cap the cost of each free user and to point anyone who wants more practice to Premium. The quota model will be re-evaluated with four weeks of data.
-- **Evidence:** [build log](docs/build-log.md) 2026-09-15; [build log](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/build-log.md) 2026-10-04 (free practice limit: rationale recorded after the fact); [PRD v2](docs/prd-v2.md) §13.7; [roadmap](docs/roadmap.md), "Post-launch tasks".
+- **Evidence:** [build log](docs/build-log.md) 2026-09-15; [build log](docs/build-log.md) 2026-10-04 (free practice limit: rationale recorded after the fact); [PRD v2](docs/prd-v2.md) §13.7; [roadmap](docs/roadmap.md), "Post-launch tasks".
 
 **3. Known flaw, not fixed: right answers graded as wrong**
 - **Problem:** answers are graded by plain text matching. In the owner's review of 35 live questions, 6 had a right or defensible answer marked "Needs work", and it goes into the error profile. Contractions (`'m` / `am`) and spelling variants (`neighbourhood` / `neighborhood`) are not normalized.
 - **Done so far:** the fallback pool carries 10 owner corrections. The live daily sets do not; the second-model check that would add accepted answers was deferred past 1.1.0.
 - **Cost:** 1.1.0 ships with it. Fixing the live sets (P14) is the first job after 1.1.0, on the server side.
-- **Evidence:** [roadmap](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/build-log.md) 2026-10-04 (P12–P14).
+- **Evidence:** [roadmap](docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](docs/build-log.md) 2026-10-04 (P12–P14).
 
 ## How it was built
 
@@ -56,11 +60,21 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 |---|---|---|---|
 | v1 — MVP | Jul 2026 | One-week sprint, user research, two iterations | Not released |
 | v2 | Aug–Sep 2026 | Free/paid split, structure and visual pass, API proxy, subscriptions | Not released |
-| 1.0.0 | Sep 2026 | v2 plus Monthly Climb | In App Store review (resubmitted 28 Sep 2026) |
-| 1.1.0 | Oct 2026 | Shared Daily Test; mountain themes, medals and collection; launch screen; new avatars; iPad layout | Release candidate, not submitted |
+| 1.0.0 | Sep 2026 | v2 plus Monthly Climb | In App Store review (rejected a second time 6 Oct 2026, metadata fixed and resubmitted the same day) |
+| 1.1.0 | Oct 2026 | Shared Daily Test; mountain themes, medals and collection; launch screen; new avatars; iPad layout | Skipped, never submitted; its content ships in 1.2.0 |
+| 1.2.0 | Oct 2026 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; new paywall with trial eligibility; multiline answers | Device checks passed; TestFlight next; an update after 1.0.0 is approved |
 
 <details>
-<summary><strong>1.0.0 screenshots</strong></summary>
+<summary><strong>Previous version: 1.1.0 screenshots</strong> (skipped, never released)</summary>
+
+| Result | Home | Review | Medal collection |
+|---|---|---|---|
+| ![Daily Test result: every answer with a one-sentence explanation](screenshots/1.1.0/01-result.png) | ![Home: the avatar on this month's mountain](screenshots/1.1.0/02-home.png) | ![Review: weak spots listed by topic](screenshots/1.1.0/04-review.png) | ![Profile: the medal collection](screenshots/1.1.0/08-collection.png) |
+
+</details>
+
+<details>
+<summary><strong>Previous version: 1.0.0 screenshots</strong> (submitted to the App Store, September 2026)</summary>
 
 | Results | Question | Review | Home |
 |---|---|---|---|
@@ -117,7 +131,10 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 - **Subscriptions:** RevenueCat.
 - **Analytics and crashes:** Firebase Analytics and Crashlytics.
 
+**Local setup:** moved to [`docs/development.md`](docs/development.md).
+
 Docs:
+- [`docs/development.md`](docs/development.md): local setup, debug defines, visual previews
 - [`docs/roadmap.md`](docs/roadmap.md): current status and what's next
 - [`docs/build-log.md`](docs/build-log.md): dated record of decisions and bugs
 - [`docs/prd.md`](docs/prd.md) (MVP), [`docs/prd-v2.md`](docs/prd-v2.md) (v2), [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb)
@@ -131,162 +148,3 @@ The avatar set is adapted from ["Cute Animal 3D Icons"](https://www.figma.com/co
 ## About
 
 Built by [Ahmet Emin Tayfur](https://www.linkedin.com/in/ahmettayfur): statistics graduate moving into product management. This repo doubles as a learning-in-public log; process write-up on [Medium](https://medium.com/@ahmet-tayfur).
-
-<details>
-<summary><strong>Local setup</strong></summary>
-
-### Local setup
-
-The Anthropic API key is not in the client at all — the app talks to a
-small Cloudflare Workers proxy (`proxy/`) that holds it as a secret; see
-`docs/build-log.md` for why (short version: a key compiled into a shipped
-binary via `--dart-define` is extractable, so it moved behind a backend
-that owns the model/prompt/schema for every call and enforces its own
-quota). The app only needs two build-time values (`AppConfig` in
-`lib/config/app_config.dart`): where the proxy is, and an app token: without
-them, Daily Test and Topic Practice fail with a `ClaudeApiException`
-telling you to do the below.
-
-1. Copy `config/dev.example.json` to `config/dev.json`:
-   ```json
-   { "PROXY_BASE_URL": "http://localhost:8787", "APP_TOKEN": "..." }
-   ```
-   `APP_TOKEN` here just has to match whatever you put in the proxy's own
-   `proxy/.dev.vars` (see `proxy/README.md`) — pick any string for local
-   dev. `config/dev.json` is gitignored — it never gets committed.
-2. Run it: `./scripts/dev.sh` — starts the proxy locally (`wrangler dev`,
-   in the background, only if nothing's already listening on its port)
-   and then runs `flutter run --dart-define-from-file=config/dev.json`, so
-   one command brings up both halves. Any extra arguments (e.g.
-   `-d chrome`) pass straight through to `flutter run`. First time only:
-   copy `proxy/.dev.vars.example` to `proxy/.dev.vars` and fill in a real
-   Anthropic API key (see `proxy/README.md`) — that's the only place a
-   real key needs to exist on a dev machine.
-   - **Testing against the live proxy instead of `wrangler dev`**: the
-     proxy also lives at the permanent `https://api.ahmettayfur.com`
-     (Cloudflare Workers custom domain — see `proxy/wrangler.jsonc`).
-     Temporarily set `config/dev.json`'s `PROXY_BASE_URL` to that and
-     `APP_TOKEN` to the real deployed secret (`config/prod.json`'s value,
-     if you have it) — `./scripts/dev.sh` detects a non-localhost URL and
-     skips starting a local proxy. Revert both back to `localhost:8787`
-     and the local dev token afterward: every call against the live
-     address spends a real Anthropic request and counts against
-     production's daily quota, so this isn't the default for a reason.
-   - **VS Code** users can use the "GrammarLens (dev)" launch config
-     (`.vscode/launch.json`, committed) instead — same flag, wired to
-     Run/Debug, but doesn't start the proxy for you; run `npm run dev` in
-     `proxy/` yourself first. `scripts/dev.sh` is the primary path since
-     day-to-day development on this project happens from the terminal.
-   - **Physical device**: `scripts/dev.sh` is simulator-only —
-     `config/dev.json`'s `PROXY_BASE_URL` points at `localhost`, which on a
-     real device means the device itself, so every proxy call fails. Use
-     `flutter run --dart-define-from-file=config/prod.json -d <device-id>`
-     instead.
-3. **Xcode**: hitting the Run button directly in Xcode does **not** pass
-   any `--dart-define`/`--dart-define-from-file` flags — the app will
-   build but every API call will fail with the missing-config error
-   above. Launch from `scripts/dev.sh` or VS Code instead when you need
-   it configured.
-4. **Release / TestFlight builds** use a separate `config/prod.json`
-   (copy `config/prod.example.json`, fill in the real deployed proxy URL
-   and app token — see `proxy/README.md` for deploying it) and need the
-   matching flag: `flutter build ipa
-   --dart-define-from-file=config/prod.json`. Easy to forget since
-   `flutter build ipa` alone still succeeds; the resulting build just
-   fails the same missing-config check at runtime instead. The same
-   class of mistake already happened once for a plain `flutter run`
-   (`docs/build-log.md`, 2026-07-21, "Fixed a 401 'invalid API key'
-   error") — worth spelling out explicitly here so it doesn't repeat for
-   a release build.
-5. **Run `./scripts/preflight.sh` before every `flutter build ipa`** (so
-   before every TestFlight or App Store build). It checks that pre-launch
-   requirements which are easy to forget mid-build — `AppLinks`' Privacy
-   Policy/Terms URLs, `config/prod.json`'s proxy URL/app token, and the
-   Daily Test fallback pool's 7 sets (`assets/daily_test_fallback/pool.json`)
-   — are actually set, and exits non-zero naming exactly what's missing if
-   not.
-   It also deletes any macOS `.DS_Store` file under `assets/` and lists
-   what it deleted: Flutter bundles every file in a registered asset
-   folder, so these would otherwise ship inside the app. More checks land
-   here over time rather than each as its own script.
-
-#### Monthly Climb debug defines
-
-Compile-time switches for checking the Monthly Climb on a device without
-waiting for a day or a month to pass. Pass them with `--dart-define` next
-to the usual config, for example
-`flutter run --dart-define-from-file=config/dev.json --dart-define=CLIMB_DEBUG_MONTH_CARD=summary_near`.
-They are display-only and never change stored progress, the Daily Test or
-`dayKey`.
-
-| Define | Builds | What it does |
-|---|---|---|
-| `CLIMB_DEBUG_DAY=<n>` | debug | The scene shows step n of the month (avatar, passed-day dots, save points). The card's month and step chips keep the real numbers. |
-| `CLIMB_DEBUG_THEME=<id>` | debug | The scene shows that theme (`green_slope`, `ember_peak`, `glacier_peak`, `red_canyon`) in any month. |
-| `CLIMB_DEBUG_MONTH_CARD=<value>` | debug **and profile** | Replays the month transition card with sample data on every launch and hot restart, then the month-change zoom: `summary_gold`, `summary_none`, `summary_near` (Silver, the near-miss line), `fresh` (the fresh-start card), or `first_run` (no card, the first run's zoom). It never reads or writes the stored "seen" records and sends no analytics events. Works in profile builds so the zoom's frame times can be measured there. |
-| `CLIMB_DEBUG_MONTH_CARD_EVENTS=true` | with the one above | Lets the replay send its `month_card_shown`, `month_card_dismissed` and `month_zoom_ended` events, for a DebugView check. Off by default: debug and profile builds write to the production Firebase project. Needs `ANALYTICS_DEBUG_EVENTS=true` as well (below). |
-
-All three combine (for example a month card on Red Canyon, zooming to step
-20). Release builds ignore every one of them.
-
-#### Analytics in debug and profile builds
-
-Debug and profile builds send **no analytics** by default (roadmap P11):
-none of the app's events or user properties, and Firebase's own automatic
-events (`first_open`, `session_start`, ...) are switched off too, because
-these builds write to the production Firebase project. Release builds
-always send; the define does nothing there.
-
-| Define | Builds | What it does |
-|---|---|---|
-| `ANALYTICS_DEBUG_EVENTS=true` | debug **and profile** | Turns analytics on for that build, for a DebugView check (`docs/analytics-plan.md` §6). |
-
-For example, the profile build that `docs/analytics-plan.md` §6 installs
-on a device:
-
-```bash
-flutter build ios --profile --dart-define-from-file=config/prod.json --dart-define=ANALYTICS_DEBUG_EVENTS=true
-```
-
-The rule lives in `AnalyticsGate` (`lib/services/analytics_service.dart`).
-Crashlytics is not affected. A build without the define also leaves
-Firebase's collection switch off on that device; the next build with the
-define, or any release build, turns it back on.
-
-The same settings can be changed while the app runs from **Settings →
-Debug** (debug and profile builds; not in release): the scene's theme and
-day, the milestones (celebrations, save point steps) and month cards
-replayed on Home, and **Sample collection**, which fills Profile's medal
-shelf with sample months (the Welcome badge, seven finished months across
-the four themes, this month) for screenshots. None of these writes a
-stored record or sends an event; "Reset local data" there is the one
-action that deletes stored data.
-
-#### Visual previews (no build config needed)
-
-`lib/preview/` holds standalone, debug-only entry points for checking a
-feature's every visual state on a device without seeding real data or
-waiting for something to happen (a month rollover, a finalized medal) —
-each is its own `main()`, guarded by `if (!kDebugMode) throw
-StateError(...)` so it can never run in a release build, and none of them
-touch `StorageService` or the real `grammar_lens.db`. Unlike the app
-itself, these need no `config/dev.json`/proxy setup at all.
-
-- **Monthly Climb** (`lib/preview/monthly_climb_preview.dart`): the
-  mountain/route/avatar visual, with sample-progress and month-length
-  controls.
-- **Monthly Medal** (`lib/preview/monthly_medal_preview.dart`): every
-  medal state — In progress, each finalized tier, "No medal", and several
-  finalized months at once — with in-preview dark-mode and Small/Medium/
-  Large text-size toggles, so a device acceptance pass can check all of
-  them without a real month ever rolling over.
-
-Run either directly with `flutter run -t <path>`, or use
-`./scripts/preview_monthly_medal.sh` for the medal one (thin wrapper, no
-VS Code needed — day-to-day development on this project happens from the
-terminal, same as `scripts/dev.sh`). On a physical iPhone: plug it in,
-confirm it shows up with `flutter devices`, then
-`./scripts/preview_monthly_medal.sh -d <device-id>` (any extra arguments
-pass straight through to `flutter run`).
-
-</details>

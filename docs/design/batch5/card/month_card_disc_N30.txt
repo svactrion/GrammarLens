@@ -1,0 +1,15 @@
+Batch 5 step 5 (N30): the fullest summary card's height (= the sheet's) by medal disc, against the sheet's limit (9/16 of the screen). Points. Largest fitting: the largest disc whose card is not taller than the limit.
+
+screen   text    limit   at 88   at 64   at 48   largest fitting
+320x568  small    319.5   371.9   346.6   329.7   none
+320x568  medium   319.5   381.9   356.6   339.7   none
+320x568  large    319.5   392.9   367.6   350.7   none
+375x667  small    375.2   371.9   346.6   329.7   88
+375x667  medium   375.2   381.9   356.6   339.7   80
+375x667  large    375.2   392.9   367.6   350.7   70
+375x812  small    456.8   371.9   346.6   329.7   88
+375x812  medium   456.8   381.9   356.6   339.7   88
+375x812  large    456.8   392.9   367.6   350.7   88
+430x932  small    524.3   371.9   346.6   329.7   88
+430x932  medium   524.3   381.9   356.6   339.7   88
+430x932  large    524.3   392.9   367.6   350.7   88

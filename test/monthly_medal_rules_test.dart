@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/monthly_medal_rules.dart';
 
@@ -17,11 +18,71 @@ void main() {
     expect(_thresholds(2026, 1), [78, 155, 233]);
   });
 
+  // [Q] now comes from DailyTestSet.questionCount instead of a literal
+  // `× 10`: the maximum and so every threshold must be exactly as before.
+  test('the monthly maximum is unchanged for 28-31 day months', () {
+    expect(MonthlyMedalRules.maxScore(2026, 2), 280);
+    expect(MonthlyMedalRules.maxScore(2028, 2), 290);
+    expect(MonthlyMedalRules.maxScore(2026, 4), 300);
+    expect(MonthlyMedalRules.maxScore(2026, 1), 310);
+  });
+
+  test('the maximum is days x [Q] x points for a correct answer', () {
+    expect(DailyTestSet.questionCount * MonthlyMedalRules.pointsPerCorrect, 10);
+    expect(
+        MonthlyMedalRules.score(correct: DailyTestSet.questionCount, wrong: 0),
+        10,
+        reason: 'one perfect day');
+  });
+
   test('tier boundaries are inclusive and return only the highest tier', () {
     expect(_tier(2026, 4, 74), isNull);
     expect(_tier(2026, 4, 75), MedalTier.bronze);
     expect(_tier(2026, 4, 150), MedalTier.silver);
     expect(_tier(2026, 4, 225), MedalTier.gold);
+  });
+
+  group('next tier and the near-miss line (Batch 6, M15, M20)', () {
+    // October 2026: Bronze 78, Silver 155, Gold 233.
+    test('the next tier and its gap, null at Gold', () {
+      expect(MonthlyMedalRules.nextTier(2026, 10, 0), (MedalTier.bronze, 78));
+      expect(MonthlyMedalRules.nextTier(2026, 10, 78), (MedalTier.silver, 77));
+      expect(MonthlyMedalRules.nextTier(2026, 10, 232), (MedalTier.gold, 1));
+      expect(MonthlyMedalRules.nextTier(2026, 10, 233), isNull);
+      expect(MonthlyMedalRules.nextTier(2026, 10, 310), isNull);
+    });
+
+    test('agrees with tierFor on every score of 28-31 day months', () {
+      for (final (y, m) in [(2026, 2), (2028, 2), (2026, 11), (2026, 10)]) {
+        for (var s = 0; s <= MonthlyMedalRules.maxScore(y, m); s++) {
+          final tier = _tier(y, m, s);
+          final expected = tier == null
+              ? MedalTier.bronze
+              : tier == MedalTier.gold
+                  ? null
+                  : MedalTier.values[tier.index + 1];
+          expect(MonthlyMedalRules.nextTier(y, m, s)?.$1, expected,
+              reason: '$y-$m score $s');
+        }
+      }
+    });
+
+    test('the line shows at a gap of 5, not 6', () {
+      expect(MonthlyMedalRules.nearMissPoints, 5);
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 228), (MedalTier.gold, 5));
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 227), isNull);
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 154), (MedalTier.silver, 1));
+    });
+
+    test('never at Gold', () {
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 233), isNull);
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 310), isNull);
+    });
+
+    test('without a medal, the gap is to Bronze', () {
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 74), (MedalTier.bronze, 4));
+      expect(MonthlyMedalRules.nearMiss(2026, 10, 72), isNull);
+    });
   });
 }
 

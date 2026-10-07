@@ -1,0 +1,33 @@
+Scene Art Stage 2 — the summit flag on the real Home, day 31 of 31 (window at the image top)
+
+320.0 pt (window 288.0 × 350.0 pt)
+  flag box x 149.4–166.3, y 46.9–68.9 pt in the window (16.9 × 21.9 pt)
+  month chip: clear across (69.0 pt apart); the flag's top is -1.1 pt from its bottom
+  steps chip: clear across (48.9 pt apart); the flag's top is -1.1 pt from its bottom
+  plaque: overlaps it across; the flag's top is 28.9 pt below its bottom
+  chip band bottom 48.0 pt; flag top 46.9 pt
+  avatar on the summit 16.3 pt; OVERLAPS the flag box by 2.7 pt
+
+375.0 pt (window 341.3 × 350.0 pt)
+  flag box x 177.0–197.1, y 55.6–81.6 pt in the window (20.0 × 26.0 pt)
+  month chip: clear across (96.6 pt apart); the flag's top is 7.6 pt from its bottom
+  steps chip: clear across (71.4 pt apart); the flag's top is 7.6 pt from its bottom
+  plaque: overlaps it across; the flag's top is 37.6 pt below its bottom
+  chip band bottom 48.0 pt; flag top 55.6 pt
+  avatar on the summit 19.3 pt; OVERLAPS the flag box by 3.3 pt
+
+430.0 pt (window 391.3 × 350.0 pt)
+  flag box x 203.0–226.0, y 63.7–93.6 pt in the window (23.0 × 29.8 pt)
+  month chip: clear across (122.6 pt apart); the flag's top is 15.7 pt from its bottom
+  steps chip: clear across (92.5 pt apart); the flag's top is 15.7 pt from its bottom
+  plaque: overlaps it across; the flag's top is 45.7 pt below its bottom
+  chip band bottom 48.0 pt; flag top 63.7 pt
+  avatar on the summit 22.1 pt; OVERLAPS the flag box by 3.7 pt
+
+assets/climb/objects/fountain.webp: 6.7 KB
+assets/climb/objects/summit_flag.webp: 8.4 KB
+assets/climb/objects/tent.webp: 6.8 KB
+assets/climb/objects/cabin.webp: 7.9 KB
+assets/climb/objects/campfire_flame.webp: 6.0 KB
+assets/climb/objects/campfire.webp: 8.3 KB
+objects added: 44.1 KB (4 save points, the flag, the flame layer)

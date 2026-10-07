@@ -1,0 +1,66 @@
+{
+  "green_slope": {
+    "light": {
+      "band": "#9EAB8C",
+      "top": "#C4D5D6",
+      "bottom": "#90986B",
+      "seam_median": 12.0,
+      "seam_p95": 19.4
+    },
+    "dark": {
+      "band": "#454F5E",
+      "top": "#5A5785",
+      "bottom": "#404C4F",
+      "seam_median": 10.0,
+      "seam_p95": 18.0
+    }
+  },
+  "ember_peak": {
+    "light": {
+      "band": "#775E58",
+      "top": "#C4846C",
+      "bottom": "#615452",
+      "seam_median": 10.4,
+      "seam_p95": 30.3
+    },
+    "dark": {
+      "band": "#413F53",
+      "top": "#5B517A",
+      "bottom": "#3D3D4A",
+      "seam_median": 7.4,
+      "seam_p95": 14.8
+    }
+  },
+  "glacier_peak": {
+    "light": {
+      "band": "#B8CFF5",
+      "top": "#B0D1FE",
+      "bottom": "#B8CEF1",
+      "seam_median": 5.9,
+      "seam_p95": 15.0
+    },
+    "dark": {
+      "band": "#6370AF",
+      "top": "#7572AB",
+      "bottom": "#6074B3",
+      "seam_median": 6.6,
+      "seam_p95": 17.0
+    }
+  },
+  "red_canyon": {
+    "light": {
+      "band": "#D08660",
+      "top": "#E6BC9E",
+      "bottom": "#C57449",
+      "seam_median": 10.3,
+      "seam_p95": 21.2
+    },
+    "dark": {
+      "band": "#6C464F",
+      "top": "#6C5879",
+      "bottom": "#6D4041",
+      "seam_median": 8.6,
+      "seam_p95": 18.5
+    }
+  }
+}

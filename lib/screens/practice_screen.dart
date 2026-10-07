@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../models/practice_item.dart';
 import '../models/practice_set.dart';
 import '../models/topic.dart';
 import '../services/analytics_service.dart';
@@ -13,7 +12,9 @@ import '../widgets/brand_scaffold.dart';
 import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
+import '../widgets/question_view.dart';
 import 'results_screen.dart';
+import '../utils/content_width.dart';
 
 class PracticeScreen extends StatefulWidget {
   final Topic topic;
@@ -39,24 +40,25 @@ class PracticeScreen extends StatefulWidget {
 
 class _PracticeScreenState extends State<PracticeScreen> {
   final Map<String, String> _answers = {};
-  late final Map<String, TextEditingController> _controllers;
+  late final AnswerDrafts _drafts;
   int _currentIndex = 0;
   bool _submitting = false;
+
+  /// The proxy's limit on one answer (`proxy/src/validation.ts`,
+  /// `MAX_TEXT_LENGTH`): a longer one would fail the whole scoring call.
+  /// The count shows only past [_answerCounterFrom] (owner decision O6).
+  static const int answerMaxLength = 2000;
+  static const int _answerCounterFrom = 1800;
 
   @override
   void initState() {
     super.initState();
-    _controllers = {
-      for (final item in widget.practiceSet.items)
-        item.id: TextEditingController(),
-    };
+    _drafts = AnswerDrafts(widget.practiceSet.items.map((item) => item.id));
   }
 
   @override
   void dispose() {
-    for (final controller in _controllers.values) {
-      controller.dispose();
-    }
+    _drafts.dispose();
     super.dispose();
   }
 
@@ -71,16 +73,26 @@ class _PracticeScreenState extends State<PracticeScreen> {
     return (_answers[item.id] ?? '').trim().isNotEmpty;
   }
 
+  /// Moves to another question. Local only: no request, no score, no quota.
+  void _showQuestion(int index) {
+    _drafts.leave(widget.practiceSet.items[_currentIndex].id);
+    setState(() => _currentIndex = index);
+    _drafts.restore(widget.practiceSet.items[index].id);
+  }
+
   void _goBack() {
-    if (_currentIndex == 0) return;
-    setState(() => _currentIndex--);
+    if (_currentIndex == 0 || _submitting) return;
+    _showQuestion(_currentIndex - 1);
   }
 
   void _advance() {
+    // A second tap before the loading view replaces the buttons must not
+    // send a second scoring request.
+    if (_submitting) return;
     if (_isLastQuestion) {
       _submit();
     } else {
-      setState(() => _currentIndex++);
+      _showQuestion(_currentIndex + 1);
     }
   }
 
@@ -107,6 +119,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Future<void> _submit() async {
+    _drafts.focusNode.unfocus();
     setState(() => _submitting = true);
     try {
       final deviceId = await widget.storageService.getOrCreateDeviceId();
@@ -137,17 +150,6 @@ class _PracticeScreenState extends State<PracticeScreen> {
     }
   }
 
-  String _itemLabel(PracticeItemType type) {
-    switch (type) {
-      case PracticeItemType.fillInBlank:
-        return 'Fill in the blank';
-      case PracticeItemType.errorCorrection:
-        return 'Find and correct the error';
-      case PracticeItemType.sentenceWriting:
-        return 'Write a sentence';
-    }
-  }
-
   // Never "Skip" — see PracticeStepFooter's doc comment for why the
   // primary action must never invite abandoning the question. Skip is
   // its own separate, quiet action, always available regardless of this
@@ -156,10 +158,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    // P1: held to the centred content column on an iPad (`ContentWidth`);
+    // the question screen's own 16 pt (14 under 360 pt) on a phone.
     final width = MediaQuery.sizeOf(context).width;
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    final hPad =
+        ContentWidth.sidePaddingOf(context, base: width < 360 ? 14 : 16);
     final total = widget.practiceSet.items.length;
     final item = widget.practiceSet.items[_currentIndex];
 
@@ -172,114 +175,56 @@ class _PracticeScreenState extends State<PracticeScreen> {
         if (!didPop) _confirmExit();
       },
       child: BrandScaffold(
-        appBar: QuestionAppBar(
-          title: widget.topic.title,
-          currentIndex: _currentIndex,
-          total: total,
-          showBack: _currentIndex != 0,
-          onBack: _goBack,
-          onClose: _confirmExit,
+        // The status bar only: the header is in the page (Question V2), so
+        // a long topic title wraps instead of being cut off.
+        appBar: AppBar(
+          toolbarHeight: 0,
+          automaticallyImplyLeading: false,
+          scrolledUnderElevation: 0,
         ),
-        // The question header (context/instruction/hint) and the answer
-        // input are split into separate regions on purpose. Putting the
-        // TextField at the bottom of one tall scrollable Card meant that
-        // when the keyboard opened, Flutter's own "scroll the focused field
-        // into view" behaviour had to drag the whole card up to clear the
-        // keyboard + button — often scrolling the instruction text half off
-        // screen in the process. Keeping the header in its own (rarely
-        // scrolling) region and pinning input+button directly above the
-        // keyboard means neither one depends on that automatic scroll to
-        // stay visible.
-        body: _submitting
-            ? const LoadingView(message: 'Reviewing your answers…')
-            : GestureDetector(
-                // Tapping anywhere outside the text field is the standard
-                // mobile way to dismiss the keyboard.
-                behavior: HitTestBehavior.opaque,
-                onTap: () => FocusScope.of(context).unfocus(),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 12),
-                        // No Card here (docs/design-audit.md §5 D1's kart
-                        // kuralı) — this text existed on a card only to stay
-                        // legible on the old full-orange scaffold; the
-                        // neutral BrandScaffold body it sits on now already
-                        // does that job.
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _itemLabel(item.type),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (item.context != null &&
-                                item.context!.trim().isNotEmpty) ...[
-                              const SizedBox(height: 14),
-                              Text(item.context!,
-                                  style: theme.textTheme.bodyLarge),
-                              const SizedBox(height: 16),
-                              Divider(
-                                  height: 1, color: colorScheme.outlineVariant),
-                              const SizedBox(height: 16),
-                            ] else
-                              const SizedBox(height: 14),
-                            Text(
-                              item.instruction,
-                              style: theme.textTheme.bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            if (item.hint != null) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                item.hint!,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
-                      child: TextField(
-                        key: ValueKey(item.id),
-                        controller: _controllers[item.id],
-                        decoration:
-                            const InputDecoration(hintText: 'Your answer'),
-                        // The keyboard must not fix the learner's mistake: a
-                        // corrected answer would measure the keyboard, not
-                        // the learner.
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        smartQuotesType: SmartQuotesType.disabled,
-                        smartDashesType: SmartDashesType.disabled,
+        body: Column(
+          children: [
+            QuestionHeader(
+              title: widget.topic.title,
+              subtitle: 'Practice',
+              onBack: _currentIndex == 0 || _submitting ? null : _goBack,
+              onClose: _confirmExit,
+            ),
+            Expanded(
+              child: _submitting
+                  ? const LoadingView(message: 'Reviewing your answers…')
+                  : GestureDetector(
+                      // Tapping outside the text field is the standard
+                      // mobile way to dismiss the keyboard.
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => FocusScope.of(context).unfocus(),
+                      // The question and the answer are separate regions,
+                      // and the page itself never scrolls: the keyboard
+                      // cannot drag the question away to show the caret
+                      // (see QuestionView).
+                      child: QuestionView(
+                        item: item,
+                        index: _currentIndex,
+                        total: total,
+                        drafts: _drafts,
+                        horizontalPadding: hPad,
+                        maxLength: answerMaxLength,
+                        counterThreshold: _answerCounterFrom,
                         onChanged: (value) =>
                             setState(() => _answers[item.id] = value),
                       ),
                     ),
-                    SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 12),
-                        child: PracticeStepFooter(
-                          primaryLabel: _primaryLabel(),
-                          primaryEnabled: _currentHasAnswer,
-                          onPrimary: _advance,
-                          onSkip: _advance,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+            if (!_submitting)
+              PracticeStepFooter(
+                horizontalPadding: hPad,
+                primaryLabel: _primaryLabel(),
+                primaryEnabled: _currentHasAnswer,
+                onPrimary: _advance,
+                onSkip: _advance,
               ),
+          ],
+        ),
       ),
     );
   }

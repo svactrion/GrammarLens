@@ -18,6 +18,9 @@ import '../widgets/result_score_band.dart';
 import 'premium_screen.dart';
 
 class ResultsScreen extends StatefulWidget {
+  /// The fixed area with "Back to topics".
+  static const footerKey = Key('resultsFooter');
+
   final Topic topic;
   final ScoringResult result;
   final PracticeSet practiceSet;
@@ -146,7 +149,24 @@ class _ResultsScreenState extends State<ResultsScreen> {
         : '${result.correctCount}/${result.totalCount} correct';
     return BrandScaffold(
       title: const PageTitle('Results'),
-      bandBottom: ResultScoreBand(text: scoreText),
+      bandBottom: ResultScoreBand.sized(context, text: scoreText),
+      // "Back to topics" stays in view however far the results are
+      // scrolled, as on Daily Test results (final screens A3). A free user
+      // out of today's practice sees the offer card at the end of the list
+      // and this as a secondary (outlined) button; everyone else gets the
+      // filled one, the screen's only action. Navy either way: an exit.
+      bottomBar: BrandBottomBar(
+        key: ResultsScreen.footerKey,
+        child: _showUpsell
+            ? OutlinedButton(
+                onPressed: _backToTopics,
+                child: const Text('Back to topics'),
+              )
+            : FilledButton(
+                onPressed: _backToTopics,
+                child: const Text('Back to topics'),
+              ),
+      ),
       children: [
         for (final item in result.feedback) ...[
           Card(
@@ -186,14 +206,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
                               : item.isCorrect
                                   ? 'Correct'
                                   : 'Needs work',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: item.isSkipped
-                                ? semantic.onSkippedBackground
-                                : item.isCorrect
-                                    ? semantic.onCorrectBackground
-                                    : semantic.onIncorrectBackground,
-                          ),
+                          style: theme.textTheme.labelLarge
+                              ?.withWeight(FontWeight.w600)
+                              .copyWith(
+                                  color: item.isSkipped
+                                      ? semantic.onSkippedBackground
+                                      : item.isCorrect
+                                          ? semantic.onCorrectBackground
+                                          : semantic.onIncorrectBackground),
                         ),
                       ),
                     ],
@@ -220,29 +240,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
           const SizedBox(height: 14),
         ],
-        // Free user out of today's practice: the offer card, then "Back to
-        // topics" as a secondary button under it. Everyone else: "Back to
-        // topics" is the screen's only action, so it stays the filled one.
-        if (_showUpsell) ...[
-          PremiumOfferCard(onSeePremium: _openPremium),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _backToTopics,
-              child: const Text('Back to topics'),
-            ),
-          ),
-        ] else ...[
-          const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _backToTopics,
-              child: const Text('Back to topics'),
-            ),
-          ),
-        ],
+        // Free user out of today's practice: the offer card at the end of
+        // the list ("Back to topics" is in the bottom bar).
+        if (_showUpsell) PremiumOfferCard(onSeePremium: _openPremium),
       ],
     );
   }

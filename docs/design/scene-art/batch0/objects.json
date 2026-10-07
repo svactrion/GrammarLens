@@ -1,0 +1,97 @@
+{
+ "gain": [
+  0.4832,
+  0.5168,
+  0.674
+ ],
+ "edges": {
+  "campfire": {
+   "stray_px": 12,
+   "stray_alpha_max": 1,
+   "stray_box": [
+    0,
+    0,
+    2507,
+    2507
+   ],
+   "edge_px": 15656,
+   "edge_band_px_median": 2.2,
+   "edge_lum": 121.6,
+   "inside_lum": 129.1,
+   "edge_sat": 80.5,
+   "inside_sat": 87.0,
+   "faint_px_alpha_1_15": 4578
+  },
+  "tent": {
+   "stray_px": 0,
+   "stray_alpha_max": 0,
+   "stray_box": null,
+   "edge_px": 15174,
+   "edge_band_px_median": 2.2,
+   "edge_lum": 131.5,
+   "inside_lum": 142.0,
+   "edge_sat": 46.1,
+   "inside_sat": 38.2,
+   "faint_px_alpha_1_15": 4475
+  },
+  "fountain": {
+   "stray_px": 12,
+   "stray_alpha_max": 1,
+   "stray_box": [
+    0,
+    0,
+    2507,
+    2507
+   ],
+   "edge_px": 15590,
+   "edge_band_px_median": 2.2,
+   "edge_lum": 148.4,
+   "inside_lum": 156.3,
+   "edge_sat": 13.1,
+   "inside_sat": 11.0,
+   "faint_px_alpha_1_15": 4510
+  },
+  "cabin": {
+   "stray_px": 12,
+   "stray_alpha_max": 1,
+   "stray_box": [
+    0,
+    0,
+    2507,
+    2507
+   ],
+   "edge_px": 17105,
+   "edge_band_px_median": 2.2,
+   "edge_lum": 100.0,
+   "inside_lum": 112.9,
+   "edge_sat": 82.4,
+   "inside_sat": 68.8,
+   "faint_px_alpha_1_15": 4993
+  },
+  "summit_flag": {
+   "stray_px": 12,
+   "stray_alpha_max": 1,
+   "stray_box": [
+    0,
+    0,
+    2507,
+    2507
+   ],
+   "edge_px": 20447,
+   "edge_band_px_median": 2.2,
+   "edge_lum": 130.9,
+   "inside_lum": 133.2,
+   "edge_sat": 93.0,
+   "inside_sat": 92.0,
+   "faint_px_alpha_1_15": 6018
+  }
+ },
+ "object_width_px": {
+  "C1": 201.0,
+  "C2": 173.0,
+  "C3": 125.0,
+  "C4": 133.0,
+  "C5": 184.0,
+  "C6": 116.0
+ }
+}

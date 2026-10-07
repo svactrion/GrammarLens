@@ -3,6 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_camera.dart';
+import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 /// `MonthlyMountain.onMotionEnd`: the pawn has finished moving to a new
@@ -128,5 +131,75 @@ void main() {
 
     expect(ended, 0);
     expect(tester.takeException(), isNull);
+  });
+
+  group('hop (design decision D8)', () {
+    final route = ClimbRoute(31);
+    double tile(double day, double width) =>
+        ClimbCamera(width).avatarTileAt(route.arcAt(day));
+
+    /// The avatar's `top` in the image (the layer the camera moves), and
+    /// the `top` it has standing on the trail at [day] with no hop.
+    double avatarTop(WidgetTester tester) => tester
+        .widget<Positioned>(find
+            .ancestor(
+                of: find.byType(AvatarTile), matching: find.byType(Positioned))
+            .first)
+        .top!;
+    double standingTop(double day, double width) =>
+        route.pointAt(day).dy * ClimbCamera(width).scale -
+        tile(day, width) * 55 / 58;
+
+    double width(WidgetTester tester) =>
+        tester.getSize(find.byType(MonthlyMountain)).width;
+
+    testWidgets(
+        'the pawn is a hop up halfway through a step, on the trail at '
+        'both ends', (tester) async {
+      await pumpMountain(tester);
+      final w = width(tester);
+      expect(avatarTop(tester), closeTo(standingTop(3, w), .01));
+
+      state.value = (steps: 4, days: 31);
+      await tester.pump();
+      // easeInOut is symmetric: at half the time, half the step.
+      await tester.pump(const Duration(milliseconds: 425));
+      expect(
+          avatarTop(tester),
+          closeTo(standingTop(3.5, w) - MonthlyMountain.hopShare * tile(3.5, w),
+              .05));
+
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(avatarTop(tester), closeTo(standingTop(4, w), .01));
+    });
+
+    testWidgets('a move that interrupts another still lands on its step',
+        (tester) async {
+      await pumpMountain(tester);
+      state.value = (steps: 4, days: 31);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      state.value = (steps: 5, days: 31);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(avatarTop(tester), closeTo(standingTop(5, width(tester)), .01));
+    });
+
+    testWidgets(
+        'Reduce Motion: no hop; the pawn appears on its new step at '
+        'once', (tester) async {
+      await pumpMountain(tester, reduceMotion: true);
+      await tester.pumpAndSettle();
+      final w = width(tester);
+
+      state.value = (steps: 4, days: 31);
+      await tester.pump();
+      expect(tester.hasRunningAnimations, isFalse);
+      expect(avatarTop(tester), closeTo(standingTop(4, w), .01));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(avatarTop(tester), closeTo(standingTop(4, w), .01));
+      }
+    });
   });
 }

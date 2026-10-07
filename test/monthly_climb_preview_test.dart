@@ -7,26 +7,44 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
 void main() {
-  test('Every month keeps continuous motion and landmarks within scene', () {
+  test(
+      'Every month walks the image\'s trail from the foot to the climb\'s '
+      'end (N31, N32)', () {
+    for (final days in [28, 29, 30, 31]) {
+      final route = ClimbRoute(days);
+      expect((route.pointAt(0) - ClimbRoute.foot).distance, lessThan(1e-4));
+      expect(
+          (route.pointAt(days.toDouble()) -
+                  ClimbRoute.at(ClimbRoute.climbLength))
+              .distance,
+          lessThan(1e-4));
+      for (var day = 1; day <= days; day++) {
+        // Straight-line distance never exceeds the longest step along the
+        // trail: 1.35 × the even share at most (N31).
+        final chord =
+            (route.pointAt(day.toDouble()) - route.pointAt(day - 1.0)).distance;
+        expect(chord,
+            lessThanOrEqualTo(ClimbRoute.climbLength / days * 1.35 + 1e-4));
+      }
+    }
+  });
+
+  test('Every month keeps continuous motion inside the image', () {
     for (final days in [28, 29, 30, 31]) {
       final route = ClimbRoute(days);
       var previous = route.pointAt(0);
       for (var tick = 1; tick <= days * 100; tick++) {
         final point = route.pointAt(tick / 100);
-        expect(point.dy, lessThanOrEqualTo(previous.dy + .01));
-        expect((point - previous).distance, lessThan(3));
-        expect(point.dx, inInclusiveRange(29, 291));
-        expect(point.dy, inInclusiveRange(55, 740));
+        // Never jumps: well under a hundredth of a day's share per tick.
+        expect((point - previous).distance,
+            lessThan(ClimbRoute.length / days / 50));
+        expect(point.dx, inInclusiveRange(0, ClimbRoute.sceneSize.width));
+        expect(point.dy, inInclusiveRange(0, ClimbRoute.sceneSize.height));
         previous = point;
       }
-      for (final day in [7, 14, 21, 28]) {
-        final point = route.pointAt(day.toDouble());
-        final landmarkX = point.dx + (point.dx > 160 ? -42 : 42);
-        expect(landmarkX - 30, greaterThanOrEqualTo(0));
-        expect(landmarkX + 30, lessThanOrEqualTo(320));
-      }
-      expect(route.pointAt(days.toDouble()).dx, closeTo(160, .01));
-      expect(route.pointAt(days.toDouble()).dy, closeTo(120, .01));
+      // The whole climb goes up: the summit is far above the foot.
+      expect(route.pointAt(days.toDouble()).dy,
+          lessThan(route.pointAt(0).dy - .5));
     }
   });
 

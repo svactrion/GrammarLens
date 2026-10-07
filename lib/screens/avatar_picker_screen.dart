@@ -6,6 +6,8 @@ import '../models/avatar.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_carousel.dart';
 import '../widgets/brand_scaffold.dart';
+import '../utils/content_width.dart';
+import '../theme.dart';
 
 /// Shared between this screen's centered avatar and Settings' own small
 /// preview row (`settings_screen.dart`), for the Settings → picker → back
@@ -15,7 +17,7 @@ const String avatarHeroTag = 'profile-avatar';
 /// Shared between this screen's centered avatar and Home's own greeting
 /// avatar (`home_screen.dart`), for the Home → picker → back flight.
 /// Deliberately a *different* tag from [avatarHeroTag], not reused: both
-/// Home and Settings live inside the same `IndexedStack` in `app.dart`
+/// Home and Settings live inside the same `TabSwitcher` in `app.dart`
 /// (every tab stays mounted, not just the visible one), so if both routes
 /// used the same tag, two `Hero`s with an identical tag would be mounted
 /// simultaneously the moment either one pushes this screen — Flutter
@@ -122,12 +124,12 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final width = MediaQuery.sizeOf(context).width;
     // BrandScaffold's own responsive horizontal padding formula
     // (`body:` bypasses it — see that widget's doc comment — so this
     // screen owns its own padding, matching that default rather than
     // inventing a different one).
-    final hPad = (width * 0.045).clamp(16.0, 28.0);
+    // P1: held to the centred content column on an iPad (`ContentWidth`).
+    final hPad = ContentWidth.sidePaddingOf(context);
 
     return PopScope(
       // Intercept every exit path (Done, the AppBar back chevron, a
@@ -159,16 +161,22 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                     Text(
                       'Pick your study buddy',
                       style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                          ?.withWeight(FontWeight.w800),
                     ),
                     const SizedBox(height: 32),
-                    AvatarCarousel(
-                      initialAvatar: widget.currentAvatar,
-                      onSettled: _onSettled,
-                      centerRadius: _centerRadius,
-                      viewportFraction: _viewportFraction,
-                      centerTileBuilder: (avatar, tile) =>
-                          Hero(tag: widget.heroTag, child: tile),
+                    // P1: the carousel is as wide as the content column on
+                    // an iPad (no inset on an iPhone).
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: ContentWidth.insetOf(context)),
+                      child: AvatarCarousel(
+                        initialAvatar: widget.currentAvatar,
+                        onSettled: _onSettled,
+                        centerRadius: _centerRadius,
+                        viewportFraction: _viewportFraction,
+                        centerTileBuilder: (avatar, tile) =>
+                            Hero(tag: widget.heroTag, child: tile),
+                      ),
                     ),
                   ],
                 ),

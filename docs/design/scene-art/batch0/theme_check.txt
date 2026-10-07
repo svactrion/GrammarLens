@@ -1,0 +1,18 @@
+reference: green/background_light.png 2172 x 2896 px; px below are the reference's pixels; 'h' = share of its height
+thresholds: trail body max 0.005 h, mean 0.0015 h, ends 0.012 h, clearing 0.004 h, flag 0.002 h
+
+green/background_dark.png: 2172 x 2896 px (x1 to the reference)  PASS
+  trail body (3-97 % of its length) deviation: max 7.57 px (0.00261 h), mean 1.11 px (0.00038 h), p95 4.36 px
+  ends: start 16.59 px, summit 2.47 px; arc length ratio 0.9907
+  clearing center shifts (px): C1 0.4, C2 0.6, C3 0.9, C4 0.9, C5 0.4, C6 0.2
+  START flag offset: dx +0 px, dy +0 px (0.00000 h)
+  trail max: ok, trail mean: ok, ends: ok, clearings: ok, flag: ok
+  worst body point: px (727, 2410), 7.8 px; crop theme_check_worst_green_background_dark.jpg
+
+volcanic/background_light.png: 1086 x 1448 px (x2 to the reference)  PASS
+  trail body (3-97 % of its length) deviation: max 12.2 px (0.00421 h), mean 2.13 px (0.00074 h), p95 5.47 px
+  ends: start 32.53 px, summit 15.61 px; arc length ratio 0.995
+  clearing center shifts (px): C1 2.1, C2 5.1, C3 1.4, C4 3.5, C5 5.8, C6 5.0
+  START flag offset: dx -1 px, dy +0 px (0.00035 h)
+  trail max: ok, trail mean: ok, ends: ok, clearings: ok, flag: ok
+  worst body point: px (582, 1625), 12.5 px; crop theme_check_worst_volcanic_background_light.jpg

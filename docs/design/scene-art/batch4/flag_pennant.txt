@@ -1,0 +1,10 @@
+G10: Red Canyon's pennant against the rock around the flag (CIEDE2000, mean colours),
+real Home at 375 pt, January 2027. Day 30: the flag faded; day 31: lit.
+
+candidate                    light day 30  light day 31  dark day 30  dark day 31
+#1E4FA3 dark blue                    26.2          54.3          14.5          28.2
+#2F7BD8 mid blue                     21.7          46.5          13.6          29.6
+#1FB5C9 cyan                         19.0          41.7          16.4          46.1
+#F0843A brand orange (≈ today)          8.4           8.7          10.1          24.7
+
+Best separated (largest lowest ΔE of the four shots): #1FB5C9

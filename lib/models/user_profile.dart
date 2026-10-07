@@ -5,8 +5,14 @@ import 'learning_goal.dart';
 /// Existence of a saved profile is what onboarding-complete means: there is
 /// no separate flag, since a guest install either has one or doesn't.
 class UserProfile {
+  /// The longest name onboarding and Profile accept (owner decision O2).
+  static const int maxNameLength = 40;
+
   final String name;
-  final LearningGoal learningGoal;
+
+  /// Null when the user skipped the question (stored as
+  /// [learningGoalSkipped]).
+  final LearningGoal? learningGoal;
   final Avatar? avatar;
 
   const UserProfile({
@@ -37,14 +43,14 @@ class UserProfile {
   Map<String, Object?> toMap() => {
         'id': 0,
         'name': name,
-        'learning_goal': learningGoal.toJson(),
+        'learning_goal': learningGoalValue(learningGoal),
         'avatar': avatar?.toJson(),
       };
 
   factory UserProfile.fromMap(Map<String, Object?> map) => UserProfile(
         name: map['name'] as String,
         learningGoal:
-            LearningGoalInfo.fromJson(map['learning_goal'] as String?),
+            LearningGoalInfo.fromStored(map['learning_goal'] as String?),
         avatar: Avatar.fromJson(map['avatar'] as String?),
       );
 }

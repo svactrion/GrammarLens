@@ -1,0 +1,9 @@
+GrammarLens-Additional-Screens-Handoff klasöründeki README.md, CLAUDE-CODE-BRIEF.md, design-tokens.json ve ACCEPTANCE-CHECKLIST.md dosyalarını oku; previews klasöründeki üç ekranı incele. Paywall, iki adımlı onboarding ve yeni Soru V2 tasarımını mevcut Flutter projeme uygula.
+
+Bu paketteki Soru V2 önceki beş ekranlık paketin soru tasarımının yerini alıyor. Devam eden Home, Review, Profile ve Topic çalışmalarını koru. Cevap alanını yazdıkça büyüyen çok satırlı yap; gerçek klavye açık yerleşimi ve önceki soruya dönerken cevapların korunmasını önceliklendir. Mock klavyeyi uygulamaya taşıma.
+
+Onboarding'deki amaç sorusu şu anda kişiselleştirme yapmıyor; kullanıcı kitlesini anlamak için soruluyor. Paket içindeki düzeltilmiş metni kullan. Veri toplama ve izin açıklamalarını mevcut gerçek akışla doğrula.
+
+Mevcut API, abonelik, ücretsiz haklar, puanlama ve oturum işleyişini koru. Paywall kod doğrulaması için mevcut servis varsa bağla; yoksa UI ve arayüzünü hazırla, eksik entegrasyonu açıkça bildir. Sahte çalışan kod/premium aktivasyonu ekleme. Fiyatları ve deneme uygunluğunu gerçek mağaza ürünlerinden al.
+
+Önce mevcut kodu inceleyerek uygula; light/dark, büyük yazı, küçük ekran ve gerçek iOS/Android klavye durumlarını kontrol et. Sonunda yapılan değişiklikleri, gerçekten çalıştırılan kontrolleri ve kalan bağımlılıkları bildir.

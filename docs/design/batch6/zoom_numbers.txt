@@ -1,0 +1,52 @@
+Batch 6 Batch 0 §6: K-c and the daily framing on the real Home
+Units: points. "scale" = points per image width (ClimbRoute's unit).
+A layer drawn at the daily scale reaches K-c by Transform: scale s0 = K-c scale ÷ daily scale, then translate.
+
+== 320.0 pt screen: window 288.0 × 350.0 (card 288.0 wide) ==
+Daily (ClimbCamera.zoom 1.1): scale 316.8, image 316.8 × 422.4, shows 75 % of the image
+  layer at 3x: 950 × 1267 px (4.6 MB as RGBA)
+K-c (fitted to the height): scale 262.5, image 262.5 × 350.0, 12.8 pt of empty window on each side
+Zoom: s0 = 0.829 (K-c is 1.21× smaller than daily)
+  day 0 (START): daily offset (0.0, 72.4), avatar at (84.8, 287.8) in the window; K-c avatar at (83.0, 298.5)
+    translate at K-c (12.8, 0.0) → daily (-0.0, -72.4) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 27.2 daily, 22.5 at K-c
+  day 15: daily offset (0.0, 0.0), avatar at (93.0, 224.5) in the window; K-c avatar at (89.8, 186.0)
+    translate at K-c (12.8, 0.0) → daily (-0.0, -0.0) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 27.2 daily, 22.5 at K-c
+  day 31: daily offset (24.8, 0.0), avatar at (144.0, 70.3) in the window; K-c avatar at (152.6, 58.3)
+    translate at K-c (12.8, 0.0) → daily (-24.8, -0.0) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 16.3 daily, 13.5 at K-c
+  summit at K-c: (152.6, 58.3); the step chip's text ends 46.0 pt below the window's top
+
+== 375.0 pt screen: window 341.3 × 350.0 (card 341.3 wide) ==
+Daily (ClimbCamera.zoom 1.1): scale 375.4, image 375.4 × 500.5, shows 64 % of the image
+  layer at 3x: 1126 × 1502 px (6.5 MB as RGBA)
+K-c (fitted to the height): scale 262.5, image 262.5 × 350.0, 39.4 pt of empty window on each side
+Zoom: s0 = 0.699 (K-c is 1.43× smaller than daily)
+  day 0 (START): daily offset (0.0, 150.5), avatar at (100.5, 276.3) in the window; K-c avatar at (109.6, 298.5)
+    translate at K-c (39.4, 0.0) → daily (-0.0, -150.5) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 32.2 daily, 22.5 at K-c
+  day 15: daily offset (0.0, 14.0), avatar at (110.2, 252.0) in the window; K-c avatar at (116.5, 186.0)
+    translate at K-c (39.4, 0.0) → daily (-0.0, -14.0) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 32.2 daily, 22.5 at K-c
+  day 31: daily offset (29.3, 0.0), avatar at (170.6, 83.3) in the window; K-c avatar at (179.2, 58.3)
+    translate at K-c (39.4, 0.0) → daily (-29.3, -0.0) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 19.3 daily, 13.5 at K-c
+  summit at K-c: (179.2, 58.3); the step chip's text ends 46.0 pt below the window's top
+
+== 430.0 pt screen: window 391.3 × 350.0 (card 391.3 wide) ==
+Daily (ClimbCamera.zoom 1.1): scale 430.4, image 430.4 × 573.9, shows 55 % of the image
+  layer at 3x: 1291 × 1722 px (8.5 MB as RGBA)
+K-c (fitted to the height): scale 262.5, image 262.5 × 350.0, 64.4 pt of empty window on each side
+Zoom: s0 = 0.610 (K-c is 1.64× smaller than daily)
+  day 0 (START): daily offset (0.0, 223.9), avatar at (115.2, 265.5) in the window; K-c avatar at (134.7, 298.5)
+    translate at K-c (64.4, 0.0) → daily (-0.0, -223.9) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 36.9 daily, 22.5 at K-c
+  day 15: daily offset (0.0, 53.0), avatar at (126.4, 252.0) in the window; K-c avatar at (141.5, 186.0)
+    translate at K-c (64.4, 0.0) → daily (-0.0, -53.0) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 36.9 daily, 22.5 at K-c
+  day 31: daily offset (33.6, 0.0), avatar at (195.7, 95.5) in the window; K-c avatar at (204.2, 58.3)
+    translate at K-c (64.4, 0.0) → daily (-33.6, -0.0) (applied after scaling the daily layer by s0 → 1)
+    avatar tile 22.1 daily, 13.5 at K-c
+  summit at K-c: (204.2, 58.3); the step chip's text ends 46.0 pt below the window's top
+

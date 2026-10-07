@@ -11,7 +11,6 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
-import 'package:grammar_lens/widgets/locked_premium_pill.dart';
 
 /// The bottom action's own visual states (this batch's UI spec) — separate
 /// from practice_launch_free_tier_test.dart, which proves the *gating
@@ -199,8 +198,9 @@ void main() {
       'naming the remaining count — never "unlimited"', (tester) async {
     await _pump(tester, hasAccess: false, freePracticeCount: 0);
 
+    // 1.2.0 (N3): the free user's button names the free practice.
     final button = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Practice this'),
+      find.widgetWithText(FilledButton, 'Start free practice'),
     );
     expect(button.onPressed, isNotNull);
     expect(
@@ -211,12 +211,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('unlimited'), findsNothing);
-    expect(find.byType(LockedPremiumPill), findsNothing);
+    expect(find.text('Practice with Premium'), findsNothing);
   });
 
   testWidgets(
-      'free user with quota exhausted: no enabled button at all — a '
-      'locked row using the same LockedPremiumPill Home already uses',
+      'free user with quota exhausted: no free-practice button — "Practice '
+      'with Premium" and the used-today message instead (1.2.0, N3)',
       (tester) async {
     await _pump(
       tester,
@@ -224,17 +224,17 @@ void main() {
       freePracticeCount: StorageService.freeDailyPracticeLimit,
     );
 
-    expect(find.widgetWithText(FilledButton, 'Practice this'), findsNothing);
-    expect(find.byType(LockedPremiumPill), findsOneWidget);
-    // Still names "Practice this" — muted, not hidden.
-    expect(find.text('Practice this'), findsOneWidget);
+    expect(find.text('Start free practice'), findsNothing);
+    expect(find.text('Practice this'), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Practice with Premium'),
+        findsOneWidget);
     expect(
       find.textContaining("You've used today's free practice"),
       findsOneWidget,
     );
     expect(find.textContaining('unlimited'), findsNothing);
 
-    await tester.tap(find.text('Practice this'));
+    await tester.tap(find.text('Practice with Premium'));
     await tester.pumpAndSettle();
 
     expect(find.byType(PremiumScreen), findsOneWidget);
@@ -252,6 +252,6 @@ void main() {
     );
     expect(button.onPressed, isNotNull);
     expect(find.textContaining('free practice'), findsNothing);
-    expect(find.byType(LockedPremiumPill), findsNothing);
+    expect(find.text('Practice with Premium'), findsNothing);
   });
 }

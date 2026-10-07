@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart' show HitTestResult;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
@@ -84,11 +85,32 @@ class _FakeSubscriptionService extends SubscriptionService {
   /// returns.
   final Completer<Offering?>? offeringsCompleter;
 
+  /// What the eligibility check answers for every product (1.2.0); the
+  /// real check needs a configured SDK.
+  final TrialEligibility eligibility;
+  int eligibilityCalls = 0;
+
+  /// What Restore finds.
+  final bool restoreResult;
+
+  /// When set, a purchase waits for it (a purchase still running).
+  final Completer<PurchaseOutcome>? purchaseCompleter;
+
   _FakeSubscriptionService({
     this.offering,
     this.purchaseOutcome = PurchaseOutcome.failure,
     this.offeringsCompleter,
+    this.eligibility = TrialEligibility.eligible,
+    this.restoreResult = false,
+    this.purchaseCompleter,
   });
+
+  @override
+  Future<Map<String, TrialEligibility>> checkTrialEligibility(
+      List<String> productIds) async {
+    eligibilityCalls++;
+    return {for (final id in productIds) id: eligibility};
+  }
 
   @override
   Future<Offering?> getOfferings() async {
@@ -100,11 +122,13 @@ class _FakeSubscriptionService extends SubscriptionService {
   @override
   Future<PurchaseOutcome> purchasePackage(Package package) async {
     purchaseCalls++;
+    final completer = purchaseCompleter;
+    if (completer != null) return completer.future;
     return purchaseOutcome;
   }
 
   @override
-  Future<bool> restorePurchases() async => false;
+  Future<bool> restorePurchases() async => restoreResult;
 }
 
 /// A real [StorageService]'s `getUserProfile()` goes through sqflite,
@@ -295,6 +319,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  // 1.2.0: the comparison table sits behind "Compare Free & Premium",
+  // closed by default; tests about the table open it first.
+  Future<void> openComparison(WidgetTester tester) async {
+    final shown =
+        find.byKey(const Key('comparisonTable')).evaluate().isNotEmpty ||
+            find.byKey(const Key('comparisonStacked')).evaluate().isNotEmpty;
+    if (shown) return;
+    final toggle = find.byKey(PremiumScreen.compareToggleKey);
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+  }
+
   // This screen is long enough that even a phone-tall test surface (see
   // pumpPremium) doesn't mount everything at once — Sliver virtualization
   // only builds what's within the viewport plus a small cache extent, so
@@ -337,6 +375,7 @@ void main() {
     final semantics = tester.ensureSemantics();
 
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+    await openComparison(tester);
     final header = find.text('FREE');
     await tester.scrollUntilVisible(header, 300);
 
@@ -352,7 +391,13 @@ void main() {
     // checkmark/dash.
     expect(find.text('Questions from your own mistakes'), findsNothing);
     expect(find.text('Targeted weak-spot practice'), findsNothing);
-    expect(find.text('Practice your weak spots'), findsOneWidget);
+    // 1.2.0: the benefits card has a line of the same name; the row is the
+    // table's own.
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('comparisonTable')),
+            matching: find.text('Practice your weak spots')),
+        findsOneWidget);
     expect(
       find.text('${StorageService.freeDailyPracticeLimit} a day'),
       findsOneWidget,
@@ -375,16 +420,11 @@ void main() {
   });
 
   testWidgets(
-      'leads with the personalized-feedback pitch, not invented ad copy '
-      'about "a feature list"', (tester) async {
+      'leads with the 1.2.0 headline, not invented ad copy about "a feature '
+      'list"', (tester) async {
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    // Visual-redesign follow-up: the previous fallback headline
-    // ("Personalized feedback, not a feature list") traced to no spec —
-    // it was written directly as ad copy in the commit that introduced
-    // the standalone Paywall screen, not a quote from docs/prd.md despite
-    // that commit citing it. Replaced with a plain statement of the pitch
-    // itself, consistent with the sourceContext-present branch below.
-    expect(find.text('Unlock personalized feedback'), findsOneWidget);
+    expect(find.text('Turn your mistakes into progress.'), findsOneWidget);
+    expect(find.text(PremiumScreen.headline), findsOneWidget);
     expect(
       find.textContaining('not a feature list'),
       findsNothing,
@@ -403,8 +443,11 @@ void main() {
       find.text('Practice definite articles.'),
       findsOneWidget,
     );
-    expect(find.text('Unlock personalized feedback'), findsOneWidget);
-    expect(find.text('Practice the mistakes you actually make.'), findsNothing);
+    expect(find.text(PremiumScreen.headline), findsOneWidget);
+    expect(
+        find.text('Focused practice. Personal feedback. A little more '
+            'confidence, every day.'),
+        findsNothing);
   });
 
   group('nothing unbuilt is sold (PRD v2 §13.4)', () {
@@ -440,7 +483,7 @@ void main() {
     // (see docs/roadmap.md) — getOfferings() fails safe to null there too,
     // so this is the state real testing on-device is expected to hit.
     expect(
-      find.text("Trial pricing isn't available right now"),
+      find.text("Prices aren't available right now"),
       findsOneWidget,
     );
     expect(find.text('Start free trial'), findsNothing);
@@ -515,9 +558,9 @@ void main() {
       );
 
       expect(find.bySemanticsLabel('Loading pricing'), findsNothing);
-      final startButton = find.text('Start free trial');
-      await tester.scrollUntilVisible(startButton, 300);
-      expect(startButton, findsOneWidget);
+      expect(find.byKey(const ValueKey('planCard_Annual')), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start my 7-day free trial'),
+          findsOneWidget);
       semantics.dispose();
     });
 
@@ -538,7 +581,7 @@ void main() {
       await tester.tap(retry);
       await tester.pumpAndSettle();
       expect(
-        find.text("Trial pricing isn't available right now"),
+        find.text("Prices aren't available right now"),
         findsOneWidget,
       );
       semantics.dispose();
@@ -615,39 +658,33 @@ void main() {
 
   group('with a package available (a real RevenueCat product connected)', () {
     testWidgets(
-        'annual is preselected, states trial length, its own price, '
-        'billing period, and auto-renewal', (tester) async {
+        'annual is preselected; with the trial eligible, the button and the '
+        'terms name its own trial (a week, shown as 7 days), price and period '
+        'and auto-renewal', (tester) async {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(offering: _offeringWithBothPlans()),
       );
 
-      final startButton = find.text('Start free trial');
-      await tester.scrollUntilVisible(startButton, 300);
-
-      // The disclosure line reflects the *selected* plan — annual by
-      // default — not always the monthly product. It's a single combined
-      // sentence now (the reordering batch condensed the old three-line
-      // _TrialTermsCard to fit the "at most two lines" requirement), but
-      // still built from the same live trial length, price, and period.
-      // The annual fixture's introductory offer is modeled as
-      // PeriodUnit.week/1 (matching real StoreKit), so this also proves
-      // the disclosure text converts it to "7-day" rather than "1-week".
+      expect(find.widgetWithText(FilledButton, 'Start my 7-day free trial'),
+          findsOneWidget);
       expect(
-        find.textContaining('7-day free trial'),
+        find.text('7 days free, then \$89.99 per year, auto-renews unless '
+            'cancelled.'),
         findsOneWidget,
       );
-      expect(find.textContaining('\$89.99 / year'), findsOneWidget);
+      final annual = find.byKey(const ValueKey('planCard_Annual'));
       expect(
-        find.textContaining('auto-renews unless cancelled'),
-        findsOneWidget,
-      );
-      expect(startButton, findsOneWidget);
+          tester.getSemantics(annual),
+          isSemantics(
+              isInMutuallyExclusiveGroup: true,
+              hasCheckedState: true,
+              isChecked: true));
     });
 
     testWidgets(
-        'switching to Monthly updates the disclosure line to the '
-        'monthly product', (tester) async {
+        'switching to Monthly changes the button, the price and the terms '
+        'together, to the monthly product', (tester) async {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(offering: _offeringWithBothPlans()),
@@ -655,49 +692,38 @@ void main() {
 
       await scrollAndTap(tester, find.text('Monthly'));
 
-      // The disclosure line's own price mention ("then $X / month, ...")
-      // is distinct text from the plan card's big figure ("$X / month"
-      // alone) — checked separately below — so this checks the
-      // disclosure line specifically, not just any "$9.99" substring
-      // anywhere on screen.
+      expect(find.widgetWithText(FilledButton, 'Start my 3-day free trial'),
+          findsOneWidget);
       expect(
-        find.textContaining('then \$9.99 / month, auto-renews'),
+        find.text('3 days free, then \$9.99 per month, auto-renews unless '
+            'cancelled.'),
         findsOneWidget,
       );
-      expect(find.textContaining('then \$89.99 / year'), findsNothing);
-      // The trial part of the same disclosure line also updates — the
-      // monthly fixture's own 3-day (not week-unit) introductory offer,
-      // distinct from annual's 7-day figure above.
-      expect(find.textContaining('3-day free trial'), findsOneWidget);
-      expect(find.textContaining('7-day free trial'), findsNothing);
+      expect(find.textContaining('\$89.99 per year'), findsNothing);
+      expect(find.textContaining('7-day'), findsOneWidget,
+          reason: 'only on the annual card, not the button or terms');
     });
 
     testWidgets(
-        'the annual plan shows its real per-month equivalent as the big '
-        'figure, the real annual total as the small detail, and a savings '
-        'badge computed from both real prices — nothing hardcoded',
-        (tester) async {
+        'the annual plan shows its real total as the big figure with its '
+        'period, and a savings badge computed from both real prices — '
+        'nothing hardcoded', (tester) async {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(offering: _offeringWithBothPlans()),
       );
-      // The plan picker sits below the table and the explanatory
-      // paragraph — scroll to its own price line, which also forces
-      // everything above it (including the picker itself) to be built.
-      final bigFigure = find.text('\$7.49 / month');
-      await tester.scrollUntilVisible(bigFigure, 300);
+      final annual = find.byKey(const ValueKey('planCard_Annual'));
+      Finder inAnnual(String text) =>
+          find.descendant(of: annual, matching: find.text(text));
 
-      // Big figure: the annual product's own pricePerMonthString (SDK-
-      // computed from its real $89.99 price), not $9.99 (the monthly
-      // product's price) and not a manually divided number.
-      expect(bigFigure, findsOneWidget);
-      // Small detail: the real annual total.
-      expect(find.text('Billed \$89.99 annually.'), findsOneWidget);
-      // Savings: 1 - 89.99 / (12 × 9.99) ≈ 24.94%, floored to 24 —
-      // computed from the two products' own real prices (never the
-      // truncated pricePerMonth figure above, and never rounded up), not
-      // a hardcoded "24%" string anywhere in the widget itself.
-      expect(find.text('Save 24%'), findsOneWidget);
+      // The brief: the yearly total is the prominent figure (1.2.0; the
+      // per-month equivalent was the big figure before).
+      expect(inAnnual('\$89.99'), findsOneWidget);
+      expect(inAnnual('per year'), findsOneWidget);
+      expect(inAnnual('7-day free trial'), findsOneWidget);
+      // 1 - 89.99 / (12 × 9.99) ≈ 24.94%, floored to 24, from the two
+      // products' own prices.
+      expect(inAnnual('Save 24%'), findsOneWidget);
     });
 
     testWidgets(
@@ -714,10 +740,9 @@ void main() {
         ),
       );
 
-      final bigFigure = find.text('\$4.16 / month');
-      await tester.scrollUntilVisible(bigFigure, 300);
-
-      expect(bigFigure, findsOneWidget);
+      final annual = find.byKey(const ValueKey('planCard_Annual'));
+      expect(find.descendant(of: annual, matching: find.text('\$49.99')),
+          findsOneWidget);
       expect(find.text('Save 30%'), findsOneWidget);
       expect(find.text('Save 31%'), findsNothing);
     });
@@ -733,18 +758,12 @@ void main() {
 
       await scrollAndTap(tester, find.text('Monthly'));
 
-      // Exact match: the monthly card's own big figure line, distinct
-      // from the disclosure line's "then $9.99 / month, ..." sentence
-      // checked in the previous test.
-      expect(find.text('\$9.99 / month'), findsOneWidget);
-      expect(find.text('Billed monthly.'), findsOneWidget);
-
-      // Both plan cards render at once now (unlike the old segmented
-      // toggle, which only ever showed the selected plan's price row) —
-      // so Annual's own "Save 24%" badge is still on screen even with
-      // Monthly selected. What must hold is that it's *inside the Annual
-      // card specifically*, not the Monthly one.
       final monthlyCard = find.byKey(const ValueKey('planCard_Monthly'));
+      expect(find.descendant(of: monthlyCard, matching: find.text('\$9.99')),
+          findsOneWidget);
+      expect(find.descendant(of: monthlyCard, matching: find.text('per month')),
+          findsOneWidget);
+      // Both cards render at once: the saving stays on Annual's card only.
       expect(
         find.descendant(of: monthlyCard, matching: find.textContaining('Save')),
         findsNothing,
@@ -762,7 +781,7 @@ void main() {
       await scrollToEnd(tester);
 
       expect(
-        find.text("Trial pricing isn't available right now"),
+        find.text("Prices aren't available right now"),
         findsOneWidget,
       );
       expect(find.text('Monthly'), findsNothing);
@@ -776,7 +795,7 @@ void main() {
       );
       await pumpPremium(tester, service);
 
-      await scrollAndTap(tester, find.text('Start free trial'));
+      await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       expect(service.purchaseCalls, 1);
       expect(
@@ -795,7 +814,7 @@ void main() {
         ),
       );
 
-      await scrollAndTap(tester, find.text('Start free trial'));
+      await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       expect(
         find.textContaining('Purchase cancelled — no charge was made'),
@@ -814,14 +833,14 @@ void main() {
         ),
       );
 
-      await scrollAndTap(tester, find.text('Start free trial'));
+      await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       expect(find.textContaining("couldn't start"), findsOneWidget);
     });
 
     testWidgets(
         'after a successful purchase, the primary button becomes '
-        '"Continue" (not a second "Start free trial") and calling it fires '
+        '"Continue" (not a second purchase button) and calling it fires '
         'onDone then returns', (tester) async {
       var doneCalled = false;
       final service = _FakeSubscriptionService(
@@ -830,10 +849,10 @@ void main() {
       );
       await pumpPremiumPushed(tester, service, onDone: () => doneCalled = true);
 
-      await scrollAndTap(tester, find.text('Start free trial'));
+      await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       expect(find.text('Continue'), findsOneWidget);
-      expect(find.text('Start free trial'), findsNothing);
+      expect(find.text('Start my 7-day free trial'), findsNothing);
       // Redundant with "Continue" once a trial has actually started.
       expect(find.text('Maybe later'), findsNothing);
 
@@ -857,14 +876,14 @@ void main() {
       // batch's reordering is that the primary button is reachable
       // without scrolling at this size, so simply finding it after the
       // initial pump (no drag) is the actual assertion.
-      final buttonRect = tester.getRect(find.text('Start free trial'));
+      final buttonRect = tester.getRect(find.byKey(PremiumScreen.ctaKey));
       final viewportHeight =
           tester.view.physicalSize.height / tester.view.devicePixelRatio;
 
       expect(
         buttonRect.bottom,
         lessThanOrEqualTo(viewportHeight),
-        reason: 'Start free trial should be visible on a 390x844 screen '
+        reason: 'The purchase button should be visible on a 390x844 screen '
             'without scrolling.',
       );
     });
@@ -938,8 +957,9 @@ void main() {
     for (final brightness in Brightness.values) {
       for (final scale in [1.0, 2.0]) {
         testWidgets(
-            'plan cards share bounds and stay stable on selection at ${scale}x text in $brightness',
-            (tester) async {
+            'plan cards share their width, stack Annual above Monthly 10 '
+            'apart, and keep their size on selection at ${scale}x text in '
+            '$brightness', (tester) async {
           await pumpAt(tester,
               size: Size(scale == 1.0 ? 320 : 375, 667),
               textScale: scale,
@@ -948,12 +968,23 @@ void main() {
                   _FakeSubscriptionService(offering: _offeringWithBothPlans()));
           final annual = find.byKey(const ValueKey('planCard_Annual'));
           final monthly = find.byKey(const ValueKey('planCard_Monthly'));
-          await tester.scrollUntilVisible(annual, 250);
+          await tester.scrollUntilVisible(annual, 250,
+              scrollable: find.byType(Scrollable).first);
           final beforeAnnual = tester.getSize(annual);
           final beforeMonthly = tester.getSize(monthly);
-          expect(beforeAnnual, beforeMonthly);
-          expect(tester.getTopLeft(annual).dy, tester.getTopLeft(monthly).dy);
-          await scrollAndTap(tester, find.text('Monthly'));
+          // 1.2.0: stacked (the mockup), so the cards share a width and a
+          // left edge, not a top edge.
+          expect(beforeAnnual.width, beforeMonthly.width);
+          expect(tester.getTopLeft(annual).dx, tester.getTopLeft(monthly).dx);
+          expect(
+              tester.getTopLeft(monthly).dy - tester.getBottomLeft(annual).dy,
+              10);
+          expect(beforeAnnual.height, greaterThanOrEqualTo(87));
+          expect(beforeMonthly.height, greaterThanOrEqualTo(87));
+          await tester.ensureVisible(monthly);
+          await tester.pumpAndSettle();
+          await tester.tap(monthly);
+          await tester.pumpAndSettle();
           expect(tester.getSize(annual), beforeAnnual);
           expect(tester.getSize(monthly), beforeMonthly);
           expect(tester.takeException(), isNull);
@@ -1054,7 +1085,7 @@ void main() {
 
       final footer = find.byKey(const Key('premiumFooter'));
       await tester.tap(
-        find.descendant(of: footer, matching: find.text('Start free trial')),
+        find.descendant(of: footer, matching: find.byKey(PremiumScreen.ctaKey)),
       );
       await tester.pumpAndSettle();
 
@@ -1090,11 +1121,13 @@ void main() {
           textScale: scale,
           service: _FakeSubscriptionService(offering: null),
         );
+        await openComparison(tester);
         // At large scales the table falls back to the stacked layout (see
         // the "stacked comparison" group); either way nothing may overflow.
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('comparisonRow_Practice your weak spots')),
           300,
+          scrollable: find.byType(Scrollable).first,
         );
         expect(tester.takeException(), isNull,
             reason: 'overflow at ${scale}x text scale');
@@ -1116,84 +1149,47 @@ void main() {
     });
 
     testWidgets(
-        'the selected plan card is distinguished from the Premium strip by '
-        'its own 2px border and check mark, not by sharing the strip\'s '
-        'fill color (visual-polish batch: card fill no longer switches to '
-        'secondaryContainer on selection)', (tester) async {
+        'the selected plan card has a 2 pt link-coloured edge, a filled radio '
+        'mark and the info surface (1.2.0 mockup); the other card a 1 pt edge, '
+        'an empty mark and the card surface', (tester) async {
       await pumpPremium(
         tester,
         _FakeSubscriptionService(offering: _offeringWithBothPlans()),
       );
+      final theme = buildAppTheme(Brightness.light);
       final annualCard = find.byKey(const ValueKey('planCard_Annual'));
-      await tester.scrollUntilVisible(annualCard, 300);
-
-      final selectedContainer = tester.widget<Container>(
-        find.descendant(of: annualCard, matching: find.byType(Container)).first,
-      );
-      final selectedDecoration = selectedContainer.decoration as BoxDecoration;
-      final selectedBorder = selectedDecoration.border as Border;
-      expect(selectedBorder.top.width, 2,
-          reason: 'the selected card keeps its own 2px border, distinct '
-              'from an unselected 1px one, regardless of fill color');
-      expect(
-        find.descendant(
-          of: annualCard,
-          matching: find.byIcon(Icons.check_circle_rounded),
-        ),
-        findsOneWidget,
-        reason: 'the selected card carries an explicit check mark, not '
-            'just a fill-color change',
-      );
-
       final monthlyCard = find.byKey(const ValueKey('planCard_Monthly'));
-      final unselectedMaterial = tester.widget<Material>(
-        find.descendant(of: monthlyCard, matching: find.byType(Material)).first,
-      );
-      final selectedMaterial = tester.widget<Material>(
-        find.descendant(of: annualCard, matching: find.byType(Material)).first,
-      );
-      expect(unselectedMaterial.color, selectedMaterial.color,
-          reason: 'card fill is identical selected or not — the surface '
-              'never doubles as the selection signal');
+
+      Border borderOf(Finder card) => (tester
+              .widget<Container>(find
+                  .descendant(of: card, matching: find.byType(Container))
+                  .first)
+              .decoration as BoxDecoration)
+          .border as Border;
+      Color? fillOf(Finder card) => tester
+          .widget<Material>(
+              find.descendant(of: card, matching: find.byType(Material)).first)
+          .color;
+      Finder mark(Finder card, IconData icon) =>
+          find.descendant(of: card, matching: find.byIcon(icon));
+
+      expect(borderOf(annualCard).top.width, 2);
+      expect(borderOf(annualCard).top.color, theme.colorScheme.secondary);
+      expect(fillOf(annualCard), theme.colorScheme.secondaryContainer);
       expect(
-        find.descendant(
-          of: monthlyCard,
-          matching: find.byIcon(Icons.check_circle_rounded),
-        ),
-        findsNothing,
-      );
+          mark(annualCard, Icons.radio_button_checked_rounded), findsOneWidget);
+      expect(borderOf(monthlyCard).top.width, 1);
+      expect(fillOf(monthlyCard), theme.colorScheme.surfaceContainerHigh);
+      expect(mark(monthlyCard, Icons.radio_button_unchecked_rounded),
+          findsOneWidget);
 
       await scrollAndTap(tester, find.text('Monthly'));
-      final selectedContainer2 = tester.widget<Container>(
-        find
-            .descendant(of: monthlyCard, matching: find.byType(Container))
-            .first,
-      );
-      final selectedBorder2 =
-          (selectedContainer2.decoration as BoxDecoration).border as Border;
-      expect(selectedBorder2.top.width, 2);
-      expect(
-        find.descendant(
-          of: monthlyCard,
-          matching: find.byIcon(Icons.check_circle_rounded),
-        ),
-        findsOneWidget,
-      );
-
-      final annualContainerNowUnselected = tester.widget<Container>(
-        find.descendant(of: annualCard, matching: find.byType(Container)).first,
-      );
-      final unselectedBorder =
-          (annualContainerNowUnselected.decoration as BoxDecoration).border
-              as Border;
-      expect(unselectedBorder.top.width, 1);
-      expect(
-        find.descendant(
-          of: annualCard,
-          matching: find.byIcon(Icons.check_circle_rounded),
-        ),
-        findsNothing,
-      );
+      expect(borderOf(monthlyCard).top.width, 2);
+      expect(mark(monthlyCard, Icons.radio_button_checked_rounded),
+          findsOneWidget);
+      expect(borderOf(annualCard).top.width, 1);
+      expect(mark(annualCard, Icons.radio_button_unchecked_rounded),
+          findsOneWidget);
     });
   });
 
@@ -1224,7 +1220,7 @@ void main() {
         .toList();
 
     testWidgets(
-        'shows exactly five avatars, the center one matching the '
+        'shows exactly three avatars (O11), the center one matching the '
         "real profile's avatar", (tester) async {
       useTallScreen(tester);
       await tester.pumpWidget(
@@ -1240,12 +1236,12 @@ void main() {
       await tester.pumpAndSettle();
 
       final shown = avatarsShown(tester);
-      expect(shown, hasLength(5));
-      expect(shown[2], profile.avatar);
+      expect(shown, hasLength(3));
+      expect(shown[1], profile.avatar);
     });
 
     testWidgets(
-        'the four other avatars are distinct from the center and from '
+        'the two other avatars are distinct from the center and from '
         'each other, and are the same every time (deterministic, not '
         'Avatar.random)', (tester) async {
       useTallScreen(tester);
@@ -1265,10 +1261,10 @@ void main() {
       }
 
       final first = await pumpAndRead();
-      expect(first, hasLength(5),
-          reason: 'the center avatar plus four distinct others');
-      expect(first.toSet(), hasLength(5),
-          reason: 'no repeats among the five shown avatars');
+      expect(first, hasLength(3),
+          reason: 'the center avatar plus two distinct others');
+      expect(first.toSet(), hasLength(3),
+          reason: 'no repeats among the three shown avatars');
 
       // Same profile, freshly pumped again — the four others must be the
       // exact same set, not re-rolled.
@@ -1278,7 +1274,7 @@ void main() {
 
     testWidgets(
         'a null avatar (legacy profile) never shows the generic '
-        'placeholder — five real avatars are shown instead', (tester) async {
+        'placeholder — three real avatars are shown instead', (tester) async {
       useTallScreen(tester);
       const legacyProfile =
           UserProfile(name: 'Ada', learningGoal: LearningGoal.work);
@@ -1294,7 +1290,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(AvatarTile), findsNWidgets(5));
+      expect(find.byType(AvatarTile), findsNWidgets(3));
       for (final tile
           in tester.widgetList<AvatarTile>(find.byType(AvatarTile))) {
         expect(tile.avatar, isNotNull,
@@ -1365,7 +1361,8 @@ void main() {
           ));
           await tester.pumpAndSettle();
           final tiles = find.byType(AvatarTile);
-          final count = width == 320 ? 3 : 5;
+          // 1.2.0 (O11): three at every width.
+          const count = 3;
           expect(tiles, findsNWidgets(count));
           expect(avatarsShown(tester)[count ~/ 2], profile.avatar);
           final rects =
@@ -1485,7 +1482,7 @@ void main() {
       );
       await pumpPremium(tester, service, analyticsService: analytics);
 
-      await scrollAndTap(tester, find.text('Start free trial'));
+      await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       expect(
         analytics.calls.map((c) => c.name),
@@ -1519,7 +1516,7 @@ void main() {
       await pumpPremium(tester, service, analyticsService: analytics);
 
       await scrollAndTap(tester, find.text('Monthly'));
-      await scrollAndTap(tester, find.text('Start free trial'));
+      await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       final result =
           analytics.calls.firstWhere((c) => c.name == 'purchase_result');
@@ -1536,7 +1533,7 @@ void main() {
       );
       await pumpPremium(tester, service, analyticsService: analytics);
 
-      await scrollAndTap(tester, find.text('Start free trial'));
+      await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       final result =
           analytics.calls.firstWhere((c) => c.name == 'purchase_result');
@@ -1574,6 +1571,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await openComparison(tester);
     }
 
     for (final size in [
@@ -1636,6 +1634,7 @@ void main() {
       'the FREE header shares a horizontal center with the checkmarks '
       'below it, not just a right edge', (tester) async {
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+    await openComparison(tester);
     final freeHeader = find.text('FREE');
     await tester.scrollUntilVisible(freeHeader, 300);
     final freeHeaderCenterX = tester.getCenter(freeHeader).dx;
@@ -1676,6 +1675,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await openComparison(tester);
 
       final strip = find.byKey(const Key('premiumStripHeader'));
       await tester.scrollUntilVisible(strip, 300);
@@ -1703,6 +1703,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await openComparison(tester);
 
       final strip = find.byKey(const Key('premiumStripHeader'));
       await tester.scrollUntilVisible(strip, 300);
@@ -1718,23 +1719,24 @@ void main() {
   });
 
   testWidgets(
-      "What's free, trial, and paid renders below the table and is "
-      'horizontally centered', (tester) async {
+      '"Compare Free & Premium" opens and closes the comparison table; it '
+      'starts closed and says so to screen readers', (tester) async {
+    final semantics = tester.ensureSemantics();
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    final link = find.text("What's free, trial, and paid");
-    await tester.scrollUntilVisible(link, 300);
+    final toggle = find.byKey(PremiumScreen.compareToggleKey);
+    expect(find.byKey(const Key('comparisonTable')), findsNothing);
+    expect(tester.getSemantics(toggle),
+        isSemantics(hasExpandedState: true, isExpanded: false, isButton: true));
 
-    final linkRect = tester.getRect(link);
-    final tableBottom = tester.getBottomLeft(find.text('FREE')).dy;
-    expect(linkRect.top, greaterThan(tableBottom),
-        reason: 'the link must render below the comparison table, not '
-            'above it as a section heading');
+    await openComparison(tester);
+    expect(find.byKey(const Key('comparisonTable')), findsOneWidget);
+    expect(tester.getSemantics(toggle),
+        isSemantics(hasExpandedState: true, isExpanded: true, isButton: true));
 
-    final screenWidth =
-        tester.view.physicalSize.width / tester.view.devicePixelRatio;
-    final linkCenterX = linkRect.center.dx;
-    expect((linkCenterX - screenWidth / 2).abs(), lessThan(1.0),
-        reason: 'the link must be horizontally centered under the table');
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('comparisonTable')), findsNothing);
+    semantics.dispose();
   });
 
   group(
@@ -1826,7 +1828,7 @@ void main() {
         for (final source in ['Modal past forms', 'definite articles', '   ']) {
           await pumpAt(tester, const Size(393, 852),
               sourceContext: source, brightness: brightness);
-          expect(find.text('Unlock personalized feedback'), findsOneWidget);
+          expect(find.text(PremiumScreen.headline), findsOneWidget);
           expect(tester.getSize(find.byKey(const Key('premiumBody'))).height,
               baselineHeight);
           expect(tester.getRect(find.byKey(const ValueKey('planCard_Annual'))),
@@ -1889,34 +1891,29 @@ void main() {
     }
 
     testWidgets(
-        'at 393x852 with pricing loaded, the plan cards are fully visible '
-        'above the fixed footer without scrolling (the batch\'s own '
-        'requirement is specifically about the plan cards, not the whole '
-        'scrollable body — Restore Purchases and the legal links below '
-        'them may still require a scroll)', (tester) async {
+        'at 393x852 with pricing loaded, the button and the renewal terms are '
+        'on the first screen in the fixed footer, and both plan cards are '
+        'reachable above it (1.2.0: the companion group and the benefits card '
+        'come first, so the cards are no longer all in view without '
+        'scrolling)', (tester) async {
       await pumpAt(tester, const Size(393, 852));
 
       final footerTop =
           tester.getTopLeft(find.byKey(const Key('premiumFooter'))).dy;
-      final annualBottom =
-          tester.getRect(find.byKey(const ValueKey('planCard_Annual'))).bottom;
-      final monthlyBottom =
-          tester.getRect(find.byKey(const ValueKey('planCard_Monthly'))).bottom;
-
-      expect(annualBottom, lessThanOrEqualTo(footerTop),
-          reason: 'the Annual plan card must be fully visible above the '
-              'fixed footer at 393x852 without scrolling');
-      expect(monthlyBottom, lessThanOrEqualTo(footerTop),
-          reason: 'the Monthly plan card must be fully visible above the '
-              'fixed footer at 393x852 without scrolling');
-
-      // The primary CTA lives in the fixed footer, not the scrollable
-      // body, so it's on screen by construction — checked directly anyway
-      // since a tall enough footer could still push it off, in principle.
-      final ctaRect = tester.getRect(find.text('Start free trial'));
       final viewportHeight =
           tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      final ctaRect = tester.getRect(find.byKey(PremiumScreen.ctaKey));
+      expect(ctaRect.top, greaterThanOrEqualTo(footerTop));
       expect(ctaRect.bottom, lessThanOrEqualTo(viewportHeight));
+      expect(tester.getRect(find.textContaining('auto-renews')).bottom,
+          lessThanOrEqualTo(viewportHeight));
+
+      final monthly = find.byKey(const ValueKey('planCard_Monthly'));
+      await tester.ensureVisible(monthly);
+      await tester.pumpAndSettle();
+      expect(tester.getRect(monthly).bottom, lessThanOrEqualTo(footerTop));
+      expect(tester.getRect(find.byKey(const ValueKey('planCard_Annual'))).top,
+          greaterThanOrEqualTo(0));
     });
   });
 
@@ -1979,16 +1976,37 @@ void main() {
         })> measure(WidgetTester tester) async {
       final disclosureFinder = find.textContaining('auto-renews');
       // A text button's tappable area is the ink well inside it.
-      Rect target(String label) => tester.getRect(find.descendant(
-          of: find.widgetWithText(TextButton, label),
-          matching: find.byType(InkWell)));
+      // Since the 2026-10-05 footer rhythm (Batch 13) a footer text button
+      // is drawn 30 pt tall and its target reaches 44 pt into the space
+      // around it, so the target is found by hit-testing, not by the ink
+      // well's box.
+      Rect target(String label) {
+        final button = find.widgetWithText(TextButton, label);
+        final renderButton = tester.renderObject(button);
+        final box = tester.getRect(button);
+        bool hits(double y) {
+          final result = HitTestResult();
+          tester.binding.hitTestInView(
+              result, Offset(box.center.dx, y), tester.view.viewId);
+          return result.path.any((e) => e.target == renderButton);
+        }
+
+        var top = box.center.dy, bottom = box.center.dy;
+        while (hits(top - .5)) {
+          top -= .5;
+        }
+        while (hits(bottom + .5)) {
+          bottom += .5;
+        }
+        return Rect.fromLTRB(box.left, top, box.right, bottom + .5);
+      }
+
       return (
         footer: tester.getRect(find.byKey(const Key('premiumFooter'))),
         scrollRegion: tester.getRect(find.ancestor(
             of: find.byKey(const Key('premiumBody')),
             matching: find.byType(SingleChildScrollView))),
-        cta: tester
-            .getRect(find.widgetWithText(FilledButton, 'Start free trial')),
+        cta: tester.getRect(find.byKey(PremiumScreen.ctaKey)),
         disclosure: tester.getRect(disclosureFinder),
         privacy: tester.getRect(find.text('Privacy Policy')),
         terms: tester.getRect(find.text('Terms of Service')),
@@ -2022,7 +2040,7 @@ void main() {
           reason: 'the disclosure sentence is never cut off');
       // The footer was tightened without shrinking any target: the legal links
       // and "Maybe later" are at least 44 pt tall, and the purchase button
-      // keeps its 52.
+      // keeps the app's button height (48 since 1.2.0, 52 before).
       for (final entry in {
         'the Privacy Policy link': m.privacyTarget as Rect,
         'the Terms of Service link': m.termsTarget as Rect,
@@ -2033,13 +2051,16 @@ void main() {
         expect(entry.value.width, greaterThanOrEqualTo(44),
             reason: '${entry.key} is at least 44 pt wide');
       }
-      expect((m.cta as Rect).height, greaterThanOrEqualTo(52));
+      expect((m.cta as Rect).height, greaterThanOrEqualTo(48));
     }
 
     // The two sizes the owner asked for, at the sizes the app offers: on an
-    // iPhone SE (375x667), Medium (the default) and Large, and also with the
-    // system text scale at 1.6x.
-    for (final textSize in [AppTextSize.medium, AppTextSize.large]) {
+    // iPhone SE (375x667), and also with the system text scale at 1.6x.
+    // Since the final pass Small and Medium are the old Medium and Large, so
+    // the numbers below are unchanged. The new Large breaks the footer's
+    // "a third of the screen" rule; it has its own test after this loop
+    // (reported to the owner, not changed).
+    for (final textSize in [AppTextSize.small, AppTextSize.medium]) {
       testWidgets(
           '375x667, ${textSize.name}: button, disclosure and both legal '
           'links are on the first screen, and the footer stays a third of it',
@@ -2056,19 +2077,28 @@ void main() {
         expect(m.scrollRegion.height, greaterThan(385));
         // The avatar hero is dropped on a screen this short...
         expect(find.byType(AvatarTile), findsNothing);
-        // ...which lifts the content: the whole comparison table is in view
-        // and the top of the plan cards shows above the footer (about 56 pt
-        // of them at Medium, 11 pt at Large; they were not visible at all
-        // before).
-        final annual =
-            tester.getRect(find.byKey(const ValueKey('planCard_Annual')));
-        final lastRow = tester.getRect(find.textContaining('Sessions of'));
-        expect(lastRow.bottom, lessThan(m.scrollRegion.bottom));
-        expect(annual.top, lessThan(m.scrollRegion.bottom - 8));
-        // Restore Purchases is still in the scrolling body, reachable.
-        await tester.scrollUntilVisible(find.text('Restore Purchases'), 200,
+        // ...which lifts the content: the headline and the start of the
+        // benefits card are in view (1.2.0: the comparison table is behind
+        // "Compare Free & Premium" and the plan cards come after the
+        // benefits, so neither is in view without scrolling any more).
+        expect(tester.getRect(find.text(PremiumScreen.headline)).bottom,
+            lessThan(m.scrollRegion.bottom));
+        expect(tester.getRect(find.text('Understand your mistakes')).top,
+            lessThan(m.scrollRegion.bottom));
+        final annual = find.byKey(const ValueKey('planCard_Annual'));
+        await tester.scrollUntilVisible(annual, 200,
             scrollable: bodyScrollable);
-        expect(find.text('Restore Purchases'), findsOneWidget);
+        expect(tester.getRect(annual).top,
+            greaterThanOrEqualTo(m.scrollRegion.top));
+        // Restore Purchases: in the fixed footer since 1.2.0 (the mockup),
+        // on the first screen.
+        expect(
+            find.descendant(
+                of: find.byKey(const Key('premiumFooter')),
+                matching: find.text('Restore Purchases')),
+            findsOneWidget);
+        expect(tester.getRect(find.text('Restore Purchases')).bottom,
+            lessThanOrEqualTo(667));
       });
 
       testWidgets(
@@ -2086,6 +2116,32 @@ void main() {
       });
     }
 
+    // The new Large (1.31, final pass): everything above still holds except
+    // the footer's share. Measured: 233 pt of 667 (0.349, over a third) at
+    // 1x and 308 pt (0.462) at a 1.6x system scale; the text area above it
+    // is 362 pt at 1x. Keeping the links in
+    // the footer on the first screen and the footer under a third cannot
+    // both hold at this size without smaller text; reported to the owner.
+    for (final systemScale in [1.0, 1.6]) {
+      testWidgets(
+          '375x667, large (the new Large), system text ${systemScale}x: the '
+          'button, disclosure and links on the first screen; the footer\'s '
+          'share is recorded, not held to a third', (tester) async {
+        await pumpMeasured(tester,
+            size: const Size(375, 667),
+            textSize: AppTextSize.large,
+            systemScale: systemScale);
+        final m = await measure(tester);
+
+        expectOnFirstScreen(m, 667);
+        expect(m.footer.height / 667,
+            closeTo(systemScale == 1 ? 0.349 : 0.462, 0.01));
+        // The text area above: 362 pt at 1x (385+ at Small and Medium).
+        expect(
+            m.scrollRegion.height, greaterThan(systemScale == 1 ? 355 : 285));
+      });
+    }
+
     testWidgets(
         '375x667 Medium: the footer stack is tight: the disclosure sits close '
         'under the button, the links directly under the disclosure, and '
@@ -2098,15 +2154,18 @@ void main() {
       // Button to disclosure: a small gap, never more than 6 pt.
       expect(m.disclosure.top - m.cta.bottom, inInclusiveRange(0, 6));
       // Disclosure to the links row, and the links row to "Maybe later":
-      // the targets are stacked with no space between them.
+      // the targets are stacked with no space between them. Since Batch 13
+      // the links' targets reach up over the (non-interactive) disclosure's
+      // lower edge, so they may start above its bottom: still no dead gap.
       final linksTop = m.privacyTarget.top;
-      expect(linksTop - m.disclosure.bottom, inInclusiveRange(0, 1));
+      expect(linksTop - m.disclosure.bottom, inInclusiveRange(-14, 1));
       expect(m.maybeLaterTarget.top - m.privacyTarget.bottom,
           inInclusiveRange(0, 1));
       // Padding above the button and under "Maybe later".
       expect(m.cta.top - m.footer.top, lessThanOrEqualTo(8));
       expect(m.footer.bottom - m.maybeLaterTarget.bottom, lessThanOrEqualTo(4));
-      // The whole footer, 375x667 Medium: 196 pt (218 before).
+      // The whole footer, 375x667 Medium: 165 pt since Batch 13 (176 in
+      // Batch 12, 196 before 1.2.0, 218 before that).
       expect(m.footer.height, lessThanOrEqualTo(196));
     });
 
@@ -2210,6 +2269,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await openComparison(tester);
     }
 
     const labels = [
@@ -2239,7 +2299,8 @@ void main() {
               pricingLoaded: pricingLoaded,
             );
             final stacked = find.byKey(const Key('comparisonStacked'));
-            await tester.scrollUntilVisible(stacked, 300);
+            await tester.scrollUntilVisible(stacked, 300,
+                scrollable: find.byType(Scrollable).first);
             await tester.pumpAndSettle();
 
             expect(tester.takeException(), isNull,
@@ -2318,9 +2379,10 @@ void main() {
           pricingLoaded: false,
         );
         final card = find.byKey(const Key('pricingUnavailableCard'));
-        await tester.scrollUntilVisible(card, 300);
+        await tester.scrollUntilVisible(card, 300,
+            scrollable: find.byType(Scrollable).first);
         final message = find.descendant(
-            of: card, matching: find.textContaining("Trial pricing"));
+            of: card, matching: find.textContaining("Prices aren't"));
         final retry =
             find.descendant(of: card, matching: find.text('Try again'));
         expect(tester.takeException(), isNull);
@@ -2364,17 +2426,25 @@ void main() {
       (430, 1.3),
     ];
     // Sizes where the previous table cut a label to two lines with an
-    // ellipsis (320 @1x and 393 @1.3x among them) plus every size beyond.
+    // ellipsis (320 @1x among them) plus every size beyond. 1.2.0 Batch 1:
+    // the type scale's smaller default text (batch0-report.md Q5) fits the
+    // labels at 360 @1.15x and 393 @1.3x, so those two moved to keepTable;
+    // the rule itself is unchanged. 1.2.0 Q18: the 14 pt side padding below
+    // 360 pt (16 before) gives the table room to fit at 320 @1x too.
+    // 1.2.0 Batch 12: the paywall's page edge is the mockup's 20 pt (15
+    // under 360 pt; 18 and 14 before), so the table is 2 pt narrower on each
+    // side and three more sizes stack: 320 @1x, 360 @1.15x, 393 @1.3x. The
+    // rule is unchanged: a table only where no label is cut.
     const nowStacked = <(double, double)>[
       (320, 1.0),
+      (360, 1.15),
+      (393, 1.3),
       (320, 1.1),
       (320, 1.15),
-      (360, 1.15),
       (320, 1.3),
       (360, 1.3),
       (375, 1.3),
       (390, 1.3),
-      (393, 1.3),
       (375, 1.5),
       (393, 1.5),
       (430, 1.5),
@@ -2406,7 +2476,8 @@ void main() {
           );
           final layout = find.byKey(
               Key(expectTable ? 'comparisonTable' : 'comparisonStacked'));
-          await tester.scrollUntilVisible(layout, 300);
+          await tester.scrollUntilVisible(layout, 300,
+              scrollable: find.byType(Scrollable).first);
           expect(tester.takeException(), isNull);
           expect(
             find.byKey(
@@ -2432,6 +2503,597 @@ void main() {
       }
     }
   });
+
+  group('the 1.2.0 paywall (additional screens Batch 12)', () {
+    String ctaLabel(WidgetTester tester) {
+      final cta = find.byKey(PremiumScreen.ctaKey);
+      return tester
+          .widgetList<Text>(
+              find.descendant(of: cta, matching: find.byType(Text)))
+          .map((t) => t.data)
+          .join();
+    }
+
+    Future<void> scrollWholeScreen(WidgetTester tester) async {
+      await openComparison(tester);
+      for (var i = 0; i < 8; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    testWidgets(
+        'not eligible for a trial: no trial anywhere; the button and the terms '
+        'state the price and the period, for either plan', (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithBothPlans(),
+              eligibility: TrialEligibility.ineligible));
+      expect(ctaLabel(tester), 'Subscribe for \$89.99 per year');
+      expect(find.text('\$89.99 per year, auto-renews unless cancelled.'),
+          findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('planCard_Annual')),
+              matching: find.text('Billed yearly')),
+          findsOneWidget);
+      await scrollAndTap(tester, find.text('Monthly'));
+      expect(ctaLabel(tester), 'Subscribe for \$9.99 per month');
+      expect(find.text('\$9.99 per month, auto-renews unless cancelled.'),
+          findsOneWidget);
+      await scrollWholeScreen(tester);
+      expect(find.textContaining('trial'), findsNothing);
+      expect(find.textContaining('free,'), findsNothing);
+    });
+
+    testWidgets(
+        'eligibility unknown (a failed or unconfigured check): a neutral '
+        'button, the price in the terms, and no trial promised',
+        (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithBothPlans(),
+              eligibility: TrialEligibility.unknown));
+      expect(ctaLabel(tester), 'Continue with Annual');
+      expect(find.text('\$89.99 per year, auto-renews unless cancelled.'),
+          findsOneWidget);
+      await scrollAndTap(tester, find.text('Monthly'));
+      expect(ctaLabel(tester), 'Continue with Monthly');
+      await scrollWholeScreen(tester);
+      expect(find.textContaining('trial'), findsNothing);
+    });
+
+    testWidgets(
+        'eligible but the product has no introductory offer: no trial (the '
+        'live prices carry none)', (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+      expect(ctaLabel(tester), 'Subscribe for \$49.99 per year');
+      expect(find.text('\$49.99 per year, auto-renews unless cancelled.'),
+          findsOneWidget);
+      expect(find.textContaining('trial'), findsNothing);
+    });
+
+    testWidgets(
+        'nothing is hardcoded: other prices, another currency and a two-week '
+        'trial come through as they are', (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringInEuros()));
+      expect(ctaLabel(tester), 'Start my 14-day free trial');
+      expect(
+          find.text('14 days free, then €39.99 per year, auto-renews unless '
+              'cancelled.'),
+          findsOneWidget);
+      expect(find.textContaining('\$'), findsNothing);
+      expect(find.textContaining('7-day'), findsNothing);
+      // 1 - 39.99 / (12 × 4.99) ≈ 33.2%
+      expect(find.text('Save 33%'), findsOneWidget);
+      await scrollAndTap(tester, find.text('Monthly'));
+      expect(ctaLabel(tester), 'Subscribe for €4.99 per month',
+          reason: 'the monthly product has no introductory offer');
+    });
+
+    testWidgets(
+        'footer rhythm (Batch 13): the terms, the links and "Maybe later" '
+        'sit about 14 pt apart, while a tap up to 44 pt still reaches each '
+        'button: above Restore (over the terms) and below "Maybe later"',
+        (tester) async {
+      var done = false;
+      final service = _FakeSubscriptionService(
+          offering: _offeringWithBothPlans(), restoreResult: true);
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      tester.view.padding = const FakeViewPadding(top: 47 * 3, bottom: 34 * 3);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.light),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => PremiumScreen(
+                    storageService: _FakeStorageServiceForAvatar(),
+                    analyticsService: _FakeAnalyticsService(),
+                    analyticsSource: AnalyticsService.paywallSourceHome,
+                    subscriptionService: service,
+                    onDone: () => done = true,
+                  ),
+                )),
+                child: const Text('open premium'),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open premium'));
+      await tester.pumpAndSettle();
+      final terms = tester.getRect(find.textContaining('auto-renews'));
+      final links = tester.getRect(find.text('Terms of Service'));
+      final later = tester.getRect(find.text('Maybe later'));
+      expect(links.top - terms.bottom, inInclusiveRange(12, 16));
+      expect(later.top - links.bottom, inInclusiveRange(10, 16));
+
+      // 13 pt above Restore's drawn button: over the terms' lower edge.
+      final restore = tester.getRect(find.byKey(PremiumScreen.restoreKey));
+      await tester.tapAt(Offset(restore.center.dx, restore.top - 13));
+      await tester.pumpAndSettle();
+      expect(find.text('Purchases restored — full access is active.'),
+          findsOneWidget);
+
+      // 13 pt below "Maybe later"'s drawn button: the empty margin.
+      final laterButton = tester.getRect(find.ancestor(
+          of: find.text('Maybe later'), matching: find.byType(TextButton)));
+      expect(laterButton.height, lessThan(44));
+      await tester
+          .tapAt(Offset(laterButton.center.dx, laterButton.bottom + 13));
+      await tester.pumpAndSettle();
+      expect(done, isTrue);
+      expect(find.byType(PremiumScreen), findsNothing);
+    });
+
+    testWidgets('a second tap while purchasing sends no second request',
+        (tester) async {
+      final completer = Completer<PurchaseOutcome>();
+      final service = _FakeSubscriptionService(
+          offering: _offeringWithBothPlans(), purchaseCompleter: completer);
+      await pumpPremium(tester, service);
+      await tester.tap(find.byKey(PremiumScreen.ctaKey));
+      await tester.tap(find.byKey(PremiumScreen.ctaKey), warnIfMissed: false);
+      await tester.pump();
+      expect(service.purchaseCalls, 1);
+      expect(
+          tester
+              .widget<FilledButton>(find.byKey(PremiumScreen.ctaKey))
+              .onPressed,
+          isNull);
+      completer.complete(PurchaseOutcome.cancelled);
+      await tester.pumpAndSettle();
+      expect(service.purchaseCalls, 1);
+    });
+
+    testWidgets(
+        'a pending purchase (Ask to Buy) has its own message, opens nothing '
+        'and logs purchase_result with outcome pending, once (O10)',
+        (tester) async {
+      final analytics = _FakeAnalyticsService();
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithBothPlans(),
+              purchaseOutcome: PurchaseOutcome.pending),
+          analyticsService: analytics);
+      await tester.tap(find.byKey(PremiumScreen.ctaKey));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Waiting for approval'), findsOneWidget);
+      expect(find.textContaining("couldn't start"), findsNothing);
+      expect(find.textContaining('unlocked'), findsNothing);
+      expect(analytics.calls.map((c) => c.name), contains('purchase_started'));
+      final results =
+          analytics.calls.where((c) => c.name == 'purchase_result').toList();
+      expect(results, hasLength(1));
+      expect(results.single.parameters,
+          {'plan': AnalyticsService.planAnnual, 'outcome': 'pending'});
+      expect(find.text('Maybe later'), findsOneWidget);
+    });
+
+    testWidgets(
+        'a purchase with no trial says Premium is active, not that a trial '
+        'started', (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithBothPlans(),
+              eligibility: TrialEligibility.ineligible,
+              purchaseOutcome: PurchaseOutcome.success));
+      await tester.tap(find.byKey(PremiumScreen.ctaKey));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Premium is active'), findsOneWidget);
+      expect(find.textContaining('Trial started'), findsNothing);
+    });
+
+    for (final restored in [true, false]) {
+      testWidgets('Restore Purchases reports what it found ($restored)',
+          (tester) async {
+        await pumpPremium(
+            tester,
+            _FakeSubscriptionService(
+                offering: _offeringWithBothPlans(), restoreResult: restored));
+        await tester.tap(find.byKey(PremiumScreen.restoreKey));
+        await tester.pumpAndSettle();
+        expect(
+            find.text(restored
+                ? 'Purchases restored — full access is active.'
+                : 'No previous purchases found to restore.'),
+            findsOneWidget);
+      });
+    }
+
+    testWidgets(
+        'no "Have a code?" and no code field (redeem codes deferred); no '
+        '"unlimited" anywhere; the session cap is stated', (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+      await scrollWholeScreen(tester);
+      expect(find.textContaining('code'), findsNothing);
+      expect(find.textContaining('Code'), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+      expect(find.textContaining('nlimited'), findsNothing);
+      expect(
+          find.textContaining(
+              'up to ${StorageService.dailySessionLimit} sessions a day'),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'the benefits match the real tiers: free users keep their daily '
+        'practice and its AI feedback, so nothing says AI is Premium-only',
+        (tester) async {
+      await pumpPremium(tester, _FakeSubscriptionService(offering: null));
+      expect(
+          find.text('AI feedback on every topic you practice, not just your '
+              'free daily practice.'),
+          findsOneWidget);
+      expect(
+          find.text('Go beyond your one free daily practice.'), findsOneWidget);
+      expect(find.textContaining('only in Premium'), findsNothing);
+      expect(find.textContaining('AI feedback explains'), findsNothing);
+    });
+
+    testWidgets('paywall_viewed carries every source value as it is',
+        (tester) async {
+      for (final source in [
+        AnalyticsService.paywallSourceHome,
+        AnalyticsService.paywallSourceWeakSpotQuota,
+        AnalyticsService.paywallSourceReviewQuota,
+        AnalyticsService.paywallSourcePracticeLaunch,
+        AnalyticsService.paywallSourcePracticeResult,
+        AnalyticsService.paywallSourceDay0AfterClimb,
+      ]) {
+        final analytics = _FakeAnalyticsService();
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpWidget(MaterialApp(
+          theme: buildAppTheme(Brightness.light),
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(),
+            analyticsService: analytics,
+            analyticsSource: source,
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ));
+        await tester.pumpAndSettle();
+        final viewed =
+            analytics.calls.where((c) => c.name == 'paywall_viewed').toList();
+        expect(viewed, hasLength(1), reason: source);
+        expect(viewed.single.parameters, {'source': source});
+      }
+    });
+
+    testWidgets('the centre companion is the user\'s own, whichever it is',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844) * 3.0;
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.reset);
+      for (final avatar in [
+        Avatar.values.first,
+        Avatar.values[7],
+        Avatar.values.last
+      ]) {
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpWidget(MaterialApp(
+          home: PremiumScreen(
+            storageService: _FakeStorageServiceForAvatar(UserProfile(
+                name: 'Ada', learningGoal: LearningGoal.work, avatar: avatar)),
+            analyticsService: _FakeAnalyticsService(),
+            analyticsSource: AnalyticsService.paywallSourceHome,
+            subscriptionService: _FakeSubscriptionService(offering: null),
+          ),
+        ));
+        await tester.pumpAndSettle();
+        final tiles =
+            tester.widgetList<AvatarTile>(find.byType(AvatarTile)).toList();
+        expect(tiles, hasLength(3));
+        expect(tiles[1].avatar, avatar);
+        expect(tiles[1].radius * 2, 124);
+        expect(tiles[0].radius * 2, 66);
+        expect(tiles[2].radius * 2, 66);
+        expect({tiles[0].avatar, tiles[2].avatar}.contains(avatar), isFalse);
+      }
+    });
+
+    for (final size in [
+      const Size(320, 568),
+      const Size(360, 740),
+      const Size(375, 667),
+      const Size(390, 844),
+      const Size(430, 932),
+    ]) {
+      for (final brightness in Brightness.values) {
+        testWidgets(
+            '${size.width.toInt()}x${size.height.toInt()}, Large text, '
+            '${brightness.name}: no overflow with the comparison open, the '
+            'button and the terms on the first screen', (tester) async {
+          tester.view.physicalSize = size * 3;
+          tester.view.devicePixelRatio = 3;
+          addTearDown(tester.view.reset);
+          await tester.pumpWidget(MaterialApp(
+            theme: buildAppTheme(brightness, textSize: AppTextSize.large),
+            home: PremiumScreen(
+              storageService: _FakeStorageServiceForAvatar(),
+              analyticsService: _FakeAnalyticsService(),
+              analyticsSource: AnalyticsService.paywallSourceHome,
+              subscriptionService:
+                  _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+            ),
+          ));
+          await tester.pumpAndSettle();
+          expect(tester.getRect(find.byKey(PremiumScreen.ctaKey)).bottom,
+              lessThanOrEqualTo(size.height));
+          expect(tester.getRect(find.textContaining('auto-renews')).bottom,
+              lessThanOrEqualTo(size.height));
+          await scrollWholeScreen(tester);
+          await scrollAndTap(tester, find.text('Monthly'));
+          expect(tester.takeException(), isNull);
+          // Nothing cut: the comparison labels may carry an ellipsis as a
+          // last resort, but the table is only used where none is reached.
+          for (final element in find.byType(Text).evaluate()) {
+            final paragraph = element.renderObject is RenderParagraph
+                ? element.renderObject! as RenderParagraph
+                : tester.renderObject<RenderParagraph>(find
+                    .descendant(
+                        of: find.byWidget(element.widget),
+                        matching: find.byType(RichText))
+                    .first);
+            expect(paragraph.didExceedMaxLines, isFalse,
+                reason: (element.widget as Text).data);
+          }
+        });
+      }
+    }
+  });
+
+  group('the annual card\'s monthly equivalent and reference price (1.2.0)',
+      () {
+    Finder inCard(String key, Finder matching) =>
+        find.descendant(of: find.byKey(ValueKey(key)), matching: matching);
+    Finder inAnnual(String text) => inCard('planCard_Annual', find.text(text));
+    Finder inMonthly(String text) =>
+        inCard('planCard_Monthly', find.text(text));
+
+    /// Every struck-through text on the screen.
+    List<String> struckTexts(WidgetTester tester) => [
+          for (final t in tester.widgetList<Text>(find.byType(Text)))
+            if (t.style?.decoration == TextDecoration.lineThrough) t.data!,
+        ];
+
+    testWidgets(
+        'the annual card shows "≈ \$4.17 per month" under its detail line, '
+        'rounded half up (not RevenueCat\'s truncated 4.16), and the monthly '
+        'card shows no such line', (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+      expect(find.textContaining('4.16'), findsNothing);
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('planCard_Monthly')),
+              matching: find.textContaining('≈')),
+          findsNothing);
+      // Under the detail line, in the left column, in the same style.
+      final detail = tester.getRect(inAnnual('Billed yearly'));
+      final line = tester.getRect(inAnnual('≈ \$4.17 per month'));
+      expect(line.top, greaterThanOrEqualTo(detail.bottom - 1));
+      expect(line.left, detail.left);
+      expect(line.right, lessThan(tester.getRect(inAnnual('\$49.99')).left));
+      final detailStyle = tester.widget<Text>(inAnnual('Billed yearly')).style!;
+      final lineStyle =
+          tester.widget<Text>(inAnnual('≈ \$4.17 per month')).style!;
+      expect(lineStyle, detailStyle);
+      final perYear = tester.widget<Text>(inAnnual('per year')).style!;
+      expect(lineStyle.fontSize, perYear.fontSize);
+      expect(lineStyle.fontWeight, perYear.fontWeight);
+      expect(lineStyle.color, perYear.color);
+    });
+
+    testWidgets(
+        'the reference price is twelve monthly payments (\$71.88), struck '
+        'through above the big price, smaller and as muted as "per year"; '
+        'the monthly card has none', (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+
+      expect(inAnnual('\$71.88'), findsOneWidget);
+      expect(inMonthly('\$71.88'), findsNothing);
+      final strike = tester.widget<Text>(inAnnual('\$71.88')).style!;
+      final price = tester.widget<Text>(inAnnual('\$49.99')).style!;
+      final perYear = tester.widget<Text>(inAnnual('per year')).style!;
+      expect(strike.decoration, TextDecoration.lineThrough);
+      expect(strike.decorationColor, strike.color);
+      expect(strike.color, perYear.color);
+      expect(strike.fontSize, perYear.fontSize);
+      expect(strike.fontWeight, perYear.fontWeight);
+      expect(strike.fontSize!, lessThan(price.fontSize!));
+      // Order in the right column: reference, big price, "per year"; the
+      // column is as wide as the big price (it does not widen).
+      final strikeRect = tester.getRect(inAnnual('\$71.88'));
+      final priceRect = tester.getRect(inAnnual('\$49.99'));
+      final perYearRect = tester.getRect(inAnnual('per year'));
+      expect(strikeRect.bottom, lessThanOrEqualTo(priceRect.top + 1));
+      expect(priceRect.bottom, lessThanOrEqualTo(perYearRect.top + 1));
+      expect(strikeRect.width, lessThanOrEqualTo(priceRect.width));
+      // The billed price stays the most prominent one.
+      expect(price.fontSize!, greaterThan(perYear.fontSize!));
+    });
+
+    testWidgets(
+        'the detail line, the button, the terms and the badge are the same '
+        'with and without a trial; the new lines change none of them',
+        (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+      expect(inAnnual('7-day free trial'), findsOneWidget);
+      expect(inAnnual('Billed yearly'), findsNothing);
+      expect(inAnnual('Save 24%'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start my 7-day free trial'),
+          findsOneWidget);
+      expect(
+          find.text('7 days free, then \$89.99 per year, auto-renews unless '
+              'cancelled.'),
+          findsOneWidget);
+      // 89.99 / 12 = 7.4991..., 12 × 9.99 = 119.88.
+      expect(inAnnual('≈ \$7.50 per month'), findsOneWidget);
+      expect(inAnnual('\$119.88'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithRealLivePrices(),
+              eligibility: TrialEligibility.ineligible));
+      expect(inAnnual('Billed yearly'), findsOneWidget);
+      expect(inAnnual('Save 30%'), findsOneWidget);
+      expect(find.text('Subscribe for \$49.99 per year'), findsOneWidget);
+      expect(find.text('\$49.99 per year, auto-renews unless cancelled.'),
+          findsOneWidget);
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+      expect(inAnnual('\$71.88'), findsOneWidget);
+    });
+
+    testWidgets(
+        'no saving badge (the annual plan costs the same as twelve months): '
+        'no struck price; the monthly equivalent stays', (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(monthly: 4.00, annual: 48.00)));
+      expect(find.textContaining('Save'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(inAnnual('≈ \$4.00 per month'), findsOneWidget);
+    });
+
+    testWidgets('no monthly price: no badge and no struck price',
+        (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(monthly: 0, annual: 49.99)));
+      expect(find.textContaining('Save'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+    });
+
+    testWidgets('no currency, or no annual price: neither line, no error',
+        (tester) async {
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(
+                  monthly: 5.99, annual: 49.99, currency: '')));
+      expect(find.textContaining('≈'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox());
+      await pumpPremium(
+          tester,
+          _FakeSubscriptionService(
+              offering: _offeringWithPrices(monthly: 5.99, annual: 0)));
+      expect(find.textContaining('≈'), findsNothing);
+      expect(struckTexts(tester), isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+        'the card\'s spoken label says what both figures are: about \$4.17 '
+        'a month, and that \$71.88 is twelve months of the monthly plan',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: _offeringWithRealLivePrices()));
+      final label = tester
+          .getSemantics(find.byKey(const ValueKey('planCard_Annual')))
+          .label;
+      expect(label, contains('Annual plan, \$49.99 per year'));
+      expect(label, contains('approximately \$4.17 per month'));
+      expect(label, contains('twelve months of the monthly plan cost \$71.88'));
+      expect(label, contains('Save 30%'));
+      final monthlyLabel = tester
+          .getSemantics(find.byKey(const ValueKey('planCard_Monthly')))
+          .label;
+      expect(monthlyLabel, isNot(contains('approximately')));
+      expect(monthlyLabel, isNot(contains('twelve months')));
+      semantics.dispose();
+    });
+
+    testWidgets('the debug price preview shows both lines', (tester) async {
+      await pumpPremium(tester,
+          _FakeSubscriptionService(offering: buildDebugFixtureOffering()));
+      expect(inAnnual('≈ \$4.17 per month'), findsOneWidget);
+      expect(inAnnual('\$71.88'), findsOneWidget);
+    });
+
+    testWidgets('euros come from the product, not from a hardcoded symbol',
+        (tester) async {
+      await pumpPremium(
+          tester, _FakeSubscriptionService(offering: _offeringInEuros()));
+      // 39.99 / 12 = 3.3325, 12 × 4.99 = 59.88.
+      expect(find.textContaining('3.33 per month'), findsOneWidget);
+      expect(find.textContaining('59.88'), findsOneWidget);
+      expect(find.textContaining('\$3.33'), findsNothing);
+    });
+  });
+}
+
+/// Both plans at the given prices, in [currency] (an empty code is a store
+/// product with no usable currency).
+Offering _offeringWithPrices({
+  required double monthly,
+  required double annual,
+  String currency = 'USD',
+}) {
+  const context = PresentedOfferingContext('default', null, null);
+  String label(double v) => '\$${v.toStringAsFixed(2)}';
+  final monthlyPackage = Package(
+    '\$rc_monthly',
+    PackageType.monthly,
+    StoreProduct('grammarlens_premium_monthly', '', 'Monthly', monthly,
+        label(monthly), currency,
+        subscriptionPeriod: 'P1M'),
+    context,
+  );
+  final annualPackage = Package(
+    '\$rc_annual',
+    PackageType.annual,
+    StoreProduct('grammarlens_premium_annual', '', 'Annual', annual,
+        label(annual), currency,
+        subscriptionPeriod: 'P1Y'),
+    context,
+  );
+  return Offering('default', '', const {}, [monthlyPackage, annualPackage],
+      monthly: monthlyPackage, annual: annualPackage);
 }
 
 Offering _offeringWithBothPlans() {
@@ -2486,6 +3148,58 @@ Offering _offeringWithRealLivePrices() {
     subscriptionPeriod: 'P1Y',
     pricePerMonth: 4.16,
     pricePerMonthString: '\$4.16',
+  );
+  const monthly = Package(
+    '\$rc_monthly',
+    PackageType.monthly,
+    monthlyProduct,
+    context,
+  );
+  const annual = Package(
+    '\$rc_annual',
+    PackageType.annual,
+    annualProduct,
+    context,
+  );
+  return const Offering(
+    'default',
+    'Default offering',
+    {},
+    [monthly, annual],
+    monthly: monthly,
+    annual: annual,
+  );
+}
+
+/// Prices in euros, a two-week annual trial and no monthly trial: proves the
+/// screen prints what the store gives, not this app's own numbers.
+Offering _offeringInEuros() {
+  const context = PresentedOfferingContext('default', null, null);
+  const monthlyProduct = StoreProduct(
+    'grammarlens_premium_monthly',
+    'Full access to Topic Practice',
+    'GrammarLens Premium (Monthly)',
+    4.99,
+    '€4.99',
+    'EUR',
+    subscriptionPeriod: 'P1M',
+  );
+  const annualProduct = StoreProduct(
+    'grammarlens_premium_annual',
+    'Full access to Topic Practice (annual)',
+    'GrammarLens Premium (Annual)',
+    39.99,
+    '€39.99',
+    'EUR',
+    introductoryPrice: IntroductoryPrice(
+      0,
+      '€0.00',
+      'P2W',
+      1,
+      PeriodUnit.week,
+      2,
+    ),
+    subscriptionPeriod: 'P1Y',
   );
   const monthly = Package(
     '\$rc_monthly',

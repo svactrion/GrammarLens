@@ -23,6 +23,8 @@ import 'utils/app_messenger.dart';
 import 'utils/debug_tools.dart';
 import 'utils/loading_view.dart';
 import 'widgets/floating_nav_shell.dart';
+import 'widgets/tab_switcher.dart';
+import 'widgets/monthly_climb/climb_debug_controls.dart';
 
 class GrammarLensApp extends StatefulWidget {
   /// Optional overrides exist so tests can observe launch/resume behavior
@@ -63,6 +65,9 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   // one to be the odd one out.
   final SubscriptionService _subscriptionService = SubscriptionService();
   int _tabIndex = 0;
+
+  /// The look of the last tab switch (`_switchTab`).
+  TabTransition _tabTransition = TabTransition.fade;
   AppThemeMode _themeMode = AppThemeMode.system;
   AppTextSize _textSize = AppTextSize.medium;
 
@@ -83,19 +88,31 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   // cleared by it in `initState`, like [_initialPendingClimb].
   bool _offerDay0Paywall = false;
 
+  // Whether Home plays the first run's zoom (Batch 6, M2): true for the Home
+  // that replaces the first-launch flow, however it ended. Cleared by that
+  // Home in `initState`, like [_offerDay0Paywall].
+  bool _firstRunZoom = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _finalizeMedalMonths();
+    _deleteStaleDailyTestSets();
     _loadThemeMode();
     _loadTextSize();
     _loadProfile();
     if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.addListener(_onDebugPlay);
+    }
   }
 
   @override
   void dispose() {
+    if (ClimbDebugControls.available) {
+      ClimbDebugControls.instance.removeListener(_onDebugPlay);
+    }
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -112,6 +129,15 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       _analyticsService.appResumed();
       _finalizeMedalMonths();
     }
+  }
+
+  /// Launch only, never on resume: old unfinished Daily Test sets
+  /// (`StorageService.deleteStaleDailyTestSets`). Best effort; a failure
+  /// just leaves them for the next launch.
+  Future<void> _deleteStaleDailyTestSets() async {
+    try {
+      await _storageService.deleteStaleDailyTestSets();
+    } catch (_) {}
   }
 
   /// Freezes past medal months at launch and on every resume, not only when
@@ -182,6 +208,35 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     }
   }
 
+  /// N27: a replay asked for from the debug panel plays on Home, so the
+  /// app shows the Home tab; Home takes the replay once it is visible.
+  void _onDebugPlay() {
+    if (ClimbDebugControls.instance.pending != null && _profile != null) {
+      _switchTab(0);
+    }
+  }
+
+  /// N27: the debug panel's "Reset local data". The whole local database
+  /// goes (`StorageService.resetAllLocalData`), and the app's in-memory
+  /// state returns to a first launch: no profile (so the first-launch
+  /// flow), the default appearance and text size, the Home tab, no
+  /// entitlement override. The panel's own theme and day settings stay
+  /// (memory only, debug tools).
+  Future<void> _resetLocalData() async {
+    await _storageService.resetAllLocalData();
+    await _subscriptionService.setDebugAccessOverride(null);
+    if (!mounted) return;
+    setState(() {
+      _profile = null;
+      _themeMode = AppThemeMode.system;
+      _textSize = AppTextSize.medium;
+      _tabIndex = 0;
+      _initialPendingClimb = null;
+      _offerDay0Paywall = false;
+      _firstRunZoom = false;
+    });
+  }
+
   void _setThemeMode(AppThemeMode mode) {
     setState(() => _themeMode = mode);
     unawaited(_storageService.setThemeMode(mode).catchError((_) {}));
@@ -201,12 +256,19 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   /// Every bottom-nav tab switch goes through this instead of setting
   /// `_tabIndex` directly, so a message left showing on the tab being left
   /// (e.g. an error banner) doesn't visually follow the user to the next
-  /// one — this is an `IndexedStack` swap, not a Navigator route change,
+  /// one — this is a `TabSwitcher` swap, not a Navigator route change,
   /// so `AppMessenger.navigatorObserver` never sees it and can't clear it
   /// on its own.
-  void _switchTab(int index) {
+  ///
+  /// [transition] is the look of the switch (`TabSwitcher`): the
+  /// fade-through everywhere, the slide only from Home's "Go to Review"
+  /// card (owner, 1.2.0 Batch 9).
+  void _switchTab(int index, {TabTransition transition = TabTransition.fade}) {
     AppMessenger.clear();
-    setState(() => _tabIndex = index);
+    setState(() {
+      _tabIndex = index;
+      _tabTransition = transition;
+    });
   }
 
   // Mirrors SettingsScreen's own `_fallbackAvatar`: `AvatarPickerScreen`
@@ -240,7 +302,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   /// Home's avatar now opens the same full-screen picker Settings does,
   /// via a real route push (not `_switchTab`) so the `Hero` flight in
   /// `HomeScreen`/`AvatarPickerScreen` has an actual route transition to
-  /// animate across — a tab switch is an `IndexedStack` swap, which Hero
+  /// animate across — a tab switch is a `TabSwitcher` swap, which Hero
   /// cannot animate through at all: it has no push/pop transition for a
   /// flight to run during. `MediaQuery.disableAnimationsOf` is checked
   /// explicitly, the same manual-gating pattern this app already uses
@@ -293,11 +355,13 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       home: Builder(
         builder: (context) {
           if (_profileLoading) {
-            // The app's first frame. Nothing else paints behind it, so it
-            // paints its own background, the same `surfaceContainerLow` the
-            // native launch screen uses (`LaunchBackground` in
-            // ios/Runner/Assets.xcassets), so there is no flash between the
-            // two. `Material` also gives the text a real text style.
+            // The app's first frame, built under the launch splash
+            // (LaunchGate) and usually replaced before the splash fades.
+            // Nothing else paints behind it, so it paints its own
+            // background, the same `surfaceContainerLow` as the splash and
+            // the native launch screen (`LaunchBackground` in
+            // ios/Runner/Assets.xcassets), so there is no flash between
+            // them. `Material` also gives the text a real text style.
             return Material(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               child: const LoadingView(message: 'Loading…'),
@@ -313,6 +377,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
                 _profile = profile;
                 _initialPendingClimb = pendingClimb;
                 _offerDay0Paywall = dayZeroCompleted;
+                _firstRunZoom = true;
               }),
             );
           }
@@ -331,14 +396,18 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               onInitialPendingClimbTaken: () => _initialPendingClimb = null,
               offerDay0Paywall: _offerDay0Paywall,
               onOfferDay0PaywallTaken: () => _offerDay0Paywall = false,
+              firstRunZoom: _firstRunZoom,
+              onFirstRunZoomTaken: () => _firstRunZoom = false,
               onAvatarTap: () => _openAvatarPickerFromHome(context),
+              onGoToReview: () =>
+                  _switchTab(1, transition: TabTransition.slide),
             ),
             ReviewScreen(
               claudeService: _claudeService,
               storageService: _storageService,
               analyticsService: _analyticsService,
               subscriptionService: _subscriptionService,
-              // IndexedStack keeps this screen's State alive across tab
+              // TabSwitcher keeps this screen's State alive across tab
               // switches instead of recreating it, so initState alone won't
               // pick up errors saved while a different tab (e.g. after a
               // Home practice session) was active. Passing whether this tab
@@ -362,16 +431,21 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               // callback itself is harmless either way, since it's never
               // invoked unless that section rendered in the first place.
               onResetOnboarding: () => setState(() => _profile = null),
+              onResetLocalData: _resetLocalData,
             ),
           ];
 
-          return Scaffold(
-            body: FloatingNavShell(
-              body: IndexedStack(index: _tabIndex, children: screens),
-              tabs: _navTabs,
-              selectedIndex: _tabIndex,
-              onTabChange: _switchTab,
+          // The shell brings its own Scaffold (see FloatingNavShell: it
+          // must not resize for the keyboard).
+          return FloatingNavShell(
+            body: TabSwitcher(
+              index: _tabIndex,
+              transition: _tabTransition,
+              children: screens,
             ),
+            tabs: _navTabs,
+            selectedIndex: _tabIndex,
+            onTabChange: (index) => _switchTab(index),
           );
         },
       ),

@@ -1,0 +1,13 @@
+Batch 6 M22: the K-c blurred backdrops (tool/scene_art/export_blur.py)
+192 x 256 px, Gaussian sigma = 0.03 x width = 5.76 px, WebP quality 70
+
+assets/climb/green_slope/background_light_blur.webp: 1.6 KB (1684 bytes)
+assets/climb/green_slope/background_dark_blur.webp: 1.1 KB (1150 bytes)
+assets/climb/ember_peak/background_light_blur.webp: 1.6 KB (1664 bytes)
+assets/climb/ember_peak/background_dark_blur.webp: 1.3 KB (1292 bytes)
+assets/climb/glacier_peak/background_light_blur.webp: 1.8 KB (1818 bytes)
+assets/climb/glacier_peak/background_dark_blur.webp: 1.5 KB (1544 bytes)
+assets/climb/red_canyon/background_light_blur.webp: 1.7 KB (1702 bytes)
+assets/climb/red_canyon/background_dark_blur.webp: 1.4 KB (1458 bytes)
+
+total: 12.0 KB (12312 bytes) for 8 assets

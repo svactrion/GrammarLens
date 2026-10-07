@@ -48,10 +48,7 @@ class DestructiveDialogActions extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.destructive,
-              foregroundColor: colorScheme.onDestructive,
-            ),
+            style: destructiveButtonStyle(colorScheme),
             onPressed: onConfirm,
             child: Text(confirmLabel),
           ),

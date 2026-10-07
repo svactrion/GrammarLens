@@ -154,7 +154,8 @@ void main() {
             analyticsService: AnalyticsService(),
             subscriptionService: _Subscription(hasAccess: premium),
           ),
-      start: (tester) async => tester.tap(find.byType(InkWell).first),
+      start: (tester) async =>
+          tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first))),
     ),
     'WeakSpotDetailScreen': (
       screen: (claude, storage, premium) => WeakSpotDetailScreen(
@@ -165,8 +166,11 @@ void main() {
             analyticsService: AnalyticsService(),
             subscriptionService: _Subscription(hasAccess: premium),
           ),
-      start: (tester) async =>
-          tester.tap(find.widgetWithText(FilledButton, 'Practice this')),
+      // 1.2.0 (N3): a free user's button says "Start free practice", a
+      // premium user's still "Practice this".
+      start: (tester) async => tester.tap(find.byWidgetPredicate((w) =>
+          w is Text &&
+          (w.data == 'Practice this' || w.data == 'Start free practice'))),
     ),
   };
 
@@ -355,9 +359,9 @@ void main() {
     await pump(
         tester, callers['TopicPracticeScreen']!.screen(claude, storage, false));
 
-    await tester.tap(find.byType(InkWell).first);
+    await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
     await tester.pump();
-    await tester.tap(find.byType(InkWell).first);
+    await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
     await tester.pump();
     gate.complete(null);
     await tester.pumpAndSettle();
@@ -393,7 +397,7 @@ void _analyticsTests() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(InkWell).first);
+      await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
       await tester.pumpAndSettle();
       expect(sink.named('ai_consent_result'), isEmpty,
           reason: 'nothing is reported until the user decides');
@@ -420,7 +424,7 @@ void _analyticsTests() {
       ),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(InkWell).first);
+    await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
     await tester.pumpAndSettle();
 
     expect(sink.named('ai_consent_result'), isEmpty);

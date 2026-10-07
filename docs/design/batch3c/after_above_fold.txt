@@ -1,0 +1,18 @@
+320x568 small  Ada             window=128.0 belowChips=83.0
+320x568 small  Mary Anne Smith window=128.0 belowChips=83.0
+320x568 medium Ada             window=109.0 belowChips=61.0
+320x568 medium Mary Anne Smith window=109.0 belowChips=61.0
+320x568 large  Ada             window=91.1 belowChips=40.1
+320x568 large  Mary Anne Smith window=91.1 belowChips=40.1
+375x667 small  Ada             window=246.0 belowChips=201.0
+375x667 small  Mary Anne Smith window=244.0 belowChips=199.0
+375x667 medium Ada             window=235.0 belowChips=187.0
+375x667 medium Mary Anne Smith window=227.0 belowChips=179.0
+375x667 large  Ada             window=211.0 belowChips=160.0
+375x667 large  Mary Anne Smith window=211.0 belowChips=160.0
+430x932 small  Ada             window=350.0 belowChips=350.0
+430x932 small  Mary Anne Smith window=350.0 belowChips=350.0
+430x932 medium Ada             window=350.0 belowChips=350.0
+430x932 medium Mary Anne Smith window=350.0 belowChips=350.0
+430x932 large  Ada             window=350.0 belowChips=350.0
+430x932 large  Mary Anne Smith window=350.0 belowChips=350.0

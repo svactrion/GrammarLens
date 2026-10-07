@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/models/topic_stats.dart';
+import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/screens/topic_practice_screen.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/claude_service.dart';
@@ -77,7 +78,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(InkWell).first);
+    await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
     await tester.pumpAndSettle();
 
     expect(find.text('How many questions?'), findsOneWidget);
@@ -102,7 +103,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(InkWell).first);
+    await tester.tap(find.byKey(TopicPracticeScreen.cardKey(kTopics.first)));
     await tester.pumpAndSettle();
 
     expect(find.text("That's all for today"), findsOneWidget);

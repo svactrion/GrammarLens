@@ -51,12 +51,22 @@ class DailyTestQuestion {
   /// what it showed before, never an empty line.
   final String? explanation;
 
+  /// Other answers that are also right, besides [correctAnswer] — added to a
+  /// shared set by the proxy's check call (docs/1.1.0-shared-daily-test-quality.md
+  /// §8), and to a fallback pool question by the owner's corrections
+  /// (`tool/fallback_pool/corrections.json`, roadmap P13). Empty everywhere
+  /// else: day 0, legacy generated sets and shared sets before that check
+  /// exists carry none, and a question without alternatives grades exactly
+  /// as it always did.
+  final List<String> acceptedAnswers;
+
   DailyTestQuestion({
     required this.item,
     required this.topicId,
     required this.correctAnswer,
     required this.commonWrongAnswers,
     this.explanation,
+    this.acceptedAnswers = const [],
   }) : assert(
           item.type == PracticeItemType.fillInBlank ||
               item.type == PracticeItemType.errorCorrection,
@@ -84,6 +94,7 @@ class DailyTestQuestion {
             .map((e) => CommonWrongAnswer.fromJson(e as Map<String, dynamic>))
             .toList(),
         explanation: _optionalText(json['explanation']),
+        acceptedAnswers: _optionalTextList(json['acceptedAnswers']),
       );
 
   /// Lenient on purpose, unlike the required fields above: an old cached
@@ -93,6 +104,14 @@ class DailyTestQuestion {
   static String? _optionalText(Object? value) =>
       value is String && value.trim().isNotEmpty ? value.trim() : null;
 
+  /// Lenient for the same reason: a missing or non-list `acceptedAnswers`
+  /// reads as none, and a blank or non-string entry is skipped. An
+  /// alternative only ever adds a way to be right, so dropping a bad one
+  /// never makes an answer wrong that the key accepts.
+  static List<String> _optionalTextList(Object? value) => value is List
+      ? value.map(_optionalText).whereType<String>().toList()
+      : const [];
+
   Map<String, dynamic> toJson() => {
         ...item.toJson(),
         'topicId': topicId,
@@ -100,5 +119,8 @@ class DailyTestQuestion {
         'commonWrongAnswers':
             commonWrongAnswers.map((c) => c.toJson()).toList(),
         if (explanation != null) 'explanation': explanation,
+        // Written only when present, so a set without alternatives is stored
+        // exactly as before the field existed.
+        if (acceptedAnswers.isNotEmpty) 'acceptedAnswers': acceptedAnswers,
       };
 }

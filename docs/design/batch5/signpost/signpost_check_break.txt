@@ -1,0 +1,5 @@
+Batch 5 N18, N35: the signpost check's deliberate breaks (glacier/background_dark.png).
+
+ok   at the clearing's centre (shift -4, 0 px undone): 68 px on the trail
+ok   moved 20 px down: 351 px on the trail
+ok   as placed (control): 0 px on the trail

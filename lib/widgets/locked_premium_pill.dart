@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme.dart';
 
 /// The trailing "this needs Premium" affordance on a locked card (Home's
 /// Topic Practice card, a locked weak-spot row) — same slot both card types
@@ -17,35 +18,39 @@ import 'package:flutter/material.dart';
 /// the pill itself (not a separate icon beside it) preserving the
 /// tap-forward signal — so removing the old chevron doesn't remove what it
 /// was for.
+///
+/// 1.2.0 look (the brief's PREMIUM tag): no fill and no outline — the lock,
+/// the label in 11/800 and the chevron, all in linkAndActive (≥ 9.2:1 on
+/// the card in both themes). The label's text is unchanged.
 class LockedPremiumPill extends StatelessWidget {
-  const LockedPremiumPill({super.key});
+  /// False for the tag on a section heading (Home's "Topic practice"), which
+  /// is not itself a tap target; the card it labels is.
+  final bool showChevron;
+
+  const LockedPremiumPill({super.key, this.showChevron = true});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final muted = colorScheme.onSurfaceVariant;
+    final theme = Theme.of(context);
+    final link = theme.colorScheme.secondary;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.lock_rounded, size: 12, color: muted),
+          Icon(Icons.lock_rounded, size: 12, color: link),
           const SizedBox(width: 4),
           Text(
             'Premium',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: muted,
-                  fontWeight: FontWeight.w700,
-                ),
+            style: theme.textTheme.labelSmall
+                ?.withWeight(FontWeight.w800)
+                .copyWith(color: link),
           ),
-          const SizedBox(width: 2),
-          Icon(Icons.chevron_right_rounded, size: 14, color: muted),
+          if (showChevron) ...[
+            const SizedBox(width: 2),
+            Icon(Icons.chevron_right_rounded, size: 14, color: link),
+          ],
         ],
       ),
     );

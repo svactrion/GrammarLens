@@ -1,7 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
+import '../theme.dart';
+import '../utils/content_width.dart';
 
 /// How much bottom padding a scrollable tab screen needs to reserve so its
 /// last item can be scrolled fully clear of [FloatingNavShell]'s bar,
@@ -44,6 +44,10 @@ class NavBarClearance extends InheritedWidget {
   /// no longer trusted as the real answer anywhere.
   static const fallback = 110.0;
 
+  /// The breathing room [value] adds above the bar's top edge. Also the gap
+  /// `AppMessenger` keeps between a message and the bar or the keyboard.
+  static const gap = 16.0;
+
   @override
   bool updateShouldNotify(NavBarClearance oldWidget) =>
       value != oldWidget.value;
@@ -62,8 +66,7 @@ class NavShellTab {
   final String label;
 }
 
-/// The floating, frosted-glass bottom nav bar (see docs/roadmap.md's "Home
-/// + nav bar revision round"s for how this look was arrived at) as a
+/// The floating bottom nav bar as a
 /// `Stack`, not `Scaffold.bottomNavigationBar` — that slot wraps its child
 /// in an opaque `Material` spanning the full screen width regardless of
 /// what's inside it, which painted a solid strip behind the pill's rounded
@@ -71,6 +74,22 @@ class NavShellTab {
 /// `Stack` with the bar as a `Positioned` overlay has no such slot: nothing
 /// paints outside the pill's own bounds, and [body] genuinely continues
 /// underneath it, Instagram-style.
+///
+/// 1.2.0 (owner decision Q17): a solid bar — `AppPalette.navSurface`, a
+/// 1 pt `navBorder` edge, the brief's nav shadow and radius 29 — replaces
+/// the frosted glass (a translucent tint over a blur, from the roadmap's
+/// "Home + nav bar revision round"s). Unselected items are textPrimary
+/// (Q6), the selected item linkAndActive.
+///
+/// The shell is its own root [Scaffold], with `resizeToAvoidBottomInset`
+/// off (1.2.0 Batch 8, owner: the bar rose with the keyboard while editing
+/// the name on Profile). Before, app.dart's Scaffold around the shell
+/// resized for the keyboard, shrinking this `Stack` by the keyboard's
+/// height, and the bar, pinned to the Stack's bottom, rode up above the
+/// keyboard. Now the Stack keeps the screen's height, so the bar stays where
+/// it is and the keyboard covers it. The keyboard inset still reaches the
+/// tab screens: their own Scaffolds (`BrandScaffold`) resize their content,
+/// so a focused field and its buttons stay in view on every tab.
 ///
 /// Also the single source of [NavBarClearance] (see its own doc comment):
 /// measures the bar's real rendered height via a `GlobalKey` after every
@@ -85,7 +104,20 @@ class FloatingNavShell extends StatefulWidget {
     required this.onTabChange,
   });
 
-  /// Typically an `IndexedStack` of the app's tab screens.
+  /// The bar itself (its decorated box), for tests that measure it.
+  static const barKey = ValueKey('floating_nav_bar');
+
+  /// The [NavBarClearance] of the shell on screen, or null when there is
+  /// none: no shell, or a route covers it. `AppMessenger` keeps its
+  /// messages above the bar with it.
+  static double? get visibleClearance {
+    for (final state in _FloatingNavShellState._mounted) {
+      if (state._route?.isCurrent ?? true) return state._clearance;
+    }
+    return null;
+  }
+
+  /// The app's tab screens (`TabSwitcher`).
   final Widget body;
   final List<NavShellTab> tabs;
   final int selectedIndex;
@@ -96,15 +128,39 @@ class FloatingNavShell extends StatefulWidget {
 }
 
 class _FloatingNavShellState extends State<FloatingNavShell> {
+  /// The bar's corner radius (the brief: 29).
+  static const _radius = 29.0;
+
+  static final Set<_FloatingNavShellState> _mounted = {};
+
   final _barKey = GlobalKey();
   double _clearance = NavBarClearance.fallback;
+  ModalRoute<Object?>? _route;
+
+  @override
+  void initState() {
+    super.initState();
+    _mounted.add(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _route = ModalRoute.of(context);
+  }
+
+  @override
+  void dispose() {
+    _mounted.remove(this);
+    super.dispose();
+  }
 
   void _measure() {
     final box = _barKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
     // A little breathing room past the bar's own top edge — the point is
     // content can scroll clearly past the bar, not stop flush against it.
-    final next = box.size.height + 16;
+    final next = box.size.height + NavBarClearance.gap;
     if ((next - _clearance).abs() > 0.5) {
       setState(() => _clearance = next);
     }
@@ -120,67 +176,50 @@ class _FloatingNavShellState extends State<FloatingNavShell> {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    // Same contrast-checked color the app bar uses for content sitting
-    // directly on the orange (light) / near-black (dark) scaffold — see
-    // theme.dart's `appBarFg` for the reasoning.
-    final unselectedColor =
-        theme.appBarTheme.foregroundColor ?? colorScheme.onSurface;
+    final palette = AppPalette.of(context);
 
-    return NavBarClearance(
-      value: _clearance,
-      child: Stack(
-        children: [
-          widget.body,
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 0,
-            child: SafeArea(
-              key: _barKey,
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        // Frosted glass: a translucent surface tint over
-                        // the blur, not a solid fill — content scrolling
-                        // behind the pill should still read through it,
-                        // softened.
-                        color: colorScheme.surfaceContainerLow
-                            .withValues(alpha: isDark ? 0.55 : 0.68),
-                        borderRadius: BorderRadius.circular(32),
-                        border: Border.all(
-                          color:
-                              colorScheme.outlineVariant.withValues(alpha: 0.5),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withValues(alpha: 0.18),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: _FloatingNavBar(
-                        tabs: widget.tabs,
-                        selectedIndex: widget.selectedIndex,
-                        onTabChange: widget.onTabChange,
-                        unselectedColor: unselectedColor,
-                        activeColor: colorScheme.secondary,
-                        labelStyle: theme.textTheme.labelMedium,
-                      ),
+    // P2: on an iPad the pill itself spans the content column; on an
+    // iPhone it keeps its 16 pt from each edge.
+    final side = 16 + ContentWidth.insetOf(context, edge: 16);
+
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: NavBarClearance(
+        value: _clearance,
+        child: Stack(
+          children: [
+            widget.body,
+            Positioned(
+              left: side,
+              right: side,
+              bottom: 0,
+              child: SafeArea(
+                key: _barKey,
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DecoratedBox(
+                    key: FloatingNavShell.barKey,
+                    decoration: BoxDecoration(
+                      color: palette.navSurface,
+                      borderRadius: BorderRadius.circular(_radius),
+                      border: Border.all(color: palette.navBorder),
+                      boxShadow: palette.navShadow,
+                    ),
+                    child: _FloatingNavBar(
+                      tabs: widget.tabs,
+                      selectedIndex: widget.selectedIndex,
+                      onTabChange: widget.onTabChange,
+                      unselectedColor: colorScheme.onSurface,
+                      activeColor: colorScheme.secondary,
+                      labelStyle: theme.textTheme.labelSmall,
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -215,17 +254,23 @@ class _FloatingNavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          // Flexible: each tab keeps its own width while the three fit;
+          // when they do not (a narrow screen with a very large text size),
+          // a tab gets an equal share and its label wraps instead of the
+          // row overflowing.
           for (var i = 0; i < tabs.length; i++)
-            _NavTab(
-              data: tabs[i],
-              active: i == selectedIndex,
-              unselectedColor: unselectedColor,
-              activeColor: activeColor,
-              labelStyle: labelStyle,
-              onTap: () {
-                if (i != selectedIndex) HapticFeedback.selectionClick();
-                onTabChange(i);
-              },
+            Flexible(
+              child: _NavTab(
+                data: tabs[i],
+                active: i == selectedIndex,
+                unselectedColor: unselectedColor,
+                activeColor: activeColor,
+                labelStyle: labelStyle,
+                onTap: () {
+                  if (i != selectedIndex) HapticFeedback.selectionClick();
+                  onTabChange(i);
+                },
+              ),
             ),
         ],
       ),
@@ -265,13 +310,15 @@ class _NavTab extends StatelessWidget {
             children: [
               Icon(active ? data.activeIcon : data.icon,
                   size: 24, color: color),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
+              // The brief's 11/600 label, 800 when selected: weight as well
+              // as color marks the selected tab.
               Text(
                 data.label,
-                style: labelStyle?.copyWith(
-                  color: color,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                ),
+                textAlign: TextAlign.center,
+                style: labelStyle
+                    ?.withWeight(active ? FontWeight.w800 : FontWeight.w600)
+                    .copyWith(color: color),
               ),
             ],
           ),

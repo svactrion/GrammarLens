@@ -15,6 +15,10 @@ class EmptyState extends StatelessWidget {
   final String? description;
   final String? ctaLabel;
   final VoidCallback? onCta;
+
+  /// The call to action's style; the theme's (navy) when null. A screen's
+  /// one main forward action passes `forwardButtonStyle`.
+  final ButtonStyle? ctaStyle;
   final bool dense;
 
   const EmptyState({
@@ -24,6 +28,7 @@ class EmptyState extends StatelessWidget {
     this.description,
     this.ctaLabel,
     this.onCta,
+    this.ctaStyle,
     this.dense = false,
   }) : assert(
           title != null || description != null,
@@ -71,7 +76,8 @@ class EmptyState extends StatelessWidget {
           ),
         if (ctaLabel != null && onCta != null) ...[
           const SizedBox(height: 16),
-          FilledButton(onPressed: onCta, child: Text(ctaLabel!)),
+          FilledButton(
+              onPressed: onCta, style: ctaStyle, child: Text(ctaLabel!)),
         ],
       ],
     );

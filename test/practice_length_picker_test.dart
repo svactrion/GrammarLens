@@ -240,4 +240,12 @@ void main() {
     await _openPicker(tester, initial: PracticeLength.standard);
     expect(find.byType(CustomPaint), findsWidgets);
   });
+
+  testWidgets('the title is the brief\'s 800, with a matching wght (1.2.0)',
+      (tester) async {
+    await _openPicker(tester, initial: PracticeLength.standard);
+    final style = tester.widget<Text>(find.text('How many questions?')).style!;
+    expect(style.fontWeight, FontWeight.w800);
+    expect(style.fontVariations, contains(const FontVariation('wght', 800)));
+  });
 }

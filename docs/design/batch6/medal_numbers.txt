@@ -1,0 +1,65 @@
+Batch 6 Batch 0 §3: medal rule v1 (MonthlyMedalRules), [Q] = 5
+A fully answered day is worth 5 (all wrong) to 10 (all correct) points; a skipped answer 0.
+
+days  max  Bronze  Silver  Gold  band (Bronze→Silver, Silver→Gold)
+28   280      70     140   210  70, 70
+29   290      73     145   218  72, 73
+30   300      75     150   225  75, 75
+31   310      78     155   233  77, 78
+
+A: gap ≤ 5 (one more fully answered day closes it, even all wrong)
+  28 days, below Bronze (70): line at 65–69 (5 of 70 scores in the band, 7 %)
+  28 days, below Silver (140): line at 135–139 (5 of 70 scores in the band, 7 %)
+  28 days, below Gold (210): line at 205–209 (5 of 70 scores in the band, 7 %)
+  28 days: limit 5; 5 % of all possible scores 0–280 show the line
+  29 days, below Bronze (73): line at 68–72 (5 of 73 scores in the band, 7 %)
+  29 days, below Silver (145): line at 140–144 (5 of 72 scores in the band, 7 %)
+  29 days, below Gold (218): line at 213–217 (5 of 73 scores in the band, 7 %)
+  29 days: limit 5; 5 % of all possible scores 0–290 show the line
+  30 days, below Bronze (75): line at 70–74 (5 of 75 scores in the band, 7 %)
+  30 days, below Silver (150): line at 145–149 (5 of 75 scores in the band, 7 %)
+  30 days, below Gold (225): line at 220–224 (5 of 75 scores in the band, 7 %)
+  30 days: limit 5; 5 % of all possible scores 0–300 show the line
+  31 days, below Bronze (78): line at 73–77 (5 of 78 scores in the band, 6 %)
+  31 days, below Silver (155): line at 150–154 (5 of 77 scores in the band, 6 %)
+  31 days, below Gold (233): line at 228–232 (5 of 78 scores in the band, 6 %)
+  31 days: limit 5; 5 % of all possible scores 0–310 show the line
+
+B: gap ≤ 10 (one more day closes it if all correct)
+  28 days, below Bronze (70): line at 60–69 (10 of 70 scores in the band, 14 %)
+  28 days, below Silver (140): line at 130–139 (10 of 70 scores in the band, 14 %)
+  28 days, below Gold (210): line at 200–209 (10 of 70 scores in the band, 14 %)
+  28 days: limit 10; 11 % of all possible scores 0–280 show the line
+  29 days, below Bronze (73): line at 63–72 (10 of 73 scores in the band, 14 %)
+  29 days, below Silver (145): line at 135–144 (10 of 72 scores in the band, 14 %)
+  29 days, below Gold (218): line at 208–217 (10 of 73 scores in the band, 14 %)
+  29 days: limit 10; 10 % of all possible scores 0–290 show the line
+  30 days, below Bronze (75): line at 65–74 (10 of 75 scores in the band, 13 %)
+  30 days, below Silver (150): line at 140–149 (10 of 75 scores in the band, 13 %)
+  30 days, below Gold (225): line at 215–224 (10 of 75 scores in the band, 13 %)
+  30 days: limit 10; 10 % of all possible scores 0–300 show the line
+  31 days, below Bronze (78): line at 68–77 (10 of 78 scores in the band, 13 %)
+  31 days, below Silver (155): line at 145–154 (10 of 77 scores in the band, 13 %)
+  31 days, below Gold (233): line at 223–232 (10 of 78 scores in the band, 13 %)
+  31 days: limit 10; 10 % of all possible scores 0–310 show the line
+
+C: gap ≤ 5 % of the month's maximum
+  28 days, below Bronze (70): line at 56–69 (14 of 70 scores in the band, 20 %)
+  28 days, below Silver (140): line at 126–139 (14 of 70 scores in the band, 20 %)
+  28 days, below Gold (210): line at 196–209 (14 of 70 scores in the band, 20 %)
+  28 days: limit 14; 15 % of all possible scores 0–280 show the line
+  29 days, below Bronze (73): line at 59–72 (14 of 73 scores in the band, 19 %)
+  29 days, below Silver (145): line at 131–144 (14 of 72 scores in the band, 19 %)
+  29 days, below Gold (218): line at 204–217 (14 of 73 scores in the band, 19 %)
+  29 days: limit 14; 14 % of all possible scores 0–290 show the line
+  30 days, below Bronze (75): line at 60–74 (15 of 75 scores in the band, 20 %)
+  30 days, below Silver (150): line at 135–149 (15 of 75 scores in the band, 20 %)
+  30 days, below Gold (225): line at 210–224 (15 of 75 scores in the band, 20 %)
+  30 days: limit 15; 15 % of all possible scores 0–300 show the line
+  31 days, below Bronze (78): line at 63–77 (15 of 78 scores in the band, 19 %)
+  31 days, below Silver (155): line at 140–154 (15 of 77 scores in the band, 19 %)
+  31 days, below Gold (233): line at 218–232 (15 of 78 scores in the band, 19 %)
+  31 days: limit 15; 14 % of all possible scores 0–310 show the line
+
+Self-check of nextTier against MonthlyMedalRules.tierFor, every score of every month length:
+  1184 scores, all consistent.

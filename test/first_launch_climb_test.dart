@@ -18,6 +18,7 @@ import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
+import 'support/celebration_support.dart';
 import 'support/recording_analytics_sink.dart';
 
 /// The end-to-end regression for the Day-0 climb: the bug lived exactly at
@@ -27,12 +28,9 @@ import 'support/recording_analytics_sink.dart';
 
 class _FakeClaudeService extends ClaudeService {
   @override
-  Future<List<DailyTestQuestion>> generateDailyTestQuestions({
-    required String deviceId,
-    required int count,
-  }) async =>
+  Future<List<DailyTestQuestion>?> fetchSharedDailyTest(String date) async =>
       List.generate(
-        count,
+        DailyTestSet.questionCount,
         (i) => DailyTestQuestion(
           item: PracticeItem(
             id: 'q$i',
@@ -159,10 +157,14 @@ void main() {
   Future<void> completeOnboarding(WidgetTester tester) async {
     await tester.tap(find.text('Get started'));
     await tester.pumpAndSettle();
+    // Two steps (1.2.0): the name, then the goal.
     await tester.enterText(find.byType(TextField), 'Ada');
-    await tester.tap(find.text('Exam prep'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Exam prep'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Start my first test'));
     await tester.pumpAndSettle();
   }
 
@@ -175,10 +177,14 @@ void main() {
         await tester.pump();
         await tester.tap(find.widgetWithText(FilledButton, 'Next'));
       } else {
-        await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
       }
       await tester.pumpAndSettle();
     }
+    // Batch 5 (N15): the answered test earns the Welcome badge, whose
+    // celebration opens over the results the moment the save lands; one
+    // tap closes it and the results, with "Start my climb", show.
+    if (answerFirst) await closeCelebration(tester);
   }
 
   final burst = find.byType(ConfettiBurst);
@@ -218,9 +224,8 @@ void main() {
 
   group('Day-0 climb', () {
     testWidgets(
-        'Start my climb: the confetti plays on the results for its whole '
-        'run, then Home mounts before the step and the pawn climbs to it',
-        (tester) async {
+        'Start my climb (N36: no confetti of its own): Home mounts before '
+        'the step and the pawn climbs to it', (tester) async {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
@@ -230,15 +235,10 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('Start my climb'));
       await tester.pump();
-      // Nothing overlaps: the burst is on the results, Home is not built yet.
-      expect(burst, findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 1000));
-      expect(burst, findsOneWidget);
-      expect(resultsTitle, findsOneWidget);
-      expect(mountain, findsNothing);
+      expect(burst, findsNothing);
 
-      await tester.pump(const Duration(milliseconds: 900));
-      final seen = await observeHome(tester);
+      // Batch 6 (M14): the first run's zoom (pause + 1.8 s) comes first.
+      final seen = await observeHome(tester, frames: 200);
       await tester.pumpAndSettle();
       final finalTop = pawnTop(tester);
 
@@ -253,7 +253,7 @@ void main() {
       expect(seen.tops.first, greaterThan(seen.tops[1]));
       expect(seen.tops.last, closeTo(finalTop, 0.01));
       // Home may already be under the first-day paywall.
-      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -294,12 +294,12 @@ void main() {
       expect(seen.steps, [0]);
       expect(seen.tops, hasLength(1));
       // Home may already be under the first-day paywall.
-      expect(find.text('0 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('0 / 31', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
-        'a slow save keeps the way out disabled until it lands, then Start '
-        'my climb plays the confetti and Home shows the saved step',
+        'a slow save keeps the way out disabled until it lands, then the '
+        'celebration, and Start my climb takes Home to the saved step',
         (tester) async {
       storage.saveGate = Completer<void>();
       await pumpApp(tester);
@@ -310,7 +310,7 @@ void main() {
           await tester.pump();
           await tester.tap(find.widgetWithText(FilledButton, 'Next'));
         } else {
-          await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
         }
         // The last tap opens the result screen, whose saving progress bar
         // never settles, so plain pumps from here on.
@@ -332,6 +332,8 @@ void main() {
       storage.saveGate!.complete();
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
+      // The save landed: the Welcome celebration first (N15).
+      await closeCelebration(tester);
       final climb = find.widgetWithText(FilledButton, 'Start my climb');
       expect(tester.widget<FilledButton>(climb).onPressed, isNotNull);
 
@@ -339,14 +341,14 @@ void main() {
       await tester.pump();
       await tester.tap(climb);
       await tester.pump();
-      expect(burst, findsOneWidget);
-      expect(mountain, findsNothing);
+      // N36: no confetti of its own.
+      expect(burst, findsNothing);
       final seen = await observeHome(tester, frames: 200);
       await tester.pumpAndSettle();
 
       expect(seen.steps, [0, 1]);
       // Home may already be under the first-day paywall.
-      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets(
@@ -412,7 +414,8 @@ void main() {
       expect(sink.named('paywall_viewed').single.parameters,
           {'source': 'day0_after_climb'});
       expect(sink.named('mode_selected'), isEmpty);
-      expect(storage.claimedFlags, {StorageService.day0PaywallFlag});
+      expect(storage.claimedFlags,
+          {StorageService.firstRunZoomFlag, StorageService.day0PaywallFlag});
     });
 
     testWidgets(
@@ -429,7 +432,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(premium, findsNothing);
       // Home may already be under the first-day paywall.
-      expect(find.text('1 / 31 steps', skipOffstage: false), findsOneWidget);
+      expect(find.text('1 / 31', skipOffstage: false), findsOneWidget);
 
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       for (var i = 0; i < 120; i++) {
@@ -489,8 +492,206 @@ void main() {
       }
 
       expect(mountain, findsOneWidget);
-      expect(storage.claimedFlags, isEmpty);
+      // Only the first run's zoom (Batch 6, M2): no paywall flag.
+      expect(storage.claimedFlags, {StorageService.firstRunZoomFlag});
       expect(sink.named('paywall_viewed'), isEmpty);
+    });
+  });
+
+  group('first run zoom (Batch 6, M2, M14)', () {
+    final premium = find.byType(PremiumScreen);
+    MonthlyMountain mtn(WidgetTester tester) =>
+        tester.widget<MonthlyMountain>(mountain);
+
+    Future<void> untilMountain(WidgetTester tester) async {
+      for (var i = 0; i < 200 && mountain.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+    }
+
+    testWidgets(
+        'Home first draws the whole mountain (K-c) on the step before; the '
+        'zoom ends before the step, and the paywall comes last',
+        (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      expect(mtn(tester).zoom, isNotNull);
+      expect(mtn(tester).zoom!.value, 0);
+      expect(mtn(tester).completedDays, 0);
+      // While the zoom is on, the step waits.
+      var zoomEnded = false;
+      for (var i = 0; i < 400; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        if (premium.evaluate().isNotEmpty) break;
+        final m = mtn(tester);
+        if (m.zoom != null) expect(m.completedDays, 0);
+        if (m.zoom == null) zoomEnded = true;
+      }
+      expect(zoomEnded, isTrue);
+      expect(premium, findsOneWidget);
+      expect(mtn(tester).completedDays, 1);
+      expect(storage.claimedFlags, contains(StorageService.firstRunZoomFlag));
+      expect(sink.named('month_zoom_ended').single.parameters, {
+        'theme_id': 'green_slope',
+        'outcome': 'completed',
+        'trigger': 'first_run',
+      });
+    });
+
+    testWidgets(
+        'Batch 5 (N15) with M14, end to end: the Welcome celebration over the '
+        'results, then the results, Start my climb, Home, the zoom, the '
+        'step and Premium, in that order', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      for (var i = 0; i < 5; i++) {
+        if (i == 0) {
+          await tester.enterText(find.byType(TextField).first, 'wrong');
+          await tester.pump();
+          await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+        } else {
+          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+        }
+        await tester.pumpAndSettle();
+      }
+      final order = <String>[];
+      // 1. The celebration, over the results, with its own burst (the
+      // first day's only confetti).
+      expect(celebrationFinder, findsOneWidget);
+      expect(resultsTitle, findsOneWidget);
+      expect(mountain, findsNothing);
+      order.add('celebration');
+      await closeCelebration(tester);
+      // 2. The results, their button "Start my climb".
+      expect(resultsTitle, findsOneWidget);
+      expect(
+          find.widgetWithText(FilledButton, 'Start my climb'), findsOneWidget);
+      order.add('results');
+      await tester.tap(find.text('Start my climb'));
+      await tester.pump();
+      // N36: one confetti on the first day, the layer's; none here.
+      expect(burst, findsNothing);
+      order.add('start my climb');
+      await untilMountain(tester);
+      order.add('home');
+      expect(mtn(tester).zoom, isNotNull);
+      expect(mtn(tester).completedDays, 0);
+      var zoomEnded = false, stepped = false;
+      for (var i = 0; i < 400 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        final m = mtn(tester);
+        if (!zoomEnded && m.zoom == null) {
+          zoomEnded = true;
+          order.add('zoom');
+        }
+        if (!stepped && m.completedDays == 1) {
+          stepped = true;
+          order.add('step');
+        }
+      }
+      expect(premium, findsOneWidget);
+      order.add('premium');
+      expect(order, [
+        'celebration',
+        'results',
+        'start my climb',
+        'home',
+        'zoom',
+        'step',
+        'premium',
+      ]);
+    });
+
+    testWidgets(
+        'a tap on the mountain skips the zoom; the step and the '
+        'paywall still follow', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      // Into the zoom (after the scroll and the pause).
+      // Into the zoom: the scroll and the pause, frame by frame.
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(mtn(tester).zoom!.value, greaterThan(0));
+      // The card's upper part: the lower one may be under the tab bar.
+      final card = tester.getRect(mountain);
+      await tester.tapAt(card.topCenter + const Offset(0, 60));
+      await tester.pump();
+      expect(mtn(tester).zoom, isNull);
+      for (var i = 0; i < 160 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(premium, findsOneWidget);
+      expect(mtn(tester).completedDays, 1);
+      expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
+          'skipped');
+    });
+
+    testWidgets(
+        'opening the Daily Test (its result) during the zoom ends it; '
+        'after it closes, the step and the paywall follow', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      setReduceMotion(tester, false);
+      await tester.pump();
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      // Into the zoom: the scroll and the pause, frame by frame.
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(mtn(tester).zoom!.value, greaterThan(0));
+      final today = find.text('Review results');
+      await tester.ensureVisible(today);
+      await tester.pump();
+      expect(mtn(tester).zoom, isNotNull);
+      await tester.tap(today);
+      await tester.pumpAndSettle();
+      expect(resultsTitle, findsOneWidget);
+      expect(mtn(tester).zoom, isNull);
+      expect(premium, findsNothing);
+      await tester.pageBack();
+      for (var i = 0; i < 200 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(premium, findsOneWidget);
+      expect(mtn(tester).completedDays, 1);
+      expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
+          'daily_test_opened');
+    });
+
+    testWidgets(
+        'Reduce Motion: a cross-fade, not a zoom, and the chain '
+        'goes on', (tester) async {
+      await pumpApp(tester);
+      await completeOnboarding(tester);
+      await takeDailyTest(tester, answerFirst: true);
+      await tester.tap(find.text('Start my climb'));
+      await untilMountain(tester);
+      var crossFaded = false;
+      for (var i = 0; i < 120 && premium.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+        if (mountain.evaluate().isNotEmpty && mtn(tester).zoomCrossFade) {
+          crossFaded = true;
+        }
+      }
+      expect(crossFaded, isTrue);
+      expect(premium, findsOneWidget);
+      expect(sink.named('month_zoom_ended').single.parameters!['outcome'],
+          'reduce_motion');
     });
   });
 }

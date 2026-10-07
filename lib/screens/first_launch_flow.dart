@@ -91,6 +91,9 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
         await _dailyTestService.seedDayZeroSet();
       } catch (_) {}
       await widget.storageService.saveUserProfile(profile);
+      // The goal before the event, so `onboarding_completed` carries it.
+      unawaited(widget.analyticsService
+          .setLearningGoalProperty(profile.learningGoal));
       unawaited(widget.analyticsService.onboardingCompleted());
       if (!mounted) return;
       setState(() {

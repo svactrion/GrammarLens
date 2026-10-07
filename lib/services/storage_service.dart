@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
+import 'package:flutter/foundation.dart'
+    show kDebugMode, kReleaseMode, visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/ai_consent.dart';
+import '../models/climb_theme.dart';
 import '../models/app_theme_mode.dart';
 import '../models/app_text_size.dart';
 import '../models/daily_test_question.dart';
@@ -27,7 +29,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 22;
+  static const _dbVersion = 23;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -132,8 +134,38 @@ class StorageService {
     )
   ''';
 
+  /// The Monthly Climb theme each month was shown with (see
+  /// [resolveClimbMonthTheme]): one row per month key (`YYYY-MM`), written
+  /// once, the first time the current month's theme is resolved, and never
+  /// changed. No backfill: a past month without a row was Green Slope, the
+  /// only theme 1.0 had.
+  static const _createClimbMonthThemesTable = '''
+    CREATE TABLE IF NOT EXISTS climb_month_themes (
+      month TEXT PRIMARY KEY NOT NULL,
+      theme_id TEXT NOT NULL,
+      assigned_at TEXT NOT NULL
+    )
+  ''';
+
+  /// The theme of every month before themes were stored, and the fallback.
+  static const String greenSlopeThemeId = ClimbThemes.greenSlopeId;
+
   /// The key for the paywall shown once, on Home, after the first climb.
   static const String day0PaywallFlag = 'day0_paywall';
+
+  /// Batch 6 (M6, M20): the month transition card for [year]/[month] was
+  /// dismissed. Written on dismissal, so a card open when the app is
+  /// closed shows again.
+  static String monthCardSeenFlag(int year, int month) =>
+      'month_card:${_monthKey(year, month)}';
+
+  /// Batch 6 (M6): the month-change zoom for [year]/[month] has started.
+  /// Claimed when it starts, so it never plays twice.
+  static String monthZoomFlag(int year, int month) =>
+      'month_zoom:${_monthKey(year, month)}';
+
+  /// Batch 6 (M2, M14): the first run's zoom has started.
+  static const String firstRunZoomFlag = 'first_run_zoom';
 
   static const _createPracticeSettingsTable = '''
     CREATE TABLE IF NOT EXISTS practice_settings (
@@ -317,6 +349,7 @@ class StorageService {
         await db.execute(_createWelcomeBadgeTable);
         await db.execute(_createAiConsentTable);
         await db.execute(_createOneTimeFlagsTable);
+        await db.execute(_createClimbMonthThemesTable);
       },
       // Incremental, per-version steps — replaying exactly what each past
       // schema bump actually added (each step below cites the commit that
@@ -493,6 +526,13 @@ class StorageService {
         if (oldVersion < 22) {
           await db.execute(_createOneTimeFlagsTable);
         }
+
+        // v22 -> v23: climb_month_themes, empty. No backfill: every month
+        // before this was Green Slope, which is what a month without a row
+        // reads as (see [resolveClimbMonthTheme]).
+        if (oldVersion < 23) {
+          await db.execute(_createClimbMonthThemesTable);
+        }
       },
     );
   }
@@ -559,6 +599,11 @@ class StorageService {
     }
     await batch.commit(noResult: true);
   }
+
+  /// A [getWeakSpots] limit that reads every saved weak spot: Premium
+  /// Review's Suggested Focus is chosen from all of them, not from the ten
+  /// the list shows.
+  static const int allWeakSpots = 1000000000;
 
   Future<List<WeakSpot>> getWeakSpots({
     int limit = 10,
@@ -860,6 +905,33 @@ class StorageService {
         .split('T')[0];
   }
 
+  /// How old, in days, an unfinished Daily Test set must be before
+  /// [deleteStaleDailyTestSets] removes it.
+  static const int staleDailyTestSetDays = 7;
+
+  /// Deletes Daily Test sets that were never completed and whose day is more
+  /// than [staleDailyTestSetDays] days before today: prepared days nobody
+  /// opened and abandoned tests (docs/1.1.0-shared-daily-test.md §7, batch
+  /// C3). Only today's and tomorrow's rows are ever read, so these can never
+  /// be shown again. Completed sets are always kept — they hold the only
+  /// record of the answers — and so is everything from the last
+  /// [staleDailyTestSetDays] days, today and tomorrow included. Returns how
+  /// many rows were deleted. Run once per launch.
+  Future<int> deleteStaleDailyTestSets() async {
+    final today = DateTime.parse(_todayKey());
+    final cutoff =
+        DateTime(today.year, today.month, today.day - staleDailyTestSetDays)
+            .toIso8601String()
+            .split('T')[0];
+    final db = await _database;
+    // Day keys are YYYY-MM-DD, so text order is calendar order.
+    return db.delete(
+      'daily_test_sets',
+      where: 'completed_at IS NULL AND day < ?',
+      whereArgs: [cutoff],
+    );
+  }
+
   /// Cache the generated set for its original day. Unfinished sets retain
   /// main's replacement behavior; completed sets cannot be reset by a stale
   /// generation request, which would allow duplicate completion writes.
@@ -959,6 +1031,12 @@ class StorageService {
         'skipped_count': completion.skipped,
         'rule_version': DailyTestCompletion.ruleVersion,
       });
+
+      // A completed Daily Test is a use of this month's climb: record the
+      // theme it is shown with, if that is not on record yet.
+      final setMonth = setDay.split('-');
+      await _resolveClimbMonthTheme(
+          txn, int.parse(setMonth[0]), int.parse(setMonth[1]));
 
       // Only a row that moves the avatar (`step = 1`) can earn the badge,
       // and only the first such row ever.
@@ -1182,6 +1260,89 @@ class StorageService {
     );
   }
 
+  /// The theme id of the Monthly Climb for [year]/[month].
+  ///
+  /// - A month with a row reads its row.
+  /// - A past month without a row is [greenSlopeThemeId]: it was shown
+  ///   before themes were stored, when Green Slope was the only theme.
+  /// - The current month without a row gets one now, written once
+  ///   (`INSERT OR IGNORE`) and never changed afterwards.
+  /// - A future month is not written; it reads what it would get today.
+  ///
+  /// "Current" is the Monthly Climb's own local calendar month
+  /// ([clockForTesting], [_monthKey]), the same one medal progress and
+  /// finalization use.
+  Future<String> resolveClimbMonthTheme(int year, int month) async {
+    final db = await _database;
+    return db.transaction((txn) => _resolveClimbMonthTheme(txn, year, month));
+  }
+
+  /// Every stored month theme, by (year, month) (Batch 5, N17: Profile
+  /// draws each month's medal in that month's theme). Read only: nothing
+  /// is written. A month with no row is not in the map; a past one reads as
+  /// Green Slope ([resolveClimbMonthTheme]).
+  Future<Map<(int, int), String>> getClimbMonthThemes() async {
+    final db = await _database;
+    final rows =
+        await db.query('climb_month_themes', columns: ['month', 'theme_id']);
+    return {
+      for (final row in rows)
+        (
+          int.parse((row['month'] as String).split('-')[0]),
+          int.parse((row['month'] as String).split('-')[1]),
+        ): row['theme_id'] as String,
+    };
+  }
+
+  Future<String> _resolveClimbMonthTheme(
+    DatabaseExecutor db,
+    int year,
+    int month,
+  ) async {
+    if (month < 1 || month > 12 || year < 1 || year > 9999) {
+      throw ArgumentError('Invalid calendar month');
+    }
+    final key = _monthKey(year, month);
+    Future<String?> stored() async {
+      final rows = await db.query('climb_month_themes',
+          columns: ['theme_id'], where: 'month = ?', whereArgs: [key]);
+      return rows.isEmpty ? null : rows.single['theme_id'] as String;
+    }
+
+    final existing = await stored();
+    if (existing != null) return existing;
+
+    final now = clockForTesting();
+    final current = _monthKey(now.year, now.month);
+    if (key.compareTo(current) < 0) return greenSlopeThemeId;
+    final themeId = _themeForNewMonth(year, month);
+    if (key != current) return themeId;
+
+    await db.insert(
+      'climb_month_themes',
+      {
+        'month': key,
+        'theme_id': themeId,
+        'assigned_at': now.toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+    return (await stored())!;
+  }
+
+  /// The theme a month gets when its row is first written: the one it is
+  /// shown with, so a scheduled theme that is not ready yet is recorded as
+  /// Green Slope ([ClimbThemeRotation.shownFor]).
+  static String _themeForNewMonth(int year, int month) =>
+      themeForNewMonthForTesting(year, month).id;
+
+  /// Test-only seam over [ClimbThemeRotation.shownFor], same pattern as
+  /// [clockForTesting]: lets a test make a theme "ready" to prove a month's
+  /// stored theme does not change afterwards. Never assigned outside a test.
+  @visibleForTesting
+  static ClimbTheme Function(int year, int month) themeForNewMonthForTesting =
+      ClimbThemeRotation.shownFor;
+
   static String _monthKey(int year, int month) =>
       '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}';
 
@@ -1302,6 +1463,54 @@ class StorageService {
     });
   }
 
+  /// Whether [key] has been claimed ([claimOneTimeFlag]), without claiming
+  /// it. Throws if the database cannot be read.
+  Future<bool> hasOneTimeFlag(String key) async {
+    final db = await _database;
+    final rows = await db.query('one_time_flags',
+        columns: ['key'], where: 'key = ?', whereArgs: [key], limit: 1);
+    return rows.isNotEmpty;
+  }
+
+  /// The debug panel's "Reset local data" (Batch 5, N27): closes and
+  /// deletes this app's whole SQLite database, so the next read finds a
+  /// fresh one and the app is back to its first launch. Every table goes:
+  /// the profile (name, avatar, goal), Daily Test sets and their answers,
+  /// mistakes and practice counts, the climb's ledger, the month themes,
+  /// medals and the Welcome badge, the one-time flags (first-day paywall,
+  /// zooms, month cards), AI consent, appearance and text size, practice
+  /// and review settings, usage counters, the debug entitlement override
+  /// and the anonymous device id the proxy counts quota by.
+  ///
+  /// Nothing outside this database is touched: RevenueCat's purchase
+  /// state (kept by the App Store and RevenueCat's own SDK storage),
+  /// Firebase's app instance and Crashlytics, and the shared Daily Test
+  /// sets on the proxy. A no-op in release builds.
+  Future<void> resetAllLocalData() async {
+    if (kReleaseMode || !DebugTools.enabledForTesting) return;
+    final db = _db;
+    _db = null;
+    await db?.close();
+    await deleteDatabase(join(await getDatabasesPath(), _dbName));
+  }
+
+  /// Whether this device used the Monthly Climb in a month before
+  /// [year]/[month]: a month theme recorded (Home was shown that month,
+  /// from 1.1.0 on) or a Daily Test completed (also 1.0's history). The
+  /// month transition card goes only to such a returning user (Batch 6,
+  /// M2: no card in the month a user starts in).
+  Future<bool> hasClimbHistoryBefore(int year, int month) async {
+    final key = _monthKey(year, month);
+    final db = await _database;
+    final rows = await db.rawQuery('''
+      SELECT 1 FROM climb_month_themes WHERE month < ?
+      UNION ALL
+      SELECT 1 FROM climb_daily_entries WHERE day < ?
+      LIMIT 1
+    ''', [key, '$key-01']);
+    return rows.isNotEmpty;
+  }
+
   /// Settings' "reset data" (PRD v2 §4) — clears practice history (logged
   /// mistakes and per-topic counts) so the app reads like a fresh install
   /// without actually losing the guest identity: name, learning goal, and
@@ -1328,8 +1537,9 @@ class StorageService {
     if (!(kDebugMode && DebugTools.enabledForTesting)) return;
     final db = await _database;
     await db.delete('user_profile');
-    // The first-day paywall is part of onboarding: a reset brings it back.
+    // The first-day paywall and the first run's zoom are part of
+    // onboarding: a reset brings them back.
     await db.delete('one_time_flags',
-        where: 'key = ?', whereArgs: [day0PaywallFlag]);
+        where: 'key IN (?, ?)', whereArgs: [day0PaywallFlag, firstRunZoomFlag]);
   }
 }

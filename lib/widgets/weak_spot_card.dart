@@ -4,6 +4,7 @@ import '../models/error_entry.dart';
 import '../models/topic.dart';
 import '../utils/text_format.dart';
 import 'locked_premium_pill.dart';
+import '../theme.dart';
 
 /// A weak spot's card, shared by Home's "Your weak spots" section and
 /// Review's list — previously two separate, drifted copies of the same
@@ -36,11 +37,27 @@ import 'locked_premium_pill.dart';
 /// `topic.title` — and moving the explanation to its own line in the
 /// body, never standing in for the title. The topic-name subtitle is
 /// shown only when it says something the title doesn't already.
+///
+/// 1.2.0 look (the brief's weak spot tile, Review's list in the mockup): a
+/// list card (radius 22, padding 17) with the topic, when shown, as a small
+/// eyebrow in linkAndActive above the title; the title in 17/800 and free
+/// to wrap rather than cut off; the explanation as a muted excerpt; and the
+/// frequency stat on the info surface. Texts are unchanged.
+///
+/// [withAction] (Home since 1.2.0 Batch 5, the mockup's Home card): no
+/// excerpt and no trailing chevron or tag; the frequency as a muted line,
+/// then the card's action as its last line — "Practice with Premium" with
+/// a lock when [locked], "Practice this" otherwise. The action is a label
+/// of the card's one tap target ([onTap]), not a second button.
 class WeakSpotCard extends StatelessWidget {
   final Topic topic;
   final WeakSpot spot;
   final bool locked;
   final VoidCallback onTap;
+  final bool withAction;
+
+  /// The brief's list card radius.
+  static const _radius = 22.0;
 
   const WeakSpotCard({
     super.key,
@@ -48,10 +65,12 @@ class WeakSpotCard extends StatelessWidget {
     required this.spot,
     this.locked = false,
     required this.onTap,
+    this.withAction = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (withAction) return _buildWithAction(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final muted = colorScheme.onSurfaceVariant;
@@ -64,44 +83,47 @@ class WeakSpotCard extends StatelessWidget {
     final explanation = spot.latestExplanation;
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_radius),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_radius),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(17),
           child: Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.bodyLarge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     if (topicSubtitle != null) ...[
-                      const SizedBox(height: 4),
                       Text(
                         topicSubtitle,
-                        style:
-                            theme.textTheme.bodySmall?.copyWith(color: muted),
+                        style: theme.textTheme.labelSmall
+                            ?.withWeight(FontWeight.w800)
+                            .copyWith(
+                                color: colorScheme.secondary,
+                                letterSpacing: 0.8),
                       ),
+                      const SizedBox(height: 7),
                     ],
+                    Text(title, style: theme.textTheme.titleMedium),
                     if (explanation != null) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Text(
                         explanation,
-                        style: theme.textTheme.bodyMedium,
+                        style:
+                            theme.textTheme.bodySmall?.copyWith(color: muted),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
+                        horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
@@ -110,20 +132,89 @@ class WeakSpotCard extends StatelessWidget {
                       ),
                       child: Text(
                         formatFrequencyStat(spot.frequency, spot.lastSeen),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSecondaryContainer,
-                        ),
+                        style: theme.textTheme.labelSmall
+                            ?.withWeight(FontWeight.w800)
+                            .copyWith(color: colorScheme.onSecondaryContainer),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               locked
                   ? const LockedPremiumPill()
                   : Icon(Icons.chevron_right_rounded, color: muted),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWithAction(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final link = colorScheme.secondary;
+    final title = humanizeSlug(spot.errorType);
+    final topicSubtitle = topic.title != title ? topic.title : null;
+    final action = locked ? 'Practice with Premium' : 'Practice this';
+
+    return Semantics(
+      container: true,
+      button: true,
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(_radius),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(17, 17, 17, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (topicSubtitle != null) ...[
+                  Text(
+                    topicSubtitle,
+                    style: theme.textTheme.labelSmall
+                        ?.withWeight(FontWeight.w800)
+                        .copyWith(color: link, letterSpacing: 0.8),
+                  ),
+                  const SizedBox(height: 7),
+                ],
+                Text(title, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 6),
+                Text(
+                  formatFrequencyStat(spot.frequency, spot.lastSeen),
+                  style: theme.textTheme.labelMedium
+                      ?.withWeight(FontWeight.w600)
+                      .copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                // The brief's link row: at least 44 pt tall.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 44),
+                  child: Row(
+                    children: [
+                      if (locked) ...[
+                        Icon(Icons.lock_rounded, size: 15, color: link),
+                        const SizedBox(width: 6),
+                      ],
+                      Flexible(
+                        child: Text(
+                          action,
+                          style:
+                              theme.textTheme.labelLarge?.copyWith(color: link),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(Icons.arrow_forward_rounded, size: 15, color: link),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

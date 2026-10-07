@@ -1,7 +1,7 @@
 name: grammar_lens
 description: An AI-powered grammar coach for people who learned English by speaking it.
 publish_to: 'none'
-version: 1.0.0+3
+version: 1.2.0+5
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -19,9 +19,13 @@ dependencies:
   firebase_crashlytics: ^4.1.6
   purchases_flutter: ^10.10.1
   url_launcher: ^6.3.1
+  intl: ^0.20.3
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  # App Store screenshot capture only (tool/screenshots/).
+  flutter_driver:
     sdk: flutter
   flutter_lints: ^4.0.0
   sqflite_common_ffi: ^2.4.2
@@ -39,6 +43,22 @@ flutter:
     # include subfolders, so the design sources in assets/icons/_source/
     # are not bundled.
     - assets/icons/
+    # The Daily Test's fallback pool (lib/data/fallback_pool.dart). The file
+    # only: the folder may hold notes that must not ship.
+    - assets/daily_test_fallback/pool.json
+    # Monthly Climb's illustrated backgrounds, one folder per theme
+    # (lib/models/climb_theme.dart), exported by
+    # tool/scene_art/export_assets.py from docs/design/scene-art/source/.
+    - assets/climb/green_slope/
+    - assets/climb/ember_peak/
+    - assets/climb/glacier_peak/
+    - assets/climb/red_canyon/
+    # The save point objects, the summit flag and the C5 signpost, shared
+    # by every theme, from tool/scene_art/export_objects.py.
+    - assets/climb/objects/
+    # The medals (Batch 5, N1–N3, N23): 12 monthly (theme × tier) and the
+    # Welcome badge, composed by tool/medals/export_medal_assets.py.
+    - assets/medals/
   fonts:
     - family: NunitoSans
       fonts:

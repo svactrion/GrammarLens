@@ -6,12 +6,726 @@
 |---|---|---|
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
-| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0 |
-| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | In progress. Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); a gate rule is proposed, not built. Next: cron deploy, merge into `main`, then the client (C1–C3) and release (report §16). Client not started. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
+| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0. **Updated (Ahmet, 2026-10-03; plan superseded 2026-10-07):** resubmitted 2026-09-28; the app version (build 3), both subscriptions and the subscription group "Waiting for Review"; not withdrawn until 1.1.0 is ready, then: approved → released, 1.1.0 as an update; still in review → withdrawn, the version becomes 1.1.0 with the new build; rejected → fixed inside 1.1.0 (section "1.1.0 side tracks", "1.0.0's state"). Manual release selected (Ahmet verified, 2026-10-03). **Updated (Ahmet, 2026-10-07):** rejected a second time on 2026-10-06 (Guideline 3.1.2(c): no Terms of Use / EULA link in the App Store metadata). The fix was metadata only, no new build: EULA, Privacy and Terms lines added to the description, answered in Resolution Center and resubmitted the same day; waiting for review, manual release. **Plan (2026-10-07), replaces the 2026-10-03 one:** 1.0.0 is not withdrawn; 1.1.0 is skipped; 1.2.0 goes as an update after 1.0.0 is approved |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Skipped (Ahmet, 2026-10-07): never submitted; everything in it ships in 1.2.0.** *(Kept as written below.)* **Release candidate (2026-10-04): what ships, what waits and the known flaws are in "1.1.0 — release candidate" below.** Screenshots approved and the iPad simulator check done (Ahmet, 2026-10-04); the other release items are open. Not submitted. **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist). **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. *(2026-10-04: filled — 7 sets, 10 owner corrections, approved by Ahmet.)* Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
+| 1.2.0 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; the paywall with trial eligibility; multiline answers. Carries all of 1.1.0 | Version `1.2.0+5` (2026-10-07); device checks passed (2026-10-07); TestFlight build 5 not yet built or uploaded (owner). Goes to review as an update once 1.0.0 is approved (plan 2026-10-07). Checklist: "1.2.0 pre-release checklist" below |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
 that say "v3" are kept as written.
+
+### 1.1.0 — release candidate (2026-10-04)
+
+A summary of the sections below; where they differ, the dated entries are
+the record. Not submitted to App Store review; `main` does not have it.
+
+*(Ahmet, 2026-10-07: 1.1.0 is skipped and will not be submitted.
+Everything below ships in 1.2.0; its open release items carry over to
+1.2.0 where they still apply.)*
+
+**What ships in 1.1.0** (code on `1.1.0`, automated tests; device checks
+as recorded in each batch's line below):
+
+- **Shared Daily Test.** One set per date for every user, read from
+  `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback);
+  `acceptedAnswers` graded as correct, with the "Also correct: …" line on
+  the result card. The client never calls the per-device generation route.
+  The fallback is a bundled pool of 7 owner-approved live sets
+  (2026-09-30 – 2026-10-06) with 10 owner corrections (P13), rotated by
+  date; an unreadable pool falls back to the day-0 questions.
+- **Mountain of Learning** (Home's Monthly Climb, renamed on screen): four
+  illustrated themes in light and dark (Green Slope, Ember Peak, Glacier
+  Peak, Red Canyon), one per month by a fixed rotation starting with Green
+  Slope in October 2026; the trail taken from the image; save points
+  (First Camp, Halfway Hut, Mountain Spring, High Camp) and the Summit flag
+  that light up when reached, with their names shown on arrival; the C5
+  signpost.
+- **Medals and the collection.** Themed medals (12: theme × tier) and the
+  Welcome badge; a celebration when a tier is reached; Profile's "Medal
+  collection" shelf with a detail per medal and a "This month" bar with
+  the thresholds.
+- **Month transition.** A month card (last month's summary, or a fresh
+  start) and, once a month, a zoom from the whole mountain to the avatar.
+- **Launch screen** with the logo and wordmark animation (cold start only;
+  static with Reduce Motion).
+- **Four new avatars** (Bird, Fox, Panda, Sloth); the avatar carousel
+  loops.
+- **iPad layout.** The content column is centred and capped at 640 pt, the
+  floating nav bar held to it (P1, P2); iPhones unchanged.
+- **Fixes and clean-ups:** Home's greeting no longer loses the user's name
+  at 320 pt; unfinished Daily Test sets older than 7 days are deleted at
+  launch; the unreachable "Today's limit reached" screen is removed.
+- **Analytics:** `set_source` (`shared` / `fallback`) and `set_date` on
+  `daily_test_completed`, `theme_id` on `mode_selected` (Daily Test),
+  `month_card_shown`, `month_card_dismissed`, `month_zoom_ended`,
+  `save_point_reached`, `medal_tier_reached` (`analytics-plan.md`). Not yet
+  seen in DebugView; their new dimensions not yet registered.
+- Debug and profile builds only (not in a release build): the in-app debug
+  panel (Settings → Debug) and the sample collection.
+
+**Moved out of 1.1.0:**
+
+- **1.1.x:** Batch 7, one-time environment motion (Ahmet, 2026-10-03).
+- **The first job after 1.1.0 (P14, Ahmet, 2026-10-04):** other
+  accepted answers on the live shared sets, generated and delivered on the
+  server side, independent of an app release (the deferred second-model
+  check call, P7a–c, or a new version of the generation rules).
+- **After 1.1.0, version not set:** merging Settings' two developer
+  sections (debug builds only; not user-visible).
+- **1.2:** the items under "Parked for 1.2" below (a "see the mountain"
+  button, a monthly learning report, a mid-month return card, a
+  "reachable tier" hint, tapping a save point, a save point rest day, a
+  summit challenge, a month-card button to the paywall).
+- **Later, not scheduled:** the items in `1.1.0-design-side-tracks.md`,
+  "Deferred to a later version" (the lens transition on the launch screen,
+  a fifth theme, remote themes, earned avatars, and others).
+
+**Known flaws shipping in 1.1.0** (accepted or not fixed; each is recorded
+below with its source):
+
+- iPad: at the month-change zoom's first frame 59 % of the mountain window
+  is the blurred band (P3, accepted). Not seen on a real iPad; on iPadOS 26
+  `UIRequiresFullScreen` is deprecated and whether the app opens full
+  screen or in a window was not recorded.
+- While the month card is open, the avatar on START is under the sheet at
+  320 pt, 375 × 667 and 430 × 932.
+- If the first-launch flow is quit half way, the first run's zoom does not
+  play.
+- 320 × 568: the month card's summary scrolls, and while it scrolls a
+  downward drag does not close it.
+- 320 pt: the "Summit" label covers the avatar.
+- 29–31-day months: on one step the avatar is drawn over the C5 signpost.
+- The medal's stars are unreadable below 48 pt, "WELCOME" below 96 pt.
+- The seam between the sharp scene and the blurred K-c backdrop (accepted
+  on the device).
+- The launch screen follows the system appearance, not the in-app theme
+  setting (since 1.0.0).
+- Premium at 375 × 667: the plan cards do not clear the fixed footer
+  without scrolling (open since 1.0.0).
+- The shared sets have no second-model check before publishing (Path A);
+  the "Also correct" line's wording is a placeholder.
+- Answers are graded by plain text matching, and the live shared sets
+  carry no `acceptedAnswers` (P12): a right or defensible answer the key
+  does not name is "Needs work" and goes into the error profile. In the
+  owner's review of 35 live questions this was 6. Contractions (`'m` /
+  `am`) and spelling variants (`neighbourhood` / `neighborhood`) are not
+  normalized. The fallback pool's known cases are corrected (P13); the
+  live sets wait for P14.
+- `validateSharedSet` checks the structure, not the grammar: an
+  `error_correction` sentence that is already correct, a hint that
+  contradicts the key, or a predicted "wrong" answer that is right all
+  pass it (P12).
+- Question screen (Practice and Daily Test): when an answer is longer than
+  one line, the answer field scrolls sideways instead of wrapping (the
+  `TextField` in `practice_screen.dart` and `daily_test_screen.dart` is
+  single-line). The user cannot see the whole answer, and getting back to
+  its start is awkward. Recorded 2026-10-05 (owner); also in 1.1.0.
+  - **Fixed in 1.2.0 (Question V2, additional screens Batch 10,
+    2026-10-05):** the answer field is multiline on both screens; it wraps,
+    grows and then scrolls inside itself. Build log 2026-10-05, Batch 10.
+    Automated tests and real-font renders only; **the device check is
+    open.**
+  - **Whether to carry the fix into 1.1.0 is the owner's decision; it is
+    not carried over now.**
+- **The paywall does not check trial eligibility** (1.0.0 and 1.1.0 have
+  it too). With no introductory price the disclosure still says "Free
+  trial" (`premium_screen.dart`, `_disclosureText`), the button always
+  reads "Start free trial", and `checkTrialOrIntroductoryPriceEligibility`
+  is never called, so a user who already used a trial is still promised
+  one. Found in the additional screens Batch 0 report (§4a).
+  - **Fixed in 1.2.0 (the paywall, additional screens Batch 12,
+    2026-10-05):** eligibility is checked per product; a trial is named
+    only when the selected product has one and the user is eligible;
+    otherwise the price and period; unknown eligibility promises no trial.
+    Build log 2026-10-05, Batch 12. Automated tests only; **sandbox check
+    open.**
+  - **Whether to carry the fix into 1.1.0 is the owner's decision; it is
+    not carried over now.**
+- **Text is drawn too thin on iOS (since 1.0.0).** The bundled font is a
+  variable font (`assets/fonts/NunitoSans-Variable.ttf`, default instance
+  ExtraLight 200), and on an iOS device `FontWeight` alone does not move
+  its `wght` axis. Every weight is drawn as ExtraLight with synthetic
+  thickening. Confirmed on the owner's iPhone 14 Plus with the Theme
+  Preview weight table (2026-10-05); the test engine resolves weights, so
+  no test showed it.
+  - 1.0.0 and 1.1.0 have it: the same font, no `FontVariation` anywhere.
+  - **Fixed in 1.2.0:** every weight also sets `FontVariation('wght', n)`
+    through `TextStyle.withWeight`, guarded by
+    `test/font_weight_guard_test.dart`; build log 2026-10-05, Batch 6.
+  - **Whether to carry the fix into 1.1.0 is the owner's decision; it is
+    not carried over now.**
+- Not measured: frame times and memory on a device.
+
+### 1.2.0 additional screens (Paywall, Onboarding, Question V2) — owner decisions 2026-10-05
+
+Package: `docs/design/1.2.0-additional/`; Batch 0 report
+`batch0-report.md` there. Order: Question V2 → Onboarding → Paywall.
+
+- **Question V2:** built in Batch 10 (2026-10-05), awaiting the device
+  check. Decisions O1 (no screen-only muted/info overrides; warm/onWarm
+  added), O4 (autocorrect, suggestions and smart punctuation stay off),
+  O5 (Daily Test keeps "Finish"), O6 (Topic Practice answers: 2,000
+  characters, the count past 1,800), O12 (fill in the blank starts at one
+  line, the other types at two), the mockup's orange primary action.
+- **Onboarding:** built in Batch 11 (2026-10-05), awaiting the device
+  check. Two steps after Welcome (O7); the name stays **required** (the
+  brief's optional name is not applied), at most 40 characters in
+  onboarding and Profile (O2); the goal is optional (`skipped`) and goes
+  to analytics as the `learning_goal` user property (Batch 0 report §3d,
+  option B). The on-screen privacy texts and `analytics-plan.md` are
+  updated; the rest is in the checklist below.
+- **Question V2 revision (owner, after the Batch 10 device check):** a
+  capital at the start of each sentence for sentence answers (not fill in
+  the blank); autocorrect stays off.
+- **Redeem code: deferred** (owner, 2026-10-05). Apple subscription offer
+  codes work without any in-app UI (App Store account settings, or the
+  redemption URL). For the first campaign the paywall gets "Have a code?"
+  → `Purchases.presentCodeRedemptionSheet()`. **Never a code check of our
+  own** (App Review 3.1.1).
+- **Paywall:** built in Batch 12 (2026-10-05), awaiting the device and
+  sandbox check: the mockup's layout, the trial-eligibility fix (Known
+  flaws above), a pending purchase (O10), three companions (O11). Redeem
+  codes deferred.
+- **Onboarding revision (owner, after the Batch 11 device check):** the
+  companion caption is the name only; a tap outside the name field or the
+  keyboard's Done closes the keyboard and never moves on.
+
+#### 1.2.0 status after the final pass (2026-10-05)
+
+**Approved by the owner on the device** (both design packages): Home,
+Review, Profile, Topic Practice, Question V2, the two-step onboarding and
+the paywall. The final pass (build log 2026-10-05, "final pass") then
+changed, **without a device check yet**:
+
+- the two-colour wordmark ("Lens" brandOrange) on Home, onboarding, the
+  paywall and the launch screen, in every build; Welcome stays one colour;
+- the default text size: the scale moved one step up (Small 1.1, Medium
+  1.2, the default, Large 1.31); the brief's sizes are now at Small
+  (replaces Q5);
+- messages (snackbars) above the nav bar on tab screens and above the
+  keyboard while editing;
+- the remaining thin headings (Welcome, the results score, the loading
+  message, AI consent, the avatar picker, the premium offer card, the
+  length picker's selected length);
+- layouts that wrap instead of overflowing at the larger sizes (Home's
+  Daily Test card, the nav bar, the onboarding header, the results score).
+
+**Not designed in 1.2.0 (no mockup):** Welcome, the results screens, the
+weak spot detail, AI consent, Data, Credits, the avatar picker, the length
+picker, the loading view, the medal celebration. Rendered and reviewed
+in `docs/design/1.2.0/final-pass/`; findings in the build log; nothing
+changed there beyond the heading weights.
+
+**Decided 2026-10-06 (owner):** the button rule (built), two colours on
+dark Welcome (built), the paywall footer at 375 × 667 new Large accepted
+as an exception.
+
+**Paywall annual card (owner, 2026-10-06):** the yearly price's monthly
+equivalent ("≈ $4.17 per month", rounded half up from the store price,
+never RevenueCat's truncated string) is back as a small muted line in the
+annual card's left column, and a struck-through twelve-month monthly
+price ("$71.88") sits above the big price when the "Save %" badge shows.
+It was dropped in Batch 12 by following the mockup's "annual total big".
+Measured, built and tested (build log 2026-10-06); adds `intl` as a
+dependency. **Sandbox check passed on the owner's iPhone (2026-10-07):**
+"≈ $4.17 per month" and the struck "$71.88" as built. **Still open:** a
+non-USD storefront (deferred to after the release, Ahmet, 2026-10-07),
+VoiceOver, the largest text size.
+
+**Deferred:** redeem codes (above).
+
+#### 1.2.0 final screens (2026-10-06)
+
+Package `docs/design/1.2.0-final/`; results in its
+`ACCEPTANCE-RESULTS.md`; build log 2026-10-06. **Device check
+(owner, iPhone 14 Plus, 2026-10-07): the button rule, Data, Credits and
+Suggested Focus passed, with the final pass's wordmark and default text
+size; no screen changed.** Dark Welcome's wordmark (A2) and the other
+final-pass fixes (A3) were not named in that check. Built: the button rule (A1), dark Welcome's wordmark (A2), the
+final-pass fixes (A3), Premium Review's Suggested Focus (B), Data (C),
+Credits (D). Accepted exception: the paywall footer at 375 × 667, new
+Large (0.349 of the screen). Open for the owner: nothing blocking;
+"practice history" in the reset copy may be read as including the Daily
+Test (kept by the reset; wording unchanged).
+
+#### Three problems from 1.1.0, solved in 1.2.0
+
+| Problem (1.0.0 and 1.1.0 have it) | 1.2.0 fix | Verified |
+|---|---|---|
+| **Text drawn too thin on iOS.** The variable font's `wght` axis is not moved by `FontWeight`, so everything was ExtraLight with synthetic thickening. | Every weight also sets `FontVariation('wght', n)` through `TextStyle.withWeight`; guarded by `test/font_weight_guard_test.dart` (Batch 6). | On the device: the owner approved the weights after Batch 6 (build log, Batch 7). |
+| **The answer field scrolls sideways.** A one-line `TextField` on both question screens hid long answers. | Question V2: a multiline field that wraps, grows, then scrolls inside itself (Batch 10). | On the device: Question V2 approved by the owner (build log, Batch 11). |
+| **The paywall promises a trial to everyone.** No eligibility check; "Start free trial" always. | Eligibility per product; a trial is named only when the selected product has one and the user is eligible; unknown → no promise (Batch 12). | Automated tests only; **the sandbox check (an account that already had a trial) is open; to be done on the TestFlight build (2026-10-07).** |
+
+Whether any of the three goes into 1.1.0 is the owner's decision; none is
+carried over now.
+
+#### 1.2.0 pre-release checklist (owner's tasks; not done)
+
+- [x] **Firebase:** register `learning_goal` as a **user-scoped custom
+  dimension** (`analytics-plan.md` §9) before 1.2.0 ships; registration is
+  not retroactive.
+- [ ] **Privacy policy** (the site repository): the live page (last updated
+  22 September 2026) says "Your name, your learning goal, your avatar and
+  your entire practice history — including the Daily Test — stay on your
+  phone", and that none of the on-device list "is ever sent anywhere".
+  Proposed:
+  - In the on-device paragraph: "Your name, your avatar and your entire
+    practice history — including the Daily Test — stay on your phone."
+  - Remove "Your stated learning goal" from "What stays on your device
+    only".
+  - Add to the analytics section: "The learning goal you choose during
+    onboarding (exam prep, work, everyday confidence, or skipped) is sent
+    with the app's usage analytics, never with your name. It helps us
+    decide what to improve; it does not change your lessons."
+  - Update "Last updated".
+- [x] **Subscription review screenshots made** (2026-10-07):
+  `screenshots/1.2.0/subscription-review/annual.png` and `monthly.png`,
+  the 1.2.0 paywall with the trial line (debug price fixture, simulator;
+  build log 2026-10-07). Slots: `screenshots/1.2.0/README.md`.
+- [x] **Subscription review screenshots compared with the sandbox
+  paywall** on the owner's iPhone (2026-10-07): the same "≈ $4.17 per
+  month", struck "$71.88" and 7-day / 3-day trial lines.
+- [ ] **App Store Connect, subscription review screenshot:** upload them,
+  one per subscription (owner).
+- [x] **App Store screenshots redone for 1.2.0** (2026-10-07): 8 iPhone
+  (6.5", 1284 × 2778) and 5 iPad (13", 2064 × 2752) in
+  `screenshots/1.2.0/store/`, made by `tool/screenshots/` (seeded
+  made-up learner, Fox, Glacier Peak; build log 2026-10-06/07).
+- [x] **Frame 06 (Review, Premium, Suggested Focus) approved**
+  (2026-10-07): Suggested Focus passed the device check;
+  `06-review-premium.png`.
+- [ ] **App Store Connect, screenshots:** upload the set (owner), per the
+  slot table in `screenshots/1.2.0/README.md`; clear or replace any 6.9"
+  set, or large iPhones keep the old one.
+- [x] **Final export after the device checks** (2026-10-07): no captured
+  screen changed in the device checks, so no recapture; the set as
+  committed is final (06 renamed only).
+- [x] **README images** (2026-10-07): the 1.2.0 hero and four frames on
+  top; 1.1.0 and 1.0.0 kept below as previous versions.
+- [x] **Case-study images made** (2026-10-07): `screenshots/1.2.0/case-study/`,
+  the site's six images under their names and sizes (600 × 1298 webp),
+  new ones, comparisons and an OG candidate (1672 × 941).
+- [ ] **Case-study images to the site** (owner, the site repository).
+- [ ] **iPad on iPadOS 26: the app opens as a resizable window.** Seen in
+  the 1.2.0 screenshot captures (iPad Pro 13-inch (M5) simulator, iOS
+  26.5, 2026-10-06): every frame has the system's window resize handle in
+  the bottom-right corner, so `UIRequiresFullScreen` (deprecated in
+  iPadOS 26) no longer keeps the app full screen. **Not checked:** how the
+  app behaves in a narrow window (below the 640 pt column, iPhone-like
+  widths, landscape-shaped windows on a portrait-only app), on the
+  simulator or a real iPad. The store frames paint the handle over
+  (system chrome, owner decision, build log 2026-10-07).
+- [ ] **Analytics reading:** `text_size` keeps its values but `medium`
+  now means the old Large (`analytics-plan.md`, E6); compare per app
+  version.
+- [x] **Device check of the final pass** (owner, iPhone 14 Plus,
+  2026-10-07): the wordmark and the default text size passed.
+- [x] **Device check of the final screens** (owner, iPhone 14 Plus,
+  2026-10-07): the button rule, Data, Credits and Premium Review's
+  Suggested Focus passed; no screen changed.
+- [x] **Version bump to 1.2.0** (2026-10-07): `pubspec.yaml`
+  `1.1.0+4` → `1.2.0+5`. Build 5 is above every build uploaded (1–3,
+  all 1.0.0; Ahmet confirmed 3 is the highest in App Store Connect);
+  `1.1.0+4` was never built or uploaded. Build log 2026-10-07.
+- [ ] **TestFlight build 5** (owner): `./scripts/preflight.sh`, then
+  `flutter build ipa --release --dart-define-from-file=config/prod.json`,
+  read back 1.2.0 / 5 from the archive's `Info.plist`, upload with
+  Transporter (steps: build log 2026-10-07).
+- [ ] **Paywall with an account that already used a trial** (sandbox):
+  to be done on the TestFlight build; until then the eligibility fix
+  has automated tests only.
+- [ ] **Paywall on a non-USD storefront:** deferred to after the
+  release (Ahmet, 2026-10-07); stays open.
+- [ ] **Privacy policy wording:** the app now says "practice sessions"
+  send answers to Anthropic (Topic Practice and weak spot practice);
+  check the policy says the same.
+- [ ] **App Store Connect, App Privacy** for the 1.2.0 submission: review
+  the answers with the goal now collected through Firebase Analytics (a
+  survey-like answer about the user's purpose; the category, and whether
+  it is linked to the user, to be decided against the existing Firebase
+  answers, which are not in this repository).
+
+### 1.1.0 side tracks (design) — defined 2026-09-26
+
+Decisions and reasons: [`1.1.0-design-side-tracks.md`](1.1.0-design-side-tracks.md).
+Client-side only, no API cost; does not hold back the shared Daily Test, and
+any batch not ready moves to the next version. Built after the `main` merge,
+one tested commit per batch. (Written 2026-09-26, when nothing below was
+started; each batch's line has its status.)
+
+*(Owner, 2026-09-30, `build-log.md` "1.1.0 ships with the full scope":
+for 1.1.0 this is overridden. 1.1.0 does not ship before Batches 4–6 are
+done; Batch 7 may move. Batch 3 is split into 3a (study) and 3b; decisions
+D1–D6 in the side-tracks file.)*
+
+- [x] Batch 0 — read-only check report (no code), including how medal
+      thresholds (points), the daily question count and blank answers work
+      — done 2026-09-27 (`1.1.0-design-batch0-report.md`; decisions in
+      `1.1.0-design-side-tracks.md`, "Decisions after Batch 0")
+- [x] Batch 1 — launch screen — built 2026-09-27, seen on a device by the
+      owner (duration kept at 1.2 s, size +25 %), in `1.1.0`
+      (`build-log.md`, 2026-09-27, "Batch 1" and "Batch 1 follow-up";
+      `1.1.0-design-side-tracks.md`, "Launch screen"). *(Corrected
+      2026-10-04: these two lines were never ticked.)*
+- [x] Batch 2 — theme data model, theme id stored with the month, migration,
+      rotation, Green Slope as data (no visible change) — done 2026-09-27,
+      with [Q] from one constant; 929 tests green
+- [x] Batch 3a — trail geometry candidates (study, no product code) — done
+      2026-09-30 (`docs/design/batch3a/report.md`; decisions D1–D6)
+- [x] Batch 3b — done, verified on device, merged into `1.1.0`
+      (2026-09-30, fast-forward to `497b6f9`; 1108 tests green on `1.1.0`)
+      (`docs/design/batch3b/report.md`): measuring tool in
+      `tool/design_measure/`; trail frozen at 45° from (136, 700); generated,
+      normalized step and marker table with its test
+      (`scripts/generate_climb_table.sh`); stop markers with the day-28 rule;
+      camera layer with framing F1; hop (none with Reduce Motion); score bar
+      under the mountain window; two-row header. No 320 pt fix: there was no
+      shift (D6)
+- [x] Batch 3c — mountain redesign — done, verified on device, merged into
+      `1.1.0` (2026-09-30, fast-forward to `0488714`; 1143 tests green on
+      `1.1.0`). 3c-A: candidates and report; 3c-B: candidate 1's trail and
+      layered mountain, turned step pills, Green Slope's pine and shrub, the
+      climb card (frame, plaque, month and steps on sky chips)
+      (`docs/design/batch3c/report.md`)
+- [x] Scene art (2026-10-01, S1–S5 in `docs/1.1.0-design-side-tracks.md`)
+      — done: Stage 1, Stage 2, and the other themes' images in Batch 4
+      (ticked 2026-10-04):
+      the coded mountain of Batch 3c is replaced by ChatGPT illustrations
+      (Green light and dark ready, volcanic light only and temporary); the
+      trail comes from the image, its steps from the extracted center line.
+      Order:
+  - [x] Scene Art Batch 0 — import, measure, report (no product code):
+        trail extraction, clearings, theme consistency check, framing,
+        objects, WebP size, replacement plan
+        (`docs/design/scene-art/batch0/report.md`) — done: report written,
+        owner's decisions G1–G7 taken, merged into `1.1.0` with Stage 1
+  - [x] Scene Art Stage 1 — **done, verified on device, merged into
+        `1.1.0`** (2026-10-01, fast-forward to `0740e83`; 1161 tests green
+        on `1.1.0`). After the device check: framing 1.1×, passed-day dots
+        at 0.40 opacity, a dot on every step left behind
+        (`docs/build-log.md`, "Scene Art Stage 1 built" and "after the
+        device check"; `docs/design/scene-art/stage1/`, `stage1-device/`). Green Slope's illustration replaces the coded
+        mountain: WebP backgrounds (light and dark), the trail from the
+        extracted polyline (generated table and test), framing K-b 1.3×
+        with two-axis follow, the avatar sized to the trail with a gradual
+        shrink at the summit, faint dots on passed days (one setting turns
+        them off). Every month showed the Green Slope image until other
+        themes had images (Batch 4) (G1–G7)
+  - [x] Scene Art Stage 2 — **done, verified on device, merged into
+        `1.1.0`** (2026-10-01, fast-forward to `75d717f`; 1206 tests green
+        on `1.1.0`). After the device checks: the dark-mode filter at
+        strength 0.5, the flag on clearing C6 (lit only on the month's last
+        day) (`docs/build-log.md`, "Scene Art Stage 2 built" and "after the
+        device check"; `docs/design/scene-art/stage2/`). Save point objects on C1–C4, placed by
+        clearing size (G9: cabin and tent on the largest, campfire and
+        fountain on the smaller), faded until reached and lit with a short
+        fade, the flame burning only once reached (G8); the dark-mode object
+        filter with the flame excluded (G6); the summit flag in themes whose
+        summit suits it; D2 retired (G4, G6, G8, G9). The other themes'
+        images, volcanic included (its resolution is too low and it has no
+        dark version), stay open
+- [x] ~~Batch 3d — stop markers become "save points"~~ — superseded, not
+      built as its own batch (2026-10-04): the save point objects came in
+      Scene Art Stage 2 (C1–C4, G8, G9), their steps, names and label in
+      Batch 5 (its line below). *(Was: the save point objects (campfire, tent,
+      fountain, cabin) on 4 of the image's 6 clearings (S3; which 4 is
+      open; weekly days and D2 retired). Planned, not started.)*
+- [x] Home greeting: the user's name is never lost (at 320 pt it was lost for
+      every name since 1.0.0) — done, verified on device, merged into
+      `1.1.0` (2026-09-30, fast-forward to `69bef5f`; 1120 tests green on
+      `1.1.0`) (`docs/design/greeting-fix/report.md`)
+- [x] Batch 4 — **done, verified on device, merged into `1.1.0`**
+      (2026-10-02, fast-forward to `d403e3f`; 1250 tests green on `1.1.0`;
+      after the device check G10: Red Canyon's flag pennant is cyan blue)
+      (`docs/build-log.md`, "Batch 4"; `docs/design/scene-art/batch4/`): Ember Peak, Glacier Peak and Red Canyon as light + dark
+      background pairs on the shared trail coordinates (scene art S1/S4),
+      each month showing (and recording) its rotation theme; the theme
+      check now verifies at Green's positions; the dark-mode object filter
+      per theme; the flag in all four themes; CLIMB_DEBUG_THEME. *(Was:
+      layer slot infrastructure, a ridge/summit silhouette slot and four
+      code-drawn summits, replaced by scene art.)*
+- [x] Batch 5 — themed medals (12 composed images + the Welcome badge),
+      save point names and labels, the tier celebration, the C5 signpost;
+      and the in-app debug panel (N27). **Done 2026-10-03, verified on
+      device, merged into `1.1.0`** by fast-forward (build log 2026-10-03,
+      "Batch 5 and the debug panel done"). Decisions N1–N38 in
+      `1.1.0-design-side-tracks.md` ("Batch 5" and the two device-check
+      sections); Batch 0 report `docs/design/batch5/batch0-report.md`.
+      Built: the medals as 512 px assets (528.9 KB), the celebration layer
+      (dark, glow and rays, shrink-and-fade close; Welcome moved into it;
+      "{Tier} medal earned"), save points pinned to steps and the climb
+      ending at the flag, save point names and their label, the C5
+      signpost, the month card's medal large and centred (112 / 70 / 48 pt
+      by screen height), Profile's "Medal collection" shelf with a tap
+      detail and the "This month" bar with its thresholds,
+      `save_point_reached` / `medal_tier_reached`,
+      `CLIMB_DEBUG_MILESTONE`, the debug panel (theme, day, milestones,
+      month cards, reset).
+      **Device check scope (Ahmet, iPhone 14 Plus, profile build, with the
+      debug panel):** the whole checklist was seen and approved — the
+      celebrations, the save points and the summit, the signpost, the
+      month card with the 112 pt medal, Profile's shelf and headings, dark
+      mode, Reduce Motion, the first-day flow. No item-by-item notes were
+      kept. Other screen sizes were verified only by renders and tests.
+      N37 confirmed: the 112 pt medal on the month card was accepted on
+      the device; its known result: at 430 × 932, while the card is open,
+      the avatar on START is under the sheet. Still open:
+  - [ ] frame times and memory: not measured on a device;
+  - [ ] the events (Batch 6's and Batch 5's): not seen in DebugView;
+  - [ ] the Firebase custom dimensions to register before the release; the
+        developer-traffic filter not set up;
+  - [ ] the source images are 97.51 MB (G1): handled before the next
+        theme (entry below);
+  - [ ] 320 × 568: the summary card scrolls, and while it scrolls a
+        downward drag does not close it;
+  - [ ] 320 pt: the "Summit" label covers the avatar;
+  - [ ] 29–31-day months: on one step the avatar is drawn over the C5
+        signpost;
+  - [ ] the stars are unreadable below 48 pt, "WELCOME" below 96 pt;
+  - [ ] Settings' two developer sections (Developer, Debug) not merged.
+      Recorded earlier and unchanged (artwork notes from the Batch 5
+      build): Red Canyon's mountain on the Bronze body has the closest
+      colours; Ember Peak's smoke is partly behind the stars; the
+      signpost's margin to the trail is thin. The faded unearned Welcome
+      badge on the shelf is deliberate (owner).
+- [x] Batch 6 — month transition card and measurement events; after the
+      card, once a month, a zoom from the whole mountain to the avatar.
+      **Done 2026-10-02, verified on device, merged into `1.1.0`** by
+      fast-forward (build log 2026-10-02, "Batch 6 done"). Decisions
+      M1–M22 in `1.1.0-design-side-tracks.md`; Batch 0 report
+      `docs/design/batch6/batch0-report.md`. Built: the month card
+      (summary / fresh start, bottom sheet, M21 scroll), the K-c → daily
+      zoom (1.8 s) and the first run's zoom → step → Premium, the three
+      events and `theme_id` on the Daily Test start,
+      `CLIMB_DEBUG_MONTH_CARD`, the plaque at 14 pt, the K-c bands as a
+      pre-made blurred backdrop (strength 0.03).
+      **Device check scope (Ahmet, iPhone 14 Plus):** the five debug states,
+      the zoom, the plaque and the cards on the device; the blurred bands
+      only on Green Slope in dark mode. The other three themes and light
+      mode of the bands: renders only, not seen on a device. The seam
+      between the sharp image and the backdrop (ΔE2000 median 8.3–14.6)
+      was accepted on the device: a known small flaw. Still open:
+  - [ ] frame times and memory: not measured on a device;
+  - [ ] the three events and `theme_id`: not yet seen in DebugView; the
+        new dimensions and metric not registered (`analytics-plan.md`,
+        "Month transition");
+  - [ ] known flaws: at 320 pt and 375 × 667 (iPhone SE) the avatar on
+        START is under the sheet while it is open; if the first-launch
+        flow is quit half way, the first run's zoom does not play;
+  - [ ] the Firebase developer-traffic filter (1.1.0 release checklist);
+  - [ ] pre-release check: Home's plaque and the month card may appear in
+        App Store screenshots and case-study images
+- **Development of 1.1.0 is done (Ahmet, 2026-10-03); what remains is
+  release preparation.** *(Updated 2026-10-04: the screenshots and the
+  iPad check are done; everything else here is open.)*
+  - Required:
+    - [x] App Store screenshots (iPhone and iPad) — **approved by Ahmet
+          (2026-10-04)**: the set of P4–P9, nine frames per device, iPhone
+          6.9" (1320 × 2868) and iPad 13" (2064 × 2752), in P7's order and
+          captions, captured from the real app in the simulator (P5) with
+          `tool/screenshots/capture.sh`, framed in the 1.0.0 style in
+          Nunito Sans 800 (P8); frame 03 celebrates September's Gold (P9)
+          (`design/release-1.1.0/screenshots/README.md`). Not yet uploaded
+          to App Store Connect (Ahmet);
+    - [x] the iPad check — **done in the simulator (Ahmet, 2026-10-04)**:
+          Ahmet went through the iPad layout (P1–P3) on the iPad Pro 13"
+          simulator in a debug build and reported no problem. Not checked
+          on a real iPad; no item-by-item notes were kept against
+          `p1/report.md` §6, so its open questions (the iPadOS 26 window,
+          the iPad mini) have no recorded answer. Earlier: report
+          2026-10-03 (`design/release-1.1.0/ipad-and-screenshots-report.md`);
+          P1 built 2026-10-03 (`3400766`), P2 `267fbd0`; iPhones
+          pixel-identical (590 and 466 renders before and after); K-c on
+          iPad accepted (P3);
+    - [x] the fallback pool filled (P10; 1.1.0 release checklist below)
+          — **done and approved by Ahmet (2026-10-04)**: 7 live v2 sets
+          (published 2026-09-30 – 2026-10-06), 10 owner corrections (P13);
+          the asset test requires exactly 7 sets and
+          `scripts/preflight.sh` fails without them. *(Added 2026-10-04:
+          it was on the release checklist but missing from this list.)*
+    - [ ] an end-to-end pass on a release build (TestFlight);
+    - [ ] the Firebase custom dimensions registered before the release
+          (1.1.0 release checklist below);
+    - [x] version and build number — `1.1.0+4` (2026-10-04; was
+          `1.0.0+3`). The build number is above every build uploaded so
+          far (1–3, all 1.0.0); the app shows its version nowhere (no
+          version line in Settings), so only `pubspec.yaml` changed;
+    - [ ] the What's New text and the listing changes (draft:
+          `design/release-1.1.0/store-copy.md`; the final text is Ahmet's);
+    - [ ] `1.1.0` merged into `main` — after the TestFlight round
+          (accepted 2026-10-04);
+    - [x] analytics off by default outside release builds (P11) — built
+          2026-10-04: `AnalyticsGate`, opt-in
+          `--dart-define=ANALYTICS_DEBUG_EVENTS=true`; automated tests
+          only, not yet seen on a device;
+    - [ ] the submission path, chosen by 1.0.0's state (below).
+  - Recommended:
+    - [ ] the events seen in DebugView;
+    - [ ] the developer-traffic filter (still useful for debug-mode
+          devices; no longer the only guard once P11 is built);
+    - [ ] a performance look on a profile build;
+    - [x] docs tidy-up — 2026-10-04: this roadmap's 1.1.0 summary
+          ("1.1.0 — release candidate"), stale ticks corrected, `prd.md`'s
+          status note, README's status, feature list and version table.
+  - Not waiting for the release:
+    - [ ] case-study images;
+    - [ ] Medium posts;
+    - [ ] Settings' two developer sections merged into one.
+- **1.0.0's state and the submission path (Ahmet, 2026-10-03).** 1.0.0
+  was resubmitted on 2026-09-28; four items are "Waiting for Review": the
+  app version 1.0.0 (build 3), the two subscriptions and the subscription
+  group. Plan: it is not withdrawn until 1.1.0 is ready. When 1.1.0 is
+  ready:
+  - 1.0.0 approved: 1.0.0 is released, and 1.1.0 is submitted as an
+    update;
+  - 1.0.0 still in review: the submission is withdrawn, the version
+    becomes 1.1.0 and is resubmitted with the new build;
+  - 1.0.0 rejected: the fix is made inside 1.1.0.
+  Open checks: [ ] the 1.0.0 build works with today's server; [x] manual
+  release is selected in App Store Connect (Ahmet verified, 2026-10-03).
+  - **Superseded (Ahmet, 2026-10-07).** 1.0.0 was rejected a second
+    time on 2026-10-06 (Guideline 3.1.2(c): no Terms of Use / EULA link
+    in the metadata), fixed in the metadata only (EULA, Privacy and
+    Terms lines in the description; no new build) and resubmitted the
+    same day. New plan: 1.0.0 is not withdrawn, 1.1.0 is skipped, and
+    1.2.0 is submitted as an update after 1.0.0 is approved.
+- **P1 (release preparation, Ahmet, 2026-10-03): on iPad the content is
+  centred and capped at a maximum width; iPhone does not change.** *Why*
+  (`design/release-1.1.0/ipad-and-screenshots-report.md`): the app had no
+  iPad layout rule; every screen stretched to the full width, the
+  mountain window became a 976 × 350 pt strip at 13 in, the scene image
+  was upscaled 1.40×, and the result screen's lines held 132–139
+  characters. *Rejected:* shipping as it is; releasing for iPhone only
+  (1.0.0 is in review with iPad support; once it is approved and
+  released, iPad support cannot be removed).
+- **P2 (Ahmet, 2026-10-03): on iPad the floating nav bar itself is held
+  to the content column (640 pt).** Corrects P1's "the bar stays full
+  width", which was written as if the bar were docked to the edges; it is
+  a floating pill, so it belongs with the content.
+- **P3 (Ahmet, 2026-10-03): K-c on iPad is a known, accepted flaw.** At
+  the zoom's first frame 59 % of the window is the blurred band. The cap
+  stays at 640 pt, the widest at which the scene image is not enlarged.
+- **P4 (Ahmet, 2026-10-03): the App Store set is nine frames, in this
+  order:** (1) the Daily Test result with explanations, (2) the mountain
+  on Home, (3) a question, (4) the Gold celebration, (5) Review, (6) a
+  weak spot's detail, (7) the month card, (8) the medal collection,
+  (9) Welcome. *Why:* the first three show in search results; first the
+  app's core promise (teaching by explaining the mistake), then the
+  mechanic that brings people back. *Rejected:* the mountain first.
+- **P5 (Ahmet, 2026-10-03): screenshots are captured from the real app in
+  the simulator** (a debug build, states set up with the debug panel); the
+  render tool's output is not used in the store (its text rendering
+  differs from the device's). Light mode. Status bar fixed: 9:41, full
+  battery, full signal.
+- **P6 (Ahmet, 2026-10-03): a "sample collection" view in the debug
+  panel** shows Profile's shelf with sample months without writing any
+  stored record; for screenshots only.
+- **P7 (Ahmet, 2026-10-04): frame order and captions** (updates P4):
+  (1) the result with explanations, "Every answer explained"; (2) the
+  mountain on Home, "Climb a new mountain each month"; (3) the Gold
+  celebration, "Earn medals as you climb"; (4) Review, "Your weak spots,
+  tracked"; (5) a weak spot's detail, "Practice what you got wrong";
+  (6) a question, "A new test every day"; (7) the month card, "Your month
+  at a glance"; (8) the medal collection, "Collect every mountain";
+  (9) Welcome, "Start in under a minute". *Why:* in the draft the
+  question frame was nearly empty and was one of the three frames search
+  shows; the first three now tell learn, climb, earn. The repeated
+  "every" and the promise of a medal every month are gone (a medal is not
+  guaranteed).
+- **P9 (Ahmet, 2026-10-04): frame 3 celebrates last month's Gold**
+  ("Gold medal earned · September"). *Why:* the draft celebrated Gold for
+  October, while Home and Profile show October at 149 points, and Gold
+  cannot be reached by the 15th. The story now: Gold earned in September
+  (frame 3), the month card sums September up (7), September's Gold sits
+  on the shelf (8), October's climb goes on (2). *Rejected:* leaving it;
+  shooting the set again at the end of a month. *Accepted:* in frame 1 the
+  last explanation runs under the fixed footer (the screen's design, as in
+  1.0.0); on the iPad, frame 8 shows the whole of Profile, which fits.
+- **P8 (Ahmet, 2026-10-04): the title typeface stays Nunito Sans 800.**
+  Raw captures are not kept in the repository (one command makes them
+  again); only the framed set and the overview are.
+- **P10 (Ahmet, 2026-10-04): the fallback pool is filled before the
+  release.** *Why:* the pool has 0 sets, so on every day the shared set
+  cannot be read the day-0 questions are shown again. Filled the
+  documented way (C2: 7 live v2 sets, exported read-only from KV with
+  `scripts/fallback_pool.sh`, the proxy's gate at export, the owner's
+  review; with the owner's corrections, P13).
+- **P11 (Ahmet, 2026-10-04): builds other than release (debug, profile)
+  send no analytics events by default; one explicit setting turns them on
+  for a DebugView check.** *Why:* these builds write to the production
+  Firebase project, and GA4's developer-traffic filter only removes
+  devices flagged in debug mode. *Rejected:* relying on the filter alone.
+- **P12 (finding, the owner's review, 2026-10-04).** The app grades a
+  Daily Test answer by plain text matching (`checkDailyTestAnswer`: case,
+  surrounding spaces and one final `.`/`!`/`?` ignored; contractions,
+  inner punctuation and spelling variants not), and the live shared sets
+  carry no `acceptedAnswers`. In 6 of the 35 reviewed questions (the 7
+  live v2 sets of 29 September – 5 October) a right or defensible answer
+  is graded "Needs work" and written into the error profile.
+  `validateSharedSet` checks the structure, not the grammar. The same flaw
+  applies to the live daily sets.
+- **P13 (Ahmet, 2026-10-04): owner corrections for the fallback pool.**
+  The corrections live in a recorded file
+  (`tool/fallback_pool/corrections.json`); the export tool applies them
+  and validates the result again. The pool's provenance (C2, build log
+  2026-09-30) becomes "live-generated, validator-passed, owner-reviewed
+  and owner-corrected". The decision that only the check call writes
+  `acceptedAnswers` (`1.1.0-shared-daily-test-quality.md` §8.1) is
+  extended to the owner's corrections of the fallback pool.
+- **P14 (Ahmet, 2026-10-04): the first job after 1.1.0** (server side,
+  independent of an app release): other accepted answers on the live
+  sets, generated and delivered (the deferred second-model check, P7a–c,
+  or a new version of the generation rules). Notes for the generation
+  rules: a hint must not contradict the key; an `error_correction`
+  context must really be wrong; in "said that … will" items the context
+  must force the past; spelling variants (e.g. `neighbourhood` /
+  `neighborhood`) and contractions (`'m` / `am`) must be handled in
+  grading.
+- **Accepted (Ahmet, 2026-10-04):** releasing without a look on a real
+  iPad (verified in the simulator; the window behaviour on the newest
+  iPadOS is not verified); build number 4; `1.1.0` merged into `main`
+  after the TestFlight round.
+- [ ] G1 rewritten (Ahmet, 2026-10-03): 100 MB was not a technical
+      limit but the project's own checkpoint. New rule: if the source
+      images approach 200 MB, or the same images start being regenerated
+      often, consider keeping the large files apart (for example Git
+      LFS). Current measure: **97.51 MB** (28 files: 86.10 MB scene art,
+      11.41 MB medals; Batch 5 N25). *(Was: looked at again against a
+      100 MB review line before the next theme is added.)*
+- [ ] Batch 7 — one-time environment motion. **Deferred to 1.1.x
+      (Ahmet, 2026-10-03).** *Why:* its definition was written for the old
+      code-drawn scene; on the illustrated scene it needs a new image layer
+      per theme. The scene already moves (the zoom, the hop, the save
+      points coming alive, the label), and the opening sequence is full.
+- [x] Batch 8 — 4 new avatars, `avatar_13`–`avatar_16` (Bird, Fox, Panda,
+      Sloth), without facing data; the avatar carousel loops in both
+      directions — built 2026-09-30, 1156 tests green; device-checked
+      2026-09-30; merged into `1.1.0` (`docs/build-log.md`, Batch 8)
+- [ ] Last — B-polish dark-mode exception written into `docs/build-log.md` and
+      `docs/design-audit.md`; this roadmap updated
+
+Parked for 1.2 (not 1.1.0):
+
+- A "see the mountain" button or a tappable mountain card (D5; a zoom on
+  every open was rejected: a repeated wait before the Daily Test).
+- A monthly learning report (2026-10-02, Batch 6 M5): a premium
+  candidate, entered from the month transition card. Not designed; which
+  data exists per month is listed in the Batch 6 Batch 0 report.
+- A mid-month return card (2026-10-02, Batch 6 M3): for a user who comes
+  back in the middle of a month after a gap. Not designed.
+- A "reachable tier" hint (2026-10-02, Batch 5 N5): for a user who starts
+  late in a month, which tier is still within reach. The thresholds are
+  not prorated in 1.1.0. Not designed.
+- Tapping a save point shows its name (2026-10-02, Batch 5 N6). In 1.1.0
+  the name shows only once, when the avatar arrives. Not designed.
+- A save point earns a "rest day" (2026-10-02, Batch 5 N7). Not designed.
+- A summit challenge (2026-10-03, after N32): the part of the trail past
+  the flag, unused since the climb ends at the flag, opened for a user who
+  reaches the flag and earns Gold. Decided on the first month's
+  `save_point_reached` data; the flag's "Summit" name is reconsidered
+  then. Not designed.
+- A button on the month card that leads to the paywall (2026-10-03). The
+  card's layout must be measured again then (N37's discs). Not designed.
 
 ## Launch scope — 2026-09-19
 
@@ -47,7 +761,7 @@ Nothing is marked complete unless the record says so.
 | Item | Why it waits |
 |---|---|
 | Mountain geometry redesign (broad-to-narrow, steeper summit, landmark placement, viewpoint contrast) | Current route and landmarks work; this is a visual improvement and needs its own 28/29/30/31-day, theme and text-size verification. |
-| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. |
+| Mountain themes and calendar rotation | Only Green Slope is approved; the sequence was never decided, and a volcano theme was never approved. *(Update 2026-09-26: decided for 1.1.0 side work — four themes rotating monthly, Green Slope kept as the default, a volcanic Ember Peak included. See `docs/1.1.0-design-side-tracks.md`. Not started.)* |
 | Final medal artwork | The tier visuals work as they are; final art is polish, and swapping it later does not change stored data. |
 | Medal shortcut on Home | Profile is reachable from the tab bar, and the shortcut is still an open product decision. |
 | v3 Home redesign | No scope is written yet; redesigning Home right before first release adds risk without a measured problem. *(2026-09-24: the "v3" label is retired — gamification shipped in 1.0.0; the Home redesign and later work go to the next releases. See "Version naming" at the top.)* |
@@ -83,6 +797,8 @@ Nothing is marked complete unless the record says so.
   there 2026-09-29, path A). The pure parts (P5, P6) are built and tested on
   `1.1.0` but not wired: the decision table with `acceptedAnswers`, repair
   generation, and the two-phase cron with `claude-opus-5-5` as the checker.
+  The 1.1.0 client already grades `acceptedAnswers` (C1, 2026-09-30), so
+  turning P7 on needs no app update.
   `docs/1.1.0-shared-daily-test-quality.md` §14.6, §15.4, §16. Planned, not
   scheduled.
 - **Practice generation model migration (claude-sonnet-4-6 → claude-sonnet-5)**
@@ -92,8 +808,28 @@ Nothing is marked complete unless the record says so.
   generator first, which gives a first data point.
 - **README refresh with current launch screenshots** (3–4 images, compressed,
   in `docs/screenshots/`); add the App Store badge and link only after the app
-  is released.
-- **Free practice quota model — undecided** (recorded 2026-09-24). Options:
+  is released. *(2026-10-04: done on `1.1.0-design` with four 1.1.0 release
+  candidate frames, 600 px wide, in `screenshots/1.1.0/` next to the 1.0.0
+  set; the README is rebuilt around three decisions (build log 2026-10-04).
+  The App Store badge still waits for the release.)*
+- **README: full GitHub URLs back to relative links once 1.1.0 is on
+  `main`** (recorded 2026-10-04). The README commit meant for a cherry-pick
+  onto `main` links to five places that exist only on `1.1.0-design` with
+  full `https://github.com/svactrion/GrammarLens/blob/1.1.0-design/...` URLs:
+  the roadmap's "1.1.0 — release candidate" and "Known flaws shipping in
+  1.1.0", and the build log's 2026-10-04 entries (P12–P14, the free practice
+  limit's rationale). When `1.1.0` is merged into `main`, make them relative.
+- **Small debt: the "not configured" message names the README** (recorded
+  2026-10-04). `ClaudeService._send` (`lib/services/claude_service.dart`)
+  says "See the "Local setup" section in README.md.", and
+  `test/claude_service_config_test.dart` expects `README` in it. Local setup
+  moved to `docs/development.md` on 2026-10-04; the README keeps a one-line
+  pointer, so the message still leads there. Fix: name
+  `docs/development.md` in the message and the test (a `lib/` change, not
+  done in the docs-only README work).
+- **Free practice quota model — undecided** (recorded 2026-09-24; why
+  the current limit is 1 was recorded after the fact on 2026-10-04: build
+  log, "Free practice limit: rationale recorded after the fact"). Options:
   1/day (current), every 3 days, a token earned through completed Daily
   Tests, an allowance per mistake. Decide with 4 weeks of data: share of free
   users who use the daily session, and conversion of practice users vs
@@ -106,7 +842,8 @@ Nothing is marked complete unless the record says so.
   Day-0 test pays for one generation; skipped days waste the prepared set;
   stale `daily_test_sets` rows are never deleted. Solved by the shared Daily
   Test; if that slips, consider preparing the set on app open instead of after
-  completion.
+  completion. *(Update 2026-09-30: C1 makes the 1.1.0 prefetch a free read of
+  tomorrow's shared set; stale-row cleanup is C3.)*
 - **Verify whether timed-out or unparseable generations are still billed**
   (recorded 2026-09-24): compare `anthropic_usage` log counts with stored
   sets.
@@ -202,7 +939,15 @@ as each one lands, with literal status words (see above):
   economics (PRD v2 §13.7, the session cap, the margin numbers above) are
   still unmeasured estimates until then. Persistent-storage options are
   proposed in PRD v2 §13.10 (recommended: Workers Analytics Engine) and none
-  is built. Two pre-existing proxy `console.error` calls (Anthropic's raw
+  is built. **Decision (Ahmet, 2026-10-04): no persistent storage for now.**
+  The measure of real cost is the monthly usage in the Anthropic Console;
+  the shared Daily Test is one call a day, a fixed item, so the total minus
+  that item is the cost of practice sessions. Workers Analytics Engine
+  stays as the job for when real users arrive. Accepted: only the total is
+  visible, not the split per session; Workers Logs is not persistent
+  (3 days on Workers Free per Cloudflare's Workers Logs page, read
+  2026-10-04; the account's own setting not verified). Build log
+  2026-10-04 (token cost data: no persistent storage for now). Two pre-existing proxy `console.error` calls (Anthropic's raw
   error body on a non-200, and the JSON parse exception on unusable
   content) could echo response text; **fixed 2026-09-21** (see the failure-log
   entry below).
@@ -2176,8 +2921,8 @@ actually exists):
 #### TestFlight pre-submission checklist
 
 Open items to run on a TestFlight build before submitting for review
-(build it only after `./scripts/preflight.sh` passes; README "Local setup",
-step 5):
+(build it only after `./scripts/preflight.sh` passes; `docs/development.md`
+"Local setup", step 5; moved from the README on 2026-10-04):
 
 *(2026-09-24: build 3 was submitted with these items as listed below.)*
 
@@ -2193,6 +2938,44 @@ step 5):
 - [ ] **Daily Test explanation on a generated set** on a device (seen only on
   the first-day set).
 - [ ] **Rotation on iPad hardware** does nothing (tried only in the simulator).
+
+#### 1.1.0 release checklist
+
+Owner items before the 1.1.0 build ships (added 2026-09-30):
+
+- [ ] **Register `set_date` as a custom dimension in Firebase** (event
+  scope, parameter `set_date`, event `daily_test_completed`) before the
+  build ships: registration is not retroactive (`docs/analytics-plan.md`
+  §9).
+- [x] **Fallback pool filled:** 7 live v2 sets exported, reviewed,
+  corrected (P13, `tool/fallback_pool/corrections.json`) and
+  committed with `scripts/fallback_pool.sh` (build log 2026-09-30); until
+  then every fallback day shows the day-0 questions. *(Done 2026-10-04,
+  approved by Ahmet: sets of 2026-09-30 – 2026-10-06, 10 corrections;
+  guarded by the asset test and `scripts/preflight.sh`.)*
+- [ ] **`SHARED_DAILY_TEST_ENABLED` is `"true"`** and has been for at least
+  3–4 days before release, so dates up to local tomorrow are published
+  (quality report §16.4, open point 2). *(2026-10-04: `proxy/wrangler.jsonc` has
+  `"true"`, unchanged since the 2026-09-29 revert (`7323075`); the deployed
+  value and the published dates were not checked from here.)*
+- [ ] **DebugView:** `set_source = shared` on a normal day and `fallback`
+  with the app opened on a new day in airplane mode; `set_date` present
+  (`docs/analytics-plan.md` §6).
+- [ ] **Register the climb's new custom dimensions before the build
+  ships** (owner, 2026-10-03): `save_point`, `step` (Batch 5, N21) and
+  Batch 6's `theme_id`, `variant`, `medal_tier`, `near_miss_shown`,
+  `trigger` and metric `open_ms` (`docs/analytics-plan.md`). Registration
+  is not retroactive.
+- [ ] **Merge Settings' two developer sections** ("Developer", debug only,
+  and "Debug", N27's panel, debug and profile) into one (owner,
+  2026-10-03). *(Later on 2026-10-03, Ahmet: does not wait for the
+  release; see "Development of 1.1.0 is done" at the top.)*
+- [ ] **Firebase developer-traffic filter:** not verified to be set up,
+  most likely not set up. Debug (and profile) builds write to the
+  production Firebase project (`grammarlens-18d47`; no build-mode gate in
+  `AnalyticsService`), so test events count as real ones until a filter
+  excludes them (Batch 6 Batch 0 report §8, decision M18; added
+  2026-10-02).
 
 ### 2. v2.2 — structure, then finish
 Decisions in `docs/prd-v2.md` §13 and `docs/design-audit.md` §5.
@@ -2394,6 +3177,10 @@ building it.
 ### 5. Rewarded video gate on streak (free tier)
 
 ### 6. Cost measurement, resolve open decisions §7.1 / §7.2
+
+*(2026-10-04: cost is read from the Anthropic Console's monthly usage; no
+persistent token log until real users arrive. "Proxy token logging" under
+Launch scope, and build log 2026-10-04.)*
 
 ### Later phases (post-v2)
 Accounts + backend → social / competition → AI Practice Partner.
