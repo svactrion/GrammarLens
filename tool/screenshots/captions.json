@@ -1,11 +1,10 @@
 {
   "result": "Every answer explained",
   "home": "Climb a new mountain each month",
-  "gold": "Earn medals as you climb",
+  "question": "A new test every day",
   "review": "Your weak spots, tracked",
   "weak-spot": "Practice what you got wrong",
-  "question": "A new test every day",
-  "month-card": "Your month at a glance",
+  "review-premium": "Premium shows your next focus",
   "collection": "Collect every mountain",
-  "welcome": "Start in under a minute"
+  "goal": "Set your goal in a minute"
 }
