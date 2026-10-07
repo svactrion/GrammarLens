@@ -7,12 +7,15 @@ captures, and writes an overview.
 Reads build/screenshots/1.2.0/raw/<device>/<name>.png (capture.sh; raw
 captures are not kept in the repository) and tool/screenshots/captions.json;
 writes, under screenshots/1.2.0/:
-- store/iphone/: the eight store frames at 1284 x 2778 (App Store 6.5");
+- store/iphone/: the eight store frames at 1320 x 2868 (App Store 6.9",
+  from the iPhone 17 Pro Max; it also covers 6.5": owner, 2026-10-07);
   06 (Premium Review, Suggested Focus) approved by the owner after the
   device check (2026-10-07);
 - store/ipad/: the five store frames at 2064 x 2752 (App Store 13");
 - subscription-review/: annual.png and monthly.png, the raw paywall
-  captures flattened to RGB, no frame;
+  captures flattened to RGB, no frame. These are the iPhone 14 Plus's
+  (1284 x 2778), compared with the sandbox paywall on the owner's iPhone
+  and kept: read from raw/iphone-6.5/, not from a new iPhone run;
 - overview.jpg: every store frame, reduced.
 Every PNG is written as RGB: the simulator's captures carry an alpha
 channel, which App Store Connect does not accept.
@@ -34,11 +37,11 @@ its style from measurements of the eight committed images
   face: to be decided).
 - The device: screen 446 x 969 at (77, 266) on the iPhone, corner radius
   55; a black bezel 9.5 wide and a grey rim 4 wide around it; side
-  buttons; a soft shadow. The simulator capture has no notch, so the
-  iPhone 14 Plus's notch is drawn (1.1.0 drew a 17 Pro Max's Dynamic
-  Island). On the iPad the frame keeps the same
+  buttons; a soft shadow. The simulator capture has no cut-out, so the
+  iPhone 17 Pro Max's Dynamic Island is drawn, to 1.1.0's measure (its
+  committed iPhone frames). On the iPad the frame keeps the same
   top, bottom, bezel and rim, with the iPad's 3:4 screen, its smaller
-  corner radius and no notch. iPadOS 26 draws a window resize handle in
+  corner radius and no island. iPadOS 26 draws a window resize handle in
   the iPad capture's bottom-right corner (the app opens as a resizable
   window); it is system chrome, not the app, and is painted over with the
   colour beside it (owner, Batch 3).
@@ -159,41 +162,24 @@ def clear_resize_handle(shot: Image.Image) -> Image.Image:
     return out
 
 
-def draw_notch(out: Image.Image, scr_left: float, scr_top: float, scr_w: float) -> None:
-    """The notch of an iPhone 14 Plus, on its 428 x 926 pt screen: 161 x 32
-    pt, centred (the 13/14 notch, 26.8 mm on a 71.3 mm wide screen). Its
-    top is the screen's top edge, flat, so nothing reaches past the bezel;
-    its lower corners are rounded (19 pt) and it meets the top edge in
-    small concave fillets (6 pt). Clear of the status bar: the time ends at
-    77 pt, the icons start at 324 pt, the notch spans 133.5-294.5 pt.
-    Apple publishes no exact outline; this is drawn to the device's
-    proportions. Drawn 4x and reduced, for smooth edges."""
-    k = scr_w / 428
-    nw, nh, rb, re = 161 * k, 32 * k, 19 * k, 6 * k
-    x0 = scr_left + (scr_w - nw) / 2
-    pad = re + 2
-    # From 2 px above the edge (inside the bezel, which is about 20 px
-    # thick): the screen is pasted at a rounded position, and a notch that
-    # started exactly at the edge left a 1 px line of the screen above it.
-    left, top = int(x0 - pad), int(scr_top) - 2
-    w, h = int(nw + 2 * pad) + 2, int(nh) + 4
+def draw_island(out: Image.Image, scr_left: float, scr_top: float, scr_w: float) -> None:
+    """The Dynamic Island of an iPhone 17 Pro Max, on its 440 x 956 pt
+    screen: a pill 126.4 x 37.7 pt, centred, its top 10.6 pt below the
+    screen's top edge. Measured on 1.1.0's committed iPhone frame
+    (docs/design/release-1.1.0/screenshots/iphone/02-home.png), drawn on
+    the same capture size. It spans 156.8-283.2 pt; the status bar's time
+    and icons are checked against it on every frame (build log,
+    2026-10-07). Drawn 4x and reduced, for smooth edges."""
+    k = scr_w / 440
+    iw, ih, it = 126.4 * k, 37.7 * k, 10.6 * k
+    x0, y0 = scr_left + (scr_w - iw) / 2, scr_top + it
+    left, top = int(x0) - 2, int(y0) - 2
+    w, h = int(iw) + 6, int(ih) + 6
     ss = 4
     m = Image.new("L", (w * ss, h * ss), 0)
-    md = ImageDraw.Draw(m)
-    ox, oy = (x0 - left) * ss, (scr_top - top) * ss
-    # The body, its top corners pushed above the edge (cut off below).
-    md.rounded_rectangle((ox, oy - rb * ss, ox + nw * ss, oy + nh * ss), radius=rb * ss, fill=255)
-    # The fillets: a square at each top corner less a circle.
-    for side in (-1, 1):
-        ex = ox if side == -1 else ox + nw * ss
-        sq = (ex - re * ss, oy, ex, oy + re * ss) if side == -1 else (ex, oy, ex + re * ss, oy + re * ss)
-        md.rectangle(sq, fill=255)
-        cxe = ex - re * ss if side == -1 else ex + re * ss
-        md.ellipse((cxe - re * ss, oy, cxe + re * ss, oy + 2 * re * ss), fill=0)
-    # Nothing more than 2 px above the screen's top edge.
-    md.rectangle((0, 0, w * ss, oy - 2 * ss), fill=0)
-    # The 2 px above the edge, over the notch and its fillets.
-    md.rectangle((ox - re * ss, oy - 2 * ss, ox + (nw + re) * ss, oy), fill=255)
+    ox, oy = (x0 - left) * ss, (y0 - top) * ss
+    ImageDraw.Draw(m).rounded_rectangle(
+        (ox, oy, ox + iw * ss, oy + ih * ss), radius=ih / 2 * ss, fill=255)
     m = m.resize((w, h), Image.LANCZOS)
     out.paste(Image.new("RGB", (w, h), BEZEL), (left, top), m)
 
@@ -261,7 +247,7 @@ def frame(raw: Path, caption: str, device: str) -> Image.Image:
     out.paste(inner, (round(scr_left), round(scr_top)), mask)
 
     if device == "iphone":
-        draw_notch(out, scr_left, scr_top, scr_w)
+        draw_island(out, scr_left, scr_top, scr_w)
     return out
 
 
@@ -307,7 +293,7 @@ def main() -> None:
     review.mkdir(parents=True, exist_ok=True)
     for raw_name, name in SUBSCRIPTION_REVIEW:
         out = review / f"{name}.png"
-        Image.open(RAW / "iphone" / f"{raw_name}.png").convert("RGB").save(out, optimize=True)
+        Image.open(RAW / "iphone-6.5" / f"{raw_name}.png").convert("RGB").save(out, optimize=True)
         print(out.relative_to(REPO))
     overview(written).save(OUT / "overview.jpg", quality=85)
     print((OUT / "overview.jpg").relative_to(REPO))
