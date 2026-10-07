@@ -222,16 +222,20 @@ annual card's left column, and a struck-through twelve-month monthly
 price ("$71.88") sits above the big price when the "Save %" badge shows.
 It was dropped in Batch 12 by following the mockup's "annual total big".
 Measured, built and tested (build log 2026-10-06); adds `intl` as a
-dependency. **Device and sandbox check open** (a non-USD storefront,
-VoiceOver, the largest text size).
+dependency. **Sandbox check passed on the owner's iPhone (2026-10-07):**
+"≈ $4.17 per month" and the struck "$71.88" as built. **Still open:** a
+non-USD storefront, VoiceOver, the largest text size.
 
 **Deferred:** redeem codes (above).
 
 #### 1.2.0 final screens (2026-10-06)
 
 Package `docs/design/1.2.0-final/`; results in its
-`ACCEPTANCE-RESULTS.md`; build log 2026-10-06. Built, **awaiting the
-device check**: the button rule (A1), dark Welcome's wordmark (A2), the
+`ACCEPTANCE-RESULTS.md`; build log 2026-10-06. **Device check
+(owner, iPhone 14 Plus, 2026-10-07): the button rule, Data, Credits and
+Suggested Focus passed, with the final pass's wordmark and default text
+size; no screen changed.** Dark Welcome's wordmark (A2) and the other
+final-pass fixes (A3) were not named in that check. Built: the button rule (A1), dark Welcome's wordmark (A2), the
 final-pass fixes (A3), Premium Review's Suggested Focus (B), Data (C),
 Credits (D). Accepted exception: the paywall footer at 375 × 667, new
 Large (0.349 of the screen). Open for the owner: nothing blocking;
@@ -272,23 +276,24 @@ carried over now.
   `screenshots/1.2.0/subscription-review/annual.png` and `monthly.png`,
   the 1.2.0 paywall with the trial line (debug price fixture, simulator;
   build log 2026-10-07). Slots: `screenshots/1.2.0/README.md`.
+- [x] **Subscription review screenshots compared with the sandbox
+  paywall** on the owner's iPhone (2026-10-07): the same "≈ $4.17 per
+  month", struck "$71.88" and 7-day / 3-day trial lines.
 - [ ] **App Store Connect, subscription review screenshot:** upload them,
-  one per subscription (owner). Compare with the open sandbox check on
-  the device first; if they differ, the device wins.
+  one per subscription (owner).
 - [x] **App Store screenshots redone for 1.2.0** (2026-10-07): 8 iPhone
   (6.5", 1284 × 2778) and 5 iPad (13", 2064 × 2752) in
   `screenshots/1.2.0/store/`, made by `tool/screenshots/` (seeded
   made-up learner, Fox, Glacier Peak; build log 2026-10-06/07).
-- [ ] **Frame 06 (Review, Premium, Suggested Focus) is on hold**
-  (`06-review-premium-ON-HOLD.png`) until Suggested Focus is checked on a
-  device with a Premium account; the owner approves it at the final
-  export.
+- [x] **Frame 06 (Review, Premium, Suggested Focus) approved**
+  (2026-10-07): Suggested Focus passed the device check;
+  `06-review-premium.png`.
 - [ ] **App Store Connect, screenshots:** upload the set (owner), per the
   slot table in `screenshots/1.2.0/README.md`; clear or replace any 6.9"
   set, or large iPhones keep the old one.
-- [ ] **Final export after the device checks** of the final pass and the
-  final screens: rerun `tool/screenshots/capture.sh` and `frame.py` /
-  `assets.py` if any captured screen changed.
+- [x] **Final export after the device checks** (2026-10-07): no captured
+  screen changed in the device checks, so no recapture; the set as
+  committed is final (06 renamed only).
 - [x] **README images** (2026-10-07): the 1.2.0 hero and four frames on
   top; 1.1.0 and 1.0.0 kept below as previous versions.
 - [x] **Case-study images made** (2026-10-07): `screenshots/1.2.0/case-study/`,
@@ -307,10 +312,13 @@ carried over now.
 - [ ] **Analytics reading:** `text_size` keeps its values but `medium`
   now means the old Large (`analytics-plan.md`, E6); compare per app
   version.
-- [ ] **Device check of the final pass:** see the build log's final-pass
-  entry, "Not measured".
-- [ ] **Device check of the final screens** (build log 2026-10-06, "Not
-  measured"), Premium Review with a Premium account included.
+- [x] **Device check of the final pass** (owner, iPhone 14 Plus,
+  2026-10-07): the wordmark and the default text size passed.
+- [x] **Device check of the final screens** (owner, iPhone 14 Plus,
+  2026-10-07): the button rule, Data, Credits and Premium Review's
+  Suggested Focus passed; no screen changed.
+- [ ] **Version bump to 1.2.0** (`pubspec.yaml` is still `1.1.0+4`): a
+  separate job, not started.
 - [ ] **Privacy policy wording:** the app now says "practice sessions"
   send answers to Anthropic (Topic Practice and weak spot practice);
   check the policy says the same.
