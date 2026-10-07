@@ -79,10 +79,10 @@ differ, the device wins.
     "See Premium" once the free practice is used).
   - New: `onboarding-goal`, `home-glacier` (Home with the Halfway Hut
     label), `weak-spot-premium` ("Practice this").
-  - Comparisons (1260 × 1398 webp, labelled): `compare-home-free-premium`,
+  - Comparisons (1260 × 1398 webp, labelled):
     `compare-review-free-premium`, `compare-home-1.0.0-1.2.0`,
     `compare-paywall-1.0.0-1.2.0`. The 1.0.0 side is the site's own
     image; the owner's name on its Home is blurred.
   - `og-candidate.png` (1672 × 941, the size of the site's
-    `grammarlens-og.png`): its subline is new copy, to be approved.
+    `grammarlens-og.png`): its subline approved by the owner (2026-10-07).
 - `overview.jpg`: every store frame, reduced.

@@ -20,8 +20,9 @@ case-study/       for ahmettayfur.com's GrammarLens page. Its current
   day0-4-paywall, practice-offer-card
                   and new ones: onboarding-goal, home-glacier,
                   weak-spot-premium;
-  compare-home-free-premium, compare-review-free-premium,
-  compare-home-1.0.0-1.2.0, compare-paywall-1.0.0-1.2.0
+  compare-review-free-premium, compare-home-1.0.0-1.2.0,
+  compare-paywall-1.0.0-1.2.0 (no Home free/premium pair: the two
+  Homes differ only in a lock and a button label)
                   two screens side by side with a label over each,
                   1260 x 1398 webp;
   og-candidate.png
@@ -206,8 +207,6 @@ def main() -> None:
     for name, raw in CASE.items():
         save(case_size(Image.open(RAW / f"{raw}.png")), case / f"{name}.webp")
     raw = lambda n: Image.open(RAW / f"{n}.png")
-    save(labelled_pair(raw("home-free"), raw("home-premium"), ("Free", "Premium")),
-         case / "compare-home-free-premium.webp")
     save(labelled_pair(raw("04-review"), raw("06-review-premium"), ("Free", "Premium")),
          case / "compare-review-free-premium.webp")
     v1_home = blur_box(Image.open(SITE / "day0-3-climb.webp"), V1_NAME_BOX)
