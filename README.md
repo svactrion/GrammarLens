@@ -2,7 +2,7 @@
 
 **An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
-**Status (4 October 2026):** 1.0.0 is in App Store review (resubmitted 28 September 2026); 1.1.0 is a release candidate, not submitted ([roadmap](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/roadmap.md), "1.1.0 — release candidate").
+**Status (7 October 2026):** 1.0.0 is in App Store review (resubmitted 28 September 2026, not yet approved); 1.1.0 is a release candidate, not submitted; 1.2.0 is in development on the `1.2.0` branch, its device checks open, not submitted. The screenshots below are from 1.2.0 ([roadmap](https://github.com/svactrion/GrammarLens/blob/1.2.0/docs/roadmap.md), "1.2.0 pre-release checklist").
 
 <p align="center">
   <img src="screenshots/1.2.0/readme/hero.png" width="820" alt="Three iPhones: Home with this month's mountain, a Daily Test result with every answer explained, and a Daily Test question">
