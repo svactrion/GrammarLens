@@ -2,7 +2,7 @@
 
 **An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
-**Status (7 October 2026):** 1.0.0 is in App Store review (rejected a second time on 6 October 2026 for a missing Terms of Use / EULA link in the App Store metadata, fixed in the metadata and resubmitted the same day; not yet approved); 1.1.0 is skipped, never submitted, and its content ships in 1.2.0; 1.2.0 (`1.2.0+5`) is on the `1.2.0` branch, its device checks passed, the TestFlight build next, to be submitted as an update once 1.0.0 is approved. The screenshots below are from 1.2.0 ([roadmap](https://github.com/svactrion/GrammarLens/blob/1.2.0/docs/roadmap.md), "1.2.0 pre-release checklist").
+**Status (7 October 2026):** 1.0.0 is in App Store review (rejected a second time on 6 October 2026 for a missing Terms of Use / EULA link in the App Store metadata, fixed in the metadata and resubmitted the same day; not yet approved); 1.1.0 is skipped, never submitted, and its content ships in 1.2.0; 1.2.0 (`1.2.0+5`) is on the `1.2.0` branch, its device checks passed, the TestFlight build next, to be submitted as an update once 1.0.0 is approved. The screenshots below are from 1.2.0 ([roadmap](docs/roadmap.md), "1.2.0 pre-release checklist").
 
 <p align="center">
   <img src="screenshots/1.2.0/readme/hero.png" width="820" alt="Three iPhones: Home with this month's mountain, a Daily Test result with every answer explained, and a Daily Test question">
@@ -37,13 +37,13 @@
 - **Problem:** Review's "Practice this" button had no subscription check, so a free user could start paid-tier practice, bounded only by the 10-a-day cap everyone shared. Found on a device on 15 September 2026; noted and deferred ten days earlier.
 - **Decision:** the check moved into the one function every practice set goes through. Free: one Daily Test and one 3-question practice session a day; the session counts only when generation succeeds.
 - **Cost:** a free user who uses both every day costs ≈ $1.72–1.86 a month on 1.0.0 (Daily Test part measured, practice part an estimate) and pays nothing. The limit is 1 to cap the cost of each free user and to point anyone who wants more practice to Premium. The quota model will be re-evaluated with four weeks of data.
-- **Evidence:** [build log](docs/build-log.md) 2026-09-15; [build log](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/build-log.md) 2026-10-04 (free practice limit: rationale recorded after the fact); [PRD v2](docs/prd-v2.md) §13.7; [roadmap](docs/roadmap.md), "Post-launch tasks".
+- **Evidence:** [build log](docs/build-log.md) 2026-09-15; [build log](docs/build-log.md) 2026-10-04 (free practice limit: rationale recorded after the fact); [PRD v2](docs/prd-v2.md) §13.7; [roadmap](docs/roadmap.md), "Post-launch tasks".
 
 **3. Known flaw, not fixed: right answers graded as wrong**
 - **Problem:** answers are graded by plain text matching. In the owner's review of 35 live questions, 6 had a right or defensible answer marked "Needs work", and it goes into the error profile. Contractions (`'m` / `am`) and spelling variants (`neighbourhood` / `neighborhood`) are not normalized.
 - **Done so far:** the fallback pool carries 10 owner corrections. The live daily sets do not; the second-model check that would add accepted answers was deferred past 1.1.0.
 - **Cost:** 1.1.0 ships with it. Fixing the live sets (P14) is the first job after 1.1.0, on the server side.
-- **Evidence:** [roadmap](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](https://github.com/svactrion/GrammarLens/blob/1.1.0-design/docs/build-log.md) 2026-10-04 (P12–P14).
+- **Evidence:** [roadmap](docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](docs/build-log.md) 2026-10-04 (P12–P14).
 
 ## How it was built
 
