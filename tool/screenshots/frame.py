@@ -8,8 +8,8 @@ Reads build/screenshots/1.2.0/raw/<device>/<name>.png (capture.sh; raw
 captures are not kept in the repository) and tool/screenshots/captions.json;
 writes, under screenshots/1.2.0/:
 - store/iphone/: the eight store frames at 1284 x 2778 (App Store 6.5");
-  06 is written as 06-review-premium-ON-HOLD.png until the owner approves
-  it (Suggested Focus is not checked on a device yet);
+  06 (Premium Review, Suggested Focus) approved by the owner after the
+  device check (2026-10-07);
 - store/ipad/: the five store frames at 2064 x 2752 (App Store 13");
 - subscription-review/: annual.png and monthly.png, the raw paywall
   captures flattened to RGB, no frame;
@@ -66,7 +66,7 @@ STORE = {
         ("03-question", "question", "03-question"),
         ("04-review", "review", "04-review"),
         ("05-weak-spot", "weak-spot", "05-weak-spot"),
-        ("06-review-premium", "review-premium", "06-review-premium-ON-HOLD"),
+        ("06-review-premium", "review-premium", "06-review-premium"),
         ("07-collection", "collection", "07-collection"),
         ("08-goal", "goal", "08-goal"),
     ],

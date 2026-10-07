@@ -37,7 +37,7 @@ appear in search).
 | 3 | `store/iphone/03-question.png` | A new test every day |
 | 4 | `store/iphone/04-review.png` | Your weak spots, tracked |
 | 5 | `store/iphone/05-weak-spot.png` | Practice what you got wrong |
-| 6 | `store/iphone/06-review-premium-ON-HOLD.png` | Premium shows your next focus — **on hold**: only after Suggested Focus is checked on a device and the owner approves (then renamed `06-review-premium.png`) |
+| 6 | `store/iphone/06-review-premium.png` | Premium shows your next focus |
 | 7 | `store/iphone/07-collection.png` | Collect every mountain |
 | 8 | `store/iphone/08-goal.png` | Set your goal in a minute |
 
@@ -64,8 +64,9 @@ the larger iPhones; with an old one, they keep showing it.
 
 1284 × 2778 (an accepted iPhone size), unframed. Taken with the debug
 price fixture (the real prices and trial lengths, eligible). Before
-uploading, compare with the open sandbox check on the device; if they
-differ, the device wins.
+uploading they were compared with the sandbox paywall on the owner's
+iPhone (2026-10-07): the same prices, "≈ $4.17 per month", the struck
+"$71.88" and the 7-day / 3-day trial lines.
 
 ## Other folders
 
