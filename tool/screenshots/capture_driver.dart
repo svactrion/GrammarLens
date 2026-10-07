@@ -24,7 +24,11 @@
 //            `release_look`,
 //            which ends Premium. Profile is not taken here.
 //   welcome  08-goal: onboarding's goal step, Sam and the Fox, Exam prep
-//            chosen (an unseeded install).
+//            chosen (an unseeded install); then the first day for the case
+//            study: day0-1-test, day0-2-result (the Welcome celebration),
+//            day0-4-paywall, day0-3-climb.
+//   practice review-practice-used: Review once today's free practice is
+//            used (its Premium offer).
 //
 // Frame numbers follow the owner's 1.2.0 order: 1 result, 2 Home,
 // 3 question, 4 Review (free), 5 weak spot, 6 Review (premium), 7 Profile,
@@ -116,39 +120,87 @@ Future<void> _homeCardTop() async {
       timeout: _timeout);
 }
 
-/// 02's scroll (owner, Batch 3): Home at its top, unless a heading
-/// then falls across the screen's bottom edge, under the nav bar ("Topic
-/// practice" on the iPhone): then scrolled just far enough for the whole
-/// heading to show between the nav bar and the edge. Measured with Home at
-/// its top; returns the heading and the `scrollIntoView` alignment that
-/// lands on that scroll from anywhere, or null for no scroll.
+/// Whether [f] is on screen within [ms].
+Future<bool> _present(SerializableFinder f, {int ms = 600}) async {
+  try {
+    await _driver.waitFor(f, timeout: Duration(milliseconds: ms));
+    return true;
+  } on DriverError {
+    return false;
+  }
+}
+
+/// 02's scroll (owner, Batch 3, then the iPad): Home at its top, unless
+/// the screen's bottom edge, under the nav bar, then cuts through a line
+/// of text ("Topic practice" on the iPhone, a weak spot card's title on
+/// the iPad): then the smallest scroll, up to 40 pt (the wordmark stays
+/// clear of the status bar), at which the edge falls between lines.
+/// Measured with Home at its top; returns a line and the `scrollIntoView`
+/// alignment that lands on that scroll from anywhere, or null for none.
 Future<(SerializableFinder, double)?> _homeTopScroll() async {
   await _toTop('HomeScreen');
   await _wait(800);
   final list = await _box(_list('HomeScreen'));
-  final heading = find.descendant(
-      of: find.byType('HomeScreen'),
-      matching: find.text('Topic practice'),
-      firstMatchOnly: true);
-  final h = await _box(heading);
-  final navBottom = (await _driver
-          .getBottomRight(find.byType('_FloatingNavBar'), timeout: _timeout))
-      .dy;
+  SerializableFinder inHome(SerializableFinder f) => find.descendant(
+      of: find.byType('HomeScreen'), matching: f, firstMatchOnly: true);
+  SerializableFinder inCard(String title, SerializableFinder f) =>
+      find.descendant(
+          of: find.ancestor(
+              of: find.descendant(
+                  of: find.byType('WeakSpotCard'),
+                  matching: find.text(title),
+                  firstMatchOnly: true),
+              matching: find.byType('WeakSpotCard'),
+              firstMatchOnly: true),
+          matching: f,
+          firstMatchOnly: true);
+  // The seeded weak spots and their count lines (seed.dart, relative to
+  // the run's day).
+  const titles = {
+    'Gerund vs. Infinitive': '1 time · last seen today',
+    'Modal Verbs': '3 times · last seen 3 days ago',
+    'Tense Selection': '1 time · last seen 5 days ago',
+  };
+  final lines = <SerializableFinder>[
+    for (final t in [
+      'Topic practice',
+      'Pick a topic. Build confidence where you need it.',
+      'Explore all topics',
+      'Your weak spots',
+    ])
+      inHome(find.text(t)),
+    for (final MapEntry(key: t, value: count) in titles.entries) ...[
+      inCard(t, find.text(t)),
+      inCard(t, find.text(count)),
+      inCard(t, find.text('Practice with Premium')),
+    ],
+  ];
+  final boxes = <_Box>[
+    for (final f in lines)
+      if (await _present(f)) await _box(f),
+  ];
   final edge = list.bottom;
+  bool cuts(double y) => boxes.any((b) => b.top - 2 < y && y < b.bottom + 2);
   String f1(double v) => v.toStringAsFixed(1);
-  if (h.top >= edge || h.bottom <= edge) {
-    stdout.writeln('02: heading ${f1(h.top)}-${f1(h.bottom)}, edge '
-        '${f1(edge)}: no scroll');
+  if (!cuts(edge)) {
+    stdout.writeln('02: edge ${f1(edge)} cuts no line: no scroll');
     return null;
   }
-  final scroll = h.bottom + 4 - edge;
-  stdout.writeln('02: heading ${f1(h.top)}-${f1(h.bottom)}, nav bar bottom '
-      '${f1(navBottom)}, edge ${f1(edge)}: scrolled ${f1(scroll)} pt');
-  if (h.top - scroll < navBottom) {
-    stdout.writeln('02: the heading still reaches under the nav bar');
+  double? scroll;
+  for (var s = 0.5; s <= 40; s += 0.5) {
+    if (!cuts(edge + s)) {
+      scroll = s;
+      break;
+    }
   }
-  final viewport = list.bottom - list.top, height = h.bottom - h.top;
-  return (heading, (h.top - list.top - scroll) / (viewport - height));
+  if (scroll == null) {
+    stdout.writeln('02: no scroll up to 40 pt clears the edge; not scrolled');
+    return null;
+  }
+  stdout.writeln('02: edge ${f1(edge)}, scrolled ${f1(scroll)} pt');
+  final anchor = boxes.first;
+  final viewport = list.bottom - list.top, h = anchor.bottom - anchor.top;
+  return (anchor.finder, (anchor.top - list.top - scroll) / (viewport - h));
 }
 
 /// Takes today's Daily Test from Home: [answers] typed through the
@@ -221,6 +273,51 @@ Future<void> _welcomeRun() async {
   await _wait(800);
   await _tap(find.byValueKey('onboarding_goal_examPrep'));
   await _shot('08-goal');
+
+  // The first day, for the case study (the site's day0-* images): the
+  // first question, unanswered; the result with the Welcome celebration
+  // over it; the day-0 paywall, which opens on Home 600 ms after the first
+  // climb lands; Home after it is closed.
+  final answers =
+      (jsonDecode(await _driver.requestData('answers', timeout: _timeout))
+              as List)
+          .cast<String>();
+  await _tap(find.byValueKey('onboarding_start'));
+  await _driver.waitFor(find.byType('TextField'),
+      timeout: const Duration(seconds: 30));
+  await _shot('day0-1-test');
+  for (final (i, answer) in answers.indexed) {
+    await _tap(find.byType('TextField'));
+    await _driver.enterText(answer, timeout: _timeout);
+    await _tap(find.text(i == answers.length - 1 ? 'Finish' : 'Next'));
+    await _wait(700);
+  }
+  await _driver.runUnsynchronized(() async {
+    await _driver.waitFor(find.byValueKey('medal_celebration'),
+        timeout: const Duration(seconds: 30));
+    await _shot('day0-2-result', settleMs: 2500);
+    await _driver.tap(find.text('Tap to continue'), timeout: _timeout);
+  });
+  await _wait(1500);
+  await _tap(find.text('Start my climb'));
+  await _driver.runUnsynchronized(() async {
+    await _driver.waitFor(find.byValueKey('premium_cta'),
+        timeout: const Duration(seconds: 60));
+    await _shot('day0-4-paywall', settleMs: 2000);
+    await _driver.tap(find.byTooltip('Close'), timeout: _timeout);
+  });
+  await _wait(2000);
+  await _toTop('HomeScreen');
+  await _shot('day0-3-climb', settleMs: 1500);
+}
+
+/// Review for a free user who has used today's free practice: its card
+/// offers Premium (the site's practice-offer-card).
+Future<void> _practiceRun() async {
+  await _tap(_tab('Review'));
+  await _driver.waitFor(find.text('See Premium'),
+      timeout: const Duration(seconds: 20));
+  await _shot('review-practice-used');
 }
 
 Future<void> _premiumRun(List<String> answers) async {
@@ -336,7 +433,8 @@ Future<void> main() async {
   await _driver
       .waitUntilFirstFrameRasterized()
       .timeout(const Duration(minutes: 2));
-  if (await _driver.requestData('mode', timeout: _timeout) == 'welcome') {
+  final mode = await _driver.requestData('mode', timeout: _timeout);
+  if (mode == 'welcome') {
     await _welcomeRun();
     await _driver.close();
     return;
@@ -351,7 +449,10 @@ Future<void> main() async {
       timeout: const Duration(seconds: 60));
   await _wait(2500);
 
-  if (await _driver.requestData('access', timeout: _timeout) == 'premium') {
+  if (mode == 'practice') {
+    await _practiceRun();
+  } else if (await _driver.requestData('access', timeout: _timeout) ==
+      'premium') {
     await _premiumRun(answers);
   } else {
     await _freeRun(answers);

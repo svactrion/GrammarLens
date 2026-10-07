@@ -16,9 +16,10 @@
 # removes the app (a fresh install, so the seeded data is the only data)
 # and runs `flutter drive` (a debug build) with capture_app.dart and
 # capture_driver.dart:
-#   iPhone: free, premium (CAPTURE_PREMIUM), welcome (CAPTURE_WELCOME);
+#   iPhone: free, premium (CAPTURE_PREMIUM), welcome (CAPTURE_WELCOME),
+#           practice (CAPTURE_PRACTICE_USED);
 #   iPad:   free.
-# RUNS (default "free premium welcome") limits the runs; the iPad only has
+# RUNS (default "free premium welcome practice") limits the runs; the iPad has
 # free. Only the runs taken replace their frames.
 # Raw PNGs go to build/screenshots/1.2.0/raw/<device>/ (not kept in the
 # repository).
@@ -27,7 +28,7 @@ cd "$(dirname "$0")/../.."
 
 RUNTIME="${SIM_RUNTIME:-iOS 26.5}"
 RAW=build/screenshots/1.2.0/raw
-RUNS=(${=RUNS:-free premium welcome})
+RUNS=(${=RUNS:-free premium welcome practice})
 BUNDLE=com.ahmettayfur.grammarlens
 typeset -A SIMS
 SIMS=(iphone "${IPHONE_SIM:-iPhone 14 Plus}" ipad "${IPAD_SIM:-iPad Pro 13-inch (M5)}")
@@ -88,6 +89,9 @@ for device in "${devices[@]}"; do
     fi
     if (( ${RUNS[(Ie)welcome]} )); then
       drive "$udid" "$device" --dart-define=CAPTURE_WELCOME=true
+    fi
+    if (( ${RUNS[(Ie)practice]} )); then
+      drive "$udid" "$device" --dart-define=CAPTURE_PRACTICE_USED=true
     fi
   fi
 done

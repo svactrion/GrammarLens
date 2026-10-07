@@ -12,9 +12,13 @@
 // year with 1 free week, both eligible), so its trial line shows.
 //
 // Defines:
-//   CAPTURE_WELCOME=true  nothing is seeded: the app opens on Welcome.
+//   CAPTURE_WELCOME=true  nothing is seeded: the app opens on Welcome, and
+//                         the first climb's month is still Glacier Peak
+//                         (the same theme seam the seed uses).
 //   CAPTURE_PREMIUM=true  Sam is premium (the debug entitlement override).
-// Both are debug-build only, as is everything this file switches on.
+//   CAPTURE_PRACTICE_USED=true  Sam (free) has used today's free practice,
+//                         so Review shows its Premium offer.
+// All are debug-build only, as is everything this file switches on.
 //
 // Run through tool/screenshots/capture.sh, not on its own.
 import 'dart:convert';
@@ -47,10 +51,15 @@ const _welcomeOnly = bool.fromEnvironment('CAPTURE_WELCOME');
 /// `--dart-define=CAPTURE_PREMIUM=true`: Sam has Premium.
 const _premium = bool.fromEnvironment('CAPTURE_PREMIUM');
 
+/// `--dart-define=CAPTURE_PRACTICE_USED=true`: today's free practice used.
+const _practiceUsed = bool.fromEnvironment('CAPTURE_PRACTICE_USED');
+
 Future<void> main() async {
   enableFlutterDriverExtension(handler: (request) async {
     if (request == 'answers') return jsonEncode(screenshotTodayAnswers);
-    if (request == 'mode') return _welcomeOnly ? 'welcome' : 'full';
+    if (request == 'mode') {
+      return _welcomeOnly ? 'welcome' : (_practiceUsed ? 'practice' : 'full');
+    }
     if (request == 'access') return _premium ? 'premium' : 'free';
     // The driver switches between flutter_driver's text-entry emulation and
     // the real iOS keyboard (frame 06): a field opens its text input
@@ -74,8 +83,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await lockAppOrientation();
   final storage = StorageService();
-  if (!_welcomeOnly) {
+  if (_welcomeOnly) {
+    // ignore: invalid_use_of_visible_for_testing_member
+    StorageService.themeForNewMonthForTesting = (_, __) => screenshotTheme;
+  } else {
     await seedScreenshotData(storage, now: DateTime.now(), premium: _premium);
+    if (_practiceUsed) await storage.recordFreePracticeStarted();
   }
   // The paywall's prices: the debug fixture (no store connection here).
   SubscriptionService().setDebugFixtureOffering(enabled: true);
