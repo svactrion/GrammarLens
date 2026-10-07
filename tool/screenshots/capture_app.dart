@@ -22,7 +22,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_driver/driver_extension.dart';
 import 'package:grammar_lens/app.dart';
-import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
@@ -51,10 +50,6 @@ const _premium = bool.fromEnvironment('CAPTURE_PREMIUM');
 Future<void> main() async {
   enableFlutterDriverExtension(handler: (request) async {
     if (request == 'answers') return jsonEncode(screenshotTodayAnswers);
-    // Frame 06 shows the first question with its right answer typed.
-    if (request == 'first_correct') {
-      return kDayZeroQuestions.first.correctAnswer;
-    }
     if (request == 'mode') return _welcomeOnly ? 'welcome' : 'full';
     if (request == 'access') return _premium ? 'premium' : 'free';
     // The driver switches between flutter_driver's text-entry emulation and
