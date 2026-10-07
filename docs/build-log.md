@@ -11464,3 +11464,50 @@ the top; 03 types "to eat", as 01 shows.
   - **Seen, not changed (owner's call):** the iPad's 02 also has a card
     title ("Gerund vs. Infinitive") across its bottom edge under the nav
     bar; the correction asked for the iPhone only.
+
+## 2026-10-07 (1.2.0 visual assets — Batch 4: iPad 02, README, case-study images, App Store Connect slots)
+
+- **iPad 02:** the bottom-edge rule now covers any line of text, not only
+  "Topic practice": with Home at its top the driver measures the lines
+  near the bottom (section headings, the topic card's text, each weak spot
+  card's title, count line and action) and takes the smallest scroll, up
+  to 40 pt, at which the screen's bottom edge cuts none of them (iPhone
+  14.7 pt as before; iPad 10 pt: "Gerund vs. Infinitive" whole above the
+  edge). Only the iPad's free run was retaken; the set reframed.
+- **Case-study captures** (new runs, iPhone):
+  - the welcome run goes on past 08 through the first day as a new user
+    sees it: `day0-1-test` (the first question), `day0-2-result` (the
+    Welcome celebration over the 4/5 result), `day0-4-paywall` (the day-0
+    paywall, which opens by itself on Home 600 ms after the first climb),
+    `day0-3-climb` (Home after it is closed, the Fox on step 1). This
+    run's month is Glacier Peak too: `capture_app.dart` sets the same
+    theme seam before the first completion;
+  - `CAPTURE_PRACTICE_USED` (`RUNS=practice`): Sam, free, has used today's
+    free practice (`recordFreePracticeStarted`), so Review offers Premium
+    (`review-practice-used`, the site's `practice-offer-card`). It shows
+    2 weak spots: no test is taken in this run.
+- **`tool/screenshots/assets.py`** (new) writes `readme/` and
+  `case-study/`. The site's current case-study images are raw app screens
+  at 600 × 1298 webp, so the new versions are too (from the unframed
+  captures, under the same names); comparisons put two screens side by
+  side under a label. The 1.0.0 side is the site's own image, read from
+  the site repository (read only, never written); its Home greets the
+  owner by his real name, which is blurred. The hero and the OG candidate
+  cut each phone out along its frame outline (frame.py's geometry) and
+  give it its own shadow. The OG candidate reuses the current OG's
+  headline ("Your personal grammar coach"); its subline ("A daily test,
+  every answer explained, and a mountain to climb each month.") is new,
+  for the owner to approve.
+- **README:** the 1.2.0 hero (Result, Home, Question) and four frames
+  (Review, weak spot, collection, goal) on top; the version table gains
+  1.2.0; the 1.1.0 frames move to a "Previous version: 1.1.0" section and
+  the 1.0.0 gallery is labelled "Previous version: 1.0.0"; v2 and v1 stay.
+  06 is not in the README while it is on hold.
+- **App Store Connect slots:** `screenshots/1.2.0/README.md` (which file
+  goes to which slot, in which order; the subscription review images by
+  product).
+- **Checked:** every new image opened (the five iPad frames, the hero and
+  four README frames, the nine single case-study images, the four
+  comparisons, the OG candidate): only the made-up "Sam" (the 1.0.0 name
+  blurred), no version number, no debug banner, no Developer section; all
+  RGB, no alpha, at the sizes above.

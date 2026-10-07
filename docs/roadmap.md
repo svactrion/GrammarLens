@@ -268,14 +268,33 @@ carried over now.
     with the app's usage analytics, never with your name. It helps us
     decide what to improve; it does not change your lessons."
   - Update "Last updated".
-- [ ] **App Store Connect, subscription review screenshot:** each
-  subscription's review screenshot shows the paywall; replace it with the
-  1.2.0 paywall.
-- [ ] **App Store screenshots:** any that show the paywall, onboarding or a
-  question screen are redone for 1.2.0. **Since the final pass, all of
-  them:** the default text size is larger on every screen, and the
-  wordmark is two-coloured (Home, onboarding, the paywall, the launch
-  screen). The case-study images too.
+- [x] **Subscription review screenshots made** (2026-10-07):
+  `screenshots/1.2.0/subscription-review/annual.png` and `monthly.png`,
+  the 1.2.0 paywall with the trial line (debug price fixture, simulator;
+  build log 2026-10-07). Slots: `screenshots/1.2.0/README.md`.
+- [ ] **App Store Connect, subscription review screenshot:** upload them,
+  one per subscription (owner). Compare with the open sandbox check on
+  the device first; if they differ, the device wins.
+- [x] **App Store screenshots redone for 1.2.0** (2026-10-07): 8 iPhone
+  (6.5", 1284 × 2778) and 5 iPad (13", 2064 × 2752) in
+  `screenshots/1.2.0/store/`, made by `tool/screenshots/` (seeded
+  made-up learner, Fox, Glacier Peak; build log 2026-10-06/07).
+- [ ] **Frame 06 (Review, Premium, Suggested Focus) is on hold**
+  (`06-review-premium-ON-HOLD.png`) until Suggested Focus is checked on a
+  device with a Premium account; the owner approves it at the final
+  export.
+- [ ] **App Store Connect, screenshots:** upload the set (owner), per the
+  slot table in `screenshots/1.2.0/README.md`; clear or replace any 6.9"
+  set, or large iPhones keep the old one.
+- [ ] **Final export after the device checks** of the final pass and the
+  final screens: rerun `tool/screenshots/capture.sh` and `frame.py` /
+  `assets.py` if any captured screen changed.
+- [x] **README images** (2026-10-07): the 1.2.0 hero and four frames on
+  top; 1.1.0 and 1.0.0 kept below as previous versions.
+- [x] **Case-study images made** (2026-10-07): `screenshots/1.2.0/case-study/`,
+  the site's six images under their names and sizes (600 × 1298 webp),
+  new ones, comparisons and an OG candidate (1672 × 941).
+- [ ] **Case-study images to the site** (owner, the site repository).
 - [ ] **iPad on iPadOS 26: the app opens as a resizable window.** Seen in
   the 1.2.0 screenshot captures (iPad Pro 13-inch (M5) simulator, iOS
   26.5, 2026-10-06): every frame has the system's window resize handle in
