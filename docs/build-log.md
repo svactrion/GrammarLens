@@ -11511,3 +11511,13 @@ the top; 03 types "to eat", as 01 shows.
   comparisons, the OG candidate): only the made-up "Sam" (the 1.0.0 name
   blurred), no version number, no debug banner, no Developer section; all
   RGB, no alpha, at the sizes above.
+- **After Batch 4 (owner, 2026-10-07):** the OG candidate's subline is
+  approved; `day0-4-paywall` stays as it is (the top of the paywall).
+  `compare-home-free-premium` is dropped: the two Homes differ only in
+  the "Premium" lock and one card's action line, so the pair says
+  nothing. The file is deleted, `assets.py` no longer writes it, and it
+  is gone from `screenshots/1.2.0/README.md` (the `home-free` and
+  `home-premium` captures stay in `build/` and are no longer used).
+  README's status line brought to 7 October: 1.0.0 in review, 1.1.0 a
+  release candidate, 1.2.0 in development with its device checks open,
+  none of them released.
