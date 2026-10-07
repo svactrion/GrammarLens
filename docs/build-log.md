@@ -11540,3 +11540,70 @@ the top; 03 types "to eat", as 01 shows.
   final. The main README keeps its four frames (06 not added, owner).
 - Open: uploads to App Store Connect, the case-study images to the site,
   the iPadOS 26 narrow window, the version bump to 1.2.0 (not started).
+
+## 2026-10-07 (1.2.0 release: version 1.2.0+5, release gates checked; 1.0.0's second rejection, 1.1.0 skipped)
+
+On branch `1.2.0`; not pushed. No IPA built here: the owner builds and
+uploads.
+
+- **[Release — owner] 1.0.0's state.** Rejected a second time on
+  2026-10-06 under Guideline 3.1.2(c): the App Store metadata had no
+  Terms of Use / EULA link. The fix was metadata only, no new build: EULA,
+  Privacy and Terms lines added to the description, answered in
+  Resolution Center and resubmitted the same day. Waiting for review,
+  manual release.
+- **[Product — owner] Plan (replaces roadmap, "1.0.0's state and the
+  submission path", 2026-10-03).** 1.0.0 is not withdrawn. 1.1.0 is
+  skipped: it is never submitted, and everything in it ships in 1.2.0.
+  1.2.0 goes to review as an update once 1.0.0 is approved. Roadmap
+  version table (a 1.2.0 row added), the 1.1.0 release candidate section
+  and the submission path updated; README's status line and version table
+  too (they said "resubmitted 28 September" and "1.1.0 a release
+  candidate").
+- **[Release]** `pubspec.yaml` `1.1.0+4` → `1.2.0+5`. *Why 5:* the highest
+  build in App Store Connect is 3 (`1.0.0+3`; the owner checked the
+  TestFlight tab). `1.1.0+4` was set on 2026-10-04 but never built as an
+  IPA or uploaded, so 4 would also be free; 5 leaves no question.
+- **[Checked] Where the version appears.** Only `pubspec.yaml`:
+  `Info.plist` reads `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)`;
+  the Runner target's `CURRENT_PROJECT_VERSION` is
+  `$(FLUTTER_BUILD_NUMBER)`; `MARKETING_VERSION = 1.0` belongs to
+  `RunnerTests`. The app shows no version (no `package_info_plus`, no
+  version line in Settings or Credits); no test names one.
+- **[Checked] Off in a release build** (each gate a compile-time
+  constant, so the branch is compiled out, not hidden):
+  - the debug panel: `settings_screen.dart` `!kReleaseMode && …` (debug
+    and profile builds only);
+  - the Developer section: `settings_screen.dart` `kDebugMode && …`;
+  - the paywall price fixture: `SubscriptionService.debugFixtureOffering`
+    returns null and its setter does nothing unless
+    `debugModeForTesting` (`kDebugMode && DebugTools.enabledForTesting`);
+  - the debug premium override: the same gate in `SubscriptionService`,
+    and in `StorageService.getDebugAccessOverride` /
+    `setDebugAccessOverride`; `app.dart` loads it only under `kDebugMode`;
+  - `CLIMB_DEBUG_THEME`, `_DAY`, `_MILESTONE`, `_MONTH_CARD` and the
+    panel's controls: `enabled: !kReleaseMode && …`;
+  - the capture tools: `tool/screenshots/capture_app.dart` is its own
+    `flutter drive --target`, debug only; nothing in `lib/` imports
+    `tool/` (`test/tool_import_guard_test.dart`); `flutter_driver` is a
+    dev dependency;
+  - also raw error text on the Daily Test, the local data and onboarding
+    resets, the standalone previews. `test/debug_tools_release_test.dart`
+    covers the release behaviour.
+- **[Checked] Release config.** `config/prod.json` has
+  `PROXY_BASE_URL`, `APP_TOKEN` and `REVENUECAT_API_KEY` set (the
+  RevenueCat key is the `appl_` production key); values not printed.
+  `ITSAppUsesNonExemptEncryption = false`. Flutter 3.44.6, Xcode 27.0.
+- **[Release] Steps for the owner** (as builds 2 and 3): `flutter pub
+  get`, `flutter analyze`, `flutter test`, `./scripts/preflight.sh`, then
+  `flutter build ipa --release --dart-define-from-file=config/prod.json`
+  (no other define; default App Store export; automatic signing, team
+  `37U9L67C2J`). Read back `CFBundleShortVersionString` 1.2.0 and
+  `CFBundleVersion` 5 from
+  `build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/Info.plist`,
+  then upload `build/ios/ipa/grammar_lens.ipa` with Transporter.
+- **[Open]** The TestFlight build and upload (owner). On the TestFlight
+  build: the paywall with an account that already used a trial. Deferred
+  to after the release (owner): the paywall on a non-USD storefront.
+- **[Tests]** `flutter analyze` clean; full suite **1,881 passed, 0
+  failed**.
