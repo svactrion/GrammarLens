@@ -11607,3 +11607,57 @@ uploads.
   to after the release (owner): the paywall on a non-USD storefront.
 - **[Tests]** `flutter analyze` clean; full suite **1,881 passed, 0
   failed**.
+
+## 2026-10-07 (1.2.0 visual assets — the iPhone set moves to 6.9": iPhone 17 Pro Max, Dynamic Island)
+
+- **[Product — owner] Decision, after the set was closed.** The iPhone
+  store set moves from the 6.5" slot (iPhone 14 Plus, notch drawn) to
+  the 6.9" slot (iPhone 17 Pro Max, 1320 × 2868, Dynamic Island drawn).
+  *Why:* the notched 14 Plus frame looks dated in the store; 6.9" is
+  Apple's main iPhone slot and App Store Connect uses it for 6.5" too, so
+  one set covers both; 1.0.0 is still in review, so there is time before
+  the 1.2.0 submission. Images only: TestFlight build 5 is not affected.
+  Roadmap: "Final export" reopened and closed again.
+- **[Checked] Simulator.** iPhone 17 Pro Max on iOS 26.5 (the runtime
+  `capture.sh` uses); `simctl io … screenshot` gives exactly 1320 × 2868
+  (with an alpha channel, removed by `frame.py`, as before).
+- **[Tooling]** `capture.sh`: the default iPhone simulator is the iPhone
+  17 Pro Max. `frame.py`: the 14 Plus notch is replaced by
+  `draw_island`, a pill 126.4 × 37.7 pt, its top 10.6 pt below the
+  screen's edge, centred: measured on 1.1.0's committed 6.9" frame
+  (`docs/design/release-1.1.0/screenshots/iphone/02-home.png`; 1.1.0's
+  drawing code is no longer in the tree). `assets.py`: 600 × 1298 images
+  are scaled to 600 wide and cut evenly at the top and bottom (1320 ×
+  2868 is 1304 tall at that width), instead of being squeezed.
+- **[Kept] Subscription review images.** The 14 Plus raw captures were
+  moved aside to `build/screenshots/1.2.0/raw/iphone-6.5/` before the
+  run; `frame.py` reads the paywall captures from there, so `annual.png`
+  and `monthly.png` stay the 1284 × 2778 images compared with the sandbox
+  paywall. Checked by hash: both, and the five iPad frames, byte-identical
+  to the committed ones.
+- **[Capture]** `capture.sh iphone`, all four runs (free, premium,
+  welcome, practice), no errors; 18 raw captures, all 1320 × 2868.
+- **[Checked] The owner's crops on the new screen height** (956 pt
+  against 926 pt):
+  - 02 Home: from the top, the Halfway Hut label showing. The driver
+    measured the bottom edge at 956.0 pt cutting no line, so **no scroll**
+    (the 14 Plus needed 14.7 pt). "Topic practice" and "Premium" are whole
+    at the bottom, as before; under them about 4 px of the next card's
+    top edge show, inside the frame's rounded corner. No half title.
+  - 07 Profile: "Medal collection" at the top. **The bottom cut moved:**
+    on the 14 Plus a section title showed half beside the nav bar and the
+    Data row was cut; now the Data row is whole below the nav bar and only
+    a few pixels of that title are left at its left edge.
+  - 03 question: "to eat" typed, keyboard up. Unchanged.
+  - Case study: `day0-4-paywall` now shows "Choose your plan" whole above
+    the footer (it was cut through on the 14 Plus).
+- **[Checked] Island and status bar, at 100%, on all eight frames:** the
+  time ends 58.3 pt left of the island, the signal icon starts 28.8 pt
+  right of it; nothing overlaps.
+- **[Output]** `frame.py` then `assets.py`: `store/iphone/` (8, 1320 ×
+  2868), `readme/` (hero and four frames), `case-study/` (12 webp and
+  `og-candidate.png`), `overview.jpg`. Every image opened and checked:
+  the stated size, RGB (no alpha), the made-up learner Sam only, status
+  bar 9:41; the 1.0.0 side of `compare-home` keeps the owner's name
+  blurred. `screenshots/1.2.0/README.md`: slot table now "iPhone 6.9"
+  Display (1320 × 2868)", no separate 6.5" set.

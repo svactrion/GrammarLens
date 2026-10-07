@@ -288,18 +288,30 @@ carried over now.
 - [ ] **App Store Connect, subscription review screenshot:** upload them,
   one per subscription (owner).
 - [x] **App Store screenshots redone for 1.2.0** (2026-10-07): 8 iPhone
-  (6.5", 1284 × 2778) and 5 iPad (13", 2064 × 2752) in
+  (6.9", 1320 × 2868, iPhone 17 Pro Max with its Dynamic Island; first
+  made at 6.5" on the iPhone 14 Plus, moved to 6.9" the same day, see
+  below) and 5 iPad (13", 2064 × 2752) in
   `screenshots/1.2.0/store/`, made by `tool/screenshots/` (seeded
   made-up learner, Fox, Glacier Peak; build log 2026-10-06/07).
 - [x] **Frame 06 (Review, Premium, Suggested Focus) approved**
   (2026-10-07): Suggested Focus passed the device check;
   `06-review-premium.png`.
 - [ ] **App Store Connect, screenshots:** upload the set (owner), per the
-  slot table in `screenshots/1.2.0/README.md`; clear or replace any 6.9"
-  set, or large iPhones keep the old one.
+  slot table in `screenshots/1.2.0/README.md`: the iPhone set into the
+  6.9" slot; no separate 6.5" set (clear any old one, or those iPhones
+  keep it).
 - [x] **Final export after the device checks** (2026-10-07): no captured
   screen changed in the device checks, so no recapture; the set as
-  committed is final (06 renamed only).
+  committed is final (06 renamed only). **Reopened the same day** (owner,
+  after it closed): the iPhone set moves to the 6.9" slot and the
+  iPhone 17 Pro Max with a Dynamic Island, since the iPhone 14 Plus's
+  notched frame looks dated in the store, and 6.9" is Apple's main iPhone
+  slot and covers 6.5". 1.0.0 is still in review, so there is time before
+  the 1.2.0 submission. **Closed again** (2026-10-07): the 8 iPhone frames
+  retaken and framed, the README and case-study images and the OG
+  candidate redone from them; the iPad set and the subscription review
+  images unchanged (byte-identical). Images only: TestFlight build 5 is
+  not affected. Build log 2026-10-07.
 - [x] **README images** (2026-10-07): the 1.2.0 hero and four frames on
   top; 1.1.0 and 1.0.0 kept below as previous versions.
 - [x] **Case-study images made** (2026-10-07): `screenshots/1.2.0/case-study/`,
