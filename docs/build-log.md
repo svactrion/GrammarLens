@@ -11521,3 +11521,22 @@ the top; 03 types "to eat", as 01 shows.
   README's status line brought to 7 October: 1.0.0 in review, 1.1.0 a
   release candidate, 1.2.0 in development with its device checks open,
   none of them released.
+
+## 2026-10-07 (1.2.0 visual assets — device checks passed, 06 approved, the set final)
+
+- **Device checks (owner, physical iPhone 14 Plus):** Premium Review's
+  Suggested Focus; the sandbox paywall ("≈ $4.17 per month", struck
+  "$71.88", the 7-day / 3-day trial lines, the same as the subscription
+  review images); the final pass (wordmark, default text size); the final
+  screens (button rule, Data, Credits). All passed; no screen changed.
+  Not named in this check and still open: the paywall on a non-USD
+  storefront, with VoiceOver and at the largest text size; dark Welcome's
+  wordmark (A2); an account that already had a trial (eligibility).
+- **06 approved:** `frame.py` writes `06-review-premium.png`; the "on
+  hold" note is gone from the slot table. Reframed: every PNG and
+  `overview.jpg` byte-identical to the committed set (compared by hash),
+  only 06's name changed.
+- **No recapture:** no captured screen changed, so the committed set is
+  final. The main README keeps its four frames (06 not added, owner).
+- Open: uploads to App Store Connect, the case-study images to the site,
+  the iPadOS 26 narrow window, the version bump to 1.2.0 (not started).
