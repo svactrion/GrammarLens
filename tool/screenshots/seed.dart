@@ -13,7 +13,9 @@
 //     so Home, Profile and the month's medal agree (a visual choice: the
 //     rotation is not changed, the stored theme is);
 //   - July, August and September finished at Bronze, Silver and Gold,
-//     frozen by the app's own finalization;
+//     frozen by the app's own finalization, each recorded with its own
+//     theme (Green Slope, Ember Peak, Red Canyon; Glacier Peak is this
+//     month's alone);
 //   - this month's Daily Tests done up to one step before Halfway Hut, so
 //     today's test, taken live by the driver, lands the avatar on it;
 //     today's set stored but not taken (the bundled day-0 questions, no
@@ -50,6 +52,14 @@ const screenshotTheme = ClimbThemes.glacierPeak;
 /// each ends on.
 const pastMonthTiers = [MedalTier.bronze, MedalTier.silver, MedalTier.gold];
 
+/// Those months' recorded themes, oldest first: three different ones, none
+/// of them [screenshotTheme].
+const pastMonthThemes = [
+  ClimbThemes.greenSlope,
+  ClimbThemes.emberPeak,
+  ClimbThemes.redCanyon,
+];
+
 String _key(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
@@ -64,14 +74,19 @@ List<String> get screenshotTodayAnswers => [
 /// has a profile is left as it is). [premium] also stores the debug
 /// entitlement override (debug builds only).
 ///
-/// Sets [StorageService.themeForNewMonthForTesting] to [screenshotTheme]
-/// for the rest of the process: the first completion this month writes the
-/// month's theme record, which is then never changed.
+/// Theme records go through two of [StorageService]'s test seams, so
+/// lib/ is unchanged. Storage writes a month's record only while that
+/// month is its current one, at the month's first completion, and never
+/// changes it afterwards. So each past month is seeded with
+/// [StorageService.clockForTesting] inside it and
+/// [StorageService.themeForNewMonthForTesting] naming its theme; then the
+/// clock is put back as it was. The theme seam stays on [screenshotTheme]
+/// for the rest of the process.
 Future<void> seedScreenshotData(StorageService storage,
     {required DateTime now, required bool premium}) async {
   if (await storage.getUserProfile() != null) return;
   // ignore: invalid_use_of_visible_for_testing_member
-  StorageService.themeForNewMonthForTesting = (_, __) => screenshotTheme;
+  final clock = StorageService.clockForTesting;
 
   await storage.saveUserProfile(UserProfile(
       name: screenshotName,
@@ -79,14 +94,26 @@ Future<void> seedScreenshotData(StorageService storage,
       avatar: screenshotAvatar));
 
   // July, August, September (relative to [now]): each the middle of its
-  // tier's band, every day all right. Past months keep the theme they read
-  // as without a record (Green Slope), as a real install's would.
-  for (final (i, tier) in pastMonthTiers.indexed) {
-    final month = DateTime(now.year, now.month - pastMonthTiers.length + i);
-    final days = _daysForTier(month.year, month.month, tier);
-    for (var d = 1; d <= days; d++) {
-      await _completeDay(storage, DateTime(month.year, month.month, d), 5);
+  // tier's band, every day all right, seeded "in" that month so its first
+  // completion records its theme.
+  try {
+    for (final (i, tier) in pastMonthTiers.indexed) {
+      final month = DateTime(now.year, now.month - pastMonthTiers.length + i);
+      final days = _daysForTier(month.year, month.month, tier);
+      // ignore: invalid_use_of_visible_for_testing_member
+      StorageService.clockForTesting =
+          () => DateTime(month.year, month.month, days, 20);
+      // ignore: invalid_use_of_visible_for_testing_member
+      StorageService.themeForNewMonthForTesting = (_, __) => pastMonthThemes[i];
+      for (var d = 1; d <= days; d++) {
+        await _completeDay(storage, DateTime(month.year, month.month, d), 5);
+      }
     }
+  } finally {
+    // ignore: invalid_use_of_visible_for_testing_member
+    StorageService.clockForTesting = clock;
+    // ignore: invalid_use_of_visible_for_testing_member
+    StorageService.themeForNewMonthForTesting = (_, __) => screenshotTheme;
   }
   await storage.finalizePastMedalMonths();
 

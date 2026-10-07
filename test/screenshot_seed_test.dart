@@ -46,17 +46,25 @@ void main() {
     expect(profile.learningGoal, LearningGoal.examPrep);
   });
 
-  test('this month is recorded as Glacier Peak, the months before are not',
+  test('each month is recorded with its own theme, Glacier Peak only now',
       () async {
     await seedAt(now);
+    final themes = await storage.getClimbMonthThemes();
+    expect(themes, {
+      (2026, 7): ClimbThemes.greenSlope.id,
+      (2026, 8): ClimbThemes.emberPeak.id,
+      (2026, 9): ClimbThemes.redCanyon.id,
+      (2026, 10): ClimbThemes.glacierPeak.id,
+    });
+    expect(themes.values.toSet(), hasLength(4));
+    // What Home reads for this month.
     expect(await storage.resolveClimbMonthTheme(2026, 10),
         ClimbThemes.glacierPeak.id);
-    final themes = await storage.getClimbMonthThemes();
-    expect(themes, {(2026, 10): ClimbThemes.glacierPeak.id});
-    // Without a record a past month reads as Green Slope, as on a real
-    // install.
-    expect(await storage.resolveClimbMonthTheme(2026, 9),
-        ClimbThemes.greenSlope.id);
+  });
+
+  test('the seed puts the storage clock back as it found it', () async {
+    await seedAt(now);
+    expect(StorageService.clockForTesting(), now);
   });
 
   test('July, August and September end on Bronze, Silver and Gold', () async {
