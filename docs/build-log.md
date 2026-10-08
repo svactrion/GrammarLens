@@ -11661,3 +11661,50 @@ uploads.
   bar 9:41; the 1.0.0 side of `compare-home` keeps the owner's name
   blurred. `screenshots/1.2.0/README.md`: slot table now "iPhone 6.9"
   Display (1320 × 2868)", no separate 6.5" set.
+
+## 2026-10-08 (Shared Daily Test timing: rationale recorded after the fact)
+
+Docs only. **Recorded after the fact:** on 2026-09-22 the shared Daily
+Test's timing was set as "after 4 weeks of proxy token-log data" (roadmap,
+"Post-launch tasks", "Shared Daily Test"; `prd-v2.md` §13.12, update note).
+On 2026-09-26 the work was moved into 1.1.0 without that data (entry
+"1.1.0 shared Daily Test — owner decisions"), and no reason for skipping the
+wait was written down (`docs/medium/01-cost-architecture-source.md` §7,
+"Not found").
+
+- **[Product — owner, stated 2026-10-04]** Two reasons:
+  1. 1.0.0 was in review, and the next version was the gamification layer
+     built on the Daily Test (Monthly Climb). Connecting it first to the old
+     infrastructure and then to the new one would have meant doing the same
+     work two or three times.
+  2. The cost of generating one set per device could not be carried, and
+     that limited the product's lifetime before it was even released. The
+     data would have shown how large the cost was, not how it was
+     structured.
+- The token-log wait was not replaced by other data: no reading of live
+  traffic is recorded (source file §7). This entry records the reasoning;
+  it does not add evidence.
+- **[Docs]** `docs/medium/01-cost-architecture-source.md` §7 keeps the
+  timing item under "Not found" (the source was cut off at 2026-10-04's
+  entries) and points to this entry.
+
+## 2026-10-08 (Medium article 1 published)
+
+Docs only.
+
+- **[Writing]** First article of the Medium series, in Turkish: "Sıfır
+  maliyetli dediğim ilk gün, maliyetin başladığı yerdi"
+  (https://ahmet-tayfur.medium.com/s%C4%B1f%C4%B1r-maliyetli-dedi%C4%9Fim-ilk-g%C3%BCn-maliyetin-ba%C5%9Flad%C4%B1%C4%9F%C4%B1-yerdi-42f94d7fa634).
+  Source: `docs/medium/01-cost-architecture-source.md`.
+- **[Note] Where the article goes beyond the source file.** Three places
+  are the owner's narrative or interpretation, not sourced facts:
+  - the observation about AI apps on the market;
+  - the "middle way" ("orta yol") framing;
+  - the comparison of 2 × $1.72–1.86 with $3.54: a derived calculation.
+    The source has the two figures separately (a free user who uses the
+    Daily Test and the practice session daily, ≈ $1.72–1.86 a month on
+    1.0.0, part estimate; net revenue of the annual plan, $3.54 a month;
+    `prd-v2.md` §13.7); the comparison itself is not in the record.
+- **[Docs]** README ("Case study and writing") links the article;
+  roadmap's Medium item updated: article 1 published, next is article 2
+  (App Review guideline 5.1.2(i)).

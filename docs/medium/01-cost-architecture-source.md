@@ -172,6 +172,10 @@ Under the 2026-10-04 decision:
 
 - Why the shared Daily Test moved into 1.1.0 (2026-09-24 / 2026-09-26)
   before the "4 weeks of proxy token-log data" set as its timing.
+  *(Note 2026-10-08: the owner's reasons, stated 2026-10-04, are now in
+  BL 2026-10-08 (Shared Daily Test timing: rationale recorded after the
+  fact), written after the fact. Kept here because this file's cut-off is
+  2026-10-04's entries.)*
 - Why the device cap started at 30 operations a day.
 - A real-traffic cost figure for any operation: no token-log reading of
   live traffic is recorded.
