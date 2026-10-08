@@ -318,6 +318,13 @@ carried over now.
   the site's six images under their names and sizes (600 × 1298 webp),
   new ones, comparisons and an OG candidate (1672 × 941).
 - [ ] **Case-study images to the site** (owner, the site repository).
+- [ ] **Medium series** (not waiting for the release): article 1, "Sıfır
+  maliyetli dediğim ilk gün, maliyetin başladığı yerdi" (Turkish, cost
+  architecture), published, recorded 2026-10-08:
+  https://ahmet-tayfur.medium.com/s%C4%B1f%C4%B1r-maliyetli-dedi%C4%9Fim-ilk-g%C3%BCn-maliyetin-ba%C5%9Flad%C4%B1%C4%9F%C4%B1-yerdi-42f94d7fa634
+  (source: `docs/medium/01-cost-architecture-source.md`; build log
+  2026-10-08). Next: article 2, App Review guideline 5.1.2(i) (the AI
+  permission before Topic Practice); not started.
 - [ ] **iPad on iPadOS 26: the app opens as a resizable window.** Seen in
   the 1.2.0 screenshot captures (iPad Pro 13-inch (M5) simulator, iOS
   26.5, 2026-10-06): every frame has the system's window resize handle in
@@ -581,7 +588,8 @@ D1–D6 in the side-tracks file.)*
           status note, README's status, feature list and version table.
   - Not waiting for the release:
     - [ ] case-study images;
-    - [ ] Medium posts;
+    - [ ] Medium posts (moved: "Medium series" in the 1.2.0 pre-release
+          checklist; article 1 published 2026-10-08);
     - [ ] Settings' two developer sections merged into one.
 - **1.0.0's state and the submission path (Ahmet, 2026-10-03).** 1.0.0
   was resubmitted on 2026-09-28; four items are "Waiting for Review": the

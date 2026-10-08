@@ -53,6 +53,7 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 
 - [Case study](https://ahmettayfur.com/products/grammarlens/case-study): the decisions behind the product and what they cost.
 - [Medium](https://medium.com/@ahmet-tayfur): process write-ups.
+  - [Sıfır maliyetli dediğim ilk gün, maliyetin başladığı yerdi](https://ahmet-tayfur.medium.com/s%C4%B1f%C4%B1r-maliyetli-dedi%C4%9Fim-ilk-g%C3%BCn-maliyetin-ba%C5%9Flad%C4%B1%C4%9F%C4%B1-yerdi-42f94d7fa634) (in Turkish): where cost leaks in an AI app, from a "free" Daily Test to one shared set a day.
 
 ## Version history
 
