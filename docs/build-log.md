@@ -12038,3 +12038,113 @@ On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
   `flutter analyze` clean; **1,951 passed, 0 failed.**
 - **[Not checked]** On the owner's iPhone: the 56 pt slider; the tight case
   (a 375 pt phone at Large text), if available.
+
+## 2026-10-12 (Question screen — B3: multi-blank answer boxes, the proxy rule (not deployed), the "Your answer" row fix; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §1, §4–§7.
+
+- **[Product — owner]** The B2 slider at 56 pt and the corrected fit
+  check committed first (entry above). B3 approved with one change from
+  the re-read: the answer counts as being edited while *any* box has focus
+  (B2 made "being edited" drive "Review answer" and the slider's tuck, and
+  it read only box 0); moving between boxes must keep "Review answer"
+  steady. Also folded in, as its own commit: the "Your answer" row growing
+  44 → 48 pt on focus (found in B2).
+- **[Engineering] The "Your answer" row (own commit).** "Review answer" /
+  "Read full question" now uses `MaterialTapTargetSize.shrinkWrap`: its own
+  44 pt minimum is the target, so the row stays 44 pt and the answer field
+  no longer drops 4 pt when the answer takes focus. Side effect, measured:
+  the B1 wrapped-tag case (390 × 844, Medium, keyboard up) now has 6.5 pt
+  of the question in its card's scroll, not 10.5 (`question_v2_test`
+  updated).
+- **[Engineering] B3, in three commits.**
+  - `lib/utils/blanks.dart`: `blankPattern` and `blankCount`, the one rule
+    (`FallbackPool.blankCount` delegates to it; the Daily Test gate is
+    unchanged).
+  - `lib/utils/blank_assembly.dart`: `BlankAnswer` (typed text or "no
+    article"; an empty box is never "no article"), `blankSourceText` (the
+    context, the instruction, or both joined, whichever holds the blanks),
+    `assembleBlanks`: each box trimmed; a no-article blank removed with the
+    space after it (or before it), no double space; a removed blank that
+    started a sentence (start of text, after a line break, `.` `?` `!`, or
+    an opening quote; not after an apostrophe) capitalises the next word;
+    typed case kept; an empty box keeps its `____`; every box empty → `''`
+    (a skipped item).
+  - `lib/widgets/blank_colors.dart`: the four colours (orange, blue, teal,
+    violet; light and dark), contrast in the doc comment.
+  - `lib/widgets/question_view.dart`:
+    - `AnswerDrafts.items(items)`: per item one controller and one
+      no-article flag per box (`boxCountFor`: 2–4 blanks of a
+      `fill_in_blank` → that many, else 1); four shared focus nodes and
+      answer scroll controllers (node 0 is the old `focusNode`);
+      `answerFor` (text, or the assembled sentence), `isComplete` (Q3),
+      `hasFocus`, `focusedBox`, `unfocus`; `leave(id, nextId:)` moves
+      focus to box 0 when the focused box does not exist on the next
+      question; `restore` puts the focused field back on the keyboard in
+      the same frame (a new field does not open the keyboard for an
+      already-focused node, so Next/Back between questions with different
+      box counts dropped it; Flutter hides a departing field's keyboard only
+      after the frame unless another one takes it).
+    - `QuestionView` listens to all four nodes; "being edited" is any box.
+    - The sentence: each blank's underscores drawn transparent with a 3×
+      underline in its colour (same width, so lines wrap as before),
+      tinted while its box has focus; semantics "blank n of N".
+    - `_BlankBoxes`: the boxes below "Your answer", 8 pt apart, in their
+      own scroll view; the answer area's minimum is one box and a 14 pt
+      peek of the next (one box in the compact case). Each box: 1.5 pt edge
+      in its colour, 3 pt while focused; one line that wraps; 100
+      characters, no counter; Return → next box, "done" on the last closes
+      the keyboard; autocorrect, suggestions, smart punctuation and
+      capitals off; semantics "Blank n of N". `articles` only: a 44 × 44
+      "—" button (semantics "No article", toggled) that clears the text and
+      sets "— no article" on a tinted fill; typing or a second tap clears
+      it.
+  - `practice_screen.dart`, `daily_test_screen.dart`: `AnswerDrafts.items`,
+    Next from `isComplete`, `leave(…, nextId:)`, `unfocus()`. The answers
+    map still gets what `onChanged` sends (the sentence for a multi-blank
+    item), so scoring and the saved error entry carry the completed
+    sentence. Daily Test: always one blank, so one box, as before.
+- **[Engineering] The proxy rule (own commit, not deployed).**
+  `GENERATION_SYSTEM_PROMPT` (practice generation only) gains "A
+  fill_in_blank item has at most 4 blanks." before "Return only the
+  structured output". The Daily Test prompts, the shared gate and the
+  scoring prompt are unchanged. **Not deployed** (Q4): it goes out only
+  with the app release that ships the boxes.
+- **[Tests]** `flutter analyze` clean; **1,991 passed, 0 failed.** Proxy:
+  typecheck clean, **393 passed**.
+  - `test/question_answer_row_test.dart` (3): the row 44 pt and the field
+    in place when "Review answer" appears, Small / Medium / Large; the
+    control still at least 44 × 44.
+  - `test/blanks_test.dart` (3): the rule; context then instruction;
+    `FallbackPool.blankCount` the same.
+  - `test/blank_assembly_test.dart` (14): the plan's three worked
+    examples; 2–4 blanks; trimming; no-article in the middle, at the end
+    and before punctuation, at a sentence start (plain, `?`, `"…`, `“…`,
+    after a line break) with the capital, and not after an apostrophe;
+    typed case kept; all empty → `''`; partial keeps `____`; `isFilled`;
+    `blankSourceText`.
+  - `test/multi_blank_test.dart` (20, real font): box counts (1, 2, 3, 4,
+    5 → 1, error correction → 1); one blank keeps the single field and no
+    colours; boxes below the sentence in order with matching underline and
+    edge colours, 1.5 / 3 pt, the 100 cap (light and dark); the palette's
+    3:1 on card and page, no semantic colour; VoiceOver labels; the focused
+    blank tinted; 4 boxes at 375 × 667 Large with the keyboard: no
+    overflow, the last box scrolled into view; "—" only on articles, 44 ×
+    44, clears text, typing clears it, an empty box is not "no article",
+    toggles; Next only when every box is typed or "—" (spaces do not
+    count), Skip always; the completed sentence in the scoring call and in
+    the saved error entry; a skipped multi-blank item sends `''`; boxes and
+    "no article" kept across Next and Back; the keyboard kept from box 3 to
+    a one-box question and from box 2 to box 2 across Next and Back (both
+    fail without the `restore` fix, checked); Return through the boxes and
+    "done" on the last; "Review answer" in place every frame (20 frames
+    each) through two Returns and two taps between boxes, and closing the
+    keyboard from box 4.
+  - `proxy/test/practice_prompt.test.ts` (2): the practice prompt has the
+    rule; the Daily Test and scoring prompts do not.
+- **[Not checked]** On the owner's iPhone: the boxes and colours in both
+  themes, the underlines, the "—" button, Return through the boxes with the
+  real keyboard, the keyboard staying up across Next and Back, the row no
+  longer jumping on focus. A live multi-blank practice item needs the proxy
+  rule deployed or an item the current prompt happens to make with 2–4
+  blanks; neither is done.

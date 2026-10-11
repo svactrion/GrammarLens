@@ -112,6 +112,16 @@ Status per batch is kept in the build log and the roadmap, not here.
   as they are, apart from the `AnswerDrafts` constructor and the Next rule
   (Q3).
 - Drafts are in memory only, as today; they survive Next/Back the same way.
+- **Added in B3 (owner, 2026-10-12):** the answer counts as being edited
+  while *any* box has focus (B2 made "being edited" drive "Review answer"
+  and the hint slider's tuck; it read only box 0). Moving between boxes,
+  by Return or a tap, keeps "Review answer" steady.
+- **Found in B3:** a question with a different number of boxes brings new
+  answer fields, and a new field does not open the keyboard for a node
+  that already has focus, so Next/Back dropped the keyboard. `restore`
+  now puts the focused field back on the keyboard in the same frame
+  (Flutter hides a departing field's keyboard only after the frame, unless
+  another field takes it first).
 
 ## 2. Topic tag (B1)
 
