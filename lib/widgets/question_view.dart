@@ -701,6 +701,10 @@ class _AnswerHead extends StatelessWidget {
               onPressed: onCloseKeyboard,
               style: TextButton.styleFrom(
                 minimumSize: const Size(44, QuestionView.headHeight),
+                // Its own 44 pt is the target: Material's padded 48 pt tap
+                // area grew the row by 4 pt when the control appeared and
+                // dropped the answer field with it.
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 foregroundColor: colorScheme.secondary,
                 textStyle:

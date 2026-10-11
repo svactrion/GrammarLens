@@ -494,7 +494,7 @@ void main() {
 
     testWidgets(
         'the same question with a topic tag that wraps (Gerund vs. '
-        'Infinitive) has 10.5 pt in its card\'s scroll, and says so (an '
+        'Infinitive) has 6.5 pt in its card\'s scroll, and says so (an '
         'accepted cost of the tag, question screen plan B1)', (tester) async {
       await _pumpPractice(tester, keyboard: 336);
       await tester.tap(_skip);
@@ -502,8 +502,11 @@ void main() {
       await tester.tap(_field);
       await tester.pumpAndSettle();
 
-      expect(_questionScroll(tester).maxScrollExtent,
-          moreOrLessEquals(10.5, epsilon: 1));
+      expect(
+          _questionScroll(tester).maxScrollExtent,
+          // 10.5 pt until the "Your answer" row stopped growing by 4 pt on
+          // focus.
+          moreOrLessEquals(6.5, epsilon: 1));
       expect(find.byKey(QuestionView.moreBelowKey), findsOneWidget);
       expect(find.text('Read full question'), findsOneWidget);
     });
