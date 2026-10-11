@@ -53,7 +53,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   @override
   void initState() {
     super.initState();
-    _drafts = AnswerDrafts(widget.practiceSet.items.map((item) => item.id));
+    _drafts = AnswerDrafts.items(widget.practiceSet.items);
   }
 
   @override
@@ -65,17 +65,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
   bool get _isLastQuestion =>
       _currentIndex == widget.practiceSet.items.length - 1;
 
-  bool get _currentHasAnswer {
-    final item = widget.practiceSet.items[_currentIndex];
-    // Same empty/whitespace predicate the scoring path uses to detect a
-    // skipped item — the button label must never disagree with what
-    // submitting will actually record.
-    return (_answers[item.id] ?? '').trim().isNotEmpty;
-  }
+  /// Some text in a single answer (the same empty/whitespace predicate the
+  /// scoring path uses to detect a skipped item); on a multi-blank question
+  /// every box typed or set to "no article" (owner decision Q3).
+  bool get _currentHasAnswer =>
+      _drafts.isComplete(widget.practiceSet.items[_currentIndex].id);
 
   /// Moves to another question. Local only: no request, no score, no quota.
   void _showQuestion(int index) {
-    _drafts.leave(widget.practiceSet.items[_currentIndex].id);
+    _drafts.leave(widget.practiceSet.items[_currentIndex].id,
+        nextId: widget.practiceSet.items[index].id);
     setState(() => _currentIndex = index);
     _drafts.restore(widget.practiceSet.items[index].id);
   }
@@ -119,7 +118,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Future<void> _submit() async {
-    _drafts.focusNode.unfocus();
+    _drafts.unfocus();
     setState(() => _submitting = true);
     try {
       final deviceId = await widget.storageService.getOrCreateDeviceId();

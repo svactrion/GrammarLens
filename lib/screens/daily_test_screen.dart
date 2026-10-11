@@ -93,7 +93,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
       setState(() {
         _dailyTestSet = dailyTestSet;
         _drafts?.dispose();
-        _drafts = AnswerDrafts(dailyTestSet.questions.map((q) => q.item.id));
+        _drafts = AnswerDrafts.items(dailyTestSet.questions.map((q) => q.item));
         _loading = false;
       });
     } catch (e) {
@@ -122,16 +122,15 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
   bool get _isLastQuestion =>
       _currentIndex == _dailyTestSet!.questions.length - 1;
 
-  bool get _currentHasAnswer {
-    final question = _dailyTestSet!.questions[_currentIndex];
-    return (_answers[question.item.id] ?? '').trim().isNotEmpty;
-  }
+  bool get _currentHasAnswer =>
+      _drafts!.isComplete(_dailyTestSet!.questions[_currentIndex].item.id);
 
   /// Moves to another question. Local only: grading happens on the result
   /// screen, so nothing is read, scored or counted here.
   void _showQuestion(int index) {
     final questions = _dailyTestSet!.questions;
-    _drafts!.leave(questions[_currentIndex].item.id);
+    _drafts!.leave(questions[_currentIndex].item.id,
+        nextId: questions[index].item.id);
     setState(() => _currentIndex = index);
     _drafts!.restore(questions[index].item.id);
   }
@@ -152,7 +151,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
 
   void _finish() {
     _finishing = true;
-    _drafts?.focusNode.unfocus();
+    _drafts?.unfocus();
     if (widget.onFinished != null) {
       widget.onFinished!(_dailyTestSet!, Map.of(_answers));
       return;

@@ -6,61 +6,191 @@ import 'package:flutter/scheduler.dart';
 import '../models/practice_item.dart';
 import '../data/topic_hints.dart';
 import '../models/topic.dart';
+import '../utils/blank_assembly.dart';
+import '../utils/blanks.dart';
 import '../theme.dart';
+import 'blank_colors.dart';
 import 'topic_hint_card.dart';
 
 /// The answer drafts of one question session (PracticeScreen, DailyTestScreen):
-/// one [TextEditingController] per question ID, made once and kept until the
-/// screen goes, so going back to a question brings back its text and its
-/// selection. Also the session's single answer [focusNode] and answer
-/// [scrollController], which the one answer field keeps across questions
-/// (only its controller is swapped), so an open keyboard stays open on Next
-/// and Back. The answer field's scroll offset is saved per question in
+/// per question ID, one [TextEditingController] per answer box (one box, or
+/// one per blank on a multi-blank Practice question, [boxCountFor]), made
+/// once and kept until the screen goes, so going back to a question brings
+/// back its text, its selection and any "no article" box. Also the
+/// session's answer [focusNodes] and [scrollControllers], one per box
+/// position, which the answer fields keep across questions (only their
+/// controllers are swapped), so an open keyboard stays open on Next and
+/// Back. The fields' scroll offsets are saved per question and box in
 /// [leave] and put back in [restore].
 class AnswerDrafts {
-  AnswerDrafts(Iterable<String> ids)
+  /// One box per ID (every question a single answer).
+  AnswerDrafts(Iterable<String> ids) : this._({for (final id in ids) id: 1});
+
+  /// One box per question, or one per blank ([boxCountFor]).
+  AnswerDrafts.items(Iterable<PracticeItem> items)
+      : this._({for (final item in items) item.id: boxCountFor(item)});
+
+  AnswerDrafts._(Map<String, int> boxCounts)
       : _controllers = {
           // A valid collapsed selection from the start: the field keeps its
           // input connection across questions, and an empty controller's
           // default (-1) selection is not one to hand to the keyboard.
-          for (final id in ids)
-            id: TextEditingController.fromValue(const TextEditingValue(
-                selection: TextSelection.collapsed(offset: 0))),
+          for (final entry in boxCounts.entries)
+            entry.key: [
+              for (var i = 0; i < entry.value; i++)
+                TextEditingController.fromValue(const TextEditingValue(
+                    selection: TextSelection.collapsed(offset: 0))),
+            ],
+        },
+        _noArticle = {
+          for (final entry in boxCounts.entries)
+            entry.key: [
+              for (var i = 0; i < entry.value; i++) ValueNotifier(false),
+            ],
         };
 
-  final Map<String, TextEditingController> _controllers;
+  /// At most this many boxes (and blanks); the proxy asks for no more.
+  static const int maxBoxes = 4;
+
+  /// One box per blank for a `fill_in_blank` question with 2 to
+  /// [maxBoxes] blanks; one box otherwise (other types, one blank, none,
+  /// or more than [maxBoxes]).
+  static int boxCountFor(PracticeItem item) {
+    if (item.type != PracticeItemType.fillInBlank) return 1;
+    final count = blankCount(item.context, item.instruction);
+    return count >= 2 && count <= maxBoxes ? count : 1;
+  }
+
+  final Map<String, List<TextEditingController>> _controllers;
+  final Map<String, List<ValueNotifier<bool>>> _noArticle;
   final Map<String, double> _offsets = {};
-  final FocusNode focusNode = FocusNode(debugLabel: 'answer');
-  final ScrollController scrollController = ScrollController();
 
-  TextEditingController controllerFor(String id) => _controllers[id]!;
+  /// Set by [leave] when the answer had focus: [restore] keeps the keyboard.
+  bool _keepKeyboard = false;
 
-  /// Call before the visible question changes away from [id].
-  void leave(String id) {
-    if (scrollController.hasClients) {
-      _offsets[id] = scrollController.offset;
+  final List<FocusNode> focusNodes = [
+    for (var i = 0; i < maxBoxes; i++) FocusNode(debugLabel: 'answer $i'),
+  ];
+  final List<ScrollController> scrollControllers = [
+    for (var i = 0; i < maxBoxes; i++) ScrollController(),
+  ];
+
+  /// The first box's: the only one for a single-answer question.
+  FocusNode get focusNode => focusNodes.first;
+  ScrollController get scrollController => scrollControllers.first;
+
+  int boxCount(String id) => _controllers[id]!.length;
+
+  /// The first (or only) box's controller.
+  TextEditingController controllerFor(String id) => _controllers[id]!.first;
+
+  List<TextEditingController> controllersFor(String id) => _controllers[id]!;
+
+  /// Whether box [box] of [id] is set to "no article".
+  ValueNotifier<bool> noArticleFor(String id, int box) => _noArticle[id]![box];
+
+  /// Whether any answer box has focus: the answer is being edited.
+  bool get hasFocus => focusNodes.any((node) => node.hasFocus);
+
+  /// The box position that has focus, or null.
+  int? get focusedBox {
+    final index = focusNodes.indexWhere((node) => node.hasFocus);
+    return index < 0 ? null : index;
+  }
+
+  /// Closes the keyboard, whichever box has it.
+  void unfocus() {
+    for (final node in focusNodes) {
+      if (node.hasFocus) node.unfocus();
     }
   }
 
-  /// Call after the visible question changed to [id]: once the field has
-  /// laid out the new text, its own saved offset comes back (0 for a
+  List<BlankAnswer> _answers(String id) => [
+        for (var i = 0; i < boxCount(id); i++)
+          noArticleFor(id, i).value
+              ? const BlankAnswer.noArticle()
+              : BlankAnswer(_controllers[id]![i].text),
+      ];
+
+  /// The answer as it goes to scoring: the box's text, or for a
+  /// multi-blank question the completed sentence ([assembleBlanks]).
+  String answerFor(PracticeItem item) {
+    if (boxCount(item.id) == 1) return controllerFor(item.id).text;
+    return assembleBlanks(blankSourceText(item), _answers(item.id));
+  }
+
+  /// Whether Next may be pressed: some text in a single box; every box
+  /// typed or set to "no article" on a multi-blank question (owner decision
+  /// Q3).
+  bool isComplete(String id) => boxCount(id) == 1
+      ? controllerFor(id).text.trim().isNotEmpty
+      : _answers(id).every((answer) => answer.isFilled);
+
+  String _offsetKey(String id, int box) => '$id#$box';
+
+  /// Call before the visible question changes away from [id] to [nextId].
+  /// If the box that has focus does not exist on [nextId], the first box
+  /// takes focus now, so the keyboard stays open.
+  void leave(String id, {String? nextId}) {
+    for (var i = 0; i < boxCount(id); i++) {
+      if (scrollControllers[i].hasClients) {
+        _offsets[_offsetKey(id, i)] = scrollControllers[i].offset;
+      }
+    }
+    final focused = focusedBox;
+    _keepKeyboard = focused != null;
+    if (nextId != null && focused != null && focused >= boxCount(nextId)) {
+      focusNode.requestFocus();
+    }
+  }
+
+  /// Call after the visible question changed to [id]: once the fields have
+  /// laid out the new text, their own saved offsets come back (0 for a
   /// question not seen yet).
+  ///
+  /// When the answer had focus, the field that has it now is put back on
+  /// the keyboard in the same frame. A question with a different number of
+  /// boxes brings new fields, and a new field does not open the keyboard
+  /// for a node that already has focus; Flutter hides the keyboard of a
+  /// field that goes only after the frame, unless another one takes it
+  /// first, so the keyboard stays up.
   void restore(String id) {
+    final keepKeyboard = _keepKeyboard;
+    _keepKeyboard = false;
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (!scrollController.hasClients) return;
-      final position = scrollController.position;
-      final target = (_offsets[id] ?? 0)
-          .clamp(position.minScrollExtent, position.maxScrollExtent);
-      if (target != position.pixels) scrollController.jumpTo(target);
+      if (keepKeyboard) {
+        FocusManager.instance.primaryFocus?.context
+            ?.findAncestorStateOfType<EditableTextState>()
+            ?.requestKeyboard();
+      }
+      for (var i = 0; i < boxCount(id); i++) {
+        final controller = scrollControllers[i];
+        if (!controller.hasClients) continue;
+        final position = controller.position;
+        final target = (_offsets[_offsetKey(id, i)] ?? 0)
+            .clamp(position.minScrollExtent, position.maxScrollExtent);
+        if (target != position.pixels) controller.jumpTo(target);
+      }
     });
   }
 
   void dispose() {
-    for (final controller in _controllers.values) {
+    for (final controllers in _controllers.values) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
+    }
+    for (final flags in _noArticle.values) {
+      for (final flag in flags) {
+        flag.dispose();
+      }
+    }
+    for (final node in focusNodes) {
+      node.dispose();
+    }
+    for (final controller in scrollControllers) {
       controller.dispose();
     }
-    focusNode.dispose();
-    scrollController.dispose();
   }
 }
 
@@ -156,6 +286,20 @@ class QuestionView extends StatefulWidget {
   /// "Your answer" and its control: a 44 pt target.
   static const double headHeight = 44;
 
+  /// Space between answer boxes, and how much of the next box shows under
+  /// the first at the least.
+  static const double boxGap = 8;
+  static const double boxPeek = 14;
+
+  /// The most characters in one answer box.
+  static const int boxMaxLength = 100;
+
+  /// Answer box [index]'s key (a multi-blank question).
+  static ValueKey<String> blankBoxKey(int index) =>
+      ValueKey('question_blank_box_$index');
+  static ValueKey<String> noArticleKey(int index) =>
+      ValueKey('question_no_article_$index');
+
   /// The least of the question the answer's full minimum may leave it;
   /// below this the answer drops to one line (see the class comment).
   static const double minQuestionHeight = 72;
@@ -184,9 +328,17 @@ class QuestionView extends StatefulWidget {
   /// The answer field's height at its minimum lines, from the style and the
   /// text scaler: lines × line height and the padding, plus 1 pt for the
   /// font's rounding (measured: 74 pt for two lines at Small, the old Medium).
+  ///
+  /// With several answer boxes ([boxes] > 1): one box, and unless
+  /// [compact] a peek of the next ([boxPeek]); the boxes scroll in their
+  /// own area.
   static double answerMinHeight(
       ThemeData theme, TextScaler scaler, PracticeItemType type,
-      {bool compact = false}) {
+      {bool compact = false, int boxes = 1}) {
+    if (boxes > 1) {
+      return answerMinHeight(theme, scaler, PracticeItemType.fillInBlank) +
+          (compact ? 0 : boxGap + boxPeek);
+    }
     final style = answerStyle(theme);
     final line = scaler.scale(style.fontSize!) * style.height!;
     return minLinesFor(type, compact: compact) * line +
@@ -204,6 +356,9 @@ class _QuestionViewState extends State<QuestionView>
   bool _questionOverflows = false;
   bool _questionAtEnd = true;
   bool _answerFocused = false;
+
+  /// The answer box that has focus (its blank is tinted in the sentence).
+  int? _focusedBox;
 
   /// How far the topic hint slider is out from under the question card: 1
   /// out, 0 tucked away. It goes in when the answer takes focus and comes
@@ -225,8 +380,9 @@ class _QuestionViewState extends State<QuestionView>
   @override
   void initState() {
     super.initState();
-    widget.drafts.focusNode.addListener(_onFocusChange);
-    _answerFocused = widget.drafts.focusNode.hasFocus;
+    _listen(widget.drafts);
+    _answerFocused = widget.drafts.hasFocus;
+    _focusedBox = widget.drafts.focusedBox;
     _hintOut = AnimationController(
       vsync: this,
       duration: hintSlideDuration,
@@ -249,8 +405,8 @@ class _QuestionViewState extends State<QuestionView>
   void didUpdateWidget(QuestionView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.drafts != widget.drafts) {
-      oldWidget.drafts.focusNode.removeListener(_onFocusChange);
-      widget.drafts.focusNode.addListener(_onFocusChange);
+      _unlisten(oldWidget.drafts);
+      _listen(widget.drafts);
     }
     // A new question is read from its start.
     if (oldWidget.item.id != widget.item.id && _questionScroll.hasClients) {
@@ -260,15 +416,32 @@ class _QuestionViewState extends State<QuestionView>
 
   @override
   void dispose() {
-    widget.drafts.focusNode.removeListener(_onFocusChange);
+    _unlisten(widget.drafts);
     _questionScroll.dispose();
     _hintOutCurved.dispose();
     _hintOut.dispose();
     super.dispose();
   }
 
+  void _listen(AnswerDrafts drafts) {
+    for (final node in drafts.focusNodes) {
+      node.addListener(_onFocusChange);
+    }
+  }
+
+  void _unlisten(AnswerDrafts drafts) {
+    for (final node in drafts.focusNodes) {
+      node.removeListener(_onFocusChange);
+    }
+  }
+
+  /// The answer is being edited while any of its boxes has focus (owner,
+  /// B3): moving from box to box keeps it so, with no flicker of "Review
+  /// answer" (the focus has already moved when the listeners run).
   void _onFocusChange() {
-    final focused = widget.drafts.focusNode.hasFocus;
+    final focused = widget.drafts.hasFocus;
+    final box = widget.drafts.focusedBox;
+    if (box != _focusedBox) setState(() => _focusedBox = box);
     if (focused == _answerFocused) return;
     setState(() => _answerFocused = focused);
     if (_reduceMotion) {
@@ -297,7 +470,7 @@ class _QuestionViewState extends State<QuestionView>
     }
   }
 
-  void _closeKeyboard() => widget.drafts.focusNode.unfocus();
+  void _closeKeyboard() => widget.drafts.unfocus();
 
   @override
   Widget build(BuildContext context) {
@@ -343,9 +516,11 @@ class _QuestionViewState extends State<QuestionView>
               QuestionView.questionGap -
               QuestionView.headHeight -
               QuestionView.headGap;
-          final compact =
-              room - QuestionView.answerMinHeight(theme, scaler, type) <
-                  QuestionView.minQuestionHeight;
+          final boxes = widget.drafts.boxCount(widget.item.id);
+          final compact = room -
+                  QuestionView.answerMinHeight(theme, scaler, type,
+                      boxes: boxes) <
+              QuestionView.minQuestionHeight;
           // An open hint card pushes the answer down past the bottom; it is
           // cut at the top of the Skip/Next bar (the bottom padding is free
           // room for it), and only there (the question card's shadow
@@ -355,7 +530,7 @@ class _QuestionViewState extends State<QuestionView>
             child: CustomMultiChildLayout(
               delegate: _QuestionLayoutDelegate(
                   answerMin: QuestionView.answerMinHeight(theme, scaler, type,
-                      compact: compact),
+                      compact: compact, boxes: boxes),
                   hintReserve: hintReserve),
               children: [
                 // Painted first, so the question card is drawn over a slider
@@ -365,9 +540,19 @@ class _QuestionViewState extends State<QuestionView>
                 LayoutId(id: _Slot.head, child: head),
                 LayoutId(
                     id: _Slot.answer,
-                    child: _answerField(theme,
-                        minLines:
-                            QuestionView.minLinesFor(type, compact: compact))),
+                    child: boxes > 1
+                        ? _BlankBoxes(
+                            key: ValueKey('blank_boxes_${widget.item.id}'),
+                            item: widget.item,
+                            drafts: widget.drafts,
+                            noArticleButton:
+                                widget.topic?.id == TopicId.articles,
+                            onChanged: () => widget.onChanged(
+                                widget.drafts.answerFor(widget.item)),
+                          )
+                        : _answerField(theme,
+                            minLines: QuestionView.minLinesFor(type,
+                                compact: compact))),
               ],
             ),
           );
@@ -386,6 +571,10 @@ class _QuestionViewState extends State<QuestionView>
         index: widget.index,
         total: widget.total,
         topic: widget.topic,
+        blankColors: widget.drafts.boxCount(widget.item.id) > 1
+            ? blankColors(theme.brightness)
+            : null,
+        focusedBlank: _focusedBox,
       ),
     );
     final radius = BorderRadius.circular(21);
@@ -513,12 +702,53 @@ class _QuestionContent extends StatelessWidget {
   final int total;
   final Topic? topic;
 
+  /// On a multi-blank question, the colours that link each blank to its
+  /// answer box; null shows the text as it is (one blank, other types).
+  final List<Color>? blankColors;
+
+  /// The blank whose box has focus, tinted.
+  final int? focusedBlank;
+
   const _QuestionContent({
     required this.item,
     required this.index,
     required this.total,
     required this.topic,
+    this.blankColors,
+    this.focusedBlank,
   });
+
+  /// [text] with each blank's underscores replaced in look (not in width,
+  /// so lines wrap as before) by an underline in its colour, numbered from
+  /// [first] in reading order; the focused one tinted. VoiceOver reads
+  /// "blank n of N".
+  Widget _withBlanks(String text, TextStyle? style, int first) {
+    final colors = blankColors!;
+    final total = blankCount(item.context, item.instruction);
+    final spans = <InlineSpan>[];
+    var last = 0;
+    var index = first;
+    for (final blank in blankPattern.allMatches(text)) {
+      spans.add(TextSpan(text: text.substring(last, blank.start)));
+      final color = colors[index % colors.length];
+      spans.add(TextSpan(
+        text: blank[0],
+        semanticsLabel: 'blank ${index + 1} of $total',
+        style: TextStyle(
+          color: Colors.transparent,
+          decoration: TextDecoration.underline,
+          decorationColor: color,
+          decorationThickness: 3,
+          backgroundColor:
+              index == focusedBlank ? color.withValues(alpha: 0.16) : null,
+        ),
+      ));
+      index++;
+      last = blank.end;
+    }
+    spans.add(TextSpan(text: text.substring(last)));
+    return Text.rich(TextSpan(style: style, children: spans));
+  }
 
   static const EdgeInsets _badgePadding =
       EdgeInsets.symmetric(horizontal: 8, vertical: 3);
@@ -542,8 +772,14 @@ class _QuestionContent extends StatelessWidget {
     final scene = item.context?.trim();
     final hasContext = scene != null && scene.isNotEmpty;
     final main = hasContext ? item.context! : item.instruction;
+    final colored = blankColors != null;
+    // Blanks are numbered in reading order: the main text's first.
+    final mainBlanks = blankPattern.allMatches(main).length;
     final secondary = <Widget>[
-      if (hasContext) Text(item.instruction, style: secondaryStyle),
+      if (hasContext)
+        colored
+            ? _withBlanks(item.instruction, secondaryStyle, mainBlanks)
+            : Text(item.instruction, style: secondaryStyle),
       if (item.hint != null) ...[
         if (hasContext) const SizedBox(height: 6),
         Text(item.hint!,
@@ -614,7 +850,9 @@ class _QuestionContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Text(main, style: mainStyle),
+        colored
+            ? _withBlanks(main, mainStyle, 0)
+            : Text(main, style: mainStyle),
         if (secondary.isNotEmpty) ...[
           const SizedBox(height: 12),
           Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
@@ -622,6 +860,194 @@ class _QuestionContent extends StatelessWidget {
           ...secondary,
         ],
       ],
+    );
+  }
+}
+
+/// The answer boxes of a multi-blank question (question screen plan, §4):
+/// one per blank, below the sentence in blank order, each edged in its
+/// blank's colour (1.5 pt; 3 pt while it has focus). One line that wraps,
+/// at most [QuestionView.boxMaxLength] characters. Return moves to the next
+/// box; on the last it closes the keyboard. With [noArticleButton] (topic
+/// `articles`), each box has a "—" button that sets it to "no article"
+/// (clearing any text); typing clears that again. The boxes scroll in their
+/// own area when they do not all fit.
+class _BlankBoxes extends StatelessWidget {
+  final PracticeItem item;
+  final AnswerDrafts drafts;
+  final bool noArticleButton;
+  final VoidCallback onChanged;
+
+  const _BlankBoxes({
+    super.key,
+    required this.item,
+    required this.drafts,
+    required this.noArticleButton,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final count = drafts.boxCount(item.id);
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < count; i++) ...[
+            if (i > 0) const SizedBox(height: QuestionView.boxGap),
+            _box(context, i, count),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _box(BuildContext context, int index, int count) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final palette = AppPalette.of(context);
+    final color = blankColors(theme.brightness)[index];
+    final controller = drafts.controllersFor(item.id)[index];
+    final noArticle = drafts.noArticleFor(item.id, index);
+    final radius = BorderRadius.circular(17);
+    OutlineInputBorder border(double width) => OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: color, width: width),
+        );
+    final last = index == count - 1;
+    return ValueListenableBuilder<bool>(
+      valueListenable: noArticle,
+      builder: (context, isNoArticle, _) => Semantics(
+        label: 'Blank ${index + 1} of $count',
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            boxShadow: palette.cardShadow,
+          ),
+          child: TextField(
+            key: QuestionView.blankBoxKey(index),
+            controller: controller,
+            focusNode: drafts.focusNodes[index],
+            scrollController: drafts.scrollControllers[index],
+            style: QuestionView.answerStyle(theme),
+            // One line that wraps (never a sideways scroll); Return goes to
+            // the next box, or closes the keyboard on the last.
+            keyboardType: TextInputType.text,
+            textInputAction: last ? TextInputAction.done : TextInputAction.next,
+            minLines: 1,
+            maxLines: null,
+            maxLength: QuestionView.boxMaxLength,
+            buildCounter: (context,
+                    {required currentLength,
+                    required isFocused,
+                    required maxLength}) =>
+                null,
+            // As the single answer field (owner decision O4).
+            autocorrect: false,
+            enableSuggestions: false,
+            smartQuotesType: SmartQuotesType.disabled,
+            smartDashesType: SmartDashesType.disabled,
+            textCapitalization: TextCapitalization.none,
+            // Handled in onSubmitted: the default would move focus in
+            // traversal order (to a "—" button) or drop it.
+            onEditingComplete: () {},
+            onSubmitted: (_) {
+              if (last) {
+                drafts.unfocus();
+              } else {
+                drafts.focusNodes[index + 1].requestFocus();
+              }
+            },
+            onChanged: (text) {
+              if (text.isNotEmpty && noArticle.value) noArticle.value = false;
+              onChanged();
+            },
+            decoration: InputDecoration(
+              hintText: isNoArticle ? '— no article' : 'Write your answer…',
+              hintStyle: isNoArticle
+                  ? QuestionView.answerStyle(theme).copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                    )
+                  : null,
+              filled: true,
+              fillColor: isNoArticle
+                  ? Color.alphaBlend(color.withValues(alpha: 0.12),
+                      colorScheme.surfaceContainerHigh)
+                  : colorScheme.surfaceContainerHigh,
+              contentPadding: QuestionView.answerPadding,
+              isDense: true,
+              enabledBorder: border(1.5),
+              border: border(1.5),
+              focusedBorder: border(3),
+              suffixIconConstraints:
+                  const BoxConstraints.tightFor(width: 44, height: 44),
+              suffixIcon: noArticleButton
+                  ? _NoArticleButton(
+                      key: QuestionView.noArticleKey(index),
+                      color: color,
+                      selected: isNoArticle,
+                      onPressed: () {
+                        if (noArticle.value) {
+                          noArticle.value = false;
+                        } else {
+                          controller.clear();
+                          noArticle.value = true;
+                        }
+                        onChanged();
+                      },
+                    )
+                  : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "—" (no article) button in an answer box: 44 × 44, filled with the
+/// box's colour (light) when the box is set to "no article".
+class _NoArticleButton extends StatelessWidget {
+  final Color color;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  const _NoArticleButton({
+    super.key,
+    required this.color,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      button: true,
+      toggled: selected,
+      label: 'No article',
+      excludeSemantics: true,
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+            minimumSize: const Size(44, 44),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: EdgeInsets.zero,
+            shape: const CircleBorder(),
+            backgroundColor:
+                selected ? color.withValues(alpha: 0.2) : Colors.transparent,
+            foregroundColor:
+                selected ? color : theme.colorScheme.onSurfaceVariant,
+            textStyle: theme.textTheme.titleMedium?.withWeight(FontWeight.w900),
+          ),
+          child: const Text('—'),
+        ),
+      ),
     );
   }
 }
