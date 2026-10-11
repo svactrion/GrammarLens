@@ -311,6 +311,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         index: _currentIndex,
         total: _dailyTestSet!.questions.length,
         topic: topicByName(question.topicId),
+        showTopicHint: true,
         drafts: _drafts!,
         horizontalPadding: hPad,
         onChanged: (value) => setState(() => _answers[item.id] = value),

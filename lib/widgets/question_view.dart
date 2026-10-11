@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../models/practice_item.dart';
+import '../data/topic_hints.dart';
 import '../models/topic.dart';
 import '../theme.dart';
+import 'topic_hint_card.dart';
 
 /// The answer drafts of one question session (PracticeScreen, DailyTestScreen):
 /// one [TextEditingController] per question ID, made once and kept until the
@@ -111,6 +113,10 @@ class QuestionView extends StatefulWidget {
   /// none (a Daily Test question whose topic id is not a known topic).
   final Topic? topic;
 
+  /// Whether the "Your answer" row offers [topic]'s hint card (the Daily
+  /// Test; see [TopicHintHandle]). No card without a topic.
+  final bool showTopicHint;
+
   /// The answer's character limit, or null for none. The count shows only
   /// past [counterThreshold].
   final int? maxLength;
@@ -127,6 +133,7 @@ class QuestionView extends StatefulWidget {
     required this.onChanged,
     required this.horizontalPadding,
     this.topic,
+    this.showTopicHint = false,
     this.maxLength,
     this.counterThreshold = 0,
   });
@@ -192,6 +199,7 @@ class QuestionView extends StatefulWidget {
 
 class _QuestionViewState extends State<QuestionView> {
   final ScrollController _questionScroll = ScrollController();
+  final GlobalKey _headKey = GlobalKey();
   bool _questionOverflows = false;
   bool _questionAtEnd = true;
   bool _answerFocused = false;
@@ -252,10 +260,16 @@ class _QuestionViewState extends State<QuestionView> {
     SchedulerBinding.instance
         .addPostFrameCallback((_) => _checkQuestionMetrics());
 
+    final topic = widget.topic;
+    final hintPoints = topic == null ? null : kTopicHints[topic.id];
     final head = _AnswerHead(
+      key: _headKey,
       focused: _answerFocused,
       questionClipped: _questionOverflows,
       onCloseKeyboard: _closeKeyboard,
+      hintHandle: widget.showTopicHint && hintPoints != null
+          ? TopicHintHandle(topic: topic!, points: hintPoints, rowKey: _headKey)
+          : null,
     );
 
     return Padding(
@@ -578,17 +592,23 @@ class _TopicTag extends StatelessWidget {
 
 /// "Your answer", and while the answer has focus the control that closes
 /// the keyboard: "Review answer", or "Read full question" when the
-/// question does not fit. The row keeps its 44 pt height either way, so
+/// question does not fit. On the Daily Test the topic hint card's handle
+/// sits before that control. The row keeps its 44 pt height either way, so
 /// the field never jumps when the control appears.
 class _AnswerHead extends StatelessWidget {
   final bool focused;
   final bool questionClipped;
   final VoidCallback onCloseKeyboard;
 
+  /// The topic hint card's handle (Daily Test), or null for none.
+  final Widget? hintHandle;
+
   const _AnswerHead({
+    super.key,
     required this.focused,
     required this.questionClipped,
     required this.onCloseKeyboard,
+    this.hintHandle,
   });
 
   @override
@@ -607,6 +627,7 @@ class _AnswerHead extends StatelessWidget {
                   .copyWith(color: colorScheme.onSurface),
             ),
           ),
+          if (hintHandle != null) hintHandle!,
           if (focused)
             TextButton.icon(
               key: QuestionView.keyboardControlKey,
