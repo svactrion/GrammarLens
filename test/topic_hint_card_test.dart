@@ -226,6 +226,68 @@ Future<TestGesture> _startDrag(WidgetTester tester) async {
   return gesture;
 }
 
+const _practiceShortest = PracticeItem(
+    id: 'p1',
+    type: PracticeItemType.fillInBlank,
+    instruction: 'I enjoy ____ in the morning.');
+
+const _practiceRealistic = PracticeItem(
+  id: 'p2',
+  type: PracticeItemType.fillInBlank,
+  context: 'At the weekend market, Lena talks about her budget: "I can\'t '
+      'afford ____ all my vegetables here, so I buy some at the '
+      'supermarket."',
+  instruction: 'Fill in the blank with the correct form of the verb (buy).',
+  hint: "Think about what comes after 'afford'.",
+);
+
+const _practice4Shortest = PracticeItem(
+    id: 'p3',
+    type: PracticeItemType.fillInBlank,
+    instruction: '____ sun set; ____ man sat on ____ bench with ____ paper.');
+
+const _practice4Realistic = PracticeItem(
+  id: 'p4',
+  type: PracticeItemType.fillInBlank,
+  context: '____ sun was setting when ____ old man sat down on ____ bench '
+      'near the river and opened ____ newspaper he had bought that morning.',
+  instruction: 'Fill in each blank with a, an or the, or tap — for no '
+      'article.',
+);
+
+/// Practice on the articles topic with [items].
+Future<void> _pumpPractice(
+  WidgetTester tester, {
+  required List<PracticeItem> items,
+  Size size = const Size(390, 844),
+  double top = 0,
+  double bottom = 0,
+  AppTextSize textSize = AppTextSize.medium,
+}) async {
+  _setView(tester, size, top: top, bottom: bottom);
+  await tester.pumpWidget(MaterialApp(
+    theme: buildAppTheme(Brightness.light, textSize: textSize),
+    home: PracticeScreen(
+      topic: topicById(TopicId.articles),
+      practiceSet: PracticeSet(topicId: 'articles', items: items),
+      claudeService: ClaudeService(),
+      storageService: _Storage(),
+      analyticsService: AnalyticsService(sink: _RecordingSink()),
+      subscriptionService: SubscriptionService(),
+    ),
+  ));
+  await tester.pumpAndSettle();
+}
+
+/// The open card's last line of text is whole: above the Skip/Next bar and
+/// inside the question area's clip. Returns the space under it.
+double _textClear(WidgetTester tester, TopicId topic) {
+  final footer = tester.getRect(find.byType(PracticeStepFooter));
+  final lastLine = tester.getRect(find.descendant(
+      of: _card, matching: find.text(kTopicHints[topic]!.last)));
+  return math.min(footer.top, _clipBottom(tester)) - lastLine.bottom;
+}
+
 void main() {
   setUpAll(() async {
     final bytes = rootBundle.load('assets/fonts/NunitoSans-Variable.ttf');
@@ -274,25 +336,38 @@ void main() {
   });
 
   group('the slider', () {
-    testWidgets('not on Practice', (tester) async {
-      _setView(tester, const Size(390, 844));
-      await tester.pumpWidget(MaterialApp(
-        theme: buildAppTheme(Brightness.light),
-        home: PracticeScreen(
-          topic: topicById(TopicId.articles),
-          practiceSet: const PracticeSet(topicId: 'articles', items: [
-            PracticeItem(
-                id: 'p',
-                type: PracticeItemType.fillInBlank,
-                instruction: 'I saw ____ owl.'),
-          ]),
-          claudeService: ClaudeService(),
-          storageService: _Storage(),
-          analyticsService: AnalyticsService(sink: _RecordingSink()),
-          subscriptionService: SubscriptionService(),
-        ),
-      ));
+    testWidgets(
+        'on Practice too (from 2026-10-12), with the set\'s topic, between '
+        'the question card and "Your answer"', (tester) async {
+      await _pumpPractice(tester, items: const [_practiceShortest]);
+      expect(_slider, findsOneWidget);
+      expect(tester.getRect(_track).top,
+          greaterThan(tester.getRect(_questionCard).bottom));
+      expect(tester.getRect(_track).bottom,
+          lessThan(tester.getRect(_yourAnswer).top));
+      final gesture = await _press(tester);
+      expect(find.descendant(of: _card, matching: find.text('Articles')),
+          findsOneWidget);
+      await gesture.up();
       await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+        'on Practice, tucked away while any answer box has focus, and back '
+        'closed when none has', (tester) async {
+      await _pumpPractice(tester, items: const [_practice4Shortest]);
+      await tester.tap(find.byKey(QuestionView.blankBoxKey(2)));
+      await tester.pumpAndSettle();
+      expect(_slider, findsNothing);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(_slider, findsOneWidget);
+      expect(_card, findsNothing);
+    });
+
+    testWidgets('not on a Practice screen under 375 pt', (tester) async {
+      await _pumpPractice(tester,
+          items: const [_practiceShortest], size: const Size(374, 700));
       expect(_slider, findsNothing);
     });
 
@@ -733,6 +808,41 @@ void main() {
             await tester.pumpAndSettle();
             if (topic != kTopics.last) await _skip(tester);
           }
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
+  }
+
+  // The same fit check on Practice (owner, 2026-10-12): 1 box and 4 boxes,
+  // the shortest and a realistic question.
+  for (final phone in phones) {
+    for (final textSize in [AppTextSize.medium, AppTextSize.large]) {
+      for (final item in [
+        _practiceShortest,
+        _practiceRealistic,
+        _practice4Shortest,
+        _practice4Realistic,
+      ]) {
+        testWidgets(
+            'Practice fit: ${phone.size.width.toInt()} × '
+            '${phone.size.height.toInt()}, ${textSize.name}, ${item.id}: the '
+            'open card\'s text is whole above the Skip/Next bar',
+            (tester) async {
+          await _pumpPractice(tester,
+              items: [item],
+              size: phone.size,
+              top: phone.top,
+              bottom: phone.bottom,
+              textSize: textSize);
+          final question = tester.getRect(_questionCard);
+          final gesture = await _press(tester);
+          final clear = _textClear(tester, TopicId.articles);
+          expect(clear, greaterThanOrEqualTo(-0.5),
+              reason: 'the last line is cut by ${-clear} pt');
+          expect(tester.getRect(_questionCard), question);
+          await gesture.up();
+          await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
         });
       }

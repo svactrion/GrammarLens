@@ -13,6 +13,7 @@ import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import '../widgets/question_view.dart';
+import '../widgets/topic_hint_card.dart';
 import 'results_screen.dart';
 import '../utils/content_width.dart';
 
@@ -206,6 +207,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         index: _currentIndex,
                         total: total,
                         topic: widget.topic,
+                        // The topic hint slider, as on the Daily Test.
+                        showTopicHint: MediaQuery.sizeOf(context).width >=
+                            TopicHintSlider.minScreenWidth,
                         drafts: _drafts,
                         horizontalPadding: hPad,
                         maxLength: answerMaxLength,

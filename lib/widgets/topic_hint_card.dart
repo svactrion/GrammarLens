@@ -57,8 +57,9 @@ class TopicHintCard extends StatelessWidget {
   }
 }
 
-/// The Daily Test's hint slider (docs/question-screen-plan.md, item 2, the
-/// B2 rework): a "slide to unlock" track between the question card and the
+/// The topic hint slider of the Daily Test and Practice
+/// (docs/question-screen-plan.md, item 2, the B2 rework; on Practice from
+/// 2026-10-12): a "slide to unlock" track between the question card and the
 /// "Your answer" row, and the topic's [TopicHintCard] that opens inline
 /// below it.
 ///
@@ -79,7 +80,8 @@ class TopicHintCard extends StatelessWidget {
 ///
 /// The slider is tucked away under the question card while the keyboard is
 /// up (`QuestionView`) and left out on screens narrower than
-/// [minScreenWidth] (`DailyTestScreen`); it comes back closed.
+/// [minScreenWidth] (`DailyTestScreen`, `PracticeScreen`); it comes back
+/// closed.
 class TopicHintSlider extends StatefulWidget {
   final Topic topic;
   final List<String> points;
@@ -106,8 +108,10 @@ class TopicHintSlider extends StatefulWidget {
   static const double trackHeight = 56;
   static const double knobInset = 4;
 
-  /// Space above the track, under the question card.
-  static const double gap = 8;
+  /// Space above the track, under the question card (6, not 8: owner,
+  /// 2026-10-12, so the open card's text fits on Practice too, whose header
+  /// is 2 pt taller).
+  static const double gap = 6;
 
   /// Space between the track and the open card (owner, 2026-10-12: 4, not
   /// 8, with the card's 8 pt top and bottom padding, so the open card fits
