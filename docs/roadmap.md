@@ -392,10 +392,14 @@ checked on the owner's iPhone before the next.
   **awaiting the device check**. Known
   limit: no slider on screens narrower than 375 pt (first-gen iPhone SE,
   SE 2/3 with Display Zoom).
+- **Hint slider on Practice too** (owner, 2026-10-12): the same slider and
+  cards (the set's topic), 375 pt and wider, tucked away while any answer
+  box has focus; the gap above it 8 → 6 pt on both screens. Built and
+  tested (build log), **awaiting the device check**.
 - **B3 — multi-blank answer boxes** (Practice `fill_in_blank`): built
-  and tested 2026-10-12 (build log), **awaiting the device check**
-  (Settings → Debug → "Multi-blank practice" opens fixed 2–4-blank sets,
-  debug and profile builds only). With
+  and tested 2026-10-12 (build log); **device check passed** (owner,
+  iPhone, 2026-10-12, through Settings → Debug → "Multi-blank practice",
+  fixed 2–4-blank sets, debug and profile builds only). With
   it, its own commit: the "Your answer" row no longer grows 44 → 48 pt
   when the answer takes focus (found in B2).
 - **Proxy rule "A fill_in_blank item has at most 4 blanks."** (practice

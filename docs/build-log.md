@@ -12198,3 +12198,64 @@ On branch `question-screen`. Debug and profile builds only.
 - **[Not checked]** On the owner's iPhone: everything in B3's list, now
   reachable through these sets; what the live scorer returns for a
   completed sentence.
+
+## 2026-10-12 (Question screen — B3 device check passed)
+
+Docs only.
+
+- **[Product — owner]** B3, the multi-blank answer boxes, passed the
+  device check on the owner's iPhone (2026-10-12), through the Debug
+  panel's multi-blank practice sets. The proxy rule ("A fill_in_blank item
+  has at most 4 blanks.") stays **not deployed** until the app release
+  that ships the boxes.
+
+## 2026-10-12 (Question screen — the hint slider on Practice too; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
+
+- **[Product — owner]** New scope: the topic hint slider on Practice as
+  well, with the same slider and cards (the Practice set's topic), the same
+  behaviour (tucked under the question card while any answer box has
+  focus, none below 375 pt, no effect on scoring or state).
+- **[Measured before building]** On Practice, with the slider switched on
+  temporarily (then restored), the fit rule ("the hint text is never cut
+  off") held everywhere but one case: 375 × 667, Large, a realistic
+  one-box question, the last line cut by 1 pt; the same case on the Daily
+  Test had 1 pt to spare. Cause, measured: Practice's header is 62 pt, not
+  60 (its "Practice" subtitle). **Owner decision (a):** the gap above the
+  slider 8 → 6 pt on both screens.
+- **[Engineering]**
+  - `TopicHintSlider.gap` 6 (was 8).
+  - `PracticeScreen` passes `showTopicHint` for screens 375 pt and wider,
+    as `DailyTestScreen` does. The rest was already shared in
+    `QuestionView`, including "any box has focus" for the tuck.
+  - **A bug found by an existing test (`question_v2_test`, "a short
+    question and its instruction are whole with the keyboard open"),
+    fixed in the code, test unchanged:** the question card's fade ("more
+    below") stayed on after the slider tucked away, though nothing was
+    hidden any more. The tuck animation rebuilds only the layout, not the
+    state that schedules the "does the question still overflow?" check, and
+    the card listened only to scrolls. It now also listens to
+    `ScrollMetricsNotification`, so a change in what the card can show
+    reads the fade again. This was on the Daily Test too since the tuck
+    animation (no test looked at the fade there).
+- **[Tests]** `flutter analyze` clean; **2,025 passed, 0 failed.**
+  - No Practice layout test changed because the slider is now visible: all
+    passed as they were once the fade bug was fixed.
+  - Replaced in `test/topic_hint_card_test.dart`, because the scope
+    changed: "not on Practice" → "on Practice too, with the set's topic,
+    between the question card and 'Your answer'" (its card shows the
+    Practice topic's title).
+  - New there: on Practice the slider tucks away while a box of a 4-blank
+    question has focus and comes back closed; none on a 374 pt Practice
+    screen; the Practice fit check (24 cases: 375 × 667, 390 × 844,
+    430 × 932 × Medium, Large × shortest and realistic, 1 and 4 boxes):
+    the open card's last line whole above the Skip/Next bar and the clip,
+    the question card unmoved.
+  - The final fit table for both screens is in the plan §3; tightest: 3 pt
+    (Daily Test) and 1 pt (Practice, one box), 375 × 667, Large, a
+    realistic question.
+- **[Not checked]** On the owner's iPhone: the slider on Practice (single
+  answer, multi-blank boxes, error correction, sentence writing), its tuck
+  with the boxes, the 6 pt gap on both screens, and the fade now clearing
+  when the slider tucks away.

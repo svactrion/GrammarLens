@@ -181,7 +181,8 @@ question card and the "Your answer" row, part of the page layout:
   2026-10-12 change after the device check.) As the knob moves right a
   filled trail (`primary` at 32 %) follows it and the label fades out
   (gone at half way). No semantic colours.
-- 8 pt above the track (under the question card); the card opens 4 pt
+- 6 pt above the track (under the question card; 8 pt until Practice
+  got the slider, owner 2026-10-12); the card opens 4 pt
   below it.
 
 **Reveal.** Dragging the knob right (horizontal only) opens the card inline
@@ -194,7 +195,9 @@ collapses (a critically damped spring, ~250 ms; instant under Reduce
 Motion). A long-press on the knob shows the card whole while held.
 VoiceOver reads the whole card from the slider; reading it changes nothing.
 
-**When it shows.** Daily Test only, and only with the keyboard down. When
+**When it shows.** The Daily Test and, from 2026-10-12 (owner), Practice
+(the set's topic), only with the keyboard down; still no effect on
+scoring or state. When
 the answer takes focus (the moment the keyboard starts to open) the slider
 slides up and tucks under the question card (drawn behind it), while its
 slot closes and "Your answer" moves up with it; when the answer loses focus
@@ -238,20 +241,28 @@ The 56 pt track (owner) made it 11 pt; the owner then set the rule above,
 the clip was moved to the top of the bar, and the check now measures the
 last line of text against the real visible bottom.
 
-**Measured with the 56 pt track** (every card the same height: four
-one-line points; "clear" = space under the last line of text):
+**Final fit (2026-10-12: 56 pt track, 6 pt above it, both screens).**
+Space under the card's last line of text, in pt (every card the same
+height: four one-line points, 134 pt at Medium, 140 pt at Large). Daily
+Test: one box always. Practice: its header is 2 pt taller (the "Practice"
+subtitle); 1 box and 4 boxes.
 
-| Phone | Medium, shortest | Medium, pool | Large, shortest | Large, pool |
-|---|---|---|---|---|
-| Card height | 134 pt | 134 pt | 140 pt | 140 pt |
-| 375 × 667 | 224 pt clear | 51 pt clear | 215 pt clear | **1 pt clear; the card's edge 7 pt behind the bar** |
-| 390 × 844 | 340 pt clear | 167 pt clear | 331 pt clear | 146 pt clear |
-| 430 × 932 | 416 pt clear | 264 pt clear | 407 pt clear | 222 pt clear |
+| Phone, size | DT shortest | DT realistic | Practice shortest, 1 box | Practice realistic, 1 box | Practice shortest, 4 boxes | Practice realistic, 4 boxes |
+|---|---|---|---|---|---|---|
+| 375 × 667, Medium | 226 | 53 | 226 | 53 | 199 | 53 |
+| 375 × 667, Large | 217 | **3** | 215 | **1** | 186 | 30 |
+| 390 × 844, Medium | 342 | 169 | 342 | 169 | 315 | 196 |
+| 390 × 844, Large | 333 | 148 | 331 | 146 | 302 | 146 |
+| 430 × 932, Medium | 418 | 266 | 418 | 266 | 391 | 293 |
+| 430 × 932, Large | 409 | 224 | 407 | 222 | 378 | 251 |
 
-The tight case is 375 × 667, Large, a pool question: the text is whole
-with 1 pt to spare, and the card's bottom edge sits 7 pt behind the bar. A
-longer question at that size, larger system text or a longer text would
-cut the text; the test fails then.
+The tight cases are 375 × 667, Large, a realistic question: 3 pt on the
+Daily Test, 1 pt on Practice with one box (the card's edge goes behind the
+bar). Four boxes leave more room than one: their minimum answer area is
+taller, so the question card is shorter. A longer question at that size,
+larger system text or a longer text would cut the text; the tests
+(`test/topic_hint_card_test.dart`, both screens) fail then. Before the
+6 pt gap, Practice's realistic 1-box case cut 1 pt (measured, 2026-10-12).
 
 **Gestures checked.** The question's vertical `SingleChildScrollView` is
 separate from the knob, and the knob takes only horizontal drags (a
