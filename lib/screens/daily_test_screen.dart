@@ -13,6 +13,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import '../widgets/question_view.dart';
+import '../widgets/topic_hint_card.dart';
 import '../utils/debug_tools.dart';
 import 'daily_test_result_screen.dart';
 import '../utils/content_width.dart';
@@ -298,6 +299,13 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     );
   }
 
+  /// The topic hint slider shows only with the keyboard down and on a
+  /// screen at least [TopicHintSlider.minScreenWidth] wide (plan §3). Read
+  /// here, above the Scaffold, which hides the keyboard from its body.
+  bool _showTopicHint(BuildContext context) =>
+      MediaQuery.viewInsetsOf(context).bottom == 0 &&
+      MediaQuery.sizeOf(context).width >= TopicHintSlider.minScreenWidth;
+
   Widget _buildQuestion(double hPad) {
     final DailyTestQuestion question = _dailyTestSet!.questions[_currentIndex];
     final item = question.item;
@@ -311,7 +319,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         index: _currentIndex,
         total: _dailyTestSet!.questions.length,
         topic: topicByName(question.topicId),
-        showTopicHint: true,
+        showTopicHint: _showTopicHint(context),
         drafts: _drafts!,
         horizontalPadding: hPad,
         onChanged: (value) => setState(() => _answers[item.id] = value),

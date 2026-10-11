@@ -113,8 +113,9 @@ class QuestionView extends StatefulWidget {
   /// none (a Daily Test question whose topic id is not a known topic).
   final Topic? topic;
 
-  /// Whether the "Your answer" row offers [topic]'s hint card (the Daily
-  /// Test; see [TopicHintHandle]). No card without a topic.
+  /// Whether [topic]'s hint slider sits between the question card and the
+  /// "Your answer" row (the Daily Test with the keyboard down, on a wide
+  /// enough screen; see [TopicHintSlider]). No slider without a topic.
   final bool showTopicHint;
 
   /// The answer's character limit, or null for none. The count shows only
@@ -199,7 +200,6 @@ class QuestionView extends StatefulWidget {
 
 class _QuestionViewState extends State<QuestionView> {
   final ScrollController _questionScroll = ScrollController();
-  final GlobalKey _headKey = GlobalKey();
   bool _questionOverflows = false;
   bool _questionAtEnd = true;
   bool _answerFocused = false;
@@ -262,14 +262,18 @@ class _QuestionViewState extends State<QuestionView> {
 
     final topic = widget.topic;
     final hintPoints = topic == null ? null : kTopicHints[topic.id];
+    final hint = widget.showTopicHint && hintPoints != null
+        ? TopicHintSlider(
+            // A new question's slider starts closed.
+            key: ValueKey(widget.item.id),
+            topic: topic!,
+            points: hintPoints,
+          )
+        : null;
     final head = _AnswerHead(
-      key: _headKey,
       focused: _answerFocused,
       questionClipped: _questionOverflows,
       onCloseKeyboard: _closeKeyboard,
-      hintHandle: widget.showTopicHint && hintPoints != null
-          ? TopicHintHandle(topic: topic!, points: hintPoints, rowKey: _headKey)
-          : null,
     );
 
     return Padding(
@@ -277,26 +281,35 @@ class _QuestionViewState extends State<QuestionView> {
           widget.horizontalPadding, 14, widget.horizontalPadding, 12),
       child: LayoutBuilder(builder: (context, constraints) {
         final type = widget.item.type;
+        final hintReserve = hint == null ? 0.0 : TopicHintSlider.closedHeight;
         final room = constraints.maxHeight -
+            hintReserve -
             QuestionView.questionGap -
             QuestionView.headHeight -
             QuestionView.headGap;
         final compact =
             room - QuestionView.answerMinHeight(theme, scaler, type) <
                 QuestionView.minQuestionHeight;
-        return CustomMultiChildLayout(
-          delegate: _QuestionLayoutDelegate(
-              answerMin: QuestionView.answerMinHeight(theme, scaler, type,
-                  compact: compact)),
-          children: [
-            LayoutId(id: _Slot.question, child: _questionCard(theme)),
-            LayoutId(id: _Slot.head, child: head),
-            LayoutId(
-                id: _Slot.answer,
-                child: _answerField(theme,
-                    minLines:
-                        QuestionView.minLinesFor(type, compact: compact))),
-          ],
+        // An open hint card pushes the answer down past the bottom; it is
+        // cut there, and only there (the question card's shadow stays).
+        return ClipRect(
+          clipper: const _BottomEdgeClipper(),
+          child: CustomMultiChildLayout(
+            delegate: _QuestionLayoutDelegate(
+                answerMin: QuestionView.answerMinHeight(theme, scaler, type,
+                    compact: compact),
+                hintReserve: hintReserve),
+            children: [
+              LayoutId(id: _Slot.question, child: _questionCard(theme)),
+              if (hint != null) LayoutId(id: _Slot.hint, child: hint),
+              LayoutId(id: _Slot.head, child: head),
+              LayoutId(
+                  id: _Slot.answer,
+                  child: _answerField(theme,
+                      minLines:
+                          QuestionView.minLinesFor(type, compact: compact))),
+            ],
+          ),
         );
       }),
     );
@@ -592,23 +605,17 @@ class _TopicTag extends StatelessWidget {
 
 /// "Your answer", and while the answer has focus the control that closes
 /// the keyboard: "Review answer", or "Read full question" when the
-/// question does not fit. On the Daily Test the topic hint card's handle
-/// sits before that control. The row keeps its 44 pt height either way, so
+/// question does not fit. The row keeps its 44 pt height either way, so
 /// the field never jumps when the control appears.
 class _AnswerHead extends StatelessWidget {
   final bool focused;
   final bool questionClipped;
   final VoidCallback onCloseKeyboard;
 
-  /// The topic hint card's handle (Daily Test), or null for none.
-  final Widget? hintHandle;
-
   const _AnswerHead({
-    super.key,
     required this.focused,
     required this.questionClipped,
     required this.onCloseKeyboard,
-    this.hintHandle,
   });
 
   @override
@@ -627,7 +634,6 @@ class _AnswerHead extends StatelessWidget {
                   .copyWith(color: colorScheme.onSurface),
             ),
           ),
-          if (hintHandle != null) hintHandle!,
           if (focused)
             TextButton.icon(
               key: QuestionView.keyboardControlKey,
@@ -684,15 +690,20 @@ class _MoreBelow extends StatelessWidget {
   }
 }
 
-enum _Slot { question, head, answer }
+enum _Slot { question, hint, head, answer }
 
-/// Lays out the question first, capped so the answer keeps [answerMin];
-/// then "Your answer"; then the answer in whatever height is left (never
-/// less than [answerMin] while the area holds it).
+/// Lays out the question first, capped so the answer keeps [answerMin]
+/// and a closed hint slider keeps [hintReserve]; then the hint slider (the
+/// Daily Test), as tall as it is at the moment; then "Your answer"; then
+/// the answer in whatever height is left (never less than [answerMin]). The
+/// question's cap ignores how far the hint card is open, so opening it
+/// never moves or resizes the question: it pushes "Your answer" and the
+/// answer down, past the bottom if it must.
 class _QuestionLayoutDelegate extends MultiChildLayoutDelegate {
   final double answerMin;
+  final double hintReserve;
 
-  _QuestionLayoutDelegate({required this.answerMin});
+  _QuestionLayoutDelegate({required this.answerMin, this.hintReserve = 0});
 
   @override
   void performLayout(Size size) {
@@ -701,6 +712,7 @@ class _QuestionLayoutDelegate extends MultiChildLayoutDelegate {
     final questionCap = math.max(
         0.0,
         size.height -
+            hintReserve -
             QuestionView.questionGap -
             head.height -
             QuestionView.headGap -
@@ -709,23 +721,40 @@ class _QuestionLayoutDelegate extends MultiChildLayoutDelegate {
         _Slot.question,
         BoxConstraints(
             minWidth: width, maxWidth: width, maxHeight: questionCap));
-    final answerTop = question.height +
-        QuestionView.questionGap +
-        head.height +
-        QuestionView.headGap;
+    positionChild(_Slot.question, Offset.zero);
+    var y = question.height;
+    if (hasChild(_Slot.hint)) {
+      final hint = layoutChild(
+          _Slot.hint, BoxConstraints(minWidth: width, maxWidth: width));
+      positionChild(_Slot.hint, Offset(0, y));
+      y += hint.height;
+    }
+    y += QuestionView.questionGap;
+    positionChild(_Slot.head, Offset(0, y));
+    final answerTop = y + head.height + QuestionView.headGap;
     layoutChild(
         _Slot.answer,
         BoxConstraints(
             minWidth: width,
             maxWidth: width,
-            maxHeight: math.max(0.0, size.height - answerTop)));
-    positionChild(_Slot.question, Offset.zero);
-    positionChild(
-        _Slot.head, Offset(0, question.height + QuestionView.questionGap));
+            maxHeight: math.max(answerMin, size.height - answerTop)));
     positionChild(_Slot.answer, Offset(0, answerTop));
   }
 
   @override
   bool shouldRelayout(_QuestionLayoutDelegate oldDelegate) =>
-      oldDelegate.answerMin != answerMin;
+      oldDelegate.answerMin != answerMin ||
+      oldDelegate.hintReserve != hintReserve;
+}
+
+/// Clips only what goes past the bottom edge.
+class _BottomEdgeClipper extends CustomClipper<Rect> {
+  const _BottomEdgeClipper();
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(-size.width, -size.height, size.width * 2, size.height);
+
+  @override
+  bool shouldReclip(_BottomEdgeClipper oldClipper) => false;
 }

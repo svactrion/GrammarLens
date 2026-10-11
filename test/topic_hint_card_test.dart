@@ -19,13 +19,16 @@ import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
 import 'package:grammar_lens/widgets/topic_hint_card.dart';
 
-/// The Daily Test's topic hint card (docs/question-screen-plan.md, item 2 and
-/// B2): the owner's texts, the fit above the "Your answer" row with the
-/// keyboard up, the reveal (drag, spring close, long-press), and that using
-/// it changes nothing.
+/// The Daily Test's topic hint slider and card (docs/question-screen-plan.md,
+/// item 2, the B2 rework): the owner's texts; the slider between the
+/// question card and "Your answer", left out with the keyboard up and below
+/// 375 pt; the reveal (drag, spring back, long-press) that never moves the
+/// question; the fit of the open card above the Skip/Next bar; and that
+/// using it changes nothing.
 
 class _Storage extends StorageService {
   final DailyTestSet? set;
@@ -63,21 +66,46 @@ const _longScene =
     'activities. You want to mention one thing you really enjoy doing and '
     'one thing you have recently decided to start doing, and you want both '
     'sentences to sound natural, connected and specific to your own life, '
-    'not like a textbook example that anyone could have written at all.';
+    'not like a textbook example that anyone could have written at all. '
+    'Think about the last month, what you did on most evenings, and what '
+    'you would like to do differently from now on, and say it simply.';
 
-/// One question per topic, in [kTopics] order; the first is short.
-DailyTestSet _set({bool longFirst = false}) => DailyTestSet(
+/// The two question shapes of the fit check: the shortest possible (one
+/// line, no scene) and a realistic one from the fallback pool.
+enum _Shape { shortest, pool, long }
+
+PracticeItem _item(int i, _Shape shape) => switch (shape) {
+      _Shape.shortest => PracticeItem(
+          id: 'q$i',
+          type: PracticeItemType.fillInBlank,
+          instruction: 'I enjoy ____ in the morning.',
+        ),
+      _Shape.pool => PracticeItem(
+          id: 'q$i',
+          type: PracticeItemType.fillInBlank,
+          context: 'At the weekend market, Lena talks about her budget: "I '
+              "can't afford ____ all my vegetables here, so I buy some at the "
+              'supermarket."',
+          instruction:
+              'Fill in the blank with the correct form of the verb (buy).',
+          hint: "Think about what comes after 'afford'.",
+        ),
+      _Shape.long => PracticeItem(
+          id: 'q$i',
+          type: PracticeItemType.fillInBlank,
+          context: _longScene,
+          instruction: 'I enjoy ____ in the morning.',
+        ),
+    };
+
+/// One question per topic, in [kTopics] order.
+DailyTestSet _set(_Shape shape) => DailyTestSet(
       day: '2026-10-12',
       source: DailyTestSource.shared,
       questions: [
         for (final (i, topic) in kTopics.indexed)
           DailyTestQuestion(
-            item: PracticeItem(
-              id: 'q$i',
-              type: PracticeItemType.fillInBlank,
-              context: i == 0 && longFirst ? _longScene : null,
-              instruction: 'I enjoy ____ in the morning.',
-            ),
+            item: _item(i, shape),
             topicId: topic.id.name,
             correctAnswer: 'swimming',
             commonWrongAnswers: const [],
@@ -86,11 +114,11 @@ DailyTestSet _set({bool longFirst = false}) => DailyTestSet(
     );
 
 void _setView(WidgetTester tester, Size size,
-    {double keyboard = 0, double top = 0}) {
+    {double keyboard = 0, double top = 0, double bottom = 0}) {
   tester.view.physicalSize = size * 3;
   tester.view.devicePixelRatio = 3;
   tester.view.viewInsets = FakeViewPadding(bottom: keyboard * 3);
-  tester.view.padding = FakeViewPadding(top: top * 3);
+  tester.view.padding = FakeViewPadding(top: top * 3, bottom: bottom * 3);
   addTearDown(tester.view.reset);
 }
 
@@ -104,11 +132,12 @@ Future<_Daily> _pumpDaily(
   Size size = const Size(390, 844),
   double keyboard = 0,
   double top = 0,
+  double bottom = 0,
   AppTextSize textSize = AppTextSize.medium,
   bool reduceMotion = false,
-  bool longFirst = false,
+  _Shape shape = _Shape.shortest,
 }) async {
-  _setView(tester, size, keyboard: keyboard, top: top);
+  _setView(tester, size, keyboard: keyboard, top: top, bottom: bottom);
   final daily = _Daily();
   await tester.pumpWidget(MaterialApp(
     theme: buildAppTheme(Brightness.light, textSize: textSize),
@@ -119,7 +148,7 @@ Future<_Daily> _pumpDaily(
     home: DailyTestScreen(
       dailyTestService: DailyTestService(
           claudeService: _NoNetworkClaude(),
-          storageService: _Storage(_set(longFirst: longFirst))),
+          storageService: _Storage(_set(shape))),
       analyticsService: AnalyticsService(sink: daily.sink),
       onFinished: (_, answers) => daily.finished.add(answers),
       onExit: () {},
@@ -129,36 +158,58 @@ Future<_Daily> _pumpDaily(
   return daily;
 }
 
-Finder get _handle => find.byKey(TopicHintHandle.handleKey);
-Finder get _card => find.byKey(TopicHintHandle.cardKey);
-Finder get _cover => find.byKey(TopicHintHandle.coverKey);
+Finder get _slider => find.byType(TopicHintSlider);
+Finder get _knob => find.byKey(TopicHintSlider.knobKey);
+Finder get _track => find.byKey(TopicHintSlider.trackKey);
+Finder get _card => find.byKey(TopicHintSlider.cardKey);
 Finder get _field => find.byKey(QuestionView.answerFieldKey);
+Finder get _questionCard => find.byKey(QuestionView.questionCardKey);
+Finder get _yourAnswer => find.text('Your answer');
 
-/// The "Your answer" row: the row that holds the handle.
-Rect _row(WidgetTester tester) => tester
-    .getRect(find.ancestor(of: _handle, matching: find.byType(Row)).first);
+/// The knob's travel: the track less the knob.
+double _travel(WidgetTester tester) =>
+    tester.getSize(_track).width - TopicHintSlider.trackHeight;
 
-/// How much of the card shows: 1 − the cover's share of its width.
-double _revealed(WidgetTester tester) {
-  if (_cover.evaluate().isEmpty) return 1;
-  return 1 - tester.getSize(_cover).width / tester.getSize(_card).width;
+/// How far the knob is along the track, 0–1.
+double _knobAt(WidgetTester tester) =>
+    (tester.getTopLeft(_knob).dx - tester.getTopLeft(_track).dx) /
+    _travel(tester);
+
+/// How much of the card (and the gap above it) shows: 0 when closed.
+double _shownHeight(WidgetTester tester) {
+  if (_card.evaluate().isEmpty) return 0;
+  return tester
+      .getSize(find.ancestor(of: _card, matching: find.byType(ClipRect)).first)
+      .height;
 }
 
-Future<void> _focusAnswer(WidgetTester tester) async {
-  await tester.tap(_field);
-  await tester.pumpAndSettle();
-}
+double _fullHeight(WidgetTester tester) =>
+    tester.getSize(_card).height + TopicHintSlider.cardGap;
+
+double _labelOpacity(WidgetTester tester) => tester
+    .widget<Opacity>(find.ancestor(
+        of: find.byKey(TopicHintSlider.labelKey),
+        matching: find.byType(Opacity)))
+    .opacity;
 
 Future<void> _skip(WidgetTester tester) async {
   await tester.tap(find.text('Skip'));
   await tester.pumpAndSettle();
 }
 
-/// Holds the handle down long enough for a long-press.
+/// Holds the knob down long enough for a long-press.
 Future<TestGesture> _press(WidgetTester tester) async {
-  final gesture = await tester.startGesture(tester.getCenter(_handle));
+  final gesture = await tester.startGesture(tester.getCenter(_knob));
   await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
   await tester.pumpAndSettle();
+  return gesture;
+}
+
+/// Starts a drag on the knob, past the touch slop.
+Future<TestGesture> _startDrag(WidgetTester tester) async {
+  final gesture = await tester.startGesture(tester.getCenter(_knob));
+  await gesture.moveBy(const Offset(30, 0));
+  await tester.pump();
   return gesture;
 }
 
@@ -209,38 +260,7 @@ void main() {
     });
   });
 
-  // The guard the owner asked for (2026-10-12): under the shortest possible
-  // question (one line, no scene), with the keyboard up on a 375 × 667
-  // phone (20 pt status bar, 260 pt keyboard), at Medium and Large, every
-  // card fits above the "Your answer" row and below the status bar. A
-  // longer text fails here.
-  for (final size in [AppTextSize.medium, AppTextSize.large]) {
-    testWidgets(
-        'every card fits above the row under the shortest question, keyboard '
-        'up, 375 × 667 (${size.name})', (tester) async {
-      await _pumpDaily(tester,
-          size: const Size(375, 667), keyboard: 260, top: 20, textSize: size);
-      await _focusAnswer(tester);
-      for (final topic in kTopics) {
-        final gesture = await _press(tester);
-        final card = tester.getRect(_card);
-        final row = _row(tester);
-        expect(
-            card.bottom, lessThanOrEqualTo(row.top - TopicHintHandle.gap + 0.5),
-            reason: '${topic.title}: ${card.height} pt tall, '
-                '${row.top - TopicHintHandle.gap - 20 - TopicHintHandle.gap} '
-                'pt of room above the row');
-        expect(card.top, greaterThanOrEqualTo(20 + TopicHintHandle.gap - 0.5),
-            reason: topic.title);
-        await gesture.up();
-        await tester.pumpAndSettle();
-        if (topic != kTopics.last) await _skip(tester);
-      }
-      expect(tester.testTextInput.isVisible, isTrue);
-    });
-  }
-
-  group('where it is offered', () {
+  group('the slider', () {
     testWidgets('not on Practice', (tester) async {
       _setView(tester, const Size(390, 844));
       await tester.pumpWidget(MaterialApp(
@@ -260,111 +280,213 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      expect(_handle, findsNothing);
+      expect(_slider, findsNothing);
     });
 
-    testWidgets('on the Daily Test: the handle, 44 × 44, and no card at rest',
-        (tester) async {
-      await _pumpDaily(tester);
-      expect(_handle, findsOneWidget);
-      expect(tester.getSize(_handle), const Size(44, 44));
-      expect(_card, findsNothing);
-    });
+    for (final brightness in Brightness.values) {
+      testWidgets(
+          'on the Daily Test (${brightness.name}): a 48 pt full-width track '
+          'between the question card and "Your answer", the knob at its left '
+          'end, "Slide for a hint", brand colours, no card at rest',
+          (tester) async {
+        _setView(tester, const Size(390, 844));
+        await tester.pumpWidget(MaterialApp(
+          theme: buildAppTheme(brightness),
+          home: DailyTestScreen(
+            dailyTestService: DailyTestService(
+                claudeService: _NoNetworkClaude(),
+                storageService: _Storage(_set(_Shape.shortest))),
+            analyticsService: AnalyticsService(sink: _RecordingSink()),
+            onFinished: (_, __) {},
+            onExit: () {},
+          ),
+        ));
+        await tester.pumpAndSettle();
+        final track = tester.getRect(_track);
+        final question = tester.getRect(_questionCard);
+        expect(track.height, TopicHintSlider.trackHeight);
+        expect(track.width, question.width);
+        expect(track.left, question.left);
+        expect(track.top, greaterThan(question.bottom));
+        expect(track.bottom, lessThan(tester.getRect(_yourAnswer).top));
+        expect(tester.getTopLeft(_knob), track.topLeft);
+        expect(find.text('Slide for a hint'), findsOneWidget);
+        expect(find.byIcon(Icons.keyboard_double_arrow_right_rounded),
+            findsOneWidget);
+        expect(_card, findsNothing);
 
-    testWidgets('the handle reads the whole card to VoiceOver', (tester) async {
+        final theme = buildAppTheme(brightness);
+        final palette = theme.extension<AppPalette>()!;
+        final trackFill = tester
+            .widgetList<DecoratedBox>(find.descendant(
+                of: _track, matching: find.byType(DecoratedBox)))
+            .map((box) => (box.decoration as BoxDecoration).color)
+            .toList();
+        expect(trackFill.first, palette.warm);
+        expect(trackFill, contains(theme.colorScheme.primary));
+        final semantic = theme.extension<SemanticColors>()!;
+        for (final color in trackFill) {
+          expect(color, isNot(semantic.correctBackground));
+          expect(color, isNot(semantic.incorrectBackground));
+        }
+      });
+    }
+
+    testWidgets('reads the whole card to VoiceOver', (tester) async {
       final semantics = tester.ensureSemantics();
       await _pumpDaily(tester);
-      final label = tester.getSemantics(_handle).label;
+      final label = tester.getSemantics(_knob).label;
       expect(label, contains('Gerund vs. Infinitive'));
       for (final point in kTopicHints[TopicId.gerundVsInfinitive]!) {
         expect(label, contains(point));
       }
       semantics.dispose();
     });
+
+    testWidgets(
+        'is left out while the keyboard is up, and comes back closed when it '
+        'goes down', (tester) async {
+      await _pumpDaily(tester);
+      // Open it, then let it close: it must come back closed.
+      final gesture = await _startDrag(tester);
+      await gesture.moveBy(Offset(_travel(tester), 0));
+      await tester.pump();
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      tester.view.viewInsets = const FakeViewPadding(bottom: 336 * 3);
+      await tester.tap(_field);
+      await tester.pumpAndSettle();
+      expect(_slider, findsNothing);
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      tester.view.viewInsets = FakeViewPadding.zero;
+      await tester.pumpAndSettle();
+      expect(_slider, findsOneWidget);
+      expect(_card, findsNothing);
+      expect(_knobAt(tester), 0);
+    });
+
+    for (final width in [320.0, 360.0, 374.0]) {
+      testWidgets('is left out on a ${width.toInt()} pt screen',
+          (tester) async {
+        await _pumpDaily(tester, size: Size(width, 700));
+        expect(_slider, findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('is there on a 375 pt screen', (tester) async {
+      await _pumpDaily(tester, size: const Size(375, 667));
+      expect(_slider, findsOneWidget);
+    });
   });
 
   group('the reveal', () {
     testWidgets(
-        'a sideways drag shows the card in proportion, either way, above the '
-        'row; nothing moves', (tester) async {
+        'dragging the knob right opens the card below the track in '
+        'proportion, the trail follows and the label fades; the question '
+        'card never moves, "Your answer" is pushed down', (tester) async {
       await _pumpDaily(tester);
-      final rowBefore = _row(tester);
-      final travel = rowBefore.width * TopicHintHandle.travelShare;
-      final gesture = await tester.startGesture(tester.getCenter(_handle));
-      // Past the touch slop, so the drag has started.
-      await gesture.moveBy(const Offset(-30, 0));
+      final question = tester.getRect(_questionCard);
+      final answerRow = tester.getRect(_yourAnswer).top;
+      final travel = _travel(tester);
+      final gesture = await _startDrag(tester);
+      final start = _knobAt(tester);
+      expect(start, greaterThanOrEqualTo(0));
+
+      await gesture.moveBy(Offset(travel * 0.25, 0));
       await tester.pump();
-      expect(_card, findsOneWidget);
-      final start = _revealed(tester);
-      await gesture.moveBy(Offset(-travel * 0.25, 0));
+      expect(_knobAt(tester), moreOrLessEquals(start + 0.25, epsilon: 0.01));
+      final full = _fullHeight(tester);
+      expect(_shownHeight(tester),
+          moreOrLessEquals(full * (start + 0.25), epsilon: 0.5));
+      expect(_labelOpacity(tester),
+          moreOrLessEquals(1 - 2 * (start + 0.25), epsilon: 0.02));
+
+      await gesture.moveBy(Offset(travel * 0.25, 0));
       await tester.pump();
-      expect(_revealed(tester), moreOrLessEquals(start + 0.25, epsilon: 0.01));
-      await gesture.moveBy(Offset(-travel * 0.25, 0));
-      await tester.pump();
-      expect(_revealed(tester), moreOrLessEquals(start + 0.5, epsilon: 0.01));
-      // Back the other way and past the start: the distance counts, not the
-      // direction.
-      await gesture.moveBy(Offset(travel * (0.5 + start) + travel * 0.4, 0));
-      await tester.pump();
-      expect(_revealed(tester), moreOrLessEquals(0.4, epsilon: 0.02));
+      expect(_shownHeight(tester),
+          moreOrLessEquals(full * (start + 0.5), epsilon: 0.5));
+      expect(_labelOpacity(tester), 0);
+      expect(tester.getRect(_questionCard), question);
+      expect(tester.getRect(_yourAnswer).top,
+          moreOrLessEquals(answerRow + _shownHeight(tester), epsilon: 0.5));
+
+      // To the end of the track: fully open, and no further.
       await gesture.moveBy(Offset(travel, 0));
       await tester.pump();
-      expect(_revealed(tester), 1);
-      expect(_cover, findsNothing);
-      // Above the row, and the row has not moved.
-      expect(tester.getRect(_card).bottom,
-          lessThanOrEqualTo(_row(tester).top - TopicHintHandle.gap + 0.5));
-      expect(_row(tester), rowBefore);
+      expect(_knobAt(tester), moreOrLessEquals(1, epsilon: 0.001));
+      expect(_shownHeight(tester), moreOrLessEquals(full, epsilon: 0.5));
+      expect(tester.getRect(_card).top,
+          greaterThan(tester.getRect(_track).bottom));
+      expect(tester.getRect(_questionCard), question);
+
+      // Back left past the start: closed, no further.
+      await gesture.moveBy(Offset(-travel * 3, 0));
+      await tester.pump();
+      expect(_knobAt(tester), 0);
+      expect(_shownHeight(tester), 0);
       await gesture.up();
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets(
-        'on release it springs closed: still there a frame later, '
-        'gone when settled', (tester) async {
+        'on release the knob springs back and the card collapses: still '
+        'moving a frame later, closed within about 250 ms', (tester) async {
       await _pumpDaily(tester);
-      final gesture = await tester.startGesture(tester.getCenter(_handle));
-      await gesture.moveBy(const Offset(-30, 0));
-      await gesture.moveBy(const Offset(-120, 0));
+      final gesture = await _startDrag(tester);
+      await gesture.moveBy(Offset(_travel(tester), 0));
       await tester.pump();
-      final before = _revealed(tester);
       await gesture.up();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
+      final knob = _knobAt(tester);
+      expect(knob, inExclusiveRange(0, 1));
       expect(_card, findsOneWidget);
-      expect(_revealed(tester), lessThan(before));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(_knobAt(tester), lessThan(0.02));
       await tester.pumpAndSettle();
+      expect(_knobAt(tester), 0);
       expect(_card, findsNothing);
     });
 
     testWidgets('under Reduce Motion it closes at once', (tester) async {
       await _pumpDaily(tester, reduceMotion: true);
       final gesture = await _press(tester);
-      expect(_revealed(tester), 1);
+      expect(_shownHeight(tester),
+          moreOrLessEquals(_fullHeight(tester), epsilon: 0.5));
       await gesture.up();
       await tester.pump();
       expect(_card, findsNothing);
+      expect(_knobAt(tester), 0);
     });
 
     testWidgets(
-        'a long-press shows it whole while held, and closes it on '
-        'release', (tester) async {
+        'a long-press on the knob shows the card whole while held, '
+        'and closes it on release', (tester) async {
       await _pumpDaily(tester);
+      final question = tester.getRect(_questionCard);
       final gesture = await _press(tester);
-      expect(_card, findsOneWidget);
-      expect(_revealed(tester), 1);
+      expect(_shownHeight(tester),
+          moreOrLessEquals(_fullHeight(tester), epsilon: 0.5));
       await tester.pump(const Duration(seconds: 2));
-      expect(_revealed(tester), 1, reason: 'stays while held');
+      expect(_shownHeight(tester),
+          moreOrLessEquals(_fullHeight(tester), epsilon: 0.5),
+          reason: 'stays while held');
+      expect(tester.getRect(_questionCard), question);
       await gesture.up();
       await tester.pumpAndSettle();
       expect(_card, findsNothing);
     });
 
-    testWidgets("a vertical drag scrolls the question and shows no card",
+    testWidgets('a vertical drag scrolls the question and opens nothing',
         (tester) async {
       await _pumpDaily(tester,
-          size: const Size(375, 667), keyboard: 260, longFirst: true);
-      await _focusAnswer(tester);
+          size: const Size(375, 667),
+          textSize: AppTextSize.large,
+          shape: _Shape.long);
       final scroll = tester
           .state<ScrollableState>(find.descendant(
               of: find.byKey(QuestionView.questionScrollKey),
@@ -376,8 +498,8 @@ void main() {
       await tester.pump();
       expect(scroll.pixels, greaterThan(0));
       expect(_card, findsNothing);
-      // An upward flick that starts on the handle is not a reveal either.
-      await tester.drag(_handle, const Offset(0, -80));
+      // An upward flick that starts on the knob opens nothing either.
+      await tester.drag(_knob, const Offset(0, -80));
       await tester.pump();
       expect(_card, findsNothing);
       await tester.pumpAndSettle();
@@ -386,41 +508,27 @@ void main() {
 
   group('changes nothing', () {
     testWidgets(
-        'the keyboard stays up, the answer, its cursor and the question stay; '
-        'no event is logged; Finish hands over the same answers',
-        (tester) async {
-      final daily = await _pumpDaily(tester, keyboard: 336);
-      await _focusAnswer(tester);
+        'the answer and the question stay; no event is logged; the answers '
+        'handed over at the end are the same', (tester) async {
+      final daily = await _pumpDaily(tester);
       await tester.enterText(_field, 'swimming');
       await tester.pump();
-      final controller = tester.widget<TextField>(_field).controller!;
-      controller.selection = const TextSelection.collapsed(offset: 4);
-      await tester.pump();
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
       final eventsBefore = List.of(daily.sink.events);
 
-      // A tap on the handle does not close the keyboard.
-      await tester.tap(_handle);
+      await tester.tap(_knob);
       await tester.pumpAndSettle();
-      expect(tester.testTextInput.isVisible, isTrue);
-
-      // A drag and a long-press.
-      final drag = await tester.startGesture(tester.getCenter(_handle));
-      await drag.moveBy(const Offset(-30, 0));
-      await drag.moveBy(const Offset(-200, 0));
+      final drag = await _startDrag(tester);
+      await drag.moveBy(Offset(_travel(tester), 0));
       await tester.pump();
-      expect(tester.testTextInput.isVisible, isTrue);
       await drag.up();
       await tester.pumpAndSettle();
       final press = await _press(tester);
-      expect(tester.testTextInput.isVisible, isTrue);
       await press.up();
       await tester.pumpAndSettle();
 
-      expect(tester.testTextInput.isVisible, isTrue);
-      expect(FocusManager.instance.primaryFocus,
-          tester.widget<TextField>(_field).focusNode);
-      expect(controller.text, 'swimming');
-      expect(controller.selection, const TextSelection.collapsed(offset: 4));
+      expect(tester.widget<TextField>(_field).controller!.text, 'swimming');
       expect(find.text('1 / 5'), findsOneWidget);
       expect(daily.sink.events, eventsBefore);
       expect(daily.finished, isEmpty);
@@ -433,63 +541,49 @@ void main() {
     });
   });
 
-  group('when a card does not fit above the row', () {
-    testWidgets(
-        'the safety net: it reaches down over the row (320 × 568, Small, '
-        'keyboard up: Gerund vs. Infinitive), the handle drawn on top',
-        (tester) async {
-      await _pumpDaily(tester,
-          size: const Size(320, 568),
-          keyboard: 260,
-          top: 20,
-          textSize: AppTextSize.small);
-      await _focusAnswer(tester);
-      final row = _row(tester);
-      final handle = tester.getRect(_handle);
-      final gesture = await _press(tester);
-      final card = tester.getRect(_card);
-      expect(card.bottom, greaterThan(row.top - TopicHintHandle.gap),
-          reason: 'does not fit above the row');
-      expect(card.bottom, moreOrLessEquals(row.bottom, epsilon: 0.5));
-      // The handle is drawn again over the card, in the same place.
-      final faces = find.byIcon(Icons.tips_and_updates_rounded);
-      expect(faces, findsNWidgets(2));
-      final face = tester.getRect(faces.last).center;
-      expect(face.dx, moreOrLessEquals(handle.center.dx, epsilon: 0.5));
-      expect(face.dy, moreOrLessEquals(handle.center.dy, epsilon: 0.5));
-      await gesture.up();
-      await tester.pumpAndSettle();
-      expect(_card, findsNothing);
-    });
-
-    testWidgets(
-        '320 × 568, Large, keyboard up: every card is whole on screen, '
-        'reaching over the answer field and the Skip/Next bar if it must',
-        (tester) async {
-      await _pumpDaily(tester,
-          size: const Size(320, 568),
-          keyboard: 260,
-          top: 20,
-          textSize: AppTextSize.large);
-      await _focusAnswer(tester);
-      const keyboardTop = 568 - 260.0;
-      for (final topic in kTopics) {
-        final gesture = await _press(tester);
-        final card = tester.getRect(_card);
-        // Nothing of the card is clipped: its painted box is its whole box.
-        expect(card.top, greaterThanOrEqualTo(20 + TopicHintHandle.gap - 0.5),
-            reason: '${topic.title}: top cut off');
-        expect(card.bottom,
-            lessThanOrEqualTo(keyboardTop - TopicHintHandle.gap + 0.5),
-            reason: '${topic.title}: under the keyboard');
-        expect(find.text(topic.title), findsWidgets);
-        expect(find.byIcon(Icons.tips_and_updates_rounded), findsNWidgets(2),
-            reason: '${topic.title}: the handle on top');
-        await gesture.up();
-        await tester.pumpAndSettle();
-        if (topic != kTopics.last) await _skip(tester);
+  // The fit check the owner asked for (2026-10-12): with the keyboard down,
+  // on 375 pt and wider phones, at Medium and Large, under the shortest and
+  // a realistic question, the fully open card is whole above the Skip/Next
+  // bar and below the question card.
+  const phones = [
+    (size: Size(375, 667), top: 20.0, bottom: 0.0),
+    (size: Size(390, 844), top: 47.0, bottom: 34.0),
+    (size: Size(430, 932), top: 59.0, bottom: 34.0),
+  ];
+  for (final phone in phones) {
+    for (final textSize in [AppTextSize.medium, AppTextSize.large]) {
+      for (final shape in [_Shape.shortest, _Shape.pool]) {
+        testWidgets(
+            'fit: ${phone.size.width.toInt()} × ${phone.size.height.toInt()}, '
+            '${textSize.name}, ${shape.name} question: every open card is '
+            'whole above the Skip/Next bar', (tester) async {
+          await _pumpDaily(tester,
+              size: phone.size,
+              top: phone.top,
+              bottom: phone.bottom,
+              textSize: textSize,
+              shape: shape);
+          for (final topic in kTopics) {
+            final question = tester.getRect(_questionCard);
+            final gesture = await _press(tester);
+            final card = tester.getRect(_card);
+            final footer = tester.getRect(find.byType(PracticeStepFooter));
+            expect(_shownHeight(tester),
+                moreOrLessEquals(_fullHeight(tester), epsilon: 0.5),
+                reason: topic.title);
+            expect(card.bottom, lessThanOrEqualTo(footer.top + 0.5),
+                reason: '${topic.title}: ${card.bottom - footer.top} pt '
+                    'under the Skip/Next bar');
+            expect(card.top, greaterThan(question.bottom), reason: topic.title);
+            expect(tester.getRect(_questionCard), question,
+                reason: topic.title);
+            await gesture.up();
+            await tester.pumpAndSettle();
+            if (topic != kTopics.last) await _skip(tester);
+          }
+          expect(tester.takeException(), isNull);
+        });
       }
-      expect(tester.takeException(), isNull);
-    });
-  });
+    }
+  }
 }
