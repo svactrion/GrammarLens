@@ -590,18 +590,27 @@ class _QuestionViewState extends State<QuestionView>
         borderRadius: radius,
         child: Stack(
           children: [
-            NotificationListener<ScrollNotification>(
+            // A scroll, and a change in what the card can show (the hint
+            // slider tucking away or coming back resizes the card without
+            // rebuilding this state), both read the fade again.
+            NotificationListener<ScrollMetricsNotification>(
               onNotification: (_) {
                 _checkQuestionMetrics();
                 return false;
               },
-              child: Scrollbar(
-                controller: _questionScroll,
-                thumbVisibility: _questionOverflows,
-                child: SingleChildScrollView(
-                  key: QuestionView.questionScrollKey,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (_) {
+                  _checkQuestionMetrics();
+                  return false;
+                },
+                child: Scrollbar(
                   controller: _questionScroll,
-                  child: content,
+                  thumbVisibility: _questionOverflows,
+                  child: SingleChildScrollView(
+                    key: QuestionView.questionScrollKey,
+                    controller: _questionScroll,
+                    child: content,
+                  ),
                 ),
               ),
             ),
