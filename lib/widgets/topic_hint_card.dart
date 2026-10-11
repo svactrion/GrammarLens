@@ -77,14 +77,24 @@ class TopicHintCard extends StatelessWidget {
 /// Nothing stays open, and nothing else changes: nothing is scored,
 /// counted or logged.
 ///
-/// The screen leaves the slider out while the keyboard is up and on screens
-/// narrower than [minScreenWidth] (see `DailyTestScreen`); it comes back
-/// closed.
+/// The slider is tucked away under the question card while the keyboard is
+/// up (`QuestionView`) and left out on screens narrower than
+/// [minScreenWidth] (`DailyTestScreen`); it comes back closed.
 class TopicHintSlider extends StatefulWidget {
   final Topic topic;
   final List<String> points;
 
-  const TopicHintSlider({super.key, required this.topic, required this.points});
+  /// Set while the slider is being tucked away (the keyboard is coming up):
+  /// an open card closes at once, a held knob is let go, and touches are
+  /// ignored, so nothing can be left open or stuck.
+  final bool collapsed;
+
+  const TopicHintSlider({
+    super.key,
+    required this.topic,
+    required this.points,
+    this.collapsed = false,
+  });
 
   static const knobKey = ValueKey('topic_hint_knob');
   static const cardKey = ValueKey('topic_hint_card');
@@ -141,6 +151,16 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   }
 
   @override
+  void didUpdateWidget(TopicHintSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.collapsed && !oldWidget.collapsed) {
+      _holding = false;
+      _reveal.stop();
+      _reveal.value = 0;
+    }
+  }
+
+  @override
   void dispose() {
     _reveal.dispose();
     super.dispose();
@@ -160,6 +180,7 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   }
 
   void _begin() {
+    if (widget.collapsed) return;
     _holding = true;
     _reveal.stop();
   }
@@ -183,6 +204,7 @@ class _TopicHintSliderState extends State<TopicHintSlider>
 
   void _onLongPressStart(LongPressStartDetails details) {
     _begin();
+    if (!_holding) return;
     _springTo(1);
   }
 
@@ -190,41 +212,44 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   Widget build(BuildContext context) {
     final label =
         'Slide for a hint. ${widget.topic.title}: ${widget.points.join('. ')}.';
-    return Padding(
-      padding: const EdgeInsets.only(top: TopicHintSlider.gap),
-      child: AnimatedBuilder(
-        animation: _reveal,
-        builder: (context, _) {
-          final value = _reveal.value;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Semantics(
-                label: label,
-                hint: 'Touch and hold to show',
-                excludeSemantics: true,
-                child: _track(context, value),
-              ),
-              if (value > 0)
-                ClipRect(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    heightFactor: value,
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.only(top: TopicHintSlider.cardGap),
-                      child: TopicHintCard(
-                        key: TopicHintSlider.cardKey,
-                        topic: widget.topic,
-                        points: widget.points,
+    return IgnorePointer(
+      ignoring: widget.collapsed,
+      child: Padding(
+        padding: const EdgeInsets.only(top: TopicHintSlider.gap),
+        child: AnimatedBuilder(
+          animation: _reveal,
+          builder: (context, _) {
+            final value = _reveal.value;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  label: label,
+                  hint: 'Touch and hold to show',
+                  excludeSemantics: true,
+                  child: _track(context, value),
+                ),
+                if (value > 0)
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      heightFactor: value,
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.only(top: TopicHintSlider.cardGap),
+                        child: TopicHintCard(
+                          key: TopicHintSlider.cardKey,
+                          topic: widget.topic,
+                          points: widget.points,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

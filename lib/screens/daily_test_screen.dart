@@ -299,11 +299,10 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     );
   }
 
-  /// The topic hint slider shows only with the keyboard down and on a
-  /// screen at least [TopicHintSlider.minScreenWidth] wide (plan §3). Read
-  /// here, above the Scaffold, which hides the keyboard from its body.
+  /// The topic hint slider is offered only on a screen at least
+  /// [TopicHintSlider.minScreenWidth] wide (plan §3); `QuestionView` tucks
+  /// it away while the keyboard is up.
   bool _showTopicHint(BuildContext context) =>
-      MediaQuery.viewInsetsOf(context).bottom == 0 &&
       MediaQuery.sizeOf(context).width >= TopicHintSlider.minScreenWidth;
 
   Widget _buildQuestion(double hPad) {

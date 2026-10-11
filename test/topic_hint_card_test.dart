@@ -506,6 +506,141 @@ void main() {
     });
   });
 
+  group('with the keyboard', () {
+    FocusNode answerFocus(WidgetTester tester) =>
+        tester.widget<TextField>(_field).focusNode!;
+
+    // The focus change lands, then the next frame starts the animation's
+    // clock: times below count from there.
+    Future<void> settleFocus(WidgetTester tester) async {
+      await tester.pump();
+      await tester.pump();
+    }
+
+    testWidgets(
+        'opening: the slider slides up under the question card while its '
+        'slot closes and "Your answer" moves up with it; the question card '
+        'never moves', (tester) async {
+      await _pumpDaily(tester);
+      final question = tester.getRect(_questionCard);
+      final track = tester.getRect(_track);
+      final row = tester.getRect(_yourAnswer).top;
+
+      answerFocus(tester).requestFocus();
+      await settleFocus(tester);
+      await tester.pump(const Duration(milliseconds: 60));
+      final early = tester.getRect(_track).top;
+      final earlyRow = tester.getRect(_yourAnswer).top;
+      expect(early, lessThan(track.top));
+      expect(earlyRow, lessThan(row));
+      await tester.pump(const Duration(milliseconds: 60));
+      final mid = tester.getRect(_track).top;
+      final midRow = tester.getRect(_yourAnswer).top;
+      expect(mid, lessThan(early), reason: 'still moving up');
+      expect(midRow, lessThan(earlyRow));
+      expect(mid, greaterThan(track.top - TopicHintSlider.closedHeight));
+      // Tucked under the card: its top is behind the card's bottom edge.
+      expect(mid, lessThan(question.bottom));
+      expect(tester.getRect(_questionCard), question);
+      // "Your answer" moves with the track (within the ~2 pt the row's
+      // "Review answer" control, shown once the answer has focus, adds).
+      expect(row - midRow, moreOrLessEquals(track.top - mid, epsilon: 3));
+
+      await tester.pump(const Duration(milliseconds: 140));
+      expect(_slider, findsNothing, reason: 'done within 250 ms');
+      expect(tester.getRect(_yourAnswer).top,
+          moreOrLessEquals(row - TopicHintSlider.closedHeight, epsilon: 3),
+          reason: 'up by the slot (and the ~2 pt of "Review answer")');
+      expect(tester.getRect(_questionCard), question);
+    });
+
+    testWidgets(
+        'closing: the slider slides back out from under the card, its slot '
+        'grows back, and it comes back closed', (tester) async {
+      await _pumpDaily(tester);
+      final question = tester.getRect(_questionCard);
+      final track = tester.getRect(_track);
+      final row = tester.getRect(_yourAnswer).top;
+      answerFocus(tester).requestFocus();
+      await tester.pumpAndSettle();
+      expect(_slider, findsNothing);
+
+      answerFocus(tester).unfocus();
+      await settleFocus(tester);
+      await tester.pump(const Duration(milliseconds: 60));
+      final early = tester.getRect(_track).top;
+      expect(early, lessThan(track.top));
+      expect(early, greaterThan(track.top - TopicHintSlider.closedHeight));
+      await tester.pump(const Duration(milliseconds: 60));
+      final mid = tester.getRect(_track).top;
+      expect(mid, greaterThan(early), reason: 'moving down');
+      expect(tester.getRect(_yourAnswer).top, lessThan(row));
+      expect(tester.getRect(_questionCard), question);
+      // Not touchable until it is all the way out.
+      await tester.drag(_knob, const Offset(200, 0), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(tester.getRect(_track), track);
+      expect(tester.getRect(_yourAnswer).top, row);
+      expect(tester.getRect(_questionCard), question);
+      expect(_card, findsNothing);
+      expect(_knobAt(tester), 0);
+    });
+
+    testWidgets('the slider is painted under the question card',
+        (tester) async {
+      await _pumpDaily(tester);
+      final layout = tester.widget<CustomMultiChildLayout>(find
+          .ancestor(
+              of: _questionCard, matching: find.byType(CustomMultiChildLayout))
+          .first);
+      final ids = [for (final child in layout.children) (child as LayoutId).id];
+      final hint = ids.indexWhere((id) => id.toString().endsWith('hint'));
+      final question =
+          ids.indexWhere((id) => id.toString().endsWith('question'));
+      expect(hint, greaterThanOrEqualTo(0));
+      expect(hint, lessThan(question));
+    });
+
+    testWidgets('under Reduce Motion it goes and comes back at once',
+        (tester) async {
+      await _pumpDaily(tester, reduceMotion: true);
+      final track = tester.getRect(_track);
+      answerFocus(tester).requestFocus();
+      await settleFocus(tester);
+      expect(_slider, findsNothing);
+      answerFocus(tester).unfocus();
+      await settleFocus(tester);
+      expect(tester.getRect(_track), track);
+      expect(_card, findsNothing);
+    });
+
+    testWidgets(
+        'a knob held when the keyboard opens: the card closes at once, the '
+        'slider tucks away, nothing is stuck, and it comes back closed',
+        (tester) async {
+      await _pumpDaily(tester);
+      final gesture = await _press(tester);
+      expect(_card, findsOneWidget);
+      answerFocus(tester).requestFocus();
+      await settleFocus(tester);
+      expect(_card, findsNothing, reason: 'closed at once');
+      await tester.pump(const Duration(milliseconds: 60));
+      // The held finger moves on: nothing opens.
+      await gesture.moveBy(const Offset(200, 0));
+      await tester.pump();
+      expect(_card, findsNothing);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(_slider, findsNothing);
+      answerFocus(tester).unfocus();
+      await tester.pumpAndSettle();
+      expect(_slider, findsOneWidget);
+      expect(_card, findsNothing);
+      expect(_knobAt(tester), 0);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   group('changes nothing', () {
     testWidgets(
         'the answer and the question stay; no event is logged; the answers '

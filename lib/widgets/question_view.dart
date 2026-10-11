@@ -198,17 +198,48 @@ class QuestionView extends StatefulWidget {
   State<QuestionView> createState() => _QuestionViewState();
 }
 
-class _QuestionViewState extends State<QuestionView> {
+class _QuestionViewState extends State<QuestionView>
+    with SingleTickerProviderStateMixin {
   final ScrollController _questionScroll = ScrollController();
   bool _questionOverflows = false;
   bool _questionAtEnd = true;
   bool _answerFocused = false;
+
+  /// How far the topic hint slider is out from under the question card: 1
+  /// out, 0 tucked away. It goes in when the answer takes focus and comes
+  /// out when it loses it: the moments the keyboard starts to open and to
+  /// close, so it moves with the keyboard. (The keyboard's inset cannot
+  /// drive it: its final height is unknown while it opens, and it reaches 0
+  /// only at the end of closing.) [hintSlideDuration] and [hintSlideCurve]
+  /// approximate the iOS keyboard's own animation.
+  late final AnimationController _hintOut;
+  late final CurvedAnimation _hintOutCurved;
+  bool _reduceMotion = false;
+
+  static const Duration hintSlideDuration = Duration(milliseconds: 250);
+  static const Curve hintSlideCurve = Curves.easeOutCubic;
 
   @override
   void initState() {
     super.initState();
     widget.drafts.focusNode.addListener(_onFocusChange);
     _answerFocused = widget.drafts.focusNode.hasFocus;
+    _hintOut = AnimationController(
+      vsync: this,
+      duration: hintSlideDuration,
+      value: _answerFocused ? 0 : 1,
+    );
+    // Fast at the start both ways, as the keyboard is.
+    _hintOutCurved = CurvedAnimation(
+        parent: _hintOut,
+        curve: hintSlideCurve,
+        reverseCurve: hintSlideCurve.flipped);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
   }
 
   @override
@@ -228,12 +259,24 @@ class _QuestionViewState extends State<QuestionView> {
   void dispose() {
     widget.drafts.focusNode.removeListener(_onFocusChange);
     _questionScroll.dispose();
+    _hintOutCurved.dispose();
+    _hintOut.dispose();
     super.dispose();
   }
 
   void _onFocusChange() {
     final focused = widget.drafts.focusNode.hasFocus;
-    if (focused != _answerFocused) setState(() => _answerFocused = focused);
+    if (focused == _answerFocused) return;
+    setState(() => _answerFocused = focused);
+    if (_reduceMotion) {
+      _hintOut.value = focused ? 0 : 1;
+    } else if (focused) {
+      // reverse(), not animateTo(0): only a reverse run takes the
+      // reverse curve.
+      _hintOut.reverse();
+    } else {
+      _hintOut.forward();
+    }
   }
 
   /// Reads whether the question card has more than it shows, after layout.
@@ -262,14 +305,7 @@ class _QuestionViewState extends State<QuestionView> {
 
     final topic = widget.topic;
     final hintPoints = topic == null ? null : kTopicHints[topic.id];
-    final hint = widget.showTopicHint && hintPoints != null
-        ? TopicHintSlider(
-            // A new question's slider starts closed.
-            key: ValueKey(widget.item.id),
-            topic: topic!,
-            points: hintPoints,
-          )
-        : null;
+    final hasHint = widget.showTopicHint && hintPoints != null;
     final head = _AnswerHead(
       focused: _answerFocused,
       questionClipped: _questionOverflows,
@@ -279,39 +315,59 @@ class _QuestionViewState extends State<QuestionView> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
           widget.horizontalPadding, 14, widget.horizontalPadding, 12),
-      child: LayoutBuilder(builder: (context, constraints) {
-        final type = widget.item.type;
-        final hintReserve = hint == null ? 0.0 : TopicHintSlider.closedHeight;
-        final room = constraints.maxHeight -
-            hintReserve -
-            QuestionView.questionGap -
-            QuestionView.headHeight -
-            QuestionView.headGap;
-        final compact =
-            room - QuestionView.answerMinHeight(theme, scaler, type) <
-                QuestionView.minQuestionHeight;
-        // An open hint card pushes the answer down past the bottom; it is
-        // cut there, and only there (the question card's shadow stays).
-        return ClipRect(
-          clipper: const _BottomEdgeClipper(),
-          child: CustomMultiChildLayout(
-            delegate: _QuestionLayoutDelegate(
-                answerMin: QuestionView.answerMinHeight(theme, scaler, type,
-                    compact: compact),
-                hintReserve: hintReserve),
-            children: [
-              LayoutId(id: _Slot.question, child: _questionCard(theme)),
-              if (hint != null) LayoutId(id: _Slot.hint, child: hint),
-              LayoutId(id: _Slot.head, child: head),
-              LayoutId(
-                  id: _Slot.answer,
-                  child: _answerField(theme,
-                      minLines:
-                          QuestionView.minLinesFor(type, compact: compact))),
-            ],
-          ),
-        );
-      }),
+      child: AnimatedBuilder(
+        animation: _hintOutCurved,
+        builder: (context, _) => LayoutBuilder(builder: (context, constraints) {
+          final type = widget.item.type;
+          final out = hasHint ? _hintOutCurved.value : 0.0;
+          // Tucked all the way: no slot, and the slider (with any open card)
+          // is gone; it is made again, closed, when it comes back out.
+          final hint = out > 0
+              ? _TuckUnder(
+                  out: out,
+                  child: TopicHintSlider(
+                    // A new question's slider starts closed.
+                    key: ValueKey(widget.item.id),
+                    topic: topic!,
+                    points: hintPoints!,
+                    collapsed: _answerFocused,
+                  ),
+                )
+              : null;
+          final hintReserve = TopicHintSlider.closedHeight * out;
+          final room = constraints.maxHeight -
+              hintReserve -
+              QuestionView.questionGap -
+              QuestionView.headHeight -
+              QuestionView.headGap;
+          final compact =
+              room - QuestionView.answerMinHeight(theme, scaler, type) <
+                  QuestionView.minQuestionHeight;
+          // An open hint card pushes the answer down past the bottom; it is
+          // cut there, and only there (the question card's shadow stays).
+          return ClipRect(
+            clipper: const _BottomEdgeClipper(),
+            child: CustomMultiChildLayout(
+              delegate: _QuestionLayoutDelegate(
+                  answerMin: QuestionView.answerMinHeight(theme, scaler, type,
+                      compact: compact),
+                  hintReserve: hintReserve),
+              children: [
+                // Painted first, so the question card is drawn over a slider
+                // that is tucking under it.
+                if (hint != null) LayoutId(id: _Slot.hint, child: hint),
+                LayoutId(id: _Slot.question, child: _questionCard(theme)),
+                LayoutId(id: _Slot.head, child: head),
+                LayoutId(
+                    id: _Slot.answer,
+                    child: _answerField(theme,
+                        minLines:
+                            QuestionView.minLinesFor(type, compact: compact))),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -745,6 +801,30 @@ class _QuestionLayoutDelegate extends MultiChildLayoutDelegate {
   bool shouldRelayout(_QuestionLayoutDelegate oldDelegate) =>
       oldDelegate.answerMin != answerMin ||
       oldDelegate.hintReserve != hintReserve;
+}
+
+/// The hint slider [out] of the way out from under the question card: its
+/// slot is [out] of its height, and the slider sits at the slot's bottom,
+/// so the rest of it reaches up under the card (drawn behind it, see the
+/// layout's paint order). It takes no touches until it is all the way out.
+class _TuckUnder extends StatelessWidget {
+  final double out;
+  final Widget child;
+
+  const _TuckUnder({required this.out, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    // The same shape at every step, so the slider keeps its state.
+    return IgnorePointer(
+      ignoring: out < 1,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: out,
+        child: child,
+      ),
+    );
+  }
 }
 
 /// Clips only what goes past the bottom edge.
