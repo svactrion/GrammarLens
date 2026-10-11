@@ -164,9 +164,11 @@ design, final); the handle, the overlay, the keyboard-up fit guard and the
 **Slider (the rework).** A full-width "slide to unlock" slider between the
 question card and the "Your answer" row, part of the page layout:
 
-- A 48 pt pill track in the light brand tint (`warm`), "Slide for a hint"
-  centred in `onWarm`; a round knob at its left end in the brand colour
-  (`primary`) with right chevrons in `onPrimary`. As the knob moves right a
+- A 56 pt pill track in the light brand tint (`warm`), "Slide for a hint"
+  centred in `onWarm`; a round 48 pt knob (4 pt inside the track's edge) at
+  its left end in the brand colour (`primary`) with right chevrons in
+  `onPrimary`. (The track was 48 pt with a 40 pt knob until the owner's
+  2026-10-12 change after the device check.) As the knob moves right a
   filled trail (`primary` at 32 %) follows it and the label fades out
   (gone at half way). No semantic colours.
 - 8 pt above the track (under the question card); the card opens 4 pt
@@ -205,25 +207,41 @@ question the room for the open card was 218 pt at Large (Tense Selection,
 question it was ~103 pt at Large and ~100 pt at Medium, so every card was
 42–133 pt too tall.
 
-**Fit (tested, `test/topic_hint_card_test.dart`).** With the keyboard down,
-on 375 × 667, 390 × 844 and 430 × 932, at Medium and Large, under the
-shortest question and a fallback-pool question, every fully open card is
-whole above the Skip/Next bar and below the question card, which does not
-move. The first run failed one case (375 × 667, Large, pool question: every
-card 11 pt under the bar); the owner chose to tighten the spacing (the
-card's top and bottom padding 12 → 8 pt, the track-to-card gap 8 → 4 pt).
-Measured after (every card the same height: four one-line points):
+**Fit rule (owner, 2026-10-12): the hint text is never cut off.** With
+the keyboard down, on 375 × 667, 390 × 844 and 430 × 932, at Medium and
+Large, under the shortest question and a fallback-pool question, the fully
+open card's last line of text is whole above the Skip/Next bar and inside
+the question area's clip (`test/topic_hint_card_test.dart`). The card's
+bottom padding and edge may go behind the bar. The question card stays
+fixed. While the card is open, the question area's 12 pt bottom padding is
+free room for it: its clip ends at the top of the Skip/Next bar.
+
+**History of the fit check.** The first run (48 pt track) failed one case
+(375 × 667, Large, pool question: every card 11 pt under the bar); the
+owner chose to tighten the spacing (the card's top and bottom padding
+12 → 8 pt, the track-to-card gap 8 → 4 pt), after which it was reported as
+fitting with "1 pt to spare". **That was wrong (corrected 2026-10-12):**
+the check measured the card's edge against the Skip/Next bar, but the card
+was cut 12 pt higher, at the question area's padded bottom. In that case
+the device-checked 48 pt version cut about 3 pt off the last line of text.
+The 56 pt track (owner) made it 11 pt; the owner then set the rule above,
+the clip was moved to the top of the bar, and the check now measures the
+last line of text against the real visible bottom.
+
+**Measured with the 56 pt track** (every card the same height: four
+one-line points; "clear" = space under the last line of text):
 
 | Phone | Medium, shortest | Medium, pool | Large, shortest | Large, pool |
 |---|---|---|---|---|
 | Card height | 134 pt | 134 pt | 140 pt | 140 pt |
-| 375 × 667: spare | 224 pt | 51 pt | 215 pt | **1 pt** |
-| 390 × 844: spare | 340 pt | 167 pt | 331 pt | 146 pt |
-| 430 × 932: spare | 416 pt | 264 pt | 407 pt | 222 pt |
+| 375 × 667 | 224 pt clear | 51 pt clear | 215 pt clear | **1 pt clear; the card's edge 7 pt behind the bar** |
+| 390 × 844 | 340 pt clear | 167 pt clear | 331 pt clear | 146 pt clear |
+| 430 × 932 | 416 pt clear | 264 pt clear | 407 pt clear | 222 pt clear |
 
-The 375 × 667 Large pool case has 1 pt to spare: a longer question at
-that size, larger system text or a longer text would not fit; the test
-fails then.
+The tight case is 375 × 667, Large, a pool question: the text is whole
+with 1 pt to spare, and the card's bottom edge sits 7 pt behind the bar. A
+longer question at that size, larger system text or a longer text would
+cut the text; the test fails then.
 
 **Gestures checked.** The question's vertical `SingleChildScrollView` is
 separate from the knob, and the knob takes only horizontal drags (a

@@ -11901,6 +11901,9 @@ rewritten in this batch.
   and bottom padding 12 → 8 pt, the gap between track and card 8 → 4 pt.
   After: every case passes; the tightest is that same case, with 1 pt to
   spare (all margins in the plan §3 table).
+  *(Corrected 2026-10-12, entry "the slider at 56 pt; the fit check
+  corrected": the check measured against the bar, but the card was cut
+  12 pt higher; in that case about 3 pt of the last line of text was cut.)*
 - **[Engineering] What changed.**
   - `lib/widgets/topic_hint_card.dart`: removed `TopicHintHandle`, the
     `OverlayPortal`, `_CardPlacement` and the cover. New `TopicHintSlider`:
@@ -12000,3 +12003,38 @@ On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
 - **[Not checked]** On the owner's iPhone: whether the slide matches the
   real keyboard's timing, the tuck under the card in both themes, Reduce
   Motion.
+
+## 2026-10-12 (Question screen — B2 keyboard animation passed; the slider at 56 pt; the fit check corrected)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
+
+- **[Product — owner]** The B2 keyboard animation (the slider tucking
+  under the question card) passed the device check on the owner's iPhone
+  (2026-10-12).
+- **[Product — owner] A thicker slider:** the track 48 → 56 pt, the knob
+  scaled with it (48 pt, the same 4 pt inside the track; the chevrons
+  22 → 26 pt). Nothing else changed.
+- **[Correction] The earlier fit result was wrong.** The B2 rework's fit
+  check (entry "B2 reworked") compared the open card's edge with the top of
+  the Skip/Next bar, but the card was cut 12 pt higher, at the question
+  area's padded bottom (`QuestionView`'s 12 pt bottom padding is outside
+  its clip). So the case reported as "1 pt to spare" (375 × 667, Large, a
+  fallback-pool question) actually cut about 3 pt off the last line of text
+  in the 48 pt version the owner checked on the device; with the 56 pt
+  track it would have cut 11 pt. Measured: the clip at y 588, the bar's top
+  at 600, the last line's bottom at 599 (56 pt track).
+- **[Product — owner] The fit rule is now "the hint text is never cut
+  off"**, not "the card's edge is visible": the card's bottom padding and
+  edge may go behind the bar.
+- **[Engineering]** `QuestionView`: the open card's clip now ends at the
+  top of the Skip/Next bar (`_BottomEdgeClipper(extra: bottomPadding)`, the
+  12 pt bottom padding is free room for an open card); nothing changes at
+  rest. `TopicHintSlider`: `trackHeight` 56, `knobInset` 4, chevrons 26 pt.
+- **[Tests]** The fit check now asserts that each card's last line of text
+  ends above both the Skip/Next bar and the question area's real clip edge
+  (read from the `RenderClipRect`). All 12 cases pass; the tight one
+  (375 × 667, Large, pool question) has 1 pt clear under the text and the
+  card's edge 7 pt behind the bar (all margins in the plan §3 table).
+  `flutter analyze` clean; **1,951 passed, 0 failed.**
+- **[Not checked]** On the owner's iPhone: the 56 pt slider; the tight case
+  (a 375 pt phone at Large text), if available.
