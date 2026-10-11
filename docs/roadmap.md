@@ -7,7 +7,7 @@
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
 | 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0. **Updated (Ahmet, 2026-10-03; plan superseded 2026-10-07):** resubmitted 2026-09-28; the app version (build 3), both subscriptions and the subscription group "Waiting for Review"; not withdrawn until 1.1.0 is ready, then: approved → released, 1.1.0 as an update; still in review → withdrawn, the version becomes 1.1.0 with the new build; rejected → fixed inside 1.1.0 (section "1.1.0 side tracks", "1.0.0's state"). Manual release selected (Ahmet verified, 2026-10-03). **Updated (Ahmet, 2026-10-07):** rejected a second time on 2026-10-06 (Guideline 3.1.2(c): no Terms of Use / EULA link in the App Store metadata). The fix was metadata only, no new build: EULA, Privacy and Terms lines added to the description, answered in Resolution Center and resubmitted the same day; waiting for review, manual release. **Plan (2026-10-07), replaces the 2026-10-03 one:** 1.0.0 is not withdrawn; 1.1.0 is skipped; 1.2.0 goes as an update after 1.0.0 is approved |
-| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Skipped (Ahmet, 2026-10-07): never submitted; everything in it ships in 1.2.0.** *(Kept as written below.)* **Release candidate (2026-10-04): what ships, what waits and the known flaws are in "1.1.0 — release candidate" below.** Screenshots approved and the iPad simulator check done (Ahmet, 2026-10-04); the other release items are open. Not submitted. **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist). **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. *(2026-10-04: filled — 7 sets, 10 owner corrections, approved by Ahmet.)* Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
+| 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Skipped (Ahmet, 2026-10-07): never submitted; everything in it ships in 1.2.0.** *(Kept as written below.)* **Release candidate (2026-10-04): what ships, what waits and the known flaws are in "1.1.0 — release candidate" below.** Screenshots approved and the iPad simulator check done (Ahmet, 2026-10-04); the other release items are open. Not submitted. **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist) *(2026-10-09: registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09))*. **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. *(2026-10-04: filled — 7 sets, 10 owner corrections, approved by Ahmet.)* Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
 | 1.2.0 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; the paywall with trial eligibility; multiline answers. Carries all of 1.1.0 | Version `1.2.0+5` (2026-10-07); device checks passed (2026-10-07); TestFlight build 5 not yet built or uploaded (owner). Goes to review as an update once 1.0.0 is approved (plan 2026-10-07). Checklist: "1.2.0 pre-release checklist" below |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
@@ -59,7 +59,8 @@ as recorded in each batch's line below):
   `daily_test_completed`, `theme_id` on `mode_selected` (Daily Test),
   `month_card_shown`, `month_card_dismissed`, `month_zoom_ended`,
   `save_point_reached`, `medal_tier_reached` (`analytics-plan.md`). Not yet
-  seen in DebugView; their new dimensions not yet registered.
+  seen in DebugView; their new dimensions and the metric `open_ms`
+  registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09).
 - Debug and profile builds only (not in a release build): the in-app debug
   panel (Settings → Debug) and the sample collection.
 
@@ -261,6 +262,10 @@ carried over now.
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
+- [x] **Firebase, carried over from the 1.1.0 release checklist:** `set_date`,
+  `theme_id`, `variant`, `medal_tier`, `near_miss_shown`, `trigger`,
+  `save_point`, `step` (event-scoped dimensions) and the metric `open_ms`
+  registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09). Nothing left to register for 1.2.0.
 - [x] **Firebase:** register `learning_goal` as a **user-scoped custom
   dimension** (`analytics-plan.md` §9) before 1.2.0 ships; registration is
   not retroactive.
@@ -350,9 +355,9 @@ carried over now.
   `flutter build ipa --release --dart-define-from-file=config/prod.json`,
   read back 1.2.0 / 5 from the archive's `Info.plist`, upload with
   Transporter (steps: build log 2026-10-07).
-- [ ] **Paywall with an account that already used a trial** (sandbox):
-  to be done on the TestFlight build; until then the eligibility fix
-  has automated tests only.
+- [x] **Paywall with an account that already used a trial** (sandbox):
+  done on the TestFlight build 1.2.0 (5) (Ahmet, 2026-10-09): no trial is
+  promised, the price is shown directly, as expected.
 - [ ] **Paywall on a non-USD storefront:** deferred to after the
   release (Ahmet, 2026-10-07); stays open.
 - [ ] **Privacy policy wording:** the app now says "practice sessions"
@@ -363,6 +368,27 @@ carried over now.
   survey-like answer about the user's purpose; the category, and whether
   it is linked to the user, to be decided against the existing Firebase
   answers, which are not in this repository).
+
+### Question screen improvements (branch `question-screen`) — owner decisions 2026-10-12
+
+Branched from `1.2.0`; **not in 1.2.0**, release not set. Plan, measurements
+and decisions: `docs/question-screen-plan.md`. Batches B1 → B2 → B3, each
+checked on the owner's iPhone before the next.
+
+- **B1 — topic tag** (Daily Test + Practice): built and tested 2026-10-12
+  (build log), **awaiting the device check**. Accepted cost: a tag that
+  wraps adds a line to the card (at 390 × 844, Medium, keyboard up, the
+  short rewrite example under "Gerund vs. Infinitive" now has 10.5 pt in
+  its card's scroll).
+- **B2 — topic hint card** (Daily Test only): not started. The method for
+  holding the layout still while the keyboard closes is described and
+  approved before any code.
+- **B3 — multi-blank answer boxes** (Practice `fill_in_blank`): not
+  started.
+- **Proxy rule "A fill_in_blank item has at most 4 blanks."** (practice
+  generation prompt): to be built and tested in B3 as its own commit and
+  **not deployed**; it deploys only together with the app release that
+  ships multi-blank boxes (Q4).
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
 
@@ -491,8 +517,8 @@ D1–D6 in the side-tracks file.)*
       the avatar on START is under the sheet. Still open:
   - [ ] frame times and memory: not measured on a device;
   - [ ] the events (Batch 6's and Batch 5's): not seen in DebugView;
-  - [ ] the Firebase custom dimensions to register before the release; the
-        developer-traffic filter not set up;
+  - [x] the Firebase custom dimensions — registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09);
+  - [ ] the developer-traffic filter not set up;
   - [ ] the source images are 97.51 MB (G1): handled before the next
         theme (entry below);
   - [ ] 320 × 568: the summary card scrolls, and while it scrolls a
@@ -526,8 +552,8 @@ D1–D6 in the side-tracks file.)*
       was accepted on the device: a known small flaw. Still open:
   - [ ] frame times and memory: not measured on a device;
   - [ ] the three events and `theme_id`: not yet seen in DebugView; the
-        new dimensions and metric not registered (`analytics-plan.md`,
-        "Month transition");
+        new dimensions and metric registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09)
+        (`analytics-plan.md`, "Month transition");
   - [ ] known flaws: at 320 pt and 375 × 667 (iPhone SE) the avatar on
         START is under the sheet while it is open; if the first-launch
         flow is quit half way, the first run's zoom does not play;
@@ -563,8 +589,8 @@ D1–D6 in the side-tracks file.)*
           `scripts/preflight.sh` fails without them. *(Added 2026-10-04:
           it was on the release checklist but missing from this list.)*
     - [ ] an end-to-end pass on a release build (TestFlight);
-    - [ ] the Firebase custom dimensions registered before the release
-          (1.1.0 release checklist below);
+    - [x] the Firebase custom dimensions registered before the release
+          (1.1.0 release checklist below) — registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09);
     - [x] version and build number — `1.1.0+4` (2026-10-04; was
           `1.0.0+3`). The build number is above every build uploaded so
           far (1–3, all 1.0.0); the app shows its version nowhere (no
@@ -2963,7 +2989,7 @@ Open items to run on a TestFlight build before submitting for review
 
 Owner items before the 1.1.0 build ships (added 2026-09-30):
 
-- [ ] **Register `set_date` as a custom dimension in Firebase** (event
+- [x] **Register `set_date` as a custom dimension in Firebase** (registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09)) (event
   scope, parameter `set_date`, event `daily_test_completed`) before the
   build ships: registration is not retroactive (`docs/analytics-plan.md`
   §9).
@@ -2981,8 +3007,8 @@ Owner items before the 1.1.0 build ships (added 2026-09-30):
 - [ ] **DebugView:** `set_source = shared` on a normal day and `fallback`
   with the app opened on a new day in airplane mode; `set_date` present
   (`docs/analytics-plan.md` §6).
-- [ ] **Register the climb's new custom dimensions before the build
-  ships** (owner, 2026-10-03): `save_point`, `step` (Batch 5, N21) and
+- [x] **Register the climb's new custom dimensions before the build
+  ships** (all seven dimensions and the metric `open_ms` registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09)) (owner, 2026-10-03): `save_point`, `step` (Batch 5, N21) and
   Batch 6's `theme_id`, `variant`, `medal_tier`, `near_miss_shown`,
   `trigger` and metric `open_ms` (`docs/analytics-plan.md`). Registration
   is not retroactive.
@@ -3278,6 +3304,10 @@ there.~~
 - Accounts + cloud sync (out of scope for MVP by design)
 - Custom loading animations
 - Turkish UI option (currently English-only interface)
+- **Open item (owner, 2026-10-12): Skip does not clear typed text.** Skip
+  only moves on, so a typed-then-skipped answer (a single box today, a
+  partly filled multi-blank answer after the question screen's B3) is still
+  sent to scoring and graded. Not fixed in the question screen work.
 
 ---
 

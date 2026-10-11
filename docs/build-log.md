@@ -11708,3 +11708,78 @@ Docs only.
 - **[Docs]** README ("Case study and writing") links the article;
   roadmap's Medium item updated: article 1 published, next is article 2
   (App Review guideline 5.1.2(i)).
+
+## 2026-10-09 (Firebase custom definitions confirmed; paywall trial check)
+
+Docs only.
+
+- **[Product — owner]** Firebase custom definitions checked in the console
+  (Ahmet, 2026-10-09): the 1.1.0 dimensions `set_date`, `theme_id`,
+  `variant`, `medal_tier`, `near_miss_shown`, `trigger`, `save_point` and
+  `step` were registered on 2026-10-04 (event scope); the metric `open_ms`
+  is registered; `learning_goal` (user scope) on 2026-10-06. The docs had
+  them as not registered (the 2026-10-04 registration was never recorded).
+  Roadmap and `analytics-plan.md` §9 corrected; nothing is left to register
+  for 1.2.0. Not changed: DebugView passes and the developer-traffic filter
+  stay open.
+- **[Product — owner]** Paywall with a sandbox account that already used
+  its trial, on TestFlight 1.2.0 (5) (Ahmet, 2026-10-09): no trial is
+  promised, the price is shown directly, as expected. The trial-eligibility
+  fix is now checked on a device, not only by automated tests.
+
+## 2026-10-12 (Question screen — Batch 0 approved; B1: the topic tag; awaiting the device check)
+
+On branch `question-screen` (from `1.2.0`); not in 1.2.0. Plan, Batch 0
+measurements and the owner's decisions Q1–Q5: `docs/question-screen-plan.md`.
+
+- **[Product — owner] Decisions on the Batch 0 report** (all in the plan):
+  Q1 the tag is a chip after the type label, no "·"; Q2 the hint card's
+  reveal closes the keyboard and reopens it, the layout held still (method
+  to be approved before B2); Q3 Next on a multi-blank item only when every
+  box is typed or "—"; Q4 the proxy's "at most 4 blanks" line built in B3,
+  not deployed until the app release that ships multi-blank boxes; Q5 the
+  hint handle in the "Your answer" row. Also: a sentence-initial no-article
+  blank capitalises the next word; Skip keeping typed text recorded as an
+  open roadmap item, not fixed here.
+- **[Engineering] B1, the topic tag.**
+  - `lib/data/topics.dart`: `topicByName(String)`, the `Topic` for a stored
+    `TopicId.name`, or null.
+  - `lib/widgets/question_view.dart`: `QuestionView.topic` (optional). The
+    card's top row is a `Wrap` of the type label and the tag, with the badge
+    top right; each piece sits centred in a line as tall as the badge, so a
+    one-line row looks as before. The tag (`_TopicTag`): labelSmall 700,
+    `onSurfaceVariant` on `surfaceContainerHighest`, a 1 px
+    `outlineVariant` edge, radius 7; semantics "Topic: <title>". A title
+    that does not fit goes to the second line whole; the type label is
+    never cut.
+  - `practice_screen.dart` passes the screen's topic;
+    `daily_test_screen.dart` passes `topicByName(question.topicId)` (an
+    unknown id shows no tag).
+  - Unchanged: answers, grading, scoring, analytics, storage, layout rules.
+- **[Measured]** Room for the tag on the first line and where each title
+  wraps: the plan's §2 table (real font, Large). Tag contrast 8.23:1
+  (light) and 7.75:1 (dark).
+- **[Accepted cost — owner]** A wrapped tag adds about 25 pt to the card.
+  Found by Batch 10's test "a short question … whole with the keyboard
+  open (390 × 844, 336 pt keyboard)": with the error-correction question
+  under "Gerund vs. Infinitive" (wraps at 390 Medium: 95 pt of room for a
+  126.8 pt chip), 10.5 pt of the question now scrolls in its card, with the
+  fade and "Read full question". The owner accepted it; the test now
+  asserts "whole" with a tag that fits on line 1 (Articles) and a new test
+  records the wrapped case (10.5 pt, the fade, "Read full question").
+- **[Tests]** `flutter analyze` clean; **1,917 passed, 0 failed.**
+  - New: `test/question_topic_tag_test.dart` (35 cases, real font):
+    `topicByName` (every topic, unknown, empty); the tag after the label and
+    before the badge on one centre line; semantics; no topic → no tag and
+    the row as before; colours in light and dark, none of them the
+    correct/incorrect ones; "Gerund vs. Infinitive" after "Find and correct
+    the error" at 320 Large on line 2, whole, the badge top right; the same
+    title after "Fill in the blank" at 390 Large on line 1; 320 / 375 / 390
+    / 430 × Small / Medium / Large × light / dark × every type × every
+    topic: no exception, the type label whole on one line, nothing under
+    the badge; Practice shows its topic; the Daily Test shows each
+    question's own topic and none for an unknown id.
+  - Changed: `question_v2_test.dart`, as above (the reason is the accepted
+    cost).
+- **[Not checked]** On the owner's iPhone: the tag's look in both themes,
+  the wrap at the larger text sizes, VoiceOver's "Topic: …".
