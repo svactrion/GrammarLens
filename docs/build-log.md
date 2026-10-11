@@ -11873,3 +11873,79 @@ On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3 (item
 - **[Not checked]** On the owner's iPhone: the drag's feel and the travel
   (60 % of the row), the spring, the long-press, the card and handle in
   both themes, the keyboard staying up, VoiceOver.
+
+## 2026-10-12 (Question screen — B2 reworked: the hint slider; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3,
+rewritten in this batch.
+
+- **[Product — owner] Device check of B2's first build: failed on design,
+  not on code.** The lightbulb handle in the "Your answer" row did not read
+  as something to drag, and the card covering the question card was worse.
+  New design (owner, final): a full-width "slide to unlock" slider between
+  the question card and "Your answer", part of the page; the card opens
+  inline below it in proportion to the knob, pushing "Your answer" down,
+  never covering or moving the question; release springs back; long-press
+  shows it while held; the slider and card are hidden while the keyboard
+  is up. Kept: the card texts, Daily Test only, no effect on score or
+  state.
+- **[Product — owner] 320 pt phones: no slider below 375 pt** (option c),
+  recorded in the plan as a known limit (first-gen iPhone SE, SE 2/3 with
+  Display Zoom). Measured at 320 × 568, keyboard down: under a
+  fallback-pool question the room for the open card was ~100 pt, every
+  card 42–133 pt too tall; under the shortest question, Tense Selection
+  18 pt too tall at Large.
+- **[Product — owner] Spacing (option a).** The fit check first failed one
+  case: 375 × 667, Large, a fallback-pool question, every card 11 pt under
+  the Skip/Next bar. The owner chose to tighten the spacing: the card's top
+  and bottom padding 12 → 8 pt, the gap between track and card 8 → 4 pt.
+  After: every case passes; the tightest is that same case, with 1 pt to
+  spare (all margins in the plan §3 table).
+- **[Engineering] What changed.**
+  - `lib/widgets/topic_hint_card.dart`: removed `TopicHintHandle`, the
+    `OverlayPortal`, `_CardPlacement` and the cover. New `TopicHintSlider`:
+    the 48 pt track (`warm`, radius 24), the trail (`primary` at 32 %),
+    "Slide for a hint" (labelLarge 800, `onWarm`, fading out by half way),
+    the knob (a 48 × 48 target, a 40 pt `primary` circle,
+    `keyboard_double_arrow_right_rounded` in `onPrimary`). The knob's
+    horizontal drag sets the reveal (0–1, the knob's travel = track width −
+    48); the card opens below with `Align(heightFactor)` in a `ClipRect`; a
+    critically damped spring back to 0 on release (instant under Reduce
+    Motion); a long-press springs to 1 while held. Taps on the knob are
+    taken. Semantics: "Slide for a hint", the title and every point.
+    `TopicHintCard`: padding 14 / 8 (was 14 / 12).
+  - `lib/widgets/question_view.dart`: the handle is out of the "Your
+    answer" row; a `hint` slot between the question and the row. The
+    question's cap keeps only the closed slider (56 pt) free, so an opening
+    card never moves the question; "Your answer" and the answer follow the
+    slot's current height, past the bottom if they must, cut there by a
+    bottom-only clip (the question card's shadow is not clipped). A new
+    question's slider starts closed.
+  - `lib/screens/daily_test_screen.dart`: `showTopicHint` is true only with
+    no keyboard inset and a screen at least 375 pt wide, read above the
+    Scaffold.
+- **[Tests]** `flutter analyze` clean; **1,946 passed, 0 failed.**
+  - `test/topic_hint_card_test.dart` rewritten (29 cases, real font): the
+    texts verbatim and complete; no slider on Practice; the track 48 pt,
+    full width, between the question card and "Your answer", the knob at
+    its left end, the label and chevrons, `warm` / `primary`, not the
+    semantic colours, no card at rest (light and dark); VoiceOver reads the
+    whole card; left out with the keyboard up and back closed when it goes
+    down; left out at 320, 360 and 374 pt, there at 375; the drag: knob at
+    25 % → card 25 % open, label fading, at 50 % the label gone, the
+    question card unmoved and "Your answer" pushed down by the open height,
+    full at the end and no further, closed going back past the start;
+    release springs back (moving a frame later, under 2 % after 300 ms,
+    closed when settled); Reduce Motion; long-press whole while held (2 s)
+    and closed on release; a vertical drag scrolls a long question and
+    opens nothing, also from the knob; the answer, the question index, no
+    analytics event and the answers handed over unchanged; **the fit check**
+    (375 × 667, 390 × 844, 430 × 932 × Medium, Large × shortest, pool
+    question: every open card whole above the Skip/Next bar, below the
+    unmoved question card).
+  - Removed with the old design: the keyboard-up fit guard, the safety-net
+    and 320 pt placement tests, the handle tests.
+- **[Not checked]** On the owner's iPhone: whether the slider reads as
+  draggable, the knob's feel and the spring, the trail and label, the card
+  opening inline, the slider leaving and coming back with the keyboard,
+  both themes, VoiceOver.

@@ -381,12 +381,14 @@ checked on the owner's iPhone before the next.
   wraps adds a line to the card (at 390 × 844, Medium, keyboard up, the
   short rewrite example under "Gerund vs. Infinitive" now has 10.5 pt in
   its card's scroll).
-- **B2 — topic hint card** (Daily Test only): built and tested 2026-10-12
-  (build log), **awaiting the device check**. Q2 revised: the keyboard
-  stays up; the owner's cards were shortened to fit above the "Your
-  answer" row under the shortest question (guarded by a test); on 320 pt
-  phones a card may reach down over the answer field and the Skip/Next
-  bar.
+- **B2 — topic hint card** (Daily Test only): first build failed the
+  owner's device check on design (2026-10-12: the lightbulb handle did not
+  read as draggable; the card covered the question). **Reworked the same
+  day** as a "slide to unlock" slider between the question card and "Your
+  answer", the card opening inline below it; hidden while the keyboard is
+  up; built and tested (build log), **awaiting the device check**. Known
+  limit: no slider on screens narrower than 375 pt (first-gen iPhone SE,
+  SE 2/3 with Display Zoom).
 - **B3 — multi-blank answer boxes** (Practice `fill_in_blank`): not
   started.
 - **Proxy rule "A fill_in_blank item has at most 4 blanks."** (practice
