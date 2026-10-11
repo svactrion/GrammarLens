@@ -217,6 +217,9 @@ class _QuestionViewState extends State<QuestionView>
   bool _reduceMotion = false;
 
   static const Duration hintSlideDuration = Duration(milliseconds: 250);
+
+  /// The space under the answer, above the Skip/Next bar.
+  static const double bottomPadding = 12;
   static const Curve hintSlideCurve = Curves.easeOutCubic;
 
   @override
@@ -313,8 +316,8 @@ class _QuestionViewState extends State<QuestionView>
     );
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-          widget.horizontalPadding, 14, widget.horizontalPadding, 12),
+      padding: EdgeInsets.fromLTRB(widget.horizontalPadding, 14,
+          widget.horizontalPadding, bottomPadding),
       child: AnimatedBuilder(
         animation: _hintOutCurved,
         builder: (context, _) => LayoutBuilder(builder: (context, constraints) {
@@ -344,9 +347,11 @@ class _QuestionViewState extends State<QuestionView>
               room - QuestionView.answerMinHeight(theme, scaler, type) <
                   QuestionView.minQuestionHeight;
           // An open hint card pushes the answer down past the bottom; it is
-          // cut there, and only there (the question card's shadow stays).
+          // cut at the top of the Skip/Next bar (the bottom padding is free
+          // room for it), and only there (the question card's shadow
+          // stays).
           return ClipRect(
-            clipper: const _BottomEdgeClipper(),
+            clipper: const _BottomEdgeClipper(extra: bottomPadding),
             child: CustomMultiChildLayout(
               delegate: _QuestionLayoutDelegate(
                   answerMin: QuestionView.answerMinHeight(theme, scaler, type,
@@ -827,14 +832,16 @@ class _TuckUnder extends StatelessWidget {
   }
 }
 
-/// Clips only what goes past the bottom edge.
+/// Clips only what goes more than [extra] past the bottom edge.
 class _BottomEdgeClipper extends CustomClipper<Rect> {
-  const _BottomEdgeClipper();
+  final double extra;
+
+  const _BottomEdgeClipper({this.extra = 0});
 
   @override
-  Rect getClip(Size size) =>
-      Rect.fromLTRB(-size.width, -size.height, size.width * 2, size.height);
+  Rect getClip(Size size) => Rect.fromLTRB(
+      -size.width, -size.height, size.width * 2, size.height + extra);
 
   @override
-  bool shouldReclip(_BottomEdgeClipper oldClipper) => false;
+  bool shouldReclip(_BottomEdgeClipper oldClipper) => oldClipper.extra != extra;
 }

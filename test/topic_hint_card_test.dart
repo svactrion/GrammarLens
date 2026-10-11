@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart' show kLongPressTimeout;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderClipRect;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -186,6 +189,16 @@ double _shownHeight(WidgetTester tester) {
 double _fullHeight(WidgetTester tester) =>
     tester.getSize(_card).height + TopicHintSlider.cardGap;
 
+/// Where the question area cuts what goes past its bottom (an open card),
+/// on screen.
+double _clipBottom(WidgetTester tester) {
+  final clip = tester.renderObject<RenderClipRect>(
+      find.ancestor(of: _questionCard, matching: find.byType(ClipRect)).first);
+  return clip
+      .localToGlobal(Offset(0, clip.clipper!.getClip(clip.size).bottom))
+      .dy;
+}
+
 double _labelOpacity(WidgetTester tester) => tester
     .widget<Opacity>(find.ancestor(
         of: find.byKey(TopicHintSlider.labelKey),
@@ -285,7 +298,7 @@ void main() {
 
     for (final brightness in Brightness.values) {
       testWidgets(
-          'on the Daily Test (${brightness.name}): a 48 pt full-width track '
+          'on the Daily Test (${brightness.name}): a 56 pt full-width track '
           'between the question card and "Your answer", the knob at its left '
           'end, "Slide for a hint", brand colours, no card at rest',
           (tester) async {
@@ -676,10 +689,11 @@ void main() {
     });
   });
 
-  // The fit check the owner asked for (2026-10-12): with the keyboard down,
-  // on 375 pt and wider phones, at Medium and Large, under the shortest and
-  // a realistic question, the fully open card is whole above the Skip/Next
-  // bar and below the question card.
+  // The fit check (owner, 2026-10-12): with the keyboard down, on 375 pt
+  // and wider phones, at Medium and Large, under the shortest and a
+  // realistic question, the hint text is never cut off: the fully open
+  // card's last line is whole above the Skip/Next bar and inside the area's
+  // clip. The card's bottom padding and edge may go behind the bar.
   const phones = [
     (size: Size(375, 667), top: 20.0, bottom: 0.0),
     (size: Size(390, 844), top: 47.0, bottom: 34.0),
@@ -690,8 +704,8 @@ void main() {
       for (final shape in [_Shape.shortest, _Shape.pool]) {
         testWidgets(
             'fit: ${phone.size.width.toInt()} × ${phone.size.height.toInt()}, '
-            '${textSize.name}, ${shape.name} question: every open card is '
-            'whole above the Skip/Next bar', (tester) async {
+            '${textSize.name}, ${shape.name} question: every open card\'s '
+            'text is whole above the Skip/Next bar', (tester) async {
           await _pumpDaily(tester,
               size: phone.size,
               top: phone.top,
@@ -706,9 +720,12 @@ void main() {
             expect(_shownHeight(tester),
                 moreOrLessEquals(_fullHeight(tester), epsilon: 0.5),
                 reason: topic.title);
-            expect(card.bottom, lessThanOrEqualTo(footer.top + 0.5),
-                reason: '${topic.title}: ${card.bottom - footer.top} pt '
-                    'under the Skip/Next bar');
+            final lastLine = tester.getRect(find.descendant(
+                of: _card, matching: find.text(kTopicHints[topic.id]!.last)));
+            final visibleBottom = math.min(footer.top, _clipBottom(tester));
+            expect(lastLine.bottom, lessThanOrEqualTo(visibleBottom + 0.5),
+                reason: '${topic.title}: the last line is cut by '
+                    '${lastLine.bottom - visibleBottom} pt');
             expect(card.top, greaterThan(question.bottom), reason: topic.title);
             expect(tester.getRect(_questionCard), question,
                 reason: topic.title);

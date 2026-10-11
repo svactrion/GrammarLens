@@ -62,7 +62,7 @@ class TopicHintCard extends StatelessWidget {
 /// "Your answer" row, and the topic's [TopicHintCard] that opens inline
 /// below it.
 ///
-/// **Track.** A 48 pt pill in the light brand tint (`warm`), "Slide for a
+/// **Track.** A 56 pt pill in the light brand tint (`warm`), "Slide for a
 /// hint" centred in `onWarm`, a round knob at its left end in the brand
 /// colour (`primary`) with right chevrons in `onPrimary`. As the knob moves
 /// right a filled trail follows it and the label fades out.
@@ -101,7 +101,10 @@ class TopicHintSlider extends StatefulWidget {
   static const trackKey = ValueKey('topic_hint_track');
   static const labelKey = ValueKey('topic_hint_label');
 
-  static const double trackHeight = 48;
+  /// 56 pt (owner, 2026-10-12; was 48). The knob keeps a [knobInset]
+  /// margin, so it is 48 pt across.
+  static const double trackHeight = 56;
+  static const double knobInset = 4;
 
   /// Space above the track, under the question card.
   static const double gap = 8;
@@ -322,7 +325,7 @@ class _TopicHintSliderState extends State<TopicHintSlider>
                   onLongPressEnd: (_) => _end(),
                   onLongPressCancel: _end,
                   child: Padding(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(TopicHintSlider.knobInset),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: colorScheme.primary,
@@ -330,7 +333,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
                       ),
                       child: Icon(
                         Icons.keyboard_double_arrow_right_rounded,
-                        size: 22,
+                        // Scaled with the knob (22 pt in the 40 pt knob).
+                        size: 26,
                         color: colorScheme.onPrimary,
                       ),
                     ),
