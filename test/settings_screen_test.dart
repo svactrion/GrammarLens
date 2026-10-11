@@ -246,6 +246,13 @@ void main() {
       await tester.tap(find.byKey(SettingsScreen.debugRowKey));
       await tester.pumpAndSettle();
       expect(find.byType(DebugPanelScreen), findsOneWidget);
+      // Settings hands the panel its services: the multi-blank practice
+      // sets are offered.
+      final panel =
+          tester.widget<DebugPanelScreen>(find.byType(DebugPanelScreen));
+      expect(panel.storageService, isNotNull);
+      expect(panel.analyticsService, isNotNull);
+      expect(panel.subscriptionService, isNotNull);
     });
 
     testWidgets('a release build: no Debug row', (tester) async {
@@ -329,8 +336,7 @@ void main() {
     storage.resultsCompleters[0].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Monthly total: 10 / 300 points'),
-        findsOneWidget);
+    expect(find.text('Monthly total: 10 / 300 points'), findsOneWidget);
 
     // Tab re-entry #1 (`false` -> `true`, the only transition that
     // triggers another load per `didUpdateWidget`): the older of the two
@@ -350,8 +356,7 @@ void main() {
     storage.resultsCompleters[2].complete(const []);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Monthly total: 90 / 300 points'),
-        findsOneWidget);
+    expect(find.text('Monthly total: 90 / 300 points'), findsOneWidget);
 
     // ...then the older, now-stale read (#1) resolves after it. Without
     // the generation token, this stale result would win simply by
