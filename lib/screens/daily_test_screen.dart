@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
+import '../data/topics.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../services/analytics_service.dart';
@@ -309,6 +310,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         item: item,
         index: _currentIndex,
         total: _dailyTestSet!.questions.length,
+        topic: topicByName(question.topicId),
         drafts: _drafts!,
         horizontalPadding: hPad,
         onChanged: (value) => setState(() => _answers[item.id] = value),

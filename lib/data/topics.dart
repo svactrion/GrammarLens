@@ -41,3 +41,11 @@ const List<Topic> kTopics = [
 ];
 
 Topic topicById(TopicId id) => kTopics.firstWhere((t) => t.id == id);
+
+/// The topic whose [TopicId.name] is [name] (how topic ids are stored:
+/// `DailyTestQuestion.topicId`, `PracticeSet.topicId`), or null for a name
+/// that is not one of [kTopics].
+Topic? topicByName(String name) {
+  final id = TopicId.values.asNameMap()[name];
+  return id == null ? null : topicById(id);
+}

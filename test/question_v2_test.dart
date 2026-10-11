@@ -77,6 +77,13 @@ const _topic = Topic(
   icon: Icons.school,
 );
 
+const _articles = Topic(
+  id: TopicId.articles,
+  title: 'Articles',
+  description: 'a, an, the',
+  icon: Icons.abc,
+);
+
 const _longContext =
     'You are chatting with a new friend about your hobbies and free-time '
     'activities. You want to mention one thing you really enjoy doing and '
@@ -141,13 +148,14 @@ Future<_ScoringClaude> _pumpPractice(
   double keyboard = 0,
   Brightness brightness = Brightness.light,
   AppTextSize textSize = AppTextSize.medium,
+  Topic topic = _topic,
 }) async {
   _setView(tester, size, keyboard: keyboard);
   final claude = _ScoringClaude();
   await tester.pumpWidget(MaterialApp(
     theme: buildAppTheme(brightness, textSize: textSize),
     home: PracticeScreen(
-      topic: _topic,
+      topic: topic,
       practiceSet: _practiceSet,
       claudeService: claude,
       storageService: _Storage(),
@@ -469,8 +477,11 @@ void main() {
 
     testWidgets(
         'a short question and its instruction are whole with the keyboard '
-        'open (390 × 844, a 336 pt keyboard)', (tester) async {
-      await _pumpPractice(tester, keyboard: 336);
+        'open (390 × 844, a 336 pt keyboard), its topic tag on the first '
+        'line', (tester) async {
+      // "Articles" fits after "Find and correct the error" at 390 pt; a
+      // title that wraps costs a line (the next test).
+      await _pumpPractice(tester, keyboard: 336, topic: _articles);
       await tester.tap(_skip);
       await tester.pumpAndSettle();
       await tester.tap(_field);
@@ -479,6 +490,22 @@ void main() {
       expect(_questionScroll(tester).maxScrollExtent, 0);
       expect(find.byKey(QuestionView.moreBelowKey), findsNothing);
       expect(find.text('Review answer'), findsOneWidget);
+    });
+
+    testWidgets(
+        'the same question with a topic tag that wraps (Gerund vs. '
+        'Infinitive) has 10.5 pt in its card\'s scroll, and says so (an '
+        'accepted cost of the tag, question screen plan B1)', (tester) async {
+      await _pumpPractice(tester, keyboard: 336);
+      await tester.tap(_skip);
+      await tester.pumpAndSettle();
+      await tester.tap(_field);
+      await tester.pumpAndSettle();
+
+      expect(_questionScroll(tester).maxScrollExtent,
+          moreOrLessEquals(10.5, epsilon: 1));
+      expect(find.byKey(QuestionView.moreBelowKey), findsOneWidget);
+      expect(find.text('Read full question'), findsOneWidget);
     });
 
     testWidgets(

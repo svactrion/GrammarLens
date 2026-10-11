@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../models/practice_item.dart';
+import '../models/topic.dart';
 import '../theme.dart';
 
 /// The answer drafts of one question session (PracticeScreen, DailyTestScreen):
@@ -106,6 +107,10 @@ class QuestionView extends StatefulWidget {
   final AnswerDrafts drafts;
   final ValueChanged<String> onChanged;
 
+  /// The question's topic, shown as a tag after the type label; null shows
+  /// none (a Daily Test question whose topic id is not a known topic).
+  final Topic? topic;
+
   /// The answer's character limit, or null for none. The count shows only
   /// past [counterThreshold].
   final int? maxLength;
@@ -121,11 +126,13 @@ class QuestionView extends StatefulWidget {
     required this.drafts,
     required this.onChanged,
     required this.horizontalPadding,
+    this.topic,
     this.maxLength,
     this.counterThreshold = 0,
   });
 
   static const questionCardKey = ValueKey('question_card');
+  static const topicTagKey = ValueKey('question_topic_tag');
   static const questionScrollKey = ValueKey('question_scroll');
   static const answerFieldKey = ValueKey('question_answer_field');
   static const keyboardControlKey = ValueKey('question_keyboard_control');
@@ -290,6 +297,7 @@ class _QuestionViewState extends State<QuestionView> {
         item: widget.item,
         index: widget.index,
         total: widget.total,
+        topic: widget.topic,
       ),
     );
     final radius = BorderRadius.circular(21);
@@ -415,12 +423,24 @@ class _QuestionContent extends StatelessWidget {
   final PracticeItem item;
   final int index;
   final int total;
+  final Topic? topic;
 
   const _QuestionContent({
     required this.item,
     required this.index,
     required this.total,
+    required this.topic,
   });
+
+  static const EdgeInsets _badgePadding =
+      EdgeInsets.symmetric(horizontal: 8, vertical: 3);
+
+  /// [child] centred in a line at least [height] tall, as wide as itself.
+  static Widget _line(double height, Widget child) => ConstrainedBox(
+        constraints: BoxConstraints(minHeight: height),
+        child: Align(
+            alignment: Alignment.centerLeft, widthFactor: 1, child: child),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -442,38 +462,63 @@ class _QuestionContent extends StatelessWidget {
             style: secondaryStyle?.copyWith(fontStyle: FontStyle.italic)),
       ],
     ];
+    final badgeStyle = theme.textTheme.labelSmall
+        ?.withWeight(FontWeight.w900)
+        .copyWith(color: colorScheme.onPrimary);
+    // The badge's height: one line of its text and its padding.
+    final badgeLine = TextPainter(
+      text: TextSpan(text: '0', style: badgeStyle),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final lineHeight = badgeLine.height + _badgePadding.vertical;
+    badgeLine.dispose();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // The type label, then the topic tag, wrapping to a second line
+        // when the tag does not fit; the badge stays top right. Each piece
+        // sits in a line as tall as the badge, centred, so a one-line row
+        // looks exactly as it did before the tag.
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(
-                questionTypeLabel(item.type),
-                style: theme.textTheme.labelMedium
-                    ?.withWeight(FontWeight.w800)
-                    .copyWith(color: colorScheme.secondary),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  _line(
+                    lineHeight,
+                    Text(
+                      questionTypeLabel(item.type),
+                      style: theme.textTheme.labelMedium
+                          ?.withWeight(FontWeight.w800)
+                          .copyWith(color: colorScheme.secondary),
+                    ),
+                  ),
+                  if (topic != null) _line(lineHeight, _TopicTag(topic!)),
+                ],
               ),
             ),
             const SizedBox(width: 10),
-            Semantics(
-              label: 'Question ${index + 1} of $total',
-              excludeSemantics: true,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  child: Text(
-                    '${index + 1} / $total',
-                    style: theme.textTheme.labelSmall
-                        ?.withWeight(FontWeight.w900)
-                        .copyWith(color: colorScheme.onPrimary),
+            _line(
+              lineHeight,
+              Semantics(
+                label: 'Question ${index + 1} of $total',
+                excludeSemantics: true,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Padding(
+                    padding: _badgePadding,
+                    child: Text(
+                      '${index + 1} / $total',
+                      style: badgeStyle,
+                    ),
                   ),
                 ),
               ),
@@ -489,6 +534,44 @@ class _QuestionContent extends StatelessWidget {
           ...secondary,
         ],
       ],
+    );
+  }
+}
+
+/// The question's topic as a small neutral chip (the question screen plan,
+/// item 1): the subtle surface with the card border's edge and the
+/// secondary text colour, 8.23:1 (light) and 7.75:1 (dark). Never the
+/// correct/incorrect colours. A title too long for its line wraps inside
+/// the chip; it is never cut.
+class _TopicTag extends StatelessWidget {
+  final Topic topic;
+
+  const _TopicTag(this.topic);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Semantics(
+      label: 'Topic: ${topic.title}',
+      excludeSemantics: true,
+      child: DecoratedBox(
+        key: QuestionView.topicTagKey,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+          child: Text(
+            topic.title,
+            style: theme.textTheme.labelSmall
+                ?.withWeight(FontWeight.w700)
+                .copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+        ),
+      ),
     );
   }
 }

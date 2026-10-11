@@ -206,6 +206,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         item: item,
                         index: _currentIndex,
                         total: total,
+                        topic: widget.topic,
                         drafts: _drafts,
                         horizontalPadding: hPad,
                         maxLength: answerMaxLength,
