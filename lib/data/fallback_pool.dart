@@ -6,6 +6,7 @@ import '../models/daily_test_question.dart';
 import '../models/practice_item.dart';
 import '../models/topic.dart';
 import '../utils/answer_matching.dart';
+import '../utils/blanks.dart' as blanks;
 import 'day_zero_daily_test.dart';
 
 /// The Daily Test's fallback: what a day gets when its shared set cannot be
@@ -188,7 +189,7 @@ class FallbackPool {
   /// underscores in [context] and [instruction] (not the hint). The proxy's
   /// `blankCount`; exactly one is required.
   static int blankCount(String? context, String instruction) =>
-      RegExp(r'_{2,}').allMatches('${context ?? ''}\n$instruction').length;
+      blanks.blankCount(context, instruction);
 
   /// Whether an `error_correction` [context] holds a sentence to correct: at
   /// least three words with a letter. The proxy's `hasSentenceToCorrect`.
