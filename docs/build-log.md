@@ -12148,3 +12148,53 @@ On branch `question-screen`. Plan: `docs/question-screen-plan.md` §1, §4–§7
   longer jumping on focus. A live multi-blank practice item needs the proxy
   rule deployed or an item the current prompt happens to make with 2–4
   blanks; neither is done.
+
+## 2026-10-12 (Question screen — debug multi-blank practice sets for the B3 device check)
+
+On branch `question-screen`. Debug and profile builds only.
+
+- **[Product — owner]** A debug-only way to see the multi-blank boxes on a
+  device: until the proxy rule is deployed, a live practice set rarely has
+  more than one blank. Same gating as the Debug panel; 2, 3 and 4 blanks;
+  an articles question with sentence-initial and mid-sentence no-article
+  blanks; a non-articles multi-blank question (no "—").
+- **[Decision — scoring is real, through the proxy]** Why: the one open
+  question B3 leaves is how the live scorer treats a completed sentence as a
+  `fill_in_blank` answer (plan §5: its `correctedAnswer` may come back as
+  the words only); a stub would not show it. The cost: one scoring call per
+  finished debug session (one unit of the device's proxy quota, a fraction
+  of a cent), the AI consent check as in a real session, and the results
+  screen saving that session's mistakes and practice count in the local
+  profile like any session (the Debug panel's "Reset local data" clears
+  them). No session is counted at launch (the debug set is not generated,
+  so `recordSessionStarted` and the free practice count are not touched).
+  Analytics are off outside release builds by default (P11).
+- **[Engineering]**
+  - `lib/utils/debug_practice_sets.dart` (new): `DebugPracticeSets`.
+    `articles` (topic `articles`): 2 blanks (one starting the sentence:
+    "____ honesty matters to her, so she gave me ____ honest answer."), 3
+    ("We had ____ lunch at ____ small café near ____ station."), 4 ("____
+    sun was setting when ____ old man sat down on ____ bench and opened
+    ____ newspaper."). `gerundVsInfinitive`: 2 and 3 blanks with the verb in
+    brackets. Ids start with `debug_`.
+  - `lib/screens/debug_panel_screen.dart`: optional storage, analytics and
+    subscription services; with them, a "Multi-blank practice" section with
+    two buttons that run `ensureAiConsent` and push `PracticeScreen` with
+    the set, its topic and a `ClaudeService()`.
+  - `lib/screens/settings_screen.dart`: the Debug row hands the panel its
+    services. The row itself is unchanged: `!kReleaseMode &&
+    DebugTools.enabledForTesting`, so a release build has neither the
+    panel nor the sets (only reachable from it).
+- **[Tests]** `flutter analyze` clean; **1,999 passed, 0 failed.** New:
+  `test/debug_practice_sets_test.dart` (8): the articles set has 2, 3 and 4
+  boxes, a sentence-initial and a mid-sentence blank; the gerund set is
+  multi-blank and not articles; ids unique and `debug_`; no section
+  without services; each button opens Practice with boxes, "—" only on
+  articles; with no consent yet the consent screen comes first.
+  `settings_screen_test`: the panel opened from Settings has the services.
+  `debug_panel_test` ("the reset brings the app back to Welcome"): scrolls
+  the reset button wholly into view before tapping (the new section moved
+  it down; the other reset test already did this).
+- **[Not checked]** On the owner's iPhone: everything in B3's list, now
+  reachable through these sets; what the live scorer returns for a
+  completed sentence.
