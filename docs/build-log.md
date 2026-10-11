@@ -11793,3 +11793,83 @@ Docs only.
   Practice). Approved; B2 may start. Not named in the check, so still not
   recorded as checked on a device: the wrap at the larger text sizes and
   VoiceOver's "Topic: …".
+
+## 2026-10-12 (Question screen — B2: the Daily Test's topic hint card; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3 (item
+2), updated in this batch.
+
+- **[Product — owner] Q2 revised.** Holding the layout still while the
+  keyboard closes was possible, but it would have freed space only below
+  the "Your answer" row, under the finger, not above it where the card
+  opens. So the keyboard stays up during the reveal (no closing, reopening
+  or freezing), and the cards were shortened by the owner to fit above the
+  row. On the smallest phones a card may cover more (below).
+- **[Measured] Correction to the Batch 0 estimate.** The room above the row
+  is the header plus the question card, so it follows the question's
+  length, not the phone. Under the shortest possible question (one line, no
+  scene), keyboard up: ~154 pt at Medium and ~157 pt at Large on 375, 390
+  and 430 pt phones alike; ~95 pt at 320 × 568. Under a fallback pool
+  question (scene, instruction, hint) at 375 × 667: ~195 pt.
+- **[Product — owner] The fit, three decisions.**
+  1. The guard measures under the shortest question, keyboard up, at
+     375 × 667, Medium and Large. With the owner's first short texts Modal
+     Verbs was 9 pt over at Medium, and Modal Verbs and Modal Past Forms
+     13 pt over at Large; the owner replaced two bullets ("mustn't ≠ don't
+     have to"; "must / can't have: sure it did / didn't"). After: every card
+     142 pt at Medium (12 pt to spare) and 148 pt at Large (9 pt), on 375,
+     390 and 430 pt phones.
+  2. 320 pt phones: even over the row the cards were 34–92 pt too tall
+     (Tense Selection at Large: 236 pt for 144 pt), so a card may reach down
+     over the answer field and the Skip/Next bar, never under the keyboard,
+     and is always whole on screen.
+  3. The safety net stays general: on any phone, a card that does not fit
+     above the row reaches down over it. After item 1 it does not trigger
+     on 375 pt and wider phones at Medium or Large.
+- **[Engineering] What changed.**
+  - `lib/data/topic_hints.dart` (new): `kTopicHints`, the owner's texts
+    verbatim, one list per `TopicId`; the card's title is the topic's.
+  - `lib/widgets/topic_hint_card.dart` (new):
+    - `TopicHintCard`: the title (labelMedium 800) and the points
+      (bodySmall, "•"), `onWarm` on `warm` (7.96:1 light, 7.82:1 dark),
+      radius 17, the card shadow.
+    - `TopicHintHandle`: a 44 × 44 handle (a `warm` pill with a tips
+      icon). A horizontal drag reveals the card in proportion to the
+      distance, either way (full at 60 % of the row's width): a cover slides
+      off it. Release: a critically damped spring back to 0 (instant under
+      Reduce Motion), then the card is put away. A long-press shows it whole
+      while held. The handle takes taps, so a tap on it does not reach the
+      screen's tap-to-close-the-keyboard. Semantics: the title and every
+      point, hint "Touch and hold to show".
+    - The card is drawn through an `OverlayPortal`, at the row's width,
+      placed by `_CardPlacement`: above the row; else over the row; else
+      from below the status bar down as far as it needs, above the keyboard.
+      It ignores pointers; the handle is drawn again on top of it. The
+      status bar and keyboard are read from the overlay's `MediaQuery` (the
+      Scaffold removes them from its body's).
+  - `lib/widgets/question_view.dart`: `showTopicHint`; the handle sits in
+    the "Your answer" row, before "Review answer" / "Read full question".
+  - `lib/screens/daily_test_screen.dart`: `showTopicHint: true`. Practice
+    has no handle.
+  - Unchanged: the question's own `hint` line, answers, focus, the
+    keyboard, grading, Monthly Climb, analytics (no event), storage.
+- **[Tests]** `flutter analyze` clean; **1,932 passed, 0 failed.**
+  - New: `test/topic_hint_card_test.dart` (15 cases, real font): every
+    topic has a card; the texts verbatim; **the guard** (every card above
+    the row and below the status bar under the shortest question, keyboard
+    up, 375 × 667, Medium and Large); no handle on Practice; the Daily
+    Test's 44 × 44 handle and no card at rest; VoiceOver reads the whole
+    card; a drag reveals 25 % / 50 % in proportion, the distance counts
+    either way, 100 % with no cover, the card above the row and the row
+    unmoved; release springs closed (still there a frame later, gone when
+    settled); Reduce Motion closes at once; a long-press shows it whole
+    while held (after 2 s) and closes on release; a vertical drag scrolls
+    the question and shows no card, also when it starts on the handle; the
+    keyboard stays up through a tap, a drag and a long-press, the answer and
+    its cursor kept, still question 1, no analytics event, and the answers
+    handed over at the end unchanged; the safety net at 320 × 568 Small
+    (over the row, the handle on top); at 320 × 568 Large, keyboard up,
+    every card whole on screen with the handle on top.
+- **[Not checked]** On the owner's iPhone: the drag's feel and the travel
+  (60 % of the row), the spring, the long-press, the card and handle in
+  both themes, the keyboard staying up, VoiceOver.

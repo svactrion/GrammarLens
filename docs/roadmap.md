@@ -381,9 +381,12 @@ checked on the owner's iPhone before the next.
   wraps adds a line to the card (at 390 × 844, Medium, keyboard up, the
   short rewrite example under "Gerund vs. Infinitive" now has 10.5 pt in
   its card's scroll).
-- **B2 — topic hint card** (Daily Test only): not started. The method for
-  holding the layout still while the keyboard closes is described and
-  approved before any code.
+- **B2 — topic hint card** (Daily Test only): built and tested 2026-10-12
+  (build log), **awaiting the device check**. Q2 revised: the keyboard
+  stays up; the owner's cards were shortened to fit above the "Your
+  answer" row under the shortest question (guarded by a test); on 320 pt
+  phones a card may reach down over the answer field and the Skip/Next
+  bar.
 - **B3 — multi-blank answer boxes** (Practice `fill_in_blank`): not
   started.
 - **Proxy rule "A fill_in_blank item has at most 4 blanks."** (practice

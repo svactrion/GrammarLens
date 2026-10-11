@@ -36,7 +36,16 @@ Status per batch is kept in the build log and the roadmap, not here.
 - **Q1 — tag separator:** no "·". The tag is a chip in a `Wrap` after the
   type label: `surfaceContainerHighest` fill, `outlineVariant` edge,
   `onSurfaceVariant` text. On both Daily Test and Practice.
-- **Q2 — hint card with the keyboard up:** the reveal closes the keyboard
+- **Q2 — hint card with the keyboard up (revised 2026-10-12, replaces the
+  text below):** the keyboard stays up during the reveal; no closing or
+  reopening, no layout freezing. Reason: if the "Your answer" row may not
+  move, closing the keyboard frees space only below the row, under the
+  finger, not above it where the card opens. Instead the cards are
+  shortened to fit above the row (about 200 pt at 375 × 667 with the
+  keyboard up), guarded by a test. On the smallest phones (320 pt at
+  Large), where even a short card does not fit, the card may also cover
+  the "Your answer" row; only the handle stays visible. *(Original Q2,
+  superseded:)* the reveal closes the keyboard
   and reopens it on release, keeping the answer text and cursor. **Hard
   condition:** while the card is being revealed the layout must not move;
   the "Your answer" row and the handle stay exactly where they were under
@@ -152,13 +161,35 @@ it (~250 ms; instant under Reduce Motion). Long-press: fully shown while
 held. VoiceOver: the handle's label carries the full text; reading it
 changes nothing.
 
-**Keyboard (Q2).** Card heights at Large are 202–338 pt (Tense Selection
-the tallest); room above the row with the keyboard up is ~279 pt at
-390 × 844 (336 pt keyboard) and ~205 pt at 375 × 667 (260 pt); with the
-keyboard closed, over 500 pt. So the reveal closes the keyboard and reopens
-it on release (text and cursor kept), with the layout held still while it
-closes. **The method for holding the layout still is described and
-approved before B2 code.**
+**Keyboard (Q2, as revised).** The keyboard stays up during the reveal;
+nothing closes, reopens or freezes.
+
+*Correction to the Batch 0 estimate (measured in B2):* the room above the
+row does not depend on the phone. It is the header plus the question card,
+so it follows the question's length. The Batch 0 figures (~279 pt at
+390 × 844, ~205 pt at 375 × 667) assumed a question that fills its share;
+under the shortest possible question (one line, no scene) the room is
+~154 pt at Medium and ~157 pt at Large on 375, 390 and 430 pt phones alike,
+and ~95 pt on a 320 × 568 phone with the keyboard up.
+
+**Fit (owner decisions, 2026-10-12).**
+
+- **The guard:** under the shortest possible question, keyboard up, at
+  375 × 667, Medium and Large, every card fits above the row
+  (`test/topic_hint_card_test.dart`). Two bullets were replaced by the
+  owner to pass it (Modal Verbs, Modal Past Forms). Measured after the
+  change: every card 142 pt at Medium (12 pt to spare) and 148 pt at Large
+  (9 pt to spare), on 375, 390 and 430 pt phones.
+- **Safety net, any phone:** a card that does not fit above the row reaches
+  down over the "Your answer" row, its bottom on the row's bottom; the
+  handle is drawn again on top. After the text change it should not
+  trigger on 375 pt and wider phones at Medium or Large (measured above);
+  it stays as a guard against larger system text sizes and future texts.
+- **320 pt phones (option a):** where a card does not fit even over the
+  row, it starts below the status bar and reaches down over the answer
+  field and the Skip/Next bar as far as it needs, never under the keyboard,
+  so every card is whole on screen; the handle stays drawn on top. Tested
+  at 320 × 568, keyboard up, Large, for every card.
 
 **Gestures checked.** The question's vertical `SingleChildScrollView` is
 outside the handle (and axis slop separates horizontal from vertical
@@ -169,41 +200,38 @@ The iOS edge back-swipe is already off: `PopScope(canPop: false)` makes
 the handle is 31 pt or more from the edge. No `PageView`/`Dismissible`
 wraps either screen.
 
-**Hint texts (verbatim, owner).**
+**Hint texts (verbatim, owner; shortened 2026-10-12 to fit above the row
+with the keyboard up).**
 
 Gerund vs. Infinitive
-- verb + -ing: enjoy, avoid, finish, mind, suggest, keep
-- verb + to + verb: want, decide, hope, plan, agree, refuse
-- Both, but the meaning changes: stop, remember, forget, try
-- After a preposition, use -ing: interested in learning
+- + -ing: enjoy, avoid, finish, keep
+- + to: want, decide, hope, plan
+- Meaning changes: stop, remember, try
+- After a preposition: always -ing
 
 Modal Verbs
-- can / could: ability, permission, possibility
-- must / have to: obligation. mustn't = not allowed; don't have to = not necessary
-- should / ought to: advice
-- may / might: possibility
 - modal + base verb: no "to", no "-s"
+- must: obligation · should: advice
+- may / might / could: possibility
+- mustn't ≠ don't have to
 
 Modal Past Forms
 - modal + have + past participle
-- must have done: almost sure it happened
-- can't / couldn't have done: sure it didn't happen
-- may / might / could have done: maybe it happened
-- should have done: it was the right thing, but it didn't happen
-- needn't have done: it happened, but it wasn't necessary
+- must / can't have: sure it did / didn't
+- might / could have: maybe it did
+- should have: right, but it didn't happen
 
 Tense Selection
-- Past simple: finished time (yesterday, in 2020, ago)
-- Present perfect: up to now, no finished time (ever, yet, since, for)
-- Present continuous: now, temporary, or a fixed future plan
-- Past continuous: in progress when something else happened
-- Past perfect: earlier than another past event
-- will: a decision made now, a prediction; going to: a plan, or evidence now
+- Past simple: finished time (ago, in 2020)
+- Present perfect: up to now (since, for, yet)
+- Past perfect: before another past event
+- Continuous: in progress at that moment
 
 Articles
-- a / an: one of many, not specific, or first mention. an goes before a vowel sound (an hour, a university)
-- the: specific, already known, or the only one (the sun)
-- — (no article): plural and uncountable nouns in general (Water is essential), most names, and some set phrases (go to school, have lunch)
+- a / an: one of many, or first mention
+- an before a vowel sound: an hour
+- the: specific, known, or the only one
+- No article: general plural or uncountable
 
 ## 4. Multi-blank boxes (B3)
 
