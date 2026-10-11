@@ -11949,3 +11949,54 @@ rewritten in this batch.
   draggable, the knob's feel and the spring, the trail and label, the card
   opening inline, the slider leaving and coming back with the keyboard,
   both themes, VoiceOver.
+
+## 2026-10-12 (Question screen — B2 device check passed; the slider tucks away with the keyboard; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
+
+- **[Product — owner] B2 (the reworked hint slider) passed the device
+  check** on the owner's iPhone (2026-10-12): "I like the slider". One
+  polish item before B3: the slider vanished at once when the keyboard came
+  up.
+- **[Product — owner] The polish.** With the keyboard opening, the slider
+  slides up and tucks under the question card (drawn behind it) while its
+  slot collapses and "Your answer" moves up with it; closing, the reverse,
+  and it comes back closed. In step with the keyboard; Reduce Motion: at
+  once. The question card never moves. A knob held when the keyboard opens
+  closes the card first, with no stuck state.
+- **[Engineering]**
+  - The driver is the answer's focus, not the keyboard's inset: focus
+    changes the moment the keyboard starts to open or close, while the
+    inset's final height is unknown during opening and reaches 0 only at
+    the end of closing. `QuestionView` runs a 250 ms `AnimationController`
+    (`forward` out, `reverse` in; `easeOutCubic`, and its flip on the way
+    in, so both directions start fast like the keyboard). Reduce Motion
+    sets it at once.
+  - The slot is `closedHeight × out` tall; the question's cap reserves the
+    same, so "Your answer" follows smoothly. `_TuckUnder` sits the slider
+    at the slot's bottom (`Align`, `heightFactor: out`), so the rest of it
+    reaches up behind the question card, which is painted after it (the
+    hint slot is now first in the layout's children). It ignores touches
+    until all the way out, and keeps the same tree at every step so the
+    slider keeps its state. At 0 the slot and the slider are gone; it is
+    made again, closed.
+  - `TopicHintSlider.collapsed` (true while the answer has focus): an open
+    card closes at once, a held knob is let go, gestures are ignored.
+  - `DailyTestScreen` no longer reads the keyboard inset; it offers the
+    slider by screen width only (375 pt and up).
+- **[Tests]** `flutter analyze` clean; **1,951 passed, 0 failed.** New in
+  `test/topic_hint_card_test.dart` (5): opening (the track moves up frame
+  by frame, behind the card's bottom edge, "Your answer" up with it, gone
+  within 250 ms, the question card's rect unchanged throughout); closing
+  (moving down frame by frame, untouchable on the way, back in place and
+  closed); the slider painted before the question card; Reduce Motion (gone
+  and back at once); a knob held when the keyboard opens (the card closed
+  at once, a further drag opens nothing, back closed, no exception).
+- **[Found, not changed]** Measured while testing: when the answer takes
+  focus, the "Your answer" row grows from 44 to 48 pt (the "Review answer"
+  button's 48 pt tap target), so the answer field moves down 4 pt. It is
+  older than this work (Question V2, Batch 10, whose comment says the row
+  keeps 44 pt) and happens without the slider too (measured at 374 pt).
+- **[Not checked]** On the owner's iPhone: whether the slide matches the
+  real keyboard's timing, the tuck under the card in both themes, Reduce
+  Motion.

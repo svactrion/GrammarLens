@@ -182,10 +182,18 @@ collapses (a critically damped spring, ~250 ms; instant under Reduce
 Motion). A long-press on the knob shows the card whole while held.
 VoiceOver reads the whole card from the slider; reading it changes nothing.
 
-**When it shows.** Daily Test only, and only with the keyboard down: while
-the keyboard is up the slider's slot is left out entirely (the question
-gets the space back); it comes back closed when the keyboard is down. The
-screen reads the keyboard above its Scaffold, which hides it from its body.
+**When it shows.** Daily Test only, and only with the keyboard down. When
+the answer takes focus (the moment the keyboard starts to open) the slider
+slides up and tucks under the question card (drawn behind it), while its
+slot closes and "Your answer" moves up with it; when the answer loses focus
+(the keyboard starts to close) it slides back out, closed. 250 ms,
+`easeOutCubic` both ways (fast at the start, as the keyboard), approximating
+the iOS keyboard's animation; under Reduce Motion it goes and comes back at
+once. The keyboard's inset is not the driver: its final height is unknown
+while it opens, and it reaches 0 only at the end of closing. The question
+card never moves. A card held open when the keyboard opens closes at once,
+and the tucking slider takes no touches. (Polish after the owner's device
+check, 2026-10-12; before it, the slider disappeared at once.)
 
 **Known limit: no slider below 375 pt (owner decision, 2026-10-12).** On
 screens narrower than 375 pt (the first-generation iPhone SE; iPhone SE

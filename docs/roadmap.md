@@ -386,7 +386,10 @@ checked on the owner's iPhone before the next.
   read as draggable; the card covered the question). **Reworked the same
   day** as a "slide to unlock" slider between the question card and "Your
   answer", the card opening inline below it; hidden while the keyboard is
-  up; built and tested (build log), **awaiting the device check**. Known
+  up; **device check passed** (owner, iPhone, 2026-10-12: "I like the
+  slider"). Polish after it: the slider tucks under the question card with
+  the keyboard instead of disappearing at once; built and tested,
+  **awaiting the device check**. Known
   limit: no slider on screens narrower than 375 pt (first-gen iPhone SE,
   SE 2/3 with Display Zoom).
 - **B3 — multi-blank answer boxes** (Practice `fill_in_blank`): not
