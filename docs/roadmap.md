@@ -376,7 +376,8 @@ and decisions: `docs/question-screen-plan.md`. Batches B1 → B2 → B3, each
 checked on the owner's iPhone before the next.
 
 - **B1 — topic tag** (Daily Test + Practice): built and tested 2026-10-12
-  (build log), **awaiting the device check**. Accepted cost: a tag that
+  (build log); **device check passed** (owner, iPhone, 2026-10-12: the
+  tags look good on both screens). Accepted cost: a tag that
   wraps adds a line to the card (at 390 × 844, Medium, keyboard up, the
   short rewrite example under "Gerund vs. Infinitive" now has 10.5 pt in
   its card's scroll).

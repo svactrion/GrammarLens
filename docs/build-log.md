@@ -11783,3 +11783,13 @@ measurements and the owner's decisions Q1–Q5: `docs/question-screen-plan.md`.
     cost).
 - **[Not checked]** On the owner's iPhone: the tag's look in both themes,
   the wrap at the larger text sizes, VoiceOver's "Topic: …".
+
+## 2026-10-12 (Question screen — B1 device check passed)
+
+Docs only.
+
+- **[Product — owner]** B1, the topic tag, checked on the owner's iPhone
+  (2026-10-12): the tags look good on both screens (Daily Test and
+  Practice). Approved; B2 may start. Not named in the check, so still not
+  recorded as checked on a device: the wrap at the larger text sizes and
+  VoiceOver's "Topic: …".
