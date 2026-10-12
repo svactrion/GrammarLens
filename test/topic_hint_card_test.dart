@@ -756,8 +756,11 @@ void main() {
       expect(daily.sink.events, eventsBefore);
       expect(daily.finished, isEmpty);
 
-      // Skip through the rest; Skip on the last question finishes.
-      for (var i = 0; i < kTopics.length; i++) {
+      // Next keeps the answer (Skip would discard it); then Skip through
+      // the rest, and Skip on the last question finishes.
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      for (var i = 1; i < kTopics.length; i++) {
         await _skip(tester);
       }
       expect(daily.finished.single, {'q0': 'swimming'});

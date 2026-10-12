@@ -96,6 +96,17 @@ class _PracticeScreenState extends State<PracticeScreen> {
     }
   }
 
+  /// Skip discards what was typed for this question (every box, any "no
+  /// article"), so it counts as skipped everywhere: scoring, results, the
+  /// error profile and the practiced count. Coming back shows it empty.
+  void _skip() {
+    if (_submitting) return;
+    final item = widget.practiceSet.items[_currentIndex];
+    _drafts.clear(item.id);
+    setState(() => _answers.remove(item.id));
+    _advance();
+  }
+
   Future<void> _confirmExit() async {
     final shouldLeave = await showDialog<bool>(
       context: context,
@@ -225,7 +236,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 primaryLabel: _primaryLabel(),
                 primaryEnabled: _currentHasAnswer,
                 onPrimary: _advance,
-                onSkip: _advance,
+                onSkip: _skip,
               ),
           ],
         ),

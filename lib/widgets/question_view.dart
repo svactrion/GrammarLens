@@ -127,6 +127,22 @@ class AnswerDrafts {
       ? controllerFor(id).text.trim().isNotEmpty
       : _answers(id).every((answer) => answer.isFilled);
 
+  /// Empties every box of [id] and turns any "no article" off: a skipped
+  /// question keeps nothing (owner, 2026-10-12). Coming back to it shows
+  /// empty boxes.
+  void clear(String id) {
+    for (final controller in _controllers[id]!) {
+      controller.value =
+          const TextEditingValue(selection: TextSelection.collapsed(offset: 0));
+    }
+    for (final flag in _noArticle[id]!) {
+      flag.value = false;
+    }
+    for (var i = 0; i < boxCount(id); i++) {
+      _offsets.remove(_offsetKey(id, i));
+    }
+  }
+
   String _offsetKey(String id, int box) => '$id#$box';
 
   /// Call before the visible question changes away from [id] to [nextId].

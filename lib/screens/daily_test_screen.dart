@@ -168,6 +168,17 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     );
   }
 
+  /// Skip discards what was typed for this question, so it is graded as
+  /// skipped (no error entry, and it does not count as answered for the
+  /// climb). Coming back shows it empty.
+  void _skip() {
+    if (_finishing) return;
+    final item = _dailyTestSet!.questions[_currentIndex].item;
+    _drafts!.clear(item.id);
+    setState(() => _answers.remove(item.id));
+    _advance();
+  }
+
   Future<void> _confirmExit() async {
     final shouldLeave = await showDialog<bool>(
       context: context,
@@ -249,7 +260,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                 primaryLabel: _primaryLabel(),
                 primaryEnabled: _currentHasAnswer,
                 onPrimary: _advance,
-                onSkip: _advance,
+                onSkip: _skip,
               ),
           ],
         ),
