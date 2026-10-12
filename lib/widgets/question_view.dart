@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/scheduler.dart';
 
 import '../models/practice_item.dart';
@@ -472,6 +473,21 @@ class _QuestionViewState extends State<QuestionView>
 
   void _closeKeyboard() => widget.drafts.unfocus();
 
+  final GlobalKey _mainTextKey = GlobalKey();
+  final GlobalKey _secondaryTextKey = GlobalKey();
+
+  /// A tap on blank [index] in the question puts the keyboard in its box
+  /// (the single answer field when there is one box); the field scrolls
+  /// itself into view.
+  void _focusBlank(int index) {
+    final drafts = widget.drafts;
+    final boxes = drafts.boxCount(widget.item.id);
+    final node = boxes > 1 && index < boxes
+        ? drafts.focusNodes[index]
+        : drafts.focusNode;
+    node.requestFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -564,19 +580,34 @@ class _QuestionViewState extends State<QuestionView>
   Widget _questionCard(ThemeData theme) {
     final colorScheme = theme.colorScheme;
     final palette = AppPalette.of(context);
-    final content = Padding(
+    final item = widget.item;
+    final tappable = item.type == PracticeItemType.fillInBlank;
+    final text = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
       child: _QuestionContent(
-        item: widget.item,
+        item: item,
         index: widget.index,
         total: widget.total,
         topic: widget.topic,
-        blankColors: widget.drafts.boxCount(widget.item.id) > 1
+        blankColors: widget.drafts.boxCount(item.id) > 1
             ? blankColors(theme.brightness)
             : null,
         focusedBlank: _focusedBox,
+        mainTextKey: tappable ? _mainTextKey : null,
+        secondaryTextKey: tappable ? _secondaryTextKey : null,
       ),
     );
+    final content = tappable
+        ? _BlankTapLayer(
+            blocks: [
+              (key: _mainTextKey, text: _QuestionContent.mainTextOf(item)),
+              if (_QuestionContent.hasScene(item))
+                (key: _secondaryTextKey, text: item.instruction),
+            ],
+            onTapBlank: _focusBlank,
+            child: text,
+          )
+        : text;
     final radius = BorderRadius.circular(21);
     return DecoratedBox(
       key: QuestionView.questionCardKey,
@@ -718,6 +749,11 @@ class _QuestionContent extends StatelessWidget {
   /// The blank whose box has focus, tinted.
   final int? focusedBlank;
 
+  /// On the main text and on the instruction under it, for the blanks'
+  /// tap areas ([_BlankTapLayer]).
+  final GlobalKey? mainTextKey;
+  final GlobalKey? secondaryTextKey;
+
   const _QuestionContent({
     required this.item,
     required this.index,
@@ -725,13 +761,25 @@ class _QuestionContent extends StatelessWidget {
     required this.topic,
     this.blankColors,
     this.focusedBlank,
+    this.mainTextKey,
+    this.secondaryTextKey,
   });
+
+  /// Whether [item] has a scene: then it is the main text and the
+  /// instruction goes under it; else the instruction is the main text.
+  static bool hasScene(PracticeItem item) {
+    final scene = item.context?.trim();
+    return scene != null && scene.isNotEmpty;
+  }
+
+  static String mainTextOf(PracticeItem item) =>
+      hasScene(item) ? item.context! : item.instruction;
 
   /// [text] with each blank's underscores replaced in look (not in width,
   /// so lines wrap as before) by an underline in its colour, numbered from
   /// [first] in reading order; the focused one tinted. VoiceOver reads
   /// "blank n of N".
-  Widget _withBlanks(String text, TextStyle? style, int first) {
+  Widget _withBlanks(String text, TextStyle? style, int first, Key? key) {
     final colors = blankColors!;
     final total = blankCount(item.context, item.instruction);
     final spans = <InlineSpan>[];
@@ -756,7 +804,7 @@ class _QuestionContent extends StatelessWidget {
       last = blank.end;
     }
     spans.add(TextSpan(text: text.substring(last)));
-    return Text.rich(TextSpan(style: style, children: spans));
+    return Text.rich(TextSpan(style: style, children: spans), key: key);
   }
 
   static const EdgeInsets _badgePadding =
@@ -778,17 +826,18 @@ class _QuestionContent extends StatelessWidget {
         .copyWith(color: colorScheme.onSurface, height: 1.45, letterSpacing: 0);
     final secondaryStyle = theme.textTheme.bodySmall
         ?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.5);
-    final scene = item.context?.trim();
-    final hasContext = scene != null && scene.isNotEmpty;
-    final main = hasContext ? item.context! : item.instruction;
+    final hasContext = hasScene(item);
+    final main = mainTextOf(item);
     final colored = blankColors != null;
     // Blanks are numbered in reading order: the main text's first.
     final mainBlanks = blankPattern.allMatches(main).length;
     final secondary = <Widget>[
       if (hasContext)
         colored
-            ? _withBlanks(item.instruction, secondaryStyle, mainBlanks)
-            : Text(item.instruction, style: secondaryStyle),
+            ? _withBlanks(
+                item.instruction, secondaryStyle, mainBlanks, secondaryTextKey)
+            : Text(item.instruction,
+                key: secondaryTextKey, style: secondaryStyle),
       if (item.hint != null) ...[
         if (hasContext) const SizedBox(height: 6),
         Text(item.hint!,
@@ -860,14 +909,164 @@ class _QuestionContent extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         colored
-            ? _withBlanks(main, mainStyle, 0)
-            : Text(main, style: mainStyle),
+            ? _withBlanks(main, mainStyle, 0, mainTextKey)
+            : Text(main, key: mainTextKey, style: mainStyle),
         if (secondary.isNotEmpty) ...[
           const SizedBox(height: 12),
           Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 10),
           ...secondary,
         ],
+      ],
+    );
+  }
+}
+
+/// The question card's content with a tap area over each blank (owner,
+/// after the B3 device check): a tap on a blank puts the keyboard in its
+/// answer box ([onTapBlank], blanks numbered in reading order across
+/// [blocks]). Each area is the blank's own box on its line, grown to
+/// [minTarget] tall and at least [minTarget] wide around its centre; where
+/// two areas overlap, the overlap is split down the middle, so a tap goes
+/// to the nearer blank. The areas take taps only: a drag that starts on
+/// one still scrolls the question, and a tap anywhere else in the text
+/// still reaches the screen (which closes the keyboard). They are placed
+/// after layout, from the text's own boxes, and move with it.
+class _BlankTapLayer extends StatefulWidget {
+  final List<({GlobalKey key, String text})> blocks;
+  final ValueChanged<int> onTapBlank;
+  final Widget child;
+
+  const _BlankTapLayer({
+    required this.blocks,
+    required this.onTapBlank,
+    required this.child,
+  });
+
+  static const double minTarget = 44;
+
+  static const blankTargetKeyPrefix = 'question_blank_target_';
+
+  @override
+  State<_BlankTapLayer> createState() => _BlankTapLayerState();
+}
+
+class _BlankTapLayerState extends State<_BlankTapLayer> {
+  final GlobalKey _stackKey = GlobalKey();
+
+  /// Each blank's tap areas (one per line it is on), in this layer's
+  /// coordinates.
+  List<({int blank, Rect rect})> _targets = const [];
+
+  void _measure() {
+    if (!mounted) return;
+    final stack = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stack == null || !stack.hasSize) return;
+    final found = <({int blank, Rect rect})>[];
+    var blank = 0;
+    for (final block in widget.blocks) {
+      final paragraph = block.key.currentContext?.findRenderObject();
+      final matches = blankPattern.allMatches(block.text).toList();
+      if (paragraph is! RenderParagraph || !paragraph.hasSize) {
+        blank += matches.length;
+        continue;
+      }
+      final toStack = paragraph.getTransformTo(stack);
+      for (final match in matches) {
+        for (final box in paragraph.getBoxesForSelection(
+            TextSelection(baseOffset: match.start, extentOffset: match.end))) {
+          final drawn = MatrixUtils.transformRect(toStack, box.toRect());
+          found.add((blank: blank, rect: _grow(drawn)));
+        }
+        blank++;
+      }
+    }
+    final targets = _split(found);
+    if (!_same(targets, _targets)) setState(() => _targets = targets);
+  }
+
+  static Rect _grow(Rect drawn) => Rect.fromCenter(
+        center: drawn.center,
+        width: math.max(drawn.width, _BlankTapLayer.minTarget),
+        height: math.max(drawn.height, _BlankTapLayer.minTarget),
+      );
+
+  /// Splits every overlap between two areas down the middle: between lines
+  /// at the midpoint of their centres' heights, on one line at the
+  /// midpoint of their centres across.
+  static List<({int blank, Rect rect})> _split(
+      List<({int blank, Rect rect})> targets) {
+    final rects = [for (final t in targets) t.rect];
+    for (var i = 0; i < rects.length; i++) {
+      for (var j = i + 1; j < rects.length; j++) {
+        if (targets[i].blank == targets[j].blank) continue;
+        final a = rects[i], b = rects[j];
+        if (!a.overlaps(b)) continue;
+        final dy = (b.center.dy - a.center.dy).abs();
+        final dx = (b.center.dx - a.center.dx).abs();
+        if (dy > 1) {
+          final line = (a.center.dy + b.center.dy) / 2;
+          final upper = a.center.dy < b.center.dy ? i : j;
+          final lower = upper == i ? j : i;
+          rects[upper] = Rect.fromLTRB(rects[upper].left, rects[upper].top,
+              rects[upper].right, math.min(rects[upper].bottom, line));
+          rects[lower] = Rect.fromLTRB(
+              rects[lower].left,
+              math.max(rects[lower].top, line),
+              rects[lower].right,
+              rects[lower].bottom);
+        } else if (dx > 0) {
+          final line = (a.center.dx + b.center.dx) / 2;
+          final left = a.center.dx < b.center.dx ? i : j;
+          final right = left == i ? j : i;
+          rects[left] = Rect.fromLTRB(rects[left].left, rects[left].top,
+              math.min(rects[left].right, line), rects[left].bottom);
+          rects[right] = Rect.fromLTRB(math.max(rects[right].left, line),
+              rects[right].top, rects[right].right, rects[right].bottom);
+        }
+      }
+    }
+    return [
+      for (var i = 0; i < targets.length; i++)
+        (blank: targets[i].blank, rect: rects[i]),
+    ];
+  }
+
+  static bool _same(
+      List<({int blank, Rect rect})> a, List<({int blank, Rect rect})> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].blank != b[i].blank) return false;
+      final r = a[i].rect, s = b[i].rect;
+      if ((r.left - s.left).abs() > 0.5 ||
+          (r.top - s.top).abs() > 0.5 ||
+          (r.right - s.right).abs() > 0.5 ||
+          (r.bottom - s.bottom).abs() > 0.5) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SchedulerBinding.instance.addPostFrameCallback((_) => _measure());
+    return Stack(
+      key: _stackKey,
+      children: [
+        widget.child,
+        for (final (i, target) in _targets.indexed)
+          Positioned.fromRect(
+            rect: target.rect,
+            child: ExcludeSemantics(
+              child: GestureDetector(
+                key: ValueKey('${_BlankTapLayer.blankTargetKeyPrefix}'
+                    '${target.blank}_$i'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () => widget.onTapBlank(target.blank),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -927,98 +1126,131 @@ class _BlankBoxes extends StatelessWidget {
     final last = index == count - 1;
     return ValueListenableBuilder<bool>(
       valueListenable: noArticle,
-      builder: (context, isNoArticle, _) => Semantics(
-        label: 'Blank ${index + 1} of $count',
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            boxShadow: palette.cardShadow,
-          ),
-          child: TextField(
-            key: QuestionView.blankBoxKey(index),
-            controller: controller,
-            focusNode: drafts.focusNodes[index],
-            scrollController: drafts.scrollControllers[index],
-            style: QuestionView.answerStyle(theme),
-            // One line that wraps (never a sideways scroll); Return goes to
-            // the next box, or closes the keyboard on the last.
-            keyboardType: TextInputType.text,
-            textInputAction: last ? TextInputAction.done : TextInputAction.next,
-            minLines: 1,
-            maxLines: null,
-            maxLength: QuestionView.boxMaxLength,
-            buildCounter: (context,
-                    {required currentLength,
-                    required isFocused,
-                    required maxLength}) =>
-                null,
-            // As the single answer field (owner decision O4).
-            autocorrect: false,
-            enableSuggestions: false,
-            smartQuotesType: SmartQuotesType.disabled,
-            smartDashesType: SmartDashesType.disabled,
-            textCapitalization: TextCapitalization.none,
-            // Handled in onSubmitted: the default would move focus in
-            // traversal order (to a "—" button) or drop it.
-            onEditingComplete: () {},
-            onSubmitted: (_) {
-              if (last) {
-                drafts.unfocus();
-              } else {
-                drafts.focusNodes[index + 1].requestFocus();
-              }
-            },
-            onChanged: (text) {
-              if (text.isNotEmpty && noArticle.value) noArticle.value = false;
-              onChanged();
-            },
-            decoration: InputDecoration(
-              hintText: isNoArticle ? '— no article' : 'Write your answer…',
-              hintStyle: isNoArticle
-                  ? QuestionView.answerStyle(theme).copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontStyle: FontStyle.italic,
-                    )
-                  : null,
-              filled: true,
-              fillColor: isNoArticle
-                  ? Color.alphaBlend(color.withValues(alpha: 0.12),
-                      colorScheme.surfaceContainerHigh)
-                  : colorScheme.surfaceContainerHigh,
-              contentPadding: QuestionView.answerPadding,
-              isDense: true,
-              enabledBorder: border(1.5),
-              border: border(1.5),
-              focusedBorder: border(3),
-              suffixIconConstraints:
-                  const BoxConstraints.tightFor(width: 44, height: 44),
-              suffixIcon: noArticleButton
-                  ? _NoArticleButton(
-                      key: QuestionView.noArticleKey(index),
-                      color: color,
-                      selected: isNoArticle,
-                      onPressed: () {
-                        if (noArticle.value) {
-                          noArticle.value = false;
-                        } else {
-                          controller.clear();
-                          noArticle.value = true;
-                        }
-                        onChanged();
-                      },
-                    )
-                  : null,
+      builder: (context, isNoArticle, _) => LayoutBuilder(
+        builder: (context, constraints) => Semantics(
+          label: 'Blank ${index + 1} of $count',
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              boxShadow: palette.cardShadow,
+            ),
+            child: TextField(
+              key: QuestionView.blankBoxKey(index),
+              controller: controller,
+              focusNode: drafts.focusNodes[index],
+              scrollController: drafts.scrollControllers[index],
+              style: QuestionView.answerStyle(theme),
+              // One line that wraps (never a sideways scroll); Return goes to
+              // the next box, or closes the keyboard on the last.
+              keyboardType: TextInputType.text,
+              textInputAction:
+                  last ? TextInputAction.done : TextInputAction.next,
+              minLines: 1,
+              maxLines: null,
+              maxLength: QuestionView.boxMaxLength,
+              buildCounter: (context,
+                      {required currentLength,
+                      required isFocused,
+                      required maxLength}) =>
+                  null,
+              // As the single answer field (owner decision O4).
+              autocorrect: false,
+              enableSuggestions: false,
+              smartQuotesType: SmartQuotesType.disabled,
+              smartDashesType: SmartDashesType.disabled,
+              textCapitalization: TextCapitalization.none,
+              // Handled in onSubmitted: the default would move focus in
+              // traversal order (to a "—" button) or drop it.
+              onEditingComplete: () {},
+              onSubmitted: (_) {
+                if (last) {
+                  drafts.unfocus();
+                } else {
+                  drafts.focusNodes[index + 1].requestFocus();
+                }
+              },
+              onChanged: (text) {
+                if (text.isNotEmpty && noArticle.value) noArticle.value = false;
+                onChanged();
+              },
+              decoration: InputDecoration(
+                hintText: isNoArticle
+                    ? '— no article'
+                    : noArticleButton
+                        ? _articlesHint(context, constraints.maxWidth)
+                        : 'Write your answer…',
+                hintStyle: isNoArticle
+                    ? QuestionView.answerStyle(theme).copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      )
+                    : null,
+                filled: true,
+                fillColor: isNoArticle
+                    ? Color.alphaBlend(color.withValues(alpha: 0.12),
+                        colorScheme.surfaceContainerHigh)
+                    : colorScheme.surfaceContainerHigh,
+                contentPadding: QuestionView.answerPadding,
+                isDense: true,
+                enabledBorder: border(1.5),
+                border: border(1.5),
+                focusedBorder: border(3),
+                suffixIconConstraints:
+                    const BoxConstraints.tightFor(width: 44, height: 44),
+                suffixIcon: noArticleButton
+                    ? _NoArticleButton(
+                        key: QuestionView.noArticleKey(index),
+                        color: color,
+                        selected: isNoArticle,
+                        onPressed: () {
+                          if (noArticle.value) {
+                            noArticle.value = false;
+                          } else {
+                            controller.clear();
+                            noArticle.value = true;
+                          }
+                          onChanged();
+                        },
+                      )
+                    : null,
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  static const String _articlesHintLong = 'Type, or tap — for no article';
+  static const String _articlesHintShort = 'Type, or tap — for none';
+
+  /// An articles box's placeholder: it says what "—" does (owner, after the
+  /// B3 device check). The long text where it fits on one line in a box
+  /// [boxWidth] wide (the text's padding and the "—" button taken off),
+  /// else the short one (measured: only 320 pt at Large).
+  static String _articlesHint(BuildContext context, double boxWidth) {
+    final room = boxWidth -
+        QuestionView.answerPadding.horizontal -
+        _NoArticleButton.size;
+    final painter = TextPainter(
+      text: TextSpan(
+          text: _articlesHintLong,
+          style: QuestionView.answerStyle(Theme.of(context))),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final fits = painter.width <= room;
+    painter.dispose();
+    return fits ? _articlesHintLong : _articlesHintShort;
+  }
 }
 
 /// The "—" (no article) button in an answer box: 44 × 44, filled with the
 /// box's colour (light) when the box is set to "no article".
 class _NoArticleButton extends StatelessWidget {
+  static const double size = 44;
+
   final Color color;
   final bool selected;
   final VoidCallback onPressed;
