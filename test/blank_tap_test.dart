@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart' show kLongPressTimeout;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,8 +23,8 @@ import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
 import 'package:grammar_lens/widgets/topic_hint_card.dart';
 
-/// Two polish items after the B3 device check: the articles boxes'
-/// placeholder says what "—" does, and a tap on a blank in the question
+/// Two polish items after the B3 device check: the articles boxes' two-part
+/// hint points at "—", and a tap on a blank in the question
 /// puts the keyboard in its answer box (44 pt tap areas, overlaps split).
 
 class _Storage extends StorageService {
@@ -147,39 +148,83 @@ void main() {
     await (FontLoader('NunitoSans')..addFont(bytes)).load();
   });
 
-  group('the articles boxes\' placeholder', () {
-    testWidgets('375 pt, Large: "Type, or tap — for no article"',
-        (tester) async {
-      await _pumpPractice(tester,
-          items: const [_two],
-          size: const Size(375, 667),
-          textSize: AppTextSize.large);
-      expect(_hint(tester, _box(0)), 'Type, or tap — for no article');
-      expect(_hint(tester, _box(1)), 'Type, or tap — for no article');
-    });
+  group('the articles boxes\' two-part hint', () {
+    Finder inBox(int i, String text) =>
+        find.descendant(of: _box(i), matching: find.text(text));
 
-    testWidgets('320 pt, Medium: still the long text (it fits)',
-        (tester) async {
-      await _pumpPractice(tester,
-          items: const [_two], size: const Size(320, 568));
-      expect(_hint(tester, _box(0)), 'Type, or tap — for no article');
-    });
+    // The variant per width and size (measured, plan §4): "none →" only at
+    // 320 pt, Large; the left is never shortened.
+    for (final width in [320.0, 375.0, 390.0, 430.0]) {
+      for (final size in AppTextSize.values) {
+        final right = width == 320 && size == AppTextSize.large
+            ? 'none →'
+            : 'no article →';
+        testWidgets(
+            '${width.toInt()} pt, ${size.name}: "Type an article…" and '
+            '"$right" against the "—" button, on one line, apart',
+            (tester) async {
+          await _pumpPractice(tester,
+              items: const [_two], size: Size(width, 700), textSize: size);
+          for (var i = 0; i < 2; i++) {
+            final left = inBox(i, 'Type an article…');
+            final hint = inBox(i, right);
+            expect(left, findsOneWidget, reason: 'box $i');
+            expect(hint, findsOneWidget, reason: 'box $i');
+            final l = tester.getRect(left);
+            final r = tester.getRect(hint);
+            final dash =
+                tester.getRect(find.byKey(QuestionView.noArticleKey(i)));
+            expect(r.right, lessThanOrEqualTo(dash.left + 0.5));
+            expect(dash.left - r.right, lessThan(16), reason: 'right-aligned');
+            expect(r.left - l.right, greaterThanOrEqualTo(8 - 0.5),
+                reason: 'apart');
+            expect(r.center.dy, moreOrLessEquals(l.center.dy, epsilon: 4),
+                reason: 'one line');
+            final paragraph = tester.renderObject<RenderParagraph>(left);
+            expect(paragraph.didExceedMaxLines, isFalse, reason: 'not cut');
+          }
+          expect(find.textContaining('Type, or tap'), findsNothing);
+        });
+      }
+    }
+
+    /// Whether [text] shows in box [i]: there, and not faded out (a field
+    /// fades its hint rather than removing it).
+    bool shown(WidgetTester tester, int i, String text) {
+      final found = inBox(i, text);
+      if (found.evaluate().isEmpty) return false;
+      return tester
+          .widgetList<AnimatedOpacity>(
+              find.ancestor(of: found, matching: find.byType(AnimatedOpacity)))
+          .every((fade) => fade.opacity > 0);
+    }
 
     testWidgets(
-        '320 pt, Large: "Type, or tap — for none" (the long one does not fit '
-        'on one line), and the box keeps one line', (tester) async {
-      await _pumpPractice(tester,
-          items: const [_two],
-          size: const Size(320, 568),
-          textSize: AppTextSize.large);
-      expect(_hint(tester, _box(0)), 'Type, or tap — for none');
-      final theme =
-          buildAppTheme(Brightness.light, textSize: AppTextSize.large);
-      expect(
-          tester.getSize(_box(0)).height,
-          lessThanOrEqualTo(QuestionView.answerMinHeight(
-                  theme, TextScaler.noScaling, PracticeItemType.fillInBlank) +
-              0.5));
+        'both go when the box has text or is set to "—", and come back when '
+        'it is empty again', (tester) async {
+      await _pumpPractice(tester, items: const [_two]);
+      expect(shown(tester, 0, 'Type an article…'), isTrue);
+      expect(shown(tester, 0, 'no article →'), isTrue);
+      await tester.enterText(_box(0), 'an');
+      await tester.pumpAndSettle();
+      expect(shown(tester, 0, 'Type an article…'), isFalse);
+      expect(shown(tester, 0, 'no article →'), isFalse);
+      expect(shown(tester, 1, 'Type an article…'), isTrue,
+          reason: 'the other box keeps its hint');
+      await tester.enterText(_box(0), '');
+      await tester.pumpAndSettle();
+      expect(shown(tester, 0, 'Type an article…'), isTrue);
+      expect(shown(tester, 0, 'no article →'), isTrue);
+
+      await tester.tap(find.byKey(QuestionView.noArticleKey(0)));
+      await tester.pumpAndSettle();
+      expect(shown(tester, 0, 'Type an article…'), isFalse);
+      expect(shown(tester, 0, 'no article →'), isFalse);
+      expect(shown(tester, 0, '— no article'), isTrue);
+      await tester.tap(find.byKey(QuestionView.noArticleKey(0)));
+      await tester.pumpAndSettle();
+      expect(shown(tester, 0, 'Type an article…'), isTrue);
+      expect(shown(tester, 0, 'no article →'), isTrue);
     });
 
     testWidgets('other topics\' boxes keep "Write your answer…"',
@@ -187,6 +232,7 @@ void main() {
       await _pumpPractice(tester,
           items: const [_two], topic: TopicId.gerundVsInfinitive);
       expect(_hint(tester, _box(0)), 'Write your answer…');
+      expect(find.text('Type an article…'), findsNothing);
     });
 
     testWidgets(

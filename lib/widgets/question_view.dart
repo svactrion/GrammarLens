@@ -1174,10 +1174,21 @@ class _BlankBoxes extends StatelessWidget {
                 onChanged();
               },
               decoration: InputDecoration(
+                // An empty articles box: "Type an article…" and, against
+                // the "—" button, "no article →" pointing at it.
+                hint: !isNoArticle && noArticleButton
+                    ? _ArticlesHint(
+                        parts: articlesHintParts(
+                            context,
+                            constraints.maxWidth -
+                                QuestionView.answerPadding.horizontal -
+                                _NoArticleButton.size),
+                      )
+                    : null,
                 hintText: isNoArticle
                     ? '— no article'
                     : noArticleButton
-                        ? _articlesHint(context, constraints.maxWidth)
+                        ? null
                         : 'Write your answer…',
                 hintStyle: isNoArticle
                     ? QuestionView.answerStyle(theme).copyWith(
@@ -1221,28 +1232,95 @@ class _BlankBoxes extends StatelessWidget {
     );
   }
 
-  static const String _articlesHintLong = 'Type, or tap — for no article';
-  static const String _articlesHintShort = 'Type, or tap — for none';
+  static const List<String> _hintLefts = [
+    'Type an article…',
+    'An article…',
+    'Article…',
+  ];
+  static const List<String> _hintRights = ['no article →', 'none →'];
 
-  /// An articles box's placeholder: it says what "—" does (owner, after the
-  /// B3 device check). The long text where it fits on one line in a box
-  /// [boxWidth] wide (the text's padding and the "—" button taken off),
-  /// else the short one (measured: only 320 pt at Large).
-  static String _articlesHint(BuildContext context, double boxWidth) {
-    final room = boxWidth -
-        QuestionView.answerPadding.horizontal -
-        _NoArticleButton.size;
-    final painter = TextPainter(
-      text: TextSpan(
-          text: _articlesHintLong,
-          style: QuestionView.answerStyle(Theme.of(context))),
-      textDirection: TextDirection.ltr,
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
-    final fits = painter.width <= room;
-    painter.dispose();
-    return fits ? _articlesHintLong : _articlesHintShort;
+  /// The gap between an articles hint's two parts.
+  static const double hintGap = 8;
+
+  /// An empty articles box's two hints (owner, after the B3 device check):
+  /// the left in the placeholder style, the right, quieter, against the
+  /// "—" button so its arrow points at it. Chosen by measured width in
+  /// [room] (the box's text area): "no article →" where the full left fits
+  /// with it, else "none →"; only if even that does not fit, a shorter
+  /// left. Measured: "none →" only at 320 pt, Large; the left is never
+  /// shortened at the app's text sizes.
+  static ({String left, String right}) articlesHintParts(
+      BuildContext context, double room) {
+    final theme = Theme.of(context);
+    final scaler = MediaQuery.textScalerOf(context);
+    double width(String text, TextStyle style) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final w = painter.width;
+      painter.dispose();
+      return w;
+    }
+
+    final leftStyle = _ArticlesHint.leftStyle(theme);
+    final rightStyle = _ArticlesHint.rightStyle(theme);
+    final fullLeft = width(_hintLefts.first, leftStyle);
+    for (final right in _hintRights) {
+      if (fullLeft + hintGap + width(right, rightStyle) <= room) {
+        return (left: _hintLefts.first, right: right);
+      }
+    }
+    final shortest = _hintRights.last;
+    final rightWidth = width(shortest, rightStyle);
+    for (final left in _hintLefts.skip(1)) {
+      if (width(left, leftStyle) + hintGap + rightWidth <= room) {
+        return (left: left, right: shortest);
+      }
+    }
+    // Larger than the app's sizes: the left gives way (an ellipsis), the
+    // right is kept whole.
+    return (left: _hintLefts.last, right: shortest);
+  }
+}
+
+/// An empty articles box's two-part hint: [parts].left in the placeholder
+/// style, [parts].right quieter (smaller) at the right end, next to the "—"
+/// button. Shown by the field only while it is empty; a box set to "no
+/// article" shows "— no article" instead.
+class _ArticlesHint extends StatelessWidget {
+  final ({String left, String right}) parts;
+
+  const _ArticlesHint({required this.parts});
+
+  static TextStyle leftStyle(ThemeData theme) => QuestionView.answerStyle(theme)
+      .copyWith(color: theme.colorScheme.onSurfaceVariant);
+
+  static TextStyle rightStyle(ThemeData theme) => theme.textTheme.bodySmall!
+      .withWeight(FontWeight.w600)
+      .copyWith(color: theme.colorScheme.onSurfaceVariant);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Expanded(
+          child: Text(
+            parts.left,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: leftStyle(theme),
+          ),
+        ),
+        const SizedBox(width: _BlankBoxes.hintGap),
+        Text(parts.right, maxLines: 1, style: rightStyle(theme)),
+      ],
+    );
   }
 }
 
