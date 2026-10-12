@@ -12435,3 +12435,54 @@ Docs only.
   check on the owner's iPhone (2026-10-12), on Practice and the Daily Test.
   Every item on `question-screen` is now checked on the device. The branch
   ships as 1.3.0.
+
+## 2026-10-12 (1.3.0 release: version 1.3.0+6, release gates checked; 1.2.0 never submitted)
+
+On `main`, after `question-screen` is merged (the owner runs git). No IPA
+built here: the owner builds and uploads.
+
+- **[Product — owner] Plan (replaces 2026-10-07's).** 1.0.0 is still in
+  review. 1.2.0 (build 5, on TestFlight) is never submitted: 1.3.0
+  replaces it as the first update. 1.3.0 = 1.2.0's redesign (with all of
+  1.1.0) + the question screen work (`docs/question-screen-plan.md`,
+  "Final state"): the topic tag; the topic hint slider on the Daily Test
+  and Practice; multi-blank answer boxes with the "—" no-article button,
+  its two-part hint and tap-a-blank; Skip discarding typed text; the fixes
+  found on the way. Every item passed the owner's device check on the
+  branch.
+- **[Release]** `pubspec.yaml` `1.2.0+5` → `1.3.0+6`. *Why 6:* the highest
+  build in App Store Connect is 5 (`1.2.0+5`, uploaded to TestFlight; the
+  owner's trial check ran on it, 2026-10-09).
+- **[Docs]** Roadmap: the version table (1.2.0 never submitted, a 1.3.0
+  row; the 1.2.0 row also said build 5 was not uploaded, corrected); a
+  "1.3.0 release checklist" with the proxy rule's deploy day, the open
+  1.2.0 items carried over, the store screenshot question and the What's
+  New text. README: status line and version table.
+- **[Checked] Where the version appears.** Only `pubspec.yaml`:
+  `Info.plist` reads `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)`;
+  the Runner target's `CURRENT_PROJECT_VERSION` is
+  `$(FLUTTER_BUILD_NUMBER)`; `MARKETING_VERSION = 1.0` belongs to
+  `RunnerTests`. The app shows no version. (Unchanged since 1.2.0.)
+- **[Checked] Off in a release build**, as listed for 1.2.0, plus the
+  question screen's one debug addition: the Debug panel's "Multi-blank
+  practice" sets (`DebugPracticeSets`) are referenced only from
+  `DebugPanelScreen`, which is reachable only through Settings'
+  `!kReleaseMode && DebugTools.enabledForTesting` row, so both are
+  compiled out.
+- **[Checked] Release config.** `config/prod.json` has `PROXY_BASE_URL`,
+  `APP_TOKEN` and `REVENUECAT_API_KEY` set (the RevenueCat key is the
+  `appl_` production key); values not printed.
+  `ITSAppUsesNonExemptEncryption = false`. Flutter 3.44.6.
+- **[Release] Proxy:** the practice prompt's "A fill_in_blank item has at
+  most 4 blanks." reaches `main` with the merge but is **not deployed**. It
+  deploys on the day 1.3.0 goes live (roadmap, 1.3.0 checklist); until
+  then no proxy deploy from `main` may carry it.
+- **[Release] Steps for the owner** (as build 5): `flutter pub get`,
+  `flutter analyze`, `flutter test`, `./scripts/preflight.sh`, then
+  `flutter build ipa --release --dart-define-from-file=config/prod.json`
+  (no other define; default App Store export; automatic signing, team
+  `37U9L67C2J`). Read back `CFBundleShortVersionString` 1.3.0 and
+  `CFBundleVersion` 6 from
+  `build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/Info.plist`,
+  then upload `build/ios/ipa/grammar_lens.ipa` with Transporter.
+- **[Open]** The TestFlight build and upload (owner); the 1.3.0 checklist.

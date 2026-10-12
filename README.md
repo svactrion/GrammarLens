@@ -2,7 +2,7 @@
 
 **An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
-**Status (7 October 2026):** 1.0.0 is in App Store review (rejected a second time on 6 October 2026 for a missing Terms of Use / EULA link in the App Store metadata, fixed in the metadata and resubmitted the same day; not yet approved); 1.1.0 is skipped, never submitted, and its content ships in 1.2.0; 1.2.0 (`1.2.0+5`) is on the `1.2.0` branch, its device checks passed, the TestFlight build next, to be submitted as an update once 1.0.0 is approved. The screenshots below are from 1.2.0 ([roadmap](docs/roadmap.md), "1.2.0 pre-release checklist").
+**Status (12 October 2026):** 1.0.0 is in App Store review (rejected a second time on 6 October 2026 for a missing Terms of Use / EULA link in the App Store metadata, fixed in the metadata and resubmitted the same day; not yet approved). 1.1.0 and 1.2.0 were never submitted; their content ships in 1.3.0 (`1.3.0+6`), which adds a new question screen and goes to review as the first update once 1.0.0 is approved. The screenshots below are from 1.2.0 ([roadmap](docs/roadmap.md), "1.3.0 release checklist").
 
 <p align="center">
   <img src="screenshots/1.2.0/readme/hero.png" width="820" alt="Three iPhones: Home with this month's mountain, a Daily Test result with every answer explained, and a Daily Test question">
@@ -63,7 +63,8 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 | v2 | Aug–Sep 2026 | Free/paid split, structure and visual pass, API proxy, subscriptions | Not released |
 | 1.0.0 | Sep 2026 | v2 plus Monthly Climb | In App Store review (rejected a second time 6 Oct 2026, metadata fixed and resubmitted the same day) |
 | 1.1.0 | Oct 2026 | Shared Daily Test; mountain themes, medals and collection; launch screen; new avatars; iPad layout | Skipped, never submitted; its content ships in 1.2.0 |
-| 1.2.0 | Oct 2026 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; new paywall with trial eligibility; multiline answers | Device checks passed; TestFlight next; an update after 1.0.0 is approved |
+| 1.2.0 | Oct 2026 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; new paywall with trial eligibility; multiline answers | Never submitted; its content ships in 1.3.0 |
+| 1.3.0 | Oct 2026 | 1.2.0's redesign plus a new question screen: the topic on each question, a slide-to-reveal topic hint, one answer box per blank (with a "no article" button for articles), tap a blank to answer it, and Skip that really skips | TestFlight next; the first update after 1.0.0 is approved |
 
 <details>
 <summary><strong>Previous version: 1.1.0 screenshots</strong> (skipped, never released)</summary>
