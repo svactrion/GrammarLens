@@ -787,7 +787,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () => Navigator.of(context)
                   .push(MaterialPageRoute(
                 builder: (_) => DebugPanelScreen(
-                    onResetLocalData: widget.onResetLocalData ?? () async {}),
+                  onResetLocalData: widget.onResetLocalData ?? () async {},
+                  storageService: widget.storageService,
+                  analyticsService: widget.analyticsService,
+                  subscriptionService: widget.subscriptionService,
+                ),
               ))
                   .then((_) {
                 if (mounted) unawaited(_loadMedals());

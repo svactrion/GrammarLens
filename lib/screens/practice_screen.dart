@@ -13,6 +13,7 @@ import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import '../widgets/question_view.dart';
+import '../widgets/topic_hint_card.dart';
 import 'results_screen.dart';
 import '../utils/content_width.dart';
 
@@ -53,7 +54,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   @override
   void initState() {
     super.initState();
-    _drafts = AnswerDrafts(widget.practiceSet.items.map((item) => item.id));
+    _drafts = AnswerDrafts.items(widget.practiceSet.items);
   }
 
   @override
@@ -65,17 +66,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
   bool get _isLastQuestion =>
       _currentIndex == widget.practiceSet.items.length - 1;
 
-  bool get _currentHasAnswer {
-    final item = widget.practiceSet.items[_currentIndex];
-    // Same empty/whitespace predicate the scoring path uses to detect a
-    // skipped item — the button label must never disagree with what
-    // submitting will actually record.
-    return (_answers[item.id] ?? '').trim().isNotEmpty;
-  }
+  /// Some text in a single answer (the same empty/whitespace predicate the
+  /// scoring path uses to detect a skipped item); on a multi-blank question
+  /// every box typed or set to "no article" (owner decision Q3).
+  bool get _currentHasAnswer =>
+      _drafts.isComplete(widget.practiceSet.items[_currentIndex].id);
 
   /// Moves to another question. Local only: no request, no score, no quota.
   void _showQuestion(int index) {
-    _drafts.leave(widget.practiceSet.items[_currentIndex].id);
+    _drafts.leave(widget.practiceSet.items[_currentIndex].id,
+        nextId: widget.practiceSet.items[index].id);
     setState(() => _currentIndex = index);
     _drafts.restore(widget.practiceSet.items[index].id);
   }
@@ -94,6 +94,17 @@ class _PracticeScreenState extends State<PracticeScreen> {
     } else {
       _showQuestion(_currentIndex + 1);
     }
+  }
+
+  /// Skip discards what was typed for this question (every box, any "no
+  /// article"), so it counts as skipped everywhere: scoring, results, the
+  /// error profile and the practiced count. Coming back shows it empty.
+  void _skip() {
+    if (_submitting) return;
+    final item = widget.practiceSet.items[_currentIndex];
+    _drafts.clear(item.id);
+    setState(() => _answers.remove(item.id));
+    _advance();
   }
 
   Future<void> _confirmExit() async {
@@ -119,7 +130,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Future<void> _submit() async {
-    _drafts.focusNode.unfocus();
+    _drafts.unfocus();
     setState(() => _submitting = true);
     try {
       final deviceId = await widget.storageService.getOrCreateDeviceId();
@@ -206,6 +217,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         item: item,
                         index: _currentIndex,
                         total: total,
+                        topic: widget.topic,
+                        // The topic hint slider, as on the Daily Test.
+                        showTopicHint: MediaQuery.sizeOf(context).width >=
+                            TopicHintSlider.minScreenWidth,
                         drafts: _drafts,
                         horizontalPadding: hPad,
                         maxLength: answerMaxLength,
@@ -221,7 +236,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 primaryLabel: _primaryLabel(),
                 primaryEnabled: _currentHasAnswer,
                 onPrimary: _advance,
-                onSkip: _advance,
+                onSkip: _skip,
               ),
           ],
         ),

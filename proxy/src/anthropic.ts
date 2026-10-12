@@ -147,6 +147,8 @@ answer in, e.g. "Find the mistake and rewrite the full corrected sentence."
 Always ask for the full rewritten sentence, not just the fixed word or
 phrase.
 
+A fill_in_blank item has at most 4 blanks.
+
 Return only the structured output — no extra commentary.
 `.trim();
 

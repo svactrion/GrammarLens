@@ -533,6 +533,10 @@ void main() {
                   of: find.byType(DebugPanelScreen),
                   matching: find.byType(Scrollable))
               .first);
+      // Wholly on screen (the multi-blank section moved it down; scrolling
+      // stops once any of it shows).
+      await tester.ensureVisible(find.byKey(DebugPanelScreen.resetKey));
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.byKey(DebugPanelScreen.resetKey));
       await tester.pump(const Duration(milliseconds: 400));
       await tester.tap(find.text('Delete and restart'));

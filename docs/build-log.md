@@ -11708,3 +11708,730 @@ Docs only.
 - **[Docs]** README ("Case study and writing") links the article;
   roadmap's Medium item updated: article 1 published, next is article 2
   (App Review guideline 5.1.2(i)).
+
+## 2026-10-09 (Firebase custom definitions confirmed; paywall trial check)
+
+Docs only.
+
+- **[Product — owner]** Firebase custom definitions checked in the console
+  (Ahmet, 2026-10-09): the 1.1.0 dimensions `set_date`, `theme_id`,
+  `variant`, `medal_tier`, `near_miss_shown`, `trigger`, `save_point` and
+  `step` were registered on 2026-10-04 (event scope); the metric `open_ms`
+  is registered; `learning_goal` (user scope) on 2026-10-06. The docs had
+  them as not registered (the 2026-10-04 registration was never recorded).
+  Roadmap and `analytics-plan.md` §9 corrected; nothing is left to register
+  for 1.2.0. Not changed: DebugView passes and the developer-traffic filter
+  stay open.
+- **[Product — owner]** Paywall with a sandbox account that already used
+  its trial, on TestFlight 1.2.0 (5) (Ahmet, 2026-10-09): no trial is
+  promised, the price is shown directly, as expected. The trial-eligibility
+  fix is now checked on a device, not only by automated tests.
+
+## 2026-10-12 (Question screen — Batch 0 approved; B1: the topic tag; awaiting the device check)
+
+On branch `question-screen` (from `1.2.0`); not in 1.2.0. Plan, Batch 0
+measurements and the owner's decisions Q1–Q5: `docs/question-screen-plan.md`.
+
+- **[Product — owner] Decisions on the Batch 0 report** (all in the plan):
+  Q1 the tag is a chip after the type label, no "·"; Q2 the hint card's
+  reveal closes the keyboard and reopens it, the layout held still (method
+  to be approved before B2); Q3 Next on a multi-blank item only when every
+  box is typed or "—"; Q4 the proxy's "at most 4 blanks" line built in B3,
+  not deployed until the app release that ships multi-blank boxes; Q5 the
+  hint handle in the "Your answer" row. Also: a sentence-initial no-article
+  blank capitalises the next word; Skip keeping typed text recorded as an
+  open roadmap item, not fixed here.
+- **[Engineering] B1, the topic tag.**
+  - `lib/data/topics.dart`: `topicByName(String)`, the `Topic` for a stored
+    `TopicId.name`, or null.
+  - `lib/widgets/question_view.dart`: `QuestionView.topic` (optional). The
+    card's top row is a `Wrap` of the type label and the tag, with the badge
+    top right; each piece sits centred in a line as tall as the badge, so a
+    one-line row looks as before. The tag (`_TopicTag`): labelSmall 700,
+    `onSurfaceVariant` on `surfaceContainerHighest`, a 1 px
+    `outlineVariant` edge, radius 7; semantics "Topic: <title>". A title
+    that does not fit goes to the second line whole; the type label is
+    never cut.
+  - `practice_screen.dart` passes the screen's topic;
+    `daily_test_screen.dart` passes `topicByName(question.topicId)` (an
+    unknown id shows no tag).
+  - Unchanged: answers, grading, scoring, analytics, storage, layout rules.
+- **[Measured]** Room for the tag on the first line and where each title
+  wraps: the plan's §2 table (real font, Large). Tag contrast 8.23:1
+  (light) and 7.75:1 (dark).
+- **[Accepted cost — owner]** A wrapped tag adds about 25 pt to the card.
+  Found by Batch 10's test "a short question … whole with the keyboard
+  open (390 × 844, 336 pt keyboard)": with the error-correction question
+  under "Gerund vs. Infinitive" (wraps at 390 Medium: 95 pt of room for a
+  126.8 pt chip), 10.5 pt of the question now scrolls in its card, with the
+  fade and "Read full question". The owner accepted it; the test now
+  asserts "whole" with a tag that fits on line 1 (Articles) and a new test
+  records the wrapped case (10.5 pt, the fade, "Read full question").
+- **[Tests]** `flutter analyze` clean; **1,917 passed, 0 failed.**
+  - New: `test/question_topic_tag_test.dart` (35 cases, real font):
+    `topicByName` (every topic, unknown, empty); the tag after the label and
+    before the badge on one centre line; semantics; no topic → no tag and
+    the row as before; colours in light and dark, none of them the
+    correct/incorrect ones; "Gerund vs. Infinitive" after "Find and correct
+    the error" at 320 Large on line 2, whole, the badge top right; the same
+    title after "Fill in the blank" at 390 Large on line 1; 320 / 375 / 390
+    / 430 × Small / Medium / Large × light / dark × every type × every
+    topic: no exception, the type label whole on one line, nothing under
+    the badge; Practice shows its topic; the Daily Test shows each
+    question's own topic and none for an unknown id.
+  - Changed: `question_v2_test.dart`, as above (the reason is the accepted
+    cost).
+- **[Not checked]** On the owner's iPhone: the tag's look in both themes,
+  the wrap at the larger text sizes, VoiceOver's "Topic: …".
+
+## 2026-10-12 (Question screen — B1 device check passed)
+
+Docs only.
+
+- **[Product — owner]** B1, the topic tag, checked on the owner's iPhone
+  (2026-10-12): the tags look good on both screens (Daily Test and
+  Practice). Approved; B2 may start. Not named in the check, so still not
+  recorded as checked on a device: the wrap at the larger text sizes and
+  VoiceOver's "Topic: …".
+
+## 2026-10-12 (Question screen — B2: the Daily Test's topic hint card; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3 (item
+2), updated in this batch.
+
+- **[Product — owner] Q2 revised.** Holding the layout still while the
+  keyboard closes was possible, but it would have freed space only below
+  the "Your answer" row, under the finger, not above it where the card
+  opens. So the keyboard stays up during the reveal (no closing, reopening
+  or freezing), and the cards were shortened by the owner to fit above the
+  row. On the smallest phones a card may cover more (below).
+- **[Measured] Correction to the Batch 0 estimate.** The room above the row
+  is the header plus the question card, so it follows the question's
+  length, not the phone. Under the shortest possible question (one line, no
+  scene), keyboard up: ~154 pt at Medium and ~157 pt at Large on 375, 390
+  and 430 pt phones alike; ~95 pt at 320 × 568. Under a fallback pool
+  question (scene, instruction, hint) at 375 × 667: ~195 pt.
+- **[Product — owner] The fit, three decisions.**
+  1. The guard measures under the shortest question, keyboard up, at
+     375 × 667, Medium and Large. With the owner's first short texts Modal
+     Verbs was 9 pt over at Medium, and Modal Verbs and Modal Past Forms
+     13 pt over at Large; the owner replaced two bullets ("mustn't ≠ don't
+     have to"; "must / can't have: sure it did / didn't"). After: every card
+     142 pt at Medium (12 pt to spare) and 148 pt at Large (9 pt), on 375,
+     390 and 430 pt phones.
+  2. 320 pt phones: even over the row the cards were 34–92 pt too tall
+     (Tense Selection at Large: 236 pt for 144 pt), so a card may reach down
+     over the answer field and the Skip/Next bar, never under the keyboard,
+     and is always whole on screen.
+  3. The safety net stays general: on any phone, a card that does not fit
+     above the row reaches down over it. After item 1 it does not trigger
+     on 375 pt and wider phones at Medium or Large.
+- **[Engineering] What changed.**
+  - `lib/data/topic_hints.dart` (new): `kTopicHints`, the owner's texts
+    verbatim, one list per `TopicId`; the card's title is the topic's.
+  - `lib/widgets/topic_hint_card.dart` (new):
+    - `TopicHintCard`: the title (labelMedium 800) and the points
+      (bodySmall, "•"), `onWarm` on `warm` (7.96:1 light, 7.82:1 dark),
+      radius 17, the card shadow.
+    - `TopicHintHandle`: a 44 × 44 handle (a `warm` pill with a tips
+      icon). A horizontal drag reveals the card in proportion to the
+      distance, either way (full at 60 % of the row's width): a cover slides
+      off it. Release: a critically damped spring back to 0 (instant under
+      Reduce Motion), then the card is put away. A long-press shows it whole
+      while held. The handle takes taps, so a tap on it does not reach the
+      screen's tap-to-close-the-keyboard. Semantics: the title and every
+      point, hint "Touch and hold to show".
+    - The card is drawn through an `OverlayPortal`, at the row's width,
+      placed by `_CardPlacement`: above the row; else over the row; else
+      from below the status bar down as far as it needs, above the keyboard.
+      It ignores pointers; the handle is drawn again on top of it. The
+      status bar and keyboard are read from the overlay's `MediaQuery` (the
+      Scaffold removes them from its body's).
+  - `lib/widgets/question_view.dart`: `showTopicHint`; the handle sits in
+    the "Your answer" row, before "Review answer" / "Read full question".
+  - `lib/screens/daily_test_screen.dart`: `showTopicHint: true`. Practice
+    has no handle.
+  - Unchanged: the question's own `hint` line, answers, focus, the
+    keyboard, grading, Monthly Climb, analytics (no event), storage.
+- **[Tests]** `flutter analyze` clean; **1,932 passed, 0 failed.**
+  - New: `test/topic_hint_card_test.dart` (15 cases, real font): every
+    topic has a card; the texts verbatim; **the guard** (every card above
+    the row and below the status bar under the shortest question, keyboard
+    up, 375 × 667, Medium and Large); no handle on Practice; the Daily
+    Test's 44 × 44 handle and no card at rest; VoiceOver reads the whole
+    card; a drag reveals 25 % / 50 % in proportion, the distance counts
+    either way, 100 % with no cover, the card above the row and the row
+    unmoved; release springs closed (still there a frame later, gone when
+    settled); Reduce Motion closes at once; a long-press shows it whole
+    while held (after 2 s) and closes on release; a vertical drag scrolls
+    the question and shows no card, also when it starts on the handle; the
+    keyboard stays up through a tap, a drag and a long-press, the answer and
+    its cursor kept, still question 1, no analytics event, and the answers
+    handed over at the end unchanged; the safety net at 320 × 568 Small
+    (over the row, the handle on top); at 320 × 568 Large, keyboard up,
+    every card whole on screen with the handle on top.
+- **[Not checked]** On the owner's iPhone: the drag's feel and the travel
+  (60 % of the row), the spring, the long-press, the card and handle in
+  both themes, the keyboard staying up, VoiceOver.
+
+## 2026-10-12 (Question screen — B2 reworked: the hint slider; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3,
+rewritten in this batch.
+
+- **[Product — owner] Device check of B2's first build: failed on design,
+  not on code.** The lightbulb handle in the "Your answer" row did not read
+  as something to drag, and the card covering the question card was worse.
+  New design (owner, final): a full-width "slide to unlock" slider between
+  the question card and "Your answer", part of the page; the card opens
+  inline below it in proportion to the knob, pushing "Your answer" down,
+  never covering or moving the question; release springs back; long-press
+  shows it while held; the slider and card are hidden while the keyboard
+  is up. Kept: the card texts, Daily Test only, no effect on score or
+  state.
+- **[Product — owner] 320 pt phones: no slider below 375 pt** (option c),
+  recorded in the plan as a known limit (first-gen iPhone SE, SE 2/3 with
+  Display Zoom). Measured at 320 × 568, keyboard down: under a
+  fallback-pool question the room for the open card was ~100 pt, every
+  card 42–133 pt too tall; under the shortest question, Tense Selection
+  18 pt too tall at Large.
+- **[Product — owner] Spacing (option a).** The fit check first failed one
+  case: 375 × 667, Large, a fallback-pool question, every card 11 pt under
+  the Skip/Next bar. The owner chose to tighten the spacing: the card's top
+  and bottom padding 12 → 8 pt, the gap between track and card 8 → 4 pt.
+  After: every case passes; the tightest is that same case, with 1 pt to
+  spare (all margins in the plan §3 table).
+  *(Corrected 2026-10-12, entry "the slider at 56 pt; the fit check
+  corrected": the check measured against the bar, but the card was cut
+  12 pt higher; in that case about 3 pt of the last line of text was cut.)*
+- **[Engineering] What changed.**
+  - `lib/widgets/topic_hint_card.dart`: removed `TopicHintHandle`, the
+    `OverlayPortal`, `_CardPlacement` and the cover. New `TopicHintSlider`:
+    the 48 pt track (`warm`, radius 24), the trail (`primary` at 32 %),
+    "Slide for a hint" (labelLarge 800, `onWarm`, fading out by half way),
+    the knob (a 48 × 48 target, a 40 pt `primary` circle,
+    `keyboard_double_arrow_right_rounded` in `onPrimary`). The knob's
+    horizontal drag sets the reveal (0–1, the knob's travel = track width −
+    48); the card opens below with `Align(heightFactor)` in a `ClipRect`; a
+    critically damped spring back to 0 on release (instant under Reduce
+    Motion); a long-press springs to 1 while held. Taps on the knob are
+    taken. Semantics: "Slide for a hint", the title and every point.
+    `TopicHintCard`: padding 14 / 8 (was 14 / 12).
+  - `lib/widgets/question_view.dart`: the handle is out of the "Your
+    answer" row; a `hint` slot between the question and the row. The
+    question's cap keeps only the closed slider (56 pt) free, so an opening
+    card never moves the question; "Your answer" and the answer follow the
+    slot's current height, past the bottom if they must, cut there by a
+    bottom-only clip (the question card's shadow is not clipped). A new
+    question's slider starts closed.
+  - `lib/screens/daily_test_screen.dart`: `showTopicHint` is true only with
+    no keyboard inset and a screen at least 375 pt wide, read above the
+    Scaffold.
+- **[Tests]** `flutter analyze` clean; **1,946 passed, 0 failed.**
+  - `test/topic_hint_card_test.dart` rewritten (29 cases, real font): the
+    texts verbatim and complete; no slider on Practice; the track 48 pt,
+    full width, between the question card and "Your answer", the knob at
+    its left end, the label and chevrons, `warm` / `primary`, not the
+    semantic colours, no card at rest (light and dark); VoiceOver reads the
+    whole card; left out with the keyboard up and back closed when it goes
+    down; left out at 320, 360 and 374 pt, there at 375; the drag: knob at
+    25 % → card 25 % open, label fading, at 50 % the label gone, the
+    question card unmoved and "Your answer" pushed down by the open height,
+    full at the end and no further, closed going back past the start;
+    release springs back (moving a frame later, under 2 % after 300 ms,
+    closed when settled); Reduce Motion; long-press whole while held (2 s)
+    and closed on release; a vertical drag scrolls a long question and
+    opens nothing, also from the knob; the answer, the question index, no
+    analytics event and the answers handed over unchanged; **the fit check**
+    (375 × 667, 390 × 844, 430 × 932 × Medium, Large × shortest, pool
+    question: every open card whole above the Skip/Next bar, below the
+    unmoved question card).
+  - Removed with the old design: the keyboard-up fit guard, the safety-net
+    and 320 pt placement tests, the handle tests.
+- **[Not checked]** On the owner's iPhone: whether the slider reads as
+  draggable, the knob's feel and the spring, the trail and label, the card
+  opening inline, the slider leaving and coming back with the keyboard,
+  both themes, VoiceOver.
+
+## 2026-10-12 (Question screen — B2 device check passed; the slider tucks away with the keyboard; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
+
+- **[Product — owner] B2 (the reworked hint slider) passed the device
+  check** on the owner's iPhone (2026-10-12): "I like the slider". One
+  polish item before B3: the slider vanished at once when the keyboard came
+  up.
+- **[Product — owner] The polish.** With the keyboard opening, the slider
+  slides up and tucks under the question card (drawn behind it) while its
+  slot collapses and "Your answer" moves up with it; closing, the reverse,
+  and it comes back closed. In step with the keyboard; Reduce Motion: at
+  once. The question card never moves. A knob held when the keyboard opens
+  closes the card first, with no stuck state.
+- **[Engineering]**
+  - The driver is the answer's focus, not the keyboard's inset: focus
+    changes the moment the keyboard starts to open or close, while the
+    inset's final height is unknown during opening and reaches 0 only at
+    the end of closing. `QuestionView` runs a 250 ms `AnimationController`
+    (`forward` out, `reverse` in; `easeOutCubic`, and its flip on the way
+    in, so both directions start fast like the keyboard). Reduce Motion
+    sets it at once.
+  - The slot is `closedHeight × out` tall; the question's cap reserves the
+    same, so "Your answer" follows smoothly. `_TuckUnder` sits the slider
+    at the slot's bottom (`Align`, `heightFactor: out`), so the rest of it
+    reaches up behind the question card, which is painted after it (the
+    hint slot is now first in the layout's children). It ignores touches
+    until all the way out, and keeps the same tree at every step so the
+    slider keeps its state. At 0 the slot and the slider are gone; it is
+    made again, closed.
+  - `TopicHintSlider.collapsed` (true while the answer has focus): an open
+    card closes at once, a held knob is let go, gestures are ignored.
+  - `DailyTestScreen` no longer reads the keyboard inset; it offers the
+    slider by screen width only (375 pt and up).
+- **[Tests]** `flutter analyze` clean; **1,951 passed, 0 failed.** New in
+  `test/topic_hint_card_test.dart` (5): opening (the track moves up frame
+  by frame, behind the card's bottom edge, "Your answer" up with it, gone
+  within 250 ms, the question card's rect unchanged throughout); closing
+  (moving down frame by frame, untouchable on the way, back in place and
+  closed); the slider painted before the question card; Reduce Motion (gone
+  and back at once); a knob held when the keyboard opens (the card closed
+  at once, a further drag opens nothing, back closed, no exception).
+- **[Found, not changed]** Measured while testing: when the answer takes
+  focus, the "Your answer" row grows from 44 to 48 pt (the "Review answer"
+  button's 48 pt tap target), so the answer field moves down 4 pt. It is
+  older than this work (Question V2, Batch 10, whose comment says the row
+  keeps 44 pt) and happens without the slider too (measured at 374 pt).
+- **[Not checked]** On the owner's iPhone: whether the slide matches the
+  real keyboard's timing, the tuck under the card in both themes, Reduce
+  Motion.
+
+## 2026-10-12 (Question screen — B2 keyboard animation passed; the slider at 56 pt; the fit check corrected)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
+
+- **[Product — owner]** The B2 keyboard animation (the slider tucking
+  under the question card) passed the device check on the owner's iPhone
+  (2026-10-12).
+- **[Product — owner] A thicker slider:** the track 48 → 56 pt, the knob
+  scaled with it (48 pt, the same 4 pt inside the track; the chevrons
+  22 → 26 pt). Nothing else changed.
+- **[Correction] The earlier fit result was wrong.** The B2 rework's fit
+  check (entry "B2 reworked") compared the open card's edge with the top of
+  the Skip/Next bar, but the card was cut 12 pt higher, at the question
+  area's padded bottom (`QuestionView`'s 12 pt bottom padding is outside
+  its clip). So the case reported as "1 pt to spare" (375 × 667, Large, a
+  fallback-pool question) actually cut about 3 pt off the last line of text
+  in the 48 pt version the owner checked on the device; with the 56 pt
+  track it would have cut 11 pt. Measured: the clip at y 588, the bar's top
+  at 600, the last line's bottom at 599 (56 pt track).
+- **[Product — owner] The fit rule is now "the hint text is never cut
+  off"**, not "the card's edge is visible": the card's bottom padding and
+  edge may go behind the bar.
+- **[Engineering]** `QuestionView`: the open card's clip now ends at the
+  top of the Skip/Next bar (`_BottomEdgeClipper(extra: bottomPadding)`, the
+  12 pt bottom padding is free room for an open card); nothing changes at
+  rest. `TopicHintSlider`: `trackHeight` 56, `knobInset` 4, chevrons 26 pt.
+- **[Tests]** The fit check now asserts that each card's last line of text
+  ends above both the Skip/Next bar and the question area's real clip edge
+  (read from the `RenderClipRect`). All 12 cases pass; the tight one
+  (375 × 667, Large, pool question) has 1 pt clear under the text and the
+  card's edge 7 pt behind the bar (all margins in the plan §3 table).
+  `flutter analyze` clean; **1,951 passed, 0 failed.**
+- **[Not checked]** On the owner's iPhone: the 56 pt slider; the tight case
+  (a 375 pt phone at Large text), if available.
+
+## 2026-10-12 (Question screen — B3: multi-blank answer boxes, the proxy rule (not deployed), the "Your answer" row fix; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §1, §4–§7.
+
+- **[Product — owner]** The B2 slider at 56 pt and the corrected fit
+  check committed first (entry above). B3 approved with one change from
+  the re-read: the answer counts as being edited while *any* box has focus
+  (B2 made "being edited" drive "Review answer" and the slider's tuck, and
+  it read only box 0); moving between boxes must keep "Review answer"
+  steady. Also folded in, as its own commit: the "Your answer" row growing
+  44 → 48 pt on focus (found in B2).
+- **[Engineering] The "Your answer" row (own commit).** "Review answer" /
+  "Read full question" now uses `MaterialTapTargetSize.shrinkWrap`: its own
+  44 pt minimum is the target, so the row stays 44 pt and the answer field
+  no longer drops 4 pt when the answer takes focus. Side effect, measured:
+  the B1 wrapped-tag case (390 × 844, Medium, keyboard up) now has 6.5 pt
+  of the question in its card's scroll, not 10.5 (`question_v2_test`
+  updated).
+- **[Engineering] B3, in three commits.**
+  - `lib/utils/blanks.dart`: `blankPattern` and `blankCount`, the one rule
+    (`FallbackPool.blankCount` delegates to it; the Daily Test gate is
+    unchanged).
+  - `lib/utils/blank_assembly.dart`: `BlankAnswer` (typed text or "no
+    article"; an empty box is never "no article"), `blankSourceText` (the
+    context, the instruction, or both joined, whichever holds the blanks),
+    `assembleBlanks`: each box trimmed; a no-article blank removed with the
+    space after it (or before it), no double space; a removed blank that
+    started a sentence (start of text, after a line break, `.` `?` `!`, or
+    an opening quote; not after an apostrophe) capitalises the next word;
+    typed case kept; an empty box keeps its `____`; every box empty → `''`
+    (a skipped item).
+  - `lib/widgets/blank_colors.dart`: the four colours (orange, blue, teal,
+    violet; light and dark), contrast in the doc comment.
+  - `lib/widgets/question_view.dart`:
+    - `AnswerDrafts.items(items)`: per item one controller and one
+      no-article flag per box (`boxCountFor`: 2–4 blanks of a
+      `fill_in_blank` → that many, else 1); four shared focus nodes and
+      answer scroll controllers (node 0 is the old `focusNode`);
+      `answerFor` (text, or the assembled sentence), `isComplete` (Q3),
+      `hasFocus`, `focusedBox`, `unfocus`; `leave(id, nextId:)` moves
+      focus to box 0 when the focused box does not exist on the next
+      question; `restore` puts the focused field back on the keyboard in
+      the same frame (a new field does not open the keyboard for an
+      already-focused node, so Next/Back between questions with different
+      box counts dropped it; Flutter hides a departing field's keyboard only
+      after the frame unless another one takes it).
+    - `QuestionView` listens to all four nodes; "being edited" is any box.
+    - The sentence: each blank's underscores drawn transparent with a 3×
+      underline in its colour (same width, so lines wrap as before),
+      tinted while its box has focus; semantics "blank n of N".
+    - `_BlankBoxes`: the boxes below "Your answer", 8 pt apart, in their
+      own scroll view; the answer area's minimum is one box and a 14 pt
+      peek of the next (one box in the compact case). Each box: 1.5 pt edge
+      in its colour, 3 pt while focused; one line that wraps; 100
+      characters, no counter; Return → next box, "done" on the last closes
+      the keyboard; autocorrect, suggestions, smart punctuation and
+      capitals off; semantics "Blank n of N". `articles` only: a 44 × 44
+      "—" button (semantics "No article", toggled) that clears the text and
+      sets "— no article" on a tinted fill; typing or a second tap clears
+      it.
+  - `practice_screen.dart`, `daily_test_screen.dart`: `AnswerDrafts.items`,
+    Next from `isComplete`, `leave(…, nextId:)`, `unfocus()`. The answers
+    map still gets what `onChanged` sends (the sentence for a multi-blank
+    item), so scoring and the saved error entry carry the completed
+    sentence. Daily Test: always one blank, so one box, as before.
+- **[Engineering] The proxy rule (own commit, not deployed).**
+  `GENERATION_SYSTEM_PROMPT` (practice generation only) gains "A
+  fill_in_blank item has at most 4 blanks." before "Return only the
+  structured output". The Daily Test prompts, the shared gate and the
+  scoring prompt are unchanged. **Not deployed** (Q4): it goes out only
+  with the app release that ships the boxes.
+- **[Tests]** `flutter analyze` clean; **1,991 passed, 0 failed.** Proxy:
+  typecheck clean, **393 passed**.
+  - `test/question_answer_row_test.dart` (3): the row 44 pt and the field
+    in place when "Review answer" appears, Small / Medium / Large; the
+    control still at least 44 × 44.
+  - `test/blanks_test.dart` (3): the rule; context then instruction;
+    `FallbackPool.blankCount` the same.
+  - `test/blank_assembly_test.dart` (14): the plan's three worked
+    examples; 2–4 blanks; trimming; no-article in the middle, at the end
+    and before punctuation, at a sentence start (plain, `?`, `"…`, `“…`,
+    after a line break) with the capital, and not after an apostrophe;
+    typed case kept; all empty → `''`; partial keeps `____`; `isFilled`;
+    `blankSourceText`.
+  - `test/multi_blank_test.dart` (20, real font): box counts (1, 2, 3, 4,
+    5 → 1, error correction → 1); one blank keeps the single field and no
+    colours; boxes below the sentence in order with matching underline and
+    edge colours, 1.5 / 3 pt, the 100 cap (light and dark); the palette's
+    3:1 on card and page, no semantic colour; VoiceOver labels; the focused
+    blank tinted; 4 boxes at 375 × 667 Large with the keyboard: no
+    overflow, the last box scrolled into view; "—" only on articles, 44 ×
+    44, clears text, typing clears it, an empty box is not "no article",
+    toggles; Next only when every box is typed or "—" (spaces do not
+    count), Skip always; the completed sentence in the scoring call and in
+    the saved error entry; a skipped multi-blank item sends `''`; boxes and
+    "no article" kept across Next and Back; the keyboard kept from box 3 to
+    a one-box question and from box 2 to box 2 across Next and Back (both
+    fail without the `restore` fix, checked); Return through the boxes and
+    "done" on the last; "Review answer" in place every frame (20 frames
+    each) through two Returns and two taps between boxes, and closing the
+    keyboard from box 4.
+  - `proxy/test/practice_prompt.test.ts` (2): the practice prompt has the
+    rule; the Daily Test and scoring prompts do not.
+- **[Not checked]** On the owner's iPhone: the boxes and colours in both
+  themes, the underlines, the "—" button, Return through the boxes with the
+  real keyboard, the keyboard staying up across Next and Back, the row no
+  longer jumping on focus. A live multi-blank practice item needs the proxy
+  rule deployed or an item the current prompt happens to make with 2–4
+  blanks; neither is done.
+
+## 2026-10-12 (Question screen — debug multi-blank practice sets for the B3 device check)
+
+On branch `question-screen`. Debug and profile builds only.
+
+- **[Product — owner]** A debug-only way to see the multi-blank boxes on a
+  device: until the proxy rule is deployed, a live practice set rarely has
+  more than one blank. Same gating as the Debug panel; 2, 3 and 4 blanks;
+  an articles question with sentence-initial and mid-sentence no-article
+  blanks; a non-articles multi-blank question (no "—").
+- **[Decision — scoring is real, through the proxy]** Why: the one open
+  question B3 leaves is how the live scorer treats a completed sentence as a
+  `fill_in_blank` answer (plan §5: its `correctedAnswer` may come back as
+  the words only); a stub would not show it. The cost: one scoring call per
+  finished debug session (one unit of the device's proxy quota, a fraction
+  of a cent), the AI consent check as in a real session, and the results
+  screen saving that session's mistakes and practice count in the local
+  profile like any session (the Debug panel's "Reset local data" clears
+  them). No session is counted at launch (the debug set is not generated,
+  so `recordSessionStarted` and the free practice count are not touched).
+  Analytics are off outside release builds by default (P11).
+- **[Engineering]**
+  - `lib/utils/debug_practice_sets.dart` (new): `DebugPracticeSets`.
+    `articles` (topic `articles`): 2 blanks (one starting the sentence:
+    "____ honesty matters to her, so she gave me ____ honest answer."), 3
+    ("We had ____ lunch at ____ small café near ____ station."), 4 ("____
+    sun was setting when ____ old man sat down on ____ bench and opened
+    ____ newspaper."). `gerundVsInfinitive`: 2 and 3 blanks with the verb in
+    brackets. Ids start with `debug_`.
+  - `lib/screens/debug_panel_screen.dart`: optional storage, analytics and
+    subscription services; with them, a "Multi-blank practice" section with
+    two buttons that run `ensureAiConsent` and push `PracticeScreen` with
+    the set, its topic and a `ClaudeService()`.
+  - `lib/screens/settings_screen.dart`: the Debug row hands the panel its
+    services. The row itself is unchanged: `!kReleaseMode &&
+    DebugTools.enabledForTesting`, so a release build has neither the
+    panel nor the sets (only reachable from it).
+- **[Tests]** `flutter analyze` clean; **1,999 passed, 0 failed.** New:
+  `test/debug_practice_sets_test.dart` (8): the articles set has 2, 3 and 4
+  boxes, a sentence-initial and a mid-sentence blank; the gerund set is
+  multi-blank and not articles; ids unique and `debug_`; no section
+  without services; each button opens Practice with boxes, "—" only on
+  articles; with no consent yet the consent screen comes first.
+  `settings_screen_test`: the panel opened from Settings has the services.
+  `debug_panel_test` ("the reset brings the app back to Welcome"): scrolls
+  the reset button wholly into view before tapping (the new section moved
+  it down; the other reset test already did this).
+- **[Not checked]** On the owner's iPhone: everything in B3's list, now
+  reachable through these sets; what the live scorer returns for a
+  completed sentence.
+
+## 2026-10-12 (Question screen — B3 device check passed)
+
+Docs only.
+
+- **[Product — owner]** B3, the multi-blank answer boxes, passed the
+  device check on the owner's iPhone (2026-10-12), through the Debug
+  panel's multi-blank practice sets. The proxy rule ("A fill_in_blank item
+  has at most 4 blanks.") stays **not deployed** until the app release
+  that ships the boxes.
+
+## 2026-10-12 (Question screen — the hint slider on Practice too; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
+
+- **[Product — owner]** New scope: the topic hint slider on Practice as
+  well, with the same slider and cards (the Practice set's topic), the same
+  behaviour (tucked under the question card while any answer box has
+  focus, none below 375 pt, no effect on scoring or state).
+- **[Measured before building]** On Practice, with the slider switched on
+  temporarily (then restored), the fit rule ("the hint text is never cut
+  off") held everywhere but one case: 375 × 667, Large, a realistic
+  one-box question, the last line cut by 1 pt; the same case on the Daily
+  Test had 1 pt to spare. Cause, measured: Practice's header is 62 pt, not
+  60 (its "Practice" subtitle). **Owner decision (a):** the gap above the
+  slider 8 → 6 pt on both screens.
+- **[Engineering]**
+  - `TopicHintSlider.gap` 6 (was 8).
+  - `PracticeScreen` passes `showTopicHint` for screens 375 pt and wider,
+    as `DailyTestScreen` does. The rest was already shared in
+    `QuestionView`, including "any box has focus" for the tuck.
+  - **A bug found by an existing test (`question_v2_test`, "a short
+    question and its instruction are whole with the keyboard open"),
+    fixed in the code, test unchanged:** the question card's fade ("more
+    below") stayed on after the slider tucked away, though nothing was
+    hidden any more. The tuck animation rebuilds only the layout, not the
+    state that schedules the "does the question still overflow?" check, and
+    the card listened only to scrolls. It now also listens to
+    `ScrollMetricsNotification`, so a change in what the card can show
+    reads the fade again. This was on the Daily Test too since the tuck
+    animation (no test looked at the fade there).
+- **[Tests]** `flutter analyze` clean; **2,025 passed, 0 failed.**
+  - No Practice layout test changed because the slider is now visible: all
+    passed as they were once the fade bug was fixed.
+  - Replaced in `test/topic_hint_card_test.dart`, because the scope
+    changed: "not on Practice" → "on Practice too, with the set's topic,
+    between the question card and 'Your answer'" (its card shows the
+    Practice topic's title).
+  - New there: on Practice the slider tucks away while a box of a 4-blank
+    question has focus and comes back closed; none on a 374 pt Practice
+    screen; the Practice fit check (24 cases: 375 × 667, 390 × 844,
+    430 × 932 × Medium, Large × shortest and realistic, 1 and 4 boxes):
+    the open card's last line whole above the Skip/Next bar and the clip,
+    the question card unmoved.
+  - The final fit table for both screens is in the plan §3; tightest: 3 pt
+    (Daily Test) and 1 pt (Practice, one box), 375 × 667, Large, a
+    realistic question.
+- **[Not checked]** On the owner's iPhone: the slider on Practice (single
+  answer, multi-blank boxes, error correction, sentence writing), its tuck
+  with the boxes, the 6 pt gap on both screens, and the fade now clearing
+  when the slider tucks away.
+
+## 2026-10-12 (Question screen — Practice slider passed; "—" placeholder and tap-a-blank; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §4,
+"Polish after the B3 device check".
+
+- **[Product — owner]** The hint slider on Practice passed the device check
+  on the owner's iPhone (2026-10-12). Two polish items from that test:
+  first-time users will not know "—" means "no article", and a learner
+  should be able to tap a blank to answer it.
+- **[Measured before building]** "Type, or tap — for no article" in an
+  answer box (its text area: the box less 26 pt padding and the 44 pt "—"
+  button): 237 pt at Large, for 273 pt at 375 pt (fits) and 222 pt at
+  320 pt (does not); "Type, or tap — for none" 200 pt. The question's lines
+  are 25–29 pt tall (Small–Large), so a 44 pt tap area reaches about 8 pt
+  into the lines above and below.
+- **[Product — owner] Decisions:** the short placeholder only where the
+  long one does not fit on one line; 44 pt tap areas with overlaps split
+  down the middle (accepted: a tap in those 8 pt bands opens the blank's box
+  instead of closing the keyboard); a test that a tap away from any blank
+  still closes the keyboard.
+- **[Engineering]** `lib/widgets/question_view.dart`:
+  - `_BlankBoxes`: an articles box's placeholder from
+    `_articlesHint`, which measures the long text with the box's real
+    width and the text scaler and falls back to the short one.
+  - `_BlankTapLayer` (new) around the question card's content, for
+    `fill_in_blank` only: after layout it reads each blank's boxes from the
+    question's `RenderParagraph`s (`getBoxesForSelection`, via keys on the
+    main text and the instruction), grows each to 44 × 44 at least around
+    its centre, splits overlaps between two blanks (between lines at the
+    midpoint of their centres' heights, on a line at the midpoint across),
+    and lays tap-only `GestureDetector`s over them; they scroll with the
+    text and are re-read after every build. A tap focuses the blank's box
+    (`focusNodes[i]`), or the single field; the field opens the keyboard
+    and scrolls itself into view. Blanks are numbered across the main text
+    and the instruction in reading order, as the boxes are. The blanks'
+    look is unchanged (coloured on multi-blank Practice, plain elsewhere).
+  - `_QuestionContent.hasScene` / `mainTextOf`: the main-text rule, now
+    shared with the layer.
+- **[Tests]** `flutter analyze` clean; **2,039 passed, 0 failed.** New:
+  `test/blank_tap_test.dart` (14, real font): the placeholder (375 pt
+  Large long; 320 pt Medium long; 320 pt Large short, the box still one
+  line; other topics and the single field "Write your answer…"); a tap on
+  each of four blanks in turn focuses its own box, with the keyboard, the
+  box in view above the Skip/Next bar (375 × 667, Large, keyboard up); the
+  areas at least 44 pt wide and no two blanks' areas overlapping; a single
+  blank's area 44 pt tall; one blank on Practice and on the Daily Test
+  (plain text kept) focuses the single field; no areas on error
+  correction; a tap on the scene's first word, outside every area, still
+  closes the keyboard; a drag that starts on a blank scrolls a long
+  question and focuses nothing; the hint slider still opens and closes, and
+  a blank is still tappable after it. No existing test changed.
+- **[Not checked]** On the owner's iPhone: the placeholder's wording, how
+  the tap areas feel next to the words above and below, the keyboard and
+  scrolling when tapping a blank on a small phone.
+
+## 2026-10-12 (Question screen — tap-a-blank passed; the articles hint in two parts; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §4,
+"Polish after the B3 device check".
+
+- **[Product — owner]** Tap-a-blank passed the device check on the owner's
+  iPhone (2026-10-12). The articles placeholder did not: "Type, or tap —
+  for no article" in italics read as two clauses split by a dash, not as a
+  pointer to the "—" button. New design (owner): a two-part empty-box hint,
+  "Type an article…" on the left in the placeholder style and, quieter,
+  "no article →" on the right against the button ("none →" where it does
+  not fit; the left shortened only if even that does not fit); both go
+  when the box has text or is set to "—"; other boxes keep "Write your
+  answer…".
+- **[Measured]** At 320 / 375 / 390 / 430 pt × Small / Medium / Large,
+  the text room (box less 26 pt padding and the 44 pt button) is 222 /
+  273 / 288 / 328 pt. "Type an article…" is 116 / 126 / 138 pt, "no
+  article →" 65 / 71 / 78, "none →" 39 / 43 / 47 (Small / Medium /
+  Large), with an 8 pt gap. Both full everywhere but 320 pt, Large (2 pt
+  short), where "none →" is used (29 pt spare); the left is never
+  shortened. The table is in the plan.
+- **[Engineering]** `lib/widgets/question_view.dart`: an empty articles box
+  uses `InputDecoration.hint` with `_ArticlesHint`, a baseline row: the
+  left (answer style, `onSurfaceVariant`, one line, ellipsis as a last
+  resort) and the right (bodySmall 600, `onSurfaceVariant`) at the end,
+  next to the button. `_BlankBoxes.articlesHintParts` picks the variant
+  by measuring with the text scaler: full left with "no article →", else
+  with "none →", else a shorter left with "none →". The field fades the
+  hint out while it has text, as any hint; a "no article" box shows
+  "— no article" as before. The single-string placeholder and its
+  fallback are removed.
+- **[Tests]** `flutter analyze` clean; **2,049 passed, 0 failed.**
+  `test/blank_tap_test.dart`: the placeholder group rewritten (the design
+  changed): at each of the 12 width × size cases both boxes show "Type an
+  article…" and the expected right text, the right one ending against the
+  "—" button (within 16 pt), at least 8 pt apart, on one line, the left
+  not cut, the old text gone; both fade out with text and with "—" (the
+  other box keeps its hint) and come back when empty or "—" is turned off;
+  other topics and the single field keep "Write your answer…".
+- **[Not checked]** On the owner's iPhone: whether "no article →" reads as
+  pointing at the "—" button, in both themes.
+
+## 2026-10-12 (Question screen — the two-part articles hint passed; the branch's work closed)
+
+Docs only.
+
+- **[Product — owner]** The two-part articles hint ("Type an article…" …
+  "no article →") passed the device check on the owner's iPhone
+  (2026-10-12). With it, every item of the question screen work is checked
+  on the device: the topic tag, the hint slider (Daily Test and Practice,
+  its keyboard animation, the 56 pt track), the multi-blank boxes,
+  tap-a-blank and the articles hint.
+- **[Docs]** Roadmap: the question screen section marked done, with what
+  shipped on the branch and the open items kept: the proxy rule committed
+  but not deployed until the release that ships the boxes; Skip still
+  sends typed text. Two stale lines corrected there: the slider's keyboard
+  animation was still "awaiting the device check" (it passed, entry "B2
+  keyboard animation passed"), and the B1 wrapped-tag cost is 6.5 pt since
+  the "Your answer" row fix (was 10.5). Plan: a "Final state" section at
+  the top; item 2's "Daily Test only" marked as replaced.
+- **[Not done]** The branch is not merged anywhere and no release carries
+  it yet.
+
+## 2026-10-12 (Question screen — Skip discards what was typed; awaiting the device check)
+
+On branch `question-screen`, before it is merged and shipped as 1.3.0
+(owner, 2026-10-12).
+
+- **[Product — owner]** Closes the roadmap's open item "Skip sends typed
+  text to scoring": Skip discards whatever was typed for the question
+  (every box of a multi-blank question, and any "—" no-article state), and
+  the question counts as skipped everywhere: the scoring payload, the
+  results, saved error entries, the practiced count. Practice and the Daily
+  Test. Back to a skipped question shows empty boxes.
+- **[Found before building]** Both screens wired Skip to the same
+  `_advance` as Next, which leaves the answers map alone. Practice: a
+  typed-then-skipped answer (or a multi-blank question's partly assembled
+  sentence) was scored, saved as a mistake when wrong, and counted as
+  practised. **The Daily Test had the same issue:** it grades locally and
+  treats only an empty answer as skipped (`DailyTestAnswerResult.from`), so
+  typed text was graded, could become a "Needs work" error entry, and
+  counted as answered (a set whose every question was skipped after typing
+  still made a Monthly Climb step).
+- **[Engineering]**
+  - `AnswerDrafts.clear(id)`: every box of the question emptied (with a
+    valid collapsed selection, as a new draft has), every "no article"
+    turned off, its saved scroll offsets dropped.
+  - `PracticeScreen._skip` and `DailyTestScreen._skip`: clear the draft,
+    remove the question's answer, then move on as before (Skip on the last
+    question still submits / finishes). Guarded by `_submitting` /
+    `_finishing`, as Next is. Next is unchanged.
+- **[Tests]** `flutter analyze` clean; **2,055 passed, 0 failed.**
+  - New `test/skip_discards_test.dart` (6, real font): Practice, a single
+    box typed then skipped: an empty answer in the scoring call, no mistake
+    saved for it, practised count 1 of 2, the answered question unaffected;
+    the same with a multi-blank question (text and "—"); Back after Skip
+    shows empty boxes, no "— no article", Next disabled; an answer kept
+    with Next survives Back. Daily Test: typed then skipped is graded as
+    skipped, an answered one is graded; Back after Skip shows an empty
+    field. The first five fail with the old Skip (checked by putting it
+    back for one run).
+  - Changed, because of this change: `topic_hint_card_test` ("changes
+    nothing…") typed an answer and reached the end by Skipping every
+    question, including the answered one; it relied on Skip keeping the
+    text. It now leaves that question with Next. What it tests (the slider
+    changes nothing) is unchanged.
+- **[Docs]** Roadmap: the open item closed (question screen section and
+  backlog); the release set to 1.3.0. Plan: "Final state" records Skip
+  (Q3's "Skip keeps its current behaviour" superseded).
+- **[Not checked]** On the owner's iPhone: typing, Skip, Back on both
+  screens; the results screen showing "Skipped".
+
+## 2026-10-12 (Question screen — Skip fix device check passed)
+
+Docs only.
+
+- **[Product — owner]** Skip discarding what was typed passed the device
+  check on the owner's iPhone (2026-10-12), on Practice and the Daily Test.
+  Every item on `question-screen` is now checked on the device. The branch
+  ships as 1.3.0.

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
+import '../data/topics.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
 import '../services/analytics_service.dart';
@@ -12,6 +13,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/practice_step_footer.dart';
 import '../widgets/question_app_bar.dart';
 import '../widgets/question_view.dart';
+import '../widgets/topic_hint_card.dart';
 import '../utils/debug_tools.dart';
 import 'daily_test_result_screen.dart';
 import '../utils/content_width.dart';
@@ -91,7 +93,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
       setState(() {
         _dailyTestSet = dailyTestSet;
         _drafts?.dispose();
-        _drafts = AnswerDrafts(dailyTestSet.questions.map((q) => q.item.id));
+        _drafts = AnswerDrafts.items(dailyTestSet.questions.map((q) => q.item));
         _loading = false;
       });
     } catch (e) {
@@ -120,16 +122,15 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
   bool get _isLastQuestion =>
       _currentIndex == _dailyTestSet!.questions.length - 1;
 
-  bool get _currentHasAnswer {
-    final question = _dailyTestSet!.questions[_currentIndex];
-    return (_answers[question.item.id] ?? '').trim().isNotEmpty;
-  }
+  bool get _currentHasAnswer =>
+      _drafts!.isComplete(_dailyTestSet!.questions[_currentIndex].item.id);
 
   /// Moves to another question. Local only: grading happens on the result
   /// screen, so nothing is read, scored or counted here.
   void _showQuestion(int index) {
     final questions = _dailyTestSet!.questions;
-    _drafts!.leave(questions[_currentIndex].item.id);
+    _drafts!.leave(questions[_currentIndex].item.id,
+        nextId: questions[index].item.id);
     setState(() => _currentIndex = index);
     _drafts!.restore(questions[index].item.id);
   }
@@ -150,7 +151,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
 
   void _finish() {
     _finishing = true;
-    _drafts?.focusNode.unfocus();
+    _drafts?.unfocus();
     if (widget.onFinished != null) {
       widget.onFinished!(_dailyTestSet!, Map.of(_answers));
       return;
@@ -165,6 +166,17 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         ),
       ),
     );
+  }
+
+  /// Skip discards what was typed for this question, so it is graded as
+  /// skipped (no error entry, and it does not count as answered for the
+  /// climb). Coming back shows it empty.
+  void _skip() {
+    if (_finishing) return;
+    final item = _dailyTestSet!.questions[_currentIndex].item;
+    _drafts!.clear(item.id);
+    setState(() => _answers.remove(item.id));
+    _advance();
   }
 
   Future<void> _confirmExit() async {
@@ -248,7 +260,7 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
                 primaryLabel: _primaryLabel(),
                 primaryEnabled: _currentHasAnswer,
                 onPrimary: _advance,
-                onSkip: _advance,
+                onSkip: _skip,
               ),
           ],
         ),
@@ -297,6 +309,12 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     );
   }
 
+  /// The topic hint slider is offered only on a screen at least
+  /// [TopicHintSlider.minScreenWidth] wide (plan §3); `QuestionView` tucks
+  /// it away while the keyboard is up.
+  bool _showTopicHint(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= TopicHintSlider.minScreenWidth;
+
   Widget _buildQuestion(double hPad) {
     final DailyTestQuestion question = _dailyTestSet!.questions[_currentIndex];
     final item = question.item;
@@ -309,6 +327,8 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
         item: item,
         index: _currentIndex,
         total: _dailyTestSet!.questions.length,
+        topic: topicByName(question.topicId),
+        showTopicHint: _showTopicHint(context),
         drafts: _drafts!,
         horizontalPadding: hPad,
         onChanged: (value) => setState(() => _answers[item.id] = value),

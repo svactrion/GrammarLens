@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../data/topics.dart';
 import '../models/climb_theme.dart';
+import '../models/practice_set.dart';
+import '../services/analytics_service.dart';
+import '../services/claude_service.dart';
+import '../services/storage_service.dart';
+import '../services/subscription_service.dart';
+import '../utils/debug_practice_sets.dart';
 import '../utils/debug_sample_collection.dart';
+import 'ai_consent_screen.dart';
+import 'practice_screen.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/monthly_climb/climb_debug_controls.dart';
 import '../widgets/monthly_climb/climb_debug_day.dart';
@@ -20,17 +29,37 @@ import '../theme.dart';
 ///   and again. No stored record is read or written, no event is sent.
 /// - Sample collection (P6): Profile's shelf shows sample months; memory
 ///   only, nothing stored is read or written, no event is sent.
+/// - Multi-blank practice (question screen B3): opens a fixed practice set
+///   with 2–4 blanks per question ([DebugPracticeSets]). Asks for AI
+///   consent as a real session does; the answers are scored for real
+///   (through the proxy, one call), and the results screen saves its
+///   mistakes and the practice count like any session. Shown only when
+///   Settings hands the panel its services.
 /// - "Reset local data": after a confirmation, the app's whole local
 ///   database goes ([onResetLocalData]) and the app is back at its first
-///   launch. The only action here that touches stored data.
+///   launch.
 class DebugPanelScreen extends StatefulWidget {
   /// Deletes the local data and puts the app back at its first launch.
   final Future<void> Function() onResetLocalData;
 
-  const DebugPanelScreen({super.key, required this.onResetLocalData});
+  /// For the multi-blank practice sets; without them the section is left
+  /// out.
+  final StorageService? storageService;
+  final AnalyticsService? analyticsService;
+  final SubscriptionService? subscriptionService;
+
+  const DebugPanelScreen({
+    super.key,
+    required this.onResetLocalData,
+    this.storageService,
+    this.analyticsService,
+    this.subscriptionService,
+  });
 
   static const resetKey = ValueKey('debug_reset');
   static const sampleCollectionKey = ValueKey('debug_sample_collection');
+  static const multiBlankArticlesKey = ValueKey('debug_multi_blank_articles');
+  static const multiBlankGerundKey = ValueKey('debug_multi_blank_gerund');
   static const celebrateLastMonthKey = ValueKey('debug_celebrate_last_month');
   static const dayRealKey = ValueKey('debug_day_real');
   static const daySliderKey = ValueKey('debug_day_slider');
@@ -91,6 +120,28 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
     final navigator = Navigator.of(context);
     await widget.onResetLocalData();
     if (mounted) navigator.pop();
+  }
+
+  Future<void> _openPractice(PracticeSet set) async {
+    final storage = widget.storageService!;
+    final analytics = widget.analyticsService!;
+    // The answers go to the AI provider at scoring, as in a real session.
+    final mayUseAi = await ensureAiConsent(
+      context: context,
+      storageService: storage,
+      analyticsService: analytics,
+    );
+    if (!mayUseAi || !mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PracticeScreen(
+        topic: topicById(DebugPracticeSets.topicOf(set)),
+        practiceSet: set,
+        claudeService: ClaudeService(),
+        storageService: storage,
+        analyticsService: analytics,
+        subscriptionService: widget.subscriptionService!,
+      ),
+    ));
   }
 
   @override
@@ -201,6 +252,29 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
           value: DebugSampleCollection.runtime,
           onChanged: (on) => setState(() => DebugSampleCollection.runtime = on),
         ),
+        if (widget.storageService != null &&
+            widget.analyticsService != null &&
+            widget.subscriptionService != null) ...[
+          section(
+              'Multi-blank practice',
+              'Fixed sets with 2–4 blanks per question, for the answer '
+                  'boxes. Scored for real through the proxy (one call); the '
+                  'results save their mistakes and the practice count like '
+                  'any session.'),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            OutlinedButton(
+              key: DebugPanelScreen.multiBlankArticlesKey,
+              onPressed: () => _openPractice(DebugPracticeSets.articles),
+              child: const Text('Articles (with "—")'),
+            ),
+            OutlinedButton(
+              key: DebugPanelScreen.multiBlankGerundKey,
+              onPressed: () =>
+                  _openPractice(DebugPracticeSets.gerundVsInfinitive),
+              child: const Text('Gerund vs. Infinitive'),
+            ),
+          ]),
+        ],
         section(
             'Local data',
             'Deletes this app\'s data on this device and starts again at '

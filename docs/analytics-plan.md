@@ -233,7 +233,7 @@ and names and parameters may still change in that file's Batch 6.
 |---|---|---|
 | `theme_id` parameter | String, the id of the month's theme as stored with that month (`green_slope` / `ember_peak` / `glacier_peak` / `red_canyon`; exact ids are set in Batch 2). Added to the existing Monthly Climb events; candidates: E1 `daily_test_completed`, E3 `welcome_badge_earned`, E4 `medal_month_finalized` (for E4, the finalized month's theme, not the current one). E5 `profile_medals_viewed` spans several months and gets none. | Planned (1.1.0), not implemented |
 | ~~Month transition card event(s)~~ | ~~"Card shown" and "`Start climbing` tapped", each with a case parameter.~~ Replaced by M19 (2026-10-02), below. | Replaced |
-| `theme_id` on `mode_selected` (M19) | Only when `mode = daily_test`: the theme of the month the Daily Test is opened in, from Home. `topic` and `premium` keep no extra parameter. The Day-0 test sends no `mode_selected` (§1, gap 2), so it carries none. | Implemented 2026-10-02 (`AnalyticsService.modeSelected(mode, themeId:)`, Home's `_openDailyTest`); not seen in DebugView; not registered |
+| `theme_id` on `mode_selected` (M19) | Only when `mode = daily_test`: the theme of the month the Daily Test is opened in, from Home. `topic` and `premium` keep no extra parameter. The Day-0 test sends no `mode_selected` (§1, gap 2), so it carries none. | Implemented 2026-10-02 (`AnalyticsService.modeSelected(mode, themeId:)`, Home's `_openDailyTest`); not seen in DebugView; registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09) |
 
 #### Month transition (Batch 6, decision M19, owner 2026-10-02) — implemented 2026-10-02, not seen in DebugView
 
@@ -263,6 +263,7 @@ the theme is derived from the date (global calendar). To register after
 the code is merged:
 dimensions `theme_id`, `variant`, `medal_tier`, `near_miss_shown`,
 `trigger`; metric `open_ms` (`method` and `outcome` are registered).
+*(Done: registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09), §9.)*
 
 Why: the monthly themes are a hypothesis about return visits; without
 `theme_id`, a drop in a given month cannot be told apart from that month's
@@ -298,7 +299,8 @@ N21 changes Batch 6's accepted deviation ("`theme_id` only on
 `mode_selected`") for these two events. To register after the merge:
 dimensions `save_point`, `step`; `theme_id`, `tier`, `day_of_month`,
 `days_in_month`, `rule_version` (dimensions) and `active_days` (metric)
-are registered or already planned. No separate events for the
+are registered or already planned. *(Done: `save_point` and `step`
+registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09), §9.)* No separate events for the
 celebration or the label: they follow from these (see "Events
 considered and not proposed").
 
@@ -664,8 +666,7 @@ Built in separate commits on `monthly-climb-v2`:
   `daily_test_completed` has been seen (2026-09-24); a full pass over every
   event is not recorded. Tracked in the TestFlight checklist in
   `docs/roadmap.md` ("What's next" §1).
-- `set_date` (1.1.0, 2026-09-30) is **not registered** as a custom dimension
-  yet (§9); DebugView shows it without registration.
+- `set_date` (1.1.0, 2026-09-30) is registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09) (§9).
 - The custom dimensions and metrics in §9 are registered: 2 user-scoped
   dimensions, 16 event-scoped dimensions and 8 metrics on 2026-09-21 (the
   event-scoped `size` as "New text size"), plus `set_source` and
@@ -706,7 +707,11 @@ Implementation of these decisions: §8.
 **Status: registered.** Everything below was registered on 2026-09-21
 (2 user-scoped dimensions, 16 event-scoped dimensions, 8 metrics; the
 event-scoped `size` under the name "New text size"); `set_source` and
-`consent_version` were registered separately.
+`consent_version` were registered separately. **1.2.0 additions, all
+registered:** `learning_goal` (user, 2026-10-06); `set_date`, `theme_id`,
+`variant`, `medal_tier`, `near_miss_shown`, `trigger`, `save_point`, `step`
+(event) and the metric `open_ms`, registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09). Event-scoped dimensions in
+the console: 26; user-scoped: 3.
 
 Firebase/GA4 reports show an event parameter or user property only after it
 is registered as a custom dimension (categorical/segmenting) or custom metric
@@ -736,7 +741,14 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 | Step earned | `step_earned` | Event | `daily_test_completed` (0/1) |
 | Day 0 | `day0` | Event | `daily_test_completed` (0/1) |
 | Set source | `set_source` | Event | `daily_test_completed` (`bundled` / `generated`, added 2026-09-22; `shared` / `fallback` from 1.1.0, 2026-09-30 — new values of a registered dimension need no re-registration) |
-| Set date | `set_date` | Event | `daily_test_completed` (`YYYY-MM-DD`, one value per day; added 2026-09-30 in 1.1.0). **Not registered yet**: register before the 1.1.0 build ships (owner decision 6, `docs/1.1.0-shared-daily-test.md` §13) |
+| Set date | `set_date` | Event | `daily_test_completed` (`YYYY-MM-DD`, one value per day; added 2026-09-30 in 1.1.0). **Registered 2026-10-04** (confirmed 2026-10-09) |
+| Theme | `theme_id` | Event | `mode_selected` (Daily Test), `month_card_shown`, `month_card_dismissed`, `month_zoom_ended`, `save_point_reached`, `medal_tier_reached` — registered 2026-10-04 |
+| Month card variant | `variant` | Event | `month_card_shown`, `month_card_dismissed` (`summary` / `fresh`) — registered 2026-10-04 |
+| Last month's medal | `medal_tier` | Event | `month_card_shown` (`none`/`bronze`/`silver`/`gold`) — registered 2026-10-04 |
+| Near miss shown | `near_miss_shown` | Event | `month_card_shown` (0/1) — registered 2026-10-04 |
+| Zoom trigger | `trigger` | Event | `month_zoom_ended` (`month_change` / `first_run`) — registered 2026-10-04 |
+| Save point | `save_point` | Event | `save_point_reached` — registered 2026-10-04 |
+| Step | `step` | Event | `save_point_reached` (int) — registered 2026-10-04 |
 | Rule version | `rule_version` | Event | `welcome_badge_earned`, `medal_month_finalized` |
 | Day of month | `day_of_month` | Event | `welcome_badge_earned` |
 | Days in month | `days_in_month` | Event | `welcome_badge_earned`, `medal_month_finalized` |
@@ -765,6 +777,7 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 | Finalized months | `finalized_months` | Event | Standard | `profile_medals_viewed` |
 | Medals earned | `medals_earned` | Event | Standard | `profile_medals_viewed` |
 | Question count | `question_count` | Event | Standard | `practice_completed` (existing) |
+| Month card open time | `open_ms` | Event | Milliseconds | `month_card_dismissed` — registered (confirmed 2026-10-09) |
 
 Events themselves (`daily_test_completed`, `welcome_badge_earned`,
 `medal_month_finalized`, `profile_medals_viewed`, `text_size_changed`,
