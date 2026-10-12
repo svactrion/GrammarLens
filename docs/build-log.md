@@ -12426,3 +12426,12 @@ On branch `question-screen`, before it is merged and shipped as 1.3.0
   (Q3's "Skip keeps its current behaviour" superseded).
 - **[Not checked]** On the owner's iPhone: typing, Skip, Back on both
   screens; the results screen showing "Skipped".
+
+## 2026-10-12 (Question screen — Skip fix device check passed)
+
+Docs only.
+
+- **[Product — owner]** Skip discarding what was typed passed the device
+  check on the owner's iPhone (2026-10-12), on Practice and the Daily Test.
+  Every item on `question-screen` is now checked on the device. The branch
+  ships as 1.3.0.

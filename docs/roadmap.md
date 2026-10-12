@@ -413,7 +413,7 @@ Branched from `1.2.0`; **not in 1.2.0**; to be merged and shipped as
 - ~~**Skip sends typed text**~~ **Fixed on the branch (2026-10-12):** Skip
   now discards what was typed (every box and any "no article"), so the
   question counts as skipped everywhere, on Practice and the Daily Test
-  (build log). Awaiting the device check.
+  (build log). **Device check passed** (owner, iPhone, 2026-10-12).
 - **Release:** 1.3.0 (owner, 2026-10-12); the proxy rule deploys with it.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
