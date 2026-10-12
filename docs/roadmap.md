@@ -372,8 +372,8 @@ carried over now.
 ### Question screen improvements (branch `question-screen`) — owner decisions 2026-10-12
 
 **Done (2026-10-12): built, tested and checked on the owner's iPhone.**
-Branched from `1.2.0`; **not in 1.2.0**, release not set; not merged into
-any release branch. Plan, measurements, decisions and the final state:
+Branched from `1.2.0`; **not in 1.2.0**; to be merged and shipped as
+**1.3.0** (owner, 2026-10-12), not merged yet. Plan, measurements, decisions and the final state:
 `docs/question-screen-plan.md`; history: build log, 2026-10-12 entries.
 
 - **Topic tag** (Daily Test + Practice): the question's topic as a neutral
@@ -410,10 +410,11 @@ any release branch. Plan, measurements, decisions and the final state:
   generation prompt): committed and tested, **not deployed**. It deploys
   only together with the app release that ships the multi-blank boxes
   (Q4). Until then a live practice set rarely has more than one blank.
-- **Skip sends typed text:** Skip does not clear what was typed, so a
-  typed-then-skipped answer (a single box, or a partly filled multi-blank
-  answer) is still scored (backlog, "Open item").
-- **Release:** which version carries this work is not decided.
+- ~~**Skip sends typed text**~~ **Fixed on the branch (2026-10-12):** Skip
+  now discards what was typed (every box and any "no article"), so the
+  question counts as skipped everywhere, on Practice and the Daily Test
+  (build log). Awaiting the device check.
+- **Release:** 1.3.0 (owner, 2026-10-12); the proxy rule deploys with it.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
 
@@ -3329,10 +3330,10 @@ there.~~
 - Accounts + cloud sync (out of scope for MVP by design)
 - Custom loading animations
 - Turkish UI option (currently English-only interface)
-- **Open item (owner, 2026-10-12): Skip does not clear typed text.** Skip
-  only moves on, so a typed-then-skipped answer (a single box today, a
-  partly filled multi-blank answer after the question screen's B3) is still
-  sent to scoring and graded. Not fixed in the question screen work.
+- ~~**Open item (owner, 2026-10-12): Skip does not clear typed text.**~~
+  **Fixed on `question-screen` (2026-10-12)**, before its merge as 1.3.0:
+  Skip discards what was typed, on Practice and the Daily Test (build
+  log).
 
 ---
 

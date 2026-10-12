@@ -12377,3 +12377,52 @@ Docs only.
   the top; item 2's "Daily Test only" marked as replaced.
 - **[Not done]** The branch is not merged anywhere and no release carries
   it yet.
+
+## 2026-10-12 (Question screen — Skip discards what was typed; awaiting the device check)
+
+On branch `question-screen`, before it is merged and shipped as 1.3.0
+(owner, 2026-10-12).
+
+- **[Product — owner]** Closes the roadmap's open item "Skip sends typed
+  text to scoring": Skip discards whatever was typed for the question
+  (every box of a multi-blank question, and any "—" no-article state), and
+  the question counts as skipped everywhere: the scoring payload, the
+  results, saved error entries, the practiced count. Practice and the Daily
+  Test. Back to a skipped question shows empty boxes.
+- **[Found before building]** Both screens wired Skip to the same
+  `_advance` as Next, which leaves the answers map alone. Practice: a
+  typed-then-skipped answer (or a multi-blank question's partly assembled
+  sentence) was scored, saved as a mistake when wrong, and counted as
+  practised. **The Daily Test had the same issue:** it grades locally and
+  treats only an empty answer as skipped (`DailyTestAnswerResult.from`), so
+  typed text was graded, could become a "Needs work" error entry, and
+  counted as answered (a set whose every question was skipped after typing
+  still made a Monthly Climb step).
+- **[Engineering]**
+  - `AnswerDrafts.clear(id)`: every box of the question emptied (with a
+    valid collapsed selection, as a new draft has), every "no article"
+    turned off, its saved scroll offsets dropped.
+  - `PracticeScreen._skip` and `DailyTestScreen._skip`: clear the draft,
+    remove the question's answer, then move on as before (Skip on the last
+    question still submits / finishes). Guarded by `_submitting` /
+    `_finishing`, as Next is. Next is unchanged.
+- **[Tests]** `flutter analyze` clean; **2,055 passed, 0 failed.**
+  - New `test/skip_discards_test.dart` (6, real font): Practice, a single
+    box typed then skipped: an empty answer in the scoring call, no mistake
+    saved for it, practised count 1 of 2, the answered question unaffected;
+    the same with a multi-blank question (text and "—"); Back after Skip
+    shows empty boxes, no "— no article", Next disabled; an answer kept
+    with Next survives Back. Daily Test: typed then skipped is graded as
+    skipped, an answered one is graded; Back after Skip shows an empty
+    field. The first five fail with the old Skip (checked by putting it
+    back for one run).
+  - Changed, because of this change: `topic_hint_card_test` ("changes
+    nothing…") typed an answer and reached the end by Skipping every
+    question, including the answered one; it relied on Skip keeping the
+    text. It now leaves that question with Next. What it tests (the slider
+    changes nothing) is unchanged.
+- **[Docs]** Roadmap: the open item closed (question screen section and
+  backlog); the release set to 1.3.0. Plan: "Final state" records Skip
+  (Q3's "Skip keeps its current behaviour" superseded).
+- **[Not checked]** On the owner's iPhone: typing, Skip, Back on both
+  screens; the results screen showing "Skipped".

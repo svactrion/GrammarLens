@@ -27,9 +27,12 @@ original decision and mark what replaced it. In short:
 - **Also fixed:** the "Your answer" row's 4 pt jump on focus; the stale
   "more below" fade after the slider tucks away; the keyboard dropping
   across Next/Back between questions with different box counts.
-- **Open, outside this work:** the proxy rule ("at most 4 blanks", §6) is
-  committed but **not deployed** until the release that ships the boxes;
-  Skip still sends typed text to scoring (roadmap backlog).
+- **Skip (added 2026-10-12, before the merge as 1.3.0):** Skip discards
+  what was typed for the question (every box, any "no article"); it counts
+  as skipped everywhere, on Practice and the Daily Test, and Back shows it
+  empty. (Q3's "Skip keeps its current behaviour" is superseded.)
+- **Open:** the proxy rule ("at most 4 blanks", §6) is committed but **not
+  deployed** until 1.3.0 ships the boxes.
 
 ## 0. The three items (owner decisions)
 
