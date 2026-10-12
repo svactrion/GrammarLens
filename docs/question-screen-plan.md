@@ -7,6 +7,30 @@ with those decisions folded in, so later sessions can work from it.
 
 Status per batch is kept in the build log and the roadmap, not here.
 
+## Final state (2026-10-12): done
+
+All three items are built, tested and checked on the owner's iPhone. Where
+the design changed after a device check, the sections below keep the
+original decision and mark what replaced it. In short:
+
+- **Topic tag (§2):** as planned. Daily Test and Practice.
+- **Topic hint (§3):** a 56 pt "slide to unlock" slider between the
+  question card and "Your answer", the card opening inline below it; on
+  the Daily Test **and Practice** (the set's topic). It tucks under the
+  question card while any answer box has focus; none below 375 pt. The
+  original handle-and-overlay design, Q2 and Q5 are superseded (§3,
+  "History"). Final fit table in §3.
+- **Multi-blank boxes (§4):** as planned, plus, after the device check: a
+  two-part hint on articles boxes ("Type an article…" … "no article →"),
+  and a tap on any blank (multi or single, Practice and Daily Test) opens
+  its box. Debug-only fixed sets reach the boxes on a device.
+- **Also fixed:** the "Your answer" row's 4 pt jump on focus; the stale
+  "more below" fade after the slider tucks away; the keyboard dropping
+  across Next/Back between questions with different box counts.
+- **Open, outside this work:** the proxy rule ("at most 4 blanks", §6) is
+  committed but **not deployed** until the release that ships the boxes;
+  Skip still sends typed text to scoring (roadmap backlog).
+
 ## 0. The three items (owner decisions)
 
 1. **Topic tag** (Daily Test + Practice): each question's topic as a small
@@ -14,7 +38,9 @@ Status per batch is kept in the build log and the roadmap, not here.
    UI only. The "N / total" badge stays on the right. A long title wraps to
    the next line; the type label is never cut. Neutral colour: not the
    correct/incorrect semantic colours, not the blank colours of item 3.
-2. **Topic hint card** (Daily Test only): a fixed card per topic, written
+2. **Topic hint card** (Daily Test only; *on Practice too from
+   2026-10-12, and revealed by a slider, see Final state*): a fixed card
+   per topic, written
    once and bundled (no AI, no proxy change, works offline). Using it has no
    effect at all: no score, Monthly Climb, analytics or state change. The
    per-question `hint` (e.g. "(eat)") stays exactly as today. The card is

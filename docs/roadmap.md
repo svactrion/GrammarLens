@@ -371,47 +371,49 @@ carried over now.
 
 ### Question screen improvements (branch `question-screen`) — owner decisions 2026-10-12
 
-Branched from `1.2.0`; **not in 1.2.0**, release not set. Plan, measurements
-and decisions: `docs/question-screen-plan.md`. Batches B1 → B2 → B3, each
-checked on the owner's iPhone before the next.
+**Done (2026-10-12): built, tested and checked on the owner's iPhone.**
+Branched from `1.2.0`; **not in 1.2.0**, release not set; not merged into
+any release branch. Plan, measurements, decisions and the final state:
+`docs/question-screen-plan.md`; history: build log, 2026-10-12 entries.
 
-- **B1 — topic tag** (Daily Test + Practice): built and tested 2026-10-12
-  (build log); **device check passed** (owner, iPhone, 2026-10-12: the
-  tags look good on both screens). Accepted cost: a tag that
-  wraps adds a line to the card (at 390 × 844, Medium, keyboard up, the
-  short rewrite example under "Gerund vs. Infinitive" now has 10.5 pt in
-  its card's scroll).
-- **B2 — topic hint card** (Daily Test only): first build failed the
-  owner's device check on design (2026-10-12: the lightbulb handle did not
-  read as draggable; the card covered the question). **Reworked the same
-  day** as a "slide to unlock" slider between the question card and "Your
-  answer", the card opening inline below it; hidden while the keyboard is
-  up; **device check passed** (owner, iPhone, 2026-10-12: "I like the
-  slider"). Polish after it: the slider tucks under the question card with
-  the keyboard instead of disappearing at once; built and tested,
-  **awaiting the device check**. Known
-  limit: no slider on screens narrower than 375 pt (first-gen iPhone SE,
-  SE 2/3 with Display Zoom).
-- **Hint slider on Practice too** (owner, 2026-10-12): the same slider and
-  cards (the set's topic), 375 pt and wider, tucked away while any answer
-  box has focus; the gap above it 8 → 6 pt on both screens. **Device
-  check passed** (owner, iPhone, 2026-10-12).
-- **Polish after the B3 device check** (owner, 2026-10-12): a tap on a
-  blank opens its box (Practice and the Daily Test): **device check
-  passed** (owner, iPhone, 2026-10-12). The articles boxes' placeholder
-  failed it and was replaced by a two-part hint ("Type an article…" …
-  "no article →" pointing at "—"): built and tested, **awaiting the device
-  check**.
-- **B3 — multi-blank answer boxes** (Practice `fill_in_blank`): built
-  and tested 2026-10-12 (build log); **device check passed** (owner,
-  iPhone, 2026-10-12, through Settings → Debug → "Multi-blank practice",
-  fixed 2–4-blank sets, debug and profile builds only). With
-  it, its own commit: the "Your answer" row no longer grows 44 → 48 pt
-  when the answer takes focus (found in B2).
+- **Topic tag** (Daily Test + Practice): the question's topic as a neutral
+  chip after the type label; wraps to a second line, never cut. Device
+  check passed. Accepted cost: a wrapped tag adds a line to the card (at
+  390 × 844, Medium, keyboard up, the rewrite example under "Gerund vs.
+  Infinitive" has 6.5 pt in its card's scroll).
+- **Topic hint slider and card** (Daily Test and Practice): a "slide to
+  unlock" slider (56 pt) between the question card and "Your answer"; the
+  card opens inline in proportion, springs closed on release, long-press
+  shows it; tucks under the question card while any answer box has focus;
+  no effect on scoring or state. The first design (a lightbulb handle
+  revealing an overlay) failed the device check and was replaced. Device
+  checks passed: the slider, its keyboard animation, the 56 pt track, the
+  slider on Practice. Known limit: no slider below 375 pt (first-gen iPhone
+  SE; SE 2/3 with Display Zoom). Fit rule: the hint text is never cut off
+  (tightest: 375 × 667, Large, a realistic question: 3 pt on the Daily
+  Test, 1 pt on Practice).
+- **Multi-blank answer boxes** (Practice `fill_in_blank`, 2–4 blanks): one
+  colour-linked box per blank; on articles a "—" (no article) button and a
+  two-part hint ("Type an article…" … "no article →"); Next only when every
+  box is filled or "—"; the completed sentence goes to scoring. A tap on a
+  blank opens its box (also single blanks, Practice and Daily Test).
+  Device checks passed, through Settings → Debug → "Multi-blank practice"
+  (debug and profile builds only).
+- **Fixes found on the way:** the "Your answer" row no longer grows 44 →
+  48 pt on focus; the question's "more below" fade clears when the slider
+  tucks away; the keyboard stays up across Next/Back between questions with
+  different box counts.
+
+**Open (not part of this work):**
+
 - **Proxy rule "A fill_in_blank item has at most 4 blanks."** (practice
-  generation prompt): built and tested in B3 as its own commit
-  (2026-10-12), **not deployed**: it deploys only together with the app
-  release that ships multi-blank boxes (Q4).
+  generation prompt): committed and tested, **not deployed**. It deploys
+  only together with the app release that ships the multi-blank boxes
+  (Q4). Until then a live practice set rarely has more than one blank.
+- **Skip sends typed text:** Skip does not clear what was typed, so a
+  typed-then-skipped answer (a single box, or a partly filled multi-blank
+  answer) is still scored (backlog, "Open item").
+- **Release:** which version carries this work is not decided.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
 

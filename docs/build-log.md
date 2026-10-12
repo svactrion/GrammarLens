@@ -12356,3 +12356,24 @@ On branch `question-screen`. Plan: `docs/question-screen-plan.md` §4,
   other topics and the single field keep "Write your answer…".
 - **[Not checked]** On the owner's iPhone: whether "no article →" reads as
   pointing at the "—" button, in both themes.
+
+## 2026-10-12 (Question screen — the two-part articles hint passed; the branch's work closed)
+
+Docs only.
+
+- **[Product — owner]** The two-part articles hint ("Type an article…" …
+  "no article →") passed the device check on the owner's iPhone
+  (2026-10-12). With it, every item of the question screen work is checked
+  on the device: the topic tag, the hint slider (Daily Test and Practice,
+  its keyboard animation, the 56 pt track), the multi-blank boxes,
+  tap-a-blank and the articles hint.
+- **[Docs]** Roadmap: the question screen section marked done, with what
+  shipped on the branch and the open items kept: the proxy rule committed
+  but not deployed until the release that ships the boxes; Skip still
+  sends typed text. Two stale lines corrected there: the slider's keyboard
+  animation was still "awaiting the device check" (it passed, entry "B2
+  keyboard animation passed"), and the B1 wrapped-tag cost is 6.5 pt since
+  the "Your answer" row fix (was 10.5). Plan: a "Final state" section at
+  the top; item 2's "Daily Test only" marked as replaced.
+- **[Not done]** The branch is not merged anywhere and no release carries
+  it yet.
