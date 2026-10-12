@@ -396,9 +396,11 @@ checked on the owner's iPhone before the next.
   cards (the set's topic), 375 pt and wider, tucked away while any answer
   box has focus; the gap above it 8 → 6 pt on both screens. **Device
   check passed** (owner, iPhone, 2026-10-12).
-- **Polish after the B3 device check** (owner, 2026-10-12): the articles
-  boxes' placeholder names "—"; a tap on a blank opens its box (Practice
-  and the Daily Test). Built and tested (build log), **awaiting the device
+- **Polish after the B3 device check** (owner, 2026-10-12): a tap on a
+  blank opens its box (Practice and the Daily Test): **device check
+  passed** (owner, iPhone, 2026-10-12). The articles boxes' placeholder
+  failed it and was replaced by a two-part hint ("Type an article…" …
+  "no article →" pointing at "—"): built and tested, **awaiting the device
   check**.
 - **B3 — multi-blank answer boxes** (Practice `fill_in_blank`): built
   and tested 2026-10-12 (build log); **device check passed** (owner,

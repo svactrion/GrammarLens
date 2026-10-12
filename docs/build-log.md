@@ -12314,3 +12314,45 @@ On branch `question-screen`. Plan: `docs/question-screen-plan.md` §4,
 - **[Not checked]** On the owner's iPhone: the placeholder's wording, how
   the tap areas feel next to the words above and below, the keyboard and
   scrolling when tapping a blank on a small phone.
+
+## 2026-10-12 (Question screen — tap-a-blank passed; the articles hint in two parts; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §4,
+"Polish after the B3 device check".
+
+- **[Product — owner]** Tap-a-blank passed the device check on the owner's
+  iPhone (2026-10-12). The articles placeholder did not: "Type, or tap —
+  for no article" in italics read as two clauses split by a dash, not as a
+  pointer to the "—" button. New design (owner): a two-part empty-box hint,
+  "Type an article…" on the left in the placeholder style and, quieter,
+  "no article →" on the right against the button ("none →" where it does
+  not fit; the left shortened only if even that does not fit); both go
+  when the box has text or is set to "—"; other boxes keep "Write your
+  answer…".
+- **[Measured]** At 320 / 375 / 390 / 430 pt × Small / Medium / Large,
+  the text room (box less 26 pt padding and the 44 pt button) is 222 /
+  273 / 288 / 328 pt. "Type an article…" is 116 / 126 / 138 pt, "no
+  article →" 65 / 71 / 78, "none →" 39 / 43 / 47 (Small / Medium /
+  Large), with an 8 pt gap. Both full everywhere but 320 pt, Large (2 pt
+  short), where "none →" is used (29 pt spare); the left is never
+  shortened. The table is in the plan.
+- **[Engineering]** `lib/widgets/question_view.dart`: an empty articles box
+  uses `InputDecoration.hint` with `_ArticlesHint`, a baseline row: the
+  left (answer style, `onSurfaceVariant`, one line, ellipsis as a last
+  resort) and the right (bodySmall 600, `onSurfaceVariant`) at the end,
+  next to the button. `_BlankBoxes.articlesHintParts` picks the variant
+  by measuring with the text scaler: full left with "no article →", else
+  with "none →", else a shorter left with "none →". The field fades the
+  hint out while it has text, as any hint; a "no article" box shows
+  "— no article" as before. The single-string placeholder and its
+  fallback are removed.
+- **[Tests]** `flutter analyze` clean; **2,049 passed, 0 failed.**
+  `test/blank_tap_test.dart`: the placeholder group rewritten (the design
+  changed): at each of the 12 width × size cases both boxes show "Type an
+  article…" and the expected right text, the right one ending against the
+  "—" button (within 16 pt), at least 8 pt apart, on one line, the left
+  not cut, the old text gone; both fade out with text and with "—" (the
+  other box keeps its hint) and come back when empty or "—" is turned off;
+  other topics and the single field keep "Write your answer…".
+- **[Not checked]** On the owner's iPhone: whether "no article →" reads as
+  pointing at the "—" button, in both themes.

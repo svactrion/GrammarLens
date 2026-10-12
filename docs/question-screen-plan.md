@@ -360,10 +360,25 @@ Skip, Q3) an empty box stays `____`.
 
 **Polish after the B3 device check (owner, 2026-10-12).**
 
-- *Placeholder:* an articles box (one with "—") says "Type, or tap — for no
-  article"; where that does not fit on one line (measured: only 320 pt at
-  Large, 237 pt of text for 222 pt) it says "Type, or tap — for none".
-  Other boxes, and a single answer field, keep "Write your answer…".
+- *Placeholder (revised after the owner's device check, 2026-10-12):* the
+  first version, "Type, or tap — for no article" in italics, read as two
+  clauses split by a dash, not as a pointer to the "—" button. An empty
+  articles box now shows two hints: "Type an article…" on the left in the
+  placeholder style, and "no article →" on the right, quieter (bodySmall
+  600), against the "—" button so the arrow points at it. Chosen by
+  measured width (the box less 26 pt padding and the 44 pt button):
+  "none →" where "no article →" does not fit with the full left; a shorter
+  left ("An article…", "Article…") only if even "none →" does not fit.
+  Both fade out when the box has text or is set to "—". Other boxes, and a
+  single answer field, keep "Write your answer…". Measured (spare pt with
+  the variant shown):
+
+  | Width (room) | Small | Medium | Large |
+  |---|---|---|---|
+  | 320 pt (222) | both full, 33 | both full, 17 | "Type an article…" + "none →", 29 |
+  | 375 pt (273) | both full, 84 | both full, 67 | both full, 49 |
+  | 390 pt (288) | both full, 99 | both full, 82 | both full, 64 |
+  | 430 pt (328) | both full, 139 | both full, 122 | both full, 104 |
 - *Tap a blank:* a tap on a blank in the question puts the keyboard in its
   box (the single field for one blank; Practice and the Daily Test, whose
   blanks keep their plain look). Each blank's tap area is its box on its
