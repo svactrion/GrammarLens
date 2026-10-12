@@ -358,6 +358,22 @@ Skip, Q3) an empty box stays `____`.
   promised to quit by May."`
 - `____ water is essential.` + [—] → `Water is essential.`
 
+**Polish after the B3 device check (owner, 2026-10-12).**
+
+- *Placeholder:* an articles box (one with "—") says "Type, or tap — for no
+  article"; where that does not fit on one line (measured: only 320 pt at
+  Large, 237 pt of text for 222 pt) it says "Type, or tap — for none".
+  Other boxes, and a single answer field, keep "Write your answer…".
+- *Tap a blank:* a tap on a blank in the question puts the keyboard in its
+  box (the single field for one blank; Practice and the Daily Test, whose
+  blanks keep their plain look). Each blank's tap area is its box on its
+  line grown to 44 pt tall and at least 44 pt wide, about 8 pt into the
+  lines above and below; overlaps between two blanks' areas are split down
+  the middle. Taps only: a drag on a blank still scrolls the question, and
+  a tap elsewhere in the text still closes the keyboard. Accepted: a tap in
+  those 8 pt bands now opens the blank's box instead of closing the
+  keyboard. Not on error correction or sentence writing.
+
 ## 5. What is stored after an answer
 
 `ErrorEntry.userAnswer` gets `_answers[id]`, the completed sentence for a

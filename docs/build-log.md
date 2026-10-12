@@ -12259,3 +12259,58 @@ On branch `question-screen`. Plan: `docs/question-screen-plan.md` §3.
   answer, multi-blank boxes, error correction, sentence writing), its tuck
   with the boxes, the 6 pt gap on both screens, and the fade now clearing
   when the slider tucks away.
+
+## 2026-10-12 (Question screen — Practice slider passed; "—" placeholder and tap-a-blank; awaiting the device check)
+
+On branch `question-screen`. Plan: `docs/question-screen-plan.md` §4,
+"Polish after the B3 device check".
+
+- **[Product — owner]** The hint slider on Practice passed the device check
+  on the owner's iPhone (2026-10-12). Two polish items from that test:
+  first-time users will not know "—" means "no article", and a learner
+  should be able to tap a blank to answer it.
+- **[Measured before building]** "Type, or tap — for no article" in an
+  answer box (its text area: the box less 26 pt padding and the 44 pt "—"
+  button): 237 pt at Large, for 273 pt at 375 pt (fits) and 222 pt at
+  320 pt (does not); "Type, or tap — for none" 200 pt. The question's lines
+  are 25–29 pt tall (Small–Large), so a 44 pt tap area reaches about 8 pt
+  into the lines above and below.
+- **[Product — owner] Decisions:** the short placeholder only where the
+  long one does not fit on one line; 44 pt tap areas with overlaps split
+  down the middle (accepted: a tap in those 8 pt bands opens the blank's box
+  instead of closing the keyboard); a test that a tap away from any blank
+  still closes the keyboard.
+- **[Engineering]** `lib/widgets/question_view.dart`:
+  - `_BlankBoxes`: an articles box's placeholder from
+    `_articlesHint`, which measures the long text with the box's real
+    width and the text scaler and falls back to the short one.
+  - `_BlankTapLayer` (new) around the question card's content, for
+    `fill_in_blank` only: after layout it reads each blank's boxes from the
+    question's `RenderParagraph`s (`getBoxesForSelection`, via keys on the
+    main text and the instruction), grows each to 44 × 44 at least around
+    its centre, splits overlaps between two blanks (between lines at the
+    midpoint of their centres' heights, on a line at the midpoint across),
+    and lays tap-only `GestureDetector`s over them; they scroll with the
+    text and are re-read after every build. A tap focuses the blank's box
+    (`focusNodes[i]`), or the single field; the field opens the keyboard
+    and scrolls itself into view. Blanks are numbered across the main text
+    and the instruction in reading order, as the boxes are. The blanks'
+    look is unchanged (coloured on multi-blank Practice, plain elsewhere).
+  - `_QuestionContent.hasScene` / `mainTextOf`: the main-text rule, now
+    shared with the layer.
+- **[Tests]** `flutter analyze` clean; **2,039 passed, 0 failed.** New:
+  `test/blank_tap_test.dart` (14, real font): the placeholder (375 pt
+  Large long; 320 pt Medium long; 320 pt Large short, the box still one
+  line; other topics and the single field "Write your answer…"); a tap on
+  each of four blanks in turn focuses its own box, with the keyboard, the
+  box in view above the Skip/Next bar (375 × 667, Large, keyboard up); the
+  areas at least 44 pt wide and no two blanks' areas overlapping; a single
+  blank's area 44 pt tall; one blank on Practice and on the Daily Test
+  (plain text kept) focuses the single field; no areas on error
+  correction; a tap on the scene's first word, outside every area, still
+  closes the keyboard; a drag that starts on a blank scrolls a long
+  question and focuses nothing; the hint slider still opens and closes, and
+  a blank is still tappable after it. No existing test changed.
+- **[Not checked]** On the owner's iPhone: the placeholder's wording, how
+  the tap areas feel next to the words above and below, the keyboard and
+  scrolling when tapping a blank on a small phone.
