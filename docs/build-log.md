@@ -12519,4 +12519,29 @@ Docs only here. The deploy and the branch deletions were done by the owner.
 - **[Open]** README, outside the status line and the version table: the
   shared Daily Test's cost line still says "1.0.0 devices keep their
   per-device cost until they update", and the known-flaw section still
-  says "1.1.0 ships with it" and "the first job after 1.1.0".
+  says "1.1.0 ships with it" and "the first job after 1.1.0". *(Closed the
+  same day: next entry.)*
+
+## 2026-10-16 (README's cost and known-flaw lines; the 1.3.0 screenshot item ticked)
+
+Docs only.
+
+- **[Docs]** README, the two lines left open above: the shared Daily
+  Test's cost line now says 1.0.0 will never be released, so no released
+  app generates per device, and 1.3.0 carries the shared Daily Test from
+  the never-submitted 1.1.0. The known flaw: 1.3.0, the first public
+  release, ships with it; fixing the live sets (P14) is the first job
+  after 1.3.0. The rest of both paragraphs unchanged.
+- **[Docs]** Roadmap: the 1.3.0 checklist's App Store screenshots item
+  ticked. The new 1.3.0 set from build 6 is in `screenshots/1.3.0/`
+  (commit `15195af`): iPhone 6.3" and 6.9" (8 each) and iPad 13" (6), with
+  the question screen in 02, 04 and 08; slots and captions in
+  `screenshots/1.3.0/README.md`.
+- **[Open]**
+  - `screenshots/1.2.0/marketing/` stays untracked; it goes into the
+    planned repo cleanup (owner).
+  - The README's images are still the 1.2.0 set (its status line says
+    so).
+  - The roadmap still calls P14 "the first job after 1.1.0" (the 1.1.0
+    release candidate section and "Known flaws"); the README now says
+    after 1.3.0.

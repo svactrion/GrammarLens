@@ -282,10 +282,16 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   `npm test` and `npm run typecheck` passed. Worker version
   `6ad41711-04ed-4867-bb11-3a3e2ede53c5`. Proxy deploys from `main` no
   longer wait for 1.3.0 (build log, 2026-10-16).
-- [ ] **App Store screenshots:** the 1.2.0 set's question frame (03, "to
+- [x] **App Store screenshots:** the 1.2.0 set's question frame (03, "to
   eat" typed, keyboard up) predates the topic tag; decide whether to
   recapture it (and the README / case-study images made from it) for
   1.3.0. The other frames are unchanged by the question screen work.
+  *(Done (owner, recorded 2026-10-16): a new 1.3.0 App Store set from
+  build 6 in `screenshots/1.3.0/` (commit `15195af`): iPhone 6.3" and
+  6.9" (8 frames each) and iPad 13" (6), with the question screen in 02
+  (hint), 04 (question) and 08 (multi-blank, iPhone only); slots, order
+  and captions in `screenshots/1.3.0/README.md`. The README's images are
+  still the 1.2.0 set.)*
 - [ ] **Carried over from 1.2.0 (open there):** the privacy policy's
   learning-goal wording; App Store Connect uploads of the screenshots and
   the subscription review screenshots.

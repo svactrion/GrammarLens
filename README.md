@@ -29,7 +29,7 @@
 **1. One shared Daily Test a day instead of one per device**
 - **Problem:** 1.0.0 generates a set per device per day, ≈ $0.023–0.028 each (measured tokens, 10 local runs). Daily Test cost grows with every active user.
 - **Decision:** 1.1.0 generates one set per date on the server and serves it to everyone; grading stays on the device; a bundled pool of 7 sets covers a failed read.
-- **Cost:** a bad set now reaches every user at once (the owner found 4 of 10 questions defective in the first two published sets); a scheduled job and a fallback to maintain; 1.0.0 devices keep their per-device cost until they update.
+- **Cost:** a bad set now reaches every user at once (the owner found 4 of 10 questions defective in the first two published sets); a scheduled job and a fallback to maintain. 1.0.0 will never be released, so no released app generates per device: 1.3.0, the first public release, carries the shared Daily Test from the never-submitted 1.1.0.
 - **Result so far:** ≈ $0.019 per set (measured, 3 runs), ≈ $0.57 a month at any user count (estimate). Not yet measured with real users.
 - **Evidence:** [shared Daily Test report](docs/1.1.0-shared-daily-test.md) §0, §1; [quality report](docs/1.1.0-shared-daily-test-quality.md) §0, §16.7; [build log](docs/build-log.md) 2026-09-26.
 
@@ -42,7 +42,7 @@
 **3. Known flaw, not fixed: right answers graded as wrong**
 - **Problem:** answers are graded by plain text matching. In the owner's review of 35 live questions, 6 had a right or defensible answer marked "Needs work", and it goes into the error profile. Contractions (`'m` / `am`) and spelling variants (`neighbourhood` / `neighborhood`) are not normalized.
 - **Done so far:** the fallback pool carries 10 owner corrections. The live daily sets do not; the second-model check that would add accepted answers was deferred past 1.1.0.
-- **Cost:** 1.1.0 ships with it. Fixing the live sets (P14) is the first job after 1.1.0, on the server side.
+- **Cost:** 1.3.0, the first public release, ships with it (it carries the never-submitted 1.1.0's shared Daily Test). Fixing the live sets (P14) is the first job after 1.3.0, on the server side.
 - **Evidence:** [roadmap](docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](docs/build-log.md) 2026-10-04 (P12–P14).
 
 ## How it was built
