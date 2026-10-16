@@ -12570,3 +12570,25 @@ Docs only.
   - The planned repo cleanup (owner): `screenshots/1.2.0/marketing/`
     (untracked) and the README's images, still the 1.2.0 set.
   - The privacy policy's learning-goal wording (1.3.0 checklist).
+    *(Closed the same day: next entry.)*
+
+## 2026-10-16 (Site: privacy policy's learning-goal wording and support answers live)
+
+Docs only here. The site work was done by the owner in the site
+repository.
+
+- **[Product — owner]** The privacy policy's learning-goal wording is live
+  on the site, "Last updated" 16 October 2026 (site commits `e87b2f2`,
+  `de5aa31`, `7e8ae6c`). The support page's deletion and Restore answers
+  were updated too.
+- **[Docs]** Roadmap: the 1.3.0 checklist's "Carried over from 1.2.0"
+  privacy policy item and the 1.2.0 checklist's "Privacy policy" item
+  ticked. The live text is not compared here with the wording proposed in
+  the 1.2.0 item.
+- **[Open]**
+  - The planned repo cleanup (owner): `screenshots/1.2.0/marketing/`
+    (untracked) and the README's images, still the 1.2.0 set.
+  - The 1.2.0 checklist's other privacy item, "Privacy policy wording"
+    (the app says "practice sessions" send answers to Anthropic; check the
+    policy says the same), is still open and is not on the 1.3.0
+    checklist.

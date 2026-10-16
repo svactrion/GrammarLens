@@ -298,8 +298,10 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   2026-10-16): the 1.3.0 screenshots (`screenshots/1.3.0/store/`) and both
   subscription review screenshots uploaded; they are in the 1.3.0
   submission.
-- [ ] **Carried over from 1.2.0 (open there):** the privacy policy's
-  learning-goal wording. *(Split from the uploads item above, 2026-10-16.)*
+- [x] **Carried over from 1.2.0:** the privacy policy's learning-goal
+  wording. *(Split from the uploads item above, 2026-10-16.)* Live on the
+  site (owner, 2026-10-16): "Last updated" 16 October 2026; site commits
+  `e87b2f2`, `de5aa31`, `7e8ae6c`.
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
@@ -313,7 +315,10 @@ the 1.3.0 checklist above.)*
 - [x] **Firebase:** register `learning_goal` as a **user-scoped custom
   dimension** (`analytics-plan.md` §9) before 1.2.0 ships; registration is
   not retroactive.
-- [ ] **Privacy policy** (the site repository): the live page (last updated
+- [x] **Privacy policy** (the site repository): *(Done (owner,
+  2026-10-16): the learning-goal wording is live, "Last updated" 16 October
+  2026; site commits `e87b2f2`, `de5aa31`, `7e8ae6c`. The live text is not
+  compared with the proposal below here.)* The live page (last updated
   22 September 2026) says "Your name, your learning goal, your avatar and
   your entire practice history — including the Daily Test — stay on your
   phone", and that none of the on-device list "is ever sent anywhere".
