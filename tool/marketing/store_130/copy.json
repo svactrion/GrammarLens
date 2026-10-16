@@ -1,0 +1,114 @@
+{
+  "question": {
+    "label": "Daily Test · Topic tag",
+    "tag": "DAILY TEST",
+    "title": [
+      "Write your",
+      "own answer."
+    ],
+    "subtitle": "Five questions. One small daily habit.",
+    "alternatives": [
+      "A little practice. Every day.",
+      "Make grammar a daily habit."
+    ],
+    "reason": "Shows the real written Daily Test question and topic tag after the feedback and hint benefits."
+  },
+  "hint": {
+    "label": "Topic hint · Held open",
+    "tag": "TOPIC HINTS",
+    "title": [
+      "See the",
+      "grammar pattern."
+    ],
+    "subtitle": "Slide to reveal a topic reminder.",
+    "alternatives": [
+      "Slide for a topic hint.",
+      "Keep useful patterns close."
+    ],
+    "reason": "Shows 1.3.0's new slider and the complete topic card. Describes general patterns without promising an answer reveal."
+  },
+  "home": {
+    "label": "Home · Glacier & Fox",
+    "tag": "MOUNTAIN OF LEARNING",
+    "title": [
+      "Watch your",
+      "progress climb."
+    ],
+    "subtitle": "A new mountain each month. A step each day.",
+    "alternatives": [
+      "Climb a new mountain each month.",
+      "Small steps. Visible progress."
+    ],
+    "reason": "Brings the product's distinctive Glacier scene, Fox and meaningful monthly progress into the first three."
+  },
+  "results": {
+    "label": "Results · Correct & needs work",
+    "tag": "CLEAR FEEDBACK",
+    "title": [
+      "Every answer",
+      "explained."
+    ],
+    "subtitle": "Your answer, the correction and the reason.",
+    "alternatives": [
+      "Understand every correction.",
+      "Learn why an answer works."
+    ],
+    "reason": "Leads with the learning payoff: the same tense question, its wrong answer, correction and explanation, followed by a correct answer."
+  },
+  "review": {
+    "label": "Review · Weak spots",
+    "tag": "YOUR WEAK SPOTS",
+    "title": [
+      "Your weak spots,",
+      "in one place."
+    ],
+    "subtitle": "See the grammar that keeps coming back.",
+    "alternatives": [
+      "Spot your recurring mistakes.",
+      "Know what needs another look."
+    ],
+    "reason": "Connects the test to the real saved error list and recurrence counts."
+  },
+  "collection": {
+    "label": "Profile · Medal collection",
+    "tag": "YOUR COLLECTION",
+    "title": [
+      "Build your",
+      "mountain collection."
+    ],
+    "subtitle": "Keep the medals you earn along the way.",
+    "alternatives": [
+      "Keep every climb.",
+      "Make progress worth collecting."
+    ],
+    "reason": "Completes the monthly progression story with the app's actual earned medals."
+  },
+  "onboarding": {
+    "label": "Onboarding · Fox selected",
+    "tag": "A COMPANION FOR THE CLIMB",
+    "title": [
+      "Pick your",
+      "learning companion."
+    ],
+    "subtitle": "Meet your Fox. Make your first step.",
+    "alternatives": [
+      "Start with a companion.",
+      "Make the journey yours."
+    ],
+    "reason": "Shows the real avatar picker with fictional Sam and Fox, without implying goal-based lesson personalization."
+  },
+  "multi-blank": {
+    "label": "Articles · Multiple blanks",
+    "tag": "EVERY BLANK HAS ITS PLACE",
+    "title": [
+      "One box for",
+      "every blank."
+    ],
+    "subtitle": "Match each color. Tap — for no article.",
+    "alternatives": [
+      "Keep every blank in view.",
+      "See where each answer belongs."
+    ],
+    "reason": "Eighth image: the real build-6 PracticeScreen with a local two-blank article fixture, colour-linked boxes and the working no-article control."
+  }
+}

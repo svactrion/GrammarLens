@@ -1,0 +1,40 @@
+{
+  "tr": {
+    "eyebrow": "İNGİLİZCE GRAMER PRATİĞİ",
+    "heroTitle": ["İngilizceni", "bir adım", "ileri taşı."],
+    "heroBody": ["Günlük pratik yap. Hatalarının nedenini öğren.", "Bir sonraki adımda daha bilinçli ilerle."],
+    "heroPills": ["Günlük test", "Açıklamalı sonuçlar"],
+    "flowTitle": "Her hatadan bir şey öğren.",
+    "flowSubtitle": "Cevabını yaz. Açıklamayı gör. Zayıf noktana geri dön.",
+    "flowSteps": ["Cevabını yaz", "Nedenini öğren", "Tekrar çalış"],
+    "flowBodies": ["Seçenek işaretlemek yerine kendin üret.", "Doğru cevap ve kısa açıklamayı birlikte gör.", "Kaydedilen hatalarından yeni pratiklere geç."],
+    "cardTitle": ["Küçük adımlar.", "Daha güçlü İngilizce."],
+    "cardBody": "Günlük pratik · Açıklamalı sonuçlar · Hata takibi",
+    "socialTitle": ["Hatanı anla.", "Bir adım ilerle."],
+    "socialBody": ["İngilizce gramer pratiğini", "görünür bir ilerlemeye dönüştür."],
+    "screenLabels": ["Aylık ilerleme", "Günlük test", "Açıklamalı sonuçlar", "Kaydedilen hatalar", "Hata detayı", "Madalya koleksiyonu"],
+    "storeTitles": [["Her gün pratik.", "Her ay ilerleme."], ["Cevabı seçme.", "Kendin yaz."], ["Sadece sonucu değil,", "nedenini de gör."], ["Tekrarlayan hatalarını", "fark et."], ["Zayıf noktanı", "yeniden çalış."], ["İlerlemeni", "görünür kıl."]],
+    "storeBodies": ["Günlük testlerinle aylık tırmanışta ilerle.", "İngilizce gramerini kısa sorularla çalış.", "Doğru cevapları kısa açıklamalarla öğren.", "Kaydedilen hatalarını konuya göre incele.", "Düzeltmeyi gör, günlük ücretsiz pratiğe geç.", "Aylık puanlarını ve madalyalarını takip et."],
+    "storeTags": ["GÜNLÜK TEST · AYLIK İLERLEME", "YAZARAK PRATİK", "AÇIKLAMALI SONUÇLAR", "KİŞİSEL HATA TAKİBİ", "HEDEFLİ TEKRAR", "AYLIK MADALYALAR"],
+    "footer": "İngilizce gramer pratiği"
+  },
+  "en": {
+    "eyebrow": "ENGLISH GRAMMAR PRACTICE",
+    "heroTitle": ["Small steps.", "Stronger", "English."],
+    "heroBody": ["Practise daily. Understand your mistakes.", "Take your next step with more confidence."],
+    "heroPills": ["Daily test", "Clear explanations"],
+    "flowTitle": "Learn something from every mistake.",
+    "flowSubtitle": "Write your answer. See why. Revisit your weak spots.",
+    "flowSteps": ["Write your answer", "Understand why", "Practise again"],
+    "flowBodies": ["Produce your own answer, one question at a time.", "See the correction and a short explanation.", "Turn your saved mistakes into fresh practice."],
+    "cardTitle": ["Small steps.", "Stronger English."],
+    "cardBody": "Daily practice · Clear explanations · Mistake tracking",
+    "socialTitle": ["Understand it.", "Move forward."],
+    "socialBody": ["Make English grammar practice", "a journey you can see."],
+    "screenLabels": ["Monthly progress", "Daily test", "Clear explanations", "Saved weak spots", "Mistake detail", "Medal collection"],
+    "storeTitles": [["Practise daily.", "Climb every month."], ["Don't just choose.", "Write your answer."], ["See the answer.", "Understand why."], ["Spot the mistakes", "that keep coming back."], ["Give your weak spots", "another go."], ["Make your progress", "visible."]],
+    "storeBodies": ["Move up your monthly climb with daily tests.", "Build your grammar through short written answers.", "Learn from corrections and clear explanations.", "Review your saved mistakes, topic by topic.", "See the correction, then start your free daily practice.", "Keep track of your monthly points and medals."],
+    "storeTags": ["DAILY TEST · MONTHLY PROGRESS", "WRITTEN PRACTICE", "CLEAR EXPLANATIONS", "PERSONAL MISTAKE TRACKING", "FOCUSED REVIEW", "MONTHLY MEDALS"],
+    "footer": "English grammar practice"
+  }
+}

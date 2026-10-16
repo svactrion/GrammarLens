@@ -72,3 +72,6 @@ docs/Claude outputs/
 
 # Raw shared sets fetched from KV by scripts/fallback_pool.sh fetch.
 tool/fallback_pool/raw/
+
+# Codex marketing pipeline (tool/marketing) working output; finals are copied to screenshots/<version>/
+docs/product/
