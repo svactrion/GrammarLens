@@ -77,6 +77,8 @@ as recorded in each batch's line below):
   accepted answers on the live shared sets, generated and delivered on the
   server side, independent of an app release (the deferred second-model
   check call, P7a–c, or a new version of the generation rules).
+  *(Owner, 2026-10-16: the first job after 1.3.0; whether it comes before
+  or with 1.4.0 is decided when 1.4.0 is planned.)*
 - **After 1.1.0, version not set:** merging Settings' two developer
   sections (debug builds only; not user-visible).
 - **1.2:** the items under "Parked for 1.2" below (a "see the mountain"
@@ -292,9 +294,12 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   (hint), 04 (question) and 08 (multi-blank, iPhone only); slots, order
   and captions in `screenshots/1.3.0/README.md`. The README's images are
   still the 1.2.0 set.)*
+- [x] **Carried over from 1.2.0, App Store Connect uploads** (owner,
+  2026-10-16): the 1.3.0 screenshots (`screenshots/1.3.0/store/`) and both
+  subscription review screenshots uploaded; they are in the 1.3.0
+  submission.
 - [ ] **Carried over from 1.2.0 (open there):** the privacy policy's
-  learning-goal wording; App Store Connect uploads of the screenshots and
-  the subscription review screenshots.
+  learning-goal wording. *(Split from the uploads item above, 2026-10-16.)*
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
@@ -786,7 +791,9 @@ D1–D6 in the side-tracks file.)*
   and owner-corrected". The decision that only the check call writes
   `acceptedAnswers` (`1.1.0-shared-daily-test-quality.md` §8.1) is
   extended to the owner's corrections of the fallback pool.
-- **P14 (Ahmet, 2026-10-04): the first job after 1.1.0** (server side,
+- **P14 (Ahmet, 2026-10-04): the first job after 1.1.0** *(owner,
+  2026-10-16: the first job after 1.3.0; before or with 1.4.0, decided
+  when 1.4.0 is planned)* (server side,
   independent of an app release): other accepted answers on the live
   sets, generated and delivered (the deferred second-model check, P7a–c,
   or a new version of the generation rules). Notes for the generation

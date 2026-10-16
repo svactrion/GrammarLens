@@ -12545,3 +12545,28 @@ Docs only.
   - The roadmap still calls P14 "the first job after 1.1.0" (the 1.1.0
     release candidate section and "Known flaws"); the README now says
     after 1.3.0.
+
+  *(All three settled the same day: next entry.)*
+
+## 2026-10-16 (Store uploads confirmed; P14 after 1.3.0; the repo cleanup's list)
+
+Docs only.
+
+- **[Product — owner]** The 1.3.0 screenshots and both subscription review
+  screenshots were uploaded to App Store Connect on 2026-10-16 and are in
+  the 1.3.0 submission.
+- **[Product — owner]** P14 (other accepted answers on the live shared
+  sets, server side) is the first job after 1.3.0. Whether it comes before
+  or with 1.4.0 is decided when 1.4.0 is planned.
+- **[Docs]** Roadmap, 1.3.0 checklist: "Carried over from 1.2.0" split in
+  two. The App Store Connect uploads are ticked; the privacy policy's
+  learning-goal wording stays open (the owner's confirmation covered the
+  uploads only). P14 annotated where the roadmap calls it "the first job
+  after 1.1.0": the 1.1.0 release candidate section and the P14 entry
+  under "1.1.0 side tracks" (the previous entry named "Known flaws" for
+  the second; that section only says the live sets wait for P14). The
+  README already says after 1.3.0.
+- **[Open]**
+  - The planned repo cleanup (owner): `screenshots/1.2.0/marketing/`
+    (untracked) and the README's images, still the 1.2.0 set.
+  - The privacy policy's learning-goal wording (1.3.0 checklist).
