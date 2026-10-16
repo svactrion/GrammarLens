@@ -12486,3 +12486,37 @@ built here: the owner builds and uploads.
   `build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/Info.plist`,
   then upload `build/ios/ipa/grammar_lens.ipa` with Transporter.
 - **[Open]** The TestFlight build and upload (owner); the 1.3.0 checklist.
+
+## 2026-10-16 (Proxy rule deployed; old branches deleted; 1.3.0 is the first public release)
+
+Docs only here. The deploy and the branch deletions were done by the owner.
+
+- **[Product — owner] Plan (replaces 2026-10-12's).** 1.0.0 will never be
+  released. 1.3.0 build 6 (`1.3.0+6`) is the first public release and is
+  in App Store review. 1.3.0 is a first release, not an update, so the
+  1.3.0 checklist's What's New item is dropped.
+- **[Release — owner] Proxy deployed** from `main` after `npm ci`,
+  `npm test` and `npm run typecheck` passed: Worker version
+  `6ad41711-04ed-4867-bb11-3a3e2ede53c5`. It carries the practice prompt's
+  "A fill_in_blank item has at most 4 blanks." (`proxy/src/anthropic.ts`),
+  on `main` since the `question-screen` merge. The 2026-10-12 rule (deploy
+  it on the day 1.3.0 goes live, and no proxy deploy from `main` before
+  then) is removed: it kept multi-blank sets away from 1.0.0's single
+  answer box, and 1.0.0 will never be released.
+- **[Owner — git] Branches deleted**, locally and on GitHub: `1.1.0`,
+  `1.1.0-design`, `monthly-climb-v2`, `1.2.0` and `question-screen`. Each
+  was fully merged (`git branch -d` accepted every one). `main` is the only
+  branch.
+- **[Docs]** Roadmap: the version table (1.0.0 never released; 1.3.0 in
+  review as the first public release) and a note on branches. The 1.3.0
+  checklist: the proxy item ticked with the version id and the wait rule
+  removed; the What's New item dropped; TestFlight build 6 ticked (build 6
+  is in review, so it was built and uploaded). The question screen
+  section: the proxy rule deployed, the branch merged and deleted.
+- **[Docs]** README: the status line and the version table follow the new
+  plan (1.3.0 in review as the first public release; 1.0.0 never
+  released).
+- **[Open]** README, outside the status line and the version table: the
+  shared Daily Test's cost line still says "1.0.0 devices keep their
+  per-device cost until they update", and the known-flaw section still
+  says "1.1.0 ships with it" and "the first job after 1.1.0".

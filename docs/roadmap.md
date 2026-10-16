@@ -6,14 +6,19 @@
 |---|---|---|
 | v1 — MVP | July 2026: one-week sprint, user research, two iterations | Not released |
 | v2 — product build-out | Aug–Sep 2026: v2.1 free/paid split, v2.2 structure + visual pass, proxy, subscriptions | Not released |
-| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0. **Updated (Ahmet, 2026-10-03; plan superseded 2026-10-07):** resubmitted 2026-09-28; the app version (build 3), both subscriptions and the subscription group "Waiting for Review"; not withdrawn until 1.1.0 is ready, then: approved → released, 1.1.0 as an update; still in review → withdrawn, the version becomes 1.1.0 with the new build; rejected → fixed inside 1.1.0 (section "1.1.0 side tracks", "1.0.0's state"). Manual release selected (Ahmet verified, 2026-10-03). **Updated (Ahmet, 2026-10-07):** rejected a second time on 2026-10-06 (Guideline 3.1.2(c): no Terms of Use / EULA link in the App Store metadata). The fix was metadata only, no new build: EULA, Privacy and Terms lines added to the description, answered in Resolution Center and resubmitted the same day; waiting for review, manual release. **Plan (2026-10-07), replaces the 2026-10-03 one:** 1.0.0 is not withdrawn; 1.1.0 is skipped; 1.2.0 goes as an update after 1.0.0 is approved |
+| 1.0.0 | First App Store release: v2 + Monthly Climb | Submitted for review 2026-09-24 (build 3); not yet approved; manual release. **Planned (2026-09-29):** if approved, held back and not released; the first public release is 1.1.0. **Updated (Ahmet, 2026-10-03; plan superseded 2026-10-07):** resubmitted 2026-09-28; the app version (build 3), both subscriptions and the subscription group "Waiting for Review"; not withdrawn until 1.1.0 is ready, then: approved → released, 1.1.0 as an update; still in review → withdrawn, the version becomes 1.1.0 with the new build; rejected → fixed inside 1.1.0 (section "1.1.0 side tracks", "1.0.0's state"). Manual release selected (Ahmet verified, 2026-10-03). **Updated (Ahmet, 2026-10-07):** rejected a second time on 2026-10-06 (Guideline 3.1.2(c): no Terms of Use / EULA link in the App Store metadata). The fix was metadata only, no new build: EULA, Privacy and Terms lines added to the description, answered in Resolution Center and resubmitted the same day; waiting for review, manual release. **Plan (2026-10-07), replaces the 2026-10-03 one:** 1.0.0 is not withdrawn; 1.1.0 is skipped; 1.2.0 goes as an update after 1.0.0 is approved. **Plan (owner, 2026-10-16), replaces the 2026-10-07 and 2026-10-12 ones: 1.0.0 will never be released; 1.3.0 (build 6) is the first public release** |
 | 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Skipped (Ahmet, 2026-10-07): never submitted; everything in it ships in 1.2.0.** *(Kept as written below.)* **Release candidate (2026-10-04): what ships, what waits and the known flaws are in "1.1.0 — release candidate" below.** Screenshots approved and the iPad simulator check done (Ahmet, 2026-10-04); the other release items are open. Not submitted. **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist) *(2026-10-09: registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09))*. **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. *(2026-10-04: filled — 7 sets, 10 owner corrections, approved by Ahmet.)* Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
 | 1.2.0 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; the paywall with trial eligibility; multiline answers. Carries all of 1.1.0 | **Never submitted (owner, 2026-10-12): replaced by 1.3.0 as the first update; everything in it ships in 1.3.0.** *(Kept as written:)* Version `1.2.0+5` (2026-10-07); device checks passed (2026-10-07); TestFlight build 5 uploaded (the trial check ran on TestFlight 1.2.0 (5), 2026-10-09). Checklist: "1.2.0 pre-release checklist" below; its open items carry over to 1.3.0 |
-| 1.3.0 | 1.2.0's redesign (all of it, with all of 1.1.0) plus the question screen work: the topic tag, the topic hint slider (Daily Test and Practice), multi-blank answer boxes with the "—" no-article button and tap-a-blank, and Skip discarding typed text (section "Question screen improvements") | Version `1.3.0+6` (2026-10-12); `question-screen` merged into `main`; device checks passed on the branch (2026-10-12). TestFlight build 6 not yet built or uploaded (owner). Goes to review as the first update once 1.0.0 is approved (plan 2026-10-12, replaces 2026-10-07). Checklist: "1.3.0 release checklist" below |
+| 1.3.0 | 1.2.0's redesign (all of it, with all of 1.1.0) plus the question screen work: the topic tag, the topic hint slider (Daily Test and Practice), multi-blank answer boxes with the "—" no-article button and tap-a-blank, and Skip discarding typed text (section "Question screen improvements") | Version `1.3.0+6` (2026-10-12); `question-screen` merged into `main`; device checks passed on the branch (2026-10-12). **The first public release (owner, 2026-10-16): build 6 is in App Store review; 1.0.0 will never be released.** *(Superseded, kept as written: "TestFlight build 6 not yet built or uploaded (owner). Goes to review as the first update once 1.0.0 is approved (plan 2026-10-12, replaces 2026-10-07).")* Proxy rule for the multi-blank boxes deployed (recorded 2026-10-16). Checklist: "1.3.0 release checklist" below |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
 that say "v3" are kept as written.
+
+**Branches (owner, 2026-10-16):** `main` is the only branch. `1.1.0`,
+`1.1.0-design`, `monthly-climb-v2`, `1.2.0` and `question-screen` were all
+fully merged into `main` and are deleted, locally and on GitHub. Older
+entries below that name them are kept as written.
 
 ### 1.1.0 — release candidate (2026-10-04)
 
@@ -265,24 +270,22 @@ carried over now.
 
 1.3.0 replaces 1.2.0 as the first update (owner, 2026-10-12). The open
 items of the 1.2.0 checklist below carry over; this list adds what 1.3.0
-brings.
+brings. *(Owner, 2026-10-16: 1.3.0 is the first public release, not an
+update; 1.0.0 will never be released. Build 6 is in App Store review.)*
 
-- [ ] **TestFlight build 6** (`1.3.0+6`): built and uploaded (owner; steps
-  in the build log, 2026-10-12, "1.3.0 release").
-- [ ] **Proxy rule on the day 1.3.0 goes live, not before:** deploy the
-  practice prompt's "A fill_in_blank item has at most 4 blanks."
-  (`proxy/src/anthropic.ts`; `cd proxy && npm test && npm run typecheck &&
-  npm run deploy`, then record the version id). Before then a live set
-  rarely has more than one blank, which 1.0.0 and the single box handle as
-  today. **The rule is on `main` from the merge on:** any other proxy
-  deploy from `main` before 1.3.0 is live would send it out too; until
-  then, deploy proxy fixes from a tree without it (revert that line for
-  the deploy) or wait.
+- [x] **TestFlight build 6** (`1.3.0+6`): built and uploaded (owner; steps
+  in the build log, 2026-10-12, "1.3.0 release"). Build 6 is in App Store
+  review (owner, recorded 2026-10-16).
+- [x] **Proxy rule deployed** (owner, recorded 2026-10-16): the practice
+  prompt's "A fill_in_blank item has at most 4 blanks."
+  (`proxy/src/anthropic.ts`), deployed from `main` after `npm ci`,
+  `npm test` and `npm run typecheck` passed. Worker version
+  `6ad41711-04ed-4867-bb11-3a3e2ede53c5`. Proxy deploys from `main` no
+  longer wait for 1.3.0 (build log, 2026-10-16).
 - [ ] **App Store screenshots:** the 1.2.0 set's question frame (03, "to
   eat" typed, keyboard up) predates the topic tag; decide whether to
   recapture it (and the README / case-study images made from it) for
   1.3.0. The other frames are unchanged by the question screen work.
-- [ ] **What's New text** for 1.3.0 in App Store Connect (owner).
 - [ ] **Carried over from 1.2.0 (open there):** the privacy policy's
   learning-goal wording; App Store Connect uploads of the screenshots and
   the subscription review screenshots.
@@ -403,7 +406,8 @@ the 1.3.0 checklist above.)*
 
 **Done (2026-10-12): built, tested and checked on the owner's iPhone.**
 Branched from `1.2.0`; **not in 1.2.0**; to be merged and shipped as
-**1.3.0** (owner, 2026-10-12), not merged yet. Plan, measurements, decisions and the final state:
+**1.3.0** (owner, 2026-10-12), not merged yet. *(Merged into `main`
+2026-10-12, `588c813`; the branch deleted 2026-10-16.)* Plan, measurements, decisions and the final state:
 `docs/question-screen-plan.md`; history: build log, 2026-10-12 entries.
 
 - **Topic tag** (Daily Test + Practice): the question's topic as a neutral
@@ -436,15 +440,17 @@ Branched from `1.2.0`; **not in 1.2.0**; to be merged and shipped as
 
 **Open (not part of this work):**
 
-- **Proxy rule "A fill_in_blank item has at most 4 blanks."** (practice
-  generation prompt): committed and tested, **not deployed**. It deploys
-  only together with the app release that ships the multi-blank boxes
-  (Q4). Until then a live practice set rarely has more than one blank.
+- ~~**Proxy rule "A fill_in_blank item has at most 4 blanks."**~~
+  **Deployed** (owner, recorded 2026-10-16; Worker version
+  `6ad41711-04ed-4867-bb11-3a3e2ede53c5`), while 1.3.0 is in review: 1.0.0
+  will never be released, so no released app has the single box (1.3.0
+  checklist).
 - ~~**Skip sends typed text**~~ **Fixed on the branch (2026-10-12):** Skip
   now discards what was typed (every box and any "no article"), so the
   question counts as skipped everywhere, on Practice and the Daily Test
   (build log). **Device check passed** (owner, iPhone, 2026-10-12).
-- **Release:** 1.3.0 (owner, 2026-10-12); the proxy rule deploys with it.
+- **Release:** 1.3.0 (owner, 2026-10-12), the first public release
+  (owner, 2026-10-16); in App Store review. The proxy rule is deployed.
 
 ### 1.1.0 side tracks (design) — defined 2026-09-26
 
