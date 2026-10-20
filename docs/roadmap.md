@@ -303,6 +303,28 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   site (owner, 2026-10-16): "Last updated" 16 October 2026; site commits
   `e87b2f2`, `de5aa31`, `7e8ae6c`.
 
+#### Next build after 1.3.0 build 6 (version not set)
+
+Code on `main` that is **not in build 6** (in App Store review) and goes
+into the next build. Version bump and build: owner, not started.
+
+- **App Review audit fixes (2026-10-20;
+  `docs/app-review-audit-2026-10.md`, findings 1 and 2):**
+  - **AI permission copy:** the permission screen's title is "AI feedback"
+    (was "Topic Practice") and its text says practice sessions use an AI
+    service, "Topic Practice and practicing a weak spot"; the onboarding
+    "Your data & AI" row says "In practice sessions (Topic Practice or a
+    weak spot)". A free user's only AI practice is a weak spot's, which the
+    old copy did not name (guideline 5.1.2(i)). `AiConsent.currentVersion`
+    unchanged (owner decision, 2026-10-20): what is sent did not change.
+  - **Privacy Policy and Terms of Service rows** in Profile → App
+    information (Data, Privacy Policy, Terms of Service, Credits), opening
+    the hosted pages in the browser. Until now the policy was reachable
+    only from the paywall and the AI permission screen (guideline
+    5.1.1(i)).
+  - Verified: `flutter analyze` clean, full test suite passed (2057).
+    **Not checked on a device.**
+
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
 *(2026-10-12: 1.2.0 is never submitted; the open items below carry over to
@@ -409,9 +431,13 @@ the 1.3.0 checklist above.)*
   promised, the price is shown directly, as expected.
 - [ ] **Paywall on a non-USD storefront:** deferred to after the
   release (Ahmet, 2026-10-07); stays open.
-- [ ] **Privacy policy wording:** the app now says "practice sessions"
+- [x] **Privacy policy wording:** the app now says "practice sessions"
   send answers to Anthropic (Topic Practice and weak spot practice);
-  check the policy says the same.
+  check the policy says the same. *(Done (owner, 2026-10-20): live on the
+  site, "Last updated" 20 October 2026; the AI section now covers
+  "practice sessions (Topic Practice and practicing a weak spot)", checked
+  against the live page the same day. Found by the App Review audit,
+  `docs/app-review-audit-2026-10.md`, finding 1.)*
 - [ ] **App Store Connect, App Privacy** for the 1.2.0 submission: review
   the answers with the goal now collected through Firebase Analytics (a
   survey-like answer about the user's purpose; the category, and whether
