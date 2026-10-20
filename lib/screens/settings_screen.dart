@@ -13,12 +13,14 @@ import '../services/analytics_service.dart';
 import '../services/medal_finalization.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
+import '../utils/app_links.dart';
 import '../utils/app_messenger.dart';
 import '../utils/debug_sample_collection.dart';
 import '../utils/debug_tools.dart';
 import '../widgets/app_segmented_button.dart';
 import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
+import '../widgets/legal_link.dart';
 import '../widgets/section_title.dart';
 import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
@@ -79,6 +81,10 @@ class SettingsScreen extends StatefulWidget {
 
   /// The "Debug" row (N27).
   static const debugRowKey = ValueKey('settings_debug_row');
+
+  /// App information's links to the hosted legal pages.
+  static const privacyRowKey = ValueKey('settings_privacy_row');
+  static const termsRowKey = ValueKey('settings_terms_row');
 
   /// The identity card, the saved name shown in it, and the medal count.
   static const identityCardKey = ValueKey('settings_identity_card');
@@ -612,6 +618,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 Divider(
                     height: 1, thickness: 1, color: colorScheme.outlineVariant),
+                // App Review 5.1.1(i): the privacy policy reachable from
+                // inside the app at any time, not only from the paywall and
+                // the AI permission screen; the terms beside it, as on the
+                // paywall.
+                _NavRow.icon(
+                  key: SettingsScreen.privacyRowKey,
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Privacy Policy',
+                  opensBrowser: true,
+                  onTap: () => openLegalLink(
+                      label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
+                ),
+                Divider(
+                    height: 1, thickness: 1, color: colorScheme.outlineVariant),
+                _NavRow.icon(
+                  key: SettingsScreen.termsRowKey,
+                  icon: Icons.description_outlined,
+                  label: 'Terms of Service',
+                  opensBrowser: true,
+                  onTap: () => openLegalLink(
+                      label: 'Terms of Service', url: AppLinks.termsUrl),
+                ),
+                Divider(
+                    height: 1, thickness: 1, color: colorScheme.outlineVariant),
                 _NavRow.icon(
                   icon: Icons.info_outline_rounded,
                   label: 'Credits',
@@ -806,17 +836,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 /// A link row that opens another screen (the mockup's "App information"
 /// rows): a 34 pt icon tile in the link colour, a label and a trailing
-/// chevron, at least 64 pt tall.
+/// chevron, at least 64 pt tall. A row that leaves the app for the browser
+/// ([opensBrowser]) ends in an "open in new" icon instead of the chevron.
 class _NavRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool opensBrowser;
 
   const _NavRow.icon({
     super.key,
     required this.icon,
     required this.label,
     required this.onTap,
+    this.opensBrowser = false,
   });
 
   @override
@@ -849,8 +882,12 @@ class _NavRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Icon(Icons.chevron_right_rounded,
-                  size: 20, color: scheme.onSurfaceVariant),
+              Icon(
+                  opensBrowser
+                      ? Icons.open_in_new_rounded
+                      : Icons.chevron_right_rounded,
+                  size: opensBrowser ? 18 : 20,
+                  color: scheme.onSurfaceVariant),
             ],
           ),
         ),

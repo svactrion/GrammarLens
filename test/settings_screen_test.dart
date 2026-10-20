@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/models/app_theme_mode.dart';
@@ -19,6 +20,7 @@ import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
+import 'package:grammar_lens/utils/app_links.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/screens/debug_panel_screen.dart';
@@ -508,6 +510,8 @@ void main() {
       top(find.byKey(MonthlyProgressCard.cardKey)),
       top(find.text('Appearance')),
       top(find.text('Data')),
+      top(find.text('Privacy Policy')),
+      top(find.text('Terms of Service')),
       top(find.text('Credits')),
       top(find.text('Developer')),
     ];
@@ -546,6 +550,51 @@ void main() {
     expect(find.byType(DataScreen), findsOneWidget);
     expect(find.text('Reset progress data'), findsOneWidget);
   });
+
+  // App Review 5.1.1(i): the privacy policy is reachable from inside the app
+  // at any time, not only from the paywall and the AI permission screen.
+  for (final (key, label, url) in [
+    (SettingsScreen.privacyRowKey, 'Privacy Policy', AppLinks.privacyPolicyUrl),
+    (SettingsScreen.termsRowKey, 'Terms of Service', AppLinks.termsUrl),
+  ]) {
+    testWidgets(
+        'the $label row, in App information, opens its page in the browser',
+        (tester) async {
+      final launched = <String>[];
+      const channel = MethodChannel('plugins.flutter.io/url_launcher');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel,
+          (call) async {
+        if (call.method == 'launch') {
+          launched.add((call.arguments as Map)['url'] as String);
+          return true;
+        }
+        return null;
+      });
+      addTearDown(() => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null));
+      await pumpSettings(tester);
+
+      await reveal(tester, find.byKey(key));
+      final row = find.byKey(key);
+      expect(
+          find.descendant(of: row, matching: find.text(label)), findsOneWidget);
+      expect(
+          find.descendant(
+              of: row, matching: find.byIcon(Icons.open_in_new_rounded)),
+          findsOneWidget);
+      expect(
+          find.ancestor(of: row, matching: find.byType(Card)), findsOneWidget);
+      expect(tester.getSize(row).height, greaterThanOrEqualTo(64));
+      expect(url, isNotEmpty);
+
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+
+      expect(launched, [url]);
+      // The browser opens; Profile stays where it was.
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+  }
 
   testWidgets('the Credits row opens the Credits screen', (tester) async {
     await pumpSettings(tester);
