@@ -32,8 +32,9 @@ const List<(String, String)> onboardingDataFacts = [
   ),
   (
     'AI feedback',
-    'If you use Topic Practice, your answers are sent to Anthropic (Claude) '
-        'to give you feedback. We ask for your permission first.'
+    'In practice sessions (Topic Practice or a weak spot), your answers are '
+        'sent to Anthropic (Claude) to give you feedback. We ask for your '
+        'permission first.'
   ),
   ('App diagnostics', 'Usage and crash data is collected.'),
 ];

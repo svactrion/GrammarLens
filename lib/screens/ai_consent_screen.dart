@@ -12,8 +12,11 @@ import '../widgets/legal_link.dart';
 import '../utils/content_width.dart';
 import '../theme.dart';
 
-/// The one-time permission screen for sending Topic Practice answers to a
-/// third-party AI provider (App Review guideline 5.1.2(i)). Pops `true` on
+/// The one-time permission screen for sending practice answers (Topic
+/// Practice and a weak spot's practice alike, every session that goes
+/// through `launchPracticeSet`) to a third-party AI provider (App Review
+/// guideline 5.1.2(i)). A free user's only practice is a weak spot's, so the
+/// screen names practice sessions, never Topic Practice alone. Pops `true` on
 /// "Agree and continue", `false` on "Not now", and `null` on the back arrow or
 /// a system back gesture; only `true` is a yes, so leaving any other way is a
 /// decline.
@@ -38,7 +41,7 @@ class AiConsentScreen extends StatelessWidget {
     final body = theme.textTheme.bodyMedium;
 
     return BrandScaffold(
-      title: const PageTitle('Topic Practice'),
+      title: const PageTitle('AI feedback'),
       body: Column(
         children: [
           Expanded(
@@ -58,8 +61,9 @@ class AiConsentScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Topic Practice uses an AI service to check your answers '
-                    'and explain what to fix.',
+                    'Practice sessions use an AI service to check your '
+                    'answers and explain what to fix. This covers Topic '
+                    'Practice and practicing a weak spot.',
                     style: body,
                   ),
                   const _Section(
@@ -202,7 +206,7 @@ bool _promptInProgress = false;
 @visibleForTesting
 void resetAiConsentPromptGuard() => _promptInProgress = false;
 
-/// Returns whether Topic Practice answers may be sent to the AI provider,
+/// Returns whether practice answers may be sent to the AI provider,
 /// asking the user first if they have not agreed yet.
 ///
 /// Fails closed: if the stored decision cannot be read, the user is asked

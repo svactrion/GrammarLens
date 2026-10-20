@@ -360,6 +360,8 @@ void main() {
       await tester.pumpAndSettle();
       final sheet = onboardingDataFacts.map((f) => '${f.$1} ${f.$2}').join();
       expect(sheet, contains('Anthropic (Claude)'));
+      expect(sheet,
+          contains('In practice sessions (Topic Practice or a weak spot)'));
       expect(sheet, contains('We ask for your permission first.'));
       expect(sheet, contains('It does not personalize your lessons.'));
       for (final (heading, _) in onboardingDataFacts) {

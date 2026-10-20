@@ -57,9 +57,14 @@ void main() {
     await pumpScreen(tester);
 
     expect(find.text('Feedback on your answers'), findsOneWidget);
+    // Every practice session asks (a free user's only one is a weak spot's),
+    // so the screen names practice sessions, not Topic Practice alone.
+    expect(find.text('AI feedback'), findsOneWidget);
+    expect(find.text('Topic Practice'), findsNothing);
     expect(
-        find.text('Topic Practice uses an AI service to check your answers '
-            'and explain what to fix.'),
+        find.text('Practice sessions use an AI service to check your answers '
+            'and explain what to fix. This covers Topic Practice and '
+            'practicing a weak spot.'),
         findsOneWidget);
     expect(find.text('What is sent'), findsOneWidget);
     expect(

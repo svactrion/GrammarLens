@@ -1,6 +1,7 @@
-/// The user's decision about sending their Topic Practice answers to a third
-/// party AI provider (Anthropic's Claude), the permission App Review guideline
-/// 5.1.2(i) requires before any personal data is shared that way.
+/// The user's decision about sending their practice answers (Topic Practice
+/// and a weak spot's practice) to a third party AI provider (Anthropic's
+/// Claude), the permission App Review guideline 5.1.2(i) requires before any
+/// personal data is shared that way.
 ///
 /// One row is stored, the latest decision. [version] is the wording and scope
 /// the user saw: raising [currentVersion] (a new provider, or more data sent)
