@@ -12617,3 +12617,29 @@ Docs only. No code, proxy or config changed.
   and TestFlight build 5 (uploaded; the trial check ran on it 2026-10-09;
   superseded for release by build 6). The checklist's other open items
   stay open.
+
+## 2026-10-23 (1.4.0 plan: the three open questions answered (owner))
+
+Docs only. No code, proxy or config changed.
+
+- **[Product — owner]** The 1.4.0 plan's three open questions:
+  - The interface language is sent as the `ui_language` user property
+    (B3), so practice completion can be compared by language (D2's
+    review). The owner registers it as a user-scoped custom dimension
+    before the 1.4.0 release.
+  - Keyboard folding is part of D3: `foldKeyboardVariants`
+    (`lib/utils/answer_matching.dart`) and its proxy copy
+    (`proxy/src/shared_daily_test.ts`) are generalized to the seven
+    languages' keyboards (full-width Latin letters and spaces, accented
+    letters, smart quotes and apostrophes), one rule for client and proxy;
+    the approach is proposed in Batch 0.
+  - If the shared cron always sends `promptVersion: 2`,
+    `DAILY_TEST_SYSTEM_PROMPT` is removed with the old route; verified in
+    the route removal's Batch 0 (Phase 3).
+- **[Docs]** `1.4.0-plan.md`: D2, D3, B3 and Phase 3 updated; "Phase 1 —
+  scope decisions: done 2026-10-23 (D1–D7)" replaces "there is no Phase
+  1"; the open questions section records the answers. `analytics-plan.md`:
+  `ui_language` in §3, the limits table and §9 (planned, not implemented,
+  not registered). Roadmap: the two P14 notes that waited for the 1.4.0
+  plan point to D7; "Next build after 1.3.0 build 6 (version not set)" is
+  now "1.4.0 (planned)" with a link to the plan.

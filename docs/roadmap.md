@@ -79,7 +79,9 @@ as recorded in each batch's line below):
   server side, independent of an app release (the deferred second-model
   check call, P7a–c, or a new version of the generation rules).
   *(Owner, 2026-10-16: the first job after 1.3.0; whether it comes before
-  or with 1.4.0 is decided when 1.4.0 is planned.)*
+  or with 1.4.0 is decided when 1.4.0 is planned.)* *(Decided 2026-10-23:
+  developed now, deployed right after 1.3.0 is live; D7 in
+  [`1.4.0-plan.md`](1.4.0-plan.md).)*
 - **After 1.1.0, version not set:** merging Settings' two developer
   sections (debug builds only; not user-visible).
 - **1.2:** the items under "Parked for 1.2" below (a "see the mountain"
@@ -304,7 +306,10 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   site (owner, 2026-10-16): "Last updated" 16 October 2026; site commits
   `e87b2f2`, `de5aa31`, `7e8ae6c`.
 
-#### Next build after 1.3.0 build 6 (version not set)
+#### 1.4.0 (planned)
+
+Plan: [`1.4.0-plan.md`](1.4.0-plan.md). *(Until 2026-10-23 this heading
+was "Next build after 1.3.0 build 6 (version not set)".)*
 
 Code on `main` that is **not in build 6** (in App Store review) and goes
 into the next build. Version bump and build: owner, not started.
@@ -834,7 +839,9 @@ D1–D6 in the side-tracks file.)*
   extended to the owner's corrections of the fallback pool.
 - **P14 (Ahmet, 2026-10-04): the first job after 1.1.0** *(owner,
   2026-10-16: the first job after 1.3.0; before or with 1.4.0, decided
-  when 1.4.0 is planned)* (server side,
+  when 1.4.0 is planned; decided 2026-10-23: developed now, deployed
+  right after 1.3.0 is live, D7 in [`1.4.0-plan.md`](1.4.0-plan.md))*
+  (server side,
   independent of an app release): other accepted answers on the live
   sets, generated and delivered (the deferred second-model check, P7a–c,
   or a new version of the generation rules). Notes for the generation
