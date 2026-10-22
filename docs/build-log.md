@@ -12672,3 +12672,38 @@ Docs only. No code, proxy or config changed.
   Review).
 - **[Open]** Coarse Location in App Privacy (owner). How the learning goal
   is declared in App Privacy is not recorded.
+
+## 2026-10-23 (1.4.0 B1: audit fixes #6, #7, #19 and the release IPA check)
+
+No proxy change, no deploy (1.3.0 is in review).
+
+- **[Engineering]** Audit #6: `PracticeScreen._submit` reads the AI
+  permission (`getAiConsent()?.allowsSending`) again just before
+  `scoreAnswers`. Without it (withdrawn, no record, or an unreadable
+  record: fails closed) nothing is sent, no request is made so no quota is
+  spent, the answers stay on the screen, and a message says they were not
+  sent and points to Profile → Data. Regression tests in
+  `test/practice_submit_consent_test.dart`.
+- **[Engineering]** Audit #7: the snackbars in `practice_launch.dart` and
+  `practice_screen.dart` use `userFacingErrorMessage` (in
+  `claude_service.dart`): a `ClaudeApiException`'s own message, or
+  "Something went wrong. Please try again." for anything else; no Dart
+  class name on screen. The `notConfigured` message now reads "Practice
+  is not available right now. Please try again later."; the setup steps
+  go to `debugPrint` in debug builds only.
+- **[Engineering]** Audit #19: stale comments corrected
+  (`subscription_service.dart`: the RevenueCat project and both
+  subscriptions exist; `app_links.dart`: the pages are live).
+- **[Engineering]** Audit #10: `scripts/release_ipa_check.sh` unzips a
+  release IPA into a temporary folder, prints version and build from
+  `Info.plist`, and searches `App.framework/App` with `strings` (and as
+  UTF-16, since Dart stores a string with a non-Latin-1 character such as
+  an em dash that way) for the audit's debug texts; it fails on a hit, or
+  if a control string every release build carries is missing. Step 6 of
+  the release steps in `docs/development.md`. Not run: no IPA on this
+  machine.
+- **[Tests]** Three test fakes that submit a practice set now return a
+  granted permission; the config test expects the user-facing message.
+  `flutter analyze` clean; 2066 tests passed.
+- **[Open]** Device check (owner): the permission copy, the Privacy
+  Policy / Terms rows, #6 and #7.

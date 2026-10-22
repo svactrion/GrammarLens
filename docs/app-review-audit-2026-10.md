@@ -22,6 +22,9 @@
 - **#10 `strings` check: moved** to the 1.4.0 release build
   (`1.4.0-plan.md`, Phase 5); build 6's archive is no longer on the
   owner's machine. Not done.
+- **#6, #7, #19: fixed in code (1.4.0 B1, 2026-10-23)**, automated tests
+  only; not checked on a device. #10 has a script for the release build,
+  `scripts/release_ipa_check.sh`, not run yet.
 - **Action 4, Notes for Review (owner, 2026-10-23):** updated in App Store
   Connect: how a weak spot is created, the AI permission covering every
   practice session, the AI running through our server, no hidden

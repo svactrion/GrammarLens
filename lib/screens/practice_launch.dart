@@ -114,7 +114,7 @@ Future<void> launchPracticeSet({
   // before anything is generated or counted: declining records no session and
   // spends none of the free tier's practice. The answers themselves leave the
   // device later, at scoring, but this is the last point before a session
-  // exists at all.
+  // exists at all; PracticeScreen reads the permission again at Submit.
   final mayUseAi = await ensureAiConsent(
     context: context,
     storageService: storageService,
@@ -182,7 +182,7 @@ Future<void> launchPracticeSet({
     onReturned?.call();
   } catch (e) {
     if (!context.mounted) return;
-    AppMessenger.show('$errorPrefix: $e');
+    AppMessenger.show('$errorPrefix: ${userFacingErrorMessage(e)}');
   } finally {
     setGenerating(false);
   }

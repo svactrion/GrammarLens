@@ -77,6 +77,15 @@ telling you to do the below.
    what it deleted: Flutter bundles every file in a registered asset
    folder, so these would otherwise ship inside the app. More checks land
    here over time rather than each as its own script.
+6. **Run `./scripts/release_ipa_check.sh` after every `flutter build ipa
+   --release`, before the upload.** It unzips the IPA (the one in
+   `build/ios/ipa/`, or the path you pass) into a temporary folder, prints
+   the version and build from its `Info.plist` (check them against
+   `pubspec.yaml` and the last build in App Store Connect), and searches
+   `App.framework/App` with `strings` (and as UTF-16) for the developer
+   tools' text (App Review audit, finding #10). It exits non-zero if one
+   is found, or if a control string every release build carries is not,
+   since then the search proves nothing.
 
 ### Monthly Climb debug defines
 

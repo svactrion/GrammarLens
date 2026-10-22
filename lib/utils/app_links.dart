@@ -1,9 +1,8 @@
 /// Externally-hosted legal page URLs referenced from the app.
 ///
-/// The pages themselves currently carry placeholder content — the real
-/// text is being written separately — but the URLs are permanent, so
-/// they're filled in now rather than left empty. `scripts/preflight.sh`
-/// still gates a release build on these being non-empty.
+/// The pages are live on the site (the site repository holds their text)
+/// and the URLs are permanent. `scripts/preflight.sh` still gates a
+/// release build on these being non-empty.
 class AppLinks {
   static const String privacyPolicyUrl =
       'https://ahmettayfur.com/products/grammarlens/privacy/';

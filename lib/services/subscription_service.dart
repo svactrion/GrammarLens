@@ -24,16 +24,16 @@ enum TrialEligibility { eligible, ineligible, unknown }
 typedef AccessListener = void Function(bool hasFullAccess);
 
 /// Wraps RevenueCat subscription/entitlement checking (PRD v2 §12.6's
-/// trial/paid mechanism) — code scaffold only as of this commit, no real
-/// App Store Connect product or RevenueCat project connected yet (see
-/// docs/roadmap.md).
+/// trial/paid mechanism), connected to the RevenueCat project and the two
+/// App Store Connect subscriptions (see docs/roadmap.md).
 ///
-/// **Identifiers to create for real later:** entitlement id `premium`,
-/// product id `grammarlens_premium_monthly` (see the constants below).
+/// **Identifiers in use:** entitlement id `premium`, product ids
+/// `grammarlens_premium_monthly` and `grammarlens_premium_annual` (see the
+/// constants below).
 ///
-/// Every method here is a best-effort no-op/safe-default until a real
-/// project is connected — the exact same intent as Firebase's
-/// `Firebase.initializeApp()` try/catch in main.dart, **but a plain
+/// Every method here is a best-effort no-op/safe-default while RevenueCat
+/// is not configured (no SDK key, as in tests) — the exact same intent as
+/// Firebase's `Firebase.initializeApp()` try/catch in main.dart, **but a plain
 /// try/catch alone doesn't deliver it here**: calling any `Purchases.*`
 /// method before `Purchases.configure()` succeeds throws a *native* Swift
 /// `fatalError` (`PurchasesHybridCommon/CommonFunctionality.swift: Fatal
@@ -53,12 +53,12 @@ class SubscriptionService {
   /// access right now").
   static const String entitlementIdPremium = 'premium';
 
-  /// The App Store Connect / RevenueCat product identifier for the
-  /// (not yet created) premium monthly subscription.
+  /// The App Store Connect / RevenueCat product identifier for the premium
+  /// monthly subscription.
   static const String productIdPremiumMonthly = 'grammarlens_premium_monthly';
 
-  /// The App Store Connect / RevenueCat product identifier for the
-  /// (not yet created) premium annual subscription — the counterpart to
+  /// The App Store Connect / RevenueCat product identifier for the premium
+  /// annual subscription — the counterpart to
   /// [productIdPremiumMonthly] (PRD v2 §13.3's two-plan pricing).
   static const String productIdPremiumAnnual = 'grammarlens_premium_annual';
 

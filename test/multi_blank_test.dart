@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/ai_consent.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/item_feedback.dart';
@@ -51,6 +52,14 @@ class _Storage extends StorageService {
 
   @override
   Future<String> getOrCreateDeviceId() async => 'test-device';
+
+  // Submit reads the AI permission again before scoring (audit #6).
+  @override
+  Future<AiConsent?> getAiConsent() async => AiConsent(
+        granted: true,
+        decidedAt: DateTime(2026, 1, 1),
+        version: AiConsent.currentVersion,
+      );
 
   @override
   Future<void> insertErrors(List<ErrorEntry> entries) async =>

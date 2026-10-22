@@ -35,6 +35,12 @@ class PracticeScreen extends StatefulWidget {
     required this.subscriptionService,
   });
 
+  /// Shown when the answers are kept on the device because the permission
+  /// to send them is missing at Submit.
+  static const notSentMessage =
+      'Your answers were not sent. AI feedback needs your permission '
+      '(Profile → Data).';
+
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
 }
@@ -129,10 +135,31 @@ class _PracticeScreenState extends State<PracticeScreen> {
     }
   }
 
+  /// The permission to send answers to the AI provider, read again at
+  /// Submit (App Review audit, finding #6): launch checks it before the
+  /// session exists, but the answers leave the device only here, and the
+  /// permission can be withdrawn in between. Fails closed: an unreadable
+  /// permission sends nothing.
+  Future<bool> _maySendAnswers() async {
+    try {
+      return (await widget.storageService.getAiConsent())?.allowsSending ??
+          false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _submit() async {
     _drafts.unfocus();
     setState(() => _submitting = true);
     try {
+      if (!await _maySendAnswers()) {
+        // Nothing is sent and no request is made, so no quota is spent;
+        // the answers stay on the screen.
+        if (!mounted) return;
+        AppMessenger.show(PracticeScreen.notSentMessage);
+        return;
+      }
       final deviceId = await widget.storageService.getOrCreateDeviceId();
       final result = await widget.claudeService.scoreAnswers(
         deviceId: deviceId,
@@ -155,7 +182,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      AppMessenger.show('Could not score answers: $e');
+      AppMessenger.show(
+          'Could not score answers: ${userFacingErrorMessage(e)}');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

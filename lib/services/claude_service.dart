@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
@@ -42,6 +43,14 @@ class ClaudeApiException implements Exception {
   @override
   String toString() => 'ClaudeApiException: $message';
 }
+
+/// What a screen shows for a failed practice request: a
+/// [ClaudeApiException]'s own [ClaudeApiException.message], or a general
+/// line for anything else. Never `toString()`, which carries the Dart class
+/// name (App Review audit, finding #7).
+String userFacingErrorMessage(Object error) => error is ClaudeApiException
+    ? error.message
+    : 'Something went wrong. Please try again.';
 
 /// Talks to the GrammarLens Cloudflare Workers proxy (`proxy/`) to
 /// generate practice sets, read the shared Daily Test set and score
@@ -203,11 +212,18 @@ class ClaudeService {
   Future<http.Response> _send(
       Future<http.Response> Function() request, Duration timeout) async {
     if (!_isConfigured) {
+      // The setup steps are for a developer, so they go to the debug log
+      // only; the user sees that practice is unavailable (audit #7).
+      if (kDebugMode) {
+        debugPrint(
+          'The practice service is not configured. Copy '
+          'config/dev.example.json to config/dev.json, fill in the proxy '
+          'URL and app token, and run via scripts/dev.sh. See the "Local '
+          'setup" section in README.md.',
+        );
+      }
       throw const ClaudeApiException(
-        'The practice service is not configured. Copy '
-        'config/dev.example.json to config/dev.json, fill in the proxy '
-        'URL and app token, and run via scripts/dev.sh. See the "Local '
-        'setup" section in README.md.',
+        'Practice is not available right now. Please try again later.',
         kind: ClaudeApiErrorKind.notConfigured,
       );
     }

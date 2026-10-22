@@ -330,6 +330,20 @@ into the next build. Version bump and build: owner, not started.
     5.1.1(i)).
   - Verified: `flutter analyze` clean, full test suite passed (2057).
     **Not checked on a device.**
+- **1.4.0 B1 (2026-10-23; `1.4.0-plan.md`, audit findings 6, 7, 19, 10):**
+  - **#6:** Practice's Submit reads the AI permission again just before
+    scoring; without it nothing is sent, no request is made, and the user
+    is told the answers were not sent (Profile → Data).
+  - **#7:** practice error messages show the service's own message or a
+    general line, never a Dart class name; the "not configured" message
+    says practice is unavailable, its setup steps go to the debug log.
+  - **#19:** stale comments in `subscription_service.dart` and
+    `app_links.dart` corrected.
+  - **#10:** `scripts/release_ipa_check.sh` (version and build from the
+    IPA, debug text search in `App.framework/App`), added to
+    `docs/development.md`; not run yet (no IPA).
+  - Verified: `flutter analyze` clean, full test suite passed (2066).
+    **Not checked on a device.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
