@@ -412,7 +412,14 @@ the 1.3.0 checklist above.)*
   (source: `docs/medium/01-cost-architecture-source.md`; build log
   2026-10-08). Next: article 2, App Review guideline 5.1.2(i) (the AI
   permission before Topic Practice); not started.
-- [ ] **iPad on iPadOS 26: the app opens as a resizable window.** Seen in
+- [x] **iPad on iPadOS 26: the app opens as a resizable window.**
+  *(Checked, clean (owner, 2026-10-23): iPadOS 27 simulator, iPad Pro
+  13-inch, `main`, dev config; full screen, iPhone width, the narrowest
+  window, wide and short, live resizing; onboarding, Daily Test (hint,
+  multi-blank, keyboard), the result screen, the paywall, Home, Review →
+  AI permission → practice, Profile, and the narrowest window at the
+  Large text size. Not checked on a real iPad. Closes audit finding #5;
+  `1.4.0-plan.md`, Phase 0.)* *(As written:)* Seen in
   the 1.2.0 screenshot captures (iPad Pro 13-inch (M5) simulator, iOS
   26.5, 2026-10-06): every frame has the system's window resize handle in
   the bottom-right corner, so `UIRequiresFullScreen` (deprecated in
@@ -457,7 +464,12 @@ the 1.3.0 checklist above.)*
   the answers with the goal now collected through Firebase Analytics (a
   survey-like answer about the user's purpose; the category, and whether
   it is linked to the user, to be decided against the existing Firebase
-  answers, which are not in this repository).
+  answers, which are not in this repository). *(Updated (owner,
+  2026-10-23; `1.4.0-plan.md`, Phase 0): the Analytics purpose added to
+  Purchase History and to Device ID; User ID not declared (RevenueCat's
+  documentation says it is not needed for an anonymous ID). Still open:
+  Coarse Location (owner's decision). How the learning goal is declared
+  is not recorded here.)*
 
 ### Question screen improvements (branch `question-screen`) — owner decisions 2026-10-12
 
@@ -1071,6 +1083,9 @@ as each one lands, with literal status words (see above):
   27 `lipo` issue at the time, so the AOT binary itself was not inspected.
   *(Update 2026-09-23: the `lipo` blocker is resolved and a release IPA now
   builds; the AOT binary has still not been inspected for tool strings.)*
+  *(2026-10-23: still not inspected; build 6's archive is no longer on the
+  owner's machine, so the check runs on the 1.4.0 release build,
+  `1.4.0-plan.md` Phase 5, audit finding #10.)*
 - **Profile: age and occupation removed — implemented, automated tests
   only.** Scan before removal: the two fields were used only by the Profile
   form, `UserProfile` and the `user_profile` table; not by prompt generation,

@@ -7,6 +7,28 @@
 
 ---
 
+## Status updates (English; the audit below is kept as written)
+
+- **#3 App Privacy (owner, 2026-10-23):** updated in App Store Connect:
+  the Analytics purpose added to Purchase History and to Device ID; User
+  ID not declared (RevenueCat's documentation says it is not needed for an
+  anonymous ID). **Open:** Coarse Location (owner's decision).
+- **#5 iPad window: closed (owner, 2026-10-23), clean.** Checked on the
+  iPadOS 27 simulator (iPad Pro 13-inch, `main`, dev config): full screen,
+  iPhone width, the narrowest window, wide and short, live resizing;
+  onboarding, Daily Test (hint, multi-blank, keyboard), the result screen,
+  the paywall, Home, Review → AI permission → practice, Profile, and the
+  narrowest window at the Large text size. Not checked on a real iPad.
+- **#10 `strings` check: moved** to the 1.4.0 release build
+  (`1.4.0-plan.md`, Phase 5); build 6's archive is no longer on the
+  owner's machine. Not done.
+- **Action 4, Notes for Review (owner, 2026-10-23):** updated in App Store
+  Connect: how a weak spot is created, the AI permission covering every
+  practice session, the AI running through our server, no hidden
+  features, Premium's 5 sessions a day.
+
+---
+
 ## 1. Özet
 
 **Genel risk: Orta (alt sınırda).** Hesap kapatma riski taşıyan bir bulgu yok. 2.5.19 açısından proje temiz: tüm geliştirici araçları (entitlement override, fiyat fixture'ı, debug paneli, tema önizleme, onboarding sıfırlama) `kDebugMode` / `kReleaseMode` derleme sabitlerine bağlı. Bu yüzden release build'de derleyici bu kodu siler; runtime'da açılabilen bir yol, gizli jest, remote config, promo/kod girişi, beyaz liste ya da obfuscation yok. AI tarafında 5.1.2(i)'nin istediği izin akışı var: ilk gönderimden önce açık onay alınıyor, onay kalıcı, sürümlü, geri alınabilir ve fail-closed. API anahtarı client'ta değil. Riski "Orta"ya çıkaran üç şey var. (1) İzin ekranı, onboarding metni ve gizlilik politikası AI'ya gidenleri "Topic Practice" olarak anlatıyor. Oysa ücretsiz kullanıcının AI'ya veri gönderdiği tek yol weak-spot practice ("Practice this") ve bu Topic Practice değil. Onay alınıyor ama yanlış özelliğin adıyla alınıyor. (2) Uygulama içinde gizlilik politikasına sabit bir giriş yok: link sadece paywall'da ve AI izin ekranında. (3) App Privacy beyanının learning goal ve weak-spot practice açısından güncel olduğu repoda doğrulanamıyor; roadmap'te iki madde hâlâ açık.

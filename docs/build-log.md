@@ -12643,3 +12643,32 @@ Docs only. No code, proxy or config changed.
   not registered). Roadmap: the two P14 notes that waited for the 1.4.0
   plan point to D7; "Next build after 1.3.0 build 6 (version not set)" is
   now "1.4.0 (planned)" with a link to the plan.
+
+## 2026-10-23 (1.4.0 Phase 0: iPad window clean, App Privacy and Notes for Review updated)
+
+Docs only. No code, proxy or config changed.
+
+- **[Product — owner]** iPad narrow-window check (audit finding #5):
+  iPadOS 27 simulator, iPad Pro 13-inch, `main`, dev config. Window
+  shapes: full screen, iPhone width, the narrowest, wide and short, live
+  resizing. Screens: onboarding, Daily Test (hint, multi-blank, keyboard),
+  the result screen, the paywall, Home, Review → AI permission →
+  practice, Profile, and the narrowest window at the Large text size.
+  Clean. Not checked on a real iPad.
+- **[Product — owner]** App Privacy updated: the Analytics purpose added
+  to Purchase History and to Device ID; User ID not declared (RevenueCat's
+  documentation says it is not needed for an anonymous ID). Coarse
+  Location is open (owner's decision).
+- **[Product — owner]** Notes for Review updated: how a weak spot is
+  created, the AI permission covering every practice session, the AI
+  running through our server, no hidden features, Premium's 5 sessions a
+  day.
+- **[Docs]** The `strings` check on the release IPA (audit finding #10)
+  moves to the 1.4.0 release build (Phase 5): build 6's archive is no
+  longer on the owner's machine. Plan Phase 0 updated ("iPadOS 26+ (tested
+  on 27)"); roadmap's iPadOS 26 window item ticked, its App Privacy item
+  annotated (still open), the AOT `strings` note annotated; the audit file
+  gets an English "Status updates" section (#3, #5, #10, Notes for
+  Review).
+- **[Open]** Coarse Location in App Privacy (owner). How the learning goal
+  is declared in App Privacy is not recorded.
