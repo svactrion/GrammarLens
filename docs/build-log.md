@@ -12592,3 +12592,28 @@ repository.
     (the app says "practice sessions" send answers to Anthropic; check the
     policy says the same), is still open and is not on the 1.3.0
     checklist.
+
+## 2026-10-23 (1.4.0 scope decided (owner))
+
+Docs only. No code, proxy or config changed.
+
+- **[Product — owner]** 1.4.0 scope decided: seven interface languages
+  (ja, ko, es, pt-BR, tr, ar with RTL, de; English default and fallback;
+  no separate language for India), questions and all AI explanations stay
+  in English, language-neutral proxy prompts (quality measured before the
+  Daily Test prompt is deployed), a practice model measurement
+  (`claude-sonnet-4-6` vs `claude-sonnet-5-5`, `low` / `medium` effort for
+  scoring), one small widget without a streak, AI-only translations with
+  a back-translation check on the paywall, the AI permission screen and
+  onboarding's "Your data & AI" text. P14 is developed now and deployed
+  right after 1.3.0 is live; no proxy deploy while 1.3.0 is in review.
+  Decisions D1–D7 with their reasons and the ordered work list (Phases 0
+  and 2–6) in [`1.4.0-plan.md`](1.4.0-plan.md); every item planned, not
+  started.
+- **[Docs]** Roadmap: a 1.4.0 row in "Version naming" (1.3.0's row
+  unchanged). In the 1.2.0 pre-release checklist, three items marked from
+  existing records: the subscription review screenshot upload (done in
+  1.3.0), the App Store screenshots upload (superseded by the 1.3.0 set)
+  and TestFlight build 5 (uploaded; the trial check ran on it 2026-10-09;
+  superseded for release by build 6). The checklist's other open items
+  stay open.
