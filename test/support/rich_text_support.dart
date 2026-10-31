@@ -65,6 +65,32 @@ void expectContinuousMark(
   }
 }
 
+/// Asserts that the visible gap between two pieces of one strip, the
+/// first's word [a] (its trailing space included) and the second's word
+/// [b], is the width of one space in [style], within a pixel (B10.2: no
+/// padding on the inner edges).
+void expectOneSpaceGap(
+    WidgetTester tester, Finder within, String a, String b, TextStyle style) {
+  double widthOf(String text) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width;
+  }
+
+  // The first occurrence of each: a box may hold the same word twice.
+  final first =
+      tester.getRect(find.descendant(of: within, matching: find.text(a)).first);
+  final second =
+      tester.getRect(find.descendant(of: within, matching: find.text(b)).first);
+  final glyphsEnd = first.left + widthOf(a.trimRight());
+  expect(second.left - glyphsEnd, closeTo(widthOf(' '), 1.0),
+      reason: 'gap "$a"→"$b" is one space');
+}
+
 /// The marks inside the [Text] at [finder], in order.
 List<RenderedMark> marksIn(WidgetTester tester, Finder finder) {
   final text = textAt(tester, finder);

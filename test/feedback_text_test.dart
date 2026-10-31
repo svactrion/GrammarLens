@@ -137,6 +137,20 @@ void main() {
     expectContinuousMark(tester, paragraph, ["'decided ", 'to ', "change'"]);
     expect(plainTextOfWidget(tester.widget<Text>(paragraph)),
         "Say 'decided to change' here.");
+    // B10.2: the gaps inside the strip are one space of the chip's style.
+    expectOneSpaceGap(tester, paragraph, "'decided ", 'to ', marks[0].style!);
+    expectOneSpaceGap(tester, paragraph, 'to ', "change'", marks[1].style!);
+    // Padding only on the outer edges: the inner pieces' texts touch.
+    final inner = tester
+        .getRect(find.descendant(of: paragraph, matching: find.text('to ')));
+    final innerBox = markRect(tester, paragraph, 'to ');
+    expect(inner.left, closeTo(innerBox.left, 0.01));
+    expect(inner.right, closeTo(innerBox.right, 0.01));
+    final firstBox = markRect(tester, paragraph, "'decided ");
+    final firstText = tester.getRect(
+        find.descendant(of: paragraph, matching: find.text("'decided ")));
+    expect(firstText.left - firstBox.left, closeTo(3, 0.01));
+    expect(firstBox.right, closeTo(firstText.right, 0.01));
   });
 
   testWidgets(

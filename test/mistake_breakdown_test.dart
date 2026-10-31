@@ -184,6 +184,13 @@ void main() {
     });
   });
 
+  test('the "You wrote" pill fill (B10.2): the measured colours', () {
+    final light = buildAppTheme(Brightness.light).extension<SemanticColors>()!;
+    final dark = buildAppTheme(Brightness.dark).extension<SemanticColors>()!;
+    expect(MistakeBreakdown.userMarkFill(light).toARGB32(), 0xFFE1C2C1);
+    expect(MistakeBreakdown.userMarkFill(dark).toARGB32(), 0xFF563434);
+  });
+
   group('word-level difference (1.4.0 B10)', () {
     const case1User =
         "Complete the sentences with the correct gerund or infinitive form of "
@@ -242,11 +249,10 @@ void main() {
         // "to join" is one phrase: the space rides inside the first piece.
         expect(user.map((m) => m.word), ['changing', 'to ', 'join', 'staying']);
         for (final m in user) {
-          expect(m.fill, semantic.incorrectBackground);
+          expect(m.fill, MistakeBreakdown.userMarkFill(semantic));
           expect(m.style?.color, semantic.onIncorrectBackground);
-          expect(m.style?.decoration, TextDecoration.underline);
-          expect(m.style?.decorationColor, semantic.onIncorrectBackground);
-          expect(m.style?.decorationThickness, 1.5);
+          // B10.2: no underline; it collided with descenders.
+          expect(m.style?.decoration, anyOf(isNull, TextDecoration.none));
         }
         final corrected =
             marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey));
@@ -262,7 +268,11 @@ void main() {
             tester, find.byKey(MistakeBreakdown.userTextKey), ['to ', 'join']);
         expectContinuousMark(tester,
             find.byKey(MistakeBreakdown.correctedTextKey), ['to ', 'change']);
-        expect(user[1].style?.decoration, TextDecoration.underline);
+        // B10.2: the gap inside a strip is one space of the pill's style.
+        expectOneSpaceGap(tester, find.byKey(MistakeBreakdown.userTextKey),
+            'to ', 'join', user[1].style!);
+        expectOneSpaceGap(tester, find.byKey(MistakeBreakdown.correctedTextKey),
+            'to ', 'change', corrected[0].style!);
         expect(
             plainTextOfWidget(
                 textAt(tester, find.byKey(MistakeBreakdown.userTextKey))),

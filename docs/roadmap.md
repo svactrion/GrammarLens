@@ -384,7 +384,14 @@ into the next build. Version bump and build: owner, not started.
     taken over the prompt's blank-bearing lines (a two-line stored prompt
     fell to simple mode and painted the instruction words); marked
     phrases are one continuous strip (each piece carries its trailing
-    space). `flutter analyze` clean, 2144 tests passed.
+    space). `flutter analyze` clean, 2144 tests passed. **Re-checked
+    2026-10-31: defects fixed; B10.2 polish (underline removed, inner
+    padding); B8 rows on a fresh record still unseen.** B10.2
+    (2026-10-31): the "You wrote" mark loses its underline and gets a
+    slightly darker fill (text 8.2:1 light / 6.4:1 dark on it); a strip's
+    padding sits on its outer edges only, so word gaps inside it are one
+    space. `flutter analyze` clean, 2145 tests passed; not checked on a
+    device.
     **Not checked on a device.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)

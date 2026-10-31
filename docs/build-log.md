@@ -12930,3 +12930,42 @@ change.
   strip, and the B10 list (a fresh multi-blank Practice with one box left
   blank for B8's rows, both highlighted boxes on an old and a new record,
   the chips in both themes, the Large text size at the narrowest layout).
+
+## 2026-10-31 (1.4.0 B10.1 re-check passed; B10.2 polish: no underline, outer-edge padding; awaiting the device check)
+
+Plan: `docs/1.4.0-plan.md` D10 (B10.2 notes). Client only, no proxy
+change.
+
+- **[Product — owner]** B10.1 re-checked on the iPhone 14 Plus (light and
+  dark): the two-line record paints only the learner's words, and phrases
+  read as one strip. Two polish items: the "You wrote" underline collides
+  with descenders and makes the misspelt word harder to read; word gaps
+  inside a strip are wider than normal text ("to  hold", "'to  +  verb'").
+  B8's rows on a fresh record are still unseen.
+- **[Engineering] Underline removed.** The "You wrote" pill keeps the
+  `onIncorrectBackground` text; its fill is `incorrectBackground` with 15 %
+  of `onIncorrectBackground` over it (`MistakeBreakdown.userMarkFill`),
+  since the plain tint measured 1.25:1 against the box and the underline
+  had made up for it. Measured: light `#E1C2C1`, text on fill 8.19:1, fill
+  on the `surface` box 1.66:1; dark `#563434`, 6.38:1 and 1.73:1 (the
+  undarkened fill: 10.87 / 1.25 light, 9.0 / 1.23 dark). Text on fill
+  stays well above 4.5:1 in both themes.
+- **[Engineering] Inner padding.** Cause confirmed in `markedSpans`: the
+  3 pt (chips) or 2 pt (pills) horizontal padding was applied on both
+  sides of every piece, on top of the space carried inside the piece, so
+  each inner edge added two paddings to the gap. Now the padding sits on
+  the first piece's left and the last piece's right only; inner edges get
+  none, so the gap between two pieces is exactly the space in the piece's
+  style. The corners are unchanged.
+- **[Tests]** `flutter analyze` clean; **2145 passed** (was 2144).
+  `mistake_breakdown_test`: the two fill colours asserted; the pill style
+  has no underline; the gap inside "to join" and "to change" is one space
+  of the pill's style within a pixel. `feedback_text_test`: the gaps
+  inside "'decided to change'" are one space of the chip's style; the inner
+  piece's text spans its whole box, the first piece has the 3 pt on its
+  left only. `test/support/rich_text_support.dart`: `expectOneSpaceGap`
+  (a `TextPainter` in the piece's style for the space width; the first
+  occurrence of each word, since a box may hold the same word twice).
+- **[Not checked]** On the owner's iPhone: the darker fill without the
+  underline in both themes, the word gaps inside strips, and B8's rows on
+  a fresh multi-blank Practice with one box left blank.

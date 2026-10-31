@@ -30,6 +30,16 @@ class MistakeBreakdown extends StatelessWidget {
   static const Key userTextKey = Key('mistake_user_text');
   static const Key correctedTextKey = Key('mistake_corrected_text');
 
+  /// The "You wrote" difference pill's fill: `incorrectBackground` with
+  /// 15 % of `onIncorrectBackground` over it (B10.2). The plain
+  /// `incorrectBackground` measured 1.25:1 against the box, which the
+  /// underline used to make up for; this is 1.66:1 light (`#E1C2C1`) and
+  /// 1.73:1 dark (`#563434`), with the text at 8.2:1 and 6.4:1 on it.
+  static Color userMarkFill(SemanticColors semantic) => Color.alphaBlend(
+        semantic.onIncorrectBackground.withValues(alpha: 0.15),
+        semantic.incorrectBackground,
+      );
+
   final String? prompt;
   final String? userAnswer;
 
@@ -126,13 +136,12 @@ class MistakeBreakdown extends StatelessWidget {
                     tokens: diff?.user,
                     plain: userAnswer!,
                     style: userBody,
+                    // B10.2: no underline (it collided with descenders);
+                    // the fill darkened a step instead, see [userMarkFill].
                     mark: InlineMark(
-                      fill: semantic.incorrectBackground,
+                      fill: MistakeBreakdown.userMarkFill(semantic),
                       textStyle: userBody.copyWith(
                         color: semantic.onIncorrectBackground,
-                        decoration: TextDecoration.underline,
-                        decorationColor: semantic.onIncorrectBackground,
-                        decorationThickness: 1.5,
                       ),
                       horizontalPadding: 2,
                     ),

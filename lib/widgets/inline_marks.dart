@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 /// inner edges between two words of one mark are square, and every piece
 /// but the last carries its trailing space inside the mark (B10.1), so the
 /// fill and any underline run on across the gap and the phrase reads as
-/// one continuous strip. Each word sits on the text baseline.
+/// one continuous strip; the horizontal padding sits on the strip's outer
+/// edges only, so the gap between two pieces is exactly one space (B10.2).
+/// Each word sits on the text baseline.
 class InlineMark {
   final Color fill;
   final TextStyle textStyle;
@@ -44,8 +46,14 @@ List<InlineSpan> markedSpans(String text, InlineMark mark) {
             right: last ? r : Radius.zero,
           ),
         ),
+        // Padding on the strip's outer edges only (B10.2): an inner edge
+        // already has the space carried inside the piece, and padding
+        // there widened the word gaps beyond normal text.
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: mark.horizontalPadding),
+          padding: EdgeInsets.only(
+            left: first ? mark.horizontalPadding : 0,
+            right: last ? mark.horizontalPadding : 0,
+          ),
           child: Text(word, style: mark.textStyle),
         ),
       ),
