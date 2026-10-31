@@ -6,6 +6,8 @@ import 'package:grammar_lens/utils/blank_assembly.dart';
 import 'package:grammar_lens/widgets/blank_colors.dart';
 import 'package:grammar_lens/widgets/mistake_breakdown.dart';
 
+import 'support/rich_text_support.dart';
+
 /// Regression coverage for docs/design-audit.md, Batch 0 item 1: a skipped
 /// question's correct answer used to render on the same green success
 /// color as an actual correction, labeled "CORRECTED" — reading as if a
@@ -179,6 +181,152 @@ void main() {
         expect(find.byKey(MistakeBreakdown.blankRowKey(0)), findsNothing);
         expect(promptBlankColors(tester), isEmpty);
       }
+    });
+  });
+
+  group('word-level difference (1.4.0 B10)', () {
+    const case1User =
+        "Complete the sentences with the correct gerund or infinitive form of "
+        "the verbs in brackets: 'I tend to procrastinate (procrastinate) when "
+        "the task feels overwhelming, but I have decided changing (change) my "
+        "habits this semester. I have also considered to join (join) a study "
+        "group, because working alone makes it hard staying (stay) motivated.'";
+    const case1Corrected =
+        'I tend to procrastinate when the task feels overwhelming, but I have '
+        'decided to change my habits this semester. I have also considered '
+        'joining a study group, because working alone makes it hard to stay '
+        'motivated.';
+    const case1Prompt =
+        "Complete the sentences with the correct gerund or infinitive form of "
+        "the verbs in brackets: 'I tend ____ (procrastinate) when the task "
+        "feels overwhelming, but I have decided ____ (change) my habits this "
+        "semester. I have also considered ____ (join) a study group, because "
+        "working alone makes it hard ____ (stay) motivated.'";
+
+    Future<void> pumpCard(
+      WidgetTester tester, {
+      required String? prompt,
+      required String userAnswer,
+      required String correctedAnswer,
+      List<BlankAnswer>? blankAnswers,
+      Brightness brightness = Brightness.light,
+    }) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(brightness),
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MistakeBreakdown(
+              prompt: prompt,
+              userAnswer: userAnswer,
+              blankAnswers: blankAnswers,
+              correctedAnswer: correctedAnswer,
+              explanation: 'x',
+            ),
+          ),
+        ),
+      ));
+    }
+
+    for (final brightness in Brightness.values) {
+      testWidgets(
+          'case 1 on an old record (no user_blanks): both boxes painted with '
+          'the theme\'s colours, text intact ($brightness)', (tester) async {
+        await pumpCard(tester,
+            prompt: case1Prompt,
+            userAnswer: case1User,
+            correctedAnswer: case1Corrected,
+            brightness: brightness);
+        final semantic = buildAppTheme(brightness).extension<SemanticColors>()!;
+
+        final user = marksIn(tester, find.byKey(MistakeBreakdown.userTextKey));
+        expect(user.map((m) => m.word), ['changing', 'to', 'join', 'staying']);
+        for (final m in user) {
+          expect(m.fill, semantic.incorrectBackground);
+          expect(m.style?.color, semantic.onIncorrectBackground);
+          expect(m.style?.decoration, TextDecoration.underline);
+          expect(m.style?.decorationColor, semantic.onIncorrectBackground);
+          expect(m.style?.decorationThickness, 1.5);
+        }
+        final corrected =
+            marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey));
+        expect(corrected.map((m) => m.word),
+            ['to', 'change', 'joining', 'to', 'stay']);
+        for (final m in corrected) {
+          expect(m.fill, semantic.onCorrectBackground);
+          expect(m.style?.color, semantic.correctBackground);
+        }
+        expect(
+            plainTextOfWidget(
+                textAt(tester, find.byKey(MistakeBreakdown.userTextKey))),
+            case1User);
+        expect(
+            plainTextOfWidget(
+                textAt(tester, find.byKey(MistakeBreakdown.correctedTextKey))),
+            case1Corrected);
+        expect(find.bySemanticsLabel(case1Corrected), findsOneWidget);
+      });
+    }
+
+    testWidgets(
+        'a new multi-blank record keeps B8\'s rows and paints only '
+        '"Corrected"', (tester) async {
+      await pumpCard(tester,
+          prompt: case1Prompt,
+          userAnswer: case1User,
+          correctedAnswer: case1Corrected,
+          blankAnswers: const [
+            BlankAnswer('to procrastinate'),
+            BlankAnswer('changing'),
+            BlankAnswer('to join'),
+            BlankAnswer('staying'),
+          ]);
+      expect(find.byKey(MistakeBreakdown.blankRowKey(3)), findsOneWidget);
+      expect(find.byKey(MistakeBreakdown.userTextKey), findsNothing);
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey))
+              .map((m) => m.word),
+          ['to', 'change', 'joining', 'to', 'stay']);
+    });
+
+    testWidgets('a heavy rewrite renders plain, as before', (tester) async {
+      const user = 'Yesterday I am going to the market and I buyed many '
+          'fruits because they was cheap.';
+      const corrected = 'Yesterday I went to the market and bought a lot of '
+          'fruit because it was cheap.';
+      await pumpCard(tester,
+          prompt: 'Write a sentence about yesterday.',
+          userAnswer: user,
+          correctedAnswer: corrected);
+      expect(find.text(user), findsOneWidget);
+      expect(find.text(corrected), findsOneWidget);
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.userTextKey)), isEmpty);
+    });
+
+    testWidgets('one word against one word: both painted', (tester) async {
+      await pumpCard(tester,
+          prompt: 'She ___ to the store yesterday.',
+          userAnswer: 'goed',
+          correctedAnswer: 'went');
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.userTextKey))
+              .map((m) => m.word),
+          ['goed']);
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey))
+              .map((m) => m.word),
+          ['went']);
+    });
+
+    testWidgets(
+        'a skipped question (no answer) paints nothing in the '
+        'neutral CORRECT ANSWER box', (tester) async {
+      await pumpCard(tester,
+          prompt: 'She ___ to the store yesterday.',
+          userAnswer: '',
+          correctedAnswer: 'went');
+      expect(find.text('CORRECT ANSWER'), findsOneWidget);
+      expect(find.text('went'), findsOneWidget);
     });
   });
 }

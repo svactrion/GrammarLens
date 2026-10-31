@@ -21,10 +21,12 @@ import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/medal_celebration.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_milestone.dart';
+import 'package:grammar_lens/widgets/feedback_text.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
 
 import 'support/celebration_support.dart';
 import 'support/recording_analytics_sink.dart';
+import 'support/rich_text_support.dart';
 
 /// Captures what DailyTestResultScreen actually writes, instead of hitting
 /// the real (platform-channel-backed, throwing-in-tests) StorageService.
@@ -317,7 +319,9 @@ void main() {
           explanation: q4Why),
     ];
 
-    Finder text(String value) => find.text(value, skipOffstage: false);
+    // The explanations render with chips (1.4.0 B10), so the plain text
+    // is read with the marks as words.
+    Finder text(String value) => findPlainText(value, skipOffstage: false);
 
     // The result list builds lazily; a tall surface keeps every card built
     // so each one's text can be checked directly.
@@ -379,14 +383,16 @@ void main() {
       // The note's two sentences and the explanation make three, so
       // FeedbackText (1.4.0 B9) lays them out as three paragraphs
       // (Text.rich: the text is the span's, not `data`), in that order.
-      final shown = tester
-          .widgetList<Text>(find.byType(Text, skipOffstage: false))
-          .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
-          .toList();
-      final note = shown.indexWhere((d) => d.contains('keyboard character'));
-      expect(note, isNonNegative);
-      expect(shown[note + 1], 'Not a grammar mistake.');
-      expect(shown[note + 2], "After 'enjoy', the verb takes -ing.");
+      final shown = [
+        for (var i = 0; i < 3; i++)
+          plainTextOfWidget(tester.widget<Text>(
+              find.byKey(FeedbackText.paragraphKey(i), skipOffstage: false))),
+      ];
+      expect(shown[0], contains('keyboard character'));
+      expect(shown[1], 'Not a grammar mistake.');
+      expect(shown[2], "After 'enjoy', the verb takes -ing.");
+      expect(find.byKey(FeedbackText.paragraphKey(3), skipOffstage: false),
+          findsNothing);
     });
 
     testWidgets(
@@ -557,7 +563,7 @@ void main() {
       expect(find.text('Correct'), findsOneWidget);
       expect(find.text('Needs work'), findsNothing);
       expect(
-          find.text('Also correct: "had to". Past obligation.',
+          findPlainText('Also correct: "had to". Past obligation.',
               skipOffstage: false),
           findsOneWidget);
       expect(storageService.insertedErrors, isEmpty);

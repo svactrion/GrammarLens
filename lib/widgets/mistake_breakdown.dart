@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../utils/answer_diff.dart';
 import '../utils/blank_assembly.dart';
 import '../utils/blanks.dart';
 import 'blank_colors.dart';
 import 'feedback_text.dart';
+import 'inline_marks.dart';
 
 /// Shared "question → your answer → correction → why" layout used by both
 /// the Results screen's per-item feedback cards and the Review weak-spot
@@ -22,6 +24,11 @@ class MistakeBreakdown extends StatelessWidget {
 
   /// The key of blank [index]'s row in "YOU WROTE".
   static Key blankRowKey(int index) => ValueKey('mistake_blank_row_$index');
+
+  /// The keys of the two boxes' texts (1.4.0 B10: `Text.rich` with the
+  /// differing words as pills).
+  static const Key userTextKey = Key('mistake_user_text');
+  static const Key correctedTextKey = Key('mistake_corrected_text');
 
   final String? prompt;
   final String? userAnswer;
@@ -73,6 +80,24 @@ class MistakeBreakdown extends StatelessWidget {
     final promptStyle = theme.textTheme.bodyMedium?.copyWith(
       color: colorScheme.onSurfaceVariant,
     );
+    // The word-level difference (1.4.0 B10), when both texts exist. On a
+    // per-blank record "You wrote" shows B8's rows, so only "Corrected" is
+    // painted; the assembled sentence is still what is compared.
+    final diff = hasAnswer && hasCorrection
+        ? diffAnswer(
+            userAnswer: userAnswer!,
+            correctedAnswer: correctedAnswer!,
+            prompt: prompt,
+          )
+        : null;
+    final userBody =
+        theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface) ??
+            const TextStyle();
+    final correctedBody = theme.textTheme.bodyMedium?.copyWith(
+          color:
+              isSkipped ? colorScheme.onSurface : semantic.onCorrectBackground,
+        ) ??
+        const TextStyle();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,13 +116,27 @@ class MistakeBreakdown extends StatelessWidget {
         if (hasAnswer) ...[
           _LabeledBox(
             label: 'YOU WROTE',
-            text: perBlank ? null : userAnswer!,
             fillColor: colorScheme.surface,
             borderColor: colorScheme.outline,
             labelColor: colorScheme.onSurfaceVariant,
-            textColor: colorScheme.onSurface,
-            child:
-                perBlank ? _BlankRows(answers: blanks, colors: colors!) : null,
+            child: perBlank
+                ? _BlankRows(answers: blanks, colors: colors!)
+                : _DiffText(
+                    key: MistakeBreakdown.userTextKey,
+                    tokens: diff?.user,
+                    plain: userAnswer!,
+                    style: userBody,
+                    mark: InlineMark(
+                      fill: semantic.incorrectBackground,
+                      textStyle: userBody.copyWith(
+                        color: semantic.onIncorrectBackground,
+                        decoration: TextDecoration.underline,
+                        decorationColor: semantic.onIncorrectBackground,
+                        decorationThickness: 1.5,
+                      ),
+                      horizontalPadding: 2,
+                    ),
+                  ),
           ),
           const SizedBox(height: 12),
         ],
@@ -108,7 +147,6 @@ class MistakeBreakdown extends StatelessWidget {
           // the same neutral box "YOU WROTE" already uses above instead.
           _LabeledBox(
             label: isSkipped ? 'CORRECT ANSWER' : 'CORRECTED',
-            text: correctedAnswer!,
             fillColor:
                 isSkipped ? colorScheme.surface : semantic.correctBackground,
             borderColor:
@@ -116,9 +154,20 @@ class MistakeBreakdown extends StatelessWidget {
             labelColor: isSkipped
                 ? colorScheme.onSurfaceVariant
                 : semantic.onCorrectBackground,
-            textColor: isSkipped
-                ? colorScheme.onSurface
-                : semantic.onCorrectBackground,
+            child: _DiffText(
+              key: MistakeBreakdown.correctedTextKey,
+              tokens: diff?.corrected,
+              plain: correctedAnswer!,
+              style: correctedBody,
+              // The inverse of the box: a solid pill in the box's text
+              // colour, the box's fill as the word's colour.
+              mark: InlineMark(
+                fill: semantic.onCorrectBackground,
+                textStyle:
+                    correctedBody.copyWith(color: semantic.correctBackground),
+                horizontalPadding: 2,
+              ),
+            ),
           ),
           const SizedBox(height: 16),
         ],
@@ -200,26 +249,63 @@ class _BlankRows extends StatelessWidget {
   }
 }
 
+/// A box's text with its differing words as pills ([markedSpans]); the
+/// plain text when there is no difference to show. VoiceOver reads the
+/// plain sentence.
+class _DiffText extends StatelessWidget {
+  final List<DiffToken>? tokens;
+  final String plain;
+  final TextStyle style;
+  final InlineMark mark;
+
+  const _DiffText({
+    super.key,
+    required this.tokens,
+    required this.plain,
+    required this.style,
+    required this.mark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = this.tokens;
+    if (tokens == null || !tokens.any((t) => t.painted)) {
+      return Text(plain, style: style);
+    }
+    final spans = <InlineSpan>[];
+    for (var i = 0; i < tokens.length; i++) {
+      final token = tokens[i];
+      if (i > 0) spans.add(const TextSpan(text: ' '));
+      if (!token.painted) {
+        spans.add(TextSpan(text: token.text));
+        continue;
+      }
+      if (token.lead.isNotEmpty) spans.add(TextSpan(text: token.lead));
+      spans.addAll(markedSpans(token.core, mark));
+      if (token.trail.isNotEmpty) spans.add(TextSpan(text: token.trail));
+    }
+    return Semantics(
+      label: plain,
+      excludeSemantics: true,
+      child: Text.rich(TextSpan(style: style, children: spans)),
+    );
+  }
+}
+
 class _LabeledBox extends StatelessWidget {
   final String label;
-
-  /// The box's text; null when [child] fills the box instead.
-  final String? text;
-  final Widget? child;
+  final Widget child;
   final Color fillColor;
   final Color borderColor;
   final Color labelColor;
-  final Color textColor;
 
   const _LabeledBox({
     required this.label,
-    required this.text,
-    this.child,
+    required this.child,
     required this.fillColor,
     required this.borderColor,
     required this.labelColor,
-    required this.textColor,
-  }) : assert((text == null) != (child == null), 'text or child, not both');
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -242,13 +328,7 @@ class _LabeledBox extends StatelessWidget {
                 .copyWith(color: labelColor, letterSpacing: 0.6),
           ),
           const SizedBox(height: 4),
-          if (child != null)
-            child!
-          else
-            Text(
-              text!,
-              style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
-            ),
+          child,
         ],
       ),
     );

@@ -13,6 +13,8 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/feedback_text.dart';
 
+import 'support/rich_text_support.dart';
+
 /// The bottom action's own visual states (this batch's UI spec) — separate
 /// from practice_launch_free_tier_test.dart, which proves the *gating
 /// behavior* through both real entry points. This file is only concerned
@@ -189,7 +191,7 @@ void main() {
         ],
       );
 
-      expect(find.text(comment), findsWidgets);
+      expect(findPlainText(comment), findsWidgets);
       expect(find.textContaining("You've had trouble"), findsNothing);
     });
 
