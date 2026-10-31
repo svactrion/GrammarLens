@@ -261,7 +261,9 @@ describe('POST /v1/generate-daily-test', () => {
     const daily = JSON.parse(String(fetchCalls[0]?.init?.body)) as { max_tokens: number; system: string };
     const practice = JSON.parse(String(fetchCalls[1]?.init?.body)) as { max_tokens: number };
     expect(daily.max_tokens).toBe(3072);
-    expect(practice.max_tokens).toBe(2048);
+    // Practice generation thinks since 2026-10-31 (claude-sonnet-5-5, low):
+    // the shared 2,048 plus the thinking headroom.
+    expect(practice.max_tokens).toBe(2048 + 12_000);
     expect(daily.system).toContain('fewer than 25 words');
   });
 
@@ -365,6 +367,7 @@ describe('POST /v1/score-answers — structured feedback (1.4.0 D11)', () => {
     mockAnthropicSuccess({ feedback: [] });
     await post('/v1/score-answers', { deviceId: 'd1', items });
     const body = JSON.parse(String(fetchCalls[0]?.init?.body)) as {
+      model: string;
       max_tokens: number;
       system: string;
       output_config: { format: { schema: { properties: { feedback: { items: { required: string[]; properties: Record<string, unknown> } } } } } };
@@ -375,7 +378,10 @@ describe('POST /v1/score-answers — structured feedback (1.4.0 D11)', () => {
     expect(body.system).toContain('"blanks"');
     expect(body.system).toContain('"summary"');
     expect(body.system).toContain('at most two sentences');
-    expect(body.max_tokens).toBe(scoreMaxTokensFor(2));
+    // Haiku 5.5 at low effort thinks (owner, 2026-10-31): the scaled budget
+    // plus the thinking headroom.
+    expect(body.max_tokens).toBe(scoreMaxTokensFor(2) + 12_000);
+    expect(body.model).toBe('claude-haiku-5-5');
   });
 
   it('scales the output budget with the item count, never under the old 2,048', () => {

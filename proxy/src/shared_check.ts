@@ -312,7 +312,7 @@ export function gradeAnswer(question: GradableQuestion, input: string): GradeKin
  */
 export type AnnotationGate = 'agreement' | 'single_review';
 
-export const ANNOTATION_GATE: AnnotationGate = 'agreement';
+export const ANNOTATION_GATE: AnnotationGate = 'single_review'; // owner, 2026-10-31, after the measurement: the second checker filtered one answer in 37
 
 /** The checkers each gate runs, in call order. The agreement pair differs in
  * model family from each other and from the generator. */
@@ -335,7 +335,10 @@ export type AnnotationFindingCode =
   | 'alternative_not_plain' // a candidate does not fold to itself (§1.4 rule 2)
   | 'key_not_plain' // the key does not fold to itself: the folding could collide
   | 'proposed_by_one_model' // under the agreement gate: not every checker proposed it
-  | 'move_leaves_no_wrong_answer'; // moving the acceptable wrong answers would empty the list
+  | 'move_leaves_no_wrong_answer' // moving the acceptable wrong answers would empty the list
+  | 'alternative_unshifted' // a reported-speech item: the alternative keeps the unshifted form the item tests
+  | 'alternative_defeats_rule' // a deduction item: the alternative replaces the deduction modal with a prediction
+  | 'alternative_changes_other_words'; // error_correction: the alternative edits words the key leaves alone
 
 export interface AnnotationFinding {
   questionId: string;
@@ -368,6 +371,101 @@ export interface CheckerReview {
 export function isPlainAnswer(answer: string): boolean {
   const normalized = normalizeAnswer(answer);
   return foldKeyboardVariants(normalized) === normalized;
+}
+
+// ---------------------------------------------------------------------------
+// The tested-rule filters (owner, 2026-10-31)
+
+/** Backshift pairs: the unshifted form a reported-speech item tests against
+ * its shifted form. The modal and going-to pairs are judged across pairs
+ * (an alternative with "will" against a key with "could" keeps an unshifted
+ * form); the auxiliary pairs only like for like, since "is" and "have" occur
+ * in sentences for other reasons. */
+const BACKSHIFT_MODALS: readonly [unshifted: string, shifted: string][] = [
+  ['is going to', 'was going to'],
+  ['are going to', 'were going to'],
+  ['am going to', 'was going to'],
+  ['will', 'would'],
+  ['can', 'could'],
+  ['may', 'might'],
+  ['shall', 'should'],
+];
+const BACKSHIFT_AUXILIARIES: readonly [unshifted: string, shifted: string][] = [
+  ['has', 'had'],
+  ['have', 'had'],
+  ['is', 'was'],
+  ['are', 'were'],
+];
+
+const REPORTED_SPEECH = /\b(said|told|asked|reported|replied|explained|promised|announced|mentioned|reported speech|backshift\w*)\b/i;
+
+function words(text: string): string[] {
+  return normalizeAnswer(text).replace(/[^\p{L}\p{N}' ]/gu, ' ').split(/\s+/).filter(Boolean);
+}
+
+function containsPhrase(haystack: readonly string[], phrase: string): boolean {
+  const needle = phrase.split(' ');
+  return haystack.some((_, i) => needle.every((w, j) => haystack[i + j] === w));
+}
+
+/**
+ * A reported-speech item (its text or explanation speaks of saying, telling
+ * or reporting) whose key carries a shifted form: an alternative that carries
+ * the unshifted counterpart of any shifted form the key uses keeps exactly
+ * the form the item tests ("he will fix" against "he could fix"; "will"
+ * against "would"), so it is right English and wrong here.
+ */
+export function isUnshiftedAlternative(question: SharedQuestion, alternative: string): boolean {
+  const text = `${question.context ?? ''} ${question.instruction} ${question.hint ?? ''} ${question.explanation}`;
+  if (!REPORTED_SPEECH.test(text)) return false;
+  const key = words(question.correctAnswer);
+  const alt = words(alternative);
+  const keyHasShiftedModal = BACKSHIFT_MODALS.some(([, shifted]) => containsPhrase(key, shifted));
+  const altKeepsUnshiftedModal = BACKSHIFT_MODALS.some(([unshifted]) => containsPhrase(alt, unshifted) && !containsPhrase(key, unshifted));
+  if (keyHasShiftedModal && altKeepsUnshiftedModal) return true;
+  return BACKSHIFT_AUXILIARIES.some(([unshifted, shifted]) => containsPhrase(key, shifted) && containsPhrase(alt, unshifted) && !containsPhrase(key, unshifted));
+}
+
+const DEDUCTION = /\b(deduc\w*|certain\w*|logical\w*|evidence|conclu\w*|must be|sure that)\b/i;
+const PREDICTION_FORMS = ['will', 'is going to', 'are going to', 'shall'];
+
+/** A deduction item ("must" with an explanation about certainty or a logical
+ * conclusion): a prediction form in place of the deduction modal defeats the
+ * rule ("will" for "must"). */
+export function defeatsDeduction(question: SharedQuestion, alternative: string): boolean {
+  const key = words(question.correctAnswer);
+  if (!containsPhrase(key, 'must')) return false;
+  if (!DEDUCTION.test(question.explanation) && !DEDUCTION.test(question.hint ?? '')) return false;
+  const alt = words(alternative);
+  return PREDICTION_FORMS.some((f) => containsPhrase(alt, f)) && !containsPhrase(alt, 'must');
+}
+
+/**
+ * error_correction: the key changes one span of the flawed sentence and
+ * keeps every other word. An alternative that loses one of those kept words
+ * ("an orange" where the key keeps "oranges" and only drops the article)
+ * corrects something else or the wrong thing; an alternative that rephrases
+ * the erroneous span and its neighbours while keeping the other words ("was
+ * not able to find" for "could not find") is left to the other rules.
+ * Measured after normalization, order-free.
+ */
+export function changesOtherWords(question: SharedQuestion, alternative: string): boolean {
+  if (question.type !== 'error_correction' || question.context === undefined) return false;
+  const original = words(question.context);
+  const key = words(question.correctAnswer);
+  let prefix = 0;
+  while (prefix < original.length && prefix < key.length && original[prefix] === key[prefix]) prefix++;
+  let suffix = 0;
+  while (suffix < original.length - prefix && suffix < key.length - prefix && original[original.length - 1 - suffix] === key[key.length - 1 - suffix]) suffix++;
+  const kept = [...original.slice(0, prefix), ...original.slice(original.length - suffix)];
+  const available = new Map<string, number>();
+  for (const w of words(alternative)) available.set(w, (available.get(w) ?? 0) + 1);
+  for (const w of kept) {
+    const n = available.get(w) ?? 0;
+    if (n === 0) return true;
+    available.set(w, n - 1);
+  }
+  return false;
 }
 
 /** The entries of [first] that every other list also holds. */
@@ -451,6 +549,22 @@ export function annotateQuestion(question: SharedQuestion, reviews: readonly Che
   };
   candidates = candidates.filter(plain);
   moves = moves.filter(plain);
+  // The three rules of 2026-10-31 (owner, after the measurement: 6 of 23
+  // written answers defeated the tested rule while being right English).
+  const defeats = (a: string): AnnotationFindingCode | null => {
+    if (isUnshiftedAlternative(question, a)) return 'alternative_unshifted';
+    if (defeatsDeduction(question, a)) return 'alternative_defeats_rule';
+    if (changesOtherWords(question, a)) return 'alternative_changes_other_words';
+    return null;
+  };
+  const ruleFilter = (a: string) => {
+    const code = defeats(a);
+    if (code === null) return true;
+    finding(code, { answers: [a] });
+    return false;
+  };
+  candidates = candidates.filter(ruleFilter);
+  moves = moves.filter(ruleFilter);
   const finalWrong = question.commonWrongAnswers.filter((w) => !moves.some((m) => sameAnswer(m, w.answer)));
 
   const accepted = [...untouched.acceptedAnswers];

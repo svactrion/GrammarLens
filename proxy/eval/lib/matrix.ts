@@ -74,7 +74,7 @@ export const SPEND_CAP_USD = 4;
 // Prices (docs/1.1.0-shared-daily-test-quality.md §13.1, read 2026-09-27 from
 // https://platform.claude.com/docs/en/about-claude/pricing)
 
-export type EvalModel = SharedGeneratorModel | CheckerModel;
+export type EvalModel = SharedGeneratorModel | CheckerModel | 'claude-haiku-5-5';
 
 /** Standard USD per million tokens. */
 export const PRICES: Readonly<Record<EvalModel, { input: number; output: number }>> = {
@@ -83,6 +83,9 @@ export const PRICES: Readonly<Record<EvalModel, { input: number; output: number 
   // Read 2026-09-29 from the same page: the same price as claude-sonnet-5.
   'claude-sonnet-5-5': { input: 2, output: 10 },
   'claude-opus-5-5': { input: 4, output: 20 },
+  // Added 2026-10-31 for the 1.4.0 measurement (owner addition); prompts up
+  // to 100K tokens.
+  'claude-haiku-5-5': { input: 0.1, output: 0.5 },
 };
 
 /** "a 50% discount on both input and output tokens". */

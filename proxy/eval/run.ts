@@ -12,6 +12,25 @@
  *                                      runs the generator comparison (or resumes DIR), at most $1
  *   npm run eval -- sets               writes the 1.4.0 measurement's test sets and label
  *                                      sheets to eval/data/ from the repo's inputs (no API call)
+ *   npm run eval -- measure --dry-run  the 1.4.0 measurement's calls and cost per cell, from
+ *                                      the built request bodies (no API call)
+ *   npm run eval -- measure probe      one minimal Haiku call: the status and the API's message
+ *   npm run eval -- measure run [--out DIR]
+ *                                      stage 1 of the measurement (generation, the S-free
+ *                                      writer, the Daily Test check, the gate), the two owner
+ *                                      sheets, the stage report; at most $30 of measured spend;
+ *                                      the key from ANTHROPIC_API_KEY in the environment only
+ *   npm run eval -- measure dt-sheet --out DIR
+ *                                      the optional blind Daily Test sheet from a run's sets
+ *   npm run eval -- measure score --out DIR [--dry-run]
+ *                                      stage 2: scoring (eight cells) and the repeat (C1, C4, C8),
+ *                                      after the owner's S-gen and S-free labels
+ *   npm run eval -- measure analyze --out DIR
+ *                                      the measurement report into docs/1.4.0-measurement-report.md,
+ *                                      and second-look-C8.md in the run folder
+ *   npm run eval -- measure dt-more --out DIR
+ *                                      six more dates per version for the v2/v3 check (12 calls)
+ *                                      and the s-dt-2 sheet
  *
  * The API key is read from the environment (ANTHROPIC_API_KEY) or from
  * `proxy/.dev.vars`, is sent only to api.anthropic.com, and is never printed or
@@ -88,6 +107,40 @@ import {
   type LiveSetFile,
   type PoolCorrection,
 } from './lib/datasets';
+import {
+  MEASURE_SPEND_CAP_USD,
+  SCORING_CELLS,
+  S_FREE_SHEET_COLUMNS,
+  S_GEN_SHEET_COLUMNS,
+  buildDtSheet,
+  buildFreeSheet,
+  buildGenSheet,
+  charactersPerToken,
+  planMeasurement,
+  readApiError,
+  renderCostTable,
+  renderStageReport,
+  sFreeAnswersFrom,
+  sFreeBody,
+  sFreeCalls,
+  sFreeLabelledAnswer,
+  sFreePlaceholders,
+  sFreeSelection,
+  sGenItemsFrom,
+  S_FREE_OUTPUT_TOKENS,
+  totalUsd,
+  DT_VERSIONS,
+  DT_OUTPUT_TOKENS,
+  estimateInputTokens,
+  type GenerationCellId,
+  type MeasureRecord,
+  type MeasurementInputs,
+  type PlannedCall,
+  type SFreeTarget,
+  type SGenItem,
+} from './lib/measurement';
+import { renderMeasurementReport, renderSecondLook, type AnalysisData } from './lib/analysis_measurement';
+import { POOL_DATES, type LabelledAnswer } from './lib/datasets';
 
 const API = 'https://api.anthropic.com/v1';
 const API_HOST = 'api.anthropic.com';
@@ -756,6 +809,537 @@ async function buildSets(): Promise<void> {
   console.log(`Written under ${path.relative(ROOT, data)}/.`);
 }
 
+/** The step-D cost table (docs/1.4.0-server-batch0-report.md §3.4, §6):
+ * every call the measurement would make, built with the proxy's own request
+ * builders, with its estimated tokens and cost. No API call. */
+async function measureDryRun(): Promise<void> {
+  const data = path.join(ROOT, 'eval/data');
+  const pool = JSON.parse(await readFile(path.join(data, 's-pool.scoring.json'), 'utf8')) as LabelledAnswer[];
+  const synth = JSON.parse(await readFile(path.join(data, 's-synth.json'), 'utf8')) as LabelledAnswer[];
+  const liveDir = path.join(data, 'live-sets');
+  const gateSets: LiveSetFile[] = [];
+  for (const f of (await readdir(liveDir)).filter((n) => /^set-\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort()) {
+    gateSets.push(JSON.parse(await readFile(path.join(liveDir, f), 'utf8')) as LiveSetFile);
+  }
+  const inputs: MeasurementInputs = { pool, synth, sFree: sFreePlaceholders(), gateSets, seed: 20261101 };
+  const ratio = charactersPerToken();
+  const calls = planMeasurement(inputs, ratio);
+  console.log(`Answers: S-pool ${pool.length}, S-synth ${synth.length}, S-free ${inputs.sFree.length} (placeholders until written); gate sets ${gateSets.length}.`);
+  console.log('');
+  console.log(renderCostTable(calls, ratio));
+}
+
+// ---------------------------------------------------------------------------
+// The 1.4.0 measurement (docs/1.4.0-server-batch0-report.md §3.4a, §6 step E)
+
+/** The key for the measurement: the environment only (owner, 2026-10-31;
+ * never a file). It is held in this closure, sent in a header to
+ * api.anthropic.com, and never written anywhere. */
+function measureKey(): string {
+  const key = process.env.ANTHROPIC_API_KEY?.trim();
+  if (!key) throw new Error('No API key: export ANTHROPIC_API_KEY in this shell (read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY). The measurement does not read .dev.vars.');
+  return key;
+}
+
+/** One call: retried twice on 429, 529 and 5xx; of an error body the type
+ * and the message are kept (never the key, which is not in it). */
+async function measureCall(key: string, body: AnthropicRequestBody): Promise<Omit<MeasureRecord, 'customId' | 'stage' | 'group' | 'model'>> {
+  for (let attempt = 1; ; attempt++) {
+    const started = Date.now();
+    let response: Response;
+    try {
+      response = await fetch(`${API}/messages`, { method: 'POST', headers: headers(key), body: JSON.stringify(body), signal: AbortSignal.timeout(SYNC_TIMEOUT_MS) });
+    } catch {
+      if (attempt < 3) {
+        await sleep(10_000 * attempt);
+        continue;
+      }
+      return { status: 'network_error', costUsd: 0, durationMs: Date.now() - started };
+    }
+    const durationMs = Date.now() - started;
+    if (response.status === 200) {
+      const m = (await response.json()) as { usage?: { input_tokens?: number; output_tokens?: number }; stop_reason?: string; content?: { type: string; text?: string }[] };
+      const usage = { inputTokens: m.usage?.input_tokens ?? 0, outputTokens: m.usage?.output_tokens ?? 0 };
+      const costUsd = costOf(body.model as Parameters<typeof costOf>[0], usage, true);
+      const text = m.content?.find((b) => b.type === 'text')?.text;
+      let content: unknown;
+      try {
+        content = text ? JSON.parse(text) : undefined;
+      } catch {
+        content = undefined;
+      }
+      return { status: content === undefined ? 'unparseable' : 'ok', ...usage, stopReason: m.stop_reason, costUsd, durationMs, ...(content === undefined ? {} : { content }) };
+    }
+    let errorType = 'unknown';
+    let errorMessage = '';
+    try {
+      ({ errorType, errorMessage } = readApiError(await response.json()));
+    } catch {
+      // unreadable error body
+    }
+    if ((response.status === 429 || response.status === 529 || response.status >= 500) && attempt < 3) {
+      await sleep(20_000 * attempt);
+      continue;
+    }
+    return { status: 'http_error', httpStatus: response.status, errorType, errorMessage, costUsd: 0, durationMs };
+  }
+}
+
+/** One minimal call (`claude-haiku-5-5`, 16 output tokens, well under a cent)
+ * that prints the status, the error type and the API's message: what a 400
+ * on every call of a run means. The key from the environment only. */
+async function measureProbe(): Promise<void> {
+  const key = measureKey();
+  const body: AnthropicRequestBody = {
+    model: 'claude-haiku-5-5',
+    max_tokens: 16,
+    system: 'Answer with the single word ok.',
+    output_config: { format: { type: 'json_schema', schema: { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'], additionalProperties: false } } },
+    messages: [{ role: 'user', content: 'ok?' }],
+  };
+  const result = await measureCall(key, body);
+  const line = `probe: ${result.status}${result.httpStatus ? ` ${result.httpStatus} ${result.errorType}: ${result.errorMessage ?? ''}` : ''}; ${result.inputTokens ?? 0} in / ${result.outputTokens ?? 0} out; ${money(result.costUsd)}`;
+  if (line.includes(key)) throw new Error('refusing to print the API key');
+  console.log(line);
+}
+
+/** Runs [items] with at most [limit] in flight, in order of start. */
+async function pool<T>(items: readonly T[], limit: number, work: (item: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const item = items[next++] as T;
+      await work(item);
+    }
+  });
+  await Promise.all(workers);
+}
+
+// ---------------------------------------------------------------------------
+// The data the measurement reads (eval/data; the owner's sheets)
+
+const DATA_DIR = path.join(ROOT, 'eval/data');
+
+async function readJsonFile<T>(file: string): Promise<T> {
+  return JSON.parse(await readFile(file, 'utf8')) as T;
+}
+
+async function readSheet(file: string): Promise<Record<string, string>[]> {
+  return (await exists(file)) ? parseCsv(await readFile(file, 'utf8')) : [];
+}
+
+const cleanCell = (v: string | undefined) => (v ?? '').replace(/^'/, '').trim();
+
+async function loadLiveSets(): Promise<LiveSetFile[]> {
+  const liveDir = path.join(DATA_DIR, 'live-sets');
+  const sets: LiveSetFile[] = [];
+  for (const f of (await readdir(liveDir)).filter((n) => /^set-\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort()) {
+    sets.push(await readJsonFile<LiveSetFile>(path.join(liveDir, f)));
+  }
+  return sets;
+}
+
+/** S-synth minus the owner's exclusions (`s-synth-exclusions.txt`, one id per line). */
+async function loadSynth(): Promise<{ answers: LabelledAnswer[]; excluded: number }> {
+  const all = await readJsonFile<LabelledAnswer[]>(path.join(DATA_DIR, 's-synth.json'));
+  const file = path.join(DATA_DIR, 's-synth-exclusions.txt');
+  const excluded = new Set((await exists(file)) ? (await readFile(file, 'utf8')).split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0 && !l.startsWith('#')) : []);
+  return { answers: all.filter((a) => !excluded.has(a.id)), excluded: excluded.size };
+}
+
+interface OwnerSheets {
+  sGenLabels: Map<string, string>;
+  sGenUnlabelled: number;
+  sFreeOwner: Map<string, boolean>;
+  sFreeTargets: Map<string, SFreeTarget>;
+  sFreeUnlabelled: number;
+  sFreeInvalid: number;
+  sLiveAccept: Map<string, string[]>;
+  sLiveDates: Set<string>;
+  sLive: { rows: number; ok: number; minor: number; defect: number; acceptAlso: number };
+  dtLabels?: Map<string, string>;
+}
+
+/** The owner's sheets joined with their mappings; what is still unlabelled
+ * is counted, never guessed. */
+async function loadOwnerSheets(): Promise<OwnerSheets> {
+  const genRows = await readSheet(path.join(DATA_DIR, 's-gen/labels.csv'));
+  const genMap = (await exists(path.join(DATA_DIR, 's-gen/mapping.json'))) ? await readJsonFile<Record<string, { itemId: string }>>(path.join(DATA_DIR, 's-gen/mapping.json')) : {};
+  const sGenLabels = new Map<string, string>();
+  let sGenUnlabelled = 0;
+  for (const row of genRows) {
+    const item = genMap[cleanCell(row.key)]?.itemId;
+    const label = cleanCell(row.label).toLowerCase();
+    if (!item) continue;
+    if (label === '') sGenUnlabelled++;
+    else sGenLabels.set(item, label);
+  }
+  const freeRows = await readSheet(path.join(DATA_DIR, 's-free/labels.csv'));
+  const freeMap = (await exists(path.join(DATA_DIR, 's-free/mapping.json'))) ? await readJsonFile<Record<string, { itemId: string; target: SFreeTarget }>>(path.join(DATA_DIR, 's-free/mapping.json')) : {};
+  const sFreeOwner = new Map<string, boolean>();
+  const sFreeTargets = new Map<string, SFreeTarget>();
+  let sFreeUnlabelled = 0;
+  let sFreeInvalid = 0;
+  for (const row of freeRows) {
+    const m = freeMap[cleanCell(row.key)];
+    if (!m) continue;
+    sFreeTargets.set(m.itemId, m.target);
+    const label = cleanCell(row.label).toLowerCase();
+    if (label === '') sFreeUnlabelled++;
+    else if (label === 'correct' || label === 'wrong') sFreeOwner.set(m.itemId, label === 'correct');
+    else sFreeInvalid++;
+  }
+  const liveRows = await readSheet(path.join(DATA_DIR, 's-live/labels.csv'));
+  const liveMap = await readJsonFile<Record<string, { date?: string; questionId: string }>>(path.join(DATA_DIR, 's-live/mapping.json'));
+  const sLiveAccept = new Map<string, string[]>();
+  const sLiveDates = new Set<string>();
+  const sLive = { rows: liveRows.length, ok: 0, minor: 0, defect: 0, acceptAlso: 0 };
+  for (const row of liveRows) {
+    const m = liveMap[cleanCell(row.key)];
+    if (!m?.date) continue;
+    sLiveDates.add(m.date);
+    const label = cleanCell(row.label).toLowerCase();
+    if (label === 'ok' || label === 'minor' || label === 'defect') sLive[label]++;
+    const accept = cleanCell(row.accept_also).split('|').map((a) => a.trim()).filter((a) => a.length > 0);
+    if (accept.length > 0) sLive.acceptAlso++;
+    sLiveAccept.set(`${m.date}|${m.questionId}`, accept);
+  }
+  let dtLabels: Map<string, string> | undefined;
+  for (const folder of ['s-dt', 's-dt-2']) {
+    const dtRows = await readSheet(path.join(DATA_DIR, `${folder}/labels.csv`));
+    if (dtRows.length === 0) continue;
+    const dtMap = await readJsonFile<Record<string, { source: string; date?: string; questionId: string }>>(path.join(DATA_DIR, `${folder}/mapping.json`));
+    dtLabels ??= new Map();
+    for (const row of dtRows) {
+      const m = dtMap[cleanCell(row.key)];
+      const label = cleanCell(row.label).toLowerCase();
+      if (m?.date && label) dtLabels.set(`${m.source.replace('DT ', '')}|${m.date}|${m.questionId}`, label);
+    }
+  }
+  return { sGenLabels, sGenUnlabelled, sFreeOwner, sFreeTargets, sFreeUnlabelled, sFreeInvalid, sLiveAccept, sLiveDates, sLive, ...(dtLabels ? { dtLabels } : {}) };
+}
+
+/** The S-free answers with the owner's verdict as the truth; an answer the
+ * owner has not labelled is left out of scoring. */
+async function loadSFree(sheets: OwnerSheets): Promise<LabelledAnswer[]> {
+  const file = path.join(DATA_DIR, 's-free/answers.json');
+  if (!(await exists(file))) return [];
+  const answers = await readJsonFile<LabelledAnswer[]>(file);
+  return answers.filter((a) => sheets.sFreeOwner.has(a.item.id)).map((a) => ({ ...a, truth: sheets.sFreeOwner.get(a.item.id) as boolean }));
+}
+
+// ---------------------------------------------------------------------------
+// A run folder
+
+class MeasureRun {
+  readonly records: MeasureRecord[] = [];
+  private readonly done = new Map<string, MeasureRecord>();
+  private constructor(
+    readonly dir: string,
+    private readonly key: string,
+  ) {}
+
+  static async open(outDir: string | undefined, key: string): Promise<MeasureRun> {
+    const dir = outDir ?? path.join(ROOT, 'eval/out', `measure-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+    await mkdir(path.join(dir, 'private'), { recursive: true });
+    const run = new MeasureRun(dir, key);
+    if (await exists(run.recordsFile)) {
+      run.records.push(...(await readJsonFile<MeasureRecord[]>(run.recordsFile)));
+      for (const r of run.records) run.done.set(r.customId, r);
+    }
+    return run;
+  }
+
+  get recordsFile() {
+    return path.join(this.dir, 'records.json');
+  }
+
+  spent(): number {
+    return this.records.reduce((n, r) => n + r.costUsd, 0);
+  }
+
+  record(customId: string): MeasureRecord | undefined {
+    return this.done.get(customId);
+  }
+
+  /** Every file a run writes goes through here: nothing that contains the
+   * key is ever written (the key never reaches these strings, and this makes
+   * sure of it). */
+  async writeSafe(file: string, text: string): Promise<void> {
+    if (text.includes(this.key)) throw new Error('refusing to write a file that contains the API key');
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, text);
+  }
+
+  async log(line: string): Promise<void> {
+    if (line.includes(this.key)) throw new Error('refusing to log the API key');
+    const stamped = `${new Date().toISOString()} ${line}`;
+    console.log(stamped);
+    await appendFile(path.join(this.dir, 'progress.log'), `${stamped}\n`);
+  }
+
+  private async save(): Promise<void> {
+    await this.writeSafe(this.recordsFile, `${JSON.stringify(this.records, null, 2)}\n`);
+  }
+
+  private put(record: MeasureRecord): void {
+    const idx = this.records.findIndex((r) => r.customId === record.customId);
+    if (idx >= 0) this.records[idx] = record;
+    else this.records.push(record);
+    this.done.set(record.customId, record);
+  }
+
+  /** One planned call, unless it is already ok or would pass the cap. */
+  async call(c: Pick<PlannedCall, 'customId' | 'stage' | 'group' | 'model' | 'body'>, estimate: Usage): Promise<MeasureRecord> {
+    const existing = this.done.get(c.customId);
+    if (existing?.status === 'ok') return existing;
+    const est = costOf(c.model, estimate, true);
+    if (this.spent() + est * 1.25 > MEASURE_SPEND_CAP_USD) {
+      const skipped: MeasureRecord = { customId: c.customId, stage: c.stage, group: c.group, model: c.model, status: 'skipped_budget', costUsd: 0 };
+      this.put(skipped);
+      await this.save();
+      await this.log(`${c.customId}: skipped, the cap`);
+      return skipped;
+    }
+    const result = await measureCall(this.key, c.body);
+    const record: MeasureRecord = { customId: c.customId, stage: c.stage, group: c.group, model: c.model, ...result };
+    this.put(record);
+    await this.save();
+    await this.log(
+      `${c.customId}: ${result.status}${result.httpStatus ? ` ${result.httpStatus} ${result.errorType}: ${result.errorMessage ?? ''}` : ''}, ${result.inputTokens ?? 0} in / ${result.outputTokens ?? 0} out, stop ${result.stopReason ?? '–'}, ${money(result.costUsd)}, ${((result.durationMs ?? 0) / 1000).toFixed(1)} s; spent ${money(this.spent())}`,
+    );
+    return record;
+  }
+
+  async runPlanned(calls: readonly PlannedCall[], label: string): Promise<void> {
+    const todo = calls.filter((c) => this.done.get(c.customId)?.status !== 'ok');
+    await this.log(`${label}: ${calls.length} calls, ${todo.length} to make`);
+    await pool(todo, 5, async (c) => {
+      await this.call(c, c.estimate);
+    });
+  }
+}
+
+/** The plan for the data as it is now: S-free from the written answers when
+ * they exist (with the owner's truth), placeholders before. */
+async function currentPlan(sheets?: OwnerSheets): Promise<{ plan: PlannedCall[]; inputs: MeasurementInputs; ratio: number; synthExcluded: number }> {
+  const pool_ = await readJsonFile<LabelledAnswer[]>(path.join(DATA_DIR, 's-pool.scoring.json'));
+  const synth = await loadSynth();
+  const sFree = sheets ? await loadSFree(sheets) : sFreePlaceholders();
+  const inputs: MeasurementInputs = { pool: pool_, synth: synth.answers, sFree, gateSets: await loadLiveSets(), seed: 20261101 };
+  const ratio = charactersPerToken();
+  return { plan: planMeasurement(inputs, ratio), inputs, ratio, synthExcluded: synth.excluded };
+}
+
+// ---------------------------------------------------------------------------
+// Stage 1
+
+async function runMeasureStage1(outDir: string | undefined): Promise<void> {
+  const run = await MeasureRun.open(outDir, measureKey());
+  const { plan } = await currentPlan();
+  const stage1 = plan.filter((c) => c.stage === 'generation' || c.stage === 'daily_test' || c.stage === 'gate');
+  const sFreeEstimate = plan.find((c) => c.stage === 's_free')?.estimate ?? { inputTokens: 900, outputTokens: S_FREE_OUTPUT_TOKENS };
+  await run.log(`stage 1 in ${path.relative(ROOT, run.dir)}; cap ${money(MEASURE_SPEND_CAP_USD)} of measured spend; ${run.records.length} records already there; spent so far ${money(run.spent())}`);
+
+  await run.runPlanned(stage1.filter((c) => c.stage === 'generation'), 'generation');
+
+  const items: SGenItem[] = [];
+  let droppedItems = 0;
+  for (const c of stage1.filter((x) => x.stage === 'generation')) {
+    const r = run.record(c.customId);
+    if (!r || r.status !== 'ok') continue;
+    const [, cell, topicId] = c.customId.split('_') as [string, GenerationCellId, string];
+    const parsed = sGenItemsFrom(cell, topicId, r.content);
+    items.push(...parsed.items);
+    droppedItems += parsed.dropped;
+  }
+  await run.log(`S-gen: ${items.length} items from the generations (${droppedItems} entries dropped as malformed)`);
+  const selection = sFreeSelection(items);
+  const freeCalls = sFreeCalls(selection);
+  const written = new Map<string, string>();
+  await run.log(`S-free: ${selection.length} items in ${freeCalls.length} writer calls`);
+  await pool(
+    freeCalls.map((call, i) => ({ call, i })),
+    5,
+    async ({ call, i }) => {
+      const record = await run.call(
+        {
+          customId: `sfree_${i}`,
+          stage: 's_free',
+          group: 'S-free',
+          model: 'claude-sonnet-5-5',
+          body: sFreeBody(call.map(({ item, target }) => ({ id: item.id, type: item.type, prompt: item.prompt, target }))),
+        },
+        sFreeEstimate,
+      );
+      if (record.status === 'ok') for (const [id, answer] of sFreeAnswersFrom(call, record.content)) written.set(id, answer);
+    },
+  );
+  const sFreeAnswers = selection.filter((s) => written.has(s.item.id)).map((s) => ({ ...s, answer: written.get(s.item.id) as string }));
+  await run.log(`S-free: ${sFreeAnswers.length} answers written`);
+
+  const genSheet = buildGenSheet(items, 20261102);
+  await run.writeSafe(path.join(DATA_DIR, 's-gen/labels.csv'), toCsv(S_GEN_SHEET_COLUMNS, genSheet.rows));
+  await run.writeSafe(path.join(DATA_DIR, 's-gen/mapping.json'), `${JSON.stringify(genSheet.mapping, null, 2)}\n`);
+  await run.writeSafe(path.join(DATA_DIR, 's-gen/items.json'), `${JSON.stringify(items, null, 2)}\n`);
+  const freeSheet = buildFreeSheet(sFreeAnswers, 20261103);
+  await run.writeSafe(path.join(DATA_DIR, 's-free/labels.csv'), toCsv(S_FREE_SHEET_COLUMNS, freeSheet.rows));
+  await run.writeSafe(path.join(DATA_DIR, 's-free/mapping.json'), `${JSON.stringify(freeSheet.mapping, null, 2)}\n`);
+  await run.writeSafe(
+    path.join(DATA_DIR, 's-free/answers.json'),
+    `${JSON.stringify(sFreeAnswers.map((a) => sFreeLabelledAnswer(a.item, a.target, a.answer)), null, 2)}\n`,
+  );
+  await run.log(`sheets written: eval/data/s-gen/labels.csv (${genSheet.rows.length} rows), eval/data/s-free/labels.csv (${freeSheet.rows.length} rows)`);
+
+  await run.runPlanned(stage1.filter((c) => c.stage === 'daily_test'), 'daily test v2 vs v3');
+  await run.runPlanned(stage1.filter((c) => c.stage === 'gate'), 'gate');
+
+  const report = renderStageReport('Measurement stage 1 — measured against the estimate', [...stage1, ...plan.filter((c) => c.stage === 's_free')], run.records);
+  await run.writeSafe(path.join(run.dir, 'stage1-report.md'), `${report}\n`);
+  console.log(`\n${report}`);
+  await run.log(`stage 1 done; spent ${money(run.spent())}; report ${path.relative(ROOT, path.join(run.dir, 'stage1-report.md'))}`);
+}
+
+/** The optional Daily Test sheet (report §2.3), from a run's twelve sets. */
+async function writeDtSheet(outDir: string | undefined): Promise<void> {
+  if (!outDir) throw new Error('measure dt-sheet needs --out DIR (the run folder with the Daily Test records).');
+  const records = await readJsonFile<MeasureRecord[]>(path.join(outDir, 'records.json'));
+  const sheet = buildDtSheet(records, 20261104);
+  const file = path.join(DATA_DIR, 's-dt/labels.csv');
+  if (await exists(file)) {
+    console.log('s-dt/labels.csv exists; not rewritten (the owner may have started it).');
+    return;
+  }
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(file, sheet.csv);
+  await writeFile(path.join(DATA_DIR, 's-dt/mapping.json'), `${JSON.stringify(sheet.mapping, null, 2)}\n`);
+  console.log(`eval/data/s-dt/labels.csv: ${sheet.rows} rows (the version and date only in mapping.json).`);
+}
+
+// ---------------------------------------------------------------------------
+// Stage 2: scoring and the repeat
+
+async function runMeasureScoring(outDir: string | undefined, dryRun: boolean): Promise<void> {
+  if (!outDir) throw new Error('measure score needs --out DIR (the stage-1 run folder).');
+  const sheets = await loadOwnerSheets();
+  const missing: string[] = [];
+  if (sheets.sFreeTargets.size === 0) missing.push('s-free/labels.csv is missing or empty (stage 1 writes it)');
+  if (sheets.sFreeUnlabelled > 0) missing.push(`${sheets.sFreeUnlabelled} S-free rows have no label`);
+  if (sheets.sFreeInvalid > 0) missing.push(`${sheets.sFreeInvalid} S-free rows have a label other than correct / wrong`);
+  if (sheets.sGenUnlabelled > 0) missing.push(`${sheets.sGenUnlabelled} S-gen rows have no label`);
+  if (missing.length > 0 && !dryRun) throw new Error(`The labels come first (owner's order): ${missing.join('; ')}.`);
+  const { plan, inputs, synthExcluded } = await currentPlan(sheets);
+  const scoring = plan.filter((c) => c.stage === 'scoring');
+  const repeat = plan.filter((c) => c.stage === 'scoring_repeat');
+  console.log(
+    `Scoring: ${inputs.pool.length} S-pool + ${inputs.synth.length} S-synth (${synthExcluded} excluded) + ${inputs.sFree.length} S-free answers = ${inputs.pool.length + inputs.synth.length + inputs.sFree.length}, in ${scoring.length / SCORING_CELLS.length} calls per cell; ${scoring.length} scoring calls (${money(totalUsd(scoring))}) + ${repeat.length} repeat calls (${money(totalUsd(repeat))}).`,
+  );
+  if (missing.length > 0) console.log(`Not runnable yet: ${missing.join('; ')}.`);
+  if (dryRun) return;
+  const run = await MeasureRun.open(outDir, measureKey());
+  await run.log(`stage 2 in ${path.relative(ROOT, run.dir)}; spent so far ${money(run.spent())}; cap ${money(MEASURE_SPEND_CAP_USD)}`);
+  await run.runPlanned(scoring, 'scoring');
+  // The repeat in its drop order: C1 first (kept longest), C8 last.
+  const order: Record<string, number> = { C1: 0, C4: 1, C8: 2 };
+  await run.runPlanned([...repeat].sort((a, b) => (order[a.group] ?? 9) - (order[b.group] ?? 9)), 'scoring repeat (C1, C4, C8)');
+  const report = renderStageReport('Measurement stage 2 — measured against the estimate', [...scoring, ...repeat], run.records);
+  await run.writeSafe(path.join(run.dir, 'stage2-report.md'), `${report}\n`);
+  console.log(`\n${report}`);
+  await run.log(`stage 2 done; spent ${money(run.spent())}`);
+}
+
+// ---------------------------------------------------------------------------
+// Analyze: the measurement report
+
+async function analyzeMeasurement(outDir: string | undefined): Promise<void> {
+  if (!outDir) throw new Error('measure analyze needs --out DIR (the run folder).');
+  const records = await readJsonFile<MeasureRecord[]>(path.join(outDir, 'records.json'));
+  const sheets = await loadOwnerSheets();
+  const { inputs, synthExcluded } = await currentPlan(sheets);
+  const sGenItems = (await exists(path.join(DATA_DIR, 's-gen/items.json'))) ? await readJsonFile<SGenItem[]>(path.join(DATA_DIR, 's-gen/items.json')) : [];
+  const gateTruth = new Map<string, string[]>();
+  const gateTruthDates = new Set<string>();
+  const poolGate = await readJsonFile<{ date: string; questionId: string; acceptAlso: string[]; movedFromWrong: string[] }[]>(path.join(DATA_DIR, 's-pool.gate.json'));
+  for (const d of POOL_DATES) gateTruthDates.add(d);
+  for (const g of poolGate) gateTruth.set(`${g.date}|${g.questionId}`, [...g.acceptAlso, ...g.movedFromWrong]);
+  for (const d of sheets.sLiveDates) gateTruthDates.add(d);
+  for (const [k, v] of sheets.sLiveAccept) gateTruth.set(k, v);
+  const data: AnalysisData & { gateJudgments?: AnalysisData['gateJudgments'] } = {
+    records,
+    answers: [...inputs.pool, ...inputs.synth, ...inputs.sFree],
+    sGenItems,
+    sGenLabels: sheets.sGenLabels,
+    sFreeTargets: sheets.sFreeTargets,
+    sFreeOwner: sheets.sFreeOwner,
+    gateSets: inputs.gateSets,
+    gateTruth,
+    gateTruthDates,
+    ...(sheets.dtLabels ? { dtLabels: sheets.dtLabels } : {}),
+    sLive: sheets.sLive,
+    synthExclusions: synthExcluded,
+  };
+  const judgmentsFile = path.join(DATA_DIR, 'gate-judgments.json');
+  if (await exists(judgmentsFile)) {
+    const { judgments } = await readJsonFile<{ judgments: { date: string; questionId: string; answer: string; verdict: 'right' | 'wrong' }[] }>(judgmentsFile);
+    const map = new Map<string, { right: string[]; wrong: string[] }>();
+    for (const j of judgments) {
+      const key = `${j.date}|${j.questionId}`;
+      const entry = map.get(key) ?? { right: [], wrong: [] };
+      entry[j.verdict].push(j.answer);
+      map.set(key, entry);
+    }
+    data.gateJudgments = map;
+  }
+  const dropped = [...new Set(records.filter((r) => r.status === 'skipped_budget').map((r) => `${r.stage} / ${r.group}`))];
+  const report = renderMeasurementReport(data, { runDir: path.relative(path.join(ROOT, '..'), outDir), generatedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', capUsd: MEASURE_SPEND_CAP_USD, dropped });
+  const key = process.env.ANTHROPIC_API_KEY?.trim();
+  if (key && report.includes(key)) throw new Error('refusing to write a report that contains the API key');
+  const file = path.join(ROOT, '..', 'docs/1.4.0-measurement-report.md');
+  await writeFile(file, report);
+  console.log(`Written: docs/1.4.0-measurement-report.md (${report.split('\n').length} lines).`);
+  // The second look at the scoring candidate (owner, 2026-10-31, decision 1).
+  const secondLookFile = path.join(outDir, 'second-look-C8.md');
+  if (await exists(secondLookFile)) {
+    console.log('second-look-C8.md exists; not rewritten (the owner\'s verdicts live in it; the committed copy is eval/data/second-look-C8.md).');
+  } else {
+    const secondLook = renderSecondLook(data, 'C8', 'C1');
+    if (key && secondLook.includes(key)) throw new Error('refusing to write a file that contains the API key');
+    await writeFile(secondLookFile, `${secondLook}\n`);
+    console.log(`Written: ${path.relative(ROOT, secondLookFile)}.`);
+  }
+}
+
+/** Six more dates per version for the v2/v3 check (owner, 2026-10-31,
+ * decision 4): 12 calls with the live generator, appended to the run's
+ * records, and the blind sheet `s-dt-2`. The key from the environment. */
+export const DT_MORE_DATES: readonly string[] = ['2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08', '2026-11-09', '2026-11-10'];
+
+async function runDtMore(outDir: string | undefined): Promise<void> {
+  if (!outDir) throw new Error('measure dt-more needs --out DIR (the run folder).');
+  const run = await MeasureRun.open(outDir, measureKey());
+  const ratio = charactersPerToken();
+  const calls: PlannedCall[] = [];
+  for (const version of DT_VERSIONS) {
+    for (const date of DT_MORE_DATES) {
+      const body = buildBody({ op: 'generate_shared_daily_test', request: sharedDailyTestRequest(dailyPlan(date), [], { promptVersion: version }) });
+      calls.push({ customId: `dt_v${version}_${date}`, stage: 'daily_test', group: `DT v${version}`, model: 'claude-sonnet-5-5', body, estimate: { inputTokens: estimateInputTokens(body, ratio), outputTokens: DT_OUTPUT_TOKENS }, dropPriority: 1 });
+    }
+  }
+  await run.log(`dt-more: ${calls.length} calls on ${DT_MORE_DATES.join(', ')}; spent so far ${money(run.spent())}`);
+  await run.runPlanned(calls, 'daily test v2 vs v3, six more dates');
+  const extra = run.records.filter((r) => r.stage === 'daily_test' && DT_MORE_DATES.some((d) => r.customId.endsWith(d)));
+  const sheet = buildDtSheet(extra, 20261105);
+  const file = path.join(DATA_DIR, 's-dt-2/labels.csv');
+  if (await exists(file)) {
+    await run.log('s-dt-2/labels.csv exists; not rewritten (the owner may have started it).');
+  } else {
+    await run.writeSafe(file, sheet.csv);
+    await run.writeSafe(path.join(DATA_DIR, 's-dt-2/mapping.json'), `${JSON.stringify(sheet.mapping, null, 2)}\n`);
+    await run.log(`eval/data/s-dt-2/labels.csv: ${sheet.rows} rows`);
+  }
+  await run.log(`dt-more done; spent ${money(run.spent())}`);
+}
+
 async function main(): Promise<void> {
   if (!(await exists(path.join(ROOT, 'wrangler.jsonc')))) throw new Error('Run from proxy/ (npm run eval -- …).');
   const [command, ...rest] = process.argv.slice(2);
@@ -769,6 +1353,13 @@ async function main(): Promise<void> {
   if (command === 'analyze') return analyzeRun(out);
   if (command === 'compare') return rest.includes('--dry-run') ? compareDryRun() : runComparison(out);
   if (command === 'sets') return buildSets();
+  if (command === 'measure' && rest.includes('score')) return runMeasureScoring(out, rest.includes('--dry-run'));
+  if (command === 'measure' && rest.includes('--dry-run')) return measureDryRun();
+  if (command === 'measure' && rest.includes('probe')) return measureProbe();
+  if (command === 'measure' && rest.includes('run')) return runMeasureStage1(out);
+  if (command === 'measure' && rest.includes('dt-sheet')) return writeDtSheet(out);
+  if (command === 'measure' && rest.includes('analyze')) return analyzeMeasurement(out);
+  if (command === 'measure' && rest.includes('dt-more')) return runDtMore(out);
   console.log(
     'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets',
   );

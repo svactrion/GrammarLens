@@ -4,7 +4,9 @@ import { logUpstreamFailure, upstreamErrorType, type UpstreamFailure } from './e
 import {
   DAILY_TEST_SYSTEM_PROMPT,
   GENERATION_SYSTEM_PROMPT,
+  GENERATION_SYSTEM_PROMPT_LIVE_2026_10,
   SCORING_SYSTEM_PROMPT,
+  SCORING_SYSTEM_PROMPT_LIVE_2026_10,
   SHARED_CHECK_SYSTEM_PROMPT,
   SHARED_DAILY_TEST_SYSTEM_PROMPT_V2,
   SHARED_DAILY_TEST_SYSTEM_PROMPT_V3,
@@ -145,7 +147,51 @@ export interface AnthropicRequestBody {
  */
 export const THINKING_HEADROOM_TOKENS = 12_000;
 
+/**
+ * The practice generation and scoring requests, parameterised for the 1.4.0
+ * measurement (docs/1.4.0-server-batch0-report.md §3.3): a model, whether it
+ * thinks (adaptive, with the headroom) and at what effort, and which prompt
+ * (and for scoring which schema). The routes use [PRODUCTION_PRACTICE] and
+ * [PRODUCTION_SCORING]; the harness builds the other cells through the same
+ * functions, so a measured body is exactly what the proxy would send with
+ * that choice. `live` is the prompt deployed on 2026-10-16.
+ */
+export interface PracticeVariant {
+  model: string;
+  thinking?: boolean;
+  effort?: GeneratorEffort;
+  prompt: 'live' | 'd3';
+}
+
+export interface ScoringVariant {
+  model: string;
+  thinking?: boolean;
+  effort?: GeneratorEffort;
+  /** `live`: the 2026-10 prompt with the six-field schema and the 2,048
+   * budget; `d3d11`: D3's prompt with D11's fields and the scaled budget. */
+  prompt: 'live' | 'd3d11';
+}
+
+/** Practice generation: `claude-sonnet-5-5` at `low` with the D3 prompt
+ * (owner, 2026-10-31, after the measurement: 23–24 of 25 items `ok` against
+ * Haiku's 19–23, at $0.008 a set). Built, not deployed. */
+export const PRODUCTION_PRACTICE: PracticeVariant = { model: 'claude-sonnet-5-5', thinking: true, effort: 'low', prompt: 'd3' };
+/**
+ * Scoring: `claude-haiku-5-5` at `low` with D3's prompt and D11's fields
+ * (owner, 2026-10-31, after the measurement and a second look: 97.8 %
+ * agreement with the labels over 371 answers, no false "correct", 8 false
+ * "needs work" of which the owner upheld 2 against it, at $0.0015 a call).
+ * `claude-sonnet-5-5` at `low` is the fallback: one constant to swap. Built,
+ * not deployed.
+ */
+export const PRODUCTION_SCORING: ScoringVariant = { model: 'claude-haiku-5-5', thinking: true, effort: 'low', prompt: 'd3d11' };
+export const FALLBACK_SCORING: ScoringVariant = { model: 'claude-sonnet-5-5', thinking: true, effort: 'low', prompt: 'd3d11' };
+
 function buildGeneratePracticeSetBody(req: GeneratePracticeSetRequest): AnthropicRequestBody {
+  return buildGeneratePracticeSetBodyFor(req, PRODUCTION_PRACTICE);
+}
+
+export function buildGeneratePracticeSetBodyFor(req: GeneratePracticeSetRequest, variant: PracticeVariant): AnthropicRequestBody {
   const topic = topicById(req.topicId);
   if (!topic) throw new ProxyError('invalid_request', 400, 'Unknown topicId.');
 
@@ -173,10 +219,11 @@ function buildGeneratePracticeSetBody(req: GeneratePracticeSetRequest): Anthropi
   };
 
   return {
-    model: MODEL,
-    max_tokens: maxTokensFor(req.count),
-    system: GENERATION_SYSTEM_PROMPT,
-    output_config: { format: { type: 'json_schema', schema } },
+    model: variant.model,
+    max_tokens: maxTokensFor(req.count) + (variant.thinking ? THINKING_HEADROOM_TOKENS : 0),
+    system: variant.prompt === 'live' ? GENERATION_SYSTEM_PROMPT_LIVE_2026_10 : GENERATION_SYSTEM_PROMPT,
+    ...(variant.thinking ? { thinking: { type: 'adaptive' as const } } : {}),
+    output_config: { format: { type: 'json_schema', schema }, ...(variant.effort ? { effort: variant.effort } : {}) },
     messages: [
       {
         role: 'user',
@@ -403,6 +450,37 @@ export function scoreMaxTokensFor(count: number): number {
  * they go out.
  */
 function buildScoreAnswersBody(req: ScoreAnswersRequest): AnthropicRequestBody {
+  return buildScoreAnswersBodyFor(req, PRODUCTION_SCORING);
+}
+
+/** The six fields every client has read since 1.0.0: the `live` schema. */
+function scoringSchemaLive() {
+  return {
+    type: 'object',
+    properties: {
+      feedback: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            itemId: { type: 'string' },
+            isCorrect: { type: 'boolean' },
+            errorType: { type: 'string' },
+            rule: { type: 'string' },
+            correctedAnswer: { type: 'string' },
+            explanation: { type: 'string' },
+          },
+          required: ['itemId', 'isCorrect', 'correctedAnswer', 'explanation'],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ['feedback'],
+    additionalProperties: false,
+  };
+}
+
+export function buildScoreAnswersBodyFor(req: ScoreAnswersRequest, variant: ScoringVariant): AnthropicRequestBody {
   const schema = {
     type: 'object',
     properties: {
@@ -449,11 +527,16 @@ function buildScoreAnswersBody(req: ScoreAnswersRequest): AnthropicRequestBody {
     userAnswer: item.userAnswer,
   }));
 
+  const live = variant.prompt === 'live';
   return {
-    model: MODEL,
-    max_tokens: scoreMaxTokensFor(req.items.length),
-    system: SCORING_SYSTEM_PROMPT,
-    output_config: { format: { type: 'json_schema', schema } },
+    model: variant.model,
+    max_tokens: (live ? 2048 : scoreMaxTokensFor(req.items.length)) + (variant.thinking ? THINKING_HEADROOM_TOKENS : 0),
+    system: live ? SCORING_SYSTEM_PROMPT_LIVE_2026_10 : SCORING_SYSTEM_PROMPT,
+    ...(variant.thinking ? { thinking: { type: 'adaptive' as const } } : {}),
+    output_config: {
+      format: { type: 'json_schema', schema: live ? scoringSchemaLive() : schema },
+      ...(variant.effort ? { effort: variant.effort } : {}),
+    },
     messages: [{ role: 'user', content: JSON.stringify({ items: itemsPayload }) }],
   };
 }
