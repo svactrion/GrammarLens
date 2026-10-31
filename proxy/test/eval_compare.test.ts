@@ -91,10 +91,10 @@ describe('generator comparison: plan and requests', () => {
     ]);
   });
 
-  it('V3, the owner\'s choice, sends exactly what the cron sends for that date (with no avoid list)', () => {
+  it('V3, the owner\'s choice, sends what the cron sent on 2026-09-29 (prompt v2; the cron moved to v3 with 1.4.0 D3)', () => {
     expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5-5', effort: 'low' });
     expect(comparisonBody({ customId: 'x', variant: 'V3', date: DATE })).toEqual(
-      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(DATE))),
+      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(dailyPlan(DATE), [], { promptVersion: 2, model: 'claude-sonnet-5-5', effort: 'low' })),
     );
   });
 

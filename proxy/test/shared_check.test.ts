@@ -2,17 +2,24 @@ import { env } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { THINKING_HEADROOM_TOKENS, buildCheckSharedDailyTestBody, callAnthropic } from '../src/anthropic';
 import {
+  ANNOTATION_CHECKERS,
+  ANNOTATION_GATE,
   CHECKER_MODEL,
   CHECK_VERSION,
   MAX_ACCEPTED_ANSWERS,
+  annotateQuestion,
+  annotateSet,
   decideCheckedSet,
   decideQuestion,
   gradeAnswer,
+  isAdditivePatch,
+  isPlainAnswer,
   parseCheckOutput,
   selectCandidates,
   sharedCheckRequest,
   type CheckRejection,
   type CheckerModel,
+  type CheckerReview,
   type QuestionCheck,
 } from '../src/shared_check';
 import type { SharedQuestion } from '../src/shared_daily_test';
@@ -149,7 +156,10 @@ describe('check_shared_daily_test request', () => {
       hash ^= body.charCodeAt(i);
       hash = Math.imul(hash, 0x01000193) >>> 0;
     }
-    expect({ version: CHECK_VERSION, fingerprint: hash.toString(16) }).toEqual({ version: 1, fingerprint: '3c489122' });
+    // History: version 1, 3c489122 (2026-09-27, never ran in production);
+    // version 2, b6509a7e (the prompt made language-neutral, 1.4.0 D3,
+    // 2026-10-31).
+    expect({ version: CHECK_VERSION, fingerprint: hash.toString(16) }).toEqual({ version: 2, fingerprint: 'b6509a7e' });
   });
 });
 
@@ -504,5 +514,143 @@ describe('gradeAnswer — test/fixtures/daily_test_grading.json', () => {
     expect(gradeAnswer(published, published.correctAnswer)).toBe('correct');
     for (const accepted of published.acceptedAnswers ?? []) expect(gradeAnswer(published, accepted)).toBe('accepted');
     for (const wrong of published.commonWrongAnswers) expect(gradeAnswer(published, wrong.answer)).toBe('commonWrong');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P14: annotate-after-publish (docs/1.4.0-server-batch0-report.md §1.3–1.4)
+
+describe('annotation gates', () => {
+  it('builds both gates behind one constant, each with checkers that differ from the generator', () => {
+    expect(['agreement', 'single_review']).toContain(ANNOTATION_GATE);
+    expect(ANNOTATION_CHECKERS.agreement).toEqual(['claude-opus-5-5', 'claude-sonnet-5-5']);
+    expect(ANNOTATION_CHECKERS.single_review).toEqual(['claude-opus-5-5']);
+    for (const gate of ['agreement', 'single_review'] as const) {
+      const body = buildCheckSharedDailyTestBody(sharedCheckRequest([fillIn()], ANNOTATION_CHECKERS[gate][0] as CheckerModel));
+      expect(body.thinking).toEqual({ type: 'adaptive' });
+    }
+  });
+});
+
+describe('annotateQuestion — add-only', () => {
+  const opus = (q: SharedQuestion, o: Partial<QuestionCheck> = {}): CheckerReview => ({ model: 'claude-opus-5-5', check: review(q, o) });
+  const sonnet = (q: SharedQuestion, o: Partial<QuestionCheck> = {}): CheckerReview => ({ model: 'claude-sonnet-5-5', check: review(q, o) });
+  const unchanged = (q: SharedQuestion) => ({ acceptedAnswers: q.acceptedAnswers ?? [], commonWrongAnswers: q.commonWrongAnswers, added: 0, moved: 0 });
+
+  it('writes nothing and records nothing for two clean reviews', () => {
+    const q = fillIn();
+    expect(annotateQuestion(q, [opus(q), sonnet(q)])).toEqual({ ...unchanged(q), findings: [] });
+  });
+
+  it('writes an alternative both checkers propose; one checker alone is a finding, not a write', () => {
+    const q = fillIn();
+    const r = annotateQuestion(q, [opus(q, { acceptableAlternatives: ['have to', 'need to'] }), sonnet(q, { acceptableAlternatives: ['Have to.'] })]);
+    expect(r.acceptedAnswers).toEqual(['have to']);
+    expect(r.added).toBe(1);
+    expect(r.findings).toEqual([{ questionId: q.id, code: 'proposed_by_one_model', model: 'claude-opus-5-5', answers: ['need to'] }]);
+  });
+
+  it('under one checker writes what it proposes', () => {
+    const q = fillIn();
+    expect(annotateQuestion(q, [opus(q, { acceptableAlternatives: ['have to'] })])).toMatchObject({ acceptedAnswers: ['have to'], added: 1, findings: [] });
+  });
+
+  it('moves an agreed acceptable wrong answer, keeps at least one wrong answer, and never empties the list', () => {
+    const q = fillIn();
+    const moved = annotateQuestion(q, [opus(q, { acceptableWrongAnswers: ['might'] }), sonnet(q, { acceptableWrongAnswers: ['might'] })]);
+    expect(moved.acceptedAnswers).toEqual(['might']);
+    expect(moved.commonWrongAnswers.map((w) => w.answer)).toEqual(['can']);
+    expect(moved).toMatchObject({ added: 1, moved: 1, findings: [] });
+
+    const all = annotateQuestion(q, [opus(q, { acceptableWrongAnswers: ['might', 'can'] }), sonnet(q, { acceptableWrongAnswers: ['can', 'might'] })]);
+    expect(all).toMatchObject({ ...unchanged(q), findings: [{ questionId: q.id, code: 'move_leaves_no_wrong_answer', answers: ['might', 'can'] }] });
+  });
+
+  it('writes nothing when the explanation rules the candidates out, or when there are more than the cap', () => {
+    const q = fillIn();
+    const excluded = annotateQuestion(q, [opus(q, { acceptableAlternatives: ['have to'], explanationExcludesAlternatives: true }), sonnet(q, { acceptableAlternatives: ['have to'] })]);
+    expect(excluded).toMatchObject({ ...unchanged(q), findings: [{ questionId: q.id, code: 'explanation_excludes_alternative', answers: ['have to'] }] });
+
+    const many = ['have to', 'need to', 'should'];
+    const ambiguous = annotateQuestion(q, [opus(q, { acceptableAlternatives: many }), sonnet(q, { acceptableAlternatives: many })]);
+    expect(ambiguous).toMatchObject({ ...unchanged(q), findings: [{ questionId: q.id, code: 'ambiguous_question', answers: many }] });
+    expect(MAX_ACCEPTED_ANSWERS).toBe(2);
+  });
+
+  it('drops a candidate that is the original sentence, a remaining wrong answer, or not plain, each with its finding', () => {
+    const ec = errorCorrection();
+    const original = annotateQuestion(ec, [opus(ec, { acceptableAlternatives: [ec.context as string] })]);
+    expect(original).toMatchObject({ ...unchanged(ec), findings: [{ questionId: ec.id, code: 'alternative_is_original', answers: [ec.context] }] });
+
+    const q = fillIn();
+    const conflict = annotateQuestion(q, [opus(q, { acceptableAlternatives: ['Can'] })]);
+    expect(conflict).toMatchObject({ ...unchanged(q), findings: [{ questionId: q.id, code: 'alternative_conflicts_wrong_answer', answers: ['Can'] }] });
+
+    const accented = annotateQuestion(q, [opus(q, { acceptableAlternatives: ['müst not'] })]);
+    expect(accented).toMatchObject({ ...unchanged(q), findings: [{ questionId: q.id, code: 'alternative_not_plain', answers: ['müst not'] }] });
+    expect(isPlainAnswer('must')).toBe(true);
+    expect(isPlainAnswer('müst')).toBe(false);
+  });
+
+  it('records what the checkers doubt without touching the question: original, key, rules, verdict, an unplain key', () => {
+    const ec = errorCorrection({ correctAnswer: 'Şey' });
+    const r = annotateQuestion(ec, [
+      opus(ec, { originalSentence: 'acceptable', correctAnswer: 'uncertain', incorrectRuleFields: ['hint', 'comment'], verdict: 'reject' }),
+      sonnet(ec),
+    ]);
+    expect(r).toMatchObject(unchanged(ec));
+    expect(r.findings).toEqual([
+      { questionId: ec.id, code: 'original_not_wrong', model: 'claude-opus-5-5' },
+      { questionId: ec.id, code: 'key_incorrect', model: 'claude-opus-5-5' },
+      { questionId: ec.id, code: 'wrong_rule', model: 'claude-opus-5-5', answers: ['hint', 'comment'] },
+      { questionId: ec.id, code: 'checker_verdict', model: 'claude-opus-5-5' },
+      { questionId: ec.id, code: 'key_not_plain', answers: ['Şey'] },
+    ]);
+  });
+
+  it('keeps accepted answers a question already has, and never writes the key or a repeat', () => {
+    const q = fillIn({ acceptedAnswers: ['have to'] });
+    const r = annotateQuestion(q, [opus(q, { acceptableAlternatives: ['Have to', 'must', 'need to'] })]);
+    expect(r.acceptedAnswers).toEqual(['have to', 'need to']);
+    expect(r.added).toBe(1);
+  });
+});
+
+describe('annotateSet and isAdditivePatch', () => {
+  const questions = [fillIn(), errorCorrection()];
+  const clean = { questions: questions.map((q) => review(q)) };
+
+  it('annotates every question from every checker\'s review and sums the counts', () => {
+    const withAlt = { questions: questions.map((q) => review(q, q.id === 'q-modal' ? { acceptableAlternatives: ['have to'] } : {})) };
+    const r = annotateSet(questions, [
+      { model: 'claude-opus-5-5', output: withAlt },
+      { model: 'claude-sonnet-5-5', output: withAlt },
+    ]);
+    expect(r.outcome).toBe('annotated');
+    if (r.outcome !== 'annotated') return;
+    expect(r.questions[0]?.acceptedAnswers).toEqual(['have to']);
+    expect(r.questions[1]?.acceptedAnswers).toBeUndefined();
+    expect(r).toMatchObject({ added: 1, moved: 0, findings: [] });
+    expect(isAdditivePatch(questions, r.questions)).toBe(true);
+  });
+
+  it('is unreadable, naming the checker, when any review cannot be used', () => {
+    expect(annotateSet(questions, [{ model: 'claude-opus-5-5', output: clean }, { model: 'claude-sonnet-5-5', output: { questions: [] } }])).toEqual({
+      outcome: 'unreadable',
+      model: 'claude-sonnet-5-5',
+    });
+  });
+
+  it('accepts only additions and moves as a patch', () => {
+    const [q] = questions as [SharedQuestion, SharedQuestion];
+    expect(isAdditivePatch([q], [q])).toBe(true);
+    expect(isAdditivePatch([q], [{ ...q, acceptedAnswers: ['have to'] }])).toBe(true);
+    expect(isAdditivePatch([q], [{ ...q, acceptedAnswers: ['might'], commonWrongAnswers: q.commonWrongAnswers.slice(1) }])).toBe(true);
+    // A wrong answer removed without being accepted; a text changed; every wrong answer gone; an accepted answer lost; a question missing.
+    expect(isAdditivePatch([q], [{ ...q, commonWrongAnswers: q.commonWrongAnswers.slice(1) }])).toBe(false);
+    expect(isAdditivePatch([q], [{ ...q, correctAnswer: 'should' }])).toBe(false);
+    expect(isAdditivePatch([q], [{ ...q, acceptedAnswers: ['might', 'can'], commonWrongAnswers: [] }])).toBe(false);
+    expect(isAdditivePatch([{ ...q, acceptedAnswers: ['x'] }], [q])).toBe(false);
+    expect(isAdditivePatch(questions, [q])).toBe(false);
   });
 });

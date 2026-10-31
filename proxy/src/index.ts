@@ -3,6 +3,7 @@ import { callAnthropic } from './anthropic';
 import { logUnhandledError } from './error_log';
 import { filterLegacyDailyTest, logLegacyFilter } from './legacy_daily_test';
 import { reserveQuota } from './quota';
+import { checkScoreFeedback, logScoreFeedback } from './score_feedback';
 import { runSharedGeneration } from './shared_generation';
 import { SHARED_SET_PATH, handleSharedSetRead } from './shared_read';
 import { ProxyError, type Env } from './types';
@@ -69,7 +70,11 @@ async function handleOperation(
       const req = validateScoreAnswers(body);
       deviceId = req.deviceId;
       await reserveQuota(env, deviceId);
-      result = await callAnthropic(env, { op, request: req });
+      // The structured fields (1.4.0 D11) are checked against the request
+      // and repaired before they go out; counts only are logged.
+      const checked = checkScoreFeedback(req, await callAnthropic(env, { op, request: req }));
+      logScoreFeedback(checked);
+      result = checked.content;
       break;
     }
   }

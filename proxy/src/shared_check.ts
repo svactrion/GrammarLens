@@ -1,4 +1,4 @@
-import { foldKeyboardVariants, normalizeAnswer, type SharedQuestion } from './shared_daily_test';
+import { foldKeyboardVariants, normalizeAnswer, type SharedQuestion, type SharedWrongAnswer } from './shared_daily_test';
 
 /**
  * The check call's pure parts (docs/1.1.0-shared-daily-test-quality.md §2,
@@ -12,9 +12,10 @@ import { foldKeyboardVariants, normalizeAnswer, type SharedQuestion } from './sh
  * yet: that is P7.
  */
 
-/** Stored with a set the check published, and bumped on any change to the
- * checker's prompt, schema or decision rules. */
-export const CHECK_VERSION = 1;
+/** Stored with a set the check annotated, and bumped on any change to the
+ * checker's prompt, schema or decision rules. 2: the prompt made
+ * language-neutral (1.4.0 D3, 2026-10-31); 1 never ran in production. */
+export const CHECK_VERSION = 2;
 
 /**
  * Checker candidates (decision 6 and its 2026-09-27 follow-up): a model
@@ -24,7 +25,7 @@ export const CHECK_VERSION = 1;
  * `claude-sonnet-4-6` is measured for comparison. All run with adaptive
  * thinking.
  */
-export type CheckerModel = 'claude-sonnet-5' | 'claude-sonnet-4-6' | 'claude-opus-5-5';
+export type CheckerModel = 'claude-sonnet-5' | 'claude-sonnet-4-6' | 'claude-opus-5-5' | 'claude-sonnet-5-5';
 
 export const CHECKER_MODEL: CheckerModel = 'claude-sonnet-5';
 
@@ -297,4 +298,240 @@ export function gradeAnswer(question: GradableQuestion, input: string): GradeKin
     if (user === normalizeAnswer(wrong.answer)) return 'commonWrong';
   }
   return 'fallback';
+}
+
+// ---------------------------------------------------------------------------
+// Annotate-after-publish (P14; docs/1.4.0-server-batch0-report.md §1.3–1.4,
+// owner decisions 2026-10-31)
+
+/**
+ * The two gates the owner asked to have built behind one constant (§5.3);
+ * the choice follows the measurement report. `agreement`: an answer is
+ * written only when every checker proposed it. `single_review`: one checker,
+ * and the owner's weekly look at `review:{date}` is the second reviewer.
+ */
+export type AnnotationGate = 'agreement' | 'single_review';
+
+export const ANNOTATION_GATE: AnnotationGate = 'agreement';
+
+/** The checkers each gate runs, in call order. The agreement pair differs in
+ * model family from each other and from the generator. */
+export const ANNOTATION_CHECKERS: Readonly<Record<AnnotationGate, readonly CheckerModel[]>> = {
+  agreement: ['claude-opus-5-5', 'claude-sonnet-5-5'],
+  single_review: ['claude-opus-5-5'],
+};
+
+/** What the annotation step found and did not write, as a fixed vocabulary
+ * (it goes into `review:{date}` and the log). */
+export type AnnotationFindingCode =
+  | 'original_not_wrong' // error_correction: a checker could defend the "flawed" sentence
+  | 'key_incorrect' // a checker doubts the key
+  | 'wrong_rule' // a checker names a false rule in the hint, explanation or a comment
+  | 'checker_verdict' // a checker says reject although its fields pass
+  | 'explanation_excludes_alternative' // the explanation rules out what would be accepted: nothing written
+  | 'ambiguous_question' // more than MAX_ACCEPTED_ANSWERS candidates: nothing written
+  | 'alternative_is_original' // the flawed sentence itself was proposed
+  | 'alternative_conflicts_wrong_answer' // a candidate is still a predicted wrong answer
+  | 'alternative_not_plain' // a candidate does not fold to itself (§1.4 rule 2)
+  | 'key_not_plain' // the key does not fold to itself: the folding could collide
+  | 'proposed_by_one_model' // under the agreement gate: not every checker proposed it
+  | 'move_leaves_no_wrong_answer'; // moving the acceptable wrong answers would empty the list
+
+export interface AnnotationFinding {
+  questionId: string;
+  code: AnnotationFindingCode;
+  /** Which checker, where one is responsible. */
+  model?: CheckerModel;
+  /** The answers or fields concerned: model-written text, never a user's. */
+  answers?: string[];
+}
+
+export interface QuestionAnnotation {
+  /** The question's accepted answers after the step: what it had, plus what
+   * was written now. */
+  acceptedAnswers: string[];
+  /** The predicted wrong answers after the moves, in their original order. */
+  commonWrongAnswers: SharedWrongAnswer[];
+  findings: AnnotationFinding[];
+  /** How many answers this step added (alternatives and moves). */
+  added: number;
+  moved: number;
+}
+
+export interface CheckerReview {
+  model: CheckerModel;
+  check: QuestionCheck;
+}
+
+/** An answer that is plain under the folding: the key and every accepted
+ * answer must be, so a fold can only move a learner's text towards them. */
+export function isPlainAnswer(answer: string): boolean {
+  const normalized = normalizeAnswer(answer);
+  return foldKeyboardVariants(normalized) === normalized;
+}
+
+/** The entries of [first] that every other list also holds. */
+function agreedAnswers(lists: readonly (readonly string[])[]): string[] {
+  const [first = [], ...rest] = lists;
+  return first.filter((a) => rest.every((list) => list.some((b) => sameAnswer(a, b))));
+}
+
+/**
+ * One published question against the checkers' reviews, add-only: nothing
+ * here can reject or change the question's texts; it can add accepted
+ * answers, move an acceptable predicted wrong answer into them (owner
+ * decision 2 of 2026-09-28, implemented here), and record findings. Rules,
+ * in order (§1.4): gather what every checker agrees on; an explanation that
+ * excludes the candidates, or more than [MAX_ACCEPTED_ANSWERS] of them, means
+ * nothing is written; then each candidate is dropped if it is the original
+ * sentence, still a predicted wrong answer, or not plain; a move that would
+ * leave no wrong answer is not made.
+ */
+export function annotateQuestion(question: SharedQuestion, reviews: readonly CheckerReview[]): QuestionAnnotation {
+  const findings: AnnotationFinding[] = [];
+  const finding = (code: AnnotationFindingCode, extra: Omit<AnnotationFinding, 'questionId' | 'code'> = {}) =>
+    findings.push({ questionId: question.id, code, ...extra });
+
+  for (const { model, check } of reviews) {
+    if (question.type === 'error_correction' && check.originalSentence !== 'clearly_wrong') finding('original_not_wrong', { model });
+    if (check.correctAnswer !== 'correct') finding('key_incorrect', { model });
+    if (check.incorrectRuleFields.length > 0) finding('wrong_rule', { model, answers: [...check.incorrectRuleFields] });
+    if (check.verdict === 'reject') finding('checker_verdict', { model });
+  }
+  if (!isPlainAnswer(question.correctAnswer)) finding('key_not_plain', { answers: [question.correctAnswer] });
+
+  const alternativesPer = reviews.map((r) => cleanAlternatives(question, r.check.acceptableAlternatives));
+  const movesPer = reviews.map((r) =>
+    question.commonWrongAnswers.filter((w) => r.check.acceptableWrongAnswers.some((a) => sameAnswer(a, w.answer))).map((w) => w.answer),
+  );
+  const agreedAlternatives = agreedAnswers(alternativesPer);
+  const agreedMoves = agreedAnswers(movesPer);
+  reviews.forEach((r, i) => {
+    const alone = [...(alternativesPer[i] ?? []), ...(movesPer[i] ?? [])].filter(
+      (a) => !agreedAlternatives.some((b) => sameAnswer(a, b)) && !agreedMoves.some((b) => sameAnswer(a, b)),
+    );
+    if (alone.length > 0) finding('proposed_by_one_model', { model: r.model, answers: alone });
+  });
+
+  let candidates = [...agreedAlternatives];
+  let moves = [...agreedMoves];
+  const untouched = { acceptedAnswers: [...(question.acceptedAnswers ?? [])], commonWrongAnswers: [...question.commonWrongAnswers] };
+
+  if (moves.length > 0 && question.commonWrongAnswers.every((w) => moves.some((m) => sameAnswer(m, w.answer)))) {
+    finding('move_leaves_no_wrong_answer', { answers: moves });
+    moves = [];
+  }
+  const all = [...candidates, ...moves.filter((m) => !candidates.some((c) => sameAnswer(c, m)))];
+  if (all.length > 0 && reviews.some((r) => r.check.explanationExcludesAlternatives)) {
+    finding('explanation_excludes_alternative', { answers: all });
+    return { ...untouched, findings, added: 0, moved: 0 };
+  }
+  if (all.length > MAX_ACCEPTED_ANSWERS) {
+    finding('ambiguous_question', { answers: all });
+    return { ...untouched, findings, added: 0, moved: 0 };
+  }
+
+  const remainingWrong = question.commonWrongAnswers.filter((w) => !moves.some((m) => sameAnswer(m, w.answer)));
+  const context = question.context;
+  candidates = candidates.filter((a) => {
+    if (question.type === 'error_correction' && context !== undefined && sameAnswer(a, context)) {
+      finding('alternative_is_original', { answers: [a] });
+      return false;
+    }
+    if (remainingWrong.some((w) => sameAnswer(a, w.answer))) {
+      finding('alternative_conflicts_wrong_answer', { answers: [a] });
+      return false;
+    }
+    return true;
+  });
+  const plain = (a: string) => {
+    if (isPlainAnswer(a)) return true;
+    finding('alternative_not_plain', { answers: [a] });
+    return false;
+  };
+  candidates = candidates.filter(plain);
+  moves = moves.filter(plain);
+  const finalWrong = question.commonWrongAnswers.filter((w) => !moves.some((m) => sameAnswer(m, w.answer)));
+
+  const accepted = [...untouched.acceptedAnswers];
+  let added = 0;
+  for (const a of [...candidates, ...moves]) {
+    if (accepted.some((b) => sameAnswer(a, b)) || sameAnswer(a, question.correctAnswer)) continue;
+    accepted.push(a);
+    added++;
+  }
+  return { acceptedAnswers: accepted, commonWrongAnswers: finalWrong, findings, added, moved: moves.length };
+}
+
+export type SetAnnotation =
+  | {
+      outcome: 'annotated';
+      /** The published questions, in order, with the step's changes. */
+      questions: SharedQuestion[];
+      added: number;
+      moved: number;
+      findings: AnnotationFinding[];
+    }
+  | { outcome: 'unreadable'; model: CheckerModel };
+
+/** Every checker's output against the published questions. One unreadable
+ * review makes the whole step unusable (the set is left as it is and the
+ * step is retried on a later run). */
+export function annotateSet(questions: readonly SharedQuestion[], outputs: readonly { model: CheckerModel; output: unknown }[]): SetAnnotation {
+  const parsed: { model: CheckerModel; checks: Map<string, QuestionCheck> }[] = [];
+  for (const { model, output } of outputs) {
+    const checks = parseCheckOutput(output, questions);
+    if (checks === null) return { outcome: 'unreadable', model };
+    parsed.push({ model, checks });
+  }
+  const annotated: SharedQuestion[] = [];
+  const findings: AnnotationFinding[] = [];
+  let added = 0;
+  let moved = 0;
+  for (const q of questions) {
+    const result = annotateQuestion(
+      q,
+      parsed.map((p) => ({ model: p.model, check: p.checks.get(q.id) as QuestionCheck })),
+    );
+    annotated.push({
+      ...q,
+      commonWrongAnswers: result.commonWrongAnswers,
+      ...(result.acceptedAnswers.length > 0 ? { acceptedAnswers: result.acceptedAnswers } : {}),
+    });
+    findings.push(...result.findings);
+    added += result.added;
+    moved += result.moved;
+  }
+  return { outcome: 'annotated', questions: annotated, added, moved, findings };
+}
+
+/**
+ * Whether [after] is [before] with nothing but accepted answers added and
+ * predicted wrong answers moved into them: the only write the annotation
+ * step may make to a published set (owner decision 2 of 2026-10-31). Same
+ * questions in the same order, every text identical; `commonWrongAnswers` a
+ * subsequence of before's, each removed one present in `acceptedAnswers`;
+ * before's accepted answers all kept.
+ */
+export function isAdditivePatch(before: readonly SharedQuestion[], after: readonly SharedQuestion[]): boolean {
+  if (before.length !== after.length) return false;
+  const fields = ['id', 'type', 'context', 'instruction', 'hint', 'topicId', 'correctAnswer', 'explanation'] as const;
+  for (let i = 0; i < before.length; i++) {
+    const b = before[i] as SharedQuestion;
+    const a = after[i] as SharedQuestion;
+    if (fields.some((f) => b[f] !== a[f])) return false;
+    let j = 0;
+    for (const w of b.commonWrongAnswers) {
+      const kept = a.commonWrongAnswers[j];
+      if (kept && kept.answer === w.answer && kept.comment === w.comment) {
+        j++;
+      } else if (!(a.acceptedAnswers ?? []).some((x) => sameAnswer(x, w.answer))) {
+        return false;
+      }
+    }
+    if (j !== a.commonWrongAnswers.length) return false;
+    if (a.commonWrongAnswers.length === 0) return false;
+    if ((b.acceptedAnswers ?? []).some((x) => !(a.acceptedAnswers ?? []).some((y) => sameAnswer(x, y)))) return false;
+  }
+  return true;
 }

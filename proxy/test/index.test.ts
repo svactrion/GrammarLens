@@ -1,6 +1,6 @@
 import { env, SELF } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { dailyTestMaxTokensFor } from '../src/anthropic';
+import { dailyTestMaxTokensFor, scoreMaxTokensFor } from '../src/anthropic';
 import { LEGACY_DAILY_TEST_BODY_COUNT_5 } from './fixtures/legacy_daily_test_body';
 
 const TOKEN = 'test-app-token'; // matches vitest.config.ts's miniflare.bindings
@@ -335,7 +335,7 @@ describe('POST /v1/score-answers', () => {
     expect(response.status).toBe(200);
   });
 
-  it('instructs the model not to score Turkish-keyboard letter variants as grammar mistakes', async () => {
+  it('instructs the model not to score keyboard-variant characters as grammar mistakes, on any keyboard (1.4.0 D3)', async () => {
     mockAnthropicSuccess({ feedback: [] });
 
     await post('/v1/score-answers', {
@@ -347,8 +347,56 @@ describe('POST /v1/score-answers', () => {
     const body = JSON.parse(String(fetchCalls[0]?.init?.body)) as { system: string };
     // The letter-substitution instruction itself, and the explicit carve-out
     // so a real one-character grammar difference is still never excused.
-    expect(body.system).toContain('ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u');
+    expect(body.system).toContain('é/e, ı/i, ü/u, ñ/n, ç/c');
+    expect(body.system).toContain('full-width Latin letters');
+    expect(body.system).not.toContain('Turkish');
     expect(body.system).toContain('stay');
+  });
+});
+
+describe('POST /v1/score-answers — structured feedback (1.4.0 D11)', () => {
+  const items = [
+    { id: 'two', type: 'fill_in_blank', prompt: 'I enjoy ____ (swim) and ____ (run).\nFill in each blank.', userAnswer: 'I enjoy swimming (swim) and ____ (run).' },
+    { id: 'ec', type: 'error_correction', prompt: 'He go home.\nRewrite the sentence.', userAnswer: 'He goes home.' },
+  ];
+  const entry = (index: number, accepted: boolean) => ({ index, correctAnswer: `c${index}`, accepted, note: `note ${index}` });
+
+  it('asks for summary and blanks as required fields, next to the six fields every client reads', async () => {
+    mockAnthropicSuccess({ feedback: [] });
+    await post('/v1/score-answers', { deviceId: 'd1', items });
+    const body = JSON.parse(String(fetchCalls[0]?.init?.body)) as {
+      max_tokens: number;
+      system: string;
+      output_config: { format: { schema: { properties: { feedback: { items: { required: string[]; properties: Record<string, unknown> } } } } } };
+    };
+    const item = body.output_config.format.schema.properties.feedback.items;
+    expect(item.required).toEqual(['itemId', 'isCorrect', 'correctedAnswer', 'explanation', 'summary', 'blanks']);
+    expect(Object.keys(item.properties)).toEqual(['itemId', 'isCorrect', 'errorType', 'rule', 'correctedAnswer', 'explanation', 'summary', 'blanks']);
+    expect(body.system).toContain('"blanks"');
+    expect(body.system).toContain('"summary"');
+    expect(body.system).toContain('at most two sentences');
+    expect(body.max_tokens).toBe(scoreMaxTokensFor(2));
+  });
+
+  it('scales the output budget with the item count, never under the old 2,048', () => {
+    expect(scoreMaxTokensFor(1)).toBe(2048);
+    expect(scoreMaxTokensFor(5)).toBe(2048);
+    expect(scoreMaxTokensFor(10)).toBe(4000);
+    expect(scoreMaxTokensFor(20)).toBe(8000);
+  });
+
+  it('repairs the structured fields against the request before they go out: a miscounted item loses them, a contradicting verdict follows the blanks', async () => {
+    mockAnthropicSuccess({
+      feedback: [
+        { itemId: 'two', isCorrect: true, correctedAnswer: 'x', explanation: 'long', summary: 's', blanks: [entry(0, true), entry(1, false)] },
+        { itemId: 'ec', isCorrect: true, correctedAnswer: 'He goes home.', explanation: 'long', summary: 's', blanks: [entry(0, true), entry(1, true)] },
+      ],
+    });
+    const response = await post('/v1/score-answers', { deviceId: 'd1', items });
+    expect(response.status).toBe(200);
+    const { feedback } = (await response.json()) as { feedback: Record<string, unknown>[] };
+    expect(feedback[0]).toMatchObject({ itemId: 'two', isCorrect: false, summary: 's', blanks: [entry(0, true), entry(1, false)] });
+    expect(feedback[1]).toEqual({ itemId: 'ec', isCorrect: true, correctedAnswer: 'He goes home.', explanation: 'long' });
   });
 });
 

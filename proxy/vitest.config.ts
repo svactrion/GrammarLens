@@ -18,6 +18,10 @@ export default defineConfig({
           // the live value in wrangler.jsonc to "false" without turning them
           // red. Tests that call a handler directly set it themselves.
           SHARED_DAILY_TEST_ENABLED: 'true',
+          // The annotation step's switch (P14), off for the tests that go
+          // through the Worker: the cron tests that exercise it set it on
+          // themselves, and every older test keeps the pre-P14 behaviour.
+          SHARED_SET_CHECK_ENABLED: 'false',
         },
       },
     }),

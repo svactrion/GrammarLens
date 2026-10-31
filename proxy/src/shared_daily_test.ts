@@ -27,15 +27,19 @@ export const SHARED_SET_QUESTION_COUNT = 5;
  * - 2: its own system prompt with explicit correctness rules
  *   (docs/1.1.0-shared-daily-test-quality.md §1.2, approved 2026-09-27; the
  *   final wording is fixed after the local measurement E).
+ * - 3: version 2 made language-neutral, with an explicit time frame asked
+ *   for where speech is reported (1.4.0 D3, owner 2026-10-31;
+ *   docs/1.4.0-server-batch0-report.md §2.1). Same schema as 2.
  */
-export type SharedPromptVersion = 1 | 2;
+export type SharedPromptVersion = 1 | 2 | 3;
 
 /**
  * The version the hourly cron builds, and stores with every published set.
- * 2 since 2026-09-29 (path A, docs/1.1.0-shared-daily-test-quality.md §16):
- * the cron generates with prompt v2, without the check call.
+ * 2 from 2026-09-29 (path A, docs/1.1.0-shared-daily-test-quality.md §16);
+ * 3 since 1.4.0 D3 (built 2026-10-31, deployed only after the v2/v3
+ * measurement passes; no set has been published with it yet).
  */
-export const SHARED_PROMPT_VERSION: SharedPromptVersion = 2;
+export const SHARED_PROMPT_VERSION: SharedPromptVersion = 3;
 
 /**
  * Models the shared set can be generated with (owner addition B, 2026-09-27;
@@ -320,22 +324,74 @@ export function normalizeAnswer(raw: string): string {
   return collapsed.replace(/[.!?]$/, '');
 }
 
+/**
+ * Characters a learner's keyboard or autocorrect produces for a plain
+ * character, mapped to that character (1.4.0 D3, owner 2026-10-31;
+ * docs/1.4.0-server-batch0-report.md §2.2). A closed table in eight classes,
+ * not fuzzy matching: every entry is a variant of the same letter or mark,
+ * never a different word. Full-width Latin, the Arabic digit rows and the
+ * invisible marks are handled by range below.
+ *
+ * The keys are all plain ASCII English (the gate's `correct_answer_not_plain`
+ * rule), so a fold can only move a learner's text towards a key, never
+ * between two English answers.
+ */
 const KEYBOARD_VARIANT_FOLD: Readonly<Record<string, string>> = {
+  // Dotted and dotless i (tr): not a decomposition, so listed on its own.
   'ı': 'i',
-  'ş': 's',
-  'ğ': 'g',
-  'ç': 'c',
-  'ö': 'o',
-  'ü': 'u',
+  // Precomposed Latin letters with a diacritic (es, pt-BR, de, tr, and the
+  // long-press pop-ups of every iOS keyboard).
+  'á': 'a', 'à': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a',
+  'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+  'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
+  'ó': 'o', 'ò': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o',
+  'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
+  'ý': 'y', 'ÿ': 'y', 'ñ': 'n', 'ç': 'c', 'ş': 's', 'ğ': 'g',
+  'ß': 'ss', 'æ': 'ae', 'œ': 'oe',
+  // Quotation marks and apostrophes `normalizeAnswer` does not straighten.
+  '\u02BC': "'", '\u2032': "'", '\u00B4': "'", '`': "'",
+  '«': '"', '»': '"', '「': '"', '」': '"', '『': '"', '』': '"',
+  // Dashes (hyphen, non-breaking hyphen, figure dash, en and em dash, bar).
+  '\u2010': '-', '\u2011': '-', '\u2012': '-', '\u2013': '-', '\u2014': '-', '\u2015': '-',
+  // Arabic comma and question mark (ar); the ideographic full stop (ja).
+  '\u060C': ',', '\u061F': '?', '\u3002': '.',
+  // Spanish inverted marks (es): nothing to match them against.
+  '¿': '', '¡': '',
+  // Non-breaking and ideographic spaces (ja, ko, ar; iOS after a full stop).
+  '\u00A0': ' ', '\u3000': ' ',
+  // Zero-width characters, direction marks and the byte-order mark.
+  '\u200B': '', '\u200C': '', '\u200D': '', '\u200E': '', '\u200F': '', '\uFEFF': '',
 };
 
-/** Port of Dart's `foldKeyboardVariants`: Turkish-keyboard letters to the
- * plain letter they stand for. Applied to already-normalized text. */
+/** A full-width [.!?] or an ideographic full stop at the end: the full-width
+ * form of the one trailing mark `normalizeAnswer` already drops. */
+const TRAILING_FULLWIDTH_MARK = /[\u3002\uFF0E\uFF01\uFF1F\u061F]$/;
+
+function foldCharacter(ch: string): string {
+  const mapped = KEYBOARD_VARIANT_FOLD[ch];
+  if (mapped !== undefined) return mapped;
+  const code = ch.codePointAt(0) ?? 0;
+  // Full-width ASCII (ja, ko): ！ … ～ → ! … ~.
+  if (code >= 0xff01 && code <= 0xff5e) return String.fromCodePoint(code - 0xff01 + 0x21);
+  // Arabic-Indic and Eastern Arabic-Indic digits (ar).
+  if (code >= 0x0660 && code <= 0x0669) return String.fromCodePoint(code - 0x0660 + 0x30);
+  if (code >= 0x06f0 && code <= 0x06f9) return String.fromCodePoint(code - 0x06f0 + 0x30);
+  return ch;
+}
+
+/**
+ * The keyboard-variant fold, the same rule in Dart (`foldKeyboardVariants`,
+ * lib/utils/answer_matching.dart; the Dart side moves to this table in 1.4.0
+ * B3) and here; `test/fixtures/keyboard_folding.json` is the contract both
+ * sides are tested against. Applied to already-normalized text (lowercased,
+ * trimmed, spaces collapsed, one trailing mark dropped): maps every variant
+ * character, collapses the spaces a mapping may have doubled, and drops the
+ * one trailing mark that was full-width and so survived normalization. The
+ * result can be shorter or longer than the input (ß, removed marks).
+ */
 export function foldKeyboardVariants(input: string): string {
-  return input
-    .split('')
-    .map((ch) => KEYBOARD_VARIANT_FOLD[ch] ?? ch)
-    .join('');
+  const mapped = Array.from(input).map(foldCharacter).join('').replace(/ {2,}/g, ' ').trim();
+  return TRAILING_FULLWIDTH_MARK.test(input) ? mapped.replace(/[.!?]$/, '') : mapped;
 }
 
 // ---------------------------------------------------------------------------
@@ -351,6 +407,7 @@ export type SharedSetRejection =
   | 'plan_mismatch' // a topic or type the plan does not ask for, or a topic twice
   | 'wrong_answer_count' // not 2-3 predicted wrong answers
   | 'blank_correct_answer' // correctAnswer normalizes to nothing
+  | 'correct_answer_not_plain' // correctAnswer does not fold to itself (a non-plain character)
   | 'wrong_answer_matches_correct' // a predicted wrong answer grades as correct
   | 'duplicate_wrong_answer'
   | 'error_correction_missing_sentence' // no flawed sentence in "context" to correct
@@ -640,6 +697,12 @@ function checkQuestion(entry: unknown): SharedQuestion {
   const correct = normalizeAnswer(correctAnswer);
   if (correct.length === 0) throw new Rejected('blank_correct_answer');
   const correctFolded = foldKeyboardVariants(correct);
+  // The key must be plain under the fold (1.4.0 D3; report §1.4 rule 2): the
+  // keyboard-variant branch then only ever moves a learner's text towards the
+  // key, and an accepted answer can never collide with another through the
+  // fold alone. No published or pool key has ever failed this (checked over
+  // the 185 questions of 2026-10-31).
+  if (correctFolded !== correct) throw new Rejected('correct_answer_not_plain');
   const seen = new Set<string>();
   for (const { answer } of commonWrongAnswers) {
     const normalized = normalizeAnswer(answer);
@@ -683,11 +746,29 @@ function checkQuestion(entry: unknown): SharedQuestion {
 /** The KV key of [date]'s published set in `DAILY_SETS_KV`. */
 export const setKey = (date: string) => `set:${date}`;
 
-/** What `set:{date}` holds. Written once by the cron, never overwritten. */
+/** The KV key of what the annotation step found on [date]'s set and did not
+ * write into it (docs/1.4.0-server-batch0-report.md §1.3): the owner's weekly
+ * look. Never read by any route. */
+export const reviewKey = (date: string) => `review:${date}`;
+
+/**
+ * What `set:{date}` holds. Written by the cron's generation step, then
+ * written once more by its annotation step (P14, owner decision 2026-10-31):
+ * the same questions with `acceptedAnswers` added and acceptable predicted
+ * wrong answers moved, plus the `checkedAt` stamp and what checked it. A set
+ * with `checkedAt` is never written again; one without it is annotated at
+ * most `MAX_CHECKS_PER_DATE` times. Before P14 the set was write-once.
+ */
 export interface PublishedSet {
   date: string;
   promptVersion: number;
   generatedAt: string;
   attempt: number;
   questions: SharedQuestion[];
+  /** Set by the annotation step; absent until then (and on every set
+   * published before P14). */
+  checkedAt?: string;
+  checkVersion?: number;
+  checkGate?: string;
+  checkModels?: string[];
 }

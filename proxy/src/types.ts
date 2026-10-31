@@ -20,6 +20,10 @@ interface WorkerEnv {
    * turns it on. Anything else, "false" included, and the scheduled run
    * touches neither KV nor Anthropic. */
   readonly SHARED_DAILY_TEST_ENABLED: string;
+  /** Kill switch for the annotation step (P14): only the exact string
+   * "true" turns it on. Anything else, and the scheduled run generates as
+   * before P14 and never calls a checker. */
+  readonly SHARED_SET_CHECK_ENABLED: string;
 }
 
 export type Env = WorkerEnv;

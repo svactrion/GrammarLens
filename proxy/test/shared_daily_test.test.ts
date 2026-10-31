@@ -33,6 +33,7 @@ import {
 } from '../src/shared_daily_test';
 import { TOPICS } from '../src/topics';
 import normalizationCases from './fixtures/answer_normalization.json';
+import foldingCases from './fixtures/keyboard_folding.json';
 
 const at = (iso: string) => new Date(iso);
 
@@ -258,7 +259,7 @@ describe('normalizeAnswer / foldKeyboardVariants — same results as the Dart co
     }
   });
 
-  it('matches every fold case produced by the Dart code', () => {
+  it('matches every fold case produced by the Dart code (the Turkish six, still folded)', () => {
     for (const { input, expected } of normalizationCases.fold) {
       expect(foldKeyboardVariants(input), JSON.stringify(input)).toBe(expected);
     }
@@ -956,6 +957,7 @@ describe('generate_shared_daily_test request', () => {
   it.each([
     [1, 'c1a5703'],
     [2, '3b9d4a6b'],
+    [3, 'd5c83865'],
   ] as const)('pins prompt version %i to its request fingerprint', (version, expected) => {
     // If a fingerprint changes, that prompt changed: make it a new version
     // instead, and pin the new one here. Version 1 is what every published set
@@ -965,12 +967,35 @@ describe('generate_shared_daily_test request', () => {
     expect(fingerprint(version)).toBe(expected);
   });
 
-  it(`builds version ${SHARED_PROMPT_VERSION} by default, the one the cron uses (path A, 2026-09-29)`, () => {
-    expect(SHARED_PROMPT_VERSION).toBe(2);
-    expect(sharedDailyTestRequest(plan).promptVersion).toBe(2);
+  it(`builds version ${SHARED_PROMPT_VERSION} by default, the one the cron uses (1.4.0 D3, 2026-10-31)`, () => {
+    expect(SHARED_PROMPT_VERSION).toBe(3);
+    expect(sharedDailyTestRequest(plan).promptVersion).toBe(3);
     expect(buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan))).toEqual(
-      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, [], { promptVersion: 2 })),
+      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, [], { promptVersion: 3 })),
     );
+  });
+
+  it('version 3 is version 2 made language-neutral with the reported-speech sentence, same schema and user prompt', () => {
+    const build = (promptVersion: SharedPromptVersion) =>
+      buildGenerateSharedDailyTestBody(sharedDailyTestRequest(plan, ['admit'], { promptVersion, model: 'claude-sonnet-5-5', effort: 'low' }));
+    const v2 = build(2);
+    const v3 = build(3);
+    expect(v3).toEqual({ ...v2, system: v3.system });
+    expect(v3.system).not.toContain('Turkish');
+    expect(v2.system).toContain('Turkish');
+    expect(v3.system).toContain('B1-C1\nlearners whose first language is not English');
+    expect(v3.system).toContain('make the time reference explicit enough\nthat the backshifted form is the only correct one.');
+    expect(v2.system).not.toContain('backshifted');
+    // Everything else is word for word the same (line breaks aside: the
+    // first sentence re-wrapped).
+    const strip = (s: string) =>
+      s
+        .replace(/\s+/g, ' ')
+        .replace(/for Turkish native speakers at B1-C1 English level/, 'X')
+        .replace(/for B1-C1 learners whose first language is not English/, 'X')
+        .replace(/ When the context reports speech[^.]*\./, '');
+    expect(strip(v3.system)).toBe(strip(v2.system));
+    expect(v3.messages[0]?.content).toContain("If a slot's type cannot be written");
   });
 });
 
@@ -1256,5 +1281,41 @@ describe('callAnthropic with generate_shared_daily_test', () => {
         duration_ms: expect.any(Number),
       },
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 1.4.0 D3: the keyboard-variant fold for seven languages' keyboards
+
+describe('foldKeyboardVariants — test/fixtures/keyboard_folding.json (1.4.0 D3)', () => {
+  it('covers the eight classes of the folding table', () => {
+    const classes = new Set(foldingCases.cases.map((c) => c.class));
+    expect([...classes].sort()).toEqual(
+      ['arabic', 'dashes', 'diacritics', 'dotless_i', 'fullwidth', 'quotes', 'spaces_and_marks', 'spanish', 'unchanged'].sort(),
+    );
+  });
+
+  it.each(foldingCases.cases)('$class: folds $input to $expected', ({ input, expected }) => {
+    expect(foldKeyboardVariants(input)).toBe(expected);
+  });
+
+  it('is idempotent and leaves a plain answer alone', () => {
+    for (const { expected } of foldingCases.cases) expect(foldKeyboardVariants(expected)).toBe(expected);
+  });
+
+  it('grades a full-width or accented answer as a keyboard variant of the key, never a different word', () => {
+    const question = { correctAnswer: 'cooking', commonWrongAnswers: [{ answer: 'cook' }] };
+    expect(foldKeyboardVariants(normalizeAnswer('ＣＯＯＫＩＮＧ'))).toBe('cooking');
+    expect(foldKeyboardVariants(normalizeAnswer('Cookíng'))).toBe(normalizeAnswer(question.correctAnswer));
+    expect(foldKeyboardVariants(normalizeAnswer('cooks'))).not.toBe('cooking');
+  });
+});
+
+describe('correct_answer_not_plain (1.4.0 D3; report §1.4 rule 2)', () => {
+  it('rejects a key that does not fold to itself, and passes a plain one', () => {
+    expectRejected(withQuestion(0, (q) => (q.correctAnswer = 'thé')), 'correct_answer_not_plain');
+    expectRejected(withQuestion(0, (q) => (q.correctAnswer = 'ｔｈｅ')), 'correct_answer_not_plain');
+    expectRejected(withQuestion(0, (q) => (q.correctAnswer = 'the\u200b')), 'correct_answer_not_plain');
+    expect(validate(withQuestion(0, (q) => (q.correctAnswer = 'The'))).ok).toBe(true);
   });
 });

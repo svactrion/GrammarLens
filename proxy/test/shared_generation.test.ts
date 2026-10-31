@@ -14,14 +14,22 @@ import {
 import {
   ATTEMPTS_TTL_SECONDS,
   ATTEMPT_LEASE_MS,
+  CHECK_TIMEOUT_MS,
   GENERATION_TIMEOUT_MS,
   MAX_ATTEMPTS_PER_DATE,
+  MAX_CHECKS_PER_DATE,
+  REVIEW_TTL_SECONDS,
   SET_TTL_SECONDS,
   attemptsKey,
+  checkLeaseMs,
+  reviewKey,
   runSharedGeneration,
   setKey,
   type PublishedSet,
+  type ReviewRecord,
 } from '../src/shared_generation';
+import { ANNOTATION_CHECKERS, ANNOTATION_GATE, CHECK_VERSION, type QuestionCheck } from '../src/shared_check';
+import { validateSharedSet, type SharedQuestion } from '../src/shared_daily_test';
 import type { Env } from '../src/types';
 import wranglerSource from '../wrangler.jsonc?raw';
 
@@ -171,7 +179,7 @@ async function storedSet(date: string): Promise<PublishedSet | null> {
 }
 
 describe('shared set generation (cron)', () => {
-  describe('request (path A, 2026-09-29): prompt version 2 with SHARED_GENERATOR, no check call', () => {
+  describe('request: prompt version 3 (1.4.0 D3) with SHARED_GENERATOR; the check call is the annotation step, never in the same run', () => {
     async function sentBody(): Promise<string> {
       for (const offset of [0, 1, 2]) await seed(dateAt(offset), [`recent ${offset}`]);
       respond = async () => anthropicBody(validSetFor(dailyPlan(PLUS_3)));
@@ -180,19 +188,19 @@ describe('shared set generation (cron)', () => {
       return String(fetchCalls[0]?.init?.body);
     }
 
-    it('sends prompt version 2 with claude-sonnet-5-5 at effort low, adaptive thinking and its headroom', async () => {
-      expect(SHARED_PROMPT_VERSION).toBe(2);
+    it('sends prompt version 3 with claude-sonnet-5-5 at effort low, adaptive thinking and its headroom', async () => {
+      expect(SHARED_PROMPT_VERSION).toBe(3);
       expect(SHARED_GENERATOR).toEqual({ model: 'claude-sonnet-5-5', effort: 'low' });
       const sent = JSON.parse(await sentBody()) as Record<string, unknown> & { output_config: object };
       const avoid = ['recent 2', 'recent 1', 'recent 0'];
+      const v3 = buildGenerateSharedDailyTestBody(
+        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 3, model: 'claude-sonnet-5-5', effort: 'low' }),
+      );
       const v2 = buildGenerateSharedDailyTestBody(
         sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 2, model: 'claude-sonnet-5-5', effort: 'low' }),
       );
-      const v1 = buildGenerateSharedDailyTestBody(
-        sharedDailyTestRequest(dailyPlan(PLUS_3), avoid, { promptVersion: 1, model: 'claude-sonnet-5-5', effort: 'low' }),
-      );
-      expect(sent).toEqual(v2);
-      expect(sent.system).not.toBe(v1.system);
+      expect(sent).toEqual(v3);
+      expect(sent.system).not.toBe(v2.system);
       expect(sent.model).toBe('claude-sonnet-5-5');
       expect(sent.thinking).toEqual({ type: 'adaptive' });
       expect(sent.max_tokens).toBe(dailyTestMaxTokensFor(5) + THINKING_HEADROOM_TOKENS);
@@ -204,20 +212,22 @@ describe('shared set generation (cron)', () => {
       // SHARED_PROMPT_VERSION), the plan, or SHARED_GENERATOR. Switching the
       // generator after the comparison is expected to re-pin it here.
       // History: b7ef3b35 (claude-sonnet-5, no effort, never deployed), then
-      // 80b1fa85 (claude-sonnet-5-5, effort low; owner, 2026-09-29).
+      // 80b1fa85 (claude-sonnet-5-5, effort low; owner, 2026-09-29; the live
+      // cron until 1.4.0 D3 deploys), then 2bfd39d1 (prompt version 3,
+      // 1.4.0 D3, 2026-10-31; not deployed until the v2/v3 measurement).
       const body = await sentBody();
       let hash = 0x811c9dc5;
       for (let i = 0; i < body.length; i++) {
         hash ^= body.charCodeAt(i);
         hash = Math.imul(hash, 0x01000193) >>> 0;
       }
-      expect(hash.toString(16)).toBe('80b1fa85');
+      expect(hash.toString(16)).toBe('2bfd39d1');
     });
 
-    it('stores prompt version 2 with the published set and in its log line', async () => {
+    it('stores prompt version 3 with the published set and in its log line', async () => {
       await sentBody();
-      expect(await storedSet(PLUS_3)).toMatchObject({ promptVersion: 2 });
-      expect(lines('shared_set_generation')).toEqual([expect.objectContaining({ outcome: 'published', prompt_version: 2 })]);
+      expect(await storedSet(PLUS_3)).toMatchObject({ promptVersion: 3 });
+      expect(lines('shared_set_generation')).toEqual([expect.objectContaining({ outcome: 'published', prompt_version: 3 })]);
     });
   });
 
@@ -230,7 +240,7 @@ describe('shared set generation (cron)', () => {
     expect(fetchCalls).toHaveLength(1);
     expect(fetchCalls[0]?.url).toBe('https://api.anthropic.com/v1/messages');
     const set = await storedSet(PLUS_3);
-    expect(set).toMatchObject({ date: PLUS_3, promptVersion: 2, attempt: 1, generatedAt: NOW.toISOString() });
+    expect(set).toMatchObject({ date: PLUS_3, promptVersion: 3, attempt: 1, generatedAt: NOW.toISOString() });
     expect(set?.questions.map((q) => q.topicId)).toEqual(dailyPlan(PLUS_3).slots.map((s) => s.topicId));
     expect(lines('shared_set_generation')).toEqual([
       {
@@ -244,7 +254,7 @@ describe('shared set generation (cron)', () => {
         input_tokens: 1500,
         output_tokens: 1400,
         duration_ms: expect.any(Number),
-        prompt_version: 2,
+        prompt_version: 3,
         model: 'claude-sonnet-5-5',
         effort: 'low',
       },
@@ -417,6 +427,7 @@ describe('shared set generation (cron)', () => {
     await runSharedGeneration(envWith(), NOW);
     expect(JSON.parse((await env.DAILY_SETS_KV.get(attemptsKey(PLUS_3))) as string)).toEqual({
       count: 1,
+      checks: 0,
       leaseUntil: NOW.getTime() + 180_000,
     });
     // Still held just before the lease ends: no second call.
@@ -601,9 +612,9 @@ describe('shared set generation (cron)', () => {
     for (let run = 0; run < 3; run++) await runSharedGeneration(envWith(), at(run));
 
     expect(lines('shared_set_generation').map((l) => [l.outcome, l.reason, l.model, l.effort, l.prompt_version])).toEqual([
-      ['upstream_failed', null, 'claude-sonnet-5-5', 'low', 2],
-      ['rejected', 'fill_in_blank_missing_blank', 'claude-sonnet-5-5', 'low', 2],
-      ['published', null, 'claude-sonnet-5-5', 'low', 2],
+      ['upstream_failed', null, 'claude-sonnet-5-5', 'low', 3],
+      ['rejected', 'fill_in_blank_missing_blank', 'claude-sonnet-5-5', 'low', 3],
+      ['published', null, 'claude-sonnet-5-5', 'low', 3],
     ]);
     expect(logged.join('\n')).not.toContain(CONTENT_SECRET);
   });
@@ -630,5 +641,303 @@ describe('shared set generation (cron)', () => {
     expect(fetchCalls).toHaveLength(1);
     expect(await storedSet(PLUS_3)).toMatchObject({ date: PLUS_3, generatedAt: NOW.toISOString() });
     expect(TODAY).toBe('2026-10-05');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P14: the annotation step (docs/1.4.0-server-batch0-report.md §1.3–1.4)
+
+describe('shared set annotation (cron, P14)', () => {
+  const PLAN = dailyPlan(TODAY);
+  const withCheck = (overrides: Partial<Env> = {}) => envWith({ SHARED_SET_CHECK_ENABLED: 'true', ...overrides });
+
+  /** The validated questions of a set that passes the gate for [plan]. */
+  function questionsFor(plan: DailyPlan, tag = 'a'): SharedQuestion[] {
+    const result = validateSharedSet(validSetFor(plan, tag), plan);
+    if (!result.ok) throw new Error(result.reason);
+    return result.questions;
+  }
+
+  /** A published, unchecked set in KV, as the generation step writes it. */
+  async function publish(date: string, questions: SharedQuestion[], extra: Partial<PublishedSet> = {}): Promise<PublishedSet> {
+    const set: PublishedSet = { date, promptVersion: 2, generatedAt: '2026-10-02T00:07:00.000Z', attempt: 1, questions, ...extra };
+    await env.DAILY_SETS_KV.put(setKey(date), JSON.stringify(set));
+    return set;
+  }
+
+  /** A clean review of every question, with per-question overrides by id. */
+  function reviewOf(questions: readonly SharedQuestion[], overrides: Record<string, Partial<QuestionCheck>> = {}): { questions: QuestionCheck[] } {
+    return {
+      questions: questions.map((q) => ({
+        id: q.id,
+        originalSentence: q.type === 'error_correction' ? 'clearly_wrong' : 'not_applicable',
+        correctAnswer: 'correct',
+        acceptableAlternatives: [],
+        acceptableWrongAnswers: [],
+        incorrectRuleFields: [],
+        explanationExcludesAlternatives: false,
+        verdict: 'pass',
+        ...overrides[q.id],
+      })),
+    };
+  }
+
+  /** Checked sets for the three later dates, so a run that skips today has
+   * nothing to generate and the call count is the annotation's alone. */
+  async function fillLaterDates(): Promise<void> {
+    for (const offset of [1, 2, 3]) await publish(dateAt(offset), questionsFor(dailyPlan(dateAt(offset))), { checkedAt: 'earlier' });
+  }
+
+  /** Answers each checker call from [byModel], keyed by the request's model. */
+  function respondByModel(byModel: Record<string, unknown>) {
+    respond = async (init) => {
+      const body = JSON.parse(String(init?.body)) as { model: string };
+      const content = byModel[body.model];
+      if (content === undefined) throw new Error(`no response planned for ${body.model}`);
+      return anthropicBody(content);
+    };
+  }
+
+  const sentModels = () => fetchCalls.map((c) => (JSON.parse(String(c.init?.body)) as { model: string }).model);
+
+  it('annotates an unchecked published set with the agreed alternatives, one call per checker, and stamps it', async () => {
+    const questions = questionsFor(PLAN);
+    const q0 = questions[0] as SharedQuestion;
+    const alt = `also ${q0.correctAnswer}`;
+    await publish(TODAY, questions);
+    const models = ANNOTATION_CHECKERS.agreement;
+    respondByModel({
+      [models[0] as string]: reviewOf(questions, { [q0.id]: { acceptableAlternatives: [alt], verdict: 'pass_with_alternatives' } }),
+      [models[1] as string]: reviewOf(questions, { [q0.id]: { acceptableAlternatives: [alt, 'only one model says this'], verdict: 'pass_with_alternatives' } }),
+    });
+
+    await runSharedGeneration(withCheck(), NOW, { gate: 'agreement' });
+
+    expect(sentModels()).toEqual([...models]);
+    const stored = (await storedSet(TODAY)) as PublishedSet;
+    expect(stored.checkedAt).toBe(NOW.toISOString());
+    expect(stored).toMatchObject({ checkVersion: CHECK_VERSION, checkGate: 'agreement', checkModels: [...models], promptVersion: 2, attempt: 1 });
+    expect(stored.questions[0]?.acceptedAnswers).toEqual([alt]);
+    expect(stored.questions.slice(1).every((q) => q.acceptedAnswers === undefined)).toBe(true);
+    // Everything else about the set is byte-identical.
+    const { acceptedAnswers: _a, ...annotated } = stored.questions[0] as SharedQuestion;
+    expect(annotated).toEqual(q0);
+    const review = JSON.parse((await env.DAILY_SETS_KV.get(reviewKey(TODAY))) as string) as ReviewRecord;
+    expect(review.findings).toEqual([{ questionId: q0.id, code: 'proposed_by_one_model', model: models[1], answers: ['only one model says this'] }]);
+    expect(lines('shared_set_annotation')).toEqual([
+      expect.objectContaining({ date: TODAY, check: 1, outcome: 'annotated', gate: 'agreement', models: [...models], added: 1, moved: 0, findings: 1, check_version: CHECK_VERSION }),
+    ]);
+  });
+
+  it('under the single-review gate makes one call and writes what that checker proposes', async () => {
+    const questions = questionsFor(PLAN);
+    const q0 = questions[0] as SharedQuestion;
+    await publish(TODAY, questions);
+    respondByModel({ 'claude-opus-5-5': reviewOf(questions, { [q0.id]: { acceptableAlternatives: ['alone'], verdict: 'pass_with_alternatives' } }) });
+
+    await runSharedGeneration(withCheck(), NOW, { gate: 'single_review' });
+
+    expect(sentModels()).toEqual(['claude-opus-5-5']);
+    expect((await storedSet(TODAY))?.questions[0]?.acceptedAnswers).toEqual(['alone']);
+    expect(await env.DAILY_SETS_KV.get(reviewKey(TODAY))).toBeNull();
+  });
+
+  it(`uses the production gate ${ANNOTATION_GATE} by default`, async () => {
+    const questions = questionsFor(PLAN);
+    await publish(TODAY, questions);
+    const byModel: Record<string, unknown> = {};
+    for (const m of ANNOTATION_CHECKERS[ANNOTATION_GATE]) byModel[m] = reviewOf(questions);
+    respondByModel(byModel);
+
+    await runSharedGeneration(withCheck(), NOW);
+
+    expect(sentModels()).toEqual([...ANNOTATION_CHECKERS[ANNOTATION_GATE]]);
+    expect((await storedSet(TODAY))?.checkGate).toBe(ANNOTATION_GATE);
+  });
+
+  it('moves an agreed acceptable wrong answer into the accepted ones and keeps the rest', async () => {
+    const questions = questionsFor(PLAN);
+    const q0 = questions[0] as SharedQuestion;
+    const moved = q0.commonWrongAnswers[0] as { answer: string; comment: string };
+    await publish(TODAY, questions);
+    const byModel: Record<string, unknown> = {};
+    for (const m of ANNOTATION_CHECKERS.agreement) byModel[m] = reviewOf(questions, { [q0.id]: { acceptableWrongAnswers: [moved.answer], verdict: 'reject' } });
+    respondByModel(byModel);
+
+    await runSharedGeneration(withCheck(), NOW, { gate: 'agreement' });
+
+    const stored = (await storedSet(TODAY)) as PublishedSet;
+    expect(stored.questions[0]?.acceptedAnswers).toEqual([moved.answer]);
+    expect(stored.questions[0]?.commonWrongAnswers).toEqual(q0.commonWrongAnswers.slice(1));
+    expect(lines('shared_set_annotation')[0]).toMatchObject({ outcome: 'annotated', added: 1, moved: 1 });
+    // The checkers' "reject" is a finding for the owner, never a change to the set.
+    const review = JSON.parse((await env.DAILY_SETS_KV.get(reviewKey(TODAY))) as string) as ReviewRecord;
+    expect(review.findings.map((f) => f.code)).toEqual(['checker_verdict', 'checker_verdict']);
+  });
+
+  it('checks the nearest unchecked set before generating a missing later date, one thing per run', async () => {
+    const questions = questionsFor(PLAN);
+    await publish(TODAY, questions);
+    const byModel: Record<string, unknown> = {};
+    for (const m of ANNOTATION_CHECKERS.agreement) byModel[m] = reviewOf(questions);
+    respondByModel(byModel);
+
+    await runSharedGeneration(withCheck(), NOW, { gate: 'agreement' });
+    expect(sentModels()).toEqual([...ANNOTATION_CHECKERS.agreement]);
+    expect(await storedSet(dateAt(1))).toBeNull();
+
+    // The next hour: today is checked, so the run generates the next date.
+    respond = async () => anthropicBody(validSetFor(dailyPlan(dateAt(1))));
+    await runSharedGeneration(withCheck(), at(1), { gate: 'agreement' });
+    expect(fetchCalls).toHaveLength(ANNOTATION_CHECKERS.agreement.length + 1);
+    expect(await storedSet(dateAt(1))).toMatchObject({ date: dateAt(1), promptVersion: 3 });
+    expect((await storedSet(dateAt(1)))?.checkedAt).toBeUndefined();
+  });
+
+  it('skips a checked set with one KV read, and never checks when the switch is off', async () => {
+    const questions = questionsFor(PLAN);
+    await publish(TODAY, questions, { checkedAt: '2026-10-05T01:07:00.000Z' });
+    for (const offset of [1, 2, 3]) await publish(dateAt(offset), questionsFor(dailyPlan(dateAt(offset))), { checkedAt: 'x' });
+    const sets = counting(env.DAILY_SETS_KV);
+    await runSharedGeneration(withCheck({ DAILY_SETS_KV: sets.kv }), NOW);
+    expect(fetchCalls).toHaveLength(0);
+    expect(sets.counts).toEqual({ get: 4, put: 0, list: 0, delete: 0 });
+
+    await publish(TODAY, questions); // unchecked again
+    for (const value of ['false', '', 'TRUE']) {
+      await runSharedGeneration(envWith({ SHARED_SET_CHECK_ENABLED: value }), NOW);
+    }
+    expect(fetchCalls).toHaveLength(0);
+    expect((await storedSet(TODAY))?.checkedAt).toBeUndefined();
+  });
+
+  it(`counts a check before the call, holds the date for ${checkLeaseMs('agreement') / 1000} s, and gives up after ${MAX_CHECKS_PER_DATE} unreadable or failed checks`, async () => {
+    const questions = questionsFor(PLAN);
+    await publish(TODAY, questions);
+    await fillLaterDates();
+    respond = async () => anthropicBody({ questions: [] }); // unreadable: wrong count
+
+    await runSharedGeneration(withCheck(), NOW, { gate: 'agreement' });
+    expect(JSON.parse((await env.DAILY_SETS_KV.get(attemptsKey(TODAY))) as string)).toEqual({
+      count: 0,
+      checks: 1,
+      leaseUntil: NOW.getTime() + checkLeaseMs('agreement'),
+    });
+    expect(checkLeaseMs('agreement')).toBe(2 * CHECK_TIMEOUT_MS + 30_000);
+    expect((await storedSet(TODAY))?.checkedAt).toBeUndefined();
+    expect(lines('shared_set_annotation')[0]).toMatchObject({ outcome: 'unreadable', check: 1, failed_model: 'claude-opus-5-5' });
+
+    // Both checkers were called before the output was read. Within the
+    // lease: nothing. After it: the second check. Then no more.
+    expect(fetchCalls).toHaveLength(2);
+    await runSharedGeneration(withCheck(), new Date(NOW.getTime() + 60_000), { gate: 'agreement' });
+    expect(fetchCalls).toHaveLength(2);
+    await runSharedGeneration(withCheck(), at(1), { gate: 'agreement' });
+    expect(fetchCalls).toHaveLength(4);
+    await runSharedGeneration(withCheck(), at(2), { gate: 'agreement' });
+    await runSharedGeneration(withCheck(), at(3), { gate: 'agreement' });
+    expect(fetchCalls).toHaveLength(4);
+    expect(lines('shared_set_annotation').map((l) => l.check)).toEqual([1, 2]);
+    expect((await storedSet(TODAY))?.checkedAt).toBeUndefined();
+  });
+
+  it('logs a checker timeout as upstream_failed with the model, leaves the set untouched and counts the check', async () => {
+    const questions = questionsFor(PLAN);
+    const before = await publish(TODAY, questions);
+    await fillLaterDates();
+    respond = (init) =>
+      new Promise<Response>((_, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      });
+
+    await runSharedGeneration(withCheck(), NOW, { gate: 'single_review', checkTimeoutMs: 20 });
+
+    expect(lines('shared_set_annotation')).toEqual([
+      expect.objectContaining({ outcome: 'upstream_failed', failure: 'timeout', failed_model: 'claude-opus-5-5', check: 1, input_tokens: null }),
+    ]);
+    expect(await storedSet(TODAY)).toEqual(before);
+    expect(JSON.parse((await env.DAILY_SETS_KV.get(attemptsKey(TODAY))) as string)).toMatchObject({ checks: 1 });
+  });
+
+  it('writes nothing when the set changed while the checkers were working', async () => {
+    const questions = questionsFor(PLAN);
+    await publish(TODAY, questions);
+    let release: (r: Response) => void = () => {};
+    respond = () => new Promise<Response>((resolve) => (release = resolve));
+
+    const run = runSharedGeneration(withCheck(), NOW, { gate: 'single_review' });
+    while (fetchCalls.length === 0) await new Promise((r) => setTimeout(r, 1));
+    const replaced = await publish(TODAY, questionsFor(PLAN, 'b'));
+    release(anthropicBody(reviewOf(questions, { [(questions[0] as SharedQuestion).id]: { acceptableAlternatives: ['x'] } })));
+    await run;
+
+    expect(await storedSet(TODAY)).toEqual(replaced);
+    expect(lines('shared_set_annotation')[0]).toMatchObject({ outcome: 'set_changed' });
+  });
+
+  it(`stores the set for ${SET_TTL_SECONDS / 86400} days again and the review for ${REVIEW_TTL_SECONDS / 86400}`, async () => {
+    const questions = questionsFor(PLAN);
+    const q0 = questions[0] as SharedQuestion;
+    await publish(TODAY, questions);
+    respondByModel({ 'claude-opus-5-5': reviewOf(questions, { [q0.id]: { incorrectRuleFields: ['hint'] } }) });
+    const puts: { key: string; options?: KVNamespacePutOptions }[] = [];
+    const kv = {
+      ...env.DAILY_SETS_KV,
+      get: env.DAILY_SETS_KV.get.bind(env.DAILY_SETS_KV),
+      put: (key: string, value: string, options?: KVNamespacePutOptions) => {
+        puts.push({ key, options });
+        return env.DAILY_SETS_KV.put(key, value, options);
+      },
+    } as unknown as KVNamespace;
+
+    await runSharedGeneration(withCheck({ DAILY_SETS_KV: kv }), NOW, { gate: 'single_review' });
+
+    expect(puts.map((p) => [p.key, p.options?.expirationTtl])).toEqual([
+      [attemptsKey(TODAY), ATTEMPTS_TTL_SECONDS],
+      [setKey(TODAY), SET_TTL_SECONDS],
+      [reviewKey(TODAY), REVIEW_TTL_SECONDS],
+    ]);
+    const review = JSON.parse((await env.DAILY_SETS_KV.get(reviewKey(TODAY))) as string) as ReviewRecord;
+    expect(review).toEqual({
+      date: TODAY,
+      checkedAt: NOW.toISOString(),
+      gate: 'single_review',
+      models: ['claude-opus-5-5'],
+      findings: [{ questionId: q0.id, code: 'wrong_rule', model: 'claude-opus-5-5', answers: ['hint'] }],
+    });
+  });
+
+  it('never logs a question, an answer or a finding\'s text, and the line has only its fixed fields', async () => {
+    const questions = questionsFor(PLAN);
+    const q0 = questions[0] as SharedQuestion;
+    await publish(TODAY, questions);
+    respondByModel({ 'claude-opus-5-5': reviewOf(questions, { [q0.id]: { acceptableAlternatives: [`${CONTENT_SECRET} alt`], verdict: 'pass_with_alternatives' } }) });
+
+    await runSharedGeneration(withCheck(), NOW, { gate: 'single_review' });
+
+    expect(logged.some((l) => l.includes(CONTENT_SECRET))).toBe(false);
+    expect(logged.some((l) => l.includes('alt'))).toBe(false);
+    const [line] = lines('shared_set_annotation');
+    expect(Object.keys(line as object).sort()).toEqual(
+      ['event', 'date', 'check', 'outcome', 'gate', 'models', 'failure', 'failed_model', 'input_tokens', 'output_tokens', 'duration_ms', 'check_version', 'added', 'moved', 'findings'].sort(),
+    );
+    expect(line).toMatchObject({ input_tokens: 1500, output_tokens: 1400 });
+  });
+
+  it('is "true" or "false" in wrangler.jsonc: either is a valid live setting', () => {
+    const match = wranglerSource.match(/"SHARED_SET_CHECK_ENABLED"\s*:\s*"([^"]*)"/g) ?? [];
+    expect(match).toHaveLength(1);
+    expect(['"true"', '"false"']).toContain((match[0] as string).split(':')[1]?.trim());
+  });
+
+  it('never touches the quota', async () => {
+    const questions = questionsFor(PLAN);
+    await publish(TODAY, questions);
+    respondByModel({ 'claude-opus-5-5': reviewOf(questions) });
+    const quota = counting(env.QUOTA_KV);
+
+    await runSharedGeneration(withCheck({ QUOTA_KV: quota.kv }), NOW, { gate: 'single_review' });
+
+    expect(quota.counts).toEqual({ get: 0, put: 0, list: 0, delete: 0 });
   });
 });

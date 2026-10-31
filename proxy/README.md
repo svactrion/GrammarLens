@@ -173,20 +173,36 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   handled by `scheduled` in `src/index.ts` → `runSharedGeneration`
   (`src/shared_generation.ts`).
 - **What a run does:** checks UTC today … UTC today + 3, nearest first, and
-  makes **at most one** Anthropic call, for the first date with no set, no
-  attempt in progress and attempts left. A run where every date already has a
-  set only reads KV (4 reads) and makes no outbound request.
-- **Cost bounds:** at most one generation per run; at most 3 attempts per date
-  (`attempts:{date}`), counted before the call. No quota is reserved: no device
-  is involved.
-- **Write-once:** `set:{date}` is written only if still absent right before the
-  write, and never overwritten. An attempt holds its date for 3 minutes (a
-  lease in its attempt record), so a run that overlaps one waiting on Anthropic
-  skips that date. KV has no compare-and-swap: two runs that both read the date
-  as free within the same few milliseconds could still both generate.
+  does **at most one thing**: for the first date with a published set that
+  has no `checkedAt`, checks left and no attempt in progress, the annotation
+  step (P14, below); otherwise, for the first date with no set, no attempt in
+  progress and attempts left, one generation. A run where every date already
+  has a checked set only reads KV (4 reads) and makes no outbound request.
+- **Cost bounds:** at most one generation, or one annotation (one call per
+  checker of the gate), per run; at most 3 generation attempts and 2
+  annotation attempts per date (`attempts:{date}`), counted before the call.
+  No quota is reserved: no device is involved.
+- **Two writes, never a third:** the generation writes `set:{date}` only if
+  still absent right before the write and never replaces a set. The
+  annotation step (P14, built 2026-10-31, deployed after 1.3.0 is live)
+  writes the same set once more, with `acceptedAnswers` added, acceptable
+  predicted wrong answers moved into them, and `checkedAt`, `checkVersion`,
+  `checkGate`, `checkModels` stamped; it re-reads the set right before the
+  write and writes only if it is still the set that was checked and the change
+  is an additive patch (`isAdditivePatch`). A set with `checkedAt` is never
+  written again. An attempt holds its date for its timeout plus 30 s (a lease
+  in the attempt record: 3 minutes for a generation, the checkers' timeouts
+  for an annotation), so a run that overlaps one waiting on Anthropic skips
+  that date. KV has no compare-and-swap: two runs that both read the date as
+  free within the same few milliseconds could still both generate.
 - **Storage:** KV namespace `DAILY_SETS_KV`. `set:{date}` →
-  `{date, promptVersion, generatedAt, attempt, questions}`, kept 35 days;
-  `attempts:{date}` → `{count, leaseUntil}`, kept 7 days.
+  `{date, promptVersion, generatedAt, attempt, questions}` plus the check
+  stamps once annotated, kept 35 days (the TTL restarts at the annotation);
+  `attempts:{date}` → `{count, checks, leaseUntil}`, kept 7 days;
+  `review:{date}` → what the annotation found and did not write (question
+  ids, finding codes, the proposed answers; never a learner), kept 14 days,
+  read by nobody but the owner (`npx wrangler kv key get --binding
+  DAILY_SETS_KV --remote "review:2026-11-05"`).
 - **Quality gate:** `validateSharedSet` (`src/shared_daily_test.ts`). A rejected
   set is not written; the next hourly run retries within the cap. Among its
   rules: an `error_correction` answer may change only one contiguous span of
@@ -196,14 +212,20 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   `fill_in_blank` question needs exactly one blank, a run of two or more
   underscores in `context` or `instruction` (`fill_in_blank_missing_blank`,
   `fill_in_blank_multiple_blanks`, 2026-09-29; the legacy route does not apply
-  this one).
-- **Prompt versions:** 2 (its own system prompt with correctness rules,
-  `docs/1.1.0-shared-daily-test-quality.md` §1.2) is what the cron sends and
-  stores as `promptVersion`, since 2026-09-29 (path A, report §16), without a
-  check call. 1 (the legacy Daily Test system prompt plus the day's plan) is
-  what every set published before that was generated with. Each version is
-  pinned by a request fingerprint test, and the cron's own request by another
-  (`test/shared_generation.test.ts`).
+  this one); a key must be plain under the keyboard fold
+  (`correct_answer_not_plain`, 2026-10-31, D3: no published key has ever
+  failed it).
+- **Prompt versions:** 3 (version 2 made language-neutral, with an explicit
+  time frame asked for where speech is reported; 1.4.0 D3, 2026-10-31,
+  `docs/1.4.0-server-batch0-report.md` §2.1) is what the cron builds and
+  stores as `promptVersion` once deployed, after the v2/v3 measurement. 2 (its
+  own system prompt with correctness rules,
+  `docs/1.1.0-shared-daily-test-quality.md` §1.2) is what the live cron sends
+  until then (since 2026-09-29, path A, report §16). 1 (the legacy Daily Test
+  system prompt plus the day's plan) is what every set published before that
+  was generated with. Every system prompt lives in `src/prompts.ts`, apart from
+  the request builders. Each version is pinned by a request fingerprint test,
+  and the cron's own request by another (`test/shared_generation.test.ts`).
 - **Generator:** `SHARED_GENERATOR` in `src/shared_daily_test.ts`, one line:
   a model and optionally an `effort` (`{ model: 'claude-sonnet-5-5', effort:
   'low' }` since 2026-09-29, the owner's choice after the comparison).
@@ -216,28 +238,46 @@ The 1.0.0 route `POST /v1/generate-daily-test` sends the same request, and
   slot (`validateSharedCandidates` drops a candidate that breaks a content rule
   and rejects only when a slot has none left). The cron uses the defaults. The
   legacy route's model is its own constant and does not follow these options.
-- **Check call — built, not wired** (P6, 2026-09-27): operation
+- **Check call, as the annotation step** (P14, 2026-10-31;
+  `docs/1.4.0-server-batch0-report.md` §1.3–1.4): operation
   `check_shared_daily_test` (`src/shared_check.ts`, request in `anthropic.ts`):
-  an adversarial review of a generated set with adaptive thinking
-  (`claude-sonnet-5` by default; `claude-sonnet-4-6` and `claude-opus-5-5` are
-  also buildable), whose structured review the proxy turns into publish or
-  reject by a fixed table (`decideQuestion`, `decideCheckedSet`,
-  `selectCandidates` for over-generated sets). Up to 2 alternatives become a
-  question's `acceptedAnswers`. Filed as `daily_test` cost. `CHECK_VERSION` 1,
-  pinned by a request fingerprint. Nothing calls it yet: the two-phase cron is
-  P7, after 1.1.0 (path A, 2026-09-29).
+  an adversarial review of a published set with adaptive thinking, whose
+  structured review the proxy turns into an **add-only** change by a fixed
+  table (`annotateQuestion`, `annotateSet`): agreed alternatives become
+  `acceptedAnswers` (at most 2), an agreed acceptable predicted wrong answer
+  moves into them when at least one wrong answer remains, and everything a
+  checker doubts (the original sentence, the key, a rule, its verdict) or that
+  the rules refuse (an alternative that is the original, still a wrong answer,
+  not plain under the fold, or proposed by one checker only) goes to
+  `review:{date}`. Two gates behind one constant (`ANNOTATION_GATE`):
+  `agreement` (`claude-opus-5-5` and `claude-sonnet-5-5` must both propose an
+  answer) and `single_review` (`claude-opus-5-5` alone, the owner's weekly look
+  as the second reviewer); the choice follows the measurement. Filed as
+  `daily_test` cost. `CHECK_VERSION` 2 (the prompt made language-neutral),
+  pinned by a request fingerprint. The publish-or-reject table of P6
+  (`decideQuestion`, `decideCheckedSet`, `selectCandidates`) stays for the
+  measurement harness.
 - **Timeout:** 150 s on the Anthropic call (`GENERATION_TIMEOUT_MS`, 90 s
   before 2026-09-29; a thinking model's 15,072-token budget takes ≈ 155 s,
   report §15.2), logged as `failure: "timeout"`.
-- **Kill switch:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it on;
-  anything else and the run touches neither KV nor Anthropic, and logs only
-  `{"event":"shared_set_cron","enabled":false}`. The tests set it themselves
-  (`vitest.config.ts` for the Worker routes, explicitly in the direct calls),
-  so `"false"` in `wrangler.jsonc` turns no test red; a test only checks that
-  the value there is `"true"` or `"false"`.
+- **Kill switches:** var `SHARED_DAILY_TEST_ENABLED`. Only `"true"` turns it
+  on; anything else and the run touches neither KV nor Anthropic, and logs only
+  `{"event":"shared_set_cron","enabled":false}`. Var `SHARED_SET_CHECK_ENABLED`
+  (P14): only `"true"` turns the annotation step on; anything else and the run
+  generates exactly as before P14 and never calls a checker. The tests set
+  both themselves (`vitest.config.ts` for the Worker routes, explicitly in the
+  direct calls), so `"false"` in `wrangler.jsonc` turns no test red; a test
+  only checks that each value there is `"true"` or `"false"`.
 
-Each paid attempt writes one line (besides the usual `anthropic_usage`, and
-`anthropic_failure` when it failed):
+Each paid generation attempt writes one line (besides the usual
+`anthropic_usage`, and `anthropic_failure` when it failed); each annotation
+attempt writes a `shared_set_annotation` line of the same kind (date, check
+number, outcome, gate, models, failure and the model it came from, summed
+tokens and duration, `check_version`, and the counts `added`, `moved`,
+`findings`; never a text). Scoring writes a `score_feedback` line with counts
+only (`items`, `structured_dropped`, `verdict_reconciled`; 1.4.0 D11: the
+`summary` and per-blank `blanks` fields are checked against the request and
+repaired before the response goes out, `src/score_feedback.ts`).
 
 ```json
 {"event":"shared_set_generation","date":"2026-10-08","attempt":1,"outcome":"published","reason":null,"failure":null,"stop_reason":"end_turn","input_tokens":1500,"output_tokens":1400,"duration_ms":11400,"prompt_version":2,"model":"claude-sonnet-5-5","effort":"low"}

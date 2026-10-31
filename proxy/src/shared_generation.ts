@@ -1,8 +1,20 @@
 import { callAnthropic, type CallMeta } from './anthropic';
 import type { UpstreamFailure } from './error_log';
 import {
+  ANNOTATION_CHECKERS,
+  ANNOTATION_GATE,
+  CHECK_VERSION,
+  annotateSet,
+  isAdditivePatch,
+  sharedCheckRequest,
+  type AnnotationFinding,
+  type AnnotationGate,
+  type CheckerModel,
+} from './shared_check';
+import {
   dailyPlan,
   dateOfDayNumber,
+  reviewKey,
   setKey,
   sharedDailyTestRequest,
   utcDayNumber,
@@ -17,9 +29,12 @@ import { durationField } from './usage_log';
 
 /**
  * The hourly scheduled run that fills in the shared Daily Test sets
- * (docs/1.1.0-shared-daily-test.md §3, §4). It never reserves quota: no device
- * is involved, and the cost is bounded here instead (one Anthropic call per run
- * at most, three attempts per date at most).
+ * (docs/1.1.0-shared-daily-test.md §3, §4) and, since P14
+ * (docs/1.4.0-server-batch0-report.md §1.3), annotates a published set once
+ * with the accepted answers a check finds. It never reserves quota: no device
+ * is involved, and the cost is bounded here instead: one generation, or one
+ * annotation (one call per checker of the gate), per run; three generations
+ * and two annotations per date at most.
  */
 
 /** Dates UTC today through UTC today + 3 are kept filled. A set for date D can
@@ -28,8 +43,13 @@ import { durationField } from './usage_log';
  * it: the owner's optional review window, and room for retries. */
 export const GENERATION_AHEAD_DAYS = 3;
 
-/** Paid attempts per date, the cost ceiling for a date that keeps failing. */
+/** Paid generation attempts per date, the cost ceiling for a date that keeps failing. */
 export const MAX_ATTEMPTS_PER_DATE = 3;
+
+/** Paid annotation attempts per date (a check that fails upstream or comes
+ * back unreadable is retried on a later run); after them the set stays as
+ * published, without accepted answers, as before P14. */
+export const MAX_CHECKS_PER_DATE = 2;
 
 /**
  * How long one generation may take before it is abandoned
@@ -43,12 +63,24 @@ export const MAX_ATTEMPTS_PER_DATE = 3;
  */
 export const GENERATION_TIMEOUT_MS = 150_000;
 
+/** The same reasoning for a check: E's checks took 14–91 s with budgets of
+ * 14,048 tokens (§14.1); the checker that thinks to its budget needs this. */
+export const CHECK_TIMEOUT_MS = 150_000;
+
 /** An attempt holds its date this long, so an overlapping run skips it
  * instead of paying for a second generation: the timeout plus margin. */
 export const ATTEMPT_LEASE_MS = GENERATION_TIMEOUT_MS + 30_000;
 
+/** An annotation holds its date for every checker's timeout plus margin. */
+export function checkLeaseMs(gate: AnnotationGate): number {
+  return ANNOTATION_CHECKERS[gate].length * CHECK_TIMEOUT_MS + 30_000;
+}
+
 export const SET_TTL_SECONDS = 35 * 24 * 60 * 60;
 export const ATTEMPTS_TTL_SECONDS = 7 * 24 * 60 * 60;
+/** `review:{date}` outlives the date's serving window by well over a week:
+ * the owner's weekly look has two chances at it. */
+export const REVIEW_TTL_SECONDS = 14 * 24 * 60 * 60;
 
 /** How many earlier dates' answers go into the "do not reuse" list. */
 const AVOID_LOOKBACK_DAYS = 7;
@@ -56,10 +88,13 @@ const AVOID_LOOKBACK_DAYS = 7;
 export const attemptsKey = (date: string) => `attempts:${date}`;
 // Defined beside the read route's other dependencies, which must not pull in
 // the Anthropic client; re-exported here for the generation side.
-export { setKey, type PublishedSet } from './shared_daily_test';
+export { reviewKey, setKey, type PublishedSet } from './shared_daily_test';
 
 interface AttemptRecord {
+  /** Paid generation attempts. */
   count: number;
+  /** Paid annotation attempts (P14); absent in records written before it. */
+  checks: number;
   /** Epoch ms until which the latest attempt still owns the date. */
   leaseUntil: number;
 }
@@ -70,16 +105,36 @@ export type GenerationOutcome =
   | 'upstream_failed' // no usable answer from Anthropic (incl. timeout); nothing written
   | 'already_published'; // another run published the date meanwhile; this result was dropped
 
+export type AnnotationOutcome =
+  | 'annotated' // the patched set written, with checkedAt
+  | 'unreadable' // a checker's output could not be used; the set is untouched and the check retried later
+  | 'upstream_failed' // a checker call failed (incl. timeout); the set is untouched and the check retried later
+  | 'set_changed' // the set in KV is no longer the one that was checked; nothing written
+  | 'patch_rejected'; // the annotated questions were not an additive patch (a bug guard); nothing written
+
 function readAttempts(raw: string | null): AttemptRecord {
-  if (raw === null) return { count: 0, leaseUntil: 0 };
+  if (raw === null) return { count: 0, checks: 0, leaseUntil: 0 };
   try {
     const parsed = JSON.parse(raw) as Partial<AttemptRecord>;
     const count = typeof parsed.count === 'number' && parsed.count >= 0 ? parsed.count : 0;
+    const checks = typeof parsed.checks === 'number' && parsed.checks >= 0 ? parsed.checks : 0;
     const leaseUntil = typeof parsed.leaseUntil === 'number' ? parsed.leaseUntil : 0;
-    return { count, leaseUntil };
+    return { count, checks, leaseUntil };
   } catch {
     // Unreadable: treat as used up rather than risk paying again.
-    return { count: MAX_ATTEMPTS_PER_DATE, leaseUntil: 0 };
+    return { count: MAX_ATTEMPTS_PER_DATE, checks: MAX_CHECKS_PER_DATE, leaseUntil: 0 };
+  }
+}
+
+/** The stored set, or null when the value is not one. */
+function readSet(raw: string | null): PublishedSet | null {
+  if (raw === null) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<PublishedSet>;
+    if (typeof parsed.date !== 'string' || !Array.isArray(parsed.questions)) return null;
+    return parsed as PublishedSet;
+  } catch {
+    return null;
   }
 }
 
@@ -142,29 +197,88 @@ function logGeneration(fields: {
   );
 }
 
+/**
+ * PRIVACY CONTRACT — one line per paid annotation attempt: the date, the check
+ * number, the outcome, the gate and its checker models (fixed vocabularies),
+ * an upstream failure category and the model it came from, token counts and
+ * duration summed over the checker calls, the check version, and three
+ * counts: accepted answers added, wrong answers moved, findings recorded.
+ * Never a question, an answer or a finding's text: those are in
+ * `review:{date}` (KV), not in a log line.
+ */
+function logAnnotation(fields: {
+  date: string;
+  check: number;
+  outcome: AnnotationOutcome;
+  gate: AnnotationGate;
+  models: readonly CheckerModel[];
+  failure?: UpstreamFailure;
+  failedModel?: CheckerModel;
+  metas: readonly CallMeta[];
+  added?: number;
+  moved?: number;
+  findings?: number;
+}): void {
+  const sum = (pick: (m: CallMeta) => number | null | undefined) => {
+    const values = fields.metas.map(pick).filter((v): v is number => typeof v === 'number');
+    return values.length === 0 ? null : values.reduce((a, b) => a + b, 0);
+  };
+  console.log(
+    JSON.stringify({
+      event: 'shared_set_annotation',
+      date: fields.date,
+      check: fields.check,
+      outcome: fields.outcome,
+      gate: fields.gate,
+      models: [...fields.models],
+      failure: fields.failure ?? null,
+      failed_model: fields.failedModel ?? null,
+      input_tokens: sum((m) => m.inputTokens),
+      output_tokens: sum((m) => m.outputTokens),
+      duration_ms: durationField(sum((m) => m.durationMs) ?? undefined),
+      check_version: CHECK_VERSION,
+      added: fields.added ?? null,
+      moved: fields.moved ?? null,
+      findings: fields.findings ?? null,
+    }),
+  );
+}
+
 export interface GenerationOptions {
   /** Test seam; production uses [GENERATION_TIMEOUT_MS]. */
   timeoutMs?: number;
+  /** Test seam; production uses [CHECK_TIMEOUT_MS]. */
+  checkTimeoutMs?: number;
   /** Test seam; production uses the defaults (`SHARED_GENERATOR`, the
    * current prompt version). */
   generation?: SharedGenerationOptions;
+  /** Test seam; production uses [ANNOTATION_GATE]. */
+  gate?: AnnotationGate;
 }
 
 /**
  * One scheduled run. Looks at UTC today … UTC today + 3, nearest first, and
- * makes **at most one** Anthropic call: for the first date that has no set, no
- * attempt in progress, and attempts left. Everything else is a KV read, so an
- * idle hour (every date filled) makes no outbound request at all.
+ * does **at most one thing**: for the first date that has a published set
+ * without `checkedAt`, checks left and no attempt in progress, the annotation
+ * (one call per checker of the gate); otherwise, for the first date that has
+ * no set, no attempt in progress and attempts left, one generation.
+ * Everything else is a KV read, so an idle hour (every date filled and
+ * checked) makes no outbound request at all.
  *
- * One call per run rather than one per missing date keeps each run's cost and
- * CPU (Workers Free: 10 ms per invocation) to a single set; after a first
- * deploy the four dates fill in over four hours.
+ * One thing per run rather than one per missing date keeps each run's cost
+ * and CPU (Workers Free: 10 ms per invocation) to a single set; after a first
+ * deploy the four dates fill in over four hours, and each is annotated the
+ * hour after it is published. Generation and annotation never share a run,
+ * so a check always sees a set that is at least an hour old.
  *
- * Publishing is write-once: the set key is read again right before the write,
- * and an existing set is never replaced. KV has no compare-and-swap, so two
- * runs that both read "no set, no attempt" in the same few milliseconds could
- * still both generate; the attempt lease closes the realistic case (a run that
- * starts while another is waiting on Anthropic).
+ * A published set is written by the generation once and by the annotation
+ * once more (P14, owner decision 2 of 2026-10-31): the annotation re-reads
+ * the set right before its write and writes only if it is still the set it
+ * checked and the change is an additive patch (`isAdditivePatch`). The
+ * generation never replaces an existing set. KV has no compare-and-swap, so
+ * two runs that both read "no set, no attempt" in the same few milliseconds
+ * could still both generate; the attempt lease closes the realistic case (a
+ * run that starts while another is waiting on Anthropic).
  */
 export async function runSharedGeneration(
   env: Env,
@@ -177,17 +291,27 @@ export async function runSharedGeneration(
   }
   const kv = env.DAILY_SETS_KV;
   const today = utcDayNumber(now);
+  const checkEnabled = env.SHARED_SET_CHECK_ENABLED === 'true';
 
   for (let offset = 0; offset <= GENERATION_AHEAD_DAYS; offset++) {
     const dayNumber = today + offset;
     const date = dateOfDayNumber(dayNumber);
 
-    if ((await kv.get(setKey(date))) !== null) continue;
+    const stored = readSet(await kv.get(setKey(date)));
+    if (stored !== null) {
+      // Published. Checked, or the step is off: nothing to do for this date.
+      if (!checkEnabled || stored.checkedAt !== undefined) continue;
+      const attempts = readAttempts(await kv.get(attemptsKey(date)));
+      if (attempts.checks >= MAX_CHECKS_PER_DATE) continue;
+      if (attempts.leaseUntil > now.getTime()) continue;
+      await annotate(env, date, stored, attempts, now, options);
+      return;
+    }
     const attempts = readAttempts(await kv.get(attemptsKey(date)));
     if (attempts.count >= MAX_ATTEMPTS_PER_DATE) continue;
     if (attempts.leaseUntil > now.getTime()) continue;
 
-    await generate(env, date, dayNumber, attempts.count + 1, now, options);
+    await generate(env, date, dayNumber, attempts, now, options);
     return;
   }
 }
@@ -196,16 +320,19 @@ async function generate(
   env: Env,
   date: string,
   dayNumber: number,
-  attempt: number,
+  attempts: AttemptRecord,
   now: Date,
   options: GenerationOptions,
 ): Promise<void> {
   const kv = env.DAILY_SETS_KV;
+  const attempt = attempts.count + 1;
   // The attempt is counted before the call, like quota: a run that dies
   // mid-call has still (possibly) been billed.
-  await kv.put(attemptsKey(date), JSON.stringify({ count: attempt, leaseUntil: now.getTime() + ATTEMPT_LEASE_MS }), {
-    expirationTtl: ATTEMPTS_TTL_SECONDS,
-  });
+  await kv.put(
+    attemptsKey(date),
+    JSON.stringify({ count: attempt, checks: attempts.checks, leaseUntil: now.getTime() + ATTEMPT_LEASE_MS }),
+    { expirationTtl: ATTEMPTS_TTL_SECONDS },
+  );
 
   const plan = dailyPlan(date);
   const request = sharedDailyTestRequest(plan, await recentAnswers(kv, dayNumber), options.generation);
@@ -242,4 +369,99 @@ async function generate(
   };
   await kv.put(setKey(date), JSON.stringify(published), { expirationTtl: SET_TTL_SECONDS });
   logGeneration({ date, attempt, outcome: 'published', meta, request });
+}
+
+/** What `review:{date}` holds: what the step found and did not write. */
+export interface ReviewRecord {
+  date: string;
+  checkedAt: string;
+  gate: AnnotationGate;
+  models: CheckerModel[];
+  findings: AnnotationFinding[];
+}
+
+/**
+ * The annotation step for one published set: one call per checker of the
+ * gate, the add-only decision (`annotateSet`), then the patched set written
+ * only if the set in KV is still the one that was checked and the change is
+ * additive. Findings go to `review:{date}`. The 35-day TTL of the set
+ * restarts at this write (the set is at most a day old by then).
+ */
+async function annotate(
+  env: Env,
+  date: string,
+  stored: PublishedSet,
+  attempts: AttemptRecord,
+  now: Date,
+  options: GenerationOptions,
+): Promise<void> {
+  const kv = env.DAILY_SETS_KV;
+  const gate = options.gate ?? ANNOTATION_GATE;
+  const models = ANNOTATION_CHECKERS[gate];
+  const check = attempts.checks + 1;
+  await kv.put(
+    attemptsKey(date),
+    JSON.stringify({ count: attempts.count, checks: check, leaseUntil: now.getTime() + checkLeaseMs(gate) }),
+    { expirationTtl: ATTEMPTS_TTL_SECONDS },
+  );
+
+  const metas: CallMeta[] = [];
+  const outputs: { model: CheckerModel; output: unknown }[] = [];
+  for (const model of models) {
+    const meta: CallMeta = {};
+    metas.push(meta);
+    try {
+      const output = await callAnthropic(
+        env,
+        { op: 'check_shared_daily_test', request: sharedCheckRequest(stored.questions, model) },
+        { signal: AbortSignal.timeout(options.checkTimeoutMs ?? CHECK_TIMEOUT_MS), meta },
+      );
+      outputs.push({ model, output });
+    } catch {
+      logAnnotation({ date, check, outcome: 'upstream_failed', gate, models, failure: meta.failure, failedModel: model, metas });
+      return;
+    }
+  }
+
+  const result = annotateSet(stored.questions, outputs);
+  if (result.outcome === 'unreadable') {
+    logAnnotation({ date, check, outcome: 'unreadable', gate, models, failedModel: result.model, metas });
+    return;
+  }
+
+  const current = readSet(await kv.get(setKey(date)));
+  if (current === null || current.checkedAt !== undefined || JSON.stringify(current.questions) !== JSON.stringify(stored.questions)) {
+    logAnnotation({ date, check, outcome: 'set_changed', gate, models, metas });
+    return;
+  }
+  if (!isAdditivePatch(current.questions, result.questions)) {
+    logAnnotation({ date, check, outcome: 'patch_rejected', gate, models, metas });
+    return;
+  }
+
+  const checkedAt = now.toISOString();
+  const patched: PublishedSet = {
+    ...current,
+    questions: result.questions,
+    checkedAt,
+    checkVersion: CHECK_VERSION,
+    checkGate: gate,
+    checkModels: [...models],
+  };
+  await kv.put(setKey(date), JSON.stringify(patched), { expirationTtl: SET_TTL_SECONDS });
+  if (result.findings.length > 0) {
+    const review: ReviewRecord = { date, checkedAt, gate, models: [...models], findings: result.findings };
+    await kv.put(reviewKey(date), JSON.stringify(review), { expirationTtl: REVIEW_TTL_SECONDS });
+  }
+  logAnnotation({
+    date,
+    check,
+    outcome: 'annotated',
+    gate,
+    models,
+    metas,
+    added: result.added,
+    moved: result.moved,
+    findings: result.findings.length,
+  });
 }
