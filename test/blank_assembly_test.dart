@@ -97,6 +97,29 @@ void main() {
     });
   });
 
+  group('BlankAnswer JSON (error_entries.user_blanks)', () {
+    test('a list round-trips: text, no article, and a box left empty', () {
+      const answers = [
+        BlankAnswer('to quit'),
+        BlankAnswer.noArticle(),
+        BlankAnswer('')
+      ];
+      final encoded = BlankAnswer.encodeList(answers);
+      expect(encoded, '[{"text":"to quit"},{"noArticle":true},{"text":""}]');
+      final decoded = BlankAnswer.decodeList(encoded)!;
+      expect(decoded.map((b) => b.text), ['to quit', '', '']);
+      expect(decoded.map((b) => b.noArticle), [false, true, false]);
+    });
+
+    test('null, empty and malformed text read as no record', () {
+      expect(BlankAnswer.decodeList(null), isNull);
+      expect(BlankAnswer.decodeList(''), isNull);
+      expect(BlankAnswer.decodeList('not json'), isNull);
+      expect(BlankAnswer.decodeList('{"text":"a"}'), isNull);
+      expect(BlankAnswer.decodeList('[1, 2]'), isNull);
+    });
+  });
+
   group('BlankAnswer.isFilled', () {
     test('typed text or no article; an empty box is never no article', () {
       expect(a('a').isFilled, isTrue);

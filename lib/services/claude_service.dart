@@ -11,6 +11,7 @@ import '../models/practice_item.dart';
 import '../models/practice_set.dart';
 import '../models/scoring_result.dart';
 import '../models/topic.dart';
+import '../utils/blanks.dart';
 
 /// What kind of failure a [ClaudeApiException] represents — lets a screen
 /// special-case the ones that need it (quota-exceeded shouldn't say "check
@@ -193,7 +194,11 @@ class ClaudeService {
     final feedback = (json['feedback'] as List).map((e) {
       final map = e as Map<String, dynamic>;
       final userAnswer = answers[map['itemId'] as String] ?? '';
-      return ItemFeedback.fromJson(map, isSkipped: userAnswer.trim().isEmpty);
+      return ItemFeedback.fromJson(
+        map,
+        isSkipped: userAnswer.trim().isEmpty,
+        hasUnfilledBlank: blankPattern.hasMatch(userAnswer),
+      );
     }).toList();
     return ScoringResult(topicId: practiceSet.topicId, feedback: feedback);
   }

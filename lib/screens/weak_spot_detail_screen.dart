@@ -305,6 +305,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                         child: MistakeBreakdown(
                           prompt: mistake.prompt,
                           userAnswer: mistake.userAnswer,
+                          blankAnswers: mistake.userBlanks,
                           correctedAnswer: mistake.correctedAnswer,
                           explanation: mistake.explanation,
                         ),

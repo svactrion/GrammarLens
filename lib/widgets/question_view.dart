@@ -106,7 +106,9 @@ class AnswerDrafts {
     }
   }
 
-  List<BlankAnswer> _answers(String id) => [
+  /// What each box of [id] holds now, in blank order: the typed text, or
+  /// "no article".
+  List<BlankAnswer> blankAnswers(String id) => [
         for (var i = 0; i < boxCount(id); i++)
           noArticleFor(id, i).value
               ? const BlankAnswer.noArticle()
@@ -117,15 +119,18 @@ class AnswerDrafts {
   /// multi-blank question the completed sentence ([assembleBlanks]).
   String answerFor(PracticeItem item) {
     if (boxCount(item.id) == 1) return controllerFor(item.id).text;
-    return assembleBlanks(blankSourceText(item), _answers(item.id));
+    return assembleBlanks(blankSourceText(item), blankAnswers(item.id));
   }
 
-  /// Whether Next may be pressed: some text in a single box; every box
-  /// typed or set to "no article" on a multi-blank question (owner decision
-  /// Q3).
+  /// Whether Next may be pressed: some text in a single box; at least one
+  /// box typed or set to "no article" on a multi-blank question (owner,
+  /// 2026-10-31, 1.4.0 B8; replaces Q3's "every box"). An empty box is an
+  /// answer in itself: it goes to scoring as its `____`, so the scorer and
+  /// the error profile see which blanks the learner did not know. With no
+  /// box filled the question is skipped, as before.
   bool isComplete(String id) => boxCount(id) == 1
       ? controllerFor(id).text.trim().isNotEmpty
-      : _answers(id).every((answer) => answer.isFilled);
+      : blankAnswers(id).any((answer) => answer.isFilled);
 
   /// Empties every box of [id] and turns any "no article" off: a skipped
   /// question keeps nothing (owner, 2026-10-12). Coming back to it shows
@@ -791,37 +796,20 @@ class _QuestionContent extends StatelessWidget {
   static String mainTextOf(PracticeItem item) =>
       hasScene(item) ? item.context! : item.instruction;
 
-  /// [text] with each blank's underscores replaced in look (not in width,
-  /// so lines wrap as before) by an underline in its colour, numbered from
-  /// [first] in reading order; the focused one tinted. VoiceOver reads
-  /// "blank n of N".
-  Widget _withBlanks(String text, TextStyle? style, int first, Key? key) {
-    final colors = blankColors!;
-    final total = blankCount(item.context, item.instruction);
-    final spans = <InlineSpan>[];
-    var last = 0;
-    var index = first;
-    for (final blank in blankPattern.allMatches(text)) {
-      spans.add(TextSpan(text: text.substring(last, blank.start)));
-      final color = colors[index % colors.length];
-      spans.add(TextSpan(
-        text: blank[0],
-        semanticsLabel: 'blank ${index + 1} of $total',
-        style: TextStyle(
-          color: Colors.transparent,
-          decoration: TextDecoration.underline,
-          decorationColor: color,
-          decorationThickness: 3,
-          backgroundColor:
-              index == focusedBlank ? color.withValues(alpha: 0.16) : null,
+  /// [text] with its blanks coloured ([colouredBlanks]), numbered from
+  /// [first] in reading order; the focused one tinted.
+  Widget _withBlanks(String text, TextStyle? style, int first, Key? key) =>
+      Text.rich(
+        colouredBlanks(
+          text,
+          colors: blankColors!,
+          total: blankCount(item.context, item.instruction),
+          first: first,
+          focusedBlank: focusedBlank,
+          style: style,
         ),
-      ));
-      index++;
-      last = blank.end;
-    }
-    spans.add(TextSpan(text: text.substring(last)));
-    return Text.rich(TextSpan(style: style, children: spans), key: key);
-  }
+        key: key,
+      );
 
   static const EdgeInsets _badgePadding =
       EdgeInsets.symmetric(horizontal: 8, vertical: 3);

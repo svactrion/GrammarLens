@@ -22,13 +22,20 @@ class ItemFeedback {
   /// "left blank" varies run to run (e.g. "You left this one blank",
   /// "Nothing was written here"), so it can't be matched reliably. See
   /// ClaudeService.scoreAnswers, which computes it before calling this.
+  ///
+  /// [hasUnfilledBlank] is decided the same way: a partial multi-blank
+  /// answer keeps a `____` for each box left empty (1.4.0 B8, owner
+  /// 2026-10-31), and such an answer is never correct whatever the model
+  /// says, so [isCorrect] is forced false. The model's error type is kept
+  /// as returned; when it gave none, no error entry is saved.
   factory ItemFeedback.fromJson(
     Map<String, dynamic> json, {
     required bool isSkipped,
+    bool hasUnfilledBlank = false,
   }) =>
       ItemFeedback(
         itemId: json['itemId'] as String,
-        isCorrect: json['isCorrect'] as bool,
+        isCorrect: !hasUnfilledBlank && json['isCorrect'] as bool,
         isSkipped: isSkipped,
         errorType: json['errorType'] as String?,
         rule: json['rule'] as String?,

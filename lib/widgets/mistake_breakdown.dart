@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../utils/blank_assembly.dart';
+import '../utils/blanks.dart';
+import 'blank_colors.dart';
 
 /// Shared "question → your answer → correction → why" layout used by both
 /// the Results screen's per-item feedback cards and the Review weak-spot
@@ -10,8 +13,25 @@ import '../theme.dart';
 /// running together as one paragraph. Any part can be omitted (e.g. a
 /// skipped item has no answer to show).
 class MistakeBreakdown extends StatelessWidget {
+  /// A "YOU WROTE" row's text for a box left empty.
+  static const String leftBlankLabel = 'Left blank';
+
+  /// A "YOU WROTE" row's text for a no-article box.
+  static const String noArticleLabel = '—';
+
+  /// The key of blank [index]'s row in "YOU WROTE".
+  static Key blankRowKey(int index) => ValueKey('mistake_blank_row_$index');
+
   final String? prompt;
   final String? userAnswer;
+
+  /// On a multi-blank Practice question, what each answer box held, in
+  /// blank order (1.4.0 B8). With two or more entries "YOU WROTE" shows one
+  /// row per blank instead of [userAnswer] (the assembled sentence, which
+  /// repeats the prompt), and the prompt's blanks take the question card's
+  /// colours so each row's colour points at its blank. Null or a single
+  /// entry: [userAnswer] as it is.
+  final List<BlankAnswer>? blankAnswers;
   final String? correctedAnswer;
   final String? explanation;
 
@@ -19,6 +39,7 @@ class MistakeBreakdown extends StatelessWidget {
     super.key,
     this.prompt,
     this.userAnswer,
+    this.blankAnswers,
     this.correctedAnswer,
     this.explanation,
   });
@@ -45,27 +66,37 @@ class MistakeBreakdown extends StatelessWidget {
     // are recorded there), so `isSkipped` is always false for that caller
     // and its box is unaffected.
     final isSkipped = hasCorrection && !hasAnswer;
+    final blanks = blankAnswers;
+    final perBlank = hasAnswer && blanks != null && blanks.length >= 2;
+    final colors = perBlank ? blankColors(theme.brightness) : null;
+    final promptStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (hasPrompt) ...[
-          Text(
-            prompt!,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
+          colors != null
+              ? Text.rich(colouredBlanks(
+                  prompt!,
+                  colors: colors,
+                  total: blankPattern.allMatches(prompt!).length,
+                  style: promptStyle,
+                ))
+              : Text(prompt!, style: promptStyle),
           const SizedBox(height: 16),
         ],
         if (hasAnswer) ...[
           _LabeledBox(
             label: 'YOU WROTE',
-            text: userAnswer!,
+            text: perBlank ? null : userAnswer!,
             fillColor: colorScheme.surface,
             borderColor: colorScheme.outline,
             labelColor: colorScheme.onSurfaceVariant,
             textColor: colorScheme.onSurface,
+            child:
+                perBlank ? _BlankRows(answers: blanks, colors: colors!) : null,
           ),
           const SizedBox(height: 12),
         ],
@@ -97,9 +128,83 @@ class MistakeBreakdown extends StatelessWidget {
   }
 }
 
+/// One row per blank in "YOU WROTE": a 3 pt bar in the blank's colour, then
+/// the typed text, "—" for a no-article box, or "Left blank" (muted) for a
+/// box left empty. VoiceOver reads "Blank n: …".
+class _BlankRows extends StatelessWidget {
+  final List<BlankAnswer> answers;
+  final List<Color> colors;
+
+  const _BlankRows({required this.answers, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final body = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurface,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < answers.length; i++) ...[
+          if (i > 0) const SizedBox(height: 6),
+          _row(i, body, colorScheme),
+        ],
+      ],
+    );
+  }
+
+  Widget _row(int i, TextStyle? body, ColorScheme colorScheme) {
+    final answer = answers[i];
+    final String text;
+    final TextStyle? style;
+    final String spoken;
+    if (answer.noArticle) {
+      text = MistakeBreakdown.noArticleLabel;
+      style = body;
+      spoken = 'no article';
+    } else if (answer.isFilled) {
+      text = answer.text.trim();
+      style = body;
+      spoken = text;
+    } else {
+      text = MistakeBreakdown.leftBlankLabel;
+      style = body?.copyWith(color: colorScheme.onSurfaceVariant);
+      spoken = 'left blank';
+    }
+    // IntrinsicHeight: the bar stretches to the text's height, one line or
+    // several, inside a column that has no height of its own to give.
+    return Semantics(
+      label: 'Blank ${i + 1}: $spoken',
+      excludeSemantics: true,
+      child: IntrinsicHeight(
+        child: Row(
+          key: MistakeBreakdown.blankRowKey(i),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 3,
+              decoration: BoxDecoration(
+                color: colors[i % colors.length],
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(text, style: style)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _LabeledBox extends StatelessWidget {
   final String label;
-  final String text;
+
+  /// The box's text; null when [child] fills the box instead.
+  final String? text;
+  final Widget? child;
   final Color fillColor;
   final Color borderColor;
   final Color labelColor;
@@ -108,11 +213,12 @@ class _LabeledBox extends StatelessWidget {
   const _LabeledBox({
     required this.label,
     required this.text,
+    this.child,
     required this.fillColor,
     required this.borderColor,
     required this.labelColor,
     required this.textColor,
-  });
+  }) : assert((text == null) != (child == null), 'text or child, not both');
 
   @override
   Widget build(BuildContext context) {
@@ -135,10 +241,13 @@ class _LabeledBox extends StatelessWidget {
                 .copyWith(color: labelColor, letterSpacing: 0.6),
           ),
           const SizedBox(height: 4),
-          Text(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
-          ),
+          if (child != null)
+            child!
+          else
+            Text(
+              text!,
+              style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+            ),
         ],
       ),
     );

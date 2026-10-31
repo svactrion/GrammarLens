@@ -27,9 +27,10 @@ import 'package:grammar_lens/widgets/question_view.dart';
 
 /// Practice's multi-blank answer boxes (question screen plan, §4 and B3):
 /// one box per blank (2–4), linked by colour to the blank's underline, the
-/// "—" no-article button on `articles` only, Next only when every box is
-/// filled, the completed sentence sent to scoring and saved, drafts kept
-/// across Next and Back, and the boxes' focus behaviour.
+/// "—" no-article button on `articles` only, Next once at least one box is
+/// filled (1.4.0 B8), the completed sentence sent to scoring and saved with
+/// the per-box answers, drafts kept across Next and Back, and the boxes'
+/// focus behaviour.
 
 class _ScoringClaude extends ClaudeService {
   final List<Map<String, String>> calls = [];
@@ -399,23 +400,36 @@ void main() {
     });
   });
 
-  group('Next (owner decision Q3)', () {
+  group('Next and Submit (owner, 2026-10-31, 1.4.0 B8; replaces Q3)', () {
     testWidgets(
-        'only when every box is typed or set to "—"; Skip is always there',
-        (tester) async {
+        'enabled once at least one box is typed or set to "—"; disabled '
+        'with none; Skip is always there', (tester) async {
       await _pump(tester, items: const [_articles, _one]);
-      expect(_primaryEnabled(tester), isFalse);
-      await _type(tester, 1, 'a');
-      expect(_primaryEnabled(tester), isFalse, reason: 'two boxes empty');
-      await _type(tester, 2, 'the');
-      expect(_primaryEnabled(tester), isFalse, reason: 'one box empty');
+      expect(_primaryEnabled(tester), isFalse, reason: 'no box filled');
       await _type(tester, 0, '   ');
       expect(_primaryEnabled(tester), isFalse, reason: 'spaces only');
+      await _type(tester, 1, 'a');
+      expect(_primaryEnabled(tester), isTrue, reason: 'one box typed');
+      await _type(tester, 1, '');
+      expect(_primaryEnabled(tester), isFalse, reason: 'cleared again');
       await _tapDash(tester, 0);
-      expect(_primaryEnabled(tester), isTrue);
-      await _type(tester, 2, '');
-      expect(_primaryEnabled(tester), isFalse);
+      expect(_primaryEnabled(tester), isTrue, reason: 'one box no-article');
       expect(tester.widget<TextButton>(_skip).onPressed, isNotNull);
+    });
+
+    testWidgets(
+        'a 4-blank item with 3 boxes filled is submittable and its wire '
+        'format keeps exactly one blank', (tester) async {
+      final pumped = await _pump(tester, items: const [_four]);
+      await _type(tester, 0, 'an');
+      await _type(tester, 1, 'an');
+      await _type(tester, 3, 'a');
+      expect(_primaryEnabled(tester), isTrue);
+      await _submit(tester, _primary);
+
+      final sent = pumped.claude.calls.single['four']!;
+      expect(sent, 'I saw an owl, an eagle, ____ hawk and a swan.');
+      expect(RegExp(r'_{2,}').allMatches(sent), hasLength(1));
     });
   });
 
@@ -463,6 +477,50 @@ void main() {
       await tester.pumpAndSettle();
       expect(pumped.storage.saved.single.userAnswer,
           'We had lunch at a small café near the station.');
+      // And what each box held, in blank order (1.4.0 B8).
+      final blanks = pumped.storage.saved.single.userBlanks!;
+      expect(blanks.map((b) => b.noArticle), [true, false, false]);
+      expect(blanks.map((b) => b.text), ['', ' a ', 'the']);
+    });
+
+    testWidgets(
+        'a partial answer saves the box left empty as empty, not as the '
+        'sentence; a single-box answer saves no per-box record',
+        (tester) async {
+      final pumped = await _pump(tester, items: const [_two, _one]);
+      await _type(tester, 1, 'to quit');
+      await _go(tester, _primary);
+      await tester.enterText(_single, 'swimming');
+      await _submit(tester, _primary);
+
+      pumped.claude.pending!.complete(const ScoringResult(
+        topicId: 'articles',
+        feedback: [
+          ItemFeedback(
+            itemId: 'two',
+            isCorrect: false,
+            isSkipped: false,
+            errorType: 'gerund',
+            correctedAnswer: 'x',
+            explanation: 'x',
+          ),
+          ItemFeedback(
+            itemId: 'one',
+            isCorrect: false,
+            isSkipped: false,
+            errorType: 'gerund',
+            correctedAnswer: 'x',
+            explanation: 'x',
+          ),
+        ],
+      ));
+      await tester.pumpAndSettle();
+      final byId = {for (final e in pumped.storage.saved) e.prompt: e};
+      final two = byId[_two.fullText]!;
+      expect(two.userAnswer,
+          'Tom says: "I can\'t stop ____, but I\'ve promised to quit by May."');
+      expect(two.userBlanks!.map((b) => b.text), ['', 'to quit']);
+      expect(byId[_one.fullText]!.userBlanks, isNull);
     });
 
     testWidgets('a skipped multi-blank question sends an empty answer',

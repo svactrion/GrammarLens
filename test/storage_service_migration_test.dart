@@ -10,6 +10,7 @@ import 'package:grammar_lens/models/error_entry.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/utils/blank_assembly.dart';
 
 /// Proves `StorageService.onUpgrade` carries real rows across a schema
 /// bump instead of the drop-and-recreate it used to do (docs/build-log.md's
@@ -714,6 +715,112 @@ void main() {
       final storage = StorageService(dbName: dbName);
       expect(await storage.claimOneTimeFlag('day0_paywall'), isTrue);
       expect(await flagRows(), hasLength(1));
+    });
+  });
+
+  group('v23 -> v24: error_entries gains user_blanks (1.4.0 B8)', () {
+    const dbName = 'test_migration_v23.db';
+    late String path;
+
+    setUp(() async {
+      path = join(await getDatabasesPath(), dbName);
+      await databaseFactory.deleteDatabase(path);
+    });
+
+    /// A v23-shaped error_entries table (every column up to `source`, no
+    /// `user_blanks`) with one saved mistake.
+    Future<void> seedV23() async {
+      final db = await databaseFactory.openDatabase(path);
+      await db.execute('''
+        CREATE TABLE error_entries (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          topic_id TEXT NOT NULL,
+          error_type TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          prompt TEXT,
+          user_answer TEXT,
+          corrected_answer TEXT,
+          explanation TEXT,
+          rule TEXT,
+          source TEXT NOT NULL DEFAULT 'topic_practice'
+        )
+      ''');
+      await db.insert('error_entries', {
+        'topic_id': 'articles',
+        'error_type': 'article_use',
+        'timestamp': '2026-10-01T10:00:00.000',
+        'prompt': 'We had ____ lunch at ____ small café.',
+        'user_answer': 'We had the lunch at a small café.',
+        'corrected_answer': 'We had lunch at a small café.',
+        'explanation': 'x',
+        'source': 'topic_practice',
+      });
+      await db.setVersion(23);
+      await db.close();
+    }
+
+    Future<List<String>> errorColumns() async {
+      final db = await databaseFactory.openDatabase(path);
+      final info = await db.rawQuery('PRAGMA table_info(error_entries)');
+      await db.close();
+      return info.map((r) => r['name'] as String).toList();
+    }
+
+    test(
+        'the column is added, the old row keeps its sentence and reads as '
+        'having no per-blank record', () async {
+      await seedV23();
+      final storage = StorageService(dbName: dbName);
+      final old =
+          (await storage.getRecentMistakes('articles', 'article_use')).single;
+      expect(old.userAnswer, 'We had the lunch at a small café.');
+      expect(old.userBlanks, isNull);
+      expect(await errorColumns(), contains('user_blanks'));
+    });
+
+    test('a new row with per-blank answers round-trips next to the old one',
+        () async {
+      await seedV23();
+      final storage = StorageService(dbName: dbName);
+      await storage.insertErrors([
+        ErrorEntry(
+          topicId: 'articles',
+          errorType: 'article_use',
+          timestamp: DateTime(2026, 10, 31, 9),
+          prompt: 'We had ____ lunch at ____ small café.',
+          userAnswer: 'We had lunch at ____ small café.',
+          correctedAnswer: 'We had lunch at a small café.',
+          source: ErrorSource.topicPractice,
+          userBlanks: const [BlankAnswer.noArticle(), BlankAnswer('')],
+        ),
+      ]);
+      final rows = await storage.getRecentMistakes('articles', 'article_use');
+      expect(rows, hasLength(2));
+      expect(rows.first.userBlanks!.map((b) => b.noArticle), [true, false]);
+      expect(rows.first.userBlanks!.map((b) => b.isFilled), [true, false]);
+      expect(rows.last.userBlanks, isNull);
+    });
+
+    test('a replayed migration (downgrade, then upgrade) keeps every row',
+        () async {
+      await seedV23();
+      await StorageService(dbName: dbName)
+          .getRecentMistakes('articles', 'article_use');
+
+      final db = await databaseFactory.openDatabase(path);
+      await db.setVersion(23);
+      await db.close();
+
+      final rows = await StorageService(dbName: dbName)
+          .getRecentMistakes('articles', 'article_use');
+      expect(rows, hasLength(1));
+      expect((await errorColumns()).where((c) => c == 'user_blanks'),
+          hasLength(1));
+    });
+
+    test('a fresh install creates the column', () async {
+      await StorageService(dbName: dbName).getRecentMistakes('a', 'b');
+      expect(await errorColumns(), contains('user_blanks'));
     });
   });
 }

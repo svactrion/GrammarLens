@@ -117,11 +117,12 @@ void main() {
     await old.close();
     expect((await storage.getClimbProgress(2026, 9)).steps, 0);
     final db = await inspect();
-    expect(await db.getVersion(), 23);
+    expect(await db.getVersion(), 24);
     for (final table in rows.keys) {
-      // v19 removed age and occupation from user_profile and v21 added the
-      // daily_test_sets source (every old set was generated); every other
-      // column of every table must come through untouched.
+      // v19 removed age and occupation from user_profile, v21 added the
+      // daily_test_sets source (every old set was generated) and v24 added
+      // the nullable error_entries user_blanks (null for every old row);
+      // every other column of every table must come through untouched.
       final expected = switch (table) {
         'user_profile' => [
             for (final row in before[table]!)
@@ -132,6 +133,9 @@ void main() {
         'daily_test_sets' => [
             for (final row in before[table]!) {...row, 'source': 'generated'}
           ],
+        'error_entries' => [
+            for (final row in before[table]!) {...row, 'user_blanks': null}
+          ],
         _ => before[table],
       };
       expect(await db.query(table), expected, reason: table);
@@ -139,7 +143,9 @@ void main() {
     final saved = (await storage.getDailyTestSetForToday())!;
     await saveCompletion(completion(saved, {'q0': 'wrong'}));
     expect(await db.query('climb_daily_entries'), isEmpty);
-    expect(await db.query('error_entries'), before['error_entries']);
+    expect(await db.query('error_entries'), [
+      for (final row in before['error_entries']!) {...row, 'user_blanks': null}
+    ]);
     expect(await storage.getOrCreateDeviceId(), 'unchanged-device-identity');
     await db.close();
     inspection = null;
@@ -180,7 +186,7 @@ void main() {
     expect(row['id'], 9);
     expect(row['source'], 'topic_practice');
     expect((await storage.getWeakSpots()).single.frequency, 1);
-    expect(await db.getVersion(), 23);
+    expect(await db.getVersion(), 24);
   });
 
   test('concurrent and stale retries persist one completion, gain and mistake',

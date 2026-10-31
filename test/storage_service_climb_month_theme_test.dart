@@ -171,7 +171,7 @@ void main() {
       for (final column in ['theme_id', 'assigned_at']) {
         expect(info.singleWhere((r) => r['name'] == column)['notnull'], 1);
       }
-      expect(await inspection!.getVersion(), 23);
+      expect(await inspection!.getVersion(), 24);
     });
 
     test('a replayed migration (downgrade, then upgrade) keeps stored themes',

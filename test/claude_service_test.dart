@@ -277,6 +277,97 @@ void main() {
       expect(result.feedback.single.isCorrect, isTrue);
       expect(result.topicId, 'articles');
     });
+
+    test(
+        'an answer that still holds a blank is never correct, whatever the '
+        'model says; its error type is kept as returned (1.4.0 B8)', () async {
+      const practiceSet = PracticeSet(
+        topicId: 'articles',
+        items: [
+          PracticeItem(
+            id: 'q1',
+            type: PracticeItemType.fillInBlank,
+            instruction: 'I saw ____ owl and ____ swan.',
+          ),
+          PracticeItem(
+            id: 'q2',
+            type: PracticeItemType.fillInBlank,
+            instruction: 'I saw ____ owl and ____ swan.',
+          ),
+        ],
+      );
+      final client = MockClient((request) async => http.Response(
+            jsonEncode({
+              'feedback': [
+                {
+                  'itemId': 'q1',
+                  'isCorrect': true,
+                  'correctedAnswer': 'I saw an owl and a swan.',
+                  'explanation': 'x',
+                },
+                {
+                  'itemId': 'q2',
+                  'isCorrect': true,
+                  'errorType': 'article_use',
+                  'correctedAnswer': 'I saw an owl and a swan.',
+                  'explanation': 'x',
+                },
+              ],
+            }),
+            200,
+          ));
+
+      final result = await serviceWith(client).scoreAnswers(
+        deviceId: 'device-1',
+        practiceSet: practiceSet,
+        answers: {
+          'q1': 'I saw an owl and ____ swan.',
+          'q2': 'I saw ____ owl and a swan.',
+        },
+      );
+
+      final q1 = result.feedback[0];
+      expect(q1.isCorrect, isFalse);
+      expect(q1.isSkipped, isFalse);
+      expect(q1.errorType, isNull);
+      final q2 = result.feedback[1];
+      expect(q2.isCorrect, isFalse);
+      expect(q2.errorType, 'article_use');
+      expect(result.correctCount, 0);
+    });
+
+    test('an answer without a blank keeps the model\'s verdict', () async {
+      const practiceSet = PracticeSet(
+        topicId: 'articles',
+        items: [
+          PracticeItem(
+            id: 'q1',
+            type: PracticeItemType.fillInBlank,
+            instruction: 'I saw ____ owl and ____ swan.',
+          ),
+        ],
+      );
+      final client = MockClient((request) async => http.Response(
+            jsonEncode({
+              'feedback': [
+                {
+                  'itemId': 'q1',
+                  'isCorrect': true,
+                  'correctedAnswer': 'I saw an owl and a swan.',
+                  'explanation': 'x',
+                },
+              ],
+            }),
+            200,
+          ));
+
+      final result = await serviceWith(client).scoreAnswers(
+        deviceId: 'device-1',
+        practiceSet: practiceSet,
+        answers: {'q1': 'I saw an owl and a swan.'},
+      );
+      expect(result.feedback.single.isCorrect, isTrue);
+    });
   });
 
   group('error mapping', () {

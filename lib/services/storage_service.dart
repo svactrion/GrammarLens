@@ -29,7 +29,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 23;
+  static const _dbVersion = 24;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -87,7 +87,8 @@ class StorageService {
       corrected_answer TEXT,
       explanation TEXT,
       rule TEXT,
-      source TEXT NOT NULL DEFAULT 'topic_practice'
+      source TEXT NOT NULL DEFAULT 'topic_practice',
+      user_blanks TEXT
     )
   ''';
 
@@ -532,6 +533,19 @@ class StorageService {
         // reads as (see [resolveClimbMonthTheme]).
         if (oldVersion < 23) {
           await db.execute(_createClimbMonthThemesTable);
+        }
+
+        // v23 -> v24: error_entries gained a nullable `user_blanks` column
+        // (1.4.0 B8): the per-box answers of a multi-blank Practice
+        // question as JSON. Every earlier row stays null and renders as
+        // the assembled sentence it already holds. The CREATE first is for
+        // a database without the table (the migration tests' partial
+        // seeds; a real install has had it since v1): created in its
+        // current shape, so the ALTER has a table to add to or finds the
+        // column already there.
+        if (oldVersion < 24) {
+          await db.execute(_createTable);
+          await _addColumnIfMissing(db, 'error_entries', 'user_blanks', 'TEXT');
         }
       },
     );

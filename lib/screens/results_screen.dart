@@ -9,6 +9,7 @@ import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../theme.dart';
 import '../utils/app_messenger.dart';
+import '../utils/blank_assembly.dart';
 import '../utils/page_title.dart';
 import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
@@ -25,6 +26,10 @@ class ResultsScreen extends StatefulWidget {
   final ScoringResult result;
   final PracticeSet practiceSet;
   final Map<String, String> answers;
+
+  /// Per-box answers of the multi-blank questions, by item id (1.4.0 B8);
+  /// a question without an entry shows its [answers] text.
+  final Map<String, List<BlankAnswer>> blankAnswers;
   final StorageService storageService;
   final AnalyticsService analyticsService;
   final SubscriptionService subscriptionService;
@@ -35,6 +40,7 @@ class ResultsScreen extends StatefulWidget {
     required this.result,
     required this.practiceSet,
     required this.answers,
+    this.blankAnswers = const {},
     required this.storageService,
     required this.analyticsService,
     required this.subscriptionService,
@@ -122,6 +128,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
               explanation: f.explanation,
               rule: f.rule,
               source: ErrorSource.topicPractice,
+              userBlanks: widget.blankAnswers[f.itemId],
             ))
         .toList();
     if (entries.isEmpty) return;
@@ -222,6 +229,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   MistakeBreakdown(
                     prompt: itemsById[item.itemId]?.fullText,
                     userAnswer: widget.answers[item.itemId],
+                    blankAnswers: widget.blankAnswers[item.itemId],
                     correctedAnswer: item.correctedAnswer,
                     explanation: item.explanation,
                   ),

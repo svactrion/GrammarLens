@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../models/practice_item.dart';
 import 'blanks.dart';
 
@@ -14,6 +16,40 @@ class BlankAnswer {
         noArticle = true;
 
   bool get isFilled => noArticle || text.trim().isNotEmpty;
+
+  /// `{"noArticle": true}` for a no-article box, else `{"text": …}` (an
+  /// empty text is a box left blank). The shape `error_entries.user_blanks`
+  /// stores, one object per blank in blank order ([encodeList]).
+  Map<String, Object> toJson() =>
+      noArticle ? const {'noArticle': true} : {'text': text};
+
+  factory BlankAnswer.fromJson(Map<String, dynamic> json) =>
+      json['noArticle'] == true
+          ? const BlankAnswer.noArticle()
+          : BlankAnswer(json['text'] as String? ?? '');
+
+  /// The JSON text of [answers], for storage.
+  static String encodeList(List<BlankAnswer> answers) =>
+      jsonEncode([for (final answer in answers) answer.toJson()]);
+
+  /// The inverse of [encodeList]. Null, an empty string and anything that
+  /// is not a JSON list read as null (no per-blank record), so an old or
+  /// odd row never fails to load.
+  static List<BlankAnswer>? decodeList(String? encoded) {
+    if (encoded == null || encoded.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(encoded);
+      if (decoded is! List) return null;
+      return [
+        for (final entry in decoded)
+          BlankAnswer.fromJson(Map<String, dynamic>.from(entry as Map)),
+      ];
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
+  }
 }
 
 /// The text of [item] that holds its blanks, in reading order: the

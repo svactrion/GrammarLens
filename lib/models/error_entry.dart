@@ -1,3 +1,5 @@
+import '../utils/blank_assembly.dart';
+
 /// Where a logged mistake came from — Topic Practice (LLM-scored, richer
 /// feedback) or Daily Test (deterministic, no LLM call). Both write into
 /// the same `error_entries` table/weak-spot aggregation (2026-09-05
@@ -36,6 +38,13 @@ class ErrorEntry {
   final String? rule;
   final ErrorSource source;
 
+  /// On a multi-blank Practice question, what each answer box held, in
+  /// blank order (1.4.0 B8): [userAnswer] is the assembled sentence and
+  /// cannot be split back into boxes reliably. Null for a single-box answer
+  /// and for every row written before the column existed; those render as
+  /// the assembled sentence.
+  final List<BlankAnswer>? userBlanks;
+
   const ErrorEntry({
     this.id,
     required this.topicId,
@@ -47,6 +56,7 @@ class ErrorEntry {
     this.explanation,
     this.rule,
     required this.source,
+    this.userBlanks,
   });
 
   Map<String, Object?> toMap() => {
@@ -60,6 +70,8 @@ class ErrorEntry {
         'explanation': explanation,
         'rule': rule,
         'source': source.toJson(),
+        'user_blanks':
+            userBlanks == null ? null : BlankAnswer.encodeList(userBlanks!),
       };
 
   factory ErrorEntry.fromMap(Map<String, Object?> map) => ErrorEntry(
@@ -73,6 +85,7 @@ class ErrorEntry {
         explanation: map['explanation'] as String?,
         rule: map['rule'] as String?,
         source: ErrorSource.fromJson(map['source'] as String?),
+        userBlanks: BlankAnswer.decodeList(map['user_blanks'] as String?),
       );
 }
 

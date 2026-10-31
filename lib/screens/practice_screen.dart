@@ -7,6 +7,7 @@ import '../services/claude_service.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_messenger.dart';
+import '../utils/blank_assembly.dart';
 import '../utils/loading_view.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/destructive_dialog_actions.dart';
@@ -74,7 +75,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   /// Some text in a single answer (the same empty/whitespace predicate the
   /// scoring path uses to detect a skipped item); on a multi-blank question
-  /// every box typed or set to "no article" (owner decision Q3).
+  /// at least one box typed or set to "no article" (owner, 2026-10-31,
+  /// 1.4.0 B8; replaces Q3). The boxes left empty go to scoring as their
+  /// `____`.
   bool get _currentHasAnswer =>
       _drafts.isComplete(widget.practiceSet.items[_currentIndex].id);
 
@@ -149,6 +152,17 @@ class _PracticeScreenState extends State<PracticeScreen> {
     }
   }
 
+  /// What each box held on every answered multi-blank question, taken at
+  /// Submit for the Results screen and the error profile (1.4.0 B8). A
+  /// single-box question and a skipped one (its boxes are cleared) have no
+  /// entry, so [_answers] and this map name the same questions.
+  Map<String, List<BlankAnswer>> _blankAnswers() => {
+        for (final item in widget.practiceSet.items)
+          if (_drafts.boxCount(item.id) > 1 &&
+              (_answers[item.id] ?? '').trim().isNotEmpty)
+            item.id: _drafts.blankAnswers(item.id),
+      };
+
   Future<void> _submit() async {
     _drafts.unfocus();
     setState(() => _submitting = true);
@@ -161,6 +175,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         return;
       }
       final deviceId = await widget.storageService.getOrCreateDeviceId();
+      final blankAnswers = _blankAnswers();
       final result = await widget.claudeService.scoreAnswers(
         deviceId: deviceId,
         practiceSet: widget.practiceSet,
@@ -174,6 +189,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
             result: result,
             practiceSet: widget.practiceSet,
             answers: Map.of(_answers),
+            blankAnswers: blankAnswers,
             storageService: widget.storageService,
             analyticsService: widget.analyticsService,
             subscriptionService: widget.subscriptionService,
