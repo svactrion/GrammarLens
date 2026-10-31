@@ -12807,3 +12807,67 @@ change, no deploy.
 - **[Not checked]** On the owner's iPhone: a long practice feedback on
   Results and in Review, both themes; the rule and the emphasis at the
   Large text size.
+
+## 2026-10-31 (1.4.0 B9 device check passed; B10: word-level difference and the quote chip; awaiting the device check)
+
+Plan: `docs/1.4.0-plan.md` D10 (Batch 0 report approved the same day with
+every recommended option and one amendment: chips and pills split per
+word). Client only: no proxy change, no deploy.
+
+- **[Product — owner]** B9 checked on the iPhone 14 Plus (release):
+  paragraphs, the closing rule and the quote emphasis render in light and
+  dark; the weight-only emphasis does not separate from the body on the
+  dark surface. B8's rows were not yet seen on a fresh record (the device's
+  entries predate B8 and render the old way, as designed). B10 decided:
+  the differing words between "You wrote" and "Corrected" highlighted on
+  every card (old records and blank-less questions included), with a noise
+  guard so a rewritten sentence does not become a wall of colour; the quote
+  emphasis replaced by a subtle chip that does not rely on weight.
+- **[Engineering] `lib/utils/answer_diff.dart`** (pure): `splitToken`
+  (lead / core / trail), `compareKey` (quotes straightened, lowercased,
+  outer marks stripped; empty without a letter or digit),
+  `longestCommonSubsequence` (O(n·m), backtracked), `diffAnswer`:
+  assembled mode when the prompt has a blank and an in-order alignment
+  matches ≥ 80 % of its non-blank tokens (prompt text never painted;
+  parenthesised prompt hints left out of the diff; the prompt key keeps
+  parentheses), simple mode otherwise; the noise guard (share > 40 % on a
+  side with ≥ 6 words), the length guard without a prompt (answer ≥ 1.5×
+  the correction and ≥ 6 words; "at least", since case 1 without its
+  prompt is exactly 1.5×), nothing painted with an empty side. On the
+  device cases: case 1 paints changing · to · join · staying against to ·
+  change · joining · to · stay; case 2 to · hold · staying against holding
+  · to · stay; the prefixes, the hints and case 2's "and" plain.
+- **[Engineering] `lib/widgets/inline_marks.dart`:** `InlineMark` and
+  `markedSpans`: one baseline-aligned `WidgetSpan` per word (outer corners
+  rounded, inner edges square), so a marked phrase wraps like text;
+  `plainTextOf` reads a marked span back as words.
+  `MistakeBreakdown`: `_DiffText` renders each box through `Text.rich`
+  with its painted words as pills ("You wrote": `incorrectBackground` fill,
+  `onIncorrectBackground` text and a 1.5 pt underline; "Corrected": the
+  inverse, `onCorrectBackground` fill with `correctBackground` text), the
+  plain `Text` when nothing is painted, a semantics label of the plain
+  sentence; on a per-blank record B8's rows stay and only "Corrected" is
+  painted. `FeedbackText`: chips (`onSurface` at 12 % light / 14 % dark,
+  radius 4, 3 pt padding, weight 600) instead of weight 700, each
+  paragraph with a semantics label of its text. Measured ratios in the
+  plan (D10).
+- **[Tests]** `flutter analyze` clean; **2138 passed** (was 2112).
+  `answer_diff_test`: the tokens, case 1 (painted words, the plain prefix
+  and hints, the text intact, the share), case 2 and case 2 with a box
+  left blank, the 44 % rewrite plain, the mild rewrite, "goed"/"went",
+  "speaks"/"speak", the single-box fill against a full sentence plain,
+  identical texts, the length guard, empty sides, the LCS on two 60-word
+  lists. `mistake_breakdown_test`: case 1 on an old record in both themes
+  (fills, text colours, the underline, the text intact, VoiceOver), a new
+  record (rows plus "Corrected"), the rewrite plain, one word, a skipped
+  question. `feedback_text_test`: the chips in both themes (fill, alpha,
+  weight, colour, radius), a phrase split per word with the outer corners
+  rounded, the real case 1 feedback at 320 pt and Large with no overflow
+  and one word per chip. `test/support/rich_text_support.dart`:
+  `findPlainText`, `textAt`, `marksIn`; the Daily Test result and
+  weak-spot detail tests that found a paragraph by its full text now read
+  the spans.
+- **[Not checked]** On the owner's iPhone: a fresh multi-blank Practice
+  with one box left blank (B8's rows, first time on a device), both
+  highlighted boxes on an old and a new record, the chips in both themes,
+  and the Large text size at the narrowest layout reachable.
