@@ -10,6 +10,7 @@ import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/practice_set.dart';
 import 'package:grammar_lens/services/claude_service.dart';
+import 'package:grammar_lens/utils/blank_assembly.dart';
 
 /// Exercises ClaudeService's actual transport/parsing logic against a
 /// mocked proxy (MockClient), rather than only the "not configured" path
@@ -334,6 +335,77 @@ void main() {
       expect(q2.isCorrect, isFalse);
       expect(q2.errorType, 'article_use');
       expect(result.correctCount, 0);
+    });
+
+    test(
+        'the per-blank snapshot pairs the scorer\'s verdicts with the boxes and '
+        'is never sent (1.4.0 D11)', () async {
+      const practiceSet = PracticeSet(
+        topicId: 'articles',
+        items: [
+          PracticeItem(
+            id: 'q1',
+            type: PracticeItemType.fillInBlank,
+            instruction: 'I saw ____ owl and ____ swan.',
+          ),
+        ],
+      );
+      http.BaseRequest? captured;
+      final client = MockClient((request) async {
+        captured = request;
+        return http.Response(
+          jsonEncode({
+            'feedback': [
+              {
+                'itemId': 'q1',
+                'isCorrect': true,
+                'correctedAnswer': 'I saw an owl and a swan.',
+                'explanation': 'The long paragraph.',
+                'summary': 'Both blanks take an article.',
+                'blanks': [
+                  {
+                    'index': 0,
+                    'correctAnswer': 'an',
+                    'accepted': true,
+                    'note': 'Owl starts with a vowel sound.'
+                  },
+                  {
+                    'index': 1,
+                    'correctAnswer': 'a',
+                    'accepted': true,
+                    'note': 'Swan starts with a consonant.'
+                  },
+                ],
+              },
+            ],
+          }),
+          200,
+        );
+      });
+
+      final result = await serviceWith(client).scoreAnswers(
+        deviceId: 'device-1',
+        practiceSet: practiceSet,
+        answers: {'q1': 'I saw an owl and ____ swan.'},
+        blankAnswers: {
+          'q1': const [BlankAnswer('an'), BlankAnswer('')],
+        },
+      );
+
+      final sentBody =
+          jsonDecode((captured! as http.Request).body) as Map<String, dynamic>;
+      expect(sentBody.keys, unorderedEquals(['deviceId', 'items']));
+      expect((sentBody['items'] as List).single, {
+        'id': 'q1',
+        'type': 'fill_in_blank',
+        'prompt': 'I saw ____ owl and ____ swan.',
+        'userAnswer': 'I saw an owl and ____ swan.',
+      });
+      final feedback = result.feedback.single;
+      expect(feedback.summary, 'Both blanks take an article.');
+      expect(feedback.blanks!.map((b) => b.accepted), [true, false]);
+      expect(feedback.isCorrect, isFalse);
+      expect(feedback.explanation, 'The long paragraph.');
     });
 
     test('an answer without a blank keeps the model\'s verdict', () async {

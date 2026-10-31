@@ -11,6 +11,7 @@ import '../models/practice_item.dart';
 import '../models/practice_set.dart';
 import '../models/scoring_result.dart';
 import '../models/topic.dart';
+import '../utils/blank_assembly.dart';
 import '../utils/blanks.dart';
 
 /// What kind of failure a [ClaudeApiException] represents — lets a screen
@@ -172,10 +173,15 @@ class ClaudeService {
     }
   }
 
+  /// [blankAnswers] is the per-box snapshot of the multi-blank questions
+  /// (1.4.0 B8), by item id. It is never sent: the request is byte for byte
+  /// what it always was. It only pairs the scorer's per-blank verdicts
+  /// (1.4.0 D11) with the boxes, see [ItemFeedback.fromJson].
   Future<ScoringResult> scoreAnswers({
     required String deviceId,
     required PracticeSet practiceSet,
     required Map<String, String> answers,
+    Map<String, List<BlankAnswer>>? blankAnswers,
   }) async {
     final itemsPayload = practiceSet.items
         .map((item) => {
@@ -193,11 +199,13 @@ class ClaudeService {
 
     final feedback = (json['feedback'] as List).map((e) {
       final map = e as Map<String, dynamic>;
-      final userAnswer = answers[map['itemId'] as String] ?? '';
+      final itemId = map['itemId'] as String;
+      final userAnswer = answers[itemId] ?? '';
       return ItemFeedback.fromJson(
         map,
         isSkipped: userAnswer.trim().isEmpty,
         hasUnfilledBlank: blankPattern.hasMatch(userAnswer),
+        userBlanks: blankAnswers?[itemId],
       );
     }).toList();
     return ScoringResult(topicId: practiceSet.topicId, feedback: feedback);

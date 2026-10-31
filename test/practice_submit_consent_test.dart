@@ -19,6 +19,7 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
+import 'package:grammar_lens/utils/blank_assembly.dart';
 
 /// App Review audit findings #6 and #7. Submit reads the AI permission
 /// again before the answers leave the device, so a permission withdrawn
@@ -35,6 +36,7 @@ class _Claude extends ClaudeService {
     required String deviceId,
     required PracticeSet practiceSet,
     required Map<String, String> answers,
+    Map<String, List<BlankAnswer>>? blankAnswers,
   }) async {
     scoreCalls++;
     if (scoreError != null) throw scoreError!;

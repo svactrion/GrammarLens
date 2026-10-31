@@ -129,6 +129,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
               rule: f.rule,
               source: ErrorSource.topicPractice,
               userBlanks: widget.blankAnswers[f.itemId],
+              summary: f.summary,
+              blankFeedback: f.blanks,
             ))
         .toList();
     if (entries.isEmpty) return;
@@ -232,6 +234,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     blankAnswers: widget.blankAnswers[item.itemId],
                     correctedAnswer: item.correctedAnswer,
                     explanation: item.explanation,
+                    blankFeedback: item.blanks,
+                    summary: item.summary,
                   ),
                   if (item.rule != null) ...[
                     const SizedBox(height: 8),

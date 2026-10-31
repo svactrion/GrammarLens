@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/models/item_feedback.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/blank_assembly.dart';
 import 'package:grammar_lens/widgets/blank_colors.dart';
@@ -181,6 +182,203 @@ void main() {
         expect(find.byKey(MistakeBreakdown.blankRowKey(0)), findsNothing);
         expect(promptBlankColors(tester), isEmpty);
       }
+    });
+  });
+
+  group('structured feedback (1.4.0 D11)', () {
+    const prompt = 'We had ____ lunch at ____ small café near ____ station.';
+    const userAnswer = 'We had lunch at the small café near ____ station.';
+    const corrected = 'We had lunch at a small café near the station.';
+    const answers = [
+      BlankAnswer.noArticle(),
+      BlankAnswer('the'),
+      BlankAnswer(''),
+    ];
+    const feedback = [
+      BlankFeedback(
+          index: 0,
+          correctAnswer: '—',
+          accepted: true,
+          note: 'Meals take no article.'),
+      BlankFeedback(
+          index: 1,
+          correctAnswer: 'a',
+          accepted: false,
+          note: 'A café we have not mentioned yet.'),
+      BlankFeedback(
+          index: 2,
+          correctAnswer: 'the',
+          accepted: false,
+          note: 'You left this one blank.'),
+    ];
+
+    Future<void> pumpStructured(
+      WidgetTester tester, {
+      List<BlankAnswer>? blankAnswers = answers,
+      List<BlankFeedback>? blankFeedback = feedback,
+      String? summary = 'Two of the three blanks take "a" and "the".',
+      String user = userAnswer,
+      Brightness brightness = Brightness.light,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(brightness),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: MistakeBreakdown(
+                prompt: prompt,
+                userAnswer: user,
+                blankAnswers: blankAnswers,
+                correctedAnswer: corrected,
+                explanation: 'The long paragraph nobody should see here.',
+                blankFeedback: blankFeedback,
+                summary: summary,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    /// The rich text of row [i]: its spans' plain texts and styles.
+    List<TextSpan> rowSpans(WidgetTester tester, int i) {
+      final rich = tester.widget<Text>(find
+          .descendant(
+              of: find.byKey(MistakeBreakdown.blankRowKey(i)),
+              matching: find.byType(Text))
+          .first);
+      final spans = <TextSpan>[];
+      rich.textSpan!.visitChildren((span) {
+        if (span is TextSpan && span.text != null) spans.add(span);
+        return true;
+      });
+      return spans;
+    }
+
+    for (final brightness in Brightness.values) {
+      testWidgets(
+          'each row shows the correct form after the learner\'s text, muted '
+          'with a check when accepted and green when not, with its note '
+          '($brightness)', (tester) async {
+        await pumpStructured(tester, brightness: brightness);
+        final theme = buildAppTheme(brightness);
+        final semantic = theme.extension<SemanticColors>()!;
+
+        final row0 = rowSpans(tester, 0);
+        expect(
+            row0.map((s) => s.text), [MistakeBreakdown.noArticleLabel, ' → —']);
+        expect(row0.last.style?.color, theme.colorScheme.onSurfaceVariant);
+        final row1 = rowSpans(tester, 1);
+        expect(row1.map((s) => s.text), ['the', ' → a']);
+        expect(row1.last.style?.color, semantic.onCorrectBackground);
+        final row2 = rowSpans(tester, 2);
+        expect(row2.map((s) => s.text),
+            [MistakeBreakdown.leftBlankLabel, ' → the']);
+        expect(row2.last.style?.color, semantic.onCorrectBackground);
+
+        // The check sits only on the accepted row.
+        expect(
+            find.descendant(
+                of: find.byKey(MistakeBreakdown.blankRowKey(0)),
+                matching: find.byIcon(Icons.check)),
+            findsOneWidget);
+        expect(
+            find.descendant(
+                of: find.byKey(MistakeBreakdown.blankRowKey(1)),
+                matching: find.byIcon(Icons.check)),
+            findsNothing);
+
+        for (var i = 0; i < 3; i++) {
+          final note = tester.widget<Text>(find.descendant(
+              of: find.byKey(MistakeBreakdown.blankNoteKey(i)),
+              matching: find.byType(Text)));
+          expect(note.data, feedback[i].note);
+          expect(note.style?.color, theme.colorScheme.onSurfaceVariant);
+          expect(note.style?.fontSize, theme.textTheme.bodySmall?.fontSize);
+        }
+      });
+    }
+
+    testWidgets('VoiceOver reads each row with its verdict', (tester) async {
+      await pumpStructured(tester);
+      expect(
+          find.bySemanticsLabel(
+              'Blank 1: you wrote no article, correct —, accepted'),
+          findsOneWidget);
+      expect(
+          find.bySemanticsLabel(
+              'Blank 2: you wrote the, correct a, not accepted: A café we have not mentioned yet.'),
+          findsOneWidget);
+      expect(
+          find.bySemanticsLabel(
+              'Blank 3: you wrote left blank, correct the, not accepted: You left this one blank.'),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'the summary shows under the boxes and the long explanation does not',
+        (tester) async {
+      await pumpStructured(tester);
+      expect(find.byKey(MistakeBreakdown.summaryKey), findsOneWidget);
+      expect(findPlainText('Two of the three blanks take "a" and "the".'),
+          findsOneWidget);
+      expect(find.textContaining('The long paragraph'), findsNothing);
+    });
+
+    testWidgets('the word difference is not run: no pills in either box',
+        (tester) async {
+      await pumpStructured(tester);
+      expect(marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey)),
+          isEmpty);
+      expect(find.byKey(MistakeBreakdown.userTextKey),
+          findsNothing); // rows, not the sentence
+
+      // The same record without the verdicts (an old row): pills are back,
+      // and the paragraph with them.
+      await pumpStructured(tester, blankFeedback: null, summary: null);
+      expect(marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey)),
+          isNotEmpty);
+      expect(find.textContaining('The long paragraph'), findsOneWidget);
+      expect(find.byKey(MistakeBreakdown.summaryKey), findsNothing);
+      expect(find.byKey(MistakeBreakdown.blankNoteKey(0)), findsNothing);
+    });
+
+    testWidgets(
+        'verdicts that do not line up with the boxes are ignored (old rendering)',
+        (tester) async {
+      await pumpStructured(tester, blankFeedback: feedback.sublist(0, 2));
+      expect(find.byKey(MistakeBreakdown.blankNoteKey(0)), findsNothing);
+      expect(find.byKey(MistakeBreakdown.summaryKey), findsNothing);
+      expect(find.textContaining('The long paragraph'), findsOneWidget);
+    });
+
+    testWidgets(
+        'a single verdict (one box): the boxes as today, the note in place of the paragraph, then the summary',
+        (tester) async {
+      await pumpStructured(
+        tester,
+        blankAnswers: null,
+        user: 'goed',
+        blankFeedback: const [
+          BlankFeedback(
+              index: 0,
+              correctAnswer: 'went',
+              accepted: false,
+              note: '"Go" is irregular: went.'),
+        ],
+        summary: 'Irregular past forms are learned one by one.',
+      );
+      expect(find.byKey(MistakeBreakdown.userTextKey), findsOneWidget);
+      expect(find.byKey(MistakeBreakdown.correctedTextKey), findsOneWidget);
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.userTextKey)), isEmpty);
+      expect(marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey)),
+          isEmpty);
+      expect(find.text('"Go" is irregular: went.'), findsOneWidget);
+      expect(find.byKey(MistakeBreakdown.blankNoteKey(0)), findsOneWidget);
+      expect(findPlainText('Irregular past forms are learned one by one.'),
+          findsOneWidget);
+      expect(find.textContaining('The long paragraph'), findsNothing);
     });
   });
 

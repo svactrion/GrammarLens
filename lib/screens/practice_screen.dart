@@ -180,6 +180,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         deviceId: deviceId,
         practiceSet: widget.practiceSet,
         answers: _answers,
+        blankAnswers: blankAnswers,
       );
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(

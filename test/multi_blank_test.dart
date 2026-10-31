@@ -24,6 +24,7 @@ import 'package:grammar_lens/widgets/blank_colors.dart';
 import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_app_bar.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
+import 'package:grammar_lens/utils/blank_assembly.dart';
 
 /// Practice's multi-blank answer boxes (question screen plan, §4 and B3):
 /// one box per blank (2–4), linked by colour to the blank's underline, the
@@ -41,6 +42,7 @@ class _ScoringClaude extends ClaudeService {
     required String deviceId,
     required PracticeSet practiceSet,
     required Map<String, String> answers,
+    Map<String, List<BlankAnswer>>? blankAnswers,
   }) {
     calls.add(Map.of(answers));
     pending = Completer<ScoringResult>();

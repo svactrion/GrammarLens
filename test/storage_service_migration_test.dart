@@ -7,6 +7,7 @@ import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/error_entry.dart';
+import 'package:grammar_lens/models/item_feedback.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/review_sort_order.dart';
 import 'package:grammar_lens/services/storage_service.dart';
@@ -821,6 +822,126 @@ void main() {
     test('a fresh install creates the column', () async {
       await StorageService(dbName: dbName).getRecentMistakes('a', 'b');
       expect(await errorColumns(), contains('user_blanks'));
+    });
+  });
+
+  group('v24 -> v25: error_entries gains feedback_json (1.4.0 D11)', () {
+    const dbName = 'test_migration_v24.db';
+    late String path;
+
+    setUp(() async {
+      path = join(await getDatabasesPath(), dbName);
+      await databaseFactory.deleteDatabase(path);
+    });
+
+    /// A v24-shaped error_entries table (every column up to `user_blanks`,
+    /// no `feedback_json`) with one saved multi-blank mistake.
+    Future<void> seedV24() async {
+      final db = await databaseFactory.openDatabase(path);
+      await db.execute('''
+        CREATE TABLE error_entries (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          topic_id TEXT NOT NULL,
+          error_type TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          prompt TEXT,
+          user_answer TEXT,
+          corrected_answer TEXT,
+          explanation TEXT,
+          rule TEXT,
+          source TEXT NOT NULL DEFAULT 'topic_practice',
+          user_blanks TEXT
+        )
+      ''');
+      await db.insert('error_entries', {
+        'topic_id': 'articles',
+        'error_type': 'article_use',
+        'timestamp': '2026-10-31T10:00:00.000',
+        'prompt': 'We had ____ lunch at ____ small café.',
+        'user_answer': 'We had lunch at ____ small café.',
+        'corrected_answer': 'We had lunch at a small café.',
+        'explanation': 'The long paragraph.',
+        'source': 'topic_practice',
+        'user_blanks': '[{"noArticle":true},{"text":""}]',
+      });
+      await db.setVersion(24);
+      await db.close();
+    }
+
+    Future<List<String>> errorColumns() async {
+      final db = await databaseFactory.openDatabase(path);
+      final info = await db.rawQuery('PRAGMA table_info(error_entries)');
+      await db.close();
+      return info.map((r) => r['name'] as String).toList();
+    }
+
+    test(
+        'the column is added, the old row keeps its paragraph and boxes and '
+        'reads as having no structured feedback', () async {
+      await seedV24();
+      final storage = StorageService(dbName: dbName);
+      final old =
+          (await storage.getRecentMistakes('articles', 'article_use')).single;
+      expect(old.explanation, 'The long paragraph.');
+      expect(old.userBlanks!.map((b) => b.noArticle), [true, false]);
+      expect(old.summary, isNull);
+      expect(old.blankFeedback, isNull);
+      expect(await errorColumns(), contains('feedback_json'));
+    });
+
+    test('a new row with structured feedback round-trips next to the old one',
+        () async {
+      await seedV24();
+      final storage = StorageService(dbName: dbName);
+      await storage.insertErrors([
+        ErrorEntry(
+          topicId: 'articles',
+          errorType: 'article_use',
+          timestamp: DateTime(2026, 10, 31, 11),
+          prompt: 'We had ____ lunch at ____ small café.',
+          userAnswer: 'We had lunch at ____ small café.',
+          correctedAnswer: 'We had lunch at a small café.',
+          explanation: 'The long paragraph.',
+          source: ErrorSource.topicPractice,
+          userBlanks: const [BlankAnswer.noArticle(), BlankAnswer('')],
+          summary: 'Meals take no article; a small café takes a.',
+          blankFeedback: const [
+            BlankFeedback(
+                index: 0, correctAnswer: '—', accepted: true, note: 'Meals.'),
+            BlankFeedback(
+                index: 1, correctAnswer: 'a', accepted: false, note: 'Café.'),
+          ],
+        ),
+      ]);
+      final rows = await storage.getRecentMistakes('articles', 'article_use');
+      expect(rows, hasLength(2));
+      expect(
+          rows.first.summary, 'Meals take no article; a small café takes a.');
+      expect(rows.first.blankFeedback!.map((b) => b.accepted), [true, false]);
+      expect(rows.last.summary, isNull);
+      expect(rows.last.blankFeedback, isNull);
+    });
+
+    test('a replayed migration (downgrade, then upgrade) keeps every row',
+        () async {
+      await seedV24();
+      await StorageService(dbName: dbName)
+          .getRecentMistakes('articles', 'article_use');
+
+      final db = await databaseFactory.openDatabase(path);
+      await db.setVersion(24);
+      await db.close();
+
+      final rows = await StorageService(dbName: dbName)
+          .getRecentMistakes('articles', 'article_use');
+      expect(rows, hasLength(1));
+      expect((await errorColumns()).where((c) => c == 'feedback_json'),
+          hasLength(1));
+    });
+
+    test('a fresh install creates the column', () async {
+      await StorageService(dbName: dbName).getRecentMistakes('a', 'b');
+      expect(await errorColumns(), contains('feedback_json'));
     });
   });
 }

@@ -29,7 +29,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 24;
+  static const _dbVersion = 25;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -88,7 +88,8 @@ class StorageService {
       explanation TEXT,
       rule TEXT,
       source TEXT NOT NULL DEFAULT 'topic_practice',
-      user_blanks TEXT
+      user_blanks TEXT,
+      feedback_json TEXT
     )
   ''';
 
@@ -546,6 +547,17 @@ class StorageService {
         if (oldVersion < 24) {
           await db.execute(_createTable);
           await _addColumnIfMissing(db, 'error_entries', 'user_blanks', 'TEXT');
+        }
+
+        // v24 -> v25: error_entries gained a nullable `feedback_json`
+        // column (1.4.0 D11): the scorer's summary and per-blank verdicts
+        // as one JSON object. Every earlier row stays null and renders
+        // through the paragraph it already holds. Same shape as the v24
+        // step, for the same reason.
+        if (oldVersion < 25) {
+          await db.execute(_createTable);
+          await _addColumnIfMissing(
+              db, 'error_entries', 'feedback_json', 'TEXT');
         }
       },
     );

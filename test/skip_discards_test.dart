@@ -24,6 +24,7 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_app_bar.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
+import 'package:grammar_lens/utils/blank_assembly.dart';
 
 /// Skip discards what was typed (owner, 2026-10-12; the roadmap's open item
 /// "Skip sends typed text"): a typed-then-skipped question counts as skipped
@@ -41,6 +42,7 @@ class _ScoringClaude extends ClaudeService {
     required String deviceId,
     required PracticeSet practiceSet,
     required Map<String, String> answers,
+    Map<String, List<BlankAnswer>>? blankAnswers,
   }) async {
     calls.add(Map.of(answers));
     return ScoringResult(topicId: practiceSet.topicId, feedback: [

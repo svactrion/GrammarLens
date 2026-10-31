@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/item_feedback.dart';
 import '../theme.dart';
 import '../utils/answer_diff.dart';
 import '../utils/blank_assembly.dart';
@@ -15,6 +16,18 @@ import 'inline_marks.dart';
 /// context, the correction is the thing users actually look at — instead of
 /// running together as one paragraph. Any part can be omitted (e.g. a
 /// skipped item has no answer to show).
+///
+/// Two shapes of record (1.4.0 D11, server package report §4.4):
+///
+/// - **Structured**: the scorer's per-blank verdicts ([blankFeedback]) are
+///   present. The per-blank rows gain the correct form next to the
+///   learner's text and the scorer's note under each; the two boxes render
+///   plain (the rows already say what changed, so B10's word difference is
+///   not run); the short [summary] replaces the long [explanation] under
+///   the boxes.
+/// - **Old**: no [blankFeedback] (the old proxy, every record stored
+///   before D11). B8's rows, B10's difference and B9's formatted paragraph,
+///   unchanged: the fallback renderer.
 class MistakeBreakdown extends StatelessWidget {
   /// A "YOU WROTE" row's text for a box left empty.
   static const String leftBlankLabel = 'Left blank';
@@ -25,10 +38,16 @@ class MistakeBreakdown extends StatelessWidget {
   /// The key of blank [index]'s row in "YOU WROTE".
   static Key blankRowKey(int index) => ValueKey('mistake_blank_row_$index');
 
+  /// The key of blank [index]'s note under its row (structured records).
+  static Key blankNoteKey(int index) => ValueKey('mistake_blank_note_$index');
+
   /// The keys of the two boxes' texts (1.4.0 B10: `Text.rich` with the
   /// differing words as pills).
   static const Key userTextKey = Key('mistake_user_text');
   static const Key correctedTextKey = Key('mistake_corrected_text');
+
+  /// The summary under the boxes of a structured record.
+  static const Key summaryKey = Key('mistake_summary');
 
   /// The "You wrote" difference pill's fill: `incorrectBackground` with
   /// 15 % of `onIncorrectBackground` over it (B10.2). The plain
@@ -53,6 +72,14 @@ class MistakeBreakdown extends StatelessWidget {
   final String? correctedAnswer;
   final String? explanation;
 
+  /// The scorer's per-blank verdicts (1.4.0 D11), paired with
+  /// [blankAnswers] by index. Null on an old record.
+  final List<BlankFeedback>? blankFeedback;
+
+  /// The scorer's short overall lesson (1.4.0 D11), shown in place of
+  /// [explanation] on a structured record.
+  final String? summary;
+
   const MistakeBreakdown({
     super.key,
     this.prompt,
@@ -60,6 +87,8 @@ class MistakeBreakdown extends StatelessWidget {
     this.blankAnswers,
     this.correctedAnswer,
     this.explanation,
+    this.blankFeedback,
+    this.summary,
   });
 
   @override
@@ -87,13 +116,24 @@ class MistakeBreakdown extends StatelessWidget {
     final blanks = blankAnswers;
     final perBlank = hasAnswer && blanks != null && blanks.length >= 2;
     final colors = perBlank ? blankColors(theme.brightness) : null;
+    // A structured record (D11): the scorer's verdicts, and on a multi-blank
+    // record one per box. A verdict list that does not line up with the
+    // boxes is treated as absent, so the card never pairs a note with the
+    // wrong blank.
+    final feedback = blankFeedback;
+    final structured = feedback != null &&
+        feedback.isNotEmpty &&
+        (!perBlank || feedback.length == blanks.length) &&
+        (perBlank || feedback.length == 1);
+    final hasSummary = structured && (summary ?? '').trim().isNotEmpty;
     final promptStyle = theme.textTheme.bodyMedium?.copyWith(
       color: colorScheme.onSurfaceVariant,
     );
-    // The word-level difference (1.4.0 B10), when both texts exist. On a
-    // per-blank record "You wrote" shows B8's rows, so only "Corrected" is
-    // painted; the assembled sentence is still what is compared.
-    final diff = hasAnswer && hasCorrection
+    // The word-level difference (1.4.0 B10), when both texts exist and the
+    // record is not structured: on a per-blank record "You wrote" shows
+    // B8's rows, so only "Corrected" is painted; the assembled sentence is
+    // still what is compared.
+    final diff = hasAnswer && hasCorrection && !structured
         ? diffAnswer(
             userAnswer: userAnswer!,
             correctedAnswer: correctedAnswer!,
@@ -130,7 +170,11 @@ class MistakeBreakdown extends StatelessWidget {
             borderColor: colorScheme.outline,
             labelColor: colorScheme.onSurfaceVariant,
             child: perBlank
-                ? _BlankRows(answers: blanks, colors: colors!)
+                ? _BlankRows(
+                    answers: blanks,
+                    colors: colors!,
+                    feedback: structured ? feedback : null,
+                  )
                 : _DiffText(
                     key: MistakeBreakdown.userTextKey,
                     tokens: diff?.user,
@@ -180,7 +224,23 @@ class MistakeBreakdown extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
-        if (hasExplanation)
+        // A structured record's single verdict (one box, or a blank-less
+        // item): its note stands where the paragraph would, then the
+        // summary. A multi-blank record's notes sit under their rows.
+        if (structured && !perBlank && feedback.single.note.trim().isNotEmpty)
+          Padding(
+            key: MistakeBreakdown.blankNoteKey(0),
+            padding: EdgeInsets.only(bottom: hasSummary ? 10 : 0),
+            child:
+                Text(feedback.single.note, style: theme.textTheme.bodyMedium),
+          ),
+        if (hasSummary)
+          FeedbackText(
+            summary!,
+            key: MistakeBreakdown.summaryKey,
+            style: theme.textTheme.bodyMedium,
+          )
+        else if (!structured && hasExplanation)
           FeedbackText(explanation!, style: theme.textTheme.bodyMedium),
       ],
     );
@@ -190,16 +250,27 @@ class MistakeBreakdown extends StatelessWidget {
 /// One row per blank in "YOU WROTE": a 3 pt bar in the blank's colour, then
 /// the typed text, "—" for a no-article box, or "Left blank" (muted) for a
 /// box left empty. VoiceOver reads "Blank n: …".
+///
+/// With the scorer's verdicts ([feedback], 1.4.0 D11) each row continues
+/// with an arrow and the correct form — muted with a small check when the
+/// answer is accepted, in the "Corrected" green when it is not — and the
+/// scorer's note under the row.
 class _BlankRows extends StatelessWidget {
   final List<BlankAnswer> answers;
   final List<Color> colors;
+  final List<BlankFeedback>? feedback;
 
-  const _BlankRows({required this.answers, required this.colors});
+  const _BlankRows({
+    required this.answers,
+    required this.colors,
+    this.feedback,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final semantic = theme.extension<SemanticColors>()!;
     final body = theme.textTheme.bodyMedium?.copyWith(
       color: colorScheme.onSurface,
     );
@@ -207,14 +278,20 @@ class _BlankRows extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var i = 0; i < answers.length; i++) ...[
-          if (i > 0) const SizedBox(height: 6),
-          _row(i, body, colorScheme),
+          if (i > 0) SizedBox(height: feedback == null ? 6 : 10),
+          _row(i, body, colorScheme, semantic, theme.textTheme.bodySmall),
         ],
       ],
     );
   }
 
-  Widget _row(int i, TextStyle? body, ColorScheme colorScheme) {
+  Widget _row(
+    int i,
+    TextStyle? body,
+    ColorScheme colorScheme,
+    SemanticColors semantic,
+    TextStyle? small,
+  ) {
     final answer = answers[i];
     final String text;
     final TextStyle? style;
@@ -232,10 +309,23 @@ class _BlankRows extends StatelessWidget {
       style = body?.copyWith(color: colorScheme.onSurfaceVariant);
       spoken = 'left blank';
     }
+    final verdict = feedback?[i];
+    final verdictColor = verdict == null
+        ? null
+        : verdict.accepted
+            ? colorScheme.onSurfaceVariant
+            : semantic.onCorrectBackground;
+    final label = verdict == null
+        ? 'Blank ${i + 1}: $spoken'
+        : verdict.accepted
+            ? 'Blank ${i + 1}: you wrote $spoken, correct '
+                '${verdict.correctAnswer}, accepted'
+            : 'Blank ${i + 1}: you wrote $spoken, correct '
+                '${verdict.correctAnswer}, not accepted: ${verdict.note}';
     // IntrinsicHeight: the bar stretches to the text's height, one line or
     // several, inside a column that has no height of its own to give.
     return Semantics(
-      label: 'Blank ${i + 1}: $spoken',
+      label: label,
       excludeSemantics: true,
       child: IntrinsicHeight(
         child: Row(
@@ -250,7 +340,49 @@ class _BlankRows extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(child: Text(text, style: style)),
+            Expanded(
+              child: verdict == null
+                  ? Text(text, style: style)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(text: text, style: style),
+                              TextSpan(
+                                text: ' → ${verdict.correctAnswer}',
+                                style: body?.copyWith(color: verdictColor),
+                              ),
+                              if (verdict.accepted)
+                                WidgetSpan(
+                                  alignment: PlaceholderAlignment.middle,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Icon(
+                                      Icons.check,
+                                      size: 16,
+                                      color: verdictColor,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (verdict.note.trim().isNotEmpty)
+                          Padding(
+                            key: MistakeBreakdown.blankNoteKey(i),
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              verdict.note,
+                              style: small?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),

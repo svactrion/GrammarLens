@@ -23,6 +23,7 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_app_bar.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
+import 'package:grammar_lens/utils/blank_assembly.dart';
 
 /// Question V2 (docs/design/1.2.0-additional, brief §5 and the acceptance
 /// checklist's "Soru V2" items): the multiline answer, the question-first
@@ -39,6 +40,7 @@ class _ScoringClaude extends ClaudeService {
     required String deviceId,
     required PracticeSet practiceSet,
     required Map<String, String> answers,
+    Map<String, List<BlankAnswer>>? blankAnswers,
   }) {
     calls.add(Map.of(answers));
     pending = Completer<ScoringResult>();

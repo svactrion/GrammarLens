@@ -309,6 +309,8 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                           blankAnswers: mistake.userBlanks,
                           correctedAnswer: mistake.correctedAnswer,
                           explanation: mistake.explanation,
+                          blankFeedback: mistake.blankFeedback,
+                          summary: mistake.summary,
                         ),
                       ),
                     ),
