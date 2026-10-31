@@ -12969,3 +12969,25 @@ change.
 - **[Not checked]** On the owner's iPhone: the darker fill without the
   underline in both themes, the word gaps inside strips, and B8's rows on
   a fresh multi-blank Practice with one box left blank.
+
+## 2026-10-31 (1.4.0 B9–B10.2 device checks passed; B8 rows still open)
+
+Plan: `docs/1.4.0-plan.md` D9, D10 and the work list. Docs only: no code,
+no proxy change, no deploy (1.3.0 is in review).
+
+- **[Verified — owner]** B9, B10, B10.1 and B10.2 checked on the iPhone
+  14 Plus (release build, light and dark, Large text), 2026-10-31. The
+  two-line record paints only the learner's words (B10.1 defect 1 fixed);
+  multi-word chips and pills are one continuous strip (defect 2 fixed);
+  the darker "You wrote" fill without the underline reads well, and the
+  word gaps inside a strip are normal (B10.2). Nothing further to change
+  in B9 or B10.
+- **[Not checked]** B8's per-blank "You wrote" rows on a fresh multi-blank
+  Practice with one box left blank: the day's free practice quota was used
+  before that check, so the rows and the coloured prompt in both themes on
+  Results and in Review remain unseen. The owner checks on 2026-11-01. B1's
+  device check (audit #6, #7, the permission copy, the Privacy Policy /
+  Terms rows) is also still open.
+- **[Docs]** `1.4.0-plan.md`: the status line, D10's device-check bullet,
+  the B8 and B10 work-list entries. `roadmap.md`: the 1.4.0 row's status
+  and the B10 bullet under "1.4.0 (planned)".
