@@ -13047,10 +13047,10 @@ calls Anthropic; `wrangler kv key get` read the live sets.
   `s-live/labels.csv` (≈ 65–70 min; `accept_also` is the gate's truth, so
   fill it on `ok` rows too), review `s-synth-review.md` (≈ 15 min;
   disagreements go to `s-synth-exclusions.txt`). After the generation calls
-  in step E: S-gen (150 rows, ≈ 50 min) and S-free (150 rows, ≈ 40 min;
-  can be cut to the D3-prompt cells, 75 rows). In all ≈ 2 h 50 min with
-  the Haiku cells, against the ≈ 2 h estimated before them; the owner
-  decides on the S-free cut before the run.
+  in step E: S-gen (150 rows, ≈ 50 min) and S-free (75 rows, ≈ 20 min:
+  **cut to the D3-prompt cells, owner 2026-10-31**). In all ≈ 2 h 30 min.
+  The cost table (report §3.4) re-estimated for 75 scoring calls per cell:
+  ≈ $15, ≈ $24 with the scoring repeat.
 - **[Tests]** `proxy/test/eval_datasets.test.ts`: the assembly rule (empty
   box keeps its blank, no-article removal and capitalisation), the eight
   transforms and the rotation, contractions (never `'s` / `'d`), spellings,
@@ -13152,3 +13152,103 @@ measurement passes and the owner deploys.
   the budget, a repaired response end to end).
 - **[Not done]** Steps D and E wait for the owner's labels. Commits: the
   owner's (the files per step are listed in the hand-over).
+
+## 2026-10-31 (Cron outage: the 06:07 UTC run tailed; the running version dated; hypotheses ranked)
+
+Read-only: `wrangler tail`, `wrangler deployments list`, `wrangler versions
+list`, `wrangler kv key get`. No deploy, no KV write, no deletion.
+
+- **[Found]** The 06:07 UTC run: `outcome: ok`, 590 ms wall, 1 ms CPU, no
+  log line, no exception. Every date in its horizon (2026-10-31 … 11-03) is
+  at the cap of 3 generation attempts, so the run only read KV. The paid
+  attempts of a date happen at 00:07, 01:07 and 02:07 UTC on the day it
+  enters the horizon (its lease stamps: the third attempt of 11-03 was at
+  2026-10-31 02:07:15 UTC); their reasons are only in those runs' log lines
+  (Cloudflare dashboard, Workers Logs, event `shared_set_generation`, and the
+  `anthropic_failure` line's `httpStatus` / `errorType`).
+- **[Found]** The code has not changed since the 2026-10-16 deploy
+  (`6ad41711…`), which generated the sets of 2026-10-20 … 10-25 on
+  2026-10-17 … 10-22 without a failure. The only version since is a
+  **Secret Change on 2026-10-31 02:15:39 UTC** (`e8cb33cf…`, same code): a
+  secret (`ANTHROPIC_API_KEY` or `APP_TOKEN`) was replaced this morning,
+  eight minutes after the day's third failed attempt. So the environment
+  changed around 2026-10-23, not the Worker.
+- **[Hypotheses, ranked]** (1) **Key or credits:** the key the Worker held
+  stopped working around 2026-10-23 (revoked, expired, a spend limit) and
+  was replaced today; if so, Practice and scoring failed for every user over
+  the same days, the Anthropic Console shows no usage from this key between
+  2026-10-23 and this morning, and the dashboard logs show `upstream_failed`
+  with `http_error` 401 or 400 (`authentication_error` /
+  `invalid_request_error` for billing). (2) **Model-side rejection** of the
+  cron's request only (`claude-sonnet-5-5`, adaptive thinking, `effort: low`,
+  the v2 `anyOf`/`const` schema): Practice would have kept working
+  (`claude-sonnet-4-6`, no thinking); the logs show `http_error` 400 with
+  `invalid_request_error`, or `invalid_json_content` with
+  `stop_reason: max_tokens` and ≈ 15,000 output tokens per attempt in the
+  Console. (3) **The gate rejecting every set:** 27 consecutive `rejected`
+  lines with the same `reason`; the least likely, since the generator and
+  the gate did not change.
+- **[What decides it, no code]** The owner's Console check (usage by model
+  and day since 2026-10-20; the key's status), the dashboard logs for one
+  of the 00:07–02:07 UTC runs, and what the 02:15 secret change was. **If
+  (1):** the fix is already in place for new attempts; the blocked dates
+  (2026-11-01 … 11-03, attempt records written 10-29 … 10-31, expiring
+  7 days later) stay on the fallback pool unless their `attempts:*` records
+  are deleted, after which the cron regenerates them within three hours; a
+  KV deletion is the owner's act. **If (2):** the smallest change is in
+  the request shape, decided from the error type; proposed after the logs
+  are read, not before. **If (3):** the reason code names the rule.
+- **[Next attempt]** 2026-11-01 00:07 UTC (03:07 local): the first
+  attempt for 2026-11-04 with the new secret. A read-only tail of that run
+  shows the outcome live.
+
+## 2026-10-31 (Incident: the Worker's Anthropic key expired on 2026-10-22; nine days without AI calls; found and closed 2026-10-31)
+
+- **[Start]** 2026-10-22. The `ANTHROPIC_API_KEY` secret of the proxy had
+  been created with a 30-day expiry and expired that day. The last shared
+  set published is 2026-10-25, generated 2026-10-22 00:07 UTC, just before
+  the expiry; the first attempt for 2026-10-26 failed on 2026-10-23 00:07
+  UTC, and every attempt since (three per date, 00:07–02:07 UTC on the day
+  a date enters the horizon) failed the same way.
+- **[Detection]** 2026-10-31, in two steps. The owner noticed the key had
+  expired and replaced it at 02:15:39 UTC (the Secret Change version
+  `e8cb33cf…`; the new key expires at the end of December 2026). The outage's
+  extent was found independently the same morning while exporting the live
+  sets read-only from KV for the measurement: no `set:*` after 10-25,
+  `attempts:*` at the cap for 10-28 … 11-03; confirmed by a read-only tail
+  of the 06:07 UTC run (nothing to do: every date at the cap) and by the
+  deployment history (code unchanged since 2026-10-16; the only version
+  since is the secret change).
+- **[Duration]** Nine days, 2026-10-22 to 2026-10-31 02:15 UTC.
+- **[Impact]** Every Anthropic call from the proxy failed: **Practice
+  generation and scoring were unavailable to every user**, and the cron
+  published nothing. The shared Daily Test fell to the bundled fallback
+  pool for the dates **2026-10-26 … 2026-10-31** (served) and would have for
+  **2026-11-01 … 2026-11-03** (already at the attempt cap at detection; see
+  the fix). No public users yet: 1.3.0 is in App Store review, so the
+  learners affected were the owner's own devices. **Near miss for App
+  Review:** a reviewer opening Topic Practice between 2026-10-22 and 10-31
+  would have seen "Something went wrong" on every attempt, and a Daily Test
+  from the fallback pool, with nothing in the app to say why; a rejection
+  for a non-working feature was one review session away.
+- **[Root cause]** A key expiry nobody was watching, and no signal in the
+  system that distinguishes "every upstream call fails" from a quiet hour:
+  the cron logs each failed attempt and then stops at the cap; `/health`
+  answers 200 regardless; the only visible trace was the fallback share in
+  `daily_test_completed.set_source` in Firebase, which nobody looked at.
+- **[Fix]** The key replaced (owner, 02:15 UTC). New attempts use it from
+  the next date to enter the horizon (2026-11-04, at 2026-11-01 00:07 UTC).
+  The dates still at the cap, 2026-11-01 … 11-03, are regenerated once the
+  owner deletes their `attempts:*` records (the commands are in the
+  hand-over; one date per hourly run, so about three hours). 2026-10-31's
+  own record is left: the day is half over on the fallback pool for every
+  device that opened it, and a set published now would reach only later
+  readers.
+- **[Prevention]** `1.4.0-plan.md` Phase 3, **P15**: `/health` reports the
+  last publish date and the last upstream outcome; a distinct cron event
+  after N consecutive failed attempts; a notification on it if the free plan
+  offers one, else an external uptime check on `/health` plus the Firebase
+  fallback share. **Owner policy:** the production key is created without an
+  expiry and rotated manually; the measurement key is separate and
+  short-lived. The "cron silent" finding of the morning's entries is closed
+  by this one.
