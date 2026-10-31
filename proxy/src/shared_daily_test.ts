@@ -36,8 +36,12 @@ export type SharedPromptVersion = 1 | 2 | 3;
 /**
  * The version the hourly cron builds, and stores with every published set.
  * 2 from 2026-09-29 (path A, docs/1.1.0-shared-daily-test-quality.md §16);
- * 3 since 1.4.0 D3 (built 2026-10-31, deployed only after the v2/v3
- * measurement passes; no set has been published with it yet).
+ * 3 since 1.4.0 D3 (built 2026-10-31; the owner's decision after the
+ * twelve-date measurement, docs/1.4.0-measurement-report.md §4; no set has
+ * been published with it yet). **Condition (owner, 2026-10-31):** after the
+ * deploy, the first 14 days of `review:{date}` findings are compared with
+ * v2's measured rate (0 defects in 55 gate-passing questions); if v3 is
+ * worse, this goes back to 2 in one deploy, so version 2 stays buildable.
  */
 export const SHARED_PROMPT_VERSION: SharedPromptVersion = 3;
 
