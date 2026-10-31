@@ -272,17 +272,32 @@ class _DiffText extends StatelessWidget {
     if (tokens == null || !tokens.any((t) => t.painted)) {
       return Text(plain, style: style);
     }
+    // Consecutive painted words with nothing between them are one phrase
+    // (one continuous strip, B10.1); a trailing or leading mark breaks it.
     final spans = <InlineSpan>[];
-    for (var i = 0; i < tokens.length; i++) {
+    var i = 0;
+    while (i < tokens.length) {
       final token = tokens[i];
       if (i > 0) spans.add(const TextSpan(text: ' '));
       if (!token.painted) {
         spans.add(TextSpan(text: token.text));
+        i++;
         continue;
       }
       if (token.lead.isNotEmpty) spans.add(TextSpan(text: token.lead));
-      spans.addAll(markedSpans(token.core, mark));
-      if (token.trail.isNotEmpty) spans.add(TextSpan(text: token.trail));
+      final phrase = StringBuffer(token.core);
+      var last = token;
+      while (i + 1 < tokens.length &&
+          tokens[i + 1].painted &&
+          last.trail.isEmpty &&
+          tokens[i + 1].lead.isEmpty) {
+        i++;
+        last = tokens[i];
+        phrase.write(' ${last.core}');
+      }
+      spans.addAll(markedSpans(phrase.toString(), mark));
+      if (last.trail.isNotEmpty) spans.add(TextSpan(text: last.trail));
+      i++;
     }
     return Semantics(
       label: plain,

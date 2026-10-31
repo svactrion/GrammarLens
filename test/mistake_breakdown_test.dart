@@ -239,7 +239,8 @@ void main() {
         final semantic = buildAppTheme(brightness).extension<SemanticColors>()!;
 
         final user = marksIn(tester, find.byKey(MistakeBreakdown.userTextKey));
-        expect(user.map((m) => m.word), ['changing', 'to', 'join', 'staying']);
+        // "to join" is one phrase: the space rides inside the first piece.
+        expect(user.map((m) => m.word), ['changing', 'to ', 'join', 'staying']);
         for (final m in user) {
           expect(m.fill, semantic.incorrectBackground);
           expect(m.style?.color, semantic.onIncorrectBackground);
@@ -250,11 +251,18 @@ void main() {
         final corrected =
             marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey));
         expect(corrected.map((m) => m.word),
-            ['to', 'change', 'joining', 'to', 'stay']);
+            ['to ', 'change', 'joining', 'to ', 'stay']);
         for (final m in corrected) {
           expect(m.fill, semantic.onCorrectBackground);
           expect(m.style?.color, semantic.correctBackground);
         }
+        // The phrases are continuous strips (B10.1): no gap between the
+        // pieces, the underline running through the "You wrote" space.
+        expectContinuousMark(
+            tester, find.byKey(MistakeBreakdown.userTextKey), ['to ', 'join']);
+        expectContinuousMark(tester,
+            find.byKey(MistakeBreakdown.correctedTextKey), ['to ', 'change']);
+        expect(user[1].style?.decoration, TextDecoration.underline);
         expect(
             plainTextOfWidget(
                 textAt(tester, find.byKey(MistakeBreakdown.userTextKey))),
@@ -285,7 +293,37 @@ void main() {
       expect(
           marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey))
               .map((m) => m.word),
-          ['to', 'change', 'joining', 'to', 'stay']);
+          ['to ', 'change', 'joining', 'to ', 'stay']);
+    });
+
+    testWidgets(
+        'the two-line stored prompt of the device\'s case 2 record paints '
+        'only the learner\'s words (B10.1)', (tester) async {
+      const prompt =
+          'Choose the correct form — gerund or infinitive — for each gap.\n'
+          "Complete these two sentences: 'My manager suggested ________ "
+          "(hold) the meeting online rather than in person.' and 'The new "
+          "intern agreed ________ (stay) late to finish the quarterly "
+          "report.'";
+      await pumpCard(tester,
+          prompt: prompt,
+          userAnswer:
+              "Complete these two sentences: 'My manager suggested to hold "
+              "(hold) the meeting online rather than in person.' and 'The "
+              "new intern agreed staying (stay) late to finish the quarterly "
+              "report.'",
+          correctedAnswer:
+              'My manager suggested holding the meeting online rather than '
+              'in person. The new intern agreed to stay late to finish the '
+              'quarterly report.');
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.userTextKey))
+              .map((m) => m.word),
+          ['to ', 'hold', 'staying']);
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey))
+              .map((m) => m.word),
+          ['holding', 'to ', 'stay']);
     });
 
     testWidgets('a heavy rewrite renders plain, as before', (tester) async {

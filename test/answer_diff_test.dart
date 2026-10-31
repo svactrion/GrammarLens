@@ -111,6 +111,86 @@ void main() {
     });
   });
 
+  group('two-line stored prompts (B10.1)', () {
+    // The device records store the full text: a context line without a
+    // blank, then the instruction that holds the blanks. The answer was
+    // assembled from the blank-bearing line only, so the match ratio is
+    // taken over that line.
+    const contextLine =
+        'Choose the correct form — gerund or infinitive — for each gap.';
+    const storedCase2Prompt = '$contextLine\n'
+        "Complete these two sentences: 'My manager suggested ________ (hold) "
+        "the meeting online rather than in person.' and 'The new intern "
+        "agreed ________ (stay) late to finish the quarterly report.'";
+
+    test(
+        'case 2 with its stored prompt: assembled, ratio 1.0, the device '
+        'defect gone (it was 0.69 over the whole prompt, simple mode)', () {
+      final diff = diffAnswer(
+          userAnswer: case2User,
+          correctedAnswer: case2Corrected,
+          prompt: storedCase2Prompt);
+      expect(diff.promptMatchRatio, 1.0);
+      expect(diff.assembled, isTrue);
+      expect(diff.paintedUser, ['to', 'hold', 'staying']);
+      expect(diff.paintedCorrected, ['holding', 'to', 'stay']);
+    });
+
+    test(
+        'case 1 with a context line: ratio 1.0 (it was exactly 0.80 over '
+        'the whole prompt with this ten-word line)', () {
+      final diff = diffAnswer(
+          userAnswer: case1User,
+          correctedAnswer: case1Corrected,
+          prompt: '$contextLine\n$case1Prompt');
+      expect(diff.promptMatchRatio, 1.0);
+      expect(diff.assembled, isTrue);
+      expect(diff.paintedUser, ['changing', 'to', 'join', 'staying']);
+    });
+
+    test('the instruction alone keeps ratio 1.0', () {
+      expect(
+          diffAnswer(
+                  userAnswer: case2User,
+                  correctedAnswer: case2Corrected,
+                  prompt: case2Prompt)
+              .promptMatchRatio,
+          1.0);
+    });
+
+    test('both lines carry blanks: both are in the answer and both count', () {
+      const prompt = 'Tom says: "I can\'t stop ____ this week."\n'
+          'And he adds: "I have promised ____ by May."';
+      const user = 'Tom says: "I can\'t stop smoking this week."\n'
+          'And he adds: "I have promised to quit by May."';
+      final diff = diffAnswer(
+          userAnswer: user,
+          correctedAnswer: 'Tom says: "I can\'t stop smoking this week." '
+              'And he adds: "I have promised to quit by May."',
+          prompt: prompt);
+      expect(diff.promptMatchRatio, 1.0);
+      expect(diff.assembled, isTrue);
+      expect(diff.highlighted, isFalse);
+    });
+
+    test(
+        'a context line the answer does not contain never counts against '
+        'it; a short instruction still reaches the threshold', () {
+      final diff = diffAnswer(
+          userAnswer: 'I saw an owl and ____ swan.',
+          correctedAnswer: 'I saw an owl and a swan.',
+          prompt: 'A long scene-setting line that has many more words than '
+              'the instruction itself does, with no blank in it.\n'
+              'I saw ____ owl and ____ swan.');
+      expect(diff.promptMatchRatio, 1.0);
+      expect(diff.assembled, isTrue);
+      // The left blank keeps its underscores (prompt text, never painted);
+      // only the correction's filled word is painted.
+      expect(diff.paintedUser, isEmpty);
+      expect(diff.paintedCorrected, ['a']);
+    });
+  });
+
   group('simple mode', () {
     test('a heavy rewrite (44 % changed) is not highlighted', () {
       final diff = diffAnswer(

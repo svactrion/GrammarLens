@@ -12871,3 +12871,62 @@ word). Client only: no proxy change, no deploy.
   with one box left blank (B8's rows, first time on a device), both
   highlighted boxes on an old and a new record, the chips in both themes,
   and the Large text size at the narrowest layout reachable.
+
+## 2026-10-31 (1.4.0 B10 device check: two defects; B10.1 fixes them; re-check open)
+
+Plan: `docs/1.4.0-plan.md` D10 (B10.1 notes). Client only, no proxy
+change.
+
+- **[Product — owner]** B10 checked on the iPhone 14 Plus (light and
+  dark, Large text). Defect 1: on the record whose stored prompt has a
+  context line without a blank ("Choose the correct form — gerund or
+  infinitive — for each gap.") above the two-sentence instruction, "You
+  wrote" painted "Complete these two sentences", "(hold)" and "and"; the
+  four-blank record painted correctly. Defect 2: a multi-word chip, pill
+  or underlined difference rendered as separate boxes with unmarked gaps,
+  one paragraph of the four-blank record as about 25 chip pieces.
+- **[Engineering] Diagnosis, defect 1 (confirmed before the fix).** The
+  alignment ratio ran over the whole stored prompt, but the answer was
+  assembled from the blank-bearing line only (`blankSourceText`), so the
+  context line's tokens never matched. Measured with the real stored
+  prompt: 0.692 over the whole prompt (under 0.8 → simple mode, which
+  paints exactly the observed words: the prefix, "hold" from the hint,
+  "and", and "staying" without "stay"); 1.0 over the instruction line. The
+  four-blank record passed by a hair: with a ten-word context line its
+  ratio is exactly 0.800. The Batch 0 prototype and the B10 tests passed
+  because their fixtures used the instruction line alone as the prompt.
+- **[Engineering] Fix, defect 1.** `diffAnswer` tokenises the prompt per
+  line and flags the tokens of lines that hold a blank; the alignment
+  still runs over every prompt token (a context the answer does include
+  is prompt text too), but the ratio counts the blank-bearing lines only,
+  the same rule as `blankSourceText` (context, instruction, or both when
+  both have blanks). `AnswerDiff.promptMatchRatio` exposes it. Ratios per
+  record, before → after: case 2 (two-line stored prompt) 0.692 → 1.0;
+  case 1 (instruction only, as in the B10 fixture) 1.0 → 1.0; case 1 with
+  a ten-word context line 0.800 → 1.0; a prompt whose two lines both carry
+  blanks 1.0 → 1.0.
+- **[Engineering] Fix, defect 2.** `markedSpans`: every piece but the last
+  carries its trailing space inside its `WidgetSpan` (no plain space span
+  between pieces), so the fill and, in "You wrote", the underline continue
+  across the gap; inner edges square, outer corners rounded; the phrase
+  still wraps at word boundaries. `MistakeBreakdown._DiffText` groups
+  consecutive painted words with nothing between them into one phrase (a
+  trailing or leading mark such as a comma breaks the strip). Applied to
+  the chips in `FeedbackText` and both difference marks.
+- **[Tests]** `flutter analyze` clean; **2144 passed** (was 2138).
+  `answer_diff_test`: case 2 with its stored two-line prompt (ratio 1.0,
+  assembled, the expected words), case 1 with a context line (1.0), the
+  instruction alone (1.0), both lines with blanks (1.0), a long blank-less
+  context over a short instruction (1.0, the left blank unpainted).
+  `mistake_breakdown_test`: the stored case 2 record paints only to ·
+  hold · staying and holding · to · stay; the "to join" and "to change"
+  phrases are continuous strips with the underline through the space.
+  `feedback_text_test`: a three-word chip's pieces touch (right edge equals
+  the next left edge on the same line); the 320 pt / Large no-overflow test
+  kept. `test/support/rich_text_support.dart`: `markRect`,
+  `expectContinuousMark`.
+- **[Not checked]** Re-check on the owner's iPhone: the two-line record
+  with only the learner's words painted, a multi-word chip and pill as one
+  strip, and the B10 list (a fresh multi-blank Practice with one box left
+  blank for B8's rows, both highlighted boxes on an old and a new record,
+  the chips in both themes, the Large text size at the narrowest layout).

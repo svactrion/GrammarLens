@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 /// `FeedbackText` and the difference pills in `MistakeBreakdown`. A mark is
 /// one [WidgetSpan] per word, so a marked phrase wraps like text instead of
 /// moving to the next line as a block; the outer edges are rounded, the
-/// inner edges between two words of one mark are square. Each word sits on
-/// the text baseline.
+/// inner edges between two words of one mark are square, and every piece
+/// but the last carries its trailing space inside the mark (B10.1), so the
+/// fill and any underline run on across the gap and the phrase reads as
+/// one continuous strip. Each word sits on the text baseline.
 class InlineMark {
   final Color fill;
   final TextStyle textStyle;
@@ -20,19 +22,17 @@ class InlineMark {
   });
 }
 
-/// [text] as marked spans: the words of [text] each in their own pill
-/// (spaces between them as plain text), the first and last with rounded
-/// outer corners.
+/// [text] as marked spans: the words of [text] each in their own pill, the
+/// first and last with rounded outer corners, each but the last ending in
+/// its space so the pieces touch.
 List<InlineSpan> markedSpans(String text, InlineMark mark) {
-  final words = text.split(' ');
+  final words = text.split(' ').where((w) => w.isNotEmpty).toList();
   final spans = <InlineSpan>[];
   for (var i = 0; i < words.length; i++) {
-    if (i > 0) spans.add(const TextSpan(text: ' '));
-    final word = words[i];
-    if (word.isEmpty) continue;
-    final r = Radius.circular(mark.radius);
     final first = i == 0;
     final last = i == words.length - 1;
+    final word = last ? words[i] : '${words[i]} ';
+    final r = Radius.circular(mark.radius);
     spans.add(WidgetSpan(
       alignment: PlaceholderAlignment.baseline,
       baseline: TextBaseline.alphabetic,

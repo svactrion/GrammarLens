@@ -379,7 +379,12 @@ into the next build. Version bump and build: owner, not started.
     emphasis: translucent `onSurface`, 12 % light / 14 % dark, split per
     word so phrases wrap.
   - Verified: `flutter analyze` clean, full test suite passed (2138).
-    **Not checked on a device.**
+    **Checked 2026-10-31 (owner, iPhone 14 Plus): two defects, fixed in
+    B10.1, re-check open.** B10.1 (2026-10-31): the alignment ratio is
+    taken over the prompt's blank-bearing lines (a two-line stored prompt
+    fell to simple mode and painted the instruction words); marked
+    phrases are one continuous strip (each piece carries its trailing
+    space). `flutter analyze` clean, 2144 tests passed.
     **Not checked on a device.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)

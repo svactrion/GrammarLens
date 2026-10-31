@@ -42,6 +42,29 @@ Text textAt(WidgetTester tester, Finder finder) {
       find.descendant(of: finder, matching: find.byType(Text)).first);
 }
 
+/// The on-screen rectangle of the mark whose word (trailing space
+/// included) is [word], inside [within].
+Rect markRect(WidgetTester tester, Finder within, String word) =>
+    tester.getRect(find
+        .ancestor(
+            of: find.descendant(of: within, matching: find.text(word)),
+            matching: find.byType(DecoratedBox))
+        .first);
+
+/// Asserts that the marks for [words], in order, touch: each piece's right
+/// edge is the next one's left edge on the same line, so the phrase reads
+/// as one continuous strip.
+void expectContinuousMark(
+    WidgetTester tester, Finder within, List<String> words) {
+  for (var i = 0; i + 1 < words.length; i++) {
+    final a = markRect(tester, within, words[i]);
+    final b = markRect(tester, within, words[i + 1]);
+    expect(b.left, closeTo(a.right, 0.01),
+        reason: '${words[i]} → ${words[i + 1]}');
+    expect(b.top, closeTo(a.top, 0.01), reason: 'same line');
+  }
+}
+
 /// The marks inside the [Text] at [finder], in order.
 List<RenderedMark> marksIn(WidgetTester tester, Finder finder) {
   final text = textAt(tester, finder);

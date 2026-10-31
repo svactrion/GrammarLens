@@ -42,12 +42,18 @@ class AnswerDiff {
   /// Whether the answer was recognised as the prompt with its blanks filled.
   final bool assembled;
 
+  /// The share of the prompt's blank-bearing lines' non-blank tokens that
+  /// the answer matched in order; 0 without a prompt or a blank. At least
+  /// [assembledMinimumMatch] makes [assembled] true.
+  final double promptMatchRatio;
+
   const AnswerDiff({
     required this.user,
     required this.corrected,
     required this.highlighted,
     required this.changedShare,
     required this.assembled,
+    this.promptMatchRatio = 0,
   });
 
   List<String> get paintedUser => [
@@ -73,8 +79,12 @@ const int noiseMinimumWords = 6;
 /// sits exactly at 1.5 (54 words to 36), hence "at least".
 const double lengthRatioLimit = 1.5;
 
-/// The prompt alignment must match this share of the prompt's non-blank
-/// tokens for the answer to count as assembled.
+/// The prompt alignment must match this share of the non-blank tokens of
+/// the prompt's blank-bearing lines for the answer to count as assembled.
+/// Only those lines: the answer was assembled from the text that holds the
+/// blanks (`blankSourceText`), so a context line without a blank is never
+/// in it (B10.1; the two-line prompt of the owner's case 2 record matched
+/// 69 % of the whole prompt and fell to simple mode).
 const double assembledMinimumMatch = 0.8;
 
 const String _leadChars = '\'"‘“([';
@@ -189,15 +199,32 @@ AnswerDiff diffAnswer({
   final learner = List<bool>.filled(user.length, true);
   final neutral = [for (final key in userKeys) key.isEmpty];
   var assembled = false;
+  var promptMatchRatio = 0.0;
   if (prompt != null && blankPattern.hasMatch(prompt)) {
-    final promptTokens = _tokens(prompt);
+    // Every prompt token, flagged when its line holds a blank. The
+    // alignment runs over all of them (a context the answer does include
+    // is prompt text too); the ratio counts the blank-bearing lines only.
+    final promptTokens = <String>[];
+    final inBlankLine = <bool>[];
+    for (final line in prompt.split('\n')) {
+      final hasBlank = blankPattern.hasMatch(line);
+      for (final token in _tokens(line)) {
+        promptTokens.add(token);
+        inBlankLine.add(hasBlank);
+      }
+    }
     final promptKeys = promptTokens.map(_promptKey).toList();
     final pairs = longestCommonSubsequence(
         userTokens.map(_promptKey).toList(), promptKeys);
-    final nonBlank = promptKeys.where((k) => !_isBlank(k)).length;
-    final matchedNonBlank =
-        pairs.where((p) => !_isBlank(promptKeys[p.$2])).length;
-    if (nonBlank > 0 && matchedNonBlank / nonBlank >= assembledMinimumMatch) {
+    var counted = 0;
+    for (var j = 0; j < promptKeys.length; j++) {
+      if (inBlankLine[j] && !_isBlank(promptKeys[j])) counted++;
+    }
+    final matchedCounted = pairs
+        .where((p) => inBlankLine[p.$2] && !_isBlank(promptKeys[p.$2]))
+        .length;
+    promptMatchRatio = counted == 0 ? 0 : matchedCounted / counted;
+    if (promptMatchRatio >= assembledMinimumMatch) {
       assembled = true;
       for (final (i, _) in pairs) {
         learner[i] = false;
@@ -271,6 +298,7 @@ AnswerDiff diffAnswer({
     highlighted: highlighted,
     changedShare: share,
     assembled: assembled,
+    promptMatchRatio: promptMatchRatio,
   );
 }
 

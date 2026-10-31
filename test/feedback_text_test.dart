@@ -122,16 +122,21 @@ void main() {
     });
   }
 
-  testWidgets('a quoted phrase is one chip per word, outer corners rounded',
-      (tester) async {
+  testWidgets(
+      'a quoted phrase is one chip per word, the spaces inside the pieces, '
+      'outer corners rounded, one continuous strip (B10.1)', (tester) async {
     await pump(tester, "Say 'decided to change' here.");
-    final marks = marksIn(tester, find.byKey(FeedbackText.paragraphKey(0)));
-    expect(marks.map((m) => m.word), ["'decided", 'to', "change'"]);
+    final paragraph = find.byKey(FeedbackText.paragraphKey(0));
+    final marks = marksIn(tester, paragraph);
+    expect(marks.map((m) => m.word), ["'decided ", 'to ', "change'"]);
     expect(marks.first.radius,
         const BorderRadius.horizontal(left: Radius.circular(4)));
     expect(marks[1].radius, BorderRadius.zero);
     expect(marks.last.radius,
         const BorderRadius.horizontal(right: Radius.circular(4)));
+    expectContinuousMark(tester, paragraph, ["'decided ", 'to ', "change'"]);
+    expect(plainTextOfWidget(tester.widget<Text>(paragraph)),
+        "Say 'decided to change' here.");
   });
 
   testWidgets(
@@ -143,7 +148,8 @@ void main() {
       final paragraph = find.byKey(FeedbackText.paragraphKey(i));
       expect(tester.getSize(paragraph).width, lessThanOrEqualTo(320));
       for (final mark in marksIn(tester, paragraph)) {
-        expect(mark.word.contains(' '), isFalse, reason: 'one word per chip');
+        expect(mark.word.trim().contains(' '), isFalse,
+            reason: 'one word per chip');
       }
     }
     // Eleven quoted examples, split into their words.
@@ -152,8 +158,8 @@ void main() {
         ...marksIn(tester, find.byKey(FeedbackText.paragraphKey(i)))
             .map((m) => m.word),
     ];
-    expect(words.first, "'to");
-    expect(words, contains("'decided"));
+    expect(words.first, "'to ");
+    expect(words, contains("'decided "));
     expect(words, contains("change'"));
     expect(words.length, greaterThanOrEqualTo(11));
   });
