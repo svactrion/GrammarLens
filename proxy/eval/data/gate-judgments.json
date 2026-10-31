@@ -1,0 +1,188 @@
+{
+  "_comment": [
+    "The owner's judgment of the accepted answers the gate wrote outside the labelled truth (docs/1.4.0-measurement-report.md §5, 2026-10-31).",
+    "right: correct and may be written (it joins the truth for precision and recall); wrong: right English that defeats the tested rule, must not be written.",
+    "Keyed by the live set's date, the question id and the written answer; the analysis matches answers after normalization and folding."
+  ],
+  "judgments": [
+    {
+      "date": "2026-10-04",
+      "questionId": "mpf-sale-would",
+      "answer": "will",
+      "verdict": "wrong",
+      "why": "the unshifted form on a backshift question"
+    },
+    {
+      "date": "2026-10-13",
+      "questionId": "phone-repair-could",
+      "answer": "Yesterday the technician told me he will fix my phone by Friday.",
+      "verdict": "wrong",
+      "why": "the unshifted form on a backshift question"
+    },
+    {
+      "date": "2026-10-14",
+      "questionId": "modalpast-restaurant-could",
+      "answer": "She said yesterday that she will book a table for us.",
+      "verdict": "wrong",
+      "why": "the unshifted form on a backshift question"
+    },
+    {
+      "date": "2026-10-22",
+      "questionId": "past-modal-manager-call",
+      "answer": "will",
+      "verdict": "wrong",
+      "why": "the unshifted form on a backshift question"
+    },
+    {
+      "date": "2026-10-12",
+      "questionId": "parents-must-be-home",
+      "answer": "will",
+      "verdict": "wrong",
+      "why": "a prediction for the deduction 'must'"
+    },
+    {
+      "date": "2026-10-18",
+      "questionId": "articles-bakery-order",
+      "answer": "At the market, I bought an umbrella and an orange.",
+      "verdict": "wrong",
+      "why": "the correction changes the noun instead of the article"
+    },
+    {
+      "date": "2026-09-26",
+      "questionId": "daily-modal-health",
+      "answer": "have to",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-09-26",
+      "questionId": "daily-mpf-health",
+      "answer": "ought to have come",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-09-26",
+      "questionId": "daily-tense-health",
+      "answer": "By the time I called the clinic yesterday, I already had taken the wrong dose twice.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-09-28",
+      "questionId": "gerund-family-chores",
+      "answer": "My parents always insisted on my doing the washing-up after dinner.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-09-28",
+      "questionId": "modal-family-advice",
+      "answer": "He ought to have told us he wasn't coming so we could have made other arrangements.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-09-28",
+      "questionId": "modal-family-advice",
+      "answer": "He could have told us he wasn't coming so we could have made other arrangements.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-09-30",
+      "questionId": "mpf-bakery-could",
+      "answer": "Yesterday, the baker told me that he would be able to make a cake for my party.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-03",
+      "questionId": "mpf-solar-panels",
+      "answer": "Last week, the landlord said that he was going to install solar panels.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-04",
+      "questionId": "tense-market-error",
+      "answer": "I bought these shoes at the market yesterday.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-04",
+      "questionId": "modal-fitting-error",
+      "answer": "You must try on the jacket before you buy it.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-08",
+      "questionId": "gerund-interview-error",
+      "answer": "She suggested that we hire a second assistant for the office.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-08",
+      "questionId": "gerund-interview-error",
+      "answer": "She suggested that they hire a second assistant for the office.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-10",
+      "questionId": "mpf-clinic-could",
+      "answer": "She said she wasn't able to come to the clinic yesterday.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-13",
+      "questionId": "phone-repair-could",
+      "answer": "Yesterday the technician told me he would fix my phone by Friday.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-18",
+      "questionId": "modal-fitting-room",
+      "answer": "In the fitting room, Mina said that she was not able to find her size yesterday.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-20",
+      "questionId": "mod-cinema-phone",
+      "answer": "In the cinema, you must switch your phone off.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-10-25",
+      "questionId": "past-modal-tutor",
+      "answer": "My tutor said last week that she was going to help me today.",
+      "verdict": "right"
+    },
+    {
+      "date": "2026-09-28",
+      "questionId": "gerund-family-chores",
+      "answer": "My parents always insisted that I do the washing-up after dinner.",
+      "verdict": "right",
+      "why": "single-review write, judged 2026-10-31"
+    },
+    {
+      "date": "2026-10-08",
+      "questionId": "tense-meeting-since",
+      "answer": "'ve been working",
+      "verdict": "right",
+      "why": "single-review write, judged 2026-10-31"
+    },
+    {
+      "date": "2026-10-08",
+      "questionId": "modal-office-must",
+      "answer": "Employees have to wear a badge in the office.",
+      "verdict": "right",
+      "why": "filtered by alternative_changes_other_words; the owner keeps the rule and records the edge"
+    },
+    {
+      "date": "2026-10-20",
+      "questionId": "mod-cinema-phone",
+      "answer": "In the cinema, you have to switch off your phone.",
+      "verdict": "right",
+      "why": "filtered by alternative_changes_other_words; the owner keeps the rule and records the edge"
+    },
+    {
+      "date": "2026-10-09",
+      "questionId": "hotel-booking-tense",
+      "answer": "I have stayed at this hotel since Monday.",
+      "verdict": "right",
+      "why": "filtered by alternative_changes_other_words (aspect, not a noun); the owner keeps the rule and records the edge"
+    }
+  ]
+}

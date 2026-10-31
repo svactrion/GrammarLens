@@ -1,0 +1,377 @@
+{
+  "k3e229f9": {
+    "cell": "G-B",
+    "itemId": "G-B:gerundVsInfinitive:gerund-inf-sw-01",
+    "target": "error"
+  },
+  "k8bcea80": {
+    "cell": "G-B",
+    "itemId": "G-B:gerundVsInfinitive:gerund-inf-sw-02",
+    "target": "correct"
+  },
+  "kc797023": {
+    "cell": "G-B",
+    "itemId": "G-B:gerundVsInfinitive:gerund-inf-ec-01",
+    "target": "error"
+  },
+  "k7da0523": {
+    "cell": "G-B",
+    "itemId": "G-B:gerundVsInfinitive:gerund-inf-ec-02",
+    "target": "correct"
+  },
+  "k7a006cf": {
+    "cell": "G-B",
+    "itemId": "G-B:gerundVsInfinitive:gerund-inf-fib-01",
+    "target": "error"
+  },
+  "kdeb6de5": {
+    "cell": "G-B",
+    "itemId": "G-B:modalVerbs:modal-sw-obligation",
+    "target": "correct"
+  },
+  "k0fd99db": {
+    "cell": "G-B",
+    "itemId": "G-B:modalVerbs:modal-sw-possibility",
+    "target": "error"
+  },
+  "kbc51a38": {
+    "cell": "G-B",
+    "itemId": "G-B:modalVerbs:modal-ec-could-past",
+    "target": "correct"
+  },
+  "k70cf003": {
+    "cell": "G-B",
+    "itemId": "G-B:modalVerbs:modal-ec-should-have",
+    "target": "error"
+  },
+  "k7eeebc5": {
+    "cell": "G-B",
+    "itemId": "G-B:modalVerbs:modal-fib-nuance",
+    "target": "correct"
+  },
+  "ke73159c": {
+    "cell": "G-B",
+    "itemId": "G-B:modalPastForms:modal-past-sw-1",
+    "target": "error"
+  },
+  "k051e825": {
+    "cell": "G-B",
+    "itemId": "G-B:modalPastForms:modal-past-sw-2",
+    "target": "correct"
+  },
+  "k6e85c09": {
+    "cell": "G-B",
+    "itemId": "G-B:modalPastForms:modal-past-ec-1",
+    "target": "error"
+  },
+  "kd0860b4": {
+    "cell": "G-B",
+    "itemId": "G-B:modalPastForms:modal-past-ec-2",
+    "target": "correct"
+  },
+  "k3532e37": {
+    "cell": "G-B",
+    "itemId": "G-B:modalPastForms:modal-past-fib-1",
+    "target": "error"
+  },
+  "kc616aab": {
+    "cell": "G-B",
+    "itemId": "G-B:tenseSelection:tense-sw-01",
+    "target": "correct"
+  },
+  "k18c531c": {
+    "cell": "G-B",
+    "itemId": "G-B:tenseSelection:tense-sw-02",
+    "target": "error"
+  },
+  "kfa75017": {
+    "cell": "G-B",
+    "itemId": "G-B:tenseSelection:tense-ec-01",
+    "target": "correct"
+  },
+  "k780c357": {
+    "cell": "G-B",
+    "itemId": "G-B:tenseSelection:tense-ec-02",
+    "target": "error"
+  },
+  "k9e216a7": {
+    "cell": "G-B",
+    "itemId": "G-B:tenseSelection:tense-fib-01",
+    "target": "correct"
+  },
+  "k75623dd": {
+    "cell": "G-B",
+    "itemId": "G-B:articles:art-sw-01",
+    "target": "error"
+  },
+  "k5203351": {
+    "cell": "G-B",
+    "itemId": "G-B:articles:art-sw-02",
+    "target": "correct"
+  },
+  "kae49d5d": {
+    "cell": "G-B",
+    "itemId": "G-B:articles:art-ec-01",
+    "target": "error"
+  },
+  "k095cc0b": {
+    "cell": "G-B",
+    "itemId": "G-B:articles:art-ec-02",
+    "target": "correct"
+  },
+  "k423aa44": {
+    "cell": "G-B",
+    "itemId": "G-B:articles:art-fb-01",
+    "target": "error"
+  },
+  "k2a32154": {
+    "cell": "G-D",
+    "itemId": "G-D:gerundVsInfinitive:sw-gerund-hobby",
+    "target": "correct"
+  },
+  "k65292b3": {
+    "cell": "G-D",
+    "itemId": "G-D:gerundVsInfinitive:sw-infinitive-goal",
+    "target": "error"
+  },
+  "k6d5ca70": {
+    "cell": "G-D",
+    "itemId": "G-D:gerundVsInfinitive:ec-suggest-gerund",
+    "target": "correct"
+  },
+  "kad29ab1": {
+    "cell": "G-D",
+    "itemId": "G-D:gerundVsInfinitive:ec-managed-infinitive",
+    "target": "error"
+  },
+  "kb8a0a4b": {
+    "cell": "G-D",
+    "itemId": "G-D:gerundVsInfinitive:fb-mixed-patterns",
+    "target": "correct"
+  },
+  "k076e2e5": {
+    "cell": "G-D",
+    "itemId": "G-D:modalVerbs:sw-deadline-email",
+    "target": "error"
+  },
+  "k060a381": {
+    "cell": "G-D",
+    "itemId": "G-D:modalVerbs:sw-weekend-possibility",
+    "target": "correct"
+  },
+  "k9986a8e": {
+    "cell": "G-D",
+    "itemId": "G-D:modalVerbs:ec-must-past",
+    "target": "error"
+  },
+  "k08410fd": {
+    "cell": "G-D",
+    "itemId": "G-D:modalVerbs:ec-should-advice",
+    "target": "correct"
+  },
+  "keeda9a8": {
+    "cell": "G-D",
+    "itemId": "G-D:modalVerbs:fib-modal-nuance",
+    "target": "error"
+  },
+  "kc673652": {
+    "cell": "G-D",
+    "itemId": "G-D:modalPastForms:sw-reported-promise",
+    "target": "correct"
+  },
+  "k2f084bb": {
+    "cell": "G-D",
+    "itemId": "G-D:modalPastForms:sw-childhood-ability",
+    "target": "error"
+  },
+  "k74e5b3f": {
+    "cell": "G-D",
+    "itemId": "G-D:modalPastForms:ec-would-reported",
+    "target": "correct"
+  },
+  "kf79719e": {
+    "cell": "G-D",
+    "itemId": "G-D:modalPastForms:ec-could-past-ability",
+    "target": "error"
+  },
+  "kd3e56ca": {
+    "cell": "G-D",
+    "itemId": "G-D:modalPastForms:fib-reported-modals",
+    "target": "correct"
+  },
+  "kcc18155": {
+    "cell": "G-D",
+    "itemId": "G-D:tenseSelection:sw-present-perfect-experience",
+    "target": "error"
+  },
+  "k3a9d167": {
+    "cell": "G-D",
+    "itemId": "G-D:tenseSelection:sw-past-continuous-interrupted",
+    "target": "correct"
+  },
+  "k0e6832d": {
+    "cell": "G-D",
+    "itemId": "G-D:tenseSelection:ec-since-present-simple",
+    "target": "error"
+  },
+  "kb70d947": {
+    "cell": "G-D",
+    "itemId": "G-D:tenseSelection:ec-future-time-clause",
+    "target": "correct"
+  },
+  "ke91798a": {
+    "cell": "G-D",
+    "itemId": "G-D:tenseSelection:fib-mixed-tenses-library",
+    "target": "error"
+  },
+  "k94df7ea": {
+    "cell": "G-D",
+    "itemId": "G-D:articles:sw-article-job-interview",
+    "target": "correct"
+  },
+  "k4617576": {
+    "cell": "G-D",
+    "itemId": "G-D:articles:sw-article-zero-general",
+    "target": "error"
+  },
+  "k0ebff78": {
+    "cell": "G-D",
+    "itemId": "G-D:articles:ec-article-advice",
+    "target": "correct"
+  },
+  "kfed852d": {
+    "cell": "G-D",
+    "itemId": "G-D:articles:ec-article-the-sun-university",
+    "target": "error"
+  },
+  "k42f297b": {
+    "cell": "G-D",
+    "itemId": "G-D:articles:fib-article-city-trip",
+    "target": "correct"
+  },
+  "kbfc9f92": {
+    "cell": "G-F",
+    "itemId": "G-F:gerundVsInfinitive:gi-sw-1",
+    "target": "error"
+  },
+  "kbffcd3b": {
+    "cell": "G-F",
+    "itemId": "G-F:gerundVsInfinitive:gi-sw-2",
+    "target": "correct"
+  },
+  "kce4c23b": {
+    "cell": "G-F",
+    "itemId": "G-F:gerundVsInfinitive:gi-ec-1",
+    "target": "error"
+  },
+  "k9065030": {
+    "cell": "G-F",
+    "itemId": "G-F:gerundVsInfinitive:gi-ec-2",
+    "target": "correct"
+  },
+  "k33a1f93": {
+    "cell": "G-F",
+    "itemId": "G-F:gerundVsInfinitive:gi-fb-1",
+    "target": "error"
+  },
+  "ka0c2119": {
+    "cell": "G-F",
+    "itemId": "G-F:modalVerbs:modal-sw-deadline",
+    "target": "correct"
+  },
+  "k71b82c3": {
+    "cell": "G-F",
+    "itemId": "G-F:modalVerbs:modal-sw-holiday",
+    "target": "error"
+  },
+  "k57443ed": {
+    "cell": "G-F",
+    "itemId": "G-F:modalVerbs:modal-ec-ability",
+    "target": "correct"
+  },
+  "kd3788b2": {
+    "cell": "G-F",
+    "itemId": "G-F:modalVerbs:modal-ec-possibility",
+    "target": "error"
+  },
+  "k8044a99": {
+    "cell": "G-F",
+    "itemId": "G-F:modalVerbs:modal-fib-nuance",
+    "target": "correct"
+  },
+  "k44810fc": {
+    "cell": "G-F",
+    "itemId": "G-F:modalPastForms:mpf-sw-1",
+    "target": "error"
+  },
+  "kef07af4": {
+    "cell": "G-F",
+    "itemId": "G-F:modalPastForms:mpf-sw-2",
+    "target": "correct"
+  },
+  "k2f89504": {
+    "cell": "G-F",
+    "itemId": "G-F:modalPastForms:mpf-ec-1",
+    "target": "error"
+  },
+  "k19f3afe": {
+    "cell": "G-F",
+    "itemId": "G-F:modalPastForms:mpf-ec-2",
+    "target": "correct"
+  },
+  "k885b4ac": {
+    "cell": "G-F",
+    "itemId": "G-F:modalPastForms:mpf-fb-1",
+    "target": "error"
+  },
+  "k979c6fa": {
+    "cell": "G-F",
+    "itemId": "G-F:tenseSelection:tense-sw-1",
+    "target": "correct"
+  },
+  "k615263f": {
+    "cell": "G-F",
+    "itemId": "G-F:tenseSelection:tense-sw-2",
+    "target": "error"
+  },
+  "k1b57cb7": {
+    "cell": "G-F",
+    "itemId": "G-F:tenseSelection:tense-ec-1",
+    "target": "correct"
+  },
+  "k2f7d8fe": {
+    "cell": "G-F",
+    "itemId": "G-F:tenseSelection:tense-ec-2",
+    "target": "error"
+  },
+  "k9184985": {
+    "cell": "G-F",
+    "itemId": "G-F:tenseSelection:tense-fb-1",
+    "target": "correct"
+  },
+  "kf386c00": {
+    "cell": "G-F",
+    "itemId": "G-F:articles:articles-sw-1",
+    "target": "error"
+  },
+  "k9cf298e": {
+    "cell": "G-F",
+    "itemId": "G-F:articles:articles-sw-2",
+    "target": "correct"
+  },
+  "ka9b8186": {
+    "cell": "G-F",
+    "itemId": "G-F:articles:articles-ec-1",
+    "target": "error"
+  },
+  "k3ce8d49": {
+    "cell": "G-F",
+    "itemId": "G-F:articles:articles-ec-2",
+    "target": "correct"
+  },
+  "k0e5a368": {
+    "cell": "G-F",
+    "itemId": "G-F:articles:articles-fib-1",
+    "target": "error"
+  }
+}

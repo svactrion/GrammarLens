@@ -1,0 +1,977 @@
+[
+  {
+    "id": "sfree:G-B:gerundVsInfinitive:gerund-inf-sw-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:gerundVsInfinitive:gerund-inf-sw-01",
+      "type": "sentence_writing",
+      "prompt": "You are telling a friend about a hobby you gave up some time ago — perhaps a sport, instrument, or creative activity.\nWrite one sentence using 'gave up' followed by a gerund, explaining what you stopped doing and briefly why."
+    },
+    "userAnswer": "I gave up to play the piano two years ago because I didn't have enough time to practise.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:gerundVsInfinitive:gerund-inf-sw-02",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:gerundVsInfinitive:gerund-inf-sw-02",
+      "type": "sentence_writing",
+      "prompt": "You are writing a personal statement for a university application and want to describe your future ambitions.\nUsing 'hope', 'plan', or 'intend' followed by an infinitive, write one sentence describing what you aim to achieve after graduating."
+    },
+    "userAnswer": "After graduating, I hope to work as an environmental engineer and develop sustainable solutions for urban water systems.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:gerundVsInfinitive:gerund-inf-ec-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:gerundVsInfinitive:gerund-inf-ec-01",
+      "type": "error_correction",
+      "prompt": "My doctor strongly advised me to avoid to eat processed food after my diagnosis.\nFind the one grammar mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "My doctor strongly advised me to avoid to eat processed food after my diagnosis.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:gerundVsInfinitive:gerund-inf-ec-02",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:gerundVsInfinitive:gerund-inf-ec-02",
+      "type": "error_correction",
+      "prompt": "She eventually admitted stealing she the money from the office drawer.\nFind the one grammar mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "She eventually admitted stealing the money from the office drawer.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:gerundVsInfinitive:gerund-inf-fib-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:gerundVsInfinitive:gerund-inf-fib-01",
+      "type": "fill_in_blank",
+      "prompt": "Choose the correct verb form — either a gerund or an infinitive — to complete each blank.\nFill in the blanks: (1) He agreed ___ (attend) the conference next month. (2) They considered ___ (move) to a smaller apartment to save money. (3) I can't stand ___ (wait) in long queues. (4) She seems ___ (enjoy) her new role at the company."
+    },
+    "userAnswer": "(1) He agreed attending the conference next month. (2) They considered moving to a smaller apartment to save money. (3) I can't stand waiting in long queues. (4) She seems to enjoy her new role at the company.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalVerbs:modal-sw-obligation",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalVerbs:modal-sw-obligation",
+      "type": "sentence_writing",
+      "prompt": "You are writing a message to a new employee who has just joined your team. They seem unsure about the company's rules.\nUsing 'must' or 'should', write one sentence explaining an important workplace rule or expectation they need to follow."
+    },
+    "userAnswer": "You must arrive on time for the daily team meeting, because everyone depends on each other's updates.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalVerbs:modal-sw-possibility",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalVerbs:modal-sw-possibility",
+      "type": "sentence_writing",
+      "prompt": "Your friend is deciding whether to apply for a job abroad, but they are nervous about making the wrong choice.\nUsing 'might' or 'could', write one sentence suggesting a possible benefit or outcome of taking the opportunity."
+    },
+    "userAnswer": "If you take this job, you might to meet many interesting people and improve your English.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalVerbs:modal-ec-could-past",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalVerbs:modal-ec-could-past",
+      "type": "error_correction",
+      "prompt": "When I was a child, I can speak French fluently, but I have forgotten most of it now.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "When I was a child, I could speak French fluently, but I have forgotten most of it now.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalVerbs:modal-ec-should-have",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalVerbs:modal-ec-should-have",
+      "type": "error_correction",
+      "prompt": "She missed the train this morning because she didn't leave early enough — she should left the house at least thirty minutes earlier.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "She missed the train this morning because she didn't leave early enough — she should leave the house at least thirty minutes earlier.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalVerbs:modal-fib-nuance",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalVerbs:modal-fib-nuance",
+      "type": "fill_in_blank",
+      "prompt": "Choose from: can, must, might, should to complete the sentences appropriately.\nFill in each blank with the correct modal verb: (1) You _____ always back up your files before updating your software — it is essential. (2) I'm not sure where Clara is; she _____ still be in the meeting. (3) After years of practice, he _____ play the piano beautifully. (4) If you feel unwell, you _____ consider seeing a doctor soon."
+    },
+    "userAnswer": "(1) You must always back up your files before updating your software — it is essential. (2) I'm not sure where Clara is; she might still be in the meeting. (3) After years of practice, he can play the piano beautifully. (4) If you feel unwell, you should consider seeing a doctor soon.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalPastForms:modal-past-sw-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalPastForms:modal-past-sw-1",
+      "type": "sentence_writing",
+      "prompt": "You are writing a paragraph about your childhood. You want to describe something you were able to do as a child that you cannot do now — for example, a skill, a sport, or a habit.\nWrite one sentence using 'could' to describe an ability you had in the past that you no longer have today."
+    },
+    "userAnswer": "When I was a child, I could to climb tall trees very quickly, but now I am afraid of heights.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalPastForms:modal-past-sw-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalPastForms:modal-past-sw-2",
+      "type": "sentence_writing",
+      "prompt": "You are telling a friend about a conversation you had yesterday with your manager. Your manager made a promise about your schedule next month.\nUsing 'would', write one sentence reporting what your manager said they would do, starting with 'She said that…' or 'He told me that…'."
+    },
+    "userAnswer": "She said that she would let me work from home two days a week next month.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalPastForms:modal-past-ec-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalPastForms:modal-past-ec-1",
+      "type": "error_correction",
+      "prompt": "When I was a teenager, I can speak French fluently, but I have forgotten most of it now.\nFind the grammatical mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "When I was a teenager, I could to speak French fluently, but I have forgotten most of it now.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalPastForms:modal-past-ec-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalPastForms:modal-past-ec-2",
+      "type": "error_correction",
+      "prompt": "The travel agent promised that the hotel will have a sea view and that breakfast will be included in the price.\nFind the grammatical mistake and rewrite the full corrected sentence, making the reported speech consistent with past tense context."
+    },
+    "userAnswer": "The travel agent promised that the hotel would have a sea view and that breakfast would be included in the price.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:modalPastForms:modal-past-fib-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:modalPastForms:modal-past-fib-1",
+      "type": "fill_in_blank",
+      "prompt": "Read the following passage about a job interview and fill in the blanks with the correct modal past form: 'will → would' or 'can → could'.\nDuring the interview, the recruiter asked if I ___ start immediately. I said I ___ begin the following Monday. She also wanted to know whether I ___ work weekends, and I explained that I ___ only do so occasionally."
+    },
+    "userAnswer": "During the interview, the recruiter asked if I can start immediately. I said I could begin the following Monday. She also wanted to know whether I could work weekends, and I explained that I could only do so occasionally.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:tenseSelection:tense-sw-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:tenseSelection:tense-sw-01",
+      "type": "sentence_writing",
+      "prompt": "You recently moved to a new city for work. A friend asks how things are going and you want to describe both your daily routine now and how your life was different before the move.\nWrite two connected sentences: one using the present simple to describe something you do regularly now, and one using the past simple or 'used to' to contrast it with your old habits."
+    },
+    "userAnswer": "Now I wake up at six every morning and take the train to my office downtown. Before I moved, I used to work from home and start my day at nine in my pajamas.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:tenseSelection:tense-sw-02",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:tenseSelection:tense-sw-02",
+      "type": "sentence_writing",
+      "prompt": "You are at a job interview and the interviewer asks: 'Where do you see yourself in five years?' You want to talk about your future career plans and something you will have achieved by then.\nWrite one or two sentences using 'will' or 'will have + past participle' to describe your future goals or what you expect to have accomplished by that time."
+    },
+    "userAnswer": "In five years I will be a team manager, and I think I will have finished my master's degree by that time. I hope that I will have lead several important projects too.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:tenseSelection:tense-ec-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:tenseSelection:tense-ec-01",
+      "type": "error_correction",
+      "prompt": "By the time the manager arrived at the office, the team already finished the quarterly report.\nFind the one tense mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "By the time the manager arrived at the office, the team had already finished the quarterly report.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:tenseSelection:tense-ec-02",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:tenseSelection:tense-ec-02",
+      "type": "error_correction",
+      "prompt": "She is working at that company since she graduated from university three years ago.\nFind the one tense mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "She is working at that company since she graduated from university three years ago.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:tenseSelection:tense-fib-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:tenseSelection:tense-fib-01",
+      "type": "fill_in_blank",
+      "prompt": "Read the sentence below and choose the correct tense forms to complete it naturally.\nFill in the blanks: 'While I ________ (walk) home yesterday, I suddenly realised that I ________ (leave) my laptop at the café, so I immediately turned around and ________ (go) back to collect it.'"
+    },
+    "userAnswer": "While I was walking home yesterday, I suddenly realised that I had left my laptop at the café, so I immediately turned around and went back to collect it.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:articles:art-sw-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:articles:art-sw-01",
+      "type": "sentence_writing",
+      "prompt": "You recently visited a city for the first time and were surprised by something specific you saw there — a famous landmark, a busy market, or an unusual building.\nWrite two sentences describing what you saw: use 'a' or 'an' the first time you mention the thing, and 'the' when you refer to it again."
+    },
+    "userAnswer": "When I visited Prague, I saw a old clock tower in the main square. The tower was covered with tourists taking photos.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:articles:art-sw-02",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:articles:art-sw-02",
+      "type": "sentence_writing",
+      "prompt": "You are giving advice to a friend who wants to start learning a musical instrument but is not sure whether to take lessons or teach themselves.\nWrite one or two sentences giving your recommendation, making sure to use 'the' before a specific noun and no article before a general or uncountable noun (e.g. music, advice, time)."
+    },
+    "userAnswer": "I recommend taking lessons at first, because the teacher can correct your mistakes early, and then you can practice on your own with music you love.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:articles:art-ec-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:articles:art-ec-01",
+      "type": "error_correction",
+      "prompt": "She was hoping to get an useful feedback from her professor before submitting the final draft.\nFind the one article mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "She was hoping to get an useful feedback from her professor before submitting the final draft.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:articles:art-ec-02",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:articles:art-ec-02",
+      "type": "error_correction",
+      "prompt": "After long journey across the country, they finally arrived at the small village where their grandparents lived.\nFind the one article mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "After a long journey across the country, they finally arrived at the small village where their grandparents lived.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-B:articles:art-fb-01",
+    "set": "S-synth",
+    "item": {
+      "id": "G-B:articles:art-fb-01",
+      "type": "fill_in_blank",
+      "prompt": "Fill in each blank with 'a', 'an', 'the', or '–' (to show no article is needed).\nLast summer, I took ___ online course in ___ photography. ___ course lasted six weeks and taught me ___ basics of lighting and composition."
+    },
+    "userAnswer": "Last summer, I took an online course in the photography. The course lasted six weeks and taught me the basics of lighting and composition.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:gerundVsInfinitive:sw-gerund-hobby",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:gerundVsInfinitive:sw-gerund-hobby",
+      "type": "sentence_writing",
+      "prompt": "You are chatting with a new classmate in an English course and telling them about activities you do in your free time.\nUsing 'enjoy' or 'avoid' followed by a gerund, write one sentence about something you like or dislike doing."
+    },
+    "userAnswer": "I really enjoy playing badminton with my friends on weekends.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:gerundVsInfinitive:sw-infinitive-goal",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:gerundVsInfinitive:sw-infinitive-goal",
+      "type": "sentence_writing",
+      "prompt": "In the IELTS Speaking Part 1 test, the examiner asks you about your plans for the next five years.\nUsing 'hope', 'plan', or 'decide' followed by an infinitive, write one sentence about a goal you have."
+    },
+    "userAnswer": "I hope finding a good job in an international company in the next five years.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:gerundVsInfinitive:ec-suggest-gerund",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:gerundVsInfinitive:ec-suggest-gerund",
+      "type": "error_correction",
+      "prompt": "My teacher suggested to join a study group before the exam.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "My teacher suggested joining a study group before the exam.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:gerundVsInfinitive:ec-managed-infinitive",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:gerundVsInfinitive:ec-managed-infinitive",
+      "type": "error_correction",
+      "prompt": "Despite the heavy traffic, we managed getting to the airport on time.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "Despite the heavy traffic, we managed getting to the airport on time.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:gerundVsInfinitive:fb-mixed-patterns",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:gerundVsInfinitive:fb-mixed-patterns",
+      "type": "fill_in_blank",
+      "prompt": "Complete the sentence with the correct form of the verbs in brackets: 'I can't afford ____ (buy) a new laptop, so I'm considering ____ (borrow) one from my brother.'"
+    },
+    "userAnswer": "I can't afford to buy a new laptop, so I'm considering borrowing one from my brother.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalVerbs:sw-deadline-email",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalVerbs:sw-deadline-email",
+      "type": "sentence_writing",
+      "prompt": "You are writing an email to a colleague about a project deadline that is approaching and the team has not finished the final report.\nUsing 'must' or 'should', write one sentence explaining what your team needs to do before the deadline."
+    },
+    "userAnswer": "We must to finish the final report before the deadline on Friday.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalVerbs:sw-weekend-possibility",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalVerbs:sw-weekend-possibility",
+      "type": "sentence_writing",
+      "prompt": "A friend asks what you are doing this weekend, but the weather forecast is bad and your plans are not certain.\nUsing 'might', write one sentence describing a possible plan and what it depends on."
+    },
+    "userAnswer": "I might go hiking in the mountains this weekend if the weather improves, but otherwise I will stay home and watch movies.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalVerbs:ec-must-past",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalVerbs:ec-must-past",
+      "type": "error_correction",
+      "prompt": "When I was a child, I must wear a uniform to school every day.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "When I was a child, I must to wear a uniform to school every day.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalVerbs:ec-should-advice",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalVerbs:ec-should-advice",
+      "type": "error_correction",
+      "prompt": "You should to see a doctor if the headache continues for more than three days.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "You should see a doctor if the headache continues for more than three days.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalVerbs:fib-modal-nuance",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalVerbs:fib-modal-nuance",
+      "type": "fill_in_blank",
+      "prompt": "Choose from: can, could, must, might, should.\nComplete: 'The lights are on, so someone ____ be at home, but I'm not sure — they ____ just have forgotten to switch them off.'"
+    },
+    "userAnswer": "The lights are on, so someone must be at home, but I'm not sure — they must just have forgotten to switch them off.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalPastForms:sw-reported-promise",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalPastForms:sw-reported-promise",
+      "type": "sentence_writing",
+      "prompt": "Last week your manager promised that the office would get new laptops. You are now telling a colleague what she said.\nUsing 'would', write one sentence reporting what your manager promised."
+    },
+    "userAnswer": "My manager promised that the office would get new laptops by the end of the month.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalPastForms:sw-childhood-ability",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalPastForms:sw-childhood-ability",
+      "type": "sentence_writing",
+      "prompt": "In an IELTS Speaking Part 2 answer, you are describing a skill you had as a child that you can no longer do as well.\nUsing 'could', write one sentence about something you were able to do when you were younger."
+    },
+    "userAnswer": "When I was a child, I can run very fast and nobody in my class could catch me.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalPastForms:ec-would-reported",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalPastForms:ec-would-reported",
+      "type": "error_correction",
+      "prompt": "My teacher told us that she will return our essays the following Monday.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "My teacher told us that she would return our essays the following Monday.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalPastForms:ec-could-past-ability",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalPastForms:ec-could-past-ability",
+      "type": "error_correction",
+      "prompt": "When I was ten, I can swim across the lake without any help.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "When I was ten, I could swim across the lake without any help.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:modalPastForms:fib-reported-modals",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:modalPastForms:fib-reported-modals",
+      "type": "fill_in_blank",
+      "prompt": "Last year, Maria told her friend: \"I will visit you soon, and I can bring the books.\"\nComplete the reported sentence: Maria told her friend that she ____ visit her soon and that she ____ bring the books."
+    },
+    "userAnswer": "Maria told her friend that she would visit her soon and that she could bring the books.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:tenseSelection:sw-present-perfect-experience",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:tenseSelection:sw-present-perfect-experience",
+      "type": "sentence_writing",
+      "prompt": "You are in an IELTS Speaking Part 1 interview and the examiner asks whether you have any experience of travelling abroad.\nWrite one sentence using the present perfect to describe a country you have visited, without giving a specific time."
+    },
+    "userAnswer": "I have visited Japan last year and I really enjoyed the food and the culture.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:tenseSelection:sw-past-continuous-interrupted",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:tenseSelection:sw-past-continuous-interrupted",
+      "type": "sentence_writing",
+      "prompt": "You are telling a friend about a strange event that happened yesterday evening while you were doing something at home.\nWrite one sentence using the past continuous and the past simple to show that one action interrupted another."
+    },
+    "userAnswer": "I was cooking dinner yesterday evening when the lights suddenly went out.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:tenseSelection:ec-since-present-simple",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:tenseSelection:ec-since-present-simple",
+      "type": "error_correction",
+      "prompt": "I live in this city since 2018, so I know most of the local shops and restaurants.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "I live in this city since 2018, so I know most of the local shops and restaurants.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:tenseSelection:ec-future-time-clause",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:tenseSelection:ec-future-time-clause",
+      "type": "error_correction",
+      "prompt": "I will send you the report as soon as I will finish checking the final figures.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "I will send you the report as soon as I finish checking the final figures.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:tenseSelection:fib-mixed-tenses-library",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:tenseSelection:fib-mixed-tenses-library",
+      "type": "fill_in_blank",
+      "prompt": "Complete the sentence with the correct form of the verbs in brackets.\nBy the time we arrived at the library, it (1) ____ (close), so we (2) ____ (decide) to study at a café instead."
+    },
+    "userAnswer": "By the time we arrived at the library, it closed, so we decided to study at a café instead.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:articles:sw-article-job-interview",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:articles:sw-article-job-interview",
+      "type": "sentence_writing",
+      "prompt": "You are telling a friend about a job interview you had yesterday at a software company, and you want to mention the interviewer and the office building.\nWrite one or two sentences describing your interview, using 'a' or 'an' to introduce something new and 'the' when you mention it again."
+    },
+    "userAnswer": "Yesterday I had an interview at a software company, and the interviewer was very friendly, although the office building was hard to find.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:articles:sw-article-zero-general",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:articles:sw-article-zero-general",
+      "type": "sentence_writing",
+      "prompt": "In IELTS Writing Task 2, you are giving your opinion on whether governments should invest more in public transport or in roads.\nWrite one sentence making a general statement about a topic such as education, technology or pollution, using no article before the plural or uncountable noun."
+    },
+    "userAnswer": "I believe that the education is the most important factor for the development of a country, so governments should invest more in it.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:articles:ec-article-advice",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:articles:ec-article-advice",
+      "type": "error_correction",
+      "prompt": "My teacher gave me an advice about how to improve my writing score.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "My teacher gave me advice about how to improve my writing score.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:articles:ec-article-the-sun-university",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:articles:ec-article-the-sun-university",
+      "type": "error_correction",
+      "prompt": "After finishing the high school, she decided to study medicine at university in Canada.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "After finishing the high school, she decided to study medicine at the university in Canada.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-D:articles:fib-article-city-trip",
+    "set": "S-synth",
+    "item": {
+      "id": "G-D:articles:fib-article-city-trip",
+      "type": "fill_in_blank",
+      "prompt": "Complete the sentences about a trip. Write a, an, the, or Ø (for no article).\nFill in the blanks: We stayed in ___ hotel near ___ airport, and ___ owner gave us ___ useful map of the city."
+    },
+    "userAnswer": "We stayed in a hotel near the airport, and the owner gave us a useful map of the city.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:gerundVsInfinitive:gi-sw-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:gerundVsInfinitive:gi-sw-1",
+      "type": "sentence_writing",
+      "prompt": "You are writing an email to a language school friend about your hobbies and plans for the summer holiday.\nWrite one sentence about something you enjoy doing and one sentence about something you want to do this summer, using a gerund or an infinitive correctly in each."
+    },
+    "userAnswer": "I enjoy to play football with my friends on weekends, and this summer I want to visit my grandparents in the countryside.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:gerundVsInfinitive:gi-sw-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:gerundVsInfinitive:gi-sw-2",
+      "type": "sentence_writing",
+      "prompt": "You are chatting with a colleague during a lunch break about your job at a small marketing firm and your career goals.\nWrite one sentence about a task you avoid or regret doing at work, and one sentence about a goal you hope to achieve next year, using the correct verb form after each verb."
+    },
+    "userAnswer": "At work I avoid answering emails late in the evening, and next year I hope to become the head of our creative team.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:gerundVsInfinitive:gi-ec-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:gerundVsInfinitive:gi-ec-1",
+      "type": "error_correction",
+      "prompt": "My manager suggested to take a short break before the presentation, but I decided continuing working on the slides instead.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "My manager suggested to take a short break before the presentation, but I decided to continue working on the slides instead.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:gerundVsInfinitive:gi-ec-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:gerundVsInfinitive:gi-ec-2",
+      "type": "error_correction",
+      "prompt": "After years of living in the city, she has finally decided moving to the countryside to enjoy the quiet and fresh air.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "After years of living in the city, she has finally decided to move to the countryside to enjoy the quiet and fresh air.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:gerundVsInfinitive:gi-fb-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:gerundVsInfinitive:gi-fb-1",
+      "type": "fill_in_blank",
+      "prompt": "Complete each gap with the correct form (gerund or to-infinitive) of the verb in brackets: 1) I always look forward to ______ (hear) from my family. 2) We managed ______ (finish) the report before the deadline. 3) Would you mind ______ (close) the window? 4) They promised ______ (call) us tonight."
+    },
+    "userAnswer": "1) I always look forward to hear from my family. 2) We managed to finish the report before the deadline. 3) Would you mind closing the window? 4) They promised to call us tonight.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalVerbs:modal-sw-deadline",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalVerbs:modal-sw-deadline",
+      "type": "sentence_writing",
+      "prompt": "You are writing an email to a colleague about a report that is due on Friday, and you have not started it yet.\nUsing 'must' or 'should', write one sentence explaining what you need to do before Friday."
+    },
+    "userAnswer": "I must start the report tomorrow morning so that I can finish it before Friday.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalVerbs:modal-sw-holiday",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalVerbs:modal-sw-holiday",
+      "type": "sentence_writing",
+      "prompt": "A friend asks you for advice about visiting your city next month. You are not sure whether the museum will be open on Mondays.\nWrite one sentence using 'might' to say what your friend could possibly find on a Monday, and one sentence using 'could' to suggest an alternative day."
+    },
+    "userAnswer": "The museum might be closed on Monday, so you might to find it shut. You could visit it on Tuesday instead.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalVerbs:modal-ec-ability",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalVerbs:modal-ec-ability",
+      "type": "error_correction",
+      "prompt": "Last year I could to speak three languages fluently after living abroad for two years.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "Last year I could speak three languages fluently after living abroad for two years.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalVerbs:modal-ec-possibility",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalVerbs:modal-ec-possibility",
+      "type": "error_correction",
+      "prompt": "The train is very late, so we must miss the start of the meeting, but we are not certain.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "The train is very late, so we must miss the start of the meeting, but we are not certain.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalVerbs:modal-fib-nuance",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalVerbs:modal-fib-nuance",
+      "type": "fill_in_blank",
+      "prompt": "Complete each gap with can, could, must, should, or might: A: The printer isn't working. B: It ___ be out of paper, but I'm not sure. Check the tray, you ___ find some. We ___ call the technician if it still doesn't work. Honestly, you ___ have reported it yesterday."
+    },
+    "userAnswer": "A: The printer isn't working. B: It might be out of paper, but I'm not sure. Check the tray, you could find some. We should call the technician if it still doesn't work. Honestly, you should have reported it yesterday.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalPastForms:mpf-sw-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalPastForms:mpf-sw-1",
+      "type": "sentence_writing",
+      "prompt": "You are telling a friend about the job interview you had last spring. At the time, you were nervous, and you were told the result would come within two weeks.\nUsing 'would' in reported speech, write one sentence reporting what the interviewer told you about when you would hear the result."
+    },
+    "userAnswer": "The interviewer told me that I will hear the result within two weeks.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalPastForms:mpf-sw-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalPastForms:mpf-sw-2",
+      "type": "sentence_writing",
+      "prompt": "You are describing your first year at university to a classmate. Back then, you struggled with the workload but managed to improve your study habits quickly.\nUsing 'could', write one sentence describing something you were able to do after a few months that you couldn't do at the start."
+    },
+    "userAnswer": "After a few months, I could finish my assignments on time, which I couldn't do at the start.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalPastForms:mpf-ec-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalPastForms:mpf-ec-1",
+      "type": "error_correction",
+      "prompt": "My manager said that she will send the revised report to the whole team by Friday.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "My manager said that she will send the revised report to the whole team by Friday.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalPastForms:mpf-ec-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalPastForms:mpf-ec-2",
+      "type": "error_correction",
+      "prompt": "When I was a child, I can swim across the lake without stopping, which surprised my parents.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "When I was a child, I could swim across the lake without stopping, which surprised my parents.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:modalPastForms:mpf-fb-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:modalPastForms:mpf-fb-1",
+      "type": "fill_in_blank",
+      "prompt": "Complete the sentence with the correct past modal form of 'will' or 'can': He promised that he ____ help us move house, but in the end he was too busy."
+    },
+    "userAnswer": "He promised that he will help us move house, but in the end he was too busy.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:tenseSelection:tense-sw-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:tenseSelection:tense-sw-1",
+      "type": "sentence_writing",
+      "prompt": "You are writing an email to a former manager, Mr. Harris, asking for a reference. You started your current job two years ago and you have been working on a large logistics project since then.\nWrite one sentence using the present perfect continuous to describe how long you have been working on this project."
+    },
+    "userAnswer": "I have been working on a large logistics project for the past two years, and I have learned a great deal from it.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:tenseSelection:tense-sw-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:tenseSelection:tense-sw-2",
+      "type": "sentence_writing",
+      "prompt": "You are giving a short talk to new students at your language school about your first job. You worked as a receptionist at a hotel in your hometown for three years before moving abroad.\nWrite one sentence using the past simple to describe what your job at the hotel involved."
+    },
+    "userAnswer": "When I was working as a receptionist at the hotel, I greeted guests, answered phone calls and I managed bookings every day.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:tenseSelection:tense-ec-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:tenseSelection:tense-ec-1",
+      "type": "error_correction",
+      "prompt": "I have visited the museum last Sunday with my cousin, and we spent almost three hours looking at the paintings.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "I visited the museum last Sunday with my cousin, and we spent almost three hours looking at the paintings.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:tenseSelection:tense-ec-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:tenseSelection:tense-ec-2",
+      "type": "error_correction",
+      "prompt": "By the time the interviewer arrives, I will already be finishing my presentation and feeling much calmer.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "By the time the interviewer arrives, I will already have finished my presentation and will be feeling much calmer.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:tenseSelection:tense-fb-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:tenseSelection:tense-fb-1",
+      "type": "fill_in_blank",
+      "prompt": "Complete the sentences with the correct form of the verbs in brackets: 'When I called the office yesterday, the manager ____ (leave) early, so I ____ (send) him an email instead, and he ____ (reply) this morning.'"
+    },
+    "userAnswer": "When I called the office yesterday, the manager had left early, so I sent him an email instead, and he replied this morning.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:articles:articles-sw-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:articles:articles-sw-1",
+      "type": "sentence_writing",
+      "prompt": "You are writing a message to a friend who is planning a trip to your city for the first time. You want to recommend a famous landmark and a local café you enjoy.\nWrite two sentences recommending one landmark and one café, using 'the' correctly where needed and no article where none is required."
+    },
+    "userAnswer": "You should definitely visit Eiffel Tower, and you must try Café Lumière, which serves the best coffee in the city.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:articles:articles-sw-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:articles:articles-sw-2",
+      "type": "sentence_writing",
+      "prompt": "You are describing your job to a new colleague during a team lunch. You work as a nurse at a hospital and you have been there for five years.\nWrite one sentence saying what your job is and where you work, using 'a' or 'an' with your job title and 'the' with the hospital."
+    },
+    "userAnswer": "I work as a nurse at the hospital in the city centre, and I have been there for five years.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:articles:articles-ec-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:articles:articles-ec-1",
+      "type": "error_correction",
+      "prompt": "Last summer I visited the Italy with my cousin, and we ate the best pizza I have ever tasted.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "Last summer I visited the Italy with my cousin, and we ate the best pizza I have ever tasted.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:articles:articles-ec-2",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:articles:articles-ec-2",
+      "type": "error_correction",
+      "prompt": "Students in a university often find it difficult to balance a part-time job with the studies.\nFind the mistake and rewrite the full corrected sentence."
+    },
+    "userAnswer": "Students at a university often find it difficult to balance a part-time job with their studies.",
+    "truth": true,
+    "kind": "sfree:correct",
+    "correctAnswer": ""
+  },
+  {
+    "id": "sfree:G-F:articles:articles-fib-1",
+    "set": "S-synth",
+    "item": {
+      "id": "G-F:articles:articles-fib-1",
+      "type": "fill_in_blank",
+      "prompt": "Fill each blank with a, an, the, or leave it empty (–): ___ honesty is ___ quality that employers value most in ___ employee."
+    },
+    "userAnswer": "The honesty is a quality that employers value most in an employee.",
+    "truth": false,
+    "kind": "sfree:error",
+    "correctAnswer": ""
+  }
+]
