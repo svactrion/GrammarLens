@@ -10,7 +10,7 @@
 | 1.1.0 | Next. Main work: shared Daily Test (one generated set per date for all users; `docs/1.1.0-shared-daily-test.md`). Side work, client-side only, no API cost: monthly themes, trail designs, logo on the launch screen, possible new hero/avatar additions. Side work does not hold back the release; anything not ready moves to the next version, and each item is defined before any code is written (scope decided 2026-09-26) | **Skipped (Ahmet, 2026-10-07): never submitted; everything in it ships in 1.2.0.** *(Kept as written below.)* **Release candidate (2026-10-04): what ships, what waits and the known flaws are in "1.1.0 — release candidate" below.** Screenshots approved and the iPad simulator check done (Ahmet, 2026-10-04); the other release items are open. Not submitted. **Development done (Ahmet, 2026-10-03); release preparation remains** (section "1.1.0 side tracks", "Development of 1.1.0 is done"). Shared Daily Test: proxy side (cron generation + read route) deployed 2026-09-26; sets for 26–29 September published; highest cron CPU 8.73 ms of the Free plan's 10 ms; proxy commits merged into `main`; 1.0.0's legacy route verified on a device (2026-09-27). Content quality: 4 of 10 reviewed questions defective, so a quality step is planned before any client reads the sets (prompt v2, a separate check call before publishing, `acceptedAnswers`; decisions 2026-09-27, `docs/1.1.0-shared-daily-test-quality.md`). Pure parts built on `1.1.0` (P4–P6); measurement E run 2026-09-28 ($2.85); live combination chosen 2026-09-28: prompt v2, generator `claude-sonnet-5`, checker `claude-opus-5-5`, only the failing question regenerated (§14–15). E found `error_correction` questions without their sentence; the shared path now rejects them, and the 1.0.0 legacy route drops them from its response: deployed 2026-09-29 (D-L, version `45cf4ef3`), verified on a device; `1.1.0` merged into `main` (`52a6d09`). **Path A (2026-09-29):** 1.1.0 ships with prompt v2 and a Sonnet generator, without the check call; the check call and repairs (P7a–c) move to after 1.1.0. Cron switched to prompt v2 with one generator setting, timeout 150 s: built, not deployed. Generator comparison run 2026-09-29 ($0.385): all three variants passed the gate 3 of 3; the owner chose `claude-sonnet-5-5` at `low` effort (≈ $0.019 per set, 11 s; ≈ $0.57 a month). Found: some v2 `fill_in_blank` questions have no blank (3 of 8 with `claude-sonnet-5`, 0 of 8 with the chosen generator); the shared gate now rejects them. Cron on prompt v2 + `claude-sonnet-5-5` `low` deployed (version `7e91abd3`), `main` at the deployed tree (`d49cfb4`). **Client C1 built 2026-09-30 on `1.1.0`, verified on a device the same day** (after a completion one `GET /v1/shared-daily-test/2026-10-01`, no `POST /v1/generate-daily-test`, Monthly Climb unaffected): the Daily Test reads `GET /v1/shared-daily-test/{local date}` (cache → shared → fallback, the fallback for now the bundled day-0 questions until C2's pool), never the legacy per-device route; tomorrow's shared set is read after a completion; `acceptedAnswers` graded as correct; `set_source` `shared` / `fallback` and `set_date` on `daily_test_completed` (`set_date` still to be registered as a custom dimension: 1.1.0 release checklist) *(2026-10-09: registered 2026-10-04 (owner; confirmed in the Firebase console 2026-10-09))*. **Rule from C1 on:** `1.1.0` now has `lib/` changes that must not reach `main` before release, so proxy commits go to `main` by cherry-pick, never by merging `1.1.0`. **C2 infrastructure and C3 built 2026-09-30:** the fallback is a bundled pool asset (`assets/daily_test_fallback/pool.json`, rotated by date, day-0 questions when empty or broken), filled by the owner from 7 live v2 sets with `scripts/fallback_pool.sh` (read-only KV export, the proxy's own gate, a review file); unfinished Daily Test sets older than 7 days are deleted at launch; the unreachable "Today's limit reached" screen is removed. The pool ships empty until the owner's export. *(2026-10-04: filled — 7 sets, 10 owner corrections, approved by Ahmet.)* Next: the owner's 7-set export and review, the 1.1.0 release checklist, release. Planned (not a fact yet): 1.1.0 is the first public release. Side work: launch screen defined 2026-09-26 (to be built after the `main` merge), not started; the other items not defined, not started |
 | 1.2.0 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; the paywall with trial eligibility; multiline answers. Carries all of 1.1.0 | **Never submitted (owner, 2026-10-12): replaced by 1.3.0 as the first update; everything in it ships in 1.3.0.** *(Kept as written:)* Version `1.2.0+5` (2026-10-07); device checks passed (2026-10-07); TestFlight build 5 uploaded (the trial check ran on TestFlight 1.2.0 (5), 2026-10-09). Checklist: "1.2.0 pre-release checklist" below; its open items carry over to 1.3.0 |
 | 1.3.0 | 1.2.0's redesign (all of it, with all of 1.1.0) plus the question screen work: the topic tag, the topic hint slider (Daily Test and Practice), multi-blank answer boxes with the "—" no-article button and tap-a-blank, and Skip discarding typed text (section "Question screen improvements") | Version `1.3.0+6` (2026-10-12); `question-screen` merged into `main`; device checks passed on the branch (2026-10-12). **The first public release (owner, 2026-10-16): build 6 is in App Store review; 1.0.0 will never be released.** *(Superseded, kept as written: "TestFlight build 6 not yet built or uploaded (owner). Goes to review as the first update once 1.0.0 is approved (plan 2026-10-12, replaces 2026-10-07).")* Proxy rule for the multi-blank boxes deployed (recorded 2026-10-16). Checklist: "1.3.0 release checklist" below |
-| 1.4.0 | Seven interface languages (ja, ko, es, pt-BR, tr, ar with RTL, de; English default and fallback; AI translation, no native review); questions and AI feedback stay English; one small widget (avatar, Monthly Climb step, today's Daily Test); language-neutral proxy prompts with a practice model measurement; the audit fixes and the hint card fix. P14 is deployed server side right after 1.3.0 is live. Plan: [`docs/1.4.0-plan.md`](1.4.0-plan.md) | **Planned, not started** (scope decided by the owner, 2026-10-23) |
+| 1.4.0 | Seven interface languages (ja, ko, es, pt-BR, tr, ar with RTL, de; English default and fallback; AI translation, no native review); questions and AI feedback stay English; one small widget (avatar, Monthly Climb step, today's Daily Test); language-neutral proxy prompts with a practice model measurement; the audit fixes and the hint card fix; partial answers on multi-blank questions with per-blank results (B8, replaces Q3) and AI feedback formatted for reading (B9; both added 2026-10-31). P14 is deployed server side right after 1.3.0 is live. Plan: [`docs/1.4.0-plan.md`](1.4.0-plan.md) | **In progress** (scope decided by the owner, 2026-10-23; B1, B8 and B9 built 2026-10-23/31, device checks open; the rest planned, not started) |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
 redesign and other later work go to the next releases. Older entries below
@@ -343,6 +343,27 @@ into the next build. Version bump and build: owner, not started.
     IPA, debug text search in `App.framework/App`), added to
     `docs/development.md`; not run yet (no IPA).
   - Verified: `flutter analyze` clean, full test suite passed (2066).
+- **1.4.0 B8 (2026-10-31; `1.4.0-plan.md` D8; owner decisions
+  2026-10-31, replacing Q3 of 2026-10-12):**
+  - **Partial answers:** on a multi-blank question Submit/Next is enabled
+    once at least one box is typed or "—" (was: every box). Empty boxes go
+    to scoring as their `____`; an answer that still holds a blank is never
+    scored correct (client guard). Zero boxes stays disabled.
+  - **Per-blank "You wrote":** error entries store the boxes
+    (`user_blanks`, schema v24, null for old rows); the Results and Review
+    cards show one row per blank with the blank's colour, "—" for
+    no-article and "Left blank" for an empty box, and colour the prompt's
+    blanks to match. Single-box questions unchanged.
+  - Verified: `flutter analyze` clean, full test suite passed (2083).
+    **Not checked on a device.**
+- **1.4.0 B9 (2026-10-31; `1.4.0-plan.md` D9):**
+  - **AI feedback formatted for reading,** client side: paragraphs per
+    sentence from three sentences, the closing sentence under a thin rule
+    from four, quoted examples at weight 700. One pure formatter and one
+    widget at two sites; stored plain-text feedback unchanged. A stopgap
+    until the scorer returns structured per-blank feedback.
+  - Verified: `flutter analyze` clean, full test suite passed (2112).
+    **Not checked on a device.**
     **Not checked on a device.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
@@ -512,8 +533,10 @@ Branched from `1.2.0`; **not in 1.2.0**; to be merged and shipped as
 - **Multi-blank answer boxes** (Practice `fill_in_blank`, 2–4 blanks): one
   colour-linked box per blank; on articles a "—" (no article) button and a
   two-part hint ("Type an article…" … "no article →"); Next only when every
-  box is filled or "—"; the completed sentence goes to scoring. A tap on a
-  blank opens its box (also single blanks, Practice and Daily Test).
+  box is filled or "—" *(superseded 2026-10-31: Next/Submit once at least
+  one box is filled, 1.4.0 B8)*; the completed sentence goes to scoring. A
+  tap on a blank opens its box (also single blanks, Practice and Daily
+  Test).
   Device checks passed, through Settings → Debug → "Multi-blank practice"
   (debug and profile builds only).
 - **Fixes found on the way:** the "Your answer" row no longer grows 44 →

@@ -12707,3 +12707,103 @@ No proxy change, no deploy (1.3.0 is in review).
   `flutter analyze` clean; 2066 tests passed.
 - **[Open]** Device check (owner): the permission copy, the Privacy
   Policy / Terms rows, #6 and #7.
+
+## 2026-10-31 (1.4.0 B8: partial multi-blank answers and per-blank "You wrote"; awaiting the device check)
+
+Plan: `docs/1.4.0-plan.md` D8 (Batch 0 report approved the same day with
+every recommended option). No proxy change, no deploy (1.3.0 is in review).
+
+- **[Product — owner]** On a multi-blank question Submit/Next is enabled
+  once **at least one** box is typed or set to "—"; this replaces Q3
+  (2026-10-12, "every box"). An empty box is an answer in itself: it goes
+  to scoring as its `____`, so the scorer and the error profile see which
+  blanks the learner did not know. "You wrote" shows the learner's answers
+  per blank, not the prompt with the answers injected.
+- **[Engineering] Batch 0 findings, cited in the plan:** `isComplete` has
+  two readers (the footers' `primaryEnabled` on Practice and the Daily
+  Test); every skip test is "trimmed answer is empty", so a partial answer
+  is answered everywhere (scorer, practiced count, error saving, the card's
+  own skipped state, analytics); the proxy accepts the string unchanged and
+  only an *empty* answer is special-cased in the prompt; the Daily Test
+  matcher gives `fallback` for a leftover blank and every Daily Test source
+  has one blank anyway.
+- **[Engineering]** `AnswerDrafts.isComplete`: `any` instead of `every`;
+  `blankAnswers(id)` public. `ItemFeedback.fromJson(hasUnfilledBlank:)`,
+  set by `scoreAnswers` from `blankPattern`: `isCorrect` forced false, the
+  error type kept. `BlankAnswer` JSON (`{"text": …}` / `{"noArticle":
+  true}`); `ErrorEntry.userBlanks`; `error_entries.user_blanks TEXT`,
+  schema **v24** (the step creates the table first for a database without
+  it, then `_addColumnIfMissing`). `PracticeScreen._blankAnswers()` at
+  Submit → `ResultsScreen.blankAnswers` → the error entry and the card.
+  `MistakeBreakdown.blankAnswers`: `_BlankRows` (3 pt bar in
+  `blankColors(brightness)[i % 4]`, "—", "Left blank" muted, VoiceOver
+  "Blank n: …") inside the "YOU WROTE" box; the prompt through
+  `colouredBlanks`, the question card's span builder moved to
+  `blank_colors.dart`. The weak-spot detail passes `mistake.userBlanks`.
+- **[Tests]** `flutter analyze` clean; **2083 passed** (was 2066).
+  `multi_blank_test`: the Q3 test replaced by the any-box rule and the
+  regression (a 4-blank item with 3 boxes filled is submittable; the wire
+  format keeps exactly one `____`); per-blank saving, a partial answer's
+  empty box saved empty, a single-box answer saving null.
+  `claude_service_test`: the guard (two items, with and without an error
+  type) and an answer without a blank keeping the verdict.
+  `blank_assembly_test`, `error_entry_test`: JSON round trips, null and
+  malformed input. `storage_service_migration_test`: v23 → v24 (old row
+  null, new row round-trips, replay, fresh install).
+  `mistake_breakdown_test`: rows in both themes, colours matching the
+  prompt's blanks, the muted "Left blank", VoiceOver labels, old rows and
+  single entries unchanged. Three schema-version assertions bumped to 24.
+- **[Not checked]** On the owner's iPhone: a partial submit end to end,
+  the rows and the coloured prompt in both themes on Results and in Review.
+
+## 2026-10-31 (1.4.0 B9: AI feedback formatted for reading; awaiting the device check)
+
+Plan: `docs/1.4.0-plan.md` D9. Client only: no proxy change, no prompt
+change, no deploy.
+
+- **[Product — owner]** Long practice feedback (one 10–14 line paragraph
+  today) is split into paragraphs, the closing sentence set apart, and
+  quoted examples emphasised. A stopgap until the scorer returns
+  structured per-blank feedback with the D3/D4 measurement: one pure
+  function over the string and one widget, easy to delete; stored
+  plain-text feedback keeps rendering.
+- **[Engineering]** `lib/utils/feedback_format.dart`: `splitSentences`
+  (`.`/`!`/`?` outside parentheses, optional closing quotes or brackets,
+  whitespace, then a capital or an opening quote; not after e.g., i.e.,
+  etc., vs.), `emphasizeQuotes` (single and double quotes; opens at the
+  start or after whitespace, a bracket, a double quote or a dash; closes at
+  the first matching quote followed by the end, whitespace or punctuation;
+  same sentence, at most 80 characters; an apostrophe after a letter never
+  opens), `formatFeedback` (one paragraph per sentence from three
+  sentences; `hasClosing` from four). `lib/widgets/feedback_text.dart`:
+  paragraphs 10 pt apart, a 1 pt `outlineVariant` rule above the closing
+  paragraph, emphasis `withWeight(FontWeight.w700)` in the surrounding
+  colour. Used at the two sites: `MistakeBreakdown`'s explanation and the
+  weak-spot detail's "Saved feedback" panel.
+- **[Engineering] Sentence-count edge on existing texts:** every bundled
+  explanation and comment (the fallback pool's 7 sets, day 0, the
+  screenshot seed; 137 texts) is one or two sentences (131 / 6), so none
+  splits and none gets the rule; no text changes through the formatter.
+  The one composed text that reaches three is the Daily Test's
+  keyboard-variant card (the two-sentence note plus the question's
+  explanation): three paragraphs, no rule. Its test now checks the three
+  pieces in order instead of one joined string.
+- **[Tests]** `flutter analyze` clean; **2112 passed**.
+  `feedback_format_test`: the real sample (four paragraphs, the eleven
+  emphasised spans, the text intact), the split rules (parentheses, a mark
+  before a closing quote, an opening quote starting a sentence, the four
+  abbreviations, a lowercase word after a mark, blank text), the paragraph
+  counts (one, two, three sentences, empty), the emphasis cases ("I don't
+  think it's 'fine'." → only 'fine'; "The learners' books were 'lost'." →
+  only 'lost'; "He said 'it's okay' here." → the phrase; an unbalanced
+  opening quote plain; a double-quoted span; curly quotes; the first
+  closing-shaped quote closes; over 80 characters plain; spans put back
+  together). `feedback_text_test`: four paragraphs and the rule's place,
+  three without the rule, one paragraph findable as its text, weight 700
+  in the body colour in both themes, `MistakeBreakdown` using it.
+  `weak_spot_detail_screen_test`: the panel and the card each with the
+  rule. `daily_test_result_screen_test`: the keyboard-variant card's three
+  pieces.
+- **[Not checked]** On the owner's iPhone: a long practice feedback on
+  Results and in Review, both themes; the rule and the emphasis at the
+  Large text size.

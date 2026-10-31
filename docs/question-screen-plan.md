@@ -85,7 +85,9 @@ original decision and mark what replaced it. In short:
   stop for approval. If it cannot be done cleanly, fall back to shorter
   cards that fit above the keyboard.
 - **Q3 — Next on multi-blank items:** enabled only when every box is typed
-  or set to "—". Skip keeps its current behaviour.
+  or set to "—". Skip keeps its current behaviour. *(Replaced 2026-10-31,
+  1.4.0 B8: enabled once at least one box is typed or "—"; empty boxes go
+  to scoring as their blank. [`1.4.0-plan.md`](1.4.0-plan.md) D8.)*
 - **Q4 — proxy rule:** built and tested in B3 as its own commit, **not
   deployed**. It deploys only together with the app release that ships
   multi-blank boxes.
