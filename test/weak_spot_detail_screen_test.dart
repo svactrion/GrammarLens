@@ -11,6 +11,7 @@ import 'package:grammar_lens/services/claude_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/feedback_text.dart';
 
 /// The bottom action's own visual states (this batch's UI spec) — separate
 /// from practice_launch_free_tier_test.dart, which proves the *gating
@@ -190,6 +191,36 @@ void main() {
 
       expect(find.text(comment), findsWidgets);
       expect(find.textContaining("You've had trouble"), findsNothing);
+    });
+
+    testWidgets(
+        'long feedback is laid out by FeedbackText in the "Saved feedback" '
+        'panel and in the mistake card (1.4.0 B9)', (tester) async {
+      const long = "First, 'a' is wrong. Second, 'b' is wrong. Third, 'c' "
+          'is wrong. In short, learn the pattern.';
+      await _pumpSpot(
+        tester,
+        topic: _modalPastForms,
+        spot: dailyTestSpot(),
+        mistakes: [
+          ErrorEntry(
+            topicId: 'modalPastForms',
+            errorType: 'modalPastForms',
+            timestamp: DateTime(2026, 9, 24),
+            userAnswer: 'will',
+            correctedAnswer: 'would',
+            explanation: long,
+            source: ErrorSource.dailyTest,
+          ),
+        ],
+      );
+
+      // The panel and the card: two FeedbackTexts, each with the closing
+      // rule above its fourth paragraph.
+      expect(find.byType(FeedbackText), findsNWidgets(2));
+      expect(find.byKey(FeedbackText.closingRuleKey), findsNWidgets(2));
+      expect(find.byKey(FeedbackText.paragraphKey(3)), findsNWidgets(2));
+      expect(find.text(long), findsNothing);
     });
   });
 

@@ -376,12 +376,17 @@ void main() {
         answersOverride: {'k1': 'cookıng'},
       );
 
+      // The note's two sentences and the explanation make three, so
+      // FeedbackText (1.4.0 B9) lays them out as three paragraphs
+      // (Text.rich: the text is the span's, not `data`), in that order.
       final shown = tester
           .widgetList<Text>(find.byType(Text, skipOffstage: false))
-          .map((t) => t.data ?? '')
-          .firstWhere((d) => d.contains('keyboard character'));
-      expect(shown, contains('Not a grammar mistake.'));
-      expect(shown, endsWith("After 'enjoy', the verb takes -ing."));
+          .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
+          .toList();
+      final note = shown.indexWhere((d) => d.contains('keyboard character'));
+      expect(note, isNonNegative);
+      expect(shown[note + 1], 'Not a grammar mistake.');
+      expect(shown[note + 2], "After 'enjoy', the verb takes -ing.");
     });
 
     testWidgets(

@@ -12,6 +12,7 @@ import '../utils/text_format.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/section_title.dart';
+import '../widgets/feedback_text.dart';
 import '../widgets/mistake_breakdown.dart';
 import 'practice_launch.dart';
 import 'premium_screen.dart';
@@ -263,7 +264,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                         ],
                       ),
                       const SizedBox(height: 9),
-                      Text(
+                      FeedbackText(
                         recap ??
                             (ruleRepeatsTopic
                                 ? 'You\'ve had trouble with $ruleTitle. '

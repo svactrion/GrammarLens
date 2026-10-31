@@ -4,6 +4,7 @@ import '../theme.dart';
 import '../utils/blank_assembly.dart';
 import '../utils/blanks.dart';
 import 'blank_colors.dart';
+import 'feedback_text.dart';
 
 /// Shared "question → your answer → correction → why" layout used by both
 /// the Results screen's per-item feedback cards and the Review weak-spot
@@ -122,7 +123,7 @@ class MistakeBreakdown extends StatelessWidget {
           const SizedBox(height: 16),
         ],
         if (hasExplanation)
-          Text(explanation!, style: theme.textTheme.bodyMedium),
+          FeedbackText(explanation!, style: theme.textTheme.bodyMedium),
       ],
     );
   }
