@@ -10,6 +10,8 @@
  *   npm run eval -- compare --dry-run  the generator comparison's requests and cost, no API call
  *   npm run eval -- compare [--out DIR]
  *                                      runs the generator comparison (or resumes DIR), at most $1
+ *   npm run eval -- sets               writes the 1.4.0 measurement's test sets and label
+ *                                      sheets to eval/data/ from the repo's inputs (no API call)
  *
  * The API key is read from the environment (ANTHROPIC_API_KEY) or from
  * `proxy/.dev.vars`, is sent only to api.anthropic.com, and is never printed or
@@ -73,6 +75,19 @@ import {
   type Usage,
 } from './lib/matrix';
 import { readGeneratedSet, readReferenceSet, type CallRecord, type ReferenceSets } from './lib/sets';
+import {
+  buildLiveSheet,
+  buildPoolGate,
+  buildPoolScoring,
+  buildSynth,
+  freeSheetTemplate,
+  genSheetTemplate,
+  renderSynthReview,
+  selectLiveSets,
+  summarize,
+  type LiveSetFile,
+  type PoolCorrection,
+} from './lib/datasets';
 
 const API = 'https://api.anthropic.com/v1';
 const API_HOST = 'api.anthropic.com';
@@ -691,6 +706,56 @@ async function runComparison(outArg: string | undefined): Promise<void> {
   await log(`done: ${path.join(dir, 'report.md')} and questions.md; spent ${money(spent())}`);
 }
 
+/**
+ * The 1.4.0 server package's test sets and label sheets
+ * (docs/1.4.0-server-batch0-report.md §3.1, `eval/lib/datasets.ts`), from
+ * inputs that are in the repo: the fallback pool and its corrections, and the
+ * live sets exported read-only from KV into `eval/data/live-sets/`. No API
+ * call. The S-live sheet is deterministic (a fixed seed), so running this
+ * again never changes a sheet the owner has started; a sheet that already
+ * exists is left alone.
+ */
+async function buildSets(): Promise<void> {
+  const data = path.join(ROOT, 'eval/data');
+  const repo = path.join(ROOT, '..');
+  const pool = JSON.parse(await readFile(path.join(repo, 'assets/daily_test_fallback/pool.json'), 'utf8')) as {
+    sets: { questions: SharedQuestion[] }[];
+  };
+  const corrections = (JSON.parse(await readFile(path.join(repo, 'tool/fallback_pool/corrections.json'), 'utf8')) as { corrections: PoolCorrection[] })
+    .corrections;
+  const liveDir = path.join(data, 'live-sets');
+  const liveFiles = (await readdir(liveDir)).filter((f) => /^set-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+  const liveSets: LiveSetFile[] = [];
+  for (const f of liveFiles) liveSets.push(JSON.parse(await readFile(path.join(liveDir, f), 'utf8')) as LiveSetFile);
+
+  const poolScoring = buildPoolScoring(pool);
+  const gate = buildPoolGate(liveSets, corrections);
+  const synth = buildSynth(pool);
+  const live = buildLiveSheet(selectLiveSets(liveSets));
+
+  await mkdir(path.join(data, 's-live'), { recursive: true });
+  await mkdir(path.join(data, 'templates'), { recursive: true });
+  await writeFile(path.join(data, 's-pool.scoring.json'), `${JSON.stringify(poolScoring, null, 2)}\n`);
+  await writeFile(path.join(data, 's-pool.gate.json'), `${JSON.stringify(gate, null, 2)}\n`);
+  await writeFile(path.join(data, 's-synth.json'), `${JSON.stringify(synth, null, 2)}\n`);
+  await writeFile(path.join(data, 's-synth-review.md'), renderSynthReview(synth));
+  const sheet = path.join(data, 's-live/labels.csv');
+  if (await exists(sheet)) {
+    console.log('s-live/labels.csv exists; not rewritten (the owner may have started it).');
+  } else {
+    await writeFile(sheet, live.csv);
+    await writeFile(path.join(data, 's-live/mapping.json'), `${JSON.stringify(live.mapping, null, 2)}\n`);
+  }
+  await writeFile(
+    path.join(data, 's-live/questions.json'),
+    `${JSON.stringify(selectLiveSets(liveSets).map((s) => ({ date: s.date, questions: s.questions })), null, 2)}\n`,
+  );
+  await writeFile(path.join(data, 'templates/s-gen-labels.csv'), genSheetTemplate());
+  await writeFile(path.join(data, 'templates/s-free-labels.csv'), freeSheetTemplate());
+  console.log(summarize(poolScoring, gate, live.rows, synth));
+  console.log(`Written under ${path.relative(ROOT, data)}/.`);
+}
+
 async function main(): Promise<void> {
   if (!(await exists(path.join(ROOT, 'wrangler.jsonc')))) throw new Error('Run from proxy/ (npm run eval -- …).');
   const [command, ...rest] = process.argv.slice(2);
@@ -703,8 +768,9 @@ async function main(): Promise<void> {
   if (command === 'run') return runE(out, add);
   if (command === 'analyze') return analyzeRun(out);
   if (command === 'compare') return rest.includes('--dry-run') ? compareDryRun() : runComparison(out);
+  if (command === 'sets') return buildSets();
   console.log(
-    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR]',
+    'Usage: npm run eval -- dry-run | run [--out DIR] | run --out DIR --add-dates [YYYY-MM-DD,…] | analyze --out DIR | compare --dry-run | compare [--out DIR] | sets',
   );
   process.exitCode = 1;
 }

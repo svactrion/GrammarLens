@@ -1,0 +1,2151 @@
+[
+  {
+    "date": "2026-09-29",
+    "questions": [
+      {
+        "id": "art-laptop-repair",
+        "type": "error_correction",
+        "context": "I took my laptop to the repair shop, but a technician was on holiday.",
+        "instruction": "Rewrite the sentence with the error corrected.",
+        "topicId": "articles",
+        "correctAnswer": "I took my laptop to the repair shop, but the technician was on holiday.",
+        "explanation": "The technician is a specific person the listener can identify from the shop, so 'the' fits better than 'a'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I took my laptop to the repair shop, but technician was on holiday.",
+            "comment": "You can't leave out the article here, because 'technician' is a singular countable noun and needs one."
+          },
+          {
+            "answer": "I took my laptop to repair shop, but a technician was on holiday.",
+            "comment": "You changed the wrong part; 'the repair shop' is fine, and the error is elsewhere."
+          }
+        ]
+      },
+      {
+        "id": "modal-phone-battery",
+        "type": "error_correction",
+        "context": "My phone battery is almost dead, so I must to charge it now.",
+        "instruction": "Rewrite the sentence with the error corrected.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "My phone battery is almost dead, so I must charge it now.",
+        "explanation": "Modal verbs like 'must' are followed by the base verb without 'to', so it's 'must charge'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My phone battery is almost dead, so I must charging it now.",
+            "comment": "After a modal verb you use the plain base form, not the -ing form."
+          },
+          {
+            "answer": "My phone battery is almost dead, so I musts charge it now.",
+            "comment": "Modal verbs never take -s, even after 'I' or 'he'; and the extra 'to' is the real problem."
+          }
+        ]
+      },
+      {
+        "id": "past-chatbot-report",
+        "type": "fill_in_blank",
+        "context": "Yesterday my brother said, \"I will send you the app link tonight.\" Later he told me that he ___ send me the app link that night.",
+        "instruction": "Fill in the blank with one word.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would",
+        "explanation": "In reported speech after a past verb like 'told', 'will' usually changes to 'would'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will",
+            "comment": "It's tempting to keep the original word, but after 'told' in the past, 'will' usually shifts back."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' changes the meaning to ability; the original promise was with 'will', which becomes 'would'."
+          },
+          {
+            "answer": "should",
+            "comment": "'Should' means advice or obligation, which isn't what the promise expressed."
+          }
+        ]
+      },
+      {
+        "id": "ger-video-call",
+        "type": "error_correction",
+        "context": "She suggested to use a different app for the video call.",
+        "instruction": "Rewrite the sentence with the error corrected.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "She suggested using a different app for the video call.",
+        "explanation": "After 'suggest', the next verb takes -ing, so it's 'suggested using'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "She suggested to using a different app for the video call.",
+            "comment": "You added -ing but kept 'to'; 'suggest' is followed directly by the -ing form."
+          },
+          {
+            "answer": "She suggested use a different app for the video call.",
+            "comment": "The base form doesn't work after 'suggest' here; you need the -ing form."
+          }
+        ]
+      },
+      {
+        "id": "tense-software-update",
+        "type": "fill_in_blank",
+        "context": "My computer is very slow today. It ___ the software update since 9 a.m., and it still hasn't finished.",
+        "instruction": "Fill in the blank with the correct form of 'install'.",
+        "hint": "(install)",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has been installing",
+        "explanation": "The action started at 9 a.m. and is still going now, so the present perfect continuous fits.",
+        "commonWrongAnswers": [
+          {
+            "answer": "is installing",
+            "comment": "'Since 9 a.m.' links the past to now, so the present continuous alone doesn't work."
+          },
+          {
+            "answer": "installed",
+            "comment": "The simple past suggests it's finished, but the update is still going."
+          },
+          {
+            "answer": "has installed",
+            "comment": "This suggests the installation is complete, but the sentence says it hasn't finished."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-07",
+    "questions": [
+      {
+        "id": "tense-lab-since",
+        "type": "error_correction",
+        "context": "I am working in this laboratory since March.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "I have been working in this laboratory since March.",
+        "explanation": "With 'since' and a starting point, we use the present perfect continuous for an action that started in the past and continues now.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I worked in this laboratory since March.",
+            "comment": "The simple past doesn't link to now, but 'since March' needs a tense that connects the past to the present."
+          },
+          {
+            "answer": "I am working in this laboratory for March.",
+            "comment": "You changed 'since' to 'for', but 'for' can't be used with a starting point like March and the tense is still wrong."
+          }
+        ]
+      },
+      {
+        "id": "gi-telescope",
+        "type": "error_correction",
+        "context": "The students enjoy to look through the telescope.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "The students enjoy looking through the telescope.",
+        "explanation": "After 'enjoy', the next verb takes -ing, so it's 'enjoy looking'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "The students enjoy look through the telescope.",
+            "comment": "You dropped 'to' but the verb after 'enjoy' needs the -ing form."
+          },
+          {
+            "answer": "The students enjoys looking through the telescope.",
+            "comment": "'Students' is plural, so 'enjoy' was already correct; the problem is 'to look'."
+          }
+        ]
+      },
+      {
+        "id": "modal-museum-lab",
+        "type": "fill_in_blank",
+        "context": "At the science museum, a sign beside the chemistry demonstration says: 'Visitors ___ wear safety goggles. It is a strict rule.' (obligation)",
+        "instruction": "Fill in the blank with one modal verb.",
+        "hint": "Think of a strong rule, not advice.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "must",
+        "explanation": "'Must' expresses a strong obligation, like a strict rule that visitors have to follow.",
+        "commonWrongAnswers": [
+          {
+            "answer": "might",
+            "comment": "'Might' shows a small possibility, not a rule."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' means ability or permission, but this sentence states a strict requirement."
+          }
+        ]
+      },
+      {
+        "id": "art-pharmacy-medicine",
+        "type": "error_correction",
+        "context": "My sister is studying to become pharmacist.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "articles",
+        "correctAnswer": "My sister is studying to become a pharmacist.",
+        "explanation": "A job title for one person needs 'a' before it, so it's 'a pharmacist'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My sister is studying to become the pharmacist.",
+            "comment": "'The' points to one specific known pharmacist; here she is just joining the profession."
+          },
+          {
+            "answer": "My sister is studying to become an pharmacist.",
+            "comment": "'An' is only used before a vowel sound, and 'pharmacist' starts with a consonant sound."
+          }
+        ]
+      },
+      {
+        "id": "past-weather-forecast",
+        "type": "fill_in_blank",
+        "context": "On Monday the weather scientist said, 'It will rain on Friday.' Later she told us that it ___ rain on Friday.",
+        "instruction": "Fill in the blank with one word.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would",
+        "explanation": "In reported speech after 'said' in the past, 'will' changes to 'would'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will",
+            "comment": "'Will' stays in direct speech, but after a past reporting verb it shifts back to 'would'."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' changes the meaning to possibility; the original sentence used 'will'."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-08",
+    "questions": [
+      {
+        "id": "tense-meeting-since",
+        "type": "fill_in_blank",
+        "context": "Dana joined the sales team in January. It is now June, and she is still part of the team. She says: \"I ____ (work) on the new client project for two weeks, and it is almost finished.\"",
+        "instruction": "Write the correct form of the verb in brackets.",
+        "hint": "(work) - the project started two weeks ago and continues up to now.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "have been working",
+        "explanation": "The work started two weeks ago and continues up to now, so we use the present perfect continuous.",
+        "commonWrongAnswers": [
+          {
+            "answer": "am working",
+            "comment": "It's tempting because the work is still going on, but with 'for two weeks' you need a tense that links the past to now."
+          },
+          {
+            "answer": "worked",
+            "comment": "Simple past is for finished actions, but this project is still in progress."
+          },
+          {
+            "answer": "work",
+            "comment": "Simple present doesn't work with 'for two weeks'; you need a tense that shows duration up to now."
+          }
+        ]
+      },
+      {
+        "id": "gerund-interview-error",
+        "type": "error_correction",
+        "context": "She suggested to hire a second assistant for the office.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "She suggested hiring a second assistant for the office.",
+        "explanation": "After 'suggest', the next verb takes -ing, so it's 'suggested hiring'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "She suggested hire a second assistant for the office.",
+            "comment": "You removed 'to' but the base verb still doesn't fit; 'suggest' needs the -ing form."
+          },
+          {
+            "answer": "She suggested to hiring a second assistant for the office.",
+            "comment": "You added -ing but kept 'to'; after 'suggest' you don't need 'to'."
+          }
+        ]
+      },
+      {
+        "id": "modalpast-boss-said",
+        "type": "error_correction",
+        "context": "The manager said that she will call me after lunch yesterday.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "The manager said that she would call me after lunch yesterday.",
+        "explanation": "In reported speech after the past tense 'said', 'will' changes to 'would'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "The manager said that she will called me after lunch yesterday.",
+            "comment": "You changed the wrong part; 'will' shouldn't be followed by a past verb form."
+          },
+          {
+            "answer": "The manager said that she would called me after lunch yesterday.",
+            "comment": "'Would' is right, but after a modal the verb stays in its base form: 'call'."
+          }
+        ]
+      },
+      {
+        "id": "modal-office-must",
+        "type": "error_correction",
+        "context": "Employees must to wear a badge in the office.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "Employees must wear a badge in the office.",
+        "explanation": "After a modal verb like 'must', we use the base verb without 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "Employees must wearing a badge in the office.",
+            "comment": "A modal is followed by the plain base verb, not the -ing form."
+          },
+          {
+            "answer": "Employees musts wear a badge in the office.",
+            "comment": "Modal verbs never take an -s ending, and the extra 'to' is the real problem."
+          }
+        ]
+      },
+      {
+        "id": "articles-job-interview",
+        "type": "fill_in_blank",
+        "context": "Tom applied for a job at a bank. He says: \"I have ____ interview at ten tomorrow, so I need to leave early.\"",
+        "instruction": "Write the missing article.",
+        "topicId": "articles",
+        "correctAnswer": "an",
+        "explanation": "'Interview' is a singular countable noun mentioned for the first time and starts with a vowel sound, so we use 'an'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "a",
+            "comment": "'A' is used before consonant sounds, but 'interview' starts with a vowel sound."
+          },
+          {
+            "answer": "the",
+            "comment": "'The' is for something already known to both people, but this interview is new information."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-09",
+    "questions": [
+      {
+        "id": "airport-passport",
+        "type": "fill_in_blank",
+        "context": "At the airport check-in desk, an agent tells a traveller that it is compulsory to show a passport on international flights. The law requires it, with no exceptions.",
+        "instruction": "Fill in the blank with one modal verb: You ___ show your passport before you board an international flight.",
+        "hint": "Think about a strong obligation from a rule.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "must",
+        "explanation": "'Must' expresses a strong obligation set by a rule or law, which is what the airport requires here.",
+        "commonWrongAnswers": [
+          {
+            "answer": "might",
+            "comment": "It's tempting as a modal, but 'might' shows a weak possibility, not a firm obligation."
+          },
+          {
+            "answer": "could",
+            "comment": "'Could' talks about ability or possibility, so it doesn't show that a rule is compulsory."
+          },
+          {
+            "answer": "may",
+            "comment": "'May' suggests possibility or permission, not a required rule."
+          }
+        ]
+      },
+      {
+        "id": "hotel-booking-tense",
+        "type": "error_correction",
+        "context": "I am staying at this hotel since Monday.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "I have been staying at this hotel since Monday.",
+        "explanation": "With 'since' and a situation that started in the past and continues now, we use the present perfect.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I stay at this hotel since Monday.",
+            "comment": "The present simple still doesn't link a past starting point with now, which 'since' needs."
+          },
+          {
+            "answer": "I was staying at this hotel since Monday.",
+            "comment": "The past continuous suggests it's finished, but you are still there now."
+          },
+          {
+            "answer": "I am staying at this hotel from Monday.",
+            "comment": "Changing 'since' to 'from' doesn't fix the tense, and the sentence is still wrong."
+          }
+        ]
+      },
+      {
+        "id": "train-station-reported",
+        "type": "fill_in_blank",
+        "context": "At the train station, the ticket officer said earlier: 'The train will leave from platform four.' You are now repeating what he said to your friend.",
+        "instruction": "Fill in the blank with one word: The officer said the train ___ leave from platform four.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would",
+        "explanation": "In reported speech after a past verb like 'said', 'will' changes to 'would'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will",
+            "comment": "It's what he originally said, but after 'said' we shift it back to 'would'."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' changes the meaning to ability, and it isn't the reported form of 'will'."
+          },
+          {
+            "answer": "should",
+            "comment": "'Should' means advice or expectation, not the reported form of 'will'."
+          }
+        ]
+      },
+      {
+        "id": "tour-guide-article",
+        "type": "error_correction",
+        "context": "We visited a Eiffel Tower on our first day in Paris.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "articles",
+        "correctAnswer": "We visited the Eiffel Tower on our first day in Paris.",
+        "explanation": "The Eiffel Tower is one unique, specific landmark, so we use 'the' before its name.",
+        "commonWrongAnswers": [
+          {
+            "answer": "We visited an Eiffel Tower on our first day in Paris.",
+            "comment": "'An' would suggest one of many towers, but this is one unique landmark."
+          },
+          {
+            "answer": "We visited Eiffel Tower on our first day in Paris.",
+            "comment": "Here the name of this landmark needs 'the', so leaving it out is wrong."
+          }
+        ]
+      },
+      {
+        "id": "beach-rental-gerund",
+        "type": "fill_in_blank",
+        "context": "On a beach holiday, you are telling a friend about a hobby you love when you stay by the sea.",
+        "instruction": "Fill in the blank with the correct form of the verb: I really enjoy ___ in the sea every morning on holiday.",
+        "hint": "(swim) Think about what comes after 'enjoy'.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "swimming",
+        "explanation": "After 'enjoy', the next verb takes -ing, so it's 'enjoy swimming'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "to swim",
+            "comment": "It's tempting because of 'want to swim', but 'enjoy' is followed by an -ing form."
+          },
+          {
+            "answer": "swim",
+            "comment": "The base form doesn't work after 'enjoy'; it needs -ing."
+          },
+          {
+            "answer": "swam",
+            "comment": "That's the past tense, which can't follow 'enjoy' here."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-10",
+    "questions": [
+      {
+        "id": "modal-doctor-must-to",
+        "type": "error_correction",
+        "context": "You should to drink more water during hot weather.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "You should drink more water during hot weather.",
+        "explanation": "Modal verbs like 'should' are followed by the base verb without 'to', so it's 'should drink'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "You should drinking more water during hot weather.",
+            "comment": "It's tempting to add -ing, but after 'should' you need the plain base verb."
+          },
+          {
+            "answer": "You should to drinking more water during hot weather.",
+            "comment": "You still have 'to' here, and modals don't take it or an -ing form."
+          }
+        ]
+      },
+      {
+        "id": "tense-pharmacy-ago",
+        "type": "error_correction",
+        "context": "I have visited the dentist two days ago.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "I visited the dentist two days ago.",
+        "explanation": "With 'two days ago', which names a finished past time, we use the past simple: 'visited'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I have visited the dentist two days ago.",
+            "comment": "This is the original sentence; 'ago' doesn't go with the present perfect."
+          },
+          {
+            "answer": "I was visiting the dentist two days ago.",
+            "comment": "The past continuous suggests an action in progress, but this is a single completed visit."
+          }
+        ]
+      },
+      {
+        "id": "art-gym-membership",
+        "type": "fill_in_blank",
+        "context": "Tom wants to get fit, so he is joining a gym. He says: \"I need to see ___ doctor first, because I have a heart problem.\" (He means his own regular doctor, whom both speakers know.)",
+        "instruction": "Fill in the blank with the correct article.",
+        "topicId": "articles",
+        "correctAnswer": "the",
+        "explanation": "The doctor is a specific, known person for both speakers, so we use 'the'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "a",
+            "comment": "'A' introduces someone new, but here both of you know which doctor he means."
+          },
+          {
+            "answer": "an",
+            "comment": "'An' is used before vowel sounds, and it also wouldn't fit because the doctor is specific."
+          }
+        ]
+      },
+      {
+        "id": "gi-recovery-avoid",
+        "type": "fill_in_blank",
+        "context": "After her knee surgery, Maria is recovering at home. Her physiotherapist advised her to stop ___ heavy boxes. (lift)",
+        "instruction": "Fill in the blank with the correct form of the verb.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "lifting",
+        "explanation": "After 'stop' meaning to quit an activity, the next verb takes -ing, so it's 'stop lifting'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "to lift",
+            "comment": "This changes the meaning to stopping in order to lift something; here she must quit the activity."
+          },
+          {
+            "answer": "lift",
+            "comment": "The base form doesn't work after 'stop'; you need the -ing form."
+          }
+        ]
+      },
+      {
+        "id": "mpf-clinic-could",
+        "type": "error_correction",
+        "context": "She said she can't come to the clinic yesterday.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "She said she couldn't come to the clinic yesterday.",
+        "explanation": "In reported speech about the past, 'can't' shifts back to 'couldn't'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "She said she can't came to the clinic yesterday.",
+            "comment": "You changed the verb after the modal, but modals are followed by the base verb."
+          },
+          {
+            "answer": "She said she wouldn't come to the clinic yesterday.",
+            "comment": "'Wouldn't' expresses refusal or future, not inability, so it changes the meaning."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-11",
+    "questions": [
+      {
+        "id": "gi-library-avoid",
+        "type": "error_correction",
+        "context": "She avoided to talk during the library session.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "She avoided talking during the library session.",
+        "explanation": "After 'avoid', the next verb takes -ing, so it's 'avoided talking'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "She avoided talk during the library session.",
+            "comment": "You removed 'to', but the verb after 'avoid' needs the -ing form, not the base form."
+          },
+          {
+            "answer": "She avoided to talking during the library session.",
+            "comment": "You added -ing but kept 'to'; after 'avoid' you don't need 'to'."
+          }
+        ]
+      },
+      {
+        "id": "tense-exam-results",
+        "type": "fill_in_blank",
+        "context": "Maria sat her final exam last Friday. It is now Tuesday, and she is checking her email. She says: \"I still ___ my exam results.\"",
+        "instruction": "Fill in the blank with the present perfect negative form of 'not receive'.",
+        "hint": "Use 'not receive' in the present perfect.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "haven't received",
+        "explanation": "The results are still missing now, so we link the past to the present with the present perfect.",
+        "commonWrongAnswers": [
+          {
+            "answer": "didn't receive",
+            "comment": "This is tempting for a past event, but the situation continues up to now, so the present perfect fits."
+          },
+          {
+            "answer": "don't receive",
+            "comment": "The simple present is for habits or facts, not for something that hasn't happened yet by now."
+          },
+          {
+            "answer": "am not receiving",
+            "comment": "The present continuous doesn't fit; you want the result up to now, not an action in progress."
+          }
+        ]
+      },
+      {
+        "id": "art-lecture-hall",
+        "type": "fill_in_blank",
+        "context": "A student says: \"Our history lecture is in ___ big room on the second floor, but I don't know its number yet.\"",
+        "instruction": "Fill in the blank with the correct article.",
+        "topicId": "articles",
+        "correctAnswer": "a",
+        "explanation": "The room is mentioned for the first time and isn't identified yet, so we use 'a' before the consonant sound.",
+        "commonWrongAnswers": [
+          {
+            "answer": "the",
+            "comment": "You'd use 'the' if both people knew which room; here it's new and unknown."
+          },
+          {
+            "answer": "an",
+            "comment": "'An' goes before a vowel sound, but 'big' starts with a consonant sound."
+          }
+        ]
+      },
+      {
+        "id": "mpf-tutor-promise",
+        "type": "fill_in_blank",
+        "context": "Yesterday my tutor told me, \"I will send you the essay feedback tonight.\" So my tutor said that she ___ send me the feedback that night.",
+        "instruction": "Fill in the blank with one word.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would",
+        "explanation": "In reported speech after 'said', 'will' usually shifts to 'would'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will",
+            "comment": "This is the original word, but in reported speech after a past verb it usually changes."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' expresses ability, not the future promise in the original sentence."
+          },
+          {
+            "answer": "shall",
+            "comment": "'Shall' doesn't work here; the reported form of 'will' is 'would'."
+          }
+        ]
+      },
+      {
+        "id": "mv-dorm-quiet",
+        "type": "error_correction",
+        "context": "You must to be quiet in the study hall.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "You must be quiet in the study hall.",
+        "explanation": "Modal verbs like 'must' are followed directly by the base verb, without 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "You must to quiet in the study hall.",
+            "comment": "You removed 'be' instead of 'to'; the sentence still needs the verb 'be'."
+          },
+          {
+            "answer": "You musts be quiet in the study hall.",
+            "comment": "Modal verbs never take an -s ending, and the extra 'to' is the real problem."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-12",
+    "questions": [
+      {
+        "id": "grandma-enjoy-cooking",
+        "type": "error_correction",
+        "context": "My grandmother enjoys to cook for the whole family.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "My grandmother enjoys cooking for the whole family.",
+        "explanation": "The verb 'enjoy' is followed by an -ing form, so it's 'enjoys cooking'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My grandmother enjoys cook for the whole family.",
+            "comment": "You removed 'to' but the verb after 'enjoy' needs -ing, not the base form."
+          },
+          {
+            "answer": "My grandmother enjoys to cooking for the whole family.",
+            "comment": "You added -ing but kept 'to'; after 'enjoy' you use only the -ing form."
+          }
+        ]
+      },
+      {
+        "id": "cousin-could-yesterday",
+        "type": "error_correction",
+        "context": "My cousin said yesterday that he can join us for dinner.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "My cousin said yesterday that he could join us for dinner.",
+        "explanation": "After a past reporting verb like 'said', 'can' usually shifts to 'could' in reported speech.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My cousin said yesterday that he can joined us for dinner.",
+            "comment": "Modal verbs are followed by the base form, so 'joined' doesn't work after a modal."
+          },
+          {
+            "answer": "My cousin said yesterday that he could joined us for dinner.",
+            "comment": "You changed the modal correctly, but 'could' must be followed by the base form 'join'."
+          }
+        ]
+      },
+      {
+        "id": "brother-moved-2019",
+        "type": "error_correction",
+        "context": "My brother has moved to Ankara in 2019.",
+        "instruction": "Rewrite the full sentence with the error corrected.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "My brother moved to Ankara in 2019.",
+        "explanation": "A finished time in the past like 'in 2019' goes with the past simple, so it's 'moved'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My brother has moved to Ankara since 2019.",
+            "comment": "Changing 'in' to 'since' doesn't fix it; this sentence describes a single past event, so use past simple."
+          },
+          {
+            "answer": "My brother is moving to Ankara in 2019.",
+            "comment": "The present continuous doesn't fit a past year; use the past simple 'moved'."
+          }
+        ]
+      },
+      {
+        "id": "wedding-the-bride",
+        "type": "fill_in_blank",
+        "context": "At my aunt's wedding, I took a photo of a woman in a blue dress. Everyone said that ___ bride was the most beautiful person there.",
+        "instruction": "Fill in the blank with the correct article.",
+        "topicId": "articles",
+        "correctAnswer": "the",
+        "explanation": "We use 'the' because everyone at the wedding knows which bride is meant: the one getting married.",
+        "commonWrongAnswers": [
+          {
+            "answer": "a",
+            "comment": "'A' introduces something new, but here the bride is a specific person everyone already knows."
+          },
+          {
+            "answer": "an",
+            "comment": "'An' goes before a vowel sound, and 'bride' starts with a consonant; it also isn't a new, unknown person."
+          }
+        ]
+      },
+      {
+        "id": "parents-must-be-home",
+        "type": "fill_in_blank",
+        "context": "The lights are on and the car is in the driveway, so my parents are certainly at home. They ___ be at home.",
+        "instruction": "Fill in the blank with one modal verb.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "must",
+        "explanation": "To say you are sure something is true from the evidence, use 'must' plus the base verb.",
+        "commonWrongAnswers": [
+          {
+            "answer": "should",
+            "comment": "'Should' suggests advice or expectation, but here you are drawing a strong conclusion from clear evidence."
+          },
+          {
+            "answer": "might",
+            "comment": "'Might' shows weak possibility, but the situation says they are certainly at home."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' doesn't express a logical conclusion like this in a positive sentence; use 'must'."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-13",
+    "questions": [
+      {
+        "id": "phone-repair-could",
+        "type": "error_correction",
+        "context": "Yesterday the technician told me he can fix my phone by Friday.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "Yesterday the technician told me he could fix my phone by Friday.",
+        "explanation": "In reported speech after a past verb like 'told', 'can' usually shifts to 'could'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "Yesterday the technician told me he will fix my phone by Friday.",
+            "comment": "You changed the modal, but 'will' doesn't fit after the past verb 'told'; it should be 'would' or 'could'."
+          },
+          {
+            "answer": "Yesterday the technician told me he can fixed my phone by Friday.",
+            "comment": "A modal is followed by the base verb, so 'fixed' is wrong, and 'can' still needs to change."
+          }
+        ]
+      },
+      {
+        "id": "laptop-article",
+        "type": "error_correction",
+        "context": "I bought laptop yesterday, and it works perfectly.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "articles",
+        "correctAnswer": "I bought a laptop yesterday, and it works perfectly.",
+        "explanation": "'Laptop' is a singular countable noun mentioned for the first time, so it needs 'a'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I bought the laptop yesterday, and it works perfectly.",
+            "comment": "'The' suggests the listener already knows which laptop, but this is new information, so 'a' fits."
+          },
+          {
+            "answer": "I bought an laptop yesterday, and it works perfectly.",
+            "comment": "'An' is used before a vowel sound, and 'laptop' starts with a consonant sound, so it's 'a'."
+          }
+        ]
+      },
+      {
+        "id": "video-call-tense",
+        "type": "fill_in_blank",
+        "context": "Maria is in the middle of an online meeting right now. Her brother phones her, but she cannot answer because she ___ to her manager on a video call.",
+        "instruction": "Fill in the blank with the correct form of the verb (talk).",
+        "hint": "Think about what is happening at this very moment.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "is talking",
+        "explanation": "The action is in progress at this moment, so the present continuous is used.",
+        "commonWrongAnswers": [
+          {
+            "answer": "talks",
+            "comment": "Present simple is for habits or facts, but this action is happening right now."
+          },
+          {
+            "answer": "talked",
+            "comment": "Past simple refers to a finished action, but she is talking now."
+          },
+          {
+            "answer": "has talked",
+            "comment": "Present perfect doesn't show an action in progress at this moment."
+          }
+        ]
+      },
+      {
+        "id": "wifi-modal",
+        "type": "fill_in_blank",
+        "context": "A teacher is giving advice to a student whose laptop keeps losing connection. She says: 'You ___ restart the router first; it is usually the best solution.' Use a modal verb giving advice.",
+        "instruction": "Fill in the blank with one modal verb.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "should",
+        "explanation": "To give friendly advice about the best thing to do, 'should' is the natural modal.",
+        "commonWrongAnswers": [
+          {
+            "answer": "can",
+            "comment": "'Can' says something is possible, but it doesn't give advice the way the teacher intends."
+          },
+          {
+            "answer": "might",
+            "comment": "'Might' expresses possibility, not a recommendation."
+          },
+          {
+            "answer": "must",
+            "comment": "'Must' is too strong for friendly advice here; the teacher is recommending, not ordering."
+          }
+        ]
+      },
+      {
+        "id": "app-gerund",
+        "type": "fill_in_blank",
+        "context": "Ali used his phone too much at night, so he decided to stop. He now avoids ___ social media apps before bed.",
+        "instruction": "Fill in the blank with the correct form of the verb (open).",
+        "hint": "Think about what comes after 'avoids'.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "opening",
+        "explanation": "After 'avoid', the next verb takes -ing, so it's 'avoids opening'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "to open",
+            "comment": "'Avoid' isn't followed by to + verb; it takes the -ing form."
+          },
+          {
+            "answer": "open",
+            "comment": "The base form doesn't work after 'avoids'; you need the -ing form."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-14",
+    "questions": [
+      {
+        "id": "tense-bakery-since",
+        "type": "fill_in_blank",
+        "context": "Mehmet opened his bakery in 2020 and still runs it today. He says: \"I ___ bread in this bakery since 2020.\"",
+        "instruction": "Fill in the blank with the correct form of (bake), using one verb phrase.",
+        "hint": "Think about how 'since 2020' connects the past to now.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "have been baking",
+        "explanation": "'Since 2020' links the past to now, and the baking is ongoing, so we use 'have been baking'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "bake",
+            "comment": "Simple present doesn't work with 'since'; you need a tense that connects the past to now."
+          },
+          {
+            "answer": "am baking",
+            "comment": "Present continuous is tempting because it's still true, but it can't be used with 'since 2020'."
+          },
+          {
+            "answer": "baked",
+            "comment": "Simple past describes a finished period, but Mehmet still bakes today."
+          }
+        ]
+      },
+      {
+        "id": "articles-market-apples",
+        "type": "error_correction",
+        "context": "At the market I bought a apple and some cheese.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "articles",
+        "correctAnswer": "At the market I bought an apple and some cheese.",
+        "explanation": "'Apple' starts with a vowel sound, so the article before it is 'an', not 'a'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "At the market I bought the apple and some cheese.",
+            "comment": "Changing to 'the' doesn't fit because this apple isn't a specific one already known."
+          },
+          {
+            "answer": "At the market I bought a apple and cheese.",
+            "comment": "You removed 'some' but the real problem is 'a' before a vowel sound."
+          }
+        ]
+      },
+      {
+        "id": "modalpast-restaurant-could",
+        "type": "error_correction",
+        "context": "She said yesterday that she can book a table for us.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "She said yesterday that she could book a table for us.",
+        "explanation": "In reported speech about something said in the past, 'can' usually shifts to 'could'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "She said yesterday that she will book a table for us.",
+            "comment": "'Will' also needs to shift to 'would' after a past reporting verb."
+          },
+          {
+            "answer": "She said yesterday that she cans book a table for us.",
+            "comment": "Modal verbs never take -s, so 'cans' is incorrect."
+          }
+        ]
+      },
+      {
+        "id": "gerund-cooking-dinner",
+        "type": "fill_in_blank",
+        "context": "Ayşe is tired after work, so she decided to order pizza. She says: \"I can't stand ___ dinner on weekdays.\"",
+        "instruction": "Fill in the blank with the correct form of (cook).",
+        "hint": "Think about what comes after 'can't stand'.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "cooking",
+        "explanation": "After 'can't stand', the next verb takes -ing, so it's 'can't stand cooking'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "to cook",
+            "comment": "'Can't stand' is followed by -ing for a general dislike like this, not 'to cook'."
+          },
+          {
+            "answer": "cook",
+            "comment": "The bare verb doesn't work after 'can't stand'; you need the -ing form."
+          }
+        ]
+      },
+      {
+        "id": "modal-cafe-must",
+        "type": "error_correction",
+        "context": "You can to try the soup; it's delicious.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "You can try the soup; it's delicious.",
+        "explanation": "Modal verbs like 'can' are followed by the bare infinitive, so we drop 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "You can to try the soup, it's delicious.",
+            "comment": "The 'to' is still there; after 'can' you use the bare verb."
+          },
+          {
+            "answer": "You could to try the soup; it's delicious.",
+            "comment": "Changing 'can' to 'could' doesn't fix the problem, since 'to' still shouldn't follow a modal."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-15",
+    "questions": [
+      {
+        "id": "bank-must-id",
+        "type": "fill_in_blank",
+        "context": "At a bank, the clerk explains the rules: it is compulsory by law to show photo identification before opening an account.",
+        "instruction": "Fill in the blank with one modal verb: You ___ show your passport to open an account.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "must",
+        "explanation": "'Must' expresses a strong obligation from a rule or law, which is what the clerk is describing here.",
+        "commonWrongAnswers": [
+          {
+            "answer": "might",
+            "comment": "It's tempting because it's a modal, but 'might' means possibility, not obligation."
+          },
+          {
+            "answer": "could",
+            "comment": "'Could' talks about possibility or ability, not a required rule."
+          },
+          {
+            "answer": "may",
+            "comment": "'May' suggests permission or possibility, not a strict requirement."
+          }
+        ]
+      },
+      {
+        "id": "shop-article-error",
+        "type": "error_correction",
+        "context": "My sister bought an university textbook at the shop.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "articles",
+        "correctAnswer": "My sister bought a university textbook at the shop.",
+        "explanation": "'University' begins with a /j/ sound, like 'you', so it takes 'a', not 'an'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My sister bought the university textbook at the shop.",
+            "comment": "Changing to 'the' avoids the problem, but nothing says it's a specific book, so it changes the meaning."
+          },
+          {
+            "answer": "My sister bought university textbook at the shop.",
+            "comment": "Removing the article leaves the singular noun without one, which is incorrect."
+          }
+        ]
+      },
+      {
+        "id": "salary-tense-since",
+        "type": "fill_in_blank",
+        "context": "Deniz started saving money for a car in January and is still saving now, in June.",
+        "instruction": "Fill in the blank with the correct form of the verb: Deniz ___ money for a car since January. (save)",
+        "hint": "Think about an action that started in the past and continues now.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has been saving",
+        "explanation": "For an action that began in the past and is still going on, with 'since', we use the present perfect continuous.",
+        "commonWrongAnswers": [
+          {
+            "answer": "is saving",
+            "comment": "The present continuous doesn't work with 'since January'; you need a perfect form."
+          },
+          {
+            "answer": "saved",
+            "comment": "The simple past would mean the saving is finished, but it's still going on."
+          },
+          {
+            "answer": "has saved",
+            "comment": "Close, but here the continuing activity is the focus, so the continuous form is needed."
+          }
+        ]
+      },
+      {
+        "id": "budget-gerund-error",
+        "type": "error_correction",
+        "context": "He avoided to spend money on expensive coffee.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "He avoided spending money on expensive coffee.",
+        "explanation": "After 'avoid', the next verb takes -ing, so it's 'avoided spending'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "He avoided spend money on expensive coffee.",
+            "comment": "You removed 'to', but the verb after 'avoid' needs the -ing form."
+          },
+          {
+            "answer": "He avoided for spending money on expensive coffee.",
+            "comment": "Adding 'for' isn't needed; 'avoid' is followed directly by an -ing verb."
+          }
+        ]
+      },
+      {
+        "id": "atm-could-reported",
+        "type": "fill_in_blank",
+        "context": "Last week Ali's card was blocked. He told us: \"I can't withdraw any cash.\"",
+        "instruction": "Fill in the blank to report his words: Ali said he ___ withdraw any cash.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "couldn't",
+        "explanation": "In reported speech after 'said', 'can't' usually shifts back to 'couldn't'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "can't",
+            "comment": "This keeps the original tense, but the reporting verb 'said' is in the past here."
+          },
+          {
+            "answer": "wouldn't",
+            "comment": "'Would' is the past of 'will', not 'can', so it changes the meaning."
+          },
+          {
+            "answer": "couldn't have",
+            "comment": "This needs a past participle after it and doesn't fit the blank."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-16",
+    "questions": [
+      {
+        "id": "tense-football-since",
+        "type": "fill_in_blank",
+        "context": "Ali joined the football club in 2021. He still plays for it today, and he is talking about the years since then.",
+        "instruction": "Fill in the blank with the correct form of the verb: Ali ___ (play) for the club since 2021.",
+        "hint": "(play)",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has played",
+        "explanation": "With 'since 2021' and an activity that continues now, English uses the present perfect, so it's 'has played'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "plays",
+            "comment": "You're thinking of the present, but 'since 2021' links the past to now, so you need the present perfect."
+          },
+          {
+            "answer": "played",
+            "comment": "The simple past is for finished actions, but Ali still plays for the club."
+          },
+          {
+            "answer": "is playing",
+            "comment": "The present continuous doesn't go with 'since'; you need the present perfect here."
+          }
+        ]
+      },
+      {
+        "id": "art-marathon-error",
+        "type": "error_correction",
+        "context": "Last Sunday she ran in marathon in Istanbul.",
+        "instruction": "Correct the sentence by rewriting it in full.",
+        "topicId": "articles",
+        "correctAnswer": "Last Sunday she ran in a marathon in Istanbul.",
+        "explanation": "'Marathon' is a singular countable noun here, so it needs 'a' before it.",
+        "commonWrongAnswers": [
+          {
+            "answer": "Last Sunday she ran in the marathon in Istanbul.",
+            "comment": "This is tempting, but the sentence doesn't point to one specific marathon already known, and it changes the meaning; the expected fix is 'a'."
+          },
+          {
+            "answer": "Last Sunday she ran in marathons in Istanbul.",
+            "comment": "Making it plural changes the meaning; the original needs a single marathon, so add 'a'."
+          }
+        ]
+      },
+      {
+        "id": "modal-gym-error",
+        "type": "error_correction",
+        "context": "You must to wear sports shoes in the gym.",
+        "instruction": "Correct the sentence by rewriting it in full.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "You must wear sports shoes in the gym.",
+        "explanation": "Modal verbs like 'must' are followed by the bare infinitive, so we drop 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "You must wearing sports shoes in the gym.",
+            "comment": "After a modal, the verb stays in its base form, so don't add -ing."
+          },
+          {
+            "answer": "You must wears sports shoes in the gym.",
+            "comment": "A modal is never followed by a verb with -s; use the base form 'wear'."
+          }
+        ]
+      },
+      {
+        "id": "gerund-tennis-error",
+        "type": "error_correction",
+        "context": "He suggested to play tennis after school.",
+        "instruction": "Correct the sentence by rewriting it in full.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "He suggested playing tennis after school.",
+        "explanation": "After 'suggest', the next verb takes -ing, so it's 'suggested playing'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "He suggested play tennis after school.",
+            "comment": "You removed 'to' but the verb still needs -ing after 'suggested'."
+          },
+          {
+            "answer": "He suggested to playing tennis after school.",
+            "comment": "'To' isn't used after 'suggest' here; just use 'playing'."
+          }
+        ]
+      },
+      {
+        "id": "past-modal-swim-race",
+        "type": "fill_in_blank",
+        "context": "Before the swimming race, Deniz told me, \"I can swim 400 metres without stopping.\" Later I reported his words.",
+        "instruction": "Fill in the blank with one word: Deniz told me that he ___ swim 400 metres without stopping.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "could",
+        "explanation": "In reported speech after 'told me', 'can' shifts back to 'could'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "can",
+            "comment": "You kept the original word, but after a past reporting verb 'can' usually shifts back."
+          },
+          {
+            "answer": "would",
+            "comment": "'Would' is the past of 'will', not 'can'; ability needs 'could'."
+          },
+          {
+            "answer": "must",
+            "comment": "'Must' expresses obligation, not ability, so it changes the meaning."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-17",
+    "questions": [
+      {
+        "id": "recycling-tense",
+        "type": "fill_in_blank",
+        "context": "Maria is talking about her neighbourhood. She started separating her rubbish in January, and she is still doing it now, in June.",
+        "instruction": "Fill in the blank with the correct form of the verb (recycle): She ____ her plastic and paper since January.",
+        "hint": "(recycle)",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has recycled",
+        "explanation": "The action began in January and continues now, and 'since' points to the present perfect, so it's 'has recycled'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "recycled",
+            "comment": "You used the simple past, but the habit continues until now, so you need the present perfect."
+          },
+          {
+            "answer": "recycles",
+            "comment": "The present simple ignores 'since January', which needs a present perfect form."
+          },
+          {
+            "answer": "is recycling",
+            "comment": "The present continuous doesn't go with 'since January'; use the present perfect instead."
+          }
+        ]
+      },
+      {
+        "id": "park-modal-past",
+        "type": "fill_in_blank",
+        "context": "Yesterday a park ranger said to us: \"I can show you the nature trail tomorrow.\"",
+        "instruction": "Complete the reported sentence with one word: The ranger told us yesterday that he ____ show us the nature trail the next day.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "could",
+        "explanation": "In reported speech after a past verb like 'told', 'can' usually shifts to 'could'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "can",
+            "comment": "It's tempting to keep the original word, but after 'told' in the past, 'can' usually changes."
+          },
+          {
+            "answer": "would",
+            "comment": "'Would' is the past of 'will', but the ranger's original word was 'can', so it becomes 'could'."
+          },
+          {
+            "answer": "must",
+            "comment": "'Must' changes the meaning; the original ability or offer 'can' becomes 'could'."
+          }
+        ]
+      },
+      {
+        "id": "beach-articles",
+        "type": "fill_in_blank",
+        "context": "At the beach, you see one particular plastic bottle floating in the water. You mention it to your friend for the first time and then pick it up: \"Look! There is ____ plastic bottle in the sea.\"",
+        "instruction": "Fill in the blank with a, an, the, or nothing (write the word).",
+        "topicId": "articles",
+        "correctAnswer": "a",
+        "explanation": "We mention the bottle for the first time and it's one of many possible bottles, so we use 'a'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "the",
+            "comment": "'The' is for something both of you already know; this bottle is being introduced for the first time."
+          },
+          {
+            "answer": "an",
+            "comment": "'An' goes before a vowel sound, but 'plastic' starts with a consonant sound, so it's 'a'."
+          }
+        ]
+      },
+      {
+        "id": "bike-gerund-fix",
+        "type": "error_correction",
+        "context": "My brother suggested to cycle to work to reduce pollution.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "My brother suggested cycling to work to reduce pollution.",
+        "explanation": "After 'suggest', the next verb takes -ing, so it's 'suggested cycling'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My brother suggested to cycling to work to reduce pollution.",
+            "comment": "You added -ing but kept 'to'; after 'suggest' you need only the -ing form."
+          },
+          {
+            "answer": "My brother suggested cycle to work to reduce pollution.",
+            "comment": "The bare verb doesn't follow 'suggest' here; it needs the -ing form."
+          }
+        ]
+      },
+      {
+        "id": "water-modal-fix",
+        "type": "error_correction",
+        "context": "You must to turn off the tap while brushing your teeth.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "You must turn off the tap while brushing your teeth.",
+        "explanation": "Modal verbs like 'must' are followed directly by the base verb, without 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "You must turning off the tap while brushing your teeth.",
+            "comment": "After 'must' you need the base verb, not an -ing form."
+          },
+          {
+            "answer": "You must to turn off the tap while brushing your teeth.",
+            "comment": "This is the original sentence; the extra 'to' after 'must' needs to go."
+          },
+          {
+            "answer": "You must turn off the tap while to brush your teeth.",
+            "comment": "The error is after 'must', not after 'while'; remove 'to' there."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-18",
+    "questions": [
+      {
+        "id": "mpf-clothes-promise",
+        "type": "error_correction",
+        "context": "The shop assistant said yesterday that she will deliver the dress today.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "The shop assistant said yesterday that she would deliver the dress today.",
+        "explanation": "In reported speech after 'said', 'will' usually shifts back to 'would', so it's 'she would deliver'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "The shop assistant said yesterday that she wills deliver the dress today.",
+            "comment": "'Will' never takes an -s, so this form doesn't exist; it should change to 'would'."
+          },
+          {
+            "answer": "The shop assistant said yesterday that she delivered the dress today.",
+            "comment": "This drops the modal and changes the meaning to a completed action, but she was making a promise about the future."
+          }
+        ]
+      },
+      {
+        "id": "tense-queue-checkout",
+        "type": "fill_in_blank",
+        "context": "At the supermarket checkout, Ali looks at his watch and sighs. He joined this queue at 5:00, and it is now 5:30. He is still waiting.",
+        "instruction": "Fill in the blank with the correct form of 'wait'. Use one word group: Ali ____ for thirty minutes.",
+        "hint": "(wait)",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has been waiting",
+        "explanation": "The waiting started in the past and is still going on now, so we use the present perfect continuous.",
+        "commonWrongAnswers": [
+          {
+            "answer": "is waiting",
+            "comment": "This tempts you because he is waiting now, but 'for thirty minutes' needs a tense linking the past to now."
+          },
+          {
+            "answer": "waited",
+            "comment": "The past simple suggests the waiting is finished, but Ali is still in the queue."
+          },
+          {
+            "answer": "has waited",
+            "comment": "This is close, but the situation is ongoing and the continuous form shows the waiting is still in progress."
+          }
+        ]
+      },
+      {
+        "id": "modal-fitting-room",
+        "type": "error_correction",
+        "context": "In the fitting room, Mina said that she can not find her size yesterday.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "In the fitting room, Mina said that she could not find her size yesterday.",
+        "explanation": "With 'yesterday' and 'said', we are in the past, so 'can' becomes 'could'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "In the fitting room, Mina said that she cans not find her size yesterday.",
+            "comment": "Modal verbs never take -s, so 'cans' isn't a word you can use."
+          },
+          {
+            "answer": "In the fitting room, Mina said that she will not find her size yesterday.",
+            "comment": "'Will' points to the future, which clashes with 'yesterday'."
+          }
+        ]
+      },
+      {
+        "id": "articles-bakery-order",
+        "type": "error_correction",
+        "context": "At the market, I bought an umbrella and a oranges.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "articles",
+        "correctAnswer": "At the market, I bought an umbrella and oranges.",
+        "explanation": "'A' can't go before a plural noun like 'oranges'; plural nouns used generally take no article.",
+        "commonWrongAnswers": [
+          {
+            "answer": "At the market, I bought an umbrella and an oranges.",
+            "comment": "'An' is also singular, so it still doesn't fit with plural 'oranges'."
+          },
+          {
+            "answer": "At the market, I bought a umbrella and oranges.",
+            "comment": "You fixed the wrong article; 'umbrella' starts with a vowel sound, so it needs 'an'."
+          }
+        ]
+      },
+      {
+        "id": "gerund-online-return",
+        "type": "fill_in_blank",
+        "context": "The jacket was too small, so Deniz decided to send it back. Now she is at the post office and says: 'I need to finish ____ this return form before the shop's deadline.' (fill)",
+        "instruction": "Fill in the blank with the correct form of 'fill'.",
+        "hint": "Think about what comes after 'finish'.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "filling",
+        "explanation": "After 'finish', the next verb takes -ing, so it's 'finish filling'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "to fill",
+            "comment": "'Finish' isn't followed by 'to' + verb; it takes the -ing form."
+          },
+          {
+            "answer": "fill",
+            "comment": "The base form doesn't work after 'finish'; you need -ing."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-19",
+    "questions": [
+      {
+        "id": "rent-tense-since",
+        "type": "fill_in_blank",
+        "context": "Deniz moved into his flat in March. It is now October, and he is still there. He pays the landlord on the first of every month.",
+        "instruction": "Fill in the blank with the correct form of the verb: Deniz ___ in this flat since March. (live)",
+        "hint": "(live)",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has lived",
+        "explanation": "With 'since March', we link a past starting point to now, so we use the present perfect: 'has lived'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "lives",
+            "comment": "It's tempting because he still lives there, but 'since' needs a perfect tense."
+          },
+          {
+            "answer": "lived",
+            "comment": "The simple past suggests he no longer lives there, but he still does."
+          },
+          {
+            "answer": "is living",
+            "comment": "The present continuous doesn't normally go with 'since March'; you need the present perfect."
+          }
+        ]
+      },
+      {
+        "id": "viewing-would",
+        "type": "fill_in_blank",
+        "context": "Last week the agent promised, 'I will send you the flat details tomorrow.' Now Aylin is telling a friend about it.",
+        "instruction": "Fill in the blank: The agent said she ___ me the flat details the next day.",
+        "hint": "Think about reporting 'will' in the past.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would send",
+        "explanation": "In reported speech after 'said', 'will' changes to 'would', so it's 'would send'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will send",
+            "comment": "This is the original word, but after 'said' in the past, 'will' shifts to 'would'."
+          },
+          {
+            "answer": "would sent",
+            "comment": "After 'would' you need the base verb 'send', not a past form."
+          },
+          {
+            "answer": "sends",
+            "comment": "The present simple doesn't fit a reported promise about the future in the past; use 'would send'."
+          }
+        ]
+      },
+      {
+        "id": "landlord-must",
+        "type": "error_correction",
+        "context": "You must to pay the rent before the fifth of every month.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "You must pay the rent before the fifth of every month.",
+        "explanation": "Modal verbs like 'must' are followed by the base verb without 'to', so it's 'must pay'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "You must paying the rent before the fifth of every month.",
+            "comment": "After a modal you need the base verb, not an -ing form."
+          },
+          {
+            "answer": "You must to pay the rent before fifth of every month.",
+            "comment": "You removed the wrong word; the error is 'to' after 'must', and 'the fifth' should stay."
+          },
+          {
+            "answer": "You must paid the rent before the fifth of every month.",
+            "comment": "A modal takes the base verb, not the past form."
+          }
+        ]
+      },
+      {
+        "id": "flat-article",
+        "type": "error_correction",
+        "context": "My sister lives in a apartment near the university.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "articles",
+        "correctAnswer": "My sister lives in an apartment near the university.",
+        "explanation": "We use 'an' before a vowel sound, and 'apartment' begins with the vowel sound /ə/, so it's 'an apartment'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My sister lives in the apartment near the university.",
+            "comment": "This changes the meaning; the sentence introduces the apartment for the first time, so 'an' is needed."
+          },
+          {
+            "answer": "My sister lives in apartment near the university.",
+            "comment": "A singular countable noun like 'apartment' needs an article here."
+          },
+          {
+            "answer": "My sister lives in an apartment near university.",
+            "comment": "You changed 'the university', which was already correct."
+          }
+        ]
+      },
+      {
+        "id": "landlord-agree",
+        "type": "fill_in_blank",
+        "context": "The tenants asked the landlord to fix the heating. He finally agreed.",
+        "instruction": "Fill in the blank with the correct form of the verb: The landlord agreed ___ the heating this week. (repair)",
+        "hint": "Think about what comes after 'agree'.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "to repair",
+        "explanation": "The verb 'agree' is followed by a to-infinitive, so it's 'agreed to repair'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "repairing",
+            "comment": "Many verbs take -ing, but 'agree' takes the to-infinitive."
+          },
+          {
+            "answer": "repair",
+            "comment": "You need 'to' after 'agree' before the base verb."
+          },
+          {
+            "answer": "to repairing",
+            "comment": "After 'to' in this structure, we use the base verb, not -ing."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-20",
+    "questions": [
+      {
+        "id": "mod-cinema-phone",
+        "type": "error_correction",
+        "context": "In the cinema, you must to switch off your phone.",
+        "instruction": "Rewrite the sentence with the error corrected.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "In the cinema, you must switch off your phone.",
+        "explanation": "Modal verbs like 'must' are followed by the bare infinitive, so we say 'must switch', without 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "In the cinema, you must switching off your phone.",
+            "comment": "It's tempting to use -ing, but after 'must' you need the plain base verb."
+          },
+          {
+            "answer": "In the cinema, you must to switching off your phone.",
+            "comment": "You still have 'to' here, and the verb should be the plain base form too."
+          }
+        ]
+      },
+      {
+        "id": "art-news-website",
+        "type": "fill_in_blank",
+        "context": "Deniz is reading online. She says: \"I just read ___ article about space travel on a news website, and it was fascinating.\" (This is the first time she mentions the article.)",
+        "instruction": "Fill in the blank with the correct article.",
+        "hint": "Think about the first sound of the next word.",
+        "topicId": "articles",
+        "correctAnswer": "an",
+        "explanation": "We use 'an' before a singular countable noun that starts with a vowel sound, like 'article'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "a",
+            "comment": "'a' is right for new things, but 'article' starts with a vowel sound, so you need 'an'."
+          },
+          {
+            "answer": "the",
+            "comment": "'the' is for something already known to the listener, but this article is mentioned for the first time."
+          }
+        ]
+      },
+      {
+        "id": "ger-podcast-listen",
+        "type": "fill_in_blank",
+        "context": "On my long train journeys, I really enjoy ___ to podcasts about history. (listen)",
+        "instruction": "Fill in the blank with the correct form of the verb.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "listening",
+        "explanation": "After 'enjoy', the next verb takes -ing, so it's 'enjoy listening'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "to listen",
+            "comment": "You might say 'want to listen', but 'enjoy' is followed by the -ing form."
+          },
+          {
+            "answer": "listen",
+            "comment": "The bare verb doesn't work after 'enjoy'; it needs -ing."
+          }
+        ]
+      },
+      {
+        "id": "tense-tv-show",
+        "type": "error_correction",
+        "context": "I watch this TV series since last January.",
+        "instruction": "Rewrite the sentence with the error corrected.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "I have watched this TV series since last January.",
+        "explanation": "For an action that started in the past and continues now, with 'since', we use the present perfect: 'have watched'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I watched this TV series since last January.",
+            "comment": "Past simple doesn't usually go with 'since' to show something that continues until now."
+          },
+          {
+            "answer": "I am watching this TV series since last January.",
+            "comment": "Present continuous doesn't work with 'since'; you need a perfect form."
+          }
+        ]
+      },
+      {
+        "id": "mpast-radio-interview",
+        "type": "error_correction",
+        "context": "The radio host said yesterday that he can interview the author today.",
+        "instruction": "Rewrite the sentence with the error corrected.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "The radio host said yesterday that he could interview the author today.",
+        "explanation": "In reported speech after 'said', 'can' usually shifts to 'could', so it's 'he could interview'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "The radio host said yesterday that he can to interview the author today.",
+            "comment": "Adding 'to' is wrong because modals take the bare verb, and 'can' also needs to change to 'could'."
+          },
+          {
+            "answer": "The radio host said yesterday that he cans interview the author today.",
+            "comment": "Modal verbs never take -s, and here 'can' should become 'could' anyway."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-21",
+    "questions": [
+      {
+        "id": "lab-reported-would",
+        "type": "fill_in_blank",
+        "context": "Last week, the lab technician told us, \"I will print the results on Friday.\" Now we are reporting what she said.",
+        "instruction": "Fill in the blank: The lab technician told us that she ___ print the results on Friday.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would",
+        "explanation": "In reported speech after a past verb like 'told', 'will' usually shifts to 'would'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will",
+            "comment": "It's tempting to keep her original word, but after 'told' in the past, 'will' usually changes."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' changes the meaning to ability; she was talking about a future plan."
+          },
+          {
+            "answer": "must",
+            "comment": "'Must' would mean obligation, which is not what she said."
+          }
+        ]
+      },
+      {
+        "id": "planetarium-must-fix",
+        "type": "error_correction",
+        "context": "At the planetarium, visitors must to wear a headset.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "At the planetarium, visitors must wear a headset.",
+        "explanation": "After a modal verb like 'must', we use the bare infinitive without 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "At the planetarium, visitors must wearing a headset.",
+            "comment": "A modal verb is not followed by -ing; use the base form."
+          },
+          {
+            "answer": "At the planetarium, visitors musts wear a headset.",
+            "comment": "Modal verbs never take -s, and the real problem is the extra 'to'."
+          }
+        ]
+      },
+      {
+        "id": "pharmacy-tense-since",
+        "type": "fill_in_blank",
+        "context": "A scientist started studying bees in 2015. She is still studying them today.",
+        "instruction": "Fill in the blank with the correct form of 'study': She ___ bees since 2015.",
+        "hint": "(study)",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has studied",
+        "explanation": "With 'since' and an action that continues up to now, we usually use the present perfect.",
+        "commonWrongAnswers": [
+          {
+            "answer": "studied",
+            "comment": "Past simple suggests the action is finished, but she still studies bees now."
+          },
+          {
+            "answer": "studies",
+            "comment": "Present simple doesn't work well with 'since' to show duration from the past."
+          },
+          {
+            "answer": "is studying",
+            "comment": "Present continuous doesn't normally combine with 'since 2015' for a period up to now."
+          }
+        ]
+      },
+      {
+        "id": "museum-article-the-moon",
+        "type": "fill_in_blank",
+        "context": "At a science museum, a guide explains that Earth has only one natural satellite.",
+        "instruction": "Fill in the blank with a, an, the, or nothing: Tides are caused mainly by ___ Moon.",
+        "topicId": "articles",
+        "correctAnswer": "the",
+        "explanation": "We use 'the' with the Moon because there is only one, so it's unique and known to everyone.",
+        "commonWrongAnswers": [
+          {
+            "answer": "a",
+            "comment": "'A' is for one of many; there is only one Moon here."
+          },
+          {
+            "answer": "an",
+            "comment": "'An' is used before a vowel sound and for non-specific things, but the Moon is unique."
+          }
+        ]
+      },
+      {
+        "id": "chemistry-gerund-enjoy",
+        "type": "error_correction",
+        "context": "My chemistry teacher enjoys to explain difficult experiments.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "My chemistry teacher enjoys explaining difficult experiments.",
+        "explanation": "After 'enjoy', the next verb takes -ing, so it's 'enjoys explaining'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My chemistry teacher enjoy explaining difficult experiments.",
+            "comment": "You fixed the verb form, but 'teacher' is singular so 'enjoys' needs its -s."
+          },
+          {
+            "answer": "My chemistry teacher enjoys explain difficult experiments.",
+            "comment": "Dropping 'to' isn't enough; the verb after 'enjoys' needs -ing."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-22",
+    "questions": [
+      {
+        "id": "past-modal-manager-call",
+        "type": "fill_in_blank",
+        "context": "On Monday, the manager told the team: \"I will review your reports on Friday.\" Later, a colleague reports it: \"The manager said that she ___ review our reports on Friday.\"",
+        "instruction": "Fill in the blank with one word.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would",
+        "explanation": "In reported speech after 'said', 'will' usually shifts to 'would' to match the past reporting verb.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will",
+            "comment": "It's tempting because the manager originally said 'will', but after 'said' we normally step back to the past form."
+          },
+          {
+            "answer": "can",
+            "comment": "You may be thinking of a modal shift, but 'can' changes the meaning from a promise to an ability."
+          },
+          {
+            "answer": "should",
+            "comment": "This changes the meaning to advice or obligation, but the original sentence was a plan or promise."
+          }
+        ]
+      },
+      {
+        "id": "tense-office-since",
+        "type": "fill_in_blank",
+        "context": "Deniz joined the accounting firm in 2019 and he still works there now. He is proud of his long career.",
+        "instruction": "Complete the sentence with the correct form of the verb (work): \"Deniz ___ at the firm since 2019.\"",
+        "topicId": "tenseSelection",
+        "correctAnswer": "has worked",
+        "explanation": "With 'since' and a situation that continues up to now, we use the present perfect.",
+        "commonWrongAnswers": [
+          {
+            "answer": "works",
+            "comment": "Present simple feels natural for a current job, but 'since' needs a tense that connects the past to now."
+          },
+          {
+            "answer": "worked",
+            "comment": "Past simple suggests he no longer works there, but he still does."
+          },
+          {
+            "answer": "is working",
+            "comment": "Present continuous doesn't normally go with 'since' to describe a period starting in the past."
+          }
+        ]
+      },
+      {
+        "id": "articles-interview-hour",
+        "type": "fill_in_blank",
+        "context": "Selin is describing her job interview yesterday at a software company. She says: \"I had ___ interview with the head of design, and it lasted an hour.\"",
+        "instruction": "Fill in the blank with the correct article.",
+        "topicId": "articles",
+        "correctAnswer": "an",
+        "explanation": "This is a first mention of a singular countable noun starting with a vowel sound, so we use 'an'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "a",
+            "comment": "You've picked the right type of article, but 'interview' starts with a vowel sound, so it needs 'an'."
+          },
+          {
+            "answer": "the",
+            "comment": "'The' is for something already known to the listener, but this interview is being introduced for the first time."
+          }
+        ]
+      },
+      {
+        "id": "modal-error-meeting-room",
+        "type": "error_correction",
+        "context": "You must to knock before entering the meeting room.",
+        "instruction": "Rewrite the sentence correctly.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "You must knock before entering the meeting room.",
+        "explanation": "Modal verbs like 'must' are followed by the base verb without 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "You must to knock before to enter the meeting room.",
+            "comment": "You've changed the wrong part; 'must' still shouldn't be followed by 'to', and 'before' is normally followed by -ing."
+          },
+          {
+            "answer": "You must knocking before entering the meeting room.",
+            "comment": "After a modal verb you need the plain base form, not the -ing form."
+          }
+        ]
+      },
+      {
+        "id": "gerund-error-deadline",
+        "type": "error_correction",
+        "context": "She finished to write the report before the deadline.",
+        "instruction": "Rewrite the sentence correctly.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "She finished writing the report before the deadline.",
+        "explanation": "After 'finish', the next verb takes -ing, so it's 'finished writing'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "She finished write the report before the deadline.",
+            "comment": "You removed 'to', but the verb after 'finish' needs the -ing form."
+          },
+          {
+            "answer": "She finished writing the report before to the deadline.",
+            "comment": "The error is in the verb after 'finished'; 'before the deadline' was already fine."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-23",
+    "questions": [
+      {
+        "id": "airport-would-reported",
+        "type": "error_correction",
+        "context": "At the airport, the agent told us that the gate will close at six.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "At the airport, the agent told us that the gate would close at six.",
+        "explanation": "In reported speech after a past verb like 'told', 'will' usually shifts to 'would', so it's 'would close'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "At the airport, the agent told us that the gate can close at six.",
+            "comment": "You changed the modal, but 'can' adds a different meaning; reported 'will' becomes 'would'."
+          },
+          {
+            "answer": "At the airport, the agent told us that the gate will closed at six.",
+            "comment": "You changed the verb but kept 'will'; a modal is followed by the base verb, and 'will' should become 'would'."
+          }
+        ]
+      },
+      {
+        "id": "hotel-article-a",
+        "type": "error_correction",
+        "context": "We stayed at hotel near the beach for three nights.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "articles",
+        "correctAnswer": "We stayed at a hotel near the beach for three nights.",
+        "explanation": "'Hotel' is a singular countable noun mentioned for the first time, so it needs 'a' before it.",
+        "commonWrongAnswers": [
+          {
+            "answer": "We stayed at the hotel near the beach for three nights.",
+            "comment": "'The' suggests a hotel both of us already know; here it's a new hotel, so 'a' fits."
+          },
+          {
+            "answer": "We stayed at an hotel near the beach for three nights.",
+            "comment": "'An' is used before a vowel sound, and 'hotel' starts with a consonant sound /h/."
+          }
+        ]
+      },
+      {
+        "id": "train-must-ticket",
+        "type": "fill_in_blank",
+        "context": "At a station in Germany, a sign says: 'Passengers ___ validate their ticket before boarding. It is the law.'",
+        "instruction": "Fill in the blank with one modal verb.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "must",
+        "explanation": "A legal rule that passengers are obliged to follow is expressed with 'must'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "might",
+            "comment": "'Might' shows a small possibility, not an obligation set by law."
+          },
+          {
+            "answer": "can",
+            "comment": "'Can' means ability or permission, but the sentence describes a legal duty."
+          }
+        ]
+      },
+      {
+        "id": "tour-gerund-avoid",
+        "type": "error_correction",
+        "context": "Our guide avoided to talk about politics during the tour.",
+        "instruction": "Write the full corrected sentence.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "Our guide avoided talking about politics during the tour.",
+        "explanation": "After 'avoid', the next verb takes -ing, so it's 'avoided talking'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "Our guide avoided talk about politics during the tour.",
+            "comment": "You dropped 'to' but the verb needs the -ing form after 'avoid'."
+          },
+          {
+            "answer": "Our guide avoided to talking about politics during the tour.",
+            "comment": "You added -ing but kept 'to'; after 'avoid' no 'to' is used."
+          }
+        ]
+      },
+      {
+        "id": "taxi-tense-now",
+        "type": "fill_in_blank",
+        "context": "You phone a friend from a taxi: 'I can't talk long. I ___ to the airport right now, and the driver needs directions.' (travel)",
+        "instruction": "Fill in the blank with the correct form of the verb.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "am travelling",
+        "explanation": "'Right now' shows an action happening at this moment, so the present continuous 'am travelling' fits.",
+        "commonWrongAnswers": [
+          {
+            "answer": "travel",
+            "comment": "Present simple is for habits, but 'right now' points to an action in progress."
+          },
+          {
+            "answer": "have travelled",
+            "comment": "Present perfect doesn't fit an action in progress at this moment."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-24",
+    "questions": [
+      {
+        "id": "art-dentist-visit",
+        "type": "fill_in_blank",
+        "context": "Tom has toothache. He says: \"I need to see ___ dentist today, but I don't know which one yet.\"",
+        "instruction": "Fill in the blank with the correct article.",
+        "topicId": "articles",
+        "correctAnswer": "a",
+        "explanation": "The dentist is not yet specific, so we introduce any one of many dentists with 'a'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "the",
+            "comment": "It's tempting because 'dentist' feels familiar, but Tom hasn't chosen a particular one yet."
+          },
+          {
+            "answer": "an",
+            "comment": "You use 'an' before a vowel sound, but 'dentist' starts with a consonant sound."
+          }
+        ]
+      },
+      {
+        "id": "mpf-nurse-reported",
+        "type": "fill_in_blank",
+        "context": "At the clinic yesterday, the nurse said to me: \"I will check your blood pressure after lunch.\" Now I tell my mother: \"The nurse said she ___ check my blood pressure after lunch.\"",
+        "instruction": "Fill in the blank with one word.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "would",
+        "explanation": "In reported speech about the past, 'will' changes to 'would' after 'said'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "will",
+            "comment": "The nurse spoke yesterday, so in reported speech 'will' usually shifts back to 'would'."
+          },
+          {
+            "answer": "could",
+            "comment": "'Could' means ability or possibility, but the nurse originally promised with 'will'."
+          }
+        ]
+      },
+      {
+        "id": "tense-gym-error",
+        "type": "error_correction",
+        "context": "I am going to the gym every morning before work.",
+        "instruction": "Rewrite the full sentence correctly.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "I go to the gym every morning before work.",
+        "explanation": "A regular habit with 'every morning' takes the present simple, so it's 'I go'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I went to the gym every morning before work.",
+            "comment": "Past simple would describe a finished past habit, but this sentence is about your routine now."
+          },
+          {
+            "answer": "I have gone to the gym every morning before work.",
+            "comment": "Present perfect doesn't fit a simple routine with 'every morning'."
+          }
+        ]
+      },
+      {
+        "id": "ger-inf-doctor-quit",
+        "type": "fill_in_blank",
+        "context": "Mr Evans has a bad cough. His doctor strongly advised him to give up smoking, and he finally decided to quit. He said: \"I have stopped ___ cigarettes, so I feel much better.\" (smoke)",
+        "instruction": "Write the correct form of the verb in brackets.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "smoking",
+        "explanation": "'Stop' followed by -ing means you quit the activity, so it's 'stopped smoking'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "to smoke",
+            "comment": "After 'stop', 'to smoke' would mean he stopped something else in order to smoke, which isn't the meaning here."
+          },
+          {
+            "answer": "smoke",
+            "comment": "The verb after 'stopped' needs a special form, not the base form."
+          }
+        ]
+      },
+      {
+        "id": "modal-pharmacy-error",
+        "type": "error_correction",
+        "context": "At the pharmacy, you must to show a prescription for this medicine.",
+        "instruction": "Rewrite the full sentence correctly.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "At the pharmacy, you must show a prescription for this medicine.",
+        "explanation": "After a modal verb like 'must', we use the base verb without 'to'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "At the pharmacy, you must showing a prescription for this medicine.",
+            "comment": "A modal verb is followed by the base form, not an -ing form."
+          },
+          {
+            "answer": "At the pharmacy, you musts show a prescription for this medicine.",
+            "comment": "Modal verbs never take an -s ending, whoever the subject is."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "date": "2026-10-25",
+    "questions": [
+      {
+        "id": "tense-library-since",
+        "type": "error_correction",
+        "context": "I am studying in this library since September.",
+        "instruction": "Correct the sentence by rewriting it in full.",
+        "topicId": "tenseSelection",
+        "correctAnswer": "I have been studying in this library since September.",
+        "explanation": "With 'since' and a starting point, an action continuing up to now needs the present perfect continuous: 'have been studying'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "I studied in this library since September.",
+            "comment": "The simple past can't link a starting point in the past to now, so it doesn't work with 'since' here."
+          },
+          {
+            "answer": "I study in this library since September.",
+            "comment": "The simple present doesn't connect a past starting point to now, so 'since' needs a perfect form."
+          }
+        ]
+      },
+      {
+        "id": "modal-exam-hall",
+        "type": "fill_in_blank",
+        "context": "In the exam hall, the invigilator says: \"Candidates ___ not use dictionaries. It is strictly forbidden by the rules.\"",
+        "instruction": "Fill in the blank with one modal verb.",
+        "hint": "Think about a rule that prohibits something.",
+        "topicId": "modalVerbs",
+        "correctAnswer": "may",
+        "explanation": "For a formal rule that forbids something, 'may not' is the standard way to say it is not permitted.",
+        "commonWrongAnswers": [
+          {
+            "answer": "might",
+            "comment": "'Might' sounds like a weak possibility here, not a formal prohibition."
+          },
+          {
+            "answer": "should",
+            "comment": "'Should not' is only advice, but this is a strict rule, so it doesn't fit."
+          },
+          {
+            "answer": "would",
+            "comment": "'Would not' doesn't express a rule or prohibition in this sentence."
+          }
+        ]
+      },
+      {
+        "id": "past-modal-tutor",
+        "type": "error_correction",
+        "context": "My tutor said last week that she will help me today.",
+        "instruction": "Correct the sentence by rewriting it in full.",
+        "topicId": "modalPastForms",
+        "correctAnswer": "My tutor said last week that she would help me today.",
+        "explanation": "After a past reporting verb like 'said', 'will' usually changes to 'would' in reported speech.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My tutor said last week that she is helping me today.",
+            "comment": "This changes 'will' into a present continuous, but the reported verb needs the past form 'would'."
+          },
+          {
+            "answer": "My tutor said last week that she can help me today.",
+            "comment": "'Can' changes the meaning from a promise to ability, and it should also shift to the past."
+          }
+        ]
+      },
+      {
+        "id": "gerund-dormitory",
+        "type": "error_correction",
+        "context": "My roommate suggested to study in the cafeteria tonight.",
+        "instruction": "Correct the sentence by rewriting it in full.",
+        "topicId": "gerundVsInfinitive",
+        "correctAnswer": "My roommate suggested studying in the cafeteria tonight.",
+        "explanation": "The verb 'suggest' is followed by an -ing form, so it's 'suggested studying'.",
+        "commonWrongAnswers": [
+          {
+            "answer": "My roommate suggested to studying in the cafeteria tonight.",
+            "comment": "You fixed the verb form but kept 'to', which can't come before the -ing form here."
+          },
+          {
+            "answer": "My roommate suggested study in the cafeteria tonight.",
+            "comment": "The base form doesn't work after 'suggested'; it needs the -ing form."
+          }
+        ]
+      },
+      {
+        "id": "article-lecture-hall",
+        "type": "fill_in_blank",
+        "context": "Before class, Ali says: \"I left my notes in ___ lecture hall we used yesterday, so I must go back.\"",
+        "instruction": "Fill in the blank with the correct article.",
+        "topicId": "articles",
+        "correctAnswer": "the",
+        "explanation": "We use 'the' because the lecture hall is a specific one that both speakers know, described as the one used yesterday.",
+        "commonWrongAnswers": [
+          {
+            "answer": "a",
+            "comment": "'A' introduces something new, but this is a specific hall both of you know."
+          },
+          {
+            "answer": "an",
+            "comment": "'An' is used before a vowel sound, and also introduces a non-specific thing, so it doesn't fit here."
+          }
+        ]
+      }
+    ]
+  }
+]

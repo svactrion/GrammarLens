@@ -1,0 +1,98 @@
+[
+  {
+    "date": "2026-09-30",
+    "questionId": "tense-cooking-now",
+    "acceptAlso": [
+      "'m cooking"
+    ],
+    "movedFromWrong": [
+      "'m cooking"
+    ],
+    "hintRemoved": true
+  },
+  {
+    "date": "2026-10-01",
+    "questionId": "salary-article",
+    "acceptAlso": [
+      "his"
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-02",
+    "questionId": "swim-must-pool",
+    "acceptAlso": [
+      "have to"
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-02",
+    "questionId": "marathon-tense-error",
+    "acceptAlso": [
+      "I have run marathons since I was twenty."
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-03",
+    "questionId": "tense-river-cleanup",
+    "acceptAlso": [
+      "'re cleaning"
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-05",
+    "questionId": "flat-article-sun",
+    "acceptAlso": [
+      "The flat has sun in the living room all afternoon."
+    ],
+    "movedFromWrong": [
+      "The flat has sun in the living room all afternoon."
+    ],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-05",
+    "questionId": "tenant-must-sign",
+    "acceptAlso": [
+      "have to"
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-05",
+    "questionId": "neighbours-since",
+    "acceptAlso": [
+      "We have been living in this neighbourhood since 2018.",
+      "We have lived in this neighborhood since 2018.",
+      "We have been living in this neighborhood since 2018."
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-06",
+    "questionId": "tense-news-since",
+    "acceptAlso": [
+      "I have read this newspaper since I was a teenager."
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  },
+  {
+    "date": "2026-10-06",
+    "questionId": "modal-film-ticket-must",
+    "acceptAlso": [
+      "must"
+    ],
+    "movedFromWrong": [],
+    "hintRemoved": false
+  }
+]

@@ -1,0 +1,2708 @@
+[
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_1",
+      "type": "fill_in_blank",
+      "prompt": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"\nFill in the blank with the correct form of the verb (buy)."
+    },
+    "correctAnswer": "to buy",
+    "id": "synth:fb01_1:kb:fullwidth",
+    "userAnswer": "ｔｏ　ｂｕｙ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_1",
+      "type": "fill_in_blank",
+      "prompt": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"\nFill in the blank with the correct form of the verb (buy)."
+    },
+    "correctAnswer": "to buy",
+    "id": "synth:fb01_1:kb:acute",
+    "userAnswer": "tó buy",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_1",
+      "type": "fill_in_blank",
+      "prompt": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"\nFill in the blank with the correct form of the verb (buy)."
+    },
+    "correctAnswer": "to buy",
+    "id": "synth:fb01_1:kb:umlaut",
+    "userAnswer": "tö buy",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_1",
+      "type": "fill_in_blank",
+      "prompt": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"\nFill in the blank with the correct form of the verb (buy)."
+    },
+    "correctAnswer": "to buy",
+    "id": "synth:fb01_1:nearmiss:to_plus_ing",
+    "userAnswer": "to buying",
+    "truth": false,
+    "kind": "nearmiss:to_plus_ing",
+    "review": "a real mistake close to the key (to plus ing): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_2",
+      "type": "fill_in_blank",
+      "prompt": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb01_2:kb:fullwidth",
+    "userAnswer": "ｔｈｅ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_2",
+      "type": "fill_in_blank",
+      "prompt": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb01_2:kb:acute",
+    "userAnswer": "thé",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_2",
+      "type": "fill_in_blank",
+      "prompt": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb01_2:kb:zero_width",
+    "userAnswer": "t​he",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_2",
+      "type": "fill_in_blank",
+      "prompt": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb01_2:nearmiss:add_s",
+    "userAnswer": "thes",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "synth:fb01_3:kb:umlaut",
+    "userAnswer": "äm cooking",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "synth:fb01_3:kb:turkish",
+    "userAnswer": "am cookıng",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "synth:fb01_3:kb:nbsp",
+    "userAnswer": "am cooking",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "synth:fb01_3:contraction",
+    "userAnswer": "'m cooking",
+    "truth": true,
+    "kind": "contraction",
+    "review": "the key with a contraction expanded or made: is it still right here?"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "synth:fb01_3:nearmiss:drop_last_word",
+    "userAnswer": "am",
+    "truth": false,
+    "kind": "nearmiss:drop_last_word",
+    "review": "a real mistake close to the key (drop last word): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_4",
+      "type": "error_correction",
+      "prompt": "Yesterday, the baker told me that he can make a cake for my party.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "id": "synth:fb01_4:kb:turkish",
+    "userAnswer": "Yeşterday, the baker told me that he could make a cake for my party.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_4",
+      "type": "error_correction",
+      "prompt": "Yesterday, the baker told me that he can make a cake for my party.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "id": "synth:fb01_4:kb:nbsp",
+    "userAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_4",
+      "type": "error_correction",
+      "prompt": "Yesterday, the baker told me that he can make a cake for my party.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "id": "synth:fb01_4:kb:zero_width",
+    "userAnswer": "Y​esterday, the baker told me that he could make a cake for my party.",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_4",
+      "type": "error_correction",
+      "prompt": "Yesterday, the baker told me that he can make a cake for my party.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "id": "synth:fb01_4:nearmiss:original_sentence",
+    "userAnswer": "Yesterday, the baker told me that he can make a cake for my party.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_5",
+      "type": "error_correction",
+      "prompt": "You must to wash your hands before you touch the food.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You must wash your hands before you touch the food.",
+    "id": "synth:fb01_5:kb:nbsp",
+    "userAnswer": "You must wash your hands before you touch the food.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_5",
+      "type": "error_correction",
+      "prompt": "You must to wash your hands before you touch the food.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You must wash your hands before you touch the food.",
+    "id": "synth:fb01_5:kb:zero_width",
+    "userAnswer": "Y​ou must wash your hands before you touch the food.",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_5",
+      "type": "error_correction",
+      "prompt": "You must to wash your hands before you touch the food.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You must wash your hands before you touch the food.",
+    "id": "synth:fb01_5:kb:fullwidth",
+    "userAnswer": "Ｙｏｕ　ｍｕｓｔ　ｗａｓｈ　ｙｏｕｒ　ｈａｎｄｓ　ｂｅｆｏｒｅ　ｙｏｕ　ｔｏｕｃｈ　ｔｈｅ　ｆｏｏｄ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb01_5",
+      "type": "error_correction",
+      "prompt": "You must to wash your hands before you touch the food.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You must wash your hands before you touch the food.",
+    "id": "synth:fb01_5:nearmiss:original_sentence",
+    "userAnswer": "You must to wash your hands before you touch the food.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "synth:fb02_1:kb:zero_width",
+    "userAnswer": "L​ast year, the manager promised that the bank would approve my loan.",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "synth:fb02_1:kb:fullwidth",
+    "userAnswer": "Ｌａｓｔ　ｙｅａｒ，　ｔｈｅ　ｍａｎａｇｅｒ　ｐｒｏｍｉｓｅｄ　ｔｈａｔ　ｔｈｅ　ｂａｎｋ　ｗｏｕｌｄ　ａｐｐｒｏｖｅ　ｍｙ　ｌｏａｎ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "synth:fb02_1:kb:acute",
+    "userAnswer": "Lást year, the manager promised that the bank would approve my loan.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "synth:fb02_1:nearmiss:original_sentence",
+    "userAnswer": "Last year, the manager promised that the bank will approve my loan.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "synth:fb02_2:kb:fullwidth",
+    "userAnswer": "Ｙｏｕ　ｓｈｏｕｌｄ　ｃｈｅｃｋ　ｙｏｕｒ　ｂａｎｋ　ｂａｌａｎｃｅ　ｂｅｆｏｒｅ　ｙｏｕ　ｓｈｏｐ　ｏｎｌｉｎｅ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "synth:fb02_2:kb:acute",
+    "userAnswer": "Yóu should check your bank balance before you shop online.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "synth:fb02_2:kb:umlaut",
+    "userAnswer": "Yöu should check your bank balance before you shop online.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "synth:fb02_2:nearmiss:original_sentence",
+    "userAnswer": "You should to check your bank balance before you shop online.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb02_3:kb:fullwidth",
+    "userAnswer": "ｔｈｅ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb02_3:kb:acute",
+    "userAnswer": "thé",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb02_3:kb:zero_width",
+    "userAnswer": "t​he",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb02_3:nearmiss:add_s",
+    "userAnswer": "thes",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "synth:fb02_4:kb:umlaut",
+    "userAnswer": "I päid my rent yesterday, so I have no money left.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "synth:fb02_4:kb:turkish",
+    "userAnswer": "I paıd my rent yesterday, so I have no money left.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "synth:fb02_4:kb:nbsp",
+    "userAnswer": "I paid my rent yesterday, so I have no money left.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "synth:fb02_4:contraction",
+    "userAnswer": "I paid my rent yesterday, so I've no money left.",
+    "truth": true,
+    "kind": "contraction",
+    "review": "the key with a contraction expanded or made: is it still right here?"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "synth:fb02_4:nearmiss:original_sentence",
+    "userAnswer": "I pay my rent yesterday, so I have no money left.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_5",
+      "type": "fill_in_blank",
+      "prompt": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "buying",
+    "id": "synth:fb02_5:kb:zero_width",
+    "userAnswer": "b​uying",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_5",
+      "type": "fill_in_blank",
+      "prompt": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "buying",
+    "id": "synth:fb02_5:kb:fullwidth",
+    "userAnswer": "ｂｕｙｉｎｇ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_5",
+      "type": "fill_in_blank",
+      "prompt": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "buying",
+    "id": "synth:fb02_5:kb:acute",
+    "userAnswer": "búying",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb02_5",
+      "type": "fill_in_blank",
+      "prompt": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "buying",
+    "id": "synth:fb02_5:nearmiss:ing_to_base",
+    "userAnswer": "buy",
+    "truth": false,
+    "kind": "nearmiss:ing_to_base",
+    "review": "a real mistake close to the key (ing to base): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_1",
+      "type": "error_correction",
+      "prompt": "The coach said that the team will train at six.\nCorrect the sentence."
+    },
+    "correctAnswer": "The coach said that the team would train at six.",
+    "id": "synth:fb03_1:kb:nbsp",
+    "userAnswer": "The coach said that the team would train at six.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_1",
+      "type": "error_correction",
+      "prompt": "The coach said that the team will train at six.\nCorrect the sentence."
+    },
+    "correctAnswer": "The coach said that the team would train at six.",
+    "id": "synth:fb03_1:kb:zero_width",
+    "userAnswer": "T​he coach said that the team would train at six.",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_1",
+      "type": "error_correction",
+      "prompt": "The coach said that the team will train at six.\nCorrect the sentence."
+    },
+    "correctAnswer": "The coach said that the team would train at six.",
+    "id": "synth:fb03_1:kb:fullwidth",
+    "userAnswer": "Ｔｈｅ　ｃｏａｃｈ　ｓａｉｄ　ｔｈａｔ　ｔｈｅ　ｔｅａｍ　ｗｏｕｌｄ　ｔｒａｉｎ　ａｔ　ｓｉｘ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_1",
+      "type": "error_correction",
+      "prompt": "The coach said that the team will train at six.\nCorrect the sentence."
+    },
+    "correctAnswer": "The coach said that the team would train at six.",
+    "id": "synth:fb03_1:nearmiss:original_sentence",
+    "userAnswer": "The coach said that the team will train at six.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb03_2:kb:acute",
+    "userAnswer": "múst",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb03_2:kb:umlaut",
+    "userAnswer": "müst",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb03_2:kb:turkish",
+    "userAnswer": "muşt",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb03_2:nearmiss:add_s",
+    "userAnswer": "musts",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_3",
+      "type": "fill_in_blank",
+      "prompt": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)\nWrite the correct form of the verb."
+    },
+    "correctAnswer": "competing",
+    "id": "synth:fb03_3:kb:umlaut",
+    "userAnswer": "cömpeting",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_3",
+      "type": "fill_in_blank",
+      "prompt": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)\nWrite the correct form of the verb."
+    },
+    "correctAnswer": "competing",
+    "id": "synth:fb03_3:kb:turkish",
+    "userAnswer": "competıng",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_3",
+      "type": "fill_in_blank",
+      "prompt": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)\nWrite the correct form of the verb."
+    },
+    "correctAnswer": "competing",
+    "id": "synth:fb03_3:kb:zero_width",
+    "userAnswer": "c​ompeting",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_3",
+      "type": "fill_in_blank",
+      "prompt": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)\nWrite the correct form of the verb."
+    },
+    "correctAnswer": "competing",
+    "id": "synth:fb03_3:nearmiss:ing_to_base",
+    "userAnswer": "compet",
+    "truth": false,
+    "kind": "nearmiss:ing_to_base",
+    "review": "a real mistake close to the key (ing to base): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_4",
+      "type": "fill_in_blank",
+      "prompt": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb03_4:kb:fullwidth",
+    "userAnswer": "ｔｈｅ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_4",
+      "type": "fill_in_blank",
+      "prompt": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb03_4:kb:acute",
+    "userAnswer": "thé",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_4",
+      "type": "fill_in_blank",
+      "prompt": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb03_4:kb:zero_width",
+    "userAnswer": "t​he",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_4",
+      "type": "fill_in_blank",
+      "prompt": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "synth:fb03_4:nearmiss:add_s",
+    "userAnswer": "thes",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "synth:fb03_5:kb:umlaut",
+    "userAnswer": "I häve been running marathons since I was twenty.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "synth:fb03_5:kb:turkish",
+    "userAnswer": "I have been runnıng marathons since I was twenty.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "synth:fb03_5:kb:nbsp",
+    "userAnswer": "I have been running marathons since I was twenty.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "synth:fb03_5:contraction",
+    "userAnswer": "I've been running marathons since I was twenty.",
+    "truth": true,
+    "kind": "contraction",
+    "review": "the key with a contraction expanded or made: is it still right here?"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "synth:fb03_5:nearmiss:original_sentence",
+    "userAnswer": "I am running marathons since I was twenty.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_1",
+      "type": "fill_in_blank",
+      "prompt": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "a",
+    "id": "synth:fb04_1:kb:fullwidth",
+    "userAnswer": "ａ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_1",
+      "type": "fill_in_blank",
+      "prompt": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "a",
+    "id": "synth:fb04_1:kb:acute",
+    "userAnswer": "á",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_1",
+      "type": "fill_in_blank",
+      "prompt": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "a",
+    "id": "synth:fb04_1:kb:umlaut",
+    "userAnswer": "ä",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_1",
+      "type": "fill_in_blank",
+      "prompt": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "a",
+    "id": "synth:fb04_1:nearmiss:add_s",
+    "userAnswer": "as",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "synth:fb04_2:kb:nbsp",
+    "userAnswer": "are cleaning",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "synth:fb04_2:kb:zero_width",
+    "userAnswer": "a​re cleaning",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "synth:fb04_2:kb:fullwidth",
+    "userAnswer": "ａｒｅ　ｃｌｅａｎｉｎｇ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "synth:fb04_2:contraction",
+    "userAnswer": "'re cleaning",
+    "truth": true,
+    "kind": "contraction",
+    "review": "the key with a contraction expanded or made: is it still right here?"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "synth:fb04_2:nearmiss:drop_last_word",
+    "userAnswer": "are",
+    "truth": false,
+    "kind": "nearmiss:drop_last_word",
+    "review": "a real mistake close to the key (drop last word): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_3",
+      "type": "error_correction",
+      "prompt": "Last week, the landlord said that he will install solar panels.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+    "id": "synth:fb04_3:kb:zero_width",
+    "userAnswer": "L​ast week, the landlord said that he would install solar panels.",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_3",
+      "type": "error_correction",
+      "prompt": "Last week, the landlord said that he will install solar panels.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+    "id": "synth:fb04_3:kb:fullwidth",
+    "userAnswer": "Ｌａｓｔ　ｗｅｅｋ，　ｔｈｅ　ｌａｎｄｌｏｒｄ　ｓａｉｄ　ｔｈａｔ　ｈｅ　ｗｏｕｌｄ　ｉｎｓｔａｌｌ　ｓｏｌａｒ　ｐａｎｅｌｓ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_3",
+      "type": "error_correction",
+      "prompt": "Last week, the landlord said that he will install solar panels.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+    "id": "synth:fb04_3:kb:acute",
+    "userAnswer": "Lást week, the landlord said that he would install solar panels.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_3",
+      "type": "error_correction",
+      "prompt": "Last week, the landlord said that he will install solar panels.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+    "id": "synth:fb04_3:nearmiss:original_sentence",
+    "userAnswer": "Last week, the landlord said that he will install solar panels.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "synth:fb04_4:kb:fullwidth",
+    "userAnswer": "Ｙｏｕ　ｓｈｏｕｌｄ　ｂｒｉｎｇ　ｙｏｕｒ　ｏｗｎ　ｂａｇ　ｗｈｅｎ　ｙｏｕ　ｇｏ　ｓｈｏｐｐｉｎｇ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "synth:fb04_4:kb:acute",
+    "userAnswer": "Yóu should bring your own bag when you go shopping.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "synth:fb04_4:kb:umlaut",
+    "userAnswer": "Yöu should bring your own bag when you go shopping.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "synth:fb04_4:nearmiss:original_sentence",
+    "userAnswer": "You should to bring your own bag when you go shopping.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_5",
+      "type": "error_correction",
+      "prompt": "I avoid to drive to work because it pollutes the air.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "I avoid driving to work because it pollutes the air.",
+    "id": "synth:fb04_5:kb:acute",
+    "userAnswer": "I ávoid driving to work because it pollutes the air.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_5",
+      "type": "error_correction",
+      "prompt": "I avoid to drive to work because it pollutes the air.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "I avoid driving to work because it pollutes the air.",
+    "id": "synth:fb04_5:kb:umlaut",
+    "userAnswer": "I ävoid driving to work because it pollutes the air.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_5",
+      "type": "error_correction",
+      "prompt": "I avoid to drive to work because it pollutes the air.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "I avoid driving to work because it pollutes the air.",
+    "id": "synth:fb04_5:kb:turkish",
+    "userAnswer": "I avoıd driving to work because it pollutes the air.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb04_5",
+      "type": "error_correction",
+      "prompt": "I avoid to drive to work because it pollutes the air.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "I avoid driving to work because it pollutes the air.",
+    "id": "synth:fb04_5:nearmiss:original_sentence",
+    "userAnswer": "I avoid to drive to work because it pollutes the air.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "synth:fb05_1:kb:fullwidth",
+    "userAnswer": "ｗｏｕｌｄ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "synth:fb05_1:kb:acute",
+    "userAnswer": "wóuld",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "synth:fb05_1:kb:umlaut",
+    "userAnswer": "wöuld",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "synth:fb05_1:nearmiss:add_s",
+    "userAnswer": "woulds",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "synth:fb05_2:kb:turkish",
+    "userAnswer": "I bouğht these shoes yesterday at the market.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "synth:fb05_2:kb:nbsp",
+    "userAnswer": "I bought these shoes yesterday at the market.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "synth:fb05_2:kb:zero_width",
+    "userAnswer": "I​ bought these shoes yesterday at the market.",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "synth:fb05_2:nearmiss:original_sentence",
+    "userAnswer": "I have bought these shoes yesterday at the market.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_3",
+      "type": "fill_in_blank",
+      "prompt": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.\nFill in the blank with one word."
+    },
+    "correctAnswer": "The",
+    "id": "synth:fb05_3:kb:fullwidth",
+    "userAnswer": "Ｔｈｅ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_3",
+      "type": "fill_in_blank",
+      "prompt": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.\nFill in the blank with one word."
+    },
+    "correctAnswer": "The",
+    "id": "synth:fb05_3:kb:acute",
+    "userAnswer": "Thé",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_3",
+      "type": "fill_in_blank",
+      "prompt": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.\nFill in the blank with one word."
+    },
+    "correctAnswer": "The",
+    "id": "synth:fb05_3:kb:zero_width",
+    "userAnswer": "T​he",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_3",
+      "type": "fill_in_blank",
+      "prompt": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.\nFill in the blank with one word."
+    },
+    "correctAnswer": "The",
+    "id": "synth:fb05_3:nearmiss:add_s",
+    "userAnswer": "Thes",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "synth:fb05_4:kb:zero_width",
+    "userAnswer": "Y​ou must try the jacket on before you buy it.",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "synth:fb05_4:kb:fullwidth",
+    "userAnswer": "Ｙｏｕ　ｍｕｓｔ　ｔｒｙ　ｔｈｅ　ｊａｃｋｅｔ　ｏｎ　ｂｅｆｏｒｅ　ｙｏｕ　ｂｕｙ　ｉｔ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "synth:fb05_4:kb:acute",
+    "userAnswer": "Yóu must try the jacket on before you buy it.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "synth:fb05_4:nearmiss:original_sentence",
+    "userAnswer": "You must to try the jacket on before you buy it.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "synth:fb05_5:kb:fullwidth",
+    "userAnswer": "ｔｏ　ａｓｋ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "synth:fb05_5:kb:acute",
+    "userAnswer": "tó ask",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "synth:fb05_5:kb:umlaut",
+    "userAnswer": "tö ask",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "synth:fb05_5:nearmiss:to_plus_ing",
+    "userAnswer": "to asking",
+    "truth": false,
+    "kind": "nearmiss:to_plus_ing",
+    "review": "a real mistake close to the key (to plus ing): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "synth:fb06_1:kb:acute",
+    "userAnswer": "My lándlord promised that he would repair the heater.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "synth:fb06_1:kb:umlaut",
+    "userAnswer": "My ländlord promised that he would repair the heater.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "synth:fb06_1:kb:turkish",
+    "userAnswer": "My landlord promısed that he would repair the heater.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "synth:fb06_1:nearmiss:original_sentence",
+    "userAnswer": "My landlord promised that he will repair the heater.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "synth:fb06_2:kb:umlaut",
+    "userAnswer": "The flät has the sun in the living room all afternoon.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "synth:fb06_2:kb:turkish",
+    "userAnswer": "The flat has the sun ın the living room all afternoon.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "synth:fb06_2:kb:nbsp",
+    "userAnswer": "The flat has the sun in the living room all afternoon.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "synth:fb06_2:nearmiss:original_sentence",
+    "userAnswer": "The flat has a sun in the living room all afternoon.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb06_3:kb:umlaut",
+    "userAnswer": "müst",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb06_3:kb:turkish",
+    "userAnswer": "muşt",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb06_3:kb:zero_width",
+    "userAnswer": "m​ust",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "synth:fb06_3:nearmiss:add_s",
+    "userAnswer": "musts",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "synth:fb06_4:kb:fullwidth",
+    "userAnswer": "Ｗｅ　ｈａｖｅ　ｌｉｖｅｄ　ｉｎ　ｔｈｉｓ　ｎｅｉｇｈｂｏｕｒｈｏｏｄ　ｓｉｎｃｅ　２０１８．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "synth:fb06_4:kb:acute",
+    "userAnswer": "Wé have lived in this neighbourhood since 2018.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "synth:fb06_4:kb:umlaut",
+    "userAnswer": "We häve lived in this neighbourhood since 2018.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "synth:fb06_4:spelling",
+    "userAnswer": "We have lived in this neighborhood since 2018.",
+    "truth": true,
+    "kind": "spelling",
+    "review": "the key in the other English spelling"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "synth:fb06_4:nearmiss:original_sentence",
+    "userAnswer": "We live in this neighbourhood since 2018.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "synth:fb06_5:kb:zero_width",
+    "userAnswer": "m​oving",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "synth:fb06_5:kb:fullwidth",
+    "userAnswer": "ｍｏｖｉｎｇ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "synth:fb06_5:kb:acute",
+    "userAnswer": "móving",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "synth:fb06_5:nearmiss:ing_to_base",
+    "userAnswer": "mov",
+    "truth": false,
+    "kind": "nearmiss:ing_to_base",
+    "review": "a real mistake close to the key (ing to base): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "synth:fb07_1:kb:fullwidth",
+    "userAnswer": "Ｉ　ｈａｖｅ　ｂｅｅｎ　ｒｅａｄｉｎｇ　ｔｈｉｓ　ｎｅｗｓｐａｐｅｒ　ｓｉｎｃｅ　Ｉ　ｗａｓ　ａ　ｔｅｅｎａｇｅｒ．",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "synth:fb07_1:kb:acute",
+    "userAnswer": "I háve been reading this newspaper since I was a teenager.",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "synth:fb07_1:kb:umlaut",
+    "userAnswer": "I häve been reading this newspaper since I was a teenager.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "synth:fb07_1:contraction",
+    "userAnswer": "I've been reading this newspaper since I was a teenager.",
+    "truth": true,
+    "kind": "contraction",
+    "review": "the key with a contraction expanded or made: is it still right here?"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "synth:fb07_1:nearmiss:original_sentence",
+    "userAnswer": "I am reading this newspaper since I was a teenager.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_2",
+      "type": "fill_in_blank",
+      "prompt": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"\nWrite the correct form of the verb (listen)."
+    },
+    "correctAnswer": "listening",
+    "id": "synth:fb07_2:kb:zero_width",
+    "userAnswer": "l​istening",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_2",
+      "type": "fill_in_blank",
+      "prompt": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"\nWrite the correct form of the verb (listen)."
+    },
+    "correctAnswer": "listening",
+    "id": "synth:fb07_2:kb:fullwidth",
+    "userAnswer": "ｌｉｓｔｅｎｉｎｇ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_2",
+      "type": "fill_in_blank",
+      "prompt": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"\nWrite the correct form of the verb (listen)."
+    },
+    "correctAnswer": "listening",
+    "id": "synth:fb07_2:kb:acute",
+    "userAnswer": "lístening",
+    "truth": true,
+    "kind": "kb:acute",
+    "review": "the key typed on a es, pt-BR keyboard (acute)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_2",
+      "type": "fill_in_blank",
+      "prompt": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"\nWrite the correct form of the verb (listen)."
+    },
+    "correctAnswer": "listening",
+    "id": "synth:fb07_2:nearmiss:ing_to_base",
+    "userAnswer": "listen",
+    "truth": false,
+    "kind": "nearmiss:ing_to_base",
+    "review": "a real mistake close to the key (ing to base): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_3",
+      "type": "error_correction",
+      "prompt": "The presenter said that the show will start at nine.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The presenter said that the show would start at nine.",
+    "id": "synth:fb07_3:kb:umlaut",
+    "userAnswer": "The presenter säid that the show would start at nine.",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_3",
+      "type": "error_correction",
+      "prompt": "The presenter said that the show will start at nine.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The presenter said that the show would start at nine.",
+    "id": "synth:fb07_3:kb:turkish",
+    "userAnswer": "The presenter saıd that the show would start at nine.",
+    "truth": true,
+    "kind": "kb:turkish",
+    "review": "the key typed on a tr keyboard (turkish)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_3",
+      "type": "error_correction",
+      "prompt": "The presenter said that the show will start at nine.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The presenter said that the show would start at nine.",
+    "id": "synth:fb07_3:kb:nbsp",
+    "userAnswer": "The presenter said that the show would start at nine.",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_3",
+      "type": "error_correction",
+      "prompt": "The presenter said that the show will start at nine.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The presenter said that the show would start at nine.",
+    "id": "synth:fb07_3:nearmiss:original_sentence",
+    "userAnswer": "The presenter said that the show will start at nine.",
+    "truth": false,
+    "kind": "nearmiss:original_sentence",
+    "review": "a real mistake close to the key (original sentence): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "synth:fb07_4:kb:nbsp",
+    "userAnswer": "have to",
+    "truth": true,
+    "kind": "kb:nbsp",
+    "review": "the key typed on a ja, ko, ar (and iOS after a full stop) keyboard (nbsp)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "synth:fb07_4:kb:zero_width",
+    "userAnswer": "h​ave to",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "synth:fb07_4:kb:fullwidth",
+    "userAnswer": "ｈａｖｅ　ｔｏ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "synth:fb07_4:nearmiss:drop_last_word",
+    "userAnswer": "have",
+    "truth": false,
+    "kind": "nearmiss:drop_last_word",
+    "review": "a real mistake close to the key (drop last word): must be marked wrong"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_5",
+      "type": "fill_in_blank",
+      "prompt": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"\nWrite the correct article."
+    },
+    "correctAnswer": "an",
+    "id": "synth:fb07_5:kb:umlaut",
+    "userAnswer": "än",
+    "truth": true,
+    "kind": "kb:umlaut",
+    "review": "the key typed on a de keyboard (umlaut)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_5",
+      "type": "fill_in_blank",
+      "prompt": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"\nWrite the correct article."
+    },
+    "correctAnswer": "an",
+    "id": "synth:fb07_5:kb:zero_width",
+    "userAnswer": "a​n",
+    "truth": true,
+    "kind": "kb:zero_width",
+    "review": "the key typed on a ar (ZWNJ), copied text keyboard (zero_width)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_5",
+      "type": "fill_in_blank",
+      "prompt": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"\nWrite the correct article."
+    },
+    "correctAnswer": "an",
+    "id": "synth:fb07_5:kb:fullwidth",
+    "userAnswer": "ａｎ",
+    "truth": true,
+    "kind": "kb:fullwidth",
+    "review": "the key typed on a ja, ko keyboard (fullwidth)"
+  },
+  {
+    "set": "S-synth",
+    "item": {
+      "id": "fb07_5",
+      "type": "fill_in_blank",
+      "prompt": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"\nWrite the correct article."
+    },
+    "correctAnswer": "an",
+    "id": "synth:fb07_5:nearmiss:add_s",
+    "userAnswer": "ans",
+    "truth": false,
+    "kind": "nearmiss:add_s",
+    "review": "a real mistake close to the key (add s): must be marked wrong"
+  },
+  {
+    "id": "synth:debug_articles_2:all_right",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_2",
+      "type": "fill_in_blank",
+      "prompt": "____ honesty matters to her, so she gave me ____ honest answer.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "Honesty matters to her, so she gave me an honest answer.",
+    "truth": true,
+    "kind": "partial:all_right",
+    "correctAnswer": "Honesty matters to her, so she gave me an honest answer.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "",
+        "noArticle": true,
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "an",
+        "accepted": true
+      }
+    ],
+    "review": "every box as the key"
+  },
+  {
+    "id": "synth:debug_articles_2:one_wrong",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_2",
+      "type": "fill_in_blank",
+      "prompt": "____ honesty matters to her, so she gave me ____ honest answer.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "Honesty matters to her, so she gave me ans honest answer.",
+    "truth": false,
+    "kind": "partial:one_wrong",
+    "correctAnswer": "Honesty matters to her, so she gave me an honest answer.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "",
+        "noArticle": true,
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "ans",
+        "accepted": false
+      }
+    ],
+    "review": "box 2 wrong (\"ans\"), the rest right"
+  },
+  {
+    "id": "synth:debug_articles_2:one_empty",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_2",
+      "type": "fill_in_blank",
+      "prompt": "____ honesty matters to her, so she gave me ____ honest answer.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "Honesty matters to her, so she gave me ____ honest answer.",
+    "truth": false,
+    "kind": "partial:one_empty",
+    "correctAnswer": "Honesty matters to her, so she gave me an honest answer.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "",
+        "noArticle": true,
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "",
+        "accepted": false
+      }
+    ],
+    "review": "box 2 left empty (its ____ stays in the sentence), the rest right"
+  },
+  {
+    "id": "synth:debug_articles_2:article_where_none",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_2",
+      "type": "fill_in_blank",
+      "prompt": "____ honesty matters to her, so she gave me ____ honest answer.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "the honesty matters to her, so she gave me an honest answer.",
+    "truth": false,
+    "kind": "partial:article_where_none",
+    "correctAnswer": "Honesty matters to her, so she gave me an honest answer.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "the",
+        "accepted": false
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "an",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 should be \"—\" (no article) but holds \"the\""
+  },
+  {
+    "id": "synth:debug_articles_3:all_right",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_3",
+      "type": "fill_in_blank",
+      "prompt": "We had ____ lunch at ____ small café near ____ station.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "We had lunch at a small café near the station.",
+    "truth": true,
+    "kind": "partial:all_right",
+    "correctAnswer": "We had lunch at a small café near the station.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "",
+        "noArticle": true,
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "the",
+        "user": "the",
+        "accepted": true
+      }
+    ],
+    "review": "every box as the key"
+  },
+  {
+    "id": "synth:debug_articles_3:one_wrong",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_3",
+      "type": "fill_in_blank",
+      "prompt": "We had ____ lunch at ____ small café near ____ station.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "We had lunch at as small café near the station.",
+    "truth": false,
+    "kind": "partial:one_wrong",
+    "correctAnswer": "We had lunch at a small café near the station.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "",
+        "noArticle": true,
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "a",
+        "user": "as",
+        "accepted": false
+      },
+      {
+        "index": 2,
+        "correct": "the",
+        "user": "the",
+        "accepted": true
+      }
+    ],
+    "review": "box 2 wrong (\"as\"), the rest right"
+  },
+  {
+    "id": "synth:debug_articles_3:one_empty",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_3",
+      "type": "fill_in_blank",
+      "prompt": "We had ____ lunch at ____ small café near ____ station.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "We had lunch at a small café near ____ station.",
+    "truth": false,
+    "kind": "partial:one_empty",
+    "correctAnswer": "We had lunch at a small café near the station.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "",
+        "noArticle": true,
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "the",
+        "user": "",
+        "accepted": false
+      }
+    ],
+    "review": "box 3 left empty (its ____ stays in the sentence), the rest right"
+  },
+  {
+    "id": "synth:debug_articles_3:article_where_none",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_3",
+      "type": "fill_in_blank",
+      "prompt": "We had ____ lunch at ____ small café near ____ station.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "We had the lunch at a small café near the station.",
+    "truth": false,
+    "kind": "partial:article_where_none",
+    "correctAnswer": "We had lunch at a small café near the station.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "—",
+        "user": "the",
+        "accepted": false
+      },
+      {
+        "index": 1,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "the",
+        "user": "the",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 should be \"—\" (no article) but holds \"the\""
+  },
+  {
+    "id": "synth:debug_articles_4:all_right",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_4",
+      "type": "fill_in_blank",
+      "prompt": "____ sun was setting when ____ old man sat down on ____ bench and opened ____ newspaper.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "The sun was setting when an old man sat down on a bench and opened a newspaper.",
+    "truth": true,
+    "kind": "partial:all_right",
+    "correctAnswer": "The sun was setting when an old man sat down on a bench and opened a newspaper.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "The",
+        "user": "The",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "an",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      },
+      {
+        "index": 3,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      }
+    ],
+    "review": "every box as the key"
+  },
+  {
+    "id": "synth:debug_articles_4:one_wrong",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_4",
+      "type": "fill_in_blank",
+      "prompt": "____ sun was setting when ____ old man sat down on ____ bench and opened ____ newspaper.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "Thes sun was setting when an old man sat down on a bench and opened a newspaper.",
+    "truth": false,
+    "kind": "partial:one_wrong",
+    "correctAnswer": "The sun was setting when an old man sat down on a bench and opened a newspaper.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "The",
+        "user": "Thes",
+        "accepted": false
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "an",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      },
+      {
+        "index": 3,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 wrong (\"Thes\"), the rest right"
+  },
+  {
+    "id": "synth:debug_articles_4:one_empty",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_4",
+      "type": "fill_in_blank",
+      "prompt": "____ sun was setting when ____ old man sat down on ____ bench and opened ____ newspaper.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "The sun was setting when an old man sat down on a bench and opened ____ newspaper.",
+    "truth": false,
+    "kind": "partial:one_empty",
+    "correctAnswer": "The sun was setting when an old man sat down on a bench and opened a newspaper.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "The",
+        "user": "The",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "an",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      },
+      {
+        "index": 3,
+        "correct": "a",
+        "user": "",
+        "accepted": false
+      }
+    ],
+    "review": "box 4 left empty (its ____ stays in the sentence), the rest right"
+  },
+  {
+    "id": "synth:debug_articles_4:keyboard_in_box",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_articles_4",
+      "type": "fill_in_blank",
+      "prompt": "____ sun was setting when ____ old man sat down on ____ bench and opened ____ newspaper.\nFill in each blank with a, an or the, or tap — for no article."
+    },
+    "userAnswer": "Thé sun was setting when an old man sat down on a bench and opened a newspaper.",
+    "truth": true,
+    "kind": "partial:keyboard_in_box",
+    "correctAnswer": "The sun was setting when an old man sat down on a bench and opened a newspaper.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "The",
+        "user": "Thé",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "an",
+        "user": "an",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      },
+      {
+        "index": 3,
+        "correct": "a",
+        "user": "a",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 typed as \"Thé\" (a keyboard variant of \"The\"), the rest right"
+  },
+  {
+    "id": "synth:debug_gerund_2:all_right",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_2",
+      "type": "fill_in_blank",
+      "prompt": "I enjoy ____ (swim), but this year I have decided ____ (learn) tennis.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "I enjoy swimming (swim), but this year I have decided to learn (learn) tennis.",
+    "truth": true,
+    "kind": "partial:all_right",
+    "correctAnswer": "I enjoy swimming (swim), but this year I have decided to learn (learn) tennis.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "swimming",
+        "user": "swimming",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "to learn",
+        "user": "to learn",
+        "accepted": true
+      }
+    ],
+    "review": "every box as the key"
+  },
+  {
+    "id": "synth:debug_gerund_2:one_wrong",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_2",
+      "type": "fill_in_blank",
+      "prompt": "I enjoy ____ (swim), but this year I have decided ____ (learn) tennis.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "I enjoy swimm (swim), but this year I have decided to learn (learn) tennis.",
+    "truth": false,
+    "kind": "partial:one_wrong",
+    "correctAnswer": "I enjoy swimming (swim), but this year I have decided to learn (learn) tennis.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "swimming",
+        "user": "swimm",
+        "accepted": false
+      },
+      {
+        "index": 1,
+        "correct": "to learn",
+        "user": "to learn",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 wrong (\"swimm\"), the rest right"
+  },
+  {
+    "id": "synth:debug_gerund_2:one_empty",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_2",
+      "type": "fill_in_blank",
+      "prompt": "I enjoy ____ (swim), but this year I have decided ____ (learn) tennis.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "I enjoy swimming (swim), but this year I have decided ____ (learn) tennis.",
+    "truth": false,
+    "kind": "partial:one_empty",
+    "correctAnswer": "I enjoy swimming (swim), but this year I have decided to learn (learn) tennis.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "swimming",
+        "user": "swimming",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "to learn",
+        "user": "",
+        "accepted": false
+      }
+    ],
+    "review": "box 2 left empty (its ____ stays in the sentence), the rest right"
+  },
+  {
+    "id": "synth:debug_gerund_2:keyboard_in_box",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_2",
+      "type": "fill_in_blank",
+      "prompt": "I enjoy ____ (swim), but this year I have decided ____ (learn) tennis.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "I enjoy swımming (swim), but this year I have decided to learn (learn) tennis.",
+    "truth": true,
+    "kind": "partial:keyboard_in_box",
+    "correctAnswer": "I enjoy swimming (swim), but this year I have decided to learn (learn) tennis.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "swimming",
+        "user": "swımming",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "to learn",
+        "user": "to learn",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 typed as \"swımming\" (a keyboard variant of \"swimming\"), the rest right"
+  },
+  {
+    "id": "synth:debug_gerund_3:all_right",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_3",
+      "type": "fill_in_blank",
+      "prompt": "She stopped ____ (smoke) last year, she avoids ____ (go) to smoky bars, and she plans ____ (run) a marathon.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "She stopped smoking (smoke) last year, she avoids going (go) to smoky bars, and she plans to run (run) a marathon.",
+    "truth": true,
+    "kind": "partial:all_right",
+    "correctAnswer": "She stopped smoking (smoke) last year, she avoids going (go) to smoky bars, and she plans to run (run) a marathon.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "smoking",
+        "user": "smoking",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "going",
+        "user": "going",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "to run",
+        "user": "to run",
+        "accepted": true
+      }
+    ],
+    "review": "every box as the key"
+  },
+  {
+    "id": "synth:debug_gerund_3:one_wrong",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_3",
+      "type": "fill_in_blank",
+      "prompt": "She stopped ____ (smoke) last year, she avoids ____ (go) to smoky bars, and she plans ____ (run) a marathon.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "She stopped smok (smoke) last year, she avoids going (go) to smoky bars, and she plans to run (run) a marathon.",
+    "truth": false,
+    "kind": "partial:one_wrong",
+    "correctAnswer": "She stopped smoking (smoke) last year, she avoids going (go) to smoky bars, and she plans to run (run) a marathon.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "smoking",
+        "user": "smok",
+        "accepted": false
+      },
+      {
+        "index": 1,
+        "correct": "going",
+        "user": "going",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "to run",
+        "user": "to run",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 wrong (\"smok\"), the rest right"
+  },
+  {
+    "id": "synth:debug_gerund_3:one_empty",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_3",
+      "type": "fill_in_blank",
+      "prompt": "She stopped ____ (smoke) last year, she avoids ____ (go) to smoky bars, and she plans ____ (run) a marathon.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "She stopped smoking (smoke) last year, she avoids going (go) to smoky bars, and she plans ____ (run) a marathon.",
+    "truth": false,
+    "kind": "partial:one_empty",
+    "correctAnswer": "She stopped smoking (smoke) last year, she avoids going (go) to smoky bars, and she plans to run (run) a marathon.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "smoking",
+        "user": "smoking",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "going",
+        "user": "going",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "to run",
+        "user": "",
+        "accepted": false
+      }
+    ],
+    "review": "box 3 left empty (its ____ stays in the sentence), the rest right"
+  },
+  {
+    "id": "synth:debug_gerund_3:keyboard_in_box",
+    "set": "S-synth",
+    "item": {
+      "id": "debug_gerund_3",
+      "type": "fill_in_blank",
+      "prompt": "She stopped ____ (smoke) last year, she avoids ____ (go) to smoky bars, and she plans ____ (run) a marathon.\nFill in each blank with the right form of the verb."
+    },
+    "userAnswer": "She stopped smokıng (smoke) last year, she avoids going (go) to smoky bars, and she plans to run (run) a marathon.",
+    "truth": true,
+    "kind": "partial:keyboard_in_box",
+    "correctAnswer": "She stopped smoking (smoke) last year, she avoids going (go) to smoky bars, and she plans to run (run) a marathon.",
+    "blanks": [
+      {
+        "index": 0,
+        "correct": "smoking",
+        "user": "smokıng",
+        "accepted": true
+      },
+      {
+        "index": 1,
+        "correct": "going",
+        "user": "going",
+        "accepted": true
+      },
+      {
+        "index": 2,
+        "correct": "to run",
+        "user": "to run",
+        "accepted": true
+      }
+    ],
+    "review": "box 1 typed as \"smokıng\" (a keyboard variant of \"smoking\"), the rest right"
+  }
+]

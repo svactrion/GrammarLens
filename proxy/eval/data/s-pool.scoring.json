@@ -1,0 +1,1692 @@
+[
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_1",
+      "type": "fill_in_blank",
+      "prompt": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"\nFill in the blank with the correct form of the verb (buy)."
+    },
+    "correctAnswer": "to buy",
+    "id": "pool:fb01_1:key",
+    "userAnswer": "to buy",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_1",
+      "type": "fill_in_blank",
+      "prompt": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"\nFill in the blank with the correct form of the verb (buy)."
+    },
+    "correctAnswer": "to buy",
+    "id": "pool:fb01_1:wrong:1",
+    "userAnswer": "buying",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_1",
+      "type": "fill_in_blank",
+      "prompt": "At the weekend market, Lena talks about her budget: \"I can't afford ____ all my vegetables here, so I buy some at the supermarket.\"\nFill in the blank with the correct form of the verb (buy)."
+    },
+    "correctAnswer": "to buy",
+    "id": "pool:fb01_1:wrong:2",
+    "userAnswer": "buy",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_2",
+      "type": "fill_in_blank",
+      "prompt": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb01_2:key",
+    "userAnswer": "the",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_2",
+      "type": "fill_in_blank",
+      "prompt": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb01_2:wrong:1",
+    "userAnswer": "a",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_2",
+      "type": "fill_in_blank",
+      "prompt": "At a restaurant, a waiter says: \"Today we have fish soup and grilled chicken. I recommend ____ soup; it's the chef's special.\"\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb01_2:wrong:2",
+    "userAnswer": "an",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "pool:fb01_3:key",
+    "userAnswer": "am cooking",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "pool:fb01_3:accepted:1",
+    "userAnswer": "'m cooking",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "pool:fb01_3:wrong:1",
+    "userAnswer": "cook",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_3",
+      "type": "fill_in_blank",
+      "prompt": "You phone your brother at 7 p.m. and hear noises. He says: \"Sorry, I can't talk long. I ____ dinner for my friends right now.\"\nFill in the blank with the correct form of the verb (cook)."
+    },
+    "correctAnswer": "am cooking",
+    "id": "pool:fb01_3:wrong:2",
+    "userAnswer": "cooked",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_4",
+      "type": "error_correction",
+      "prompt": "Yesterday, the baker told me that he can make a cake for my party.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "id": "pool:fb01_4:key",
+    "userAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_4",
+      "type": "error_correction",
+      "prompt": "Yesterday, the baker told me that he can make a cake for my party.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "id": "pool:fb01_4:wrong:1",
+    "userAnswer": "Yesterday, the baker told me that he would can make a cake for my party.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_4",
+      "type": "error_correction",
+      "prompt": "Yesterday, the baker told me that he can make a cake for my party.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Yesterday, the baker told me that he could make a cake for my party.",
+    "id": "pool:fb01_4:wrong:2",
+    "userAnswer": "Yesterday, the baker told me that he could made a cake for my party.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_5",
+      "type": "error_correction",
+      "prompt": "You must to wash your hands before you touch the food.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You must wash your hands before you touch the food.",
+    "id": "pool:fb01_5:key",
+    "userAnswer": "You must wash your hands before you touch the food.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_5",
+      "type": "error_correction",
+      "prompt": "You must to wash your hands before you touch the food.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You must wash your hands before you touch the food.",
+    "id": "pool:fb01_5:wrong:1",
+    "userAnswer": "You must washing your hands before you touch the food.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb01_5",
+      "type": "error_correction",
+      "prompt": "You must to wash your hands before you touch the food.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You must wash your hands before you touch the food.",
+    "id": "pool:fb01_5:wrong:2",
+    "userAnswer": "You must to wash your hands before touching the food.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "pool:fb02_1:key",
+    "userAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "pool:fb02_1:wrong:1",
+    "userAnswer": "Last year, the manager promised that the bank can approve my loan.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "pool:fb02_1:wrong:2",
+    "userAnswer": "Last year, the manager promised that the bank will have approved my loan.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_1",
+      "type": "error_correction",
+      "prompt": "Last year, the manager promised that the bank will approve my loan.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "Last year, the manager promised that the bank would approve my loan.",
+    "id": "pool:fb02_1:wrong:3",
+    "userAnswer": "Last year, the manager promised that the bank would to approve my loan.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "pool:fb02_2:key",
+    "userAnswer": "You should check your bank balance before you shop online.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "pool:fb02_2:wrong:1",
+    "userAnswer": "You should checking your bank balance before you shop online.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "pool:fb02_2:wrong:2",
+    "userAnswer": "You should to checking your bank balance before you shop online.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_2",
+      "type": "error_correction",
+      "prompt": "You should to check your bank balance before you shop online.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You should check your bank balance before you shop online.",
+    "id": "pool:fb02_2:wrong:3",
+    "userAnswer": "You should checked your bank balance before you shop online.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb02_3:key",
+    "userAnswer": "the",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb02_3:accepted:1",
+    "userAnswer": "his",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb02_3:wrong:1",
+    "userAnswer": "a",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_3",
+      "type": "fill_in_blank",
+      "prompt": "Ali got a job at a large company. He says that ___ salary is much higher than his old one, so he can save more.\nFill in the blank with one word."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb02_3:wrong:2",
+    "userAnswer": "an",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "pool:fb02_4:key",
+    "userAnswer": "I paid my rent yesterday, so I have no money left.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "pool:fb02_4:wrong:1",
+    "userAnswer": "I have paid my rent yesterday, so I have no money left.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "pool:fb02_4:wrong:2",
+    "userAnswer": "I have paid my rent, so I have no money left yesterday.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_4",
+      "type": "error_correction",
+      "prompt": "I pay my rent yesterday, so I have no money left.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I paid my rent yesterday, so I have no money left.",
+    "id": "pool:fb02_4:wrong:3",
+    "userAnswer": "I was paying my rent yesterday, so I have no money left.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_5",
+      "type": "fill_in_blank",
+      "prompt": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "buying",
+    "id": "pool:fb02_5:key",
+    "userAnswer": "buying",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_5",
+      "type": "fill_in_blank",
+      "prompt": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "buying",
+    "id": "pool:fb02_5:wrong:1",
+    "userAnswer": "to buy",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb02_5",
+      "type": "fill_in_blank",
+      "prompt": "Sara wants to save money, so she has decided to avoid ___ expensive coffee every morning. (buy)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "buying",
+    "id": "pool:fb02_5:wrong:2",
+    "userAnswer": "buy",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_1",
+      "type": "error_correction",
+      "prompt": "The coach said that the team will train at six.\nCorrect the sentence."
+    },
+    "correctAnswer": "The coach said that the team would train at six.",
+    "id": "pool:fb03_1:key",
+    "userAnswer": "The coach said that the team would train at six.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_1",
+      "type": "error_correction",
+      "prompt": "The coach said that the team will train at six.\nCorrect the sentence."
+    },
+    "correctAnswer": "The coach said that the team would train at six.",
+    "id": "pool:fb03_1:wrong:1",
+    "userAnswer": "The coach said that the team will trained at six.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_1",
+      "type": "error_correction",
+      "prompt": "The coach said that the team will train at six.\nCorrect the sentence."
+    },
+    "correctAnswer": "The coach said that the team would train at six.",
+    "id": "pool:fb03_1:wrong:2",
+    "userAnswer": "The coach said that the team would trained at six.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb03_2:key",
+    "userAnswer": "must",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb03_2:accepted:1",
+    "userAnswer": "have to",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb03_2:wrong:1",
+    "userAnswer": "might",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_2",
+      "type": "fill_in_blank",
+      "prompt": "At the public pool, a sign says: 'Swimmers ___ wear a cap. It is a strict rule.'\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb03_2:wrong:2",
+    "userAnswer": "can",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_3",
+      "type": "fill_in_blank",
+      "prompt": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)\nWrite the correct form of the verb."
+    },
+    "correctAnswer": "competing",
+    "id": "pool:fb03_3:key",
+    "userAnswer": "competing",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_3",
+      "type": "fill_in_blank",
+      "prompt": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)\nWrite the correct form of the verb."
+    },
+    "correctAnswer": "competing",
+    "id": "pool:fb03_3:wrong:1",
+    "userAnswer": "to compete",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_3",
+      "type": "fill_in_blank",
+      "prompt": "My brother plays tennis every weekend because he really enjoys ___ against strong opponents. (compete)\nWrite the correct form of the verb."
+    },
+    "correctAnswer": "competing",
+    "id": "pool:fb03_3:wrong:2",
+    "userAnswer": "compete",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_4",
+      "type": "fill_in_blank",
+      "prompt": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb03_4:key",
+    "userAnswer": "the",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_4",
+      "type": "fill_in_blank",
+      "prompt": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb03_4:wrong:1",
+    "userAnswer": "a",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_4",
+      "type": "fill_in_blank",
+      "prompt": "At a football match, a fan says: 'Our striker scored two goals, but ___ goalkeeper of the other team saved everything else.'\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "the",
+    "id": "pool:fb03_4:wrong:2",
+    "userAnswer": "an",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "pool:fb03_5:key",
+    "userAnswer": "I have been running marathons since I was twenty.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "pool:fb03_5:accepted:1",
+    "userAnswer": "I have run marathons since I was twenty.",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "pool:fb03_5:wrong:1",
+    "userAnswer": "I run marathons since I was twenty.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb03_5",
+      "type": "error_correction",
+      "prompt": "I am running marathons since I was twenty.\nCorrect the sentence."
+    },
+    "correctAnswer": "I have been running marathons since I was twenty.",
+    "id": "pool:fb03_5:wrong:2",
+    "userAnswer": "I was running marathons since I was twenty.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_1",
+      "type": "fill_in_blank",
+      "prompt": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "a",
+    "id": "pool:fb04_1:key",
+    "userAnswer": "a",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_1",
+      "type": "fill_in_blank",
+      "prompt": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "a",
+    "id": "pool:fb04_1:wrong:1",
+    "userAnswer": "the",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_1",
+      "type": "fill_in_blank",
+      "prompt": "Maria is at a park. She wants to throw away her plastic bottle. She says: \"Excuse me, is there ___ recycling bin near here?\" (She does not know of any particular bin.)\nFill in the blank with the correct article."
+    },
+    "correctAnswer": "a",
+    "id": "pool:fb04_1:wrong:2",
+    "userAnswer": "an",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "pool:fb04_2:key",
+    "userAnswer": "are cleaning",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "pool:fb04_2:accepted:1",
+    "userAnswer": "'re cleaning",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "pool:fb04_2:wrong:1",
+    "userAnswer": "clean",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "pool:fb04_2:wrong:2",
+    "userAnswer": "cleaned",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_2",
+      "type": "fill_in_blank",
+      "prompt": "A volunteer speaks on the phone: \"I can't talk now. We ___ the river bank at the moment, and my hands are full.\" (clean)\nFill in the blank with the correct form of the verb in brackets."
+    },
+    "correctAnswer": "are cleaning",
+    "id": "pool:fb04_2:wrong:3",
+    "userAnswer": "are clean",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_3",
+      "type": "error_correction",
+      "prompt": "Last week, the landlord said that he will install solar panels.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+    "id": "pool:fb04_3:key",
+    "userAnswer": "Last week, the landlord said that he would install solar panels.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_3",
+      "type": "error_correction",
+      "prompt": "Last week, the landlord said that he will install solar panels.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+    "id": "pool:fb04_3:wrong:1",
+    "userAnswer": "Last week, the landlord said that he wills install solar panels.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_3",
+      "type": "error_correction",
+      "prompt": "Last week, the landlord said that he will install solar panels.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "Last week, the landlord said that he would install solar panels.",
+    "id": "pool:fb04_3:wrong:2",
+    "userAnswer": "Last week, the landlord said that he would installed solar panels.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "pool:fb04_4:key",
+    "userAnswer": "You should bring your own bag when you go shopping.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "pool:fb04_4:wrong:1",
+    "userAnswer": "You should bringing your own bag when you go shopping.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "pool:fb04_4:wrong:2",
+    "userAnswer": "You should to bring your own bag when you go shopping.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_4",
+      "type": "error_correction",
+      "prompt": "You should to bring your own bag when you go shopping.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "You should bring your own bag when you go shopping.",
+    "id": "pool:fb04_4:wrong:3",
+    "userAnswer": "You should brought your own bag when you go shopping.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_5",
+      "type": "error_correction",
+      "prompt": "I avoid to drive to work because it pollutes the air.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "I avoid driving to work because it pollutes the air.",
+    "id": "pool:fb04_5:key",
+    "userAnswer": "I avoid driving to work because it pollutes the air.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_5",
+      "type": "error_correction",
+      "prompt": "I avoid to drive to work because it pollutes the air.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "I avoid driving to work because it pollutes the air.",
+    "id": "pool:fb04_5:wrong:1",
+    "userAnswer": "I avoid drive to work because it pollutes the air.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb04_5",
+      "type": "error_correction",
+      "prompt": "I avoid to drive to work because it pollutes the air.\nRewrite the sentence with the error corrected."
+    },
+    "correctAnswer": "I avoid driving to work because it pollutes the air.",
+    "id": "pool:fb04_5:wrong:2",
+    "userAnswer": "I avoid to driving to work because it pollutes the air.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "pool:fb05_1:key",
+    "userAnswer": "would",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "pool:fb05_1:wrong:1",
+    "userAnswer": "will",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "pool:fb05_1:wrong:2",
+    "userAnswer": "could",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_1",
+      "type": "fill_in_blank",
+      "prompt": "Yesterday, a shop assistant told me, \"We will have the new jackets on Friday.\" Later I told my friend about it.\nComplete the reported sentence with one word: The assistant said they ___ have the new jackets on Friday."
+    },
+    "correctAnswer": "would",
+    "id": "pool:fb05_1:wrong:3",
+    "userAnswer": "should",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "pool:fb05_2:key",
+    "userAnswer": "I bought these shoes yesterday at the market.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "pool:fb05_2:wrong:1",
+    "userAnswer": "I have bought these shoes at the market yesterday.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "pool:fb05_2:wrong:2",
+    "userAnswer": "I buy these shoes yesterday at the market.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_2",
+      "type": "error_correction",
+      "prompt": "I have bought these shoes yesterday at the market.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "I bought these shoes yesterday at the market.",
+    "id": "pool:fb05_2:wrong:3",
+    "userAnswer": "I was buying these shoes yesterday at the market.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_3",
+      "type": "fill_in_blank",
+      "prompt": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.\nFill in the blank with one word."
+    },
+    "correctAnswer": "The",
+    "id": "pool:fb05_3:key",
+    "userAnswer": "The",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_3",
+      "type": "fill_in_blank",
+      "prompt": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.\nFill in the blank with one word."
+    },
+    "correctAnswer": "The",
+    "id": "pool:fb05_3:wrong:1",
+    "userAnswer": "A",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_3",
+      "type": "fill_in_blank",
+      "prompt": "At the checkout, a customer says: \"I'd like two loaves of bread, please.\" The cashier replies: \"Sorry, we've sold out of bread. ___ bakery next door might still have some.\" There is only one bakery next door.\nFill in the blank with one word."
+    },
+    "correctAnswer": "The",
+    "id": "pool:fb05_3:wrong:2",
+    "userAnswer": "An",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "pool:fb05_4:key",
+    "userAnswer": "You must try the jacket on before you buy it.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "pool:fb05_4:wrong:1",
+    "userAnswer": "You must to try on the jacket before you buy it.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "pool:fb05_4:wrong:2",
+    "userAnswer": "You must trying the jacket on before you buy it.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_4",
+      "type": "error_correction",
+      "prompt": "You must to try the jacket on before you buy it.\nRewrite the full sentence with the error corrected."
+    },
+    "correctAnswer": "You must try the jacket on before you buy it.",
+    "id": "pool:fb05_4:wrong:3",
+    "userAnswer": "You must tried the jacket on before you buy it.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "pool:fb05_5:key",
+    "userAnswer": "to ask",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "pool:fb05_5:wrong:1",
+    "userAnswer": "asking",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "pool:fb05_5:wrong:2",
+    "userAnswer": "ask",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb05_5",
+      "type": "fill_in_blank",
+      "prompt": "The blender you bought stopped working after two days, so you went back to the store.\nComplete the sentence with the correct form of the verb: I decided ___ (ask) for a refund."
+    },
+    "correctAnswer": "to ask",
+    "id": "pool:fb05_5:wrong:3",
+    "userAnswer": "to asking",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "pool:fb06_1:key",
+    "userAnswer": "My landlord promised that he would repair the heater.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "pool:fb06_1:wrong:1",
+    "userAnswer": "My landlord promised that he is repair the heater.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "pool:fb06_1:wrong:2",
+    "userAnswer": "My landlord promised that he will to repair the heater.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_1",
+      "type": "error_correction",
+      "prompt": "My landlord promised that he will repair the heater.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "My landlord promised that he would repair the heater.",
+    "id": "pool:fb06_1:wrong:3",
+    "userAnswer": "My landlord promised that he would to repair the heater.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "pool:fb06_2:key",
+    "userAnswer": "The flat has the sun in the living room all afternoon.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "pool:fb06_2:accepted:1",
+    "userAnswer": "The flat has sun in the living room all afternoon.",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "pool:fb06_2:wrong:1",
+    "userAnswer": "The flat has an sun in the living room all afternoon.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_2",
+      "type": "error_correction",
+      "prompt": "The flat has a sun in the living room all afternoon.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The flat has the sun in the living room all afternoon.",
+    "id": "pool:fb06_2:wrong:2",
+    "userAnswer": "A flat has a sun in the living room all afternoon.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb06_3:key",
+    "userAnswer": "must",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb06_3:accepted:1",
+    "userAnswer": "have to",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb06_3:wrong:1",
+    "userAnswer": "might",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb06_3:wrong:2",
+    "userAnswer": "could",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_3",
+      "type": "fill_in_blank",
+      "prompt": "You are renting a flat. The agent says: \"The contract is a legal rule here, so you ___ sign it before you get the keys.\"\nFill in the blank with one modal verb."
+    },
+    "correctAnswer": "must",
+    "id": "pool:fb06_3:wrong:3",
+    "userAnswer": "can",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "pool:fb06_4:key",
+    "userAnswer": "We have lived in this neighbourhood since 2018.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "pool:fb06_4:accepted:1",
+    "userAnswer": "We have been living in this neighbourhood since 2018.",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "pool:fb06_4:accepted:2",
+    "userAnswer": "We have lived in this neighborhood since 2018.",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "pool:fb06_4:accepted:3",
+    "userAnswer": "We have been living in this neighborhood since 2018.",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "pool:fb06_4:wrong:1",
+    "userAnswer": "We lived in this neighbourhood since 2018.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "pool:fb06_4:wrong:2",
+    "userAnswer": "We are living in this neighbourhood since 2018.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_4",
+      "type": "error_correction",
+      "prompt": "We live in this neighbourhood since 2018.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "We have lived in this neighbourhood since 2018.",
+    "id": "pool:fb06_4:wrong:3",
+    "userAnswer": "We have live in this neighbourhood since 2018.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "pool:fb06_5:key",
+    "userAnswer": "moving",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "pool:fb06_5:wrong:1",
+    "userAnswer": "to move",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "pool:fb06_5:wrong:2",
+    "userAnswer": "move",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb06_5",
+      "type": "fill_in_blank",
+      "prompt": "Our flat is too small, so we are considering ___ to a bigger house next year. (move)\nFill in the blank with the correct form of the verb."
+    },
+    "correctAnswer": "moving",
+    "id": "pool:fb06_5:wrong:3",
+    "userAnswer": "moved",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "pool:fb07_1:key",
+    "userAnswer": "I have been reading this newspaper since I was a teenager.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "pool:fb07_1:accepted:1",
+    "userAnswer": "I have read this newspaper since I was a teenager.",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "pool:fb07_1:wrong:1",
+    "userAnswer": "I read this newspaper since I was a teenager.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_1",
+      "type": "error_correction",
+      "prompt": "I am reading this newspaper since I was a teenager.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "I have been reading this newspaper since I was a teenager.",
+    "id": "pool:fb07_1:wrong:2",
+    "userAnswer": "I was reading this newspaper since I was a teenager.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_2",
+      "type": "fill_in_blank",
+      "prompt": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"\nWrite the correct form of the verb (listen)."
+    },
+    "correctAnswer": "listening",
+    "id": "pool:fb07_2:key",
+    "userAnswer": "listening",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_2",
+      "type": "fill_in_blank",
+      "prompt": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"\nWrite the correct form of the verb (listen)."
+    },
+    "correctAnswer": "listening",
+    "id": "pool:fb07_2:wrong:1",
+    "userAnswer": "to listen",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_2",
+      "type": "fill_in_blank",
+      "prompt": "Maria listens to podcasts every morning on the bus. She says: \"I really enjoy ___ to true crime podcasts.\"\nWrite the correct form of the verb (listen)."
+    },
+    "correctAnswer": "listening",
+    "id": "pool:fb07_2:wrong:2",
+    "userAnswer": "listen",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_3",
+      "type": "error_correction",
+      "prompt": "The presenter said that the show will start at nine.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The presenter said that the show would start at nine.",
+    "id": "pool:fb07_3:key",
+    "userAnswer": "The presenter said that the show would start at nine.",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_3",
+      "type": "error_correction",
+      "prompt": "The presenter said that the show will start at nine.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The presenter said that the show would start at nine.",
+    "id": "pool:fb07_3:wrong:1",
+    "userAnswer": "The presenter said that the show will starts at nine.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_3",
+      "type": "error_correction",
+      "prompt": "The presenter said that the show will start at nine.\nCorrect the sentence by rewriting it in full."
+    },
+    "correctAnswer": "The presenter said that the show would start at nine.",
+    "id": "pool:fb07_3:wrong:2",
+    "userAnswer": "The presenter said that the show would starts at nine.",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "pool:fb07_4:key",
+    "userAnswer": "have to",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "pool:fb07_4:accepted:1",
+    "userAnswer": "must",
+    "truth": true,
+    "kind": "accepted"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "pool:fb07_4:wrong:1",
+    "userAnswer": "might",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_4",
+      "type": "fill_in_blank",
+      "prompt": "At the cinema entrance, a sign says that entry without a ticket is forbidden by the rules. It says: \"You ___ show your ticket before entering the screening room.\"\nWrite the one modal verb that fits best to show a strict rule."
+    },
+    "correctAnswer": "have to",
+    "id": "pool:fb07_4:wrong:2",
+    "userAnswer": "could",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_5",
+      "type": "fill_in_blank",
+      "prompt": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"\nWrite the correct article."
+    },
+    "correctAnswer": "an",
+    "id": "pool:fb07_5:key",
+    "userAnswer": "an",
+    "truth": true,
+    "kind": "key"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_5",
+      "type": "fill_in_blank",
+      "prompt": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"\nWrite the correct article."
+    },
+    "correctAnswer": "an",
+    "id": "pool:fb07_5:wrong:1",
+    "userAnswer": "a",
+    "truth": false,
+    "kind": "predicted_wrong"
+  },
+  {
+    "set": "S-pool",
+    "item": {
+      "id": "fb07_5",
+      "type": "fill_in_blank",
+      "prompt": "Tom turns on his radio in the car and says: \"Look, there's ___ interview with my favourite singer on this station tonight!\"\nWrite the correct article."
+    },
+    "correctAnswer": "an",
+    "id": "pool:fb07_5:wrong:2",
+    "userAnswer": "the",
+    "truth": false,
+    "kind": "predicted_wrong"
+  }
+]
