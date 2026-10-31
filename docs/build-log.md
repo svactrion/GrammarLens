@@ -12991,3 +12991,164 @@ no proxy change, no deploy (1.3.0 is in review).
 - **[Docs]** `1.4.0-plan.md`: the status line, D10's device-check bullet,
   the B8 and B10 work-list entries. `roadmap.md`: the 1.4.0 row's status
   and the B10 bullet under "1.4.0 (planned)".
+
+## 2026-10-31 (Server package: Batch 0 approved; decisions recorded; the cron found silent since 2026-10-22)
+
+Plan: `docs/1.4.0-plan.md` (the new D11 section and the Phase 3 list);
+report: `docs/1.4.0-server-batch0-report.md` §5 (the decisions under each
+item) and §6 (the order of work and the design constraint). Docs only in
+this entry; no deploy (1.3.0 is in review).
+
+- **[Decision — owner]** The Batch 0 report is approved with the §5
+  decisions: `explanation` stays for live clients and `summary` +
+  `blanks[]` are added; a published set may be annotated in place (additive
+  patch, `checkedAt`); both P14 gates behind one constant; `review:{date}`
+  with no automatic pull; prompt v3 includes the reported-speech sentence;
+  the legacy prompt stays; the full labelling set; a **30 USD** cap and a
+  separate key; the folding's client half with B3. Additions:
+  `claude-haiku-5-5` cells in the D4 matrix; prompts in their own module,
+  the harness parameterised by provider and model id, the labelled sets in
+  the repo, no multi-provider layer.
+- **[Found — read-only KV]** While exporting the live sets for the
+  measurement: the newest published set is `set:2026-10-25` (generated
+  2026-10-22, attempt 1); `attempts:2026-10-28` … `attempts:2026-11-03` are
+  all `{count: 3}`; there is no set for 2026-10-26 or later. **The cron
+  has published nothing since 2026-10-22; learners have had the fallback
+  pool since 2026-10-26.** KV holds no reason (a rejection code or an
+  upstream failure is only in the `shared_set_generation` log lines);
+  `/health` answers 200. Reported to the owner; the cause is read from the
+  Cloudflare dashboard's logs (Workers → grammarlens-proxy → Logs, event
+  `shared_set_generation`, fields `outcome`, `reason`, `failure`,
+  `stop_reason`) before anything else is decided. Not part of this package.
+- **[Data]** `proxy/eval/data/live-sets/set-<date>.json`: the 30 live sets
+  in KV (2026-09-26 … 10-25; three are prompt v1), fetched read-only with
+  `wrangler kv key get`, kept in the repo as measurement input (the owner's
+  design constraint). 150 questions; none carries `acceptedAnswers`.
+
+## 2026-10-31 (Server package step B: the test sets and the owner's label sheets; no API call)
+
+Report: `docs/1.4.0-server-batch0-report.md` §3.1, §6 step B. Nothing
+calls Anthropic; `wrangler kv key get` read the live sets.
+
+- **[Engineering]** `proxy/eval/lib/datasets.ts` (pure builders) and
+  `npm run eval -- sets` (the writer) build `proxy/eval/data/` from inputs in
+  the repo: **S-pool scoring** (130 labelled answers from the pool: 35 keys,
+  12 owner-accepted, 83 predicted wrong), **S-pool gate** (the 10 owner
+  corrections mapped to the live questions, 12 accepted answers a checker
+  should rediscover), **S-live** (the 20 prompt-v2 live sets the owner has
+  not reviewed, 2026-09-29 and 10-07 … 10-25: 100 questions on a blind
+  sheet with letter-prefixed random keys, a fixed seed, and a mapping kept
+  apart), **S-synth** (166 answers of known quality: 105 keyboard variants
+  over eight classes rotated three per question, 5 contractions, 1
+  spelling, 35 near-misses, 20 multi-blank cases over the five debug items,
+  each with a per-blank truth and a review line), and the S-gen / S-free
+  sheet templates. A sheet the owner has started is never rewritten.
+- **[Owner — to do]** `proxy/eval/data/README.md`: label
+  `s-live/labels.csv` (≈ 65–70 min; `accept_also` is the gate's truth, so
+  fill it on `ok` rows too), review `s-synth-review.md` (≈ 15 min;
+  disagreements go to `s-synth-exclusions.txt`). After the generation calls
+  in step E: S-gen (150 rows, ≈ 50 min) and S-free (150 rows, ≈ 40 min;
+  can be cut to the D3-prompt cells, 75 rows). In all ≈ 2 h 50 min with
+  the Haiku cells, against the ≈ 2 h estimated before them; the owner
+  decides on the S-free cut before the run.
+- **[Tests]** `proxy/test/eval_datasets.test.ts`: the assembly rule (empty
+  box keeps its blank, no-article removal and capitalisation), the eight
+  transforms and the rotation, contractions (never `'s` / `'d`), spellings,
+  the near-miss rules, S-pool counts and shapes, the gate mapping and its
+  failure on a missing question, S-live selection and the deterministic
+  sheet, S-synth's unique ids, review notes and multi-blank verdicts.
+
+## 2026-10-31 (Server package step C: P14, D3 and D11 built and tested; nothing deployed)
+
+Report: `docs/1.4.0-server-batch0-report.md` §1–§4, §6 step C. Plan:
+`1.4.0-plan.md`, Phase 3. No proxy deploy and no live prompt change (1.3.0 is
+in review): the cron keeps sending prompt v2 without a check until the
+measurement passes and the owner deploys.
+
+- **[Engineering] Prompts module (design constraint).** The five system
+  prompts moved byte for byte into `proxy/src/prompts.ts`, apart from the
+  request builders in `anthropic.ts`; every request fingerprint unchanged by
+  the move (`test/prompts.test.ts` pins that no prompt text remains in the
+  builders).
+- **[Engineering] P14, annotate-after-publish.** `shared_generation.ts`: the
+  hourly run does one thing: the annotation of the nearest published set
+  without `checkedAt` (one call per checker of the gate, `MAX_CHECKS_PER_DATE`
+  2, a lease of the checkers' timeouts plus 30 s, `attempts:{date}` gains
+  `checks`), else one generation as before. `shared_check.ts`:
+  `ANNOTATION_GATE` (`agreement`: Opus 5.5 + Sonnet 5.5 must both propose an
+  answer; `single_review`: Opus 5.5 alone), `annotateQuestion` /
+  `annotateSet` (add-only: agreed alternatives, agreed moves of acceptable
+  wrong answers with at least one wrong answer kept; nothing written when the
+  explanation excludes the candidates or there are more than two; an
+  alternative that is the original, still a wrong answer, or not plain is
+  dropped; every doubt and every refusal is a finding), `isAdditivePatch`.
+  The set is re-read right before the write and written only if unchanged
+  and the patch additive; `checkedAt`, `checkVersion`, `checkGate`,
+  `checkModels` stamped; findings to `review:{date}` (14 days). Kill switch
+  `SHARED_SET_CHECK_ENABLED` (wrangler.jsonc `"true"`, tests `"false"` unless
+  they turn it on). Log line `shared_set_annotation`: fixed fields and counts,
+  never a text. The "write-once" rule and its test now read "two writes,
+  never a third" (`proxy/README.md`).
+- **[Engineering] D3.** `GENERATION_SYSTEM_PROMPT`, `SHARED_CHECK_SYSTEM_PROMPT`
+  and the scoring prompt's keyboard paragraph made language-neutral;
+  `SHARED_DAILY_TEST_SYSTEM_PROMPT_V3` = v2 with the neutral first sentence
+  and the reported-speech time-frame sentence in rule 1 (v2 kept buildable
+  for the comparison; the legacy prompt untouched, owner decision);
+  `SharedPromptVersion` 1 | 2 | 3, `SHARED_PROMPT_VERSION` 3, the v3 request
+  pinned (`d5c83865`), the cron's request re-pinned (`80b1fa85` →
+  `2bfd39d1`), `CHECK_VERSION` 2 (`b6509a7e`). Folding:
+  `foldKeyboardVariants` on the proxy now maps the eight classes of the
+  report's §2.2 (full-width ASCII and ideographic space, the precomposed
+  Latin letters of es/pt-BR/de/tr with ß/æ/œ, dotless i, the quotation marks
+  and apostrophes `normalizeAnswer` does not straighten, NBSP and the
+  zero-width and direction marks, dashes, Arabic digits and punctuation,
+  the Spanish inverted marks, one trailing full-width mark), collapses
+  doubled spaces and may change the length; the contract is
+  `proxy/test/fixtures/keyboard_folding.json` (43 cases in nine groups, the
+  Dart test reads it from B3; the old Turkish fixture cases still pass).
+  Gate rule `correct_answer_not_plain` (none of the 185 live and pool keys
+  fails it). The 2026-09-29 comparison's V3 test now compares against a v2
+  request explicitly.
+- **[Engineering] D11, proxy half.** The scoring prompt asks for `blanks`
+  (one entry per blank of a fill_in_blank prompt in order, else one entry:
+  index, the correct form, accepted, a one-sentence note) and `summary`
+  (two sentences at most); both required in the schema;
+  `scoreMaxTokensFor` (400 per item, never under 2,048, cap 8,192).
+  `src/score_feedback.ts` checks the fields against the request before the
+  response goes out: a count or index that does not match the prompt's
+  blanks (the app's `_{2,}` rule; one entry for every other item) removes
+  `blanks` and `summary` from that item; `isCorrect` is set to
+  `every(accepted)` when the model contradicts its own entries; the six
+  fields every client reads are otherwise untouched. Log line
+  `score_feedback`: counts only.
+- **[Engineering] D11, client half** (built by a forked agent from the
+  report's §4.3–4.6; verified here: `flutter analyze` clean, **2171 tests
+  passed**, was 2145). `BlankFeedback`; `ItemFeedback.summary` /
+  `.blanks`, parsed only when the list is well formed with indexes 0 … n − 1;
+  `fromJson(userBlanks:)`: an unfilled box forces its entry to not accepted
+  and `isCorrect` becomes "every entry accepted" when the snapshot lines up,
+  else today's rule; `scoreAnswers(blankAnswers:)` passes the B8 snapshot
+  (the request is byte-identical). `error_entries.feedback_json TEXT`,
+  schema **v25**, one JSON object `{summary, blanks}`, null on old rows.
+  `MistakeBreakdown`: on a structured multi-blank record each row shows the
+  learner's text, an arrow and the correct form (muted with a check when
+  accepted, the "Corrected" green when not) and its note; a single entry's
+  note replaces the paragraph; the summary renders through `FeedbackText`;
+  the B10 diff is not run on a structured record; old records unchanged.
+  Decisions the fork took: a verdict list that does not line up with the
+  boxes renders as an old record; row spacing 10 pt with notes; VoiceOver
+  labels on B8's pattern. **Not checked on a device.**
+- **[Tests]** Proxy: **495 passed** (was 409 at the start of the day),
+  `npm run typecheck` clean. New: `prompts.test.ts`, `score_feedback.test.ts`,
+  `eval_datasets.test.ts`; annotation decision tests in
+  `shared_check.test.ts` (gates, agreement, moves, the cap, the exclusions,
+  the plain rule, the findings, `isAdditivePatch`); cron annotation tests in
+  `shared_generation.test.ts` (one call per checker, the stamps, the review
+  record, single review, the production gate, the order check-then-generate,
+  the switch, the lease and the cap, a timeout, a set changed under the
+  checkers, the TTLs, the log's fixed fields, no quota); D3 tests (v3
+  against v2, the fixture's 43 cases, idempotence, `correct_answer_not_plain`,
+  the Turkish-free prompts); D11 route tests (the schema's required fields,
+  the budget, a repaired response end to end).
+- **[Not done]** Steps D and E wait for the owner's labels. Commits: the
+  owner's (the files per step are listed in the hand-over).
