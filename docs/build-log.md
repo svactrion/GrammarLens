@@ -13252,3 +13252,411 @@ list`, `wrangler kv key get`. No deploy, no KV write, no deletion.
   expiry and rotated manually; the measurement key is separate and
   short-lived. The "cron silent" finding of the morning's entries is closed
   by this one.
+- **[Verified — read-only tail, 2026-10-31 07:07 UTC]** The owner deleted
+  `attempts:2026-11-01` … `11-03` at 06:29–06:3x UTC. The 07:07 run made
+  attempt 1 for 2026-11-01: **the Anthropic call succeeded with the new key**
+  (`anthropic_usage`: 2,962 input / 1,377 output tokens, `end_turn`,
+  12.2 s; `claude-sonnet-5-5`, `low`, prompt version 2), and the gate
+  **rejected the set** (`fill_in_blank_missing_blank`, the generator fault
+  of quality report §16.6: a fill-in question with no blank in the text the
+  learner sees). No set written; attempt 2 follows at 08:07 UTC, then the
+  other two dates one per hour. 7 of the 30 live sets had needed more than
+  one attempt before, so one rejection is the ordinary bad day, not a second
+  fault. The key incident is closed; the publication is confirmed in the
+  next entry when it lands.
+- **[Verified — read-only tail, 2026-10-31 08:07 UTC] `set:2026-11-01`
+  published** on attempt 2 (`anthropic_usage` 2,962 in / 1,419 out,
+  `end_turn`, 10.3 s; `shared_set_generation` `outcome: published`,
+  `attempt: 2`). The cron is back to normal; 2026-11-02 and 11-03 follow at
+  09:07 and 10:07 UTC, one per run. The dates 2026-10-26 … 10-31 stayed on
+  the fallback pool, as recorded above.
+
+## 2026-10-31 (Server package step D: the final cost table from the built request bodies; the labels in; waiting for the owner's go)
+
+Report: `docs/1.4.0-server-batch0-report.md` §3.4a (the table, the run order,
+the drop order) and §3.1 (label provenance); the measurement report
+template at `docs/1.4.0-measurement-report.md`. No API call.
+
+- **[Owner]** Labelling done 2026-10-31: `s-live/labels.csv` 100 rows (93
+  `ok`, 3 `minor`, 4 `defect`: 2 `original_not_wrong`, 2
+  `wrong_answer_acceptable`, 1 `multiple_answers`; `accept_also` on 31
+  rows), verified to parse with every key intact; S-synth reviewed with no
+  exclusions. **Provenance recorded:** the labels were written by Claude in
+  the owner's Cowork session and reviewed by the owner, who confirmed every
+  `defect` and `accept_also`; the measurement report states the limitation
+  (labels and measured models share a model family) and keeps the owner's
+  line as "rater disagreement".
+- **[Engineering]** The baseline prompts kept byte for byte as
+  `GENERATION_SYSTEM_PROMPT_LIVE_2026_10` and `SCORING_SYSTEM_PROMPT_LIVE_2026_10`
+  (`src/prompts.ts`, never used by a route); `PracticeVariant` /
+  `ScoringVariant` seams on the two builders (`buildGeneratePracticeSetBodyFor`,
+  `buildScoreAnswersBodyFor`; the routes send `PRODUCTION_*`, pinned
+  unchanged); `claude-haiku-5-5` priced in `matrix.ts`;
+  `eval/lib/measurement.ts`: the cells (C1–C8, G-A–G-F, DT v2/v3 × six dates,
+  the gate over 30 sets × 2 checkers × 2 repeats, the S-free writer), the
+  grouping of answers into calls (no two answers of one question per call),
+  the calibrated token estimate, the cost table, the cap logic with the drop
+  order; `npm run eval -- measure --dry-run`.
+- **[Result]** 1,377 planned calls; **≈ $14.9 without the scoring repeat,
+  ≈ $24.8 with it**, against the $30 cap; inputs estimated at 2.33
+  characters per token (calibrated on the measured v2 request, which counts
+  the structured-output grammar, so an upper bound). Drop order: the repeat,
+  the second gate repeat, C6, C5, the gate's Sonnet checker; the baseline is
+  never dropped. Run order: generation → S-free → Daily Test check → gate
+  (≈ $4.9) → **pause for the owner's S-gen / S-free labels** → scoring → the
+  repeat as the cap allows → analyze → **pause for the decisions**.
+- **[Tests]** Proxy **503 passed** (was 495); `npm run typecheck` clean.
+  `eval_measurement.test.ts`: the routes unchanged by the seams, the live
+  scoring variant byte-equal to the 2026-10 request, a thinking cell's
+  shape, the calibration bound, no two answers of one question per call,
+  the plan's counts per stage, every model priced, the drop order and the
+  baseline kept.
+- **[Not done]** No call runs before the owner's go on §3.4a. The runner's
+  stages are built in step E after the go, before the first call.
+
+## 2026-10-31 (Server package step E: the go; the scoring repeat narrowed to C1, C4, C8; stage 1 built; the production key, environment only)
+
+Report: `docs/1.4.0-server-batch0-report.md` §3.4a (the table refreshed, the
+drop order), §6 step E; `proxy/eval/data/README.md` ("Running the
+measurement"); `docs/1.4.0-measurement-report.md` (the shared-key note).
+
+- **[Decision — owner]** Go for the run as tabled, with the scoring repeat
+  covering **C1, C4 and C8 only** (the production baseline, the expected
+  production cell, the Haiku candidate): ≈ $17.7 in all instead of ≈ $24.8;
+  the repeat drops first in the order C8, C4, C1, then the second gate
+  repeat, C6, C5, the gate's Sonnet checker; the baseline is never dropped.
+  **The run uses the production `ANTHROPIC_API_KEY`**, no separate key: read
+  from the environment only, never written to a file, a log, a report or a
+  commit; the measurement report notes that production and measurement
+  spend share one key, so the Console's October/November usage includes
+  about 19 USD of measurement.
+- **[Engineering]** `npm run eval -- measure run [--out DIR]`
+  (`eval/run.ts`): the key from `process.env` only (`.dev.vars` is not
+  read); every file write and every log line goes through a check that
+  refuses content containing the key; calls with two retries on 429 / 529
+  / 5xx, five in flight, 600 s timeout; the cap checked before every call
+  (spent + estimate × 1.25 ≤ $30, else `skipped_budget`); records
+  (`records.json`, with the parsed outputs for the later analysis) and
+  `progress.log` (counts and numbers only) in `eval/out/measure-<ts>/`,
+  resumable by `--out`. Stage 1: generation (30) → the S-gen items read
+  from the outputs (`sGenItemsFrom`, malformed entries dropped and counted)
+  → the S-free writer over the D3 cells' items, targets alternating
+  (`claude-sonnet-5-5`, `low`, five items per call) → the two blind sheets
+  and the items into `eval/data/s-gen/` and `eval/data/s-free/` (committed
+  with the labels; the cell and the writer's target only in the mapping
+  files) → the Daily Test v2/v3 check (12) → the gate (120) → the stage
+  report (`stage1-report.md`: per group calls, ok, failed, skipped, tokens
+  and cost estimated → measured). Stage 2 (scoring, the repeat) and
+  `analyze` are built during pause 1.
+- **[Tests]** `eval_measurement.test.ts`: the repeat cells and their drop
+  order, the item reader, the S-free selection, calls and answers, the two
+  sheets (blind, deterministic, letter-prefixed keys), the stage report.
+- **[Not done]** The run itself: the key is not in this session's shell, so
+  stage 1 is launched where the owner exports it (`proxy/eval/data/README.md`,
+  "Running the measurement"); the measured spend against the estimate is
+  reported from `stage1-report.md` when it lands.
+
+## 2026-10-31 (Measurement stage 1 run: a workspace-less key refused everything, then 177 of 177 calls ok, $4.94 against $4.92; the sheets written; paused for the labels)
+
+Report: `docs/1.4.0-server-batch0-report.md` §3.4a, §6 step E;
+`docs/1.4.0-measurement-report.md` (the key row); `proxy/eval/data/README.md`.
+
+- **[Incident, small]** The first launch (`eval/out/measure-2026-10-31T07-57-30-575Z`)
+  made 162 calls and every one came back **HTTP 400
+  `invalid_request_error`** in 0.2 s with 0 tokens: nothing billed. The
+  runner recorded only the error type, so the cause took a second round:
+  a one-call probe (`npm run eval -- measure probe`, added then) returned
+  the API's message: *"This API key is not scoped to a workspace, so this
+  request must include the anthropic-workspace-id header with the ID of
+  the workspace to use. Add the header, or use an API key that is scoped
+  to a workspace."* The key typed into the shell was an organisation-level
+  key. **Fix (owner):** a new key scoped to the Default workspace; the
+  probe then answered normally. So the measurement runs on a **separate,
+  workspace-scoped key after all**, not the production key; the shared-key
+  note in the report template is replaced. **Harness change:** every
+  `http_error` now stores the API's `message` (first 300 characters, never
+  the key) in `records.json` and `progress.log`, read through
+  `readApiError` with a test.
+- **[Run]** Relaunched from the owner's own Terminal:
+  `eval/out/measure-2026-10-31T08-04-39-515Z`, 08:04–08:13 UTC, **177 of
+  177 calls ok, measured $4.94 against $4.92 estimated** (generation 30,
+  S-free writer 15, Daily Test v2/v3 12, gate 120). Per group the
+  estimate's inputs ran high for the generations (≈ 1,017 estimated,
+  802–1,043 measured) and on the mark for the shared-set bodies; outputs
+  ran low for the generations (≈ 420–580 measured against 1,100–1,500
+  estimated) and high for the Sonnet 5.5 checker (≈ 2,650 against 2,000).
+  No key material in any output file (checked).
+- **[Sheets — owner]** `proxy/eval/data/s-gen/labels.csv`: **150 rows**
+  (25 per cell: 60 `sentence_writing`, 60 `error_correction`, 30
+  `fill_in_blank`; ≈ 50 min). `proxy/eval/data/s-free/labels.csv`: **75
+  rows** (38 written to be wrong, 37 to be correct; ≈ 20 min). The cell
+  and the writer's target are only in the `mapping.json` files. An
+  optional third sheet, `s-dt/labels.csv` (the 60 questions of the twelve
+  v2/v3 Daily Test sets, blind; ≈ 40 min), gives the v2/v3 check owner
+  labels; without it that check rests on the gate pass rate and the
+  checker findings.
+- **[Not done]** Stage 2 (scoring, the repeat) runs after the labels;
+  `analyze` writes the measurement report. Both built during the pause
+  (next entry).
+
+## 2026-10-31 (Measurement: stage 2 and analyze built during the labelling pause; the optional Daily Test sheet; a stage-1 draft of the report)
+
+Report: `docs/1.4.0-server-batch0-report.md` §6 step E;
+`proxy/eval/data/README.md` ("Now" and "Then"); the draft
+`docs/1.4.0-measurement-report.md`. No API call in this entry.
+
+- **[Engineering]** `eval/run.ts`: the measurement commands share one
+  `MeasureRun` (the run folder, the records, the cap check before every
+  call, the key-hygiene writer and logger). `measure score --out DIR
+  [--dry-run]`: stage 2, refused while an S-gen or S-free row is unlabelled
+  (the owner's order: labels first); the S-free truth is the owner's
+  verdict; the eight scoring cells over the same calls, then the repeat in
+  the order C1, C4, C8 so the drop order holds under the cap;
+  `stage2-report.md`. `measure analyze --out DIR`: joins the records with
+  the sheets and their mappings and writes `docs/1.4.0-measurement-report.md`
+  (`eval/lib/analysis_measurement.ts`, pure): the limitation and the
+  spend first; per scoring cell agreement, false "correct" of the wrong
+  answers, false "needs work" of the right ones, by set and by type, the
+  repeat's self-agreement; the disagreement line against C1 with who was
+  right; the rater line (S-free: owner verdict vs the writer's target;
+  S-live: final labels only, no rate); the keyboard classes with the
+  near-miss line; D11's raw fields (presence, length, consistency,
+  per-blank agreement, note and summary lengths); the generation cells
+  with the owner's labels and the proxy's own checks; the Daily Test v2/v3
+  gate pass per version; the P14 gate computed with the production
+  `annotateSet` for both gates, precision and recall against the truth,
+  findings per code, checker agreement and repeat stability, and **every
+  written answer outside the owner's truth as a table for the owner to
+  judge** (the go/no-go). `measure dt-sheet --out DIR` writes the optional
+  blind Daily Test sheet; `eval/data/s-dt/labels.csv` (60 rows) exists.
+- **[Found in the stage-1 draft]** The gate, from the 120 checks over the
+  30 live sets (27 with truth): the agreement gate writes 37 accepted
+  answers, 14 of the 20 on questions with truth are in it (70 % precision),
+  15 of the owner's 49 accepted answers found (31 % recall); single review
+  36 written, 67 % / 31 %; 23 and 22 written answers fall outside the truth
+  and wait for the owner's judgment, among them the reported-speech
+  "would → will" of 2026-10-04 and 10-22 (the owner kept "would" as the
+  textbook form on 2026-10-04). Opus 5.5's proposals agreed with Sonnet
+  5.5's on 81 %; proposal sets identical across the two repeats on 81 %
+  (Opus) and 74 % (Sonnet) of 150 questions; `checker_verdict` on 95
+  question-reviews, `wrong_rule` on 73. Daily Test: v2 passed the gate on 5
+  of 6 dates (one `fill_in_blank_missing_blank`), v3 on 4 of 6 (one
+  `fill_in_blank_missing_blank`, one `wrong_answer_count`); no language
+  named in any output; inputs 2,875 / 2,913, outputs 1,488 / 1,361. Read
+  as a screen, not a verdict: six sets a side.
+- **[Tests]** Proxy **512 passed**; `npm run typecheck` clean. New
+  `eval_analysis_measurement.test.ts`: cell metrics against a truth,
+  the disagreement line, the report's limitation and rater text, the gate's
+  precision, recall, findings, cost and the outside-truth list for both
+  gates; `readApiError` in `eval_measurement.test.ts`.
+- **[Owner — to do]** `s-gen/labels.csv` (150), `s-free/labels.csv` (75),
+  optionally `s-dt/labels.csv` (60); then stage 2 in the key-holding
+  shell, then `analyze` (commands in the data README).
+
+## 2026-10-31 (Measurement run complete: 1,002 calls, $15.08; the report written; the owner's decisions open)
+
+Report: `docs/1.4.0-measurement-report.md` (written by `npm run eval --
+measure analyze` from `eval/out/measure-2026-10-31T08-04-39-515Z`); plan:
+`1.4.0-plan.md` Phase 3; `1.4.0-server-batch0-report.md` §6 step E.
+Nothing deployed.
+
+- **[Run]** Stage 2 (owner's Terminal, 08:28–09:01 UTC): 825 of 825
+  scoring calls ok, $10.14 measured against $12.82 estimated; the whole
+  run **1,002 of 1,002 calls, $15.08** against $17.69 estimated and the $30
+  cap, nothing dropped. The owner labelled all three stage-1 sheets,
+  S-dt included (S-gen 137 ok / 9 ambiguous / 2 other / 1 unnatural / 1
+  blank count; S-free 40 correct / 35 wrong, the writer's target overruled
+  on 3; S-dt 55 ok / 1 minor / 4 defect).
+- **[Results, headline]** Scoring agreement with the labels over 371
+  answers: **C8 (Haiku 5.5 `low`, D3 + D11) 97.8 %**, 0 false "correct",
+  3.9 % false "needs work", $0.0015 a call; C2 (Sonnet 4.6, D3 + D11)
+  95.9 %; C4 (Sonnet 5.5 `low`, D3 + D11) 95.4 %; C1 (production today)
+  93.3 %; the live prompt on the current models is poor on S-synth (C3
+  72 %, C6 75 %, C7 77 %): the keyboard paragraph of D3 is what carries
+  them. Every cell marks every near-miss wrong; false "correct" is 0–3 of
+  166 wrong answers in every cell. Medium effort buys nothing over low
+  (C5 = C4). The repeat agrees with itself on 97.8–98.9 %. D11's fields
+  came back complete in every D3 + D11 cell (`blanks` present and the right
+  length 100 %; `isCorrect` consistent 98.6–100 %; per-blank agreement on
+  the multi-blank truths 91–98 %; no summary over two sentences but 1–4
+  of 370). Generation: Sonnet cells 23–24 of 25 `ok`; Haiku 19 `ok` on
+  the live prompt (5 ambiguous), 23 on D3. Daily Test v2 vs v3 on six
+  dates: gate 5 of 6 vs 4 of 6, owner defects 1 vs 3 of 30 questions, no
+  language named; a screen, six sets a side. P14 gate over the 30 live
+  sets (27 with truth): agreement gate 37 written, precision 70 % (14 of
+  20), recall 31 % (15 of 49), 23 outside the truth for the owner to judge
+  (the reported-speech "would → will" among them); single review 36 / 67 %
+  / 31 % / 22; the two checkers agreed on 81 % of Opus's proposals;
+  repeat stability 81 % (Opus) and 74 % (Sonnet).
+- **[Not done]** The owner's decisions (report §6): practice generation
+  and scoring model and effort; D3 + D11 shipping; the P14 gate after the
+  23 written answers are judged; prompt v3 (the evidence is a six-set
+  screen and leans against v3; six more dates cost ≈ $0.25). The run
+  folder stays out of the repo (`eval/out/` is not committed); the labelled
+  sheets and the report are committed with the owner's next commits.
+
+## 2026-10-31 (Measurement decisions: practice generator and gate set; three tested-rule filters; the second look at Haiku; v3 still open)
+
+Report: `docs/1.4.0-measurement-report.md` §5–§7 (regenerated by
+`measure analyze`); plan: `1.4.0-plan.md` Phase 3; data:
+`proxy/eval/data/gate-judgments.json`, `proxy/eval/data/README.md`.
+Nothing deployed.
+
+- **[Decision — owner]** Scoring: D3 + D11 as built, effort `low`;
+  candidate `claude-haiku-5-5` (C8) pending a second look;
+  `claude-sonnet-5-5` `low` the fallback behind one constant
+  (`PRODUCTION_SCORING`, still `claude-sonnet-4-6` until the look is done).
+  Practice generation: `claude-sonnet-5-5`, `low`, the D3 prompt
+  (`PRODUCTION_PRACTICE`; the practice body now thinks, 2,048 + the
+  headroom). P14 gate: single review (Opus 5.5) + the weekly review
+  (`ANNOTATION_GATE = 'single_review'`). Of the 23 written answers outside
+  the truth none was wrong English; 17 may be written, 6 defeat the tested
+  rule: the unshifted "will" on four backshift items, "will" for the
+  deduction "must", and "an orange" for "a oranges".
+- **[Engineering] Three decision rules** (`shared_check.ts`, run after the
+  plain-key rule, each a finding): `alternative_unshifted` (a
+  reported-speech item whose key carries a shifted modal or going-to form
+  rejects an alternative that keeps any unshifted modal form; the
+  auxiliary pairs only like for like), `alternative_defeats_rule` (a
+  deduction "must", read from the explanation or hint, rejects a prediction
+  form), `alternative_changes_other_words` (`error_correction`: an
+  alternative that loses a word the key keeps outside its edited span). A
+  first version of the third rule compared edit spans and rejected "was not
+  able to find" for "could not find"; replaced by the kept-words rule before
+  anything was recorded. The checker prompt is unchanged (the rules are the
+  proxy's; a prompt change would be `CHECK_VERSION` 3 and a re-pin).
+- **[Verified offline]** `measure analyze` applies the owner's judgments
+  (`gate-judgments.json`: 17 right join the truth, 6 wrong are the go/no-go
+  count) and re-runs the decision on the stored checker outputs: **all six
+  judged-wrong answers are filtered**; the agreement gate would now write 29
+  answers, all in the truth (recall 30 of 66); single review 27, 25 in the
+  truth, recall 26 of 66, **two outside the truth and unjudged** (Sonnet 5.5
+  had not proposed them, so they were never in the 23): "insisted that I do"
+  (2026-09-28) and "'ve been working" (2026-10-08). The third rule also
+  filtered three answers the owner has not judged: "have to wear" for
+  "must wear" and "have to switch off" for "must switch off" (2026-10-08,
+  10-20: the error was "must to", the alternative also swaps the modal), and
+  "I have stayed at this hotel since Monday" for the key "I have been
+  staying …" (2026-10-09: the key's minimal edit of "am staying" keeps
+  "staying", which the alternative loses; the owner's pool corrections
+  accepted the simple form in two like cases). By the owner's wording (a
+  change of the tested word rather than the error) all three are
+  rejections; they are listed in §5 for the owner's confirmation, and the
+  third shows the rule's edge: it cannot tell a noun's number from a verb's
+  aspect.
+- **[Engineering] The second look** (decision 1): `measure analyze` also
+  writes `second-look-C8.md` into the run folder: the 8 answers C8 marked
+  "needs work" against the truth and the 21 where C8 and C1 differ, each
+  with the question, the learner's answer, the truth, both verdicts and both
+  explanations, an "Owner:" line to fill. No API call.
+- **[Engineering] Prompt v3** (decision 4): `measure dt-more --out DIR`
+  generates six more dates per version (2026-11-05 … 11-10, 12 calls,
+  ≈ $0.25, the key from the environment) into the same run folder and
+  writes the blind `s-dt-2` sheet; `analyze` reads both Daily Test sheets
+  and now splits the owner's labels into gate-passing sets and all sets.
+  **The S-dt oddities, answered:** the placeholder item (key equal to the
+  original, one "placeholder" wrong answer) is v3's 2026-10-15 set, and the
+  two blank-less fill-ins are v2's 2026-10-13 and v3's 2026-10-11; **the gate
+  rejected all three sets** (`wrong_answer_count`;
+  `fill_in_blank_missing_blank` twice). They are on the sheet because the
+  sheet was built from every generated set, as E's label sheet was; the
+  report's new "gate-passing sets" column is the comparison as published.
+- **[Report]** §6, the cost model from this run's measured calls:
+  generation $0.0078 per 5-item set, scoring $0.0015 (Haiku) or $0.0187
+  (Sonnet 5.5) per 5-answer call; a 5-question session ≈ $0.009 with Haiku,
+  ≈ $0.026 with Sonnet 5.5; per user per month: free ≈ $0.17 / $0.48,
+  Premium light ≈ $0.28 / $0.79, Premium heavy (the cap) ≈ $1.40 / $3.97;
+  1,000 users at an **assumed** mix (90 % free, 8 % light, 2 % heavy) plus
+  the shared Daily Test with its check ≈ $203 / $573 a month, ceilings
+  (every user on the full quota every day). The owner's own planning mix
+  replaces the assumption in `COST_SCENARIOS`.
+- **[Tests]** Proxy **519 passed**; `npm run typecheck` clean. New
+  `shared_check_rules.test.ts` (the three rules, their non-firing cases,
+  the gate choice); the measurement tests moved to the new constants.
+
+## 2026-10-31 (Prompt v3: six more dates per version generated; s-dt-2 sheet written)
+
+- **[Run — owner's Terminal]** `measure dt-more`, 09:26 UTC: 12 of 12 calls
+  ok (2026-11-05 … 11-10, v2 and v3, the live generator), $0.24; the run
+  folder stands at **$15.32**. `proxy/eval/data/s-dt-2/labels.csv`: 60 rows,
+  blind (the version and date in `mapping.json`). Open: the owner labels it
+  (≈ 40 min) and does the second look at C8; `measure analyze` then rewrites
+  the report with both Daily Test sheets.
+
+## 2026-10-31 (Second look done: Haiku 5.5 is the scoring model in the constant; the five gate answers right; s-dt-2 labelled)
+
+Report: `docs/1.4.0-measurement-report.md` §2, §4, §5, §7 (regenerated);
+data: `proxy/eval/data/second-look-C8.md` (the owner's verdicts),
+`gate-judgments.json`; plan: `1.4.0-plan.md` Phase 3 and the P13 item.
+Nothing deployed.
+
+- **[Decision — owner]** `claude-haiku-5-5`, `low`, D3 + D11 is the
+  production scoring model (`PRODUCTION_SCORING`); `claude-sonnet-5-5`
+  `low` the fallback (`FALLBACK_SCORING`); one constant to swap. The
+  second look: of C8's 8 "needs work" verdicts against the truth, 2 are
+  C8's errors (pool fb02_3 "the"; "bouğht" misread as a tense error, as C1
+  did), 1 an edge case both got wrong, 3 carry no verdict because the pool
+  key is defective (fb06_2 "has the sun"; **a P13 pool correction is to
+  rewrite the question so the natural answer is "gets sun"**), 1 shows C8
+  inconsistent with its own nbsp verdict on a question whose "one modal
+  verb" contradicts its own key, 1 is a defensible owner label both missed.
+  Of the 21 differences, **C8 right on 19, C1 on 2**. Recorded in the
+  report's §2: production today states a false rule ("afford takes -ing"),
+  argues with itself inside an explanation, and penalises non-Turkish
+  keyboard variants as spelling errors: the D3 motivation, evidenced.
+- **[Decision — owner]** The five remaining gate answers are right and may
+  be written ("insisted that I do the washing-up", "'ve been working",
+  "have to wear", "have to switch off", "I have stayed at this hotel since
+  Monday"); the kept-words rule over-filters on aspect and is kept, the
+  edge recorded. `gate-judgments.json` holds 28 verdicts (22 right, 6
+  wrong).
+- **[Owner]** `s-dt-2/labels.csv` labelled: 55 ok, 4 minor, 1 defect,
+  `accept_also` on 17; the same provenance as the other sheets.
+- **[Engineering]** `measure analyze` no longer rewrites
+  `second-look-C8.md` once it exists (the owner's verdicts live in it); the
+  committed copy is `eval/data/second-look-C8.md`. The scoring route's
+  body now thinks (budget + headroom), pinned in `index.test.ts`.
+
+## 2026-10-31 (Prompt v2 vs v3 read on twelve dates a side; the gate confirmed clean; the commit list handed over)
+
+Report: `docs/1.4.0-measurement-report.md` §4, §5. Nothing deployed.
+
+- **[Result] v2 vs v3, gate-passing sets only** (the comparison as
+  published): v2 11 of 12 sets passed the gate, 55 questions labelled by the
+  owner **53 ok / 2 minor / 0 defect**; v3 10 of 12 passed, 50 questions
+  **45 ok / 3 minor / 2 defect**. Over all generated sets: v2 57 / 2 / 1, v3
+  53 / 3 / 4 (the three oddities of the morning all sit in rejected sets).
+  No language named in any of the 24 outputs; v3's outputs are shorter
+  (1,376 against 1,436 tokens). v3's two published defects: a deduction
+  item where "should" and "will" fit as well as the key (2026-10-12,
+  `modalVerbs`) and a predicted wrong answer that is acceptable ("the 9:15
+  train", 2026-11-06, `articles`); neither is a reported-speech item whose
+  time frame the new sentence governs, so nothing links v3's extra sentence
+  to them. **Reading:** v3 leans worse on every count by one set or two
+  questions, within what 50-odd questions a side can hide (two defects in
+  50 against none in 55 is not a significant difference); no mechanism in
+  the two changes explains the lean; the neutral wording is a 1.4.0
+  requirement. The owner decides whether v3 ships with D3; the measurement
+  is a screen, and the live `review:{date}` findings after P14 are the
+  longer measurement.
+- **[Verified offline]** With the 28 judgments applied, the P14 gate
+  writes 27 answers under single review, all in the truth, none judged
+  wrong, none outside; recall 28 of 71 (the truth grew by the owner's 22
+  judged-right answers); agreement would write 29 / 30 of 71. Cost per set
+  $0.04 (single) / $0.07 (agreement).
+- **[Tests]** Proxy **519 passed**; `npm run typecheck` clean; `flutter
+  analyze` clean and 2171 Flutter tests (unchanged since the D11 client
+  half). `eval/out/` is ignored by `proxy/.gitignore`; the committed copies
+  of what belongs in the repo are under `proxy/eval/data/`.
+
+## 2026-10-31 (Decision: prompt v3 ships with D3, on a 14-day condition)
+
+- **[Decision — owner]** Prompt v3 ships with D3 as built
+  (`SHARED_PROMPT_VERSION = 3`), on the twelve-date screen of the
+  measurement report §4. **Condition:** after the deploy, the first 14 days
+  of `review:{date}` findings are compared with v2's measured rate (0
+  defects in 55 gate-passing questions); if v3 is worse,
+  `SHARED_PROMPT_VERSION` goes back to 2 in one deploy. Version 2 stays
+  buildable (its fingerprint pin and the V2 constant remain). Recorded on
+  the constant and in `1.4.0-plan.md`. No other change; the four commits
+  stand as listed in the hand-over. Nothing deployed.
