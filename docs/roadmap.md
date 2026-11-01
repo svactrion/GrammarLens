@@ -355,7 +355,8 @@ into the next build. Version bump and build: owner, not started.
     no-article and "Left blank" for an empty box, and colour the prompt's
     blanks to match. Single-box questions unchanged.
   - Verified: `flutter analyze` clean, full test suite passed (2083).
-    **Not checked on a device.**
+    **Device check passed** (owner, 2026-11-02): the per-blank rows on a
+    fresh multi-blank Practice.
 - **1.4.0 B9 (2026-10-31; `1.4.0-plan.md` D9):**
   - **AI feedback formatted for reading,** client side: paragraphs per
     sentence from three sentences, the closing sentence under a thin rule
@@ -396,6 +397,17 @@ into the next build. Version bump and build: owner, not started.
     strips are continuous, the darker fill without the underline reads
     well. B8's rows on a fresh multi-blank Practice remain unseen (the
     owner's free quota was used; he checks on 2026-11-01).
+  - **B10.3 (2026-11-02), the bridge rule:** a short function word ("to",
+    "a", "the", …) the LCS matched across a displaced phrase is painted
+    with its neighbours when it sits between two painted words on either
+    side, so "to decide applying" ↔ "decided to apply" reads as one strip
+    a side; bridged words do not count towards the noise guard. Found on
+    the owner's device on an error-correction record. `flutter analyze`
+    clean, 2178 tests passed. **Not re-checked on a device.**
+  - **Seen on the device (2026-11-02):** on a multi-blank record a blank
+    the learner got right shows no mark in "Corrected". That is D11's
+    per-blank ✓ / ✗ display, already built on the client, live once the
+    proxy half deploys after 1.3.0's approval; no change to B10.
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 

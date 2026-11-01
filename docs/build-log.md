@@ -13660,3 +13660,69 @@ Report: `docs/1.4.0-measurement-report.md` §4, §5. Nothing deployed.
   buildable (its fingerprint pin and the V2 constant remain). Recorded on
   the constant and in `1.4.0-plan.md`. No other change; the four commits
   stand as listed in the hand-over. Nothing deployed.
+
+## 2026-11-02 (B3 and B2 Batch 0 report written and approved; B8 device check passed; B10.3 bridge rule; D11 note)
+
+Report: `docs/1.4.0-b3-batch0-report.md`; plan: `docs/1.4.0-plan.md`
+(status, B2, B3, B8, B10, D11). No proxy change, no deploy (1.3.0 is in
+review).
+
+- **[Docs]** The Batch 0 report for B3 (translation infrastructure) and
+  B2 (the hint card gives the answer away), read-only: about 460
+  user-visible strings in the shipped UI code plus 39 screen-reader
+  labels, 93 with placeholders, 16 hand-built plurals and three English
+  month-name tables; nothing in `lib/` is model-facing; the l10n
+  architecture (`gen-l10n`, one ARB per locale, `context.l10n`, an
+  `AppLanguage` enum, a `language_settings` row at schema v26, a Language
+  row under Appearance, language-code-only resolution of the system
+  locale); the RTL sites that must mirror (the hint slider, the climb
+  score bar, the practice length labels, nine `centerLeft` alignments; the
+  arrow icons mirror by themselves, verified in the SDK) and what stays as
+  drawn (the mountain scene); a seven-batch B4 plan behind a guard test
+  with a shrinking pending list; the Dart folding plan against
+  `proxy/test/fixtures/keyboard_folding.json` (43 cases; applied in the
+  Daily Test matcher only, never before the scorer request, which the proxy
+  expects raw); `ui_language` as the resolved language, set at startup, on
+  change and on a device-language change, no event; the B2 rule (example
+  verbs that occur in the question removed from the Gerund vs. Infinitive
+  verb-list lines; 5 of 40 bundled questions change their card, the other
+  four topics never do); nine open questions.
+- **[Product — owner]** All nine options approved as proposed. Order:
+  B10.3, then B2 (its own commit), then B3 in three commits.
+- **[Product — owner]** B8's device check passed: the per-blank rows on a
+  fresh multi-blank Practice.
+- **[Engineering] B10.3, the bridge rule** (`lib/utils/answer_diff.dart`).
+  On the owner's device an error correction, "She finally to decide
+  applying for the management position…" against "She finally decided to
+  apply…", painted "decide applying" and "decided" / "apply" but left both
+  "to" plain: the LCS had matched the learner's displaced "to" with the
+  correction's, although the infinitive marker was the point. After the
+  LCS, a matched pair is painted on both sides when, on either side, its
+  token is a short function word (`bridgeWords`: to, a, an, the, of, in,
+  on, at, for; or any compared word of at most `bridgeMaxLength` = 3
+  letters) lying between two painted words; a run of such words ("to
+  the") counts as one, and the pass repeats until nothing changes. The
+  inline marks already render consecutive painted words as one strip, so
+  nothing changed there. Two choices to note: bridged words do not count
+  towards the noise guard's changed share (they are the same word on both
+  sides, not a difference; the guard is computed before the bridge), and a
+  pair whose answer token is prompt text in an assembled answer is left
+  alone (D10: prompt text is never painted). Results: the device case
+  paints "to decide applying" ↔ "decided to apply", one strip a side,
+  share 2 of 13; case 1's "to join" ↔ "joining" leaves "a study group"
+  plain; "I bought a laptop yesterday" ↔ "I bought a laptop at the store
+  yesterday" keeps "a" plain; "I go to the shopping" ↔ "I went to the
+  shop" closes the two-word run; "She enjoys to swim in the sea" ↔ "She
+  enjoys swimming in the sea" leaves "in" plain.
+- **[Tests]** `test/answer_diff_test.dart`: the device case with and
+  without its prompt, the strip shape, the share, case 1's "a", the shared
+  "a", the two-word run, the single-neighbour case. `flutter analyze`
+  clean; **2178 tests passed**.
+- **[Product — owner]** Seen on the device: on a multi-blank record a
+  blank the learner got right shows no mark in "Corrected" (B10 paints
+  only changes). The owner expects a per-blank ✓ / ✗ with the correct form
+  beside each row: D11's structured display, already built on the client,
+  live once the proxy half deploys after 1.3.0's approval. Recorded under
+  D11 in the plan; no change to B10.
+- **[Open]** B10.3 device re-check (owner): the record above on Results or
+  in Review. Then B2.

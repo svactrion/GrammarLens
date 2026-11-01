@@ -87,6 +87,32 @@ const double lengthRatioLimit = 1.5;
 /// 69 % of the whole prompt and fell to simple mode).
 const double assembledMinimumMatch = 0.8;
 
+/// B10.3 (owner, 2026-11-02): short function words the LCS can match
+/// across a displaced phrase. On the device an error correction had
+/// "finally to decide applying" against "finally decided to apply": the
+/// learner's displaced "to" matched the correction's "to", so both stayed
+/// plain although the infinitive marker was the point of the item. After
+/// the LCS, a matched pair is painted on both sides when, on either side,
+/// its token is one of these words (or any compared word of at most
+/// [bridgeMaxLength] letters) and lies between two painted words; painted
+/// runs then render as one strip. The list is a constant so it can be
+/// tuned without touching the rule.
+const Set<String> bridgeWords = {
+  'to',
+  'a',
+  'an',
+  'the',
+  'of',
+  'in',
+  'on',
+  'at',
+  'for',
+};
+
+/// The fallback of [bridgeWords]: a compared word this short is a function
+/// word for the bridge rule.
+const int bridgeMaxLength = 3;
+
 const String _leadChars = '\'"‘“([';
 const String _trailChars = '\'"’”)].,;:!?…';
 
@@ -285,6 +311,23 @@ AnswerDiff diffAnswer({
   if (paintUser.isEmpty && paintCorrected.isEmpty) highlighted = false;
   if (comparedUser == 0 || comparedCorrected == 0) highlighted = false;
 
+  // The bridge rule runs after the guards: a bridged word is the same word
+  // on both sides, not a difference, so it does not count towards the
+  // changed share. Prompt text in an assembled answer is never painted
+  // (D10), so a pair whose answer token is prompt text is left alone.
+  if (highlighted) {
+    _bridgeFunctionWords(
+      pairs: pairs,
+      userKeys: userKeys,
+      correctedLength: corrected.length,
+      learner: learner,
+      skipUser: (i) => neutral[i],
+      skipCorrected: (j) => correctedKeys[j].isEmpty,
+      paintUser: paintUser,
+      paintCorrected: paintCorrected,
+    );
+  }
+
   return AnswerDiff(
     user: [
       for (var i = 0; i < user.length; i++)
@@ -300,6 +343,73 @@ AnswerDiff diffAnswer({
     assembled: assembled,
     promptMatchRatio: promptMatchRatio,
   );
+}
+
+bool _isBridgeWord(String key) =>
+    key.isNotEmpty &&
+    (bridgeWords.contains(key) || key.length <= bridgeMaxLength);
+
+/// Paints every matched pair that the bridge rule covers ([bridgeWords]).
+/// A run of consecutive bridgeable words ("to the") is looked at as one:
+/// the nearest compared words before and after the run must both be
+/// painted. Repeated until nothing changes, since painting a pair on one
+/// side can complete the condition on the other.
+void _bridgeFunctionWords({
+  required List<(int, int)> pairs,
+  required List<String> userKeys,
+  required int correctedLength,
+  required List<bool> learner,
+  required bool Function(int) skipUser,
+  required bool Function(int) skipCorrected,
+  required Set<int> paintUser,
+  required Set<int> paintCorrected,
+}) {
+  final bridgeable = [
+    for (final p in pairs)
+      if (learner[p.$1] && _isBridgeWord(userKeys[p.$1])) p,
+  ];
+  final runUser = {for (final p in bridgeable) p.$1};
+  final runCorrected = {for (final p in bridgeable) p.$2};
+  var changed = true;
+  while (changed) {
+    changed = false;
+    for (final (i, j) in bridgeable) {
+      if (paintUser.contains(i)) continue;
+      final onUser =
+          _runBetweenPainted(i, userKeys.length, skipUser, runUser, paintUser);
+      final onCorrected = _runBetweenPainted(
+          j, correctedLength, skipCorrected, runCorrected, paintCorrected);
+      if (onUser || onCorrected) {
+        paintUser.add(i);
+        paintCorrected.add(j);
+        changed = true;
+      }
+    }
+  }
+}
+
+/// Whether the nearest compared tokens before and after the run of
+/// bridgeable words that holds [index] (skipping neutral tokens and the
+/// run's own members) both exist and are painted.
+bool _runBetweenPainted(
+  int index,
+  int length,
+  bool Function(int) skip,
+  Set<int> run,
+  Set<int> painted,
+) {
+  var before = index - 1;
+  while (before >= 0 && (skip(before) || run.contains(before))) {
+    before--;
+  }
+  var after = index + 1;
+  while (after < length && (skip(after) || run.contains(after))) {
+    after++;
+  }
+  return before >= 0 &&
+      after < length &&
+      painted.contains(before) &&
+      painted.contains(after);
 }
 
 List<String> _tokens(String text) =>

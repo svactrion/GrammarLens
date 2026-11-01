@@ -270,6 +270,92 @@ void main() {
     });
   });
 
+  group('bridge rule (B10.3)', () {
+    // The owner's device case (error correction, 2026-11-02): the learner's
+    // displaced "to" matched the correction's "to" and both stayed plain.
+    const deviceUser =
+        'She finally to decide applying for the management position after '
+        'years of hesitation.';
+    const deviceCorrected =
+        'She finally decided to apply for the management position after '
+        'years of hesitation.';
+
+    test('the device case paints "to decide applying" and "decided to apply"',
+        () {
+      final diff = diffAnswer(
+          userAnswer: deviceUser,
+          correctedAnswer: deviceCorrected,
+          prompt: 'Find the mistake and rewrite the sentence: She finally to '
+              'decide applying for the management position after years of '
+              'hesitation.');
+      expect(diff.assembled, isFalse);
+      expect(diff.highlighted, isTrue);
+      expect(diff.paintedUser, ['to', 'decide', 'applying']);
+      expect(diff.paintedCorrected, ['decided', 'to', 'apply']);
+      // One strip on each side: the painted tokens are consecutive.
+      String shape(List<DiffToken> side) =>
+          side.map((t) => t.painted ? 't' : 'f').join();
+      expect(shape(diff.user), matches(RegExp(r'^f*t+f*$')));
+      expect(shape(diff.corrected), matches(RegExp(r'^f*t+f*$')));
+    });
+
+    test('the device case without a prompt gives the same result', () {
+      final diff =
+          diffAnswer(userAnswer: deviceUser, correctedAnswer: deviceCorrected);
+      expect(diff.paintedUser, ['to', 'decide', 'applying']);
+      expect(diff.paintedCorrected, ['decided', 'to', 'apply']);
+    });
+
+    test('bridged words do not count towards the changed share', () {
+      final diff =
+          diffAnswer(userAnswer: deviceUser, correctedAnswer: deviceCorrected);
+      // Two of thirteen compared words differ on each side before the bridge.
+      expect(diff.changedShare, closeTo(2 / 13, 0.001));
+      expect(diff.highlighted, isTrue);
+    });
+
+    test('case 1: "to join" / "joining" does not over-paint "a study group"',
+        () {
+      final diff = diffAnswer(
+          userAnswer: case1User,
+          correctedAnswer: case1Corrected,
+          prompt: case1Prompt);
+      expect(diff.paintedUser, ['changing', 'to', 'join', 'staying']);
+      expect(diff.paintedCorrected, ['to', 'change', 'joining', 'to', 'stay']);
+      expect(diff.corrected.where((t) => t.text == 'a').any((t) => t.painted),
+          isFalse);
+    });
+
+    test('a legitimately shared function word stays plain', () {
+      final diff = diffAnswer(
+          userAnswer: 'I bought a laptop yesterday.',
+          correctedAnswer: 'I bought a laptop at the store yesterday.');
+      expect(diff.highlighted, isTrue);
+      expect(diff.paintedUser, isEmpty);
+      expect(diff.paintedCorrected, ['at', 'the', 'store']);
+      expect(diff.corrected.singleWhere((t) => t.text == 'a').painted, isFalse);
+    });
+
+    test('a run of two function words between painted words closes', () {
+      final diff = diffAnswer(
+          userAnswer: 'I go to the shopping',
+          correctedAnswer: 'I went to the shop');
+      expect(diff.highlighted, isTrue);
+      expect(diff.user.map((t) => t.toString()).join(' '),
+          'I [go] [to] [the] [shopping]');
+      expect(diff.corrected.map((t) => t.toString()).join(' '),
+          'I [went] [to] [the] [shop]');
+    });
+
+    test('a function word next to one painted word only stays plain', () {
+      final diff = diffAnswer(
+          userAnswer: 'She enjoys to swim in the sea',
+          correctedAnswer: 'She enjoys swimming in the sea');
+      expect(diff.paintedUser, ['to', 'swim']);
+      expect(diff.paintedCorrected, ['swimming']);
+    });
+  });
+
   group('longestCommonSubsequence', () {
     test('matches in order and never on an empty key', () {
       expect(longestCommonSubsequence(['a', 'b', 'c'], ['b', 'c', 'a']),
