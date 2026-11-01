@@ -13726,3 +13726,38 @@ review).
   D11 in the plan; no change to B10.
 - **[Open]** B10.3 device re-check (owner): the record above on Results or
   in Review. Then B2.
+
+## 2026-11-02 (1.4.0 B2: the hint card leaves out the question's own verb; awaiting the device check)
+
+Plan: `docs/1.4.0-plan.md` B2; Batch 0: `docs/1.4.0-b3-batch0-report.md`
+§7, §8 Q5 (approved 2026-11-02). No proxy change, no deploy.
+
+- **[Engineering]** `lib/data/topic_hints.dart`: `kTopicHints` stays the
+  owner's text verbatim; `kHintExampleLines` names the lines that list
+  examples after a label (Gerund vs. Infinitive lines 0–2: "+ -ing", "+
+  to", "Meaning changes"); `hintPointsFor(topic, questionText)` removes
+  from those lines every example whose word occurs in the question text,
+  whole word and case-insensitive, in any form of `hintWordForms` (the
+  word, -s, -es, -ed, -d, -ing, -e dropped before -ing, the doubled final
+  consonant, y → -ies / -ied, and the irregular "kept"). A line that loses
+  every example keeps its label alone. `QuestionView` passes the item's
+  context, instruction and hint, so the card and the slider's VoiceOver
+  label (which joins the points) both change, on Daily Test and Practice.
+  The card only gets shorter, so the 375 × 667 fit checks still hold.
+- **[Result]** On the 40 bundled questions **six** Gerund vs. Infinitive
+  cards change, not the Batch 0 report's five: that count matched exact
+  words only and missed "I decided ___ (ask) for a refund" (fb05_5; the
+  card listed "decide" under "+ to", a real give-away) and the "wants" in
+  fb02_5. The six: day-0 q1 (avoid), fb02_5 (avoid, want, decide), fb03_3
+  (enjoys), fb04_5 (avoid), fb05_5 (decide; and stop, from "stopped" in
+  the scene, harmless), fb07_2 (enjoy). The other four topics' 35 cards
+  are unchanged. The report's §7.1 carries the correction.
+- **[Tests]** New `test/topic_hints_test.dart`: the recorded case, the six
+  changed ids, the five pool cards line by line, the other day-0 cards
+  unchanged, the inflections, whole words only, the label-alone line, the
+  preposition line, the other topics. `topic_hint_card_test.dart`'s
+  VoiceOver test now expects the card as filtered for its "I enjoy ____"
+  item. `flutter analyze` clean; **2187 tests passed**.
+- **[Open]** Device check (owner): day 0's first question (reset
+  onboarding from the debug panel) shows "+ -ing: enjoy, finish, keep";
+  B10.3's re-check from earlier today is still open too. Then B3.

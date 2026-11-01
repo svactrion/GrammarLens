@@ -425,7 +425,12 @@ void main() {
       await _pumpDaily(tester);
       final label = tester.getSemantics(_knob).label;
       expect(label, contains('Gerund vs. Infinitive'));
-      for (final point in kTopicHints[TopicId.gerundVsInfinitive]!) {
+      // The card as shown for this question (B2: "I enjoy ____" drops
+      // "enjoy" from the first line).
+      final points = hintPointsFor(
+          TopicId.gerundVsInfinitive, 'I enjoy ____ in the morning.')!;
+      expect(points.first, '+ -ing: avoid, finish, keep');
+      for (final point in points) {
         expect(label, contains(point));
       }
       semantics.dispose();

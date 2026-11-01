@@ -517,7 +517,11 @@ class _QuestionViewState extends State<QuestionView>
         .addPostFrameCallback((_) => _checkQuestionMetrics());
 
     final topic = widget.topic;
-    final hintPoints = topic == null ? null : kTopicHints[topic.id];
+    // B2: the card leaves out an example verb the question itself uses.
+    final hintPoints = topic == null
+        ? null
+        : hintPointsFor(topic.id,
+            [widget.item.fullText, widget.item.hint ?? ''].join('\n'));
     final hasHint = widget.showTopicHint && hintPoints != null;
     final head = _AnswerHead(
       focused: _answerFocused,

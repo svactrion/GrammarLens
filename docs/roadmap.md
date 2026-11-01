@@ -408,6 +408,17 @@ into the next build. Version bump and build: owner, not started.
     the learner got right shows no mark in "Corrected". That is D11's
     per-blank ✓ / ✗ display, already built on the client, live once the
     proxy half deploys after 1.3.0's approval; no change to B10.
+- **1.4.0 B2 (2026-11-02; `1.4.0-plan.md` B2; Batch 0
+  `1.4.0-b3-batch0-report.md` §7):**
+  - **The hint card no longer gives the answer away:** an example verb
+    the question itself uses (in any regular form, or "kept") is left out
+    of the Gerund vs. Infinitive card's three verb lists, on Daily Test
+    and Practice and in the VoiceOver label; "You should avoid ___ too much
+    sugar." now shows "+ -ing: enjoy, finish, keep". Six of the 40 bundled
+    questions get a shorter card; the other four topics' cards never
+    change.
+  - Verified: `flutter analyze` clean, full test suite passed (2187).
+    **Not checked on a device.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
