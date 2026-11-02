@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/daily_test_completion.dart';
 import '../models/daily_test_set.dart';
 import '../models/pending_climb.dart';
@@ -104,7 +105,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      AppMessenger.show('Could not save your profile: $e');
+      AppMessenger.show(context.l10n.firstLaunchSaveFailed('$e'));
     }
   }
 
@@ -149,7 +150,7 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
   @override
   Widget build(BuildContext context) {
     if (_saving) {
-      return const LoadingView(message: 'Setting things up…');
+      return LoadingView(message: context.l10n.firstLaunchSaving);
     }
     switch (_step) {
       case _Step.welcome:

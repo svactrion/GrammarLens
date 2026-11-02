@@ -10,6 +10,8 @@ import 'package:grammar_lens/screens/onboarding_screen.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_carousel.dart';
 
+import 'support/l10n_support.dart';
+
 /// Onboarding in two steps (the 1.2.0 additional screens package): the
 /// companion and the required name, then the optional goal.
 void main() {
@@ -347,24 +349,25 @@ void main() {
       await pump(tester);
       await toGoalStep(tester);
       expect(
-          onboardingPrivacyNote,
+          onboardingPrivacyNote(en),
           'Your name stays on this device. Your goal is sent with app usage '
           'data, never with your name. Usage and crash data is collected.');
-      await tester.ensureVisible(find.text(onboardingPrivacyNote));
-      expect(find.text(onboardingPrivacyNote), findsOneWidget);
+      await tester.ensureVisible(find.text(onboardingPrivacyNote(en)));
+      expect(find.text(onboardingPrivacyNote(en)), findsOneWidget);
       expect(find.textContaining('never sent'), findsNothing);
       expect(find.textContaining('goal stay'), findsNothing);
 
       await tester.ensureVisible(find.byKey(OnboardingScreen.dataLinkKey));
       await tester.tap(find.byKey(OnboardingScreen.dataLinkKey));
       await tester.pumpAndSettle();
-      final sheet = onboardingDataFacts.map((f) => '${f.$1} ${f.$2}').join();
+      final sheet =
+          onboardingDataFacts(en).map((f) => '${f.$1} ${f.$2}').join();
       expect(sheet, contains('Anthropic (Claude)'));
       expect(sheet,
           contains('In practice sessions (Topic Practice or a weak spot)'));
       expect(sheet, contains('We ask for your permission first.'));
       expect(sheet, contains('It does not personalize your lessons.'));
-      for (final (heading, _) in onboardingDataFacts) {
+      for (final (heading, _) in onboardingDataFacts(en)) {
         expect(
             find.descendant(
                 of: find.byType(Dialog),

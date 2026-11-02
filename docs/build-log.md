@@ -13985,3 +13985,7 @@ Plan: `docs/1.4.0-plan.md` B3; Batch 0:
 ## 2026-11-02 (1.4.0 B4.1: Shell and Profile strings to the ARB)
 
 - **[Engineering]** App shell, Profile, Data, Credits, the AI permission screen, the avatar picker and the goal / practice-length / sort labels moved to `app_en.arb` (98 keys, English unchanged; model labels via `lib/l10n/labels.dart`, bold names via `emphasizedSpans`, the Developer section and names kept out with new guard block markers; `{count}` medals as an ICU plural; the theme-icon fit measures the widest localized label); guard pending list 51 → 42; `flutter analyze` clean, 2284 tests passed.
+
+## 2026-11-02 (1.4.0 B4.2: onboarding strings to the ARB)
+
+- **[Engineering]** Onboarding, Welcome and the first-launch flow moved to `app_en.arb` (31 keys, English unchanged; the privacy note and "Your data & AI" rows now functions of the strings; "Step {step} of {total}"; the number-word table gone, "Five questions a day." pinned to `DailyTestSet.questionCount` by `test/onboarding_l10n_test.dart`, since gen-l10n allows only =0/=1/=2 plural cases; the guard no longer reads an escape such as `\n` as a letter); pending list 42 → 39; `flutter analyze` clean, 2285 tests passed (one run hit a flake in `debug_panel_test`'s real-SQLite reset, green alone and in three full runs).

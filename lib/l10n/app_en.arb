@@ -450,5 +450,155 @@
   "reviewSortFrequent": "Most frequent",
   "@reviewSortFrequent": {
     "description": "Review: sort the weak spots by how often the mistake was made."
+  },
+  "commonBack": "Back",
+  "@commonBack": {
+    "description": "Tooltip of a back button."
+  },
+  "commonContinue": "Continue",
+  "@commonContinue": {
+    "description": "Button that moves to the next step."
+  },
+  "welcomeTagline": "Practice English grammar with instant, plain-language feedback — no jargon, no judgment, just what to fix and why.",
+  "@welcomeTagline": {
+    "description": "Welcome screen (first launch): the line under the wordmark."
+  },
+  "welcomeGetStarted": "Get started",
+  "@welcomeGetStarted": {
+    "description": "Welcome screen: the button that starts onboarding."
+  },
+  "onboardingStep": "Step {step} of {total}",
+  "@onboardingStep": {
+    "description": "Onboarding: the step counter at the top, also read by VoiceOver.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "onboardingCompanionEyebrow": "A little practice. Every day.",
+  "@onboardingCompanionEyebrow": {
+    "description": "Onboarding step 1: the small line above the heading."
+  },
+  "onboardingCompanionTitle": "Meet your learning companion.",
+  "@onboardingCompanionTitle": {
+    "description": "Onboarding step 1: the heading above the avatar carousel."
+  },
+  "onboardingCompanionSubtitle": "Five questions a day. A small step forward, together.",
+  "@onboardingCompanionSubtitle": {
+    "description": "Onboarding step 1: the line under the heading. 'Five' is the Daily Test's question count (DailyTestSet.questionCount), spelled out; test/onboarding_l10n_test.dart fails if the count changes."
+  },
+  "onboardingCarouselHint": "Swipe to choose · Change it later in Profile",
+  "@onboardingCarouselHint": {
+    "description": "Onboarding step 1: under the avatar carousel. 'Profile' must match navProfile."
+  },
+  "onboardingNameQuestion": "What should we call you?",
+  "@onboardingNameQuestion": {
+    "description": "Onboarding step 1: the name card's question."
+  },
+  "onboardingNameHint": "Your name",
+  "@onboardingNameHint": {
+    "description": "Onboarding step 1: the hint inside the empty name field."
+  },
+  "onboardingNameNote": "A nickname is fine. It stays on this device.",
+  "@onboardingNameNote": {
+    "description": "Onboarding step 1: under the name field."
+  },
+  "onboardingGoalGreeting": "One more thing, {name}.",
+  "@onboardingGoalGreeting": {
+    "description": "Onboarding step 2: beside the learner's avatar; {name} is the name they typed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "onboardingGoalEyebrow": "Help shape GrammarLens",
+  "@onboardingGoalEyebrow": {
+    "description": "Onboarding step 2: the small line above the heading. 'GrammarLens' is the app's name, never translated."
+  },
+  "onboardingGoalTitle": "What brings you to English?",
+  "@onboardingGoalTitle": {
+    "description": "Onboarding step 2: the heading above the learning goals."
+  },
+  "onboardingGoalSubtitle": "Choose what matters most to you. Your answer helps us decide what to improve next.",
+  "@onboardingGoalSubtitle": {
+    "description": "Onboarding step 2: the line under the heading."
+  },
+  "onboardingPrivacyNote": "Your name stays on this device. Your goal is sent with app usage data, never with your name. Usage and crash data is collected.",
+  "@onboardingPrivacyNote": {
+    "description": "Onboarding step 2: the privacy line under the goals. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataLink": "How AI feedback uses your answers",
+  "@onboardingDataLink": {
+    "description": "Onboarding step 2: the link that opens 'Your data & AI'."
+  },
+  "onboardingStart": "Start my first test",
+  "@onboardingStart": {
+    "description": "Onboarding step 2: the button that saves and starts the first Daily Test."
+  },
+  "onboardingSkipGoal": "Skip goal & start",
+  "@onboardingSkipGoal": {
+    "description": "Onboarding step 2: finishes without a learning goal."
+  },
+  "onboardingDataTitle": "Your data & AI",
+  "@onboardingDataTitle": {
+    "description": "The 'Your data & AI' dialog's title. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataDeviceHeading": "On this device",
+  "@onboardingDataDeviceHeading": {
+    "description": "'Your data & AI': row heading. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataDeviceBody": "Your name stays on this device.",
+  "@onboardingDataDeviceBody": {
+    "description": "'Your data & AI': what stays on the device. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataGoalHeading": "Your learning goal",
+  "@onboardingDataGoalHeading": {
+    "description": "'Your data & AI': row heading. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataGoalBody": "Sent with app usage data, never with your name, to help us decide what to improve. It does not personalize your lessons.",
+  "@onboardingDataGoalBody": {
+    "description": "'Your data & AI': what happens to the learning goal. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataAiHeading": "AI feedback",
+  "@onboardingDataAiHeading": {
+    "description": "'Your data & AI': row heading. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataAiBody": "In practice sessions (Topic Practice or a weak spot), your answers are sent to Anthropic (Claude) to give you feedback. We ask for your permission first.",
+  "@onboardingDataAiBody": {
+    "description": "'Your data & AI': what is sent to the AI service. 'Anthropic (Claude)' is a company and product name, never translated. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataDiagnosticsHeading": "App diagnostics",
+  "@onboardingDataDiagnosticsHeading": {
+    "description": "'Your data & AI': row heading. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataDiagnosticsBody": "Usage and crash data is collected.",
+  "@onboardingDataDiagnosticsBody": {
+    "description": "'Your data & AI': what the app's analytics collect. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+  },
+  "onboardingDataGotIt": "Got it",
+  "@onboardingDataGotIt": {
+    "description": "'Your data & AI': the button that closes the dialog."
+  },
+  "firstLaunchSaving": "Setting things up…",
+  "@firstLaunchSaving": {
+    "description": "Shown while the new profile is saved at the end of onboarding."
+  },
+  "firstLaunchSaveFailed": "Could not save your profile: {error}",
+  "@firstLaunchSaveFailed": {
+    "description": "Snackbar when saving the new profile failed; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
   }
 }

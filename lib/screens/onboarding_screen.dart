@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../models/avatar.dart';
-import '../models/daily_test_set.dart';
 import '../models/learning_goal.dart';
 import '../models/user_profile.dart';
 import '../theme.dart';
@@ -18,27 +17,20 @@ import '../widgets/brand_wordmark.dart';
 /// sent with usage data and never with the name; Firebase collects usage
 /// and crash data. The AI facts are in [OnboardingScreen]'s "Your data &
 /// AI" sheet, one tap away.
-const String onboardingPrivacyNote =
-    'Your name stays on this device. Your goal is sent with app usage data, '
-    'never with your name. Usage and crash data is collected.';
+String onboardingPrivacyNote(AppLocalizations l10n) =>
+    l10n.onboardingPrivacyNote;
 
 /// The "Your data & AI" sheet's rows (heading, text), in order. Public for
 /// the same reason as [onboardingPrivacyNote].
-const List<(String, String)> onboardingDataFacts = [
-  ('On this device', 'Your name stays on this device.'),
-  (
-    'Your learning goal',
-    'Sent with app usage data, never with your name, to help us decide what '
-        'to improve. It does not personalize your lessons.'
-  ),
-  (
-    'AI feedback',
-    'In practice sessions (Topic Practice or a weak spot), your answers are '
-        'sent to Anthropic (Claude) to give you feedback. We ask for your '
-        'permission first.'
-  ),
-  ('App diagnostics', 'Usage and crash data is collected.'),
-];
+List<(String, String)> onboardingDataFacts(AppLocalizations l10n) => [
+      (l10n.onboardingDataDeviceHeading, l10n.onboardingDataDeviceBody),
+      (l10n.onboardingDataGoalHeading, l10n.onboardingDataGoalBody),
+      (l10n.onboardingDataAiHeading, l10n.onboardingDataAiBody),
+      (
+        l10n.onboardingDataDiagnosticsHeading,
+        l10n.onboardingDataDiagnosticsBody
+      ),
+    ];
 
 /// Onboarding in two short steps (the 1.2.0 additional screens package),
 /// after Welcome and before the first Daily Test:
@@ -180,10 +172,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _Heading(
-                    eyebrow: 'A little practice. Every day.',
-                    title: 'Meet your learning companion.',
-                    subtitle: '${_countWord(DailyTestSet.questionCount)} '
-                        'questions a day. A small step forward, together.',
+                    eyebrow: context.l10n.onboardingCompanionEyebrow,
+                    title: context.l10n.onboardingCompanionTitle,
+                    // "Five": DailyTestSet.questionCount spelled out, pinned
+                    // by test/onboarding_l10n_test.dart.
+                    subtitle: context.l10n.onboardingCompanionSubtitle,
                   ),
                   const SizedBox(height: 10),
                   // The warm glow behind the selected companion.
@@ -211,7 +204,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   Text(
-                    'Swipe to choose · Change it later in Profile',
+                    context.l10n.onboardingCarouselHint,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.labelSmall
                         ?.withWeight(FontWeight.w400)
@@ -238,7 +231,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               _PrimaryCta(
                 buttonKey: OnboardingScreen.continueKey,
-                label: 'Continue',
+                label: context.l10n.commonContinue,
                 onPressed: _canContinue ? _continue : null,
               ),
             ],
@@ -275,7 +268,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const SizedBox(width: 9),
                       Flexible(
                         child: Text(
-                          'One more thing, $_name.',
+                          context.l10n.onboardingGoalGreeting(_name),
                           style: theme.textTheme.labelMedium
                               ?.withWeight(FontWeight.w700)
                               .copyWith(color: colorScheme.onSurfaceVariant),
@@ -285,11 +278,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 21),
-                const _Heading(
-                  eyebrow: 'Help shape GrammarLens',
-                  title: 'What brings you to English?',
-                  subtitle: 'Choose what matters most to you. Your answer '
-                      'helps us decide what to improve next.',
+                _Heading(
+                  eyebrow: context.l10n.onboardingGoalEyebrow,
+                  title: context.l10n.onboardingGoalTitle,
+                  subtitle: context.l10n.onboardingGoalSubtitle,
                 ),
                 const SizedBox(height: 24),
                 Padding(
@@ -326,7 +318,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(onboardingPrivacyNote, style: muted),
+                            Text(onboardingPrivacyNote(context.l10n),
+                                style: muted),
                             TextButton(
                               key: OnboardingScreen.dataLinkKey,
                               focusNode: _dataLinkFocus,
@@ -339,8 +332,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 textStyle: theme.textTheme.labelSmall
                                     ?.withWeight(FontWeight.w700),
                               ),
-                              child: const Text(
-                                  'How AI feedback uses your answers'),
+                              child: Text(context.l10n.onboardingDataLink),
                             ),
                           ],
                         ),
@@ -357,7 +349,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: [
             _PrimaryCta(
               buttonKey: OnboardingScreen.startKey,
-              label: 'Start my first test',
+              label: context.l10n.onboardingStart,
               onPressed:
                   _selectedGoal == null ? null : () => _finish(skipGoal: false),
             ),
@@ -370,23 +362,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 textStyle:
                     theme.textTheme.labelMedium?.withWeight(FontWeight.w700),
               ),
-              child: const Text('Skip goal & start'),
+              child: Text(context.l10n.onboardingSkipGoal),
             ),
           ],
         ),
       ],
     );
   }
-}
-
-/// "Five" for 5: the Daily Test's question count in words, read from the
-/// constant so the line cannot drift from the real test.
-String _countWord(int n) {
-  const words = [
-    'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', //
-    'Eight', 'Nine', 'Ten',
-  ];
-  return n >= 0 && n < words.length ? words[n] : '$n';
 }
 
 /// The step's top line: the wordmark (step 1) or Back (step 2), "Step N of
@@ -425,7 +407,7 @@ class _StepHeader extends StatelessWidget {
                     if (onBack != null)
                       IconButton(
                         key: OnboardingScreen.backKey,
-                        tooltip: 'Back',
+                        tooltip: context.l10n.commonBack,
                         onPressed: onBack,
                         style: IconButton.styleFrom(
                           minimumSize: const Size(44, 44),
@@ -442,7 +424,7 @@ class _StepHeader extends StatelessWidget {
                                 letterSpacing: -.6),
                       ),
                     Text(
-                      'Step $step of 2',
+                      context.l10n.onboardingStep(step, 2),
                       style: theme.textTheme.labelSmall
                           ?.withWeight(FontWeight.w700)
                           .copyWith(color: colorScheme.onSurfaceVariant),
@@ -455,7 +437,7 @@ class _StepHeader extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 12, 4, 26),
             child: Semantics(
-              label: 'Step $step of 2',
+              label: context.l10n.onboardingStep(step, 2),
               excludeSemantics: true,
               child: Row(
                 children: [
@@ -575,7 +557,7 @@ class _NameCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'What should we call you?',
+            context.l10n.onboardingNameQuestion,
             style: theme.textTheme.titleSmall
                 ?.withWeight(FontWeight.w800)
                 .copyWith(color: colorScheme.onSurface),
@@ -601,7 +583,7 @@ class _NameCard extends StatelessWidget {
               style: theme.textTheme.bodyLarge
                   ?.copyWith(color: colorScheme.onSurface),
               decoration: InputDecoration(
-                hintText: 'Your name',
+                hintText: context.l10n.onboardingNameHint,
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
                 contentPadding:
@@ -616,7 +598,7 @@ class _NameCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'A nickname is fine. It stays on this device.',
+            context.l10n.onboardingNameNote,
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w400)
                 .copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
@@ -846,14 +828,15 @@ class _DataDialog extends StatelessWidget {
             Semantics(
               header: true,
               child: Text(
-                'Your data & AI',
+                context.l10n.onboardingDataTitle,
                 style: theme.textTheme.titleLarge
                     ?.withWeight(FontWeight.w900)
                     .copyWith(color: colorScheme.onSurface),
               ),
             ),
             const SizedBox(height: 16),
-            for (final (heading, text) in onboardingDataFacts) ...[
+            for (final (heading, text)
+                in onboardingDataFacts(context.l10n)) ...[
               Text.rich(
                 TextSpan(children: [
                   TextSpan(
@@ -873,7 +856,7 @@ class _DataDialog extends StatelessWidget {
               key: OnboardingScreen.gotItKey,
               autofocus: true,
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Got it'),
+              child: Text(context.l10n.onboardingDataGotIt),
             ),
           ],
         ),

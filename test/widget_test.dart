@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/app.dart';
 import 'package:grammar_lens/screens/onboarding_screen.dart';
 
+import 'support/l10n_support.dart';
+
 void main() {
   // Welcome's ambient decorations (breathing mark, scan rings, drifting
   // background glow, twinkle dots) animate on an infinite loop by design,
@@ -78,9 +80,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text(onboardingPrivacyNote));
+    await tester.ensureVisible(find.text(onboardingPrivacyNote(en)));
 
-    expect(find.text(onboardingPrivacyNote), findsOneWidget);
+    expect(find.text(onboardingPrivacyNote(en)), findsOneWidget);
     expect(find.textContaining('never sent'), findsNothing);
   });
 }

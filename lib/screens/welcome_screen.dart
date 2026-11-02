@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../spacing.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/brand_wordmark.dart';
@@ -251,9 +252,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 300),
                       child: Text(
-                        'Practice English grammar with instant, '
-                        'plain-language feedback — no jargon, no judgment, '
-                        'just what to fix and why.',
+                        context.l10n.welcomeTagline,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyLarge
                             ?.copyWith(color: appBarFg),
@@ -267,7 +266,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       width: double.infinity,
                       child: FilledButton(
                         onPressed: widget.onGetStarted,
-                        child: const Text('Get started'),
+                        child: Text(context.l10n.welcomeGetStarted),
                       ),
                     ),
                   ),

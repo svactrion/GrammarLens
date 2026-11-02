@@ -110,6 +110,8 @@ void main() {
           ['After the block']);
       expect(
           scanForInterfaceText("FocusNode(debugLabel: 'Edit name')"), isEmpty);
+      expect(scanForInterfaceText(r"TextSpan(text: '$heading\n')"), isEmpty);
+      expect(scanForInterfaceText(r"Text('Got it\n')"), ['Got it\\n']);
     });
   });
 }
@@ -142,9 +144,7 @@ const _pending = <String>{
   'lib/models/climb_theme.dart',
   'lib/screens/daily_test_result_screen.dart',
   'lib/screens/daily_test_screen.dart',
-  'lib/screens/first_launch_flow.dart',
   'lib/screens/home_screen.dart',
-  'lib/screens/onboarding_screen.dart',
   'lib/screens/practice_launch.dart',
   'lib/screens/practice_length_picker.dart',
   'lib/screens/practice_screen.dart',
@@ -153,7 +153,6 @@ const _pending = <String>{
   'lib/screens/review_screen.dart',
   'lib/screens/topic_practice_screen.dart',
   'lib/screens/weak_spot_detail_screen.dart',
-  'lib/screens/welcome_screen.dart',
   'lib/services/claude_service.dart',
   'lib/services/subscription_service.dart',
   'lib/utils/answer_matching.dart',
@@ -247,9 +246,11 @@ List<String> scanForInterfaceText(String source) {
   final hits = <String>[];
   for (final literal in _literals(source)) {
     final text = literal.text;
-    if (!_letter.hasMatch(text.replaceAll(RegExp(r'\$\{…\}|\$\w+'), ''))) {
-      continue;
-    }
+    // Letters outside interpolations and escapes ("\n" is not an "n").
+    final letters = text
+        .replaceAll(RegExp(r'\$\{…\}|\$\w+'), '')
+        .replaceAll(RegExp(r'\\.'), '');
+    if (!_letter.hasMatch(letters)) continue;
     final line = lineOf(literal.start);
     final marked = blocked.contains(line) ||
         lines[line].contains('l10n-guard:') ||
