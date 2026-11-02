@@ -471,21 +471,43 @@ void main() {
         .platformDispatcher
         .clearAccessibilityFeaturesTestValue());
 
-    // Closes [storage] from the test's own zone and pumps until it is done.
-    // A connection the app opened during the test lives in the fake-async
-    // zone: closing it from `runAsync` (or deleting its file in the next
-    // test's setUp) waits on that zone's microtasks, which nobody flushes,
-    // and the run stalls (1.4.0 B5). So no connection outlives its test.
-    Future<void> closeInZone(
-        WidgetTester tester, StorageService storage) async {
-      var closed = false;
-      unawaited(storage.close().whenComplete(() => closed = true));
-      for (var i = 0; i < 100 && !closed; i++) {
+    // Runs [work] in the test's own zone and pumps until it is done, at
+    // most about 12 s, then fails instead of waiting on. A connection the
+    // app opened during the test lives in the fake-async zone: waiting on
+    // it from `runAsync` (or deleting its file in the next test's setUp)
+    // waits on that zone's microtasks, which nobody flushes, and the run
+    // stalls (1.4.0 B5; 2026-11-03 under load). So no wait on the database
+    // here is unbounded.
+    Future<T?> settleInZone<T>(
+        WidgetTester tester, Future<T> Function() work, String what) async {
+      var done = false;
+      T? result;
+      unawaited(work().then((value) {
+        result = value;
+        done = true;
+      }));
+      for (var i = 0; i < 100 && !done; i++) {
         await tester.runAsync(
             () => Future<void>.delayed(const Duration(milliseconds: 20)));
         await tester.pump(const Duration(milliseconds: 100));
       }
-      expect(closed, isTrue, reason: 'the connection did not close');
+      expect(done, isTrue, reason: '$what did not finish');
+      return result;
+    }
+
+    // Closes [storage], an open still in flight included, until it stays
+    // closed across a pump (work the app queued before it was unmounted can
+    // open it again), so no connection outlives its test.
+    Future<void> closeInZone(
+        WidgetTester tester, StorageService storage) async {
+      for (var round = 0; round < 10; round++) {
+        await settleInZone(tester, storage.close, 'the connection\'s close');
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 50)));
+        await tester.pump(const Duration(milliseconds: 300));
+        if (!storage.isOpen) return;
+      }
+      expect(storage.isOpen, isFalse, reason: 'the app kept reopening it');
     }
 
     Future<StorageService> pumpApp(WidgetTester tester) async {
@@ -523,7 +545,9 @@ void main() {
       expect(ClimbDebugControls.instance.pending, isNull);
       await tester.tap(find.byType(MedalCelebration));
       await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpWidget(const SizedBox.shrink());
       await closeInZone(tester, storage);
+      expect(storage.isOpen, isFalse);
     });
 
     testWidgets('the reset brings the app back to Welcome', (tester) async {
@@ -575,12 +599,16 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(find.text('Get started'), findsOneWidget);
-      // The app reopened the database in this zone after the reset; close
-      // it here, then read the file through a fresh connection.
+      // The app reopened the database in this zone after the reset. Unmount
+      // it, so nothing opens the file again, close it here, then read the
+      // file through a fresh connection, in this zone too.
+      await tester.pumpWidget(const SizedBox.shrink());
       await closeInZone(tester, storage);
+      expect(storage.isOpen, isFalse);
       final fresh = StorageService(dbName: dbName);
-      expect(await tester.runAsync(fresh.getUserProfile), isNull);
-      await tester.runAsync(fresh.close);
+      expect(await settleInZone(tester, fresh.getUserProfile, 'the fresh read'),
+          isNull);
+      await closeInZone(tester, fresh);
     });
   });
 

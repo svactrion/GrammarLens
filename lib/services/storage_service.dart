@@ -341,17 +341,46 @@ class StorageService {
   /// B5, the stalled reset test; `test/storage_reset_race_test.dart`).
   Future<void>? _resetting;
 
+  /// The open in flight, if any: [close] and [resetAllLocalData] wait for it
+  /// before closing, so a connection that was still opening when they ran
+  /// does not stay open after them. Left open, it held sqflite's per-path
+  /// lock, and the next open or delete of the file waited on it (the
+  /// debug-panel reset test's stall under load, 2026-11-03).
+  Future<Database>? _opening;
+
   Future<Database> get _database async {
     while (_resetting != null) {
       await _resetting;
     }
-    return _db ??= await _initDb();
+    final db = _db;
+    if (db != null) return db;
+    return _opening ??= _open();
   }
+
+  Future<Database> _open() async {
+    try {
+      return _db = await _initDb();
+    } finally {
+      _opening = null;
+    }
+  }
+
+  /// Waits for an open in flight; its failure is its caller's to report.
+  Future<void> _settleOpening() async {
+    try {
+      await _opening;
+    } catch (_) {}
+  }
+
+  /// Whether a connection is open or opening.
+  @visibleForTesting
+  bool get isOpen => _db != null || _opening != null;
 
   /// Closes the connection; the next call opens it again. For tests that
   /// share a database file between test cases.
   @visibleForTesting
   Future<void> close() async {
+    await _settleOpening();
     final db = _db;
     _db = null;
     await db?.close();
@@ -1572,6 +1601,7 @@ class StorageService {
     final done = Completer<void>();
     _resetting = done.future;
     try {
+      await _settleOpening();
       final db = _db;
       _db = null;
       await db?.close();
