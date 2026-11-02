@@ -679,7 +679,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   opensBrowser: true,
                   onTap: () => openLegalLink(
                       label: context.l10n.commonPrivacyPolicy,
-                      url: AppLinks.privacyPolicyUrl),
+                      url: AppLinks.privacyPolicyUrl,
+                      failedMessage: context.l10n
+                          .legalLinkFailed(context.l10n.commonPrivacyPolicy)),
                 ),
                 Divider(
                     height: 1, thickness: 1, color: colorScheme.outlineVariant),
@@ -690,7 +692,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   opensBrowser: true,
                   onTap: () => openLegalLink(
                       label: context.l10n.commonTermsOfService,
-                      url: AppLinks.termsUrl),
+                      url: AppLinks.termsUrl,
+                      failedMessage: context.l10n
+                          .legalLinkFailed(context.l10n.commonTermsOfService)),
                 ),
                 Divider(
                     height: 1, thickness: 1, color: colorScheme.outlineVariant),

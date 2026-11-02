@@ -23,18 +23,18 @@ class PremiumOfferCard extends StatelessWidget {
   /// for a free user, and a free user gets
   /// `StorageService.freeDailyPracticeLimit` practice sessions a day against
   /// Premium's `StorageService.dailySessionLimit`.
-  static const benefits = [
-    _OfferBenefit(
-      icon: 'ic_topic_practice',
-      title: 'Topic Practice',
-      detail: 'Focus on the areas you need',
-    ),
-    _OfferBenefit(
-      icon: 'ic_daily_sessions',
-      title: 'More Daily Sessions',
-      detail: 'Build your progress faster',
-    ),
-  ];
+  static List<_OfferBenefit> _benefits(AppLocalizations l10n) => [
+        _OfferBenefit(
+          icon: 'ic_topic_practice',
+          title: l10n.offerTopicPracticeTitle,
+          detail: l10n.offerTopicPracticeBody,
+        ),
+        _OfferBenefit(
+          icon: 'ic_daily_sessions',
+          title: l10n.offerSessionsTitle,
+          detail: l10n.offerSessionsBody,
+        ),
+      ];
 
   /// The one place a benefit icon's light or dark variant is chosen:
   /// `assets/icons/<name>_dark.png` in a dark theme, `_light.png` otherwise
@@ -61,7 +61,7 @@ class PremiumOfferCard extends StatelessWidget {
             const _PremiumChip(),
             const SizedBox(height: 10),
             Text(
-              'Keep practicing',
+              context.l10n.offerTitle,
               style: theme.textTheme.titleLarge?.withWeight(FontWeight.w800),
             ),
             const SizedBox(height: 6),
@@ -81,9 +81,9 @@ class PremiumOfferCard extends StatelessWidget {
                     key: const Key('premiumOfferBenefitsRow'),
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _BenefitTile(benefits[0])),
+                      Expanded(child: _BenefitTile(_benefits(context.l10n)[0])),
                       const SizedBox(width: _benefitGap),
-                      Expanded(child: _BenefitTile(benefits[1])),
+                      Expanded(child: _BenefitTile(_benefits(context.l10n)[1])),
                     ],
                   );
                 }
@@ -91,9 +91,9 @@ class PremiumOfferCard extends StatelessWidget {
                   key: const Key('premiumOfferBenefitsColumn'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _BenefitTile(benefits[0]),
+                    _BenefitTile(_benefits(context.l10n)[0]),
                     const SizedBox(height: 12),
-                    _BenefitTile(benefits[1]),
+                    _BenefitTile(_benefits(context.l10n)[1]),
                   ],
                 );
               },
@@ -103,7 +103,7 @@ class PremiumOfferCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: onSeePremium,
-                child: const Text('See Premium'),
+                child: Text(context.l10n.reviewSeePremium),
               ),
             ),
           ],
@@ -189,7 +189,7 @@ class _PremiumChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        'PREMIUM',
+        context.l10n.offerChip,
         style: theme.textTheme.labelSmall
             ?.withWeight(FontWeight.w700)
             .copyWith(color: colorScheme.onSecondaryContainer),

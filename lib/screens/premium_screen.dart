@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '../l10n/l10n.dart';
 import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/practice_length.dart';
@@ -75,8 +76,7 @@ class PremiumScreen extends StatefulWidget {
     this.sourceContext,
   }) : subscriptionService = subscriptionService ?? SubscriptionService();
 
-  /// The headline, the same from every entry point.
-  static const String headline = 'Turn your mistakes into progress.';
+  // The headline, the same from every entry point: `paywallHeadline`.
 
   static const compareToggleKey = ValueKey('premium_compare_toggle');
   static const ctaKey = ValueKey('premium_cta');
@@ -168,9 +168,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
         _PlanPeriod.annual => AnalyticsService.planAnnual,
       };
 
-  _PlanTerms _termsFor(Package package, String label) => _PlanTerms.of(
+  _PlanTerms _termsFor(Package package, String id) => _PlanTerms.of(
         package,
-        label: label,
+        id: id,
+        label: switch (id) {
+          'Annual' => context.l10n.paywallPlanAnnual,
+          'Monthly' => context.l10n.paywallPlanMonthly,
+          _ => id,
+        },
+        l10n: context.l10n,
         eligibility: _eligibility[package.storeProduct.identifier] ??
             TrialEligibility.unknown,
         locale: View.of(context).platformDispatcher.locale.toString(),
@@ -223,8 +229,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
     setState(() {
       _restoring = false;
       _restoreMessage = restored
-          ? 'Purchases restored — full access is active.'
-          : 'No previous purchases found to restore.';
+          ? context.l10n.paywallRestored
+          : context.l10n.paywallNothingToRestore;
     });
   }
 
@@ -247,9 +253,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
   String get _supportingText {
     final source = widget.sourceContext?.trim();
     return source == null || source.isEmpty
-        ? 'Focused practice. Personal feedback. A little more confidence, '
-            'every day.'
-        : 'Practice $source.';
+        ? context.l10n.paywallSupporting
+        : context.l10n.paywallSupportingSource(source);
   }
 
   @override
@@ -318,7 +323,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Semantics(
                       header: true,
                       child: Text(
-                        PremiumScreen.headline,
+                        context.l10n.paywallHeadline,
                         textAlign: TextAlign.center,
                         style: _headlineStyle(theme, size.width),
                       ),
@@ -340,7 +345,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Semantics(
                       header: true,
                       child: Text(
-                        'Choose your plan',
+                        context.l10n.paywallChoosePlan,
                         style: theme.textTheme.titleSmall
                             ?.withWeight(FontWeight.w900)
                             .copyWith(color: colorScheme.onSurface),
@@ -362,7 +367,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       _PlanCards(
                         annual: _termsFor(annual, 'Annual'),
                         monthly: _termsFor(monthly, 'Monthly'),
-                        savingsLabel: _savingsLabel(monthly, annual),
+                        savingsLabel:
+                            _savingsLabel(monthly, annual, context.l10n),
                         referencePrice: _referencePrice(
                             monthly,
                             annual,
@@ -430,6 +436,7 @@ class _SupportingLine extends StatelessWidget {
     // fractional font size the two differ by a fraction of a point, and a
     // weak spot's one-line text would then not take the default's place.
     final painter = TextPainter(
+      // l10n-guard: a two-line measuring probe, never shown
       text: TextSpan(text: 'A\nA', style: style),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
@@ -458,13 +465,20 @@ TextStyle _headlineStyle(ThemeData theme, double width) {
 /// The annual plan's saving against twelve months of the monthly plan, from
 /// the two products' own prices (never the rounded per-month figure), or
 /// null when it does not save anything.
-String? _savingsLabel(Package monthlyPackage, Package annualPackage) {
+String? _savingsLabel(
+    Package monthlyPackage, Package annualPackage, AppLocalizations l10n) {
+  final percent = _savingsPercent(monthlyPackage, annualPackage);
+  return percent == null ? null : l10n.paywallSave(percent);
+}
+
+/// The saving in whole percent, or null when there is none.
+int? _savingsPercent(Package monthlyPackage, Package annualPackage) {
   final monthly = monthlyPackage.storeProduct.price;
   final annual = annualPackage.storeProduct.price;
   if (monthly <= 0) return null;
   final yearlyIfMonthly = monthly * 12;
   final savings = (yearlyIfMonthly - annual) / yearlyIfMonthly * 100;
-  return savings > 0 ? 'Save ${savings.floor()}%' : null;
+  return savings > 0 ? savings.floor() : null;
 }
 
 /// Twelve months of the monthly plan, shown struck through on the annual
@@ -472,7 +486,7 @@ String? _savingsLabel(Package monthlyPackage, Package annualPackage) {
 /// against nothing); null when either is missing or it cannot be formatted.
 String? _referencePrice(
     Package monthlyPackage, Package annualPackage, String locale) {
-  if (_savingsLabel(monthlyPackage, annualPackage) == null) return null;
+  if (_savingsPercent(monthlyPackage, annualPackage) == null) return null;
   // An annual price that is not a price (0) is no reference to strike
   // against, whatever the badge says.
   if (annualPackage.storeProduct.price <= 0) return null;
@@ -484,60 +498,67 @@ String? _referencePrice(
   );
 }
 
+/// A billing or trial period as data: how many of which unit.
+typedef _Period = ({int count, PeriodUnit unit});
+
 /// What one plan says, everywhere it is said (its card, the button, the
 /// renewal terms), from the store product and this user's eligibility.
+/// The words come from the strings (1.4.0 B4.6); the period is kept as
+/// data, so "is this the yearly plan" never compares a word.
 class _PlanTerms {
+  /// The plan's stable name for keys: "Annual", "Monthly" (never shown).
+  final String id;
   final String label;
   final String price;
 
-  /// "year", "month", or "3 months"; null if the store gave no period.
-  final String? period;
+  /// The billing period; null if the store gave none.
+  final _Period? billing;
 
-  /// The trial's length ("7-day"), only when the product has an
-  /// introductory offer and the user is eligible for it.
-  final String? trialLength;
-
-  /// The same trial as a span of time ("7 days").
-  final String? trialSpan;
+  /// The trial, only when the product has an introductory offer and the
+  /// user is eligible for it.
+  final _Period? trial;
   final TrialEligibility eligibility;
 
   /// A yearly plan's price over twelve months ("$4.17"), computed from the
   /// store price (see [monthlyEquivalent]); null on any other plan, and when
   /// it cannot be worked out.
   final String? monthlyEquivalentPrice;
+  final AppLocalizations l10n;
 
   const _PlanTerms({
+    required this.id,
     required this.label,
     required this.price,
-    required this.period,
-    required this.trialLength,
-    required this.trialSpan,
+    required this.billing,
+    required this.trial,
     required this.eligibility,
+    required this.l10n,
     this.monthlyEquivalentPrice,
   });
 
   factory _PlanTerms.of(Package package,
-      {required String label,
+      {required String id,
+      required String label,
       required TrialEligibility eligibility,
-      required String locale}) {
+      required String locale,
+      required AppLocalizations l10n}) {
     final product = package.storeProduct;
     final intro = product.introductoryPrice;
-    String? length;
-    String? span;
-    if (intro != null && eligibility == TrialEligibility.eligible) {
-      final (count, unit) = _trialDurationInDays(intro);
-      length = _hyphenatedDuration(count, unit);
-      span = _durationSpan(count, unit);
-    }
-    final period = _formatSubscriptionPeriod(product.subscriptionPeriod);
+    final _Period? trial =
+        intro != null && eligibility == TrialEligibility.eligible
+            ? _trialDurationInDays(intro)
+            : null;
+    final billing = _parseSubscriptionPeriod(product.subscriptionPeriod);
+    final yearly = billing?.unit == PeriodUnit.year && billing?.count == 1;
     return _PlanTerms(
+      id: id,
       label: label,
       price: product.priceString,
-      period: period,
-      trialLength: length,
-      trialSpan: span,
+      billing: billing,
+      trial: trial,
       eligibility: eligibility,
-      monthlyEquivalentPrice: period == 'year'
+      l10n: l10n,
+      monthlyEquivalentPrice: yearly
           ? monthlyEquivalent(
               annualPrice: product.price,
               currencyCode: product.currencyCode,
@@ -547,55 +568,96 @@ class _PlanTerms {
     );
   }
 
+  /// "year", "month", or "3 months"; null if the store gave no period.
+  String? get period {
+    final b = billing;
+    return b == null ? null : _periodWord(b, l10n);
+  }
+
+  /// The trial's length ("7-day").
+  String? get trialLength {
+    final t = trial;
+    return t == null ? null : _trialLengthWord(t, l10n);
+  }
+
+  /// The same trial as a span of time ("7 days").
+  String? get trialSpan {
+    final t = trial;
+    return t == null ? null : _spanWord(t, l10n);
+  }
+
   /// The annual card's small extra line, "≈ $4.17 per month"; null when
   /// there is none.
   String? get monthlyEquivalentLine {
     final value = monthlyEquivalentPrice;
-    return value == null ? null : '≈ $value per month';
+    return value == null ? null : l10n.paywallPerMonthApprox(value);
   }
 
-  bool get hasTrial => trialLength != null;
+  bool get hasTrial => trial != null;
 
   /// "$49.99 per year", or the price alone without a period.
-  String get pricePerPeriod => period == null ? price : '$price per $period';
+  String get pricePerPeriod {
+    final p = period;
+    return p == null ? price : l10n.paywallPricePerPeriod(price, p);
+  }
 
   /// The card's detail line: the trial, or how it is billed.
   String get detail {
-    if (hasTrial) return '$trialLength free trial';
-    return switch (period) {
-      'year' => 'Billed yearly',
-      'month' => 'Billed monthly',
-      null => 'Billed per period',
-      _ => 'Billed every $period',
-    };
+    if (hasTrial) return l10n.paywallTrial(trialLength!);
+    final b = billing;
+    if (b == null) return l10n.paywallBilledPerPeriod;
+    if (b.count == 1 && b.unit == PeriodUnit.year) {
+      return l10n.paywallBilledYearly;
+    }
+    if (b.count == 1 && b.unit == PeriodUnit.month) {
+      return l10n.paywallBilledMonthly;
+    }
+    return l10n.paywallBilledEvery(period!);
   }
 
   /// The purchase button: the trial when there is one for this user; the
   /// price and period when there is none; neutral when it is unknown.
   String get cta {
-    if (hasTrial) return 'Start my $trialLength free trial';
-    if (eligibility == TrialEligibility.unknown) return 'Continue with $label';
-    return 'Subscribe for $pricePerPeriod';
+    if (hasTrial) return l10n.paywallStartTrial(trialLength!);
+    if (eligibility == TrialEligibility.unknown) {
+      return l10n.paywallContinueWith(label);
+    }
+    return l10n.paywallSubscribeFor(pricePerPeriod);
   }
 
   /// The renewal terms under the button (App Store 3.1.2), always for the
   /// selected plan: the trial and then the price, or the price alone.
   String get disclosure => hasTrial
-      ? '$trialSpan free, then $pricePerPeriod, auto-renews unless cancelled.'
-      : '$pricePerPeriod, auto-renews unless cancelled.';
+      ? l10n.paywallDisclosureTrial(trialSpan!, pricePerPeriod)
+      : l10n.paywallDisclosure(pricePerPeriod);
 }
 
+/// "month" or "3 months": a billing period after "per" or "every".
+String _periodWord(_Period p, AppLocalizations l10n) => switch (p.unit) {
+      PeriodUnit.day => l10n.paywallPeriodDay(p.count),
+      PeriodUnit.week => l10n.paywallPeriodWeek(p.count),
+      PeriodUnit.month => l10n.paywallPeriodMonth(p.count),
+      PeriodUnit.year => l10n.paywallPeriodYear(p.count),
+      PeriodUnit.unknown => l10n.paywallPeriodUnknown,
+    };
+
 /// "7 days", "1 month": a trial as a span of time.
-String _durationSpan(int count, PeriodUnit unit) {
-  final singular = switch (unit) {
-    PeriodUnit.day => 'day',
-    PeriodUnit.week => 'week',
-    PeriodUnit.month => 'month',
-    PeriodUnit.year => 'year',
-    PeriodUnit.unknown => 'period',
-  };
-  return '$count ${count == 1 ? singular : '${singular}s'}';
-}
+String _spanWord(_Period p, AppLocalizations l10n) => switch (p.unit) {
+      PeriodUnit.day => l10n.paywallSpanDay(p.count),
+      PeriodUnit.week => l10n.paywallSpanWeek(p.count),
+      PeriodUnit.month => l10n.paywallSpanMonth(p.count),
+      PeriodUnit.year => l10n.paywallSpanYear(p.count),
+      PeriodUnit.unknown => l10n.paywallSpanUnknown(p.count),
+    };
+
+/// "7-day": a trial's length before "free trial".
+String _trialLengthWord(_Period p, AppLocalizations l10n) => switch (p.unit) {
+      PeriodUnit.day => l10n.paywallTrialLengthDay(p.count),
+      PeriodUnit.week => l10n.paywallTrialLengthWeek(p.count),
+      PeriodUnit.month => l10n.paywallTrialLengthMonth(p.count),
+      PeriodUnit.year => l10n.paywallTrialLengthYear(p.count),
+      PeriodUnit.unknown => l10n.paywallTrialLengthUnknown(p.count),
+    };
 
 /// Below this screen height the decorative companion group is dropped.
 const double _shortScreenHeight = 700;
@@ -639,7 +701,7 @@ class _TopBar extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.close_rounded, size: 22),
-            tooltip: 'Close',
+            tooltip: context.l10n.paywallClose,
             color: colorScheme.onSurface,
             style: IconButton.styleFrom(minimumSize: const Size(44, 44)),
             onPressed: onClose,
@@ -676,7 +738,7 @@ class _AvatarHero extends StatelessWidget {
     final others = _otherAvatarsFor(centerAvatar);
     return Semantics(
       key: PremiumScreen.heroKey,
-      label: 'Your companion: ${centerAvatar.semanticLabel}',
+      label: context.l10n.paywallCompanion(centerAvatar.semanticLabel),
       container: true,
       child: ExcludeSemantics(
         child: SizedBox(
@@ -730,7 +792,7 @@ class _PremiumLabel extends StatelessWidget {
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              'GRAMMARLENS PREMIUM',
+              context.l10n.paywallBadge,
               style: theme.textTheme.labelSmall
                   ?.withWeight(FontWeight.w900)
                   .copyWith(color: palette.onWarm, letterSpacing: 1),
@@ -742,12 +804,6 @@ class _PremiumLabel extends StatelessWidget {
   }
 }
 
-/// "one" for 1: small counts in words, for the benefit lines.
-String _countWord(int n) {
-  const words = ['no', 'one', 'two', 'three', 'four', 'five'];
-  return n >= 0 && n < words.length ? words[n] : '$n';
-}
-
 /// The three benefits, true to what each tier really has: a free user has
 /// the Daily Test, AI feedback on one weak-spot practice a day, and Review;
 /// so Premium's lines say "more" and "every topic", never "AI only in
@@ -755,28 +811,26 @@ String _countWord(int n) {
 class _BenefitsCard extends StatelessWidget {
   const _BenefitsCard();
 
-  static List<(IconData, String, String)> get benefits {
+  static List<(IconData, String, String)> benefits(AppLocalizations l10n) {
     const free = StorageService.freeDailyPracticeLimit;
     final lengthText = _joinWithOr(
-        PracticeLength.values.map((l) => '${l.questionCount}').toList());
+        PracticeLength.values.map((l) => '${l.questionCount}').toList(), l10n);
     return [
       (
         Icons.chat_bubble_outline_rounded,
-        'Understand your mistakes',
-        'AI feedback on every topic you practice, not just your free daily '
-            'practice.'
+        l10n.paywallBenefitFeedbackTitle,
+        l10n.paywallBenefitFeedbackBody,
       ),
       (
         Icons.track_changes_rounded,
-        'Practice your weak spots',
-        'Go beyond your ${_countWord(free)} free daily '
-            'practice${free == 1 ? '' : 's'}.'
+        l10n.paywallBenefitWeakSpotsTitle,
+        l10n.paywallBenefitWeakSpotsBody(free),
       ),
       (
         Icons.menu_book_rounded,
-        'Every topic, your own pace',
-        'All ${kTopics.length} topics · $lengthText questions · up to '
-            '${StorageService.dailySessionLimit} sessions a day.'
+        l10n.paywallBenefitTopicsTitle,
+        l10n.paywallBenefitTopicsBody(
+            kTopics.length, lengthText, StorageService.dailySessionLimit),
       ),
     ];
   }
@@ -786,7 +840,7 @@ class _BenefitsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final palette = AppPalette.of(context);
-    final items = benefits;
+    final items = benefits(context.l10n);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
       decoration: BoxDecoration(
@@ -875,7 +929,7 @@ class _CompareToggle extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Flexible(child: Text('Compare Free & Premium')),
+              Flexible(child: Text(context.l10n.paywallCompare)),
               const SizedBox(width: 6),
               Icon(
                 open
@@ -936,12 +990,16 @@ class _FooterLinks extends StatelessWidget {
             style: TextButton.styleFrom(
               foregroundColor: colorScheme.secondary,
             ),
-            child: Text(restoring ? 'Restoring…' : 'Restore Purchases'),
+            child: Text(restoring
+                ? context.l10n.paywallRestoring
+                : context.l10n.paywallRestore),
           )),
-          _link(const LegalLink(
-              label: 'Terms of Service', url: AppLinks.termsUrl)),
-          _link(const LegalLink(
-              label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl)),
+          _link(LegalLink(
+              label: context.l10n.commonTermsOfService,
+              url: AppLinks.termsUrl)),
+          _link(LegalLink(
+              label: context.l10n.commonPrivacyPolicy,
+              url: AppLinks.privacyPolicyUrl)),
         ],
       ),
     );
@@ -1154,7 +1212,7 @@ class _PremiumFooter extends StatelessWidget {
                           )
                         : Text(
                             purchaseState == _PurchaseState.success
-                                ? 'Continue'
+                                ? context.l10n.commonContinue
                                 : terms!.cta,
                             textAlign: TextAlign.center,
                           ),
@@ -1195,7 +1253,7 @@ class _PremiumFooter extends StatelessWidget {
                               colorScheme.onSurfaceVariant),
                         ),
                         onPressed: onMaybeLater,
-                        child: const Text('Maybe later'),
+                        child: Text(context.l10n.paywallMaybeLater),
                       ),
                     ),
                   ),
@@ -1281,25 +1339,23 @@ class _StatusMessage extends StatelessWidget {
       _PurchaseState.success => (
           Icons.check_circle_rounded,
           purchasedTrial
-              ? 'Trial started — Topic Practice is unlocked.'
-              : 'Premium is active — Topic Practice is unlocked.',
+              ? context.l10n.paywallTrialStarted
+              : context.l10n.paywallActive,
           colorScheme.onSurface,
         ),
       _PurchaseState.cancelled => (
           Icons.info_outline_rounded,
-          'Purchase cancelled — no charge was made.',
+          context.l10n.paywallCancelled,
           colorScheme.onSurfaceVariant,
         ),
       _PurchaseState.pending => (
           Icons.hourglass_top_rounded,
-          'Waiting for approval — Premium starts once the purchase is '
-              'approved. No charge until then.',
+          context.l10n.paywallPending,
           colorScheme.onSurfaceVariant,
         ),
       _PurchaseState.error => (
           Icons.error_outline_rounded,
-          "Something went wrong and the purchase couldn't start. Please try "
-              'again.',
+          context.l10n.paywallFailed,
           colorScheme.error,
         ),
       _PurchaseState.idle || _PurchaseState.purchasing => restoreMessage == null
@@ -1352,9 +1408,10 @@ class _ComparisonRow {
 /// — no Oxford comma) rather than a plain comma list, and read off
 /// [PracticeLength] so this can't drift from what session lengths the app
 /// actually offers.
-String _joinWithOr(List<String> items) {
+String _joinWithOr(List<String> items, AppLocalizations l10n) {
   if (items.length == 1) return items.first;
-  return '${items.sublist(0, items.length - 1).join(', ')} or ${items.last}';
+  return l10n.paywallListOr(
+      items.sublist(0, items.length - 1).join(', '), items.last);
 }
 
 /// Four rows (down from five): "Questions from your own mistakes" and
@@ -1370,27 +1427,29 @@ String _joinWithOr(List<String> items) {
 /// abbreviated "N/day" once it's measured whether the full phrase fits
 /// the free-value column on one line at the current width (see that
 /// class's own doc comment on the overlap this replaced).
-List<_ComparisonRow> _buildComparisonRows(String weakSpotFreeLabel) => [
-      const _ComparisonRow(
-        label: 'Daily Test, refreshed every day',
+List<_ComparisonRow> _buildComparisonRows(
+        String weakSpotFreeLabel, AppLocalizations l10n) =>
+    [
+      _ComparisonRow(
+        label: l10n.paywallRowDailyTest,
         free: true,
         premium: true,
       ),
-      const _ComparisonRow(
-        label: 'Topic Practice, all five topics',
+      _ComparisonRow(
+        label: l10n.paywallRowTopicPractice,
         free: false,
         premium: true,
       ),
       _ComparisonRow(
-        label: 'Practice your weak spots',
+        label: l10n.paywallRowWeakSpots,
         free: false,
         freeLabel: weakSpotFreeLabel,
         premium: true,
       ),
       _ComparisonRow(
-        label: 'Sessions of '
-            '${_joinWithOr(PracticeLength.values.map((l) => '${l.questionCount}').toList())} '
-            'questions',
+        label: l10n.paywallRowLengths(_joinWithOr(
+            PracticeLength.values.map((l) => '${l.questionCount}').toList(),
+            l10n)),
         free: false,
         premium: true,
       ),
@@ -1452,7 +1511,8 @@ class _ComparisonTable extends StatelessWidget {
   /// text scale, measured directly via [_measureTextWidth] rather than a
   /// fixed constant, so this is correct at any Dynamic Type setting.
   double _premiumColumnWidth(BuildContext context) {
-    final width = _measureTextWidth(context, 'PREMIUM', _headerStyle);
+    final width = _measureTextWidth(
+        context, context.l10n.paywallHeaderPremium, _headerStyle);
     // Horizontal padding inside the strip on each side, plus a floor so a
     // single small checkmark icon never makes the strip look pinched.
     return (width + 28).clamp(56, double.infinity);
@@ -1509,8 +1569,8 @@ class _ComparisonTable extends StatelessWidget {
         // like "Practice your weak spots" reads comfortably at 2 lines,
         // 13sp, on this table's own font.
         const minLabelWidth = 96.0;
-        final freeHeaderWidth =
-            _measureTextWidth(context, 'FREE', _headerStyle);
+        final freeHeaderWidth = _measureTextWidth(
+            context, context.l10n.paywallHeaderFree, _headerStyle);
         // The checkmark icon (_ComparisonCell's `included` branch) is 20pt
         // square — included as a width candidate so the column is never
         // narrower than the icon itself even if every text candidate
@@ -1518,8 +1578,8 @@ class _ComparisonTable extends StatelessWidget {
         // the header/quota text ever gets shorter than that).
         const checkmarkWidth = 20.0;
         const limit = StorageService.freeDailyPracticeLimit;
-        const longFreeText = '$limit a day';
-        const shortFreeText = '$limit/day';
+        final longFreeText = context.l10n.paywallFreePerDay(limit);
+        final shortFreeText = context.l10n.paywallFreePerDayShort(limit);
         final longFreeWidth =
             _measureTextWidth(context, longFreeText, _freeValueStyle);
         final shortFreeWidth =
@@ -1551,7 +1611,7 @@ class _ComparisonTable extends StatelessWidget {
         bool everyLabelFitsInTwoLines() {
           final textWidth = availableForLabel - _labelCellHorizontalPadding;
           if (textWidth <= 0) return false;
-          for (final row in _buildComparisonRows(freeText)) {
+          for (final row in _buildComparisonRows(freeText, context.l10n)) {
             final painter = TextPainter(
               text: TextSpan(
                 text: row.label,
@@ -1575,13 +1635,13 @@ class _ComparisonTable extends StatelessWidget {
         if (availableForLabel < minLabelWidth || !everyLabelFitsInTwoLines()) {
           return _StackedComparison(
             key: const Key('comparisonStacked'),
-            rows: _buildComparisonRows(longFreeText),
+            rows: _buildComparisonRows(longFreeText, context.l10n),
             theme: theme,
             colorScheme: colorScheme,
           );
         }
 
-        final rows = _buildComparisonRows(freeText);
+        final rows = _buildComparisonRows(freeText, context.l10n);
         final headerHeight = _measuredHeight(context, _headerStyle, 1);
         final dataRowHeight = _measuredHeight(context, labelStyle, 2);
 
@@ -1687,7 +1747,7 @@ class _StackedComparison extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       _StackedTierChip(
-                        tier: 'Free',
+                        tier: context.l10n.paywallTierFree,
                         included: rows[i].free,
                         valueLabel: rows[i].freeLabel,
                         fill: colorScheme.surfaceContainerHighest,
@@ -1695,7 +1755,7 @@ class _StackedComparison extends StatelessWidget {
                         dashColor: colorScheme.outline,
                       ),
                       _StackedTierChip(
-                        tier: 'Premium',
+                        tier: context.l10n.featurePremium,
                         included: rows[i].premium,
                         fill: colorScheme.brightness == Brightness.dark
                             ? colorScheme.surfaceContainerHighest
@@ -1805,7 +1865,7 @@ class _ComparisonHeaderRow extends StatelessWidget {
             width: freeColumnWidth,
             child: Center(
               child: Text(
-                'FREE',
+                context.l10n.paywallHeaderFree,
                 style: _headerStyle.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -1821,7 +1881,7 @@ class _ComparisonHeaderRow extends StatelessWidget {
               topRight: Radius.circular(20),
             ),
             child: Text(
-              'PREMIUM',
+              context.l10n.paywallHeaderPremium,
               maxLines: 1,
               style: _headerStyle.copyWith(
                 color: colorScheme.onSecondaryContainer,
@@ -1923,7 +1983,7 @@ class _ComparisonRowLine extends StatelessWidget {
                         included: row.free,
                         includedColor: colorScheme.onSurfaceVariant,
                         dashColor: colorScheme.outline,
-                        tier: 'Free',
+                        tier: context.l10n.paywallTierFree,
                       ),
               ),
             ),
@@ -1941,7 +2001,7 @@ class _ComparisonRowLine extends StatelessWidget {
               included: row.premium,
               includedColor: colorScheme.onSecondaryContainer,
               dashColor: colorScheme.onSecondaryContainer,
-              tier: 'Premium',
+              tier: context.l10n.featurePremium,
             ),
           ),
         ],
@@ -2010,7 +2070,9 @@ class _ComparisonCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: included ? 'Included in $tier' : 'Not included in $tier',
+      label: included
+          ? context.l10n.paywallIncludedIn(tier)
+          : context.l10n.paywallNotIncludedIn(tier),
       excludeSemantics: true,
       // Forces this into its own semantics node instead of merging its
       // label into whatever ancestor node it would otherwise combine
@@ -2135,18 +2197,19 @@ class _PlanCard extends StatelessWidget {
         .copyWith(color: colorScheme.onSurfaceVariant);
 
     return Semantics(
-      key: ValueKey('planCard_${terms.label}'),
+      key: ValueKey('planCard_${terms.id}'),
       button: true,
       inMutuallyExclusiveGroup: true,
       checked: selected,
       selected: selected,
       container: true,
       excludeSemantics: true,
-      label: '${terms.label} plan, ${terms.pricePerPeriod}'
-          '${terms.monthlyEquivalentPrice != null ? ', approximately ${terms.monthlyEquivalentPrice} per month' : ''}'
+      label:
+          '${context.l10n.paywallPlanSemantics(terms.label, terms.pricePerPeriod)}'
+          '${terms.monthlyEquivalentPrice != null ? context.l10n.paywallPlanSemanticsMonthly(terms.monthlyEquivalentPrice!) : ''}'
           ', ${terms.detail}'
           '${savings != null ? ', $savings' : ''}'
-          '${referencePrice != null ? ', twelve months of the monthly plan cost $referencePrice' : ''}',
+          '${referencePrice != null ? context.l10n.paywallPlanSemanticsReference(referencePrice!) : ''}',
       child: Material(
         color: selected
             ? colorScheme.secondaryContainer
@@ -2230,7 +2293,8 @@ class _PlanCard extends StatelessWidget {
                               letterSpacing: -.5),
                     ),
                     if (terms.period != null)
-                      Text('per ${terms.period}', style: muted),
+                      Text(context.l10n.paywallPerPeriod(terms.period!),
+                          style: muted),
                   ],
                 ),
               ],
@@ -2265,7 +2329,7 @@ class _UnavailableCard extends StatelessWidget {
     required this.onRetry,
   });
 
-  static const _message = "Prices aren't available right now";
+  // The message: `paywallUnavailable`.
 
   /// A TextButton's own horizontal padding is 12 on each side and its
   /// minimum width 64; the label is measured, not guessed, so this follows
@@ -2273,7 +2337,7 @@ class _UnavailableCard extends StatelessWidget {
   double _retryButtonWidth(BuildContext context) {
     final label = _measureTextWidth(
       context,
-      'Try again',
+      context.l10n.commonTryAgain,
       theme.textTheme.labelLarge ?? const TextStyle(fontSize: 14),
     );
     return (label + 24).clamp(64, double.infinity);
@@ -2283,9 +2347,10 @@ class _UnavailableCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon =
         Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 20);
-    final message = Text(_message, style: theme.textTheme.bodyMedium);
-    final retry =
-        TextButton(onPressed: onRetry, child: const Text('Try again'));
+    final message = Text(context.l10n.paywallUnavailable,
+        style: theme.textTheme.bodyMedium);
+    final retry = TextButton(
+        onPressed: onRetry, child: Text(context.l10n.commonTryAgain));
 
     return Container(
       key: const Key('pricingUnavailableCard'),
@@ -2301,7 +2366,9 @@ class _UnavailableCard extends StatelessWidget {
           final roomForMessage =
               constraints.maxWidth - 20 - 10 - 8 - _retryButtonWidth(context);
           final painter = TextPainter(
-            text: TextSpan(text: _message, style: theme.textTheme.bodyMedium),
+            text: TextSpan(
+                text: context.l10n.paywallUnavailable,
+                style: theme.textTheme.bodyMedium),
             textDirection: Directionality.of(context),
             textScaler: MediaQuery.textScalerOf(context),
             maxLines: 2,
@@ -2391,7 +2458,7 @@ class _PlanCardsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Loading pricing',
+      label: context.l10n.paywallLoadingPricing,
       child: Column(
         children: [
           _card(),
@@ -2409,51 +2476,30 @@ class _PlanCardsSkeleton extends StatelessWidget {
 /// App Store Connect models the annual trial as a "1 Week" duration, which
 /// StoreKit/RevenueCat report back as `PeriodUnit.week`/1, not as 7 days
 /// (PRD v2 §13.2). Every other unit passes through unchanged; this is
-/// display-only and never touches [_formatSubscriptionPeriod] (the
+/// display-only and never touches [_parseSubscriptionPeriod] (the
 /// separate renewal-period text), which has its own independent input
 /// (the product's ISO subscription period, not the introductory offer).
-(int, PeriodUnit) _trialDurationInDays(IntroductoryPrice trial) {
+_Period _trialDurationInDays(IntroductoryPrice trial) {
   if (trial.periodUnit == PeriodUnit.week) {
-    return (trial.periodNumberOfUnits * 7, PeriodUnit.day);
+    return (count: trial.periodNumberOfUnits * 7, unit: PeriodUnit.day);
   }
-  return (trial.periodNumberOfUnits, trial.periodUnit);
+  return (count: trial.periodNumberOfUnits, unit: trial.periodUnit);
 }
 
-String _hyphenatedDuration(int count, PeriodUnit unit) {
-  final singular = switch (unit) {
-    PeriodUnit.day => 'day',
-    PeriodUnit.week => 'week',
-    PeriodUnit.month => 'month',
-    PeriodUnit.year => 'year',
-    PeriodUnit.unknown => 'period',
-  };
-  return '$count-$singular';
-}
-
-/// Parses RevenueCat's ISO-8601 subscription period ("P1M", "P3D", ...)
-/// into a short billing-period word ("month", "3 days"), or null if absent
-/// or unparseable — callers should omit the "/ period" suffix entirely
-/// then, rather than showing a raw ISO string to the user.
-String? _formatSubscriptionPeriod(String? iso) {
+/// Parses RevenueCat's ISO-8601 subscription period ("P1M", "P3D", ...),
+/// or null if absent or unparseable — callers should omit the "/ period"
+/// suffix entirely then, rather than showing a raw ISO string to the user.
+_Period? _parseSubscriptionPeriod(String? iso) {
   if (iso == null) return null;
   final match = RegExp(r'^P(\d+)([DWMY])$').firstMatch(iso);
   if (match == null) return null;
-  final count = int.parse(match.group(1)!);
-  String? unit;
-  switch (match.group(2)) {
-    case 'D':
-      unit = 'day';
-      break;
-    case 'W':
-      unit = 'week';
-      break;
-    case 'M':
-      unit = 'month';
-      break;
-    case 'Y':
-      unit = 'year';
-      break;
-  }
+  final unit = switch (match.group(2)) {
+    'D' => PeriodUnit.day,
+    'W' => PeriodUnit.week,
+    'M' => PeriodUnit.month,
+    'Y' => PeriodUnit.year,
+    _ => null,
+  };
   if (unit == null) return null;
-  return count == 1 ? unit : '$count ${unit}s';
+  return (count: int.parse(match.group(1)!), unit: unit);
 }

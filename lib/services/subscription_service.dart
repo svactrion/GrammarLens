@@ -365,6 +365,7 @@ Offering buildDebugFixtureOffering() {
 
   String money(double amount) => '\$${amount.toStringAsFixed(2)}';
 
+  // l10n-guard-begin: the debug preview fixture, never shown in a release
   const offeringContext = PresentedOfferingContext(
     'debug_fixture_offering',
     null,
@@ -416,7 +417,7 @@ Offering buildDebugFixtureOffering() {
   return Offering(
     'debug_fixture_offering',
     'Debug-only fixture — PRD v2 §13.2 prices, never shown in a release '
-        'build',
+        'build', // l10n-guard-end
     const {},
     [monthlyPackage, annualPackage],
     monthly: monthlyPackage,

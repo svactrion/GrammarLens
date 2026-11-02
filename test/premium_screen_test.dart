@@ -18,6 +18,8 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 
+import 'support/l10n_support.dart';
+
 /// Records every call instead of the real (best-effort, silently
 /// swallowed) Firebase call — needed so a test can assert exactly which
 /// analytics events fired, in what order, with what parameters.
@@ -424,7 +426,7 @@ void main() {
       'list"', (tester) async {
     await pumpPremium(tester, _FakeSubscriptionService(offering: null));
     expect(find.text('Turn your mistakes into progress.'), findsOneWidget);
-    expect(find.text(PremiumScreen.headline), findsOneWidget);
+    expect(find.text(en.paywallHeadline), findsOneWidget);
     expect(
       find.textContaining('not a feature list'),
       findsNothing,
@@ -443,7 +445,7 @@ void main() {
       find.text('Practice definite articles.'),
       findsOneWidget,
     );
-    expect(find.text(PremiumScreen.headline), findsOneWidget);
+    expect(find.text(en.paywallHeadline), findsOneWidget);
     expect(
         find.text('Focused practice. Personal feedback. A little more '
             'confidence, every day.'),
@@ -1828,7 +1830,7 @@ void main() {
         for (final source in ['Modal past forms', 'definite articles', '   ']) {
           await pumpAt(tester, const Size(393, 852),
               sourceContext: source, brightness: brightness);
-          expect(find.text(PremiumScreen.headline), findsOneWidget);
+          expect(find.text(en.paywallHeadline), findsOneWidget);
           expect(tester.getSize(find.byKey(const Key('premiumBody'))).height,
               baselineHeight);
           expect(tester.getRect(find.byKey(const ValueKey('planCard_Annual'))),
@@ -2081,7 +2083,7 @@ void main() {
         // benefits card are in view (1.2.0: the comparison table is behind
         // "Compare Free & Premium" and the plan cards come after the
         // benefits, so neither is in view without scrolling any more).
-        expect(tester.getRect(find.text(PremiumScreen.headline)).bottom,
+        expect(tester.getRect(find.text(en.paywallHeadline)).bottom,
             lessThan(m.scrollRegion.bottom));
         expect(tester.getRect(find.text('Understand your mistakes')).top,
             lessThan(m.scrollRegion.bottom));

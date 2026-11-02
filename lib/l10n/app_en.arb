@@ -2218,5 +2218,579 @@
   "monthCardFreshBody": "Your avatar is ready at the start.",
   "@monthCardFreshBody": {
     "description": "The month transition card for a learner with no climb last month."
+  },
+  "paywallHeadline": "Turn your mistakes into progress.",
+  "@paywallHeadline": {
+    "description": "The paywall's headline, the same from every entry point."
+  },
+  "paywallSupporting": "Focused practice. Personal feedback. A little more confidence, every day.",
+  "@paywallSupporting": {
+    "description": "The paywall's line under the headline."
+  },
+  "paywallSupportingSource": "Practice {source}.",
+  "@paywallSupportingSource": {
+    "description": "The paywall's line under the headline when opened from a topic; {source} is the topic's title.",
+    "placeholders": {
+      "source": {
+        "type": "String",
+        "example": "Articles"
+      }
+    }
+  },
+  "paywallBadge": "GRAMMARLENS PREMIUM",
+  "@paywallBadge": {
+    "description": "The paywall's small label above the headline (uppercase in English). 'GrammarLens' and 'Premium' are names. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "paywallClose": "Close",
+  "@paywallClose": {
+    "description": "Tooltip of the paywall's close button."
+  },
+  "paywallCompanion": "Your companion: {avatar}",
+  "@paywallCompanion": {
+    "description": "VoiceOver label of the paywall's avatar group; {avatar} is the avatar's name.",
+    "placeholders": {
+      "avatar": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "paywallBenefitFeedbackTitle": "Understand your mistakes",
+  "@paywallBenefitFeedbackTitle": {
+    "description": "Paywall benefit title."
+  },
+  "paywallBenefitFeedbackBody": "AI feedback on every topic you practice, not just your free daily practice.",
+  "@paywallBenefitFeedbackBody": {
+    "description": "Paywall benefit line. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact."
+  },
+  "paywallBenefitWeakSpotsTitle": "Practice your weak spots",
+  "@paywallBenefitWeakSpotsTitle": {
+    "description": "Paywall benefit title."
+  },
+  "paywallBenefitWeakSpotsBody": "{count, plural, =1{Go beyond your one free daily practice.} other{Go beyond your {count} free daily practices.}}",
+  "@paywallBenefitWeakSpotsBody": {
+    "description": "Paywall benefit line; {count} is the free daily practice limit (1). Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallBenefitTopicsTitle": "Every topic, your own pace",
+  "@paywallBenefitTopicsTitle": {
+    "description": "Paywall benefit title."
+  },
+  "paywallBenefitTopicsBody": "All {topics} topics · {lengths} questions · up to {sessions} sessions a day.",
+  "@paywallBenefitTopicsBody": {
+    "description": "Paywall benefit line; {lengths} is the session lengths joined with paywallListOr ('3, 5 or 10'). Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "topics": {
+        "type": "int",
+        "example": "5"
+      },
+      "lengths": {
+        "type": "String",
+        "example": "3, 5 or 10"
+      },
+      "sessions": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "paywallListOr": "{items} or {last}",
+  "@paywallListOr": {
+    "description": "Joins the last item of a list: '3, 5 or 10' (no comma before 'or').",
+    "placeholders": {
+      "items": {
+        "type": "String",
+        "example": "3, 5"
+      },
+      "last": {
+        "type": "String",
+        "example": "10"
+      }
+    }
+  },
+  "paywallCompare": "Compare Free & Premium",
+  "@paywallCompare": {
+    "description": "Opens the paywall's comparison table. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "paywallChoosePlan": "Choose your plan",
+  "@paywallChoosePlan": {
+    "description": "The paywall's heading above the plan cards."
+  },
+  "paywallPlanAnnual": "Annual",
+  "@paywallPlanAnnual": {
+    "description": "The yearly plan's name on its card and in 'Continue with Annual'."
+  },
+  "paywallPlanMonthly": "Monthly",
+  "@paywallPlanMonthly": {
+    "description": "The monthly plan's name on its card and in 'Continue with Monthly'."
+  },
+  "paywallSave": "Save {percent}%",
+  "@paywallSave": {
+    "description": "The annual plan's saving badge.",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "paywallPerMonthApprox": "≈ {price} per month",
+  "@paywallPerMonthApprox": {
+    "description": "The annual card's monthly equivalent. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "$4.17"
+      }
+    }
+  },
+  "paywallPricePerPeriod": "{price} per {period}",
+  "@paywallPricePerPeriod": {
+    "description": "A plan's price and billing period. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "$49.99"
+      },
+      "period": {
+        "type": "String",
+        "example": "year"
+      }
+    }
+  },
+  "paywallPerPeriod": "per {period}",
+  "@paywallPerPeriod": {
+    "description": "Under a plan card's price.",
+    "placeholders": {
+      "period": {
+        "type": "String",
+        "example": "year"
+      }
+    }
+  },
+  "paywallTrial": "{length} free trial",
+  "@paywallTrial": {
+    "description": "A plan card's line when a free trial applies; {length} is paywallTrialLength* ('7-day'). Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "length": {
+        "type": "String",
+        "example": "7-day"
+      }
+    }
+  },
+  "paywallBilledYearly": "Billed yearly",
+  "@paywallBilledYearly": {
+    "description": "A plan card's line without a trial. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact."
+  },
+  "paywallBilledMonthly": "Billed monthly",
+  "@paywallBilledMonthly": {
+    "description": "A plan card's line without a trial. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact."
+  },
+  "paywallBilledPerPeriod": "Billed per period",
+  "@paywallBilledPerPeriod": {
+    "description": "A plan card's line when the store gave no period. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact."
+  },
+  "paywallBilledEvery": "Billed every {period}",
+  "@paywallBilledEvery": {
+    "description": "A plan card's line for another period ('3 months'). Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "period": {
+        "type": "String",
+        "example": "3 months"
+      }
+    }
+  },
+  "paywallStartTrial": "Start my {length} free trial",
+  "@paywallStartTrial": {
+    "description": "The purchase button when a trial applies. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "length": {
+        "type": "String",
+        "example": "7-day"
+      }
+    }
+  },
+  "paywallContinueWith": "Continue with {plan}",
+  "@paywallContinueWith": {
+    "description": "The purchase button while trial eligibility is unknown.",
+    "placeholders": {
+      "plan": {
+        "type": "String",
+        "example": "Annual"
+      }
+    }
+  },
+  "paywallSubscribeFor": "Subscribe for {pricePerPeriod}",
+  "@paywallSubscribeFor": {
+    "description": "The purchase button without a trial. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "pricePerPeriod": {
+        "type": "String",
+        "example": "$49.99 per year"
+      }
+    }
+  },
+  "paywallDisclosureTrial": "{span} free, then {pricePerPeriod}, auto-renews unless cancelled.",
+  "@paywallDisclosureTrial": {
+    "description": "The renewal terms under the button with a trial (App Store 3.1.2). Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "span": {
+        "type": "String",
+        "example": "7 days"
+      },
+      "pricePerPeriod": {
+        "type": "String",
+        "example": "$49.99 per year"
+      }
+    }
+  },
+  "paywallDisclosure": "{pricePerPeriod}, auto-renews unless cancelled.",
+  "@paywallDisclosure": {
+    "description": "The renewal terms under the button (App Store 3.1.2). Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact.",
+    "placeholders": {
+      "pricePerPeriod": {
+        "type": "String",
+        "example": "$4.99 per month"
+      }
+    }
+  },
+  "paywallPeriodDay": "{count, plural, =1{day} other{{count} days}}",
+  "@paywallPeriodDay": {
+    "description": "A billing period: 'day' for one, '3 days' for more (after 'per' or 'every').",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallSpanDay": "{count, plural, =1{1 day} other{{count} days}}",
+  "@paywallSpanDay": {
+    "description": "A trial as a span of time ('7 days'), in the renewal terms.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallTrialLengthDay": "{count}-day",
+  "@paywallTrialLengthDay": {
+    "description": "A trial's length as an adjective ('7-day'), before 'free trial'.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallPeriodWeek": "{count, plural, =1{week} other{{count} weeks}}",
+  "@paywallPeriodWeek": {
+    "description": "A billing period: 'week' for one, '3 weeks' for more (after 'per' or 'every').",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallSpanWeek": "{count, plural, =1{1 week} other{{count} weeks}}",
+  "@paywallSpanWeek": {
+    "description": "A trial as a span of time ('7 days'), in the renewal terms.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallTrialLengthWeek": "{count}-week",
+  "@paywallTrialLengthWeek": {
+    "description": "A trial's length as an adjective ('7-day'), before 'free trial'.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallPeriodMonth": "{count, plural, =1{month} other{{count} months}}",
+  "@paywallPeriodMonth": {
+    "description": "A billing period: 'month' for one, '3 months' for more (after 'per' or 'every').",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallSpanMonth": "{count, plural, =1{1 month} other{{count} months}}",
+  "@paywallSpanMonth": {
+    "description": "A trial as a span of time ('7 days'), in the renewal terms.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallTrialLengthMonth": "{count}-month",
+  "@paywallTrialLengthMonth": {
+    "description": "A trial's length as an adjective ('7-day'), before 'free trial'.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallPeriodYear": "{count, plural, =1{year} other{{count} years}}",
+  "@paywallPeriodYear": {
+    "description": "A billing period: 'year' for one, '3 years' for more (after 'per' or 'every').",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallSpanYear": "{count, plural, =1{1 year} other{{count} years}}",
+  "@paywallSpanYear": {
+    "description": "A trial as a span of time ('7 days'), in the renewal terms.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallTrialLengthYear": "{count}-year",
+  "@paywallTrialLengthYear": {
+    "description": "A trial's length as an adjective ('7-day'), before 'free trial'.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallPeriodUnknown": "period",
+  "@paywallPeriodUnknown": {
+    "description": "A billing period the store did not name."
+  },
+  "paywallSpanUnknown": "{count, plural, =1{1 period} other{{count} periods}}",
+  "@paywallSpanUnknown": {
+    "description": "A trial span in an unnamed unit.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallTrialLengthUnknown": "{count}-period",
+  "@paywallTrialLengthUnknown": {
+    "description": "A trial length in an unnamed unit.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallPlanSemantics": "{plan} plan, {pricePerPeriod}",
+  "@paywallPlanSemantics": {
+    "description": "VoiceOver label of a plan card, the start; the parts below follow it.",
+    "placeholders": {
+      "plan": {
+        "type": "String",
+        "example": "Annual"
+      },
+      "pricePerPeriod": {
+        "type": "String",
+        "example": "$49.99 per year"
+      }
+    }
+  },
+  "paywallPlanSemanticsMonthly": ", approximately {price} per month",
+  "@paywallPlanSemanticsMonthly": {
+    "description": "VoiceOver: a plan card's monthly equivalent (keep the leading comma).",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "$4.17"
+      }
+    }
+  },
+  "paywallPlanSemanticsReference": ", twelve months of the monthly plan cost {price}",
+  "@paywallPlanSemanticsReference": {
+    "description": "VoiceOver: the annual card's struck reference price (keep the leading comma).",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "$59.88"
+      }
+    }
+  },
+  "paywallRestoring": "Restoring…",
+  "@paywallRestoring": {
+    "description": "The restore button while it runs."
+  },
+  "paywallRestore": "Restore Purchases",
+  "@paywallRestore": {
+    "description": "The paywall's restore button."
+  },
+  "paywallRestored": "Purchases restored — full access is active.",
+  "@paywallRestored": {
+    "description": "After a successful restore."
+  },
+  "paywallNothingToRestore": "No previous purchases found to restore.",
+  "@paywallNothingToRestore": {
+    "description": "After a restore that found nothing."
+  },
+  "paywallMaybeLater": "Maybe later",
+  "@paywallMaybeLater": {
+    "description": "The paywall's dismiss button."
+  },
+  "paywallTrialStarted": "Trial started — Topic Practice is unlocked.",
+  "@paywallTrialStarted": {
+    "description": "After a trial started. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "paywallActive": "Premium is active — Topic Practice is unlocked.",
+  "@paywallActive": {
+    "description": "After a purchase. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "paywallCancelled": "Purchase cancelled — no charge was made.",
+  "@paywallCancelled": {
+    "description": "After a cancelled purchase. Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact."
+  },
+  "paywallPending": "Waiting for approval — Premium starts once the purchase is approved. No charge until then.",
+  "@paywallPending": {
+    "description": "After a purchase that needs approval (Ask to Buy). Paywall (D6: back-translation check; App Store 3.1.2 weight): keep the meaning exact."
+  },
+  "paywallFailed": "Something went wrong and the purchase couldn't start. Please try again.",
+  "@paywallFailed": {
+    "description": "After a purchase that could not start."
+  },
+  "paywallRowDailyTest": "Daily Test, refreshed every day",
+  "@paywallRowDailyTest": {
+    "description": "Comparison table row. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "paywallRowTopicPractice": "Topic Practice, all five topics",
+  "@paywallRowTopicPractice": {
+    "description": "Comparison table row. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "paywallRowWeakSpots": "Practice your weak spots",
+  "@paywallRowWeakSpots": {
+    "description": "Comparison table row."
+  },
+  "paywallRowLengths": "Sessions of {lengths} questions",
+  "@paywallRowLengths": {
+    "description": "Comparison table row; {lengths} joined with paywallListOr.",
+    "placeholders": {
+      "lengths": {
+        "type": "String",
+        "example": "3, 5 or 10"
+      }
+    }
+  },
+  "paywallFreePerDay": "{count} a day",
+  "@paywallFreePerDay": {
+    "description": "The free column's weak-spot value, long form.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallFreePerDayShort": "{count}/day",
+  "@paywallFreePerDayShort": {
+    "description": "The free column's weak-spot value when the long form does not fit.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "paywallHeaderFree": "FREE",
+  "@paywallHeaderFree": {
+    "description": "The comparison table's free column header (uppercase in English)."
+  },
+  "paywallHeaderPremium": "PREMIUM",
+  "@paywallHeaderPremium": {
+    "description": "The comparison table's Premium column header (uppercase in English). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "paywallTierFree": "Free",
+  "@paywallTierFree": {
+    "description": "The free tier's name in VoiceOver labels and the stacked chips."
+  },
+  "paywallIncludedIn": "Included in {tier}",
+  "@paywallIncludedIn": {
+    "description": "VoiceOver: a comparison cell that is included.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Free"
+      }
+    }
+  },
+  "paywallNotIncludedIn": "Not included in {tier}",
+  "@paywallNotIncludedIn": {
+    "description": "VoiceOver: a comparison cell that is not included.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Free"
+      }
+    }
+  },
+  "paywallUnavailable": "Prices aren't available right now",
+  "@paywallUnavailable": {
+    "description": "The paywall when the store's prices could not be loaded."
+  },
+  "paywallLoadingPricing": "Loading pricing",
+  "@paywallLoadingPricing": {
+    "description": "VoiceOver label while the plan cards load."
+  },
+  "legalLinkFailed": "Could not open {page}.",
+  "@legalLinkFailed": {
+    "description": "Snackbar when a legal page could not be opened; {page} is its link label.",
+    "placeholders": {
+      "page": {
+        "type": "String",
+        "example": "Privacy Policy"
+      }
+    }
+  },
+  "offerTopicPracticeTitle": "Topic Practice",
+  "@offerTopicPracticeTitle": {
+    "description": "Practice results offer: a benefit's title. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "offerTopicPracticeBody": "Focus on the areas you need",
+  "@offerTopicPracticeBody": {
+    "description": "Practice results offer: a benefit's line."
+  },
+  "offerSessionsTitle": "More Daily Sessions",
+  "@offerSessionsTitle": {
+    "description": "Practice results offer: a benefit's title."
+  },
+  "offerSessionsBody": "Build your progress faster",
+  "@offerSessionsBody": {
+    "description": "Practice results offer: a benefit's line."
+  },
+  "offerTitle": "Keep practicing",
+  "@offerTitle": {
+    "description": "Practice results offer: the title."
+  },
+  "offerChip": "PREMIUM",
+  "@offerChip": {
+    "description": "Practice results offer: the small Premium label (uppercase in English). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
   }
 }

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/l10n.dart';
 import '../theme.dart';
 import '../utils/app_messenger.dart';
 
 /// Opens [url] in the system browser; says so briefly when it cannot
-/// ("Could not open [label].") and leaves the screen as it is.
-Future<void> openLegalLink({required String label, required String url}) async {
+/// ([failedMessage], `legalLinkFailed`: "Could not open [label].") and
+/// leaves the screen as it is.
+Future<void> openLegalLink(
+    {required String label,
+    required String url,
+    required String failedMessage}) async {
   bool launched;
   try {
     launched =
@@ -14,7 +19,7 @@ Future<void> openLegalLink({required String label, required String url}) async {
   } catch (_) {
     launched = false;
   }
-  if (!launched) AppMessenger.show('Could not open $label.');
+  if (!launched) AppMessenger.show(failedMessage);
 }
 
 /// A small text link to a legal or attribution page, disabled (greyed out, non-
@@ -35,7 +40,10 @@ class LegalLink extends StatelessWidget {
   const LegalLink(
       {super.key, required this.label, required this.url, this.flush = false});
 
-  Future<void> _open() => openLegalLink(label: label, url: url);
+  Future<void> _open(BuildContext context) => openLegalLink(
+      label: label,
+      url: url,
+      failedMessage: context.l10n.legalLinkFailed(label));
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +57,7 @@ class LegalLink extends StatelessWidget {
         minimumSize: flush ? const Size(44, 44) : null,
         tapTargetSize: flush ? MaterialTapTargetSize.shrinkWrap : null,
       ),
-      onPressed: url.isEmpty ? null : _open,
+      onPressed: url.isEmpty ? null : () => _open(context),
       child: Text(label),
     );
   }
@@ -71,7 +79,12 @@ class LegalLinkRow extends StatelessWidget {
     return Semantics(
       link: true,
       child: InkWell(
-        onTap: url.isEmpty ? null : () => openLegalLink(label: label, url: url),
+        onTap: url.isEmpty
+            ? null
+            : () => openLegalLink(
+                label: label,
+                url: url,
+                failedMessage: context.l10n.legalLinkFailed(label)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 55),
           child: Row(

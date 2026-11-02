@@ -140,14 +140,10 @@ const _excluded = [
 /// Files with hard-coded interface text, waiting for B4. Only ever shrinks.
 const _pending = <String>{
   // The 51 files with a hit when B3 landed (2026-11-02).
-  'lib/screens/premium_screen.dart',
   'lib/services/claude_service.dart',
-  'lib/services/subscription_service.dart',
   'lib/utils/app_messenger.dart',
   'lib/widgets/avatar_carousel.dart',
   'lib/widgets/brand_wordmark.dart',
-  'lib/widgets/legal_link.dart',
-  'lib/widgets/premium_offer_card.dart',
 };
 
 final _prose = RegExp(r'\p{L}\s+\p{L}', unicode: true);
