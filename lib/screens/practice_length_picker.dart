@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
+import '../l10n/l10n.dart';
 import '../models/practice_length.dart';
 import '../spacing.dart';
 import '../theme.dart';
@@ -167,7 +168,8 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                 onChanged: _onSliderChanged,
                 semanticFormatterCallback: (value) {
                   final length = PracticeLength.values[value.round()];
-                  return '${length.questionCount} questions, ${length.label}';
+                  return '${length.questionCount} questions, '
+                      '${length.label(context.l10n)}';
                 },
               ),
             ),
@@ -320,14 +322,14 @@ class _SelectionCard extends StatelessWidget {
                   // Theme styles, so both follow the text size setting
                   // (final screens A3; were a fixed 19 and 13).
                   Text(
-                    selected.label,
+                    selected.label(context.l10n),
                     style: theme.textTheme.titleLarge
                         ?.withWeight(FontWeight.w800)
                         .copyWith(color: onCard),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    selected.description,
+                    selected.description(context.l10n),
                     style: theme.textTheme.bodySmall?.copyWith(color: onCard),
                   ),
                 ],

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/ai_consent.dart';
 import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
@@ -41,7 +42,7 @@ class AiConsentScreen extends StatelessWidget {
     final body = theme.textTheme.bodyMedium;
 
     return BrandScaffold(
-      title: const PageTitle('AI feedback'),
+      title: PageTitle(context.l10n.aiConsentTitle),
       body: Column(
         children: [
           Expanded(
@@ -54,51 +55,36 @@ class AiConsentScreen extends StatelessWidget {
                   Semantics(
                     header: true,
                     child: Text(
-                      'Feedback on your answers',
+                      context.l10n.aiConsentHeading,
                       style: theme.textTheme.titleLarge
                           ?.withWeight(FontWeight.w800),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Practice sessions use an AI service to check your '
-                    'answers and explain what to fix. This covers Topic '
-                    'Practice and practicing a weak spot.',
-                    style: body,
+                  Text(context.l10n.aiConsentIntro, style: body),
+                  _Section(
+                    heading: context.l10n.aiConsentSentHeading,
+                    text: context.l10n.aiConsentSentBody,
                   ),
-                  const _Section(
-                    heading: 'What is sent',
-                    text: 'The answers you type, together with the question '
-                        'each one responds to. This happens when you finish a '
-                        'practice session.',
+                  _Section(
+                    heading: context.l10n.aiConsentRecipientHeading,
+                    text: context.l10n.aiConsentRecipientBody,
                   ),
-                  const _Section(
-                    heading: 'Who receives it',
-                    text: 'Anthropic, the company that makes Claude. Your '
-                        'answers go through GrammarLens\'s server to '
-                        'Anthropic\'s Claude model, which writes your '
-                        'feedback.',
-                  ),
-                  const _Section(
-                    heading: 'What is never sent',
-                    text: 'Your name or your avatar. Daily Test answers stay '
-                        'on your device.',
+                  _Section(
+                    heading: context.l10n.aiConsentNeverHeading,
+                    text: context.l10n.aiConsentNeverBody,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Please don\'t type personal details such as full names, '
-                    'addresses or contact information into your answers.',
-                    style: body,
-                  ),
+                  Text(context.l10n.aiConsentPersonalDetails, style: body),
                   const SizedBox(height: 16),
                   Text(
-                    'You can change this any time in Profile → Data.',
+                    context.l10n.aiConsentChangeLater,
                     style: body?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
-                  const Align(
+                  Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: LegalLink(
-                      label: 'Privacy Policy',
+                      label: context.l10n.commonPrivacyPolicy,
                       url: AppLinks.privacyPolicyUrl,
                       flush: true,
                     ),
@@ -172,7 +158,7 @@ class _ConsentFooter extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Agree and continue'),
+                  child: Text(context.l10n.aiConsentAgree),
                 ),
               ),
               const SizedBox(height: 4),
@@ -181,10 +167,10 @@ class _ConsentFooter extends StatelessWidget {
                   foregroundColor: colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Not now'),
+                child: Text(context.l10n.aiConsentNotNow),
               ),
               Text(
-                'Not now: you can still take the Daily Test.',
+                context.l10n.aiConsentNotNowNote,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: colorScheme.onSurfaceVariant),

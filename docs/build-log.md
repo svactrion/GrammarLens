@@ -13981,3 +13981,7 @@ Plan: `docs/1.4.0-plan.md` B3; Batch 0:
   commit 1's Language screen and commit 2's folding; commit 3 has nothing
   visible in English and is checked on a device with Arabic in B6. Next:
   B4 (strings to the ARB, seven batches behind the guard).
+
+## 2026-11-02 (1.4.0 B4.1: Shell and Profile strings to the ARB)
+
+- **[Engineering]** App shell, Profile, Data, Credits, the AI permission screen, the avatar picker and the goal / practice-length / sort labels moved to `app_en.arb` (98 keys, English unchanged; model labels via `lib/l10n/labels.dart`, bold names via `emphasizedSpans`, the Developer section and names kept out with new guard block markers; `{count}` medals as an ICU plural; the theme-icon fit measures the widest localized label); guard pending list 51 → 42; `flutter analyze` clean, 2284 tests passed.

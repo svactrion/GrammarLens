@@ -394,7 +394,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'GrammarLens',
+      title: 'GrammarLens', // l10n-guard: the brand
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: AppMessenger.key,
       navigatorObservers: [AppMessenger.navigatorObserver],
@@ -427,7 +427,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
             // them. `Material` also gives the text a real text style.
             return Material(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
-              child: const LoadingView(message: 'Loading…'),
+              child: LoadingView(message: context.l10n.appLoading),
             );
           }
           if (_profile == null) {
@@ -508,7 +508,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               transition: _tabTransition,
               children: screens,
             ),
-            tabs: _navTabs,
+            tabs: _navTabs(context.l10n),
             selectedIndex: _tabIndex,
             onTabChange: (index) => _switchTab(index),
           );
@@ -518,20 +518,22 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   }
 }
 
-const _navTabs = [
-  NavShellTab(
-    icon: Icons.home_outlined,
-    activeIcon: Icons.home,
-    label: 'Home',
-  ),
-  NavShellTab(
-    icon: Icons.history_outlined,
-    activeIcon: Icons.history,
-    label: 'Review',
-  ),
-  NavShellTab(
-    icon: Icons.person_outline_rounded,
-    activeIcon: Icons.person_rounded,
-    label: 'Profile',
-  ),
-];
+/// The bottom navigation's tabs. "Review" is a feature name and stays
+/// English in every language (1.4.0 D6).
+List<NavShellTab> _navTabs(AppLocalizations l10n) => [
+      NavShellTab(
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home,
+        label: l10n.navHome,
+      ),
+      NavShellTab(
+        icon: Icons.history_outlined,
+        activeIcon: Icons.history,
+        label: l10n.featureReview,
+      ),
+      NavShellTab(
+        icon: Icons.person_outline_rounded,
+        activeIcon: Icons.person_rounded,
+        label: l10n.navProfile,
+      ),
+    ];

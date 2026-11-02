@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/screens/practice_length_picker.dart';
 
+import 'support/l10n_support.dart';
+
 /// Captures the eventual result of one `showPracticeLengthPicker` call so a
 /// test can open the sheet, interact with it, then assert on what the
 /// picker's Future resolved with once it closes.
@@ -206,7 +208,8 @@ void main() {
       expect(
         labelCenter.dx,
         closeTo(expectedStopX[i], 1.0),
-        reason: '${length.label} label should sit under its slider stop, not '
+        reason:
+            '${length.label(en)} label should sit under its slider stop, not '
             'wherever the full-width row happens to place it',
       );
     }

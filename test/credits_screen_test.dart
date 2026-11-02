@@ -8,6 +8,8 @@ import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/widgets/legal_link.dart';
 import 'package:grammar_lens/widgets/page_header.dart';
 
+import 'support/l10n_support.dart';
+
 /// Profile → Credits (1.2.0 final screens, brief §4).
 void main() {
   tearDown(AppMessenger.clear);
@@ -42,7 +44,12 @@ void main() {
     expect(find.text('Credits'), findsOneWidget);
     expect(find.text('Artwork and attribution.'), findsOneWidget);
     expect(find.text('Avatar illustrations'), findsOneWidget);
-    expect(find.text(CreditsScreen.avatarAttribution, findRichText: true),
+    // B4.1: the same sentence as before the move to the ARB.
+    expect(
+        CreditsScreen.avatarAttribution(en),
+        'Adapted from Cute Animal 3D Icons by Tran Mau Tri Tam, via Figma '
+        'Community. Licensed under CC BY 4.0.');
+    expect(find.text(CreditsScreen.avatarAttribution(en), findRichText: true),
         findsOneWidget);
     for (final part in [
       'Adapted from',
@@ -51,7 +58,7 @@ void main() {
       'Figma Community',
       'CC BY 4.0',
     ]) {
-      expect(CreditsScreen.avatarAttribution, contains(part));
+      expect(CreditsScreen.avatarAttribution(en), contains(part));
     }
   });
 

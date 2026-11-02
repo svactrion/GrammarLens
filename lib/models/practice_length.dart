@@ -18,28 +18,6 @@ extension PracticeLengthInfo on PracticeLength {
     }
   }
 
-  String get label {
-    switch (this) {
-      case PracticeLength.quick:
-        return 'Quick';
-      case PracticeLength.standard:
-        return 'Standard';
-      case PracticeLength.extended:
-        return 'Extended';
-    }
-  }
-
-  String get description {
-    switch (this) {
-      case PracticeLength.quick:
-        return 'A short warm-up';
-      case PracticeLength.standard:
-        return 'The balanced session';
-      case PracticeLength.extended:
-        return 'A deep, thorough workout';
-    }
-  }
-
   static PracticeLength fromQuestionCount(int? value) {
     switch (value) {
       case 3:

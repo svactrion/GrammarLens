@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme.dart';
 import '../utils/app_links.dart';
 import '../widgets/brand_scaffold.dart';
@@ -17,10 +18,14 @@ class CreditsScreen extends StatelessWidget {
 
   static const cardKey = ValueKey('credits_card');
 
+  // The work, its author and its licence are names: never translated.
+  static const String avatarWork = 'Cute Animal 3D Icons'; // l10n-guard: a name
+  static const String avatarAuthor = 'Tran Mau Tri Tam'; // l10n-guard: a name
+  static const String avatarLicense = 'CC BY 4.0'; // l10n-guard: a name
+
   /// The attribution, as the screen says it.
-  static const String avatarAttribution =
-      'Adapted from Cute Animal 3D Icons by Tran Mau Tri Tam, via Figma '
-      'Community. Licensed under CC BY 4.0.';
+  static String avatarAttribution(AppLocalizations l10n) =>
+      l10n.creditsAvatarAttribution(avatarWork, avatarAuthor, avatarLicense);
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +44,9 @@ class CreditsScreen extends StatelessWidget {
       ),
       horizontalPadding: hPad,
       children: [
-        const PageHeader(
-            title: 'Credits', subtitle: 'Artwork and attribution.'),
+        PageHeader(
+            title: context.l10n.creditsTitle,
+            subtitle: context.l10n.creditsSubtitle),
         const SizedBox(height: 24),
         Card(
           key: cardKey,
@@ -55,23 +61,23 @@ class CreditsScreen extends StatelessWidget {
                     Semantics(
                       header: true,
                       child: Text(
-                        'Avatar illustrations',
+                        context.l10n.creditsAvatarHeading,
                         style: theme.textTheme.titleMedium
                             ?.copyWith(color: scheme.onSurface),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text.rich(
-                      TextSpan(children: [
-                        const TextSpan(text: 'Adapted from '),
-                        TextSpan(text: 'Cute Animal 3D Icons', style: strong),
-                        const TextSpan(text: ' by '),
-                        TextSpan(text: 'Tran Mau Tri Tam', style: strong),
-                        const TextSpan(
-                            text: ', via Figma Community. Licensed under '),
-                        TextSpan(text: 'CC BY 4.0', style: strong),
-                        const TextSpan(text: '.'),
-                      ]),
+                      TextSpan(
+                          children: emphasizedSpans(
+                        avatarAttribution(context.l10n),
+                        emphasized: const [
+                          avatarWork,
+                          avatarAuthor,
+                          avatarLicense
+                        ],
+                        style: strong,
+                      )),
                       style: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant, height: 1.6),
                     ),
@@ -79,19 +85,21 @@ class CreditsScreen extends StatelessWidget {
                 ),
               ),
               Divider(height: 1, color: scheme.outlineVariant),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 19),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 19),
                 child: LegalLinkRow(
-                    label: 'Figma file', url: AppLinks.avatarSetUrl),
+                    label: context.l10n.creditsFigmaLink,
+                    url: AppLinks.avatarSetUrl),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 19),
                 child: Divider(height: 1, color: scheme.outlineVariant),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 19),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 19),
                 child: LegalLinkRow(
-                    label: 'CC BY 4.0 license', url: AppLinks.ccBy4Url),
+                    label: context.l10n.creditsLicenseLink(avatarLicense),
+                    url: AppLinks.ccBy4Url),
               ),
             ],
           ),

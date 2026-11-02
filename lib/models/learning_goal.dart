@@ -12,28 +12,6 @@ enum LearningGoal { examPrep, work, general }
 const String learningGoalSkipped = 'skipped';
 
 extension LearningGoalInfo on LearningGoal {
-  String get label {
-    switch (this) {
-      case LearningGoal.examPrep:
-        return 'Exam prep';
-      case LearningGoal.work:
-        return 'Work';
-      case LearningGoal.general:
-        return 'Everyday confidence';
-    }
-  }
-
-  String get description {
-    switch (this) {
-      case LearningGoal.examPrep:
-        return 'IELTS, TOEFL or another English exam';
-      case LearningGoal.work:
-        return 'Emails, meetings and professional English';
-      case LearningGoal.general:
-        return 'General fluency, no specific goal';
-    }
-  }
-
   static LearningGoal fromJson(String? value) {
     switch (value) {
       case 'exam_prep':

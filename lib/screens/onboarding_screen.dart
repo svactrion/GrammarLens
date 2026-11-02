@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/avatar.dart';
 import '../models/daily_test_set.dart';
 import '../models/learning_goal.dart';
@@ -779,14 +780,14 @@ class _GoalOption extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        goal.label,
+                        goal.label(context.l10n),
                         style: theme.textTheme.titleSmall
                             ?.withWeight(FontWeight.w800)
                             .copyWith(color: colorScheme.onSurface),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        goal.description,
+                        goal.description(context.l10n),
                         style: theme.textTheme.labelMedium
                             ?.withWeight(FontWeight.w400)
                             .copyWith(

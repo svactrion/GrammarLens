@@ -12,6 +12,7 @@ import 'generated/app_localizations.dart';
 import 'generated/app_localizations_en.dart';
 
 export 'generated/app_localizations.dart';
+export 'labels.dart';
 
 extension AppLocalizationsX on BuildContext {
   /// The interface strings for this context's locale.

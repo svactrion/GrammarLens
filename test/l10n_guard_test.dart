@@ -11,8 +11,9 @@ import 'package:flutter_test/flutter_test.dart';
 /// `label:` / `title:` / `hintText:` / `semanticsLabel:`-style argument.
 /// Not counted: comments, SQL, URLs and asset paths, `debugPrint`,
 /// `assert`, `RegExp`, keys, analytics calls and programmer errors
-/// (`StateError` and the like), and a line marked `// l10n-guard: <reason>`
-/// (or the line above it).
+/// (`StateError` and the like), a line marked `// l10n-guard: <reason>`
+/// (or the line above it), and the lines between `// l10n-guard-begin:
+/// <reason>` and `// l10n-guard-end` (a debug-only section).
 ///
 /// [_pending] lists every file with a hit when B3 landed. A hit in any
 /// other file fails, so no new hard-coded string can be added; each B4
@@ -102,6 +103,13 @@ void main() {
           scanForInterfaceText(
               "// l10n-guard: debug only\nText('Preview pricing')"),
           isEmpty);
+      expect(
+          scanForInterfaceText("// l10n-guard-begin: debug section\n"
+              "Text('One line'),\nText('Two lines'),\n// l10n-guard-end\n"
+              "Text('After the block')"),
+          ['After the block']);
+      expect(
+          scanForInterfaceText("FocusNode(debugLabel: 'Edit name')"), isEmpty);
     });
   });
 }
@@ -130,18 +138,10 @@ const _excluded = [
 /// Files with hard-coded interface text, waiting for B4. Only ever shrinks.
 const _pending = <String>{
   // The 51 files with a hit when B3 landed (2026-11-02).
-  'lib/app.dart',
   'lib/data/topics.dart',
   'lib/models/climb_theme.dart',
-  'lib/models/learning_goal.dart',
-  'lib/models/practice_length.dart',
-  'lib/models/review_sort_order.dart',
-  'lib/screens/ai_consent_screen.dart',
-  'lib/screens/avatar_picker_screen.dart',
-  'lib/screens/credits_screen.dart',
   'lib/screens/daily_test_result_screen.dart',
   'lib/screens/daily_test_screen.dart',
-  'lib/screens/data_screen.dart',
   'lib/screens/first_launch_flow.dart',
   'lib/screens/home_screen.dart',
   'lib/screens/onboarding_screen.dart',
@@ -151,7 +151,6 @@ const _pending = <String>{
   'lib/screens/premium_screen.dart',
   'lib/screens/results_screen.dart',
   'lib/screens/review_screen.dart',
-  'lib/screens/settings_screen.dart',
   'lib/screens/topic_practice_screen.dart',
   'lib/screens/weak_spot_detail_screen.dart',
   'lib/screens/welcome_screen.dart',
@@ -201,10 +200,11 @@ final _sql = RegExp(
 /// skipped only while it sits inside such a call's parentheses: widget
 /// trees have no semicolons, so "anywhere after `ValueKey(`" would hide
 /// every later string of the expression.
-final _ignoredCall = RegExp(
-    r'\b(debugPrint|assert|RegExp|Key|ValueKey|_?logEvent|_?setUserProperty|'
-    r'StateError|ArgumentError|FormatException|UnsupportedError|'
-    r'UnimplementedError|AssertionError)\(');
+final _ignoredCall =
+    RegExp(r'\b(debugPrint|assert|RegExp|Key|ValueKey|FocusNode|_?logEvent|'
+        r'_?setUserProperty|'
+        r'StateError|ArgumentError|FormatException|UnsupportedError|'
+        r'UnimplementedError|AssertionError)\(');
 final _directive = RegExp(r'^\s*(import|export|part)\s', multiLine: true);
 
 /// The interface-text literals of a Dart [source], as their text with
@@ -229,6 +229,21 @@ List<String> scanForInterfaceText(String source) {
     return lo;
   }
 
+  // Lines inside a `l10n-guard-begin` … `l10n-guard-end` block.
+  final blocked = <int>{};
+  int? openedAt;
+  for (var i = 0; i < lines.length; i++) {
+    if (lines[i].contains('l10n-guard-begin:')) openedAt = i;
+    if (lines[i].contains('l10n-guard-end')) {
+      if (openedAt != null) {
+        for (var j = openedAt; j <= i; j++) {
+          blocked.add(j);
+        }
+      }
+      openedAt = null;
+    }
+  }
+
   final hits = <String>[];
   for (final literal in _literals(source)) {
     final text = literal.text;
@@ -236,7 +251,8 @@ List<String> scanForInterfaceText(String source) {
       continue;
     }
     final line = lineOf(literal.start);
-    final marked = lines[line].contains('l10n-guard:') ||
+    final marked = blocked.contains(line) ||
+        lines[line].contains('l10n-guard:') ||
         (line > 0 && lines[line - 1].contains('l10n-guard:'));
     if (marked) continue;
     final before = source.substring(

@@ -1,6 +1,5 @@
 {
   "@@locale": "en",
-
   "settingsLanguageLabel": "Language",
   "@settingsLanguageLabel": {
     "description": "Profile → Appearance card: the label above the interface-language choice, beside Theme and Text size."
@@ -26,5 +25,430 @@
         "example": "English"
       }
     }
+  },
+  "appLoading": "Loading…",
+  "@appLoading": {
+    "description": "The app's first frame under the launch splash, while the saved profile is read."
+  },
+  "navHome": "Home",
+  "@navHome": {
+    "description": "Bottom navigation: the Home tab."
+  },
+  "featureReview": "Review",
+  "@featureReview": {
+    "description": "The Review feature's name, also the bottom navigation tab. Feature names are never translated: keep 'Review' in English."
+  },
+  "navProfile": "Profile",
+  "@navProfile": {
+    "description": "Bottom navigation: the Profile tab (settings, medals, data)."
+  },
+  "commonPrivacyPolicy": "Privacy Policy",
+  "@commonPrivacyPolicy": {
+    "description": "Link to the hosted privacy policy (Profile, the AI permission screen, the paywall)."
+  },
+  "commonTermsOfService": "Terms of Service",
+  "@commonTermsOfService": {
+    "description": "Link to the hosted terms of service (Profile, the paywall)."
+  },
+  "commonEdit": "Edit",
+  "@commonEdit": {
+    "description": "Button that opens a field for editing."
+  },
+  "commonSave": "Save",
+  "@commonSave": {
+    "description": "Button that saves an edited field."
+  },
+  "commonSaving": "Saving…",
+  "@commonSaving": {
+    "description": "Shown on the Save button while the save runs."
+  },
+  "commonCancel": "Cancel",
+  "@commonCancel": {
+    "description": "Button that closes an editor without saving."
+  },
+  "commonDone": "Done",
+  "@commonDone": {
+    "description": "Button that closes a picker screen."
+  },
+  "commonResetting": "Resetting…",
+  "@commonResetting": {
+    "description": "Shown on a reset button while the reset runs."
+  },
+  "settingsTitle": "Profile",
+  "@settingsTitle": {
+    "description": "Profile tab: the page title."
+  },
+  "settingsSubtitle": "Your journey, your way.",
+  "@settingsSubtitle": {
+    "description": "Profile tab: the line under the page title."
+  },
+  "settingsNameSaved": "Name saved",
+  "@settingsNameSaved": {
+    "description": "Snackbar after the learner's name was saved in Profile."
+  },
+  "settingsProfileSaveFailed": "Could not save profile: {error}",
+  "@settingsProfileSaveFailed": {
+    "description": "Snackbar when saving the name failed; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "settingsMedalCollection": "Medal collection",
+  "@settingsMedalCollection": {
+    "description": "Profile: the heading of the monthly medal collection."
+  },
+  "settingsMedalsEarned": "{count, plural, other{{count} earned}}",
+  "@settingsMedalsEarned": {
+    "description": "Profile: beside the medal heading, how many medals the learner has earned.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsMedalsRetry": "Retry medal history",
+  "@settingsMedalsRetry": {
+    "description": "Profile: button shown when the medals could not be loaded."
+  },
+  "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Profile: the heading of the theme, text size and language card."
+  },
+  "settingsThemeLabel": "Theme",
+  "@settingsThemeLabel": {
+    "description": "Profile → Appearance: the label of the light/dark choice."
+  },
+  "settingsThemeSystem": "System",
+  "@settingsThemeSystem": {
+    "description": "Profile → Appearance → Theme: follow the device's light or dark setting. Short: one of three segments."
+  },
+  "settingsThemeLight": "Light",
+  "@settingsThemeLight": {
+    "description": "Profile → Appearance → Theme: always light. Short: one of three segments."
+  },
+  "settingsThemeDark": "Dark",
+  "@settingsThemeDark": {
+    "description": "Profile → Appearance → Theme: always dark. Short: one of three segments."
+  },
+  "settingsTextSizeLabel": "Text size",
+  "@settingsTextSizeLabel": {
+    "description": "Profile → Appearance: the label of the text size choice."
+  },
+  "settingsTextSizeSmall": "Small",
+  "@settingsTextSizeSmall": {
+    "description": "Profile → Appearance → Text size. Short: one of three segments."
+  },
+  "settingsTextSizeMedium": "Medium",
+  "@settingsTextSizeMedium": {
+    "description": "Profile → Appearance → Text size. Short: one of three segments."
+  },
+  "settingsTextSizeLarge": "Large",
+  "@settingsTextSizeLarge": {
+    "description": "Profile → Appearance → Text size. Short: one of three segments."
+  },
+  "settingsAppearanceFooter": "A little practice, every day.",
+  "@settingsAppearanceFooter": {
+    "description": "Profile → Appearance: a short closing line at the bottom of the card."
+  },
+  "settingsAppInformation": "App information",
+  "@settingsAppInformation": {
+    "description": "Profile: the heading of the Data, Privacy Policy, Terms and Credits rows."
+  },
+  "settingsDataRow": "Data",
+  "@settingsDataRow": {
+    "description": "Profile → App information: the row that opens the Data screen (AI permission, reset progress)."
+  },
+  "settingsCreditsRow": "Credits",
+  "@settingsCreditsRow": {
+    "description": "Profile → App information: the row that opens the artwork credits."
+  },
+  "settingsCompanion": "Your companion",
+  "@settingsCompanion": {
+    "description": "Profile: the heading above the learner's avatar."
+  },
+  "settingsChangeAvatar": "Change your avatar",
+  "@settingsChangeAvatar": {
+    "description": "Profile: the button under the avatar that opens the avatar picker."
+  },
+  "settingsNameLabel": "Your name",
+  "@settingsNameLabel": {
+    "description": "Profile: the label of the learner's name, and the hint in the field when editing it."
+  },
+  "dataTitle": "Data",
+  "@dataTitle": {
+    "description": "Data screen: the page title."
+  },
+  "dataSubtitle": "Your practice. Your choices.",
+  "@dataSubtitle": {
+    "description": "Data screen: the line under the title."
+  },
+  "dataAiCardTitle": "AI feedback",
+  "@dataAiCardTitle": {
+    "description": "Data screen: the heading of the AI permission card."
+  },
+  "dataAiExplanation": "Practice sessions send your {what} to {provider} to create feedback.",
+  "@dataAiExplanation": {
+    "description": "Data screen, AI card: what is sent and to whom. {what} is dataAiWhat, shown in bold; {provider} is the company and product name 'Anthropic (Claude)', shown in bold and never translated. Legal weight: keep the meaning exact.",
+    "placeholders": {
+      "what": {
+        "type": "String",
+        "example": "typed answers and the questions"
+      },
+      "provider": {
+        "type": "String",
+        "example": "Anthropic (Claude)"
+      }
+    }
+  },
+  "dataAiWhat": "typed answers and the questions",
+  "@dataAiWhat": {
+    "description": "Data screen, AI card: the bold part of dataAiExplanation, what a practice session sends."
+  },
+  "dataAiSwitch": "Allow AI feedback",
+  "@dataAiSwitch": {
+    "description": "Data screen: the switch that grants or withdraws the AI permission."
+  },
+  "dataAiOn": "On · Required for practice sessions",
+  "@dataAiOn": {
+    "description": "Data screen: under the switch when the permission is granted."
+  },
+  "dataAiOff": "Off · Practice sessions need permission",
+  "@dataAiOff": {
+    "description": "Data screen: under the switch when the permission is not granted."
+  },
+  "dataAiDailyTestNote": "Daily Test works without this permission.",
+  "@dataAiDailyTestNote": {
+    "description": "Data screen, AI card: the note that the Daily Test needs no AI permission. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "dataSaveFailed": "Could not save this setting. Please try again.",
+  "@dataSaveFailed": {
+    "description": "Snackbar when the AI permission could not be stored."
+  },
+  "dataAiWithdrawn": "Practice sessions will ask again.",
+  "@dataAiWithdrawn": {
+    "description": "Snackbar after the AI permission was withdrawn."
+  },
+  "dataAiChangeFailed": "Could not change this setting: {error}",
+  "@dataAiChangeFailed": {
+    "description": "Snackbar when changing the AI permission failed; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "dataResetCardTitle": "Reset progress",
+  "@dataResetCardTitle": {
+    "description": "Data screen: the heading of the reset card."
+  },
+  "dataResetCardBody": "Clear your practice history and saved weak spots.",
+  "@dataResetCardBody": {
+    "description": "Data screen, reset card: what the reset does."
+  },
+  "dataResetCardKeeps": "Your name, goal and theme stay as they are.",
+  "@dataResetCardKeeps": {
+    "description": "Data screen, reset card: what the reset keeps."
+  },
+  "dataResetConfirm": "Reset progress data",
+  "@dataResetConfirm": {
+    "description": "The reset button on the Data screen and the confirming button in its dialog."
+  },
+  "dataResetDialogTitle": "Reset your progress?",
+  "@dataResetDialogTitle": {
+    "description": "The reset confirmation dialog's title."
+  },
+  "dataResetDialogBody": "This clears your practice history and saved weak spots.",
+  "@dataResetDialogBody": {
+    "description": "The reset confirmation dialog: what will be cleared."
+  },
+  "dataResetDialogKeeps": "Your name, goal and theme will stay as they are.",
+  "@dataResetDialogKeeps": {
+    "description": "The reset confirmation dialog: what will be kept."
+  },
+  "dataResetKeep": "Keep my progress",
+  "@dataResetKeep": {
+    "description": "The reset confirmation dialog: the button that cancels."
+  },
+  "dataResetDone": "Progress reset.",
+  "@dataResetDone": {
+    "description": "Snackbar after progress data was reset."
+  },
+  "dataResetFailed": "Could not reset progress: {error}",
+  "@dataResetFailed": {
+    "description": "Snackbar when the reset failed; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "creditsTitle": "Credits",
+  "@creditsTitle": {
+    "description": "Credits screen: the page title."
+  },
+  "creditsSubtitle": "Artwork and attribution.",
+  "@creditsSubtitle": {
+    "description": "Credits screen: the line under the title."
+  },
+  "creditsAvatarHeading": "Avatar illustrations",
+  "@creditsAvatarHeading": {
+    "description": "Credits screen: the heading of the avatar artwork's attribution."
+  },
+  "creditsAvatarAttribution": "Adapted from {work} by {author}, via Figma Community. Licensed under {license}.",
+  "@creditsAvatarAttribution": {
+    "description": "Credits screen: the attribution the CC BY 4.0 licence requires. {work}, {author} and {license} are names, shown in bold, never translated. 'Figma Community' is a product name.",
+    "placeholders": {
+      "work": {
+        "type": "String",
+        "example": "Cute Animal 3D Icons"
+      },
+      "author": {
+        "type": "String",
+        "example": "Tran Mau Tri Tam"
+      },
+      "license": {
+        "type": "String",
+        "example": "CC BY 4.0"
+      }
+    }
+  },
+  "creditsFigmaLink": "Figma file",
+  "@creditsFigmaLink": {
+    "description": "Credits screen: the link to the artwork's source file on Figma."
+  },
+  "creditsLicenseLink": "{license} license",
+  "@creditsLicenseLink": {
+    "description": "Credits screen: the link to the licence text; {license} is its name, never translated.",
+    "placeholders": {
+      "license": {
+        "type": "String",
+        "example": "CC BY 4.0"
+      }
+    }
+  },
+  "aiConsentTitle": "AI feedback",
+  "@aiConsentTitle": {
+    "description": "AI permission screen: the title in the app bar."
+  },
+  "aiConsentHeading": "Feedback on your answers",
+  "@aiConsentHeading": {
+    "description": "AI permission screen: the heading. Legal weight (App Review 5.1.2): keep the meaning exact."
+  },
+  "aiConsentIntro": "Practice sessions use an AI service to check your answers and explain what to fix. This covers Topic Practice and practicing a weak spot.",
+  "@aiConsentIntro": {
+    "description": "AI permission screen: what the permission is for. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium. Legal weight: keep the meaning exact."
+  },
+  "aiConsentSentHeading": "What is sent",
+  "@aiConsentSentHeading": {
+    "description": "AI permission screen: section heading."
+  },
+  "aiConsentSentBody": "The answers you type, together with the question each one responds to. This happens when you finish a practice session.",
+  "@aiConsentSentBody": {
+    "description": "AI permission screen: what is sent. Legal weight: keep the meaning exact."
+  },
+  "aiConsentRecipientHeading": "Who receives it",
+  "@aiConsentRecipientHeading": {
+    "description": "AI permission screen: section heading."
+  },
+  "aiConsentRecipientBody": "Anthropic, the company that makes Claude. Your answers go through GrammarLens's server to Anthropic's Claude model, which writes your feedback.",
+  "@aiConsentRecipientBody": {
+    "description": "AI permission screen: who receives the data. 'Anthropic', 'Claude' and 'GrammarLens' are names, never translated. Legal weight: keep the meaning exact."
+  },
+  "aiConsentNeverHeading": "What is never sent",
+  "@aiConsentNeverHeading": {
+    "description": "AI permission screen: section heading."
+  },
+  "aiConsentNeverBody": "Your name or your avatar. Daily Test answers stay on your device.",
+  "@aiConsentNeverBody": {
+    "description": "AI permission screen: what is never sent. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium. Legal weight: keep the meaning exact."
+  },
+  "aiConsentPersonalDetails": "Please don't type personal details such as full names, addresses or contact information into your answers.",
+  "@aiConsentPersonalDetails": {
+    "description": "AI permission screen: the request not to type personal data."
+  },
+  "aiConsentChangeLater": "You can change this any time in Profile → Data.",
+  "@aiConsentChangeLater": {
+    "description": "AI permission screen: where the choice can be changed. 'Profile' and 'Data' must match navProfile and settingsDataRow."
+  },
+  "aiConsentAgree": "Agree and continue",
+  "@aiConsentAgree": {
+    "description": "AI permission screen: the button that grants the permission."
+  },
+  "aiConsentNotNow": "Not now",
+  "@aiConsentNotNow": {
+    "description": "AI permission screen: the button that declines."
+  },
+  "aiConsentNotNowNote": "Not now: you can still take the Daily Test.",
+  "@aiConsentNotNowNote": {
+    "description": "AI permission screen: under the buttons, what declining leaves. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "avatarPickerTitle": "Choose your avatar",
+  "@avatarPickerTitle": {
+    "description": "Avatar picker: the title."
+  },
+  "avatarPickerHeading": "Pick your study buddy",
+  "@avatarPickerHeading": {
+    "description": "Avatar picker: the heading above the avatars."
+  },
+  "goalExamPrep": "Exam prep",
+  "@goalExamPrep": {
+    "description": "Learning goal (onboarding): preparing for an English exam. Short title."
+  },
+  "goalExamPrepDetail": "IELTS, TOEFL or another English exam",
+  "@goalExamPrepDetail": {
+    "description": "Learning goal (onboarding): the line under 'Exam prep'. IELTS and TOEFL are exam names."
+  },
+  "goalWork": "Work",
+  "@goalWork": {
+    "description": "Learning goal (onboarding): English for work. Short title."
+  },
+  "goalWorkDetail": "Emails, meetings and professional English",
+  "@goalWorkDetail": {
+    "description": "Learning goal (onboarding): the line under 'Work'."
+  },
+  "goalGeneral": "Everyday confidence",
+  "@goalGeneral": {
+    "description": "Learning goal (onboarding): general English. Short title."
+  },
+  "goalGeneralDetail": "General fluency, no specific goal",
+  "@goalGeneralDetail": {
+    "description": "Learning goal (onboarding): the line under 'Everyday confidence'."
+  },
+  "practiceLengthQuick": "Quick",
+  "@practiceLengthQuick": {
+    "description": "Practice length (3 questions): its name in the length picker."
+  },
+  "practiceLengthQuickDetail": "A short warm-up",
+  "@practiceLengthQuickDetail": {
+    "description": "Practice length (3 questions): the line under its name."
+  },
+  "practiceLengthStandard": "Standard",
+  "@practiceLengthStandard": {
+    "description": "Practice length (5 questions): its name in the length picker."
+  },
+  "practiceLengthStandardDetail": "The balanced session",
+  "@practiceLengthStandardDetail": {
+    "description": "Practice length (5 questions): the line under its name."
+  },
+  "practiceLengthExtended": "Extended",
+  "@practiceLengthExtended": {
+    "description": "Practice length (10 questions): its name in the length picker."
+  },
+  "practiceLengthExtendedDetail": "A deep, thorough workout",
+  "@practiceLengthExtendedDetail": {
+    "description": "Practice length (10 questions): the line under its name."
+  },
+  "reviewSortRecent": "Recent",
+  "@reviewSortRecent": {
+    "description": "Review: sort the weak spots by the most recent mistake."
+  },
+  "reviewSortFrequent": "Most frequent",
+  "@reviewSortFrequent": {
+    "description": "Review: sort the weak spots by how often the mistake was made."
   }
 }

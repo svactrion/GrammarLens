@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
+import '../l10n/l10n.dart';
 import '../models/error_entry.dart';
 import '../models/review_sort_order.dart';
 import '../services/analytics_service.dart';
@@ -337,7 +338,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
           .map(
             (order) => PopupMenuItem(
               value: order,
-              child: Text(order.label),
+              child: Text(order.label(context.l10n)),
             ),
           )
           .toList(),
@@ -349,7 +350,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             Icon(Icons.sort_rounded, size: 16, color: colorScheme.secondary),
             const SizedBox(width: 4),
             Text(
-              _sortOrder.label,
+              _sortOrder.label(context.l10n),
               style: theme.textTheme.labelMedium
                   ?.withWeight(FontWeight.w800)
                   .copyWith(color: colorScheme.secondary),

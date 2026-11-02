@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/avatar.dart';
 import '../utils/page_title.dart';
 import '../widgets/avatar_carousel.dart';
@@ -143,7 +144,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
         _popNow(context);
       },
       child: BrandScaffold(
-        title: const PageTitle('Choose your avatar'),
+        title: PageTitle(context.l10n.avatarPickerTitle),
         body: Column(
           children: [
             Expanded(
@@ -159,7 +160,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                     // with typography alone: a title-weight role straight off
                     // the theme, not a new style or a new color value.
                     Text(
-                      'Pick your study buddy',
+                      context.l10n.avatarPickerHeading,
                       style: theme.textTheme.titleMedium
                           ?.withWeight(FontWeight.w800),
                     ),
@@ -198,7 +199,7 @@ class _AvatarPickerScreenState extends State<AvatarPickerScreen> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () => _popNow(context),
-                    child: const Text('Done'),
+                    child: Text(context.l10n.commonDone),
                   ),
                 ),
               ),

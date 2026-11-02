@@ -22,13 +22,4 @@ extension ReviewSortOrderJson on ReviewSortOrder {
         return 'frequent';
     }
   }
-
-  String get label {
-    switch (this) {
-      case ReviewSortOrder.recent:
-        return 'Recent';
-      case ReviewSortOrder.frequent:
-        return 'Most frequent';
-    }
-  }
 }

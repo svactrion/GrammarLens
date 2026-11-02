@@ -15,6 +15,8 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/weak_spot_card.dart';
 
+import 'support/l10n_support.dart';
+
 /// 1.2.0 Batch 4: Review's layout, the daily free practice card (its two
 /// states, read from the existing free practice count, hidden for premium),
 /// the empty state and the sort order.
@@ -313,16 +315,16 @@ void main() {
       final storage =
           _Storage(weakSpots: _twoSpots, storedSort: ReviewSortOrder.frequent);
       await pump(tester, storage: storage);
-      expect(find.text(ReviewSortOrder.frequent.label), findsOneWidget);
+      expect(find.text(ReviewSortOrder.frequent.label(en)), findsOneWidget);
       expect(storage.weakSpotReads.last, ReviewSortOrder.frequent);
     });
 
     testWidgets('a new choice reloads the list and is saved', (tester) async {
       final storage = _Storage(weakSpots: _twoSpots);
       await pump(tester, storage: storage);
-      await tester.tap(find.text(ReviewSortOrder.recent.label));
+      await tester.tap(find.text(ReviewSortOrder.recent.label(en)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(ReviewSortOrder.frequent.label).last);
+      await tester.tap(find.text(ReviewSortOrder.frequent.label(en)).last);
       await tester.pumpAndSettle();
       expect(storage.savedSorts, [ReviewSortOrder.frequent]);
       expect(storage.weakSpotReads.last, ReviewSortOrder.frequent);

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/ai_consent.dart';
 import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
@@ -22,6 +23,10 @@ import 'ai_consent_screen.dart';
 /// is the one every practice session checks (`launchPracticeSet`: Topic
 /// Practice and a weak spot's practice alike), so the copy says "practice
 /// sessions", not the brief's "Topic Practice" alone.
+/// Who receives a practice session's answers: a company and product name,
+/// never translated.
+const String _aiProvider = 'Anthropic (Claude)'; // l10n-guard: a name
+
 class DataScreen extends StatefulWidget {
   final StorageService storageService;
   final AnalyticsService analyticsService;
@@ -97,7 +102,7 @@ class _DataScreenState extends State<DataScreen> {
         if (!mounted) return;
         setState(() => _aiAllowed = stored);
         if (granted && !stored) {
-          AppMessenger.show('Could not save this setting. Please try again.');
+          AppMessenger.show(context.l10n.dataSaveFailed);
         }
       } else {
         await widget.storageService.setAiConsent(granted: false);
@@ -108,11 +113,11 @@ class _DataScreenState extends State<DataScreen> {
         ));
         if (!mounted) return;
         setState(() => _aiAllowed = false);
-        AppMessenger.show('Practice sessions will ask again.');
+        AppMessenger.show(context.l10n.dataAiWithdrawn);
       }
     } catch (e) {
       if (!mounted) return;
-      AppMessenger.show('Could not change this setting: $e');
+      AppMessenger.show(context.l10n.dataAiChangeFailed('$e'));
     } finally {
       if (mounted) setState(() => _aiBusy = false);
     }
@@ -126,21 +131,21 @@ class _DataScreenState extends State<DataScreen> {
       confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Reset your progress?'),
-          content: const Column(
+          title: Text(dialogContext.l10n.dataResetDialogTitle),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('This clears your practice history and saved weak spots.'),
-              SizedBox(height: 10),
-              Text('Your name, goal and theme will stay as they are.'),
+              Text(dialogContext.l10n.dataResetDialogBody),
+              const SizedBox(height: 10),
+              Text(dialogContext.l10n.dataResetDialogKeeps),
             ],
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             DestructiveDialogActions(
-              cancelLabel: 'Keep my progress',
-              confirmLabel: 'Reset progress data',
+              cancelLabel: dialogContext.l10n.dataResetKeep,
+              confirmLabel: dialogContext.l10n.dataResetConfirm,
               onCancel: () => Navigator.of(dialogContext).pop(false),
               onConfirm: () => Navigator.of(dialogContext).pop(true),
             ),
@@ -156,10 +161,10 @@ class _DataScreenState extends State<DataScreen> {
     try {
       await widget.storageService.resetProgressData();
       if (!mounted) return;
-      AppMessenger.show('Progress reset.');
+      AppMessenger.show(context.l10n.dataResetDone);
     } catch (e) {
       if (!mounted) return;
-      AppMessenger.show('Could not reset progress: $e');
+      AppMessenger.show(context.l10n.dataResetFailed('$e'));
     } finally {
       if (mounted) setState(() => _resetting = false);
     }
@@ -189,23 +194,22 @@ class _DataScreenState extends State<DataScreen> {
       ),
       horizontalPadding: hPad,
       children: [
-        const PageHeader(
-            title: 'Data', subtitle: 'Your practice. Your choices.'),
+        PageHeader(
+            title: context.l10n.dataTitle, subtitle: context.l10n.dataSubtitle),
         const SizedBox(height: 24),
         _DataCard(
           key: DataScreen.aiCardKey,
           icon: Icons.auto_awesome_rounded,
-          title: 'AI feedback',
+          title: context.l10n.dataAiCardTitle,
           children: [
             Text.rich(
-              TextSpan(children: [
-                const TextSpan(text: 'Practice sessions send your '),
-                TextSpan(
-                    text: 'typed answers and the questions', style: strong),
-                const TextSpan(text: ' to '),
-                TextSpan(text: 'Anthropic (Claude)', style: strong),
-                const TextSpan(text: ' to create feedback.'),
-              ]),
+              TextSpan(
+                  children: emphasizedSpans(
+                context.l10n
+                    .dataAiExplanation(context.l10n.dataAiWhat, _aiProvider),
+                emphasized: [context.l10n.dataAiWhat, _aiProvider],
+                style: strong,
+              )),
               style: body,
             ),
             const SizedBox(height: 14),
@@ -214,15 +218,13 @@ class _DataScreenState extends State<DataScreen> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'Allow AI feedback',
+                context.l10n.dataAiSwitch,
                 style: theme.textTheme.bodyMedium
                     ?.withWeight(FontWeight.w800)
                     .copyWith(color: colorScheme.onSurface),
               ),
               subtitle: Text(
-                allowed
-                    ? 'On · Required for practice sessions'
-                    : 'Off · Practice sessions need permission',
+                allowed ? context.l10n.dataAiOn : context.l10n.dataAiOff,
                 style: theme.textTheme.labelMedium
                     ?.withWeight(FontWeight.w600)
                     .copyWith(color: colorScheme.onSurfaceVariant),
@@ -248,7 +250,7 @@ class _DataScreenState extends State<DataScreen> {
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      'Daily Test works without this permission.',
+                      context.l10n.dataAiDailyTestNote,
                       style: theme.textTheme.labelMedium
                           ?.withWeight(FontWeight.w600)
                           .copyWith(color: colorScheme.onSecondaryContainer),
@@ -264,10 +266,9 @@ class _DataScreenState extends State<DataScreen> {
           key: DataScreen.resetCardKey,
           icon: Icons.restart_alt_rounded,
           warning: true,
-          title: 'Reset progress',
+          title: context.l10n.dataResetCardTitle,
           children: [
-            Text('Clear your practice history and saved weak spots.',
-                style: body),
+            Text(context.l10n.dataResetCardBody, style: body),
             const SizedBox(height: 12),
             Divider(height: 1, color: colorScheme.outlineVariant),
             const SizedBox(height: 12),
@@ -281,8 +282,7 @@ class _DataScreenState extends State<DataScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Your name, goal and theme stay as they are.',
-                      style: body),
+                  child: Text(context.l10n.dataResetCardKeeps, style: body),
                 ),
               ],
             ),
@@ -294,7 +294,9 @@ class _DataScreenState extends State<DataScreen> {
                 style: resetButtonStyle(colorScheme),
                 onPressed: _resetting ? null : _confirmResetData,
                 icon: const Icon(Icons.delete_outline_rounded, size: 17),
-                label: Text(_resetting ? 'Resetting…' : 'Reset progress data'),
+                label: Text(_resetting
+                    ? context.l10n.commonResetting
+                    : context.l10n.dataResetConfirm),
               ),
             ),
           ],

@@ -20,6 +20,8 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/weak_spot_card.dart';
 
+import 'support/l10n_support.dart';
+
 /// Premium Review's Suggested Focus (1.2.0 final screens, brief §2).
 class _Subs extends SubscriptionService {
   final Completer<bool>? pending;
@@ -220,7 +222,7 @@ void main() {
       expect(title(), 'Modal Past Form');
       await tester.tap(find.byTooltip('Sort weak spots'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(ReviewSortOrder.frequent.label).last);
+      await tester.tap(find.text(ReviewSortOrder.frequent.label(en)).last);
       await tester.pumpAndSettle();
       expect(title(), 'Modal Past Form');
     });
@@ -340,7 +342,7 @@ void main() {
     await pump(tester, storage: _Storage(spots), subs: _Subs(true));
     await tester.tap(find.byTooltip('Sort weak spots'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(ReviewSortOrder.frequent.label).last);
+    await tester.tap(find.text(ReviewSortOrder.frequent.label(en)).last);
     await tester.pumpAndSettle();
     final scrollable = find.byType(Scrollable).first;
     await tester.drag(scrollable, const Offset(0, -500));
@@ -361,7 +363,7 @@ void main() {
         offset);
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
     await tester.pumpAndSettle();
-    expect(find.text(ReviewSortOrder.frequent.label), findsOneWidget);
+    expect(find.text(ReviewSortOrder.frequent.label(en)), findsOneWidget);
   });
 
   group('the same size as the Free card (owner, 2026-10-06)', () {

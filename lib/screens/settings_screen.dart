@@ -299,6 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await widget.storageService.resetOnboarding();
       widget.onResetOnboarding();
     } catch (e) {
+      // l10n-guard: debug builds only (the Developer section)
       AppMessenger.show('Could not reset onboarding: $e');
     } finally {
       if (mounted) setState(() => _resettingOnboarding = false);
@@ -343,10 +344,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       widget.onProfileUpdated(updated);
       if (!mounted) return;
       setState(() => _editingName = false);
-      AppMessenger.show('Name saved');
+      AppMessenger.show(context.l10n.settingsNameSaved);
     } catch (e) {
       if (!mounted) return;
-      AppMessenger.show('Could not save profile: $e');
+      AppMessenger.show(context.l10n.settingsProfileSaveFailed('$e'));
     } finally {
       if (mounted) setState(() => _savingProfile = false);
     }
@@ -417,25 +418,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   /// Whether the theme segments keep their icons at [width]: only while
-  /// the longest label ("System", in the selected weight) fits beside its
-  /// icon in a third of the control. At 320 pt with Large text inside the
+  /// the longest label ("System" in English, in the selected weight; the
+  /// longest of the three in any language) fits beside its icon in a third
+  /// of the control. At 320 pt with Large text inside the
   /// Appearance card it does not, and a label would break mid-word
   /// ("Syst-em"); the labels alone carry the choice there.
   static bool _themeIconsFit(BuildContext context, double width) {
     final style =
         Theme.of(context).textTheme.labelMedium?.withWeight(FontWeight.w800);
-    final label = TextPainter(
-      text: TextSpan(text: 'System', style: style),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
+    final l10n = context.l10n;
+    var widest = 0.0;
+    for (final text in [
+      l10n.settingsThemeSystem,
+      l10n.settingsThemeLight,
+      l10n.settingsThemeDark,
+    ]) {
+      final label = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+        maxLines: 1,
+      )..layout();
+      if (label.width > widest) widest = label.width;
+      label.dispose();
+    }
     // Per segment (a third of the control): Material's 12 pt padding each
     // side, the 18 pt icon and its 8 pt gap.
     final segment = width / 3;
-    final fits = label.width + 18 + 8 + 24 <= segment;
-    label.dispose();
-    return fits;
+    return widest + 18 + 8 + 24 <= segment;
   }
 
   /// The page header (1.2.0 mockup, "Profile"): the title and its line in
@@ -448,14 +458,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           container: true,
           header: true,
           child: Text(
-            'Profile',
+            context.l10n.settingsTitle,
             style: theme.textTheme.displaySmall
                 ?.copyWith(color: theme.colorScheme.onSurface),
           ),
         ),
         const SizedBox(height: 7),
         Text(
-          'Your journey, your way.',
+          context.l10n.settingsSubtitle,
           style: theme.textTheme.bodyMedium
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
@@ -513,11 +523,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Expanded(child: SectionTitle('Medal collection')),
+              Expanded(
+                  child: SectionTitle(context.l10n.settingsMedalCollection)),
               if (!_medalsLoading && !_medalsFailed) ...[
                 const SizedBox(width: 10),
                 Text(
-                  '${medals.earnedCount} earned',
+                  context.l10n.settingsMedalsEarned(medals.earnedCount),
                   key: SettingsScreen.earnedCountKey,
                   style: theme.textTheme.labelMedium
                       ?.withWeight(FontWeight.w400)
@@ -535,7 +546,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: TextButton.icon(
                 onPressed: _loadMedals,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry medal history'),
+                label: Text(context.l10n.settingsMedalsRetry),
               ),
             )
           else ...[
@@ -551,7 +562,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ],
           const SizedBox(height: 23),
-          const SectionTitle('Appearance'),
+          SectionTitle(context.l10n.settingsAppearance),
           const SizedBox(height: 12),
           Card(
             margin: EdgeInsets.zero,
@@ -560,8 +571,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _SettingLabel(
-                      icon: Icons.palette_outlined, text: 'Theme'),
+                  _SettingLabel(
+                      icon: Icons.palette_outlined,
+                      text: context.l10n.settingsThemeLabel),
                   const SizedBox(height: 9),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -571,21 +583,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         segments: [
                           ButtonSegment(
                             value: AppThemeMode.system,
-                            label: const Text('System'),
+                            label: Text(context.l10n.settingsThemeSystem),
                             icon: icons
                                 ? const Icon(Icons.brightness_auto_rounded)
                                 : null,
                           ),
                           ButtonSegment(
                             value: AppThemeMode.light,
-                            label: const Text('Light'),
+                            label: Text(context.l10n.settingsThemeLight),
                             icon: icons
                                 ? const Icon(Icons.light_mode_rounded)
                                 : null,
                           ),
                           ButtonSegment(
                             value: AppThemeMode.dark,
-                            label: const Text('Dark'),
+                            label: Text(context.l10n.settingsThemeDark),
                             icon: icons
                                 ? const Icon(Icons.dark_mode_rounded)
                                 : null,
@@ -598,17 +610,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   const SizedBox(height: 18),
-                  const _SettingLabel(
-                      icon: Icons.text_fields_rounded, text: 'Text size'),
+                  _SettingLabel(
+                      icon: Icons.text_fields_rounded,
+                      text: context.l10n.settingsTextSizeLabel),
                   const SizedBox(height: 9),
                   AppSegmentedButton<AppTextSize>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
-                          value: AppTextSize.small, label: Text('Small')),
+                          value: AppTextSize.small,
+                          label: Text(context.l10n.settingsTextSizeSmall)),
                       ButtonSegment(
-                          value: AppTextSize.medium, label: Text('Medium')),
+                          value: AppTextSize.medium,
+                          label: Text(context.l10n.settingsTextSizeMedium)),
                       ButtonSegment(
-                          value: AppTextSize.large, label: Text('Large')),
+                          value: AppTextSize.large,
+                          label: Text(context.l10n.settingsTextSizeLarge)),
                     ],
                     selected: {widget.textSize},
                     onSelectionChanged: (selection) =>
@@ -629,7 +645,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 13),
                   Text(
-                    'A little practice, every day.',
+                    context.l10n.settingsAppearanceFooter,
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
@@ -638,7 +654,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 23),
-          const SectionTitle('App information'),
+          SectionTitle(context.l10n.settingsAppInformation),
           const SizedBox(height: 12),
           Card(
             margin: EdgeInsets.zero,
@@ -647,7 +663,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 _NavRow.icon(
                   icon: Icons.storage_rounded,
-                  label: 'Data',
+                  label: context.l10n.settingsDataRow,
                   onTap: _openData,
                 ),
                 Divider(
@@ -659,31 +675,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _NavRow.icon(
                   key: SettingsScreen.privacyRowKey,
                   icon: Icons.privacy_tip_outlined,
-                  label: 'Privacy Policy',
+                  label: context.l10n.commonPrivacyPolicy,
                   opensBrowser: true,
                   onTap: () => openLegalLink(
-                      label: 'Privacy Policy', url: AppLinks.privacyPolicyUrl),
+                      label: context.l10n.commonPrivacyPolicy,
+                      url: AppLinks.privacyPolicyUrl),
                 ),
                 Divider(
                     height: 1, thickness: 1, color: colorScheme.outlineVariant),
                 _NavRow.icon(
                   key: SettingsScreen.termsRowKey,
                   icon: Icons.description_outlined,
-                  label: 'Terms of Service',
+                  label: context.l10n.commonTermsOfService,
                   opensBrowser: true,
                   onTap: () => openLegalLink(
-                      label: 'Terms of Service', url: AppLinks.termsUrl),
+                      label: context.l10n.commonTermsOfService,
+                      url: AppLinks.termsUrl),
                 ),
                 Divider(
                     height: 1, thickness: 1, color: colorScheme.outlineVariant),
                 _NavRow.icon(
                   icon: Icons.info_outline_rounded,
-                  label: 'Credits',
+                  label: context.l10n.settingsCreditsRow,
                   onTap: _openCredits,
                 ),
               ],
             ),
           ),
+          // l10n-guard-begin: debug builds only, never translated
           if (kDebugMode && DebugTools.enabledForTesting) ...[
             const SizedBox(height: 32),
             const SectionTitle('Developer'),
@@ -845,7 +864,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _NavRow.icon(
               key: SettingsScreen.debugRowKey,
               icon: Icons.bug_report_outlined,
-              label: 'Debug',
+              label: 'Debug', // l10n-guard-end
               // The panel can switch the sample collection (P6): the
               // shelf is read again when it closes.
               onTap: () => Navigator.of(context)
@@ -1076,7 +1095,7 @@ class _IdentityCard extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'Your companion',
+                  context.l10n.settingsCompanion,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.titleMedium
                       ?.copyWith(color: scheme.onSurface, letterSpacing: -.2),
@@ -1100,7 +1119,7 @@ class _IdentityCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Flexible(
-                        child: Text('Change your avatar',
+                        child: Text(context.l10n.settingsChangeAvatar,
                             textAlign: TextAlign.center, style: link),
                       ),
                       const SizedBox(width: 5),
@@ -1121,7 +1140,7 @@ class _IdentityCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Your name', style: caption),
+                        Text(context.l10n.settingsNameLabel, style: caption),
                         const SizedBox(height: 2),
                         Text(
                           name,
@@ -1141,7 +1160,7 @@ class _IdentityCard extends StatelessWidget {
                       minimumSize: const Size(44, 44),
                     ),
                     icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: Text('Edit',
+                    label: Text(context.l10n.commonEdit,
                         style: theme.textTheme.bodySmall
                             ?.withWeight(FontWeight.w800)
                             .copyWith(color: scheme.secondary)),
@@ -1155,7 +1174,7 @@ class _IdentityCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Your name',
+                  Text(context.l10n.settingsNameLabel,
                       style: theme.textTheme.labelMedium
                           ?.copyWith(color: scheme.onSurface)),
                   const SizedBox(height: 7),
@@ -1179,8 +1198,8 @@ class _IdentityCard extends StatelessWidget {
                                   required isFocused,
                                   required maxLength}) =>
                               null,
-                          decoration:
-                              const InputDecoration(hintText: 'Your name'),
+                          decoration: InputDecoration(
+                              hintText: context.l10n.settingsNameLabel),
                           onChanged: (_) => onChanged(),
                           onSubmitted: (_) {
                             if (canSave && !saving) onSave();
@@ -1194,7 +1213,9 @@ class _IdentityCard extends StatelessWidget {
                         style: FilledButton.styleFrom(
                             minimumSize: const Size(64, 48)),
                         onPressed: canSave && !saving ? onSave : null,
-                        child: Text(saving ? 'Saving…' : 'Save'),
+                        child: Text(saving
+                            ? context.l10n.commonSaving
+                            : context.l10n.commonSave),
                       ),
                     ],
                   ),
@@ -1205,7 +1226,7 @@ class _IdentityCard extends StatelessWidget {
                       minimumSize: const Size(44, 44),
                       padding: EdgeInsets.zero,
                     ),
-                    child: Text('Cancel', style: link),
+                    child: Text(context.l10n.commonCancel, style: link),
                   ),
                 ],
               ),
