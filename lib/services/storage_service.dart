@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -333,9 +334,27 @@ class StorageService {
 
   Database? _db;
 
+  /// Set while [resetAllLocalData] closes and deletes the file: a read that
+  /// arrives then waits for it and opens the fresh database afterwards,
+  /// instead of reopening the file the reset is deleting, which the delete
+  /// then closes under it ("This database has already been closed"; 1.4.0
+  /// B5, the stalled reset test; `test/storage_reset_race_test.dart`).
+  Future<void>? _resetting;
+
   Future<Database> get _database async {
-    _db ??= await _initDb();
-    return _db!;
+    while (_resetting != null) {
+      await _resetting;
+    }
+    return _db ??= await _initDb();
+  }
+
+  /// Closes the connection; the next call opens it again. For tests that
+  /// share a database file between test cases.
+  @visibleForTesting
+  Future<void> close() async {
+    final db = _db;
+    _db = null;
+    await db?.close();
   }
 
   Future<Database> _initDb() async {
@@ -1550,10 +1569,17 @@ class StorageService {
   /// sets on the proxy. A no-op in release builds.
   Future<void> resetAllLocalData() async {
     if (kReleaseMode || !DebugTools.enabledForTesting) return;
-    final db = _db;
-    _db = null;
-    await db?.close();
-    await deleteDatabase(join(await getDatabasesPath(), _dbName));
+    final done = Completer<void>();
+    _resetting = done.future;
+    try {
+      final db = _db;
+      _db = null;
+      await db?.close();
+      await deleteDatabase(join(await getDatabasesPath(), _dbName));
+    } finally {
+      _resetting = null;
+      done.complete();
+    }
   }
 
   /// Whether this device used the Monthly Climb in a month before

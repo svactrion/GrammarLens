@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
@@ -469,6 +471,23 @@ void main() {
         .platformDispatcher
         .clearAccessibilityFeaturesTestValue());
 
+    // Closes [storage] from the test's own zone and pumps until it is done.
+    // A connection the app opened during the test lives in the fake-async
+    // zone: closing it from `runAsync` (or deleting its file in the next
+    // test's setUp) waits on that zone's microtasks, which nobody flushes,
+    // and the run stalls (1.4.0 B5). So no connection outlives its test.
+    Future<void> closeInZone(
+        WidgetTester tester, StorageService storage) async {
+      var closed = false;
+      unawaited(storage.close().whenComplete(() => closed = true));
+      for (var i = 0; i < 100 && !closed; i++) {
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(closed, isTrue, reason: 'the connection did not close');
+    }
+
     Future<StorageService> pumpApp(WidgetTester tester) async {
       tester.view.physicalSize = const Size(390, 844) * 3;
       tester.view.devicePixelRatio = 3;
@@ -491,7 +510,7 @@ void main() {
     testWidgets(
         'a replay asked for while Profile shows: the app shows Home, which '
         'plays it', (tester) async {
-      await pumpApp(tester);
+      final storage = await pumpApp(tester);
       await tester.tap(find.text('Profile'));
       await tester.pump(const Duration(milliseconds: 300));
       ClimbDebugControls.instance.playMilestone(ClimbDebugMilestoneValue.gold);
@@ -504,6 +523,7 @@ void main() {
       expect(ClimbDebugControls.instance.pending, isNull);
       await tester.tap(find.byType(MedalCelebration));
       await tester.pump(const Duration(milliseconds: 400));
+      await closeInZone(tester, storage);
     });
 
     testWidgets('the reset brings the app back to Welcome', (tester) async {
@@ -544,13 +564,23 @@ void main() {
       await tester.tap(find.byKey(DebugPanelScreen.resetKey));
       await tester.pump(const Duration(milliseconds: 400));
       await tester.tap(find.text('Delete and restart'));
-      for (var i = 0; i < 20; i++) {
+      // Until Welcome shows, not a fixed real-time budget: the reset's real
+      // SQLite work takes longer on a loaded machine (the full suite runs
+      // files in parallel), and that is where the test stalled (1.4.0 B5).
+      for (var i = 0;
+          i < 100 && find.text('Get started').evaluate().isEmpty;
+          i++) {
         await tester.runAsync(
             () => Future<void>.delayed(const Duration(milliseconds: 20)));
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(find.text('Get started'), findsOneWidget);
-      expect(await tester.runAsync(storage.getUserProfile), isNull);
+      // The app reopened the database in this zone after the reset; close
+      // it here, then read the file through a fresh connection.
+      await closeInZone(tester, storage);
+      final fresh = StorageService(dbName: dbName);
+      expect(await tester.runAsync(fresh.getUserProfile), isNull);
+      await tester.runAsync(fresh.close);
     });
   });
 
