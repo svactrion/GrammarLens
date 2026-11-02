@@ -249,4 +249,21 @@ void main() {
       ], expected, reason: lang);
     }
   });
+
+  // Dates use Latin digits in every language (B5 rule), Arabic included:
+  // "نوفمبر 2026", never Arabic-Indic digits.
+  test('month and year use Latin digits in every shipped language', () {
+    final nonLatinDigits = RegExp(r'[٠-٩۰-۹]');
+    for (final locale in AppLocalizations.supportedLocales) {
+      final l10n = lookupAppLocalizations(locale);
+      for (final text in [
+        monthYear(2026, 11, l10n),
+        monthYearShort(2026, 11, l10n),
+      ]) {
+        expect(text, contains('2026'), reason: '${locale.languageCode}: $text');
+        expect(nonLatinDigits.hasMatch(text), isFalse,
+            reason: '${locale.languageCode}: $text');
+      }
+    }
+  });
 }

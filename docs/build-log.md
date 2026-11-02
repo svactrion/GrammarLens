@@ -14060,3 +14060,7 @@ Plan: `docs/1.4.0-plan.md` B5; Batch 0: `docs/1.4.0-b5-batch0-report.md` §8 (de
 ## 2026-11-02 (1.4.0 B5: Korean)
 
 - **[Engineering]** `app_ko.arb`, 479 keys, 해요체, the name addressed as "{name}님" through `greetingName`; feature names 데일리 테스트, 주제별 연습, 월간 등반, 복습; topic titles English. Particles after placeholders are avoided or fitted to the fixed text they take. Blind back-translation (`docs/translations/back-translation-ko.md`): 76 of 83 matched first time, seven revised, among them a real particle error ("문제을") and "{period}마다", which broke on one-unit periods and is now a label. The completeness test passes; the layout test does not cover Korean script, so overflow is for the device pass.
+
+## 2026-11-02 (1.4.0 B5: Arabic)
+
+- **[Engineering]** `app_ar.arb`, 479 keys, Modern Standard Arabic, masculine generic; every plural message has zero, one, two, few, many and other; Latin digits (a new test in `test/l10n_test.dart` checks month-and-year dates in every shipped language); feature names الاختبار اليومي, تدريب الموضوعات, التسلق الشهري, المراجعة, never after the merging preposition لـ, so the one-name check holds. Blind back-translation (`docs/translations/back-translation-ar.md`): 75 of 83 matched first time, eight revised, among them a definiteness error in "Continue with the {plan} plan" (the plan names are definite now). The completeness test passes; the layout test does not cover Arabic script, so overflow and the mirrored layout are for the device pass and B6.
