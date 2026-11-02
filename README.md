@@ -2,20 +2,25 @@
 
 **An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
-**Status (16 October 2026):** 1.3.0 (`1.3.0+6`) is in App Store review as the first public release. It carries the content of 1.1.0 and 1.2.0, which were never submitted, and adds a new question screen. 1.0.0, submitted in September 2026, will never be released. The screenshots below are from 1.2.0 ([roadmap](docs/roadmap.md), "1.3.0 release checklist").
+<p>
+  <a href="https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346"><img src="https://tools.applemarketingtools.com/api/badges/download-on-the-app-store/black/en-us" height="44" alt="Download on the App Store"></a>
+</p>
+
+**Status: 1.3.0 — live since 2026-11-02** on the [App Store](https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346) (iPhone and iPad, English), build `1.3.0+6`. It is the first public release: it carries the content of 1.1.0 and 1.2.0, which were never submitted, and adds a new question screen. 1.0.0, submitted in September 2026, was never released. 1.4.0 (seven interface languages) is in development ([1.4.0 plan](docs/1.4.0-plan.md)).
 
 <p align="center">
-  <img src="screenshots/1.2.0/readme/hero.png" width="820" alt="Three iPhones: Home with this month's mountain, a Daily Test result with every answer explained, and a Daily Test question">
+  <img src="screenshots/1.3.0/readme/hero.png" width="820" alt="Three App Store frames: Every answer explained (Daily Test results); See the grammar pattern (the topic hint); Watch your progress climb (Home with this month's mountain)">
 </p>
 
 <p align="center">
-  <img src="screenshots/1.2.0/readme/04-review.png" width="190" alt="Review: saved weak spots by topic, with today's free practice">
-  <img src="screenshots/1.2.0/readme/05-weak-spot.png" width="190" alt="A weak spot's detail: the saved mistake, its correction and a free practice">
-  <img src="screenshots/1.2.0/readme/07-collection.png" width="190" alt="Profile: the medal collection and this month's progress">
-  <img src="screenshots/1.2.0/readme/08-goal.png" width="190" alt="Onboarding: choosing a learning goal">
+  <img src="screenshots/1.3.0/readme/04-question.png" width="160" alt="Write your own answer: a Daily Test question with its answer box">
+  <img src="screenshots/1.3.0/readme/05-review.png" width="160" alt="Your weak spots, in one place: Review with saved weak spots by topic">
+  <img src="screenshots/1.3.0/readme/06-collection.png" width="160" alt="Build your mountain collection: Profile's medal collection">
+  <img src="screenshots/1.3.0/readme/07-onboarding.png" width="160" alt="Pick your learning companion: onboarding's avatar choice">
+  <img src="screenshots/1.3.0/readme/08-multi-blank.png" width="160" alt="One box for every blank: a two-blank Articles question">
 </p>
 
-*Screenshots: 1.2.0, not yet on the App Store. The learner is made up ("Sam"). Earlier versions are under "Version history" below.*
+*Screenshots: the 1.3.0 App Store set (build 6), in store order with its captions ([`screenshots/1.3.0/`](screenshots/1.3.0/README.md)). The learner is made up ("Sam"). Earlier versions are under "Version history" below.*
 
 ## What it does
 
@@ -36,14 +41,14 @@
 **2. Closing a paywall gap with a free quota**
 - **Problem:** Review's "Practice this" button had no subscription check, so a free user could start paid-tier practice, bounded only by the 10-a-day cap everyone shared. Found on a device on 15 September 2026; noted and deferred ten days earlier.
 - **Decision:** the check moved into the one function every practice set goes through. Free: one Daily Test and one 3-question practice session a day; the session counts only when generation succeeds.
-- **Cost:** a free user who uses both every day costs ≈ $1.72–1.86 a month on 1.0.0 (Daily Test part measured, practice part an estimate) and pays nothing. The limit is 1 to cap the cost of each free user and to point anyone who wants more practice to Premium. The quota model will be re-evaluated with four weeks of data.
-- **Evidence:** [build log](docs/build-log.md) 2026-09-15; [build log](docs/build-log.md) 2026-10-04 (free practice limit: rationale recorded after the fact); [PRD v2](docs/prd-v2.md) §13.7; [roadmap](docs/roadmap.md), "Post-launch tasks".
+- **Cost:** a free user who uses both every day costs ≈ $1.72–1.86 a month on 1.0.0 (Daily Test part measured, practice part an estimate) and pays nothing. Since 2026-11-02 the proxy scores practice with Claude Haiku 5.5 (Sonnet 5.5 generates the questions): in an offline measurement run (2026-10-31, list prices, not real users), a 5-question practice session cost ≈ $0.009 ($0.0078 to generate, $0.0015 to score), against ≈ $0.026 with Sonnet 5.5 scoring. Haiku agreed with the owner-reviewed labels on 97.8 % of 370 answers, marked no wrong answer as correct, and marked 3.9 % of right answers as wrong. Not yet measured on real traffic. The limit is 1 to cap the cost of each free user and to point anyone who wants more practice to Premium. The quota model will be re-evaluated with four weeks of data.
+- **Evidence:** [build log](docs/build-log.md) 2026-09-15; [build log](docs/build-log.md) 2026-10-04 (free practice limit: rationale recorded after the fact); [PRD v2](docs/prd-v2.md) §13.7; [roadmap](docs/roadmap.md), "Post-launch tasks"; [measurement report](docs/1.4.0-measurement-report.md) §2, §6.
 
 **3. Known flaw, not fixed: right answers graded as wrong**
 - **Problem:** answers are graded by plain text matching. In the owner's review of 35 live questions, 6 had a right or defensible answer marked "Needs work", and it goes into the error profile. Contractions (`'m` / `am`) and spelling variants (`neighbourhood` / `neighborhood`) are not normalized.
-- **Done so far:** the fallback pool carries 10 owner corrections. The live daily sets do not; the second-model check that would add accepted answers was deferred past 1.1.0.
-- **Cost:** 1.3.0, the first public release, ships with it (it carries the never-submitted 1.1.0's shared Daily Test). Fixing the live sets (P14) is the first job after 1.3.0, on the server side.
-- **Evidence:** [roadmap](docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](docs/build-log.md) 2026-10-04 (P12–P14).
+- **Done so far:** the fallback pool carries 10 owner corrections. Since 2026-11-02 (P14, server side) each new live set goes through one review call (Claude Opus 5.5) that may add other accepted answers to it. In the offline measurement, all 27 answers it wrote were right, but it found 28 of the 71 known right alternatives (39.4 %), so most right alternatives are still graded as wrong.
+- **Cost:** 1.3.0, the first public release, ships with it (it carries the never-submitted 1.1.0's shared Daily Test). The review call costs ≈ $0.04 per set (measured offline), and its findings go to a weekly owner review.
+- **Evidence:** [roadmap](docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](docs/build-log.md) 2026-10-04 (P12–P14), 2026-11-02 (proxy deployed); [measurement report](docs/1.4.0-measurement-report.md) §5.
 
 ## How it was built
 
@@ -61,10 +66,26 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 |---|---|---|---|
 | v1 — MVP | Jul 2026 | One-week sprint, user research, two iterations | Not released |
 | v2 | Aug–Sep 2026 | Free/paid split, structure and visual pass, API proxy, subscriptions | Not released |
-| 1.0.0 | Sep 2026 | v2 plus Monthly Climb | Submitted to App Store review; will never be released |
+| 1.0.0 | Sep 2026 | v2 plus Monthly Climb | Submitted to App Store review; never released |
 | 1.1.0 | Oct 2026 | Shared Daily Test; mountain themes, medals and collection; launch screen; new avatars; iPad layout | Skipped, never submitted; its content ships in 1.2.0 |
 | 1.2.0 | Oct 2026 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; new paywall with trial eligibility; multiline answers | Never submitted; its content ships in 1.3.0 |
-| 1.3.0 | Oct 2026 | 1.2.0's redesign plus a new question screen: the topic on each question, a slide-to-reveal topic hint, one answer box per blank (with a "no article" button for articles), tap a blank to answer it, and Skip that really skips | In App Store review; the first public release |
+| 1.3.0 | Oct–Nov 2026 | 1.2.0's redesign plus a new question screen: the topic on each question, a slide-to-reveal topic hint, one answer box per blank (with a "no article" button for articles), tap a blank to answer it, and Skip that really skips | **Live since 2026-11-02** (build 6); the first public release |
+
+<details>
+<summary><strong>Previous version: 1.2.0 screenshots</strong> (never submitted; its content ships in 1.3.0)</summary>
+
+<p align="center">
+  <img src="screenshots/1.2.0/readme/hero.png" width="820" alt="Three iPhones: Home with this month's mountain, a Daily Test result with every answer explained, and a Daily Test question">
+</p>
+
+<p align="center">
+  <img src="screenshots/1.2.0/readme/04-review.png" width="190" alt="Review: saved weak spots by topic, with today's free practice">
+  <img src="screenshots/1.2.0/readme/05-weak-spot.png" width="190" alt="A weak spot's detail: the saved mistake, its correction and a free practice">
+  <img src="screenshots/1.2.0/readme/07-collection.png" width="190" alt="Profile: the medal collection and this month's progress">
+  <img src="screenshots/1.2.0/readme/08-goal.png" width="190" alt="Onboarding: choosing a learning goal">
+</p>
+
+</details>
 
 <details>
 <summary><strong>Previous version: 1.1.0 screenshots</strong> (skipped, never released)</summary>
@@ -76,7 +97,7 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 </details>
 
 <details>
-<summary><strong>Previous version: 1.0.0 screenshots</strong> (submitted to the App Store, September 2026)</summary>
+<summary><strong>Previous version: 1.0.0 screenshots</strong> (submitted to the App Store, September 2026; never released)</summary>
 
 | Results | Question | Review | Home |
 |---|---|---|---|

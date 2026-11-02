@@ -48,3 +48,17 @@ paywall that was rejected under 3.1.2(c).
 ## Overviews
 
 `overview-iphone.png`, `overview-ipad.png`: contact sheets of the two sets.
+
+## README images (2026-11-03)
+
+`readme/`, made from `store/iphone-6.9/` with ImageMagick (Lanczos), in
+the store order above with the same captions:
+
+- `hero.png`, 1920 × 1364: frames 01–03 (the three shown in search) at
+  600 px wide, 30 px apart, on the frames' own cream gradient (`#FFFBF4`
+  to `#F6F2EA`), 8-bit RGB.
+- `04-question.png` … `08-multi-blank.png`, 600 × 1304: frames 04–08.
+
+```bash
+magick store/iphone-6.9/04-question.png -filter Lanczos -resize 600x -strip readme/04-question.png
+```
