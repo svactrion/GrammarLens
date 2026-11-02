@@ -22,6 +22,8 @@ import 'package:grammar_lens/utils/text_format.dart';
 import 'package:grammar_lens/widgets/locked_premium_pill.dart';
 import 'package:grammar_lens/widgets/section_title.dart';
 
+import 'support/l10n_support.dart';
+
 /// 1.2.0 Batch 9: Topic Practice laid out as the mockup. Presentation only:
 /// the topics come from `kTopics`, the status line is the existing one
 /// (N18) without the activity bar (Q8), a tap starts the existing launch
@@ -161,9 +163,10 @@ void main() {
     double? last;
     for (final topic in kTopics) {
       final card = find.byKey(TopicPracticeScreen.cardKey(topic));
-      expect(find.descendant(of: card, matching: find.text(topic.title)),
+      expect(find.descendant(of: card, matching: find.text(topic.title(en))),
           findsOneWidget);
-      expect(find.descendant(of: card, matching: find.text(topic.description)),
+      expect(
+          find.descendant(of: card, matching: find.text(topic.description(en))),
           findsOneWidget);
       final top = tester.getTopLeft(card).dy;
       if (last != null) expect(top, greaterThan(last));
@@ -182,7 +185,7 @@ void main() {
     String status(Topic t) =>
         tester.widget<Text>(find.byKey(TopicPracticeScreen.statusKey(t))).data!;
     expect(status(first), 'Not started yet');
-    expect(status(second), formatTopicStatsLine(12, 2));
+    expect(status(second), formatTopicStatsLine(12, 2, en));
     expect(status(second), '12 practiced · 2 weak spots');
     // No bar, no score, no percentage.
     expect(find.bySemanticsLabel('Practice activity level'), findsNothing);

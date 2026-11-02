@@ -83,15 +83,11 @@ class _ReadCountingClaude extends ClaudeService {
 
 const _topic = Topic(
   id: TopicId.gerundVsInfinitive,
-  title: 'Gerund vs. Infinitive',
-  description: 'enjoy doing / decide to do',
   icon: Icons.school,
 );
 
 const _articles = Topic(
   id: TopicId.articles,
-  title: 'Articles',
-  description: 'a, an, the',
   icon: Icons.abc,
 );
 

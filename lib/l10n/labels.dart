@@ -7,7 +7,9 @@ import 'package:flutter/painting.dart';
 import '../models/learning_goal.dart';
 import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
+import '../models/topic.dart';
 import '../utils/answer_matching.dart';
+import '../utils/text_format.dart';
 import 'generated/app_localizations.dart';
 
 extension LearningGoalLabels on LearningGoal {
@@ -37,6 +39,39 @@ extension PracticeLengthLabels on PracticeLength {
         PracticeLength.extended => l10n.practiceLengthExtendedDetail,
       };
 }
+
+extension TopicLabels on Topic {
+  String title(AppLocalizations l10n) => switch (id) {
+        TopicId.gerundVsInfinitive => l10n.topicGerundTitle,
+        TopicId.modalVerbs => l10n.topicModalVerbsTitle,
+        TopicId.modalPastForms => l10n.topicModalPastTitle,
+        TopicId.tenseSelection => l10n.topicTenseTitle,
+        TopicId.articles => l10n.topicArticlesTitle,
+      };
+
+  String description(AppLocalizations l10n) => switch (id) {
+        TopicId.gerundVsInfinitive => l10n.topicGerundDescription,
+        TopicId.modalVerbs => l10n.topicModalVerbsDescription,
+        TopicId.modalPastForms => l10n.topicModalPastDescription,
+        TopicId.tenseSelection => l10n.topicTenseDescription,
+        TopicId.articles => l10n.topicArticlesDescription,
+      };
+}
+
+/// Whether a weak spot's rule ([errorType], the scorer's English slug, or
+/// the topic id a Daily Test mistake stores) is just its [topic]: compared
+/// in English, the slug humanized against the topic id humanized ("Gerund
+/// vs. Infinitive" both ways), so it holds in every interface language.
+/// Before 1.4.0 B4.4 it compared with the topic's English title, which
+/// `test/l10n_labels_test.dart` pins as the same thing.
+bool ruleIsTopic(String errorType, Topic topic) =>
+    humanizeSlug(errorType) == humanizeSlug(topic.id.name);
+
+/// A weak spot's title: the topic's own title when the rule is the topic
+/// ([ruleIsTopic]), translated; otherwise the scorer's English rule name,
+/// humanized (AI output stays English, 1.4.0 D2).
+String weakSpotTitle(String errorType, Topic topic, AppLocalizations l10n) =>
+    ruleIsTopic(errorType, topic) ? topic.title(l10n) : humanizeSlug(errorType);
 
 extension ReviewSortOrderLabels on ReviewSortOrder {
   String label(AppLocalizations l10n) => switch (this) {

@@ -285,14 +285,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
           container: true,
           header: true,
           child: Text(
-            'Review',
+            context.l10n.featureReview,
             style: theme.textTheme.displaySmall
                 ?.copyWith(color: theme.colorScheme.onSurface),
           ),
         ),
         const SizedBox(height: 7),
         Text(
-          'Turn your mistakes into progress.',
+          context.l10n.reviewSubtitle,
           style: theme.textTheme.bodyMedium
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
@@ -333,7 +333,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final sortAction = PopupMenuButton<ReviewSortOrder>(
       initialValue: _sortOrder,
       onSelected: _changeSortOrder,
-      tooltip: 'Sort weak spots',
+      tooltip: context.l10n.reviewSortTooltip,
       itemBuilder: (context) => ReviewSortOrder.values
           .map(
             (order) => PopupMenuItem(
@@ -387,13 +387,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Could not load your error profile.\n${snapshot.error}',
+                    context.l10n.reviewLoadFailed('${snapshot.error}'),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: _reloadWeakSpots,
-                    child: const Text('Retry'),
+                    child: Text(context.l10n.commonRetry),
                   ),
                 ],
               ),
@@ -428,10 +428,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
               padding: const EdgeInsets.all(24),
               child: EmptyState(
                 icon: Icons.fact_check_outlined,
-                title: 'No weak spots yet.',
-                description: 'Mistakes from your Daily Test and practice '
-                    'will show up here.',
-                ctaLabel: 'Go to Daily Test',
+                title: context.l10n.reviewEmptyTitle,
+                description: context.l10n.reviewEmptyBody,
+                ctaLabel: context.l10n.reviewGoToDailyTest,
                 onCta: widget.onGoToPractice,
                 ctaStyle: forwardButtonStyle(context),
               ),
@@ -488,7 +487,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     crossAxisAlignment: WrapCrossAlignment.end,
                     spacing: 6,
                     children: [
-                      const SectionTitle('Saved weak spots'),
+                      SectionTitle(context.l10n.reviewSavedWeakSpots),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 3),
                         child: Text(
@@ -584,18 +583,14 @@ class DailyPracticeContent extends StatelessWidget {
     final ink = available ? colorScheme.onPrimary : palette.onButton;
     final muted = available ? colorScheme.onPrimary : palette.onButtonMuted;
 
-    final title = available
-        ? 'One weak spot. One step forward.'
-        : 'Today’s practice is complete.';
-    final description = available
-        ? 'Choose any saved weak spot below. Practice for free and get AI '
-            'feedback.'
-        : 'Keep reviewing your saved feedback. Your next free practice is '
-            'available tomorrow.';
+    final l10n = context.l10n;
+    final title =
+        available ? l10n.reviewDailyAvailableTitle : l10n.reviewDailyUsedTitle;
+    final description =
+        available ? l10n.reviewDailyAvailableBody : l10n.reviewDailyUsedBody;
     final status = available
-        ? '$remaining free practice${remaining == 1 ? '' : 's'} available '
-            'today'
-        : 'Next free practice tomorrow';
+        ? l10n.reviewDailyRemaining(remaining)
+        : l10n.reviewDailyNextTomorrow;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,7 +599,7 @@ class DailyPracticeContent extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'YOUR DAILY PRACTICE',
+                l10n.reviewDailyEyebrow,
                 style: theme.textTheme.labelSmall
                     ?.withWeight(FontWeight.w800)
                     .copyWith(color: ink, letterSpacing: 1),
@@ -646,7 +641,7 @@ class DailyPracticeContent extends StatelessWidget {
         if (!available) ...[
           const SizedBox(height: 16),
           Text(
-            'Want more practice today?',
+            l10n.reviewWantMore,
             style: theme.textTheme.bodySmall
                 ?.withWeight(FontWeight.w700)
                 .copyWith(color: ink),
@@ -657,11 +652,11 @@ class DailyPracticeContent extends StatelessWidget {
           FilledButton(
             onPressed: onSeePremium,
             style: forwardButtonStyle(context),
-            child: const Row(
+            child: Row(
               children: [
-                Expanded(child: Text('See Premium')),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded, size: 17),
+                Expanded(child: Text(l10n.reviewSeePremium)),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_rounded, size: 17),
               ],
             ),
           ),
@@ -710,8 +705,8 @@ class SuggestedFocusCard extends StatelessWidget {
   static const ctaKey = ValueKey('review_suggested_focus_cta');
 
   /// "Saved N times · Most repeated", "Saved 1 time" for one.
-  static String countLine(int count) =>
-      'Saved $count ${count == 1 ? 'time' : 'times'} · Most repeated';
+  static String countLine(int count, AppLocalizations l10n) =>
+      l10n.reviewFocusCount(count);
 
   @override
   Widget build(BuildContext context) {
@@ -729,7 +724,7 @@ class SuggestedFocusCard extends StatelessWidget {
         const SizedBox(width: 7),
         Expanded(
           child: Text(
-            'SUGGESTED FOCUS',
+            context.l10n.reviewFocusEyebrow,
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w800)
                 .copyWith(color: muted, letterSpacing: 1),
@@ -752,12 +747,16 @@ class SuggestedFocusCard extends StatelessWidget {
               // The record's own title, as the list below names it; it
               // wraps, never cut short.
               Text(
-                humanizeSlug(spot.errorType),
+                switch (topicByName(spot.topicId)) {
+                  final topic? =>
+                    weakSpotTitle(spot.errorType, topic, context.l10n),
+                  null => humanizeSlug(spot.errorType),
+                },
                 style: theme.textTheme.headlineSmall?.copyWith(color: ink),
               ),
               const SizedBox(height: 8),
               Text(
-                countLine(spot.frequency),
+                countLine(spot.frequency, context.l10n),
                 style: theme.textTheme.bodySmall?.copyWith(color: muted),
               ),
               const SizedBox(height: 16),
@@ -767,11 +766,11 @@ class SuggestedFocusCard extends StatelessWidget {
             key: ctaKey,
             onPressed: onPractice,
             style: forwardButtonStyle(context),
-            child: const Row(
+            child: Row(
               children: [
-                Expanded(child: Text('Practice this weak spot')),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded, size: 17),
+                Expanded(child: Text(context.l10n.reviewFocusPractice)),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_rounded, size: 17),
               ],
             ),
           ),
@@ -784,7 +783,7 @@ class SuggestedFocusCard extends StatelessWidget {
           eyebrow,
           const SizedBox(height: 12),
           Text(
-            'Your suggestion could not be loaded.',
+            context.l10n.reviewFocusFailed,
             style: theme.textTheme.bodyMedium
                 ?.withWeight(FontWeight.w700)
                 .copyWith(color: ink),
@@ -797,7 +796,7 @@ class SuggestedFocusCard extends StatelessWidget {
               padding: EdgeInsets.zero,
               minimumSize: const Size(44, 44),
             ),
-            child: const Text('Try again'),
+            child: Text(context.l10n.commonTryAgain),
           ),
         ],
       );
@@ -808,7 +807,7 @@ class SuggestedFocusCard extends StatelessWidget {
           eyebrow,
           const SizedBox(height: 20),
           Semantics(
-            label: 'Loading your suggestion',
+            label: context.l10n.reviewFocusLoading,
             child: SizedBox.square(
               dimension: 22,
               child: CircularProgressIndicator(strokeWidth: 2.5, color: muted),
@@ -857,15 +856,14 @@ class PremiumReviewEmpty extends StatelessWidget {
             Semantics(
               header: true,
               child: Text(
-                'Your next step starts with practice.',
+                context.l10n.reviewNextStepTitle,
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(color: colorScheme.onSurface),
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'As you practice, your mistakes will appear here so you can '
-              'work on them again.',
+              context.l10n.reviewNextStepBody,
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
@@ -874,11 +872,12 @@ class PremiumReviewEmpty extends StatelessWidget {
               key: ctaKey,
               onPressed: onExplore,
               style: forwardButtonStyle(context),
-              child: const Row(
+              child: Row(
                 children: [
-                  Expanded(child: Text('Explore Topic Practice')),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_rounded, size: 17),
+                  Expanded(
+                      child: Text(context.l10n.reviewExploreTopicPractice)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_rounded, size: 17),
                 ],
               ),
             ),

@@ -13997,3 +13997,7 @@ Plan: `docs/1.4.0-plan.md` B3; Batch 0:
 ## 2026-11-02 (Git rule change: Claude Code commits and pushes)
 
 - **[Product — owner]** Claude Code may now run `git add` of the exact files it lists, `git commit` and `git push`; `reset --hard`, rebase, force pushes, branch deletion and anything that discards work stay with the owner. Recorded in `docs/AGENTS.md` ("Git"). B4.4–B4.7 run back to back, one commit per batch, one push at the end.
+
+## 2026-11-02 (1.4.0 B4.4: Home, Review, weak spots, Topic Practice and the topic titles to the ARB)
+
+- **[Engineering]** Home, the greeting, Review, the weak-spot card and screen, Topic Practice, the Premium pill, the free-practice line and `text_format`'s dates and counts moved to `app_en.arb` (93 keys, English unchanged; relative dates, frequencies, topic stats and free-practice counts as ICU plurals; the topic titles and descriptions moved off `Topic` into `topic.title(l10n)` (§8 Q2); a weak spot's "rule is its topic" check now compares the humanized slug with the humanized topic id, pinned equal to the English titles by `test/l10n_labels_test.dart`, and such a weak spot shows the translated topic title; `HomeGreeting` takes its localized forms as parameters); pending list 26 → 16; `flutter analyze` clean, 2288 tests passed.

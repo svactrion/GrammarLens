@@ -81,7 +81,7 @@ Future<void> launchPracticeSet({
             analyticsService: analyticsService,
             analyticsSource: AnalyticsService.paywallSourcePracticeLaunch,
             subscriptionService: subscriptionService,
-            sourceContext: topic.title,
+            sourceContext: topic.title(context.l10n),
           ),
         ),
       );

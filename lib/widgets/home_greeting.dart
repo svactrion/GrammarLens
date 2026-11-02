@@ -24,15 +24,26 @@ class HomeGreeting extends StatelessWidget {
   final TextStyle? style;
   final TextStyle? nameStyle;
 
+  /// The greeting with the name on one line, and its first line when the
+  /// name moves to a line of its own (1.4.0 B4.4: `greetingWithName`,
+  /// `greetingLead`, passed in so this widget stays free of the strings).
+  /// Without them, the English forms "word, name" and "word,".
+  final String? withName;
+  final String? lead;
+
   const HomeGreeting(
       {super.key,
       required this.word,
       required this.name,
       this.style,
-      this.nameStyle});
+      this.nameStyle,
+      this.withName,
+      this.lead});
+
+  String get _lead => lead ?? '$word,';
 
   /// What is shown, and what VoiceOver reads, however it is laid out.
-  String get text => name.isEmpty ? word : '$word, $name';
+  String get text => name.isEmpty ? word : (withName ?? '$word, $name');
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +64,7 @@ class HomeGreeting extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: AlignmentDirectional.centerStart,
-                    child: Text('$word,', maxLines: 1, style: style),
+                    child: Text(_lead, maxLines: 1, style: style),
                   ),
                   Text(name,
                       maxLines: 1,
@@ -71,7 +82,7 @@ class HomeGreeting extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$word,', style: style),
+        Text(_lead, style: style),
         Text(name, style: nameStyle),
       ],
     );

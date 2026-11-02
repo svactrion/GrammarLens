@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/error_entry.dart';
 import '../models/topic.dart';
 import '../services/analytics_service.dart';
@@ -114,7 +115,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
       setGenerating: (value) {
         if (mounted) setState(() => _generating = value);
       },
-      errorPrefix: 'Could not generate review set',
+      errorPrefix: context.l10n.weakSpotGenerateFailed,
     );
   }
 
@@ -142,13 +143,14 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ruleTitle = humanizeSlug(widget.spot.errorType);
+    final ruleTitle =
+        weakSpotTitle(widget.spot.errorType, widget.topic, context.l10n);
     // A Daily Test-sourced weak spot stores its topic id as the error type
     // (it has no finer classification), so its humanized rule title *is*
     // the topic title. Same rule as WeakSpotCard's topic subtitle: name the
     // topic once, and drop the rule line and the rule half of the recap
     // sentence when they would only repeat it.
-    final ruleRepeatsTopic = ruleTitle == widget.topic.title;
+    final ruleRepeatsTopic = ruleIsTopic(widget.spot.errorType, widget.topic);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     // The page's own header stays while the set is generated (final
@@ -161,7 +163,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
           style: theme.textTheme.headlineMedium
               ?.copyWith(color: colorScheme.onSurface),
         ),
-        message: 'Preparing your questions…',
+        message: context.l10n.weakSpotPreparing,
       );
     }
     // 1.2.0 (brief, "Review"; Q14: still a pushed screen, restyled): the
@@ -173,7 +175,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
       children: [
         if (!ruleRepeatsTopic) ...[
           Text(
-            widget.topic.title,
+            widget.topic.title(context.l10n),
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w800)
                 .copyWith(color: colorScheme.secondary, letterSpacing: 0.8),
@@ -199,7 +201,8 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              formatFrequencyStat(widget.spot.frequency, widget.spot.lastSeen),
+              formatFrequencyStat(
+                  widget.spot.frequency, widget.spot.lastSeen, context.l10n),
               style: theme.textTheme.labelSmall
                   ?.withWeight(FontWeight.w800)
                   .copyWith(color: colorScheme.onSecondaryContainer),
@@ -220,13 +223,11 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Could not load your recent mistakes.\n${snapshot.error}',
-                  ),
+                  Text(context.l10n.weakSpotLoadFailed('${snapshot.error}')),
                   const SizedBox(height: 8),
                   FilledButton(
                     onPressed: _reloadMistakes,
-                    child: const Text('Retry'),
+                    child: Text(context.l10n.commonRetry),
                   ),
                 ],
               );
@@ -256,7 +257,7 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                               size: 15, color: colorScheme.secondary),
                           const SizedBox(width: 6),
                           Text(
-                            'Saved feedback',
+                            context.l10n.weakSpotSavedFeedback,
                             style: theme.textTheme.labelMedium
                                 ?.withWeight(FontWeight.w800)
                                 .copyWith(color: colorScheme.secondary),
@@ -267,12 +268,9 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                       FeedbackText(
                         recap ??
                             (ruleRepeatsTopic
-                                ? 'You\'ve had trouble with $ruleTitle. '
-                                    'Practicing it again will help '
-                                    'reinforce it.'
-                                : 'You\'ve had trouble with $ruleTitle in '
-                                    '${widget.topic.title}. Practicing it '
-                                    'again will help reinforce it.'),
+                                ? context.l10n.weakSpotRecap(ruleTitle)
+                                : context.l10n.weakSpotRecapInTopic(ruleTitle,
+                                    widget.topic.title(context.l10n))),
                         style: theme.textTheme.bodyLarge,
                       ),
                       if (mistakes.isNotEmpty &&
@@ -289,13 +287,12 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const SectionTitle('Recent mistakes'),
+                SectionTitle(context.l10n.weakSpotRecentMistakes),
                 const SizedBox(height: 12),
                 if (mistakes.isEmpty)
-                  const EmptyState(
+                  EmptyState(
                     icon: Icons.history_toggle_off_rounded,
-                    description: 'No detailed history stored for these '
-                        'mistakes yet.',
+                    description: context.l10n.weakSpotNoHistory,
                     dense: true,
                   )
                 else
@@ -383,12 +380,12 @@ class _PracticeAction extends StatelessWidget {
               onPressed: onLockedTap,
               style: forwardButtonStyle(context),
               icon: const Icon(Icons.lock_rounded, size: 17),
-              label: const Text('Practice with Premium'),
+              label: Text(context.l10n.weakSpotPracticePremium),
             ),
           ),
           const SizedBox(height: 10),
           Text(
-            freePracticeUsedMessage,
+            freePracticeUsedMessage(context.l10n),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
@@ -405,8 +402,9 @@ class _PracticeAction extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                      hasFullAccess ? 'Practice this' : 'Start free practice'),
+                  child: Text(hasFullAccess
+                      ? context.l10n.weakSpotPracticeThis
+                      : context.l10n.weakSpotStartFree),
                 ),
                 const SizedBox(width: 8),
                 const Icon(Icons.arrow_forward_rounded, size: 17),
@@ -420,7 +418,7 @@ class _PracticeAction extends StatelessWidget {
         if (!hasFullAccess) ...[
           const SizedBox(height: 10),
           Text(
-            '$remaining free practice${remaining == 1 ? '' : 's'} today',
+            context.l10n.weakSpotRemaining(remaining),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),

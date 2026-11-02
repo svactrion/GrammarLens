@@ -1122,5 +1122,507 @@
   "keyboardNoteGeneral": "Your answer matches apart from keyboard characters. Not a grammar mistake.",
   "@keyboardNoteGeneral": {
     "description": "Daily Test card note when the difference is in keyboard characters but none can be named."
+  },
+  "topicGerundTitle": "Gerund vs. Infinitive",
+  "@topicGerundTitle": {
+    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+  },
+  "topicGerundDescription": "Knowing when it's \"I enjoy swimming\" vs. \"I want to swim\".",
+  "@topicGerundDescription": {
+    "description": "A grammar topic's one-line description; keep the English example words and sentences in English, they are what the topic teaches."
+  },
+  "topicModalVerbsTitle": "Modal Verbs",
+  "@topicModalVerbsTitle": {
+    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+  },
+  "topicModalVerbsDescription": "Can, could, must, should, might, and the nuance between them.",
+  "@topicModalVerbsDescription": {
+    "description": "A grammar topic's one-line description; keep the English example words and sentences in English, they are what the topic teaches."
+  },
+  "topicModalPastTitle": "Modal Past Forms",
+  "@topicModalPastTitle": {
+    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+  },
+  "topicModalPastDescription": "Past and reported contexts: will → would, can → could.",
+  "@topicModalPastDescription": {
+    "description": "A grammar topic's one-line description; keep the English example words and sentences in English, they are what the topic teaches."
+  },
+  "topicTenseTitle": "Tense Selection",
+  "@topicTenseTitle": {
+    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+  },
+  "topicTenseDescription": "Choosing the right tense for the situation.",
+  "@topicTenseDescription": {
+    "description": "A grammar topic's one-line description; keep the English example words and sentences in English, they are what the topic teaches."
+  },
+  "topicArticlesTitle": "Articles",
+  "@topicArticlesTitle": {
+    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+  },
+  "topicArticlesDescription": "A, an, the — and when to use none at all.",
+  "@topicArticlesDescription": {
+    "description": "A grammar topic's one-line description; keep the English example words and sentences in English, they are what the topic teaches."
+  },
+  "featureTopicPractice": "Topic Practice",
+  "@featureTopicPractice": {
+    "description": "The Topic Practice feature's name (a screen title). Feature names are never translated: keep 'Topic Practice' in English."
+  },
+  "featurePremium": "Premium",
+  "@featurePremium": {
+    "description": "The Premium subscription's name (a pill and buttons). Feature names are never translated: keep 'Premium' in English."
+  },
+  "greetingMorning": "Good morning",
+  "@greetingMorning": {
+    "description": "Home greeting, 05:00–11:59."
+  },
+  "greetingAfternoon": "Good afternoon",
+  "@greetingAfternoon": {
+    "description": "Home greeting, 12:00–17:59."
+  },
+  "greetingEvening": "Good evening",
+  "@greetingEvening": {
+    "description": "Home greeting, 18:00–04:59 (never 'good night', which is a farewell)."
+  },
+  "greetingWithName": "{greeting}, {name}",
+  "@greetingWithName": {
+    "description": "Home greeting with the learner's name on one line.",
+    "placeholders": {
+      "greeting": {
+        "type": "String",
+        "example": "Good morning"
+      },
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "greetingLead": "{greeting},",
+  "@greetingLead": {
+    "description": "Home greeting's first line when the name moves to a line of its own.",
+    "placeholders": {
+      "greeting": {
+        "type": "String",
+        "example": "Good morning"
+      }
+    }
+  },
+  "recencyToday": "today",
+  "@recencyToday": {
+    "description": "When a weak spot was last seen: today (lowercase, mid-sentence)."
+  },
+  "recencyYesterday": "yesterday",
+  "@recencyYesterday": {
+    "description": "When a weak spot was last seen: yesterday (lowercase, mid-sentence)."
+  },
+  "recencyDays": "{count, plural, other{{count} days ago}}",
+  "@recencyDays": {
+    "description": "When a weak spot was last seen, 2 to 6 days ago (lowercase, mid-sentence).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "recencyWeeks": "{count, plural, =1{1 week ago} other{{count} weeks ago}}",
+  "@recencyWeeks": {
+    "description": "When a weak spot was last seen, in weeks (lowercase, mid-sentence).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "recencyMonths": "{count, plural, =1{1 month ago} other{{count} months ago}}",
+  "@recencyMonths": {
+    "description": "When a weak spot was last seen, in months (lowercase, mid-sentence).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "frequencyTimes": "{count, plural, =1{1 time} other{{count} times}}",
+  "@frequencyTimes": {
+    "description": "How often a mistake was made, the first half of frequencyStat.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "frequencyStat": "{times} · last seen {recency}",
+  "@frequencyStat": {
+    "description": "A weak spot's line: how often, and when last (frequencyTimes, recency*).",
+    "placeholders": {
+      "times": {
+        "type": "String",
+        "example": "3 times"
+      },
+      "recency": {
+        "type": "String",
+        "example": "2 days ago"
+      }
+    }
+  },
+  "topicStatsPracticed": "{count, plural, =1{1 practiced} other{{count} practiced}}",
+  "@topicStatsPracticed": {
+    "description": "A topic card's line: how many questions were practiced.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "topicStatsWeakSpots": "{count, plural, =1{1 weak spot} other{{count} weak spots}}",
+  "@topicStatsWeakSpots": {
+    "description": "A count of weak spots (topic cards, Home's badge).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "topicStatsLine": "{practiced} · {weakSpots}",
+  "@topicStatsLine": {
+    "description": "A topic card's line: topicStatsPracticed and topicStatsWeakSpots.",
+    "placeholders": {
+      "practiced": {
+        "type": "String",
+        "example": "12 practiced"
+      },
+      "weakSpots": {
+        "type": "String",
+        "example": "2 weak spots"
+      }
+    }
+  },
+  "premiumFreePracticeUsed": "You've used today's free practice. Unlock Topic Practice and more daily sessions with Premium.",
+  "@premiumFreePracticeUsed": {
+    "description": "Shown where a free user has used today's practice (the weak spot's locked row, the results offer). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "homeTopicPractice": "Topic practice",
+  "@homeTopicPractice": {
+    "description": "Home: the heading of the topic strip (sentence case on Home)."
+  },
+  "homeWeakSpots": "Your weak spots",
+  "@homeWeakSpots": {
+    "description": "Home: the heading of the weak-spot list."
+  },
+  "homeClimbTitle": "Mountain of Learning",
+  "@homeClimbTitle": {
+    "description": "Home: the Monthly Climb card's title while it loads."
+  },
+  "homeClimbLoading": "Loading monthly progress",
+  "@homeClimbLoading": {
+    "description": "VoiceOver label of the Monthly Climb card's progress bar."
+  },
+  "homeClimbFailed": "Couldn’t load your monthly progress.",
+  "@homeClimbFailed": {
+    "description": "Home: the Monthly Climb card when it could not be loaded."
+  },
+  "homeClimbRetry": "Retry progress",
+  "@homeClimbRetry": {
+    "description": "Home: the button that retries loading the Monthly Climb."
+  },
+  "homeChangeAvatar": "Change your avatar",
+  "@homeChangeAvatar": {
+    "description": "VoiceOver label of Home's avatar, which opens the avatar picker."
+  },
+  "homeDailyDoneTitle": "Daily test complete.",
+  "@homeDailyDoneTitle": {
+    "description": "Home's Daily Test card when today's test is done. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "homeDailyDoneBody": "New test tomorrow. Review today’s answers.",
+  "@homeDailyDoneBody": {
+    "description": "Home's Daily Test card when today's test is done."
+  },
+  "homeDailyUnitCorrect": "correct",
+  "@homeDailyUnitCorrect": {
+    "description": "Home's Daily Test card: the word after the score ('4/5 correct')."
+  },
+  "homeDailyReview": "Review results",
+  "@homeDailyReview": {
+    "description": "Home's Daily Test card: opens today's results."
+  },
+  "homeDailyNextTitle": "Your next step.",
+  "@homeDailyNextTitle": {
+    "description": "Home's Daily Test card before today's test."
+  },
+  "homeDailyNextBody": "Take today’s test and move your hero forward.",
+  "@homeDailyNextBody": {
+    "description": "Home's Daily Test card before today's test; 'hero' is the learner's avatar on the Monthly Climb."
+  },
+  "homeDailyUnitQuestions": "{count, plural, =1{question} other{questions}}",
+  "@homeDailyUnitQuestions": {
+    "description": "Home's Daily Test card: the word after the question count ('5 questions').",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "homeDailyStart": "Start daily test",
+  "@homeDailyStart": {
+    "description": "Home's Daily Test card: starts today's test."
+  },
+  "homeDailyEyebrow": "DAILY TEST",
+  "@homeDailyEyebrow": {
+    "description": "Home's Daily Test card label (uppercase in English). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "homeDailyFree": "Free every day",
+  "@homeDailyFree": {
+    "description": "Home's Daily Test card: beside the label."
+  },
+  "homeTopicStripLead": "Pick a topic. Build confidence where you need it.",
+  "@homeTopicStripLead": {
+    "description": "Home: the line above the topic strip."
+  },
+  "homeExploreTopics": "Explore all topics",
+  "@homeExploreTopics": {
+    "description": "Home: opens Topic Practice."
+  },
+  "homeReviewCalloutTitle": "One free practice. Every day.",
+  "@homeReviewCalloutTitle": {
+    "description": "Home: the callout that points a free user to Review."
+  },
+  "homeReviewCalloutBody": "Choose one weak spot in Review.\nGet AI feedback on your answers.",
+  "@homeReviewCalloutBody": {
+    "description": "Home: the callout's two lines (keep the line break). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "homeGoToReview": "Go to Review",
+  "@homeGoToReview": {
+    "description": "Home: the callout's link. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "reviewSubtitle": "Turn your mistakes into progress.",
+  "@reviewSubtitle": {
+    "description": "Review tab: the line under the title."
+  },
+  "reviewSortTooltip": "Sort weak spots",
+  "@reviewSortTooltip": {
+    "description": "Tooltip of the Review tab's sort menu."
+  },
+  "reviewLoadFailed": "Could not load your error profile.\n{error}",
+  "@reviewLoadFailed": {
+    "description": "Review tab when the weak spots could not be loaded; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "commonRetry": "Retry",
+  "@commonRetry": {
+    "description": "Button that retries a failed load."
+  },
+  "reviewEmptyTitle": "No weak spots yet.",
+  "@reviewEmptyTitle": {
+    "description": "Review tab with no weak spots."
+  },
+  "reviewEmptyBody": "Mistakes from your Daily Test and practice will show up here.",
+  "@reviewEmptyBody": {
+    "description": "Review tab with no weak spots. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "reviewGoToDailyTest": "Go to Daily Test",
+  "@reviewGoToDailyTest": {
+    "description": "Review tab with no weak spots: the button. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "reviewSavedWeakSpots": "Saved weak spots",
+  "@reviewSavedWeakSpots": {
+    "description": "Review tab: the heading of the weak-spot list."
+  },
+  "reviewDailyEyebrow": "YOUR DAILY PRACTICE",
+  "@reviewDailyEyebrow": {
+    "description": "Review tab: the free daily practice card's label (uppercase in English)."
+  },
+  "reviewDailyAvailableTitle": "One weak spot. One step forward.",
+  "@reviewDailyAvailableTitle": {
+    "description": "Review's daily practice card while a free practice is left."
+  },
+  "reviewDailyAvailableBody": "Choose any saved weak spot below. Practice for free and get AI feedback.",
+  "@reviewDailyAvailableBody": {
+    "description": "Review's daily practice card while a free practice is left."
+  },
+  "reviewDailyUsedTitle": "Today’s practice is complete.",
+  "@reviewDailyUsedTitle": {
+    "description": "Review's daily practice card after today's free practice."
+  },
+  "reviewDailyUsedBody": "Keep reviewing your saved feedback. Your next free practice is available tomorrow.",
+  "@reviewDailyUsedBody": {
+    "description": "Review's daily practice card after today's free practice."
+  },
+  "reviewDailyRemaining": "{count, plural, =1{1 free practice available today} other{{count} free practices available today}}",
+  "@reviewDailyRemaining": {
+    "description": "Review's daily practice card: how many free practices are left.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "reviewDailyNextTomorrow": "Next free practice tomorrow",
+  "@reviewDailyNextTomorrow": {
+    "description": "Review's daily practice card when none is left."
+  },
+  "reviewWantMore": "Want more practice today?",
+  "@reviewWantMore": {
+    "description": "Review's daily practice card, above the Premium button."
+  },
+  "reviewSeePremium": "See Premium",
+  "@reviewSeePremium": {
+    "description": "Opens the paywall. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "reviewFocusEyebrow": "SUGGESTED FOCUS",
+  "@reviewFocusEyebrow": {
+    "description": "Review: the suggested weak spot card's label (uppercase in English)."
+  },
+  "reviewFocusCount": "{count, plural, =1{Saved 1 time · Most repeated} other{Saved {count} times · Most repeated}}",
+  "@reviewFocusCount": {
+    "description": "Review's suggested weak spot: how often it was saved.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "reviewFocusPractice": "Practice this weak spot",
+  "@reviewFocusPractice": {
+    "description": "Review's suggested weak spot: the button."
+  },
+  "reviewFocusFailed": "Your suggestion could not be loaded.",
+  "@reviewFocusFailed": {
+    "description": "Review's suggested weak spot when it could not be loaded."
+  },
+  "reviewFocusLoading": "Loading your suggestion",
+  "@reviewFocusLoading": {
+    "description": "VoiceOver label while the suggested weak spot loads."
+  },
+  "reviewNextStepTitle": "Your next step starts with practice.",
+  "@reviewNextStepTitle": {
+    "description": "Review for a learner with no practice yet."
+  },
+  "reviewNextStepBody": "As you practice, your mistakes will appear here so you can work on them again.",
+  "@reviewNextStepBody": {
+    "description": "Review for a learner with no practice yet."
+  },
+  "reviewExploreTopicPractice": "Explore Topic Practice",
+  "@reviewExploreTopicPractice": {
+    "description": "Review for a learner with no practice yet: opens Topic Practice. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "weakSpotGenerateFailed": "Could not generate review set",
+  "@weakSpotGenerateFailed": {
+    "description": "The first half of practiceLaunchError when a weak spot's practice set could not be made."
+  },
+  "weakSpotPreparing": "Preparing your questions…",
+  "@weakSpotPreparing": {
+    "description": "Shown while a practice set is made."
+  },
+  "weakSpotLoadFailed": "Could not load your recent mistakes.\n{error}",
+  "@weakSpotLoadFailed": {
+    "description": "Weak spot screen when its mistakes could not be loaded; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "weakSpotSavedFeedback": "Saved feedback",
+  "@weakSpotSavedFeedback": {
+    "description": "Weak spot screen: the heading of the saved feedback panel."
+  },
+  "weakSpotRecap": "You've had trouble with {rule}. Practicing it again will help reinforce it.",
+  "@weakSpotRecap": {
+    "description": "Weak spot screen: the recap when the rule is the topic itself; {rule} is the weak spot's title.",
+    "placeholders": {
+      "rule": {
+        "type": "String",
+        "example": "Articles"
+      }
+    }
+  },
+  "weakSpotRecapInTopic": "You've had trouble with {rule} in {topic}. Practicing it again will help reinforce it.",
+  "@weakSpotRecapInTopic": {
+    "description": "Weak spot screen: the recap; {rule} is the weak spot's title (English, from the feedback), {topic} the topic's title.",
+    "placeholders": {
+      "rule": {
+        "type": "String",
+        "example": "Article Use"
+      },
+      "topic": {
+        "type": "String",
+        "example": "Articles"
+      }
+    }
+  },
+  "weakSpotRecentMistakes": "Recent mistakes",
+  "@weakSpotRecentMistakes": {
+    "description": "Weak spot screen: the heading of the mistake list."
+  },
+  "weakSpotNoHistory": "No detailed history stored for these mistakes yet.",
+  "@weakSpotNoHistory": {
+    "description": "Weak spot screen when no mistake details are stored."
+  },
+  "weakSpotPracticePremium": "Practice with Premium",
+  "@weakSpotPracticePremium": {
+    "description": "The locked practice button for a free user without a free practice left. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "weakSpotPracticeThis": "Practice this",
+  "@weakSpotPracticeThis": {
+    "description": "The practice button of a weak spot."
+  },
+  "weakSpotStartFree": "Start free practice",
+  "@weakSpotStartFree": {
+    "description": "The practice button when today's free practice is left."
+  },
+  "weakSpotRemaining": "{count, plural, =1{1 free practice today} other{{count} free practices today}}",
+  "@weakSpotRemaining": {
+    "description": "Under the practice button: how many free practices are left today.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "topicPracticeGenerateFailed": "Could not generate practice",
+  "@topicPracticeGenerateFailed": {
+    "description": "The first half of practiceLaunchError when a topic's practice set could not be made."
+  },
+  "topicPracticeHeading": "Grammar topics",
+  "@topicPracticeHeading": {
+    "description": "Topic Practice: the heading of the topic list."
+  },
+  "topicPracticeCount": "{count, plural, =1{1 topic} other{{count} topics}}",
+  "@topicPracticeCount": {
+    "description": "Topic Practice: beside the heading, how many topics.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "topicPracticeSubtitle": "Choose a topic to work on.",
+  "@topicPracticeSubtitle": {
+    "description": "Topic Practice: the line under the title."
+  },
+  "topicPracticePremiumAccess": "Premium access",
+  "@topicPracticePremiumAccess": {
+    "description": "Topic Practice: the label shown to a Premium learner. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "topicPracticeNotStarted": "Not started yet",
+  "@topicPracticeNotStarted": {
+    "description": "A topic card's line before any practice in it."
   }
 }

@@ -14,8 +14,6 @@ import 'package:grammar_lens/theme.dart';
 void main() {
   const topic = Topic(
     id: TopicId.articles,
-    title: 'Articles',
-    description: 'a/an/the',
     icon: Icons.school,
   );
 

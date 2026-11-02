@@ -11,8 +11,12 @@ import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/greeting.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
 
 import 'layouts.dart';
+
+/// The English interface strings (1.4.0 B4.4).
+final AppLocalizations en = lookupAppLocalizations(const Locale('en'));
 
 enum Option {
   today('Today: one line, cut at the end'),
@@ -132,7 +136,7 @@ void main() {
                             key: rowKeys[(option, c)],
                             child: _row(
                                 option,
-                                timeOfDayGreeting(DateTime(2026, 9, 15, c.$1)),
+                                timeOfDayGreeting(DateTime(2026, 9, 15, c.$1), en),
                                 c.$2,
                                 style),
                           ),

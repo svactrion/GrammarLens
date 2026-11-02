@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 import '../theme.dart';
 
 /// The trailing "this needs Premium" affordance on a locked card (Home's
@@ -42,7 +43,7 @@ class LockedPremiumPill extends StatelessWidget {
           Icon(Icons.lock_rounded, size: 12, color: link),
           const SizedBox(width: 4),
           Text(
-            'Premium',
+            context.l10n.featurePremium,
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w800)
                 .copyWith(color: link),

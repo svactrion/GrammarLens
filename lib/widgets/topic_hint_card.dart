@@ -36,7 +36,7 @@ class TopicHintCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              topic.title,
+              topic.title(context.l10n),
               style: theme.textTheme.labelMedium
                   ?.withWeight(FontWeight.w800)
                   .copyWith(color: palette.onWarm),
@@ -224,8 +224,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
 
   @override
   Widget build(BuildContext context) {
-    final label = context.l10n
-        .hintSliderSemantics(widget.topic.title, widget.points.join('. '));
+    final label = context.l10n.hintSliderSemantics(
+        widget.topic.title(context.l10n), widget.points.join('. '));
     return IgnorePointer(
       ignoring: widget.collapsed,
       child: Padding(

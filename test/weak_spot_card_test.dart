@@ -14,14 +14,10 @@ import 'package:grammar_lens/widgets/weak_spot_card.dart';
 void main() {
   const gerundTopic = Topic(
     id: TopicId.gerundVsInfinitive,
-    title: 'Gerund vs. Infinitive',
-    description: 'x',
     icon: Icons.compare_arrows,
   );
   const articlesTopic = Topic(
     id: TopicId.articles,
-    title: 'Articles',
-    description: 'x',
     icon: Icons.abc,
   );
 

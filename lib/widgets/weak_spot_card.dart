@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/error_entry.dart';
 import '../models/topic.dart';
 import '../utils/text_format.dart';
@@ -75,11 +76,12 @@ class WeakSpotCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final muted = colorScheme.onSurfaceVariant;
 
-    final title = humanizeSlug(spot.errorType);
+    final title = weakSpotTitle(spot.errorType, topic, context.l10n);
     // Only adds information when it differs from the title — for a Daily
     // Test-sourced weak spot (errorType == topic id) it's identical and
     // would just repeat it (see this class's doc comment).
-    final topicSubtitle = topic.title != title ? topic.title : null;
+    final topicSubtitle =
+        ruleIsTopic(spot.errorType, topic) ? null : topic.title(context.l10n);
     final explanation = spot.latestExplanation;
 
     return Card(
@@ -131,7 +133,8 @@ class WeakSpotCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        formatFrequencyStat(spot.frequency, spot.lastSeen),
+                        formatFrequencyStat(
+                            spot.frequency, spot.lastSeen, context.l10n),
                         style: theme.textTheme.labelSmall
                             ?.withWeight(FontWeight.w800)
                             .copyWith(color: colorScheme.onSecondaryContainer),
@@ -155,9 +158,12 @@ class WeakSpotCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final link = colorScheme.secondary;
-    final title = humanizeSlug(spot.errorType);
-    final topicSubtitle = topic.title != title ? topic.title : null;
-    final action = locked ? 'Practice with Premium' : 'Practice this';
+    final title = weakSpotTitle(spot.errorType, topic, context.l10n);
+    final topicSubtitle =
+        ruleIsTopic(spot.errorType, topic) ? null : topic.title(context.l10n);
+    final action = locked
+        ? context.l10n.weakSpotPracticePremium
+        : context.l10n.weakSpotPracticeThis;
 
     return Semantics(
       container: true,
@@ -187,7 +193,8 @@ class WeakSpotCard extends StatelessWidget {
                 Text(title, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 6),
                 Text(
-                  formatFrequencyStat(spot.frequency, spot.lastSeen),
+                  formatFrequencyStat(
+                      spot.frequency, spot.lastSeen, context.l10n),
                   style: theme.textTheme.labelMedium
                       ?.withWeight(FontWeight.w600)
                       .copyWith(color: colorScheme.onSurfaceVariant),

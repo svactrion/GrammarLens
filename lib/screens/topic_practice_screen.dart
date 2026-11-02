@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../data/topics.dart';
 import '../models/topic.dart';
 import '../models/topic_stats.dart';
@@ -72,7 +73,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
       setGenerating: (value) {
         if (mounted) setState(() => _generating = value);
       },
-      errorPrefix: 'Could not generate practice',
+      errorPrefix: context.l10n.topicPracticeGenerateFailed,
       // A completed practice set changes this topic's stats (and possibly
       // its weak spots), so refresh the cards once the user is back here.
       onReturned: _reloadStats,
@@ -94,7 +95,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
       return PageLoading(
         appBar: _statusBarOnly,
         header: _Header(theme: theme),
-        message: 'Preparing your questions…',
+        message: context.l10n.weakSpotPreparing,
       );
     }
     return FutureBuilder<Map<String, TopicStats>>(
@@ -111,10 +112,11 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Expanded(child: SectionTitle('Grammar topics')),
+                Expanded(
+                    child: SectionTitle(context.l10n.topicPracticeHeading)),
                 const SizedBox(width: 10),
                 Text(
-                  kTopics.length == 1 ? '1 topic' : '${kTopics.length} topics',
+                  context.l10n.topicPracticeCount(kTopics.length),
                   key: TopicPracticeScreen.topicCountKey,
                   style: theme.textTheme.labelSmall
                       ?.withWeight(FontWeight.w400)
@@ -164,14 +166,14 @@ class _Header extends StatelessWidget {
           container: true,
           header: true,
           child: Text(
-            'Topic Practice',
+            context.l10n.featureTopicPractice,
             style: theme.textTheme.headlineLarge
                 ?.copyWith(color: scheme.onSurface),
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Choose a topic to work on.',
+          context.l10n.topicPracticeSubtitle,
           style: theme.textTheme.bodyMedium
               ?.copyWith(color: scheme.onSurfaceVariant),
         ),
@@ -203,7 +205,7 @@ class _AccessLabel extends StatelessWidget {
           Icon(Icons.check_rounded, size: 14, color: scheme.onPrimary),
           const SizedBox(width: 6),
           Text(
-            'Premium access',
+            context.l10n.topicPracticePremiumAccess,
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w800)
                 .copyWith(color: scheme.onPrimary),
@@ -275,13 +277,13 @@ class _TopicCard extends StatelessWidget {
                     children: [
                       const SizedBox(height: 1),
                       Text(
-                        topic.title,
+                        topic.title(context.l10n),
                         style: theme.textTheme.titleMedium?.copyWith(
                             color: scheme.onSurface, letterSpacing: -.25),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        topic.description,
+                        topic.description(context.l10n),
                         style:
                             theme.textTheme.bodySmall?.copyWith(color: muted),
                       ),
@@ -303,9 +305,9 @@ class _TopicCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               stats.isStarted
-                                  ? formatTopicStatsLine(
-                                      stats.practiced, stats.weakSpotCount)
-                                  : 'Not started yet',
+                                  ? formatTopicStatsLine(stats.practiced,
+                                      stats.weakSpotCount, context.l10n)
+                                  : context.l10n.topicPracticeNotStarted,
                               key: TopicPracticeScreen.statusKey(topic),
                               style: theme.textTheme.labelSmall
                                   ?.copyWith(color: muted),

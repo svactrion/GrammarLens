@@ -1,3 +1,5 @@
+import '../l10n/generated/app_localizations.dart';
+
 /// The three-way time-of-day greeting word for [time]'s local hour — no
 /// fourth "night" slice and never "Good night": that phrase is an
 /// English-language farewell, not a greeting, and this app teaches
@@ -13,9 +15,9 @@
 /// Takes a concrete [time] rather than reading the clock itself, so it's
 /// a pure function callers can test directly with any boundary value —
 /// the caller (e.g. `HomeScreen`) owns its own injectable clock seam.
-String timeOfDayGreeting(DateTime time) {
+String timeOfDayGreeting(DateTime time, AppLocalizations l10n) {
   final hour = time.hour;
-  if (hour >= 5 && hour < 12) return 'Good morning';
-  if (hour >= 12 && hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour >= 5 && hour < 12) return l10n.greetingMorning;
+  if (hour >= 12 && hour < 18) return l10n.greetingAfternoon;
+  return l10n.greetingEvening;
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../utils/premium_copy.dart';
 import '../theme.dart';
 
@@ -65,7 +66,7 @@ class PremiumOfferCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              freePracticeUsedMessage,
+              freePracticeUsedMessage(context.l10n),
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),

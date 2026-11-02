@@ -11,8 +11,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/utils/greeting.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
 
 import 'home_fakes.dart';
+
+/// The English interface strings (1.4.0 B4.4).
+final AppLocalizations en = lookupAppLocalizations(const Locale('en'));
 
 const _screens = [
   (Size(320, 568), 20.0, 0.0),
@@ -69,7 +73,7 @@ void main() {
             final text = paragraph.text.toPlainText();
             final lines = text == name ? 2 : 1;
             final greeting =
-                '${timeOfDayGreeting(DateTime(2026, 9, 15, hour))}, $name';
+                '${timeOfDayGreeting(DateTime(2026, 9, 15, hour), en)}, $name';
             // A character is drawn if the paragraph lays out a box for it;
             // characters cut by the ellipsis get none.
             var drawn = 0;

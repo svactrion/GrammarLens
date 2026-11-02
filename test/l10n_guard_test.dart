@@ -140,23 +140,14 @@ const _excluded = [
 /// Files with hard-coded interface text, waiting for B4. Only ever shrinks.
 const _pending = <String>{
   // The 51 files with a hit when B3 landed (2026-11-02).
-  'lib/data/topics.dart',
   'lib/models/climb_theme.dart',
-  'lib/screens/home_screen.dart',
   'lib/screens/premium_screen.dart',
-  'lib/screens/review_screen.dart',
-  'lib/screens/topic_practice_screen.dart',
-  'lib/screens/weak_spot_detail_screen.dart',
   'lib/services/claude_service.dart',
   'lib/services/subscription_service.dart',
   'lib/utils/app_messenger.dart',
-  'lib/utils/greeting.dart',
-  'lib/utils/premium_copy.dart',
-  'lib/utils/text_format.dart',
   'lib/widgets/avatar_carousel.dart',
   'lib/widgets/brand_wordmark.dart',
   'lib/widgets/legal_link.dart',
-  'lib/widgets/locked_premium_pill.dart',
   'lib/widgets/medal_celebration.dart',
   'lib/widgets/month_card_sheet.dart',
   'lib/widgets/monthly_climb/climb_card.dart',
@@ -165,7 +156,6 @@ const _pending = <String>{
   'lib/widgets/monthly_climb/monthly_mountain.dart',
   'lib/widgets/monthly_medal_collection.dart',
   'lib/widgets/premium_offer_card.dart',
-  'lib/widgets/weak_spot_card.dart',
 };
 
 final _prose = RegExp(r'\p{L}\s+\p{L}', unicode: true);

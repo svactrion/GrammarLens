@@ -1407,7 +1407,7 @@ class _TopicTag extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Semantics(
-      label: context.l10n.questionTopicSemantics(topic.title),
+      label: context.l10n.questionTopicSemantics(topic.title(context.l10n)),
       excludeSemantics: true,
       child: DecoratedBox(
         key: QuestionView.topicTagKey,
@@ -1419,7 +1419,7 @@ class _TopicTag extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
           child: Text(
-            topic.title,
+            topic.title(context.l10n),
             style: theme.textTheme.labelSmall
                 ?.withWeight(FontWeight.w700)
                 .copyWith(color: colorScheme.onSurfaceVariant),

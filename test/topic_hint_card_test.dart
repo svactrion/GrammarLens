@@ -26,6 +26,8 @@ import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
 import 'package:grammar_lens/widgets/topic_hint_card.dart';
 
+import 'support/l10n_support.dart';
+
 /// The Daily Test's topic hint slider and card (docs/question-screen-plan.md,
 /// item 2, the B2 rework): the owner's texts; the slider between the
 /// question card and "Your answer", left out with the keyboard up and below
@@ -802,16 +804,17 @@ void main() {
             final footer = tester.getRect(find.byType(PracticeStepFooter));
             expect(_shownHeight(tester),
                 moreOrLessEquals(_fullHeight(tester), epsilon: 0.5),
-                reason: topic.title);
+                reason: topic.title(en));
             final lastLine = tester.getRect(find.descendant(
                 of: _card, matching: find.text(kTopicHints[topic.id]!.last)));
             final visibleBottom = math.min(footer.top, _clipBottom(tester));
             expect(lastLine.bottom, lessThanOrEqualTo(visibleBottom + 0.5),
-                reason: '${topic.title}: the last line is cut by '
+                reason: '${topic.title(en)}: the last line is cut by '
                     '${lastLine.bottom - visibleBottom} pt');
-            expect(card.top, greaterThan(question.bottom), reason: topic.title);
+            expect(card.top, greaterThan(question.bottom),
+                reason: topic.title(en));
             expect(tester.getRect(_questionCard), question,
-                reason: topic.title);
+                reason: topic.title(en));
             await gesture.up();
             await tester.pumpAndSettle();
             if (topic != kTopics.last) await _skip(tester);

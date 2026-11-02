@@ -240,7 +240,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         body: Column(
           children: [
             QuestionHeader(
-              title: widget.topic.title,
+              title: widget.topic.title(context.l10n),
               subtitle: context.l10n.practiceModeLabel,
               onBack: _currentIndex == 0 || _submitting ? null : _goBack,
               onClose: _confirmExit,

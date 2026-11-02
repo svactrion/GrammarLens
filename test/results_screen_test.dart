@@ -19,6 +19,8 @@ import 'package:grammar_lens/utils/premium_copy.dart';
 import 'package:grammar_lens/widgets/premium_offer_card.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/recording_analytics_sink.dart';
 
 class _FakeSubscriptionService extends SubscriptionService {
@@ -132,7 +134,7 @@ List<String> _upsellEvents(RecordingAnalyticsSink sink) => [
     ];
 
 void _expectNoUpsell(RecordingAnalyticsSink sink) {
-  expect(find.text(freePracticeUsedMessage), findsNothing);
+  expect(find.text(freePracticeUsedMessage(en)), findsNothing);
   expect(find.byType(PremiumOfferCard), findsNothing);
   expect(find.text('See Premium'), findsNothing);
   expect(_upsellEvents(sink), isEmpty);
@@ -215,7 +217,7 @@ void main() {
       Finder inCard(Finder f) => find.descendant(of: card, matching: f);
       final chip = inCard(find.text('PREMIUM'));
       final title = inCard(find.text('Keep practicing'));
-      final body = inCard(find.text(freePracticeUsedMessage));
+      final body = inCard(find.text(freePracticeUsedMessage(en)));
       final topic = inCard(find.text('Topic Practice'));
       final sessions = inCard(find.text('More Daily Sessions'));
       for (final f in [
@@ -346,7 +348,7 @@ void main() {
       for (final text in [
         'PREMIUM',
         'Keep practicing',
-        freePracticeUsedMessage,
+        freePracticeUsedMessage(en),
         'Topic Practice',
         'Focus on the areas you need',
         'More Daily Sessions',

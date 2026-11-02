@@ -279,8 +279,6 @@ final List<_Screen> _screens = [
     build: (size) => PracticeScreen(
           topic: const Topic(
             id: TopicId.gerundVsInfinitive,
-            title: 'Gerund vs. Infinitive',
-            description: '',
             icon: Icons.school,
           ),
           practiceSet: _practiceSet,

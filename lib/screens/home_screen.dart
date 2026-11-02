@@ -5,6 +5,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 
+import '../l10n/l10n.dart';
 import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/climb_theme.dart';
@@ -1151,8 +1152,13 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               Flexible(
                 child: HomeGreeting(
-                  word: timeOfDayGreeting(widget.clock()),
+                  word: timeOfDayGreeting(widget.clock(), context.l10n),
                   name: widget.userName,
+                  withName: context.l10n.greetingWithName(
+                      timeOfDayGreeting(widget.clock(), context.l10n),
+                      widget.userName),
+                  lead: context.l10n.greetingLead(
+                      timeOfDayGreeting(widget.clock(), context.l10n)),
                   // 22 pt at Small (owner, after Batch 3: larger): above
                   // the 20 pt section titles, below the name (24) and the
                   // brand (34). Derived from titleLarge so it follows the
@@ -1193,7 +1199,7 @@ class _HomeScreenState extends State<HomeScreen>
           _buildClimb(context),
           const SizedBox(height: 24),
           _SectionHeader(
-            title: 'Topic practice',
+            title: context.l10n.homeTopicPractice,
             trailing: _hasFullAccess
                 ? null
                 : const LockedPremiumPill(showChevron: false),
@@ -1207,11 +1213,9 @@ class _HomeScreenState extends State<HomeScreen>
           if (!_loadingWeakSpots && _weakSpots.isNotEmpty) ...[
             const SizedBox(height: 24),
             _SectionHeader(
-              title: 'Your weak spots',
+              title: context.l10n.homeWeakSpots,
               trailing: _CountBadge(
-                _weakSpotTotal == 1
-                    ? '1 weak spot'
-                    : '$_weakSpotTotal weak spots',
+                context.l10n.topicStatsWeakSpots(_weakSpotTotal),
               ),
             ),
             const SizedBox(height: 12),
@@ -1253,7 +1257,7 @@ class _HomeScreenState extends State<HomeScreen>
         // until the month's progress has loaded there is no card, so the
         // title stands alone above the progress indicator or the retry.
         if (_climbSteps == null) ...[
-          Text('Mountain of Learning',
+          Text(context.l10n.homeClimbTitle,
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
         ],
@@ -1299,13 +1303,12 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               )),
         if (_loadingClimb)
-          const LinearProgressIndicator(
-              semanticsLabel: 'Loading monthly progress'),
+          LinearProgressIndicator(
+              semanticsLabel: context.l10n.homeClimbLoading),
         if (_climbLoadFailed) ...[
-          const Text('Couldn’t load your monthly progress.',
-              textAlign: TextAlign.center),
+          Text(context.l10n.homeClimbFailed, textAlign: TextAlign.center),
           TextButton(
-              onPressed: _loadClimb, child: const Text('Retry progress')),
+              onPressed: _loadClimb, child: Text(context.l10n.homeClimbRetry)),
         ],
       ],
     );
@@ -1343,7 +1346,7 @@ class _HeroButton extends StatelessWidget {
     return Semantics(
       container: true,
       button: true,
-      label: 'Change your avatar',
+      label: context.l10n.homeChangeAvatar,
       child: InkWell(
         // Matches AvatarTile's own corner rounding (radius * 0.6).
         customBorder: RoundedRectangleBorder(
@@ -1525,17 +1528,18 @@ class _DailyTestCard extends StatelessWidget {
     final String title, description, amount, unit, action;
     if (completed) {
       final score = computeDailyTestScore(set.questions, set.answers ?? {});
-      title = 'Daily test complete.';
-      description = 'New test tomorrow. Review today’s answers.';
+      title = context.l10n.homeDailyDoneTitle;
+      description = context.l10n.homeDailyDoneBody;
       amount = '${score.correct}/${score.total}';
-      unit = 'correct';
-      action = 'Review results';
+      unit = context.l10n.homeDailyUnitCorrect;
+      action = context.l10n.homeDailyReview;
     } else {
-      title = 'Your next step.';
-      description = 'Take today’s test and move your hero forward.';
-      amount = '${set?.questions.length ?? DailyTestSet.questionCount}';
-      unit = 'questions';
-      action = 'Start daily test';
+      final count = set?.questions.length ?? DailyTestSet.questionCount;
+      title = context.l10n.homeDailyNextTitle;
+      description = context.l10n.homeDailyNextBody;
+      amount = '$count';
+      unit = context.l10n.homeDailyUnitQuestions(count);
+      action = context.l10n.homeDailyStart;
     }
     final small = theme.textTheme.labelSmall?.copyWith(color: ink);
 
@@ -1555,7 +1559,7 @@ class _DailyTestCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 4,
               children: [
-                Text('DAILY TEST',
+                Text(context.l10n.homeDailyEyebrow,
                     style: small
                         ?.withWeight(FontWeight.w800)
                         .copyWith(letterSpacing: 0.8)),
@@ -1564,7 +1568,8 @@ class _DailyTestCard extends StatelessWidget {
                   children: [
                     Icon(Icons.check_rounded, size: 13, color: ink),
                     const SizedBox(width: 4),
-                    Flexible(child: Text('Free every day', style: small)),
+                    Flexible(
+                        child: Text(context.l10n.homeDailyFree, style: small)),
                   ],
                 ),
               ],
@@ -1681,7 +1686,7 @@ class _TopicStrip extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Text(
-                'Pick a topic. Build confidence where you need it.',
+                context.l10n.homeTopicStripLead,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
@@ -1712,7 +1717,7 @@ class _TopicStrip extends StatelessWidget {
                   onPressed: onOpen,
                   iconAlignment: IconAlignment.end,
                   icon: const Icon(Icons.arrow_forward_rounded, size: 15),
-                  label: const Text('Explore all topics'),
+                  label: Text(context.l10n.homeExploreTopics),
                 ),
               ),
             ),
@@ -1763,7 +1768,7 @@ class _TopicTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          topic.title,
+                          topic.title(context.l10n),
                           style: theme.textTheme.titleSmall
                               ?.withWeight(FontWeight.w800)
                               .copyWith(
@@ -1827,13 +1832,12 @@ class _ReviewCallout extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('One free practice. Every day.',
+                      Text(context.l10n.homeReviewCalloutTitle,
                           style: theme.textTheme.labelLarge
                               ?.copyWith(color: onInfo)),
                       const SizedBox(height: 5),
                       Text(
-                        'Choose one weak spot in Review.\n'
-                        'Get AI feedback on your answers.',
+                        context.l10n.homeReviewCalloutBody,
                         style:
                             theme.textTheme.bodySmall?.copyWith(color: onInfo),
                       ),
@@ -1841,7 +1845,7 @@ class _ReviewCallout extends StatelessWidget {
                       Row(
                         children: [
                           Flexible(
-                            child: Text('Go to Review',
+                            child: Text(context.l10n.homeGoToReview,
                                 style: theme.textTheme.labelLarge
                                     ?.copyWith(color: link)),
                           ),

@@ -248,7 +248,7 @@ void main() {
                     width: width,
                     textSize: size,
                     brightness: brightness);
-                final why = '${type.name} / ${topic.title}';
+                final why = '${type.name} / ${topic.title(en)}';
                 expect(tester.takeException(), isNull, reason: why);
                 final label =
                     tester.renderObject<RenderParagraph>(_typeLabel(type));
@@ -257,7 +257,7 @@ void main() {
                 expect(label.size.height,
                     lessThan(label.text.style!.fontSize! * 1.4 * 1.5),
                     reason: why);
-                expect(find.text(topic.title), findsOneWidget, reason: why);
+                expect(find.text(topic.title(en)), findsOneWidget, reason: why);
                 final tag = tester.getRect(_tag);
                 final badge = _badgeRect(tester);
                 expect(tag.right, lessThanOrEqualTo(badge.left - 10 + 0.5),

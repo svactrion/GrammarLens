@@ -33,6 +33,8 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
 import 'package:grammar_lens/widgets/weak_spot_card.dart';
+
+import 'support/l10n_support.dart';
 import 'support/celebration_support.dart';
 
 /// Records `modeSelected` calls instead of the real (best-effort, silently
@@ -1205,7 +1207,8 @@ void main() {
       await pumpHome(tester);
       await revealStrip(tester);
       for (final topic in kTopics) {
-        expect(find.text(topic.title), findsOneWidget, reason: topic.title);
+        expect(find.text(topic.title(en)), findsOneWidget,
+            reason: topic.title(en));
       }
       expect(find.text('Tenses'), findsNothing);
       expect(find.text('Prepositions'), findsNothing);
@@ -1221,7 +1224,7 @@ void main() {
       await revealStrip(tester);
       expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
 
-      await tester.tap(find.text(kTopics.first.title));
+      await tester.tap(find.text(kTopics.first.title(en)));
       await tester.pumpAndSettle();
 
       expect(find.byType(TopicPracticeScreen), findsNothing);
@@ -1247,7 +1250,7 @@ void main() {
       await revealStrip(tester);
       expect(find.byIcon(Icons.lock_rounded), findsNothing);
 
-      await tester.tap(find.text(kTopics.first.title));
+      await tester.tap(find.text(kTopics.first.title(en)));
       await tester.pumpAndSettle();
       expect(find.byType(TopicPracticeScreen), findsOneWidget);
 
@@ -1270,7 +1273,7 @@ void main() {
       await tester.pump();
       expect(find.byIcon(Icons.lock_rounded), findsNothing);
 
-      await tester.tap(find.text(kTopics.first.title));
+      await tester.tap(find.text(kTopics.first.title(en)));
       await tester.pumpAndSettle();
       expect(find.byType(TopicPracticeScreen), findsOneWidget);
     });
@@ -1287,7 +1290,8 @@ void main() {
           matching: find.byType(Scrollable));
       final stripPosition = tester.state<ScrollableState>(strip).position;
 
-      await tester.drag(find.text(kTopics.first.title), const Offset(-200, 0));
+      await tester.drag(
+          find.text(kTopics.first.title(en)), const Offset(-200, 0));
       await tester.pumpAndSettle();
 
       expect(stripPosition.pixels, greaterThan(0));
