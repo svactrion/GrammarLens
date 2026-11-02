@@ -14119,3 +14119,11 @@ Docs only.
 - **[Decision — owner]** B6 (the Arabic RTL pass and the narrow-screen / large-text checks) is closed with no fixes needed; B3's RTL preparation is checked with it.
 - **[Docs]** `1.4.0-plan.md`: B5's device item done, B6 ticked; Phase 6's repo cleanup ticked (the owner deleted `screenshots/1.2.0/marketing/`). Roadmap: a B5/B6 entry under "1.4.0 (planned)" and a note on B3's RTL commit.
 - **[Open]** B5: the owner's sign-off on the seven back-translation tables is not recorded.
+
+## 2026-11-03 (1.4.0 release prepared: version 1.4.0+7, steps and What's New drafts; not built)
+
+No IPA built and nothing uploaded: the owner builds.
+
+- **[Release]** `pubspec.yaml` `1.3.0+6` → `1.4.0+7`. *Why 7:* the highest build in App Store Connect is 6 (`1.3.0+6`, live). Checked: the version lives only in `pubspec.yaml` (`Info.plist` reads `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)`; no test or `lib/` file pins it); `config/prod.json` has `PROXY_BASE_URL`, `APP_TOKEN` and `REVENUECAT_API_KEY` set (values not printed); `ITSAppUsesNonExemptEncryption = false`; Flutter 3.44.6.
+- **[Docs]** `docs/1.4.0-release-steps.md`: the open items that block Submission; the build (`flutter pub get`, `flutter analyze`, `flutter test`, `./scripts/preflight.sh`, `flutter build ipa --release --dart-define-from-file=config/prod.json`); reading version and build from the archive's `Info.plist`; `./scripts/release_ipa_check.sh` on the IPA; `CFBundleLocalizations` in the bundle; Transporter; the App Store Connect checklist for a localized update (version 1.4.0, eight localizations, the four page findings, App Review); What's New drafts in the eight languages from the ARB terms (AI drafts, not native-reviewed). Plan Phase 5's version item ticked; roadmap's "1.4.0 (planned)" line updated.
+- **[Open — owner]** The build and upload; the items in the steps file's §0 (device checks for B1–B4 and B10.3/B10.4, the back-translation sign-offs, `ui_language` in Firebase, the Phase 5 checks); Phase 4's localized screenshots and descriptions.

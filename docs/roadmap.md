@@ -318,7 +318,8 @@ Plan: [`1.4.0-plan.md`](1.4.0-plan.md). *(Until 2026-10-23 this heading
 was "Next build after 1.3.0 build 6 (version not set)".)*
 
 Code on `main` that is **not in build 6** (in App Store review) and goes
-into the next build. Version bump and build: owner, not started.
+into the next build. Version bumped to `1.4.0+7` (2026-11-03); build and
+upload: owner, not started ([`1.4.0-release-steps.md`](1.4.0-release-steps.md)).
 
 - **App Review audit fixes (2026-10-20;
   `docs/app-review-audit-2026-10.md`, findings 1 and 2):**
