@@ -13873,3 +13873,56 @@ Plan: `docs/1.4.0-plan.md` B3; Batch 0: `docs/1.4.0-b3-batch0-report.md`
 - **[Open]** Device check (owner): Profile → Appearance → Language, the
   picker, light and dark, at Large text. Then B3 commits 2 (the folding)
   and 3 (the RTL preparation).
+
+## 2026-11-02 (1.4.0 B3, commit 2 of 3: the client half of the keyboard folding)
+
+Plan: `docs/1.4.0-plan.md` B3, D3; Batch 0:
+`docs/1.4.0-b3-batch0-report.md` §5, §8 Q8; the proxy half:
+`docs/1.4.0-server-batch0-report.md` §2.2 (built 2026-10-31, not
+deployed). No proxy change, no deploy.
+
+- **[Engineering]** `lib/utils/answer_matching.dart`: the six-letter
+  Turkish table is replaced by the proxy's eight-class table
+  (`KEYBOARD_VARIANT_FOLD` in `proxy/src/shared_daily_test.ts`): dotless ı;
+  the precomposed Latin letters with a diacritic, `ß` → `ss`, `æ` → `ae`,
+  `œ` → `oe`; four apostrophe look-alikes and six quotation marks; six
+  dashes; the Arabic comma and question mark and the ideographic full
+  stop; `¿ ¡` removed; the non-breaking and ideographic spaces; the
+  zero-width characters, direction marks and the byte-order mark removed;
+  plus the full-width ASCII and the two Arabic digit rows by range. The
+  fold runs over code points (`runes`; the proxy's `Array.from`), collapses
+  the spaces a mapping doubled, trims, and drops one trailing `.`, `!` or
+  `?` when the input ended with a full-width or Arabic mark. The invisible
+  and look-alike characters are written as `\u` escapes in the source.
+- **[Engineering] The note** (report §5.2, §8 Q8): the fold can change
+  length, so characters are no longer paired by position. The note names
+  the learner's characters whose fold differs, in order, once each:
+  `You typed "ı", "ü" — your keyboard's versions of "i", "u". Not a
+  grammar mistake.`; for added characters `Your keyboard added "¡" — not a
+  grammar mistake.` (an invisible mark is named "an invisible
+  character"); both clauses when both happen; more than three characters
+  are shown as three and "…" (a full-width answer). When the learner's
+  answer has nothing to name (only a non-plain key can cause that; every
+  key is plain), a general sentence. Still two sentences, so B9's
+  formatter lays the composed card out as before.
+- **[Unchanged on purpose]** Where the fold applies: only
+  `checkDailyTestAnswer`'s keyboard-variant branch and its folded pass over
+  the accepted answers. Not in B8's blank guard, not in "You wrote", not
+  before the scorer request: `/v1/score-answers` takes the answer as typed
+  and does not fold; the D3 scoring prompt's keyboard paragraph is what
+  makes the model tolerate variants.
+- **[Tests]** `test/shared_grading_fixture_test.dart` reads
+  `proxy/test/fixtures/keyboard_folding.json`: the nine class names, all
+  43 cases, every expected value a fixed point; the proxy suite already
+  reads the same file. `answer_matching_test.dart`: the note's clauses,
+  singular and plural, full-width answers and the trailing full-width
+  mark, an added and an invisible mark, `ß` against `ss`, a Hangul answer
+  stays wrong, a full-width accepted answer, code points over UTF-16
+  units; the old non-plain-key case now expects the general sentence. New
+  `plain_keys_test.dart`: every day-0 and pool key and accepted answer
+  folds to itself (the gate rule's client twin). Two result-screen tests
+  look for the new wording. `flutter analyze` clean; **2275 tests
+  passed**.
+- **[Open]** Device check (owner): a Daily Test answer typed with a
+  Japanese full-width keyboard or with an accent shows "Correct" and the
+  note. Then B3 commit 3 (the RTL preparation).

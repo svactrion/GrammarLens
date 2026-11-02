@@ -439,6 +439,16 @@ into the next build. Version bump and build: owner, not started.
     wait on its pending list for B4.
   - Verified: `flutter analyze` clean, full test suite passed (2218).
     **Not checked on a device.**
+- **1.4.0 B3, commit 2 of 3 (2026-11-02):**
+  - **Keyboard folding for the seven languages' keyboards** in the Daily
+    Test's local matching: full-width letters (ja, ko), accented letters,
+    dotless ı, look-alike apostrophes, quotes and dashes, Arabic digits and
+    punctuation, Spanish inverted marks and invisible marks count as the
+    plain character, the same rule as the proxy (one shared fixture, 43
+    cases). The note says which characters the keyboard typed differently
+    or added; still "Correct", never "Needs work".
+  - Verified: `flutter analyze` clean, full test suite passed (2275).
+    **Not checked on a device.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 

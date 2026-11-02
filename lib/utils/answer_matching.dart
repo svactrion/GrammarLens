@@ -22,60 +22,159 @@ String normalizeAnswer(String raw) {
   return collapsed.replaceFirst(RegExp(r'[.!?]$'), '');
 }
 
-/// Maps each Latin letter a Turkish keyboard types as a visually distinct
-/// character — dotless ı, dotted İ, ş, ğ, ç, ö, ü — to the plain-ASCII
-/// letter it's a variant of. None of these are ever a grammatical
-/// distinction in English ("cookıng" and "cooking" are the same word), so
-/// folding them lets an exact-match comparison treat the two as identical
-/// instead of a spelling mismatch.
+/// Characters a learner's keyboard or autocorrect produces for a plain
+/// character, mapped to that character (1.4.0 D3, owner 2026-10-31;
+/// docs/1.4.0-server-batch0-report.md §2.2; client half in B3). A closed
+/// table in eight classes, not fuzzy matching: every entry is a variant of
+/// the same letter or mark, never a different word. Full-width ASCII and
+/// the two Arabic digit rows are handled by range in [_foldRune].
 ///
-/// Applied *after* [normalizeAnswer], which already lowercases — Dart's own
-/// `String.toLowerCase()` already collapses İ/I to plain `i` (verified: it
-/// does not produce the two-codepoint "i + combining dot" some other
-/// runtimes give Turkish `İ`), so this table only needs the already-lower
-/// Turkish letters that survive that step.
+/// The same table as the proxy's `KEYBOARD_VARIANT_FOLD`
+/// (`proxy/src/shared_daily_test.ts`); `proxy/test/fixtures/keyboard_folding.json`
+/// is the contract both sides are tested against
+/// (`test/shared_grading_fixture_test.dart` here). Every key is plain ASCII
+/// English (the proxy gate's `correct_answer_not_plain` rule), so a fold
+/// only ever moves a learner's text towards a key, never between two
+/// English answers.
 ///
-/// Deliberately a small, fixed, closed set — NOT a general edit-distance or
-/// fuzzy match. A real one-character grammar difference ("stay" vs.
-/// "stays") must still count as wrong; only these specific keyboard-layout
-/// substitutions fold, nothing else.
+/// Applied *after* [normalizeAnswer], which already lowercases (Dart's
+/// `toLowerCase` collapses `İ` to plain `i`) and turns every Unicode space
+/// (non-breaking, ideographic, the byte-order mark) into a plain one; the
+/// space entries are kept anyway so the table matches the proxy's.
 const Map<String, String> _keyboardVariantFold = {
+  // Dotless i (tr): not a decomposition, so listed on its own.
   'ı': 'i',
-  'ş': 's',
-  'ğ': 'g',
-  'ç': 'c',
-  'ö': 'o',
-  'ü': 'u',
+  // Precomposed Latin letters with a diacritic (es, pt-BR, de, tr, and the
+  // long-press pop-ups of every iOS keyboard).
+  'á': 'a', 'à': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', //
+  'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e', //
+  'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i', //
+  'ó': 'o', 'ò': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o', //
+  'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u', //
+  'ý': 'y', 'ÿ': 'y', 'ñ': 'n', 'ç': 'c', 'ş': 's', 'ğ': 'g', //
+  'ß': 'ss', 'æ': 'ae', 'œ': 'oe',
+  // Quotation marks and apostrophes [normalizeAnswer] does not straighten.
+  '\u02BC': "'", '\u2032': "'", '\u00B4': "'", '`': "'", //
+  '«': '"', '»': '"', '「': '"', '」': '"', '『': '"', '』': '"',
+  // Dashes (hyphen, non-breaking hyphen, figure dash, en and em dash, bar).
+  '\u2010': '-', '\u2011': '-', '\u2012': '-', '\u2013': '-', //
+  '\u2014': '-', '\u2015': '-',
+  // Arabic comma and question mark (ar); the ideographic full stop (ja).
+  '\u060C': ',', '\u061F': '?', '\u3002': '.',
+  // Spanish inverted marks (es): nothing to match them against.
+  '¿': '', '¡': '',
+  // Non-breaking and ideographic spaces (ja, ko, ar; iOS after a stop).
+  '\u00A0': ' ', '\u3000': ' ',
+  // Zero-width characters, direction marks and the byte-order mark.
+  '\u200B': '', '\u200C': '', '\u200D': '', '\u200E': '', '\u200F': '', //
+  '\uFEFF': '',
 };
 
-/// Folds the Turkish-keyboard letter variants in [_keyboardVariantFold],
-/// leaving every other character untouched. See that table's doc comment
-/// for why this specific, closed set and nothing broader.
-String foldKeyboardVariants(String input) =>
-    input.split('').map((ch) => _keyboardVariantFold[ch] ?? ch).join();
+/// A full-width `.`, `!` or `?`, the ideographic full stop or the Arabic
+/// question mark at the end: the full-width form of the one trailing mark
+/// [normalizeAnswer] already drops.
+final RegExp _trailingFullWidthMark =
+    RegExp('[\u3002\uFF0E\uFF01\uFF1F\u061F]\$');
 
-/// Builds the short, non-accusatory note shown when an answer only differs
-/// from the correct one by [foldKeyboardVariants]-equivalent letters —
-/// naming the specific letter(s) involved rather than a generic "close
-/// enough" message, since a learner should still notice their keyboard
-/// typed something different, just not something wrong. [normalizedUser]
-/// and [normalizedCorrect] must already be equal length (guaranteed by the
-/// fold-equality check that calls this — folding never changes length).
-String _keyboardVariantNote(String normalizedUser, String normalizedCorrect) {
-  final userChars = normalizedUser.split('');
-  final correctChars = normalizedCorrect.split('');
-  final pairs = <String, String>{};
-  for (var i = 0; i < userChars.length; i++) {
-    if (userChars[i] != correctChars[i]) {
-      pairs[userChars[i]] = correctChars[i];
+String _foldRune(int rune) {
+  final char = String.fromCharCode(rune);
+  final mapped = _keyboardVariantFold[char];
+  if (mapped != null) return mapped;
+  // Full-width ASCII (ja, ko): ！ … ～ → ! … ~.
+  if (rune >= 0xFF01 && rune <= 0xFF5E) {
+    return String.fromCharCode(rune - 0xFF01 + 0x21);
+  }
+  // Arabic-Indic and Eastern Arabic-Indic digits (ar).
+  if (rune >= 0x0660 && rune <= 0x0669) {
+    return String.fromCharCode(rune - 0x0660 + 0x30);
+  }
+  if (rune >= 0x06F0 && rune <= 0x06F9) {
+    return String.fromCharCode(rune - 0x06F0 + 0x30);
+  }
+  return char;
+}
+
+/// The keyboard-variant fold, the same rule as the proxy's: every variant
+/// character mapped ([_keyboardVariantFold], [_foldRune]), runs of spaces a
+/// mapping may have doubled collapsed, the ends trimmed, and the one
+/// trailing mark dropped when it was full-width (and so survived
+/// [normalizeAnswer]). Code points, not UTF-16 units, are folded. The
+/// result can be shorter or longer than the input (`ß`, removed marks).
+String foldKeyboardVariants(String input) {
+  final mapped =
+      input.runes.map(_foldRune).join().replaceAll(RegExp(' {2,}'), ' ').trim();
+  return _trailingFullWidthMark.hasMatch(input)
+      ? mapped.replaceFirst(RegExp(r'[.!?]$'), '')
+      : mapped;
+}
+
+/// Characters with no visible form of their own (zero-width and direction
+/// marks, the byte-order mark, the special spaces), named as such in the
+/// note rather than quoted.
+bool _isInvisible(String char) {
+  final rune = char.runes.first;
+  return (rune >= 0x200B && rune <= 0x200F) ||
+      rune == 0xFEFF ||
+      rune == 0x00A0 ||
+      rune == 0x3000;
+}
+
+/// How many character pairs the note names before it shortens to "…".
+const int _noteMaxPairs = 3;
+
+/// The short, non-accusatory note shown when an answer differs from the
+/// correct one only by [foldKeyboardVariants]: it names the characters of
+/// the learner's [normalizedUser] whose fold differs from themselves, in
+/// order, each once, with what they fold to, so a learner still notices
+/// their keyboard typed something different, just not something wrong.
+///
+/// The fold can change length (`ß`, removed marks), so characters are not
+/// paired by position (1.4.0 B3; report §5.2). Two clauses: one for
+/// characters typed in another form, one for characters the keyboard added
+/// (Spanish inverted marks, invisible marks). When the learner's answer
+/// has no such character (only a non-plain key could cause that, and keys
+/// are plain), a general sentence.
+String _keyboardVariantNote(String normalizedUser) {
+  final typed = <String, String>{};
+  final added = <String>[];
+  var invisible = false;
+  for (final rune in normalizedUser.runes) {
+    final char = String.fromCharCode(rune);
+    final folded = _foldRune(rune);
+    if (folded == char) continue;
+    if (folded.trim().isEmpty) {
+      if (_isInvisible(char)) {
+        invisible = true;
+      } else if (!added.contains(char)) {
+        added.add(char);
+      }
+    } else {
+      typed.putIfAbsent(char, () => folded);
     }
   }
-  final plural = pairs.length > 1;
-  final typed = pairs.keys.join('", "');
-  final same = pairs.values.join('", "');
-  return 'You typed "$typed" — that\'s the same letter${plural ? 's' : ''} '
-      'as "$same" here, just a different keyboard character. Not a '
-      'grammar mistake.';
+  String quoted(Iterable<String> chars) {
+    final list = chars.toList();
+    final shown = list.take(_noteMaxPairs).map((c) => '"$c"').join(', ');
+    return list.length > _noteMaxPairs ? '$shown …' : shown;
+  }
+
+  final addedParts = [
+    if (added.isNotEmpty) quoted(added),
+    if (invisible) 'an invisible character',
+  ];
+  final addedClause = addedParts.isEmpty
+      ? null
+      : 'Your keyboard added ${addedParts.join(' and ')}';
+  if (typed.isEmpty && addedClause == null) {
+    return 'Your answer matches apart from keyboard characters. Not a '
+        'grammar mistake.';
+  }
+  if (typed.isEmpty) return '$addedClause — not a grammar mistake.';
+  final versions = typed.length == 1 ? 'version' : 'versions';
+  final typedClause = 'You typed ${quoted(typed.keys)} — your keyboard\'s '
+      '$versions of ${quoted(typed.values)}.';
+  if (addedClause == null) return '$typedClause Not a grammar mistake.';
+  return '$typedClause $addedClause — not a grammar mistake.';
 }
 
 /// How a checked Daily Test answer matched, from most to least specific.
@@ -83,8 +182,10 @@ enum AnswerMatchKind {
   /// Matched the question's correct answer exactly.
   correct,
 
-  /// Matched the correct answer once Turkish-keyboard letter variants
-  /// (ı/i, İ/I, ş/s, ğ/g, ç/c, ö/o, ü/u) are folded to the same letter —
+  /// Matched the correct answer once keyboard variants
+  /// ([foldKeyboardVariants]: full-width letters, accented letters, dotless
+  /// ı, look-alike quotes and dashes, Arabic digits, inverted marks,
+  /// invisible marks) are folded to the plain character —
   /// substantively correct, kept as its own kind (rather than merged into
   /// [correct]) only so callers can show [AnswerMatchResult.comment] as a
   /// short explanatory note instead of silently passing over the
@@ -174,7 +275,7 @@ AnswerMatchResult checkDailyTestAnswer(
     return AnswerMatchResult(
       kind: AnswerMatchKind.keyboardVariant,
       correctAnswer: question.correctAnswer,
-      comment: _keyboardVariantNote(normalizedUser, normalizedCorrect),
+      comment: _keyboardVariantNote(normalizedUser),
     );
   }
 

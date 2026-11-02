@@ -117,7 +117,9 @@ void main() {
     });
   });
 
-  group('Turkish-keyboard letter variants (docs/build-log.md, 2026-09-07)', () {
+  group(
+      'keyboard variants (Turkish letters 2026-09-07; the eight classes '
+      '1.4.0 D3 / B3)', () {
     final keyboardQuestion = DailyTestQuestion(
       item: const PracticeItem(
         id: 'kb1',
@@ -202,25 +204,120 @@ void main() {
         item: const PracticeItem(
           id: 'kb3',
           type: PracticeItemType.fillInBlank,
+          instruction: 'Fill in the blank: I want ___ sugar.',
+        ),
+        topicId: 'gerundVsInfinitive',
+        correctAnswer: 'to give up',
+        commonWrongAnswers: const [],
+      );
+
+      final result = checkDailyTestAnswer(multiQuestion, 'to gıve üp');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+      expect(
+          result.comment,
+          'You typed "ı", "ü" — your keyboard\'s versions of "i", "u". Not '
+          'a grammar mistake.');
+    });
+
+    test('one character: "version", singular', () {
+      final result = checkDailyTestAnswer(keyboardQuestion, 'cookıng');
+      expect(
+          result.comment,
+          'You typed "ı" — your keyboard\'s version of "i". Not a grammar '
+          'mistake.');
+    });
+
+    test('a full-width answer (ja, ko IME) is a keyboard variant', () {
+      final result = checkDailyTestAnswer(keyboardQuestion, 'ｃｏｏｋｉｎｇ');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+      // More than three characters: the note shows three and "…".
+      expect(
+          result.comment,
+          'You typed "ｃ", "ｏ", "ｋ" … — your keyboard\'s versions of "c", '
+          '"o", "k" …. Not a grammar mistake.');
+    });
+
+    test('a full-width question mark at the end is dropped like "?"', () {
+      expect(checkDailyTestAnswer(keyboardQuestion, 'cooking？').kind,
+          AnswerMatchKind.keyboardVariant);
+    });
+
+    test('an added mark gets its own clause', () {
+      final result = checkDailyTestAnswer(keyboardQuestion, '¡cooking');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+      expect(
+          result.comment, 'Your keyboard added "¡" — not a grammar mistake.');
+    });
+
+    test('an invisible mark is named, not quoted', () {
+      final result = checkDailyTestAnswer(keyboardQuestion, 'cook\u200Bing');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+      expect(
+          result.comment,
+          'Your keyboard added an invisible character — not a grammar '
+          'mistake.');
+    });
+
+    test('both clauses when both happen', () {
+      final result = checkDailyTestAnswer(keyboardQuestion, '¿cookıng');
+      expect(
+          result.comment,
+          'You typed "ı" — your keyboard\'s version of "i". Your keyboard '
+          'added "¿" — not a grammar mistake.');
+    });
+
+    test('ß against ss changes the length and still names the letter', () {
+      final question = DailyTestQuestion(
+        item: const PracticeItem(
+          id: 'kb4',
+          type: PracticeItemType.fillInBlank,
+          instruction: 'Fill in the blank: Please ___ the salt.',
+        ),
+        topicId: 'modalVerbs',
+        correctAnswer: 'pass',
+        commonWrongAnswers: const [],
+      );
+      final result = checkDailyTestAnswer(question, 'paß');
+      expect(result.kind, AnswerMatchKind.keyboardVariant);
+      expect(result.comment, contains('"ß"'));
+      expect(result.comment, contains('"ss"'));
+    });
+
+    test('an answer in another script is not folded into English', () {
+      expect(checkDailyTestAnswer(keyboardQuestion, '요리').kind,
+          AnswerMatchKind.fallback);
+    });
+
+    test(
+        'a non-plain key with a plain answer (never published: keys are '
+        'plain) gets the general sentence', () {
+      final question = DailyTestQuestion(
+        item: const PracticeItem(
+          id: 'kb5',
+          type: PracticeItemType.fillInBlank,
           instruction: 'Fill in the blank: This is a ___ topic.',
         ),
         topicId: 'articles',
         correctAnswer: 'değişik',
         commonWrongAnswers: const [],
       );
-
-      final result = checkDailyTestAnswer(multiQuestion, 'degisik');
+      final result = checkDailyTestAnswer(question, 'degisik');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
-      // Both differing letter pairs (ğ/g and ş/s) named, not just the
-      // first one found.
-      expect(result.comment, contains('ğ'));
-      expect(result.comment, contains('ş'));
+      expect(
+          result.comment,
+          'Your answer matches apart from keyboard characters. Not a '
+          'grammar mistake.');
     });
   });
 
   group('foldKeyboardVariants', () {
     test('folds each Turkish letter to its plain-ASCII variant', () {
       expect(foldKeyboardVariants('ışığı çözüyor'), 'isigi cozuyor');
+    });
+
+    test('folds by code point, not by UTF-16 unit', () {
+      // An astral character passes through whole.
+      expect(foldKeyboardVariants('go 🙂'), 'go 🙂');
     });
 
     test('leaves plain ASCII and unrelated characters untouched', () {
@@ -374,6 +471,12 @@ void main() {
     test('a keyboard variant of an alternative is accepted too', () {
       final q = withAlternatives(const ['is used to going']);
       expect(checkDailyTestAnswer(q, 'ıs used to going').kind,
+          AnswerMatchKind.accepted);
+    });
+
+    test('a full-width alternative is accepted too (1.4.0 B3)', () {
+      final q = withAlternatives(const ['is used to going']);
+      expect(checkDailyTestAnswer(q, 'ｉｓ　ｕｓｅｄ　ｔｏ　ｇｏｉｎｇ').kind,
           AnswerMatchKind.accepted);
     });
 

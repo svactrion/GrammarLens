@@ -388,7 +388,7 @@ void main() {
           plainTextOfWidget(tester.widget<Text>(
               find.byKey(FeedbackText.paragraphKey(i), skipOffstage: false))),
       ];
-      expect(shown[0], contains('keyboard character'));
+      expect(shown[0], contains("your keyboard's version"));
       expect(shown[1], 'Not a grammar mistake.');
       expect(shown[2], "After 'enjoy', the verb takes -ing.");
       expect(find.byKey(FeedbackText.paragraphKey(3), skipOffstage: false),
@@ -541,7 +541,7 @@ void main() {
 
       expect(find.text('Correct'), findsOneWidget);
       expect(find.text('Needs work'), findsNothing);
-      expect(find.textContaining('keyboard character'), findsOneWidget);
+      expect(find.textContaining("your keyboard's version"), findsOneWidget);
     });
 
     testWidgets(

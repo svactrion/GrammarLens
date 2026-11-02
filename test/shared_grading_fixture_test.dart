@@ -7,9 +7,10 @@ import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/utils/answer_matching.dart';
 
-/// The Dart side of the two fixtures the proxy also tests against
-/// (docs/1.1.0-shared-daily-test-quality.md §8.3): the proxy's TypeScript
-/// port of the normalization and of the grading order must agree with
+/// The Dart side of the three fixtures the proxy also tests against
+/// (docs/1.1.0-shared-daily-test-quality.md §8.3; the keyboard fold from
+/// 1.4.0 B3): the proxy's TypeScript port of the normalization, of the
+/// eight-class keyboard fold and of the grading order must agree with
 /// `normalizeAnswer`, `foldKeyboardVariants` and `checkDailyTestAnswer`, or
 /// one of the two suites turns red.
 Map<String, dynamic> _fixture(String name) =>
@@ -35,6 +36,41 @@ void main() {
         expect(foldKeyboardVariants(c['input'] as String), c['expected']);
       });
     }
+  });
+
+  group('keyboard_folding.json (1.4.0 D3; the client half in B3)', () {
+    final fixture = _fixture('keyboard_folding.json');
+    final cases = (fixture['cases'] as List).cast<Map>();
+
+    test('has the 43 cases in the eight classes and the unchanged ones', () {
+      expect(cases.length, greaterThanOrEqualTo(43));
+      expect(cases.map((c) => c['class']).toSet(), {
+        'fullwidth',
+        'diacritics',
+        'dotless_i',
+        'quotes',
+        'spaces_and_marks',
+        'dashes',
+        'arabic',
+        'spanish',
+        'unchanged',
+      });
+    });
+
+    for (final c in cases) {
+      test('${c['class']}: foldKeyboardVariants(${jsonEncode(c['input'])})',
+          () {
+        expect(foldKeyboardVariants(c['input'] as String), c['expected']);
+      });
+    }
+
+    test('every expected value is a fixed point of the fold', () {
+      for (final c in cases) {
+        final expected = c['expected'] as String;
+        expect(foldKeyboardVariants(expected), expected,
+            reason: jsonEncode(expected));
+      }
+    });
   });
 
   group('daily_test_grading.json', () {
