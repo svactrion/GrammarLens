@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/error_entry.dart';
 import '../models/practice_set.dart';
 import '../models/scoring_result.dart';
@@ -140,7 +141,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       // Don't let a storage failure pass silently — without this the Review
       // tab looks broken later with no clue why (errors were never recorded).
       if (!mounted) return;
-      AppMessenger.show('Could not save this to your error profile: $e');
+      AppMessenger.show(context.l10n.resultsSaveFailed('$e'));
     }
   }
 
@@ -153,11 +154,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
       for (final item in widget.practiceSet.items) item.id: item,
     };
     final scoreText = result.skippedCount > 0
-        ? '${result.correctCount}/${result.totalCount} correct '
-            '· ${result.skippedCount} skipped'
-        : '${result.correctCount}/${result.totalCount} correct';
+        ? context.l10n.resultsScoreSkipped(
+            result.correctCount, result.totalCount, result.skippedCount)
+        : context.l10n.resultsScore(result.correctCount, result.totalCount);
     return BrandScaffold(
-      title: const PageTitle('Results'),
+      title: PageTitle(context.l10n.resultsTitle),
       bandBottom: ResultScoreBand.sized(context, text: scoreText),
       // "Back to topics" stays in view however far the results are
       // scrolled, as on Daily Test results (final screens A3). A free user
@@ -169,11 +170,11 @@ class _ResultsScreenState extends State<ResultsScreen> {
         child: _showUpsell
             ? OutlinedButton(
                 onPressed: _backToTopics,
-                child: const Text('Back to topics'),
+                child: Text(context.l10n.resultsBackToTopics),
               )
             : FilledButton(
                 onPressed: _backToTopics,
-                child: const Text('Back to topics'),
+                child: Text(context.l10n.resultsBackToTopics),
               ),
       ),
       children: [
@@ -211,10 +212,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       Flexible(
                         child: Text(
                           item.isSkipped
-                              ? 'Skipped'
+                              ? context.l10n.resultSkipped
                               : item.isCorrect
-                                  ? 'Correct'
-                                  : 'Needs work',
+                                  ? context.l10n.resultCorrect
+                                  : context.l10n.resultNeedsWork,
                           style: theme.textTheme.labelLarge
                               ?.withWeight(FontWeight.w600)
                               .copyWith(

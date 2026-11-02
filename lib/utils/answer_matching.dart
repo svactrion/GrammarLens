@@ -119,22 +119,34 @@ bool _isInvisible(String char) {
       rune == 0x3000;
 }
 
-/// How many character pairs the note names before it shortens to "…".
-const int _noteMaxPairs = 3;
-
-/// The short, non-accusatory note shown when an answer differs from the
-/// correct one only by [foldKeyboardVariants]: it names the characters of
-/// the learner's [normalizedUser] whose fold differs from themselves, in
-/// order, each once, with what they fold to, so a learner still notices
-/// their keyboard typed something different, just not something wrong.
+/// What a keyboard-variant answer's note names (1.4.0 B3, B4.3): the
+/// characters of the learner's answer whose fold differs from themselves,
+/// in order, each once. The sentence itself is interface text, built on
+/// the results card from the strings (`keyboardVariantNoteText`,
+/// `lib/l10n/labels.dart`); this is the data.
 ///
 /// The fold can change length (`ß`, removed marks), so characters are not
-/// paired by position (1.4.0 B3; report §5.2). Two clauses: one for
-/// characters typed in another form, one for characters the keyboard added
-/// (Spanish inverted marks, invisible marks). When the learner's answer
-/// has no such character (only a non-plain key could cause that, and keys
-/// are plain), a general sentence.
-String _keyboardVariantNote(String normalizedUser) {
+/// paired by position (report §5.2). [typed] are characters typed in
+/// another form, each with the plain character it stands for; [added] are
+/// characters the keyboard added (Spanish inverted marks), [invisible]
+/// whether it also added an invisible mark. All empty when the learner's
+/// answer has nothing to name (only a non-plain key could cause that, and
+/// keys are plain).
+class KeyboardVariantNote {
+  final List<(String typed, String plain)> typed;
+  final List<String> added;
+  final bool invisible;
+
+  const KeyboardVariantNote({
+    this.typed = const [],
+    this.added = const [],
+    this.invisible = false,
+  });
+
+  bool get isEmpty => typed.isEmpty && added.isEmpty && !invisible;
+}
+
+KeyboardVariantNote _keyboardVariantNote(String normalizedUser) {
   final typed = <String, String>{};
   final added = <String>[];
   var invisible = false;
@@ -152,29 +164,11 @@ String _keyboardVariantNote(String normalizedUser) {
       typed.putIfAbsent(char, () => folded);
     }
   }
-  String quoted(Iterable<String> chars) {
-    final list = chars.toList();
-    final shown = list.take(_noteMaxPairs).map((c) => '"$c"').join(', ');
-    return list.length > _noteMaxPairs ? '$shown …' : shown;
-  }
-
-  final addedParts = [
-    if (added.isNotEmpty) quoted(added),
-    if (invisible) 'an invisible character',
-  ];
-  final addedClause = addedParts.isEmpty
-      ? null
-      : 'Your keyboard added ${addedParts.join(' and ')}';
-  if (typed.isEmpty && addedClause == null) {
-    return 'Your answer matches apart from keyboard characters. Not a '
-        'grammar mistake.';
-  }
-  if (typed.isEmpty) return '$addedClause — not a grammar mistake.';
-  final versions = typed.length == 1 ? 'version' : 'versions';
-  final typedClause = 'You typed ${quoted(typed.keys)} — your keyboard\'s '
-      '$versions of ${quoted(typed.values)}.';
-  if (addedClause == null) return '$typedClause Not a grammar mistake.';
-  return '$typedClause $addedClause — not a grammar mistake.';
+  return KeyboardVariantNote(
+    typed: [for (final e in typed.entries) (e.key, e.value)],
+    added: added,
+    invisible: invisible,
+  );
 }
 
 /// How a checked Daily Test answer matched, from most to least specific.
@@ -187,7 +181,7 @@ enum AnswerMatchKind {
   /// ı, look-alike quotes and dashes, Arabic digits, inverted marks,
   /// invisible marks) are folded to the plain character —
   /// substantively correct, kept as its own kind (rather than merged into
-  /// [correct]) only so callers can show [AnswerMatchResult.comment] as a
+  /// [correct]) only so callers can show [AnswerMatchResult.keyboardNote] as a
   /// short explanatory note instead of silently passing over the
   /// difference. Never written to the error profile, never shown as
   /// "Needs work" — this is not a grammar mistake.
@@ -222,11 +216,15 @@ class AnswerMatchResult {
   final AnswerMatchKind kind;
   final String correctAnswer;
 
-  /// Set when [kind] is [AnswerMatchKind.commonWrong] (the matched wrong
-  /// answer's pre-written comment) or [AnswerMatchKind.keyboardVariant]
-  /// (the short note naming which keyboard characters differed). Null for
-  /// [AnswerMatchKind.correct] and [AnswerMatchKind.fallback].
+  /// Set when [kind] is [AnswerMatchKind.commonWrong]: the matched wrong
+  /// answer's pre-written comment (content, English by 1.4.0 D2). Null
+  /// otherwise.
   final String? comment;
+
+  /// Set when [kind] is [AnswerMatchKind.keyboardVariant]: which keyboard
+  /// characters differed, for the card's note (1.4.0 B4.3: the sentence is
+  /// interface text, built where the strings are).
+  final KeyboardVariantNote? keyboardNote;
 
   /// The alternative from [DailyTestQuestion.acceptedAnswers] that matched;
   /// set only when [kind] is [AnswerMatchKind.accepted].
@@ -236,6 +234,7 @@ class AnswerMatchResult {
     required this.kind,
     required this.correctAnswer,
     this.comment,
+    this.keyboardNote,
     this.acceptedAnswer,
   });
 }
@@ -275,7 +274,7 @@ AnswerMatchResult checkDailyTestAnswer(
     return AnswerMatchResult(
       kind: AnswerMatchKind.keyboardVariant,
       correctAnswer: question.correctAnswer,
-      comment: _keyboardVariantNote(normalizedUser),
+      keyboardNote: _keyboardVariantNote(normalizedUser),
     );
   }
 

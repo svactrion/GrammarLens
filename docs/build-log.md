@@ -13989,3 +13989,7 @@ Plan: `docs/1.4.0-plan.md` B3; Batch 0:
 ## 2026-11-02 (1.4.0 B4.2: onboarding strings to the ARB)
 
 - **[Engineering]** Onboarding, Welcome and the first-launch flow moved to `app_en.arb` (31 keys, English unchanged; the privacy note and "Your data & AI" rows now functions of the strings; "Step {step} of {total}"; the number-word table gone, "Five questions a day." pinned to `DailyTestSet.questionCount` by `test/onboarding_l10n_test.dart`, since gen-l10n allows only =0/=1/=2 plural cases; the guard no longer reads an escape such as `\n` as a letter); pending list 42 → 39; `flutter analyze` clean, 2285 tests passed (one run hit a flake in `debug_panel_test`'s real-SQLite reset, green alone and in three full runs).
+
+## 2026-11-02 (1.4.0 B4.3: the question flow's strings to the ARB)
+
+- **[Engineering]** The question view, hint slider, session header and footer, Daily Test and Practice screens, practice launch and length sheet, both results screens, the mistake card and blank labels moved to `app_en.arb` (82 keys, English unchanged; `colouredBlanks` and `questionTypeLabel` take the strings from their callers; the keyboard-variant note is now data on the match, `KeyboardVariantNote`, rendered by `keyboardVariantNoteText` with the same sentences; the question and length counts as ICU plurals; `PracticeScreen.notSentMessage` and `MistakeBreakdown.leftBlankLabel` replaced by their keys); pending list 39 → 26; `flutter analyze` clean, 2285 tests passed.

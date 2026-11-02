@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 import '../theme.dart';
 
 /// A 44 × 44 icon tile, the Back (top-left) and Close (top-right) controls
@@ -68,7 +69,9 @@ class QuestionHeader extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onBack;
   final VoidCallback onClose;
-  final String closeTooltip;
+
+  /// The close button's tooltip; `commonLeave` ("Leave") when null.
+  final String? closeTooltip;
 
   const QuestionHeader({
     super.key,
@@ -76,7 +79,7 @@ class QuestionHeader extends StatelessWidget {
     this.subtitle,
     required this.onBack,
     required this.onClose,
-    this.closeTooltip = 'Leave',
+    this.closeTooltip,
   });
 
   static const backKey = ValueKey('question_header_back');
@@ -98,7 +101,7 @@ class QuestionHeader extends StatelessWidget {
               key: backKey,
               icon: Icons.arrow_back_rounded,
               onPressed: onBack,
-              tooltip: 'Previous question',
+              tooltip: context.l10n.questionPrevious,
             ),
             const SizedBox(width: 9),
             Expanded(
@@ -132,7 +135,7 @@ class QuestionHeader extends StatelessWidget {
               key: closeKey,
               icon: Icons.close_rounded,
               onPressed: onClose,
-              tooltip: closeTooltip,
+              tooltip: closeTooltip ?? context.l10n.commonLeave,
             ),
           ],
         ),

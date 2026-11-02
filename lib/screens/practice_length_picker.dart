@@ -131,7 +131,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
             ),
             const SizedBox(height: Spacing.lg),
             Text(
-              'How many questions?',
+              context.l10n.lengthPickerTitle,
               // The brief's 800 (1.2.0 Batch 9; was 600).
               style: theme.textTheme.titleLarge?.withWeight(FontWeight.w800),
             ),
@@ -168,15 +168,15 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                 onChanged: _onSliderChanged,
                 semanticFormatterCallback: (value) {
                   final length = PracticeLength.values[value.round()];
-                  return '${length.questionCount} questions, '
-                      '${length.label(context.l10n)}';
+                  return context.l10n.lengthPickerSemantics(
+                      length.questionCount, length.label(context.l10n));
                 },
               ),
             ),
             _LengthLabelRow(selected: _selected),
             const SizedBox(height: Spacing.sm),
             Text(
-              'Drag to set the session length',
+              context.l10n.lengthPickerHint,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: colorScheme.onSurfaceVariant),
@@ -187,7 +187,8 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
               child: FilledButton(
                 style: forwardButtonStyle(context),
                 onPressed: () => Navigator.of(context).pop(_selected),
-                child: Text('Start ${_selected.questionCount} questions'),
+                child: Text(
+                    context.l10n.lengthPickerStart(_selected.questionCount)),
               ),
             ),
           ],

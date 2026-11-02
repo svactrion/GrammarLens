@@ -22,13 +22,15 @@ List<Color> blankColors(Brightness brightness) =>
 /// [text] with each blank's underscores replaced in look (not in width, so
 /// lines wrap as before) by an underline in its colour, blank n in
 /// `colors[n % colors.length]`, numbered from [first] in reading order out
-/// of [total]; [focusedBlank] tinted. VoiceOver reads "blank n of N". The
+/// of [total]; [focusedBlank] tinted. VoiceOver reads [blankLabel]
+/// ("blank n of N", `blankSemantics` in the strings). The
 /// question card and the "YOU WROTE" rows (`MistakeBreakdown`) share it, so
 /// a row's colour points at the same blank on both.
 TextSpan colouredBlanks(
   String text, {
   required List<Color> colors,
   required int total,
+  required String Function(int number, int total) blankLabel,
   int first = 0,
   int? focusedBlank,
   TextStyle? style,
@@ -41,7 +43,7 @@ TextSpan colouredBlanks(
     final color = colors[index % colors.length];
     spans.add(TextSpan(
       text: blank[0],
-      semanticsLabel: 'blank ${index + 1} of $total',
+      semanticsLabel: blankLabel(index + 1, total),
       style: TextStyle(
         color: Colors.transparent,
         decoration: TextDecoration.underline,

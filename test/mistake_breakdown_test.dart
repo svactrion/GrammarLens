@@ -7,6 +7,8 @@ import 'package:grammar_lens/utils/blank_assembly.dart';
 import 'package:grammar_lens/widgets/blank_colors.dart';
 import 'package:grammar_lens/widgets/mistake_breakdown.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/rich_text_support.dart';
 
 /// Regression coverage for docs/design-audit.md, Batch 0 item 1: a skipped
@@ -142,7 +144,7 @@ void main() {
             findsNothing);
         expect(find.text(MistakeBreakdown.noArticleLabel), findsOneWidget);
         expect(find.text('a'), findsOneWidget);
-        expect(find.text(MistakeBreakdown.leftBlankLabel), findsOneWidget);
+        expect(find.text(en.mistakeLeftBlank), findsOneWidget);
         for (var i = 0; i < 3; i++) {
           expect(rowBarColor(tester, i), colors[i], reason: 'row $i');
         }
@@ -157,7 +159,7 @@ void main() {
       final scheme = buildAppTheme(Brightness.light).colorScheme;
       Color? colorOf(String text) =>
           tester.widget<Text>(find.text(text)).style?.color;
-      expect(colorOf(MistakeBreakdown.leftBlankLabel), scheme.onSurfaceVariant);
+      expect(colorOf(en.mistakeLeftBlank), scheme.onSurfaceVariant);
       expect(colorOf('a'), scheme.onSurface);
       expect(colorOf(MistakeBreakdown.noArticleLabel), scheme.onSurface);
     });
@@ -272,8 +274,7 @@ void main() {
         expect(row1.map((s) => s.text), ['the', ' → a']);
         expect(row1.last.style?.color, semantic.onCorrectBackground);
         final row2 = rowSpans(tester, 2);
-        expect(row2.map((s) => s.text),
-            [MistakeBreakdown.leftBlankLabel, ' → the']);
+        expect(row2.map((s) => s.text), [en.mistakeLeftBlank, ' → the']);
         expect(row2.last.style?.color, semantic.onCorrectBackground);
 
         // The check sits only on the accepted row.

@@ -7,6 +7,7 @@ import 'package:flutter/painting.dart';
 import '../models/learning_goal.dart';
 import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
+import '../utils/answer_matching.dart';
 import 'generated/app_localizations.dart';
 
 extension LearningGoalLabels on LearningGoal {
@@ -72,4 +73,40 @@ List<InlineSpan> emphasizedSpans(
   }
   if (i < text.length) spans.add(TextSpan(text: text.substring(i)));
   return spans;
+}
+
+/// How many characters the keyboard note names before it shortens to "…".
+const int _noteMaxCharacters = 3;
+
+/// The Daily Test card's note for a keyboard-variant answer (1.4.0 B3,
+/// B4.3; report §8 Q8): which characters the keyboard typed in another
+/// form, and which it added, then that it is not a grammar mistake.
+String keyboardVariantNoteText(
+    KeyboardVariantNote note, AppLocalizations l10n) {
+  if (note.isEmpty) return l10n.keyboardNoteGeneral;
+  String quoted(Iterable<String> chars) {
+    final list = chars.toList();
+    final shown = list.take(_noteMaxCharacters).map((c) => '"$c"').join(', ');
+    return list.length > _noteMaxCharacters ? '$shown …' : shown;
+  }
+
+  final addedParts = [
+    if (note.added.isNotEmpty) quoted(note.added),
+    if (note.invisible) l10n.keyboardNoteInvisible,
+  ];
+  final added = addedParts.isEmpty
+      ? null
+      : addedParts.length == 1
+          ? l10n.keyboardNoteAdded(addedParts.single)
+          : l10n.keyboardNoteAdded(
+              l10n.keyboardNoteAnd(addedParts[0], addedParts[1]));
+  if (note.typed.isEmpty) return added!;
+  final typed = l10n.keyboardNoteTyped(
+    quoted(note.typed.map((p) => p.$1)),
+    quoted(note.typed.map((p) => p.$2)),
+    note.typed.length,
+  );
+  return added == null
+      ? '$typed ${l10n.keyboardNoteNotAMistake}'
+      : '$typed $added';
 }

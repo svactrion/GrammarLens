@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
+import '../l10n/l10n.dart';
 import '../models/topic.dart';
 import '../theme.dart';
 
@@ -223,8 +224,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
 
   @override
   Widget build(BuildContext context) {
-    final label =
-        'Slide for a hint. ${widget.topic.title}: ${widget.points.join('. ')}.';
+    final label = context.l10n
+        .hintSliderSemantics(widget.topic.title, widget.points.join('. '));
     return IgnorePointer(
       ignoring: widget.collapsed,
       child: Padding(
@@ -239,7 +240,7 @@ class _TopicHintSliderState extends State<TopicHintSlider>
               children: [
                 Semantics(
                   label: label,
-                  hint: 'Touch and hold to show',
+                  hint: context.l10n.hintSliderSemanticsHint,
                   excludeSemantics: true,
                   child: _track(context, value),
                 ),
@@ -309,7 +310,7 @@ class _TopicHintSliderState extends State<TopicHintSlider>
                   child: Opacity(
                     opacity: (1 - value * 2).clamp(0.0, 1.0),
                     child: Text(
-                      'Slide for a hint',
+                      context.l10n.hintSliderLabel,
                       key: TopicHintSlider.labelKey,
                       maxLines: 1,
                       overflow: TextOverflow.fade,

@@ -21,6 +21,8 @@ import 'package:grammar_lens/widgets/practice_step_footer.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
 import 'package:grammar_lens/utils/blank_assembly.dart';
 
+import 'support/l10n_support.dart';
+
 /// App Review audit findings #6 and #7. Submit reads the AI permission
 /// again before the answers leave the device, so a permission withdrawn
 /// during a session sends nothing; and a failed practice request shows a
@@ -157,7 +159,7 @@ void main() {
 
       expect(claude.scoreCalls, 0);
       expect(storage.consentReads, 1);
-      expect(_shownMessage(tester), PracticeScreen.notSentMessage);
+      expect(_shownMessage(tester), en.practiceNotSent);
       expect(find.byType(PracticeScreen), findsOneWidget);
       expect(find.byType(ResultsScreen), findsNothing);
       expect(tester.widget<TextField>(_field).controller!.text,
@@ -172,7 +174,7 @@ void main() {
       await _answerAndSubmit(tester);
 
       expect(claude.scoreCalls, 0);
-      expect(_shownMessage(tester), PracticeScreen.notSentMessage);
+      expect(_shownMessage(tester), en.practiceNotSent);
     });
 
     testWidgets('an unreadable permission fails closed', (tester) async {
@@ -183,7 +185,7 @@ void main() {
       await _answerAndSubmit(tester);
 
       expect(claude.scoreCalls, 0);
-      expect(_shownMessage(tester), PracticeScreen.notSentMessage);
+      expect(_shownMessage(tester), en.practiceNotSent);
     });
 
     testWidgets('a permission still granted scores the answers',

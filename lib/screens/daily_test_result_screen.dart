@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/daily_test_completion.dart';
 import '../models/climb_theme.dart';
 import '../models/daily_test_set.dart';
@@ -143,7 +144,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saveFailed = true);
-      AppMessenger.show('Could not save your Daily Test results: $e');
+      AppMessenger.show(context.l10n.dailyResultSaveFailed('$e'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -226,15 +227,15 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
   /// are scrolled.
   Widget _primaryButton() {
     if (_saving) {
-      return const FilledButton(
+      return FilledButton(
         onPressed: null,
-        child: Text('Saving your results…'),
+        child: Text(context.l10n.dailyResultSaving),
       );
     }
     if (_saveFailed) {
       return FilledButton(
         onPressed: _saveCompletion,
-        child: const Text('Try saving again'),
+        child: Text(context.l10n.dailyResultRetrySave),
       );
     }
     if (_showWelcomeCelebration) {
@@ -243,12 +244,12 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
         // layer); the label and the way on stay.
         onPressed: _leave,
         style: forwardButtonStyle(context),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.emoji_events_rounded, size: 20),
-            SizedBox(width: 8),
-            Flexible(child: Text('Start my climb')),
+            const Icon(Icons.emoji_events_rounded, size: 20),
+            const SizedBox(width: 8),
+            Flexible(child: Text(context.l10n.dailyResultStartClimb)),
           ],
         ),
       );
@@ -262,10 +263,10 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       // "Back to Home" is an exit and stays navy (owner's button rule).
       style: seeClimb ? forwardButtonStyle(context) : null,
       child: Text(widget.isDay0
-          ? 'Continue'
+          ? context.l10n.commonContinue
           : seeClimb
-              ? 'See your climb'
-              : 'Back to Home'),
+              ? context.l10n.dailyResultSeeClimb
+              : context.l10n.dailyResultBackHome),
     );
   }
 
@@ -278,12 +279,13 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
     final skippedCount = _results.where((r) => r.isSkipped).length;
     final totalCount = _results.length;
     final scoreText = skippedCount > 0
-        ? '$correctCount/$totalCount correct · $skippedCount skipped'
-        : '$correctCount/$totalCount correct';
+        ? context.l10n
+            .resultsScoreSkipped(correctCount, totalCount, skippedCount)
+        : context.l10n.resultsScore(correctCount, totalCount);
 
     final celebration = _celebration;
     final scaffold = BrandScaffold(
-      title: const PageTitle('Daily Test Results'),
+      title: PageTitle(context.l10n.dailyResultTitle),
       bandBottom: ResultScoreBand.sized(context, text: scoreText),
       // Fixed, like Premium's footer: a hard edge (not a shadow that only
       // appears once scrolled) between the results and the one button.
@@ -299,7 +301,7 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
           child: _saving ? const LinearProgressIndicator() : null,
         ),
         if (_saveFailed) ...[
-          const Text('Your result could not be saved. Please try again.'),
+          Text(context.l10n.dailyResultNotSaved),
           const SizedBox(height: 14),
         ],
         for (final result in _results) ...[
@@ -343,8 +345,6 @@ class _Celebration {
       MedalTier this.tier, ClimbTheme this.theme, this.month);
 }
 
-const _fallbackComment = "Not quite — here's the correct answer.";
-
 class _QuestionResultCard extends StatelessWidget {
   final DailyTestAnswerResult result;
   final SemanticColors semantic;
@@ -372,8 +372,10 @@ class _QuestionResultCard extends StatelessWidget {
         : isCorrect
             ? Icons.check_circle_rounded
             : Icons.cancel_rounded;
-    final label =
-        isSkipped ? 'Skipped' : (isCorrect ? 'Correct' : 'Needs work');
+    final l10n = context.l10n;
+    final label = isSkipped
+        ? l10n.resultSkipped
+        : (isCorrect ? l10n.resultCorrect : l10n.resultNeedsWork);
 
     // Mirrors Topic Practice's ResultsScreen, where every card — correct,
     // skipped or wrong — carries its explanation. Priority, most specific
@@ -389,16 +391,18 @@ class _QuestionResultCard extends StatelessWidget {
     final explanation = switch (result.match?.kind) {
       AnswerMatchKind.commonWrong => result.match?.comment,
       AnswerMatchKind.keyboardVariant => [
-          result.match?.comment,
+          keyboardVariantNoteText(
+              result.match?.keyboardNote ?? const KeyboardVariantNote(), l10n),
           questionExplanation,
         ].whereType<String>().join(' '),
       // An alternative the set accepts: shown as correct, with the key
       // named so the learner also sees the form the set expected.
       AnswerMatchKind.accepted => [
-          'Also correct: "${result.question.correctAnswer}".',
+          l10n.dailyResultAlsoCorrect(result.question.correctAnswer),
           questionExplanation,
         ].whereType<String>().join(' '),
-      AnswerMatchKind.fallback => questionExplanation ?? _fallbackComment,
+      AnswerMatchKind.fallback =>
+        questionExplanation ?? l10n.dailyResultFallback,
       AnswerMatchKind.correct || null => questionExplanation,
     };
 

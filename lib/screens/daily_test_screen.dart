@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../data/topics.dart';
 import '../models/daily_test_question.dart';
 import '../models/daily_test_set.dart';
@@ -183,13 +184,13 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
     final shouldLeave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave Daily Test?'),
-        content: const Text('Your progress will be lost.'),
+        title: Text(dialogContext.l10n.dailyTestLeaveTitle),
+        content: Text(dialogContext.l10n.commonProgressLost),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           DestructiveDialogActions(
-            cancelLabel: 'Cancel',
-            confirmLabel: 'Leave',
+            cancelLabel: dialogContext.l10n.commonCancel,
+            confirmLabel: dialogContext.l10n.commonLeave,
             onCancel: () => Navigator.of(dialogContext).pop(false),
             onConfirm: () => Navigator.of(dialogContext).pop(true),
           ),
@@ -205,7 +206,8 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
   // primary action must never invite abandoning the question. Skip is
   // its own separate, quiet action, always available regardless of this
   // label.
-  String _primaryLabel() => _isLastQuestion ? 'Finish' : 'Next';
+  String _primaryLabel() =>
+      _isLastQuestion ? context.l10n.questionFinish : context.l10n.questionNext;
 
   @override
   Widget build(BuildContext context) {
@@ -240,16 +242,16 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
             // change once the questions appear; Back stays disabled until
             // there is a previous question.
             QuestionHeader(
-              title: 'Daily Test',
+              title: context.l10n.featureDailyTest,
               onBack: showQuestion && _currentIndex > 0 && !_finishing
                   ? _goBack
                   : null,
               onClose: _confirmExit,
-              closeTooltip: 'Leave Daily Test',
+              closeTooltip: context.l10n.dailyTestLeaveTooltip,
             ),
             Expanded(
               child: _loading
-                  ? const LoadingView(message: "Preparing today's test…")
+                  ? LoadingView(message: context.l10n.dailyTestPreparing)
                   : _error != null
                       ? _buildError(colorScheme)
                       : _buildQuestion(hPad),
@@ -288,10 +290,9 @@ class _DailyTestScreenState extends State<DailyTestScreen> {
           children: [
             EmptyState(
               icon: Icons.error_outline_rounded,
-              title: "Couldn't load today's test",
-              description: 'Something went wrong generating it. Check your '
-                  'connection and try again.',
-              ctaLabel: 'Try again',
+              title: context.l10n.dailyTestLoadFailedTitle,
+              description: context.l10n.dailyTestLoadFailedBody,
+              ctaLabel: context.l10n.commonTryAgain,
               onCta: _load,
             ),
             if (kDebugMode && DebugTools.enabledForTesting) ...[

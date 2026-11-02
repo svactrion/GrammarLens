@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/item_feedback.dart';
 import '../theme.dart';
 import '../utils/answer_diff.dart';
@@ -30,8 +31,7 @@ import 'inline_marks.dart';
 ///   before D11). B8's rows, B10's difference and B9's formatted paragraph,
 ///   unchanged: the fallback renderer.
 class MistakeBreakdown extends StatelessWidget {
-  /// A "YOU WROTE" row's text for a box left empty.
-  static const String leftBlankLabel = 'Left blank';
+  // A "YOU WROTE" row's text for a box left empty: `mistakeLeftBlank`.
 
   /// A "YOU WROTE" row's text for a no-article box.
   static const String noArticleLabel = '—';
@@ -164,6 +164,7 @@ class MistakeBreakdown extends StatelessWidget {
             child: colors != null
                 ? Text.rich(colouredBlanks(
                     prompt!,
+                    blankLabel: context.l10n.blankSemantics,
                     colors: colors,
                     total: blankPattern.allMatches(prompt!).length,
                     style: promptStyle,
@@ -174,7 +175,7 @@ class MistakeBreakdown extends StatelessWidget {
         ],
         if (hasAnswer) ...[
           _LabeledBox(
-            label: 'YOU WROTE',
+            label: context.l10n.mistakeYouWrote,
             fillColor: colorScheme.surface,
             borderColor: colorScheme.outline,
             labelColor: colorScheme.onSurfaceVariant,
@@ -208,7 +209,9 @@ class MistakeBreakdown extends StatelessWidget {
           // treatment (this app's success color) doesn't apply, and gets
           // the same neutral box "YOU WROTE" already uses above instead.
           _LabeledBox(
-            label: isSkipped ? 'CORRECT ANSWER' : 'CORRECTED',
+            label: isSkipped
+                ? context.l10n.mistakeCorrectAnswer
+                : context.l10n.mistakeCorrected,
             fillColor:
                 isSkipped ? colorScheme.surface : semantic.correctBackground,
             borderColor:
@@ -289,7 +292,8 @@ class _BlankRows extends StatelessWidget {
       children: [
         for (var i = 0; i < answers.length; i++) ...[
           if (i > 0) SizedBox(height: feedback == null ? 6 : 10),
-          _row(i, body, colorScheme, semantic, theme.textTheme.bodySmall),
+          _row(i, body, colorScheme, semantic, theme.textTheme.bodySmall,
+              context.l10n),
         ],
       ],
     );
@@ -301,6 +305,7 @@ class _BlankRows extends StatelessWidget {
     ColorScheme colorScheme,
     SemanticColors semantic,
     TextStyle? small,
+    AppLocalizations l10n,
   ) {
     final answer = answers[i];
     final String text;
@@ -309,15 +314,15 @@ class _BlankRows extends StatelessWidget {
     if (answer.noArticle) {
       text = MistakeBreakdown.noArticleLabel;
       style = body;
-      spoken = 'no article';
+      spoken = l10n.mistakeSpokenNoArticle;
     } else if (answer.isFilled) {
       text = answer.text.trim();
       style = body;
       spoken = text;
     } else {
-      text = MistakeBreakdown.leftBlankLabel;
+      text = l10n.mistakeLeftBlank;
       style = body?.copyWith(color: colorScheme.onSurfaceVariant);
-      spoken = 'left blank';
+      spoken = l10n.mistakeSpokenLeftBlank;
     }
     final verdict = feedback?[i];
     final verdictColor = verdict == null
@@ -326,12 +331,11 @@ class _BlankRows extends StatelessWidget {
             ? colorScheme.onSurfaceVariant
             : semantic.onCorrectBackground;
     final label = verdict == null
-        ? 'Blank ${i + 1}: $spoken'
+        ? l10n.mistakeBlankRowSemantics(i + 1, spoken)
         : verdict.accepted
-            ? 'Blank ${i + 1}: you wrote $spoken, correct '
-                '${verdict.correctAnswer}, accepted'
-            : 'Blank ${i + 1}: you wrote $spoken, correct '
-                '${verdict.correctAnswer}, not accepted: ${verdict.note}';
+            ? l10n.mistakeBlankRowAccepted(i + 1, spoken, verdict.correctAnswer)
+            : l10n.mistakeBlankRowNotAccepted(
+                i + 1, spoken, verdict.correctAnswer, verdict.note);
     // IntrinsicHeight: the bar stretches to the text's height, one line or
     // several, inside a column that has no height of its own to give.
     return Semantics(

@@ -600,5 +600,527 @@
         "example": "database is locked"
       }
     }
+  },
+  "featureDailyTest": "Daily Test",
+  "@featureDailyTest": {
+    "description": "The Daily Test feature's name (a screen title). Feature names are never translated: keep 'Daily Test' in English."
+  },
+  "commonLeave": "Leave",
+  "@commonLeave": {
+    "description": "Button or tooltip that leaves a session."
+  },
+  "commonProgressLost": "Your progress will be lost.",
+  "@commonProgressLost": {
+    "description": "Body of the dialog that asks whether to leave a session."
+  },
+  "commonTryAgain": "Try again",
+  "@commonTryAgain": {
+    "description": "Button that retries a failed load."
+  },
+  "commonGotIt": "Got it",
+  "@commonGotIt": {
+    "description": "Button that closes an information dialog."
+  },
+  "questionTypeFillInBlank": "Fill in the blank",
+  "@questionTypeFillInBlank": {
+    "description": "The question type's label above a fill-in-the-blank question."
+  },
+  "questionTypeErrorCorrection": "Find and correct the error",
+  "@questionTypeErrorCorrection": {
+    "description": "The question type's label above an error-correction question."
+  },
+  "questionTypeSentenceWriting": "Write a sentence",
+  "@questionTypeSentenceWriting": {
+    "description": "The question type's label above a sentence-writing question."
+  },
+  "questionCounterSemantics": "Question {number} of {total}",
+  "@questionCounterSemantics": {
+    "description": "VoiceOver label of the question counter badge.",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "example": "2"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "questionTopicSemantics": "Topic: {topic}",
+  "@questionTopicSemantics": {
+    "description": "VoiceOver label of the question's topic tag; {topic} is the topic's title.",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "Articles"
+      }
+    }
+  },
+  "questionYourAnswer": "Your answer",
+  "@questionYourAnswer": {
+    "description": "The line above the answer field."
+  },
+  "questionAnswerHint": "Write your answer…",
+  "@questionAnswerHint": {
+    "description": "Placeholder in an empty answer field."
+  },
+  "questionBlankSemantics": "Blank {number} of {total}",
+  "@questionBlankSemantics": {
+    "description": "VoiceOver label of one answer box on a question with several blanks.",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "questionNoArticleHint": "— no article",
+  "@questionNoArticleHint": {
+    "description": "Shown in an answer box set to 'no article' (the '—' button)."
+  },
+  "questionArticleHintLong": "Type an article…",
+  "@questionArticleHintLong": {
+    "description": "Placeholder in an empty articles answer box, the longest of three; the shorter ones are used when it does not fit."
+  },
+  "questionArticleHintMedium": "An article…",
+  "@questionArticleHintMedium": {
+    "description": "Placeholder in an empty articles answer box, the middle length."
+  },
+  "questionArticleHintShort": "Article…",
+  "@questionArticleHintShort": {
+    "description": "Placeholder in an empty articles answer box, the shortest."
+  },
+  "questionNoArticlePointer": "no article →",
+  "@questionNoArticlePointer": {
+    "description": "Quiet hint at the right end of an empty articles box; the arrow points at the '—' (no article) button beside it."
+  },
+  "questionNoArticlePointerShort": "none →",
+  "@questionNoArticlePointerShort": {
+    "description": "Shorter form of questionNoArticlePointer, used when the longer one does not fit."
+  },
+  "questionNoArticleButton": "No article",
+  "@questionNoArticleButton": {
+    "description": "VoiceOver label of the '—' button that marks an answer box as needing no article."
+  },
+  "questionReadFull": "Read full question",
+  "@questionReadFull": {
+    "description": "Button above the answer field, while the keyboard is up and the question is cut off: closes the keyboard."
+  },
+  "questionReviewAnswer": "Review answer",
+  "@questionReviewAnswer": {
+    "description": "Button above the answer field, while the keyboard is up: closes the keyboard."
+  },
+  "questionPrevious": "Previous question",
+  "@questionPrevious": {
+    "description": "Tooltip of the back arrow in a session's header."
+  },
+  "questionSkip": "Skip",
+  "@questionSkip": {
+    "description": "Button that skips the current question."
+  },
+  "questionNext": "Next",
+  "@questionNext": {
+    "description": "Button that goes to the next question."
+  },
+  "questionFinish": "Finish",
+  "@questionFinish": {
+    "description": "Button on a Daily Test's last question."
+  },
+  "questionSubmit": "Submit",
+  "@questionSubmit": {
+    "description": "Button on a practice session's last question: sends the answers for feedback."
+  },
+  "blankSemantics": "blank {number} of {total}",
+  "@blankSemantics": {
+    "description": "VoiceOver reading of a blank inside a question sentence (lowercase, read mid-sentence).",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "hintSliderLabel": "Slide for a hint",
+  "@hintSliderLabel": {
+    "description": "The topic hint slider's label on its track."
+  },
+  "hintSliderSemantics": "Slide for a hint. {topic}: {points}.",
+  "@hintSliderSemantics": {
+    "description": "VoiceOver label of the hint slider: the topic's title and the hint card's points.",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "Articles"
+      },
+      "points": {
+        "type": "String",
+        "example": "a / an: one of many. the: specific"
+      }
+    }
+  },
+  "hintSliderSemanticsHint": "Touch and hold to show",
+  "@hintSliderSemanticsHint": {
+    "description": "VoiceOver hint of the hint slider."
+  },
+  "dailyTestLeaveTitle": "Leave Daily Test?",
+  "@dailyTestLeaveTitle": {
+    "description": "Title of the dialog that asks whether to leave the Daily Test. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "dailyTestLeaveTooltip": "Leave Daily Test",
+  "@dailyTestLeaveTooltip": {
+    "description": "Tooltip of the Daily Test's close button. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "dailyTestPreparing": "Preparing today's test…",
+  "@dailyTestPreparing": {
+    "description": "Shown while today's Daily Test loads."
+  },
+  "dailyTestLoadFailedTitle": "Couldn't load today's test",
+  "@dailyTestLoadFailedTitle": {
+    "description": "Title when today's Daily Test could not be loaded."
+  },
+  "dailyTestLoadFailedBody": "Something went wrong generating it. Check your connection and try again.",
+  "@dailyTestLoadFailedBody": {
+    "description": "Body when today's Daily Test could not be loaded."
+  },
+  "practiceModeLabel": "Practice",
+  "@practiceModeLabel": {
+    "description": "The small line under a practice session's topic title in its header."
+  },
+  "practiceLeaveTitle": "Leave practice?",
+  "@practiceLeaveTitle": {
+    "description": "Title of the dialog that asks whether to leave a practice session."
+  },
+  "practiceReviewing": "Reviewing your answers…",
+  "@practiceReviewing": {
+    "description": "Shown while the practice answers are being scored."
+  },
+  "practiceScoreFailed": "Could not score answers: {reason}",
+  "@practiceScoreFailed": {
+    "description": "Snackbar when scoring failed; {reason} is a short user-facing sentence.",
+    "placeholders": {
+      "reason": {
+        "type": "String",
+        "example": "Please try again later."
+      }
+    }
+  },
+  "practiceNotSent": "Your answers were not sent. AI feedback needs your permission (Profile → Data).",
+  "@practiceNotSent": {
+    "description": "Snackbar when the AI permission is missing at Submit. 'Profile' and 'Data' must match navProfile and settingsDataRow."
+  },
+  "practiceLaunchError": "{prefix}: {reason}",
+  "@practiceLaunchError": {
+    "description": "Snackbar when a practice set could not be made: {prefix} says what failed, {reason} why.",
+    "placeholders": {
+      "prefix": {
+        "type": "String",
+        "example": "Could not generate practice"
+      },
+      "reason": {
+        "type": "String",
+        "example": "Please try again later."
+      }
+    }
+  },
+  "practiceDailyLimitTitle": "That's all for today",
+  "@practiceDailyLimitTitle": {
+    "description": "Title of the dialog shown when today's practice sessions are used up."
+  },
+  "practiceDailyLimitBody": "{count, plural, =1{You've used your practice session for today.} other{You've used all {count} practice sessions for today.}} Come back tomorrow for more — your progress is saved.",
+  "@practiceDailyLimitBody": {
+    "description": "Body of the dialog shown when today's practice sessions are used up; {count} is the daily limit (5).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "lengthPickerTitle": "How many questions?",
+  "@lengthPickerTitle": {
+    "description": "Title of the practice length sheet."
+  },
+  "lengthPickerSemantics": "{count, plural, =1{1 question, {label}} other{{count} questions, {label}}}",
+  "@lengthPickerSemantics": {
+    "description": "VoiceOver value of the length slider: the question count and the length's name.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "label": {
+        "type": "String",
+        "example": "Standard"
+      }
+    }
+  },
+  "lengthPickerHint": "Drag to set the session length",
+  "@lengthPickerHint": {
+    "description": "Under the practice length slider."
+  },
+  "lengthPickerStart": "{count, plural, =1{Start 1 question} other{Start {count} questions}}",
+  "@lengthPickerStart": {
+    "description": "The practice length sheet's button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "resultsTitle": "Results",
+  "@resultsTitle": {
+    "description": "Title of a practice session's results screen."
+  },
+  "resultsScore": "{correct}/{total} correct",
+  "@resultsScore": {
+    "description": "The score band on a results screen.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "4"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "resultsScoreSkipped": "{correct}/{total} correct · {skipped} skipped",
+  "@resultsScoreSkipped": {
+    "description": "The score band on a results screen when questions were skipped.",
+    "placeholders": {
+      "correct": {
+        "type": "int",
+        "example": "3"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      },
+      "skipped": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "resultsBackToTopics": "Back to topics",
+  "@resultsBackToTopics": {
+    "description": "The practice results screen's button."
+  },
+  "resultsSaveFailed": "Could not save this to your error profile: {error}",
+  "@resultsSaveFailed": {
+    "description": "Snackbar when the mistakes could not be stored; {error} is the technical reason.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "resultSkipped": "Skipped",
+  "@resultSkipped": {
+    "description": "A result card's verdict for a skipped question."
+  },
+  "resultCorrect": "Correct",
+  "@resultCorrect": {
+    "description": "A result card's verdict for a right answer."
+  },
+  "resultNeedsWork": "Needs work",
+  "@resultNeedsWork": {
+    "description": "A result card's verdict for a wrong answer."
+  },
+  "dailyResultTitle": "Daily Test Results",
+  "@dailyResultTitle": {
+    "description": "Title of the Daily Test's results screen. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "dailyResultSaving": "Saving your results…",
+  "@dailyResultSaving": {
+    "description": "The results screen's button while the Daily Test is being saved."
+  },
+  "dailyResultRetrySave": "Try saving again",
+  "@dailyResultRetrySave": {
+    "description": "The results screen's button after saving failed."
+  },
+  "dailyResultNotSaved": "Your result could not be saved. Please try again.",
+  "@dailyResultNotSaved": {
+    "description": "Line on the results screen after saving failed."
+  },
+  "dailyResultSaveFailed": "Could not save your Daily Test results: {error}",
+  "@dailyResultSaveFailed": {
+    "description": "Snackbar when saving the Daily Test failed; {error} is the technical reason. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "database is locked"
+      }
+    }
+  },
+  "dailyResultStartClimb": "Start my climb",
+  "@dailyResultStartClimb": {
+    "description": "The results screen's button after the first-ever step: goes to the Monthly Climb."
+  },
+  "dailyResultSeeClimb": "See your climb",
+  "@dailyResultSeeClimb": {
+    "description": "The results screen's button: goes to Home to see the new Monthly Climb step."
+  },
+  "dailyResultBackHome": "Back to Home",
+  "@dailyResultBackHome": {
+    "description": "The results screen's button: goes back to Home."
+  },
+  "dailyResultFallback": "Not quite — here's the correct answer.",
+  "@dailyResultFallback": {
+    "description": "A wrong Daily Test answer's card text when the question has no explanation."
+  },
+  "dailyResultAlsoCorrect": "Also correct: \"{answer}\".",
+  "@dailyResultAlsoCorrect": {
+    "description": "Before the explanation on a card whose answer was an accepted alternative; {answer} is the expected answer, in English.",
+    "placeholders": {
+      "answer": {
+        "type": "String",
+        "example": "has gone"
+      }
+    }
+  },
+  "mistakeYouWrote": "YOU WROTE",
+  "@mistakeYouWrote": {
+    "description": "Label of the box with the learner's answer on a mistake card (uppercase in English)."
+  },
+  "mistakeCorrected": "CORRECTED",
+  "@mistakeCorrected": {
+    "description": "Label of the box with the corrected answer on a mistake card (uppercase in English)."
+  },
+  "mistakeCorrectAnswer": "CORRECT ANSWER",
+  "@mistakeCorrectAnswer": {
+    "description": "Label of the box with the correct answer on a skipped question's card (uppercase in English)."
+  },
+  "mistakeLeftBlank": "Left blank",
+  "@mistakeLeftBlank": {
+    "description": "A 'YOU WROTE' row for an answer box the learner left empty."
+  },
+  "mistakeSpokenNoArticle": "no article",
+  "@mistakeSpokenNoArticle": {
+    "description": "Read by VoiceOver for a 'YOU WROTE' row set to no article (lowercase, mid-sentence)."
+  },
+  "mistakeSpokenLeftBlank": "left blank",
+  "@mistakeSpokenLeftBlank": {
+    "description": "Read by VoiceOver for a 'YOU WROTE' row left empty (lowercase, mid-sentence)."
+  },
+  "mistakeBlankRowSemantics": "Blank {number}: {answer}",
+  "@mistakeBlankRowSemantics": {
+    "description": "VoiceOver label of a 'YOU WROTE' row; {answer} is what the learner wrote, or mistakeSpokenNoArticle / mistakeSpokenLeftBlank.",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "example": "2"
+      },
+      "answer": {
+        "type": "String",
+        "example": "the"
+      }
+    }
+  },
+  "mistakeBlankRowAccepted": "Blank {number}: you wrote {answer}, correct {correct}, accepted",
+  "@mistakeBlankRowAccepted": {
+    "description": "VoiceOver label of a 'YOU WROTE' row with the scorer's verdict: accepted.",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "example": "2"
+      },
+      "answer": {
+        "type": "String",
+        "example": "the"
+      },
+      "correct": {
+        "type": "String",
+        "example": "the"
+      }
+    }
+  },
+  "mistakeBlankRowNotAccepted": "Blank {number}: you wrote {answer}, correct {correct}, not accepted: {note}",
+  "@mistakeBlankRowNotAccepted": {
+    "description": "VoiceOver label of a 'YOU WROTE' row with the scorer's verdict: not accepted; {note} is the scorer's English note.",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "example": "2"
+      },
+      "answer": {
+        "type": "String",
+        "example": "a"
+      },
+      "correct": {
+        "type": "String",
+        "example": "the"
+      },
+      "note": {
+        "type": "String",
+        "example": "A specific hotel needs 'the'."
+      }
+    }
+  },
+  "keyboardNoteTyped": "You typed {typed} — your keyboard's {count, plural, =1{version} other{versions}} of {plain}.",
+  "@keyboardNoteTyped": {
+    "description": "Daily Test card note when an answer differed only by keyboard characters: {typed} are the characters the learner typed, {plain} the plain characters they stand for, both quoted lists; {count} how many.",
+    "placeholders": {
+      "typed": {
+        "type": "String",
+        "example": "\"ı\", \"ü\""
+      },
+      "plain": {
+        "type": "String",
+        "example": "\"i\", \"u\""
+      },
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "keyboardNoteAdded": "Your keyboard added {added} — not a grammar mistake.",
+  "@keyboardNoteAdded": {
+    "description": "Daily Test card note when the keyboard added characters (Spanish inverted marks, invisible marks); {added} is a quoted list or keyboardNoteInvisible.",
+    "placeholders": {
+      "added": {
+        "type": "String",
+        "example": "\"¿\""
+      }
+    }
+  },
+  "keyboardNoteInvisible": "an invisible character",
+  "@keyboardNoteInvisible": {
+    "description": "Part of keyboardNoteAdded: an invisible mark the keyboard added."
+  },
+  "keyboardNoteAnd": "{first} and {second}",
+  "@keyboardNoteAnd": {
+    "description": "Joins two parts of keyboardNoteAdded.",
+    "placeholders": {
+      "first": {
+        "type": "String",
+        "example": "\"¿\""
+      },
+      "second": {
+        "type": "String",
+        "example": "an invisible character"
+      }
+    }
+  },
+  "keyboardNoteNotAMistake": "Not a grammar mistake.",
+  "@keyboardNoteNotAMistake": {
+    "description": "Closes keyboardNoteTyped when nothing was added."
+  },
+  "keyboardNoteGeneral": "Your answer matches apart from keyboard characters. Not a grammar mistake.",
+  "@keyboardNoteGeneral": {
+    "description": "Daily Test card note when the difference is in keyboard characters but none can be named."
   }
 }

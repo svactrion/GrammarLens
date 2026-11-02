@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/practice_set.dart';
 import '../models/topic.dart';
 import '../services/analytics_service.dart';
@@ -37,10 +38,7 @@ class PracticeScreen extends StatefulWidget {
   });
 
   /// Shown when the answers are kept on the device because the permission
-  /// to send them is missing at Submit.
-  static const notSentMessage =
-      'Your answers were not sent. AI feedback needs your permission '
-      '(Profile → Data).';
+  /// to send them is missing at Submit: `practiceNotSent` in the strings.
 
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
@@ -120,13 +118,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
     final shouldLeave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave practice?'),
-        content: const Text('Your progress will be lost.'),
+        title: Text(dialogContext.l10n.practiceLeaveTitle),
+        content: Text(dialogContext.l10n.commonProgressLost),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           DestructiveDialogActions(
-            cancelLabel: 'Cancel',
-            confirmLabel: 'Leave',
+            cancelLabel: dialogContext.l10n.commonCancel,
+            confirmLabel: dialogContext.l10n.commonLeave,
             onCancel: () => Navigator.of(dialogContext).pop(false),
             onConfirm: () => Navigator.of(dialogContext).pop(true),
           ),
@@ -171,7 +169,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         // Nothing is sent and no request is made, so no quota is spent;
         // the answers stay on the screen.
         if (!mounted) return;
-        AppMessenger.show(PracticeScreen.notSentMessage);
+        AppMessenger.show(context.l10n.practiceNotSent);
         return;
       }
       final deviceId = await widget.storageService.getOrCreateDeviceId();
@@ -200,7 +198,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     } catch (e) {
       if (!mounted) return;
       AppMessenger.show(
-          'Could not score answers: ${userFacingErrorMessage(e)}');
+          context.l10n.practiceScoreFailed(userFacingErrorMessage(e)));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -210,7 +208,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   // primary action must never invite abandoning the question. Skip is
   // its own separate, quiet action, always available regardless of this
   // label.
-  String _primaryLabel() => _isLastQuestion ? 'Submit' : 'Next';
+  String _primaryLabel() =>
+      _isLastQuestion ? context.l10n.questionSubmit : context.l10n.questionNext;
 
   @override
   Widget build(BuildContext context) {
@@ -242,13 +241,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
           children: [
             QuestionHeader(
               title: widget.topic.title,
-              subtitle: 'Practice',
+              subtitle: context.l10n.practiceModeLabel,
               onBack: _currentIndex == 0 || _submitting ? null : _goBack,
               onClose: _confirmExit,
             ),
             Expanded(
               child: _submitting
-                  ? const LoadingView(message: 'Reviewing your answers…')
+                  ? LoadingView(message: context.l10n.practiceReviewing)
                   : GestureDetector(
                       // Tapping outside the text field is the standard
                       // mobile way to dismiss the keyboard.

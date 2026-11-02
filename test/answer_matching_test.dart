@@ -4,6 +4,13 @@ import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/utils/answer_matching.dart';
 
+import 'support/l10n_support.dart';
+
+/// The keyboard-variant note as the card shows it in English.
+String? note(AnswerMatchResult result) => result.keyboardNote == null
+    ? null
+    : keyboardVariantNoteText(result.keyboardNote!, en);
+
 void main() {
   final question = DailyTestQuestion(
     item: const PracticeItem(
@@ -149,9 +156,9 @@ void main() {
       final result = checkDailyTestAnswer(keyboardQuestion, 'cookıng');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
       expect(result.correctAnswer, 'cooking');
-      expect(result.comment, isNotNull);
-      expect(result.comment, contains('ı'));
-      expect(result.comment, contains('i'));
+      expect(note(result), isNotNull);
+      expect(note(result), contains('ı'));
+      expect(note(result), contains('i'));
     });
 
     test('a case-only difference is plain correct, not a keyboard variant', () {
@@ -214,7 +221,7 @@ void main() {
       final result = checkDailyTestAnswer(multiQuestion, 'to gıve üp');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
       expect(
-          result.comment,
+          note(result),
           'You typed "ı", "ü" — your keyboard\'s versions of "i", "u". Not '
           'a grammar mistake.');
     });
@@ -222,7 +229,7 @@ void main() {
     test('one character: "version", singular', () {
       final result = checkDailyTestAnswer(keyboardQuestion, 'cookıng');
       expect(
-          result.comment,
+          note(result),
           'You typed "ı" — your keyboard\'s version of "i". Not a grammar '
           'mistake.');
     });
@@ -232,7 +239,7 @@ void main() {
       expect(result.kind, AnswerMatchKind.keyboardVariant);
       // More than three characters: the note shows three and "…".
       expect(
-          result.comment,
+          note(result),
           'You typed "ｃ", "ｏ", "ｋ" … — your keyboard\'s versions of "c", '
           '"o", "k" …. Not a grammar mistake.');
     });
@@ -245,15 +252,14 @@ void main() {
     test('an added mark gets its own clause', () {
       final result = checkDailyTestAnswer(keyboardQuestion, '¡cooking');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
-      expect(
-          result.comment, 'Your keyboard added "¡" — not a grammar mistake.');
+      expect(note(result), 'Your keyboard added "¡" — not a grammar mistake.');
     });
 
     test('an invisible mark is named, not quoted', () {
       final result = checkDailyTestAnswer(keyboardQuestion, 'cook\u200Bing');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
       expect(
-          result.comment,
+          note(result),
           'Your keyboard added an invisible character — not a grammar '
           'mistake.');
     });
@@ -261,7 +267,7 @@ void main() {
     test('both clauses when both happen', () {
       final result = checkDailyTestAnswer(keyboardQuestion, '¿cookıng');
       expect(
-          result.comment,
+          note(result),
           'You typed "ı" — your keyboard\'s version of "i". Your keyboard '
           'added "¿" — not a grammar mistake.');
     });
@@ -279,8 +285,8 @@ void main() {
       );
       final result = checkDailyTestAnswer(question, 'paß');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
-      expect(result.comment, contains('"ß"'));
-      expect(result.comment, contains('"ss"'));
+      expect(note(result), contains('"ß"'));
+      expect(note(result), contains('"ss"'));
     });
 
     test('an answer in another script is not folded into English', () {
@@ -304,7 +310,7 @@ void main() {
       final result = checkDailyTestAnswer(question, 'degisik');
       expect(result.kind, AnswerMatchKind.keyboardVariant);
       expect(
-          result.comment,
+          note(result),
           'Your answer matches apart from keyboard characters. Not a '
           'grammar mistake.');
     });

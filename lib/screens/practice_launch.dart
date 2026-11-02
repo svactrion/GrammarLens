@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/practice_length.dart';
 import '../models/topic.dart';
 import '../services/analytics_service.dart';
@@ -182,7 +183,8 @@ Future<void> launchPracticeSet({
     onReturned?.call();
   } catch (e) {
     if (!context.mounted) return;
-    AppMessenger.show('$errorPrefix: ${userFacingErrorMessage(e)}');
+    AppMessenger.show(context.l10n
+        .practiceLaunchError(errorPrefix, userFacingErrorMessage(e)));
   } finally {
     setGenerating(false);
   }
@@ -192,19 +194,16 @@ Future<void> _showDailyLimitReachedDialog(BuildContext context) {
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('That\'s all for today'),
-      content: const Text(
-        'You\'ve used all ${StorageService.dailySessionLimit} practice '
-        'sessions for today. Come back tomorrow for more — your progress '
-        'is saved.',
-      ),
+      title: Text(dialogContext.l10n.practiceDailyLimitTitle),
+      content: Text(dialogContext.l10n
+          .practiceDailyLimitBody(StorageService.dailySessionLimit)),
       actionsAlignment: MainAxisAlignment.center,
       actions: [
         SizedBox(
           width: double.infinity,
           child: FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Got it'),
+            child: Text(dialogContext.l10n.commonGotIt),
           ),
         ),
       ],

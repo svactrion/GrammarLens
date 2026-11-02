@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme.dart';
 
 /// The Skip/primary-action bar at the bottom of PracticeScreen's and
@@ -86,7 +87,7 @@ class PracticeStepFooter extends StatelessWidget {
                   textStyle:
                       theme.textTheme.labelLarge?.withWeight(FontWeight.w800),
                 ),
-                child: const Text('Skip'),
+                child: Text(context.l10n.questionSkip),
               ),
               const SizedBox(width: gap),
               Expanded(

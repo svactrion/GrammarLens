@@ -20,6 +20,8 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
 
+import 'support/l10n_support.dart';
+
 /// The topic tag on the question card (docs/question-screen-plan.md, item 1
 /// and B1): a neutral chip after the type label, wrapping to a second line
 /// when it does not fit, never cutting the type label; the badge stays top
@@ -91,7 +93,8 @@ Future<void> _pumpView(
 }
 
 Finder get _tag => find.byKey(QuestionView.topicTagKey);
-Finder _typeLabel(PracticeItemType type) => find.text(questionTypeLabel(type));
+Finder _typeLabel(PracticeItemType type) =>
+    find.text(questionTypeLabel(type, en));
 Finder get _badge => find.text('10 / 10');
 Finder get _card => find.byKey(QuestionView.questionCardKey);
 

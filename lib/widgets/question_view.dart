@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/scheduler.dart';
 
+import '../l10n/l10n.dart';
 import '../models/practice_item.dart';
 import '../data/topic_hints.dart';
 import '../models/topic.dart';
@@ -218,16 +219,12 @@ class AnswerDrafts {
 }
 
 /// The question type's label above the question.
-String questionTypeLabel(PracticeItemType type) {
-  switch (type) {
-    case PracticeItemType.fillInBlank:
-      return 'Fill in the blank';
-    case PracticeItemType.errorCorrection:
-      return 'Find and correct the error';
-    case PracticeItemType.sentenceWriting:
-      return 'Write a sentence';
-  }
-}
+String questionTypeLabel(PracticeItemType type, AppLocalizations l10n) =>
+    switch (type) {
+      PracticeItemType.fillInBlank => l10n.questionTypeFillInBlank,
+      PracticeItemType.errorCorrection => l10n.questionTypeErrorCorrection,
+      PracticeItemType.sentenceWriting => l10n.questionTypeSentenceWriting,
+    };
 
 /// The question and its answer field (Question V2, the additional screens
 /// package): the question card, then "Your answer" with the keyboard
@@ -729,7 +726,7 @@ class _QuestionViewState extends State<QuestionView>
         // ignores case either way (`normalizeAnswer` lowercases).
         textCapitalization: QuestionView.capitalizationFor(widget.item.type),
         decoration: InputDecoration(
-          hintText: 'Write your answer…',
+          hintText: context.l10n.questionAnswerHint,
           filled: true,
           fillColor: colorScheme.surfaceContainerHigh,
           contentPadding: QuestionView.answerPadding,
@@ -806,10 +803,12 @@ class _QuestionContent extends StatelessWidget {
 
   /// [text] with its blanks coloured ([colouredBlanks]), numbered from
   /// [first] in reading order; the focused one tinted.
-  Widget _withBlanks(String text, TextStyle? style, int first, Key? key) =>
+  Widget _withBlanks(BuildContext context, String text, TextStyle? style,
+          int first, Key? key) =>
       Text.rich(
         colouredBlanks(
           text,
+          blankLabel: context.l10n.blankSemantics,
           colors: blankColors!,
           total: blankCount(item.context, item.instruction),
           first: first,
@@ -848,8 +847,8 @@ class _QuestionContent extends StatelessWidget {
     final secondary = <Widget>[
       if (hasContext)
         colored
-            ? _withBlanks(
-                item.instruction, secondaryStyle, mainBlanks, secondaryTextKey)
+            ? _withBlanks(context, item.instruction, secondaryStyle, mainBlanks,
+                secondaryTextKey)
             : Text(item.instruction,
                 key: secondaryTextKey, style: secondaryStyle),
       if (item.hint != null) ...[
@@ -888,7 +887,7 @@ class _QuestionContent extends StatelessWidget {
                   _line(
                     lineHeight,
                     Text(
-                      questionTypeLabel(item.type),
+                      questionTypeLabel(item.type, context.l10n),
                       style: theme.textTheme.labelMedium
                           ?.withWeight(FontWeight.w800)
                           .copyWith(color: colorScheme.secondary),
@@ -902,7 +901,7 @@ class _QuestionContent extends StatelessWidget {
             _line(
               lineHeight,
               Semantics(
-                label: 'Question ${index + 1} of $total',
+                label: context.l10n.questionCounterSemantics(index + 1, total),
                 excludeSemantics: true,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -926,7 +925,7 @@ class _QuestionContent extends StatelessWidget {
         // interface language; the header row above follows the interface.
         EnglishContent(
           child: colored
-              ? _withBlanks(main, mainStyle, 0, mainTextKey)
+              ? _withBlanks(context, main, mainStyle, 0, mainTextKey)
               : Text(main, key: mainTextKey, style: mainStyle),
         ),
         if (secondary.isNotEmpty) ...[
@@ -1146,7 +1145,7 @@ class _BlankBoxes extends StatelessWidget {
       valueListenable: noArticle,
       builder: (context, isNoArticle, _) => LayoutBuilder(
         builder: (context, constraints) => Semantics(
-          label: 'Blank ${index + 1} of $count',
+          label: context.l10n.questionBlankSemantics(index + 1, count),
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: radius,
@@ -1204,10 +1203,10 @@ class _BlankBoxes extends StatelessWidget {
                       )
                     : null,
                 hintText: isNoArticle
-                    ? '— no article'
+                    ? context.l10n.questionNoArticleHint
                     : noArticleButton
                         ? null
-                        : 'Write your answer…',
+                        : context.l10n.questionAnswerHint,
                 hintStyle: isNoArticle
                     ? QuestionView.answerStyle(theme).copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -1250,12 +1249,14 @@ class _BlankBoxes extends StatelessWidget {
     );
   }
 
-  static const List<String> _hintLefts = [
-    'Type an article…',
-    'An article…',
-    'Article…',
-  ];
-  static const List<String> _hintRights = ['no article →', 'none →'];
+  /// The articles hint's left parts, longest first, and right parts.
+  static List<String> _hintLefts(AppLocalizations l10n) => [
+        l10n.questionArticleHintLong,
+        l10n.questionArticleHintMedium,
+        l10n.questionArticleHintShort,
+      ];
+  static List<String> _hintRights(AppLocalizations l10n) =>
+      [l10n.questionNoArticlePointer, l10n.questionNoArticlePointerShort];
 
   /// The gap between an articles hint's two parts.
   static const double hintGap = 8;
@@ -1285,22 +1286,24 @@ class _BlankBoxes extends StatelessWidget {
 
     final leftStyle = _ArticlesHint.leftStyle(theme);
     final rightStyle = _ArticlesHint.rightStyle(theme);
-    final fullLeft = width(_hintLefts.first, leftStyle);
-    for (final right in _hintRights) {
+    final lefts = _hintLefts(context.l10n);
+    final rights = _hintRights(context.l10n);
+    final fullLeft = width(lefts.first, leftStyle);
+    for (final right in rights) {
       if (fullLeft + hintGap + width(right, rightStyle) <= room) {
-        return (left: _hintLefts.first, right: right);
+        return (left: lefts.first, right: right);
       }
     }
-    final shortest = _hintRights.last;
+    final shortest = rights.last;
     final rightWidth = width(shortest, rightStyle);
-    for (final left in _hintLefts.skip(1)) {
+    for (final left in lefts.skip(1)) {
       if (width(left, leftStyle) + hintGap + rightWidth <= room) {
         return (left: left, right: shortest);
       }
     }
     // Larger than the app's sizes: the left gives way (an ellipsis), the
     // right is kept whole.
-    return (left: _hintLefts.last, right: shortest);
+    return (left: lefts.last, right: shortest);
   }
 }
 
@@ -1364,7 +1367,7 @@ class _NoArticleButton extends StatelessWidget {
     return Semantics(
       button: true,
       toggled: selected,
-      label: 'No article',
+      label: context.l10n.questionNoArticleButton,
       excludeSemantics: true,
       child: SizedBox(
         width: 44,
@@ -1404,7 +1407,7 @@ class _TopicTag extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Semantics(
-      label: 'Topic: ${topic.title}',
+      label: context.l10n.questionTopicSemantics(topic.title),
       excludeSemantics: true,
       child: DecoratedBox(
         key: QuestionView.topicTagKey,
@@ -1452,7 +1455,7 @@ class _AnswerHead extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'Your answer',
+              context.l10n.questionYourAnswer,
               style: theme.textTheme.bodySmall
                   ?.withWeight(FontWeight.w800)
                   .copyWith(color: colorScheme.onSurface),
@@ -1479,8 +1482,9 @@ class _AnswerHead extends StatelessWidget {
                     : Icons.keyboard_hide_rounded,
                 size: 15,
               ),
-              label: Text(
-                  questionClipped ? 'Read full question' : 'Review answer'),
+              label: Text(questionClipped
+                  ? context.l10n.questionReadFull
+                  : context.l10n.questionReviewAnswer),
             ),
         ],
       ),
