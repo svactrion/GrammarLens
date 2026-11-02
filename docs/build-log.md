@@ -14127,3 +14127,11 @@ No IPA built and nothing uploaded: the owner builds.
 - **[Release]** `pubspec.yaml` `1.3.0+6` → `1.4.0+7`. *Why 7:* the highest build in App Store Connect is 6 (`1.3.0+6`, live). Checked: the version lives only in `pubspec.yaml` (`Info.plist` reads `$(FLUTTER_BUILD_NAME)` / `$(FLUTTER_BUILD_NUMBER)`; no test or `lib/` file pins it); `config/prod.json` has `PROXY_BASE_URL`, `APP_TOKEN` and `REVENUECAT_API_KEY` set (values not printed); `ITSAppUsesNonExemptEncryption = false`; Flutter 3.44.6.
 - **[Docs]** `docs/1.4.0-release-steps.md`: the open items that block Submission; the build (`flutter pub get`, `flutter analyze`, `flutter test`, `./scripts/preflight.sh`, `flutter build ipa --release --dart-define-from-file=config/prod.json`); reading version and build from the archive's `Info.plist`; `./scripts/release_ipa_check.sh` on the IPA; `CFBundleLocalizations` in the bundle; Transporter; the App Store Connect checklist for a localized update (version 1.4.0, eight localizations, the four page findings, App Review); What's New drafts in the eight languages from the ARB terms (AI drafts, not native-reviewed). Plan Phase 5's version item ticked; roadmap's "1.4.0 (planned)" line updated.
 - **[Open — owner]** The build and upload; the items in the steps file's §0 (device checks for B1–B4 and B10.3/B10.4, the back-translation sign-offs, `ui_language` in Firebase, the Phase 5 checks); Phase 4's localized screenshots and descriptions.
+
+## 2026-11-03 (Release-steps ticks; back-translation sign-off; B5 closed)
+
+Docs only.
+
+- **[Product — owner]** `ui_language` is registered in Firebase as a user-scoped custom dimension.
+- **[Device check — owner]** Passed on 2026-11-02/03: B2 (the hint card), the Language screen and the keyboard note (B3), the B4 English pass and B10.4. *(The owner's update of 2026-11-03; the earlier dated entries for these items still end with "[Open] device check".)* To be seen on build 7: B10.3 and B1's audit items. Ticked in `1.4.0-release-steps.md` §0.
+- **[Product — owner] Back-translation sign-off:** all seven tables approved as they stand; every revised row matched on its blind second pass; the same-model-family caveat stays. "Owner sign-off: done 2026-11-03" added to each `docs/translations/back-translation-*.md`. **B5 closed** (plan ticked; roadmap's B5/B6 entry and the release steps updated).

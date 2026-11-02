@@ -4,7 +4,7 @@
 
 **Limit:** the back-translation was made by the same model family that wrote the Brazilian Portuguese, so it is a consistency check (a dropped clause, a changed number, a trial that became a discount, a lost "auto-renews", a changed recipient), not an independent review. D6 has no native-speaker review.
 
-**Result:** 78 of 83 matched the English meaning on the first pass. Five were revised in `app_pt.arb` and back-translated again, blind, all matching: the never-sent list ("Nem … nem"), the order of asking ("Antes, pedimos" could read as past), and three paywall lines made consistent. The free trial is **"período grátis"** on purpose: the more usual "teste grátis" would share its word with the Daily Test ("Teste diário"), the collision the Spanish check found. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off:** open.
+**Result:** 78 of 83 matched the English meaning on the first pass. Five were revised in `app_pt.arb` and back-translated again, blind, all matching: the never-sent list ("Nem … nem"), the order of asking ("Antes, pedimos" could read as past), and three paywall lines made consistent. The free trial is **"período grátis"** on purpose: the more usual "teste grátis" would share its word with the Daily Test ("Teste diário"), the collision the Spanish check found. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off: done 2026-11-03.** All rows approved as they stand; every revised row matched on its blind second pass; the same-model-family limit above stays.
 
 | Key | English (original) | Back-translation | Subagent note | Δ |
 |---|---|---|---|---|

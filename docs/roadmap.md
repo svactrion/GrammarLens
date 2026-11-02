@@ -487,8 +487,8 @@ upload: owner, not started ([`1.4.0-release-steps.md`](1.4.0-release-steps.md)).
     pt with no raw keys and no overflow; ja, ko with no overflow; Arabic
     mirrored correctly with the English content left to right. Onboarding
     read through the debug panel's Preview onboarding in each language.
-    B6 is closed. Open: the owner's sign-off on the back-translation
-    tables (not recorded).
+    B6 is closed. **Back-translation tables signed off (owner,
+    2026-11-03); B5 closed.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 

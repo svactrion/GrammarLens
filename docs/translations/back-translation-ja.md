@@ -6,7 +6,7 @@
 
 **Layout:** `test/l10n_layout_test.dart` measures Latin-script text only; it cannot judge a Japanese line's width or wrapping (no word spaces to break on, different glyph widths), so it does not run for Japanese. The 320 pt and Large-text check for Japanese is the owner's device pass.
 
-**Result:** 71 of 83 matched the English meaning on the first pass. Twelve were revised in `app_ja.arb` and back-translated again, blind, all matching: "you entered" now covers only the answers; the withdrawal note and the onboarding AI line now say the app asks (not a request to the learner); "what to improve" now says "in the app"; the never-sent line and two others became full です・ます sentences; three labels made plainer. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off:** open.
+**Result:** 71 of 83 matched the English meaning on the first pass. Twelve were revised in `app_ja.arb` and back-translated again, blind, all matching: "you entered" now covers only the answers; the withdrawal note and the onboarding AI line now say the app asks (not a request to the learner); "what to improve" now says "in the app"; the never-sent line and two others became full です・ます sentences; three labels made plainer. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off: done 2026-11-03.** All rows approved as they stand; every revised row matched on its blind second pass; the same-model-family limit above stays.
 
 | Key | English (original) | Back-translation | Subagent note | Δ |
 |---|---|---|---|---|

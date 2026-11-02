@@ -4,7 +4,7 @@
 
 **Limit:** the back-translation was made by the same model family that wrote the Spanish, so it is a consistency check (a dropped clause, a changed number, a trial that became a discount, a lost "auto-renews", a changed recipient), not an independent review. D6 has no native-speaker review.
 
-**Result:** 66 of 83 matched the English meaning on the first pass. Seventeen were revised in `app_es.arb` and back-translated again, blind, all matching. The main find: the Daily Test ("Prueba diaria") and the free trial ("prueba gratuita") shared a word, so the feature is now **Test diario** (a change from the Batch 0 proposal); "por {period}" became "cada {period}"; and smaller fixes to the recipient, the permission order, the never-sent list and the crash-data word. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off:** open.
+**Result:** 66 of 83 matched the English meaning on the first pass. Seventeen were revised in `app_es.arb` and back-translated again, blind, all matching. The main find: the Daily Test ("Prueba diaria") and the free trial ("prueba gratuita") shared a word, so the feature is now **Test diario** (a change from the Batch 0 proposal); "por {period}" became "cada {period}"; and smaller fixes to the recipient, the permission order, the never-sent list and the crash-data word. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off: done 2026-11-03.** All rows approved as they stand; every revised row matched on its blind second pass; the same-model-family limit above stays.
 
 | Key | English (original) | Back-translation | Subagent note | Δ |
 |---|---|---|---|---|

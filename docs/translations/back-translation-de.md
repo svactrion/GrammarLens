@@ -4,7 +4,7 @@
 
 **Limit:** the back-translation was made by the same model family that wrote the German, so it is a consistency check (a dropped clause, a changed number, a trial that became a discount, a lost "auto-renews", a changed recipient), not an independent review. D6 has no native-speaker review.
 
-**Result:** 74 of 83 matched the English meaning on the first pass. Nine were revised in `app_de.arb` and back-translated again, blind, all matching: the five trial lengths had no singular, so a one-week trial would have read "1 Wochen" (they are plurals now, pinned by `test/l10n_test.dart`); "billed every" became a label, since German cannot say "alle" before a single week; and three wordings were tightened (where to change the permission, the weak-spot benefit, the failed purchase). The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off:** open.
+**Result:** 74 of 83 matched the English meaning on the first pass. Nine were revised in `app_de.arb` and back-translated again, blind, all matching: the five trial lengths had no singular, so a one-week trial would have read "1 Wochen" (they are plurals now, pinned by `test/l10n_test.dart`); "billed every" became a label, since German cannot say "alle" before a single week; and three wordings were tightened (where to change the permission, the weak-spot benefit, the failed purchase). The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off: done 2026-11-03.** All rows approved as they stand; every revised row matched on its blind second pass; the same-model-family limit above stays.
 
 | Key | English (original) | Back-translation | Subagent note | Δ |
 |---|---|---|---|---|

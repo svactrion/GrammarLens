@@ -6,7 +6,7 @@
 
 **Layout:** `test/l10n_layout_test.dart` measures Latin-script text only; it cannot judge an Arabic line's width, joining or right-to-left wrapping, so it does not run for Arabic. The 320 pt and Large-text check, and the mirrored layout itself, are the owner's device pass and B6 (the RTL pass).
 
-**Result:** 75 of 83 matched on the first pass. Eight were revised in `app_ar.arb` and back-translated again, blind, all matching. The real error: "المتابعة بالخطة سنوية" broke definiteness agreement, so the plan names are definite now (السنوية, الشهرية). Also: the switch's off state ("غير مفعّل"), the weak-spot benefit (the 3–10 form used "الـ {count}" and "تجاوز" could read "skip"), a comma splice, a word order, and "your notes" in the recipient line. "ملاحظات" stays the word for feedback, as in Arabic apps generally. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off:** open.
+**Result:** 75 of 83 matched on the first pass. Eight were revised in `app_ar.arb` and back-translated again, blind, all matching. The real error: "المتابعة بالخطة سنوية" broke definiteness agreement, so the plan names are definite now (السنوية, الشهرية). Also: the switch's off state ("غير مفعّل"), the weak-spot benefit (the 3–10 form used "الـ {count}" and "تجاوز" could read "skip"), a comma splice, a word order, and "your notes" in the recipient line. "ملاحظات" stays the word for feedback, as in Arabic apps generally. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off: done 2026-11-03.** All rows approved as they stand; every revised row matched on its blind second pass; the same-model-family limit above stays.
 
 | Key | English (original) | Back-translation | Subagent note | Δ |
 |---|---|---|---|---|

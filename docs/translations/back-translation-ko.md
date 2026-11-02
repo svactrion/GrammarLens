@@ -6,7 +6,7 @@
 
 **Layout:** `test/l10n_layout_test.dart` measures Latin-script text only; it cannot judge a Korean line's width or wrapping (no word spaces to break on, different glyph widths), so it does not run for Korean. The 320 pt and Large-text check for Korean is the owner's device pass.
 
-**Result:** 76 of 83 matched on the first pass. Seven rows were revised (six strings changed) and back-translated again, blind, all matching. The real error: the object particle after {what} read "문제을" (the inserted text ends in a vowel); `dataAiWhat` now ends in a consonant, which also makes "you entered" cover only the answers. "{period}마다" broke on one-unit periods ("월마다", "년마다"), so the line is a label now. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off:** open.
+**Result:** 76 of 83 matched on the first pass. Seven rows were revised (six strings changed) and back-translated again, blind, all matching. The real error: the object particle after {what} read "문제을" (the inserted text ends in a vowel); `dataAiWhat` now ends in a consonant, which also makes "you entered" cover only the answers. "{period}마다" broke on one-unit periods ("월마다", "년마다"), so the line is a label now. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off: done 2026-11-03.** All rows approved as they stand; every revised row matched on its blind second pass; the same-model-family limit above stays.
 
 | Key | English (original) | Back-translation | Subagent note | Δ |
 |---|---|---|---|---|
