@@ -3,7 +3,7 @@
 **An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
 
 <p>
-  <a href="https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346"><img src="https://tools.applemarketingtools.com/api/badges/download-on-the-app-store/black/en-us" height="44" alt="Download on the App Store"></a>
+  <a href="https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346"><img src="https://img.shields.io/badge/App_Store-Download-black?logo=apple&logoColor=white" alt="Download on the App Store"></a>
 </p>
 
 **Status: 1.3.0 — live since 2026-11-02** on the [App Store](https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346) (iPhone and iPad, English), build `1.3.0+6`. It is the first public release: it carries the content of 1.1.0 and 1.2.0, which were never submitted, and adds a new question screen. 1.0.0, submitted in September 2026, was never released. 1.4.0 (seven interface languages) is in development ([1.4.0 plan](docs/1.4.0-plan.md)).
