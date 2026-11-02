@@ -14064,3 +14064,7 @@ Plan: `docs/1.4.0-plan.md` B5; Batch 0: `docs/1.4.0-b5-batch0-report.md` §8 (de
 ## 2026-11-02 (1.4.0 B5: Arabic)
 
 - **[Engineering]** `app_ar.arb`, 479 keys, Modern Standard Arabic, masculine generic; every plural message has zero, one, two, few, many and other; Latin digits (a new test in `test/l10n_test.dart` checks month-and-year dates in every shipped language); feature names الاختبار اليومي, تدريب الموضوعات, التسلق الشهري, المراجعة, never after the merging preposition لـ, so the one-name check holds. Blind back-translation (`docs/translations/back-translation-ar.md`): 75 of 83 matched first time, eight revised, among them a definiteness error in "Continue with the {plan} plan" (the plan names are definite now). The completeness test passes; the layout test does not cover Arabic script, so overflow and the mirrored layout are for the device pass and B6.
+
+## 2026-11-02 (1.4.0 B5: iOS localizations)
+
+- **[Engineering]** `ios/Runner/Info.plist` gets `CFBundleLocalizations` (en, ja, ko, es, pt-BR, tr, ar, de), so iOS offers GrammarLens's language under Settings → GrammarLens → Language; Xcode's `knownRegions` lists the same. A test in `test/l10n_test.dart` pins the eight shipped languages across the delegate, the picker and the plist (pt as pt-BR). Added after the last translation, as the Batch 0 report planned, so iOS never offered a language without strings.

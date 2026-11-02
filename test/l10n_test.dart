@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -265,5 +267,30 @@ void main() {
             reason: '${locale.languageCode}: $text');
       }
     }
+  });
+
+  // The shipped languages, pinned (1.4.0 B5): the picker, the delegate and
+  // iOS's CFBundleLocalizations (Settings → GrammarLens → Language) agree.
+  test('eight languages ship, and iOS lists the same eight', () {
+    const shipped = {'en', 'tr', 'de', 'es', 'pt', 'ja', 'ko', 'ar'};
+    expect(
+        AppLocalizations.supportedLocales.map((l) => l.languageCode).toSet(),
+        shipped);
+    expect({
+      for (final l in AppLanguage.available())
+        if (l.locale != null) l.locale!.languageCode,
+    }, shipped);
+    final plist = File('ios/Runner/Info.plist').readAsStringSync();
+    final block = RegExp(
+            r'<key>CFBundleLocalizations</key>\s*<array>(.*?)</array>',
+            dotAll: true)
+        .firstMatch(plist)!
+        .group(1)!;
+    final ios = {
+      for (final m in RegExp(r'<string>([^<]+)</string>').allMatches(block))
+        m.group(1)!,
+    };
+    // Brazilian Portuguese is "pt-BR" to iOS; the app resolves it to `pt`.
+    expect(ios, {...shipped.difference({'pt'}), 'pt-BR'});
   });
 }
