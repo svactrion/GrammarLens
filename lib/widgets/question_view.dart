@@ -11,6 +11,7 @@ import '../utils/blank_assembly.dart';
 import '../utils/blanks.dart';
 import '../theme.dart';
 import 'blank_colors.dart';
+import 'english_content.dart';
 import 'topic_hint_card.dart';
 
 /// The answer drafts of one question session (PracticeScreen, DailyTestScreen):
@@ -581,19 +582,22 @@ class _QuestionViewState extends State<QuestionView>
                 LayoutId(id: _Slot.head, child: head),
                 LayoutId(
                     id: _Slot.answer,
-                    child: boxes > 1
-                        ? _BlankBoxes(
-                            key: ValueKey('blank_boxes_${widget.item.id}'),
-                            item: widget.item,
-                            drafts: widget.drafts,
-                            noArticleButton:
-                                widget.topic?.id == TopicId.articles,
-                            onChanged: () => widget.onChanged(
-                                widget.drafts.answerFor(widget.item)),
-                          )
-                        : _answerField(theme,
-                            minLines: QuestionView.minLinesFor(type,
-                                compact: compact))),
+                    // The learner writes English: left to right, caret at
+                    // the left, boxes in the sentence's order.
+                    child: EnglishContent(
+                        child: boxes > 1
+                            ? _BlankBoxes(
+                                key: ValueKey('blank_boxes_${widget.item.id}'),
+                                item: widget.item,
+                                drafts: widget.drafts,
+                                noArticleButton:
+                                    widget.topic?.id == TopicId.articles,
+                                onChanged: () => widget.onChanged(
+                                    widget.drafts.answerFor(widget.item)),
+                              )
+                            : _answerField(theme,
+                                minLines: QuestionView.minLinesFor(type,
+                                    compact: compact)))),
               ],
             ),
           );
@@ -822,7 +826,9 @@ class _QuestionContent extends StatelessWidget {
   static Widget _line(double height, Widget child) => ConstrainedBox(
         constraints: BoxConstraints(minHeight: height),
         child: Align(
-            alignment: Alignment.centerLeft, widthFactor: 1, child: child),
+            alignment: AlignmentDirectional.centerStart,
+            widthFactor: 1,
+            child: child),
       );
 
   @override
@@ -916,14 +922,18 @@ class _QuestionContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        colored
-            ? _withBlanks(main, mainStyle, 0, mainTextKey)
-            : Text(main, key: mainTextKey, style: mainStyle),
+        // The question itself is English (1.4.0 D2): left to right in every
+        // interface language; the header row above follows the interface.
+        EnglishContent(
+          child: colored
+              ? _withBlanks(main, mainStyle, 0, mainTextKey)
+              : Text(main, key: mainTextKey, style: mainStyle),
+        ),
         if (secondary.isNotEmpty) ...[
           const SizedBox(height: 12),
           Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 10),
-          ...secondary,
+          for (final widget in secondary) EnglishContent(child: widget),
         ],
       ],
     );
@@ -1490,8 +1500,8 @@ class _MoreBelow extends StatelessWidget {
     return Container(
       key: QuestionView.moreBelowKey,
       height: 30,
-      alignment: Alignment.bottomRight,
-      padding: const EdgeInsets.only(right: 8),
+      alignment: AlignmentDirectional.bottomEnd,
+      padding: const EdgeInsetsDirectional.only(end: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,

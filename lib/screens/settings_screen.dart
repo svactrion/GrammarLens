@@ -426,7 +426,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Theme.of(context).textTheme.labelMedium?.withWeight(FontWeight.w800);
     final label = TextPainter(
       text: TextSpan(text: 'System', style: style),
-      textDirection: TextDirection.ltr,
+      textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
       maxLines: 1,
     )..layout();
@@ -531,7 +531,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Center(child: CircularProgressIndicator())
           else if (_medalsFailed)
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: TextButton.icon(
                 onPressed: _loadMedals,
                 icon: const Icon(Icons.refresh_rounded),

@@ -79,8 +79,10 @@ class ClimbScoreBar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(_trackHeight / 2),
                         child: ColoredBox(
                           color: scheme.surfaceContainerHighest,
+                          // Fills from the start edge: from the right in
+                          // RTL (1.4.0 B3).
                           child: Align(
-                            alignment: Alignment.centerLeft,
+                            alignment: AlignmentDirectional.centerStart,
                             child: FractionallySizedBox(
                               widthFactor: fill,
                               heightFactor: 1,
@@ -91,8 +93,8 @@ class ClimbScoreBar extends StatelessWidget {
                       ),
                     ),
                     for (final tier in MedalTier.values)
-                      Positioned(
-                        left: at(tier) - 1.5,
+                      PositionedDirectional(
+                        start: at(tier) - 1.5,
                         top: 0,
                         width: 3,
                         height: _tickHeight,
@@ -112,8 +114,8 @@ class ClimbScoreBar extends StatelessWidget {
                   height: (theme.textTheme.labelSmall?.fontSize ?? 11) * 1.6,
                   child: Stack(clipBehavior: Clip.none, children: [
                     for (final tier in MedalTier.values)
-                      Positioned(
-                        left: at(tier) - 40,
+                      PositionedDirectional(
+                        start: at(tier) - 40,
                         width: 80,
                         top: 0,
                         child: Text(

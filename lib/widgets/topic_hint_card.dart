@@ -142,6 +142,10 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   /// widget is being taken down, when its context may no longer be used.
   bool _reduceMotion = false;
 
+  /// Right to left (Arabic, 1.4.0 B3): the knob starts at the right end and
+  /// is dragged to the left; the track mirrors.
+  bool _rtl = false;
+
   static final SpringDescription _spring =
       SpringDescription.withDampingRatio(mass: 1, stiffness: 500, ratio: 1);
 
@@ -155,6 +159,7 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _rtl = Directionality.of(context) == TextDirection.rtl;
   }
 
   @override
@@ -205,7 +210,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
 
   void _onDragUpdate(DragUpdateDetails details) {
     if (!_holding || _travel <= 0) return;
-    _dragDistance += details.delta.dx;
+    // Towards the track's far end: right in LTR, left in RTL.
+    _dragDistance += _rtl ? -details.delta.dx : details.delta.dx;
     _reveal.value = (_dragDistance / _travel).clamp(0.0, 1.0);
   }
 
@@ -262,6 +268,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
   }
 
   Widget _track(BuildContext context, double value) {
+    // Positions are from the start edge (PositionedDirectional), so the
+    // same numbers mirror under RTL.
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final palette = AppPalette.of(context);
@@ -280,8 +288,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
           child: Stack(
             children: [
               // The trail behind the knob.
-              Positioned(
-                left: 0,
+              PositionedDirectional(
+                start: 0,
                 top: 0,
                 bottom: 0,
                 width: knobLeft + height,
@@ -292,9 +300,11 @@ class _TopicHintSliderState extends State<TopicHintSlider>
                   ),
                 ),
               ),
-              Positioned.fill(
-                left: height,
-                right: height / 2,
+              PositionedDirectional(
+                start: height,
+                end: height / 2,
+                top: 0,
+                bottom: 0,
                 child: Center(
                   child: Opacity(
                     opacity: (1 - value * 2).clamp(0.0, 1.0),
@@ -311,8 +321,8 @@ class _TopicHintSliderState extends State<TopicHintSlider>
                   ),
                 ),
               ),
-              Positioned(
-                left: knobLeft,
+              PositionedDirectional(
+                start: knobLeft,
                 top: 0,
                 width: height,
                 height: height,
@@ -335,8 +345,11 @@ class _TopicHintSliderState extends State<TopicHintSlider>
                         color: colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
+                      // No `matchTextDirection` on this icon: chosen by hand.
                       child: Icon(
-                        Icons.keyboard_double_arrow_right_rounded,
+                        Directionality.of(context) == TextDirection.rtl
+                            ? Icons.keyboard_double_arrow_left_rounded
+                            : Icons.keyboard_double_arrow_right_rounded,
                         // Scaled with the knob (22 pt in the 40 pt knob).
                         size: 26,
                         color: colorScheme.onPrimary,

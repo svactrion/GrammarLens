@@ -54,7 +54,11 @@ class _TabState extends State<_Tab> {
 class _Harness extends StatefulWidget {
   final bool reduceMotion;
   final VoidCallback? onHomeTap;
-  const _Harness({this.reduceMotion = false, this.onHomeTap});
+  final TextDirection direction;
+  const _Harness(
+      {this.reduceMotion = false,
+      this.onHomeTap,
+      this.direction = TextDirection.ltr});
 
   @override
   State<_Harness> createState() => _HarnessState();
@@ -74,6 +78,8 @@ class _HarnessState extends State<_Harness> {
       data: MediaQueryData(
           size: const Size(400, 800), disableAnimations: widget.reduceMotion),
       child: MaterialApp(
+        builder: (context, child) =>
+            Directionality(textDirection: widget.direction, child: child!),
         home: FloatingNavShell(
           body: TabSwitcher(index: index, transition: transition, children: [
             _Tab('home', key: const ValueKey('home'), onTap: widget.onHomeTap),
@@ -96,12 +102,14 @@ class _HarnessState extends State<_Harness> {
 }
 
 Future<_HarnessState> _pump(WidgetTester tester,
-    {bool reduceMotion = false, VoidCallback? onHomeTap}) async {
+    {bool reduceMotion = false,
+    VoidCallback? onHomeTap,
+    TextDirection direction = TextDirection.ltr}) async {
   tester.view.physicalSize = const Size(400, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  await tester
-      .pumpWidget(_Harness(reduceMotion: reduceMotion, onHomeTap: onHomeTap));
+  await tester.pumpWidget(_Harness(
+      reduceMotion: reduceMotion, onHomeTap: onHomeTap, direction: direction));
   await tester.pumpAndSettle();
   return tester.state<_HarnessState>(find.byType(_Harness));
 }
@@ -162,6 +170,23 @@ void main() {
     expect(_x(tester, 'review'), lessThan(400 * .02));
     await tester.pumpAndSettle();
     expect(_opacity(tester, 1), 1);
+    expect(_x(tester, 'review'), 0);
+  });
+
+  testWidgets(
+      'slide under RTL (1.4.0 B3): mirrored, the new tab comes in from the '
+      'left and the old one leaves to the right', (tester) async {
+    final harness = await _pump(tester, direction: TextDirection.rtl);
+    harness.go(1, TabTransition.slide);
+    await tester.pump();
+    expect(_x(tester, 'review'), -400);
+    expect(_x(tester, 'home'), 0);
+
+    await tester.pump(const Duration(milliseconds: 160));
+    final t = Curves.easeOutCubic.transform(.5);
+    expect(_x(tester, 'review'), moreOrLessEquals(-400 * (1 - t), epsilon: .5));
+    expect(_x(tester, 'home'), moreOrLessEquals(400 * t, epsilon: .5));
+    await tester.pumpAndSettle();
     expect(_x(tester, 'review'), 0);
   });
 

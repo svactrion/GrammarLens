@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import '../utils/feedback_format.dart';
+import 'english_content.dart';
 import 'inline_marks.dart';
 
 /// AI feedback laid out for reading (1.4.0 B9): [formatFeedback]'s
@@ -33,7 +34,12 @@ class FeedbackText extends StatelessWidget {
   const FeedbackText(this.text, {super.key, this.style});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      // AI feedback is English (1.4.0 D2): left to right in every interface
+      // language (B3).
+      EnglishContent(child: Builder(builder: _paragraphs));
+
+  Widget _paragraphs(BuildContext context) {
     final formatted = formatFeedback(text);
     final scheme = Theme.of(context).colorScheme;
     final base = style ?? DefaultTextStyle.of(context).style;

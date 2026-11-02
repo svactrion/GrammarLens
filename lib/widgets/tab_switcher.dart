@@ -170,6 +170,9 @@ class _TabSwitcherState extends State<TabSwitcher>
             key: TabSwitcher.slotKey(i),
             child: SlideTransition(
               position: _offsetFor(i),
+              // Mirrored under RTL (1.4.0 B3): the content slides the other
+              // way.
+              textDirection: Directionality.of(context),
               child: FadeTransition(
                 opacity: _opacityFor(i),
                 child: ScaleTransition(

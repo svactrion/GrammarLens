@@ -333,7 +333,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               style: TextButton.styleFrom(
                                 minimumSize: const Size(44, 44),
                                 padding: EdgeInsets.zero,
-                                alignment: Alignment.centerLeft,
+                                alignment: AlignmentDirectional.centerStart,
                                 foregroundColor: colorScheme.secondary,
                                 textStyle: theme.textTheme.labelSmall
                                     ?.withWeight(FontWeight.w700),
@@ -412,7 +412,7 @@ class _StepHeader extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: SizedBox(
                 width: double.infinity,
                 child: Wrap(

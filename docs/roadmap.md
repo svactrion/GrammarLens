@@ -449,6 +449,16 @@ into the next build. Version bump and build: owner, not started.
     or added; still "Correct", never "Needs work".
   - Verified: `flutter analyze` clean, full test suite passed (2275).
     **Not checked on a device.**
+- **1.4.0 B3, commit 3 of 3 (2026-11-02):**
+  - **RTL preparation for Arabic:** the hint slider, the Monthly Climb
+    score bar, the practice length labels, the paywall's comparison cells,
+    the tab slide and the remaining left/right alignments mirror under a
+    right-to-left interface; the questions, the answers, the corrections
+    and the AI feedback stay left to right inside it. The mountain scene
+    stays as drawn. Checked in tests under a forced RTL direction; the
+    Arabic device pass is B6.
+  - Verified: `flutter analyze` clean, full test suite passed (2284).
+    **Not checked on a device** (no Arabic strings yet).
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 

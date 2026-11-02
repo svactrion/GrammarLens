@@ -13926,3 +13926,58 @@ deployed). No proxy change, no deploy.
 - **[Open]** Device check (owner): a Daily Test answer typed with a
   Japanese full-width keyboard or with an accent shows "Correct" and the
   note. Then B3 commit 3 (the RTL preparation).
+
+## 2026-11-02 (1.4.0 B3, commit 3 of 3: the RTL preparation; B3 built)
+
+Plan: `docs/1.4.0-plan.md` B3; Batch 0:
+`docs/1.4.0-b3-batch0-report.md` §3, §8 Q7. No proxy change, no deploy.
+
+- **[Engineering] Mirrored** (start/end instead of left/right):
+  - The hint slider (`topic_hint_card.dart`): the trail, the label and
+    the knob are `PositionedDirectional` from the start edge; the drag
+    counts towards the far end (left under RTL); the knob shows
+    `keyboard_double_arrow_left_rounded` under RTL (the right-pointing icon
+    has no `matchTextDirection`, so it is picked by hand).
+  - The climb score bar: the fill from `AlignmentDirectional.centerStart`,
+    the ticks and tier labels from the start edge.
+  - The practice length labels: from the start edge, centred by half
+    their width towards it, so they stay on the mirrored `Slider`'s stops.
+  - The question view: the header's line alignment and the "more below"
+    row (`bottomEnd`, end padding).
+  - The paywall: the comparison's label cells (`fromSTEB`,
+    `centerStart`) and the retry button (`centerEnd`); its corner radii
+    are symmetric and stay.
+  - Onboarding (2), Profile's medal retry, the result score band:
+    `centerStart`. The mistake card's check icon: start padding.
+  - The tab slide: `SlideTransition` gets the ambient direction, which
+    negates the offset under RTL.
+  - `TextPainter`s that measure interface text (the paywall's five,
+    Profile's theme-segment fit, the result band) take
+    `Directionality.of(context)`. The launch splash (outside `MaterialApp`,
+    the brand) and the question view's two (English content) keep LTR.
+- **[Engineering] English stays left to right** (§3.3): a small
+  `EnglishContent` widget (`Directionality(ltr)`) wraps the question text
+  and its instruction and hint lines (not the header with the type label,
+  topic tag and counter), the answer field and the blank boxes, the
+  mistake card's prompt, the contents of "You wrote" and "Corrected" (not
+  their labels), the structured single note, and `FeedbackText`. Known
+  limits for B6: the "Left blank" row text and the field's placeholder sit
+  inside the LTR content and will align left in Arabic; the Review card
+  excerpts and the "Also correct" lines are not wrapped yet.
+- **[Stays as drawn]** The Monthly Climb scene (image, trail, camera,
+  pawn, save points), the welcome screen's artwork, the brand mark,
+  wordmark and splash, the medals and avatars.
+- **[Tests]** New `test/rtl_test.dart` under a forced RTL `Directionality`
+  (no Arabic strings until B5): the knob starts at the right end with left
+  chevrons; dragging left opens the card and dragging right does not; the
+  score bar fills from the right and Bronze is the rightmost label; the
+  length labels are the LTR positions reflected about the slider, within
+  half a point; the question text, the answer field, the mistake card's
+  prompt and boxes and the feedback paragraphs are LTR while the counter,
+  the "YOU WROTE" label and the surroundings are RTL; LTR unchanged.
+  `tab_switcher_test.dart`: the slide mirrored under RTL. `flutter
+  analyze` clean; **2284 tests passed**.
+- **[Status]** B3 is built (three commits). Device checks open (owner):
+  commit 1's Language screen and commit 2's folding; commit 3 has nothing
+  visible in English and is checked on a device with Arabic in B6. Next:
+  B4 (strings to the ARB, seven batches behind the guard).

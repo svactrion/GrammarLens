@@ -6,6 +6,7 @@ import '../utils/answer_diff.dart';
 import '../utils/blank_assembly.dart';
 import '../utils/blanks.dart';
 import 'blank_colors.dart';
+import 'english_content.dart';
 import 'feedback_text.dart';
 import 'inline_marks.dart';
 
@@ -157,14 +158,18 @@ class MistakeBreakdown extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (hasPrompt) ...[
-          colors != null
-              ? Text.rich(colouredBlanks(
-                  prompt!,
-                  colors: colors,
-                  total: blankPattern.allMatches(prompt!).length,
-                  style: promptStyle,
-                ))
-              : Text(prompt!, style: promptStyle),
+          // The question, the boxes' text and the feedback are English
+          // (1.4.0 D2): left to right in every interface language (B3).
+          EnglishContent(
+            child: colors != null
+                ? Text.rich(colouredBlanks(
+                    prompt!,
+                    colors: colors,
+                    total: blankPattern.allMatches(prompt!).length,
+                    style: promptStyle,
+                  ))
+                : Text(prompt!, style: promptStyle),
+          ),
           const SizedBox(height: 16),
         ],
         if (hasAnswer) ...[
@@ -235,8 +240,9 @@ class MistakeBreakdown extends StatelessWidget {
           Padding(
             key: MistakeBreakdown.blankNoteKey(0),
             padding: EdgeInsets.only(bottom: hasSummary ? 10 : 0),
-            child:
-                Text(feedback.single.note, style: theme.textTheme.bodyMedium),
+            child: EnglishContent(
+                child: Text(feedback.single.note,
+                    style: theme.textTheme.bodyMedium)),
           ),
         if (hasSummary)
           FeedbackText(
@@ -362,7 +368,8 @@ class _BlankRows extends StatelessWidget {
                                 WidgetSpan(
                                   alignment: PlaceholderAlignment.middle,
                                   child: Padding(
-                                    padding: const EdgeInsets.only(left: 4),
+                                    padding: const EdgeInsetsDirectional.only(
+                                        start: 4),
                                     child: Icon(
                                       Icons.check,
                                       size: 16,
@@ -488,7 +495,9 @@ class _LabeledBox extends StatelessWidget {
                 .copyWith(color: labelColor, letterSpacing: 0.6),
           ),
           const SizedBox(height: 4),
-          child,
+          // The label above follows the interface; the English inside reads
+          // left to right (1.4.0 B3).
+          EnglishContent(child: child),
         ],
       ),
     );

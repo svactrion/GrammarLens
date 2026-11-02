@@ -15,8 +15,7 @@ class ResultScoreBand extends StatelessWidget implements PreferredSizeWidget {
   /// The band's height: [_height] for one line, more when the score wraps.
   final double height;
 
-  const ResultScoreBand({super.key, required this.text})
-      : height = _height;
+  const ResultScoreBand({super.key, required this.text}) : height = _height;
 
   /// The band sized for [text] on [context]'s screen: one line keeps the
   /// band's 52 pt; at a large text size on a narrow screen the score wraps
@@ -25,15 +24,15 @@ class ResultScoreBand extends StatelessWidget implements PreferredSizeWidget {
   factory ResultScoreBand.sized(BuildContext context,
       {Key? key, required String text}) {
     final width = MediaQuery.sizeOf(context).width;
-    final inset = ContentWidth.insetOf(context,
-        edge: ContentWidth.basePadding(width));
+    final inset =
+        ContentWidth.insetOf(context, edge: ContentWidth.basePadding(width));
     final maxWidth = width - 2 * inset - 2 * ContentWidth.basePadding(width);
     final style = _style(Theme.of(context));
     final scaler = MediaQuery.textScalerOf(context);
     double measure(String s, double maxWidth) {
       final painter = TextPainter(
         text: TextSpan(text: s, style: style),
-        textDirection: TextDirection.ltr,
+        textDirection: Directionality.of(context),
         textScaler: scaler,
       )..layout(maxWidth: maxWidth);
       final h = painter.height;
@@ -50,11 +49,10 @@ class ResultScoreBand extends StatelessWidget implements PreferredSizeWidget {
 
   static const double _height = 52;
 
-  static TextStyle? _style(ThemeData theme) => theme.textTheme.headlineSmall
-      ?.withWeight(FontWeight.w900)
-      .copyWith(
-          color: theme.appBarTheme.foregroundColor ??
-              theme.colorScheme.onSurface);
+  static TextStyle? _style(ThemeData theme) =>
+      theme.textTheme.headlineSmall?.withWeight(FontWeight.w900).copyWith(
+          color:
+              theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface);
 
   @override
   Size get preferredSize => Size.fromHeight(height);
@@ -70,7 +68,7 @@ class ResultScoreBand extends StatelessWidget implements PreferredSizeWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 12),
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: AlignmentDirectional.centerStart,
         child: Text(text, style: _style(theme)),
       ),
     );

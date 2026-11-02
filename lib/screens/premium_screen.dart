@@ -431,7 +431,7 @@ class _SupportingLine extends StatelessWidget {
     // weak spot's one-line text would then not take the default's place.
     final painter = TextPainter(
       text: TextSpan(text: 'A\nA', style: style),
-      textDirection: TextDirection.ltr,
+      textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
     final twoLines = painter.height;
@@ -1413,7 +1413,7 @@ double _measureTextWidth(BuildContext context, String text, TextStyle style) {
       text: text,
       style: DefaultTextStyle.of(context).style.merge(style),
     ),
-    textDirection: TextDirection.ltr,
+    textDirection: Directionality.of(context),
     textScaler: MediaQuery.textScalerOf(context),
   )..layout();
   return painter.width;
@@ -1472,7 +1472,7 @@ class _ComparisonTable extends StatelessWidget {
     final painter = TextPainter(
       text:
           TextSpan(text: List.filled(maxLines, 'Mg').join('\n'), style: style),
-      textDirection: TextDirection.ltr,
+      textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
     return painter.height + 10; // 5 top + 5 bottom padding, both row types
@@ -1557,7 +1557,7 @@ class _ComparisonTable extends StatelessWidget {
                 text: row.label,
                 style: DefaultTextStyle.of(context).style.merge(labelStyle),
               ),
-              textDirection: TextDirection.ltr,
+              textDirection: Directionality.of(context),
               textScaler: MediaQuery.textScalerOf(context),
               maxLines: 2,
             )..layout(maxWidth: textWidth);
@@ -1886,10 +1886,12 @@ class _ComparisonRowLine extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(border: divider),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
+                // Start and end, not left and right (1.4.0 B3): the label
+                // cell mirrors under RTL.
+                padding: const EdgeInsetsDirectional.fromSTEB(
                     _labelCellLeftPadding, 5, _labelCellRightPadding, 5),
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: Text(
                     row.label,
                     maxLines: 2,
@@ -2300,7 +2302,7 @@ class _UnavailableCard extends StatelessWidget {
               constraints.maxWidth - 20 - 10 - 8 - _retryButtonWidth(context);
           final painter = TextPainter(
             text: TextSpan(text: _message, style: theme.textTheme.bodyMedium),
-            textDirection: TextDirection.ltr,
+            textDirection: Directionality.of(context),
             textScaler: MediaQuery.textScalerOf(context),
             maxLines: 2,
           )..layout(maxWidth: roomForMessage > 0 ? roomForMessage : 0);
@@ -2330,7 +2332,7 @@ class _UnavailableCard extends StatelessWidget {
                   Expanded(child: message),
                 ],
               ),
-              Align(alignment: Alignment.centerRight, child: retry),
+              Align(alignment: AlignmentDirectional.centerEnd, child: retry),
             ],
           );
         },

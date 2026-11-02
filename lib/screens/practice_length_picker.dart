@@ -217,6 +217,9 @@ class _LengthLabelRow extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     const values = PracticeLength.values;
+    // The Slider mirrors under RTL (1.4.0 B3), so the labels follow: placed
+    // from the start edge and centred by half their width towards it.
+    final rtl = Directionality.of(context) == TextDirection.rtl;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -235,12 +238,12 @@ class _LengthLabelRow extends StatelessWidget {
                 child: Text('0', style: theme.textTheme.bodyMedium),
               ),
               for (var i = 0; i < values.length; i++)
-                Positioned(
-                  left: _kSliderThumbRadius +
+                PositionedDirectional(
+                  start: _kSliderThumbRadius +
                       trackWidth * i / (values.length - 1),
                   top: 0,
                   child: FractionalTranslation(
-                    translation: const Offset(-0.5, 0),
+                    translation: Offset(rtl ? 0.5 : -0.5, 0),
                     child: Text(
                       key: ValueKey('lengthLabel_${values[i].name}'),
                       '${values[i].questionCount}',
