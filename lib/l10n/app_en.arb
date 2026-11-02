@@ -1,0 +1,30 @@
+{
+  "@@locale": "en",
+
+  "settingsLanguageLabel": "Language",
+  "@settingsLanguageLabel": {
+    "description": "Profile → Appearance card: the label above the interface-language choice, beside Theme and Text size."
+  },
+  "settingsLanguageSystemDefault": "System default",
+  "@settingsLanguageSystemDefault": {
+    "description": "The interface-language choice that follows the device's language. Shown as the current value in Profile and as the first option of the language picker."
+  },
+  "languagePickerTitle": "Language",
+  "@languagePickerTitle": {
+    "description": "Title of the screen where the interface language is chosen (Profile → Appearance → Language)."
+  },
+  "languagePickerSubtitle": "Questions and feedback stay in English.",
+  "@languagePickerSubtitle": {
+    "description": "Subtitle under the language picker's title. The app teaches English, so the questions and the AI feedback are English in every interface language; only the interface changes."
+  },
+  "languagePickerSystemDetail": "Now: {language}",
+  "@languagePickerSystemDetail": {
+    "description": "Second line of the 'System default' option: the language the device's settings resolve to right now, shown as its own name (for example 'Now: English').",
+    "placeholders": {
+      "language": {
+        "type": "String",
+        "example": "English"
+      }
+    }
+  }
+}

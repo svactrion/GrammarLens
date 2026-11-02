@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
+import 'l10n/l10n.dart';
 import 'models/app_theme_mode.dart';
 import 'models/app_text_size.dart';
 import 'models/avatar.dart';
@@ -71,6 +72,10 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   AppThemeMode _themeMode = AppThemeMode.system;
   AppTextSize _textSize = AppTextSize.medium;
 
+  /// The interface-language choice (1.4.0 B3): System default until the
+  /// stored one loads or the user picks one in Profile.
+  AppLanguage _language = AppLanguage.system;
+
   // Null while loading and stays null until onboarding completes — that's
   // the app's whole "returning vs. first launch" signal (PRD v2 §4), no
   // separate flag. `_profileLoading` only exists to avoid a one-frame flash
@@ -101,6 +106,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     _deleteStaleDailyTestSets();
     _loadThemeMode();
     _loadTextSize();
+    _loadLanguage();
     _loadProfile();
     if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
     if (ClimbDebugControls.available) {
@@ -129,6 +135,15 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       _analyticsService.appResumed();
       _finalizeMedalMonths();
     }
+  }
+
+  /// The device's language changed in Settings while the app ran. When the
+  /// locale is not pinned (System default, or a choice this build has no
+  /// strings for) the interface follows it, MaterialApp resolving the
+  /// locale on its own; `ui_language` follows too.
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    if (_fixedLocale == null) _reportUiLanguage(locales);
   }
 
   /// Launch only, never on resume: old unfinished Daily Test sets
@@ -192,6 +207,43 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     }
   }
 
+  Future<void> _loadLanguage() async {
+    try {
+      final language = await _storageService.getLanguage();
+      if (mounted) setState(() => _language = language);
+    } catch (_) {
+      // Keep following the device's language if storage is unavailable.
+    }
+    _reportUiLanguage();
+  }
+
+  /// The locale [MaterialApp] is pinned to: the chosen language when this
+  /// build has its strings, else null, so the device's language is resolved
+  /// ([resolveAppLocale]).
+  Locale? get _fixedLocale {
+    final locale = _language.locale;
+    if (locale == null) return null;
+    final supported = AppLocalizations.supportedLocales
+        .any((l) => l.languageCode == locale.languageCode);
+    return supported ? locale : null;
+  }
+
+  /// `ui_language` (docs/analytics-plan.md §3): the language the interface
+  /// is shown in now, the resolved one on System default.
+  void _reportUiLanguage([List<Locale>? deviceLocales]) {
+    final locale = effectiveAppLocale(_language,
+        deviceLocales ?? WidgetsBinding.instance.platformDispatcher.locales);
+    unawaited(
+        _analyticsService.setUiLanguageProperty(AppLanguage.forLocale(locale)));
+  }
+
+  void _setLanguage(AppLanguage language) {
+    if (language == _language) return;
+    setState(() => _language = language);
+    unawaited(_storageService.setLanguage(language).catchError((_) {}));
+    _reportUiLanguage();
+  }
+
   /// Applies whatever debug entitlement override a developer set last
   /// session (Settings' "Developer" section) before any screen has a
   /// chance to check `SubscriptionService.hasFullAccess` — so Home's
@@ -230,6 +282,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       _profile = null;
       _themeMode = AppThemeMode.system;
       _textSize = AppTextSize.medium;
+      _language = AppLanguage.system;
       _tabIndex = 0;
       _initialPendingClimb = null;
       _offerDay0Paywall = false;
@@ -348,6 +401,16 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       theme: buildAppTheme(Brightness.light, textSize: _textSize),
       darkTheme: buildAppTheme(Brightness.dark, textSize: _textSize),
       themeMode: _flutterThemeMode,
+      // 1.4.0 B3: the interface strings. A fixed choice pins the locale;
+      // System default leaves it null and the device's preferred locales
+      // are resolved against the languages this build has strings for.
+      // A change rebuilds from here: every widget that reads
+      // `context.l10n` in `build` follows.
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: _fixedLocale,
+      localeListResolutionCallback: (locales, supported) =>
+          resolveAppLocale(locales, supported),
       // `Builder` gets a context nested under the `MaterialApp` above, so
       // `Theme.of` here resolves the light/dark scheme we just set via
       // `theme`/`darkTheme` instead of whatever theme sits above this
@@ -422,6 +485,8 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               onSelectThemeMode: _setThemeMode,
               textSize: _textSize,
               onSelectTextSize: _setTextSize,
+              language: _language,
+              onSelectLanguage: _setLanguage,
               profile: _profile!,
               storageService: _storageService,
               analyticsService: _analyticsService,

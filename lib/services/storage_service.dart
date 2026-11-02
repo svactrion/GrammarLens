@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart'
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../l10n/l10n.dart';
 import '../models/ai_consent.dart';
 import '../models/climb_theme.dart';
 import '../models/app_theme_mode.dart';
@@ -29,7 +30,7 @@ import 'welcome_badge_rules.dart';
 /// accounts"). Tracks topic × error type × frequency, driving the Review tab.
 class StorageService {
   static const _defaultDbName = 'grammar_lens.db';
-  static const _dbVersion = 25;
+  static const _dbVersion = 26;
 
   // Overridable only so tests that exercise real SQLite (via
   // sqflite_common_ffi) can give each test file its own file on disk —
@@ -111,6 +112,15 @@ class StorageService {
     CREATE TABLE IF NOT EXISTS text_size_settings (
       id INTEGER PRIMARY KEY CHECK (id = 0),
       size TEXT NOT NULL
+    )
+  ''';
+
+  /// The interface-language choice (1.4.0 B3): `AppLanguage.storageValue`.
+  /// No row means System default.
+  static const _createLanguageSettingsTable = '''
+    CREATE TABLE IF NOT EXISTS language_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 0),
+      language TEXT NOT NULL
     )
   ''';
 
@@ -338,6 +348,7 @@ class StorageService {
         await db.execute(_createReviewSettingsTable);
         await db.execute(_createThemeSettingsTable);
         await db.execute(_createTextSizeSettingsTable);
+        await db.execute(_createLanguageSettingsTable);
         await db.execute(_createPracticeSettingsTable);
         await db.execute(_createTopicPracticeStatsTable);
         await db.execute(_createUserProfileTable);
@@ -559,6 +570,12 @@ class StorageService {
           await _addColumnIfMissing(
               db, 'error_entries', 'feedback_json', 'TEXT');
         }
+
+        // v25 -> v26: language_settings (1.4.0 B3), the interface-language
+        // choice; no row is System default, so nothing to fill in.
+        if (oldVersion < 26) {
+          await db.execute(_createLanguageSettingsTable);
+        }
       },
     );
   }
@@ -737,6 +754,25 @@ class StorageService {
     await db.insert(
       'text_size_settings',
       {'id': 0, 'size': size.toJson()},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// The interface-language choice (1.4.0 B3). [AppLanguage.system] until
+  /// the user picks one in Profile, and for a value this build does not
+  /// know.
+  Future<AppLanguage> getLanguage() async {
+    final db = await _database;
+    final rows = await db.query('language_settings', limit: 1);
+    if (rows.isEmpty) return AppLanguage.system;
+    return AppLanguage.fromStorage(rows.first['language'] as String?);
+  }
+
+  Future<void> setLanguage(AppLanguage language) async {
+    final db = await _database;
+    await db.insert(
+      'language_settings',
+      {'id': 0, 'language': language.storageValue},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

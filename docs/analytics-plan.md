@@ -352,16 +352,22 @@ answered nothing. Rules:
 - Register `learning_goal` as a user-scoped custom dimension before 1.2.0
   ships (§9); registration is not retroactive.
 
-**`ui_language` (1.4.0) — planned, not implemented (owner, 2026-10-23).**
+**`ui_language` (1.4.0) — implemented 2026-11-02 (B3), not registered (owner, 2026-10-23).**
 The language the interface is shown in: `en`, `ja`, `ko`, `es`, `pt-BR`,
 `tr`, `ar` or `de`. It lets practice completion be compared by language,
 the condition for reviewing the decision that questions and AI feedback
 stay in English (`1.4.0-plan.md`, D2 and B3). The device language alone
 is not enough, since the app gets an in-app language choice. A closed
-vocabulary, so it is allowed by §4. When it is set, and whether it
-records how the language was chosen, is proposed in B3's Batch 0.
-Register it as a user-scoped custom dimension before 1.4.0 ships (§9;
-owner).
+vocabulary, so it is allowed by §4. **Decided in B3's Batch 0 (owner,
+2026-11-02; `1.4.0-b3-batch0-report.md` §6):** the language actually
+shown, so on System default the resolved one (a Japanese device reports
+`ja` once Japanese strings exist), never "system"; the `pt` strings report
+`pt-BR`. Set by `AnalyticsService.setUiLanguageProperty` at startup once
+the stored choice has loaded, on every change in Profile → Language, and
+when the device language changes while the interface follows it. No
+event, and no record of how the language was chosen. Until B5 adds the
+translations every install reports `en`. Register it as a user-scoped
+custom dimension before 1.4.0 ships (§9; owner).
 
 `first_step_dom` is what makes the Welcome assumption testable: the
 hypothesis is that a badge on day one helps **mid-month starters** — the
@@ -427,7 +433,7 @@ Limits below are from Google Analytics help
 | Parameters per event | 25 | Max is 6 (E4) |
 | Parameter name length | 40 chars | Pass |
 | Parameter value length | 100 chars | All values are short enums/ints |
-| User properties | 25 max; name ≤ 24 chars; value ≤ 36 chars | 3 properties (1.2.0: `learning_goal`); names 14, 9 and 13 chars; values ≤ 9 chars. 1.4.0, planned: `ui_language` (11 chars, values ≤ 5 chars) makes 4 |
+| User properties | 25 max; name ≤ 24 chars; value ≤ 36 chars | 4 properties (1.2.0: `learning_goal`; 1.4.0: `ui_language`, 11 chars, values ≤ 5 chars); values ≤ 9 chars |
 | Distinct events per app | 500 | 9 existing + 6 proposed = 15 |
 
 Not verified from the fetched page (check in the console before relying on
@@ -744,7 +750,7 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 | First step day of month | `first_step_dom` | User | `1`–`31` |
 | Text size | `text_size` | User | `small` / `medium` / `large` |
 | Learning goal | `learning_goal` | User | `exam_prep` / `work` / `general` / `skipped` — **1.2.0, registered 2026-10-06** |
-| Interface language | `ui_language` | User | `en` / `ja` / `ko` / `es` / `pt-BR` / `tr` / `ar` / `de` — **1.4.0, planned; not implemented, not registered** (owner registers before 1.4.0 ships) |
+| Interface language | `ui_language` | User | `en` / `ja` / `ko` / `es` / `pt-BR` / `tr` / `ar` / `de` — **1.4.0; implemented 2026-11-02 (B3), not registered** (owner registers before 1.4.0 ships) |
 
 ### Event-scoped custom dimensions
 

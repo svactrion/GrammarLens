@@ -1,0 +1,14 @@
+# Interface strings (1.4.0 B3; docs/1.4.0-b3-batch0-report.md §2.1).
+# English is the template and the fallback. The generated code is written to
+# lib/l10n/generated/ and is not committed (.gitignore); `flutter pub get`,
+# `run`, `build` and `test` regenerate it.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false
+# Every key carries a description: the translation step (B5) reads it.
+required-resource-attributes: true
+# B5's completeness check compares each locale's keys with app_en.arb in a
+# test, so no untranslated-messages file is written here.

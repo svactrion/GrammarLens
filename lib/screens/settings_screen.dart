@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/app_theme_mode.dart';
 import '../models/app_text_size.dart';
 import '../models/avatar.dart';
@@ -26,6 +27,7 @@ import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
 import 'credits_screen.dart';
 import 'data_screen.dart';
+import 'language_picker_screen.dart';
 import 'theme_preview_screen.dart';
 import 'debug_panel_screen.dart';
 import '../theme.dart';
@@ -62,6 +64,11 @@ class SettingsScreen extends StatefulWidget {
   final void Function(AppThemeMode mode) onSelectThemeMode;
   final AppTextSize textSize;
   final ValueChanged<AppTextSize> onSelectTextSize;
+
+  /// The interface-language choice (1.4.0 B3) and where a new one goes;
+  /// the app root persists it and rebuilds in the new language.
+  final AppLanguage language;
+  final ValueChanged<AppLanguage>? onSelectLanguage;
   final UserProfile profile;
   final StorageService storageService;
   final ValueChanged<UserProfile> onProfileUpdated;
@@ -85,6 +92,7 @@ class SettingsScreen extends StatefulWidget {
   /// App information's links to the hosted legal pages.
   static const privacyRowKey = ValueKey('settings_privacy_row');
   static const termsRowKey = ValueKey('settings_terms_row');
+  static const languageRowKey = ValueKey('settings_language_row');
 
   /// The identity card, the saved name shown in it, and the medal count.
   static const identityCardKey = ValueKey('settings_identity_card');
@@ -98,6 +106,8 @@ class SettingsScreen extends StatefulWidget {
     required this.onSelectThemeMode,
     required this.textSize,
     required this.onSelectTextSize,
+    this.language = AppLanguage.system,
+    this.onSelectLanguage,
     required this.profile,
     required this.storageService,
     required this.onProfileUpdated,
@@ -384,6 +394,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _openLanguagePicker() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LanguagePickerScreen(
+          current: widget.language,
+          onSelected: (language) => widget.onSelectLanguage?.call(language),
+        ),
+      ),
+    );
+  }
+
   void _openData() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -592,6 +613,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     selected: {widget.textSize},
                     onSelectionChanged: (selection) =>
                         widget.onSelectTextSize(selection.first),
+                  ),
+                  const SizedBox(height: 18),
+                  _SettingLabel(
+                      icon: Icons.language_rounded,
+                      text: context.l10n.settingsLanguageLabel),
+                  const SizedBox(height: 9),
+                  _LanguageField(
+                    key: SettingsScreen.languageRowKey,
+                    value: widget.language == AppLanguage.system
+                        ? context.l10n.settingsLanguageSystemDefault
+                        : widget.language.endonym,
+                    label: context.l10n.settingsLanguageLabel,
+                    onTap: _openLanguagePicker,
                   ),
                   const SizedBox(height: 13),
                   Text(
@@ -889,6 +923,64 @@ class _NavRow extends StatelessWidget {
                   size: opensBrowser ? 18 : 20,
                   color: scheme.onSurfaceVariant),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The interface-language choice in the Appearance card (1.4.0 B3): the
+/// current value on the segmented buttons' surface, height and radius
+/// ([AppSegmentedButton]), with a chevron; a tap opens the picker.
+class _LanguageField extends StatelessWidget {
+  final String value;
+  final String label;
+  final VoidCallback onTap;
+
+  const _LanguageField({
+    super.key,
+    required this.value,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      button: true,
+      label: label,
+      value: value,
+      excludeSemantics: true,
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppSegmentedButton.radius),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints:
+                const BoxConstraints(minHeight: AppSegmentedButton.height),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 10, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: theme.textTheme.labelMedium
+                          ?.withWeight(FontWeight.w800)
+                          .copyWith(color: scheme.onSurface),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 20, color: scheme.onSurfaceVariant),
+                ],
+              ),
+            ),
           ),
         ),
       ),

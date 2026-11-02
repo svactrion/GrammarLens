@@ -424,6 +424,21 @@ into the next build. Version bump and build: owner, not started.
     change.
   - Verified: `flutter analyze` clean, full test suite passed (2187).
     **Not checked on a device.**
+- **1.4.0 B3, commit 1 of 3 (2026-11-02; `1.4.0-plan.md` B3; Batch 0
+  `1.4.0-b3-batch0-report.md`):**
+  - **Translation plumbing, English only:** `flutter_localizations` and
+    gen-l10n with `lib/l10n/app_en.arb` as the template; the interface
+    follows the device language when the app has strings for it, else
+    English. **Profile → Appearance → Language** opens a picker (System
+    default, then each language with strings: English until B5); the
+    choice is stored (schema v26) and applies at once.
+  - **`ui_language` user property:** the language shown, set at startup,
+    on change and on a device-language change. **Owner:** register it as
+    a user-scoped custom dimension in Firebase before the 1.4.0 release.
+  - **Guard test:** no new hard-coded interface text in `lib/`; 51 files
+    wait on its pending list for B4.
+  - Verified: `flutter analyze` clean, full test suite passed (2218).
+    **Not checked on a device.**
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 

@@ -1,6 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 
+import '../l10n/l10n.dart';
 import '../models/app_text_size.dart';
 import '../models/learning_goal.dart';
 import '../models/medal_tier.dart';
@@ -520,6 +521,16 @@ class AnalyticsService {
   /// `general` cannot be told apart from a choice.
   Future<void> setLearningGoalProperty(LearningGoal? goal) {
     return _setUserProperty('learning_goal', learningGoalValue(goal));
+  }
+
+  /// User property `ui_language` (1.4.0 B3; docs/analytics-plan.md §3): the
+  /// language the interface is shown in, `en` / `ja` / `ko` / `es` / `pt-BR`
+  /// / `tr` / `ar` / `de` ([AppLanguage.analyticsValue]). On System default
+  /// it is the resolved language, never "system". Set at startup, on every
+  /// change in Profile and when the device language changes; no event.
+  Future<void> setUiLanguageProperty(AppLanguage language) {
+    assert(language != AppLanguage.system);
+    return _setUserProperty('ui_language', language.analyticsValue);
   }
 
   Future<void> _logEvent(String name, [Map<String, Object>? parameters]) async {

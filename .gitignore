@@ -50,6 +50,10 @@ Flutter/flutter_export_environment.sh
 ServiceDefinitions.json
 Runner/GeneratedPluginRegistrant.*
 
+# gen-l10n output (1.4.0 B3): regenerated from lib/l10n/*.arb by every
+# Flutter command that resolves the project.
+/lib/l10n/generated/
+
 # Symbolication related
 app.*.symbols
 

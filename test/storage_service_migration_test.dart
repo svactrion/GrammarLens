@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:grammar_lens/l10n/l10n.dart';
 import 'package:grammar_lens/models/app_theme_mode.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
@@ -942,6 +943,47 @@ void main() {
     test('a fresh install creates the column', () async {
       await StorageService(dbName: dbName).getRecentMistakes('a', 'b');
       expect(await errorColumns(), contains('feedback_json'));
+    });
+  });
+
+  group('v25 -> v26: language_settings (1.4.0 B3)', () {
+    const dbName = 'test_migration_v25.db';
+    late String path;
+
+    setUp(() async {
+      path = join(await getDatabasesPath(), dbName);
+      await databaseFactory.deleteDatabase(path);
+    });
+
+    test(
+        'a v25 database gains the table; no row reads as System default; a '
+        'choice round-trips; an unknown value reads as System default',
+        () async {
+      final seed = await databaseFactory.openDatabase(path);
+      await seed.execute(
+          'CREATE TABLE text_size_settings (id INTEGER PRIMARY KEY, size TEXT)');
+      await seed.setVersion(25);
+      await seed.close();
+
+      final storage = StorageService(dbName: dbName);
+      expect(await storage.getLanguage(), AppLanguage.system);
+      await storage.setLanguage(AppLanguage.de);
+      expect(await storage.getLanguage(), AppLanguage.de);
+      await storage.setLanguage(AppLanguage.ptBR);
+      expect(await storage.getLanguage(), AppLanguage.ptBR);
+
+      final db = await databaseFactory.openDatabase(path);
+      expect(await db.getVersion(), 26);
+      await db.update('language_settings', {'language': 'fr'});
+      await db.close();
+      expect(await StorageService(dbName: dbName).getLanguage(),
+          AppLanguage.system);
+    });
+
+    test('a fresh install creates the table', () async {
+      final storage = StorageService(dbName: dbName);
+      await storage.setLanguage(AppLanguage.en);
+      expect(await storage.getLanguage(), AppLanguage.en);
     });
   });
 }

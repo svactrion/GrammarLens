@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/l10n/l10n.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
@@ -404,6 +405,23 @@ void main() {
       expect(sink.userProperties, {'text_size': 'small'});
     });
 
+    test(
+        'ui_language is a user property from the closed vocabulary of '
+        'analytics-plan.md §3; pt is sent as pt-BR (1.4.0 B3)', () async {
+      for (final language
+          in AppLanguage.values.where((l) => l != AppLanguage.system)) {
+        await service.setUiLanguageProperty(language);
+      }
+      expect(sink.events, isEmpty);
+      expect(sink.userPropertyWrites.toSet(), {'ui_language'});
+      expect(sink.userProperties, {'ui_language': 'de'});
+      expect(
+          AppLanguage.values
+              .where((l) => l != AppLanguage.system)
+              .map((l) => l.analyticsValue),
+          ['en', 'ja', 'ko', 'es', 'pt-BR', 'tr', 'ar', 'de']);
+    });
+
     group('profile_medals_viewed session limit', () {
       late DateTime now;
       late RecordingAnalyticsSink sessionSink;
@@ -533,6 +551,7 @@ void main() {
       await service.setFirstStepDayOfMonth(31);
       await service.setLearningGoalProperty(LearningGoal.examPrep);
       await service.setLearningGoalProperty(null);
+      await service.setUiLanguageProperty(AppLanguage.ptBR);
 
       final nameRule = RegExp(r'^[A-Za-z][A-Za-z0-9_]*$');
       final reserved = RegExp(r'^(firebase_|google_|ga_|_)');

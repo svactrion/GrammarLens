@@ -9,6 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # The interface strings (1.4.0 B3): gen-l10n over lib/l10n/*.arb, see
+  # l10n.yaml.
+  flutter_localizations:
+    sdk: flutter
   http: ^1.2.0
   sqflite: ^2.3.0
   path: ^1.9.0
@@ -19,7 +23,9 @@ dependencies:
   firebase_crashlytics: ^4.1.6
   purchases_flutter: ^10.10.1
   url_launcher: ^6.3.1
-  intl: ^0.20.3
+  # ^0.20.2, not ^0.20.3: flutter_localizations pins the SDK's intl (1.4.0
+  # B3). The app uses NumberFormat.simpleCurrency and localeExists only.
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +39,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # 1.4.0 B3: `flutter pub get` (and every run, build and test) generates
+  # lib/l10n/generated/ from the ARB files; the folder is not committed.
+  generate: true
   # The stock avatar illustrations (lib/models/avatar.dart) — registered as
   # a folder, not file-by-file, so adding avatar_13.webp later is just
   # dropping the file in plus bumping Avatar.count, nothing here to edit.
