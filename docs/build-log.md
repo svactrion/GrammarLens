@@ -13993,3 +13993,7 @@ Plan: `docs/1.4.0-plan.md` B3; Batch 0:
 ## 2026-11-02 (1.4.0 B4.3: the question flow's strings to the ARB)
 
 - **[Engineering]** The question view, hint slider, session header and footer, Daily Test and Practice screens, practice launch and length sheet, both results screens, the mistake card and blank labels moved to `app_en.arb` (82 keys, English unchanged; `colouredBlanks` and `questionTypeLabel` take the strings from their callers; the keyboard-variant note is now data on the match, `KeyboardVariantNote`, rendered by `keyboardVariantNoteText` with the same sentences; the question and length counts as ICU plurals; `PracticeScreen.notSentMessage` and `MistakeBreakdown.leftBlankLabel` replaced by their keys); pending list 39 → 26; `flutter analyze` clean, 2285 tests passed.
+
+## 2026-11-02 (Git rule change: Claude Code commits and pushes)
+
+- **[Product — owner]** Claude Code may now run `git add` of the exact files it lists, `git commit` and `git push`; `reset --hard`, rebase, force pushes, branch deletion and anything that discards work stay with the owner. Recorded in `docs/AGENTS.md` ("Git"). B4.4–B4.7 run back to back, one commit per batch, one push at the end.

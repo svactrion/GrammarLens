@@ -13,3 +13,13 @@ Bağlam için docs klasöründeki roadmap.md (mevcut durum ve sıradaki işler),
 - Değişiklikler bitince roadmap.md güncellenir
 
 Bana ürün kararlarında ikinci bir göz ol: hangi işin öncelikli olduğu, bir özelliğin gerçekten gerekli olup olmadığı, kullanıcı bulgularının nasıl yorumlanacağı konularında fikir ver. Rutin prompt yazımında kısa ve net ol.
+
+## Git (owner, 2026-11-02)
+
+Claude Code may run `git add` of the exact files it lists, `git commit` and
+`git push` in this repo; before 2026-11-02 the owner ran every commit block
+by hand. Never Claude's: `reset --hard`, `rebase`, force pushes, branch
+deletion, or any command that discards work; those stay with the owner.
+Commits stay small and single-purpose; `dart format` only on changed files,
+after `flutter pub get`. Code, comments, commit messages and docs in
+English.
