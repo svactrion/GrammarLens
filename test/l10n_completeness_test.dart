@@ -71,8 +71,7 @@ void main() {
         expect(problems, isEmpty, reason: problems.join('\n'));
       });
 
-      test('keeps the feature names, the brand and the fixed names verbatim',
-          () {
+      test('keeps the brand and the names of others verbatim', () {
         final problems = <String>[
           for (final key in keys)
             for (final name in _verbatim)
@@ -80,6 +79,22 @@ void main() {
                   !(arb[key] as String).contains(name))
                 '$key: "$name" missing',
         ];
+        expect(problems, isEmpty, reason: problems.join('\n'));
+      });
+
+      test('calls each feature by one name, its feature key\'s', () {
+        final problems = <String>[];
+        for (final f in _features) {
+          final name = (arb[f.key] as String).toLowerCase();
+          for (final key in keys) {
+            if (f.only != null && !f.only!.contains(key)) continue;
+            if (!f.english.hasMatch(english[key] as String)) continue;
+            if (_featureExceptions[lang]?.contains(key) ?? false) continue;
+            if (!(arb[key] as String).toLowerCase().contains(name)) {
+              problems.add('$key: no "$name" in "${arb[key]}"');
+            }
+          }
+        }
         expect(problems, isEmpty, reason: problems.join('\n'));
       });
 
@@ -154,18 +169,15 @@ const _pluralForms = {
   'ar': ['zero', 'one', 'two', 'few', 'many', 'other'],
 };
 
-/// Never translated (report §1): the feature names, the brand and the
-/// names of companies, products, works and exams.
+/// Never translated: the brand (owner, 2026-11-02: GrammarLens and
+/// Premium; the feature names are translated since then), and the names of
+/// others the text has to name exactly: the AI provider the consent text
+/// names as the recipient, the artwork's source, the exams.
 const _verbatim = [
-  'Daily Test',
-  'Topic Practice',
-  'Review',
-  'Monthly Climb',
-  'Premium',
-  'PREMIUM',
-  'DAILY TEST',
   'GrammarLens',
   'GRAMMARLENS',
+  'Premium',
+  'PREMIUM',
   'Anthropic',
   'Claude',
   'Figma Community',
@@ -173,19 +185,43 @@ const _verbatim = [
   'TOEFL',
 ];
 
+/// The feature names (translated since 2026-11-02, owner): each language's
+/// own word, from its `feature*` key, must appear wherever the English
+/// names the feature, so a feature is never called two things. Matched
+/// case-insensitively, as a substring (suffixes and inflections attach).
+/// `english` finds the English mentions; "Review" is also an English verb
+/// ("Review answer", "Reviewing"), so only the listed keys name it.
+final _features = <({String key, RegExp english, Set<String>? only})>[
+  (key: 'featureDailyTest', english: _dailyTest, only: null),
+  (key: 'featureTopicPractice', english: _topicPractice, only: null),
+  (
+    key: 'featureReview',
+    english: _review,
+    only: {'featureReview', 'homeReviewCalloutBody', 'homeGoToReview'},
+  ),
+];
+final _dailyTest = RegExp('daily test', caseSensitive: false);
+final _topicPractice = RegExp('topic practice', caseSensitive: false);
+final _review = RegExp('Review');
+
 /// Keys whose value is the English one in every language, with the reason.
 const _sameEverywhere = {
-  'featureReview', // a feature name (D6)
-  'featureDailyTest', // a feature name (D6)
-  'featureTopicPractice', // a feature name (D6)
-  'featurePremium', // a feature name (D6)
-  'homeTopicPractice', // a feature name (D6)
-  'offerTopicPracticeTitle', // a feature name (D6)
-  'homeDailyEyebrow', // a feature name, uppercase (D6)
-  'paywallHeaderPremium', // a feature name, uppercase (D6)
-  'offerChip', // a feature name, uppercase (D6)
-  'paywallBadge', // the brand and a feature name, uppercase
+  'featurePremium', // the brand
+  'paywallHeaderPremium', // the brand, uppercase
+  'offerChip', // the brand, uppercase
+  'paywallBadge', // the brand, uppercase
+  // The topic titles name English grammar points and match the hint cards
+  // and the questions (owner, 2026-11-02).
+  'topicGerundTitle',
+  'topicModalVerbsTitle',
+  'topicModalPastTitle',
+  'topicTenseTitle',
+  'topicArticlesTitle',
 };
+
+/// Per language: keys where the feature's word cannot appear as a plain
+/// substring (an inflection that changes the word itself), with a reason.
+const _featureExceptions = <String, Set<String>>{};
 
 /// Per language: values that are the same word by nature.
 const _sameIn = {

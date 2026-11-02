@@ -36,7 +36,7 @@
   },
   "featureReview": "Review",
   "@featureReview": {
-    "description": "The Review feature's name, also the bottom navigation tab. Feature names are never translated: keep 'Review' in English."
+    "description": "The Review feature's name: the bottom navigation tab, the screen's title and every mention. Translated as a function name (Turkish: Tekrar), the same word everywhere it appears (owner, 2026-11-02)."
   },
   "navProfile": "Profile",
   "@navProfile": {
@@ -221,7 +221,7 @@
   },
   "dataAiDailyTestNote": "Daily Test works without this permission.",
   "@dataAiDailyTestNote": {
-    "description": "Data screen, AI card: the note that the Daily Test needs no AI permission. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Data screen, AI card: the note that the Daily Test needs no AI permission. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "dataSaveFailed": "Could not save this setting. Please try again.",
   "@dataSaveFailed": {
@@ -341,7 +341,7 @@
   },
   "aiConsentIntro": "Practice sessions use an AI service to check your answers and explain what to fix. This covers Topic Practice and practicing a weak spot.",
   "@aiConsentIntro": {
-    "description": "AI permission screen: what the permission is for. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium. Legal weight: keep the meaning exact."
+    "description": "AI permission screen: what the permission is for. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium. Legal weight: keep the meaning exact."
   },
   "aiConsentSentHeading": "What is sent",
   "@aiConsentSentHeading": {
@@ -365,7 +365,7 @@
   },
   "aiConsentNeverBody": "Your name or your avatar. Daily Test answers stay on your device.",
   "@aiConsentNeverBody": {
-    "description": "AI permission screen: what is never sent. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium. Legal weight: keep the meaning exact."
+    "description": "AI permission screen: what is never sent. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium. Legal weight: keep the meaning exact."
   },
   "aiConsentPersonalDetails": "Please don't type personal details such as full names, addresses or contact information into your answers.",
   "@aiConsentPersonalDetails": {
@@ -385,7 +385,7 @@
   },
   "aiConsentNotNowNote": "Not now: you can still take the Daily Test.",
   "@aiConsentNotNowNote": {
-    "description": "AI permission screen: under the buttons, what declining leaves. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "AI permission screen: under the buttons, what declining leaves. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "avatarPickerTitle": "Choose your avatar",
   "@avatarPickerTitle": {
@@ -573,7 +573,7 @@
   },
   "onboardingDataAiBody": "In practice sessions (Topic Practice or a weak spot), your answers are sent to Anthropic (Claude) to give you feedback. We ask for your permission first.",
   "@onboardingDataAiBody": {
-    "description": "'Your data & AI': what is sent to the AI service. 'Anthropic (Claude)' is a company and product name, never translated. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
+    "description": "'Your data & AI': what is sent to the AI service. 'Anthropic (Claude)' is a company and product name, never translated. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium. Part of onboarding's 'Your data & AI' text (D6: back-translation check). Keep the meaning exact."
   },
   "onboardingDataDiagnosticsHeading": "App diagnostics",
   "@onboardingDataDiagnosticsHeading": {
@@ -603,7 +603,7 @@
   },
   "featureDailyTest": "Daily Test",
   "@featureDailyTest": {
-    "description": "The Daily Test feature's name (a screen title). Feature names are never translated: keep 'Daily Test' in English."
+    "description": "The Daily Test feature's name (a screen title and every mention). Translated (Turkish: Günlük Test), the same words everywhere it appears (owner, 2026-11-02)."
   },
   "commonLeave": "Leave",
   "@commonLeave": {
@@ -773,11 +773,11 @@
   },
   "dailyTestLeaveTitle": "Leave Daily Test?",
   "@dailyTestLeaveTitle": {
-    "description": "Title of the dialog that asks whether to leave the Daily Test. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Title of the dialog that asks whether to leave the Daily Test. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "dailyTestLeaveTooltip": "Leave Daily Test",
   "@dailyTestLeaveTooltip": {
-    "description": "Tooltip of the Daily Test's close button. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Tooltip of the Daily Test's close button. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "dailyTestPreparing": "Preparing today's test…",
   "@dailyTestPreparing": {
@@ -941,7 +941,7 @@
   },
   "dailyResultTitle": "Daily Test Results",
   "@dailyResultTitle": {
-    "description": "Title of the Daily Test's results screen. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Title of the Daily Test's results screen. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "dailyResultSaving": "Saving your results…",
   "@dailyResultSaving": {
@@ -957,7 +957,7 @@
   },
   "dailyResultSaveFailed": "Could not save your Daily Test results: {error}",
   "@dailyResultSaveFailed": {
-    "description": "Snackbar when saving the Daily Test failed; {error} is the technical reason. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium.",
+    "description": "Snackbar when saving the Daily Test failed; {error} is the technical reason. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium.",
     "placeholders": {
       "error": {
         "type": "String",
@@ -1125,7 +1125,7 @@
   },
   "topicGerundTitle": "Gerund vs. Infinitive",
   "@topicGerundTitle": {
-    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+    "description": "A grammar topic's title. Stays in English in every language (owner, 2026-11-02): it names an English grammar point and matches the hint cards and the questions."
   },
   "topicGerundDescription": "Knowing when it's \"I enjoy swimming\" vs. \"I want to swim\".",
   "@topicGerundDescription": {
@@ -1133,7 +1133,7 @@
   },
   "topicModalVerbsTitle": "Modal Verbs",
   "@topicModalVerbsTitle": {
-    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+    "description": "A grammar topic's title. Stays in English in every language (owner, 2026-11-02): it names an English grammar point and matches the hint cards and the questions."
   },
   "topicModalVerbsDescription": "Can, could, must, should, might, and the nuance between them.",
   "@topicModalVerbsDescription": {
@@ -1141,7 +1141,7 @@
   },
   "topicModalPastTitle": "Modal Past Forms",
   "@topicModalPastTitle": {
-    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+    "description": "A grammar topic's title. Stays in English in every language (owner, 2026-11-02): it names an English grammar point and matches the hint cards and the questions."
   },
   "topicModalPastDescription": "Past and reported contexts: will → would, can → could.",
   "@topicModalPastDescription": {
@@ -1149,7 +1149,7 @@
   },
   "topicTenseTitle": "Tense Selection",
   "@topicTenseTitle": {
-    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+    "description": "A grammar topic's title. Stays in English in every language (owner, 2026-11-02): it names an English grammar point and matches the hint cards and the questions."
   },
   "topicTenseDescription": "Choosing the right tense for the situation.",
   "@topicTenseDescription": {
@@ -1157,7 +1157,7 @@
   },
   "topicArticlesTitle": "Articles",
   "@topicArticlesTitle": {
-    "description": "A grammar topic's title (the questions stay English; the title is interface text)."
+    "description": "A grammar topic's title. Stays in English in every language (owner, 2026-11-02): it names an English grammar point and matches the hint cards and the questions."
   },
   "topicArticlesDescription": "A, an, the — and when to use none at all.",
   "@topicArticlesDescription": {
@@ -1165,11 +1165,11 @@
   },
   "featureTopicPractice": "Topic Practice",
   "@featureTopicPractice": {
-    "description": "The Topic Practice feature's name (a screen title). Feature names are never translated: keep 'Topic Practice' in English."
+    "description": "The Topic Practice feature's name (a screen title and every mention). Translated (Turkish: Konu Pratiği), the same words everywhere it appears (owner, 2026-11-02)."
   },
   "featurePremium": "Premium",
   "@featurePremium": {
-    "description": "The Premium subscription's name (a pill and buttons). Feature names are never translated: keep 'Premium' in English."
+    "description": "The Premium subscription's name (a pill and buttons). Premium is the brand: never translated."
   },
   "greetingMorning": "Good morning",
   "@greetingMorning": {
@@ -1305,7 +1305,7 @@
   },
   "premiumFreePracticeUsed": "You've used today's free practice. Unlock Topic Practice and more daily sessions with Premium.",
   "@premiumFreePracticeUsed": {
-    "description": "Shown where a free user has used today's practice (the weak spot's locked row, the results offer). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Shown where a free user has used today's practice (the weak spot's locked row, the results offer). Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "homeTopicPractice": "Topic practice",
   "@homeTopicPractice": {
@@ -1337,7 +1337,7 @@
   },
   "homeDailyDoneTitle": "Daily test complete.",
   "@homeDailyDoneTitle": {
-    "description": "Home's Daily Test card when today's test is done. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Home's Daily Test card when today's test is done. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "homeDailyDoneBody": "New test tomorrow. Review today’s answers.",
   "@homeDailyDoneBody": {
@@ -1375,7 +1375,7 @@
   },
   "homeDailyEyebrow": "DAILY TEST",
   "@homeDailyEyebrow": {
-    "description": "Home's Daily Test card label (uppercase in English). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Home's Daily Test card label (uppercase in English; plain in scripts without case). The Daily Test name, translated as in featureDailyTest."
   },
   "homeDailyFree": "Free every day",
   "@homeDailyFree": {
@@ -1395,11 +1395,11 @@
   },
   "homeReviewCalloutBody": "Choose one weak spot in Review.\nGet AI feedback on your answers.",
   "@homeReviewCalloutBody": {
-    "description": "Home: the callout's two lines (keep the line break). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Home: the callout's two lines (keep the line break). Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "homeGoToReview": "Go to Review",
   "@homeGoToReview": {
-    "description": "Home: the callout's link. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Home: the callout's link. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "reviewSubtitle": "Turn your mistakes into progress.",
   "@reviewSubtitle": {
@@ -1429,11 +1429,11 @@
   },
   "reviewEmptyBody": "Mistakes from your Daily Test and practice will show up here.",
   "@reviewEmptyBody": {
-    "description": "Review tab with no weak spots. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Review tab with no weak spots. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "reviewGoToDailyTest": "Go to Daily Test",
   "@reviewGoToDailyTest": {
-    "description": "Review tab with no weak spots: the button. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Review tab with no weak spots: the button. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "reviewSavedWeakSpots": "Saved weak spots",
   "@reviewSavedWeakSpots": {
@@ -1479,7 +1479,7 @@
   },
   "reviewSeePremium": "See Premium",
   "@reviewSeePremium": {
-    "description": "Opens the paywall. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Opens the paywall. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "reviewFocusEyebrow": "SUGGESTED FOCUS",
   "@reviewFocusEyebrow": {
@@ -1517,7 +1517,7 @@
   },
   "reviewExploreTopicPractice": "Explore Topic Practice",
   "@reviewExploreTopicPractice": {
-    "description": "Review for a learner with no practice yet: opens Topic Practice. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Review for a learner with no practice yet: opens Topic Practice. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "weakSpotGenerateFailed": "Could not generate review set",
   "@weakSpotGenerateFailed": {
@@ -1575,7 +1575,7 @@
   },
   "weakSpotPracticePremium": "Practice with Premium",
   "@weakSpotPracticePremium": {
-    "description": "The locked practice button for a free user without a free practice left. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "The locked practice button for a free user without a free practice left. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "weakSpotPracticeThis": "Practice this",
   "@weakSpotPracticeThis": {
@@ -1619,7 +1619,7 @@
   },
   "topicPracticePremiumAccess": "Premium access",
   "@topicPracticePremiumAccess": {
-    "description": "Topic Practice: the label shown to a Premium learner. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Topic Practice: the label shown to a Premium learner. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "topicPracticeNotStarted": "Not started yet",
   "@topicPracticeNotStarted": {
@@ -2239,7 +2239,7 @@
   },
   "paywallBadge": "GRAMMARLENS PREMIUM",
   "@paywallBadge": {
-    "description": "The paywall's small label above the headline (uppercase in English). 'GrammarLens' and 'Premium' are names. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "The paywall's small label above the headline (uppercase in English). 'GrammarLens' and 'Premium' are the brand: never translated."
   },
   "paywallClose": "Close",
   "@paywallClose": {
@@ -2315,7 +2315,7 @@
   },
   "paywallCompare": "Compare Free & Premium",
   "@paywallCompare": {
-    "description": "Opens the paywall's comparison table. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Opens the paywall's comparison table. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "paywallChoosePlan": "Choose your plan",
   "@paywallChoosePlan": {
@@ -2659,11 +2659,11 @@
   },
   "paywallTrialStarted": "Trial started — Topic Practice is unlocked.",
   "@paywallTrialStarted": {
-    "description": "After a trial started. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "After a trial started. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "paywallActive": "Premium is active — Topic Practice is unlocked.",
   "@paywallActive": {
-    "description": "After a purchase. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "After a purchase. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "paywallCancelled": "Purchase cancelled — no charge was made.",
   "@paywallCancelled": {
@@ -2679,11 +2679,11 @@
   },
   "paywallRowDailyTest": "Daily Test, refreshed every day",
   "@paywallRowDailyTest": {
-    "description": "Comparison table row. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Comparison table row. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "paywallRowTopicPractice": "Topic Practice, all five topics",
   "@paywallRowTopicPractice": {
-    "description": "Comparison table row. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Comparison table row. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "paywallRowWeakSpots": "Practice your weak spots",
   "@paywallRowWeakSpots": {
@@ -2725,7 +2725,7 @@
   },
   "paywallHeaderPremium": "PREMIUM",
   "@paywallHeaderPremium": {
-    "description": "The comparison table's Premium column header (uppercase in English). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "The comparison table's Premium column header (uppercase in English). 'Premium' is the brand: never translated."
   },
   "paywallTierFree": "Free",
   "@paywallTierFree": {
@@ -2771,7 +2771,7 @@
   },
   "offerTopicPracticeTitle": "Topic Practice",
   "@offerTopicPracticeTitle": {
-    "description": "Practice results offer: a benefit's title. Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Practice results offer: a benefit's title. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
   "offerTopicPracticeBody": "Focus on the areas you need",
   "@offerTopicPracticeBody": {
@@ -2791,7 +2791,7 @@
   },
   "offerChip": "PREMIUM",
   "@offerChip": {
-    "description": "Practice results offer: the small Premium label (uppercase in English). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+    "description": "Practice results offer: the small Premium label (uppercase in English). 'Premium' is the brand: never translated."
   },
   "errorGeneral": "Something went wrong. Please try again.",
   "@errorGeneral": {
@@ -2811,7 +2811,7 @@
   },
   "errorSharedSetUnreadable": "The shared Daily Test couldn't be read.",
   "@errorSharedSetUnreadable": {
-    "description": "Today's shared Daily Test came back in a form the app could not read. Feature names stay English: Daily Test."
+    "description": "Today's shared Daily Test came back in a form the app could not read. The Daily Test name is translated as in featureDailyTest."
   },
   "errorQuotaDevice": "You've reached today's practice limit on this device. Please try again tomorrow.",
   "@errorQuotaDevice": {

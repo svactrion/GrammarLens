@@ -3,7 +3,8 @@
 /// English is the template and the fallback; the generated
 /// [AppLocalizations] comes from `lib/l10n/*.arb` (see `l10n.yaml`). The
 /// questions and every AI explanation stay English in every interface
-/// language (1.4.0 D2), and so do the feature names (D6).
+/// language (1.4.0 D2), and so do the topic titles and the brand (B5,
+/// owner 2026-11-02); feature names are translated.
 library;
 
 import 'package:flutter/widgets.dart';

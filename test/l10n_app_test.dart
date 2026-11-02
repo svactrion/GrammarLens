@@ -120,7 +120,8 @@ void main() {
     expect(Localizations.localeOf(context), const Locale('tr'));
     expect(sink.userProperties['ui_language'], 'tr');
     expect(find.text('Ana Sayfa'), findsOneWidget);
-    expect(find.text('Review'), findsOneWidget); // a feature name, in English
+    // Feature names are translated (owner, 2026-11-02).
+    expect(find.text('Tekrar'), findsOneWidget);
   });
 
   testWidgets(

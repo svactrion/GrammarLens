@@ -4,7 +4,7 @@
 
 **Limit:** the back-translation was made by the same model family that wrote the Turkish, so it is a consistency check (a dropped clause, a changed number, a trial that became a discount, a lost "auto-renews", a changed recipient), not an independent review. D6 has no native-speaker review.
 
-**Result:** 79 of 83 matched the English meaning on the first pass. Four were revised in `app_tr.arb` and back-translated again, blind; the second pass is what the table shows, and the Δ column says what changed. **Owner sign-off:** open.
+**Result:** 79 of 83 matched the English meaning on the first pass. Four were revised in `app_tr.arb` and back-translated again, blind. On 2026-11-02 the owner had the feature names translated (Günlük Test, Konu Pratiği, Tekrar); the nine rows that name a feature were updated and back-translated a third time, blind, all matching. The table shows each row's latest pass; the Δ column says what changed. **Owner sign-off:** open.
 
 | Key | English (original) | Back-translation | Subagent note | Δ |
 |---|---|---|---|---|
@@ -14,23 +14,23 @@
 | `dataAiSwitch` | Allow AI feedback | Allow artificial intelligence feedback |  | ✓ |
 | `dataAiOn` | On · Required for practice sessions | On · Required for practice sessions |  | ✓ |
 | `dataAiOff` | Off · Practice sessions need permission | Off · Permission is required for practice sessions | "gerekir" aorist = is required / is needed | **Revised.** The first version said practice sessions "ask for permission"; it now says permission "is required", as the English does. |
-| `dataAiDailyTestNote` | Daily Test works without this permission. | Daily Test works without this permission. | No "too/also" particle; plain statement | **Revised.** The first version added "too" ("works without this permission too"); dropped. |
+| `dataAiDailyTestNote` | Daily Test works without this permission. | Daily Test works without this permission. | "Günlük Test" = Daily Test, rendered literally as a feature name | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. **Revised.** The first version added "too" ("works without this permission too"); dropped. |
 | `dataAiWithdrawn` | Practice sessions will ask again. | Practice sessions will ask for permission again. |  | ✓ |
 | `dataAiChangeFailed` | Could not change this setting: {error} | This setting could not be changed: {error} |  | ✓ |
 | `aiConsentTitle` | AI feedback | Artificial intelligence feedback |  | ✓ As `dataAiCardTitle`. |
 | `aiConsentHeading` | Feedback on your answers | Feedback on your answers | Literally "Feedback to your answers" | ✓ |
-| `aiConsentIntro` | Practice sessions use an AI service to check your answers and explain what to fix. This covers Topic Practice and practicing a weak spot. | Practice sessions use an artificial intelligence service to check your answers and to explain what you need to correct. This covers Topic Practice and the practice of a weak spot. | "düzeltmen gerektiğini" = what you need to fix/correct; "bir zayıf noktanın pratiği" = practising a weak spot | ✓ |
+| `aiConsentIntro` | Practice sessions use an AI service to check your answers and explain what to fix. This covers Topic Practice and practicing a weak spot. | Practice sessions use an artificial intelligence service to check your answers and to explain what you need to correct. This covers Topic Practice and the practice of a weak spot. | "Konu Pratiği" = Topic Practice (literal); "düzeltmen gerektiğini" = what you need to fix/correct | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ |
 | `aiConsentSentHeading` | What is sent | What is sent |  | ✓ |
 | `aiConsentSentBody` | The answers you type, together with the question each one responds to. This happens when you finish a practice session. | The answers you write and the question that each one answers. This happens when you finish a practice session. |  | ✓ |
 | `aiConsentRecipientHeading` | Who receives it | To whom it goes | Natural: "Who it goes to" | ✓ "To whom it goes": the same question. |
 | `aiConsentRecipientBody` | Anthropic, the company that makes Claude. Your answers go through GrammarLens's server to Anthropic's Claude model, which writes your feedback. | Anthropic, the company that develops Claude. Your answers go to Anthropic's Claude model via GrammarLens's server; this model writes your feedback. | "geliştiren" = develops/builds | ✓ "develops" for "makes"; the data path (GrammarLens server → Claude) and the recipient are unchanged. |
 | `aiConsentNeverHeading` | What is never sent | What is never sent | Literally "The ones that are never sent" (plural) | ✓ |
-| `aiConsentNeverBody` | Your name or your avatar. Daily Test answers stay on your device. | Your name or your avatar. Your Daily Test answers stay on your device. | "Daily Test cevapların" is a noun compound = "your Daily Test answers" | ✓ |
+| `aiConsentNeverBody` | Your name or your avatar. Daily Test answers stay on your device. | Your name or your avatar. Your Daily Test answers stay on your device. | "Günlük Test cevapların" is a noun compound = "your Daily Test answers" | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ |
 | `aiConsentPersonalDetails` | Please don't type personal details such as full names, addresses or contact information into your answers. | Please do not write personal information such as full name, address or contact information in your answers. |  | ✓ |
 | `aiConsentChangeLater` | You can change this any time in Profile → Data. | You can change this whenever you want from the Profile → Data section. |  | ✓ |
 | `aiConsentAgree` | Agree and continue | Accept and continue | "Kabul et" = accept/agree | ✓ "Accept" and "agree" are the same Turkish verb. |
 | `aiConsentNotNow` | Not now | Not now |  | ✓ |
-| `aiConsentNotNowNote` | Not now: you can still take the Daily Test. | Not now: you can still solve the Daily Test. | "çözebilirsin" = you can solve (i.e. take/do the test); "yine de" = still/anyway | ✓ "solve the Daily Test" is how Turkish says "take a test". |
+| `aiConsentNotNowNote` | Not now: you can still take the Daily Test. | Not now: you can still solve the Daily Test. | "çözebilirsin" = you can solve (i.e. take/do the test); "yine de" = still/anyway | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ "solve the Daily Test" is how Turkish says "take a test". |
 | `onboardingPrivacyNote` | Your name stays on this device. Your goal is sent with app usage data, never with your name. Usage and crash data is collected. | Your name stays on this device. Your goal is sent with app usage data, never with your name. Usage and crash data are collected. |  | ✓ |
 | `onboardingDataLink` | How AI feedback uses your answers | How artificial intelligence feedback uses your answers |  | ✓ |
 | `onboardingDataTitle` | Your data & AI | Your data and artificial intelligence | Possessive applies to "data" only | ✓ "Your data and AI". |
@@ -39,7 +39,7 @@
 | `onboardingDataGoalHeading` | Your learning goal | Your learning goal |  | ✓ |
 | `onboardingDataGoalBody` | Sent with app usage data, never with your name, to help us decide what to improve. It does not personalize your lessons. | It is sent with app usage data, never with your name, to help us decide what we will improve. It does not personalize your lessons. | Subject is implicit (the goal); "geliştireceğimize" = what we will improve/develop | ✓ |
 | `onboardingDataAiHeading` | AI feedback | Artificial intelligence feedback |  | ✓ As `dataAiCardTitle`. |
-| `onboardingDataAiBody` | In practice sessions (Topic Practice or a weak spot), your answers are sent to Anthropic (Claude) to give you feedback. We ask for your permission first. | In practice sessions (Topic Practice or a weak spot), your answers are sent to the Anthropic (Claude) service to give you feedback. We ask for your permission first. | "isteriz" aorist: "we ask" / "we will ask" | ✓ |
+| `onboardingDataAiBody` | In practice sessions (Topic Practice or a weak spot), your answers are sent to Anthropic (Claude) to give you feedback. We ask for your permission first. | In practice sessions (Topic Practice or a weak spot), your answers are sent to the Anthropic (Claude) service to give you feedback. We ask for your permission first. | "isteriz" aorist: "we ask" / "we will ask" | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ |
 | `onboardingDataDiagnosticsHeading` | App diagnostics | App diagnostics |  | ✓ |
 | `onboardingDataDiagnosticsBody` | Usage and crash data is collected. | Usage and crash data are collected. |  | ✓ |
 | `onboardingDataGotIt` | Got it | Got it | Literally "I understood" | ✓ |
@@ -80,13 +80,13 @@
 | `paywallTrialLengthUnknown` | {count}-period | {count}-period | Adjectival form | ✓ The adjective form ("7-day"), as in English. |
 | `paywallRestored` | Purchases restored — full access is active. | Purchases restored; full access is active. |  | ✓ |
 | `paywallNothingToRestore` | No previous purchases found to restore. | No purchase to restore was found. | Literally "A purchase to be restored could not be found" | ✓ |
-| `paywallTrialStarted` | Trial started — Topic Practice is unlocked. | Trial started; Topic Practice is unlocked. | Literally "the lock of Topic Practice was opened" | ✓ |
-| `paywallActive` | Premium is active — Topic Practice is unlocked. | Premium is active; Topic Practice is unlocked. | Literally "the lock of Topic Practice was opened" | ✓ |
+| `paywallTrialStarted` | Trial started — Topic Practice is unlocked. | Trial started; Topic Practice is unlocked. | Literally "the lock of Topic Practice was opened" | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ |
+| `paywallActive` | Premium is active — Topic Practice is unlocked. | Premium is active; Topic Practice is unlocked. | Literally "the lock of Topic Practice was opened" | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ |
 | `paywallCancelled` | Purchase cancelled — no charge was made. | Purchase cancelled; no charge was taken. | "ücret alınmadı" = no fee was charged | ✓ "no charge was taken" = no charge was made. |
 | `paywallPending` | Waiting for approval — Premium starts once the purchase is approved. No charge until then. | Approval is awaited; Premium starts when the purchase is approved. Until then no charge is taken. | "Onay" = approval/confirmation; "ücret alınmaz" aorist = you are not / will not be charged | ✓ The purchase awaits approval; Premium starts on approval; no charge until then. |
 | `paywallFailed` | Something went wrong and the purchase couldn't start. Please try again. | A problem occurred and the purchase could not be started. Please try again. |  | ✓ |
-| `paywallRowDailyTest` | Daily Test, refreshed every day | Daily Test, renews every day | "yenilenir" = renews/refreshes/is renewed | ✓ "renews" here means the test is refreshed daily, not a subscription renewal; the Turkish verb is the everyday "is renewed / refreshed". |
-| `paywallRowTopicPractice` | Topic Practice, all five topics | Topic Practice, all of the five topics |  | ✓ |
+| `paywallRowDailyTest` | Daily Test, refreshed every day | Daily Test, renews every day | "yenilenir" = renews/refreshes/is renewed | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ "renews" here means the test is refreshed daily, not a subscription renewal; the Turkish verb is the everyday "is renewed / refreshed". |
+| `paywallRowTopicPractice` | Topic Practice, all five topics | Topic Practice, all of the five topics |  | Updated for the translated feature names (Günlük Test, Konu Pratiği; owner, 2026-11-02) and back-translated again, blind. ✓ |
 | `paywallRowWeakSpots` | Practice your weak spots | Study your weak spots | "çalış" imperative = study/work on | ✓ "Study" = practice. |
 | `paywallRowLengths` | Sessions of {lengths} questions | {lengths}-question sessions | Literally "sessions of {lengths} questions" | ✓ |
 | `paywallFreePerDay` | {count} a day | {count} per day | Literally "In a day {count}" | ✓ |
