@@ -14110,3 +14110,12 @@ Docs and assets only. No app code, proxy or config changed.
 - **[Repo cleanup]** `screenshots/1.2.0/marketing/` (untracked): the final launch artwork, version 5 (the last revision; no record names a final), moved to `screenshots/1.2.0/marketing-final/` with a README: `grammarlens-launch-v5-three-iphone17promax-warm.png` (1729 × 910) and `grammarlens-launch-v5-three-iphone17promax-warm-og-1200x630.jpg`. Nothing deleted by Claude. **The owner's delete list** (all in `screenshots/1.2.0/marketing/`, untracked, ≈ 5.5 MB): `generation-prompt-v4.txt`, `generation-prompt-v5.txt`, `generation-prompts-v2-v3.txt`, `grammarlens-launch-v2-midnight.png`, `grammarlens-launch-v2-midnight-og-1200x630.jpg`, `grammarlens-launch-v3-progress.png`, `grammarlens-launch-v3-progress-og-1200x630.jpg`, `grammarlens-launch-v4-three-iphone17promax.png`, `grammarlens-launch-v4-three-iphone17promax-og-1200x630.jpg`; then the empty folder.
 - **[Findings — owner]** Four findings on the live App Store page, recorded in `1.4.0-plan.md` Phase 4 (and a closing check in Phase 5): the age rating questionnaire to be answered again (13+ from "infrequent contests" looks wrong; 4+ if the answers allow); the Support URL to be checked; Mac and Apple Vision availability off until tested (the page shows "Designed for iPad. Not verified for macOS."); the "Sixteen study buddies" claim checked: build 6 and `main` have 16 avatars (`Avatar.count`), all selectable, so it holds.
 - **[Open]** The owner's deletes above; the README badge image to be checked on GitHub (Apple's badge server could not be reached from the session).
+
+## 2026-11-03 (1.4.0 B5 device pass and B6 closed, no fixes)
+
+Docs only.
+
+- **[Device check — owner] The language device pass on the iPhone 14 Plus passed for all seven languages:** Turkish read in full; German, Spanish and Portuguese with no raw keys and no overflow; Japanese and Korean with no overflow; Arabic mirrored correctly, with the English content left to right. The debug panel's Preview onboarding was used for each language.
+- **[Decision — owner]** B6 (the Arabic RTL pass and the narrow-screen / large-text checks) is closed with no fixes needed; B3's RTL preparation is checked with it.
+- **[Docs]** `1.4.0-plan.md`: B5's device item done, B6 ticked; Phase 6's repo cleanup ticked (the owner deleted `screenshots/1.2.0/marketing/`). Roadmap: a B5/B6 entry under "1.4.0 (planned)" and a note on B3's RTL commit.
+- **[Open]** B5: the owner's sign-off on the seven back-translation tables is not recorded.

@@ -465,6 +465,8 @@ into the next build. Version bump and build: owner, not started.
     Arabic device pass is B6.
   - Verified: `flutter analyze` clean, full test suite passed (2284).
     **Not checked on a device** (no Arabic strings yet).
+    *(Checked on a device in B6 (owner, iPhone 14 Plus, 2026-11-03):
+    Arabic mirrored correctly, English content left to right.)*
 - **1.4.0 B4 (2026-11-02; seven batches, `1.4.0-plan.md` B4):**
   - **Every interface string in the English ARB** (477 keys), read through
     `context.l10n`; plurals as ICU plurals, month names through
@@ -474,6 +476,18 @@ into the next build. Version bump and build: owner, not started.
     any hard-coded interface text in `lib/`. English output unchanged.
   - Verified: `flutter analyze` clean, full test suite passed (2288).
     **Not checked on a device:** one pass over the main screens (owner).
+- **1.4.0 B5 and B6 (2026-11-02 / 2026-11-03; `1.4.0-plan.md` B5, B6):**
+  - **The seven translations** (`app_tr`, `app_de`, `app_es`, `app_pt`,
+    `app_ja`, `app_ko`, `app_ar`, 479 keys each) and `CFBundleLocalizations`
+    for the eight languages; one blind back-translation table per language
+    in `docs/translations/`.
+  - **Device pass, all seven languages (owner, iPhone 14 Plus,
+    2026-11-03): passed, no fixes needed.** Turkish read in full; de, es,
+    pt with no raw keys and no overflow; ja, ko with no overflow; Arabic
+    mirrored correctly with the English content left to right. Onboarding
+    read through the debug panel's Preview onboarding in each language.
+    B6 is closed. Open: the owner's sign-off on the back-translation
+    tables (not recorded).
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 
