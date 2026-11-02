@@ -52,8 +52,11 @@ void main() {
             problems
                 .add('$key: ${_placeholders(en)} → ${_placeholders(value)}');
           }
-          if (_isPlural(en) != _isPlural(value)) {
-            problems.add('$key: plural in one and not the other');
+          // A translation may add a plural the English does not need (German
+          // "1 Woche" / "2 Wochen" where English has "1-week" / "2-week"),
+          // on an int placeholder; it never drops one.
+          if (_isPlural(en) && !_isPlural(value)) {
+            problems.add('$key: the English is a plural, this is not');
           }
         }
         expect(problems, isEmpty, reason: problems.join('\n'));
@@ -229,6 +232,15 @@ const _sameIn = {
     'avatarKoala', // the same word in Turkish
     'avatarPanda', // the same word in Turkish
     'paywallPlanSemantics', // "plan" is the Turkish word too
+  },
+  'de': {
+    'settingsThemeSystem', // "System" is the German word too
+    'practiceLengthStandard', // "Standard" is the German word too
+    'tierBronze', // the same word in German
+    'tierGold', // the same word in German
+    'avatarKoala', // the same word in German
+    'avatarGiraffe', // the same word in German
+    'avatarPanda', // the same word in German
   },
 };
 

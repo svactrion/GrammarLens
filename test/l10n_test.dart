@@ -230,4 +230,21 @@ void main() {
       expect(find.byType(LanguagePickerScreen), findsNothing);
     });
   });
+
+  // A one-unit trial reads in the singular where the language inflects the
+  // unit (German "1 Woche", not "1 Wochen"); English needs no plural there.
+  test('a one-unit trial length is singular in every language', () {
+    const one = {
+      'de': ['1 Tag', '1 Woche', '1 Monat', '1 Jahr'],
+    };
+    for (final MapEntry(key: lang, value: expected) in one.entries) {
+      final l10n = lookupAppLocalizations(Locale(lang));
+      expect([
+        l10n.paywallTrialLengthDay(1),
+        l10n.paywallTrialLengthWeek(1),
+        l10n.paywallTrialLengthMonth(1),
+        l10n.paywallTrialLengthYear(1),
+      ], expected, reason: lang);
+    }
+  });
 }
