@@ -129,11 +129,15 @@ class MistakeBreakdown extends StatelessWidget {
     final promptStyle = theme.textTheme.bodyMedium?.copyWith(
       color: colorScheme.onSurfaceVariant,
     );
-    // The word-level difference (1.4.0 B10), when both texts exist and the
-    // record is not structured: on a per-blank record "You wrote" shows
-    // B8's rows, so only "Corrected" is painted; the assembled sentence is
-    // still what is compared.
-    final diff = hasAnswer && hasCorrection && !structured
+    // The word-level difference (1.4.0 B10), when both texts exist, the
+    // record is not structured, and it has no per-blank rows. B10.4 (owner,
+    // 2026-11-02): on a per-blank record the diff against the assembled
+    // sentence read wrong — a right blank showed no mark and a misspelt
+    // one painted only the corrected word — and the per-blank correct
+    // forms it would need are D11's data, not derivable here. So
+    // "Corrected" stays plain there; the rows stay, and D11's structured
+    // fields add the correct form and a mark to each row when present.
+    final diff = hasAnswer && hasCorrection && !structured && !perBlank
         ? diffAnswer(
             userAnswer: userAnswer!,
             correctedAnswer: correctedAnswer!,

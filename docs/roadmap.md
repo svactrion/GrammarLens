@@ -407,7 +407,12 @@ into the next build. Version bump and build: owner, not started.
   - **Seen on the device (2026-11-02):** on a multi-blank record a blank
     the learner got right shows no mark in "Corrected". That is D11's
     per-blank ✓ / ✗ display, already built on the client, live once the
-    proxy half deploys after 1.3.0's approval; no change to B10.
+    proxy half deploys after 1.3.0's approval.
+  - **B10.4 (2026-11-02):** on a record with per-blank rows, "Corrected"
+    renders plain: the sentence diff marked a misspelt blank's corrected
+    word only and a right blank not at all, which read wrong. Single-box
+    and sentence-type records keep the diff. `flutter analyze` clean, 2189
+    tests passed. **Not checked on a device.**
 - **1.4.0 B2 (2026-11-02; `1.4.0-plan.md` B2; Batch 0
   `1.4.0-b3-batch0-report.md` §7):**
   - **The hint card no longer gives the answer away:** an example verb

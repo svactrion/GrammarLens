@@ -13761,3 +13761,27 @@ Plan: `docs/1.4.0-plan.md` B2; Batch 0: `docs/1.4.0-b3-batch0-report.md`
 - **[Open]** Device check (owner): day 0's first question (reset
   onboarding from the debug panel) shows "+ -ing: enjoy, finish, keep";
   B10.3's re-check from earlier today is still open too. Then B3.
+
+## 2026-11-02 (1.4.0 B10.4: no word diff on per-blank records; awaiting the device check)
+
+Plan: `docs/1.4.0-plan.md` B10, D11. No proxy change, no deploy.
+
+- **[Product — owner]** From the device: on a multi-blank record the
+  "Corrected" box painted the word diff against the learner's assembled
+  sentence, which reads wrong: a right blank ("retaking") shows no mark,
+  a misspelt one ("to recieve") paints only "receive". The learner expects
+  the correct form per blank, which is D11's data and cannot be derived on
+  the client. **Decision:** on records with two or more per-blank rows,
+  "Corrected" renders plain; the rows stay; single-box and sentence-type
+  records keep the diff. With D11's structured fields the rows get the
+  correct form and a ✓ / ✗ (already built, live after the proxy deploy).
+- **[Engineering]** `MistakeBreakdown`: the diff runs only when the record
+  has no per-blank rows (`!perBlank`), besides the existing conditions.
+- **[Tests]** `test/mistake_breakdown_test.dart`: the four-blank record
+  paints nothing in "Corrected" (replacing B10's "paints only Corrected"
+  test), the device's two-blank shape likewise, a single-box record with
+  one per-blank entry still paints both boxes; the D11 test's old-row half
+  now expects "Corrected" plain. `flutter analyze` clean; **2189 tests
+  passed**.
+- **[Open]** Device checks (owner): B10.4 on a multi-blank record, B10.3
+  and B2 on their records.

@@ -333,11 +333,12 @@ void main() {
       expect(find.byKey(MistakeBreakdown.userTextKey),
           findsNothing); // rows, not the sentence
 
-      // The same record without the verdicts (an old row): pills are back,
-      // and the paragraph with them.
+      // The same record without the verdicts (an old row): the paragraph is
+      // back, and "Corrected" stays plain (B10.4: no diff on a record with
+      // per-blank rows).
       await pumpStructured(tester, blankFeedback: null, summary: null);
       expect(marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey)),
-          isNotEmpty);
+          isEmpty);
       expect(find.textContaining('The long paragraph'), findsOneWidget);
       expect(find.byKey(MistakeBreakdown.summaryKey), findsNothing);
       expect(find.byKey(MistakeBreakdown.blankNoteKey(0)), findsNothing);
@@ -484,7 +485,7 @@ void main() {
     }
 
     testWidgets(
-        'a new multi-blank record keeps B8\'s rows and paints only '
+        'B10.4: a multi-blank record keeps B8\'s rows and paints nothing in '
         '"Corrected"', (tester) async {
       await pumpCard(tester,
           prompt: case1Prompt,
@@ -498,10 +499,51 @@ void main() {
           ]);
       expect(find.byKey(MistakeBreakdown.blankRowKey(3)), findsOneWidget);
       expect(find.byKey(MistakeBreakdown.userTextKey), findsNothing);
+      expect(marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey)),
+          isEmpty);
+      expect(
+          plainTextOfWidget(
+              textAt(tester, find.byKey(MistakeBreakdown.correctedTextKey))),
+          case1Corrected);
+    });
+
+    testWidgets(
+        'B10.4: the device\'s two-blank record ("retaking", "to recieve") '
+        'shows "Corrected" plain', (tester) async {
+      const prompt = 'Complete the sentence: After ____ (retake) the exam, '
+          'she expected ____ (receive) a better grade.';
+      await pumpCard(tester,
+          prompt: prompt,
+          userAnswer: 'Complete the sentence: After retaking (retake) the '
+              'exam, she expected to recieve (receive) a better grade.',
+          correctedAnswer:
+              'After retaking the exam, she expected to receive a better '
+              'grade.',
+          blankAnswers: const [
+            BlankAnswer('retaking'),
+            BlankAnswer('to recieve'),
+          ]);
+      expect(find.byKey(MistakeBreakdown.blankRowKey(1)), findsOneWidget);
+      expect(marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey)),
+          isEmpty);
+    });
+
+    testWidgets(
+        'B10.4: a single-box record (one per-blank entry) still paints both '
+        'boxes', (tester) async {
+      await pumpCard(tester,
+          prompt: 'She ___ to the store yesterday.',
+          userAnswer: 'goed',
+          correctedAnswer: 'went',
+          blankAnswers: const [BlankAnswer('goed')]);
+      expect(
+          marksIn(tester, find.byKey(MistakeBreakdown.userTextKey))
+              .map((m) => m.word),
+          ['goed']);
       expect(
           marksIn(tester, find.byKey(MistakeBreakdown.correctedTextKey))
               .map((m) => m.word),
-          ['to ', 'change', 'joining', 'to ', 'stay']);
+          ['went']);
     });
 
     testWidgets(
