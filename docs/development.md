@@ -139,6 +139,17 @@ the four themes, this month) for screenshots. None of these writes a
 stored record or sends an event; "Reset local data" there is the one
 action that deletes stored data.
 
+**Preview onboarding** (Settings → Debug → Local data, next to the reset;
+1.4.0 B5) shows the real Welcome screen and the two onboarding steps,
+"Your data & AI" sheet included, in the interface language, so each
+translation can be read on a device as it lands. It writes nothing: the
+name, avatar and goal are dropped, no event is sent, and the first-launch
+state is unchanged, because the preview runs the screens without
+`FirstLaunchFlow`, the part that saves the profile, seeds the day-0 set
+and reports onboarding. Finishing or going back returns to the panel.
+`test/onboarding_preview_test.dart` walks it to the end on a real
+database and finds it still empty.
+
 ### Visual previews (no build config needed)
 
 `lib/preview/` holds standalone, debug-only entry points for checking a

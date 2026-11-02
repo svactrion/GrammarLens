@@ -11,6 +11,7 @@ import '../services/subscription_service.dart';
 import '../utils/debug_practice_sets.dart';
 import '../utils/debug_sample_collection.dart';
 import 'ai_consent_screen.dart';
+import 'onboarding_preview.dart';
 import 'practice_screen.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/monthly_climb/climb_debug_controls.dart';
@@ -36,6 +37,9 @@ import '../theme.dart';
 ///   (through the proxy, one call), and the results screen saves its
 ///   mistakes and the practice count like any session. Shown only when
 ///   Settings hands the panel its services.
+/// - "Preview onboarding" (1.4.0 B5): Welcome and the two onboarding
+///   steps in the interface language ([OnboardingPreview]); writes nothing
+///   and comes back here.
 /// - "Reset local data": after a confirmation, the app's whole local
 ///   database goes ([onResetLocalData]) and the app is back at its first
 ///   launch.
@@ -58,6 +62,7 @@ class DebugPanelScreen extends StatefulWidget {
   });
 
   static const resetKey = ValueKey('debug_reset');
+  static const previewOnboardingKey = ValueKey('debug_preview_onboarding');
   static const sampleCollectionKey = ValueKey('debug_sample_collection');
   static const multiBlankArticlesKey = ValueKey('debug_multi_blank_articles');
   static const multiBlankGerundKey = ValueKey('debug_multi_blank_gerund');
@@ -278,8 +283,20 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
         ],
         section(
             'Local data',
-            'Deletes this app\'s data on this device and starts again at '
-                'Welcome (the first-day flow). Asks first.'),
+            'Preview onboarding shows Welcome and the two onboarding steps in '
+                'the interface language and saves nothing. Reset deletes this '
+                'app\'s data on this device and starts again at Welcome (the '
+                'first-day flow); it asks first.'),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            key: DebugPanelScreen.previewOnboardingKey,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const OnboardingPreview())),
+            child: const Text('Preview onboarding'),
+          ),
+        ),
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: FilledButton.tonal(
