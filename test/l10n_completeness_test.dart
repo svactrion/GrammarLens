@@ -242,6 +242,10 @@ const _sameIn = {
     'avatarGiraffe', // the same word in German
     'avatarPanda', // the same word in German
   },
+  'es': {
+    'avatarKoala', // the same word in Spanish
+    'avatarPanda', // the same word in Spanish
+  },
 };
 
 /// The script each non-Latin language's values must contain.

@@ -236,6 +236,7 @@ void main() {
   test('a one-unit trial length is singular in every language', () {
     const one = {
       'de': ['1 Tag', '1 Woche', '1 Monat', '1 Jahr'],
+      'es': ['1 día', '1 semana', '1 mes', '1 año'],
     };
     for (final MapEntry(key: lang, value: expected) in one.entries) {
       final l10n = lookupAppLocalizations(Locale(lang));

@@ -14044,3 +14044,7 @@ Plan: `docs/1.4.0-plan.md` B5; Batch 0: `docs/1.4.0-b5-batch0-report.md` §8 (de
 ## 2026-11-02 (1.4.0 B5: German)
 
 - **[Engineering]** `app_de.arb`, 479 keys, "du"; feature names Tagestest, Themenübung, Monatsaufstieg, Wiederholung; topic titles English. The blind back-translation (`docs/translations/back-translation-de.md`) found the trial lengths without a singular ("1 Wochen"): they are ICU plurals now, and `test/l10n_completeness_test.dart` lets a translation add a plural the English does not need (never drop one); `test/l10n_test.dart` pins the one-unit forms. 74 of 83 matched first time, nine revised. Completeness and layout tests (320 pt, Large) pass for German.
+
+## 2026-11-02 (1.4.0 B5: Spanish)
+
+- **[Engineering]** `app_es.arb`, 479 keys, "tú", neutral Latin American; feature names Test diario, Práctica por temas, Ascenso mensual, Repaso; topic titles English. The blind back-translation (`docs/translations/back-translation-es.md`) found the proposed "Prueba diaria" colliding with the free trial ("prueba gratuita"), so the Daily Test is "Test diario"; prices read "cada {period}", since "por 3 meses" reads as a one-off. 66 of 83 matched first time, seventeen revised. Trial lengths are plurals, as in German.
