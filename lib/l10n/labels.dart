@@ -158,17 +158,21 @@ String _dateLocale(AppLocalizations l10n) {
   return l10n.localeName;
 }
 
+/// Latin digits in every language, the counts' digits (owner, 2026-11-02,
+/// B5 Q4): intl would write Arabic-Indic digits in an Arabic date.
+DateFormat _latin(DateFormat format) => format..useNativeDigits = false;
+
 /// A month's name ("October") in the interface language.
 String monthName(int month, AppLocalizations l10n) =>
-    DateFormat.MMMM(_dateLocale(l10n)).format(DateTime(2000, month));
+    _latin(DateFormat.MMMM(_dateLocale(l10n))).format(DateTime(2000, month));
 
 /// A month and its year ("October 2026").
 String monthYear(int year, int month, AppLocalizations l10n) =>
-    DateFormat.yMMMM(_dateLocale(l10n)).format(DateTime(year, month));
+    _latin(DateFormat.yMMMM(_dateLocale(l10n))).format(DateTime(year, month));
 
 /// A month and its year, short ("Oct 2026"): the medal shelf's labels.
 String monthYearShort(int year, int month, AppLocalizations l10n) =>
-    DateFormat.yMMM(_dateLocale(l10n)).format(DateTime(year, month));
+    _latin(DateFormat.yMMM(_dateLocale(l10n))).format(DateTime(year, month));
 
 extension ReviewSortOrderLabels on ReviewSortOrder {
   String label(AppLocalizations l10n) => switch (this) {

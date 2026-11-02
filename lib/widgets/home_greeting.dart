@@ -31,6 +31,10 @@ class HomeGreeting extends StatelessWidget {
   final String? withName;
   final String? lead;
 
+  /// The name as the app addresses it on its own line ("Ada"; "Adaさん" in
+  /// Japanese, owner 2026-11-02: `greetingName`); [name] without it.
+  final String? addressedName;
+
   const HomeGreeting(
       {super.key,
       required this.word,
@@ -38,7 +42,10 @@ class HomeGreeting extends StatelessWidget {
       this.style,
       this.nameStyle,
       this.withName,
-      this.lead});
+      this.lead,
+      this.addressedName});
+
+  String get _nameLine => addressedName ?? name;
 
   String get _lead => lead ?? '$word,';
 
@@ -66,7 +73,7 @@ class HomeGreeting extends StatelessWidget {
                     alignment: AlignmentDirectional.centerStart,
                     child: Text(_lead, maxLines: 1, style: style),
                   ),
-                  Text(name,
+                  Text(_nameLine,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: style),
@@ -83,7 +90,7 @@ class HomeGreeting extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_lead, style: style),
-        Text(name, style: nameStyle),
+        Text(_nameLine, style: nameStyle),
       ],
     );
   }

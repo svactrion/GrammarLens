@@ -444,7 +444,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
       for (final p in ClimbSavePoints.all)
         l10n.climbSavePointAt(
             savePointLabel(p.name, l10n), p.reachedOn(widget.days))
-    ].join(', ');
+    ].join(l10n.listSeparator);
     return Semantics(
       label: l10n.climbMountainSemantics(theme.title(l10n), _shownSteps,
           widget.days, widget.avatar.name(l10n), savePoints),

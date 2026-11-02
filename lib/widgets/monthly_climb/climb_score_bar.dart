@@ -41,7 +41,7 @@ class ClimbScoreBar extends StatelessWidget {
     final marks = [
       for (final tier in MedalTier.values)
         l10n.climbTierAt(tier.label(l10n), thresholds[tier]!)
-    ].join(', ');
+    ].join(l10n.listSeparator);
     final reached = _reached;
     final base = l10n.climbScoreSemantics(score, maxScore, marks);
     return reached == null

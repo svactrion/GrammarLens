@@ -268,7 +268,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const SizedBox(width: 9),
                       Flexible(
                         child: Text(
-                          context.l10n.onboardingGoalGreeting(_name),
+                          context.l10n.onboardingGoalGreeting(
+                              context.l10n.greetingName(_name)),
                           style: theme.textTheme.labelMedium
                               ?.withWeight(FontWeight.w700)
                               .copyWith(color: colorScheme.onSurfaceVariant),

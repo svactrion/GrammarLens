@@ -1157,7 +1157,8 @@ class _HomeScreenState extends State<HomeScreen>
                   name: widget.userName,
                   withName: context.l10n.greetingWithName(
                       timeOfDayGreeting(widget.clock(), context.l10n),
-                      widget.userName),
+                      context.l10n.greetingName(widget.userName)),
+                  addressedName: context.l10n.greetingName(widget.userName),
                   lead: context.l10n.greetingLead(
                       timeOfDayGreeting(widget.clock(), context.l10n)),
                   // 22 pt at Small (owner, after Batch 3: larger): above

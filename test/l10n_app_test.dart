@@ -87,19 +87,40 @@ void main() {
     tester.platformDispatcher.localesTestValue = const [Locale('ja', 'JP')];
     final sink = RecordingAnalyticsSink();
     await pumpApp(tester, _Storage(AppLanguage.system), sink);
-    // No Japanese strings in this build yet (B5): English is shown.
-    expect(sink.userProperties['ui_language'], 'en');
+    // Japanese once its strings ship (B5), English before.
+    final shipsJapanese =
+        AppLocalizations.supportedLocales.any((l) => l.languageCode == 'ja');
+    expect(sink.userProperties['ui_language'], shipsJapanese ? 'ja' : 'en');
     expect(sink.events.where((e) => e.name.contains('language')), isEmpty);
   });
 
   testWidgets(
       'a stored choice this build has no strings for shows English and '
       'reports it', (tester) async {
+    final shipped = {
+      for (final l in AppLocalizations.supportedLocales) l.languageCode
+    };
+    final missing = [
+      for (final l in AppLanguage.values)
+        if (l.locale != null && !shipped.contains(l.locale!.languageCode)) l,
+    ];
+    if (missing.isEmpty) return; // every language ships (after B5)
     final sink = RecordingAnalyticsSink();
-    await pumpApp(tester, _Storage(AppLanguage.de), sink);
+    await pumpApp(tester, _Storage(missing.first), sink);
     final context = tester.element(find.byType(FloatingNavShell));
     expect(Localizations.localeOf(context), const Locale('en'));
     expect(sink.userProperties['ui_language'], 'en');
+  });
+
+  testWidgets('a stored Turkish choice shows the interface in Turkish',
+      (tester) async {
+    final sink = RecordingAnalyticsSink();
+    await pumpApp(tester, _Storage(AppLanguage.tr), sink);
+    final context = tester.element(find.byType(FloatingNavShell));
+    expect(Localizations.localeOf(context), const Locale('tr'));
+    expect(sink.userProperties['ui_language'], 'tr');
+    expect(find.text('Ana Sayfa'), findsOneWidget);
+    expect(find.text('Review'), findsOneWidget); // a feature name, in English
   });
 
   testWidgets(

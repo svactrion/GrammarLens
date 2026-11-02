@@ -458,7 +458,7 @@ class MonthlyProgressCard extends StatelessWidget {
             [
               for (final MapEntry(key: tier, value: v) in thresholds.entries)
                 l10n.medalThresholdSemantics(tier.label(l10n), v)
-            ].join(', '),
+            ].join(l10n.listSeparator),
             p.score,
             p.maxScore),
         child: Padding(

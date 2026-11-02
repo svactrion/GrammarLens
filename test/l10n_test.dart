@@ -41,7 +41,8 @@ void main() {
     });
 
     test('only the languages this build has strings for count', () {
-      expect(resolveAppLocale(const [Locale('ja')]), const Locale('en'));
+      // French is not one of the eight: never offered, never resolved.
+      expect(resolveAppLocale(const [Locale('fr')]), const Locale('en'));
       expect(AppLocalizations.supportedLocales, contains(const Locale('en')));
     });
   });
@@ -79,7 +80,15 @@ void main() {
     });
 
     test('available: System default plus the languages with strings', () {
-      expect(AppLanguage.available(), [AppLanguage.system, AppLanguage.en]);
+      // Follows the build: each ARB file B5 adds makes its language appear.
+      final shipped = {
+        for (final l in AppLocalizations.supportedLocales) l.languageCode
+      };
+      expect(AppLanguage.available(), [
+        AppLanguage.system,
+        for (final l in AppLanguage.values)
+          if (l.locale != null && shipped.contains(l.locale!.languageCode)) l,
+      ]);
       expect(AppLanguage.available(all), AppLanguage.values);
     });
 
@@ -156,18 +165,29 @@ void main() {
       return picked;
     }
 
-    testWidgets('today: System default (with the device language) and English',
-        (tester) async {
+    testWidgets(
+        'System default (with the device language), then each language '
+        'the build has strings for, and no other', (tester) async {
+      tester.view.physicalSize = const Size(390, 1400) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
       await pumpPicker(tester);
       expect(find.text('Language'), findsOneWidget);
       expect(
           find.text('Questions and feedback stay in English.'), findsOneWidget);
       expect(find.text('System default'), findsOneWidget);
       expect(find.text('Now: English'), findsOneWidget);
-      expect(find.byKey(LanguagePickerScreen.optionKey(AppLanguage.en)),
-          findsOneWidget);
-      expect(find.byKey(LanguagePickerScreen.optionKey(AppLanguage.ja)),
-          findsNothing);
+      final shipped = {
+        for (final l in AppLocalizations.supportedLocales) l.languageCode
+      };
+      for (final language in AppLanguage.values.skip(1)) {
+        expect(
+            find.byKey(LanguagePickerScreen.optionKey(language)),
+            shipped.contains(language.locale!.languageCode)
+                ? findsOneWidget
+                : findsNothing,
+            reason: language.name);
+      }
     });
 
     testWidgets('all eight languages, under their own names, once they exist',

@@ -1411,7 +1411,7 @@ class _ComparisonRow {
 String _joinWithOr(List<String> items, AppLocalizations l10n) {
   if (items.length == 1) return items.first;
   return l10n.paywallListOr(
-      items.sublist(0, items.length - 1).join(', '), items.last);
+      items.sublist(0, items.length - 1).join(l10n.listSeparator), items.last);
 }
 
 /// Four rows (down from five): "Questions from your own mistakes" and

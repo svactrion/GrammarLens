@@ -2920,5 +2920,19 @@
   "commonClose": "Close",
   "@commonClose": {
     "description": "VoiceOver label of the dimmed area behind a dialog: a tap there closes it."
+  },
+  "listSeparator": ", ",
+  "@listSeparator": {
+    "description": "Between the items of a list ('3, 5 or 10', VoiceOver lists), with its space: ', ' in English, '、' in Japanese, '، ' in Arabic."
+  },
+  "greetingName": "{name}",
+  "@greetingName": {
+    "description": "The learner's name as the app addresses them (Home's greeting, onboarding's 'One more thing'). English uses the name alone; Japanese adds さん, Korean 님 (owner, 2026-11-02).",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
   }
 }
