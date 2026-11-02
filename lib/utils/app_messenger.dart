@@ -3,6 +3,8 @@ import 'package:flutter/scheduler.dart';
 
 import '../widgets/floating_nav_shell.dart';
 
+import '../l10n/l10n.dart';
+
 /// Every transient status message in the app (errors, and short
 /// confirmations like "Profile saved.") goes through this single helper
 /// instead of calling `ScaffoldMessenger` directly, so the guarantees below
@@ -74,7 +76,8 @@ class AppMessenger {
         duration: _duration,
         margin: bottom == null
             ? null
-            : EdgeInsets.fromLTRB(_inset.left, _inset.top, _inset.right, bottom),
+            : EdgeInsets.fromLTRB(
+                _inset.left, _inset.top, _inset.right, bottom),
         // A SnackBar with an action defaults `persist` to true — it would
         // otherwise never auto-dismiss on its own no matter what
         // [_duration] says, which was the original bug: a Dismiss action
@@ -82,7 +85,7 @@ class AppMessenger {
         // silently disabled the duration entirely.
         persist: false,
         action: SnackBarAction(
-          label: 'Dismiss',
+          label: messenger.context.l10n.commonDismiss,
           onPressed: messenger.hideCurrentSnackBar,
         ),
       ),

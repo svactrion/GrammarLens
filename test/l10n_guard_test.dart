@@ -15,11 +15,9 @@ import 'package:flutter_test/flutter_test.dart';
 /// (or the line above it), and the lines between `// l10n-guard-begin:
 /// <reason>` and `// l10n-guard-end` (a debug-only section).
 ///
-/// [_pending] lists every file with a hit when B3 landed. A hit in any
-/// other file fails, so no new hard-coded string can be added; each B4
-/// batch removes its files from the list once they are clean, and a listed
-/// file that is already clean fails too, so the list only ever shrinks.
-/// B4's last batch deletes the list.
+/// B3 shipped it with a pending list of the 51 files that still had hits;
+/// B4.1–B4.7 emptied it batch by batch and B4.7 removed it, so a hit
+/// anywhere in `lib/` now fails.
 void main() {
   final offences = <String, List<String>>{};
   for (final file in Directory('lib')
@@ -32,25 +30,15 @@ void main() {
     if (hits.isNotEmpty) offences[path] = hits;
   }
 
-  test('no hard-coded interface text outside the B4 pending list', () {
-    final unexpected = {
-      for (final MapEntry(:key, :value) in offences.entries)
-        if (!_pending.contains(key)) key: value,
-    };
+  test('no hard-coded interface text in lib/', () {
     expect(
-      unexpected,
+      offences,
       isEmpty,
       reason: 'Move these strings to lib/l10n/app_en.arb and read them '
           'through context.l10n (or mark a line `// l10n-guard: <reason>` '
           'when it is not interface text):\n'
-          '${unexpected.entries.map((e) => '${e.key}\n  ${e.value.join('\n  ')}').join('\n')}',
+          '${offences.entries.map((e) => '${e.key}\n  ${e.value.join('\n  ')}').join('\n')}',
     );
-  });
-
-  test('every file on the pending list still has a hit (the list shrinks)', () {
-    final clean = _pending.where((p) => !offences.containsKey(p)).toList();
-    expect(clean, isEmpty,
-        reason: 'These files are clean now: remove them from _pending.');
   });
 
   group('the scanner', () {
@@ -137,21 +125,12 @@ const _excluded = [
   'lib/widgets/monthly_climb/climb_save_point_table.dart',
 ];
 
-/// Files with hard-coded interface text, waiting for B4. Only ever shrinks.
-const _pending = <String>{
-  // The 51 files with a hit when B3 landed (2026-11-02).
-  'lib/services/claude_service.dart',
-  'lib/utils/app_messenger.dart',
-  'lib/widgets/avatar_carousel.dart',
-  'lib/widgets/brand_wordmark.dart',
-};
-
 final _prose = RegExp(r'\p{L}\s+\p{L}', unicode: true);
 final _letter = RegExp(r'\p{L}', unicode: true);
 final _uiArgument = RegExp(
     r'(\bText\(|\bTextSpan\(\s*text:|\b(label|title|subtitle|tooltip|hintText|'
     r'labelText|semanticsLabel|semanticLabel|hint|message|description|'
-    r'tagline|name|text):)\s*(const\s+)?$');
+    r'tagline|name|text|barrierLabel|helpText|errorText):)\s*(const\s+)?$');
 
 /// SQL: a statement, or a fragment carrying an uppercase SQL keyword (a
 /// `where:` or `orderBy:` argument, a column definition).

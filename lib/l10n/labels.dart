@@ -6,6 +6,7 @@ import 'package:flutter/painting.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
+import '../models/avatar.dart';
 import '../models/climb_theme.dart';
 import '../models/learning_goal.dart';
 import '../models/medal_tier.dart';
@@ -76,6 +77,31 @@ bool ruleIsTopic(String errorType, Topic topic) =>
 /// humanized (AI output stays English, 1.4.0 D2).
 String weakSpotTitle(String errorType, Topic topic, AppLocalizations l10n) =>
     ruleIsTopic(errorType, topic) ? topic.title(l10n) : humanizeSlug(errorType);
+
+extension AvatarLabels on Avatar {
+  /// The animal the illustration shows, in the interface language (shown
+  /// under the carousel and read by VoiceOver). [Avatar.semanticLabel] is
+  /// the English identity.
+  String name(AppLocalizations l10n) => switch (index) {
+        1 => l10n.avatarKoala,
+        2 => l10n.avatarSnail,
+        3 => l10n.avatarElephant,
+        4 => l10n.avatarBee,
+        5 => l10n.avatarFrog,
+        6 => l10n.avatarChick,
+        7 => l10n.avatarCrab,
+        8 => l10n.avatarCat,
+        9 => l10n.avatarTurtle,
+        10 => l10n.avatarPenguin,
+        11 => l10n.avatarGiraffe,
+        12 => l10n.avatarHedgehog,
+        13 => l10n.avatarBird,
+        14 => l10n.avatarFox,
+        15 => l10n.avatarPanda,
+        16 => l10n.avatarSloth,
+        _ => semanticLabel,
+      };
+}
 
 extension MedalTierLabels on MedalTier {
   String label(AppLocalizations l10n) => switch (this) {

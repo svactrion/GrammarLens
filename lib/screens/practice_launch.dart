@@ -183,8 +183,8 @@ Future<void> launchPracticeSet({
     onReturned?.call();
   } catch (e) {
     if (!context.mounted) return;
-    AppMessenger.show(context.l10n
-        .practiceLaunchError(errorPrefix, userFacingErrorMessage(e)));
+    AppMessenger.show(context.l10n.practiceLaunchError(
+        errorPrefix, userFacingErrorMessage(e, context.l10n)));
   } finally {
     setGenerating(false);
   }

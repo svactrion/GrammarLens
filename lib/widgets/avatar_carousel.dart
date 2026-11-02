@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
+import '../l10n/l10n.dart';
 import '../models/avatar.dart';
 import '../theme.dart';
 import 'avatar_tile.dart';
@@ -205,7 +206,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
           children: [
             IconButton(
               key: AvatarCarousel.previousKey,
-              tooltip: 'Previous companion',
+              tooltip: context.l10n.carouselPrevious,
               onPressed: () => _step(-1),
               icon: const Icon(Icons.chevron_left_rounded),
             ),
@@ -215,10 +216,11 @@ class _AvatarCarouselState extends State<AvatarCarousel>
                 constraints: const BoxConstraints(minWidth: 125),
                 child: Semantics(
                   liveRegion: true,
-                  label: '${avatar.semanticLabel}, selected',
+                  label:
+                      context.l10n.carouselSelected(avatar.name(context.l10n)),
                   excludeSemantics: true,
                   child: Text(
-                    avatar.semanticLabel,
+                    avatar.name(context.l10n),
                     key: AvatarCarousel.captionKey,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.labelMedium
@@ -231,7 +233,7 @@ class _AvatarCarouselState extends State<AvatarCarousel>
             const SizedBox(width: 9),
             IconButton(
               key: AvatarCarousel.nextKey,
-              tooltip: 'Next companion',
+              tooltip: context.l10n.carouselNext,
               onPressed: () => _step(1),
               icon: const Icon(Icons.chevron_right_rounded),
             ),
@@ -326,7 +328,7 @@ class _CarouselPage extends StatelessWidget {
             child: Transform.scale(
               scale: scale * pop,
               child: Semantics(
-                label: avatar.semanticLabel,
+                label: avatar.name(context.l10n),
                 // The visual selection cue is now purely paint-only
                 // (this page's own full scale/opacity vs. its faded,
                 // shrunk neighbors) — no colored ring backs it up

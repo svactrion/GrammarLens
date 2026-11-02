@@ -2792,5 +2792,133 @@
   "offerChip": "PREMIUM",
   "@offerChip": {
     "description": "Practice results offer: the small Premium label (uppercase in English). Feature names stay English in every language: Daily Test, Topic Practice, Review, Monthly Climb, Premium."
+  },
+  "errorGeneral": "Something went wrong. Please try again.",
+  "@errorGeneral": {
+    "description": "A practice request failed for a reason the app cannot name."
+  },
+  "errorNotConfigured": "Practice is not available right now. Please try again later.",
+  "@errorNotConfigured": {
+    "description": "Practice cannot reach its service in this build (a setup problem, not the learner's)."
+  },
+  "errorTimeout": "The practice service took too long to respond. Please try again.",
+  "@errorTimeout": {
+    "description": "A practice request timed out."
+  },
+  "errorUnreachable": "Couldn't reach the practice service. Check your connection and try again.",
+  "@errorUnreachable": {
+    "description": "A practice request could not reach the service (no connection)."
+  },
+  "errorSharedSetUnreadable": "The shared Daily Test couldn't be read.",
+  "@errorSharedSetUnreadable": {
+    "description": "Today's shared Daily Test came back in a form the app could not read. Feature names stay English: Daily Test."
+  },
+  "errorQuotaDevice": "You've reached today's practice limit on this device. Please try again tomorrow.",
+  "@errorQuotaDevice": {
+    "description": "The service's daily limit for this device was reached."
+  },
+  "errorQuotaGlobal": "GrammarLens has reached its overall limit for today. Please try again tomorrow.",
+  "@errorQuotaGlobal": {
+    "description": "The service's overall daily limit was reached. 'GrammarLens' is the app's name."
+  },
+  "errorServerStatus": "Something went wrong ({status}). Please try again.",
+  "@errorServerStatus": {
+    "description": "A practice request failed with an HTTP status and no message.",
+    "placeholders": {
+      "status": {
+        "type": "int",
+        "example": "503"
+      }
+    }
+  },
+  "commonDismiss": "Dismiss",
+  "@commonDismiss": {
+    "description": "The action on a snackbar that closes it."
+  },
+  "carouselPrevious": "Previous companion",
+  "@carouselPrevious": {
+    "description": "Tooltip of the avatar carousel's left arrow."
+  },
+  "carouselNext": "Next companion",
+  "@carouselNext": {
+    "description": "Tooltip of the avatar carousel's right arrow."
+  },
+  "carouselSelected": "{avatar}, selected",
+  "@carouselSelected": {
+    "description": "VoiceOver: the avatar shown in the carousel's centre.",
+    "placeholders": {
+      "avatar": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "avatarKoala": "Koala",
+  "@avatarKoala": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarSnail": "Snail",
+  "@avatarSnail": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarElephant": "Elephant",
+  "@avatarElephant": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarBee": "Bee",
+  "@avatarBee": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarFrog": "Frog",
+  "@avatarFrog": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarChick": "Chick",
+  "@avatarChick": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarCrab": "Crab",
+  "@avatarCrab": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarCat": "Cat",
+  "@avatarCat": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarTurtle": "Turtle",
+  "@avatarTurtle": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarPenguin": "Penguin",
+  "@avatarPenguin": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarGiraffe": "Giraffe",
+  "@avatarGiraffe": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarHedgehog": "Hedgehog",
+  "@avatarHedgehog": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarBird": "Bird",
+  "@avatarBird": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarFox": "Fox",
+  "@avatarFox": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarPanda": "Panda",
+  "@avatarPanda": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "avatarSloth": "Sloth",
+  "@avatarSloth": {
+    "description": "An avatar illustration's name: the animal it shows (under the carousel, and read by VoiceOver)."
+  },
+  "commonClose": "Close",
+  "@commonClose": {
+    "description": "VoiceOver label of the dimmed area behind a dialog: a tap there closes it."
   }
 }

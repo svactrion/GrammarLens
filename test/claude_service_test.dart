@@ -493,6 +493,8 @@ void main() {
           isA<ClaudeApiException>()
               .having((e) => e.kind, 'kind', ClaudeApiErrorKind.quotaExceeded)
               .having(
+                  (e) => e.reason, 'reason', ClaudeApiErrorReason.quotaDevice)
+              .having(
                   (e) => e.message, 'message', contains('try again tomorrow')),
         ),
       );

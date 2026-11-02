@@ -459,6 +459,15 @@ into the next build. Version bump and build: owner, not started.
     Arabic device pass is B6.
   - Verified: `flutter analyze` clean, full test suite passed (2284).
     **Not checked on a device** (no Arabic strings yet).
+- **1.4.0 B4 (2026-11-02; seven batches, `1.4.0-plan.md` B4):**
+  - **Every interface string in the English ARB** (477 keys), read through
+    `context.l10n`; plurals as ICU plurals, month names through
+    `DateFormat`, the paywall's periods as data; topic, theme, medal,
+    save point and avatar names translatable, their English identities
+    kept where analytics or storage use them. The guard test now fails on
+    any hard-coded interface text in `lib/`. English output unchanged.
+  - Verified: `flutter analyze` clean, full test suite passed (2288).
+    **Not checked on a device:** one pass over the main screens (owner).
 
 #### 1.2.0 pre-release checklist (owner's tasks; not done)
 

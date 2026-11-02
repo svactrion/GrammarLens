@@ -331,7 +331,7 @@ Future<void> showMedalDetail(BuildContext context,
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Close',
+    barrierLabel: context.l10n.commonClose,
     barrierColor: const Color(0xD9080A10),
     transitionDuration: const Duration(milliseconds: 200),
     pageBuilder: (dialogContext, _, __) {

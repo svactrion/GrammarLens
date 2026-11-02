@@ -447,7 +447,7 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     ].join(', ');
     return Semantics(
       label: l10n.climbMountainSemantics(theme.title(l10n), _shownSteps,
-          widget.days, widget.avatar.semanticLabel, savePoints),
+          widget.days, widget.avatar.name(l10n), savePoints),
       child: LayoutBuilder(builder: (context, constraints) {
         final camera = ClimbCamera(constraints.maxWidth);
         final image = camera.imageSize;

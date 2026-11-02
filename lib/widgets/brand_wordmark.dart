@@ -36,9 +36,10 @@ class BrandWordmark extends StatelessWidget {
       excludeSemantics: true,
       child: Text.rich(
         TextSpan(children: [
+          // l10n-guard-begin: the brand, never translated
           const TextSpan(text: 'Grammar'),
           TextSpan(
-            text: 'Lens',
+            text: 'Lens', // l10n-guard-end
             style: TextStyle(color: Theme.of(context).colorScheme.primary),
           ),
         ]),

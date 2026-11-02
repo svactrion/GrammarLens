@@ -197,8 +197,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      AppMessenger.show(
-          context.l10n.practiceScoreFailed(userFacingErrorMessage(e)));
+      AppMessenger.show(context.l10n
+          .practiceScoreFailed(userFacingErrorMessage(e, context.l10n)));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

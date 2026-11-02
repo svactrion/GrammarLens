@@ -60,6 +60,9 @@ class Avatar {
   /// one added here.
   String get semanticLabel => _semanticLabels[index - 1];
 
+  // The English identities; the screen shows `avatar.name(l10n)`
+  // (1.4.0 B4.7).
+  // l10n-guard-begin: identities, not shown as is
   static const List<String> _semanticLabels = [
     'Koala',
     'Snail',
@@ -78,6 +81,7 @@ class Avatar {
     'Panda',
     'Sloth',
   ];
+  // l10n-guard-end
 
   /// Persisted as `avatar_NN`, matching the asset filename exactly — the
   /// storage id and the asset path share one source of truth (this class),

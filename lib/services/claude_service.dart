@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:http/http.dart' as http;
 
+import '../l10n/l10n.dart';
 import '../config/app_config.dart';
 import '../models/daily_test_question.dart';
 import '../models/item_feedback.dart';
@@ -36,23 +37,59 @@ enum ClaudeApiErrorKind {
   upstream,
 }
 
+/// Why a request failed, as far as the app can tell; decides which of the
+/// app's own sentences a screen shows ([userFacingErrorMessage]; 1.4.0
+/// B4.7). [server] means the proxy's own message is the best there is.
+enum ClaudeApiErrorReason {
+  notConfigured,
+  timeout,
+  unreachable,
+  sharedSetUnreadable,
+  quotaDevice,
+  quotaGlobal,
+
+  /// The proxy answered with an error and no message; [ClaudeApiException
+  /// .statusCode] says which.
+  serverStatus,
+  server,
+}
+
 class ClaudeApiException implements Exception {
+  /// The English description: the proxy's own message, or the app's. Shown
+  /// only for [ClaudeApiErrorReason.server]; otherwise the screen shows the
+  /// app's sentence for [reason], in the interface language.
   final String message;
   final ClaudeApiErrorKind kind;
+  final ClaudeApiErrorReason reason;
+  final int? statusCode;
   const ClaudeApiException(this.message,
-      {this.kind = ClaudeApiErrorKind.upstream});
+      {this.kind = ClaudeApiErrorKind.upstream,
+      this.reason = ClaudeApiErrorReason.server,
+      this.statusCode});
 
   @override
   String toString() => 'ClaudeApiException: $message';
 }
 
-/// What a screen shows for a failed practice request: a
-/// [ClaudeApiException]'s own [ClaudeApiException.message], or a general
-/// line for anything else. Never `toString()`, which carries the Dart class
-/// name (App Review audit, finding #7).
-String userFacingErrorMessage(Object error) => error is ClaudeApiException
-    ? error.message
-    : 'Something went wrong. Please try again.';
+/// What a screen shows for a failed practice request: the app's sentence
+/// for a [ClaudeApiException]'s [ClaudeApiException.reason], the proxy's
+/// own message when the app has none, or a general line for anything else.
+/// Never `toString()`, which carries the Dart class name (App Review audit,
+/// finding #7).
+String userFacingErrorMessage(Object error, AppLocalizations l10n) {
+  if (error is! ClaudeApiException) return l10n.errorGeneral;
+  return switch (error.reason) {
+    ClaudeApiErrorReason.notConfigured => l10n.errorNotConfigured,
+    ClaudeApiErrorReason.timeout => l10n.errorTimeout,
+    ClaudeApiErrorReason.unreachable => l10n.errorUnreachable,
+    ClaudeApiErrorReason.sharedSetUnreadable => l10n.errorSharedSetUnreadable,
+    ClaudeApiErrorReason.quotaDevice => l10n.errorQuotaDevice,
+    ClaudeApiErrorReason.quotaGlobal => l10n.errorQuotaGlobal,
+    ClaudeApiErrorReason.serverStatus =>
+      l10n.errorServerStatus(error.statusCode ?? 0),
+    ClaudeApiErrorReason.server => error.message,
+  };
+}
 
 /// Talks to the GrammarLens Cloudflare Workers proxy (`proxy/`) to
 /// generate practice sets, read the shared Daily Test set and score
@@ -167,8 +204,9 @@ class ClaudeService {
       return questions;
     } catch (_) {
       throw const ClaudeApiException(
-        "The shared Daily Test couldn't be read.",
+        "The shared Daily Test couldn't be read.", // l10n-guard: log text
         kind: ClaudeApiErrorKind.upstream,
+        reason: ClaudeApiErrorReason.sharedSetUnreadable,
       );
     }
   }
@@ -236,8 +274,10 @@ class ClaudeService {
         );
       }
       throw const ClaudeApiException(
+        // l10n-guard: log text; the screen shows errorNotConfigured
         'Practice is not available right now. Please try again later.',
         kind: ClaudeApiErrorKind.notConfigured,
+        reason: ClaudeApiErrorReason.notConfigured,
       );
     }
 
@@ -245,14 +285,18 @@ class ClaudeService {
       return await request().timeout(timeout);
     } on TimeoutException {
       throw const ClaudeApiException(
+        // l10n-guard: log text; the screen shows errorTimeout
         'The practice service took too long to respond. Please try again.',
         kind: ClaudeApiErrorKind.network,
+        reason: ClaudeApiErrorReason.timeout,
       );
     } catch (_) {
       throw const ClaudeApiException(
+        // l10n-guard-begin: log text; the screen shows errorUnreachable
         "Couldn't reach the practice service. Check your connection and "
-        'try again.',
+        'try again.', // l10n-guard-end
         kind: ClaudeApiErrorKind.network,
+        reason: ClaudeApiErrorReason.unreachable,
       );
     }
   }
@@ -287,9 +331,21 @@ class ClaudeService {
       'quota_exceeded' => ClaudeApiErrorKind.quotaExceeded,
       _ => ClaudeApiErrorKind.upstream,
     };
-    final message = errorJson?['message'] as String? ??
+    final serverMessage = errorJson?['message'] as String?;
+    final scope = errorJson?['scope'] as String?;
+    final reason = switch ((kind, scope)) {
+      (ClaudeApiErrorKind.quotaExceeded, 'device') =>
+        ClaudeApiErrorReason.quotaDevice,
+      (ClaudeApiErrorKind.quotaExceeded, 'global') =>
+        ClaudeApiErrorReason.quotaGlobal,
+      _ when serverMessage == null => ClaudeApiErrorReason.serverStatus,
+      _ => ClaudeApiErrorReason.server,
+    };
+    final message = serverMessage ??
+        // l10n-guard: log text; the screen shows errorServerStatus
         'Something went wrong (${response.statusCode}). Please try again.';
 
-    throw ClaudeApiException(message, kind: kind);
+    throw ClaudeApiException(message,
+        kind: kind, reason: reason, statusCode: response.statusCode);
   }
 }

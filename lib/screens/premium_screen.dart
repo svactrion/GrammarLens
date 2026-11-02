@@ -738,7 +738,7 @@ class _AvatarHero extends StatelessWidget {
     final others = _otherAvatarsFor(centerAvatar);
     return Semantics(
       key: PremiumScreen.heroKey,
-      label: context.l10n.paywallCompanion(centerAvatar.semanticLabel),
+      label: context.l10n.paywallCompanion(centerAvatar.name(context.l10n)),
       container: true,
       child: ExcludeSemantics(
         child: SizedBox(
