@@ -11,6 +11,8 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 
+import 'support/l10n_support.dart';
+
 /// Batch 5 (N10, N33) and 1.2.0 Batch 7 (Q7, N9, N10): Profile's strip.
 /// The running month first, then the months newest to oldest, one medal
 /// each (the highest tier, in the month's theme), the Welcome badge last;
@@ -193,11 +195,11 @@ void main() {
         currentProgress: november(score: 80),
         results: [goldOctober, bronzeSeptember],
         themeIds: storedThemes);
-    expect(find.text(MonthlyMedalCollection.inProgress), findsOneWidget);
+    expect(find.text(en.medalInProgress), findsOneWidget);
     expect(
         find.descendant(
             of: find.byKey(MonthlyMedalCollection.slotKey(2026, 11)),
-            matching: find.text(MonthlyMedalCollection.inProgress)),
+            matching: find.text(en.medalInProgress)),
         findsOneWidget);
     expect(
         find.bySemanticsLabel(
@@ -222,7 +224,7 @@ void main() {
         find.descendant(of: slot, matching: find.byType(ColorFiltered)));
     expect(filter.colorFilter, ColorFilter.matrix(MedalBadge.fadedMatrix(.38)));
     // The label and the mark are drawn in full: nothing fades them.
-    for (final text in ['Nov 2026', MonthlyMedalCollection.inProgress]) {
+    for (final text in ['Nov 2026', en.medalInProgress]) {
       final label = find.descendant(of: slot, matching: find.text(text));
       expect(find.ancestor(of: label, matching: find.byType(Opacity)),
           findsNothing);

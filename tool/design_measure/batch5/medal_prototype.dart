@@ -11,6 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
+
+/// The English interface strings (1.4.0 B4.5).
+final AppLocalizations en = lookupAppLocalizations(const Locale('en'));
 
 /// The WebP candidates' pixel size the prototypes draw.
 const protoMedalPx = 512;
@@ -211,7 +215,7 @@ class ProtoCollection extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('This month · ${current.theme.name}',
+            Text('This month · ${current.theme.title(en)}',
                 style: theme.textTheme.titleSmall
                     ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
@@ -220,7 +224,7 @@ class ProtoCollection extends StatelessWidget {
             LinearProgressIndicator(value: current.score / current.maxScore),
             const SizedBox(height: 8),
             Text('${current.score} / ${current.maxScore} points · '
-                '${current.tier!.label} reached'),
+                '${current.tier!.label(en)} reached'),
           ]),
         ),
       ),
@@ -238,11 +242,11 @@ class ProtoCollection extends StatelessWidget {
               Text('${_monthNames[m.month - 1]} ${m.year}',
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(fontWeight: FontWeight.w700)),
-              Text(m.theme.name, style: muted),
+              Text(m.theme.title(en), style: muted),
               Text(
                   m.tier == null
                       ? 'No medal · ${m.score} points'
-                      : '${m.tier!.label} · ${m.score} points',
+                      : '${m.tier!.label(en)} · ${m.score} points',
                   style: muted),
             ]),
           ),

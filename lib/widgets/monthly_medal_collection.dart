@@ -8,6 +8,7 @@ import '../services/monthly_medal_rules.dart';
 import 'medal_badge.dart';
 import 'medal_tier_color.dart';
 import '../theme.dart';
+import '../l10n/l10n.dart';
 
 /// Profile's medals (Batch 5, N10, N33; 1.2.0 Batch 7, Q7): a horizontal
 /// strip, the medals side by side with no card or disc behind them. The
@@ -65,12 +66,8 @@ class MonthlyMedalCollection extends StatelessWidget {
       ValueKey('medal_shelf_$year-$month');
   static const detailKey = ValueKey('medal_shelf_detail');
 
-  static const inProgress = 'In progress';
-
-  static const months = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July', //
-    'August', 'September', 'October', 'November', 'December',
-  ];
+  // The running month's mark: `medalInProgress`. Month names come from
+  // `DateFormat` in the interface language (1.4.0 B4.5).
 
   /// The theme [year]/[month] is drawn in: its stored theme; otherwise
   /// the running month's calendar theme (Home records it on its first
@@ -175,13 +172,14 @@ class ShelfMonth {
   /// The month's days: the steps to the top.
   int get days => DateTime(year, month + 1, 0).day;
 
-  String get name => '${MonthlyMedalCollection.months[month - 1]} $year';
+  /// "October 2026".
+  String name(AppLocalizations l10n) => monthYear(year, month, l10n);
 
   /// The strip's label: "Sep 2026".
-  String get label =>
-      '${MonthlyMedalCollection.months[month - 1].substring(0, 3)} $year';
+  String label(AppLocalizations l10n) => monthYearShort(year, month, l10n);
 
-  String get outcome => tier == null ? 'No medal yet' : '${tier!.label} medal';
+  String outcome(AppLocalizations l10n) =>
+      tier == null ? l10n.medalNone : l10n.medalTierMedal(tier!.label(l10n));
 
   /// The medal shown: the tier reached, or the theme's Bronze faded (on
   /// the strip to [MonthlyMedalCollection.runningFade], in the detail to
@@ -197,16 +195,13 @@ class ShelfMonth {
       );
 
   /// The detail's lines under the medal (N34).
-  List<String> get details => [
-        name,
-        theme.name,
-        running ? '$outcome · in progress' : outcome,
-        '$steps / $days steps · $score points',
+  List<String> details(AppLocalizations l10n) => [
+        name(l10n),
+        theme.title(l10n),
+        running ? l10n.medalOutcomeInProgress(outcome(l10n)) : outcome(l10n),
+        l10n.medalStepsPoints(steps, days, score),
       ];
 }
-
-/// "1 point", "7 points".
-String _points(int n) => n == 1 ? '1 point' : '$n points';
 
 /// A strip slot: the medal, its disc on a common baseline, the label under
 /// it and, for the running month, the in-progress mark. Tappable.
@@ -280,18 +275,20 @@ class _WelcomeSlot extends StatelessWidget {
       key: MonthlyMedalCollection.welcomeSlotKey,
       medal: MedalBadge.welcome(
           disc: MonthlyMedalCollection.shelfDisc, earned: earned),
-      label: 'Welcome',
-      semantics: 'Welcome badge, ${earned ? 'earned' : 'locked'}.',
+      label: context.l10n.medalWelcomeSlot,
+      semantics: earned
+          ? context.l10n.medalWelcomeEarned
+          : context.l10n.medalWelcomeLocked,
       onTap: () => showMedalDetail(
         context,
         medal: MedalBadge.welcome(
             disc: MonthlyMedalCollection.detailDisc, earned: earned),
         lines: [
-          'Welcome to the climb',
+          context.l10n.medalWelcomeTitle,
           at == null
-              ? 'Not earned yet'
-              : 'Earned in ${MonthlyMedalCollection.months[at.month - 1]} '
-                  '${at.year}',
+              ? context.l10n.medalWelcomeNotEarned
+              : context.l10n.medalWelcomeEarnedIn(
+                  monthYear(at.year, at.month, context.l10n)),
         ],
       ),
     );
@@ -305,16 +302,21 @@ class _MonthSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = month;
+    final l10n = context.l10n;
     return _Slot(
       key: MonthlyMedalCollection.slotKey(m.year, m.month),
       medal: m.medal(MonthlyMedalCollection.shelfDisc,
           fadedOpacity: MonthlyMedalCollection.runningFade),
-      label: m.label,
-      mark: m.running ? MonthlyMedalCollection.inProgress : null,
-      semantics: '${m.name}, ${m.theme.name}, ${m.outcome}'
-          '${m.running ? ', in progress' : ''}.',
+      label: m.label(l10n),
+      mark: m.running ? l10n.medalInProgress : null,
+      semantics: m.running
+          ? l10n.medalSlotSemanticsRunning(
+              m.name(l10n), m.theme.title(l10n), m.outcome(l10n))
+          : l10n.medalSlotSemantics(
+              m.name(l10n), m.theme.title(l10n), m.outcome(l10n)),
       onTap: () => showMedalDetail(context,
-          medal: m.medal(MonthlyMedalCollection.detailDisc), lines: m.details),
+          medal: m.medal(MonthlyMedalCollection.detailDisc),
+          lines: m.details(l10n)),
     );
   }
 }
@@ -406,19 +408,16 @@ class MonthlyProgressCard extends StatelessWidget {
   static const barHeight = 9.0;
 
   /// The line under the bar for [progress].
-  static String toGoLine(MonthlyMedalProgress progress) {
+  static String toGoLine(MonthlyMedalProgress progress, AppLocalizations l10n) {
     final reached = MonthlyMedalRules.tierFor(
         year: progress.year, month: progress.month, score: progress.score);
     final next = MonthlyMedalRules.nextTier(
         progress.year, progress.month, progress.score);
-    if (next == null) {
-      return "Gold earned. That's this month's top medal.";
-    }
+    if (next == null) return l10n.medalTopReached;
     final (tier, gap) = next;
-    if (reached == null) {
-      return '${_points(gap)} to your first monthly medal';
-    }
-    return '${reached.label} earned · ${_points(gap)} to ${tier.label}';
+    if (reached == null) return l10n.medalToFirst(l10n.medalPoints(gap));
+    return l10n.medalToNext(
+        reached.label(l10n), l10n.medalPoints(gap), tier.label(l10n));
   }
 
   @override
@@ -426,7 +425,8 @@ class MonthlyProgressCard extends StatelessWidget {
     final t = Theme.of(context);
     final scheme = t.colorScheme;
     final p = progress;
-    final monthName = MonthlyMedalCollection.months[p.month - 1];
+    final l10n = context.l10n;
+    final month = monthName(p.month, l10n);
     final next = MonthlyMedalRules.nextTier(p.year, p.month, p.score);
     final thresholds = {
       for (final tier in MedalTier.values)
@@ -437,12 +437,11 @@ class MonthlyProgressCard extends StatelessWidget {
     final value = next == null ? 1.0 : (p.score / goal).clamp(0.0, 1.0);
     final muted = scheme.onSurfaceVariant;
     final small = t.textTheme.labelSmall?.withWeight(FontWeight.w400);
-    final days =
-        p.activeDays == 1 ? '1 active day' : '${p.activeDays} active days';
-    final toGo = toGoLine(p);
+    final days = l10n.medalActiveDays(p.activeDays);
+    final toGo = toGoLine(p, l10n);
     final goalLine = next == null
-        ? 'Gold reached, ${p.score} of ${p.maxScore} points'
-        : 'Next medal ${next.$1.label}, ${p.score} of $goal points';
+        ? l10n.medalGoldReachedSemantics(p.score, p.maxScore)
+        : l10n.medalNextSemantics(next.$1.label(l10n), p.score, goal);
 
     return Card(
       key: cardKey,
@@ -450,11 +449,18 @@ class MonthlyProgressCard extends StatelessWidget {
       child: Semantics(
         container: true,
         excludeSemantics: true,
-        label: '$monthName progress, ${theme.name}, $days. '
-            '$goalLine. $toGo. ${[
-          for (final MapEntry(key: tier, value: v) in thresholds.entries)
-            '${tier.label} at $v points'
-        ].join(', ')}. Monthly total ${p.score} of ${p.maxScore} points.',
+        label: l10n.medalProgressSemantics(
+            month,
+            theme.title(l10n),
+            days,
+            goalLine,
+            toGo,
+            [
+              for (final MapEntry(key: tier, value: v) in thresholds.entries)
+                l10n.medalThresholdSemantics(tier.label(l10n), v)
+            ].join(', '),
+            p.score,
+            p.maxScore),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(17, 18, 17, 15),
           child:
@@ -464,11 +470,11 @@ class MonthlyProgressCard extends StatelessWidget {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('$monthName progress',
+                      Text(l10n.medalProgressTitle(month),
                           style: t.textTheme.titleMedium?.copyWith(
                               color: scheme.onSurface, letterSpacing: -.3)),
                       const SizedBox(height: 4),
-                      Text('${theme.name} · $days',
+                      Text(l10n.medalThemeDays(theme.title(l10n), days),
                           style: small?.copyWith(color: muted)),
                     ]),
               ),
@@ -487,7 +493,7 @@ class MonthlyProgressCard extends StatelessWidget {
                       style: t.textTheme.headlineMedium
                           ?.copyWith(color: scheme.onPrimary, height: 1)),
                   const SizedBox(height: 3),
-                  Text(p.score == 1 ? 'point' : 'points',
+                  Text(l10n.medalPointsUnit(p.score),
                       style: t.textTheme.labelSmall
                           ?.withWeight(FontWeight.w800)
                           .copyWith(color: scheme.onPrimary)),
@@ -504,9 +510,13 @@ class MonthlyProgressCard extends StatelessWidget {
                 Text.rich(
                     TextSpan(children: [
                       TextSpan(
-                          text: next == null ? 'Top medal ' : 'Next medal '),
+                          text: next == null
+                              ? l10n.medalTopLabel
+                              : l10n.medalNextLabel),
                       TextSpan(
-                          text: next == null ? 'Gold' : next.$1.label,
+                          text: next == null
+                              ? MedalTier.gold.label(l10n)
+                              : next.$1.label(l10n),
                           style: TextStyle(color: scheme.onSurface)
                               .withWeight(FontWeight.w800)),
                     ]),
@@ -519,7 +529,7 @@ class MonthlyProgressCard extends StatelessWidget {
                           text: '${p.score}',
                           style: TextStyle(color: scheme.onSurface)
                               .withWeight(FontWeight.w800)),
-                      TextSpan(text: ' / $goal pts'),
+                      TextSpan(text: l10n.medalGoalPoints(goal)),
                     ]),
                     style: t.textTheme.labelMedium
                         ?.withWeight(FontWeight.w400)
@@ -562,12 +572,12 @@ class MonthlyProgressCard extends StatelessWidget {
                     Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tier.label,
+                          Text(tier.label(l10n),
                               style: t.textTheme.labelSmall
                                   ?.withWeight(FontWeight.w800)
                                   .copyWith(color: scheme.onSurface)),
                           const SizedBox(height: 2),
-                          Text('$v pts',
+                          Text(l10n.medalThresholdPoints(v),
                               key: thresholdKey(tier),
                               style: small?.copyWith(color: muted)),
                         ]),
@@ -575,7 +585,7 @@ class MonthlyProgressCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Text('Monthly total: ${p.score} / ${p.maxScore} points',
+            Text(l10n.medalMonthlyTotal(p.score, p.maxScore),
                 key: totalKey, style: small?.copyWith(color: muted)),
           ]),
         ),

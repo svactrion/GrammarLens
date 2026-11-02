@@ -28,10 +28,10 @@ enum ClimbEmblem { pine, flame, iceCrystal, rockArch }
 class ClimbTheme {
   /// Stable id, stored per month in `climb_month_themes`. Never renamed.
   final String id;
-  final String name;
 
-  /// One line, used word for word (month transition card).
-  final String tagline;
+  // Its name and its one-line tagline (the month transition card) are
+  // interface text: `theme.title(l10n)`, `theme.tagline(l10n)`
+  // (`lib/l10n/labels.dart`; 1.4.0 B4.5).
 
   /// Whether the theme can be shown. A theme that is not ready is never
   /// assigned to a month (see [ClimbThemeRotation.shownFor]).
@@ -67,8 +67,6 @@ class ClimbTheme {
 
   const ClimbTheme({
     required this.id,
-    required this.name,
-    required this.tagline,
     required this.ready,
     this.lightPalette,
     this.darkPalette,
@@ -134,8 +132,6 @@ class ClimbThemes {
   /// The 1.0 mountain: the default and the fallback.
   static const greenSlope = ClimbTheme(
     id: greenSlopeId,
-    name: 'Green Slope',
-    tagline: 'Green slopes and an easy trail to find your rhythm.',
     ready: true,
     lightPalette: _lightPalette,
     darkPalette: _darkPalette,
@@ -148,8 +144,6 @@ class ClimbThemes {
 
   static const emberPeak = ClimbTheme(
     id: 'ember_peak',
-    name: 'Ember Peak',
-    tagline: 'Smoke on the ridge, warm rock underfoot.',
     ready: true,
     lightPalette: _lightPalette,
     darkPalette: _darkPalette,
@@ -162,8 +156,6 @@ class ClimbThemes {
 
   static const glacierPeak = ClimbTheme(
     id: 'glacier_peak',
-    name: 'Glacier Peak',
-    tagline: 'Thin air, bright ice, and a view worth the climb.',
     ready: true,
     lightPalette: _lightPalette,
     darkPalette: _darkPalette,
@@ -183,8 +175,6 @@ class ClimbThemes {
 
   static const redCanyon = ClimbTheme(
     id: 'red_canyon',
-    name: 'Red Canyon',
-    tagline: 'Sun-baked rock and a mesa waiting at the top.',
     ready: true,
     lightPalette: _lightPalette,
     darkPalette: _darkPalette,

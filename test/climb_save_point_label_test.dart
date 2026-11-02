@@ -8,6 +8,8 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_save_point_table.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
+import 'support/l10n_support.dart';
+
 /// Batch 5 (N6, N11, N18, N19): save point names and their label, and the
 /// C5 signpost, which is decoration.
 void main() {
@@ -265,7 +267,7 @@ void main() {
           .label;
       expect(semantics, contains('First Camp at step 7'));
       expect(semantics.toLowerCase(), isNot(contains('signpost')));
-      expect(ClimbThemes.greenSlope.name, isNotEmpty);
+      expect(ClimbThemes.greenSlope.title(en), isNotEmpty);
     });
   });
 }

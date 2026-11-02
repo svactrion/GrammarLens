@@ -9,12 +9,14 @@ import 'package:grammar_lens/models/climb_theme.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 
+import 'support/l10n_support.dart';
+
 /// Monthly themes as data, the global-calendar rotation, and the rule that
 /// what is recorded for a month is what the month is shown with.
 void main() {
   group('registry', () {
     test('four themes in rotation order, with their names and taglines', () {
-      expect(ClimbThemes.all.map((t) => (t.id, t.name, t.tagline)), [
+      expect(ClimbThemes.all.map((t) => (t.id, t.title(en), t.tagline(en))), [
         (
           'green_slope',
           'Green Slope',

@@ -9,6 +9,8 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_debug_month_card.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_debug_theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/month_card_support.dart';
 import 'support/recording_analytics_sink.dart';
 
@@ -176,7 +178,7 @@ void main() {
       ClimbDebugDay.valueForTesting = 12;
       await pumpHome(tester, _NoFlagsStorage());
       expect(find.textContaining('Red Canyon'), findsWidgets);
-      expect(find.text(ClimbThemes.redCanyon.tagline), findsOneWidget);
+      expect(find.text(ClimbThemes.redCanyon.tagline(en)), findsOneWidget);
       await tester.tapAt(const Offset(20, 120));
       await settleZoom(tester);
       expect(tester.widget<MonthlyMountain>(mountainFinder).zoom, isNull);

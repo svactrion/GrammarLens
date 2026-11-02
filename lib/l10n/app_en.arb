@@ -1624,5 +1624,599 @@
   "topicPracticeNotStarted": "Not started yet",
   "@topicPracticeNotStarted": {
     "description": "A topic card's line before any practice in it."
+  },
+  "themeGreenSlope": "Green Slope",
+  "@themeGreenSlope": {
+    "description": "A Monthly Climb theme's name (a mountain scene)."
+  },
+  "themeGreenSlopeTagline": "Green slopes and an easy trail to find your rhythm.",
+  "@themeGreenSlopeTagline": {
+    "description": "A Monthly Climb theme's one-line tagline, on the new month's card."
+  },
+  "themeEmberPeak": "Ember Peak",
+  "@themeEmberPeak": {
+    "description": "A Monthly Climb theme's name (a mountain scene)."
+  },
+  "themeEmberPeakTagline": "Smoke on the ridge, warm rock underfoot.",
+  "@themeEmberPeakTagline": {
+    "description": "A Monthly Climb theme's one-line tagline, on the new month's card."
+  },
+  "themeGlacierPeak": "Glacier Peak",
+  "@themeGlacierPeak": {
+    "description": "A Monthly Climb theme's name (a mountain scene)."
+  },
+  "themeGlacierPeakTagline": "Thin air, bright ice, and a view worth the climb.",
+  "@themeGlacierPeakTagline": {
+    "description": "A Monthly Climb theme's one-line tagline, on the new month's card."
+  },
+  "themeRedCanyon": "Red Canyon",
+  "@themeRedCanyon": {
+    "description": "A Monthly Climb theme's name (a mountain scene)."
+  },
+  "themeRedCanyonTagline": "Sun-baked rock and a mesa waiting at the top.",
+  "@themeRedCanyonTagline": {
+    "description": "A Monthly Climb theme's one-line tagline, on the new month's card."
+  },
+  "savePointFirstCamp": "First Camp",
+  "@savePointFirstCamp": {
+    "description": "A save point's name on the Monthly Climb trail (a chip in the scene)."
+  },
+  "savePointHalfwayHut": "Halfway Hut",
+  "@savePointHalfwayHut": {
+    "description": "A save point's name on the Monthly Climb trail (a chip in the scene)."
+  },
+  "savePointMountainSpring": "Mountain Spring",
+  "@savePointMountainSpring": {
+    "description": "A save point's name on the Monthly Climb trail (a chip in the scene)."
+  },
+  "savePointHighCamp": "High Camp",
+  "@savePointHighCamp": {
+    "description": "A save point's name on the Monthly Climb trail (a chip in the scene)."
+  },
+  "savePointSummit": "Summit",
+  "@savePointSummit": {
+    "description": "A save point's name on the Monthly Climb trail (a chip in the scene)."
+  },
+  "tierBronze": "Bronze",
+  "@tierBronze": {
+    "description": "The lowest monthly medal."
+  },
+  "tierSilver": "Silver",
+  "@tierSilver": {
+    "description": "The middle monthly medal."
+  },
+  "tierGold": "Gold",
+  "@tierGold": {
+    "description": "The top monthly medal."
+  },
+  "climbTitle": "Mountain of Learning",
+  "@climbTitle": {
+    "description": "The Monthly Climb card's plaque on Home."
+  },
+  "climbSteps": "{steps} of {days} steps.",
+  "@climbSteps": {
+    "description": "VoiceOver: the Monthly Climb card's progress this month.",
+    "placeholders": {
+      "steps": {
+        "type": "int",
+        "example": "12"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "climbSummitSteps": "Summit reached. {steps} of {days} steps.",
+  "@climbSummitSteps": {
+    "description": "VoiceOver: the Monthly Climb card once the summit is reached.",
+    "placeholders": {
+      "steps": {
+        "type": "int",
+        "example": "30"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "climbScoreSemantics": "Monthly score: {score} of {max} points. {marks}.",
+  "@climbScoreSemantics": {
+    "description": "VoiceOver: the score bar under the mountain; {marks} lists climbTierAt for each medal.",
+    "placeholders": {
+      "score": {
+        "type": "int",
+        "example": "120"
+      },
+      "max": {
+        "type": "int",
+        "example": "300"
+      },
+      "marks": {
+        "type": "String",
+        "example": "Bronze at 90, Silver at 180, Gold at 270"
+      }
+    }
+  },
+  "climbTierAt": "{tier} at {points}",
+  "@climbTierAt": {
+    "description": "VoiceOver: one medal's threshold in the score bar.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      },
+      "points": {
+        "type": "int",
+        "example": "90"
+      }
+    }
+  },
+  "climbTierReached": "{tier} reached.",
+  "@climbTierReached": {
+    "description": "VoiceOver: the score bar, the medal reached this month.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      }
+    }
+  },
+  "climbMountainSemantics": "{theme}. {steps} of {days} steps. {avatar} avatar. Save points: {savePoints}. Summit at {days} steps.",
+  "@climbMountainSemantics": {
+    "description": "VoiceOver: the mountain scene; {avatar} is the avatar's name, {savePoints} lists climbSavePointAt.",
+    "placeholders": {
+      "theme": {
+        "type": "String",
+        "example": "Ember Peak"
+      },
+      "steps": {
+        "type": "int",
+        "example": "12"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      },
+      "avatar": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "savePoints": {
+        "type": "String",
+        "example": "First Camp at step 5"
+      }
+    }
+  },
+  "climbSavePointAt": "{name} at step {step}",
+  "@climbSavePointAt": {
+    "description": "VoiceOver: one save point on the trail.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "First Camp"
+      },
+      "step": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "medalEarnedTitle": "{tier} medal earned",
+  "@medalEarnedTitle": {
+    "description": "The medal celebration's title.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      }
+    }
+  },
+  "medalMonthTheme": "{month} · {theme}",
+  "@medalMonthTheme": {
+    "description": "The medal celebration's line: the month's name and the theme.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "October"
+      },
+      "theme": {
+        "type": "String",
+        "example": "Ember Peak"
+      }
+    }
+  },
+  "medalWelcomeTitle": "Welcome to the climb",
+  "@medalWelcomeTitle": {
+    "description": "The Welcome badge's title (celebration and detail)."
+  },
+  "medalWelcomeBody": "Answer at least one question a day to keep moving up this month's mountain.",
+  "@medalWelcomeBody": {
+    "description": "The Welcome badge's celebration line."
+  },
+  "medalTapToContinue": "Tap to continue",
+  "@medalTapToContinue": {
+    "description": "Under a medal celebration: a tap anywhere closes it."
+  },
+  "medalInProgress": "In progress",
+  "@medalInProgress": {
+    "description": "The running month's mark on the medal shelf."
+  },
+  "medalNone": "No medal yet",
+  "@medalNone": {
+    "description": "A month's medal detail when no medal was earned."
+  },
+  "medalTierMedal": "{tier} medal",
+  "@medalTierMedal": {
+    "description": "A month's medal (detail, month card).",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Gold"
+      }
+    }
+  },
+  "medalOutcomeInProgress": "{outcome} · in progress",
+  "@medalOutcomeInProgress": {
+    "description": "A running month's medal detail line.",
+    "placeholders": {
+      "outcome": {
+        "type": "String",
+        "example": "Bronze medal"
+      }
+    }
+  },
+  "medalStepsPoints": "{steps} / {days} steps · {score} points",
+  "@medalStepsPoints": {
+    "description": "A month's medal detail line.",
+    "placeholders": {
+      "steps": {
+        "type": "int",
+        "example": "12"
+      },
+      "days": {
+        "type": "int",
+        "example": "30"
+      },
+      "score": {
+        "type": "int",
+        "example": "120"
+      }
+    }
+  },
+  "medalSlotSemantics": "{month}, {theme}, {outcome}.",
+  "@medalSlotSemantics": {
+    "description": "VoiceOver: a past month's medal on the shelf.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "October 2026"
+      },
+      "theme": {
+        "type": "String",
+        "example": "Ember Peak"
+      },
+      "outcome": {
+        "type": "String",
+        "example": "Gold medal"
+      }
+    }
+  },
+  "medalSlotSemanticsRunning": "{month}, {theme}, {outcome}, in progress.",
+  "@medalSlotSemanticsRunning": {
+    "description": "VoiceOver: the running month's medal on the shelf.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November 2026"
+      },
+      "theme": {
+        "type": "String",
+        "example": "Red Canyon"
+      },
+      "outcome": {
+        "type": "String",
+        "example": "No medal yet"
+      }
+    }
+  },
+  "medalWelcomeSlot": "Welcome",
+  "@medalWelcomeSlot": {
+    "description": "The Welcome badge's label on the medal shelf."
+  },
+  "medalWelcomeEarned": "Welcome badge, earned.",
+  "@medalWelcomeEarned": {
+    "description": "VoiceOver: the Welcome badge on the shelf, earned."
+  },
+  "medalWelcomeLocked": "Welcome badge, locked.",
+  "@medalWelcomeLocked": {
+    "description": "VoiceOver: the Welcome badge on the shelf, not earned."
+  },
+  "medalWelcomeNotEarned": "Not earned yet",
+  "@medalWelcomeNotEarned": {
+    "description": "The Welcome badge's detail before it is earned."
+  },
+  "medalWelcomeEarnedIn": "Earned in {month}",
+  "@medalWelcomeEarnedIn": {
+    "description": "The Welcome badge's detail; {month} is the month and year.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "October 2026"
+      }
+    }
+  },
+  "medalPoints": "{count, plural, =1{1 point} other{{count} points}}",
+  "@medalPoints": {
+    "description": "A number of points.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "medalPointsUnit": "{count, plural, =1{point} other{points}}",
+  "@medalPointsUnit": {
+    "description": "The word under the month's score.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "120"
+      }
+    }
+  },
+  "medalTopReached": "Gold earned. That's this month's top medal.",
+  "@medalTopReached": {
+    "description": "The progress card's line once Gold is reached."
+  },
+  "medalToFirst": "{points} to your first monthly medal",
+  "@medalToFirst": {
+    "description": "The progress card's line before any medal; {points} is medalPoints.",
+    "placeholders": {
+      "points": {
+        "type": "String",
+        "example": "12 points"
+      }
+    }
+  },
+  "medalToNext": "{reached} earned · {points} to {next}",
+  "@medalToNext": {
+    "description": "The progress card's line between medals.",
+    "placeholders": {
+      "reached": {
+        "type": "String",
+        "example": "Bronze"
+      },
+      "points": {
+        "type": "String",
+        "example": "12 points"
+      },
+      "next": {
+        "type": "String",
+        "example": "Silver"
+      }
+    }
+  },
+  "medalActiveDays": "{count, plural, =1{1 active day} other{{count} active days}}",
+  "@medalActiveDays": {
+    "description": "The progress card: days with a step this month.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "medalGoldReachedSemantics": "Gold reached, {score} of {max} points",
+  "@medalGoldReachedSemantics": {
+    "description": "VoiceOver: the progress card past Gold.",
+    "placeholders": {
+      "score": {
+        "type": "int",
+        "example": "280"
+      },
+      "max": {
+        "type": "int",
+        "example": "300"
+      }
+    }
+  },
+  "medalNextSemantics": "Next medal {tier}, {score} of {goal} points",
+  "@medalNextSemantics": {
+    "description": "VoiceOver: the progress card's goal.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      },
+      "score": {
+        "type": "int",
+        "example": "120"
+      },
+      "goal": {
+        "type": "int",
+        "example": "180"
+      }
+    }
+  },
+  "medalThresholdSemantics": "{tier} at {points} points",
+  "@medalThresholdSemantics": {
+    "description": "VoiceOver: one medal's threshold on the progress card.",
+    "placeholders": {
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      },
+      "points": {
+        "type": "int",
+        "example": "90"
+      }
+    }
+  },
+  "medalProgressSemantics": "{month} progress, {theme}, {days}. {goal}. {toGo}. {thresholds}. Monthly total {score} of {max} points.",
+  "@medalProgressSemantics": {
+    "description": "VoiceOver: the whole progress card.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November"
+      },
+      "theme": {
+        "type": "String",
+        "example": "Red Canyon"
+      },
+      "days": {
+        "type": "String",
+        "example": "12 active days"
+      },
+      "goal": {
+        "type": "String",
+        "example": "Next medal Silver, 120 of 180 points"
+      },
+      "toGo": {
+        "type": "String",
+        "example": "Bronze earned · 60 points to Silver"
+      },
+      "thresholds": {
+        "type": "String",
+        "example": "Bronze at 90 points, Silver at 180 points, Gold at 270 points"
+      },
+      "score": {
+        "type": "int",
+        "example": "120"
+      },
+      "max": {
+        "type": "int",
+        "example": "300"
+      }
+    }
+  },
+  "medalProgressTitle": "{month} progress",
+  "@medalProgressTitle": {
+    "description": "The progress card's title; {month} is the month's name.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November"
+      }
+    }
+  },
+  "medalThemeDays": "{theme} · {days}",
+  "@medalThemeDays": {
+    "description": "The progress card's line under the title.",
+    "placeholders": {
+      "theme": {
+        "type": "String",
+        "example": "Red Canyon"
+      },
+      "days": {
+        "type": "String",
+        "example": "12 active days"
+      }
+    }
+  },
+  "medalTopLabel": "Top medal ",
+  "@medalTopLabel": {
+    "description": "The progress card's goal line past Gold, before the medal's name (keep the trailing space)."
+  },
+  "medalNextLabel": "Next medal ",
+  "@medalNextLabel": {
+    "description": "The progress card's goal line, before the next medal's name (keep the trailing space)."
+  },
+  "medalGoalPoints": " / {goal} pts",
+  "@medalGoalPoints": {
+    "description": "The progress card's goal after the score (keep the leading space; 'pts' short for points).",
+    "placeholders": {
+      "goal": {
+        "type": "int",
+        "example": "180"
+      }
+    }
+  },
+  "medalThresholdPoints": "{points} pts",
+  "@medalThresholdPoints": {
+    "description": "A medal's threshold on the progress card.",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "90"
+      }
+    }
+  },
+  "medalMonthlyTotal": "Monthly total: {score} / {max} points",
+  "@medalMonthlyTotal": {
+    "description": "The progress card's last line.",
+    "placeholders": {
+      "score": {
+        "type": "int",
+        "example": "120"
+      },
+      "max": {
+        "type": "int",
+        "example": "300"
+      }
+    }
+  },
+  "monthCardButton": "See the mountain",
+  "@monthCardButton": {
+    "description": "The month transition card's button."
+  },
+  "monthCardTitle": "Your {month} climb",
+  "@monthCardTitle": {
+    "description": "The month transition card's title; {month} is last month's name.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "October"
+      }
+    }
+  },
+  "monthCardSteps": "{count, plural, =1{step} other{steps}}",
+  "@monthCardSteps": {
+    "description": "The month transition card: the word after 'N / M'.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "monthCardNearMiss": "{count, plural, =1{Just 1 point from {tier}} other{Just {count} points from {tier}}}",
+  "@monthCardNearMiss": {
+    "description": "The month transition card when a medal was narrowly missed.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      },
+      "tier": {
+        "type": "String",
+        "example": "Silver"
+      }
+    }
+  },
+  "monthCardNext": "Next: {month} · {theme}",
+  "@monthCardNext": {
+    "description": "The month transition card: the new month and its theme.",
+    "placeholders": {
+      "month": {
+        "type": "String",
+        "example": "November"
+      },
+      "theme": {
+        "type": "String",
+        "example": "Red Canyon"
+      }
+    }
+  },
+  "monthCardFreshTitle": "A new mountain awaits",
+  "@monthCardFreshTitle": {
+    "description": "The month transition card for a learner with no climb last month."
+  },
+  "monthCardFreshBody": "Your avatar is ready at the start.",
+  "@monthCardFreshBody": {
+    "description": "The month transition card for a learner with no climb last month."
   }
 }

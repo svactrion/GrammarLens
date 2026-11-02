@@ -56,8 +56,12 @@ import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/utils/loading_view.dart';
 import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/medal_celebration.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
 
 import '../layouts.dart' show loadFont, loadIconFont, outDir;
+
+/// The English interface strings (1.4.0 B4.5).
+final AppLocalizations en = lookupAppLocalizations(const Locale('en'));
 
 class _Subscription extends SubscriptionService {
   @override
@@ -344,6 +348,7 @@ final List<_Screen> _screens = [
             theme: ClimbThemeRotation.shownFor(2026, 10),
             month: 10,
             onClose: () {},
+            l10n: en,
           ),
         ),
     after: null,
@@ -351,7 +356,7 @@ final List<_Screen> _screens = [
   (
     name: 'medal_celebration_welcome',
     scrolls: false,
-    build: () => Scaffold(body: MedalCelebration.welcome(onClose: () {})),
+    build: () => Scaffold(body: MedalCelebration.welcome(onClose: () {}, l10n: en)),
     after: null,
   ),
 ];

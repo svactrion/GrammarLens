@@ -27,6 +27,8 @@ import 'package:grammar_lens/services/analytics_service.dart';
 import 'package:grammar_lens/screens/settings_screen.dart';
 import 'package:grammar_lens/app.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/month_card_support.dart';
 import 'support/recording_analytics_sink.dart';
 
@@ -230,7 +232,8 @@ void main() {
           ClimbDebugControls.instance.playMilestone(v);
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
-          expect(find.text('${v.tier!.label} medal earned'), findsOneWidget);
+          expect(
+              find.text('${v.tier!.label(en)} medal earned'), findsOneWidget);
           await tester.tap(find.byType(MedalCelebration));
           await tester.pumpAndSettle();
           expect(find.byType(MedalCelebration), findsNothing);
@@ -257,7 +260,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Gold medal earned'), findsOneWidget);
-      expect(find.text('October · ${card.previousTheme.name}'), findsOneWidget);
+      expect(find.text('October · ${card.previousTheme.title(en)}'),
+          findsOneWidget);
       final medal = tester.widget<MedalBadge>(find.descendant(
           of: find.byType(MedalCelebration),
           matching: find.byType(MedalBadge)));

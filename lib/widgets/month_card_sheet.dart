@@ -6,8 +6,8 @@ import '../models/avatar.dart';
 import '../services/month_transition.dart';
 import 'avatar_tile.dart';
 import 'medal_badge.dart';
-import 'monthly_climb/climb_card.dart';
 import '../theme.dart';
+import '../l10n/l10n.dart';
 
 /// How the month card was closed (Batch 6, M6). The names are
 /// `month_card_dismissed`'s `method` values (M19).
@@ -43,7 +43,6 @@ class MonthCardSheet extends StatelessWidget {
     required this.onClose,
   });
 
-  static const buttonLabel = 'See the mountain';
   static const contentKey = ValueKey('month_card_content');
   static const scrollKey = ValueKey('month_card_scroll');
   static const nearMissKey = ValueKey('month_card_near_miss');
@@ -86,8 +85,8 @@ class MonthCardSheet extends StatelessWidget {
   }
 
   /// The near-miss line (M15): the gap as a number, no promise of days.
-  static String nearMissText(int gap, String tier) =>
-      'Just $gap ${gap == 1 ? 'point' : 'points'} from $tier';
+  static String nearMissText(int gap, String tier, AppLocalizations l10n) =>
+      l10n.monthCardNearMiss(gap, tier);
 
   @override
   Widget build(BuildContext context) {
@@ -106,8 +105,8 @@ class MonthCardSheet extends StatelessWidget {
         ),
       ),
     );
-    final button =
-        FilledButton(onPressed: onClose, child: const Text(buttonLabel));
+    final button = FilledButton(
+        onPressed: onClose, child: Text(context.l10n.monthCardButton));
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -134,9 +133,10 @@ class MonthCardSheet extends StatelessWidget {
   List<Widget> _summary(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
-    final month = ClimbCard.monthNames[data.previousMonth - 1];
-    final next = ClimbCard.monthNames[data.month - 1];
-    final title = Text('Your $month climb',
+    final l10n = context.l10n;
+    final month = monthName(data.previousMonth, l10n);
+    final next = monthName(data.month, l10n);
+    final title = Text(l10n.monthCardTitle(month),
         textAlign: TextAlign.center,
         style: theme.textTheme.titleLarge?.withWeight(FontWeight.w800));
     Widget stat(String value, String label) => Text.rich(TextSpan(children: [
@@ -159,7 +159,7 @@ class MonthCardSheet extends StatelessWidget {
               tier: tier,
               disc: medalDiscFor(MediaQuery.sizeOf(context).height)),
           const SizedBox(height: 4),
-          Text('${tier.label} medal',
+          Text(l10n.medalTierMedal(tier.label(l10n)),
               textAlign: TextAlign.center,
               style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700)),
         ]),
@@ -171,12 +171,13 @@ class MonthCardSheet extends StatelessWidget {
           spacing: 20,
           runSpacing: 4,
           children: [
-            stat('${data.steps} / ${data.days}', 'steps'),
-            stat('${data.score}', 'points'),
+            stat(
+                '${data.steps} / ${data.days}', l10n.monthCardSteps(data.days)),
+            stat('${data.score}', l10n.medalPointsUnit(data.score)),
           ]),
       if (data.nearMiss case (final next, final gap)) ...[
         const SizedBox(height: 6),
-        Text(nearMissText(gap, next.label),
+        Text(nearMissText(gap, next.label(l10n), l10n),
             key: nearMissKey,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
@@ -184,7 +185,7 @@ class MonthCardSheet extends StatelessWidget {
       const SizedBox(height: 12),
       const Divider(height: 1),
       const SizedBox(height: 12),
-      Text('Next: $next · ${data.theme.name}',
+      Text(l10n.monthCardNext(next, data.theme.title(l10n)),
           textAlign: TextAlign.center,
           style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700)),
     ];
@@ -204,21 +205,20 @@ class MonthCardSheet extends StatelessWidget {
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Semantics(
               header: true,
-              child: Text('A new mountain awaits',
+              child: Text(context.l10n.monthCardFreshTitle,
                   style:
                       theme.textTheme.titleLarge?.withWeight(FontWeight.w800)),
             ),
-            Text(data.theme.name,
+            Text(data.theme.title(context.l10n),
                 style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700)),
           ]),
         ),
       ]),
       const SizedBox(height: 10),
-      Text(data.theme.tagline,
+      Text(data.theme.tagline(context.l10n),
           style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
       const SizedBox(height: 6),
-      Text('Your avatar is ready at the start.',
-          style: theme.textTheme.bodyMedium),
+      Text(context.l10n.monthCardFreshBody, style: theme.textTheme.bodyMedium),
     ];
   }
 }

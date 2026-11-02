@@ -14,6 +14,10 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_route.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_point_table.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_save_points.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
+
+/// The English interface strings (1.4.0 B4.5).
+final AppLocalizations en = lookupAppLocalizations(const Locale('en'));
 
 /// What a summary card shows (M5). [tier] null: no medal row.
 /// [nearMiss] null: no near-miss line.
@@ -105,7 +109,7 @@ class SummaryCard extends StatelessWidget {
             MedalCircle(tier: tier),
             const SizedBox(width: 12),
             Expanded(
-                child: Text('${tier.label} medal',
+                child: Text('${tier.label(en)} medal',
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700))),
           ]),
@@ -117,13 +121,13 @@ class SummaryCard extends StatelessWidget {
         ]),
         if (data.nearMiss case (final tier, final gap)) ...[
           const SizedBox(height: 12),
-          Text('Only $gap points short of ${tier.label}.',
+          Text('Only $gap points short of ${tier.label(en)}.',
               style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
         ],
         const SizedBox(height: 16),
         const Divider(height: 1),
         const SizedBox(height: 16),
-        Text('${data.nextMonth}: ${data.nextTheme.name}',
+        Text('${data.nextMonth}: ${data.nextTheme.title(en)}',
             style: theme.textTheme.titleMedium
                 ?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: 20),
@@ -159,7 +163,7 @@ class FreshCard extends StatelessWidget {
             style: theme.textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
-        Text('$nextMonth is on ${nextTheme.name}.',
+        Text('$nextMonth is on ${nextTheme.title(en)}.',
             textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
         const SizedBox(height: 24),
         FilledButton(onPressed: () {}, child: const Text(prototypeButton)),

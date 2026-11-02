@@ -317,13 +317,15 @@ class _DailyTestResultScreenState extends State<DailyTestResultScreen> {
       scaffold,
       Positioned.fill(
         child: celebration.tier == null
-            ? MedalCelebration.welcome(key: key, onClose: close)
+            ? MedalCelebration.welcome(
+                key: key, onClose: close, l10n: context.l10n)
             : MedalCelebration.tier(
                 key: key,
                 tier: celebration.tier!,
                 theme: celebration.theme!,
                 month: celebration.month,
-                onClose: close),
+                onClose: close,
+                l10n: context.l10n),
       ),
     ]);
   }

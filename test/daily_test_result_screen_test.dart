@@ -24,6 +24,8 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_debug_milestone.dart';
 import 'package:grammar_lens/widgets/feedback_text.dart';
 import 'package:grammar_lens/widgets/result_score_band.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/celebration_support.dart';
 import 'support/recording_analytics_sink.dart';
 import 'support/rich_text_support.dart';
@@ -1407,7 +1409,7 @@ void main() {
 
     for (final tier in MedalTier.values) {
       testWidgets(
-          '${tier.label}: the completion that crosses it opens the '
+          '${tier.label(en)}: the completion that crosses it opens the '
           'celebration once, and one tap shows the results', (tester) async {
         monthAfter(MonthlyMedalRules.threshold(2026, 10, tier));
         await pumpResult(tester, setOn('2026-10-20'));
@@ -1420,14 +1422,14 @@ void main() {
         expect(
             find.descendant(
                 of: celebrationFinder,
-                matching: find.text(MedalCelebration.closeHint)),
+                matching: find.text(en.medalTapToContinue)),
             findsOneWidget);
         final medal = tester.widget<MedalBadge>(find.descendant(
             of: celebrationFinder, matching: find.byType(MedalBadge)));
         expect(medal.asset, MedalArt.monthly('green_slope', tier));
         expect(medal.earned, isTrue);
 
-        await closeCelebration(tester, title: '${tier.label} medal earned');
+        await closeCelebration(tester, title: '${tier.label(en)} medal earned');
         expect(find.text('See your climb'), findsOneWidget);
         await tester.pump(const Duration(seconds: 3));
         expect(celebrationFinder, findsNothing);

@@ -783,6 +783,7 @@ class _HomeScreenState extends State<HomeScreen>
         theme: theme,
         month: month,
         onClose: () => Navigator.of(routeContext).pop(),
+        l10n: routeContext.l10n,
       ),
     ));
   }

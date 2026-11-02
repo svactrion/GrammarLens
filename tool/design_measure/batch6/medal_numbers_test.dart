@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 // Batch 6 Batch 0, §3: the medal rule's numbers for 28–31-day months, read
 // from the product's own MonthlyMedalRules, and the near-miss line's
 // candidate thresholds: for each, which scores show the line, and what share
@@ -11,8 +12,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
 import 'package:grammar_lens/models/medal_tier.dart';
 import 'package:grammar_lens/services/monthly_medal_rules.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
 
 import '../layouts.dart' show outDir;
+
+/// The English interface strings (1.4.0 B4.5).
+final AppLocalizations en = lookupAppLocalizations(const ui.Locale('en'));
 
 /// A month of [days] days: (year, month). 2026-02 has 28, 2028-02 has 29.
 const _months = {28: (2026, 2), 29: (2028, 2), 30: (2026, 11), 31: (2026, 10)};
@@ -77,7 +82,7 @@ void main() {
           final from = th - limit;
           final bandStart = prev ?? 0;
           shown += th - from;
-          lines.add('  $days days, below ${tier.label} ($th): line at '
+          lines.add('  $days days, below ${tier.label(en)} ($th): line at '
               '$from–${th - 1} ($limit of ${th - bandStart} scores in the band, '
               '${(limit * 100 / (th - bandStart)).toStringAsFixed(0)} %)');
           prev = th;

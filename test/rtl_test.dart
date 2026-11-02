@@ -16,6 +16,8 @@ import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/question_view.dart';
 import 'package:grammar_lens/widgets/topic_hint_card.dart';
 
+import 'support/l10n_support.dart';
+
 /// 1.4.0 B3, the RTL preparation (docs/1.4.0-b3-batch0-report.md §3): under
 /// a right-to-left interface (Arabic, from B5) the start-edge layouts
 /// mirror, and the English content stays left to right. Driven by a
@@ -111,8 +113,8 @@ void main() {
     expect(fill.right, closeTo(bar.right - 16, 0.5));
     expect(fill.width, closeTo((288 - 32) * 100 / 300, 0.5));
     // Bronze, the lowest threshold, is the rightmost label.
-    final bronze = tester.getCenter(find.text(MedalTier.bronze.label));
-    final gold = tester.getCenter(find.text(MedalTier.gold.label));
+    final bronze = tester.getCenter(find.text(MedalTier.bronze.label(en)));
+    final gold = tester.getCenter(find.text(MedalTier.gold.label(en)));
     expect(bronze.dx, greaterThan(gold.dx));
   });
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/climb_theme.dart';
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// The Monthly Climb card on Home (1.1.0 design decision K3, Batch 3c
 /// a–c): a thin frame around the mountain and the score bar, "Mountain of
@@ -45,13 +46,8 @@ class ClimbCard extends StatelessWidget {
 
   static const chipsKey = ValueKey('climb_card_chips');
 
-  /// English month names: the app has no localization setup (roadmap,
-  /// "Turkish UI copy"), and `MaterialLocalizations` only formats a month
-  /// together with its year.
-  static const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July', //
-    'August', 'September', 'October', 'November', 'December',
-  ];
+  // The month chip's name comes from `DateFormat` in the interface
+  // language (`monthName`, 1.4.0 B4.5).
 
   /// The frame's corner radius: the brief's list card radius (22), not
   /// the large card's 24 ([appCardRadius]).
@@ -76,7 +72,7 @@ class ClimbCard extends StatelessWidget {
   static double plaqueHeight(BuildContext context) {
     final painter = TextPainter(
       text:
-          TextSpan(text: 'Mountain of Learning', style: _plaqueStyle(context)),
+          TextSpan(text: context.l10n.climbTitle, style: _plaqueStyle(context)),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
@@ -109,7 +105,7 @@ class ClimbCard extends StatelessWidget {
     }
 
     final top = plaqueHeight(context) / 2 + 6;
-    final monthChip = measure(monthNames[month.month - 1]);
+    final monthChip = measure(monthName(month.month, context.l10n));
     final stepsChip = measure('$steps / $days');
     return [
       Offset(10, top) & monthChip,
@@ -178,8 +174,10 @@ class ClimbCard extends StatelessWidget {
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   alignment: AlignmentDirectional.centerStart,
-                                  child: chip(Text(monthNames[month.month - 1],
-                                      key: monthKey, style: labelStyle)),
+                                  child: chip(Text(
+                                      monthName(month.month, context.l10n),
+                                      key: monthKey,
+                                      style: labelStyle)),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -191,8 +189,9 @@ class ClimbCard extends StatelessWidget {
                                     liveRegion: true,
                                     container: true,
                                     label: steps == days
-                                        ? 'Summit reached. $steps of $days steps.'
-                                        : '$steps of $days steps.',
+                                        ? context.l10n
+                                            .climbSummitSteps(steps, days)
+                                        : context.l10n.climbSteps(steps, days),
                                     excludeSemantics: true,
                                     child: chip(Text('$steps / $days',
                                         key: stepsKey, style: labelStyle)),
@@ -226,7 +225,7 @@ class ClimbCard extends StatelessWidget {
                   padding: _plaquePadding + const EdgeInsets.all(outlineWidth),
                   child: Center(
                       widthFactor: 1,
-                      child: Text('Mountain of Learning',
+                      child: Text(context.l10n.climbTitle,
                           style: _plaqueStyle(context))),
                 ),
               ),

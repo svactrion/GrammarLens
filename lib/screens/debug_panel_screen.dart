@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/topics.dart';
+import '../l10n/l10n.dart';
 import '../models/climb_theme.dart';
 import '../models/practice_set.dart';
 import '../services/analytics_service.dart';
@@ -182,7 +183,7 @@ class _DebugPanelScreenState extends State<DebugPanelScreen> {
           for (final t in ClimbThemes.all)
             ChoiceChip(
               key: DebugPanelScreen.themeKey(t.id),
-              label: Text(t.name),
+              label: Text(t.title(context.l10n)),
               selected: themeId == t.id,
               onSelected: (_) => _setTheme(t.id),
             ),

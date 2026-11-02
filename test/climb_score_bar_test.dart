@@ -7,6 +7,8 @@ import 'package:grammar_lens/services/monthly_medal_rules.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 
+import 'support/l10n_support.dart';
+
 /// Design decision D9: the month's score against the medal thresholds, in a
 /// strip under the mountain window, read aloud by VoiceOver.
 void main() {
@@ -69,7 +71,7 @@ void main() {
         final tick = tester.getRect(ticks.at(i));
         final expected =
             trackLeft + trackWidth * thresholds(year, month)[tier]! / max;
-        expect(tick.center.dx, closeTo(expected, .01), reason: tier.label);
+        expect(tick.center.dx, closeTo(expected, .01), reason: tier.label(en));
       }
     });
   }
@@ -111,15 +113,16 @@ void main() {
       final bar = tester.getRect(find.byType(ClimbScoreBar));
       final labels = [
         for (final tier in MedalTier.values)
-          tester.getRect(find.text(tier.label))
+          tester.getRect(find.text(tier.label(en)))
       ];
       // Measure the glyphs, not the 80 pt centering boxes.
       final widths = [
         for (final tier in MedalTier.values)
           (TextPainter(
                   text: TextSpan(
-                      text: tier.label,
-                      style: tester.widget<Text>(find.text(tier.label)).style),
+                      text: tier.label(en),
+                      style:
+                          tester.widget<Text>(find.text(tier.label(en))).style),
                   textDirection: TextDirection.ltr)
                 ..layout())
               .width

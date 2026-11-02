@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/medal_tier.dart';
 import '../medal_tier_color.dart';
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// The month's score against the medal thresholds: a strip of its own inside
 /// the mountain card, under the mountain window (design decision D9), so it
@@ -36,14 +37,16 @@ class ClimbScoreBar extends StatelessWidget {
 
   /// Read aloud by VoiceOver: the bar has no numbers on screen, so this is
   /// the only way to hear the score.
-  String get semanticsLabel {
+  String semanticsLabel(AppLocalizations l10n) {
     final marks = [
       for (final tier in MedalTier.values)
-        '${tier.label} at ${thresholds[tier]}'
+        l10n.climbTierAt(tier.label(l10n), thresholds[tier]!)
     ].join(', ');
     final reached = _reached;
-    return 'Monthly score: $score of $maxScore points. $marks.'
-        '${reached == null ? '' : ' ${reached.label} reached.'}';
+    final base = l10n.climbScoreSemantics(score, maxScore, marks);
+    return reached == null
+        ? base
+        : '$base ${l10n.climbTierReached(reached.label(l10n))}';
   }
 
   @override
@@ -53,7 +56,7 @@ class ClimbScoreBar extends StatelessWidget {
     final fill = maxScore == 0 ? 0.0 : (score / maxScore).clamp(0.0, 1.0);
     final reached = _reached;
     return Semantics(
-      label: semanticsLabel,
+      label: semanticsLabel(context.l10n),
       container: true,
       excludeSemantics: true,
       child: ColoredBox(
@@ -119,7 +122,7 @@ class ClimbScoreBar extends StatelessWidget {
                         width: 80,
                         top: 0,
                         child: Text(
-                          tier.label,
+                          tier.label(context.l10n),
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           // The metal color stays on the tick: as small text

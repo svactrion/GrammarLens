@@ -7,6 +7,7 @@ import '../models/medal_tier.dart';
 import 'confetti_burst.dart';
 import 'medal_badge.dart';
 import '../theme.dart';
+import '../l10n/l10n.dart';
 
 /// The medal celebration (Batch 5, N15, N28): a layer over the Daily Test
 /// result screen, opened the moment the test is saved, for a tier just
@@ -46,7 +47,7 @@ class MedalCelebration extends StatefulWidget {
   /// is 162 pt, 486 px at 3x, inside the 512 px assets (N23).
   static const disc = 144.0;
 
-  static const closeHint = 'Tap to continue';
+  // The close hint under the medal: `medalTapToContinue`.
 
   /// The layer's fade (in and out) and its shrink on closing.
   static const fadeKey = ValueKey('medal_celebration_fade');
@@ -77,11 +78,6 @@ class MedalCelebration extends StatefulWidget {
   static const raysTurn = Duration(seconds: 12);
   static const raysAngle = math.pi / 3;
 
-  static const _months = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July', //
-    'August', 'September', 'October', 'November', 'December',
-  ];
-
   /// A tier's celebration (N15, N29): "{Tier} medal earned",
   /// "{Month} · {Theme}".
   static MedalCelebration tier({
@@ -90,13 +86,15 @@ class MedalCelebration extends StatefulWidget {
     required ClimbTheme theme,
     required int month,
     required VoidCallback onClose,
+    required AppLocalizations l10n,
   }) =>
       MedalCelebration(
         key: key,
         medal: MedalBadge.monthly(themeId: theme.id, tier: tier, disc: disc),
         glow: glowFor(tier),
-        title: '${tier.label} medal earned',
-        subtitle: '${_months[month - 1]} · ${theme.name}',
+        title: l10n.medalEarnedTitle(tier.label(l10n)),
+        subtitle:
+            l10n.medalMonthTheme(monthName(month, l10n), theme.title(l10n)),
         onClose: onClose,
       );
 
@@ -104,14 +102,16 @@ class MedalCelebration extends StatefulWidget {
   /// replaced, word for word: audience-neutral (no "first test" language),
   /// since a pre-existing v2 user earns the same badge on their first Daily
   /// Test after updating.
-  static MedalCelebration welcome({Key? key, required VoidCallback onClose}) =>
+  static MedalCelebration welcome(
+          {Key? key,
+          required VoidCallback onClose,
+          required AppLocalizations l10n}) =>
       MedalCelebration(
         key: key,
         medal: const MedalBadge.welcome(disc: disc),
         glow: glowFor(null),
-        title: 'Welcome to the climb',
-        subtitle: "Answer at least one question a day to keep moving "
-            "up this month's mountain.",
+        title: l10n.medalWelcomeTitle,
+        subtitle: l10n.medalWelcomeBody,
         onClose: onClose,
       );
 
@@ -205,7 +205,7 @@ class _MedalCelebrationState extends State<MedalCelebration>
         liveRegion: true,
         button: true,
         label: '${widget.title}. ${widget.subtitle}. '
-            '${MedalCelebration.closeHint}.',
+            '${context.l10n.medalTapToContinue}.',
         onTap: _close,
         excludeSemantics: true,
         child: GestureDetector(
@@ -263,7 +263,7 @@ class _MedalCelebrationState extends State<MedalCelebration>
                           ),
                           const SizedBox(height: 22),
                           Text(
-                            MedalCelebration.closeHint,
+                            context.l10n.medalTapToContinue,
                             textAlign: TextAlign.center,
                             style: theme.textTheme.labelMedium
                                 ?.withWeight(FontWeight.w700)

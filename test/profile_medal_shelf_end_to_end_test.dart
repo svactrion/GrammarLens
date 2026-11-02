@@ -19,6 +19,8 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/recording_analytics_sink.dart';
 
 final _questions = [
@@ -151,7 +153,7 @@ void main() {
             earned: false, why: '${day * 10} points, under Bronze');
       } else {
         expectMedal(MedalTier.values[tier.index - 1],
-            earned: true, why: '${day * 10} points, under ${tier.label}');
+            earned: true, why: '${day * 10} points, under ${tier.label(en)}');
       }
       // The save that crosses it.
       await saveDay(++day);
@@ -159,7 +161,7 @@ void main() {
       expectMedal(tier, earned: true, why: '${day * 10} points');
       expect(
           find.bySemanticsLabel(RegExp(
-              '^November 2026, Ember Peak, ${tier.label} medal, in progress')),
+              '^November 2026, Ember Peak, ${tier.label(en)} medal, in progress')),
           findsOneWidget);
     }
     expect(day, 23); // 230 points: Gold at 225.

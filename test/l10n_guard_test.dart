@@ -140,7 +140,6 @@ const _excluded = [
 /// Files with hard-coded interface text, waiting for B4. Only ever shrinks.
 const _pending = <String>{
   // The 51 files with a hit when B3 landed (2026-11-02).
-  'lib/models/climb_theme.dart',
   'lib/screens/premium_screen.dart',
   'lib/services/claude_service.dart',
   'lib/services/subscription_service.dart',
@@ -148,13 +147,6 @@ const _pending = <String>{
   'lib/widgets/avatar_carousel.dart',
   'lib/widgets/brand_wordmark.dart',
   'lib/widgets/legal_link.dart',
-  'lib/widgets/medal_celebration.dart',
-  'lib/widgets/month_card_sheet.dart',
-  'lib/widgets/monthly_climb/climb_card.dart',
-  'lib/widgets/monthly_climb/climb_save_points.dart',
-  'lib/widgets/monthly_climb/climb_score_bar.dart',
-  'lib/widgets/monthly_climb/monthly_mountain.dart',
-  'lib/widgets/monthly_medal_collection.dart',
   'lib/widgets/premium_offer_card.dart',
 };
 

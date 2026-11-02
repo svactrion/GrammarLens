@@ -10,6 +10,8 @@ import 'package:grammar_lens/widgets/medal_badge.dart';
 import 'package:grammar_lens/widgets/month_card_sheet.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/month_card_support.dart';
 import 'support/recording_analytics_sink.dart';
 
@@ -106,7 +108,7 @@ void main() {
       final text = _sheetText(tester);
       expect(text, contains('A new mountain awaits'));
       expect(text, contains('Ember Peak'));
-      expect(text, contains(ClimbThemes.emberPeak.tagline));
+      expect(text, contains(ClimbThemes.emberPeak.tagline(en)));
       expect(text, contains('Your avatar is ready at the start.'));
       expect(RegExp(r'\d').hasMatch(text), isFalse, reason: text);
     });
@@ -177,9 +179,7 @@ void main() {
     }
 
     testWidgets('button', (tester) async {
-      expect(
-          await run(
-              tester, () => tester.tap(find.text(MonthCardSheet.buttonLabel))),
+      expect(await run(tester, () => tester.tap(find.text(en.monthCardButton))),
           MonthCardDismissal.button);
     });
     testWidgets('drag', (tester) async {
@@ -204,7 +204,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await pumpHome(tester, storage, key: const ValueKey(2));
     expect(_sheet, findsOneWidget);
-    await tester.tap(find.text(MonthCardSheet.buttonLabel));
+    await tester.tap(find.text(en.monthCardButton));
     await settleZoom(tester);
     await pumpHome(tester, storage, key: const ValueKey(3));
     expect(_sheet, findsNothing);
@@ -218,9 +218,9 @@ void main() {
       final sink = RecordingAnalyticsSink();
       await pumpHome(tester, CardStorage(), screen: screen, sink: sink);
       // The button may be below the sheet's fold (it scrolls when needed).
-      await tester.ensureVisible(find.text(MonthCardSheet.buttonLabel));
+      await tester.ensureVisible(find.text(en.monthCardButton));
       await tester.pump();
-      await tester.tap(find.text(MonthCardSheet.buttonLabel));
+      await tester.tap(find.text(en.monthCardButton));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
       expect(_sheet, findsNothing);
@@ -255,9 +255,9 @@ void main() {
     Future<void> closeBy(WidgetTester tester, String method) async {
       switch (method) {
         case 'button':
-          await tester.ensureVisible(find.text(MonthCardSheet.buttonLabel));
+          await tester.ensureVisible(find.text(en.monthCardButton));
           await tester.pump();
-          await tester.tap(find.text(MonthCardSheet.buttonLabel));
+          await tester.tap(find.text(en.monthCardButton));
         case 'drag':
           await tester.fling(_sheet, const Offset(0, 500), 1500);
         case 'barrier':

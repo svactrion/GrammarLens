@@ -16,6 +16,7 @@ import 'climb_save_point_table.dart';
 import 'climb_save_points.dart';
 import 'climb_zoom.dart';
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// The Monthly Climb scene (1.1.0 design, scene art S1–S2): the theme's
 /// illustration, with the trail painted in, and the avatar on its step.
@@ -438,15 +439,15 @@ class _MonthlyMountainState extends State<MonthlyMountain>
     // G6: in dark mode the objects take the theme's relighting.
     final darkGain =
         brightness == Brightness.dark ? climbObjectDarkGain[theme.id] : null;
+    final l10n = context.l10n;
     final savePoints = [
       for (final p in ClimbSavePoints.all)
-        '${p.name} at step ${p.reachedOn(widget.days)}'
+        l10n.climbSavePointAt(
+            savePointLabel(p.name, l10n), p.reachedOn(widget.days))
     ].join(', ');
     return Semantics(
-      label: '${theme.name}. $_shownSteps of ${widget.days} steps. '
-          '${widget.avatar.semanticLabel} avatar. '
-          'Save points: $savePoints. '
-          'Summit at ${widget.days} steps.',
+      label: l10n.climbMountainSemantics(theme.title(l10n), _shownSteps,
+          widget.days, widget.avatar.semanticLabel, savePoints),
       child: LayoutBuilder(builder: (context, constraints) {
         final camera = ClimbCamera(constraints.maxWidth);
         final image = camera.imageSize;
@@ -567,7 +568,8 @@ class _MonthlyMountainState extends State<MonthlyMountain>
                                     const []),
                             child: Opacity(
                               opacity: _labelOpacity,
-                              child: ClimbSavePointLabel(labelled.name,
+                              child: ClimbSavePointLabel(
+                                  savePointLabel(labelled.name, l10n),
                                   key: MonthlyMountain.labelKey),
                             ),
                           ),

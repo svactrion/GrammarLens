@@ -53,7 +53,10 @@ abstract final class ClimbSavePoints {
   static String assetFor(String object) => 'assets/climb/objects/$object.webp';
 
   /// N6: the save points' names, by object, the same in all four themes.
-  /// The signpost has none: it is decoration (N11).
+  /// The signpost has none: it is decoration (N11). These are the English
+  /// identities (the `save_point` analytics value derives from them); the
+  /// screen shows `savePointLabel(name, l10n)` (1.4.0 B4.5).
+  // l10n-guard-begin: identities, not shown as is
   static const names = {
     'tent': 'First Camp',
     'cabin': 'Halfway Hut',
@@ -61,6 +64,7 @@ abstract final class ClimbSavePoints {
     'campfire': 'High Camp',
     'summit_flag': 'Summit',
   };
+  // l10n-guard-end
 
   /// G10: the flag split in two, for a theme that recolours the pennant:
   /// the pennant alone, and the flag without it (their alphas add up to the

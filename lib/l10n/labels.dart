@@ -3,8 +3,12 @@
 library;
 
 import 'package:flutter/painting.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
+import '../models/climb_theme.dart';
 import '../models/learning_goal.dart';
+import '../models/medal_tier.dart';
 import '../models/practice_length.dart';
 import '../models/review_sort_order.dart';
 import '../models/topic.dart';
@@ -72,6 +76,73 @@ bool ruleIsTopic(String errorType, Topic topic) =>
 /// humanized (AI output stays English, 1.4.0 D2).
 String weakSpotTitle(String errorType, Topic topic, AppLocalizations l10n) =>
     ruleIsTopic(errorType, topic) ? topic.title(l10n) : humanizeSlug(errorType);
+
+extension MedalTierLabels on MedalTier {
+  String label(AppLocalizations l10n) => switch (this) {
+        MedalTier.bronze => l10n.tierBronze,
+        MedalTier.silver => l10n.tierSilver,
+        MedalTier.gold => l10n.tierGold,
+      };
+}
+
+extension ClimbThemeLabels on ClimbTheme {
+  /// The theme's name ("Ember Peak"); its id for a theme the strings do
+  /// not know yet.
+  String title(AppLocalizations l10n) => switch (id) {
+        'green_slope' => l10n.themeGreenSlope,
+        'ember_peak' => l10n.themeEmberPeak,
+        'glacier_peak' => l10n.themeGlacierPeak,
+        'red_canyon' => l10n.themeRedCanyon,
+        _ => id,
+      };
+
+  String tagline(AppLocalizations l10n) => switch (id) {
+        'green_slope' => l10n.themeGreenSlopeTagline,
+        'ember_peak' => l10n.themeEmberPeakTagline,
+        'glacier_peak' => l10n.themeGlacierPeakTagline,
+        'red_canyon' => l10n.themeRedCanyonTagline,
+        _ => '',
+      };
+}
+
+/// A save point's name on screen. [name] is its English identity
+/// (`ClimbSavePoints.names`, also the `save_point` analytics value), never
+/// shown as is.
+String savePointLabel(String name, AppLocalizations l10n) => switch (name) {
+      'First Camp' => l10n.savePointFirstCamp,
+      'Halfway Hut' => l10n.savePointHalfwayHut,
+      'Mountain Spring' => l10n.savePointMountainSpring,
+      'High Camp' => l10n.savePointHighCamp,
+      'Summit' => l10n.savePointSummit,
+      _ => name,
+    };
+
+/// Loads intl's bundled date symbols once. In the app the Material
+/// localizations delegate does it for the interface locale; a screen built
+/// without it (a widget test in a bare `MaterialApp`) needs it here.
+/// `initializeDateFormatting` fills the symbol tables synchronously from
+/// the bundled data (its future only reports completion), and
+/// `flutter_localizations` ships that data already.
+bool _dateSymbolsLoaded = false;
+String _dateLocale(AppLocalizations l10n) {
+  if (!_dateSymbolsLoaded) {
+    initializeDateFormatting();
+    _dateSymbolsLoaded = true;
+  }
+  return l10n.localeName;
+}
+
+/// A month's name ("October") in the interface language.
+String monthName(int month, AppLocalizations l10n) =>
+    DateFormat.MMMM(_dateLocale(l10n)).format(DateTime(2000, month));
+
+/// A month and its year ("October 2026").
+String monthYear(int year, int month, AppLocalizations l10n) =>
+    DateFormat.yMMMM(_dateLocale(l10n)).format(DateTime(year, month));
+
+/// A month and its year, short ("Oct 2026"): the medal shelf's labels.
+String monthYearShort(int year, int month, AppLocalizations l10n) =>
+    DateFormat.yMMM(_dateLocale(l10n)).format(DateTime(year, month));
 
 extension ReviewSortOrderLabels on ReviewSortOrder {
   String label(AppLocalizations l10n) => switch (this) {

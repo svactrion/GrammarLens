@@ -25,6 +25,8 @@ import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/screens/debug_panel_screen.dart';
 
+import 'support/l10n_support.dart';
+
 import 'support/recording_analytics_sink.dart';
 
 /// sqflite has no platform channel in this test environment (see
@@ -284,7 +286,7 @@ void main() {
     // "Your medals will appear here once earned." caption); the strip holds
     // the running month and the faded Welcome badge.
     expect(find.text('0 earned'), findsOneWidget);
-    expect(find.text(MonthlyMedalCollection.inProgress), findsOneWidget);
+    expect(find.text(en.medalInProgress), findsOneWidget);
     expect(
       find.bySemanticsLabel('Welcome badge, locked.'),
       findsOneWidget,
