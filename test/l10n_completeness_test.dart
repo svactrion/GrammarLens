@@ -246,6 +246,12 @@ const _sameIn = {
     'avatarKoala', // the same word in Spanish
     'avatarPanda', // the same word in Spanish
   },
+  'pt': {
+    'tierBronze', // the same word in Portuguese
+    'avatarPanda', // the same word in Portuguese
+    'medalGoalPoints', // "pts" is the Portuguese abbreviation too
+    'medalThresholdPoints', // "pts" is the Portuguese abbreviation too
+  },
 };
 
 /// The script each non-Latin language's values must contain.

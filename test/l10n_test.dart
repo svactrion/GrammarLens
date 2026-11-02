@@ -237,6 +237,7 @@ void main() {
     const one = {
       'de': ['1 Tag', '1 Woche', '1 Monat', '1 Jahr'],
       'es': ['1 día', '1 semana', '1 mes', '1 año'],
+      'pt': ['1 dia', '1 semana', '1 mês', '1 ano'],
     };
     for (final MapEntry(key: lang, value: expected) in one.entries) {
       final l10n = lookupAppLocalizations(Locale(lang));

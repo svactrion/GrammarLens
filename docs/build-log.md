@@ -14048,3 +14048,7 @@ Plan: `docs/1.4.0-plan.md` B5; Batch 0: `docs/1.4.0-b5-batch0-report.md` §8 (de
 ## 2026-11-02 (1.4.0 B5: Spanish)
 
 - **[Engineering]** `app_es.arb`, 479 keys, "tú", neutral Latin American; feature names Test diario, Práctica por temas, Ascenso mensual, Repaso; topic titles English. The blind back-translation (`docs/translations/back-translation-es.md`) found the proposed "Prueba diaria" colliding with the free trial ("prueba gratuita"), so the Daily Test is "Test diario"; prices read "cada {period}", since "por 3 meses" reads as a one-off. 66 of 83 matched first time, seventeen revised. Trial lengths are plurals, as in German.
+
+## 2026-11-02 (1.4.0 B5: Portuguese)
+
+- **[Engineering]** `app_pt.arb`, 479 keys, Brazilian Portuguese, "você"; feature names Teste diário, Prática por tema, Escalada mensal, Revisão; topic titles English. The free trial is "período grátis", not "teste grátis", so it does not share the Daily Test's word (the collision the Spanish check found). Blind back-translation (`docs/translations/back-translation-pt.md`): 78 of 83 matched first time, five revised. Completeness and layout tests (320 pt, Large) pass.
