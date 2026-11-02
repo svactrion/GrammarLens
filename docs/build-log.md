@@ -14052,3 +14052,7 @@ Plan: `docs/1.4.0-plan.md` B5; Batch 0: `docs/1.4.0-b5-batch0-report.md` §8 (de
 ## 2026-11-02 (1.4.0 B5: Portuguese)
 
 - **[Engineering]** `app_pt.arb`, 479 keys, Brazilian Portuguese, "você"; feature names Teste diário, Prática por tema, Escalada mensal, Revisão; topic titles English. The free trial is "período grátis", not "teste grátis", so it does not share the Daily Test's word (the collision the Spanish check found). Blind back-translation (`docs/translations/back-translation-pt.md`): 78 of 83 matched first time, five revised. Completeness and layout tests (320 pt, Large) pass.
+
+## 2026-11-02 (1.4.0 B5: Japanese)
+
+- **[Engineering]** `app_ja.arb`, 479 keys, です・ます, the name addressed as "{name}さん" through `greetingName`; feature names デイリーテスト, トピック練習, 月間クライム, 復習; topic titles English; `listSeparator` "、". Blind back-translation (`docs/translations/back-translation-ja.md`): 71 of 83 matched first time, twelve revised (scope of "you entered", who asks for permission, "improve the app", full です・ます sentences). The completeness test passes, the script check included; the layout test does not cover Japanese script, so overflow at 320 pt and Large text is for the device pass.
