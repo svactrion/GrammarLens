@@ -14056,3 +14056,7 @@ Plan: `docs/1.4.0-plan.md` B5; Batch 0: `docs/1.4.0-b5-batch0-report.md` §8 (de
 ## 2026-11-02 (1.4.0 B5: Japanese)
 
 - **[Engineering]** `app_ja.arb`, 479 keys, です・ます, the name addressed as "{name}さん" through `greetingName`; feature names デイリーテスト, トピック練習, 月間クライム, 復習; topic titles English; `listSeparator` "、". Blind back-translation (`docs/translations/back-translation-ja.md`): 71 of 83 matched first time, twelve revised (scope of "you entered", who asks for permission, "improve the app", full です・ます sentences). The completeness test passes, the script check included; the layout test does not cover Japanese script, so overflow at 320 pt and Large text is for the device pass.
+
+## 2026-11-02 (1.4.0 B5: Korean)
+
+- **[Engineering]** `app_ko.arb`, 479 keys, 해요체, the name addressed as "{name}님" through `greetingName`; feature names 데일리 테스트, 주제별 연습, 월간 등반, 복습; topic titles English. Particles after placeholders are avoided or fitted to the fixed text they take. Blind back-translation (`docs/translations/back-translation-ko.md`): 76 of 83 matched first time, seven revised, among them a real particle error ("문제을") and "{period}마다", which broke on one-unit periods and is now a label. The completeness test passes; the layout test does not cover Korean script, so overflow is for the device pass.
