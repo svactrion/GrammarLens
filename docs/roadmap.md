@@ -318,8 +318,13 @@ Plan: [`1.4.0-plan.md`](1.4.0-plan.md). *(Until 2026-10-23 this heading
 was "Next build after 1.3.0 build 6 (version not set)".)*
 
 Code on `main` that is **not in build 6** (in App Store review) and goes
-into the next build. Version bumped to `1.4.0+7` (2026-11-03); build and
-upload: owner, not started ([`1.4.0-release-steps.md`](1.4.0-release-steps.md)).
+into the next build. **Build 7 (`1.4.0+7`) built and uploaded to TestFlight
+(owner, 2026-11-03, about 01:54 local) from `main` at `c37757a`**; the app
+code is the same as at `3c7a4f9`, the version bump; `release_ipa_check.sh`
+passed. **Not in build 7:** the `StorageService` open/close fix (`8d4183b`):
+`close()` is test-only, the reset debug-only, the shared first open
+behaviour-neutral; it ships in the next build if Phase 5 needs one,
+otherwise in 1.4.1 ([`1.4.0-release-steps.md`](1.4.0-release-steps.md)).
 
 - **App Review audit fixes (2026-10-20;
   `docs/app-review-audit-2026-10.md`, findings 1 and 2):**
