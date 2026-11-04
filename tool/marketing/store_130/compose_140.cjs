@@ -100,7 +100,8 @@ async function poster(family,name,index){
  const tag=await fit(c.tag,pad?28:22,pad?28:22,maxWidth,1,weights.tag,latin?1.6:0);
  body+=caption(x,pad?268:230,c.tag,tag.size,weights.tag,C.navy,latin?1.6:0);
  // Keep approved English line breaks and sizes; fit localized text in up to 3 lines.
- let title=language==='en'?{lines:c.title,size:pad?122:82}:await fit(c.title.join(language==='ja'?'':' '),pad?122:82,pad?36:27,maxWidth,3,weights.title,latin?(pad?-3.5:-2.5):0);
+ const preferred=await Promise.all(c.title.map(line=>fit(line,pad?122:82,pad?36:27,maxWidth,1,weights.title,latin?(pad?-3.5:-2.5):0)));
+ let title={lines:c.title,size:Math.min(...preferred.map(line=>line.size))};
  let step=title.lines.length===3?(pad?102:78):(pad?140:99);
  if(title.lines.length===3&&title.size>step*.9)title=await fit(c.title.join(language==='ja'?'':' '),Math.floor(step*.9),pad?36:27,maxWidth,3,weights.title,latin?(pad?-3.5:-2.5):0);
  const start=title.lines.length===3?(pad?380:328):(pad?412:356);
@@ -119,7 +120,7 @@ async function overview(family){
 async function main(){
  browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});page=await browser.newPage({deviceScaleFactor:1});
  await page.setContent(`<svg>${defs}<text font-family="Caption">${esc(copy.results.title.join(' '))}</text></svg>`);await page.evaluate(()=>document.fonts.ready);
- for(const [family,names]of Object.entries(sets)){for(const [i,name]of names.entries())await poster(family,name,i);await overview(family);}
+ for(const [family,names]of Object.entries(sets).filter(([family])=>!process.argv[3]||process.argv[3]===family)){for(const [i,name]of names.entries())await poster(family,name,i);await overview(family);}
  fs.copyFileSync(`tool/marketing/store_130/copy.${language}.json`,path.join(delivery,'copy.json'));
  fs.copyFileSync(`tool/marketing/store_130/copy.${language}.json`,path.join(delivery,`copy.${language}.json`));
  fs.writeFileSync(path.join(root,'composition-audit.json'),JSON.stringify({language,sourceCommit:'c37757a',weights:copy._meta.fontWeights,layout},null,2));
