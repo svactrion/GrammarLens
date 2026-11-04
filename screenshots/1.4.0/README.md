@@ -180,3 +180,23 @@ Review outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone
 shows the lifted control and explanation. `verification.json` records all
 eight PNG checks, typography and preserved-page checks. v3 awaits owner
 design approval; no other language, iPad or App Store Connect write is included.
+
+### Design exploration v4 (owner feedback)
+
+The original v1 double ribbon is restored across all eight pages. 01–04
+have varied headline styles, weights and alignment, with colored underlines.
+01 now lifts the complete native red error card, including its question,
+wrong answer, correction and explanation. 03's foreground slider and hint
+card are lowered so the question on the phone is fully visible.
+
+05 and 08 retain their composition; their heading cedillas are centered
+under the s body to remove the apparent hook beneath the following i/ı.
+The actual captions remain “yükselişini” and “arkadaşını”. 06 and 07 are
+copied byte for byte from v3. All raw captures and prior designs are retained.
+
+Source: `tool/marketing/store_130/explore_cozy_tr_v4.cjs`.
+Review outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/`.
+`overview.png` shows all eight pages; `01-results.png` and `03-hint.png`
+show the revised foreground composition. `verification.json` records PNG,
+preservation and unchanged lower-composition checks. v4 awaits owner design
+approval. No other language, iPad, App Store Connect write or push is included.
