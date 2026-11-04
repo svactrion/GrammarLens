@@ -9,7 +9,7 @@
     },
     "direction": "ltr",
     "source": "copy.json (1.3.0 approved English)",
-    "fontWeightReview": "pending visual comparison"
+    "fontWeightReview": "Visually checked on composed frame 01; original Nunito Sans weights retained."
   },
   "results": {
     "label": "results",
