@@ -159,3 +159,24 @@ Review outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone
 `revised-four.png` focuses on the first four pages; `06-review.png` shows
 the corrected review cards. `verification.json` records PNG checks and the
 exact preservation of 05/07/08. v2 awaits owner design feedback.
+
+### Design exploration v3 (owner feedback)
+
+02-question's “yaz.” and 03-hint's “gör.” now use Fredoka 600, matching
+the other emphasized words. The first four pages have no decorative
+underlines or isolated dotted arrows. A single continuous curve spans
+their shared canvas, joining each page boundary and ending with one arrowhead.
+03-hint additionally lifts the real “İpucu için kaydır” slider above the
+existing open hint card. The labeled control is cropped from the closed
+04-question state; the phone and explanation remain the actual held-open
+02-hint state. No interface pixels or claims were invented.
+
+05-home, 06-review, 07-collection and 08-onboarding are copied byte for byte
+from v2. All original native screenshots and earlier concepts are retained.
+
+Source: `tool/marketing/store_130/explore_cozy_tr_v3.cjs`.
+Review outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/`.
+`test-story.png` shows the continuous first-four sequence; `03-hint.png`
+shows the lifted control and explanation. `verification.json` records all
+eight PNG checks, typography and preserved-page checks. v3 awaits owner
+design approval; no other language, iPad or App Store Connect write is included.
