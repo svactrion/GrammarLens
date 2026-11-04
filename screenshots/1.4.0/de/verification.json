@@ -3,145 +3,162 @@
   "language": "de",
   "sourceCommit": "c37757a",
   "build": "1.4.0+7",
+  "design": "approved-vivid",
+  "captionWording": "unchanged from blind-reviewed inputs",
   "font": {
     "language": "de",
-    "fontFamily": "Nunito Sans",
+    "fontFamily": "Fredoka / Caveat / Nunito Sans",
     "fontWeights": {
       "tag": 800,
-      "title": 900,
-      "subtitle": 600
+      "title": 600,
+      "subtitle": 650
     },
     "direction": "ltr",
     "source": "copy.json (1.3.0 approved English)",
-    "fontWeightReview": "Visually checked on composed iPad frame 01 against the approved Nunito Sans design; tag/title/subtitle weights confirmed."
+    "fontWeightReview": "See composition-audit.json for each caption’s actual font, weight and fitted size; caption wording unchanged.",
+    "design": "approved vivid fade"
   },
   "iphoneCount": 8,
   "ipadCount": 6,
   "rows": [
     {
       "set": "iphone-6.9",
+      "order": 1,
       "file": "01-results.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "4f2cec9a4860a0b706831e1792c5af45c01961f2fd187be22084ebdd97eaead6",
+      "sha256": "706007145bda319392a96208897d7b85d6d95eea9ba4651457ab3dee1d0035e9",
       "rawSha256": "22b38b8f4ffb6b0c5d90040f44ca33239213485666b99c3ffa4a8b0717ddc8e3"
     },
     {
       "set": "iphone-6.9",
+      "order": 3,
       "file": "02-hint.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "9deecb54ed3007466d620f890ec69b71ff35a469953fb023562d99af3dcbf85a",
+      "sha256": "537bf7f01047da0ee35a7f110af1c05f036c1ae748beb06b8d06e53b2f80ad4b",
       "rawSha256": "ad5565369ef353dfda03110413de6193f4285b6054b25e562cd697059a2ab655"
     },
     {
       "set": "iphone-6.9",
+      "order": 5,
       "file": "03-home.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "638038e4a764e3dee9f9a64f32aa888e0d7aed9b58ade0734ba37a99656d1d21",
+      "sha256": "ec0d023ca3c43c809bd52fdf3e313e5f0b451384f02747378f75cb9da12d3244",
       "rawSha256": "d07b25b3b4d3d6e97720311fdc76ab9333d2249d2d4138609444417705e3cec2"
     },
     {
       "set": "iphone-6.9",
+      "order": 2,
       "file": "04-question.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "3384addb0811de57613465895093b5e426f086cd9d65118ff4a0e4f74278c748",
+      "sha256": "19bceee8f688f8e69a30d4f7c5feefd70c35e9bb735c6148bd749721fdd32af5",
       "rawSha256": "efe5ecb88d47d5ba899e04534405259eb562a3e7629e700b325a495f0905a897"
     },
     {
       "set": "iphone-6.9",
+      "order": 6,
       "file": "05-review.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "a331b299cb567097d2f8b5cd12007885f5681e23f589c00db23b2211fa801aa1",
+      "sha256": "da6235cc419a7d615c26fda821bd9f678d50ac27e09ae7fd35ef36ccdba91466",
       "rawSha256": "62c280ac13d464fe04065197b89f0d52652180578e867d3f91e985ad0395b2a8"
     },
     {
       "set": "iphone-6.9",
+      "order": 7,
       "file": "06-collection.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "be64a9c711c51189330ac14e37fd0329e49f57dea4523316771ff8de804c1a93",
+      "sha256": "7aabc6cd79a5444e4886df4924f67703b8c675ce7287f701f887c8d61f0fe99a",
       "rawSha256": "0169edb68aa57069dd284965b42e526d512a4b3b8122fd39a695659e9da67729"
     },
     {
       "set": "iphone-6.9",
+      "order": 8,
       "file": "07-onboarding.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "69dbc60f83ada281d0e433dfbbeab61556f45b5dae065ed6e8727b954cc7f63d",
+      "sha256": "f31bc99f634579b88229dce9c35e41767b1e7f36b9f6d2c0754531e11710e030",
       "rawSha256": "b7743ff0e2c08d03eca1fa026bbd0b0259b8e551d85bae39bf605c64896f3a85"
     },
     {
       "set": "iphone-6.9",
+      "order": 4,
       "file": "08-multi-blank.png",
       "width": 1320,
       "height": 2868,
       "alpha": false,
-      "sha256": "1a66c930b42d81fd9250198b51a458e9f8f7dbb827dc48533393537f2eec2733",
+      "sha256": "46b45d81245bddb2b5448d74f3a81e66d149dc7d6fdd1fa13c49a359a088e956",
       "rawSha256": "0c407ed31ec5df6e7bd155598419469a254058d1f9a82129a7f1b2c4974db38f"
     },
     {
       "set": "ipad-13",
+      "order": 1,
       "file": "01-results.png",
       "width": 2064,
       "height": 2752,
       "alpha": false,
-      "sha256": "cd49d7205af31505b0e37c478720f89066295d7b4a3e01738e2ee73e5885aa74",
+      "sha256": "076db4be2aa06d7111180696317568aa997f44b3c7a9a1eb9acb9b662c145e65",
       "rawSha256": "af7e816f5e1752af0779517c3946f0ef2b2627dc5b7e1587489c677d9223add1"
     },
     {
       "set": "ipad-13",
+      "order": 3,
       "file": "02-hint.png",
       "width": 2064,
       "height": 2752,
       "alpha": false,
-      "sha256": "d3ab5f9564b8c9b3222e64b367ffb72df16ef3167dad09e84e670af980ed58a8",
+      "sha256": "8abd98755a6941a616b3cdce054c42e7bc7ea7fc71d503fad8d9c680ef5f0ab7",
       "rawSha256": "3d1c38202c74db2cbaabb59e9483bcf35379b1f0c7dbbf456ec3cc3d7bcfbc15"
     },
     {
       "set": "ipad-13",
+      "order": 4,
       "file": "03-home.png",
       "width": 2064,
       "height": 2752,
       "alpha": false,
-      "sha256": "c8100b1c69163e122e73f9e732e51eec6d8041e0d45224f2b3817ff5bdbddd51",
+      "sha256": "b467c120148c5db0b2ce115f4d7ecfe92c1ea52bb86673d88876c8effafa8744",
       "rawSha256": "3a55e52bb1f822625155ee42d1e9bcc1645a4fc2be1fc2bbd93c785e11867860"
     },
     {
       "set": "ipad-13",
+      "order": 2,
       "file": "04-question.png",
       "width": 2064,
       "height": 2752,
       "alpha": false,
-      "sha256": "88314af0ba75f2f0db912be9891b25da1d85bfa027453d8b9da4b02bc60b228d",
+      "sha256": "2b117ddc0f43ccc46b747ea07ab9dccb1ba015b29a4489b7493264d10de44e6b",
       "rawSha256": "ffa10bc269735642d79171c7eff8598f9e8fab4de090db78b1ee6ce024095b91"
     },
     {
       "set": "ipad-13",
+      "order": 5,
       "file": "05-review.png",
       "width": 2064,
       "height": 2752,
       "alpha": false,
-      "sha256": "e7c30acdee8e444fb088687124708bad39812802fa91b39a765d424aadf28027",
+      "sha256": "7aafffde3050bd4e6009eb4f8c3891ea6dd3935b3a688dbad1d141658722a87e",
       "rawSha256": "e9155e625ebba48ed86d72154ce56fda606bbce7037cf9da36406f335a473807"
     },
     {
       "set": "ipad-13",
+      "order": 6,
       "file": "06-collection.png",
       "width": 2064,
       "height": 2752,
       "alpha": false,
-      "sha256": "1b453dee98dd386364f9abe80fe4ef52c1525075cf521c6a9895f4640350a9c9",
+      "sha256": "44cc4cc68291aa5f03633a3fe1bd9f39992625953a0e1557d9a785b52f7dc782",
       "rawSha256": "c18dae7bc1065efa3ce8ac3aecb54ef16922bc84baf87f5dadde1e5a32a3721d"
     }
   ]

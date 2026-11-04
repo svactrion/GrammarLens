@@ -1,0 +1,858 @@
+{
+  "language": "ja",
+  "sourceCommit": "c37757a",
+  "build": "1.4.0+7",
+  "design": "approved-vivid",
+  "layout": [
+    {
+      "file": "store/iphone-6.9/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "1a215cb4dececa4da32fbed9ad7fae5651e8f8660a6adc54b2ec3a9c5ac9741b",
+      "text": [
+        {
+          "text": "わかりやすいフィードバック",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 842,
+          "width": 438.453125,
+          "height": 70
+        },
+        {
+          "text": "すべての答えに",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 106,
+          "direction": "ltr",
+          "x": 90.1646499633789,
+          "y": 220.1453857421875,
+          "width": 1143.670654296875,
+          "height": 164.787353515625
+        },
+        {
+          "text": "解説がつきます。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "ltr",
+          "x": 86,
+          "y": 410,
+          "width": 930,
+          "height": 138.046875
+        },
+        {
+          "text": "あなたの解答、修正後の答え、その理由。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 98,
+          "y": 660,
+          "width": 1020,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "3a71511d823110e6916a8a3595dacb58df45c07298aac8a4b1373df5fd7e5cac",
+      "text": [
+        {
+          "text": "デイリーテスト",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 883,
+          "width": 271,
+          "height": 70
+        },
+        {
+          "text": "自分の答えを",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 111,
+          "direction": "ltr",
+          "x": 93,
+          "y": 235,
+          "width": 1150,
+          "height": 130.96875
+        },
+        {
+          "text": "書きましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 104,
+          "direction": "ltr",
+          "x": 121.13351440429688,
+          "y": 381.96478271484375,
+          "width": 937.73291015625,
+          "height": 219.2579345703125
+        },
+        {
+          "text": "5つの問題。毎日の小さな習慣。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 97,
+          "y": 755,
+          "width": 1040,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "2f3f3aef3881e47b181f35ce4533228370d802028dc4376c6891674a80f06b4d",
+      "text": [
+        {
+          "text": "トピックのヒント",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 510.5,
+          "y": 835,
+          "width": 299,
+          "height": 70
+        },
+        {
+          "text": "文法パターンを",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "ltr",
+          "x": 92,
+          "y": 242,
+          "width": 1140,
+          "height": 138.046875
+        },
+        {
+          "text": "確認できます。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 134,
+          "direction": "ltr",
+          "x": 86.49986267089844,
+          "y": 396.0377502441406,
+          "width": 937.000244140625,
+          "height": 206.56515502929688
+        },
+        {
+          "text": "スライドして、トピックを思い出すヒントを表示できます。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 95,
+          "y": 665,
+          "width": 1090,
+          "height": 115.625
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/08-multi-blank.png",
+      "order": 4,
+      "slot": "multi-blank",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "7dea9068fed132a9a95a4857aa5d5ae47790801114db3a367f75df3a9722b6da",
+      "text": [
+        {
+          "text": "空欄にはそれぞれの場所があります",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 701,
+          "y": 872,
+          "width": 523,
+          "height": 70
+        },
+        {
+          "text": "空欄ごとに",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 106,
+          "direction": "ltr",
+          "x": 91.1646499633789,
+          "y": 215.1453857421875,
+          "width": 1143.670654296875,
+          "height": 164.787353515625
+        },
+        {
+          "text": "入力欄があります。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 104,
+          "direction": "ltr",
+          "x": 300,
+          "y": 410,
+          "width": 930,
+          "height": 122.71875
+        },
+        {
+          "text": "色を合わせましょう。冠詞なしなら — をタップ。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 660,
+          "width": 1090,
+          "height": 115.625
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/03-home.png",
+      "order": 5,
+      "slot": "home",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "f7e1d3e14863d9e3bd278656cd65b9194b9c47d9d630a0bbef04f0d3db406c4e",
+      "text": [
+        {
+          "text": "学びの山",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 924,
+          "width": 187,
+          "height": 70
+        },
+        {
+          "text": "あなたの進歩が",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 139,
+          "direction": "ltr",
+          "x": 89,
+          "y": 230,
+          "width": 1140,
+          "height": 164.015625
+        },
+        {
+          "text": "のぼる様子を見ましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 127,
+          "direction": "ltr",
+          "x": 90,
+          "y": 410.015625,
+          "width": 930,
+          "height": 299.71875
+        },
+        {
+          "text": "毎月新しい山。毎日一歩ずつ。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 810,
+          "width": 1050,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/05-review.png",
+      "order": 6,
+      "slot": "review",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "dd1d310e071abb988bef47e02e0638418202bb44c5066637fbe091603c28d2e6",
+      "text": [
+        {
+          "text": "あなたの弱点",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 924,
+          "width": 243,
+          "height": 70
+        },
+        {
+          "text": "あなたの弱点を",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 88,
+          "direction": "ltr",
+          "x": 86.071044921875,
+          "y": 217.97796630859375,
+          "width": 1153.85791015625,
+          "height": 163.8721923828125
+        },
+        {
+          "text": "ひとまとめに。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 133,
+          "direction": "ltr",
+          "x": 91,
+          "y": 410,
+          "width": 930,
+          "height": 156.9375
+        },
+        {
+          "text": "繰り返し出てくる文法を確認できます。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 805,
+          "width": 1070,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/06-collection.png",
+      "order": 7,
+      "slot": "collection",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "38b3511a98f203a26f10a6280686340837f4d541dc23d3fb3b75f86e7165dced",
+      "text": [
+        {
+          "text": "あなたのコレクション",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 838,
+          "width": 355,
+          "height": 70
+        },
+        {
+          "text": "山のコレクションを",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 112,
+          "direction": "ltr",
+          "x": 88,
+          "y": 241,
+          "width": 1140,
+          "height": 132.15625
+        },
+        {
+          "text": "増やしましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "ltr",
+          "x": 107.75367736816406,
+          "y": 389.1414794921875,
+          "width": 938.49267578125,
+          "height": 218.576416015625
+        },
+        {
+          "text": "道のりで獲得したメダルを残しましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 730,
+          "width": 1090,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/07-onboarding.png",
+      "order": 8,
+      "slot": "onboarding",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "ab3c085bad64d4b760afec63f48f26946887ef910aa805c362f534d44b6292e3",
+      "text": [
+        {
+          "text": "登山の仲間",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 884.625,
+          "width": 215,
+          "height": 70
+        },
+        {
+          "text": "学習仲間を",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 112,
+          "direction": "ltr",
+          "x": 90,
+          "y": 245,
+          "width": 1140,
+          "height": 132.15625
+        },
+        {
+          "text": "選びましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 91,
+          "direction": "ltr",
+          "x": 106.92317962646484,
+          "y": 393.1528015136719,
+          "width": 936.1536254882812,
+          "height": 219.91311645507812
+        },
+        {
+          "text": "キツネに出会って、最初の一歩を踏み出しましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 97,
+          "y": 745,
+          "width": 1070,
+          "height": 115.625
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "e64d0d3a31104d511542c11ce4358c7e5d673ae638e37b964712af38c53ad601",
+      "text": [
+        {
+          "text": "すべての答えに",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "解説がつきます。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 182,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 214.75
+        },
+        {
+          "text": "あなたの解答、修正後の答え、その理由。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "わかりやすいフィードバック",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 491.328125,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "6b333f04920074ed7f40bad30db96126a884013ac62fbe0211cd6ef7678ea497",
+      "text": [
+        {
+          "text": "自分の答えを",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "書きましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 156,
+          "direction": "ltr",
+          "x": 136.16978454589844,
+          "y": 415.8973693847656,
+          "width": 1447.660400390625,
+          "height": 259.1896057128906
+        },
+        {
+          "text": "5つの問題。毎日の小さな習慣。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "デイリーテスト",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 288,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "355a6de39913100aeb03ae374827e9b72c48b1bc1c9865ddc2543ae9bad1d5e5",
+      "text": [
+        {
+          "text": "文法パターンを",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "確認できます。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 208,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 245.4375
+        },
+        {
+          "text": "スライドして、トピックを思い出すヒントを表示できます。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "トピックのヒント",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 322,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/03-home.png",
+      "order": 4,
+      "slot": "home",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "d1d54ac63ddac2fcd59eaa200e5cc48a4bf2261b8922bdc7a901fed4cce915eb",
+      "text": [
+        {
+          "text": "あなたの進歩が",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "のぼる様子を見ましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 120,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 141.59375
+        },
+        {
+          "text": "毎月新しい山。毎日一歩ずつ。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "学びの山",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 186,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/05-review.png",
+      "order": 5,
+      "slot": "review",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "e691ef064b18ac941a24bce3c226a9d8c76bbe3a7b02bd3f43bab444b18080be",
+      "text": [
+        {
+          "text": "あなたの弱点を",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "ひとまとめに。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 206,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 243.078125
+        },
+        {
+          "text": "繰り返し出てくる文法を確認できます。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "あなたの弱点",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 254,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/06-collection.png",
+      "order": 6,
+      "slot": "collection",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "ad6805b7ead2fc8cc5b4bd33c138b9da73877adfde5fc4b247e330462c163824",
+      "text": [
+        {
+          "text": "山のコレクションを",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "増やしましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 156,
+          "direction": "ltr",
+          "x": 136.16978454589844,
+          "y": 415.8973693847656,
+          "width": 1447.660400390625,
+          "height": 259.1896057128906
+        },
+        {
+          "text": "道のりで獲得したメダルを残しましょう。",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "あなたのコレクション",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 390,
+          "height": 79
+        }
+      ]
+    }
+  ],
+  "nativeGeometry": {
+    "iphone": {
+      "error": {
+        "left": 54,
+        "top": 585,
+        "width": 1212,
+        "height": 1086
+      },
+      "question": {
+        "left": 48,
+        "top": 408,
+        "width": 1224,
+        "height": 540
+      },
+      "input": {
+        "left": 50,
+        "top": 1280,
+        "width": 1220,
+        "height": 152
+      },
+      "slider": {
+        "left": 48,
+        "top": 966,
+        "width": 1224,
+        "height": 168
+      },
+      "review": [
+        {
+          "left": 54,
+          "top": 1293,
+          "width": 1212,
+          "height": 432
+        },
+        {
+          "left": 54,
+          "top": 1761,
+          "width": 1212,
+          "height": 432
+        }
+      ],
+      "hint": {
+        "left": 48,
+        "top": 1146,
+        "width": 1224,
+        "height": 402
+      }
+    },
+    "ipad": {
+      "error": {
+        "left": 391,
+        "top": 329,
+        "width": 1282,
+        "height": 638
+      },
+      "question": {
+        "left": 391,
+        "top": 211,
+        "width": 1282,
+        "height": 320
+      },
+      "input": {
+        "left": 392,
+        "top": 750,
+        "width": 1280,
+        "height": 104
+      },
+      "slider": {
+        "left": 392,
+        "top": 542,
+        "width": 1280,
+        "height": 112
+      },
+      "review": [
+        {
+          "left": 391,
+          "top": 759,
+          "width": 1282,
+          "height": 248
+        },
+        {
+          "left": 391,
+          "top": 1029,
+          "width": 1282,
+          "height": 248
+        }
+      ],
+      "hint": {
+        "left": 392,
+        "top": 662,
+        "width": 1280,
+        "height": 268
+      }
+    }
+  }
+}

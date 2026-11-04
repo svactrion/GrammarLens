@@ -5,11 +5,12 @@
     "fontWeights": {
       "tag": 700,
       "title": 800,
-      "subtitle": 500
+      "subtitle": 650
     },
     "direction": "ltr",
     "source": "copy.json (1.3.0 approved English)",
-    "fontWeightReview": "Visually checked on composed iPad frame 01 against the approved Nunito Sans design; tag/title/subtitle weights confirmed."
+    "fontWeightReview": "See composition-audit.json for each caption’s actual font, weight and fitted size; caption wording unchanged.",
+    "design": "approved vivid fade"
   },
   "results": {
     "label": "results",

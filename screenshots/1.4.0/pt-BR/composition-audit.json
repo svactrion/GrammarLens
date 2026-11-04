@@ -1,0 +1,858 @@
+{
+  "language": "pt-BR",
+  "sourceCommit": "c37757a",
+  "build": "1.4.0+7",
+  "design": "approved-vivid",
+  "layout": [
+    {
+      "file": "store/iphone-6.9/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "76b760317a0b538c6d843b1138dbcb174ac47a236527fba95482cc25bfd5a620",
+      "text": [
+        {
+          "text": "FEEDBACK CLARO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 842,
+          "width": 345.65625,
+          "height": 68
+        },
+        {
+          "text": "Cada resposta,",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 122,
+          "direction": "ltr",
+          "x": 90.17582702636719,
+          "y": 220.1451873779297,
+          "width": 1143.6484375,
+          "height": 164.14710998535156
+        },
+        {
+          "text": "explicada.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 184,
+          "direction": "ltr",
+          "x": 86,
+          "y": 410,
+          "width": 930,
+          "height": 187.671875
+        },
+        {
+          "text": "Sua resposta, a correção e o motivo.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 98,
+          "y": 660,
+          "width": 1020,
+          "height": 60.75
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "1162c0b2a61f4cf4bb2e192ab1a03c124674da556112ab41b3a1747fe805afd4",
+      "text": [
+        {
+          "text": "TESTE DIÁRIO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 883,
+          "width": 283.65625,
+          "height": 68
+        },
+        {
+          "text": "Escreva sua",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 111,
+          "direction": "ltr",
+          "x": 93,
+          "y": 235,
+          "width": 1150,
+          "height": 113.21875
+        },
+        {
+          "text": "própria resposta.",
+          "fontFamily": "Caveat",
+          "fontWeight": "700",
+          "fontSize": 121,
+          "direction": "ltr",
+          "x": 121.09758758544922,
+          "y": 364.2166442871094,
+          "width": 937.8048706054688,
+          "height": 219.94168090820312
+        },
+        {
+          "text": "Cinco perguntas. Um pequeno hábito diário.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 97,
+          "y": 755,
+          "width": 1040,
+          "height": 60.75
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "ad027dbeae6ad1fb672e23566b8475d56e0999fbfd4949821f2c806384be20da",
+      "text": [
+        {
+          "text": "DICAS DO TEMA",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 501.703125,
+          "y": 835,
+          "width": 316.59375,
+          "height": 68
+        },
+        {
+          "text": "Veja o padrão",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 117,
+          "direction": "ltr",
+          "x": 92,
+          "y": 242,
+          "width": 1140,
+          "height": 119.328125
+        },
+        {
+          "text": "gramatical.",
+          "fontFamily": "Nunito",
+          "fontWeight": "950",
+          "fontSize": 168,
+          "direction": "ltr",
+          "x": 86.15313720703125,
+          "y": 385.78118896484375,
+          "width": 937.6937255859375,
+          "height": 219.7969970703125
+        },
+        {
+          "text": "Deslize para ver um lembrete do tema.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 95,
+          "y": 665,
+          "width": 1090,
+          "height": 60.75
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/08-multi-blank.png",
+      "order": 4,
+      "slot": "multi-blank",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "bcf24e912421f7a3ae68a92d495ccbb0d0ede689f1ebd452da5f50921882275d",
+      "text": [
+        {
+          "text": "CADA LACUNA TEM SEU LUGAR",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 677.53125,
+          "y": 872,
+          "width": 546.46875,
+          "height": 68
+        },
+        {
+          "text": "Uma caixa para",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 122,
+          "direction": "ltr",
+          "x": 91.17582702636719,
+          "y": 215.1451873779297,
+          "width": 1143.6484375,
+          "height": 164.14710998535156
+        },
+        {
+          "text": "cada lacuna.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 168,
+          "direction": "ltr",
+          "x": 300,
+          "y": 410,
+          "width": 930,
+          "height": 171.359375
+        },
+        {
+          "text": "Combine cada cor. Toque em — para não usar artigo.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 660,
+          "width": 1090,
+          "height": 121.5
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/03-home.png",
+      "order": 5,
+      "slot": "home",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "bc5f74a857ae0e20cacadc075ba26d349fcf00e5ed7f5c51115f540801886d12",
+      "text": [
+        {
+          "text": "MONTANHA DO APRENDIZADO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 955.5,
+          "width": 537.40625,
+          "height": 68
+        },
+        {
+          "text": "Veja seu",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 89,
+          "y": 230,
+          "width": 1140,
+          "height": 146.875
+        },
+        {
+          "text": "progresso subir.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 147,
+          "direction": "ltr",
+          "x": 90,
+          "y": 410,
+          "width": 930,
+          "height": 299.875
+        },
+        {
+          "text": "Uma nova montanha por mês. Um passo por dia.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 810,
+          "width": 1050,
+          "height": 121.5
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/05-review.png",
+      "order": 6,
+      "slot": "review",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "99026355b01b284cecd040a72636a95f902d02b78595c858848fd9fe0ff768ab",
+      "text": [
+        {
+          "text": "SEUS PONTOS FRACOS",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 924,
+          "width": 417.015625,
+          "height": 68
+        },
+        {
+          "text": "Seus pontos fracos,",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 102,
+          "direction": "ltr",
+          "x": 86.06572723388672,
+          "y": 217.9781036376953,
+          "width": 1153.86865234375,
+          "height": 164.0750274658203
+        },
+        {
+          "text": "em um só lugar.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 91,
+          "y": 410,
+          "width": 930,
+          "height": 299.5
+        },
+        {
+          "text": "Veja a gramática que volta a aparecer.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 805,
+          "width": 1070,
+          "height": 60.75
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/06-collection.png",
+      "order": 7,
+      "slot": "collection",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "d6faa6bb70d2be84222f71b6140778dbcdaddbfbb871363b20f4f0f80c8ac979",
+      "text": [
+        {
+          "text": "SUA COLEÇÃO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 875.5,
+          "width": 290.015625,
+          "height": 68
+        },
+        {
+          "text": "Monte sua coleção",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 112,
+          "direction": "ltr",
+          "x": 88,
+          "y": 241,
+          "width": 1140,
+          "height": 114.234375
+        },
+        {
+          "text": "de montanhas.",
+          "fontFamily": "Caveat",
+          "fontWeight": "650",
+          "fontSize": 136,
+          "direction": "ltr",
+          "x": 107.72439575195312,
+          "y": 371.22088623046875,
+          "width": 938.55126953125,
+          "height": 219.2457275390625
+        },
+        {
+          "text": "Guarde as medalhas que você ganha pelo caminho.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 730,
+          "width": 1090,
+          "height": 121.5
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/07-onboarding.png",
+      "order": 8,
+      "slot": "onboarding",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "cadc9139f78322348eba7a02382a499238b3b760929eea226dc7b6080dd8be56",
+      "text": [
+        {
+          "text": "UM COMPANHEIRO PARA A SUBIDA",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 860,
+          "width": 602.59375,
+          "height": 68
+        },
+        {
+          "text": "Escolha seu",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 112,
+          "direction": "ltr",
+          "x": 90,
+          "y": 245,
+          "width": 1140,
+          "height": 114.234375
+        },
+        {
+          "text": "companheiro de estudo.",
+          "fontFamily": "Caveat",
+          "fontWeight": "650",
+          "fontSize": 105,
+          "direction": "ltr",
+          "x": 106.94031524658203,
+          "y": 375.2298889160156,
+          "width": 936.119384765625,
+          "height": 219.63400268554688
+        },
+        {
+          "text": "Conheça sua Raposa. Dê seu primeiro passo.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 97,
+          "y": 745,
+          "width": 1070,
+          "height": 60.75
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "6d8513f7786aed24c6c85c6fdc43278c10dc2c73eb062f8d41b8152ac43d3e2a",
+      "text": [
+        {
+          "text": "Cada resposta,",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "explicada.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 215.21875
+        },
+        {
+          "text": "Sua resposta, a correção e o motivo.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "FEEDBACK CLARO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 375.34375,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "ec404ff4c25a437477ccade3436be5cca6bcc36b4684358e400f13ab744ae742",
+      "text": [
+        {
+          "text": "Escreva sua",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "própria resposta.",
+          "fontFamily": "Caveat",
+          "fontWeight": "700",
+          "fontSize": 181,
+          "direction": "ltr",
+          "x": 136.1558837890625,
+          "y": 415.3039855957031,
+          "width": 1447.688232421875,
+          "height": 259.7201232910156
+        },
+        {
+          "text": "Cinco perguntas. Um pequeno hábito diário.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "TESTE DIÁRIO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 300.546875,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "00b14300101613e68af1857aca14596e6e2920c622cccf47a688ca7596240ca2",
+      "text": [
+        {
+          "text": "Veja o padrão",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "gramatical.",
+          "fontFamily": "Nunito",
+          "fontWeight": "600",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 215.21875
+        },
+        {
+          "text": "Deslize para ver um lembrete do tema.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "DICAS DO TEMA",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 340.296875,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/03-home.png",
+      "order": 4,
+      "slot": "home",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "1171f7929c9637366e0815669046fb5d2a416e9893025892c12f1ce08d72bdfb",
+      "text": [
+        {
+          "text": "Veja seu",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "progresso subir.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 209,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 213.171875
+        },
+        {
+          "text": "Uma nova montanha por mês. Um passo por dia.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "MONTANHA DO APRENDIZADO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 606.0625,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/05-review.png",
+      "order": 5,
+      "slot": "review",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "5bfa6b1f6e9596eea08e5bc6aac31df91ed7a26678f806d4c678fdb80efa689d",
+      "text": [
+        {
+          "text": "Seus pontos fracos,",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "em um só lugar.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 215.21875
+        },
+        {
+          "text": "Veja a gramática que volta a aparecer.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "SEUS PONTOS FRACOS",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 461.0625,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/06-collection.png",
+      "order": 6,
+      "slot": "collection",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "6a3a45d584565d260a7bfec3336d27699a2bf52ee6e250a3ee859bb58a341d57",
+      "text": [
+        {
+          "text": "Monte sua coleção",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "de montanhas.",
+          "fontFamily": "Caveat",
+          "fontWeight": "700",
+          "fontSize": 181,
+          "direction": "ltr",
+          "x": 136.1558837890625,
+          "y": 415.3039855957031,
+          "width": 1447.688232421875,
+          "height": 259.7201232910156
+        },
+        {
+          "text": "Guarde as medalhas que você ganha pelo caminho.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "SUA COLEÇÃO",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 308.484375,
+          "height": 76
+        }
+      ]
+    }
+  ],
+  "nativeGeometry": {
+    "iphone": {
+      "error": {
+        "left": 54,
+        "top": 582,
+        "width": 1212,
+        "height": 1086
+      },
+      "question": {
+        "left": 48,
+        "top": 408,
+        "width": 1224,
+        "height": 540
+      },
+      "input": {
+        "left": 50,
+        "top": 1280,
+        "width": 1220,
+        "height": 149
+      },
+      "slider": {
+        "left": 48,
+        "top": 966,
+        "width": 1224,
+        "height": 168
+      },
+      "review": [
+        {
+          "left": 54,
+          "top": 1383,
+          "width": 1212,
+          "height": 432
+        },
+        {
+          "left": 54,
+          "top": 1851,
+          "width": 1212,
+          "height": 432
+        }
+      ],
+      "hint": {
+        "left": 48,
+        "top": 1146,
+        "width": 1224,
+        "height": 402
+      }
+    },
+    "ipad": {
+      "error": {
+        "left": 391,
+        "top": 327,
+        "width": 1282,
+        "height": 638
+      },
+      "question": {
+        "left": 391,
+        "top": 211,
+        "width": 1282,
+        "height": 320
+      },
+      "input": {
+        "left": 392,
+        "top": 750,
+        "width": 1280,
+        "height": 102
+      },
+      "slider": {
+        "left": 392,
+        "top": 542,
+        "width": 1280,
+        "height": 112
+      },
+      "review": [
+        {
+          "left": 391,
+          "top": 757,
+          "width": 1282,
+          "height": 248
+        },
+        {
+          "left": 391,
+          "top": 1027,
+          "width": 1282,
+          "height": 248
+        }
+      ],
+      "hint": {
+        "left": 392,
+        "top": 662,
+        "width": 1280,
+        "height": 268
+      }
+    }
+  }
+}

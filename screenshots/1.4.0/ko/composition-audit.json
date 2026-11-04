@@ -1,0 +1,858 @@
+{
+  "language": "ko",
+  "sourceCommit": "c37757a",
+  "build": "1.4.0+7",
+  "design": "approved-vivid",
+  "layout": [
+    {
+      "file": "store/iphone-6.9/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "930ef60a922c4ead5fdc46f6654882108b0046091b3a715e8740db6abfc5aac5",
+      "text": [
+        {
+          "text": "명확한 피드백",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 842,
+          "width": 237.40625,
+          "height": 70
+        },
+        {
+          "text": "모든 답을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 106,
+          "direction": "ltr",
+          "x": 90.1646499633789,
+          "y": 220.1453857421875,
+          "width": 1143.670654296875,
+          "height": 164.787353515625
+        },
+        {
+          "text": "설명해 드려요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 151,
+          "direction": "ltr",
+          "x": 86,
+          "y": 410,
+          "width": 930,
+          "height": 178.171875
+        },
+        {
+          "text": "내 답변, 고친 답, 그리고 그 이유.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 98,
+          "y": 660,
+          "width": 1020,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "0a065b69187cfcc1a4fc2f6261dda96157fad80e90f8a282088532a60fce1df2",
+      "text": [
+        {
+          "text": "데일리 테스트",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 883,
+          "width": 237.40625,
+          "height": 70
+        },
+        {
+          "text": "자신의 답을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 111,
+          "direction": "ltr",
+          "x": 93,
+          "y": 235,
+          "width": 1150,
+          "height": 130.96875
+        },
+        {
+          "text": "직접 써요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 104,
+          "direction": "ltr",
+          "x": 121.13351440429688,
+          "y": 381.96478271484375,
+          "width": 937.73291015625,
+          "height": 219.2579345703125
+        },
+        {
+          "text": "다섯 문제. 매일의 작은 습관.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 97,
+          "y": 755,
+          "width": 1040,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "85b84570a5e5a6736f86e8849d5a5efcdab1718ecd9ed71062ff2ea878caec93",
+      "text": [
+        {
+          "text": "주제 힌트",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 567.0546875,
+          "y": 835,
+          "width": 185.890625,
+          "height": 70
+        },
+        {
+          "text": "문법 패턴을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "ltr",
+          "x": 92,
+          "y": 242,
+          "width": 1140,
+          "height": 138.046875
+        },
+        {
+          "text": "확인해요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 145,
+          "direction": "ltr",
+          "x": 86.16008758544922,
+          "y": 396.046630859375,
+          "width": 937.6798095703125,
+          "height": 219.53173828125
+        },
+        {
+          "text": "밀어서 주제를 떠올릴 힌트를 확인해요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 95,
+          "y": 665,
+          "width": 1090,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/08-multi-blank.png",
+      "order": 4,
+      "slot": "multi-blank",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "e7f657d5d544ca3a514e66638e5670ffd34199adfd9d374d494e4007c8fe8b1b",
+      "text": [
+        {
+          "text": "모든 빈칸에는 자리가 있어요",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 816.359375,
+          "y": 872,
+          "width": 407.640625,
+          "height": 70
+        },
+        {
+          "text": "빈칸마다",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 106,
+          "direction": "ltr",
+          "x": 91.1646499633789,
+          "y": 215.1453857421875,
+          "width": 1143.670654296875,
+          "height": 164.787353515625
+        },
+        {
+          "text": "입력 상자가 있어요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 112,
+          "direction": "ltr",
+          "x": 300,
+          "y": 410,
+          "width": 930,
+          "height": 132.15625
+        },
+        {
+          "text": "색을 맞춰요. 관사가 없으면 — 를 눌러요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 660,
+          "width": 1090,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/03-home.png",
+      "order": 5,
+      "slot": "home",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "e3d55c89344bfaf2990534f906f35e2dde97f504a85eb3be2885d38db2e2376e",
+      "text": [
+        {
+          "text": "배움의 산",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 924,
+          "width": 185.890625,
+          "height": 70
+        },
+        {
+          "text": "나의 발전이",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 139,
+          "direction": "ltr",
+          "x": 89,
+          "y": 230,
+          "width": 1140,
+          "height": 164.015625
+        },
+        {
+          "text": "올라가는 걸 봐요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 127,
+          "direction": "ltr",
+          "x": 90,
+          "y": 410.015625,
+          "width": 930,
+          "height": 299.71875
+        },
+        {
+          "text": "매달 새로운 산. 매일 한 걸음.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 810,
+          "width": 1050,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/05-review.png",
+      "order": 6,
+      "slot": "review",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "fc2a11b8e4ef452f2d024139aa5d91fbd74598ae42df3042f69ebcc76173000d",
+      "text": [
+        {
+          "text": "나의 약점",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 924,
+          "width": 185.890625,
+          "height": 70
+        },
+        {
+          "text": "나의 약점을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 88,
+          "direction": "ltr",
+          "x": 86.071044921875,
+          "y": 217.97796630859375,
+          "width": 1153.85791015625,
+          "height": 163.8721923828125
+        },
+        {
+          "text": "한곳에 모아요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 151,
+          "direction": "ltr",
+          "x": 91,
+          "y": 410,
+          "width": 930,
+          "height": 178.171875
+        },
+        {
+          "text": "계속 반복되는 문법을 확인해요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 805,
+          "width": 1070,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/06-collection.png",
+      "order": 7,
+      "slot": "collection",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "49b4923bb676fb14d6a72c1efac67e872581ec8dd5ab820e4b03584f342731ae",
+      "text": [
+        {
+          "text": "나의 컬렉션",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 838,
+          "width": 211.640625,
+          "height": 70
+        },
+        {
+          "text": "산 컬렉션을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 112,
+          "direction": "ltr",
+          "x": 88,
+          "y": 241,
+          "width": 1140,
+          "height": 132.15625
+        },
+        {
+          "text": "쌓아 가요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 118,
+          "direction": "ltr",
+          "x": 107.7019271850586,
+          "y": 389.14373779296875,
+          "width": 938.59619140625,
+          "height": 219.7593994140625
+        },
+        {
+          "text": "가는 길에 얻은 메달을 간직해요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 96,
+          "y": 730,
+          "width": 1090,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/07-onboarding.png",
+      "order": 8,
+      "slot": "onboarding",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "708e5b2663133c05a5779a244d4f533569f925dfe883a092d3462ec0893c8fef",
+      "text": [
+        {
+          "text": "등반을 함께할 친구",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "ltr",
+          "x": 96,
+          "y": 860,
+          "width": 296.765625,
+          "height": 70
+        },
+        {
+          "text": "학습 친구를",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 112,
+          "direction": "ltr",
+          "x": 90,
+          "y": 245,
+          "width": 1140,
+          "height": 132.15625
+        },
+        {
+          "text": "골라요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 91,
+          "direction": "ltr",
+          "x": 106.92317962646484,
+          "y": 393.1528015136719,
+          "width": 936.1536254882812,
+          "height": 219.91311645507812
+        },
+        {
+          "text": "나의 여우를 만나요. 첫걸음을 내디뎌요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 97,
+          "y": 745,
+          "width": 1070,
+          "height": 57.8125
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "d6594c3b7be800a9c23f6f4b51f78b0aa25ed599d11468c4a6a698734adaca9d",
+      "text": [
+        {
+          "text": "모든 답을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "설명해 드려요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 248.96875
+        },
+        {
+          "text": "내 답변, 고친 답, 그리고 그 이유.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "명확한 피드백",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 247.203125,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "590c3df26abe127f878b56dc015e3f20b5aaa42038e0b13d90cfa8faf8c689e1",
+      "text": [
+        {
+          "text": "자신의 답을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "직접 써요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 156,
+          "direction": "ltr",
+          "x": 136.16978454589844,
+          "y": 415.8973693847656,
+          "width": 1447.660400390625,
+          "height": 259.1896057128906
+        },
+        {
+          "text": "다섯 문제. 매일의 작은 습관.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "데일리 테스트",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 247.203125,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "ff960173ce0d531d41c5a5069575db8111e58b622acc4d81c4a71f3053db8d8c",
+      "text": [
+        {
+          "text": "문법 패턴을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "확인해요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 248.96875
+        },
+        {
+          "text": "밀어서 주제를 떠올릴 힌트를 확인해요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "주제 힌트",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 184.640625,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/03-home.png",
+      "order": 4,
+      "slot": "home",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "42fb903bddf4aac88e27ac8644e329967f22835b8fed60933989ed5243d2c312",
+      "text": [
+        {
+          "text": "나의 발전이",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "올라가는 걸 봐요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 196,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 231.265625
+        },
+        {
+          "text": "매달 새로운 산. 매일 한 걸음.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "배움의 산",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 184.640625,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/05-review.png",
+      "order": 5,
+      "slot": "review",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "a11e6b272fee521c3dd19e3869335d7f07a307a7a8a419a58c5ce796c9994fa2",
+      "text": [
+        {
+          "text": "나의 약점을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "한곳에 모아요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.90625,
+          "width": 1440,
+          "height": 248.96875
+        },
+        {
+          "text": "계속 반복되는 문법을 확인해요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "나의 약점",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 184.640625,
+          "height": 79
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/06-collection.png",
+      "order": 6,
+      "slot": "collection",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "4233b826f68dc8697bfb7f6030ea28c93fcba72d022e7485a5ec71ddc143950a",
+      "text": [
+        {
+          "text": "산 컬렉션을",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 144,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.90625
+        },
+        {
+          "text": "쌓아 가요.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 156,
+          "direction": "ltr",
+          "x": 136.16978454589844,
+          "y": 415.8973693847656,
+          "width": 1447.660400390625,
+          "height": 259.1896057128906
+        },
+        {
+          "text": "가는 길에 얻은 메달을 간직해요.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 57.8125
+        },
+        {
+          "text": "나의 컬렉션",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 215.921875,
+          "height": 79
+        }
+      ]
+    }
+  ],
+  "nativeGeometry": {
+    "iphone": {
+      "error": {
+        "left": 54,
+        "top": 582,
+        "width": 1212,
+        "height": 1086
+      },
+      "question": {
+        "left": 48,
+        "top": 408,
+        "width": 1224,
+        "height": 540
+      },
+      "input": {
+        "left": 50,
+        "top": 1280,
+        "width": 1220,
+        "height": 152
+      },
+      "slider": {
+        "left": 48,
+        "top": 966,
+        "width": 1224,
+        "height": 168
+      },
+      "review": [
+        {
+          "left": 54,
+          "top": 1296,
+          "width": 1212,
+          "height": 432
+        },
+        {
+          "left": 54,
+          "top": 1764,
+          "width": 1212,
+          "height": 432
+        }
+      ],
+      "hint": {
+        "left": 48,
+        "top": 1146,
+        "width": 1224,
+        "height": 402
+      }
+    },
+    "ipad": {
+      "error": {
+        "left": 391,
+        "top": 327,
+        "width": 1282,
+        "height": 638
+      },
+      "question": {
+        "left": 391,
+        "top": 211,
+        "width": 1282,
+        "height": 320
+      },
+      "input": {
+        "left": 392,
+        "top": 750,
+        "width": 1280,
+        "height": 104
+      },
+      "slider": {
+        "left": 392,
+        "top": 542,
+        "width": 1280,
+        "height": 112
+      },
+      "review": [
+        {
+          "left": 391,
+          "top": 761,
+          "width": 1282,
+          "height": 248
+        },
+        {
+          "left": 391,
+          "top": 1031,
+          "width": 1282,
+          "height": 248
+        }
+      ],
+      "hint": {
+        "left": 392,
+        "top": 662,
+        "width": 1280,
+        "height": 268
+      }
+    }
+  }
+}

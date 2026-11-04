@@ -1,0 +1,858 @@
+{
+  "language": "ar",
+  "sourceCommit": "c37757a",
+  "build": "1.4.0+7",
+  "design": "approved-vivid",
+  "layout": [
+    {
+      "file": "store/iphone-6.9/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "bec0d738d182fea8b8a660291bd2361be93e3c7427cc8d55a80ae70923113945",
+      "text": [
+        {
+          "text": "ملاحظات واضحة",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 947.078125,
+          "y": 807,
+          "width": 276.921875,
+          "height": 89
+        },
+        {
+          "text": "كل إجابة",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "rtl",
+          "x": 92,
+          "y": 240,
+          "width": 1140,
+          "height": 163.796875
+        },
+        {
+          "text": "مع شرحها.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 157,
+          "direction": "rtl",
+          "x": 300,
+          "y": 419.796875,
+          "width": 930,
+          "height": 219.796875
+        },
+        {
+          "text": "إجابتك والتصحيح والسبب.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 98,
+          "y": 660,
+          "width": 1020,
+          "height": 68.59375
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "cbcffe1393700eb9a3816f0f8676eebbf36cd6b4fe53b609b57ea0af9f5d5de9",
+      "text": [
+        {
+          "text": "الاختبار اليومي",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 975.421875,
+          "y": 848,
+          "width": 248.578125,
+          "height": 89
+        },
+        {
+          "text": "اكتب إجابتك",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 111,
+          "direction": "rtl",
+          "x": 93,
+          "y": 235,
+          "width": 1150,
+          "height": 155.390625
+        },
+        {
+          "text": "بنفسك.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 157,
+          "direction": "rtl",
+          "x": 300,
+          "y": 410,
+          "width": 930,
+          "height": 219.796875
+        },
+        {
+          "text": "خمسة أسئلة. عادة يومية صغيرة.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 97,
+          "y": 755,
+          "width": 1040,
+          "height": 68.59375
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "f4b51019ede24732735777e375f03219e4ee32a3e0a91bbaec4abac845214320",
+      "text": [
+        {
+          "text": "تلميحات الموضوع",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 931.203125,
+          "y": 800,
+          "width": 292.796875,
+          "height": 89
+        },
+        {
+          "text": "شاهد النمط",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "rtl",
+          "x": 92,
+          "y": 242,
+          "width": 1140,
+          "height": 163.796875
+        },
+        {
+          "text": "النحوي.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 157,
+          "direction": "rtl",
+          "x": 300,
+          "y": 421.796875,
+          "width": 930,
+          "height": 219.796875
+        },
+        {
+          "text": "اسحب لتذكيرك بالموضوع.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 95,
+          "y": 665,
+          "width": 1090,
+          "height": 68.59375
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/08-multi-blank.png",
+      "order": 4,
+      "slot": "multi-blank",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "4f6ea0fbb32c903c9c47a1d22a10593244f9a7d86f9ea1dd94a18a4e272ec924",
+      "text": [
+        {
+          "text": "لكل فراغ مكانه",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 976.234375,
+          "y": 837,
+          "width": 247.765625,
+          "height": 89
+        },
+        {
+          "text": "خانة واحدة",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "rtl",
+          "x": 93,
+          "y": 235,
+          "width": 1140,
+          "height": 163.796875
+        },
+        {
+          "text": "لكل فراغ.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 157,
+          "direction": "rtl",
+          "x": 300,
+          "y": 414.796875,
+          "width": 930,
+          "height": 219.796875
+        },
+        {
+          "text": "طابق كل لون. اضغط — عند عدم استخدام أداة تعريف أو تنكير.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 44,
+          "direction": "rtl",
+          "x": 96,
+          "y": 660,
+          "width": 1090,
+          "height": 123.1875
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/03-home.png",
+      "order": 5,
+      "slot": "home",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "c74a03a941eda00942a1814de5cb3bd23985d17b51fa843e83e8c26e4b6c5bb9",
+      "text": [
+        {
+          "text": "جبل التعلّم",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 1020.1875,
+          "y": 902.59375,
+          "width": 203.8125,
+          "height": 89
+        },
+        {
+          "text": "شاهد تقدّمك",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 117,
+          "direction": "rtl",
+          "x": 89,
+          "y": 230,
+          "width": 1140,
+          "height": 163.796875
+        },
+        {
+          "text": "يرتقي.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 163,
+          "direction": "rtl",
+          "x": 300,
+          "y": 410,
+          "width": 930,
+          "height": 228.1875
+        },
+        {
+          "text": "جبل جديد كل شهر. خطوة كل يوم.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 96,
+          "y": 810,
+          "width": 1050,
+          "height": 68.59375
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/05-review.png",
+      "order": 6,
+      "slot": "review",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "b8ede0fbff18655f9b7934f00ff9b66f26c851fb9a0e6f86040aebc2571e6b8a",
+      "text": [
+        {
+          "text": "نقاط ضعفك",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 1000.671875,
+          "y": 897.59375,
+          "width": 223.328125,
+          "height": 89
+        },
+        {
+          "text": "نقاط ضعفك،",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 109,
+          "direction": "rtl",
+          "x": 88,
+          "y": 248,
+          "width": 1150,
+          "height": 152.59375
+        },
+        {
+          "text": "في مكان واحد.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 145,
+          "direction": "rtl",
+          "x": 300,
+          "y": 416.59375,
+          "width": 930,
+          "height": 203
+        },
+        {
+          "text": "شاهد القواعد التي تتكرر.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 96,
+          "y": 805,
+          "width": 1070,
+          "height": 68.59375
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/06-collection.png",
+      "order": 7,
+      "slot": "collection",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "fa5111fba9afc8925e049b3a74147d619db3c4ba63a493f558ff61f854d5562a",
+      "text": [
+        {
+          "text": "مجموعتك",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 1027.921875,
+          "y": 822.59375,
+          "width": 196.078125,
+          "height": 89
+        },
+        {
+          "text": "ابنِ مجموعتك",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 112,
+          "direction": "rtl",
+          "x": 88,
+          "y": 241,
+          "width": 1140,
+          "height": 156.796875
+        },
+        {
+          "text": "من الجبال.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 157,
+          "direction": "rtl",
+          "x": 300,
+          "y": 413.796875,
+          "width": 930,
+          "height": 219.796875
+        },
+        {
+          "text": "احتفظ بالميداليات التي تكسبها في الطريق.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 96,
+          "y": 730,
+          "width": 1090,
+          "height": 68.59375
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/07-onboarding.png",
+      "order": 8,
+      "slot": "onboarding",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "066c731147c468ec218e68d56ec6283ee38d78fe6bcc6ce8e73eb55da3c688ab",
+      "text": [
+        {
+          "text": "رفيق للتسلّق",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 28,
+          "direction": "rtl",
+          "x": 990.0625,
+          "y": 837.59375,
+          "width": 233.9375,
+          "height": 89
+        },
+        {
+          "text": "اختر رفيقك",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 112,
+          "direction": "rtl",
+          "x": 90,
+          "y": 245,
+          "width": 1140,
+          "height": 156.796875
+        },
+        {
+          "text": "في التعلّم.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 157,
+          "direction": "rtl",
+          "x": 300,
+          "y": 417.796875,
+          "width": 930,
+          "height": 219.796875
+        },
+        {
+          "text": "تعرّف على ثعلبك. اخطُ خطوتك الأولى.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 97,
+          "y": 745,
+          "width": 1070,
+          "height": 68.59375
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "2864c3e67a93c8d80e70b8744c95980e2163dfbdb858f18e4beea0c15e9c2862",
+      "text": [
+        {
+          "text": "كل إجابة",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 121,
+          "direction": "rtl",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.390625
+        },
+        {
+          "text": "مع شرحها.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 185,
+          "direction": "rtl",
+          "x": 480,
+          "y": 415.390625,
+          "width": 1440,
+          "height": 259
+        },
+        {
+          "text": "إجابتك والتصحيح والسبب.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 68.59375
+        },
+        {
+          "text": "ملاحظات واضحة",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "rtl",
+          "x": 1623.8125,
+          "y": 815,
+          "width": 295.1875,
+          "height": 102
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "061bd7db4e76868f0260125c2006d49c56b03ae05c6a51b851b6dcbe7fc5a4dc",
+      "text": [
+        {
+          "text": "اكتب إجابتك",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 121,
+          "direction": "rtl",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.390625
+        },
+        {
+          "text": "بنفسك.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 185,
+          "direction": "rtl",
+          "x": 480,
+          "y": 415.390625,
+          "width": 1440,
+          "height": 259
+        },
+        {
+          "text": "خمسة أسئلة. عادة يومية صغيرة.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 68.59375
+        },
+        {
+          "text": "الاختبار اليومي",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "rtl",
+          "x": 1658.21875,
+          "y": 815,
+          "width": 260.78125,
+          "height": 102
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "fada972300d2a5b3656c5e3c11cfcea69a595f3d59e8a2175f6ea791d3c9a263",
+      "text": [
+        {
+          "text": "شاهد النمط",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 121,
+          "direction": "rtl",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.390625
+        },
+        {
+          "text": "النحوي.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 185,
+          "direction": "rtl",
+          "x": 480,
+          "y": 415.390625,
+          "width": 1440,
+          "height": 259
+        },
+        {
+          "text": "اسحب لتذكيرك بالموضوع.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 68.59375
+        },
+        {
+          "text": "تلميحات الموضوع",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "rtl",
+          "x": 1604.546875,
+          "y": 815,
+          "width": 314.453125,
+          "height": 102
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/03-home.png",
+      "order": 4,
+      "slot": "home",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "be076ab09f699fe4e4a0bdc07adc0f32a19c171863302884acc0401809956ec3",
+      "text": [
+        {
+          "text": "شاهد تقدّمك",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 121,
+          "direction": "rtl",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.390625
+        },
+        {
+          "text": "يرتقي.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 185,
+          "direction": "rtl",
+          "x": 480,
+          "y": 415.390625,
+          "width": 1440,
+          "height": 259
+        },
+        {
+          "text": "جبل جديد كل شهر. خطوة كل يوم.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 68.59375
+        },
+        {
+          "text": "جبل التعلّم",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "rtl",
+          "x": 1712.59375,
+          "y": 815,
+          "width": 206.40625,
+          "height": 102
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/05-review.png",
+      "order": 5,
+      "slot": "review",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "02a8f77c3a5a193f359a962f0cb1fc16c92e0caa12e1e3e3e8c5d76774a82322",
+      "text": [
+        {
+          "text": "نقاط ضعفك،",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 121,
+          "direction": "rtl",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.390625
+        },
+        {
+          "text": "في مكان واحد.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 185,
+          "direction": "rtl",
+          "x": 480,
+          "y": 415.390625,
+          "width": 1440,
+          "height": 259
+        },
+        {
+          "text": "شاهد القواعد التي تتكرر.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 68.59375
+        },
+        {
+          "text": "نقاط ضعفك",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "rtl",
+          "x": 1688.890625,
+          "y": 815,
+          "width": 230.109375,
+          "height": 102
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/06-collection.png",
+      "order": 6,
+      "slot": "collection",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "ab5eba467f957323605e6cacdf66ff3f2e248d97078bcdcc8f8974f0bb0f4ea6",
+      "text": [
+        {
+          "text": "ابنِ مجموعتك",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 121,
+          "direction": "rtl",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.390625
+        },
+        {
+          "text": "من الجبال.",
+          "fontFamily": "Local",
+          "fontWeight": "800",
+          "fontSize": 185,
+          "direction": "rtl",
+          "x": 480,
+          "y": 415.390625,
+          "width": 1440,
+          "height": 259
+        },
+        {
+          "text": "احتفظ بالميداليات التي تكسبها في الطريق.",
+          "fontFamily": "Local",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "rtl",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 68.59375
+        },
+        {
+          "text": "مجموعتك",
+          "fontFamily": "Local",
+          "fontWeight": "700",
+          "fontSize": 34,
+          "direction": "rtl",
+          "x": 1721.96875,
+          "y": 815,
+          "width": 197.03125,
+          "height": 102
+        }
+      ]
+    }
+  ],
+  "nativeGeometry": {
+    "iphone": {
+      "error": {
+        "left": 54,
+        "top": 585,
+        "width": 1212,
+        "height": 1089
+      },
+      "question": {
+        "left": 48,
+        "top": 408,
+        "width": 1224,
+        "height": 540
+      },
+      "input": {
+        "left": 50,
+        "top": 1280,
+        "width": 1220,
+        "height": 152
+      },
+      "slider": {
+        "left": 48,
+        "top": 966,
+        "width": 1224,
+        "height": 168
+      },
+      "review": [
+        {
+          "left": 54,
+          "top": 1395,
+          "width": 1212,
+          "height": 432
+        },
+        {
+          "left": 54,
+          "top": 1863,
+          "width": 1212,
+          "height": 432
+        }
+      ],
+      "hint": {
+        "left": 48,
+        "top": 1146,
+        "width": 1224,
+        "height": 402
+      }
+    },
+    "ipad": {
+      "error": {
+        "left": 391,
+        "top": 329,
+        "width": 1282,
+        "height": 640
+      },
+      "question": {
+        "left": 391,
+        "top": 211,
+        "width": 1282,
+        "height": 320
+      },
+      "input": {
+        "left": 392,
+        "top": 750,
+        "width": 1280,
+        "height": 104
+      },
+      "slider": {
+        "left": 392,
+        "top": 542,
+        "width": 1280,
+        "height": 112
+      },
+      "review": [
+        {
+          "left": 391,
+          "top": 763,
+          "width": 1282,
+          "height": 248
+        },
+        {
+          "left": 391,
+          "top": 1033,
+          "width": 1282,
+          "height": 248
+        }
+      ],
+      "hint": {
+        "left": 392,
+        "top": 662,
+        "width": 1280,
+        "height": 268
+      }
+    }
+  }
+}

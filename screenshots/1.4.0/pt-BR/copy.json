@@ -1,15 +1,16 @@
 {
   "_meta": {
     "language": "pt-BR",
-    "fontFamily": "Nunito Sans",
+    "fontFamily": "Fredoka / Caveat / Nunito Sans",
     "fontWeights": {
       "tag": 800,
-      "title": 900,
-      "subtitle": 600
+      "title": 600,
+      "subtitle": 650
     },
     "direction": "ltr",
     "source": "copy.json (1.3.0 approved English)",
-    "fontWeightReview": "Visually checked on composed iPad frame 01 against the approved Nunito Sans design; tag/title/subtitle weights confirmed."
+    "fontWeightReview": "See composition-audit.json for each caption’s actual font, weight and fitted size; caption wording unchanged.",
+    "design": "approved vivid fade"
   },
   "results": {
     "label": "results",

@@ -1,6 +1,8 @@
 # 1.4.0 App Store screenshot assets
 
-Checkpoint 1 draft. Owner approval pending; nothing uploaded or pushed.
+Checkpoint 1: the owner selected **Canlı fade** on 2026-11-04 and authorized
+its rollout to all eight languages and both device families. The localized
+sets below await checkpoint review; nothing uploaded or pushed.
 
 Captured from build 7's source, detached commit `c37757a` (`1.4.0+7`),
 in `/private/tmp/grammarlens-140-build7`. The owner's checkout remains on
@@ -10,7 +12,8 @@ with `git checkout main -- tool/`. Every run refuses to capture unless
 No application, iOS, proxy or test sources were edited.
 
 The existing `tool/marketing/store_130/` rig supplies the capture flow,
-original device frames, cream gradient and English copy. Only
+native screenshots and English copy. The current composition uses the
+owner-approved vivid fade, double ribbon and floating native components. Only
 `tool/screenshots/seed.dart` is reused from the older screenshot pipeline.
 The real app widgets run with a capture-only database and no Firebase or
 RevenueCat initialization. Every launch creates a fresh capture database;
@@ -44,38 +47,43 @@ English learning content left to right. No screenshot is mirrored by hand.
 
 | Language | AppleLanguages / AppleLocale | Font | Tag / title / subtitle weights | Review |
 |---|---|---|---|---|
-| en | en-US / en_US | Nunito Sans | 800 / 900 / 600 | [iPhone](en/overview-iphone.png), [iPad](en/overview-ipad.png), [copy](en/copy.en.json), [source-language note](en/back-translation.md) |
-| tr | tr / tr_TR | Nunito Sans | 800 / 900 / 600 | [iPhone](tr/overview-iphone.png), [iPad](tr/overview-ipad.png), [copy](tr/copy.tr.json), [blind table](tr/back-translation.md) |
-| de | de / de_DE | Nunito Sans | 800 / 900 / 600 | [iPhone](de/overview-iphone.png), [iPad](de/overview-ipad.png), [copy](de/copy.de.json), [blind table](de/back-translation.md) |
-| es | es-MX / es_MX | Nunito Sans | 800 / 900 / 600 | [iPhone](es/overview-iphone.png), [iPad](es/overview-ipad.png), [copy](es/copy.es.json), [blind table](es/back-translation.md) |
-| pt-BR | pt-BR / pt_BR | Nunito Sans | 800 / 900 / 600 | [iPhone](pt-BR/overview-iphone.png), [iPad](pt-BR/overview-ipad.png), [copy](pt-BR/copy.pt-BR.json), [blind table](pt-BR/back-translation.md) |
-| ja | ja / ja_JP | Noto Sans JP | 700 / 800 / 500 | [iPhone](ja/overview-iphone.png), [iPad](ja/overview-ipad.png), [copy](ja/copy.ja.json), [blind table](ja/back-translation.md) |
-| ko | ko / ko_KR | Noto Sans KR | 700 / 800 / 500 | [iPhone](ko/overview-iphone.png), [iPad](ko/overview-ipad.png), [copy](ko/copy.ko.json), [blind table](ko/back-translation.md) |
-| ar | ar / ar_SA | Noto Sans Arabic | 700 / 800 / 500 | [iPhone](ar/overview-iphone.png), [iPad](ar/overview-ipad.png), [copy](ar/copy.ar.json), [blind table](ar/back-translation.md) |
+| en | en-US / en_US | Fredoka / Caveat / Nunito Sans | see font report | [iPhone](en/overview-iphone.png), [iPad](en/overview-ipad.png), [copy](en/copy.en.json), [source-language note](en/back-translation.md) |
+| tr | tr / tr_TR | Fredoka / Caveat / Nunito Sans | see font report | [iPhone](tr/overview-iphone.png), [iPad](tr/overview-ipad.png), [copy](tr/copy.tr.json), [blind table](tr/back-translation.md) |
+| de | de / de_DE | Fredoka / Caveat / Nunito Sans | see font report | [iPhone](de/overview-iphone.png), [iPad](de/overview-ipad.png), [copy](de/copy.de.json), [blind table](de/back-translation.md) |
+| es | es-MX / es_MX | Fredoka / Caveat / Nunito Sans | see font report | [iPhone](es/overview-iphone.png), [iPad](es/overview-ipad.png), [copy](es/copy.es.json), [blind table](es/back-translation.md) |
+| pt-BR | pt-BR / pt_BR | Fredoka / Caveat / Nunito Sans | see font report | [iPhone](pt-BR/overview-iphone.png), [iPad](pt-BR/overview-ipad.png), [copy](pt-BR/copy.pt-BR.json), [blind table](pt-BR/back-translation.md) |
+| ja | ja / ja_JP | Noto Sans JP | 700 / 600–800 / 650 | [iPhone](ja/overview-iphone.png), [iPad](ja/overview-ipad.png), [copy](ja/copy.ja.json), [blind table](ja/back-translation.md) |
+| ko | ko / ko_KR | Noto Sans KR | 700 / 600–800 / 650 | [iPhone](ko/overview-iphone.png), [iPad](ko/overview-ipad.png), [copy](ko/copy.ko.json), [blind table](ko/back-translation.md) |
+| ar | ar / ar_SA | Noto Sans Arabic | 700 / 600–800 / 650 | [iPhone](ar/overview-iphone.png), [iPad](ar/overview-ipad.png), [copy](ar/copy.ar.json), [blind table](ar/back-translation.md) |
 
-Noto fonts and their SIL OFL licences are kept under
-`tool/marketing/store_130/fonts/`. Nunito Sans and its licence remain
-under `assets/fonts/`. Noto tag, title and subtitle weights were compared visually with the
-approved Nunito design and checked on composed frame 01 in each language.
-The brand and Latin-digit counters retain Nunito Sans and the original
-positioning. Arabic captions are right-aligned and RTL; tags in scripts
-without case are not uppercased. Titles may wrap to three lines. The
-composer rejects overflow and caption/device overlap; it never reduces
-text below the original subtitle size (27 px iPhone / 36 px iPad).
+Fredoka, Caveat and Noto font licences are retained under
+`tool/marketing/store_130/fonts/`; Nunito Sans stays under `assets/fonts/`.
+Latin headlines use Fredoka 500–600, Caveat 650–700 and Nunito Sans 600–950;
+Latin tags use Nunito Sans 800 and subtitles 650. Japanese, Korean and
+Arabic use their respective Noto families: headline weights 600–800,
+tags 700 and subtitles 650. The brand and counters retain Nunito Sans.
+[Exact per-caption fonts, weights and sizes](font-weights.md) are recorded
+for both device families, along with each locale's `composition-audit.json`.
+Arabic captions are right-aligned and RTL; the real UI pixels are not mirrored.
+Long headings and subtitles are fitted without changing their wording.
 
 Each language contains eight opaque RGB iPhone 6.9-inch PNGs and six
 opaque RGB iPad 13-inch PNGs. There is no 6.3-inch set.
 
-| # | File | iPhone | iPad |
-|---|---|---|---|
-| 01 | `01-results.png` | ✓ | ✓ |
-| 02 | `02-hint.png` | ✓ | ✓ |
-| 03 | `03-home.png` | ✓ | ✓ |
-| 04 | `04-question.png` | ✓ | ✓ |
-| 05 | `05-review.png` | ✓ | ✓ |
-| 06 | `06-collection.png` | ✓ | ✓ |
-| 07 | `07-onboarding.png` | ✓ | — |
-| 08 | `08-multi-blank.png` | ✓ | — |
+The approved **display sequence** is below. Source filenames retain the
+brief's original slot IDs; upload ordering must follow `order` in each
+`composition-audit.json` / `verification.json`, not filename sorting.
+
+| Display position | iPhone file | iPad file |
+|---|---|---|
+| 01 | `01-results.png` | `01-results.png` |
+| 02 | `04-question.png` | `04-question.png` |
+| 03 | `02-hint.png` | `02-hint.png` |
+| 04 | `08-multi-blank.png` | `03-home.png` |
+| 05 | `03-home.png` | `05-review.png` |
+| 06 | `05-review.png` | `06-collection.png` |
+| 07 | `06-collection.png` | — |
+| 08 | `07-onboarding.png` | — |
 
 Files live under `<lang>/store/iphone-6.9/` and `<lang>/store/ipad-13/`.
 `overview-iphone.png` and `overview-ipad.png` are contact sheets.
@@ -102,7 +110,8 @@ zsh tool/marketing/store_130/capture.sh iphone tr
 From main, compose and verify each language:
 
 ```sh
-node tool/marketing/store_130/compose_140.cjs tr
+node tool/marketing/store_130/compose_vivid_140.cjs tr iphone
+node tool/marketing/store_130/compose_vivid_140.cjs tr ipad
 node tool/marketing/store_130/verify.cjs --140 tr
 ```
 
@@ -119,8 +128,8 @@ under tool/ and screenshots/1.4.0/.
 
 All 112 original PNGs in the permanent raw archive match the native
 checksums recorded in each language's verification.json. The archive's
-manifest.json is complete. Every copy.json matches copy.<lang>.json and
-the corresponding rig input. All seven non-English blind tables contain
+manifest.json is complete. Every copy.json matches copy.<lang>.json. Caption wording matches
+the corresponding blind-reviewed rig input; only design/font metadata changed. All seven non-English blind tables contain
 24 caption fields. English retains all 24 source fields word for word.
 The capture rig's Dart analysis passed with no issues.
 
@@ -132,9 +141,9 @@ been made. Checkpoint 1 awaits owner approval before Phase 4 continues.
 The owner requested a warmer, more colorful direction with varied type,
 a connected sequence for results/question/hint/multi-blank, multiple
 perspective devices, and enlarged native UI components floating in front
-of a device. Approval of this Turkish iPhone concept comes before applying
-the direction to other languages or iPad. The earlier checkpoint set above
-is retained. No App Store Connect write or push has been made.
+of a device. These historical experiments led to the approved vivid direction now
+applied above. Earlier checkpoint artwork remains in Git history, and all
+exploratory variants remain outside Git. No App Store Connect write or push has been made.
 
 Source: `tool/marketing/store_130/explore_cozy_tr.cjs`.
 Concept PNGs and review sheets are outside Git at
@@ -231,3 +240,19 @@ and `fade-mist/`. Each contains eight composed PNGs, overview sheets,
 eight separate blank PNGs in `backgrounds/`, `background-flow.png`, a
 manifest and verification. All 32 PNGs are opaque RGB at 1320 × 2868.
 Both alternatives await owner selection; no ASC write or push was made.
+
+## Approved vivid rollout (2026-11-04)
+
+The owner selected **Canlı fade** and authorized all languages and devices.
+All 112 store frames and 16 overview sheets now use that direction. The
+eight Turkish iPhone frames match the selected reference byte for byte.
+iPad uses a dedicated tablet composition with the same colors, double
+ribbon, varied headlines and enlarged native components. Native interface
+crops retain their complete localized controls, including the hint slider.
+
+All eight final verification runs passed. All 112 permanent originals
+match the recorded capture hashes. Copy wording and the existing blind
+back-translations are unchanged. Caption fit and overlap checks passed;
+all localized iPhone and iPad sheets were visually reviewed. No recapture,
+App Store Connect operation or push was performed for this rollout.
+Checkpoint 1 is ready for owner review; checkpoint 2 has not started.

@@ -1,0 +1,954 @@
+{
+  "language": "tr",
+  "sourceCommit": "c37757a",
+  "build": "1.4.0+7",
+  "design": "approved-vivid",
+  "layout": [
+    {
+      "file": "store/iphone-6.9/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "20d74f8ba78d432c10c09a4dfa11a9626932157fb3485bbf68354a08898d163f",
+      "text": [
+        {
+          "text": "NET GERİ BİLDİRİM",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 842,
+          "width": 356.546875,
+          "height": 68,
+          "top": 842,
+          "right": 452.546875,
+          "bottom": 910,
+          "left": 96
+        },
+        {
+          "text": "Her cevap",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "textDecoration": "none",
+          "x": 89.83773803710938,
+          "y": 220.15109252929688,
+          "width": 1144.324462890625,
+          "height": 183.51031494140625,
+          "top": 220.15109252929688,
+          "right": 1234.1622009277344,
+          "bottom": 403.6614074707031,
+          "left": 89.83773803710938
+        },
+        {
+          "text": "açıklanır.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "textDecoration": "none",
+          "x": 86,
+          "y": 395,
+          "width": 1150,
+          "height": 187.671875,
+          "top": 395,
+          "right": 1236,
+          "bottom": 582.671875,
+          "left": 86
+        },
+        {
+          "text": "Cevabın, düzeltilmiş hali ve nedeni.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 98,
+          "y": 660,
+          "width": 1020,
+          "height": 60.75,
+          "top": 660,
+          "right": 1118,
+          "bottom": 720.75,
+          "left": 98
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "be64084416b6fba2fa093f5eb3e9c4cf07bd053bee61a08660ebc6385d52b37a",
+      "text": [
+        {
+          "text": "GÜNLÜK TEST",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 883,
+          "width": 282.453125,
+          "height": 68,
+          "top": 883,
+          "right": 378.453125,
+          "bottom": 951,
+          "left": 96
+        },
+        {
+          "text": "Kendi cevabını",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 93,
+          "y": 235,
+          "width": 1150,
+          "height": 113.21875,
+          "top": 235,
+          "right": 1243,
+          "bottom": 348.21875,
+          "left": 93
+        },
+        {
+          "text": "yaz.",
+          "fontFamily": "Caveat",
+          "fontWeight": "700",
+          "textDecoration": "none",
+          "x": 111.74620056152344,
+          "y": 275.57391357421875,
+          "width": 1026.507568359375,
+          "height": 408.8521728515625,
+          "top": 275.57391357421875,
+          "right": 1138.2537689208984,
+          "bottom": 684.4260864257812,
+          "left": 111.74620056152344
+        },
+        {
+          "text": "Beş soru. Küçük bir günlük alışkanlık.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 97,
+          "y": 755,
+          "width": 1040,
+          "height": 60.75,
+          "top": 755,
+          "right": 1137,
+          "bottom": 815.75,
+          "left": 97
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "27b599f2a3a973018555b78b8e1b6cdb21b0f467890d3341393eebdffbe35809",
+      "text": [
+        {
+          "text": "KONU İPUÇLARI",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 504.4375,
+          "y": 835,
+          "width": 311.125,
+          "height": 68,
+          "top": 835,
+          "right": 815.5625,
+          "bottom": 903,
+          "left": 504.4375
+        },
+        {
+          "text": "Gramer kalıbını",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "textDecoration": "none",
+          "x": 92,
+          "y": 242,
+          "width": 1140,
+          "height": 119.328125,
+          "top": 242,
+          "right": 1232,
+          "bottom": 361.328125,
+          "left": 92
+        },
+        {
+          "text": "gör.",
+          "fontFamily": "Nunito",
+          "fontWeight": "950",
+          "textDecoration": "none",
+          "x": 84.64231872558594,
+          "y": 340.3292541503906,
+          "width": 1150.71533203125,
+          "height": 293.9352111816406,
+          "top": 340.3292541503906,
+          "right": 1235.357650756836,
+          "bottom": 634.2644653320312,
+          "left": 84.64231872558594
+        },
+        {
+          "text": "Konuyu hatırlatan ipucunu görmek için kaydır.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 95,
+          "y": 665,
+          "width": 1090,
+          "height": 60.75,
+          "top": 665,
+          "right": 1185,
+          "bottom": 725.75,
+          "left": 95
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/08-multi-blank.png",
+      "order": 4,
+      "slot": "multi-blank",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "e889558bd27a090a68cb7f8598239ea2999a122bbdb92185fe5d5192e3adbdb1",
+      "text": [
+        {
+          "text": "HER BOŞLUĞUN BİR YERİ VAR",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 703.703125,
+          "y": 872,
+          "width": 520.296875,
+          "height": 68,
+          "top": 872,
+          "right": 1224,
+          "bottom": 940,
+          "left": 703.703125
+        },
+        {
+          "text": "Her boşluğa",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 90.92662048339844,
+          "y": 215.1495361328125,
+          "width": 1144.146728515625,
+          "height": 178.419677734375,
+          "top": 215.1495361328125,
+          "right": 1235.0733489990234,
+          "bottom": 393.5692138671875,
+          "left": 90.92662048339844
+        },
+        {
+          "text": "bir kutu.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "textDecoration": "none",
+          "x": 90,
+          "y": 395,
+          "width": 1140,
+          "height": 180.53125,
+          "top": 395,
+          "right": 1230,
+          "bottom": 575.53125,
+          "left": 90
+        },
+        {
+          "text": "Her rengi eşleştir. Artikel yoksa — işaretine dokun.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 660,
+          "width": 1090,
+          "height": 121.5,
+          "top": 660,
+          "right": 1186,
+          "bottom": 781.5,
+          "left": 96
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/03-home.png",
+      "order": 5,
+      "slot": "home",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "2c058cefc33321030dcb25f272a24e215ac9aa5ef1ae9d20d40c7363dd3a1c4c",
+      "text": [
+        {
+          "text": "ÖĞRENME DAĞI",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 924,
+          "width": 308.921875,
+          "height": 68,
+          "top": 924,
+          "right": 404.921875,
+          "bottom": 992,
+          "left": 96
+        },
+        {
+          "text": "İlerlemenin",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "textDecoration": "none",
+          "x": 89,
+          "y": 230,
+          "width": 1140,
+          "height": 146.875,
+          "top": 230,
+          "right": 1229,
+          "bottom": 376.875,
+          "left": 89
+        },
+        {
+          "text": "yükselişini\nizle.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "textDecoration": "none",
+          "x": 90,
+          "y": 392,
+          "width": 1140,
+          "height": 332.5,
+          "top": 392,
+          "right": 1230,
+          "bottom": 724.5,
+          "left": 90
+        },
+        {
+          "text": "Her ay yeni bir dağ. Her gün bir adım.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 810,
+          "width": 1050,
+          "height": 60.75,
+          "top": 810,
+          "right": 1146,
+          "bottom": 870.75,
+          "left": 96
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/05-review.png",
+      "order": 6,
+      "slot": "review",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "e7215b1efbb59c8368aa632201c1f1d04aeb489e9d43bd822e95d1613af4afca",
+      "text": [
+        {
+          "text": "ZAYIF NOKTALARIN",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 924,
+          "width": 363.546875,
+          "height": 68,
+          "top": 924,
+          "right": 459.546875,
+          "bottom": 992,
+          "left": 96
+        },
+        {
+          "text": "Zayıf noktaların,",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "textDecoration": "none",
+          "x": 85.87887573242188,
+          "y": 217.98300170898438,
+          "width": 1154.2421875,
+          "height": 171.20587158203125,
+          "top": 217.98300170898438,
+          "right": 1240.1210632324219,
+          "bottom": 389.1888732910156,
+          "left": 85.87887573242188
+        },
+        {
+          "text": "tek bir\nyerde.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "textDecoration": "none",
+          "x": 91,
+          "y": 395,
+          "width": 1140,
+          "height": 341.09375,
+          "top": 395,
+          "right": 1231,
+          "bottom": 736.09375,
+          "left": 91
+        },
+        {
+          "text": "Tekrar karşına çıkan grameri gör.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 805,
+          "width": 1070,
+          "height": 60.75,
+          "top": 805,
+          "right": 1166,
+          "bottom": 865.75,
+          "left": 96
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/06-collection.png",
+      "order": 7,
+      "slot": "collection",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "583f2616a154af9395e9c92f90006bc3e5a070f864a0cf87273c54b758a30285",
+      "text": [
+        {
+          "text": "KOLEKSİYONUN",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 838,
+          "width": 308.640625,
+          "height": 68,
+          "top": 838,
+          "right": 404.640625,
+          "bottom": 906,
+          "left": 96
+        },
+        {
+          "text": "Dağ koleksiyonunu",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "textDecoration": "none",
+          "x": 88,
+          "y": 241,
+          "width": 1140,
+          "height": 114.234375,
+          "top": 241,
+          "right": 1228,
+          "bottom": 355.234375,
+          "left": 88
+        },
+        {
+          "text": "oluştur.",
+          "fontFamily": "Caveat",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 103.24747467041016,
+          "y": 310.5378723144531,
+          "width": 1117.505126953125,
+          "height": 343.7992858886719,
+          "top": 310.5378723144531,
+          "right": 1220.7526016235352,
+          "bottom": 654.337158203125,
+          "left": 103.24747467041016
+        },
+        {
+          "text": "Yol boyunca kazandığın madalyaları sakla.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 730,
+          "width": 1090,
+          "height": 60.75,
+          "top": 730,
+          "right": 1186,
+          "bottom": 790.75,
+          "left": 96
+        }
+      ]
+    },
+    {
+      "file": "store/iphone-6.9/07-onboarding.png",
+      "order": 8,
+      "slot": "onboarding",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "b12ffc795457504983e54125dd45c2f796bea4dd82826fade4c8f1d472686de2",
+      "text": [
+        {
+          "text": "TIRMANIŞ İÇİN BİR ARKADAŞ",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "textDecoration": "none",
+          "x": 96,
+          "y": 860,
+          "width": 508.515625,
+          "height": 68,
+          "top": 860,
+          "right": 604.515625,
+          "bottom": 928,
+          "left": 96
+        },
+        {
+          "text": "Öğrenme arkadaşını",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "textDecoration": "none",
+          "x": 90,
+          "y": 245,
+          "width": 1140,
+          "height": 114.234375,
+          "top": 245,
+          "right": 1230,
+          "bottom": 359.234375,
+          "left": 90
+        },
+        {
+          "text": "seç.",
+          "fontFamily": "Caveat",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 96.38667297363281,
+          "y": 279.05523681640625,
+          "width": 1127.2265625,
+          "height": 422.5770263671875,
+          "top": 279.05523681640625,
+          "right": 1223.6132354736328,
+          "bottom": 701.6322631835938,
+          "left": 96.38667297363281
+        },
+        {
+          "text": "Tilkinle tanış. İlk adımını at.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "textDecoration": "none",
+          "x": 97,
+          "y": 745,
+          "width": 1070,
+          "height": 60.75,
+          "top": 745,
+          "right": 1167,
+          "bottom": 805.75,
+          "left": 97
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/01-results.png",
+      "order": 1,
+      "slot": "results",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "66f1b55cbfa336d4d9975c9f118c74e982ff0d96b5defa48579ad3781da09206",
+      "text": [
+        {
+          "text": "Her cevap",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "açıklanır.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 215.21875
+        },
+        {
+          "text": "Cevabın, düzeltilmiş hali ve nedeni.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "NET GERİ BİLDİRİM",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 387.859375,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/04-question.png",
+      "order": 2,
+      "slot": "question",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "22c357dbb9026d2233cb05e4f1642ddcbebdcfd8eabbda529e6741160416a364",
+      "text": [
+        {
+          "text": "Kendi cevabını",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "yaz.",
+          "fontFamily": "Caveat",
+          "fontWeight": "700",
+          "fontSize": 181,
+          "direction": "ltr",
+          "x": 136.1558837890625,
+          "y": 415.3039855957031,
+          "width": 1447.688232421875,
+          "height": 259.7201232910156
+        },
+        {
+          "text": "Beş soru. Küçük bir günlük alışkanlık.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "GÜNLÜK TEST",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 299.296875,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/02-hint.png",
+      "order": 3,
+      "slot": "hint",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "3adfb0e8103c33495e61c39b8b85322d90427c502db4838ed39f9cc6e503d5d0",
+      "text": [
+        {
+          "text": "Gramer kalıbını",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "gör.",
+          "fontFamily": "Nunito",
+          "fontWeight": "600",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 215.21875
+        },
+        {
+          "text": "Konuyu hatırlatan ipucunu görmek için kaydır.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "KONU İPUÇLARI",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 333.65625,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/03-home.png",
+      "order": 4,
+      "slot": "home",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "a340b8d00fb39d8f12aba66cf18cac7f4adaf2969b3d42758d7c9a7d5510bbcb",
+      "text": [
+        {
+          "text": "İlerlemenin",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "yükselişini izle.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 215.21875
+        },
+        {
+          "text": "Her ay yeni bir dağ. Her gün bir adım.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "ÖĞRENME DAĞI",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 331.203125,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/05-review.png",
+      "order": 5,
+      "slot": "review",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "f32c9dc8353bbd25fc1b2f7787ceee4f9b38d7b737e52eaa805973333db81176",
+      "text": [
+        {
+          "text": "Zayıf noktaların,",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "tek bir yerde.",
+          "fontFamily": "Fredoka",
+          "fontWeight": "600",
+          "fontSize": 211,
+          "direction": "ltr",
+          "x": 140,
+          "y": 415.3125,
+          "width": 1440,
+          "height": 215.21875
+        },
+        {
+          "text": "Tekrar karşına çıkan grameri gör.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "ZAYIF NOKTALARIN",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 396.609375,
+          "height": 76
+        }
+      ]
+    },
+    {
+      "file": "store/ipad-13/06-collection.png",
+      "order": 6,
+      "slot": "collection",
+      "width": 2064,
+      "height": 2752,
+      "sha256": "cb636474d69d72298304a07de837d7e14dd885d462729e82616f4e3bd16a97d8",
+      "text": [
+        {
+          "text": "Dağ koleksiyonunu",
+          "fontFamily": "Fredoka",
+          "fontWeight": "500",
+          "fontSize": 166,
+          "direction": "ltr",
+          "x": 140,
+          "y": 230,
+          "width": 1760,
+          "height": 169.3125
+        },
+        {
+          "text": "oluştur.",
+          "fontFamily": "Caveat",
+          "fontWeight": "700",
+          "fontSize": 181,
+          "direction": "ltr",
+          "x": 136.1558837890625,
+          "y": 415.3039855957031,
+          "width": 1447.688232421875,
+          "height": 259.7201232910156
+        },
+        {
+          "text": "Yol boyunca kazandığın madalyaları sakla.",
+          "fontFamily": "Nunito",
+          "fontWeight": "650",
+          "fontSize": 49,
+          "direction": "ltr",
+          "x": 145,
+          "y": 720,
+          "width": 1760,
+          "height": 60.75
+        },
+        {
+          "text": "KOLEKSİYONUN",
+          "fontFamily": "Nunito",
+          "fontWeight": "800",
+          "fontSize": 34,
+          "direction": "ltr",
+          "x": 145,
+          "y": 855,
+          "width": 330.875,
+          "height": 76
+        }
+      ]
+    }
+  ],
+  "nativeGeometry": {
+    "ipad": {
+      "error": {
+        "left": 391,
+        "top": 327,
+        "width": 1282,
+        "height": 638
+      },
+      "question": {
+        "left": 391,
+        "top": 211,
+        "width": 1282,
+        "height": 320
+      },
+      "input": {
+        "left": 392,
+        "top": 750,
+        "width": 1280,
+        "height": 102
+      },
+      "slider": {
+        "left": 392,
+        "top": 542,
+        "width": 1280,
+        "height": 112
+      },
+      "review": [
+        {
+          "left": 391,
+          "top": 757,
+          "width": 1282,
+          "height": 248
+        },
+        {
+          "left": 391,
+          "top": 1027,
+          "width": 1282,
+          "height": 248
+        }
+      ],
+      "hint": {
+        "left": 392,
+        "top": 662,
+        "width": 1280,
+        "height": 268
+      }
+    },
+    "iphone": {
+      "error": {
+        "left": 54,
+        "top": 582,
+        "width": 1212,
+        "height": 1086
+      },
+      "question": {
+        "left": 48,
+        "top": 408,
+        "width": 1224,
+        "height": 540
+      },
+      "input": {
+        "left": 50,
+        "top": 1280,
+        "width": 1220,
+        "height": 149
+      },
+      "slider": {
+        "left": 48,
+        "top": 966,
+        "width": 1224,
+        "height": 168
+      },
+      "review": [
+        {
+          "left": 54,
+          "top": 1290,
+          "width": 1212,
+          "height": 432
+        },
+        {
+          "left": 54,
+          "top": 1758,
+          "width": 1212,
+          "height": 432
+        }
+      ],
+      "hint": {
+        "left": 48,
+        "top": 1146,
+        "width": 1224,
+        "height": 402
+      }
+    }
+  }
+}
