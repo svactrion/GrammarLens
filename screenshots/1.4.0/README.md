@@ -144,3 +144,18 @@ flow sheets. Input pixels come from the retained build-7 native originals;
 the floating components are crops of those exact images. Fredoka and Caveat
 are licensed under the SIL OFL, retained with their licence files under the
 rig's fonts/ folder. Existing Turkish caption claims are retained.
+
+### Design exploration v2 (owner feedback)
+
+05-home, 07-collection and 08-onboarding are copied byte for byte from v1,
+as requested. 06-review retains the same device composition and headings;
+its two floating cards now use native interior crops inside complete,
+padded rounded shells. 01–04 use calmer device angles and the same complete
+component shells; short dotted arrows connect the pages instead of the
+broad background ribbon. Native content and caption claims are retained.
+
+Source: `tool/marketing/store_130/explore_cozy_tr_v2.cjs`.
+Review outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/`.
+`revised-four.png` focuses on the first four pages; `06-review.png` shows
+the corrected review cards. `verification.json` records PNG checks and the
+exact preservation of 05/07/08. v2 awaits owner design feedback.
