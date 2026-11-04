@@ -126,3 +126,21 @@ The capture rig's Dart analysis passed with no issues.
 
 No App Store Connect upload or other write has been made. No push has
 been made. Checkpoint 1 awaits owner approval before Phase 4 continues.
+
+## Turkish iPhone design exploration (owner request, 2026-11-04)
+
+The owner requested a warmer, more colorful direction with varied type,
+a connected sequence for results/question/hint/multi-blank, multiple
+perspective devices, and enlarged native UI components floating in front
+of a device. Approval of this Turkish iPhone concept comes before applying
+the direction to other languages or iPad. The earlier checkpoint set above
+is retained. No App Store Connect write or push has been made.
+
+Source: `tool/marketing/store_130/explore_cozy_tr.cjs`.
+Concept PNGs and review sheets are outside Git at
+`/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/`.
+There are eight 1320 × 2868 opaque RGB PNGs, plus an overview and continuous
+flow sheets. Input pixels come from the retained build-7 native originals;
+the floating components are crops of those exact images. Fredoka and Caveat
+are licensed under the SIL OFL, retained with their licence files under the
+rig's fonts/ folder. Existing Turkish caption claims are retained.
