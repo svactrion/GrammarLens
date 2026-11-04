@@ -216,3 +216,18 @@ Outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v
 first page, V4 left and V5 right. All eight PNG checks, text fit and caption
 comparisons passed (`verification.json`). Turkish iPhone design review
 continues; no other locales, iPad, ASC uploads or push are included.
+
+### Two fade background alternatives (owner request)
+
+`tool/marketing/store_130/explore_fade_tr.cjs` renders the V5 foreground
+with `FADE_THEME=vivid` (coral, mango, turquoise and lilac) or
+`FADE_THEME=mist` (cool blue, lavender and mint). Only the background
+gradient, glow and ribbon tones change. All caption text and measured
+caption positions match V5; native build-7 checksums pass.
+
+Outputs are outside Git under
+`/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/`
+and `fade-mist/`. Each contains eight composed PNGs, overview sheets,
+eight separate blank PNGs in `backgrounds/`, `background-flow.png`, a
+manifest and verification. All 32 PNGs are opaque RGB at 1320 × 2868.
+Both alternatives await owner selection; no ASC write or push was made.
