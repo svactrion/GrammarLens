@@ -9,7 +9,7 @@
     },
     "direction": "ltr",
     "source": "copy.json (1.3.0 approved English)",
-    "fontWeightReview": "pending visual comparison"
+    "fontWeightReview": "Visually checked on composed iPad frame 01 against the approved Nunito Sans design; tag/title/subtitle weights confirmed."
   },
   "results": {
     "label": "results",
