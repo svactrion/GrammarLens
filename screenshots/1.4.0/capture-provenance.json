@@ -1,0 +1,161 @@
+{
+  "sourceCommit": "c37757a0f8967bb39c8ab60bf91161ad05e1e31a",
+  "build": "1.4.0+7",
+  "worktree": "/private/tmp/grammarlens-140-build7",
+  "detached": true,
+  "protectedPaths": [
+    "lib",
+    "ios",
+    "assets",
+    "pubspec.yaml"
+  ],
+  "finalProtectedSourceDiff": "empty",
+  "mainCheckoutBranch": "main",
+  "nativeArchive": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw",
+  "runs": [
+    {
+      "language": "en",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "en",
+      "languageSetting": "system",
+      "firstFrameCheck": "manually inspected 04-question.png",
+      "log": "/private/tmp/grammarlens-140-capture-en-iphone.log"
+    },
+    {
+      "language": "en",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "en",
+      "languageSetting": "system",
+      "firstFrameCheck": "Daily Test",
+      "log": "/private/tmp/grammarlens-140-capture-en-ipad.log"
+    },
+    {
+      "language": "tr",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "tr",
+      "languageSetting": "system",
+      "firstFrameCheck": "manually inspected 04-question.png",
+      "log": "/private/tmp/grammarlens-140-capture-tr-iphone.log"
+    },
+    {
+      "language": "tr",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "tr",
+      "languageSetting": "system",
+      "firstFrameCheck": "Günlük Test",
+      "log": "/private/tmp/grammarlens-140-capture-tr-ipad.log"
+    },
+    {
+      "language": "de",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "de",
+      "languageSetting": "system",
+      "firstFrameCheck": "Tagestest",
+      "log": "/private/tmp/grammarlens-140-capture-de-iphone.log"
+    },
+    {
+      "language": "de",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "de",
+      "languageSetting": "system",
+      "firstFrameCheck": "Tagestest",
+      "log": "/private/tmp/grammarlens-140-capture-de-ipad.log"
+    },
+    {
+      "language": "es",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "es",
+      "languageSetting": "system",
+      "firstFrameCheck": "Test diario",
+      "log": "/private/tmp/grammarlens-140-capture-es-iphone.log"
+    },
+    {
+      "language": "es",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "es",
+      "languageSetting": "system",
+      "firstFrameCheck": "Test diario",
+      "log": "/private/tmp/grammarlens-140-capture-es-ipad.log"
+    },
+    {
+      "language": "pt-BR",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "pt",
+      "languageSetting": "system",
+      "firstFrameCheck": "Teste diário",
+      "log": "/private/tmp/grammarlens-140-capture-pt-BR-iphone.log"
+    },
+    {
+      "language": "pt-BR",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "pt",
+      "languageSetting": "system",
+      "firstFrameCheck": "Teste diário",
+      "log": "/private/tmp/grammarlens-140-capture-pt-BR-ipad.log"
+    },
+    {
+      "language": "ja",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "ja",
+      "languageSetting": "system",
+      "firstFrameCheck": "デイリーテスト",
+      "log": "/private/tmp/grammarlens-140-capture-ja-iphone.log"
+    },
+    {
+      "language": "ja",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "ja",
+      "languageSetting": "system",
+      "firstFrameCheck": "デイリーテスト",
+      "log": "/private/tmp/grammarlens-140-capture-ja-ipad.log"
+    },
+    {
+      "language": "ko",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "ko",
+      "languageSetting": "system",
+      "firstFrameCheck": "데일리 테스트",
+      "log": "/private/tmp/grammarlens-140-capture-ko-iphone.log"
+    },
+    {
+      "language": "ko",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "ko",
+      "languageSetting": "system",
+      "firstFrameCheck": "데일리 테스트",
+      "log": "/private/tmp/grammarlens-140-capture-ko-ipad.log"
+    },
+    {
+      "language": "ar",
+      "device": "iphone",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "ar",
+      "languageSetting": "system",
+      "firstFrameCheck": "الاختبار اليومي",
+      "log": "/private/tmp/grammarlens-140-capture-ar-iphone.log"
+    },
+    {
+      "language": "ar",
+      "device": "ipad",
+      "sourceGuard": "passed; empty protected-source diff before capture",
+      "locale": "ar",
+      "languageSetting": "system",
+      "firstFrameCheck": "الاختبار اليومي",
+      "log": "/private/tmp/grammarlens-140-capture-ar-ipad.log"
+    }
+  ]
+}

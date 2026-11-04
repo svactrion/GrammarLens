@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "language": "ar",
+    "fontFamily": "Noto Sans Arabic",
+    "fontWeights": {
+      "tag": 700,
+      "title": 800,
+      "subtitle": 500
+    },
+    "direction": "rtl",
+    "source": "copy.json (1.3.0 approved English)",
+    "fontWeightReview": "Visually checked on composed iPad frame 01 against the approved Nunito Sans design; tag/title/subtitle weights confirmed."
+  },
+  "results": {
+    "label": "results",
+    "tag": "ملاحظات واضحة",
+    "title": [
+      "كل إجابة",
+      "مع شرحها."
+    ],
+    "subtitle": "إجابتك والتصحيح والسبب."
+  },
+  "hint": {
+    "label": "hint",
+    "tag": "تلميحات الموضوع",
+    "title": [
+      "شاهد النمط",
+      "النحوي."
+    ],
+    "subtitle": "اسحب لتذكيرك بالموضوع."
+  },
+  "home": {
+    "label": "home",
+    "tag": "جبل التعلّم",
+    "title": [
+      "شاهد تقدّمك",
+      "يرتقي."
+    ],
+    "subtitle": "جبل جديد كل شهر. خطوة كل يوم."
+  },
+  "question": {
+    "label": "question",
+    "tag": "الاختبار اليومي",
+    "title": [
+      "اكتب إجابتك",
+      "بنفسك."
+    ],
+    "subtitle": "خمسة أسئلة. عادة يومية صغيرة."
+  },
+  "review": {
+    "label": "review",
+    "tag": "نقاط ضعفك",
+    "title": [
+      "نقاط ضعفك،",
+      "في مكان واحد."
+    ],
+    "subtitle": "شاهد القواعد التي تتكرر."
+  },
+  "collection": {
+    "label": "collection",
+    "tag": "مجموعتك",
+    "title": [
+      "ابنِ مجموعتك",
+      "من الجبال."
+    ],
+    "subtitle": "احتفظ بالميداليات التي تكسبها في الطريق."
+  },
+  "onboarding": {
+    "label": "onboarding",
+    "tag": "رفيق للتسلّق",
+    "title": [
+      "اختر رفيقك",
+      "في التعلّم."
+    ],
+    "subtitle": "تعرّف على ثعلبك. اخطُ خطوتك الأولى."
+  },
+  "multi-blank": {
+    "label": "multi-blank",
+    "tag": "لكل فراغ مكانه",
+    "title": [
+      "خانة واحدة",
+      "لكل فراغ."
+    ],
+    "subtitle": "طابق كل لون. اضغط — عند عدم استخدام أداة تعريف أو تنكير."
+  }
+}

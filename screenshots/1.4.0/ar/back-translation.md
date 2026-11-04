@@ -1,0 +1,32 @@
+# Blind caption back-translation: ar
+
+Checkpoint 1 draft, 2026-11-04. A separate reviewer received only the localized caption files, never the English originals, brief or history. Revised fields were sent back separately without English. The primary agent compared the returned English with the approved 1.3.0 copy.
+
+Limit: same model family; this is a consistency check, not native-speaker review. Owner approval is pending. The Korean first-person labels follow the approved app wording; omitted possessives and polite invitations retain the same claims.
+
+| Slot / field | English original | Localized text | Blind back-translation | Comparison / note |
+|---|---|---|---|---|
+| results / tag | CLEAR FEEDBACK | ملاحظات واضحة | CLEAR NOTES | Meaning matches. Modern Standard Arabic; singular addressee, normally masculine by default. ملاحظات can mean notes, comments or feedback. |
+| results / title | Every answer explained. | كل إجابة مع شرحها. | Every answer with its explanation. | Meaning matches. Modern Standard Arabic; singular addressee, normally masculine by default. ملاحظات can mean notes, comments or feedback. |
+| results / subtitle | Your answer, the correction and the reason. | إجابتك والتصحيح والسبب. | Your answer, the correction and the reason. | Meaning matches. Modern Standard Arabic; singular addressee, normally masculine by default. ملاحظات can mean notes, comments or feedback. |
+| hint / tag | TOPIC HINTS | تلميحات الموضوع | TOPIC HINTS | Meaning matches. Modern Standard Arabic, masculine singular imperatives. اسحب literally means pull/drag and can mean swipe in a UI. |
+| hint / title | See the grammar pattern. | شاهد النمط النحوي. | See the grammatical pattern. | Meaning matches. Modern Standard Arabic, masculine singular imperatives. اسحب literally means pull/drag and can mean swipe in a UI. |
+| hint / subtitle | Slide to reveal a topic reminder. | اسحب لتذكيرك بالموضوع. | Swipe to remind you of the topic. | Meaning matches. Modern Standard Arabic, masculine singular imperatives. اسحب literally means pull/drag and can mean swipe in a UI. |
+| home / tag | MOUNTAIN OF LEARNING | جبل التعلّم | MOUNTAIN OF LEARNING | Meaning matches. Modern Standard Arabic; masculine singular imperative. يرتقي can mean rise, ascend or improve. |
+| home / title | Watch your progress climb. | شاهد تقدّمك يرتقي. | Watch your progress ascend. | Meaning matches. Modern Standard Arabic; masculine singular imperative. يرتقي can mean rise, ascend or improve. |
+| home / subtitle | A new mountain each month. A step each day. | جبل جديد كل شهر. خطوة كل يوم. | A new mountain every month. A step every day. | Meaning matches. Modern Standard Arabic; masculine singular imperative. يرتقي can mean rise, ascend or improve. |
+| question / tag | DAILY TEST | الاختبار اليومي | THE DAILY TEST | Meaning matches. Modern Standard Arabic; masculine singular imperative. بنفسك emphasizes doing it oneself. |
+| question / title | Write your own answer. | اكتب إجابتك بنفسك. | Write your answer yourself. | Meaning matches. Modern Standard Arabic; masculine singular imperative. بنفسك emphasizes doing it oneself. |
+| question / subtitle | Five questions. One small daily habit. | خمسة أسئلة. عادة يومية صغيرة. | Five questions. A small daily habit. | Meaning matches. Modern Standard Arabic; masculine singular imperative. بنفسك emphasizes doing it oneself. |
+| review / tag | YOUR WEAK SPOTS | نقاط ضعفك | YOUR WEAK POINTS | Meaning matches. Modern Standard Arabic; masculine singular imperative. القواعد literally means rules and can denote grammar in context. |
+| review / title | Your weak spots, in one place. | نقاط ضعفك، في مكان واحد. | Your weak points, in one place. | Meaning matches. Modern Standard Arabic; masculine singular imperative. القواعد literally means rules and can denote grammar in context. |
+| review / subtitle | See the grammar that keeps coming back. | شاهد القواعد التي تتكرر. | See the rules that repeat. | Meaning matches. Modern Standard Arabic; masculine singular imperative. القواعد literally means rules and can denote grammar in context. |
+| collection / tag | YOUR COLLECTION | مجموعتك | YOUR COLLECTION | Meaning matches. Modern Standard Arabic; masculine singular imperatives. مجموعة can mean group, set or collection. |
+| collection / title | Build your mountain collection. | ابنِ مجموعتك من الجبال. | Build your collection of mountains. | Meaning matches. Modern Standard Arabic; masculine singular imperatives. مجموعة can mean group, set or collection. |
+| collection / subtitle | Keep the medals you earn along the way. | احتفظ بالميداليات التي تكسبها في الطريق. | Keep the medals you earn on the way. | Meaning matches. Modern Standard Arabic; masculine singular imperatives. مجموعة can mean group, set or collection. |
+| onboarding / tag | A COMPANION FOR THE CLIMB | رفيق للتسلّق | A COMPANION FOR CLIMBING | Meaning matches. Modern Standard Arabic; masculine singular imperatives; companion and fox are grammatically masculine. |
+| onboarding / title | Pick your learning companion. | اختر رفيقك في التعلّم. | Choose your companion in learning. | Meaning matches. Modern Standard Arabic; masculine singular imperatives; companion and fox are grammatically masculine. |
+| onboarding / subtitle | Meet your Fox. Make your first step. | تعرّف على ثعلبك. اخطُ خطوتك الأولى. | Get to know your fox. Take your first step. | Meaning matches. Modern Standard Arabic; masculine singular imperatives; companion and fox are grammatically masculine. |
+| multi-blank / tag | EVERY BLANK HAS ITS PLACE | لكل فراغ مكانه | EVERY BLANK HAS ITS PLACE | Meaning matches. Modern Standard Arabic; masculine singular imperatives. خانة means field/box; the article wording explicitly includes both definite and indefinite articles. |
+| multi-blank / title | One box for every blank. | خانة واحدة لكل فراغ. | One field for each blank. | Meaning matches. Modern Standard Arabic; masculine singular imperatives. خانة means field/box; the article wording explicitly includes both definite and indefinite articles. |
+| multi-blank / subtitle | Match each color. Tap — for no article. | طابق كل لون. اضغط — عند عدم استخدام أداة تعريف أو تنكير. | Match every color. Press — when not using a definite or indefinite article. | Meaning matches. Modern Standard Arabic; masculine singular imperatives. خانة means field/box; the article wording explicitly includes both definite and indefinite articles. |
