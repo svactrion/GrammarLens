@@ -27,10 +27,11 @@ import 'package:grammar_lens/widgets/launch_splash.dart';
 import '../../screenshots/seed.dart';
 
 const captureDate = '2026-11-04';
-const captureRun = String.fromEnvironment('CAPTURE_RUN');
+// Fresh capture-only database on every launch; never resets existing data.
+final captureRun = DateTime.now().microsecondsSinceEpoch.toString();
 final captureNow = DateTime(2026, 11, 4, 9, 41);
-const captureDb = 'store_140_$captureRun.db';
-const onboardingDb = 'onboarding_140_$captureRun.db';
+final captureDb = 'store_140_$captureRun.db';
+final onboardingDb = 'onboarding_140_$captureRun.db';
 // Same real bundled questions, reordered only in the capture database.
 // The Tense Selection card contains neither "see" nor "saw".
 final captureQuestions = [kDayZeroQuestions.last, ...kDayZeroQuestions.take(4)];

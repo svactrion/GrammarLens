@@ -38,10 +38,19 @@ xcrun simctl boot "$CAPTURE_DEVICE"
 xcrun simctl bootstatus "$CAPTURE_DEVICE" -b
 xcrun simctl ui "$CAPTURE_DEVICE" appearance light
 xcrun simctl status_bar "$CAPTURE_DEVICE" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState discharging --batteryLevel 100
-EXTRA_DEFINES=(--dart-define="CAPTURE_RUN=${LANGUAGE}_${FAMILY}_$(date +%s)")
+EXTRA_DEFINES=()
+# A universal simulator app may be reused only when the capture sources match.
+RIG_HASH=$(shasum -a 256 tool/marketing/store_130/capture_app.dart tool/screenshots/seed.dart pubspec.lock | shasum -a 256 | cut -d' ' -f1)
+STAMP=build/ios/store-140-rig.sha256
+if [[ "$MODE" == full && -f "$STAMP" && "$(cat "$STAMP")" == "$RIG_HASH" && -d build/ios/iphonesimulator/Runner.app ]]; then
+ EXTRA_DEFINES+=(--use-application-binary="$PWD/build/ios/iphonesimulator/Runner.app")
+ print 'Reusing the identical build 7 capture binary'
+fi
 [[ "$MODE" != onboarding ]] || EXTRA_DEFINES+=(--dart-define=CAPTURE_ONBOARDING_ONLY=true)
 SCREENSHOT_UDID="$CAPTURE_DEVICE" SCREENSHOT_FAMILY="$FAMILY" SCREENSHOT_MODE="$MODE" SCREENSHOT_LANGUAGE="$LANGUAGE" \
  SCREENSHOT_OUT="${STORE_CAPTURE_OUT:-/private/tmp/grammarlens-140-captures/$LANGUAGE/raw/$FAMILY}" \
  flutter drive --no-pub -d "$CAPTURE_DEVICE" "${EXTRA_DEFINES[@]}" \
  --driver=tool/marketing/store_130/capture_driver.dart \
  --target=tool/marketing/store_130/capture_app.dart
+
+[[ "$MODE" != full ]] || print -r -- "$RIG_HASH" > "$STAMP"
