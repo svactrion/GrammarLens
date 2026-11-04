@@ -200,3 +200,19 @@ Review outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone
 show the revised foreground composition. `verification.json` records PNG,
 preservation and unchanged lower-composition checks. v4 awaits owner design
 approval. No other language, iPad, App Store Connect write or push is included.
+
+### Design exploration v5 (general polish requested by owner)
+
+V4's complete error card, visible hint question, varied headings, corrected
+Turkish cedillas and continuous double ribbon remain. The eight pages now
+use small topic illustration badges, the existing translated caption tags
+in contrasting pills, soft light behind the devices and refined layered
+card shadows. Brand and sequence markers share a softer capsule treatment.
+No new caption claims were introduced; native build-7 sources are unchanged.
+
+Source: `tool/marketing/store_130/explore_cozy_tr_v5.cjs`.
+Outputs: `/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/`.
+`overview.png` shows all eight pages. `comparison-v4-v5.png` compares the
+first page, V4 left and V5 right. All eight PNG checks, text fit and caption
+comparisons passed (`verification.json`). Turkish iPhone design review
+continues; no other locales, iPad, ASC uploads or push are included.
