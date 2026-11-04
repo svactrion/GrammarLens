@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_driver/driver_extension.dart';
 import 'package:grammar_lens/app.dart';
+import 'package:grammar_lens/l10n/l10n.dart';
 import 'package:grammar_lens/data/day_zero_daily_test.dart';
 import 'package:grammar_lens/data/topic_hints.dart';
 import 'package:grammar_lens/data/topics.dart';
@@ -25,10 +26,11 @@ import 'package:grammar_lens/widgets/launch_splash.dart';
 
 import '../../screenshots/seed.dart';
 
-const captureDate = '2026-10-16';
-final captureNow = DateTime(2026, 10, 16, 9, 41);
-const captureDb = 'product_capture_2026_10_16_store_r2.db';
-const onboardingDb = 'product_capture_2026_10_16_onboarding_r2.db';
+const captureDate = '2026-11-04';
+const captureRun = String.fromEnvironment('CAPTURE_RUN');
+final captureNow = DateTime(2026, 11, 4, 9, 41);
+const captureDb = 'store_140_${captureRun}.db';
+const onboardingDb = 'onboarding_140_${captureRun}.db';
 // Same real bundled questions, reordered only in the capture database.
 // The Tense Selection card contains neither "see" nor "saw".
 final captureQuestions = [kDayZeroQuestions.last, ...kDayZeroQuestions.take(4)];
@@ -113,11 +115,26 @@ Future<void> launchOnboarding() async {
     throw StateError('Onboarding capture DB already has a profile; keep it.');
   }
   await store.setThemeMode(AppThemeMode.light);
+  await store.setLanguage(AppLanguage.system);
   launch(store, 'onboarding-capture');
 }
 
 Future<void> main() async {
   enableFlutterDriverExtension(handler: (request) async {
+    if (request == 'labels') {
+      final context = navigator.context;
+      final l = context.l10n;
+      return jsonEncode({
+        'locale': Localizations.localeOf(context).languageCode,
+        'systemLocale': WidgetsBinding.instance.platformDispatcher.locale.toString(),
+        'languageSetting': (await storage.getLanguage()).storageValue,
+        'start': l.homeDailyStart, 'next': l.questionNext,
+        'finish': l.questionFinish, 'climb': l.dailyResultSeeClimb,
+        'review': l.featureReview, 'profile': l.navProfile,
+        'collection': l.settingsMedalCollection,
+        'getStarted': l.welcomeGetStarted, 'fox': l.avatarFox,
+      });
+    }
     if (request == 'answers') return jsonEncode(captureAnswers);
     if (request == 'unfocus') {
       FocusManager.instance.primaryFocus?.unfocus();
@@ -127,7 +144,8 @@ Future<void> main() async {
       final box = keyedBox('topic_hint_knob');
       final start = box.localToGlobal(box.size.center(Offset.zero));
       final track = keyedBox('topic_hint_track');
-      final travel = track.size.width - 56;
+      final rtl = Directionality.of(elementWhere((e) => e.widget.key == const ValueKey('topic_hint_track'))!) == TextDirection.rtl;
+      final travel = (track.size.width - 56) * (rtl ? -1 : 1);
       GestureBinding.instance.handlePointerEvent(
           PointerDownEvent(pointer: heldPointer, position: start));
       var previous = start;
@@ -176,7 +194,9 @@ Future<void> main() async {
         'promptVerbOrAnswerInHint':
             RegExp(r'\b(?:see|saw)\b', caseSensitive: false)
                 .hasMatch(points.join(' ')),
-        'knobAtEnd': (knobRight - trackRight).abs() < 0.5,
+        'knobAtEnd': Directionality.of(elementWhere((e) => e.widget.key == const ValueKey('topic_hint_track'))!) == TextDirection.rtl
+            ? (knob.localToGlobal(Offset.zero).dx - track.localToGlobal(Offset.zero).dx).abs() < 0.5
+            : (knobRight - trackRight).abs() < 0.5,
         'card': {
           'x': p.dx,
           'y': p.dy,
@@ -223,5 +243,6 @@ Future<void> main() async {
   await storage.saveDailyTestSet(captureQuestions,
       day: captureDate, source: DailyTestSource.bundled);
   await storage.setThemeMode(AppThemeMode.light);
+  await storage.setLanguage(AppLanguage.system);
   launch(storage, 'store-capture');
 }

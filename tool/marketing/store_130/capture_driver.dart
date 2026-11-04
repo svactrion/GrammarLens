@@ -5,6 +5,8 @@ import 'package:flutter_driver/flutter_driver.dart';
 
 const timeout = Duration(seconds: 40);
 late FlutterDriver driver;
+late Map<String, dynamic> labels;
+String label(String key) => labels[key] as String;
 final device = Platform.environment['SCREENSHOT_UDID']!;
 final output = Platform.environment['SCREENSHOT_OUT']!;
 final isIpad = Platform.environment['SCREENSHOT_FAMILY'] == 'ipad';
@@ -40,9 +42,9 @@ Future<void> shot(String name) async {
 Future<void> onboarding() async {
   // Welcome never settles: reuse the original screenshot driver's rule.
   await driver.runUnsynchronized(() async {
-    await driver.waitFor(find.text('Get started'), timeout: timeout);
+    await driver.waitFor(find.text(label('getStarted')), timeout: timeout);
     await wait(1500);
-    await driver.tap(find.text('Get started'), timeout: timeout);
+    await driver.tap(find.text(label('getStarted')), timeout: timeout);
   });
   await driver.waitFor(find.byValueKey('onboarding_name'), timeout: timeout);
   await tap(find.byValueKey('onboarding_name'));
@@ -50,14 +52,14 @@ Future<void> onboarding() async {
   await driver.requestData('unfocus');
   for (var n = 0; n < 17; n++) {
     if (await driver.getText(find.byValueKey('avatar_carousel_caption')) ==
-        'Fox') {
+        label('fox')) {
       break;
     }
     await tap(find.byValueKey('avatar_carousel_next'));
     await wait(700);
   }
   if (await driver.getText(find.byValueKey('avatar_carousel_caption')) !=
-      'Fox') {
+      label('fox')) {
     throw StateError('Fox selection did not settle.');
   }
   await shot('07-onboarding');
@@ -70,15 +72,22 @@ Future<void> main() async {
     await driver
         .waitUntilFirstFrameRasterized()
         .timeout(const Duration(minutes: 2));
+    await wait(3000);
+    labels = jsonDecode(await driver.requestData('labels')) as Map<String, dynamic>;
+    final expected = Platform.environment['SCREENSHOT_LANGUAGE']!.split('-').first;
+    if (labels['locale'] != expected || labels['languageSetting'] != 'system') {
+      throw StateError('Wrong interface language: $labels, expected $expected / system');
+    }
+    File('$output/locale-audit.json').writeAsStringSync(jsonEncode(labels));
     if (onboardingOnly) {
       await onboarding();
       return;
     }
-    await driver.waitFor(find.text('Start daily test'), timeout: timeout);
+    await driver.waitFor(find.text(label('start')), timeout: timeout);
     await wait(3500);
     final answers = (jsonDecode(await driver.requestData('answers')) as List)
         .cast<String>();
-    await tap(find.text('Start daily test'));
+    await tap(find.text(label('start')));
     await shot('04-question');
     await driver.requestData('hold_hint');
     await driver.waitFor(find.byValueKey('topic_hint_card'), timeout: timeout);
@@ -93,22 +102,22 @@ Future<void> main() async {
     for (final (i, answer) in answers.indexed) {
       await tap(find.byType('TextField'));
       await driver.enterText(answer, timeout: timeout);
-      await tap(find.text(i == answers.length - 1 ? 'Finish' : 'Next'));
+      await tap(find.text(i == answers.length - 1 ? label('finish') : label('next')));
       await wait(700);
     }
-    await driver.waitFor(find.text('See your climb'), timeout: timeout);
+    await driver.waitFor(find.text(label('climb')), timeout: timeout);
     await shot('01-results');
-    await tap(find.text('See your climb'));
+    await tap(find.text(label('climb')));
     await wait(7000);
     await driver.scroll(
         list('HomeScreen'), 0, 4000, const Duration(milliseconds: 400),
         timeout: timeout);
     await shot('03-home');
-    await tap(tab('Review'));
+    await tap(tab(label('review')));
     await shot('05-review');
-    await tap(tab('Profile'));
+    await tap(tab(label('profile')));
     if (!isIpad) {
-      await driver.scrollIntoView(find.text('Medal collection'),
+      await driver.scrollIntoView(find.text(label('collection')),
           alignment: 0.02, timeout: timeout);
     }
     await shot('06-collection');
