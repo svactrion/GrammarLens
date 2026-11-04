@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "language": "pt-BR",
+    "fontFamily": "Nunito Sans",
+    "fontWeights": {
+      "tag": 800,
+      "title": 900,
+      "subtitle": 600
+    },
+    "direction": "ltr",
+    "source": "copy.json (1.3.0 approved English)",
+    "fontWeightReview": "Visually checked on composed iPad frame 01 against the approved Nunito Sans design; tag/title/subtitle weights confirmed."
+  },
+  "results": {
+    "label": "results",
+    "tag": "FEEDBACK CLARO",
+    "title": [
+      "Cada resposta,",
+      "explicada."
+    ],
+    "subtitle": "Sua resposta, a correção e o motivo."
+  },
+  "hint": {
+    "label": "hint",
+    "tag": "DICAS DO TEMA",
+    "title": [
+      "Veja o padrão",
+      "gramatical."
+    ],
+    "subtitle": "Deslize para ver um lembrete do tema."
+  },
+  "home": {
+    "label": "home",
+    "tag": "MONTANHA DO APRENDIZADO",
+    "title": [
+      "Veja seu",
+      "progresso subir."
+    ],
+    "subtitle": "Uma nova montanha por mês. Um passo por dia."
+  },
+  "question": {
+    "label": "question",
+    "tag": "TESTE DIÁRIO",
+    "title": [
+      "Escreva sua",
+      "própria resposta."
+    ],
+    "subtitle": "Cinco perguntas. Um pequeno hábito diário."
+  },
+  "review": {
+    "label": "review",
+    "tag": "SEUS PONTOS FRACOS",
+    "title": [
+      "Seus pontos fracos,",
+      "em um só lugar."
+    ],
+    "subtitle": "Veja a gramática que volta a aparecer."
+  },
+  "collection": {
+    "label": "collection",
+    "tag": "SUA COLEÇÃO",
+    "title": [
+      "Monte sua coleção",
+      "de montanhas."
+    ],
+    "subtitle": "Guarde as medalhas que você ganha pelo caminho."
+  },
+  "onboarding": {
+    "label": "onboarding",
+    "tag": "UM COMPANHEIRO PARA A SUBIDA",
+    "title": [
+      "Escolha seu",
+      "companheiro de estudo."
+    ],
+    "subtitle": "Conheça sua Raposa. Dê seu primeiro passo."
+  },
+  "multi-blank": {
+    "label": "multi-blank",
+    "tag": "CADA LACUNA TEM SEU LUGAR",
+    "title": [
+      "Uma caixa para",
+      "cada lacuna."
+    ],
+    "subtitle": "Combine cada cor. Toque em — para não usar artigo."
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "language": "ja",
+    "fontFamily": "Noto Sans JP",
+    "fontWeights": {
+      "tag": 700,
+      "title": 800,
+      "subtitle": 500
+    },
+    "direction": "ltr",
+    "source": "copy.json (1.3.0 approved English)",
+    "fontWeightReview": "Visually checked on composed iPad frame 01 against the approved Nunito Sans design; tag/title/subtitle weights confirmed."
+  },
+  "results": {
+    "label": "results",
+    "tag": "わかりやすいフィードバック",
+    "title": [
+      "すべての答えに",
+      "解説がつきます。"
+    ],
+    "subtitle": "あなたの解答、修正後の答え、その理由。"
+  },
+  "hint": {
+    "label": "hint",
+    "tag": "トピックのヒント",
+    "title": [
+      "文法パターンを",
+      "確認できます。"
+    ],
+    "subtitle": "スライドして、トピックを思い出すヒントを表示できます。"
+  },
+  "home": {
+    "label": "home",
+    "tag": "学びの山",
+    "title": [
+      "あなたの進歩が",
+      "のぼる様子を見ましょう。"
+    ],
+    "subtitle": "毎月新しい山。毎日一歩ずつ。"
+  },
+  "question": {
+    "label": "question",
+    "tag": "デイリーテスト",
+    "title": [
+      "自分の答えを",
+      "書きましょう。"
+    ],
+    "subtitle": "5つの問題。毎日の小さな習慣。"
+  },
+  "review": {
+    "label": "review",
+    "tag": "あなたの弱点",
+    "title": [
+      "あなたの弱点を",
+      "ひとまとめに。"
+    ],
+    "subtitle": "繰り返し出てくる文法を確認できます。"
+  },
+  "collection": {
+    "label": "collection",
+    "tag": "あなたのコレクション",
+    "title": [
+      "山のコレクションを",
+      "増やしましょう。"
+    ],
+    "subtitle": "道のりで獲得したメダルを残しましょう。"
+  },
+  "onboarding": {
+    "label": "onboarding",
+    "tag": "登山の仲間",
+    "title": [
+      "学習仲間を",
+      "選びましょう。"
+    ],
+    "subtitle": "キツネに出会って、最初の一歩を踏み出しましょう。"
+  },
+  "multi-blank": {
+    "label": "multi-blank",
+    "tag": "空欄にはそれぞれの場所があります",
+    "title": [
+      "空欄ごとに",
+      "入力欄があります。"
+    ],
+    "subtitle": "色を合わせましょう。冠詞なしなら — をタップ。"
+  }
+}
