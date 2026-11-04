@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "language": "de",
+    "fontFamily": "Nunito Sans",
+    "fontWeights": {
+      "tag": 800,
+      "title": 900,
+      "subtitle": 600
+    },
+    "direction": "ltr",
+    "source": "copy.json (1.3.0 approved English)",
+    "fontWeightReview": "pending visual comparison"
+  },
+  "results": {
+    "label": "results",
+    "tag": "KLARES FEEDBACK",
+    "title": [
+      "Jede Antwort",
+      "erklärt."
+    ],
+    "subtitle": "Deine Antwort, die Korrektur und der Grund."
+  },
+  "hint": {
+    "label": "hint",
+    "tag": "THEMEN-TIPPS",
+    "title": [
+      "Erkenne das",
+      "Grammatikmuster."
+    ],
+    "subtitle": "Schiebe, um eine Erinnerung zum Thema zu sehen."
+  },
+  "home": {
+    "label": "home",
+    "tag": "LERNBERG",
+    "title": [
+      "Sieh deinen",
+      "Fortschritt steigen."
+    ],
+    "subtitle": "Jeden Monat ein neuer Berg. Jeden Tag ein Schritt."
+  },
+  "question": {
+    "label": "question",
+    "tag": "TAGESTEST",
+    "title": [
+      "Schreib deine",
+      "eigene Antwort."
+    ],
+    "subtitle": "Fünf Fragen. Eine kleine tägliche Gewohnheit."
+  },
+  "review": {
+    "label": "review",
+    "tag": "DEINE SCHWACHSTELLEN",
+    "title": [
+      "Deine Schwachstellen,",
+      "an einem Ort."
+    ],
+    "subtitle": "Sieh die Grammatik, die immer wiederkehrt."
+  },
+  "collection": {
+    "label": "collection",
+    "tag": "DEINE SAMMLUNG",
+    "title": [
+      "Baue deine",
+      "Bergsammlung auf."
+    ],
+    "subtitle": "Behalte die Medaillen, die du unterwegs verdienst."
+  },
+  "onboarding": {
+    "label": "onboarding",
+    "tag": "EIN BEGLEITER FÜR DEN AUFSTIEG",
+    "title": [
+      "Wähle deinen",
+      "Lernbegleiter."
+    ],
+    "subtitle": "Lerne deinen Fuchs kennen. Mach den ersten Schritt."
+  },
+  "multi-blank": {
+    "label": "multi-blank",
+    "tag": "JEDE LÜCKE HAT IHREN PLATZ",
+    "title": [
+      "Ein Feld für",
+      "jede Lücke."
+    ],
+    "subtitle": "Ordne jede Farbe zu. Tippe — für keinen Artikel."
+  }
+}

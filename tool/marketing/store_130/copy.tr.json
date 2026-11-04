@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "language": "tr",
+    "fontFamily": "Nunito Sans",
+    "fontWeights": {
+      "tag": 800,
+      "title": 900,
+      "subtitle": 600
+    },
+    "direction": "ltr",
+    "source": "copy.json (1.3.0 approved English)",
+    "fontWeightReview": "pending visual comparison"
+  },
+  "results": {
+    "label": "results",
+    "tag": "NET GERİ BİLDİRİM",
+    "title": [
+      "Her cevap",
+      "açıklanır."
+    ],
+    "subtitle": "Cevabın, düzeltilmiş hali ve nedeni."
+  },
+  "hint": {
+    "label": "hint",
+    "tag": "KONU İPUÇLARI",
+    "title": [
+      "Gramer kalıbını",
+      "gör."
+    ],
+    "subtitle": "Konuyu hatırlatan ipucunu görmek için kaydır."
+  },
+  "home": {
+    "label": "home",
+    "tag": "ÖĞRENME DAĞI",
+    "title": [
+      "İlerlemenin",
+      "yükselişini izle."
+    ],
+    "subtitle": "Her ay yeni bir dağ. Her gün bir adım."
+  },
+  "question": {
+    "label": "question",
+    "tag": "GÜNLÜK TEST",
+    "title": [
+      "Kendi cevabını",
+      "yaz."
+    ],
+    "subtitle": "Beş soru. Küçük bir günlük alışkanlık."
+  },
+  "review": {
+    "label": "review",
+    "tag": "ZAYIF NOKTALARIN",
+    "title": [
+      "Zayıf noktaların,",
+      "tek bir yerde."
+    ],
+    "subtitle": "Tekrar karşına çıkan grameri gör."
+  },
+  "collection": {
+    "label": "collection",
+    "tag": "KOLEKSİYONUN",
+    "title": [
+      "Dağ koleksiyonunu",
+      "oluştur."
+    ],
+    "subtitle": "Yol boyunca kazandığın madalyaları sakla."
+  },
+  "onboarding": {
+    "label": "onboarding",
+    "tag": "TIRMANIŞ İÇİN BİR ARKADAŞ",
+    "title": [
+      "Öğrenme arkadaşını",
+      "seç."
+    ],
+    "subtitle": "Tilkinle tanış. İlk adımını at."
+  },
+  "multi-blank": {
+    "label": "multi-blank",
+    "tag": "HER BOŞLUĞUN BİR YERİ VAR",
+    "title": [
+      "Her boşluğa",
+      "bir kutu."
+    ],
+    "subtitle": "Her rengi eşleştir. Artikel yoksa — işaretine dokun."
+  }
+}

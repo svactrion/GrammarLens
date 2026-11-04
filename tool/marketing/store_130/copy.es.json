@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "language": "es",
+    "fontFamily": "Nunito Sans",
+    "fontWeights": {
+      "tag": 800,
+      "title": 900,
+      "subtitle": 600
+    },
+    "direction": "ltr",
+    "source": "copy.json (1.3.0 approved English)",
+    "fontWeightReview": "pending visual comparison"
+  },
+  "results": {
+    "label": "results",
+    "tag": "RETROALIMENTACIÓN CLARA",
+    "title": [
+      "Cada respuesta,",
+      "explicada."
+    ],
+    "subtitle": "Tu respuesta, la corrección y el porqué."
+  },
+  "hint": {
+    "label": "hint",
+    "tag": "PISTAS DEL TEMA",
+    "title": [
+      "Ve el patrón",
+      "gramatical."
+    ],
+    "subtitle": "Desliza para ver un recordatorio del tema."
+  },
+  "home": {
+    "label": "home",
+    "tag": "MONTAÑA DEL APRENDIZAJE",
+    "title": [
+      "Mira cómo sube",
+      "tu progreso."
+    ],
+    "subtitle": "Una montaña nueva cada mes. Un paso cada día."
+  },
+  "question": {
+    "label": "question",
+    "tag": "TEST DIARIO",
+    "title": [
+      "Escribe tu",
+      "propia respuesta."
+    ],
+    "subtitle": "Cinco preguntas. Un pequeño hábito diario."
+  },
+  "review": {
+    "label": "review",
+    "tag": "TUS PUNTOS DÉBILES",
+    "title": [
+      "Tus puntos débiles,",
+      "en un solo lugar."
+    ],
+    "subtitle": "Ve la gramática que vuelve a aparecer."
+  },
+  "collection": {
+    "label": "collection",
+    "tag": "TU COLECCIÓN",
+    "title": [
+      "Crea tu colección",
+      "de montañas."
+    ],
+    "subtitle": "Conserva las medallas que ganas en el camino."
+  },
+  "onboarding": {
+    "label": "onboarding",
+    "tag": "UN COMPAÑERO PARA EL ASCENSO",
+    "title": [
+      "Elige tu compañero",
+      "de aprendizaje."
+    ],
+    "subtitle": "Conoce a tu Zorro. Da tu primer paso."
+  },
+  "multi-blank": {
+    "label": "multi-blank",
+    "tag": "CADA ESPACIO TIENE SU LUGAR",
+    "title": [
+      "Un recuadro para",
+      "cada espacio."
+    ],
+    "subtitle": "Relaciona cada color. Toca — si no hay artículo."
+  }
+}

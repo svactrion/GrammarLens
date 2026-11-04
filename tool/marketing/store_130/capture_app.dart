@@ -29,8 +29,8 @@ import '../../screenshots/seed.dart';
 const captureDate = '2026-11-04';
 const captureRun = String.fromEnvironment('CAPTURE_RUN');
 final captureNow = DateTime(2026, 11, 4, 9, 41);
-const captureDb = 'store_140_${captureRun}.db';
-const onboardingDb = 'onboarding_140_${captureRun}.db';
+const captureDb = 'store_140_$captureRun.db';
+const onboardingDb = 'onboarding_140_$captureRun.db';
 // Same real bundled questions, reordered only in the capture database.
 // The Tense Selection card contains neither "see" nor "saw".
 final captureQuestions = [kDayZeroQuestions.last, ...kDayZeroQuestions.take(4)];
@@ -122,12 +122,14 @@ Future<void> launchOnboarding() async {
 Future<void> main() async {
   enableFlutterDriverExtension(handler: (request) async {
     if (request == 'labels') {
+      final languageSetting = (await storage.getLanguage()).storageValue;
       final context = navigator.context;
+      if (!context.mounted) throw StateError('Capture context unmounted');
       final l = context.l10n;
       return jsonEncode({
         'locale': Localizations.localeOf(context).languageCode,
         'systemLocale': WidgetsBinding.instance.platformDispatcher.locale.toString(),
-        'languageSetting': (await storage.getLanguage()).storageValue,
+        'languageSetting': languageSetting,
         'start': l.homeDailyStart, 'next': l.questionNext,
         'finish': l.questionFinish, 'climb': l.dailyResultSeeClimb,
         'review': l.featureReview, 'profile': l.navProfile,

@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "language": "ko",
+    "fontFamily": "Noto Sans KR",
+    "fontWeights": {
+      "tag": 800,
+      "title": 900,
+      "subtitle": 600
+    },
+    "direction": "ltr",
+    "source": "copy.json (1.3.0 approved English)",
+    "fontWeightReview": "pending visual comparison"
+  },
+  "results": {
+    "label": "results",
+    "tag": "명확한 피드백",
+    "title": [
+      "모든 답을",
+      "설명해 드려요."
+    ],
+    "subtitle": "내 답변, 고친 답, 그리고 그 이유."
+  },
+  "hint": {
+    "label": "hint",
+    "tag": "주제 힌트",
+    "title": [
+      "문법 패턴을",
+      "확인해요."
+    ],
+    "subtitle": "밀어서 주제를 떠올릴 힌트를 확인해요."
+  },
+  "home": {
+    "label": "home",
+    "tag": "배움의 산",
+    "title": [
+      "나의 발전이",
+      "올라가는 걸 봐요."
+    ],
+    "subtitle": "매달 새로운 산. 매일 한 걸음."
+  },
+  "question": {
+    "label": "question",
+    "tag": "데일리 테스트",
+    "title": [
+      "자신의 답을",
+      "직접 써요."
+    ],
+    "subtitle": "다섯 문제. 매일의 작은 습관."
+  },
+  "review": {
+    "label": "review",
+    "tag": "나의 약점",
+    "title": [
+      "나의 약점을",
+      "한곳에 모아요."
+    ],
+    "subtitle": "계속 반복되는 문법을 확인해요."
+  },
+  "collection": {
+    "label": "collection",
+    "tag": "나의 컬렉션",
+    "title": [
+      "산 컬렉션을",
+      "쌓아 가요."
+    ],
+    "subtitle": "가는 길에 얻은 메달을 간직해요."
+  },
+  "onboarding": {
+    "label": "onboarding",
+    "tag": "등반을 함께할 친구",
+    "title": [
+      "학습 친구를",
+      "골라요."
+    ],
+    "subtitle": "나의 여우를 만나요. 첫걸음을 내디뎌요."
+  },
+  "multi-blank": {
+    "label": "multi-blank",
+    "tag": "모든 빈칸에는 자리가 있어요",
+    "title": [
+      "빈칸마다",
+      "입력 상자가 있어요."
+    ],
+    "subtitle": "색을 맞춰요. 관사가 없으면 — 를 눌러요."
+  }
+}

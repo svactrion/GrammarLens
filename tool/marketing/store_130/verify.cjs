@@ -1,3 +1,4 @@
+if(process.argv[2]==='--140'){require('./verify_140.cjs');}else{
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),cp=require('child_process');
 const sharp=require('/Users/ahmet/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');
 const root=path.resolve('docs/product/marketing/2026-10-16-app-store');
@@ -112,3 +113,5 @@ async function main(){
  console.log(`Verified ${files.length} opaque RGB exports, ${raw.length} native captures and ${links.length} local gallery links.`);
 }
 main().catch(e=>{console.error(e);process.exit(1)});
+
+}
