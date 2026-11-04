@@ -131,7 +131,7 @@ Future<void> main() async {
         'locale': Localizations.localeOf(context).languageCode,
         'systemLocale': WidgetsBinding.instance.platformDispatcher.locale.toString(),
         'languageSetting': languageSetting,
-        'start': l.homeDailyStart, 'next': l.questionNext,
+        'dailyTitle': l.featureDailyTest, 'start': l.homeDailyStart, 'next': l.questionNext,
         'finish': l.questionFinish, 'climb': l.dailyResultSeeClimb,
         'review': l.featureReview, 'profile': l.navProfile,
         'collection': l.settingsMedalCollection,

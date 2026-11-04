@@ -100,9 +100,9 @@ async function poster(family,name,index){
  const tag=await fit(c.tag,pad?28:22,pad?28:22,maxWidth,1,weights.tag,latin?1.6:0);
  body+=caption(x,pad?268:230,c.tag,tag.size,weights.tag,C.navy,latin?1.6:0);
  // Keep approved English line breaks and sizes; fit localized text in up to 3 lines.
- let title=language==='en'?{lines:c.title,size:pad?122:82}:await fit(c.title.join(' '),pad?122:82,pad?36:27,maxWidth,3,weights.title,latin?(pad?-3.5:-2.5):0);
+ let title=language==='en'?{lines:c.title,size:pad?122:82}:await fit(c.title.join(language==='ja'?'':' '),pad?122:82,pad?36:27,maxWidth,3,weights.title,latin?(pad?-3.5:-2.5):0);
  let step=title.lines.length===3?(pad?102:78):(pad?140:99);
- if(title.lines.length===3&&title.size>step*.9)title=await fit(c.title.join(' '),Math.floor(step*.9),pad?36:27,maxWidth,3,weights.title,latin?(pad?-3.5:-2.5):0);
+ if(title.lines.length===3&&title.size>step*.9)title=await fit(c.title.join(language==='ja'?'':' '),Math.floor(step*.9),pad?36:27,maxWidth,3,weights.title,latin?(pad?-3.5:-2.5):0);
  const start=title.lines.length===3?(pad?380:328):(pad?412:356);
  title.lines.forEach((line,i)=>{body+=caption(x,start+i*step,line,title.size,weights.title,C.ink,latin?(pad?-3.5:-2.5):0);});
  const sub=await fit(c.subtitle,pad?36:27,pad?36:27,maxWidth,2,weights.subtitle);

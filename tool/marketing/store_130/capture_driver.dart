@@ -88,7 +88,10 @@ Future<void> main() async {
     final answers = (jsonDecode(await driver.requestData('answers')) as List)
         .cast<String>();
     await tap(find.text(label('start')));
+    await driver.waitFor(find.text(label('dailyTitle')), timeout: timeout);
     await shot('04-question');
+    labels['firstFrameTitleVerified'] = label('dailyTitle');
+    File('$output/locale-audit.json').writeAsStringSync(jsonEncode(labels));
     await driver.requestData('hold_hint');
     await driver.waitFor(find.byValueKey('topic_hint_card'), timeout: timeout);
     await shot('02-hint');
