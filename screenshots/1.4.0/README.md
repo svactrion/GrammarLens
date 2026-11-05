@@ -345,3 +345,10 @@ localizations; source PNG remains 3840 × 1646 RGB.
 [Current header read-back](asc/header-v5-read-back.md) and
 [measured comparison](product-page/header-device-comparison-v5.png).
 No other ASC content or submission state changed.
+
+## README images (2026-11-05)
+
+`readme/`, made with ImageMagick (Lanczos) for the repository's README:
+`header.png` (1600 × 686) from `product-page/header.png`, and six frames
+(600 × 1304) from `en/store/iphone-6.9/`, the first six in the en-US store
+order: 01, 04, 02, 08, 03, 05. Not uploaded anywhere.

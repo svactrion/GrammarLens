@@ -14167,3 +14167,16 @@ Docs only here. The App Store Connect work was done by Codex (API) and the owner
   - No result on record at the submission for the B10.3 re-check, B1's audit items on build 7, the Phase 5 device check or the paywall on a non-USD storefront; they stay unticked until the owner reports them.
   - Which localization India's store shows (D1): no record.
   - The `StorageService` fix (`8d4183b`) is not in build 7, as recorded on 2026-11-03.
+
+## 2026-11-05 (README refreshed for the 1.4.0 submission)
+
+Docs and assets only.
+
+- **[Docs]** README: the status line (1.3.0 live, 1.4.0 submitted); the 1.4.0 header and six en-US frames (`screenshots/1.4.0/readme/`, downscaled: the source header is 4.2 MB and the frames 1.5–3 MB); feature copy from the approved en-US description (`screenshots/1.4.0/asc/metadata.json`); an interface languages section; a 1.4.0 row in the version table; the 1.3.0 set kept as "Live version"; a Stack and a Docs section; two more key decisions. The shields.io badge stays: Apple's official file is still not in the repository.
+- **[Checked against the request, written as the record shows]**
+  - No "decline" for analytics: a release build always sends it (`AnalyticsGate`), with no in-app switch. What can be declined or withdrawn is the AI permission. The README says so.
+  - Feature names are translated, topic names are not (owner, 2026-11-02, B5), so the decision line says that.
+  - The subscription is "Premium" in the app and on the store, not "Pro".
+  - Haiku against Sonnet 5.5: "about a third" holds for a whole 5-question session (≈ $0.0093 against ≈ $0.0264; `1.4.0-measurement-report.md` §6); agreement was 97.8 % against 95.4 % (§2), not equal; the labels' model-family limit (§0) is stated.
+  - `FALLBACK_SCORING` is one constant to swap by hand, not an automatic failover.
+  - "(working title)" and the "language pairs" line are in `docs/prd.md` (title; MVP out-of-scope list), not in the README; the PRD is left as written.

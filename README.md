@@ -1,35 +1,46 @@
 # GrammarLens
 
-**An AI-powered grammar coach for people who learned English by speaking it, not by studying it.**
+<p align="center">
+  <img src="screenshots/1.4.0/readme/header.png" width="820" alt="The GrammarLens wordmark beside a card that corrects 'She write every day.' to 'She writes every day.'">
+</p>
+
+GrammarLens turns your English mistakes into practice. Every day you get a short grammar test. When you finish, you don't just see a score — you see why each answer was right or wrong, written in plain language. It is built for people who learned English by speaking it, not by studying it.
+
+**Live on the App Store — 1.3.0 (2 Nov 2026). 1.4.0 (seven interface languages, question-flow improvements) submitted for review 5 Nov 2026.**
 
 <p>
   <a href="https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346"><img src="https://img.shields.io/badge/App_Store-Download-black?logo=apple&logoColor=white" alt="Download on the App Store"></a>
 </p>
 
-**Status: 1.3.0 — live since 2026-11-02** on the [App Store](https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346) (iPhone and iPad, English), build `1.3.0+6`. It is the first public release: it carries the content of 1.1.0 and 1.2.0, which were never submitted, and adds a new question screen. 1.0.0, submitted in September 2026, was never released. 1.4.0 (seven interface languages) is in development ([1.4.0 plan](docs/1.4.0-plan.md)).
-
 <p align="center">
-  <img src="screenshots/1.3.0/readme/hero.png" width="820" alt="Three App Store frames: Every answer explained (Daily Test results); See the grammar pattern (the topic hint); Watch your progress climb (Home with this month's mountain)">
+  <img src="screenshots/1.4.0/readme/01-results.png" width="135" alt="Every answer explained: a Daily Test result with the answer written, its correction and the reason">
+  <img src="screenshots/1.4.0/readme/04-question.png" width="135" alt="Write your own answer: a Daily Test question with its answer box">
+  <img src="screenshots/1.4.0/readme/02-hint.png" width="135" alt="See the grammar pattern: the topic hint slid open on a Tense Selection question">
+  <img src="screenshots/1.4.0/readme/08-multi-blank.png" width="135" alt="One box for every blank: a two-blank Articles question, one blank set to no article">
+  <img src="screenshots/1.4.0/readme/03-home.png" width="135" alt="Watch your progress climb: Home with the avatar on this month's mountain">
+  <img src="screenshots/1.4.0/readme/05-review.png" width="135" alt="Your weak spots, in one place: Review with saved weak spots by topic">
 </p>
 
-<p align="center">
-  <img src="screenshots/1.3.0/readme/04-question.png" width="160" alt="Write your own answer: a Daily Test question with its answer box">
-  <img src="screenshots/1.3.0/readme/05-review.png" width="160" alt="Your weak spots, in one place: Review with saved weak spots by topic">
-  <img src="screenshots/1.3.0/readme/06-collection.png" width="160" alt="Build your mountain collection: Profile's medal collection">
-  <img src="screenshots/1.3.0/readme/07-onboarding.png" width="160" alt="Pick your learning companion: onboarding's avatar choice">
-  <img src="screenshots/1.3.0/readme/08-multi-blank.png" width="160" alt="One box for every blank: a two-blank Articles question">
-</p>
-
-*Screenshots: the 1.3.0 App Store set (build 6), in store order with its captions ([`screenshots/1.3.0/`](screenshots/1.3.0/README.md)). The learner is made up ("Sam"). Earlier versions are under "Version history" below.*
+*Screenshots: the first six frames of the en-US 1.4.0 App Store set (build 7, in review; [`screenshots/1.4.0/`](screenshots/1.4.0/README.md)). The store shows 1.3.0's set until 1.4.0 is approved; it is under "Version history". The learner is made up ("Sam").*
 
 ## What it does
 
-- **Daily Test** (free): five questions a day, graded on the device, each answer explained. From 1.1.0 everyone gets the same set on a given date.
-- **Review**: wrong answers build a personal error profile, shown as weak spots by topic.
-- **Topic Practice** (Premium): AI-generated sets on a chosen topic, graded by AI with plain-language feedback. Free users get one short session a day from a weak spot.
-- **Monthly Climb**: each Daily Test moves the avatar one step up a monthly mountain; a month's score earns a Bronze, Silver or Gold medal.
+- **Daily Test** (free): a fresh set of five questions every day. Fill in the blanks, correct the errors, and get an explanation for every answer. Everyone gets the same set on a given date, and it is graded on the device.
+- **Topic Practice** (Premium): focus on a specific area (Articles, Tense Selection, Modal Verbs, Modal Past Forms, Gerund vs. Infinitive) with sessions of 3, 5 or 10 questions, generated and scored by AI.
+- **Plain-language feedback:** instead of "wrong", you get the reasoning: which rule applies, why your answer doesn't fit, and what to remember next time. New in 1.4.0 (in review): marks per blank on multi-blank questions, and the words that changed between your answer and the correction highlighted.
+- **Review:** built from your own wrong answers. The app remembers which grammar points you keep missing and collects them as weak spots, so you always know what to work on.
+- **Topic hints:** slide to see the grammar pattern for a question's topic: a reminder of the rule, never the answer.
+- **Mountain of Learning** (the Monthly Climb): every Daily Test takes your character one step up this month's mountain; a month's score earns a Bronze, Silver or Gold medal.
+- **Free and Premium:** free includes one Daily Test and one practice session every day. Premium unlocks Topic Practice across all five areas and more practice sessions each day, as a monthly or annual subscription; both include a free trial for new subscribers.
+- **Privacy:** no account and no sign-up. Your name, your progress and your practice history stay on your device. To give feedback, the answers you type in practice sessions are sent to the AI provider, Anthropic, only with your permission, which you can withdraw at any time from the Data screen. The app sends anonymous usage and crash data, never your name; there is no in-app switch to decline it.
 
-## Three decisions, and what each one cost
+## Interface languages
+
+English, plus Turkish, German, Spanish, Portuguese, Japanese, Korean and Arabic in 1.4.0 (in review). 1.3.0, the live version, is English only.
+
+The English content is the same for everyone: questions, answers, AI feedback and topic names stay in English in every language. Only the interface is localized. The translations are AI-made and checked by a blind back-translation; no native speaker has reviewed them ([tables](docs/translations/)).
+
+## Key decisions, and what they cost
 
 **1. One shared Daily Test a day instead of one per device**
 - **Problem:** 1.0.0 generates a set per device per day, ≈ $0.023–0.028 each (measured tokens, 10 local runs). Daily Test cost grows with every active user.
@@ -50,9 +61,18 @@
 - **Cost:** 1.3.0, the first public release, ships with it (it carries the never-submitted 1.1.0's shared Daily Test). The review call costs ≈ $0.04 per set (measured offline), and its findings go to a weekly owner review.
 - **Evidence:** [roadmap](docs/roadmap.md), "Known flaws shipping in 1.1.0"; [build log](docs/build-log.md) 2026-10-04 (P12–P14), 2026-11-02 (proxy deployed); [measurement report](docs/1.4.0-measurement-report.md) §5.
 
+**4. The scoring model, chosen by measurement**
+- **Decision:** Claude Haiku 5.5 scores practice answers; a 5-question session costs about a third of the same session scored by Sonnet 5.5 (≈ $0.0093 against ≈ $0.0264), and Haiku agreed with the labelled sets at least as well (97.8 % against 95.4 %, about 370 answers each).
+- **Limit:** an offline run at list prices, not real users. The labels were written by Claude and reviewed by the owner, so they share a model family with the models measured.
+- **Evidence:** [measurement report](docs/1.4.0-measurement-report.md) §0, §2, §6, §7.
+
+**5. Topic names stay in English in every interface language**
+- **Decision:** topic names (Gerund vs. Infinitive, Modal Verbs, …) name English grammar points and match the questions, so they are not translated. Feature names are translated, one word each; only the brand stays (GrammarLens, Premium).
+- **Evidence:** [build log](docs/build-log.md) 2026-11-02 (B5, the owner's decisions from the Turkish device pass).
+
 ## How it was built
 
-I made the product decisions, set scope and acceptance criteria, and tested on device. The code was written with Claude Code in small batches. The reasoning behind each decision is in [`docs/build-log.md`](docs/build-log.md), dated.
+I made the product decisions, set scope and acceptance criteria, and tested on device. The code was written with Claude Code in small batches; Codex made the 1.4.0 App Store screenshots and uploaded them through the App Store Connect API. The reasoning behind each decision is in [`docs/build-log.md`](docs/build-log.md), dated.
 
 ## Case study and writing
 
@@ -69,7 +89,29 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 | 1.0.0 | Sep 2026 | v2 plus Monthly Climb | Submitted to App Store review; never released |
 | 1.1.0 | Oct 2026 | Shared Daily Test; mountain themes, medals and collection; launch screen; new avatars; iPad layout | Skipped, never submitted; its content ships in 1.2.0 |
 | 1.2.0 | Oct 2026 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; new paywall with trial eligibility; multiline answers | Never submitted; its content ships in 1.3.0 |
-| 1.3.0 | Oct–Nov 2026 | 1.2.0's redesign plus a new question screen: the topic on each question, a slide-to-reveal topic hint, one answer box per blank (with a "no article" button for articles), tap a blank to answer it, and Skip that really skips | **Live since 2026-11-02** (build 6); the first public release |
+| 1.3.0 | Released 2 Nov 2026 | 1.2.0's redesign plus a new question screen: the topic on each question, a slide-to-reveal topic hint, one answer box per blank (with a "no article" button for articles), tap a blank to answer it, and Skip that really skips | **Live since 2026-11-02** (build 6); the first public release |
+| 1.4.0 | Submitted 5 Nov 2026 | Seven more interface languages; multi-blank questions accept a blank left empty and mark each blank; long feedback split into paragraphs; the words that changed highlighted; hints that no longer give the answer away | **In App Store review** (build 7); not live |
+
+**Research:** four short interviews (one a self-interview) and a 3-participant usability test on the MVP ([PRD](docs/prd.md) §2.1, §2.2); fewer testers than the original target of five, a deliberate call.
+
+**Not done yet:** Medium article 2; the home-screen widget (planned for 1.5.0); App Store approval of 1.4.0.
+
+<details>
+<summary><strong>Live version: 1.3.0 screenshots</strong> (the App Store set, build 6)</summary>
+
+<p align="center">
+  <img src="screenshots/1.3.0/readme/hero.png" width="820" alt="Three App Store frames: Every answer explained (Daily Test results); See the grammar pattern (the topic hint); Watch your progress climb (Home with this month's mountain)">
+</p>
+
+<p align="center">
+  <img src="screenshots/1.3.0/readme/04-question.png" width="160" alt="Write your own answer: a Daily Test question with its answer box">
+  <img src="screenshots/1.3.0/readme/05-review.png" width="160" alt="Your weak spots, in one place: Review with saved weak spots by topic">
+  <img src="screenshots/1.3.0/readme/06-collection.png" width="160" alt="Build your mountain collection: Profile's medal collection">
+  <img src="screenshots/1.3.0/readme/07-onboarding.png" width="160" alt="Pick your learning companion: onboarding's avatar choice">
+  <img src="screenshots/1.3.0/readme/08-multi-blank.png" width="160" alt="One box for every blank: a two-blank Articles question">
+</p>
+
+</details>
 
 <details>
 <summary><strong>Previous version: 1.2.0 screenshots</strong> (never submitted; its content ships in 1.3.0)</summary>
@@ -147,22 +189,25 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 
 </details>
 
-## Tech & docs
+## Stack
 
-- **App:** Flutter / Dart, iOS only; local storage in sqflite (no accounts).
-- **AI:** Anthropic's Claude through an operation-based Cloudflare Workers proxy (`proxy/`). The proxy owns the model, prompts and token limits and enforces daily quotas; the API key is never in the client.
+- **App:** Flutter / Dart, iOS only (iPhone and iPad); local storage in sqflite; no accounts.
+- **Server:** a Cloudflare Worker proxy in TypeScript, with KV, in [`proxy/`](proxy/). It owns the models, prompts and token limits and enforces daily quotas; the API key is never in the client.
+- **AI:** the Anthropic API. Haiku 5.5 scores answers, with Sonnet 5.5 as the fallback (one constant to swap by hand, not an automatic failover). Sonnet 5.5 generates practice sets and the Daily Test. Opus 5.5 checks each shared set. Evidence for the choice: [measurement report](docs/1.4.0-measurement-report.md).
 - **Subscriptions:** RevenueCat.
 - **Analytics and crashes:** Firebase Analytics and Crashlytics.
 
-**Local setup:** moved to [`docs/development.md`](docs/development.md).
+## Docs
 
-Docs:
-- [`docs/development.md`](docs/development.md): local setup, debug defines, visual previews
 - [`docs/roadmap.md`](docs/roadmap.md): current status and what's next
-- [`docs/build-log.md`](docs/build-log.md): dated record of decisions and bugs
 - [`docs/prd.md`](docs/prd.md) (MVP), [`docs/prd-v2.md`](docs/prd-v2.md) (v2), [`docs/prd-gamification.md`](docs/prd-gamification.md) (Monthly Climb)
+- [`docs/build-log.md`](docs/build-log.md): dated record of decisions and bugs
+- [`docs/1.4.0-plan.md`](docs/1.4.0-plan.md): the 1.4.0 decisions and work list
+- [`docs/1.4.0-measurement-report.md`](docs/1.4.0-measurement-report.md): the model measurement
+- [`docs/translations/`](docs/translations/): the back-translation reviews, one table per language
 - [`docs/analytics-plan.md`](docs/analytics-plan.md): launch events and how to read them
 - [`docs/case-study-material.md`](docs/case-study-material.md): sourced raw material behind the case study
+- [`docs/development.md`](docs/development.md): local setup, debug defines, visual previews
 
 ## Credits
 
