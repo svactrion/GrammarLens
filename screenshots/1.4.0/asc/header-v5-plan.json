@@ -1,0 +1,44 @@
+{
+  "versionId": "23d20cb5-2df3-49c4-b3c6-841cd080a576",
+  "oldImageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+  "file": "screenshots/1.4.0/product-page/header-A-balanced-v5.png",
+  "fileName": "header-A-balanced-v5.png",
+  "fileSize": 4218739,
+  "sha256": "4292acd44747a5323c6ecdfc84eadace21843a560c3b5e102982a9683c73f109",
+  "referenceName": "GrammarLens 1.4.0 header A balanced v5",
+  "resultFile": "screenshots/1.4.0/asc/header-v5-read-back.json",
+  "localizations": [
+    {
+      "locale": "en-US",
+      "id": "207797dd-54bd-480e-be43-41ef1c6bac66"
+    },
+    {
+      "locale": "tr",
+      "id": "f2380dc1-9551-4863-afb3-c6dd6496e0f3"
+    },
+    {
+      "locale": "de-DE",
+      "id": "9c4a2cfe-bd96-4ee7-b37f-d9e778d16fa2"
+    },
+    {
+      "locale": "es-MX",
+      "id": "59562966-9555-4e74-a371-1f7f6c171cf7"
+    },
+    {
+      "locale": "pt-BR",
+      "id": "6d01380e-710f-48c4-80c3-1079cc96e9c0"
+    },
+    {
+      "locale": "ja",
+      "id": "b704a413-2638-4cdf-a8a6-7e4524012aef"
+    },
+    {
+      "locale": "ko",
+      "id": "39426655-dc45-44a6-9cdb-c583ecdda1e7"
+    },
+    {
+      "locale": "ar-SA",
+      "id": "a741abc3-8025-45b2-9c7e-8362156d87d4"
+    }
+  ]
+}

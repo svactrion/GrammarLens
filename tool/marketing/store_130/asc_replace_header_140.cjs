@@ -1,6 +1,6 @@
 // Replace only 1.4.0 header placements with the owner-approved mobile-fit file.
 const fs=require('fs'),crypto=require('crypto');
-const PLAN='screenshots/1.4.0/asc/header-update-plan.json';
+const PLAN=process.env.ASC_HEADER_PLAN||'screenshots/1.4.0/asc/header-update-plan.json';
 const RUN=process.env.ASC_RUN_DIR||'/private/tmp/grammarlens-140-asc-header-v4';fs.mkdirSync(RUN,{recursive:true});
 const planBytes=fs.readFileSync(PLAN),plan=JSON.parse(planBytes),sha=crypto.createHash('sha256').update(planBytes).digest('hex');
 const statePath=RUN+'/state.json';const state=fs.existsSync(statePath)?JSON.parse(fs.readFileSync(statePath)):{planSha256:sha,next:0,ids:{},results:{},rejections:[],startedAt:new Date().toISOString()};
@@ -18,7 +18,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function upload(file,operations){assert(operations?.length,'No upload operations');const bytes=fs.readFileSync(file);for(const op of operations){assert(op.method==='PUT','Unexpected upload method');const url=new URL(op.url);assert(url.protocol==='https:','Upload URL must be HTTPS');const headers=Object.fromEntries((op.requestHeaders||[]).map(h=>[h.name,h.value]));assert(!Object.keys(headers).some(h=>h.toLowerCase()==='authorization'),'Unexpected authorization on upload');const body=bytes.subarray(op.offset,op.offset+op.length);assert(body.length===op.length,'Upload range mismatch');const r=await fetch(op.url,{method:'PUT',headers,body,signal:AbortSignal.timeout(120000)});log({method:'PUT',path:url.origin+'/<upload-operation-redacted>',status:r.status,file,offset:op.offset,length:op.length});assert(r.ok,'Upload PUT rejected '+r.status);}}
 
 const entry=(type,id)=>({type,id});
-function imageBody(){return {data:{type:'appAssetLibraryImages',attributes:{category:'CREATIVE_ASSETS',fileName:'header-A-mobile-fit-v4.png',fileSize:plan.fileSize,referenceName:'GrammarLens 1.4.0 header A mobile fit v4'},relationships:{assetLibrary:{data:entry('appAssetLibraries','6811477346')}}}}}
+function imageBody(){return {data:{type:'appAssetLibraryImages',attributes:{category:'CREATIVE_ASSETS',fileName:plan.fileName||'header-A-mobile-fit-v4.png',fileSize:plan.fileSize,referenceName:plan.referenceName||'GrammarLens 1.4.0 header A mobile fit v4'},relationships:{assetLibrary:{data:entry('appAssetLibraries','6811477346')}}}}}
 function placementBody(loc,image){return {data:{type:'appAssetLibraryPlacements',attributes:{placementType:'PRODUCT_PAGE_HEADER_ASSET',placementGroup:'DEFAULT_PROFILE'},relationships:{image:{data:entry('appAssetLibraryImages',image)},appStoreVersionLocalization:{data:entry('appStoreVersionLocalizations',loc.id)}}}}}
 async function headers(loc){const data=requireOk(await api('GET','/v1/appStoreVersionLocalizations/'+loc.id+'/placements')).data;const hs=data.filter(x=>x.attributes.placementType==='PRODUCT_PAGE_HEADER_ASSET');const details=[];for(const h of hs)details.push(requireOk(await api('GET','/v1/appAssetLibraryPlacements/'+h.id+'?include=image')).data);return details;}
 (async()=>{
@@ -27,7 +27,7 @@ async function headers(loc){const data=requireOk(await api('GET','/v1/appStoreVe
  const build=requireOk(await api('GET','/v1/appStoreVersions/'+plan.versionId+'/build')).data;assert(build?.attributes.version==='7','Build guard');
  const locs=requireOk(await api('GET','/v1/appStoreVersions/'+plan.versionId+'/appStoreVersionLocalizations')).data;
  for(const loc of plan.localizations){assert(locs.some(l=>l.id===loc.id&&l.attributes.locale===loc.locale),'Locale scope changed');const hs=await headers(loc);assert(hs.length<=1,'Unexpected header count');for(const h of hs)assert([plan.oldImageId,state.imageId].includes(h.relationships?.image?.data?.id),'Existing header unexpectedly changed');}
- if(!state.imageId){const j=requireOk(await api('POST','/v1/appAssetLibraryImages',imageBody()));state.imageId=j.data.id;state.phase='reserved';save();}
+ if(!state.imageId){const j=requireOk(await api('POST','/v1/appAssetLibraryImages',imageBody()));state.imageId=j.data.id;state.reservedAt=new Date().toISOString();state.phase='reserved';save();}
  if(state.phase==='reserved'){
   const j=requireOk(await api('GET','/v1/appAssetLibraryImages/'+state.imageId));
   if(j.data.attributes.state==='AWAITING_UPLOAD'){await upload(plan.file,j.data.attributes.uploadOperations);requireOk(await api('PATCH','/v1/appAssetLibraryImages/'+state.imageId,{data:{type:'appAssetLibraryImages',id:state.imageId,attributes:{uploaded:true}}}));}
@@ -37,6 +37,11 @@ async function headers(loc){const data=requireOk(await api('GET','/v1/appStoreVe
  for(let i=0;i<600;i++){
   image=requireOk(await api('GET','/v1/appAssetLibraryImages/'+state.imageId)).data;
   if(image.attributes.state==='PREPARE_FOR_SUBMISSION')break;
+  if(image.attributes.state==='UPLOAD_COMPLETE'&&Date.now()-Date.parse(state.reservedAt||state.startedAt)>240000&&!state.retryCount){
+   assert(!state.updated?.length&&state.imageId!==plan.oldImageId,'Retry scope');requireOk(await api('DELETE','/v1/appAssetLibraryImages/'+state.imageId));state.retriedImageId=state.imageId;
+   const retry=requireOk(await api('POST','/v1/appAssetLibraryImages',imageBody()));state.imageId=retry.data.id;state.retryCount=1;state.phase='reserved';save();await upload(plan.file,retry.data.attributes.uploadOperations);requireOk(await api('PATCH','/v1/appAssetLibraryImages/'+state.imageId,{data:{type:'appAssetLibraryImages',id:state.imageId,attributes:{uploaded:true}}}));state.phase='processing';save();console.log('One exact-file retry of new unused header.');continue;
+  }
+
   assert(!['FAILED','REJECTED'].includes(image.attributes.state),'Header processing failed '+JSON.stringify(image.attributes.stateDetails));
   if(i===599)throw Error('Header processing timeout');await sleep(2500);
  }
@@ -52,5 +57,5 @@ async function headers(loc){const data=requireOk(await api('GET','/v1/appStoreVe
  const results=[];for(const loc of plan.localizations){const hs=await headers(loc);assert(hs.length===1&&hs[0].relationships?.image?.data?.id===state.imageId,'Header read-back mismatch '+loc.locale);results.push({locale:loc.locale,localizationId:loc.id,placementId:hs[0].id,imageId:state.imageId,state:hs[0].attributes.state});}
  version=requireOk(await api('GET','/v1/appStoreVersions/'+plan.versionId)).data;assert(version.attributes.appStoreState==='PREPARE_FOR_SUBMISSION'&&version.attributes.releaseType==='MANUAL','Final version state');
  const result={status:'passed',readAt:new Date().toISOString(),version:{id:version.id,versionString:version.attributes.versionString,state:version.attributes.appStoreState,releaseType:version.attributes.releaseType,build:'7'},source:{file:plan.file,sha256:plan.sha256,fileSize:plan.fileSize,width:3840,height:1646},previousImageId:plan.oldImageId,image:{id:image.id,state:image.attributes.state,fileName:image.attributes.fileName,specId:image.attributes.specId},localizations:results,runLog:RUN+'/requests.jsonl',scope:'Only 1.4.0 header placements replaced; old library image retained. No screenshots/text/review/submission/release changes.'};
- fs.writeFileSync('screenshots/1.4.0/asc/header-update-read-back.json',JSON.stringify(result,null,2)+'\n');fs.copyFileSync(plan.file,'screenshots/1.4.0/product-page/header.png');state.phase='complete';state.finishedAt=new Date().toISOString();save();console.log('Eight header associations verified. Canonical header.png updated.');
+ fs.writeFileSync(plan.resultFile||'screenshots/1.4.0/asc/header-update-read-back.json',JSON.stringify(result,null,2)+'\n');fs.copyFileSync(plan.file,'screenshots/1.4.0/product-page/header.png');state.phase='complete';state.finishedAt=new Date().toISOString();save();console.log('Eight header associations verified. Canonical header.png updated.');
 })().catch(e=>{console.error(e.message);save();process.exit(1)});
