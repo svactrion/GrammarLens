@@ -1,0 +1,86 @@
+{
+  "status": "passed",
+  "readAt": "2026-11-05T16:43:14.539Z",
+  "version": {
+    "id": "23d20cb5-2df3-49c4-b3c6-841cd080a576",
+    "versionString": "1.4.0",
+    "state": "PREPARE_FOR_SUBMISSION",
+    "releaseType": "MANUAL",
+    "build": "7"
+  },
+  "source": {
+    "file": "screenshots/1.4.0/product-page/header-A-mobile-fit-v4.png",
+    "sha256": "b8240811f39e219e47c3c49b69e9e883ca35787e4a8e6eeb3f84fe61544eddf9",
+    "fileSize": 4387786,
+    "width": 3840,
+    "height": 1646
+  },
+  "previousImageId": "76400019-5fee-8562-8036-188001010828",
+  "image": {
+    "id": "c8c00019-5fee-8562-801e-c927a99a5697",
+    "state": "PREPARE_FOR_SUBMISSION",
+    "fileName": "header-A-mobile-fit-v4.png",
+    "specId": "1eb43b80-e0b7-4d96-bd32-47a42a8c5fed"
+  },
+  "localizations": [
+    {
+      "locale": "en-US",
+      "localizationId": "207797dd-54bd-480e-be43-41ef1c6bac66",
+      "placementId": "49c00019-5fee-8562-8f14-7f1e3470fbd0",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "tr",
+      "localizationId": "f2380dc1-9551-4863-afb3-c6dd6496e0f3",
+      "placementId": "8d400019-5fee-8562-8f31-d398ce6990cd",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "de-DE",
+      "localizationId": "9c4a2cfe-bd96-4ee7-b37f-d9e778d16fa2",
+      "placementId": "8b400019-5fee-8562-8f0f-d2ebbf3440b2",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "es-MX",
+      "localizationId": "59562966-9555-4e74-a371-1f7f6c171cf7",
+      "placementId": "47c00019-5fee-8562-8f39-38570867ba10",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "pt-BR",
+      "localizationId": "6d01380e-710f-48c4-80c3-1079cc96e9c0",
+      "placementId": "94000019-5fee-8562-8f2b-c32d7b422074",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "ja",
+      "localizationId": "b704a413-2638-4cdf-a8a6-7e4524012aef",
+      "placementId": "2fc00019-5fee-8562-8f0f-398c2e8674f7",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "ko",
+      "localizationId": "39426655-dc45-44a6-9cdb-c583ecdda1e7",
+      "placementId": "e1400019-5fee-8562-8f21-02e899535126",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "ar-SA",
+      "localizationId": "a741abc3-8025-45b2-9c7e-8362156d87d4",
+      "placementId": "88400019-5fee-8562-8f19-61c08e908b98",
+      "imageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+      "state": "ACTIVE"
+    }
+  ],
+  "runLog": "/Users/ahmet/Pictures/GrammarLens/1.4.0-asc/2026-11-05/header-mobile-fit-v4-requests.jsonl",
+  "scope": "Only 1.4.0 header placements replaced; old library image retained. No screenshots/text/review/submission/release changes.",
+  "processingRetryCount": 1
+}

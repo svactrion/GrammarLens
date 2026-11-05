@@ -323,3 +323,15 @@ App Privacy were not changed.
 [Machine-readable read-back](asc/read-back.json).
 The complete request log is retained outside Git at
 `/Users/ahmet/Pictures/GrammarLens/1.4.0-asc/2026-11-05/requests.jsonl`.
+
+## Mobile-fit header replacement (2026-11-05)
+
+After the owner reviewed the phone crop and approved the shared-asset
+change, header A mobile-fit v4 replaced the previous header on all eight
+1.4.0 localizations. The file remains 3840 × 1646 opaque RGB. All eight
+associations were read back and match the new image ID; version remains
+PREPARE_FOR_SUBMISSION with build 7 and MANUAL release. Screenshots and
+store/review text were not changed.
+
+[Current header read-back](asc/header-update-read-back.md) supersedes only
+the header portion of the earlier checkpoint 4 snapshot.
