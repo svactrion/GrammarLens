@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "2139d9d796eddad3a09ab510553c239e2256878a107f6dc67b0b9245c47a515a",
+      "sha256": "14236cdb87435beddc674757fd62406a0ecea97e0bbb1d59a16be02c816c87d9",
       "text": [
         {
           "text": "كل إجابة",
@@ -506,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "1e88a4d2c82dcdb1b304b7e8322f78426b34b8c12077fc56def121bf8458b48c",
+      "sha256": "733b5413ed95d0c5f6567b4b1eb83451bfe794772ef481174c399c9086e11da0",
       "text": [
         {
           "text": "اكتب إجابتك",
@@ -563,6 +563,14 @@
           "right": 2003.41259765625
         },
         {
+          "component": "slider-float",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0741577148438,
+          "delta": -0.000732421875,
+          "left": 597.1979370117188,
+          "right": 1948.9503784179688
+        },
+        {
           "component": "lifted",
           "screenCenterX": 1273.0748901367188,
           "cardCenterX": 1273.0684204101562,
@@ -578,7 +586,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "6e27dad1c3bdc84a75ae0b0708ee31ad144cdfe4d507e42d9cb922eef2a3ee88",
+      "sha256": "c6c463a30168046f3c1cfbaa0431f82dacec835f0b3d5fa4a6f69daef15364e9",
       "text": [
         {
           "text": "شاهد النمط",
@@ -627,20 +635,12 @@
       ],
       "foregroundAlignment": [
         {
-          "component": "slider-float",
-          "screenCenterX": 1248.2118530273438,
-          "cardCenterX": 1248.2100219726562,
-          "delta": -0.0018310546875,
-          "left": 532.2650146484375,
-          "right": 1964.155029296875
-        },
-        {
           "component": "tile",
           "screenCenterX": 1248.2118530273438,
-          "cardCenterX": 1248.2191162109375,
-          "delta": 0.00726318359375,
-          "left": 528.76171875,
-          "right": 1967.676513671875
+          "cardCenterX": 1248.210693359375,
+          "delta": -0.00115966796875,
+          "left": 526.708251953125,
+          "right": 1969.713134765625
         }
       ]
     },
@@ -650,7 +650,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "e9bf7bf899a1f48bc940d3537c2d53f265834fff6e5db1570a88347db8b69182",
+      "sha256": "be076ab09f699fe4e4a0bdc07adc0f32a19c171863302884acc0401809956ec3",
       "text": [
         {
           "text": "شاهد تقدّمك",
@@ -777,7 +777,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "dd02e97cfde0cd316f4e04385596998364f06c6d3adb485f8f45f8c4fae19ca8",
+      "sha256": "a9b40ee583dfffaa476e3b5b876259a804bd56e080c590118df61c2864108785",
       "text": [
         {
           "text": "ابنِ مجموعتك",
@@ -918,6 +918,12 @@
         "top": 662,
         "width": 1280,
         "height": 268
+      },
+      "openHint": {
+        "left": 392,
+        "top": 542,
+        "width": 1280,
+        "height": 388
       }
     }
   }

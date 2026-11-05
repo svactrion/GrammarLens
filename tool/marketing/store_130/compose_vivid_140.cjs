@@ -228,6 +228,7 @@ async function loadGeometry(){
  const knob=await bands('04-question',[255,122,26],whites[0].top+whites[0].height,Math.round(hint.y*scale),.015);
  if(!knob[0])throw Error('Slider knob missing');
  geometry={error:red[0],question:whites[0],input:whites[1],slider:{left:Math.round(hint.x*scale),top:whites[0].top+whites[0].height+(pad?11:18),width:Math.round(hint.w*scale),height:pad?112:168},review:review.slice(0,2),hint:{left:Math.round(hint.x*scale),top:Math.round(hint.y*scale),width:Math.round(hint.w*scale),height:Math.round(hint.h*scale)}};
+ if(pad)geometry.openHint={left:geometry.slider.left,top:geometry.slider.top,width:geometry.slider.width,height:geometry.hint.top+geometry.hint.height-geometry.slider.top};
  if(!geometry.error||!geometry.question||!geometry.input||!geometry.slider||geometry.review.length!==2)throw Error('Missing native geometry '+JSON.stringify(geometry));
 }
 function tablet(name,x,y,w,rz=-3,z=0){return place(`<div class="device tablet"><div class="screen"><img src="${images[name]}"/></div><i class="tablet-camera"></i></div>`,x,y,w,`z-index:${z};transform:perspective(3600px) rotateY(-4deg) rotateX(2deg) rotateZ(${rz}deg)`);}
@@ -241,11 +242,11 @@ async function tabletArt(i){
  b+=`<div class="feature-tag" data-text-check data-copy="${esc(c.tag)}" style="top:${rtl?815:855}px;${rtl?'right':'left'}:145px">${esc(c.tag)}</div>`;
  b+=`<svg class="doodle" width="2064" height="2752" viewBox="0 0 2064 2752"><path d="M170 ${[1,6].includes(i)?725:655} Q680 ${[1,6].includes(i)?760:690} 1260 ${[1,6].includes(i)?715:645}" stroke="${i===1?'#BC5B3E':'#F6D37C'}" stroke-width="${i===1?13:35}" fill="none" stroke-linecap="round"/></svg>`;
  if(i===0){b+=tablet(p.source,660,960,1270);b+=place(`<div class="whole-error"><img src="${await crop(p.source,geometry.error)}"/></div>`,595,1330,1400,'z-index:5;transform:rotate(-2deg)');}
- if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),545,1270,1450,{rz:2,ry:3,pad:36,r:48});b+=lifted(await crop(p.source,geometry.input),595,1940,1350,{rz:2,ry:3,r:40});}
- if(i===2){b+=tablet(p.source,580,955,1310,-2);b+=await hintControl(520,1585,1430);b+=await component(p.source,inset(geometry.hint,12),520,1810,1430,{rz:-2,ry:-3,pad:36,r:48});}
+ if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),545,1270,1450,{rz:2,ry:3,pad:36,r:48});b+=await hintControl(595,1740,1350);b+=lifted(await crop(p.source,geometry.input),595,1940,1350,{rz:2,ry:3,r:40});}
+ if(i===2){b+=tablet(p.source,580,955,1310,-2);b+=await component(p.source,geometry.openHint,520,1585,1430,{rz:-2,ry:-3,pad:18,r:48});}
  if(i===4){b+=tablet(p.source,665,950,1300,5);b+=place(`<img class="fox" src="${fox}"/>`,-50,1630,880,'z-index:5;transform:rotate(-10deg)');}
  if(i===5){b+=tablet(p.source,190,970,1270,-5,1);b+=tablet('01-results',1540,1220,1080,9,0);b+=await component(p.source,inset(geometry.review[0],22),175,1560,1400,{rz:3,ry:4,pad:36,r:48});b+=await component(p.source,inset(geometry.review[1],22),120,2050,1400,{rz:3,ry:4,pad:36,r:48});}
- if(i===6){b+=tablet(p.source,630,1040,1260,-4);[[655,1140,400,-12],[1005,1000,510,-3],[1455,1110,400,10]].forEach(([x,y,w,r],j)=>b+=place(`<img class="medal" src="${medals[j]}"/>`,x,y,w,`z-index:${j===1?7:6};transform:perspective(2200px) rotateY(${j===0?-10:j===2?10:0}deg) rotateZ(${r}deg)`));}
+ if(i===6){b+=tablet('01-results',1540-W,1220,1080,9,0);b+=tablet(p.source,630,1040,1260,-4);[[655,990,400,-12],[1005,850,510,-3],[1455,960,400,10]].forEach(([x,y,w,r],j)=>b+=place(`<img class="medal" src="${medals[j]}"/>`,x,y,w,`z-index:${j===1?7:6};transform:perspective(2200px) rotateY(${j===0?-10:j===2?10:0}deg) rotateZ(${r}deg)`));}
  return b;
 }
 const localeCss=`${localeFont}

@@ -29,7 +29,7 @@ const names=['01-results','02-hint','03-home','04-question','05-review','06-coll
    const record=composed.find(r=>r.file===`store/${folder}/${file}`),caption=copy[file.slice(3,-4)];
    if(family==='ipad'&&['01-results.png','04-question.png','02-hint.png','05-review.png'].includes(file)){
     const aligned=record.foregroundAlignment;
-    assert(aligned?.length===(file==='01-results.png'?1:2),'Missing foreground alignment '+file);
+    assert(aligned?.length===({'01-results.png':1,'04-question.png':3,'02-hint.png':1,'05-review.png':2}[file]),'Missing foreground alignment '+file);
     for(const card of aligned)assert(Math.abs(card.cardCenterX-card.screenCenterX)<1&&card.left>=35&&card.right<=2029,'Foreground is not centered on the device screen '+file);
    }
    const rendered=record.text.map(r=>normalize(r.text));

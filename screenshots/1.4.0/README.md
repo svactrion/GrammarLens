@@ -281,3 +281,20 @@ center deviation. The collection medals form a compact arch over the
 tablet: the central gold medal is larger and higher, with the two side
 medals angled inward as a balanced group. This supersedes the previous
 straight row. All eight iPad languages use the revision.
+
+### iPad hint states and connected pages (2026-11-05)
+
+Owner feedback: position 02 now lifts three native pieces—question,
+unmoved hint slider and answer input. Position 03 lifts one contiguous
+crop from the held-open `02-hint.png`, containing both the slider with
+its knob at the end and the revealed hint card; it no longer combines
+a closed slider with an open card. `nativeGeometry.ipad.openHint` records
+that exact crop. Arabic retains its native right-to-left slider state.
+
+The secondary results iPad in position 05 continues into position 06
+behind the collection tablet. Both halves use the same image, size,
+vertical position, perspective and rotation; the second half is offset
+by exactly one canvas width (2064 px). The medal group is raised by
+150 px, exposing the native companion and avatar-change control beneath.
+Caption wording and typography, iPhone outputs and raw captures remain
+unchanged. Checkpoint 1 awaits owner review; nothing has been uploaded.
