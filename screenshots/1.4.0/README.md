@@ -298,3 +298,9 @@ by exactly one canvas width (2064 px). The medal group is raised by
 150 px, exposing the native companion and avatar-change control beneath.
 Caption wording and typography, iPhone outputs and raw captures remain
 unchanged. Checkpoint 1 awaits owner review; nothing has been uploaded.
+
+### iPad question slider angle (2026-11-05)
+
+The closed hint slider in display position 02 now follows the same
+2-degree clockwise tilt as the question and answer cards, with the
+question card’s perspective angles. Applied to all eight iPad languages.

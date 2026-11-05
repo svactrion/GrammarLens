@@ -79,9 +79,9 @@ async function wholeErrorCard(){
  const src=await crop('01-results',geometry.error);
  return place(`<div class="whole-error"><img src="${src}"/></div>`,92,1260,1135,'z-index:5;transform:perspective(2400px) rotateY(-3deg) rotateX(2deg) rotateZ(-2deg)');
 }
-async function hintControl(x,y,w){
+async function hintControl(x,y,w,{rz=-2,ry=-3,rx=2}={}){
  const image=await crop('04-question',geometry.slider);
- return place(`<div class="slider-float"><img src="${image}"/></div>`,x,y,w,'z-index:6;transform:perspective(2400px) rotateY(-3deg) rotateX(2deg) rotateZ(-2deg)');
+ return place(`<div class="slider-float"><img src="${image}"/></div>`,x,y,w,`z-index:6;transform:perspective(2400px) rotateY(${ry}deg) rotateX(${rx}deg) rotateZ(${rz}deg)`);
 }
 
 
@@ -242,7 +242,7 @@ async function tabletArt(i){
  b+=`<div class="feature-tag" data-text-check data-copy="${esc(c.tag)}" style="top:${rtl?815:855}px;${rtl?'right':'left'}:145px">${esc(c.tag)}</div>`;
  b+=`<svg class="doodle" width="2064" height="2752" viewBox="0 0 2064 2752"><path d="M170 ${[1,6].includes(i)?725:655} Q680 ${[1,6].includes(i)?760:690} 1260 ${[1,6].includes(i)?715:645}" stroke="${i===1?'#BC5B3E':'#F6D37C'}" stroke-width="${i===1?13:35}" fill="none" stroke-linecap="round"/></svg>`;
  if(i===0){b+=tablet(p.source,660,960,1270);b+=place(`<div class="whole-error"><img src="${await crop(p.source,geometry.error)}"/></div>`,595,1330,1400,'z-index:5;transform:rotate(-2deg)');}
- if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),545,1270,1450,{rz:2,ry:3,pad:36,r:48});b+=await hintControl(595,1740,1350);b+=lifted(await crop(p.source,geometry.input),595,1940,1350,{rz:2,ry:3,r:40});}
+ if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),545,1270,1450,{rz:2,ry:3,pad:36,r:48});b+=await hintControl(595,1740,1350,{rz:2,ry:3,rx:2});b+=lifted(await crop(p.source,geometry.input),595,1940,1350,{rz:2,ry:3,r:40});}
  if(i===2){b+=tablet(p.source,580,955,1310,-2);b+=await component(p.source,geometry.openHint,520,1585,1430,{rz:-2,ry:-3,pad:18,r:48});}
  if(i===4){b+=tablet(p.source,665,950,1300,5);b+=place(`<img class="fox" src="${fox}"/>`,-50,1630,880,'z-index:5;transform:rotate(-10deg)');}
  if(i===5){b+=tablet(p.source,190,970,1270,-5,1);b+=tablet('01-results',1540,1220,1080,9,0);b+=await component(p.source,inset(geometry.review[0],22),175,1560,1400,{rz:3,ry:4,pad:36,r:48});b+=await component(p.source,inset(geometry.review[1],22),120,2050,1400,{rz:3,ry:4,pad:36,r:48});}

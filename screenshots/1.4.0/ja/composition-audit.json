@@ -506,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "032fd8547da5b86ddc1c8acf324174a1e0c334c78c0b4e618ebea5d7fbf32dd9",
+      "sha256": "07e7bfe565c17268a02bbba1709750570cdb7ec400b479b84ec62f45fd50a1fc",
       "text": [
         {
           "text": "自分の答えを",
@@ -565,10 +565,10 @@
         {
           "component": "slider-float",
           "screenCenterX": 1273.0748901367188,
-          "cardCenterX": 1273.0741577148438,
-          "delta": -0.000732421875,
-          "left": 597.1979370117188,
-          "right": 1948.9503784179688
+          "cardCenterX": 1273.0820922851562,
+          "delta": 0.0072021484375,
+          "left": 597.205810546875,
+          "right": 1948.9583740234375
         },
         {
           "component": "lifted",
