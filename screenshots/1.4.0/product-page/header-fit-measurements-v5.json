@@ -1,0 +1,50 @@
+{
+  "phone": {
+    "viewport": [
+      76,
+      76,
+      626,
+      414
+    ],
+    "scale": 0.19400630914826497,
+    "offsetX": -58.77129337539429,
+    "offsetY": 94.2634069400631,
+    "sourceVisible": {
+      "left": 302.9349593495934,
+      "top": -485.8780487804879,
+      "right": 3529.6341463414633,
+      "bottom": 1648.0731707317075
+    }
+  },
+  "ipad": {
+    "viewport": [
+      120,
+      99,
+      1893,
+      568
+    ],
+    "scale": 0.4921135646687697,
+    "offsetX": 1.1167192429022634,
+    "offsetY": -79.75867507886437,
+    "sourceVisible": {
+      "left": -2.2692307692308815,
+      "top": 162.07371794871798,
+      "right": 3844.403846153846,
+      "bottom": 1316.2788461538462
+    }
+  },
+  "method": "Measured navy/orange wordmark bounds in the two owner-supplied ASC previews against the current v4 source; applied the resulting affine image mappings to v5.",
+  "v5Layout": {
+    "wordmarkWidth": 1850,
+    "wordmarkLeft": 450,
+    "wordmarkGeometricCenterY": 850,
+    "cardScale": 0.75,
+    "cardOrigin": [
+      2390,
+      490
+    ],
+    "cardAngleDegrees": -5,
+    "brandWidthIncreaseOverV4Percent": 44.1,
+    "cardScaleIncreaseOverV4Percent": 21.0
+  }
+}

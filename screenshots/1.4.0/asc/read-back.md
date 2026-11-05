@@ -1,6 +1,8 @@
 # GrammarLens 1.4.0 — checkpoint 4 read-back
 
-Historical snapshot: the header was later replaced with the owner-approved mobile-fit revision. See [current header read-back](header-update-read-back.md); the screenshot/text tables below remain unchanged.
+Header has since been superseded: [current v5 read-back](header-v5-read-back.md).
+
+Historical checkpoint 4 snapshot: the screenshot/text tables below remain unchanged; the header is documented in the v5 update linked above.
 
 Status: **passed**. Read at 2026-11-05T02:38:58.988Z.
 

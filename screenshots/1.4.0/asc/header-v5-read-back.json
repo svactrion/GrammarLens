@@ -1,0 +1,86 @@
+{
+  "status": "passed",
+  "readAt": "2026-11-05T16:57:53.687Z",
+  "version": {
+    "id": "23d20cb5-2df3-49c4-b3c6-841cd080a576",
+    "versionString": "1.4.0",
+    "state": "PREPARE_FOR_SUBMISSION",
+    "releaseType": "MANUAL",
+    "build": "7"
+  },
+  "source": {
+    "file": "screenshots/1.4.0/product-page/header-A-balanced-v5.png",
+    "sha256": "4292acd44747a5323c6ecdfc84eadace21843a560c3b5e102982a9683c73f109",
+    "fileSize": 4218739,
+    "width": 3840,
+    "height": 1646
+  },
+  "previousImageId": "c8c00019-5fee-8562-801e-c927a99a5697",
+  "image": {
+    "id": "0a800019-5fee-8562-801c-b7fb50f2373a",
+    "state": "PREPARE_FOR_SUBMISSION",
+    "fileName": "header-A-balanced-v5.png",
+    "specId": "1eb43b80-e0b7-4d96-bd32-47a42a8c5fed"
+  },
+  "localizations": [
+    {
+      "locale": "en-US",
+      "localizationId": "207797dd-54bd-480e-be43-41ef1c6bac66",
+      "placementId": "9a000019-5fee-8562-8f04-8b6622bafce9",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "tr",
+      "localizationId": "f2380dc1-9551-4863-afb3-c6dd6496e0f3",
+      "placementId": "ebc00019-5fee-8562-8f3b-aa63f2ea6017",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "de-DE",
+      "localizationId": "9c4a2cfe-bd96-4ee7-b37f-d9e778d16fa2",
+      "placementId": "6c800019-5fee-8562-8f1d-228139bbc739",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "es-MX",
+      "localizationId": "59562966-9555-4e74-a371-1f7f6c171cf7",
+      "placementId": "c3000019-5fee-8562-8f2f-0c3e756271d4",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "pt-BR",
+      "localizationId": "6d01380e-710f-48c4-80c3-1079cc96e9c0",
+      "placementId": "6e400019-5fee-8562-8f26-831f8be07380",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "ja",
+      "localizationId": "b704a413-2638-4cdf-a8a6-7e4524012aef",
+      "placementId": "ffc00019-5fee-8562-8f3d-53797c8c0dd8",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "ko",
+      "localizationId": "39426655-dc45-44a6-9cdb-c583ecdda1e7",
+      "placementId": "f9000019-5fee-8562-8f16-aacea9002d5d",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    },
+    {
+      "locale": "ar-SA",
+      "localizationId": "a741abc3-8025-45b2-9c7e-8362156d87d4",
+      "placementId": "9a400019-5fee-8562-8f3e-6db1b016e321",
+      "imageId": "0a800019-5fee-8562-801c-b7fb50f2373a",
+      "state": "ACTIVE"
+    }
+  ],
+  "runLog": "/Users/ahmet/Pictures/GrammarLens/1.4.0-asc/2026-11-05/header-balanced-v5-requests.jsonl",
+  "scope": "Only 1.4.0 header placements replaced; old library image retained. No screenshots/text/review/submission/release changes.",
+  "processingRetryCount": 0
+}

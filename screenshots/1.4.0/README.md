@@ -335,3 +335,13 @@ store/review text were not changed.
 
 [Current header read-back](asc/header-update-read-back.md) supersedes only
 the header portion of the earlier checkpoint 4 snapshot.
+
+## Balanced header v5 (2026-11-05)
+
+The owner’s real iPhone/iPad previews exposed different scaling and vertical
+crops. Header A v5 increases the wordmark and card and lifts the card into
+the measured iPad visible area. It now replaces v4 on all eight 1.4.0
+localizations; source PNG remains 3840 × 1646 RGB.
+[Current header read-back](asc/header-v5-read-back.md) and
+[measured comparison](product-page/header-device-comparison-v5.png).
+No other ASC content or submission state changed.

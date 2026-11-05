@@ -1,5 +1,7 @@
 # Mobile-fit header update — read-back
 
+Header has since been superseded: [current v5 read-back](header-v5-read-back.md).
+
 Status: **passed**. Read at 2026-11-05T16:43:14.539Z.
 
 Version **1.4.0**, build **7**, state **PREPARE_FOR_SUBMISSION**, release **MANUAL**.
