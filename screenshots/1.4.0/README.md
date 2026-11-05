@@ -1,8 +1,9 @@
 # 1.4.0 App Store screenshot assets
 
-Checkpoint 1: the owner selected **Canlı fade** on 2026-11-04 and authorized
-its rollout to all eight languages and both device families. The localized
-sets below await checkpoint review; nothing uploaded or pushed.
+Checkpoint 4 completed on 2026-11-05: all eight localizations, 112 approved
+Canlı fade screenshots and the selected header A were uploaded and read back
+successfully. Version 1.4.0 stays PREPARE_FOR_SUBMISSION, build 7, MANUAL.
+See [read-back tables](asc/read-back.md). Nothing submitted, released or pushed.
 
 Captured from build 7's source, detached commit `c37757a` (`1.4.0+7`),
 in `/private/tmp/grammarlens-140-build7`. The owner's checkout remains on
@@ -133,8 +134,8 @@ the corresponding blind-reviewed rig input; only design/font metadata changed. A
 24 caption fields. English retains all 24 source fields word for word.
 The capture rig's Dart analysis passed with no issues.
 
-No App Store Connect upload or other write has been made. No push has
-been made. Checkpoint 1 awaits owner approval before Phase 4 continues.
+At checkpoint 1 no App Store Connect write or push had been made. The owner
+later approved the assets and texts and authorized upload; see checkpoint 4 below.
 
 ## Turkish iPhone design exploration (owner request, 2026-11-04)
 
@@ -304,3 +305,21 @@ unchanged. Checkpoint 1 awaits owner review; nothing has been uploaded.
 The closed hint slider in display position 02 now follows the same
 2-degree clockwise tilt as the question and answer cards, with the
 question card’s perspective angles. Applied to all eight iPad languages.
+
+## ASC upload and checkpoint 4 (2026-11-05)
+
+After owner approval of all texts and explicit upload authorization, all
+112 approved frames were uploaded and read back with exact order, source
+MD5 and COMPLETE delivery state. All eight localizations’ fields match
+`asc/metadata.json`. Header A/vivid is a single 3840 × 1646 asset placed
+on all eight localizations. Search-results artwork was cancelled and not
+uploaded. The copied en-US 6.3-inch set was removed from 1.4.0 only.
+Review notes match the approved file. Version 1.4.0 remains
+PREPARE_FOR_SUBMISSION, build 7 VALID, release MANUAL. Nothing was submitted
+or released; 1.3.0 and owner-managed pricing, availability, age rating and
+App Privacy were not changed.
+
+[Checkpoint 4 read-back tables](asc/read-back.md) ·
+[Machine-readable read-back](asc/read-back.json).
+The complete request log is retained outside Git at
+`/Users/ahmet/Pictures/GrammarLens/1.4.0-asc/2026-11-05/requests.jsonl`.

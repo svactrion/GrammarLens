@@ -1,12 +1,12 @@
-# GrammarLens 1.4.0 — approved scope; waiting for text approval
+# GrammarLens 1.4.0 — approved dry run, executed
 
-No ASC writes performed. Search-results artwork is cancelled and excluded. Header A/vivid: `../product-page/header.png`, 3840 × 1646, one library image reused for eight 1.4.0 localizations.
+Executed after owner checkpoint 2 text approval and explicit upload authorization. Final [checkpoint 4 read-back](read-back.md) passed. Search-results artwork was cancelled and excluded. Header A/vivid: `../product-page/header.png`, 3840 × 1646, one library image reused for eight 1.4.0 localizations.
 
 ## Current state and explicit decisions
 
-- Version 1.4.0 exists in PREPARE_FOR_SUBMISSION; releaseType MANUAL. Only en-US exists.
+- Version 1.4.0 exists in PREPARE_FOR_SUBMISSION; releaseType MANUAL. At preflight only en-US existed; all eight are now present and verified.
 - Re-read after owner saved in ASC (2026-11-05): build 7 is attached and VALID. Version remains PREPARE_FOR_SUBMISSION, releaseType MANUAL. The obsolete build-attachment PATCH has been removed; final read-back calls remain.
-- Store text was not present as separate ready JSON files: descriptions/subtitles/keywords originated in docs/1.4.0-asc-brief.md; ja/ko privacy, ja subscription wording and de consent timing were then corrected exactly as requested by the owner; What's New verbatim from docs/1.4.0-release-steps.md §5. Full bodies are in metadata.json and dry-run-calls.json. Blind back-translation is complete: see [description-back-translation.md](description-back-translation.md) for the three requested correction rows, rechecked blind on the four changed blocks only (the initial seven-language pass is retained in Git commit b2c3bb1). The three corrected rows match. tr, es-MX, pt-BR and ar-SA were approved as-is. Stop for owner review; upload/checkpoint 3 requires the explicit “upload” instruction.
+- Store text was not present as separate ready JSON files: descriptions/subtitles/keywords originated in docs/1.4.0-asc-brief.md; ja/ko privacy, ja subscription wording and de consent timing were then corrected exactly as requested by the owner; What's New verbatim from docs/1.4.0-release-steps.md §5. Full bodies are in metadata.json and dry-run-calls.json. Blind back-translation is complete: see [description-back-translation.md](description-back-translation.md) for the three requested correction rows, rechecked blind on the four changed blocks only (the initial seven-language pass is retained in Git commit b2c3bb1). The three corrected rows matched; the owner approved all eight final texts and then explicitly authorized upload/checkpoint 3. Final stored fields match metadata.json.
 - Owner approved keeping promotional text blank in all eight locales (empty string in request).
 - Seven additional store locale identifiers: tr, de-DE, es-MX, pt-BR, ja, ko, ar-SA.
 - Subtitle belongs to editable appInfo localization; description, keywords, What's New, promotionalText and supportUrl belong to version localizations. Name retained; privacyPolicyUrl copied from brief, no App Privacy declarations touched.
@@ -43,6 +43,10 @@ See length-report.json for characters and UTF-8 bytes. Original keywords are att
 
 ## Scope
 
-No search-results artwork upload; no submission/review submission creation; no release; no 1.3.0 writes; no pricing, availability, age rating or App Privacy changes. No credentials or bearer tokens in these files. Owner approved the screenshot/header/deletion/review-note/manual-release scope. Wait for explicit checkpoint 2 text approval before any upload or ASC write.
+No search-results artwork upload; no submission/review submission creation; no release; no 1.3.0 writes; no pricing, availability, age rating or App Privacy changes. No credentials or bearer tokens in these files. Owner approved the screenshot/header/deletion/review-note/manual-release scope and the final texts, then explicitly authorized upload. Execution and checkpoint 4 read-back are complete; no submission or release was made.
 
 Official API sources: [App Asset Library](https://developer.apple.com/documentation/appstoreconnectapi/app-asset-library), [image uploads](https://developer.apple.com/documentation/appstoreconnectapi/uploading-and-managing-image-assets), [placement](https://developer.apple.com/documentation/appstoreconnectapi/placing-assets-on-your-app-store-surfaces).
+
+## Execution adaptations
+
+ASC created the seven appInfo localizations automatically when version localizations were added; those existing editable records were PATCHed rather than duplicated. The initial Turkish duplicate-create 409 was resolved after reading its target ID. Five screenshots that remained in UPLOAD_COMPLETE with empty error lists were retried once each, using identical approved file bytes and MD5 values; all replacements completed. The only deleted image records were those owned by this run. Exact IDs, adaptation details, final fields and screenshot checksums are in read-back.json. All original keywords were accepted, so no fallback was used. Header A (3840 × 1646) was accepted and associated with all eight localizations; its asset state is PREPARE_FOR_SUBMISSION, with no review submission created.

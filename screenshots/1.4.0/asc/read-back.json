@@ -1,0 +1,2177 @@
+{
+  "version": {
+    "id": "23d20cb5-2df3-49c4-b3c6-841cd080a576",
+    "platform": "IOS",
+    "versionString": "1.4.0",
+    "appStoreState": "PREPARE_FOR_SUBMISSION",
+    "appVersionState": "PREPARE_FOR_SUBMISSION",
+    "copyright": "2026 Ahmet Emin Tayfur",
+    "reviewType": "APP_STORE",
+    "releaseType": "MANUAL",
+    "earliestReleaseDate": null,
+    "usesIdfa": null,
+    "downloadable": true,
+    "createdDate": "2026-11-04T16:16:34-08:00"
+  },
+  "build": {
+    "id": "de97920c-9700-40e8-a6a7-6d5089c74823",
+    "version": "7",
+    "processingState": "VALID"
+  },
+  "localizations": [
+    {
+      "locale": "en-US",
+      "id": "207797dd-54bd-480e-be43-41ef1c6bac66",
+      "appInfoId": "31f15ff4-0108-4367-adb3-d0d0efc087bc",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "Daily practice, real feedback"
+        },
+        "description": {
+          "filled": true,
+          "characters": 2437,
+          "utf8Bytes": 2445,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens turns your English mistakes into practice.\n\nEvery day you get a short grammar test. When you finish, you don't just see a score — you see why each answer was right or wrong, written in plain language.\n\nNOW IN YOUR LANGUAGE\nThe app's menus and buttons are available in English, Japanese, Korean, Spanish, Portuguese (Brazil), Turkish, Arabic and German. The questions and the feedback stay in English, so you practice the language you are learning.\n\nWHAT YOU GET\n\nDaily Test\nA fresh set of questions every day. Fill in the blanks, correct the errors, and get an explanation for every answer.\n\nReal explanations, not just checkmarks\nInstead of \"wrong\", you get the reasoning: which rule applies, why your answer doesn't fit, and what to remember next time. The words that changed between your answer and the correction are highlighted.\n\nTopic hints\nStuck on a question? Slide to see the grammar pattern for its topic — a reminder of the rule, never the answer.\n\nYour weak spots, tracked\nThe app remembers which grammar points you keep missing and collects them in Review, so you always know what to work on.\n\nTopic Practice\nFocus on a specific area — Articles, Tense Selection, Modal Verbs, Modal Past Forms, and Gerund vs. Infinitive — with sessions of 3, 5 or 10 questions.\n\nMountain of Learning\nEvery Daily Test takes your character one step up this month's mountain. Earn medals for the month and build a habit that sticks.\n\nSixteen study buddies\nPick the character that climbs with you.\n\nFREE AND PREMIUM\nFree includes one Daily Test and one practice session every day.\nPremium unlocks Topic Practice across all five areas and more practice sessions each day.\nPremium is available as a monthly or annual subscription. Both include a free trial for new subscribers. Prices are shown in the app before you subscribe.\n\nPRIVACY\nThere is no account and no sign-up. Your name, your progress and your practice history stay on your device. The app sends anonymous usage data, never your name.\nTo give you feedback, the answers you type are sent to our AI provider, Anthropic. The app asks your permission before this happens for the first time, and you can withdraw it at any time from the Data screen.\n\nTerms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nPrivacy Policy: https://ahmettayfur.com/products/grammarlens/privacy/\nTerms of Service: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 94,
+          "utf8Bytes": 94,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "grammar,quiz,ESL,learn,tenses,articles,verbs,modal,gerund,exam,daily,practice,mistakes,writing"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 689,
+          "utf8Bytes": 707,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens now speaks your language.\n• The app is now available in Japanese, Korean, Spanish, Portuguese (Brazil), Turkish, Arabic and German. Questions and feedback stay in English. Change it in Profile → Appearance → Language.\n• Questions with several blanks: submit with a blank left empty, and see what you wrote in each blank.\n• Clearer feedback: long explanations are split into paragraphs, and the words that changed between \"You wrote\" and \"Corrected\" are highlighted.\n• Topic hints no longer give the answer away.\n• In the Daily Test, accented and full-width letters from your keyboard are accepted.\n• The Privacy Policy and Terms of Service are now in Profile → App information."
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "b0718bd9-af23-4d9c-afa4-a99e123042c5",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "88400019-5fee-8562-8001-b59d79c393ef",
+              "file": "01-results.png",
+              "md5": "462869029dc5a0ebc432b2f2bc474e22",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "36c00019-5fee-8562-802f-fbab23688a3b",
+              "file": "04-question.png",
+              "md5": "6988dc376d04905894822add883b359f",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "ecc00019-5fee-8562-8028-43f25e50b0be",
+              "file": "02-hint.png",
+              "md5": "5e50f916ba5202720c610817db54ba4b",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "ee400019-5fee-8562-801a-0879a6a51999",
+              "file": "03-home.png",
+              "md5": "39bec717acdbb2522d1291a9ff5a8131",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "16800019-5fee-8562-802b-b86eee68d3a7",
+              "file": "05-review.png",
+              "md5": "32d0255a8736a9f863791e4956c4fbae",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "ed000019-5fee-8562-8015-d24089fcacc5",
+              "file": "06-collection.png",
+              "md5": "7d8b674eb74cc3f83fe19421e12e4935",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "33233b78-2a58-407c-9ff7-6bd2a5d3aa1f",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "80c00019-5fee-8562-8011-7a8748d22362",
+              "file": "01-results.png",
+              "md5": "c10534e39c5d0fdb710925688e674886",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "70400019-5fee-8562-8001-a418b1e48de5",
+              "file": "04-question.png",
+              "md5": "a9b8fd069fbdf66a1b3616df4a12eec4",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "36000019-5fee-8562-8006-66973fb4f2ca",
+              "file": "02-hint.png",
+              "md5": "cae286e12dbc39a302fd5dd7cc8f0af0",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "1f800019-5fee-8562-8001-1ded331d9546",
+              "file": "08-multi-blank.png",
+              "md5": "1311f5d8683cad1d904913e31b717b0e",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "00c00019-5fee-8562-803b-cc170d55abc5",
+              "file": "03-home.png",
+              "md5": "ef4727f2b16a38e5b3bbec55ebae4c52",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "56400019-5fee-8562-8011-5c6464bb22fd",
+              "file": "05-review.png",
+              "md5": "1a4035845693054c852ca1c63e945c2b",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "98c00019-5fee-8562-8028-02bfed811dd5",
+              "file": "06-collection.png",
+              "md5": "521b8665178a105f0edae84e72972928",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "72c00019-5fee-8562-8019-1c2fd2adb23d",
+              "file": "07-onboarding.png",
+              "md5": "7987fdd7912378ec3b98750001d406c6",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "50000019-5fee-8562-8f1a-8b283143e399",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:03.593651Z",
+            "lastModifiedDate": "2026-11-05T02:38:03.593651Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "tr",
+      "id": "f2380dc1-9551-4863-afb3-c6dd6496e0f3",
+      "appInfoId": "03650131-737c-421a-95b7-f9a4a480e10c",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 28,
+          "utf8Bytes": 31,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "Her gün gramer, net açıklama"
+        },
+        "description": {
+          "filled": true,
+          "characters": 2351,
+          "utf8Bytes": 2543,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens İngilizce hatalarını pratiğe dönüştürür.\n\nHer gün kısa bir gramer testi çözersin. Bitirdiğinde yalnızca puanını görmezsin: her cevabın neden doğru ya da yanlış olduğunu sade bir dille okursun.\n\nARTIK SENİN DİLİNDE\nUygulamanın menüleri ve düğmeleri İngilizce, Japonca, Korece, İspanyolca, Portekizce (Brezilya), Türkçe, Arapça ve Almanca. Sorular ve geri bildirimler İngilizce kalır; böylece öğrendiğin dilde pratik yaparsın.\n\nNELER VAR\n\nGünlük Test\nHer gün yeni bir soru seti. Boşlukları doldur, hataları düzelt ve her cevap için bir açıklama al.\n\nSadece işaret değil, gerçek açıklama\n\"Yanlış\" yerine nedenini görürsün: hangi kural geçerli, cevabın neden uymuyor ve bir dahaki sefere neyi hatırlamalısın. Cevabınla düzeltilmiş hali arasında değişen kelimeler vurgulanır.\n\nKonu ipuçları\nBir soruda takıldın mı? Konusunun gramer kalıbını görmek için kaydır: kuralı hatırlatır, cevabı asla vermez.\n\nZayıf noktaların takipte\nUygulama sürekli kaçırdığın gramer konularını hatırlar ve Tekrar'da toplar; neye çalışman gerektiğini hep bilirsin.\n\nKonu Pratiği\nBelirli bir alana odaklan (Articles, Tense Selection, Modal Verbs, Modal Past Forms, Gerund vs. Infinitive); 3, 5 ya da 10 soruluk oturumlarla.\n\nÖğrenme Dağı\nHer Günlük Test karakterini bu ayın dağında bir adım yukarı taşır. Ayın madalyalarını kazan, kalıcı bir alışkanlık edin.\n\nOn altı çalışma arkadaşı\nSeninle tırmanacak karakteri seç.\n\nÜCRETSİZ VE PREMIUM\nÜcretsiz sürümde her gün bir Günlük Test ve bir pratik oturumu var.\nPremium, beş alanın hepsinde Konu Pratiği'ni ve her gün daha fazla pratik oturumunu açar.\nPremium aylık ya da yıllık abonelik olarak sunulur. İkisi de yeni aboneler için ücretsiz deneme içerir. Fiyatlar abone olmadan önce uygulamada gösterilir.\n\nGİZLİLİK\nHesap yok, kayıt yok. Adın, ilerlemen ve pratik geçmişin cihazında kalır. Uygulama anonim kullanım verileri gönderir, adını asla göndermez.\nSana geri bildirim verebilmek için yazdığın cevaplar yapay zekâ sağlayıcımız Anthropic'e gönderilir. Uygulama bunu ilk kez yapmadan önce iznini ister; iznini istediğin zaman Veriler ekranından geri çekebilirsin.\n\nSon Kullanıcı Lisans Sözleşmesi (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nGizlilik Politikası: https://ahmettayfur.com/products/grammarlens/privacy/\nKullanım Koşulları: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 82,
+          "utf8Bytes": 85,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "ingilizce,gramer,dilbilgisi,test,pratik,zamanlar,fiil,sınav,günlük,hata,yazma,ders"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 708,
+          "utf8Bytes": 783,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens artık senin dilinde.\n• Uygulama artık Japonca, Korece, İspanyolca, Portekizce (Brezilya), Türkçe, Arapça ve Almanca. Sorular ve geri bildirimler İngilizce kalır. Dili Profil → Görünüm → Dil'den değiştirebilirsin.\n• Birden fazla boşluklu sorular: bir boşluğu boş bırakarak da gönderebilir, her boşluğa ne yazdığını ayrı ayrı görebilirsin.\n• Daha net geri bildirim: uzun açıklamalar paragraflara ayrılıyor; \"Senin yazdığın\" ile \"Düzeltilmiş hali\" arasında değişen kelimeler vurgulanıyor.\n• Konu ipuçları artık cevabı ele vermiyor.\n• Günlük Test'te klavyenin yazdığı aksanlı ve tam genişlikli harfler kabul ediliyor.\n• Gizlilik Politikası ve Kullanım Koşulları artık Profil → Uygulama bilgileri'nde."
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "319baee9-6fd6-4e80-812c-097142bf5fcb",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "77400019-5fee-8562-8019-d905280cca5f",
+              "file": "01-results.png",
+              "md5": "3e66918a6b077465aabc7c9b59f9bf19",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "cf000019-5fee-8562-8027-ffb99a46d590",
+              "file": "04-question.png",
+              "md5": "7c7f41a35801caf16c028688adace3b3",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "86000019-5fee-8562-8028-6084ea73e2bd",
+              "file": "02-hint.png",
+              "md5": "4163a1641de5afda63bfb6669f073359",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "07400019-5fee-8562-8012-1461b44827da",
+              "file": "08-multi-blank.png",
+              "md5": "f8c273a85ac0a38bcbce70642a372b84",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "1fc00019-5fee-8562-801c-90e528fac9de",
+              "file": "03-home.png",
+              "md5": "5c1eeca56614ec1203669ce67d16e0cf",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "01000019-5fee-8562-800a-f12a9c298be6",
+              "file": "05-review.png",
+              "md5": "91f27f04c6480c4a4d103fbc5101339f",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "95800019-5fee-8562-8008-f20b4c027a59",
+              "file": "06-collection.png",
+              "md5": "df13dce1f4355351bbb9c93f3f01f448",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "8b000019-5fee-8562-8005-32ad0d2b47ea",
+              "file": "07-onboarding.png",
+              "md5": "bfd83a37fc27913c4170eb7d6b69bf33",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "eba258fc-84be-4cd5-8338-51f6a4532c64",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "e1800019-5fee-8562-8029-27d6dca1e96c",
+              "file": "01-results.png",
+              "md5": "84574a64f18bbd8e8cbd5c3ca828d91b",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "8f800019-5fee-8562-8036-4db2bf5024c3",
+              "file": "04-question.png",
+              "md5": "daaa215980b7e99ff71d7b8bb866ce6d",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "07800019-5fee-8562-8006-27b3b9c5f27d",
+              "file": "02-hint.png",
+              "md5": "598b1b790fffe4b91c6b95abac7dae7c",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "72c00019-5fee-8562-8019-64cdd1b45d81",
+              "file": "03-home.png",
+              "md5": "2301ced264cb75e04282701d125f955a",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "39c00019-5fee-8562-8010-5315f68dfd05",
+              "file": "05-review.png",
+              "md5": "f988262888f099e826a042e9bbe329cb",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "b6c00019-5fee-8562-8013-a307296b1f9b",
+              "file": "06-collection.png",
+              "md5": "86e4de31858b6bbb96a3bf3165f65713",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "69800019-5fee-8562-8f2b-dc31d9063e5c",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:04.23987Z",
+            "lastModifiedDate": "2026-11-05T02:38:04.23987Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "de-DE",
+      "id": "9c4a2cfe-bd96-4ee7-b37f-d9e778d16fa2",
+      "appInfoId": "22383bec-dc66-4142-a994-00c09f95af78",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 31,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "Täglich üben, echtes Feedback"
+        },
+        "description": {
+          "filled": true,
+          "characters": 2567,
+          "utf8Bytes": 2604,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens macht aus deinen Englischfehlern Übung.\n\nJeden Tag bekommst du einen kurzen Grammatiktest. Danach siehst du nicht nur eine Punktzahl, sondern in einfachen Worten, warum jede Antwort richtig oder falsch war.\n\nJETZT IN DEINER SPRACHE\nMenüs und Schaltflächen der App gibt es auf Englisch, Japanisch, Koreanisch, Spanisch, Portugiesisch (Brasilien), Türkisch, Arabisch und Deutsch. Fragen und Feedback bleiben auf Englisch, damit du die Sprache übst, die du lernst.\n\nDAS BEKOMMST DU\n\nTagestest\nJeden Tag neue Fragen. Fülle Lücken aus, korrigiere Fehler und bekomme zu jeder Antwort eine Erklärung.\n\nEchte Erklärungen statt Häkchen\nStatt „falsch“ bekommst du die Begründung: welche Regel gilt, warum deine Antwort nicht passt und was du dir merken solltest. Die Wörter, die sich zwischen deiner Antwort und der Korrektur unterscheiden, sind hervorgehoben.\n\nThemen-Tipps\nDu hängst bei einer Frage? Schieb, um das Grammatikmuster des Themas zu sehen – eine Erinnerung an die Regel, nie die Antwort.\n\nDeine Schwachstellen im Blick\nDie App merkt sich, welche Grammatikpunkte du immer wieder verfehlst, und sammelt sie in der Wiederholung. So weißt du immer, woran du arbeiten solltest.\n\nThemenübung\nKonzentriere dich auf einen Bereich (Articles, Tense Selection, Modal Verbs, Modal Past Forms, Gerund vs. Infinitive) mit Einheiten von 3, 5 oder 10 Fragen.\n\nLernberg\nJeder Tagestest bringt deine Figur einen Schritt auf den Berg dieses Monats. Verdiene Medaillen für den Monat und bau dir eine Gewohnheit auf, die bleibt.\n\nSechzehn Lernbegleiter\nWähle die Figur, die mit dir klettert.\n\nKOSTENLOS UND PREMIUM\nKostenlos: jeden Tag ein Tagestest und eine Übungseinheit.\nPremium schaltet die Themenübung in allen fünf Bereichen frei und mehr Übungseinheiten pro Tag.\nPremium gibt es als Monats- oder Jahresabo. Beide enthalten eine kostenlose Testphase für neue Abonnenten. Die Preise werden in der App angezeigt, bevor du abschließt.\n\nDATENSCHUTZ\nKein Konto, keine Anmeldung. Dein Name, dein Fortschritt und dein Übungsverlauf bleiben auf deinem Gerät. Die App sendet anonyme Nutzungsdaten, nie deinen Namen.\nFür das Feedback werden die Antworten, die du eingibst, an unseren KI-Anbieter Anthropic gesendet. Die App fragt vor dem ersten Senden um Erlaubnis. Du kannst die Erlaubnis jederzeit im Bildschirm „Daten“ widerrufen.\n\nLizenzvereinbarung (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nDatenschutzerklärung: https://ahmettayfur.com/products/grammarlens/privacy/\nNutzungsbedingungen: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 85,
+          "utf8Bytes": 88,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "englisch,grammatik,lernen,übung,test,zeitformen,artikel,verben,prüfung,täglich,fehler"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 801,
+          "utf8Bytes": 837,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens spricht jetzt deine Sprache.\n• Die App gibt es jetzt auf Japanisch, Koreanisch, Spanisch, Portugiesisch (Brasilien), Türkisch, Arabisch und Deutsch. Fragen und Feedback bleiben auf Englisch. Ändern kannst du das unter Profil → Darstellung → Sprache.\n• Fragen mit mehreren Lücken: Du kannst auch mit einer leeren Lücke abgeben und siehst für jede Lücke, was du geschrieben hast.\n• Klareres Feedback: Lange Erklärungen sind in Absätze gegliedert, und die Wörter, die sich zwischen „Deine Antwort“ und „Korrigiert“ unterscheiden, sind hervorgehoben.\n• Themen-Tipps verraten die Antwort nicht mehr.\n• Im Tagestest werden Buchstaben mit Akzent und in voller Breite von deiner Tastatur akzeptiert.\n• Datenschutzerklärung und Nutzungsbedingungen findest du jetzt unter Profil → App-Informationen."
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "c08e3bb5-28e9-4745-8d0d-a1bb32f72e21",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "8f400019-5fee-8562-800f-1f4c4b439a40",
+              "file": "01-results.png",
+              "md5": "e78ecbb1b4638c39f7a3739e03210f26",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "3a400019-5fee-8562-801f-be672be6986a",
+              "file": "04-question.png",
+              "md5": "62e4e5715f92e24a4f3de05c050bb976",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "46c00019-5fee-8562-8004-308fa0eef5fc",
+              "file": "02-hint.png",
+              "md5": "4108692dcdbd8af888611795b33fc1e2",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "0bc00019-5fee-8562-8038-0d546cbf3030",
+              "file": "08-multi-blank.png",
+              "md5": "8e42e7b794942f113eea613dcdfa2602",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "14c00019-5fee-8562-8033-b652861c1f03",
+              "file": "03-home.png",
+              "md5": "e59cc8cbfffe4c4542ca7cfe1dabdc77",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "91400019-5fee-8562-802e-c4f30f36be5b",
+              "file": "05-review.png",
+              "md5": "24b73771f5fc7ab38c68af2385d07719",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "f5c00019-5fee-8562-8000-a84caa956301",
+              "file": "06-collection.png",
+              "md5": "32f7f020bfacc638c220ddc930a91f07",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "4f000019-5fee-8562-801e-58b94adf21cf",
+              "file": "07-onboarding.png",
+              "md5": "09e552a23e08beded234b815d62f10ef",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "1b99cee2-faf0-470c-b1ff-e99b018fdcc8",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "aac00019-5fee-8562-803b-e7946f8f046a",
+              "file": "01-results.png",
+              "md5": "cac815f6f0a5a99aa46b9c65d329e657",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "0b400019-5fee-8562-8007-7de3a75e0f29",
+              "file": "04-question.png",
+              "md5": "bdd8d988e68dbad8f40173bd3cc0117b",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "be000019-5fee-8562-800a-8d9ed3b4876e",
+              "file": "02-hint.png",
+              "md5": "542c0ad0a76a91fd8db9f6fcf1afbfaf",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "12800019-5fee-8562-8032-c5dd83fcc4a3",
+              "file": "03-home.png",
+              "md5": "459cd3176548b7fb8d6a5180cb3b91b9",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "90000019-5fee-8562-802e-2b557e3f5765",
+              "file": "05-review.png",
+              "md5": "a0350d9a210c545eac8037336f19659f",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "87c00019-5fee-8562-8034-07b0b9504335",
+              "file": "06-collection.png",
+              "md5": "3de8fcf5a955d142d43a83598d2b8de0",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "8d000019-5fee-8562-8f34-b475f132d186",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:04.83019Z",
+            "lastModifiedDate": "2026-11-05T02:38:04.83019Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "es-MX",
+      "id": "59562966-9555-4e74-a371-1f7f6c171cf7",
+      "appInfoId": "0d1e38a5-288c-4af4-9c92-3ccc7c110901",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 28,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "Gramática diaria y explicada"
+        },
+        "description": {
+          "filled": true,
+          "characters": 2542,
+          "utf8Bytes": 2599,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens convierte tus errores de inglés en práctica.\n\nCada día haces un test corto de gramática. Al terminar, no solo ves una puntuación: ves por qué cada respuesta estuvo bien o mal, explicado con palabras sencillas.\n\nAHORA EN TU IDIOMA\nLos menús y botones de la app están en inglés, japonés, coreano, español, portugués (Brasil), turco, árabe y alemán. Las preguntas y la retroalimentación siguen en inglés, para que practiques el idioma que estás aprendiendo.\n\nLO QUE OBTIENES\n\nTest diario\nUn nuevo grupo de preguntas cada día. Completa espacios, corrige errores y recibe una explicación para cada respuesta.\n\nExplicaciones reales, no solo marcas\nEn lugar de \"incorrecto\", ves el porqué: qué regla aplica, por qué tu respuesta no encaja y qué recordar la próxima vez. Las palabras que cambian entre tu respuesta y la corrección aparecen resaltadas.\n\nPistas del tema\n¿Te atoraste en una pregunta? Desliza para ver el patrón gramatical de su tema: un recordatorio de la regla, nunca la respuesta.\n\nTus puntos débiles, bajo control\nLa app recuerda los puntos de gramática que sigues fallando y los reúne en Repaso, para que siempre sepas en qué trabajar.\n\nPráctica por temas\nConcéntrate en un área (Articles, Tense Selection, Modal Verbs, Modal Past Forms, Gerund vs. Infinitive) con sesiones de 3, 5 o 10 preguntas.\n\nMontaña del aprendizaje\nCada Test diario sube a tu personaje un paso en la montaña del mes. Gana las medallas del mes y crea un hábito que dure.\n\nDieciséis compañeros de estudio\nElige el personaje que sube contigo.\n\nGRATIS Y PREMIUM\nLa versión gratis incluye un Test diario y una sesión de práctica cada día.\nPremium desbloquea la Práctica por temas en las cinco áreas y más sesiones de práctica al día.\nPremium está disponible como suscripción mensual o anual. Ambas incluyen una prueba gratuita para nuevos suscriptores. Los precios se muestran en la app antes de suscribirte.\n\nPRIVACIDAD\nSin cuenta y sin registro. Tu nombre, tu progreso y tu historial de práctica se quedan en tu dispositivo. La app envía datos de uso anónimos, nunca tu nombre.\nPara darte retroalimentación, las respuestas que escribes se envían a nuestro proveedor de IA, Anthropic. La app te pide permiso antes de hacerlo por primera vez, y puedes retirarlo cuando quieras desde la pantalla Datos.\n\nContrato de licencia (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nPolítica de privacidad: https://ahmettayfur.com/products/grammarlens/privacy/\nTérminos del servicio: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 86,
+          "utf8Bytes": 90,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "inglés,gramática,aprender,práctica,test,tiempos,artículos,verbos,examen,diario,errores"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 746,
+          "utf8Bytes": 780,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens ahora habla tu idioma.\n• La app ahora está disponible en japonés, coreano, español, portugués (Brasil), turco, árabe y alemán. Las preguntas y la retroalimentación siguen en inglés. Cámbialo en Perfil → Apariencia → Idioma.\n• Preguntas con varios espacios: puedes enviar aunque dejes un espacio en blanco y ver lo que escribiste en cada uno.\n• Retroalimentación más clara: las explicaciones largas se dividen en párrafos y se resaltan las palabras que cambian entre \"Escribiste\" y \"Corregido\".\n• Las pistas del tema ya no revelan la respuesta.\n• En el Test diario se aceptan las letras con acento y de ancho completo de tu teclado.\n• La Política de privacidad y los Términos del servicio ahora están en Perfil → Información de la app."
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "44c56bc0-bf45-481e-bc48-de6089fb7862",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "ab000019-5fee-8562-801e-98ffd97a20e9",
+              "file": "01-results.png",
+              "md5": "6e2681666068fa99530f7154ce452654",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "d7000019-5fee-8562-8011-4e7c90d0e8e9",
+              "file": "04-question.png",
+              "md5": "6881179aeabf90acd5ceac4ea3521068",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "41000019-5fee-8562-8024-34175df01212",
+              "file": "02-hint.png",
+              "md5": "6389430fe0d694c2a8b73802dbe94317",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "fc800019-5fee-8562-8015-06237e23cc19",
+              "file": "08-multi-blank.png",
+              "md5": "c789e524f9ebbbda2925061f961c35d4",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "f3c00019-5fee-8562-801b-8dbeb7898131",
+              "file": "03-home.png",
+              "md5": "699ec836241ec6b151e0960e2cb3dd20",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "1d000019-5fee-8562-801a-99ebb7f8252f",
+              "file": "05-review.png",
+              "md5": "0fa9eaf0110c434a7ee5184da3673433",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "10000019-5fee-8562-8002-9571d213274a",
+              "file": "06-collection.png",
+              "md5": "cea6ff2fbf3c23831d5791db01476e5c",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "8f800019-5fee-8562-802c-6be39fe6c9c3",
+              "file": "07-onboarding.png",
+              "md5": "ee12bd0d6b74ccc2a7316e11ad7a4b81",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "4df75bbc-74dd-4fd1-8dc5-4b77bb80d52c",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "94800019-5fee-8562-803e-7927cbeaef80",
+              "file": "01-results.png",
+              "md5": "49a90ba501217c804d5ed1392a0fe230",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "43400019-5fee-8562-802a-74f69ee899ea",
+              "file": "04-question.png",
+              "md5": "cd3e9a1cbaa6a310d43626fda4d4cba4",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "87c00019-5fee-8562-803a-3f71d20fa277",
+              "file": "02-hint.png",
+              "md5": "ddd57894e7e417dde195d27a31ead6ce",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "a7400019-5fee-8562-8014-aa4015e6d363",
+              "file": "03-home.png",
+              "md5": "da5fdfe96568780c7c2aa82d148ceaf5",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "af800019-5fee-8562-8030-79f758ac6776",
+              "file": "05-review.png",
+              "md5": "87fbbe14d2a8ee98a165f96064bc7b7b",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "47400019-5fee-8562-8019-69022149fb58",
+              "file": "06-collection.png",
+              "md5": "2c8384efb566c9e6da29cb8397ab8c44",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "17800019-5fee-8562-8f1d-a904ba72685f",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:05.450804Z",
+            "lastModifiedDate": "2026-11-05T02:38:05.450804Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "pt-BR",
+      "id": "6d01380e-710f-48c4-80c3-1079cc96e9c0",
+      "appInfoId": "c1cf1888-ac45-43ea-b6f8-7c98f26f7f3e",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 31,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "Prática diária, feedback real"
+        },
+        "description": {
+          "filled": true,
+          "characters": 2462,
+          "utf8Bytes": 2541,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "O GrammarLens transforma seus erros de inglês em prática.\n\nTodo dia você faz um teste curto de gramática. Ao terminar, você não vê só uma pontuação: vê por que cada resposta estava certa ou errada, em linguagem simples.\n\nAGORA NA SUA LÍNGUA\nOs menus e botões do app estão em inglês, japonês, coreano, espanhol, português (Brasil), turco, árabe e alemão. As perguntas e o feedback continuam em inglês, para você praticar a língua que está aprendendo.\n\nO QUE VOCÊ GANHA\n\nTeste diário\nUm novo conjunto de perguntas todo dia. Complete lacunas, corrija erros e receba uma explicação para cada resposta.\n\nExplicações de verdade, não só marcações\nEm vez de \"errado\", você vê o motivo: qual regra se aplica, por que sua resposta não serve e o que lembrar da próxima vez. As palavras que mudam entre sua resposta e a correção ficam destacadas.\n\nDicas do tema\nTravou em uma pergunta? Deslize para ver o padrão gramatical do tema: um lembrete da regra, nunca a resposta.\n\nSeus pontos fracos, acompanhados\nO app lembra os pontos de gramática que você continua errando e os reúne na Revisão, para você sempre saber no que trabalhar.\n\nPrática por tema\nFoque em uma área (Articles, Tense Selection, Modal Verbs, Modal Past Forms, Gerund vs. Infinitive) com sessões de 3, 5 ou 10 perguntas.\n\nMontanha do aprendizado\nCada Teste diário leva seu personagem um passo acima na montanha do mês. Ganhe as medalhas do mês e crie um hábito que fica.\n\nDezesseis companheiros de estudo\nEscolha o personagem que sobe com você.\n\nGRÁTIS E PREMIUM\nO plano grátis inclui um Teste diário e uma sessão de prática por dia.\nO Premium libera a Prática por tema nas cinco áreas e mais sessões de prática por dia.\nO Premium está disponível em assinatura mensal ou anual. As duas incluem um período grátis para novos assinantes. Os preços aparecem no app antes de você assinar.\n\nPRIVACIDADE\nSem conta e sem cadastro. Seu nome, seu progresso e seu histórico de prática ficam no seu aparelho. O app envia dados de uso anônimos, nunca o seu nome.\nPara dar feedback, as respostas que você digita são enviadas ao nosso provedor de IA, a Anthropic. O app pede sua permissão antes de fazer isso pela primeira vez, e você pode retirá-la quando quiser na tela Dados.\n\nContrato de Licença (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nPolítica de Privacidade: https://ahmettayfur.com/products/grammarlens/privacy/\nTermos de Serviço: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 80,
+          "utf8Bytes": 84,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "inglês,gramática,aprender,prática,teste,tempos,artigos,verbos,exame,diário,erros"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 717,
+          "utf8Bytes": 759,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "O GrammarLens agora fala a sua língua.\n• O app agora está disponível em japonês, coreano, espanhol, português (Brasil), turco, árabe e alemão. As perguntas e o feedback continuam em inglês. Mude em Perfil → Aparência → Idioma.\n• Perguntas com várias lacunas: você pode enviar mesmo com uma lacuna em branco e ver o que escreveu em cada uma.\n• Feedback mais claro: explicações longas são divididas em parágrafos, e as palavras que mudam entre \"Você escreveu\" e \"Corrigido\" ficam destacadas.\n• As dicas do tema não entregam mais a resposta.\n• No Teste diário, letras com acento e de largura total do seu teclado são aceitas.\n• A Política de Privacidade e os Termos de Serviço agora estão em Perfil → Informações do app."
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "fc70e24c-5368-412c-b137-858cd0ea1b22",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "39000019-5fee-8562-8027-27fd7f19f27a",
+              "file": "01-results.png",
+              "md5": "dd26f50206a1d85ea64d7ac4ee9f54cd",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "79400019-5fee-8562-8003-9abaf12e942a",
+              "file": "04-question.png",
+              "md5": "481637663086105d6a0e20305b49c55b",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "d4400019-5fee-8562-8029-2ce757805bb8",
+              "file": "02-hint.png",
+              "md5": "b2da1c6cefbc7a8c84a73c1a97944e2a",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "af400019-5fee-8562-8003-ed5ac6631192",
+              "file": "03-home.png",
+              "md5": "17a2a77aa78c300a0d1f26259a5f82b0",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "56800019-5fee-8562-802a-3729409ad016",
+              "file": "05-review.png",
+              "md5": "ccfa98e9114ccfa04c8c49324cdd8112",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "f4c00019-5fee-8562-8021-527c661a47f2",
+              "file": "06-collection.png",
+              "md5": "ba49a3850313797d9cdaf42da5759b41",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "9c8fae03-4f5d-4935-b8d5-4892d8f8142a",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "16400019-5fee-8562-800b-c8b409d33307",
+              "file": "01-results.png",
+              "md5": "1ccacb022c43e36dd2cb80b5ce45d912",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "82000019-5fee-8562-8030-04af68e7c906",
+              "file": "04-question.png",
+              "md5": "aecf7f4af8497b2f06a3019f44ea711e",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "c1400019-5fee-8562-800c-6ad3d76e25e9",
+              "file": "02-hint.png",
+              "md5": "c9eec57302b1d8e27d49e906e7ba2dd8",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "24000019-5fee-8562-8025-b446666c1f21",
+              "file": "08-multi-blank.png",
+              "md5": "1344a3c92831e1d36f78ada92e8d7312",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "63800019-5fee-8562-8002-1804514a4447",
+              "file": "03-home.png",
+              "md5": "9c7e5683ad24e54ed60ebc0726913707",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "54400019-5fee-8562-801a-5f9bd48d718a",
+              "file": "05-review.png",
+              "md5": "02a5075aa10e594c6fb2dffa6be78c81",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "1fc00019-5fee-8562-803f-6544eb018075",
+              "file": "06-collection.png",
+              "md5": "685d09b3c9f97846ba30f2439f1a0282",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "3c400019-5fee-8562-803a-c540056bc252",
+              "file": "07-onboarding.png",
+              "md5": "42d8eb0fa348886b88c1cddd622eab98",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "e2000019-5fee-8562-8f21-e645ec2b2899",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:06.083043Z",
+            "lastModifiedDate": "2026-11-05T02:38:06.083043Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "ja",
+      "id": "b704a413-2638-4cdf-a8a6-7e4524012aef",
+      "appInfoId": "448cd3db-69dd-4dfd-b130-6dcbfaf487d2",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 15,
+          "utf8Bytes": 45,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "毎日の文法練習とていねいな解説"
+        },
+        "description": {
+          "filled": true,
+          "characters": 1275,
+          "utf8Bytes": 3132,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLensは、英語のまちがいを練習に変えるアプリです。\n\n毎日、短い文法テストに答えます。終わるとスコアだけでなく、それぞれの答えがなぜ正しいのか、なぜまちがいなのかを、わかりやすい言葉で確認できます。\n\nあなたの言語に対応\nアプリのメニューとボタンは、英語、日本語、韓国語、スペイン語、ポルトガル語（ブラジル）、トルコ語、アラビア語、ドイツ語で表示できます。問題とフィードバックは英語のままなので、学んでいる言語で練習できます。\n\n主な機能\n\nデイリーテスト\n毎日新しい問題セット。空欄を埋め、まちがいを直し、すべての答えに解説がつきます。\n\n○×だけではない、本当の解説\n「不正解」だけでなく理由がわかります。どのルールが当てはまるのか、なぜその答えが合わないのか、次に何を覚えておけばよいのか。あなたの答えと修正後で変わった語は強調表示されます。\n\nトピックのヒント\n問題でつまずいたら、スライドしてそのトピックの文法パターンを確認できます。ルールを思い出すためのもので、答えは表示しません。\n\n弱点を記録\n何度もまちがえる文法項目をアプリが覚えて、復習にまとめます。次に取り組むべきことがいつもわかります。\n\nトピック練習\nArticles、Tense Selection、Modal Verbs、Modal Past Forms、Gerund vs. Infinitive から分野を選び、3問・5問・10問のセッションで集中して練習できます。\n\n学びの山\nデイリーテストを1回受けるたびに、キャラクターが今月の山を一歩のぼります。月ごとにメダルを集めて、続けられる習慣をつくりましょう。\n\n16体の学習仲間\n一緒にのぼるキャラクターを選べます。\n\n無料版とPremium\n無料版では、毎日デイリーテスト1回と練習セッション1回を利用できます。\nPremiumでは、5つの分野すべてのトピック練習と、1日あたりより多くの練習セッションが使えます。\nPremiumは月額または年額のサブスクリプションです。どちらも新規購読者には無料体験があります。料金は購読前にアプリ内で表示されます。\n\nプライバシー\nアカウントも登録も不要です。名前、進み具合、練習の履歴は端末に保存されます。アプリは匿名の利用データを送信しますが、名前は決して送りません。\nフィードバックのために、入力した答えはAIプロバイダーのAnthropicに送信されます。初めて送信する前にアプリが許可を求め、許可はいつでも「データ」画面から取り消せます。\n\n使用許諾契約（EULA）: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nプライバシーポリシー: https://ahmettayfur.com/products/grammarlens/privacy/\n利用規約: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 46,
+          "utf8Bytes": 112,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "英語,文法,英文法,学習,テスト,練習,時制,冠詞,動詞,助動詞,試験,毎日,間違い,英作文"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 346,
+          "utf8Bytes": 974,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLensがあなたの言語に対応しました。\n• 日本語、韓国語、スペイン語、ポルトガル語（ブラジル）、トルコ語、アラビア語、ドイツ語で使えるようになりました。問題とフィードバックは英語のままです。プロフィール → 表示 → 言語 で変更できます。\n• 空欄が複数ある問題：空欄を残したままでも送信でき、空欄ごとに自分の解答を確認できます。\n• わかりやすいフィードバック：長い解説は段落に分かれ、「あなたの解答」と「修正後」で変わった語が強調表示されます。\n• トピックのヒントが答えを明かさなくなりました。\n• デイリーテストで、キーボードのアクセント付き文字や全角文字も正解として扱います。\n• プライバシーポリシーと利用規約は プロフィール → アプリ情報 から確認できます。"
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "51433d31-5093-4c11-9327-fa61a0521027",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "61400019-5fee-8562-8014-937d4f71146c",
+              "file": "01-results.png",
+              "md5": "c1348fd1cfa884277b1cc3b8737e8a00",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "7b400019-5fee-8562-8025-30af5de01bb5",
+              "file": "04-question.png",
+              "md5": "62c0500f5f3708ff19c81bf8e4efde44",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "b8000019-5fee-8562-800b-557426bcf24f",
+              "file": "02-hint.png",
+              "md5": "435fd756a60796281ec76c81ed999a4e",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "63800019-5fee-8562-800b-4a4e0b085f7c",
+              "file": "03-home.png",
+              "md5": "2f897c831c7d6d89bdf8526b4e212f71",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "d8000019-5fee-8562-8013-cee53065ebfb",
+              "file": "05-review.png",
+              "md5": "36fc97e8fd6297655a54231eab53d9ce",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "25400019-5fee-8562-8019-f1fd78c18863",
+              "file": "06-collection.png",
+              "md5": "e3544dc5be70a71b25a4c7d99b0487d7",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "1cc8dba1-c41f-4fda-9f31-aeb50f7e62e4",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "c0c00019-5fee-8562-800f-d41a4542863f",
+              "file": "01-results.png",
+              "md5": "15a813e2f1bcb4cd89c46113139e0ffb",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "8ec00019-5fee-8562-8037-6b19e6223df0",
+              "file": "04-question.png",
+              "md5": "281449033fa1695087f5570eac0a9d0c",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "a5000019-5fee-8562-803a-722f392615f4",
+              "file": "02-hint.png",
+              "md5": "2fe56cae1cc30579d131d0cdb51838a1",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "91400019-5fee-8562-8034-43a32681009b",
+              "file": "08-multi-blank.png",
+              "md5": "b5396f99ad6579cc5275b8b308dbd788",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "c3400019-5fee-8562-8000-ddd552905a29",
+              "file": "03-home.png",
+              "md5": "3394412931ff4d6cbe8f624689e863a5",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "37800019-5fee-8562-8017-764dd81a64f9",
+              "file": "05-review.png",
+              "md5": "6e7b8d4c5cdf8b85d7761f947d2032ca",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "ea400019-5fee-8562-801e-45198dd0a54a",
+              "file": "06-collection.png",
+              "md5": "b8f8de489b9cab8c7de97be088ffe168",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "41800019-5fee-8562-8011-9a32f1abcb9a",
+              "file": "07-onboarding.png",
+              "md5": "bd18a9a35406e4b7f29e96eac4c8744b",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "c7c00019-5fee-8562-8f28-aae049494fe9",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:06.698925Z",
+            "lastModifiedDate": "2026-11-05T02:38:06.698925Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "ko",
+      "id": "39426655-dc45-44a6-9cdb-c583ecdda1e7",
+      "appInfoId": "c80a3875-45d9-4693-8cb5-8e883d00be34",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 16,
+          "utf8Bytes": 38,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "매일 문법 연습, 친절한 해설"
+        },
+        "description": {
+          "filled": true,
+          "characters": 1357,
+          "utf8Bytes": 2765,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens는 영어 실수를 연습으로 바꿔 줘요.\n\n매일 짧은 문법 테스트를 풀어요. 끝나면 점수만 보는 게 아니라, 각 답이 왜 맞았는지 또는 틀렸는지 쉬운 말로 확인할 수 있어요.\n\n이제 내 언어로\n앱의 메뉴와 버튼을 영어, 일본어, 한국어, 스페인어, 포르투갈어(브라질), 튀르키예어, 아랍어, 독일어로 볼 수 있어요. 문제와 피드백은 영어로 유지되어, 배우고 있는 언어로 연습할 수 있어요.\n\n주요 기능\n\n데일리 테스트\n매일 새로운 문제 세트가 나와요. 빈칸을 채우고, 틀린 부분을 고치고, 모든 답에 대한 해설을 받아요.\n\n정답 표시만이 아닌 진짜 해설\n'오답' 대신 이유를 알려 줘요. 어떤 규칙이 적용되는지, 내 답이 왜 맞지 않는지, 다음에 무엇을 기억하면 좋을지요. 내 답변과 고친 답 사이에서 바뀐 단어는 강조돼요.\n\n주제 힌트\n문제가 막히면 밀어서 그 주제의 문법 패턴을 확인하세요. 규칙을 떠올리게 해 줄 뿐, 정답은 알려 주지 않아요.\n\n약점 기록\n자주 틀리는 문법 항목을 앱이 기억해서 복습에 모아 줘요. 무엇을 공부해야 할지 항상 알 수 있어요.\n\n주제별 연습\nArticles, Tense Selection, Modal Verbs, Modal Past Forms, Gerund vs. Infinitive 중 원하는 분야를 골라 3문제, 5문제, 10문제 세션으로 집중 연습해요.\n\n배움의 산\n데일리 테스트를 풀 때마다 캐릭터가 이번 달 산을 한 걸음 올라가요. 매달 메달을 모으며 꾸준한 습관을 만들어 보세요.\n\n16명의 학습 친구\n함께 오를 캐릭터를 골라요.\n\n무료와 Premium\n무료로 매일 데일리 테스트 1회와 연습 세션 1회를 이용할 수 있어요.\nPremium은 다섯 분야 모두의 주제별 연습과 하루 더 많은 연습 세션을 열어 줘요.\nPremium은 월간 또는 연간 구독으로 이용할 수 있어요. 둘 다 신규 구독자에게 무료 체험이 있어요. 가격은 구독하기 전에 앱에서 보여 드려요.\n\n개인정보\n계정도 가입도 필요 없어요. 이름, 진행 상황, 연습 기록은 기기에 저장돼요. 앱은 익명 사용 데이터를 보내고, 이름은 절대 보내지 않아요.\n피드백을 드리기 위해 입력한 답은 AI 제공업체인 Anthropic으로 전송돼요. 처음 전송하기 전에 앱이 허락을 구하며, '데이터' 화면에서 언제든지 철회할 수 있어요.\n\n최종 사용자 사용권 계약(EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\n개인정보 처리방침: https://ahmettayfur.com/products/grammarlens/privacy/\n이용약관: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 44,
+          "utf8Bytes": 106,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "영어,문법,영문법,공부,테스트,연습,시제,관사,동사,조동사,시험,매일,오답,영작"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 359,
+          "utf8Bytes": 827,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "이제 GrammarLens를 내 언어로 사용할 수 있어요.\n• 일본어, 한국어, 스페인어, 포르투갈어(브라질), 튀르키예어, 아랍어, 독일어를 지원해요. 문제와 피드백은 영어로 유지돼요. 프로필 → 화면 → 언어에서 바꿀 수 있어요.\n• 빈칸이 여러 개인 문제: 빈칸을 비워 둔 채로도 제출할 수 있고, 빈칸마다 내 답변을 확인할 수 있어요.\n• 더 명확한 피드백: 긴 설명은 문단으로 나뉘고, '내 답변'과 '고친 답' 사이에서 바뀐 단어가 강조돼요.\n• 주제 힌트가 더 이상 정답을 알려 주지 않아요.\n• 데일리 테스트에서 키보드의 악센트 문자와 전각 문자도 인정돼요.\n• 개인정보 처리방침과 이용약관은 이제 프로필 → 앱 정보에 있어요."
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "2074c8b6-185d-4e7b-8230-e7ff665bad9e",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "cb400019-5fee-8562-8021-10756afaa7e8",
+              "file": "01-results.png",
+              "md5": "e81037730a63293cde89f76b5f61ab2a",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "b1c00019-5fee-8562-8020-676f9f0fe17f",
+              "file": "04-question.png",
+              "md5": "543e2b3ea0421346c3bb493c39ceedbd",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "86800019-5fee-8562-801a-541fc8be6c31",
+              "file": "02-hint.png",
+              "md5": "29e6721a6a4d61eb81e30acd25eda059",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "8dc00019-5fee-8562-800a-dec356f61da0",
+              "file": "03-home.png",
+              "md5": "fc24a60bf6798e424db5b7dadceab06e",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "0d400019-5fee-8562-800d-db7b1bc6e240",
+              "file": "05-review.png",
+              "md5": "f2828d33a43f855cdaf8898cc64189e5",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "a8800019-5fee-8562-8024-c371910a4f2f",
+              "file": "06-collection.png",
+              "md5": "a5488e7933d05949cf46bbbb1089e0ad",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "3d717489-d61c-41f4-8b00-359b2abc00f0",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "b4000019-5fee-8562-8021-1b0474baf2e7",
+              "file": "01-results.png",
+              "md5": "f96aba93cc6a3cc2f8848660a89d27cc",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "3a800019-5fee-8562-8009-23ac875b6d51",
+              "file": "04-question.png",
+              "md5": "acfd686bcbb20c1836b53718f0b71f0e",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "5ac00019-5fee-8562-8022-502b4df3d69e",
+              "file": "02-hint.png",
+              "md5": "23a69d3790dac05daa65781367c69f68",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "d9800019-5fee-8562-8032-a7f124c0a627",
+              "file": "08-multi-blank.png",
+              "md5": "1ceeefae0237b293e16ec4290860b395",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "43800019-5fee-8562-8019-8bc8feeb8957",
+              "file": "03-home.png",
+              "md5": "1708a245c527f9e067e9dd1579eec746",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "05400019-5fee-8562-801f-dfe50420c0b8",
+              "file": "05-review.png",
+              "md5": "c7d3944373be5ce2cf793a4684d7245b",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "70000019-5fee-8562-8028-226d4f033a7c",
+              "file": "06-collection.png",
+              "md5": "f16418dda1a08032dc44020a3920d33a",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "31c00019-5fee-8562-803e-eeaee6a247b5",
+              "file": "07-onboarding.png",
+              "md5": "46bca8876b4a74905da10988a5531319",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "01800019-5fee-8562-8f2e-c4172ed7ab84",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:07.300161Z",
+            "lastModifiedDate": "2026-11-05T02:38:07.300161Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "locale": "ar-SA",
+      "id": "a741abc3-8025-45b2-9c7e-8362156d87d4",
+      "appInfoId": "a5f60acb-790f-41ae-a0e5-e55d8bbf4d0d",
+      "fields": {
+        "name": {
+          "filled": true,
+          "characters": 29,
+          "utf8Bytes": 29,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "GrammarLens: AI English Tutor"
+        },
+        "subtitle": {
+          "filled": true,
+          "characters": 26,
+          "utf8Bytes": 49,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "تدريب يومي وملاحظات حقيقية"
+        },
+        "description": {
+          "filled": true,
+          "characters": 2057,
+          "utf8Bytes": 3480,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "يحوّل GrammarLens أخطاءك في الإنجليزية إلى تدريب.\n\nكل يوم تحصل على اختبار قواعد قصير. وعندما تنتهي، لا ترى الدرجة فقط، بل ترى لماذا كانت كل إجابة صحيحة أو خاطئة، بلغة بسيطة.\n\nالآن بلغتك\nقوائم التطبيق وأزراره متاحة بالإنجليزية واليابانية والكورية والإسبانية والبرتغالية (البرازيل) والتركية والعربية والألمانية. تبقى الأسئلة والملاحظات باللغة الإنجليزية، لتتدرّب على اللغة التي تتعلّمها.\n\nما الذي تحصل عليه\n\nالاختبار اليومي\nمجموعة جديدة من الأسئلة كل يوم. املأ الفراغات، وصحّح الأخطاء، واحصل على شرح لكل إجابة.\n\nشروح حقيقية، لا مجرد علامات\nبدلًا من «خطأ» تحصل على السبب: أي قاعدة تنطبق، ولماذا لا تناسب إجابتك، وما الذي تتذكره في المرة القادمة. وتُبرَز الكلمات التي تغيّرت بين إجابتك والتصحيح.\n\nتلميحات الموضوع\nهل توقفت عند سؤال؟ اسحب لترى النمط النحوي لموضوعه: تذكير بالقاعدة، وليس الإجابة أبدًا.\n\nنقاط ضعفك تحت المتابعة\nيتذكّر التطبيق القواعد التي تخطئ فيها مرارًا ويجمعها في المراجعة، فتعرف دائمًا ما الذي تعمل عليه.\n\nتدريب الموضوعات\nركّز على مجال محدد (Articles وTense Selection وModal Verbs وModal Past Forms وGerund vs. Infinitive) بجلسات من 3 أو 5 أو 10 أسئلة.\n\nجبل التعلّم\nكل اختبار يومي يرفع شخصيتك خطوة على جبل هذا الشهر. اربح ميداليات الشهر وابنِ عادة تدوم.\n\nستة عشر رفيقًا للدراسة\nاختر الشخصية التي تتسلّق معك.\n\nمجاني وPremium\nتتضمن النسخة المجانية اختبارًا يوميًا واحدًا وجلسة تدريب واحدة كل يوم.\nيفتح Premium تدريب الموضوعات في المجالات الخمسة كلها وجلسات تدريب أكثر كل يوم.\nيتوفر Premium باشتراك شهري أو سنوي، ويتضمن كلاهما فترة تجربة مجانية للمشتركين الجدد. تُعرض الأسعار في التطبيق قبل الاشتراك.\n\nالخصوصية\nلا حساب ولا تسجيل. يبقى اسمك وتقدّمك وسجل تدريبك على جهازك. يرسل التطبيق بيانات استخدام مجهولة، ولا يرسل اسمك أبدًا.\nلتقديم الملاحظات، تُرسَل الإجابات التي تكتبها إلى مزوّد الذكاء الاصطناعي لدينا، Anthropic. يطلب التطبيق إذنك قبل أن يحدث ذلك أول مرة، ويمكنك سحب الإذن في أي وقت من شاشة البيانات.\n\nاتفاقية ترخيص المستخدم النهائي (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nسياسة الخصوصية: https://ahmettayfur.com/products/grammarlens/privacy/\nشروط الخدمة: https://ahmettayfur.com/products/grammarlens/terms/"
+        },
+        "keywords": {
+          "filled": true,
+          "characters": 80,
+          "utf8Bytes": 149,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "إنجليزي,قواعد,الإنجليزية,تعلم,اختبار,تدريب,الأزمنة,أفعال,امتحان,يومي,أخطاء,كتابة"
+        },
+        "whatsNew": {
+          "filled": true,
+          "characters": 627,
+          "utf8Bytes": 1144,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "‏GrammarLens الآن بلغتك.\n• التطبيق متاح الآن باليابانية والكورية والإسبانية والبرتغالية (البرازيل) والتركية والعربية والألمانية. تبقى الأسئلة والملاحظات باللغة الإنجليزية. يمكنك تغيير اللغة من الملف الشخصي ← المظهر ← اللغة.\n• الأسئلة ذات الفراغات المتعددة: يمكنك الإرسال حتى إذا تركت فراغًا فارغًا، وترى ما كتبته في كل فراغ.\n• ملاحظات أوضح: تُقسَّم الشروح الطويلة إلى فقرات، وتُبرَز الكلمات التي تغيّرت بين «ما كتبته» و«التصحيح».\n• لم تعد تلميحات الموضوع تكشف الإجابة.\n• في الاختبار اليومي تُقبل الحروف المشكَّلة والحروف كاملة العرض من لوحة المفاتيح.\n• سياسة الخصوصية وشروط الخدمة موجودة الآن في الملف الشخصي ← معلومات التطبيق."
+        },
+        "promotionalText": {
+          "filled": false,
+          "characters": 0,
+          "utf8Bytes": 0,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": ""
+        },
+        "supportUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/support/"
+        },
+        "privacyPolicyUrl": {
+          "filled": true,
+          "characters": 53,
+          "utf8Bytes": 53,
+          "matchesApproved": true,
+          "fallbackUsed": false,
+          "value": "https://ahmettayfur.com/products/grammarlens/privacy/"
+        }
+      },
+      "sets": [
+        {
+          "id": "1970c4cc-5f5d-413c-818d-f84465d05f2c",
+          "displayType": "APP_IPAD_PRO_3GEN_129",
+          "family": "ipad-13",
+          "count": 6,
+          "rows": [
+            {
+              "order": 1,
+              "id": "cdc00019-5fee-8562-8014-55730f1cf08d",
+              "file": "01-results.png",
+              "md5": "1bd4f3d3d515703b315b15caf3fb65ee",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "2cc00019-5fee-8562-801b-39dcc22ee741",
+              "file": "04-question.png",
+              "md5": "f5dd7770f7f4887d791b3a31f06b9fab",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "7bc00019-5fee-8562-8032-e4523c2dc39d",
+              "file": "02-hint.png",
+              "md5": "f89b2f6f22f0fa4248c32b66e9e52e59",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "5f800019-5fee-8562-8025-87e07362022c",
+              "file": "03-home.png",
+              "md5": "eba51667237ea2d78afab17f8f9c252e",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "89400019-5fee-8562-8013-a4bc498838ae",
+              "file": "05-review.png",
+              "md5": "5830824d7525aebae2fd0373c9e17141",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "6a800019-5fee-8562-8017-14360104566d",
+              "file": "06-collection.png",
+              "md5": "4466dfc0bcf0c94896789e775c7131ae",
+              "state": "COMPLETE",
+              "width": 2064,
+              "height": 2752,
+              "matchesApproved": true
+            }
+          ]
+        },
+        {
+          "id": "b9def353-5192-4da0-8484-f9166a02fee5",
+          "displayType": "APP_IPHONE_67",
+          "family": "iphone-6.9",
+          "count": 8,
+          "rows": [
+            {
+              "order": 1,
+              "id": "05000019-5fee-8562-801f-7cf25cef2b75",
+              "file": "01-results.png",
+              "md5": "7344ae2ea1c03665f2685f2669d86bf1",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 2,
+              "id": "52800019-5fee-8562-8016-66583fd7a51c",
+              "file": "04-question.png",
+              "md5": "f804ebbe96678fe14d8409e396c06335",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 3,
+              "id": "f1800019-5fee-8562-8038-a0311eef561a",
+              "file": "02-hint.png",
+              "md5": "2ac53940d22094e39334a83987e646ff",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 4,
+              "id": "58400019-5fee-8562-8030-0e4ee9d0a3bb",
+              "file": "08-multi-blank.png",
+              "md5": "1803cec168b8ca9506730f15fdf1290a",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 5,
+              "id": "4e400019-5fee-8562-803b-f765cfae2d9d",
+              "file": "03-home.png",
+              "md5": "8d1f2e2ba592a84ffe95c1a11db21558",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 6,
+              "id": "4e000019-5fee-8562-803a-43cccdac06e1",
+              "file": "05-review.png",
+              "md5": "835bf6d40f1c7d730eea92d9c2499847",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 7,
+              "id": "31c00019-5fee-8562-800d-3b7a9a73fd09",
+              "file": "06-collection.png",
+              "md5": "b20b66a8e75c771d6a087217b112066e",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            },
+            {
+              "order": 8,
+              "id": "58c00019-5fee-8562-8004-9b1631b9bde5",
+              "file": "07-onboarding.png",
+              "md5": "94c7d1e31804bc07a4e6344b09cfa038",
+              "state": "COMPLETE",
+              "width": 1320,
+              "height": 2868,
+              "matchesApproved": true
+            }
+          ]
+        }
+      ],
+      "headers": [
+        {
+          "type": "appAssetLibraryPlacements",
+          "id": "16800019-5fee-8562-8f37-6a42052bd9ef",
+          "attributes": {
+            "createdDate": "2026-11-05T02:38:07.940732Z",
+            "lastModifiedDate": "2026-11-05T02:38:07.940732Z",
+            "placementType": "PRODUCT_PAGE_HEADER_ASSET",
+            "mediaType": "IMAGE",
+            "placementGroup": "DEFAULT_PROFILE",
+            "state": "ACTIVE",
+            "stateDetails": null
+          },
+          "relationships": {
+            "image": {
+              "data": {
+                "type": "appAssetLibraryImages",
+                "id": "76400019-5fee-8562-8036-188001010828"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "index": 5,
+      "method": "POST",
+      "path": "/v1/appInfoLocalizations",
+      "status": 409,
+      "errors": [
+        {
+          "status": "409",
+          "code": "ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE",
+          "title": "The provided entity includes an attribute with a value that has already been used",
+          "detail": "An 'appInfoLocalizations' with a 'locale' of 'tr' already exists.",
+          "source": {
+            "pointer": "/data/attributes/locale"
+          }
+        }
+      ]
+    }
+  ],
+  "adaptations": [
+    {
+      "index": 5,
+      "reason": "ASC created appInfo localization automatically with version localization",
+      "method": "PATCH",
+      "path": "/v1/appInfoLocalizations/03650131-737c-421a-95b7-f9a4a480e10c"
+    },
+    {
+      "index": 7,
+      "reason": "ASC created appInfo localization automatically with version localization",
+      "method": "PATCH",
+      "path": "/v1/appInfoLocalizations/22383bec-dc66-4142-a994-00c09f95af78"
+    },
+    {
+      "index": 9,
+      "reason": "ASC created appInfo localization automatically with version localization",
+      "method": "PATCH",
+      "path": "/v1/appInfoLocalizations/0d1e38a5-288c-4af4-9c92-3ccc7c110901"
+    },
+    {
+      "index": 11,
+      "reason": "ASC created appInfo localization automatically with version localization",
+      "method": "PATCH",
+      "path": "/v1/appInfoLocalizations/c1cf1888-ac45-43ea-b6f8-7c98f26f7f3e"
+    },
+    {
+      "index": 14,
+      "reason": "ASC created appInfo localization automatically with version localization",
+      "method": "PATCH",
+      "path": "/v1/appInfoLocalizations/448cd3db-69dd-4dfd-b130-6dcbfaf487d2"
+    },
+    {
+      "index": 17,
+      "reason": "ASC created appInfo localization automatically with version localization",
+      "method": "PATCH",
+      "path": "/v1/appInfoLocalizations/c80a3875-45d9-4693-8cb5-8e883d00be34"
+    },
+    {
+      "index": 20,
+      "reason": "ASC created appInfo localization automatically with version localization",
+      "method": "PATCH",
+      "path": "/v1/appInfoLocalizations/a5f60acb-790f-41ae-a0e5-e55d8bbf4d0d"
+    },
+    {
+      "index": 362,
+      "reason": "Single retry of own screenshot after prolonged UPLOAD_COMPLETE with no errors",
+      "oldId": "84800019-5fee-8562-8037-88d150e86de9",
+      "newId": "c3400019-5fee-8562-8000-ddd552905a29"
+    },
+    {
+      "index": 447,
+      "reason": "Single retry of own screenshot after prolonged UPLOAD_COMPLETE with no errors",
+      "oldId": "c7400019-5fee-8562-802a-5dc54649b29d",
+      "newId": "b1c00019-5fee-8562-8020-676f9f0fe17f",
+      "file": "screenshots/1.4.0/ko/store/ipad-13/04-question.png"
+    },
+    {
+      "index": 470,
+      "reason": "Single retry of own screenshot after prolonged UPLOAD_COMPLETE with no errors",
+      "oldId": "65c00019-5fee-8562-8000-4d8a0f4c6846",
+      "newId": "05000019-5fee-8562-801f-7cf25cef2b75",
+      "file": "screenshots/1.4.0/ar/store/iphone-6.9/01-results.png"
+    },
+    {
+      "index": 482,
+      "reason": "Single retry of own screenshot after prolonged UPLOAD_COMPLETE with no errors",
+      "oldId": "5fc00019-5fee-8562-8025-9e3b3eb53b53",
+      "newId": "58400019-5fee-8562-8030-0e4ee9d0a3bb",
+      "file": "screenshots/1.4.0/ar/store/iphone-6.9/08-multi-blank.png"
+    },
+    {
+      "index": 513,
+      "reason": "Single retry of own screenshot after prolonged UPLOAD_COMPLETE with no errors",
+      "oldId": "bd000019-5fee-8562-8033-fae3937bc781",
+      "newId": "7bc00019-5fee-8562-8032-e4523c2dc39d",
+      "file": "screenshots/1.4.0/ar/store/ipad-13/02-hint.png"
+    }
+  ],
+  "runLog": "/Users/ahmet/Pictures/GrammarLens/1.4.0-asc/2026-11-05/requests.jsonl",
+  "readAt": "2026-11-05T02:38:58.988Z",
+  "header": {
+    "type": "appAssetLibraryImages",
+    "id": "76400019-5fee-8562-8036-188001010828",
+    "attributes": {
+      "category": "CREATIVE_ASSETS",
+      "createdDate": "2026-11-05T02:37:41.374278Z",
+      "lastModifiedDate": "2026-11-05T02:38:01.498605Z",
+      "fileName": "header.png",
+      "fileSize": 3849633,
+      "imageAsset": {
+        "templateUrl": "https://is1-ssl.mzstatic.com/image/thumb/OXR0ikF0bqydAoj6OIrriw/{w}x{h}bb.{f}",
+        "width": 3840,
+        "height": 1646
+      },
+      "referenceName": "GrammarLens 1.4.0 header A vivid",
+      "specId": "1eb43b80-e0b7-4d96-bd32-47a42a8c5fed",
+      "state": "PREPARE_FOR_SUBMISSION",
+      "stateDetails": null
+    },
+    "relationships": {
+      "placements": {}
+    }
+  },
+  "review": {
+    "id": "ef0585d5-222c-49e5-83c1-831966de5a5d",
+    "notes": "GrammarLens is an English grammar practice app. No account, no sign-up, no login. Open the app and start.\n\nATTACHED\nA screen recording on iPhone (version 1.3.0, build 6) showing onboarding, the Daily Test with a topic hint, results, the AI consent screen, the subscription screen, the purchase sheet and Restore Purchases. The sandbox account used in the recording had already used its free trial, so the subscription screen shows the direct price; new users see the free-trial wording described below.\n\nFIRST LAUNCH\nOnboarding has two steps: a first name and a companion, then a learning goal (the goal can be skipped). It then gives a 5-question Daily Test that is bundled with the app (no network call). After the results, tapping \"Start my climb\" goes to the Home screen and the subscription screen is shown once.\n\nAI CONSENT SCREEN\nIn practice sessions the app sends the answers a user types, with their questions, to Anthropic (Claude) to generate feedback. Before the first time this happens, a full-screen consent screen explains what is sent and asks for permission. The consent covers every practice session: the free weak-spot practice and Premium Topic Practice.\n\nTo reach it: answer at least one Daily Test question wrongly (for example, leave it blank) so a weak spot is created, then Home > Review tab > tap the weak spot > \"Start free practice\". The consent screen appears before the practice session starts. Consent can be withdrawn at any time from Profile > Data.\n\nThe Daily Test does not send any user-written text and does not require this consent.\n\nAI requests go only through our own server (api.ahmettayfur.com); the app contains no AI API key. The server does not store question or answer text. A random anonymous device ID is used only for daily limits; it is not sent to Anthropic and expires after 48 hours.\n\nFREE LIMITS\nA free user gets one Daily Test and one practice session per day. After the practice session is used, the results screen shows a Premium offer card. Topic Practice (from the Home screen) is a Premium feature. Premium allows up to 5 practice sessions a day (not unlimited).\n\nIf the daily allowance is already spent during review, the limits reset at local midnight.\n\nSUBSCRIPTIONS\nTwo auto-renewable subscriptions in one group: monthly ($5.99, 3-day free trial) and annual ($49.99, 7-day free trial). Prices and trial lengths are loaded live from the App Store through RevenueCat and are never hardcoded.\n\nTo reach the subscription screen: on Home, tap Premium next to Topic practice (or open any Topic Practice topic). Restore Purchases is at the bottom of that screen.\n\nPRIVACY\nNo account system. Name, avatar, practice history and progress stay on the device. Typed answers go to Anthropic only with consent. Firebase Analytics and Crashlytics collect anonymous usage and diagnostics; the learning goal chosen in onboarding is sent with these anonymous analytics, never with the user's name. RevenueCat handles subscription status. No IDFA, no tracking.\n\nThe release build has no hidden, debug or developer features, no remote configuration and no promo or redeem codes.\n\nSUBSCRIPTION DISPLAY\nThe total annual/monthly amount is the prominent price; any monthly equivalent is secondary. Trial length, post-trial charge, renewal terms, EULA and Privacy Policy links are shown on the subscription screen.\n\nPrivacy policy: https://ahmettayfur.com/products/grammarlens/privacy/\nTerms: https://ahmettayfur.com/products/grammarlens/terms/\nSupport: https://ahmettayfur.com/products/grammarlens/support/\n\nVERSION 1.4.0 (BUILD 7)\nSeven additional interface languages: Japanese, Korean, Spanish, Portuguese (Brazil), Turkish, Arabic and German. The interface follows the device language or Profile → Appearance → Language. Questions and AI feedback stay in English.",
+    "characters": 3805,
+    "matchesApproved": true
+  },
+  "problems": [],
+  "status": "passed",
+  "preflightReadLog": "/Users/ahmet/Pictures/GrammarLens/1.4.0-asc/2026-11-05/preflight-reads.jsonl",
+  "supportCheck": {
+    "status": 200,
+    "title": "GrammarLens support",
+    "viewport": 390,
+    "contentWidth": 390,
+    "bodyText": "Ahmet E. Tayfur\nGrammarLens\nEN\nTR\nSUPPORT\nGrammarLens for iOS\nLast updated: 16 October 2026\nSupport\n\nWrite to support@ahmettayfur.com. Include your device model and iOS version — it usually saves a round trip. Expect a reply within five business days.\n\nCOMMON QUESTIONS\nHow do I cancel my subscription?\n\nIn iOS Settings, tap your name, then Subscript"
+  }
+}
