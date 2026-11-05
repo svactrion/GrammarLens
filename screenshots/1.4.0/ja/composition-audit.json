@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "e64d0d3a31104d511542c11ce4358c7e5d673ae638e37b964712af38c53ad601",
+      "sha256": "e337b8e5fb51f6f0d67b4960d19cf888cee6ecbc6350ddbeb1db248c46e1d5ef",
       "text": [
         {
           "text": "すべての答えに",
@@ -496,7 +496,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "6b333f04920074ed7f40bad30db96126a884013ac62fbe0211cd6ef7678ea497",
+      "sha256": "b87eecf415af006eef83e4b5692af6074e9cf5e4b2d613748b09259d01b34991",
       "text": [
         {
           "text": "自分の答えを",
@@ -513,12 +513,12 @@
           "text": "書きましょう。",
           "fontFamily": "Local",
           "fontWeight": "800",
-          "fontSize": 156,
+          "fontSize": 207,
           "direction": "ltr",
-          "x": 136.16978454589844,
-          "y": 415.8973693847656,
-          "width": 1447.660400390625,
-          "height": 259.1896057128906
+          "x": 137.97828674316406,
+          "y": 415.906005859375,
+          "width": 1444.04345703125,
+          "height": 269.34423828125
         },
         {
           "text": "5つの問題。毎日の小さな習慣。",
@@ -527,7 +527,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 57.8125
         },
@@ -538,7 +538,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 861.8125,
           "width": 288,
           "height": 79
         }
@@ -550,7 +550,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "355a6de39913100aeb03ae374827e9b72c48b1bc1c9865ddc2543ae9bad1d5e5",
+      "sha256": "78dd061fbd28268a513920012fde3456f8afa7c11542c5b9b0f1401e25f993c0",
       "text": [
         {
           "text": "文法パターンを",
@@ -658,7 +658,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "e691ef064b18ac941a24bce3c226a9d8c76bbe3a7b02bd3f43bab444b18080be",
+      "sha256": "05f4df14041be5021afd739eb4df9e210c3facd48dc2ae19af11124c583f777e",
       "text": [
         {
           "text": "あなたの弱点を",
@@ -712,7 +712,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "ad6805b7ead2fc8cc5b4bd33c138b9da73877adfde5fc4b247e330462c163824",
+      "sha256": "55c0326d2ce31760b25130b932c148dd24f721c37a330cd6ae01876409c99416",
       "text": [
         {
           "text": "山のコレクションを",
@@ -729,12 +729,12 @@
           "text": "増やしましょう。",
           "fontFamily": "Local",
           "fontWeight": "800",
-          "fontSize": 156,
+          "fontSize": 181,
           "direction": "ltr",
-          "x": 136.16978454589844,
-          "y": 415.8973693847656,
-          "width": 1447.660400390625,
-          "height": 259.1896057128906
+          "x": 138.2459259033203,
+          "y": 415.9036560058594,
+          "width": 1443.508056640625,
+          "height": 238.67703247070312
         },
         {
           "text": "道のりで獲得したメダルを残しましょう。",
@@ -743,7 +743,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 57.8125
         },
@@ -754,7 +754,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 861.8125,
           "width": 390,
           "height": 79
         }

@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "2864c3e67a93c8d80e70b8744c95980e2163dfbdb858f18e4beea0c15e9c2862",
+      "sha256": "a0d1093574803351b0e29009c0cda1b03b49a286e8d897637fa746189d6e6bdc",
       "text": [
         {
           "text": "كل إجابة",
@@ -496,7 +496,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "061bd7db4e76868f0260125c2006d49c56b03ae05c6a51b851b6dcbe7fc5a4dc",
+      "sha256": "f6724fbc43070895028bfc18277e208fddc3b93f5a5337000edb14b52b2d859e",
       "text": [
         {
           "text": "اكتب إجابتك",
@@ -513,12 +513,12 @@
           "text": "بنفسك.",
           "fontFamily": "Local",
           "fontWeight": "800",
-          "fontSize": 185,
+          "fontSize": 235,
           "direction": "rtl",
           "x": 480,
           "y": 415.390625,
           "width": 1440,
-          "height": 259
+          "height": 329
         },
         {
           "text": "خمسة أسئلة. عادة يومية صغيرة.",
@@ -527,7 +527,7 @@
           "fontSize": 49,
           "direction": "rtl",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 68.59375
         },
@@ -538,7 +538,7 @@
           "fontSize": 34,
           "direction": "rtl",
           "x": 1658.21875,
-          "y": 815,
+          "y": 872.59375,
           "width": 260.78125,
           "height": 102
         }
@@ -550,7 +550,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "fada972300d2a5b3656c5e3c11cfcea69a595f3d59e8a2175f6ea791d3c9a263",
+      "sha256": "ac3c2538222a37caba4de52a9a3ef4ea987cdbab218bc6dbb9f285b6ae3e7875",
       "text": [
         {
           "text": "شاهد النمط",
@@ -658,7 +658,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "02a8f77c3a5a193f359a962f0cb1fc16c92e0caa12e1e3e3e8c5d76774a82322",
+      "sha256": "6ba902049d4e91b5ab4655ac716ecb36069ad9f8d4ed7cf88921b3dc970c8bde",
       "text": [
         {
           "text": "نقاط ضعفك،",
@@ -712,7 +712,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "ab5eba467f957323605e6cacdf66ff3f2e248d97078bcdcc8f8974f0bb0f4ea6",
+      "sha256": "8d34d9a896e7f095fad35228a3b6d8917f7f543622f870f8325e508918c9ad06",
       "text": [
         {
           "text": "ابنِ مجموعتك",
@@ -729,12 +729,12 @@
           "text": "من الجبال.",
           "fontFamily": "Local",
           "fontWeight": "800",
-          "fontSize": 185,
+          "fontSize": 235,
           "direction": "rtl",
           "x": 480,
           "y": 415.390625,
           "width": 1440,
-          "height": 259
+          "height": 329
         },
         {
           "text": "احتفظ بالميداليات التي تكسبها في الطريق.",
@@ -743,7 +743,7 @@
           "fontSize": 49,
           "direction": "rtl",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 68.59375
         },
@@ -754,7 +754,7 @@
           "fontSize": 34,
           "direction": "rtl",
           "x": 1721.96875,
-          "y": 815,
+          "y": 872.59375,
           "width": 197.03125,
           "height": 102
         }

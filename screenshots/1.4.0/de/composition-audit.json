@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "076db4be2aa06d7111180696317568aa997f44b3c7a9a1eb9acb9b662c145e65",
+      "sha256": "633a230f86c6c073d43aeed6b77e4f0ec4b69374c267b105bbc404b77918b292",
       "text": [
         {
           "text": "Jede Antwort",
@@ -496,7 +496,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "2b117ddc0f43ccc46b747ea07ab9dccb1ba015b29a4489b7493264d10de44e6b",
+      "sha256": "2605865e808c912c5ada9a88341f02cf2d10bcb757e77fe034e941cfff100147",
       "text": [
         {
           "text": "Schreib deine",
@@ -513,12 +513,12 @@
           "text": "eigene Antwort.",
           "fontFamily": "Caveat",
           "fontWeight": "700",
-          "fontSize": 181,
+          "fontSize": 278,
           "direction": "ltr",
-          "x": 136.1558837890625,
-          "y": 415.3039855957031,
-          "width": 1447.688232421875,
-          "height": 259.7201232910156
+          "x": 137.6353759765625,
+          "y": 415.29962158203125,
+          "width": 1444.729248046875,
+          "height": 308.6351318359375
         },
         {
           "text": "Fünf Fragen. Eine kleine tägliche Gewohnheit.",
@@ -527,7 +527,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 60.75
         },
@@ -538,7 +538,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 864.75,
           "width": 255.046875,
           "height": 76
         }
@@ -550,7 +550,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "8abd98755a6941a616b3cdce054c42e7bc7ea7fc71d503fad8d9c680ef5f0ab7",
+      "sha256": "e0f17638aaa6c7230a5ebb979c6177a8612b547b2ecf27c1e1e0da5ba9583d1c",
       "text": [
         {
           "text": "Erkenne das",
@@ -604,7 +604,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "b467c120148c5db0b2ce115f4d7ecfe92c1ea52bb86673d88876c8effafa8744",
+      "sha256": "cc4c5bd3677e449c13d06be5b60a02e11131257cba780c572ac300a19bd0bc2a",
       "text": [
         {
           "text": "Sieh deinen",
@@ -658,7 +658,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "7aafffde3050bd4e6009eb4f8c3891ea6dd3935b3a688dbad1d141658722a87e",
+      "sha256": "22c220696f97cc99faba3ab7a937f6f4d62661b0c113849d37f15f810b48af7f",
       "text": [
         {
           "text": "Deine Schwachstellen,",
@@ -712,7 +712,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "44cc4cc68291aa5f03633a3fe1bd9f39992625953a0e1557d9a785b52f7dc782",
+      "sha256": "3d084f62311ef011c7231b903c86bbdee9d27fa8fa398feb2f69cba170676eab",
       "text": [
         {
           "text": "Baue deine",
@@ -729,12 +729,12 @@
           "text": "Bergsammlung auf.",
           "fontFamily": "Caveat",
           "fontWeight": "700",
-          "fontSize": 181,
+          "fontSize": 229,
           "direction": "ltr",
-          "x": 136.1558837890625,
-          "y": 415.3039855957031,
-          "width": 1447.688232421875,
-          "height": 259.7201232910156
+          "x": 138.0714111328125,
+          "y": 415.3114318847656,
+          "width": 1443.857177734375,
+          "height": 258.6740417480469
         },
         {
           "text": "Behalte die Medaillen, die du unterwegs verdienst.",
@@ -743,7 +743,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 60.75
         },
@@ -754,7 +754,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 864.75,
           "width": 379.3125,
           "height": 76
         }

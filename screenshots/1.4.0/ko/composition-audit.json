@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "d6594c3b7be800a9c23f6f4b51f78b0aa25ed599d11468c4a6a698734adaca9d",
+      "sha256": "b6f2ce87136c654b9a73ab045f84a172f307aaf7531693faad240c30a2c4b07f",
       "text": [
         {
           "text": "모든 답을",
@@ -496,7 +496,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "590c3df26abe127f878b56dc015e3f20b5aaa42038e0b13d90cfa8faf8c689e1",
+      "sha256": "5b8340f596f005dfac7d97739c61e6f1a76dba0c11b372fd51caf8f59bf9df6f",
       "text": [
         {
           "text": "자신의 답을",
@@ -513,12 +513,12 @@
           "text": "직접 써요.",
           "fontFamily": "Local",
           "fontWeight": "800",
-          "fontSize": 156,
+          "fontSize": 258,
           "direction": "ltr",
-          "x": 136.16978454589844,
-          "y": 415.8973693847656,
-          "width": 1447.660400390625,
-          "height": 259.1896057128906
+          "x": 137.4530792236328,
+          "y": 415.89495849609375,
+          "width": 1445.09375,
+          "height": 329.5225830078125
         },
         {
           "text": "다섯 문제. 매일의 작은 습관.",
@@ -527,7 +527,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 57.8125
         },
@@ -538,7 +538,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 861.8125,
           "width": 247.203125,
           "height": 79
         }
@@ -550,7 +550,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "ff960173ce0d531d41c5a5069575db8111e58b622acc4d81c4a71f3053db8d8c",
+      "sha256": "0be93d84c5d64355078399a4effed00edbfa303f3b8d6a354f6f2fea55d95732",
       "text": [
         {
           "text": "문법 패턴을",
@@ -658,7 +658,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "a11e6b272fee521c3dd19e3869335d7f07a307a7a8a419a58c5ce796c9994fa2",
+      "sha256": "e2b139cf870f8e6ded583d852537e4b4873360e6215e286d04cf2364b288ab00",
       "text": [
         {
           "text": "나의 약점을",
@@ -712,7 +712,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "4233b826f68dc8697bfb7f6030ea28c93fcba72d022e7485a5ec71ddc143950a",
+      "sha256": "ef567e883c0dfff0ea9377c7f3f291d93c890dc661a5a6c7d6e416026de3027c",
       "text": [
         {
           "text": "산 컬렉션을",
@@ -729,12 +729,12 @@
           "text": "쌓아 가요.",
           "fontFamily": "Local",
           "fontWeight": "800",
-          "fontSize": 156,
+          "fontSize": 258,
           "direction": "ltr",
-          "x": 136.16978454589844,
-          "y": 415.8973693847656,
-          "width": 1447.660400390625,
-          "height": 259.1896057128906
+          "x": 137.4530792236328,
+          "y": 415.89495849609375,
+          "width": 1445.09375,
+          "height": 329.5225830078125
         },
         {
           "text": "가는 길에 얻은 메달을 간직해요.",
@@ -743,7 +743,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 57.8125
         },
@@ -754,7 +754,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 861.8125,
           "width": 215.921875,
           "height": 79
         }

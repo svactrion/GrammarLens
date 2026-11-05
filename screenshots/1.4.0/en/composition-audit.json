@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "7f3858507d4d1eaf39a38d4b5f3bdbd0ac3ba9389e38fd79ce5d13bf7520cd63",
+      "sha256": "cdbdf2e9a777681fd22ef1c5182c1d01427ccdb91c57c0417e8099891b848cc5",
       "text": [
         {
           "text": "Every answer",
@@ -496,7 +496,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "277b932e236294462212a1b8d1a817ca42c2c8206bf645e40832c244532240cc",
+      "sha256": "410c7b51f5c34ca404b8a4263e03cfb2dad667911d4682241df30390106f6c50",
       "text": [
         {
           "text": "Write your",
@@ -513,12 +513,12 @@
           "text": "own answer.",
           "fontFamily": "Caveat",
           "fontWeight": "700",
-          "fontSize": 181,
+          "fontSize": 280,
           "direction": "ltr",
-          "x": 136.1558837890625,
-          "y": 415.3039855957031,
-          "width": 1447.688232421875,
-          "height": 259.7201232910156
+          "x": 137.6175079345703,
+          "y": 415.2997741699219,
+          "width": 1444.764892578125,
+          "height": 310.6817321777344
         },
         {
           "text": "Five questions. One small daily habit.",
@@ -527,7 +527,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 60.75
         },
@@ -538,7 +538,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 864.75,
           "width": 253.3125,
           "height": 76
         }
@@ -550,7 +550,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "9f7fe3555156bc05099c13e298aa1208deff2fd9d61032f1e27b09c4cb2a1c12",
+      "sha256": "c051e54b8baba29712326b2174b33367462d2158fb235b5a78e4105d4529f19c",
       "text": [
         {
           "text": "See the",
@@ -604,7 +604,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "ced28ae71d3141c4fa1ab307cdd9494df9ec06f5b63925b558a1bec0f2b59705",
+      "sha256": "5b1faab6f7786b678a226a8be801228fcc8281bc5b586c90e2e9bf6e96a25c4d",
       "text": [
         {
           "text": "Watch your",
@@ -658,7 +658,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "3cd76ae7b1b74c1c9320e12c5f994ec376c6c0a6d7bf326599afba23961fc088",
+      "sha256": "810f513b12c6c196135935c09e45c48c34b79570560bc0a44d0db8c3e457d760",
       "text": [
         {
           "text": "Your weak spots,",
@@ -712,7 +712,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "f10431a8a7c4ae8878e0561d221e9995f99bc750e6354d31bfc62999b91ab97e",
+      "sha256": "094ad5f21cafa509920153bb5dc5f3501af6f460c30ddcdaa749a8819809a5a7",
       "text": [
         {
           "text": "Build your",
@@ -729,12 +729,12 @@
           "text": "mountain collection.",
           "fontFamily": "Caveat",
           "fontWeight": "700",
-          "fontSize": 181,
+          "fontSize": 219,
           "direction": "ltr",
-          "x": 136.1558837890625,
-          "y": 415.3039855957031,
-          "width": 1447.688232421875,
-          "height": 259.7201232910156
+          "x": 138.1604461669922,
+          "y": 415.3106384277344,
+          "width": 1443.67919921875,
+          "height": 248.47244262695312
         },
         {
           "text": "Keep the medals you earn along the way.",
@@ -743,7 +743,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 60.75
         },
@@ -754,7 +754,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 864.75,
           "width": 388.140625,
           "height": 76
         }

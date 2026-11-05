@@ -19,11 +19,11 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 136px | Nunito Sans **650** / 49px |
 | iphone-6.9 / 08 | onboarding | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 105px | Nunito Sans **650** / 49px |
 | ipad-13 / 01 | results | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 280px | Nunito Sans **650** / 49px |
 | ipad-13 / 03 | hint | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Nunito Sans **600** / 185px | Nunito Sans **650** / 49px |
 | ipad-13 / 04 | home | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
 | ipad-13 / 05 | review | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 219px | Nunito Sans **650** / 49px |
 
 ## tr — Fredoka / Caveat / Nunito Sans
 
@@ -40,11 +40,11 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Nunito Sans **800** / — | Fredoka **500** / — | Caveat **650** / — | Nunito Sans **650** / — |
 | iphone-6.9 / 08 | onboarding | Nunito Sans **800** / — | Fredoka **500** / — | Caveat **650** / — | Nunito Sans **650** / — |
 | ipad-13 / 01 | results | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 280px | Nunito Sans **650** / 49px |
 | ipad-13 / 03 | hint | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Nunito Sans **600** / 211px | Nunito Sans **650** / 49px |
 | ipad-13 / 04 | home | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
 | ipad-13 / 05 | review | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 280px | Nunito Sans **650** / 49px |
 
 ## de — Fredoka / Caveat / Nunito Sans
 
@@ -61,11 +61,11 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 136px | Nunito Sans **650** / 49px |
 | iphone-6.9 / 08 | onboarding | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 105px | Nunito Sans **650** / 49px |
 | ipad-13 / 01 | results | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 278px | Nunito Sans **650** / 49px |
 | ipad-13 / 03 | hint | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Nunito Sans **600** / 175px | Nunito Sans **650** / 49px |
 | ipad-13 / 04 | home | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 172px | Nunito Sans **650** / 49px |
 | ipad-13 / 05 | review | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 229px | Nunito Sans **650** / 49px |
 
 ## es — Fredoka / Caveat / Nunito Sans
 
@@ -82,11 +82,11 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 136px | Nunito Sans **650** / 49px |
 | iphone-6.9 / 08 | onboarding | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 105px | Nunito Sans **650** / 49px |
 | ipad-13 / 01 | results | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 255px | Nunito Sans **650** / 49px |
 | ipad-13 / 03 | hint | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Nunito Sans **600** / 211px | Nunito Sans **650** / 49px |
 | ipad-13 / 04 | home | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
 | ipad-13 / 05 | review | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 202px | Nunito Sans **650** / 49px |
-| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 280px | Nunito Sans **650** / 49px |
 
 ## pt-BR — Fredoka / Caveat / Nunito Sans
 
@@ -103,11 +103,11 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 136px | Nunito Sans **650** / 49px |
 | iphone-6.9 / 08 | onboarding | Nunito Sans **800** / 28px | Fredoka **500** / 112px | Caveat **650** / 105px | Nunito Sans **650** / 49px |
 | ipad-13 / 01 | results | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 02 | question | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 253px | Nunito Sans **650** / 49px |
 | ipad-13 / 03 | hint | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Nunito Sans **600** / 211px | Nunito Sans **650** / 49px |
 | ipad-13 / 04 | home | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 209px | Nunito Sans **650** / 49px |
 | ipad-13 / 05 | review | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Fredoka **600** / 211px | Nunito Sans **650** / 49px |
-| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 181px | Nunito Sans **650** / 49px |
+| ipad-13 / 06 | collection | Nunito Sans **800** / 34px | Fredoka **500** / 166px | Caveat **700** / 280px | Nunito Sans **650** / 49px |
 
 ## ja — Noto Sans JP
 
@@ -124,11 +124,11 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Noto Sans JP **700** / 28px | Noto Sans JP **800** / 112px | Noto Sans JP **800** / 117px | Noto Sans JP **650** / 49px |
 | iphone-6.9 / 08 | onboarding | Noto Sans JP **700** / 28px | Noto Sans JP **800** / 112px | Noto Sans JP **800** / 91px | Noto Sans JP **650** / 49px |
 | ipad-13 / 01 | results | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 182px | Noto Sans JP **650** / 49px |
-| ipad-13 / 02 | question | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 156px | Noto Sans JP **650** / 49px |
+| ipad-13 / 02 | question | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 207px | Noto Sans JP **650** / 49px |
 | ipad-13 / 03 | hint | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 208px | Noto Sans JP **650** / 49px |
 | ipad-13 / 04 | home | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 120px | Noto Sans JP **650** / 49px |
 | ipad-13 / 05 | review | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 206px | Noto Sans JP **650** / 49px |
-| ipad-13 / 06 | collection | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 156px | Noto Sans JP **650** / 49px |
+| ipad-13 / 06 | collection | Noto Sans JP **700** / 34px | Noto Sans JP **800** / 144px | Noto Sans JP **800** / 181px | Noto Sans JP **650** / 49px |
 
 ## ko — Noto Sans KR
 
@@ -145,11 +145,11 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Noto Sans KR **700** / 28px | Noto Sans KR **800** / 112px | Noto Sans KR **800** / 118px | Noto Sans KR **650** / 49px |
 | iphone-6.9 / 08 | onboarding | Noto Sans KR **700** / 28px | Noto Sans KR **800** / 112px | Noto Sans KR **800** / 91px | Noto Sans KR **650** / 49px |
 | ipad-13 / 01 | results | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 211px | Noto Sans KR **650** / 49px |
-| ipad-13 / 02 | question | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 156px | Noto Sans KR **650** / 49px |
+| ipad-13 / 02 | question | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 258px | Noto Sans KR **650** / 49px |
 | ipad-13 / 03 | hint | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 211px | Noto Sans KR **650** / 49px |
 | ipad-13 / 04 | home | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 196px | Noto Sans KR **650** / 49px |
 | ipad-13 / 05 | review | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 211px | Noto Sans KR **650** / 49px |
-| ipad-13 / 06 | collection | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 156px | Noto Sans KR **650** / 49px |
+| ipad-13 / 06 | collection | Noto Sans KR **700** / 34px | Noto Sans KR **800** / 144px | Noto Sans KR **800** / 258px | Noto Sans KR **650** / 49px |
 
 ## ar — Noto Sans Arabic
 
@@ -166,9 +166,9 @@ Latin font aliases: Nunito = Nunito Sans. Local = the Noto family named in the l
 | iphone-6.9 / 07 | collection | Noto Sans Arabic **700** / 28px | Noto Sans Arabic **800** / 112px | Noto Sans Arabic **800** / 157px | Noto Sans Arabic **650** / 49px |
 | iphone-6.9 / 08 | onboarding | Noto Sans Arabic **700** / 28px | Noto Sans Arabic **800** / 112px | Noto Sans Arabic **800** / 157px | Noto Sans Arabic **650** / 49px |
 | ipad-13 / 01 | results | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 185px | Noto Sans Arabic **650** / 49px |
-| ipad-13 / 02 | question | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 185px | Noto Sans Arabic **650** / 49px |
+| ipad-13 / 02 | question | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 235px | Noto Sans Arabic **650** / 49px |
 | ipad-13 / 03 | hint | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 185px | Noto Sans Arabic **650** / 49px |
 | ipad-13 / 04 | home | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 185px | Noto Sans Arabic **650** / 49px |
 | ipad-13 / 05 | review | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 185px | Noto Sans Arabic **650** / 49px |
-| ipad-13 / 06 | collection | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 185px | Noto Sans Arabic **650** / 49px |
+| ipad-13 / 06 | collection | Noto Sans Arabic **700** / 34px | Noto Sans Arabic **800** / 121px | Noto Sans Arabic **800** / 235px | Noto Sans Arabic **650** / 49px |
 

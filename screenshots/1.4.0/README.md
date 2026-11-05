@@ -256,3 +256,15 @@ back-translations are unchanged. Caption fit and overlap checks passed;
 all localized iPhone and iPad sheets were visually reviewed. No recapture,
 App Store Connect operation or push was performed for this rollout.
 Checkpoint 1 is ready for owner review; checkpoint 2 has not started.
+
+## iPad layout revision (2026-11-05)
+
+Owner feedback applied to all eight iPad localizations: the three medals
+in display position 06 now share the same size and baseline, with equal
+close spacing. Foreground components in positions 01–03 are centered on
+the page. Position 03 no longer centers its first title line independently;
+both lines share the locale’s alignment. The second headline lines in
+positions 02 and 06 are enlarged, with more vertical room for their
+underlines and subtitles. All eight iPad sheets were visually reviewed;
+all locale verification checks pass. iPhone images, native captures and
+caption wording are unchanged. Checkpoint 1 still awaits owner approval.

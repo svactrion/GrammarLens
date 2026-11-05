@@ -538,7 +538,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "66f1b55cbfa336d4d9975c9f118c74e982ff0d96b5defa48579ad3781da09206",
+      "sha256": "7f3464f833466a3b1e2d056b08e2926a908641c2d18d62608d940dece55a1983",
       "text": [
         {
           "text": "Her cevap",
@@ -592,7 +592,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "22c357dbb9026d2233cb05e4f1642ddcbebdcfd8eabbda529e6741160416a364",
+      "sha256": "688cbcd0ec2065b5a04ad9b50f197b39f17c189447144da99e51f3f9667a4f01",
       "text": [
         {
           "text": "Kendi cevabını",
@@ -609,12 +609,12 @@
           "text": "yaz.",
           "fontFamily": "Caveat",
           "fontWeight": "700",
-          "fontSize": 181,
+          "fontSize": 280,
           "direction": "ltr",
-          "x": 136.1558837890625,
-          "y": 415.3039855957031,
-          "width": 1447.688232421875,
-          "height": 259.7201232910156
+          "x": 137.6175079345703,
+          "y": 415.2997741699219,
+          "width": 1444.764892578125,
+          "height": 310.6817321777344
         },
         {
           "text": "Beş soru. Küçük bir günlük alışkanlık.",
@@ -623,7 +623,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 60.75
         },
@@ -634,7 +634,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 864.75,
           "width": 299.296875,
           "height": 76
         }
@@ -646,7 +646,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "3adfb0e8103c33495e61c39b8b85322d90427c502db4838ed39f9cc6e503d5d0",
+      "sha256": "4a8f3d56fc01875785b479b99a4c80513b86836393737d041d14d610732c8cfb",
       "text": [
         {
           "text": "Gramer kalıbını",
@@ -700,7 +700,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "a340b8d00fb39d8f12aba66cf18cac7f4adaf2969b3d42758d7c9a7d5510bbcb",
+      "sha256": "e1c6ea0c9c8cbeac4b5aa4d6ef7f7a2020275726e5b8ee590362a30dc1034503",
       "text": [
         {
           "text": "İlerlemenin",
@@ -754,7 +754,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "f32c9dc8353bbd25fc1b2f7787ceee4f9b38d7b737e52eaa805973333db81176",
+      "sha256": "b39b2408a6a95556155a5534cc8d78df45ff8db47fc9fa889121071a4a15d3b3",
       "text": [
         {
           "text": "Zayıf noktaların,",
@@ -808,7 +808,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "cb636474d69d72298304a07de837d7e14dd885d462729e82616f4e3bd16a97d8",
+      "sha256": "a342d2931d939e1a7f204df4fe3077130f530f1c8cc39e5f06a8893590c9766d",
       "text": [
         {
           "text": "Dağ koleksiyonunu",
@@ -825,12 +825,12 @@
           "text": "oluştur.",
           "fontFamily": "Caveat",
           "fontWeight": "700",
-          "fontSize": 181,
+          "fontSize": 280,
           "direction": "ltr",
-          "x": 136.1558837890625,
-          "y": 415.3039855957031,
-          "width": 1447.688232421875,
-          "height": 259.7201232910156
+          "x": 137.6175079345703,
+          "y": 415.2997741699219,
+          "width": 1444.764892578125,
+          "height": 310.6817321777344
         },
         {
           "text": "Yol boyunca kazandığın madalyaları sakla.",
@@ -839,7 +839,7 @@
           "fontSize": 49,
           "direction": "ltr",
           "x": 145,
-          "y": 720,
+          "y": 780,
           "width": 1760,
           "height": 60.75
         },
@@ -850,7 +850,7 @@
           "fontSize": 34,
           "direction": "ltr",
           "x": 145,
-          "y": 855,
+          "y": 864.75,
           "width": 330.875,
           "height": 76
         }

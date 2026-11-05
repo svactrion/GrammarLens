@@ -235,17 +235,17 @@ async function tabletArt(i){
  const p=pages[i],c=copy[p.key];
  let b=background(i)+header(i)+accentBadge(i);
  const font=[1,6,7].includes(i)?'Caveat':i===2?'Nunito':'Fredoka';
- b+=txt(esc(c.title[0]),140,230,1760,166,{weight:500,align:i===2?'center':'left'});
- b+=txt(esc(c.title[1]),140,415,1760,font==='Caveat'?254:211,{font,weight:font==='Caveat'?700:600,rotate:font==='Caveat'?-3:0,cls:'cedilla-fix'});
- b+=sub(c.subtitle,145,720,1760);
+ b+=txt(esc(c.title[0]),140,230,1760,166,{weight:500,align:'left'});
+ b+=txt(esc(c.title[1]),140,415,1760,font==='Caveat'?280:211,{font,weight:font==='Caveat'?700:600,rotate:font==='Caveat'?-1:0,cls:'cedilla-fix'});
+ b+=sub(c.subtitle,145,[1,6].includes(i)?780:720,1760);
  b+=`<div class="feature-tag" data-text-check data-copy="${esc(c.tag)}" style="top:${rtl?815:855}px;${rtl?'right':'left'}:145px">${esc(c.tag)}</div>`;
- b+=`<svg class="doodle" width="2064" height="2752" viewBox="0 0 2064 2752"><path d="M170 655 Q680 690 1260 645" stroke="${i===1?'#BC5B3E':'#F6D37C'}" stroke-width="${i===1?13:35}" fill="none" stroke-linecap="round"/></svg>`;
- if(i===0){b+=tablet(p.source,660,960,1270);b+=place(`<div class="whole-error"><img src="${await crop(p.source,geometry.error)}"/></div>`,110,1330,1510,'z-index:5;transform:rotate(-2deg)');}
- if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),110,1270,1550,{rz:2,ry:3,pad:36,r:48});b+=lifted(await crop(p.source,geometry.input),165,1940,1450,{rz:2,ry:3,r:40});}
- if(i===2){b+=tablet(p.source,580,955,1310,-2);b+=await hintControl(110,1585,1530);b+=await component(p.source,inset(geometry.hint,12),110,1810,1530,{rz:-2,ry:-3,pad:36,r:48});}
+ b+=`<svg class="doodle" width="2064" height="2752" viewBox="0 0 2064 2752"><path d="M170 ${[1,6].includes(i)?725:655} Q680 ${[1,6].includes(i)?760:690} 1260 ${[1,6].includes(i)?715:645}" stroke="${i===1?'#BC5B3E':'#F6D37C'}" stroke-width="${i===1?13:35}" fill="none" stroke-linecap="round"/></svg>`;
+ if(i===0){b+=tablet(p.source,660,960,1270);b+=place(`<div class="whole-error"><img src="${await crop(p.source,geometry.error)}"/></div>`,277,1330,1510,'z-index:5;transform:rotate(-2deg)');}
+ if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),257,1270,1550,{rz:2,ry:3,pad:36,r:48});b+=lifted(await crop(p.source,geometry.input),307,1940,1450,{rz:2,ry:3,r:40});}
+ if(i===2){b+=tablet(p.source,580,955,1310,-2);b+=await hintControl(267,1585,1530);b+=await component(p.source,inset(geometry.hint,12),267,1810,1530,{rz:-2,ry:-3,pad:36,r:48});}
  if(i===4){b+=tablet(p.source,665,950,1300,5);b+=place(`<img class="fox" src="${fox}"/>`,-50,1630,880,'z-index:5;transform:rotate(-10deg)');}
  if(i===5){b+=tablet(p.source,190,970,1270,-5,1);b+=tablet('01-results',1540,1220,1080,9,0);b+=await component(p.source,inset(geometry.review[0],22),175,1560,1550,{rz:3,ry:4,pad:36,r:48});b+=await component(p.source,inset(geometry.review[1],22),120,2050,1550,{rz:3,ry:4,pad:36,r:48});}
- if(i===6){b+=tablet(p.source,630,1040,1260,-4);[[100,1090,420,-15],[565,975,460,3],[1535,1140,410,15]].forEach(([x,y,w,r],j)=>b+=place(`<img class="medal" src="${medals[j]}"/>`,x,y,w,`z-index:6;transform:rotate(${r}deg)`));}
+ if(i===6){b+=tablet(p.source,630,1040,1260,-4);[[372,1050,420,-8],[822,1050,420,0],[1272,1050,420,8]].forEach(([x,y,w,r],j)=>b+=place(`<img class="medal" src="${medals[j]}"/>`,x,y,w,`z-index:6;transform:rotate(${r}deg)`));}
  return b;
 }
 const localeCss=`${localeFont}
@@ -269,7 +269,7 @@ async function fitCopy(page){
     if(second&&!pad)wrap.style.top='410px';
     if(rtl)el.style.transform='none';
     if(second){wrap.style.width=(pad?1440:930)+'px';if(rtl||(!pad&&document.body.dataset.slot==='multi-blank')){wrap.style.left=(pad?480:300)+'px';}}
-    const maxHeight=sub?125:(second?(pad?260:(top>=390&&['home','review'].includes(document.body.dataset.slot)?300:220)):(pad?170:165));
+    const maxHeight=sub?125:(second?(pad?(['question','collection'].includes(document.body.dataset.slot)?330:260):(top>=390&&['home','review'].includes(document.body.dataset.slot)?300:220)):(pad?170:165));
     el.style.whiteSpace='normal';el.style.overflowWrap=latin||language==='ko'?'normal':'anywhere';if(language==='ko')el.style.wordBreak='keep-all';
     while((el.scrollWidth>el.clientWidth+1||el.getBoundingClientRect().height>maxHeight)&&size>(pad?90:72))el.style.fontSize=(--size)+'px';
    }else{
