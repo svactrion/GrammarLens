@@ -14180,3 +14180,11 @@ Docs and assets only.
   - Haiku against Sonnet 5.5: "about a third" holds for a whole 5-question session (≈ $0.0093 against ≈ $0.0264; `1.4.0-measurement-report.md` §6); agreement was 97.8 % against 95.4 % (§2), not equal; the labels' model-family limit (§0) is stated.
   - `FALLBACK_SCORING` is one constant to swap by hand, not an automatic failover.
   - "(working title)" and the "language pairs" line are in `docs/prd.md` (title; MVP out-of-scope list), not in the README; the PRD is left as written.
+
+## 2026-11-05 (P16: raw screenshot sets out of git, after the release)
+
+Docs only. Nothing is rewritten or deleted by this entry.
+
+- **[Decision — owner]** Pushing `main` on 2026-11-05 published about 842 MB of screenshot history (`screenshots/1.4.0`'s raw per-locale sets, 36 Codex commits); the public repository is now about 1.1 GB, above GitHub's 1 GB recommendation. **P16, only after the 1.4.0 release is live:** zip the raw sets and attach them to a GitHub Release; remove them from history with `git filter-repo`, keeping `screenshots/1.4.0/readme/`, `product-page/header.png` and `asc/*.md` / `asc/*.json`; force-push once with the owner present, **the single sanctioned exception to the no-force-push rule**; add to `docs/AGENTS.md` that raw App Store screenshot sets never go into git, only README-sized copies do.
+- **[Decision — owner]** Deleting `~/GrammarLens-backup.git` moves from "on or after 2026-11-09" to after P16 is done.
+- **[Docs]** Roadmap, "Post-launch tasks": P16 and the moved backup item, with what to settle first (noted, not decided). `1.4.0-plan.md` Phase 6 and `case-study-material.md` follow. The `docs/AGENTS.md` rule is P16's last step, not added yet. The review notes (`screenshots/1.4.0/asc/review-notes.txt`) now hold the text as submitted (previous commit); `asc/read-back.md`'s match line is about the version read back before the owner's edits.

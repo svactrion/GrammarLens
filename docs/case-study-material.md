@@ -223,4 +223,4 @@ roadmap.md § Launch scope › Launch checklist, code items › "Daily Test expl
 | Daily Test error-profile entry does not store the new explanation. | Recorded as a possible follow-up, not part of the change. | BL 2026-09-24 (Daily Test: a per-question explanation) |
 | Explanation word limit followed "mostly, not always" (5/25 over 25 words). | Nothing depends on length; owner's call, no further prompt change. | BL 2026-09-24 (… output measured …) |
 | Out-of-scope launch items: mountain geometry, themes, final medal art, Home medal shortcut, v3 Home redesign, Turkish UI, theme toggle. | Each has its own recorded reason. | roadmap.md § Out of scope (after launch) |
-| Pre-rewrite mirror backup `~/GrammarLens-backup.git`. | Kept until one week after launch, then deleted; never pushed. | roadmap.md § Post-launch tasks › "Delete ~/GrammarLens-backup.git" |
+| Pre-rewrite mirror backup `~/GrammarLens-backup.git`. | Kept until P16 (repo size) is done, then deleted (owner, 2026-11-05; was one week after launch); never pushed. | roadmap.md § Post-launch tasks › "Delete ~/GrammarLens-backup.git" |

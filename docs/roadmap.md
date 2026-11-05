@@ -1118,7 +1118,33 @@ Nothing is marked complete unless the record says so.
 
 ### Post-launch tasks
 
-- **Delete `~/GrammarLens-backup.git` one week after launch.** It is the
+- **P16 (owner, 2026-11-05): Repo size: raw screenshot sets out of git.**
+  Pushing `main` on 2026-11-05 published about 842 MB of screenshot history
+  (`screenshots/1.4.0`'s raw per-locale sets, 36 Codex commits); the public
+  repository is now about 1.1 GB (GitHub reports 1,065 MB), above GitHub's
+  1 GB recommendation. Planned, not started. **Runs only after the 1.4.0
+  release is live:**
+  1. Zip the raw sets and attach them to a GitHub Release.
+  2. Remove `screenshots/1.4.0`'s raw sets from history with
+     `git filter-repo`, keeping `screenshots/1.4.0/readme/`,
+     `product-page/header.png` and `asc/*.md` / `asc/*.json`.
+  3. Force-push once, with the owner present. **The single sanctioned
+     exception to the no-force-push rule.**
+  4. Add a rule to `docs/AGENTS.md`: raw App Store screenshot sets never go
+     into git; only README-sized copies do.
+
+  To settle first (noted 2026-11-05, not decided): the keep list does not
+  name `asc/review-notes.txt`, the submitted Notes for Review, or the text
+  records beside the images (`README.md`, `font-weights.md`,
+  `capture-provenance.json`, `cleanup-2026-11-05.json`, each locale's copy
+  files and back-translation table). `~/GrammarLens-backup.git` dates from
+  2026-09-17, so it does not protect this rewrite; it needs its own fresh
+  mirror. Every commit from `ab06ba2` on gets a new hash, so the docs' later
+  hashes (`f2d8edd`, `f952cdc`, …) go stale; build 7's `c37757a`, `8d4183b`
+  and `103cdfc` keep theirs. GitHub's reported size may not drop straight
+  after the push: check it, and ask GitHub Support if it stays.
+- **Delete `~/GrammarLens-backup.git` after P16 is done** *(owner,
+  2026-11-05; was one week after launch, on or after 2026-11-09)*. It is the
   full mirror taken before the 2026-09-17 history rewrite and still contains
   personal data (it also holds the deleted `codex/monthly-climb`). Never push
   it anywhere.
