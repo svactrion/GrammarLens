@@ -14153,3 +14153,17 @@ Docs only.
 - **[Release — scope]** **The `StorageService` open/close fix (`8d4183b`, 02:12) is not in build 7.** Acceptable: `close()` is test-only (`@visibleForTesting`), `resetAllLocalData()` is debug-only (a no-op in release builds), and the shared first open is behaviour-neutral (sqflite returned the same instance per path before). It ships in the next build if Phase 5 needs one, otherwise in 1.4.1.
 - **[Release — owner, lessons]** The first archive failed with the Crashlytics upload-symbols script missing until the Swift packages were resolved: `cd ios && xcodebuild -resolvePackageDependencies -workspace Runner.xcworkspace -scheme Runner && cd ..` before `flutter build ipa`. Flutter's App Settings Validation prints the version and build, so reading them with PlistBuddy is optional.
 - **[Docs]** `1.4.0-release-steps.md`: status, build 7's source, the fix not in it, the package resolve step, the optional PlistBuddy read, the IPA check result, the test count by commit. Roadmap's "1.4.0 (planned)" line; plan Phase 5: the `strings` check ticked, TestFlight build 7 uploaded (device check open).
+
+## 2026-11-05 (1.4.0 submitted for review)
+
+Docs only here. The App Store Connect work was done by Codex (API) and the owner (interface).
+
+- **[Release — owner]** 1.4.0 (build 7, `1.4.0+7`, source `c37757a`) submitted for App Store review on 2026-11-05 at 20:3x local; release manual. Not approved yet.
+- **[Release — Codex, API]** Eight localizations (en-US, tr, de-DE, es-MX, pt-BR, ja, ko, ar-SA) and 112 screenshots (8 iPhone 6.9" and 6 iPad 13" each) uploaded and read back: every field, file order, MD5 and delivery state (`screenshots/1.4.0/asc/read-back.md`); header v5 on all eight (`header-v5-read-back.md`). Search-results artwork cancelled, not uploaded. en-US's copied 6.3" set removed from 1.4.0 only. Those read-backs were taken before the submission, in `PREPARE_FOR_SUBMISSION`.
+- **[Release — owner]** Age rating re-answered to 4+. Coarse Location added to App Privacy (Analytics, not linked, no tracking). Mac and Apple Vision availability kept, which replaces the 2026-11-03 plan to switch both off until tested; neither platform has a recorded test. Notes for Review updated (`screenshots/1.4.0/asc/review-notes.txt`).
+- **[Docs]** Roadmap's version table; `1.4.0-release-steps.md` status and §4; `1.4.0-plan.md` status, Phases 4 and 5; Phase 6 gains the privacy policy additions.
+- **[Open]**
+  - Privacy policy additions for `ui_language` and the IP / approximate-region sentence (owner, on the website now).
+  - No result on record at the submission for the B10.3 re-check, B1's audit items on build 7, the Phase 5 device check or the paywall on a non-USD storefront; they stay unticked until the owner reports them.
+  - Which localization India's store shows (D1): no record.
+  - The `StorageService` fix (`8d4183b`) is not in build 7, as recorded on 2026-11-03.
