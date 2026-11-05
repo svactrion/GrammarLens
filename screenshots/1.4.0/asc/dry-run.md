@@ -6,7 +6,7 @@ No ASC writes performed. Search-results artwork is cancelled and excluded. Heade
 
 - Version 1.4.0 exists in PREPARE_FOR_SUBMISSION; releaseType MANUAL. Only en-US exists.
 - Re-read after owner saved in ASC (2026-11-05): build 7 is attached and VALID. Version remains PREPARE_FOR_SUBMISSION, releaseType MANUAL. The obsolete build-attachment PATCH has been removed; final read-back calls remain.
-- Store text was not present as separate ready JSON files: descriptions/subtitles/keywords are extracted verbatim from docs/1.4.0-asc-brief.md; What's New verbatim from docs/1.4.0-release-steps.md §5. Full bodies are in metadata.json and dry-run-calls.json. Blind back-translation is complete: see [description-back-translation.md](description-back-translation.md) for all seven full comparisons and drift notes. Descriptions are awaiting the owner’s checkpoint 2 approval; no upload is authorized before that approval.
+- Store text was not present as separate ready JSON files: descriptions/subtitles/keywords originated in docs/1.4.0-asc-brief.md; ja/ko privacy, ja subscription wording and de consent timing were then corrected exactly as requested by the owner; What's New verbatim from docs/1.4.0-release-steps.md §5. Full bodies are in metadata.json and dry-run-calls.json. Blind back-translation is complete: see [description-back-translation.md](description-back-translation.md) for the three requested correction rows, rechecked blind on the four changed blocks only (the initial seven-language pass is retained in Git commit b2c3bb1). The three corrected rows match. tr, es-MX, pt-BR and ar-SA were approved as-is. Stop for owner review; upload/checkpoint 3 requires the explicit “upload” instruction.
 - Owner approved keeping promotional text blank in all eight locales (empty string in request).
 - Seven additional store locale identifiers: tr, de-DE, es-MX, pt-BR, ja, ko, ar-SA.
 - Subtitle belongs to editable appInfo localization; description, keywords, What's New, promotionalText and supportUrl belong to version localizations. Name retained; privacyPolicyUrl copied from brief, no App Privacy declarations touched.
@@ -34,10 +34,10 @@ See length-report.json for characters and UTF-8 bytes. Original keywords are att
 |---|---:|---:|---:|---:|---:|
 | en-US | 29 | 2437 | 94 / 94 | 689 | 0 |
 | tr | 28 | 2351 | 82 / 85 | 708 | 0 |
-| de-DE | 29 | 2566 | 85 / 88 | 801 | 0 |
+| de-DE | 29 | 2567 | 85 / 88 | 801 | 0 |
 | es-MX | 28 | 2542 | 86 / 90 | 746 | 0 |
 | pt-BR | 29 | 2462 | 80 / 84 | 717 | 0 |
-| ja | 15 | 1273 | 46 / 112 | 346 | 0 |
+| ja | 15 | 1275 | 46 / 112 | 346 | 0 |
 | ko | 16 | 1357 | 44 / 106 | 359 | 0 |
 | ar-SA | 26 | 2057 | 80 / 149 | 627 | 0 |
 
