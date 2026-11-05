@@ -1,0 +1,1636 @@
+{
+  "removed": [
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/07-collection.png",
+      "kind": "file",
+      "bytes": 3214059,
+      "allocatedBytes": 3215360
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/test-story.png",
+      "kind": "file",
+      "bytes": 2959259,
+      "allocatedBytes": 2961408
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/08-onboarding.png",
+      "kind": "file",
+      "bytes": 2698484,
+      "allocatedBytes": 2699264
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/overview.png",
+      "kind": "file",
+      "bytes": 1880844,
+      "allocatedBytes": 1884160
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/03-hint.png",
+      "kind": "file",
+      "bytes": 1908432,
+      "allocatedBytes": 1908736
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/flow-strip.png",
+      "kind": "file",
+      "bytes": 1980368,
+      "allocatedBytes": 1982464
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/01-results.png",
+      "kind": "file",
+      "bytes": 2105731,
+      "allocatedBytes": 2109440
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/02-question.png",
+      "kind": "file",
+      "bytes": 2013752,
+      "allocatedBytes": 2015232
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/04-multi-blank.png",
+      "kind": "file",
+      "bytes": 2401925,
+      "allocatedBytes": 2404352
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/06-review.png",
+      "kind": "file",
+      "bytes": 2394581,
+      "allocatedBytes": 2396160
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v1/05-home.png",
+      "kind": "file",
+      "bytes": 3479934,
+      "allocatedBytes": 3481600
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/07-collection.png",
+      "kind": "file",
+      "bytes": 3214059,
+      "allocatedBytes": 3215360
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/revised-four.png",
+      "kind": "file",
+      "bytes": 2576241,
+      "allocatedBytes": 2576384
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/test-story.png",
+      "kind": "file",
+      "bytes": 2734310,
+      "allocatedBytes": 2736128
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/08-onboarding.png",
+      "kind": "file",
+      "bytes": 2698484,
+      "allocatedBytes": 2699264
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/overview.png",
+      "kind": "file",
+      "bytes": 1787852,
+      "allocatedBytes": 1789952
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/03-hint.png",
+      "kind": "file",
+      "bytes": 2138502,
+      "allocatedBytes": 2142208
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/flow-strip.png",
+      "kind": "file",
+      "bytes": 1883480,
+      "allocatedBytes": 1884160
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/01-results.png",
+      "kind": "file",
+      "bytes": 1978431,
+      "allocatedBytes": 1982464
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/02-question.png",
+      "kind": "file",
+      "bytes": 1985228,
+      "allocatedBytes": 1986560
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/04-multi-blank.png",
+      "kind": "file",
+      "bytes": 2339340,
+      "allocatedBytes": 2342912
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/06-review.png",
+      "kind": "file",
+      "bytes": 2350176,
+      "allocatedBytes": 2351104
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v2/05-home.png",
+      "kind": "file",
+      "bytes": 3479934,
+      "allocatedBytes": 3481600
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/07-collection.png",
+      "kind": "file",
+      "bytes": 3214059,
+      "allocatedBytes": 3215360
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/revised-four.png",
+      "kind": "file",
+      "bytes": 2586083,
+      "allocatedBytes": 2588672
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/test-story.png",
+      "kind": "file",
+      "bytes": 2740177,
+      "allocatedBytes": 2740224
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/08-onboarding.png",
+      "kind": "file",
+      "bytes": 2698484,
+      "allocatedBytes": 2699264
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/overview.png",
+      "kind": "file",
+      "bytes": 1794410,
+      "allocatedBytes": 1798144
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/03-hint.png",
+      "kind": "file",
+      "bytes": 2091067,
+      "allocatedBytes": 2093056
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/flow-strip.png",
+      "kind": "file",
+      "bytes": 1890059,
+      "allocatedBytes": 1892352
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/01-results.png",
+      "kind": "file",
+      "bytes": 2019657,
+      "allocatedBytes": 2023424
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/02-question.png",
+      "kind": "file",
+      "bytes": 1981714,
+      "allocatedBytes": 1982464
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/04-multi-blank.png",
+      "kind": "file",
+      "bytes": 2340003,
+      "allocatedBytes": 2342912
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/06-review.png",
+      "kind": "file",
+      "bytes": 2350176,
+      "allocatedBytes": 2351104
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v3/05-home.png",
+      "kind": "file",
+      "bytes": 3479934,
+      "allocatedBytes": 3481600
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/07-collection.png",
+      "kind": "file",
+      "bytes": 3214059,
+      "allocatedBytes": 3215360
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/revised-four.png",
+      "kind": "file",
+      "bytes": 2532489,
+      "allocatedBytes": 2535424
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/test-story.png",
+      "kind": "file",
+      "bytes": 2687823,
+      "allocatedBytes": 2691072
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/08-onboarding.png",
+      "kind": "file",
+      "bytes": 2698331,
+      "allocatedBytes": 2699264
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/overview.png",
+      "kind": "file",
+      "bytes": 1793098,
+      "allocatedBytes": 1794048
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/03-hint.png",
+      "kind": "file",
+      "bytes": 2083573,
+      "allocatedBytes": 2084864
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/flow-strip.png",
+      "kind": "file",
+      "bytes": 1886849,
+      "allocatedBytes": 1888256
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/01-results.png",
+      "kind": "file",
+      "bytes": 1862983,
+      "allocatedBytes": 1863680
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/02-question.png",
+      "kind": "file",
+      "bytes": 1943769,
+      "allocatedBytes": 1945600
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/04-multi-blank.png",
+      "kind": "file",
+      "bytes": 2284168,
+      "allocatedBytes": 2285568
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/06-review.png",
+      "kind": "file",
+      "bytes": 2350176,
+      "allocatedBytes": 2351104
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v4/05-home.png",
+      "kind": "file",
+      "bytes": 3479732,
+      "allocatedBytes": 3481600
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/07-collection.png",
+      "kind": "file",
+      "bytes": 3266675,
+      "allocatedBytes": 3268608
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/revised-four.png",
+      "kind": "file",
+      "bytes": 2642314,
+      "allocatedBytes": 2646016
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/test-story.png",
+      "kind": "file",
+      "bytes": 2795828,
+      "allocatedBytes": 2797568
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/08-onboarding.png",
+      "kind": "file",
+      "bytes": 2746869,
+      "allocatedBytes": 2748416
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/overview.png",
+      "kind": "file",
+      "bytes": 1874204,
+      "allocatedBytes": 1875968
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/03-hint.png",
+      "kind": "file",
+      "bytes": 2145371,
+      "allocatedBytes": 2146304
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/comparison-v4-v5.png",
+      "kind": "file",
+      "bytes": 785216,
+      "allocatedBytes": 786432
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/flow-strip.png",
+      "kind": "file",
+      "bytes": 1966942,
+      "allocatedBytes": 1970176
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/01-results.png",
+      "kind": "file",
+      "bytes": 1899716,
+      "allocatedBytes": 1900544
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/02-question.png",
+      "kind": "file",
+      "bytes": 2000646,
+      "allocatedBytes": 2002944
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/04-multi-blank.png",
+      "kind": "file",
+      "bytes": 2322395,
+      "allocatedBytes": 2322432
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/06-review.png",
+      "kind": "file",
+      "bytes": 2411067,
+      "allocatedBytes": 2412544
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/cozy-v5/05-home.png",
+      "kind": "file",
+      "bytes": 3524144,
+      "allocatedBytes": 3526656
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/07-collection.png",
+      "kind": "file",
+      "bytes": 2165734,
+      "allocatedBytes": 2166784
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/revised-four.png",
+      "kind": "file",
+      "bytes": 2288849,
+      "allocatedBytes": 2289664
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/test-story.png",
+      "kind": "file",
+      "bytes": 2413261,
+      "allocatedBytes": 2416640
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/08-onboarding.png",
+      "kind": "file",
+      "bytes": 1721771,
+      "allocatedBytes": 1724416
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/overview.png",
+      "kind": "file",
+      "bytes": 1727880,
+      "allocatedBytes": 1728512
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/03-hint.png",
+      "kind": "file",
+      "bytes": 1324143,
+      "allocatedBytes": 1327104
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/background-flow.png",
+      "kind": "file",
+      "bytes": 640928,
+      "allocatedBytes": 643072
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/flow-strip.png",
+      "kind": "file",
+      "bytes": 1788895,
+      "allocatedBytes": 1789952
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/01-results.png",
+      "kind": "file",
+      "bytes": 1049387,
+      "allocatedBytes": 1052672
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/02-question.png",
+      "kind": "file",
+      "bytes": 1212055,
+      "allocatedBytes": 1212416
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/04-multi-blank.png",
+      "kind": "file",
+      "bytes": 1339164,
+      "allocatedBytes": 1339392
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/06-review.png",
+      "kind": "file",
+      "bytes": 1533345,
+      "allocatedBytes": 1536000
+    },
+    {
+      "path": "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-mist/05-home.png",
+      "kind": "file",
+      "bytes": 2441062,
+      "allocatedBytes": 2441216
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-A-v3.png",
+      "kind": "file",
+      "bytes": 3849633,
+      "allocatedBytes": 3850240
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-B.png",
+      "kind": "file",
+      "bytes": 125921,
+      "allocatedBytes": 126976
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-A-v2.png",
+      "kind": "file",
+      "bytes": 193364,
+      "allocatedBytes": 196608
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-A.png",
+      "kind": "file",
+      "bytes": 105351,
+      "allocatedBytes": 106496
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-en.png",
+      "kind": "file",
+      "bytes": 6447321,
+      "allocatedBytes": 6451200
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-ja.png",
+      "kind": "file",
+      "bytes": 6445524,
+      "allocatedBytes": 6447104
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/contact-sheet-search-results.png",
+      "kind": "file",
+      "bytes": 1139582,
+      "allocatedBytes": 1142784
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-pt-BR.png",
+      "kind": "file",
+      "bytes": 6445570,
+      "allocatedBytes": 6447104
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-ar.png",
+      "kind": "file",
+      "bytes": 6443814,
+      "allocatedBytes": 6447104
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-A-mobile-fit-v4.png",
+      "kind": "file",
+      "bytes": 4387786,
+      "allocatedBytes": 4390912
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-tr.png",
+      "kind": "file",
+      "bytes": 6446260,
+      "allocatedBytes": 6447104
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-B-v2.png",
+      "kind": "file",
+      "bytes": 150086,
+      "allocatedBytes": 151552
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-B-v3.png",
+      "kind": "file",
+      "bytes": 4254461,
+      "allocatedBytes": 4255744
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/contact-sheet-v3.png",
+      "kind": "file",
+      "bytes": 471865,
+      "allocatedBytes": 475136
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/contact-sheet-v2.png",
+      "kind": "file",
+      "bytes": 172397,
+      "allocatedBytes": 176128
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-de.png",
+      "kind": "file",
+      "bytes": 6442570,
+      "allocatedBytes": 6443008
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/contact-sheet.png",
+      "kind": "file",
+      "bytes": 112229,
+      "allocatedBytes": 114688
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-mobile-fit-preview-v4.png",
+      "kind": "file",
+      "bytes": 273328,
+      "allocatedBytes": 274432
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-es.png",
+      "kind": "file",
+      "bytes": 6447613,
+      "allocatedBytes": 6451200
+    },
+    {
+      "path": "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/search-results-ko.png",
+      "kind": "file",
+      "bytes": 6440786,
+      "allocatedBytes": 6443008
+    },
+    {
+      "path": "/private/tmp/gl-08-multi-blank-small.png",
+      "kind": "file",
+      "bytes": 96458,
+      "allocatedBytes": 98304
+    },
+    {
+      "path": "/private/tmp/gl-03-home-small.png",
+      "kind": "file",
+      "bytes": 573162,
+      "allocatedBytes": 573440
+    },
+    {
+      "path": "/private/tmp/gl-01-results-small.png",
+      "kind": "file",
+      "bytes": 145555,
+      "allocatedBytes": 147456
+    },
+    {
+      "path": "/private/tmp/gl-06-collection-small.png",
+      "kind": "file",
+      "bytes": 233011,
+      "allocatedBytes": 233472
+    },
+    {
+      "path": "/private/tmp/gl-05-review-small.png",
+      "kind": "file",
+      "bytes": 148964,
+      "allocatedBytes": 151552
+    },
+    {
+      "path": "/private/tmp/gl-v3-02-hint.png",
+      "kind": "file",
+      "bytes": 153939,
+      "allocatedBytes": 155648
+    },
+    {
+      "path": "/private/tmp/gl-v3-02-hint-controls.png",
+      "kind": "file",
+      "bytes": 113005,
+      "allocatedBytes": 114688
+    },
+    {
+      "path": "/private/tmp/gl-v3-04-question.png",
+      "kind": "file",
+      "bytes": 113008,
+      "allocatedBytes": 114688
+    },
+    {
+      "path": "/private/tmp/gl-v3-04-question-controls.png",
+      "kind": "file",
+      "bytes": 62047,
+      "allocatedBytes": 65536
+    },
+    {
+      "path": "/private/tmp/gl-cozy-v2-crop-check.png",
+      "kind": "file",
+      "bytes": 284808,
+      "allocatedBytes": 286720
+    },
+    {
+      "path": "/private/tmp/grammarlens-v4-letters.png",
+      "kind": "file",
+      "bytes": 883987,
+      "allocatedBytes": 884736
+    },
+    {
+      "path": "/private/tmp/grammarlens-140-font-proof.png",
+      "kind": "file",
+      "bytes": 171969,
+      "allocatedBytes": 172032
+    },
+    {
+      "path": "/private/tmp/grammarlens-140-ipad-corner.png",
+      "kind": "file",
+      "bytes": 9136,
+      "allocatedBytes": 12288
+    },
+    {
+      "path": "/private/tmp/grammarlens-140-build7/build",
+      "kind": "generated-directory",
+      "bytes": 2114517406,
+      "allocatedBytes": 2210045952
+    },
+    {
+      "path": "/private/tmp/grammarlens-140-build7/.dart_tool/flutter_build",
+      "kind": "generated-directory",
+      "bytes": 177491846,
+      "allocatedBytes": 177713152
+    }
+  ],
+  "deduplicatedTemporaryCaptures": [
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/05-review.png",
+      "bytes": 369822,
+      "sha256": "4c5bef01555355806e3fbfcaa44d0b30d81c85aeae501ec2ff681759f1d51f44"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/06-collection.png",
+      "bytes": 684581,
+      "sha256": "cdcde7dd577a3cf9002fcc8999c15c931fc1987c7208e516b82c95a6d93ce297"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/07-onboarding.png",
+      "bytes": 790097,
+      "sha256": "ad30860b0dcca17992194f912689b2357b690d46d0870231355d762381a26c63"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/08-multi-blank.png",
+      "bytes": 257092,
+      "sha256": "2cd5acc03842051c3a57181fd8d9eda625799a72cf91214812390719e9ca3d18"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/02-hint.png",
+      "bytes": 286640,
+      "sha256": "ba1c8b9a5731796c0c1f0271f7d37ca037d0ec2946e9ac1495c947ee9591251b"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/03-home.png",
+      "bytes": 2359635,
+      "sha256": "6d344930617125843cfbfc0f47b360fd8ca3946f1a8934248a3af02c913fa187"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/01-results.png",
+      "bytes": 314419,
+      "sha256": "d6736aaef29d8e7472eeab87e6696f6d349d52cb330c8a1ea8da557f21e5229c"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/04-question.png",
+      "bytes": 234962,
+      "sha256": "097ae749e428326f5d228083628fda357fe6fcc4c9b3f392cd9128e3c9939fc2"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/05-review.png",
+      "bytes": 308767,
+      "sha256": "4bcd26beb0452a1cd340cb946ff5aafce8313eb74c4ff55ad67d01b2fc446fcd"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/06-collection.png",
+      "bytes": 668162,
+      "sha256": "3420dd72964621d9bb7e03ffaf296066a4e39fe525ef6d0c2f0c4609f708b6a7"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/02-hint.png",
+      "bytes": 255704,
+      "sha256": "4c704789b40e75e5d80c3198c5725697fa21b7b748d5b91136f8c4085d614d5a"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/03-home.png",
+      "bytes": 1926269,
+      "sha256": "b93a0e395810214780551257cc7d9eb85548a570170560a6968ed36cfdc34477"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/01-results.png",
+      "bytes": 409507,
+      "sha256": "f15f3eabca2b7efc0dde1948a1f2e66d6c1f5f6455831d5be229c276bd678326"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ja/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/04-question.png",
+      "bytes": 219020,
+      "sha256": "e980bc518ec9ca272ca4bb2e4a90395bd2c73792aec6c97067b93ade0cab7496"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/05-review.png",
+      "bytes": 351157,
+      "sha256": "5ed1bb0166e67e8b0dc3c9b17e6573247718849cc99cc6e1cb1bb6a8df674613"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/06-collection.png",
+      "bytes": 673441,
+      "sha256": "62568ac3508ed2dfa92de4de117aa0963bf7b7dc8bd5779a9d4f803812acb16a"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/07-onboarding.png",
+      "bytes": 748399,
+      "sha256": "697ccd38e2f2424f8bc73b1f84e59671687c8d7d303c198edc9fc0011d44d5fc"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/08-multi-blank.png",
+      "bytes": 238916,
+      "sha256": "41f30fc504bd9ad0929d04b482ee2ea59db04f0409fbc4f0b493bd912db2b24f"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/02-hint.png",
+      "bytes": 272551,
+      "sha256": "405c8d3793fb0f77797cbe271d37cee645d4cb6d01eb86b2f24f99199631ad2c"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/03-home.png",
+      "bytes": 2382470,
+      "sha256": "9c5fe93d262a1d8621485d78a955b6e05aa4ec2c0b4e593f855ebb32bc518abe"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/01-results.png",
+      "bytes": 298962,
+      "sha256": "0a1751df03a0061cbe6e4cbe11fc496bab85669c37825d7f6a944157fc2447fb"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/04-question.png",
+      "bytes": 215778,
+      "sha256": "c09e49db1ee8e2af051417408806cb1b8da428e9a011ec50d7e2d5bb2dbb80c2"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/05-review.png",
+      "bytes": 295361,
+      "sha256": "249144d2f25038cdab770bfa401b4809964616b35e02d112c73c7970d9d7d385"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/06-collection.png",
+      "bytes": 640452,
+      "sha256": "d87c5f3369a69a60ae5b852b453a904ad2d0135dc2cb50a7cd1b1eb6e196adaf"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/02-hint.png",
+      "bytes": 249058,
+      "sha256": "8bb2b9c5a06ceb609f9b6688a95ab832c9dc65dd2fd14d0057bb503647a528a3"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/03-home.png",
+      "bytes": 1892600,
+      "sha256": "84aa65bdcf29877f7fc4b44841729d35c04c2522f99941a237d2a5add20a499e"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/01-results.png",
+      "bytes": 394226,
+      "sha256": "272c870a9b1e771b1739a7e9a8e47310c95bdb782a878899800c420384838074"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ar/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/04-question.png",
+      "bytes": 208874,
+      "sha256": "71c50bdc41367c4dd143150bfe1701ae444c27e7d67b818d790d6eddd877c9b4"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/05-review.png",
+      "bytes": 357778,
+      "sha256": "80e4269d22bd92b392f1488c52ae5136a63dfefe6812d52fa400fa26b37e7dce"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/06-collection.png",
+      "bytes": 690687,
+      "sha256": "a04eb8b1825c3868d518a85ab8edd1384a4f850c4af7f3dafc3ffe0d4d02fe87"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/07-onboarding.png",
+      "bytes": 780659,
+      "sha256": "857982eb2651659bc54b3f77d33a74e02be1e97222f0eb8e4530ebb3094f1c8d"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/08-multi-blank.png",
+      "bytes": 249890,
+      "sha256": "bb6cbaf82716ddf7fc249f2115c7ccf2aa7a61d6ed4614f6e0f74cca6c28d488"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/02-hint.png",
+      "bytes": 280640,
+      "sha256": "06d3a5a36488f92a7d289ee1432190a10cc4fab93f4db841fff5d4d2f991b628"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/03-home.png",
+      "bytes": 2295788,
+      "sha256": "ab013637385b78aef1b42cb6bcd236a0a511a3a816c0dcbe4f74c8e8ab518dec"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/01-results.png",
+      "bytes": 315521,
+      "sha256": "aea1542a19f2cb23a71d8ae9022aac0451dad1881b6052a75d5441095f7b74a9"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/04-question.png",
+      "bytes": 228383,
+      "sha256": "5358cdb3dbd0fd2b9d7cfb518921c42859d4ab1c4150c4ec8a59735d592310e3"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/05-review.png",
+      "bytes": 303040,
+      "sha256": "379dfead4b570673d3d909ebbfcf3d128e45271d7293daa4997a71c66e40cd64"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/06-collection.png",
+      "bytes": 658370,
+      "sha256": "8708616a47fd420fb7006246127e7b87fcd7c863ad20abe2896a9e3fe50e4aed"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/02-hint.png",
+      "bytes": 256420,
+      "sha256": "1b1d62a0b736ca79dd864352ff9aa2083d9ed817c11260dfe18db2bc112f1115"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/03-home.png",
+      "bytes": 1880647,
+      "sha256": "727cbb083326a6d8743cf12bcb9ed5c54df4af50d86dfecf1708cf7cc6b2060d"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/01-results.png",
+      "bytes": 412968,
+      "sha256": "c07fc312cc9e5fe0002e536ccff52fdb68de2845736fcf32fb01fcdd35b6bd3b"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/pt-BR/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/04-question.png",
+      "bytes": 220425,
+      "sha256": "2df6a660184722890db7fd1c40ed78ff2e032485fd2ba97e035920a68fcd3731"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/05-review.png",
+      "bytes": 368379,
+      "sha256": "62c280ac13d464fe04065197b89f0d52652180578e867d3f91e985ad0395b2a8"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/06-collection.png",
+      "bytes": 681212,
+      "sha256": "0169edb68aa57069dd284965b42e526d512a4b3b8122fd39a695659e9da67729"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/07-onboarding.png",
+      "bytes": 759907,
+      "sha256": "b7743ff0e2c08d03eca1fa026bbd0b0259b8e551d85bae39bf605c64896f3a85"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/08-multi-blank.png",
+      "bytes": 249889,
+      "sha256": "0c407ed31ec5df6e7bd155598419469a254058d1f9a82129a7f1b2c4974db38f"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/02-hint.png",
+      "bytes": 284833,
+      "sha256": "ad5565369ef353dfda03110413de6193f4285b6054b25e562cd697059a2ab655"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/03-home.png",
+      "bytes": 2328440,
+      "sha256": "d07b25b3b4d3d6e97720311fdc76ab9333d2249d2d4138609444417705e3cec2"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/01-results.png",
+      "bytes": 306107,
+      "sha256": "22b38b8f4ffb6b0c5d90040f44ca33239213485666b99c3ffa4a8b0717ddc8e3"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/04-question.png",
+      "bytes": 230621,
+      "sha256": "efe5ecb88d47d5ba899e04534405259eb562a3e7629e700b325a495f0905a897"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/05-review.png",
+      "bytes": 305557,
+      "sha256": "e9155e625ebba48ed86d72154ce56fda606bbce7037cf9da36406f335a473807"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/06-collection.png",
+      "bytes": 654244,
+      "sha256": "c18dae7bc1065efa3ce8ac3aecb54ef16922bc84baf87f5dadde1e5a32a3721d"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/02-hint.png",
+      "bytes": 254403,
+      "sha256": "3d1c38202c74db2cbaabb59e9483bcf35379b1f0c7dbbf456ec3cc3d7bcfbc15"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/03-home.png",
+      "bytes": 1898233,
+      "sha256": "3a55e52bb1f822625155ee42d1e9bcc1645a4fc2be1fc2bbd93c785e11867860"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/01-results.png",
+      "bytes": 402233,
+      "sha256": "af7e816f5e1752af0779517c3946f0ef2b2627dc5b7e1587489c677d9223add1"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/de/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/04-question.png",
+      "bytes": 217512,
+      "sha256": "ffa10bc269735642d79171c7eff8598f9e8fab4de090db78b1ee6ce024095b91"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/05-review.png",
+      "bytes": 297410,
+      "sha256": "58eeed0ac645709e3a726abbcf901d3be9709636708d09b330c4b5fe65d8671d"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/06-collection.png",
+      "bytes": 617784,
+      "sha256": "9baeb6dd07f549c135f1156faf746cad1765f860cf80fc44dc67a9f1564840e4"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/07-onboarding.png",
+      "bytes": 723482,
+      "sha256": "46e166b68422d5bcec1e5036672bbf1fa9e6162958cc1404a139d885a7c115f5"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/08-multi-blank.png",
+      "bytes": 230814,
+      "sha256": "3dba60b2de81df10a0a2bc47b7868d822fec928401c6bdecf75ed58e96f8db34"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/02-hint.png",
+      "bytes": 262807,
+      "sha256": "fd0ac6628afe0fee6a8583c5fa8c848452bf9ac322a3f6e6a0e15cab4a9ea6ab"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/03-home.png",
+      "bytes": 2307207,
+      "sha256": "35902b15e1fda1db666d44436432939d800c2cc6708513ba093210517391b1e3"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/01-results.png",
+      "bytes": 276704,
+      "sha256": "a021c5f86e09ac246aa3bf05218739e2462bc4a64507ed51794f855aa8fd70bd"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/04-question.png",
+      "bytes": 206034,
+      "sha256": "74f2a5ac5c84f057d1ae25ed2f6a84675c1f602cade9dfc636a6929cc93362e9"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/05-review.png",
+      "bytes": 265236,
+      "sha256": "53dd6422f4d0a896ee3211b4af0e0ce78e2ff5cf40d33a9fe737cfad749b91e6"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/06-collection.png",
+      "bytes": 599008,
+      "sha256": "81b59b9e1679a0ec8e2b1a560762ef2880455b8cffb0f9bc531d7cee933560df"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/02-hint.png",
+      "bytes": 243098,
+      "sha256": "2922a71a859f38b82db58831ce1947a42ccc72c5e1b8894195ab2e472a89f047"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/03-home.png",
+      "bytes": 1869590,
+      "sha256": "500ad3fe6e9cfec5f22261391063231c7a6e3fc127d4300d5f35b1a0de6eeed3"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/01-results.png",
+      "bytes": 373959,
+      "sha256": "867473778de7dc7114885276af07d4bf3d19f70d046c0e7f61fe87963d8504a6"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/ko/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/04-question.png",
+      "bytes": 203094,
+      "sha256": "9469c71ece424ebb299c1efdf32a81c446ae38630f4098412bb272cb8f331764"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/05-review.png",
+      "bytes": 356738,
+      "sha256": "54d7ba6495a37a64d5498a8cae8965b174280bb700872a92239f2258392df9ec"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/06-collection.png",
+      "bytes": 686322,
+      "sha256": "b11c3e7154ca702426ba88f98475232e42f4748759faee29d6bde502e4471a8a"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/07-onboarding.png",
+      "bytes": 773395,
+      "sha256": "7bf171ac3bbc5464f854682d9cc8b927f7382ac23900682549250119ef477d30"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/08-multi-blank.png",
+      "bytes": 249678,
+      "sha256": "c55cf5745a69a9b75541264d917435229ae097080d3698720903bc6904d2393b"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/02-hint.png",
+      "bytes": 279164,
+      "sha256": "e70a95c22bb372e3c39606ef55b1ee3eac17eeee855cdb7582af3a33afa7cc76"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/03-home.png",
+      "bytes": 2124798,
+      "sha256": "91ff86035e700f0f83de91c019e655e597479160d7e3c9a39c281560e243741f"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/01-results.png",
+      "bytes": 309168,
+      "sha256": "25fb9e407fcbbfa64609d0146cecd271da9e46a2e63de8051a63a8691692cfac"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/04-question.png",
+      "bytes": 225217,
+      "sha256": "4ec7d24d6145d7d46194b0fd93096c30fdcdae203e216565999c57d5d0a55df7"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/05-review.png",
+      "bytes": 298776,
+      "sha256": "9eb6e2e767feba96af876fcafde10d3c191e0b73f9ad75fb200640b229f6f061"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/06-collection.png",
+      "bytes": 654595,
+      "sha256": "af51b1f54794fe33eb9478df9e96ca88d16df13b827605bf7c0ff0c3d258bdf1"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/02-hint.png",
+      "bytes": 253889,
+      "sha256": "f1212cfb861f5996d2f2ac82c7015729ad287c18b0d43200559f3bcd18ebb52b"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/03-home.png",
+      "bytes": 1882764,
+      "sha256": "c56e282fced250ba1d7513ef849e15e83569458bb04cd6d45f6a48d25defb7d7"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/01-results.png",
+      "bytes": 403960,
+      "sha256": "dc6ad0d7ce5d9e15341bc229e0c2933dfaf2df8ddab69e887501777ae62ce800"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/es/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/04-question.png",
+      "bytes": 217975,
+      "sha256": "0ad925f8c2027a9662d74455bc5584af411159f8c47140fc2d9a53eb263765a7"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/05-review.png",
+      "bytes": 351195,
+      "sha256": "d4869cdcc55e57030aed56bd31196b504569bf30632f02967a89084bf43597ff"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/06-collection.png",
+      "bytes": 676329,
+      "sha256": "c8ba4dca439d5a3c8548f13188a42f1efe2f37e77e9e0ff2753cc87b6a19ed57"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/07-onboarding.png",
+      "bytes": 758908,
+      "sha256": "da5a5a4760d8e59873a63eac9e2349c91c453e44ce022178dfa876d0f2f36539"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/08-multi-blank.png",
+      "bytes": 240285,
+      "sha256": "cc08fb4e44c515510c46ab25b06e26fc7d159b47549312e8e54318eef250b4de"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/02-hint.png",
+      "bytes": 274228,
+      "sha256": "5a5cb763a01421d5d9f912a4db94cbb25948b6ac8cd1961308b5e456957d7a28"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/03-home.png",
+      "bytes": 2356005,
+      "sha256": "291dc975f7e6940c565a00d6c4935744a5ff7d069b2c1d83ee2983dc6e16dba4"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/01-results.png",
+      "bytes": 303334,
+      "sha256": "b908c36ec0060e6d2dab74bf35c30b178af24cbb8044be8b641ebbc1032dd7b3"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/04-question.png",
+      "bytes": 218833,
+      "sha256": "1236f51c25a75c47efe16f2c0c9cc8dc340733e5204191bc46d609ad3a62e6d0"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/05-review.png",
+      "bytes": 304476,
+      "sha256": "e87456e6a83cdcb15410bb4bc48784370cf90af5ef97d343ca9f55dd13e2b80f"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/06-collection.png",
+      "bytes": 656044,
+      "sha256": "4cea9cec787cda95ef932eca0c298533fe99072e98ff8eb67e616b59457be512"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/02-hint.png",
+      "bytes": 255889,
+      "sha256": "78f30f7c4d473b0d6b78af8c69760dffd5a5991b17d6e81537d07283dd06ea00"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/03-home.png",
+      "bytes": 1883105,
+      "sha256": "e4bb5651fb23fb1d5d0ce11e015c5c2d4d44bd92ed71f9f81872522a80dba22b"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/01-results.png",
+      "bytes": 407779,
+      "sha256": "4aa973cd62676821c2b90f21a583d999d6a6c399f3b92bed5f7464b807597cbb"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/en/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/04-question.png",
+      "bytes": 217802,
+      "sha256": "11678606cdf7e21c774ead55d0a2f22d17af5d2bbaba398618693be643586e53"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/05-review.png",
+      "bytes": 335170,
+      "sha256": "c5fc9fc2eb9d52fcee024c32324969c40e09548bb742b114221835aa533ec755"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/06-collection.png",
+      "bytes": 671663,
+      "sha256": "745250b707fdde25f7acb69277364e2da5c421203a7f90fa294a51319dc3d6cc"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/07-onboarding.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/07-onboarding.png",
+      "bytes": 753383,
+      "sha256": "7e438e635212498b390ffaea69f15847a5c4f4c8d80a139deab9f130a8664f8a"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/08-multi-blank.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/08-multi-blank.png",
+      "bytes": 240419,
+      "sha256": "1b51b0f51cb75997f97ab5cdfae1edfb39da014ec17933efbbc42eb8db6c275e"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/02-hint.png",
+      "bytes": 272453,
+      "sha256": "e0103133da1ba290c290eb8257864d64d72f945299421629f8302cb87541a668"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/03-home.png",
+      "bytes": 2143629,
+      "sha256": "81d2fbbd99d43735d1209130da87516e9bc7b7a18b588c7a96b867e944df7aee"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/01-results.png",
+      "bytes": 306192,
+      "sha256": "6b397dc70474e0dc6400e160d66e93970fd57593833465e08fe19f874b5f49cf"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/iphone/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/04-question.png",
+      "bytes": 216926,
+      "sha256": "964eaa2caa443647a83f57416d09c2995681b8413f18d7c6ff6347e70578a44b"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/ipad/05-review.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/05-review.png",
+      "bytes": 284654,
+      "sha256": "b3c4692cf8e37fbcac424328bcf0827d619938f342dae00435b8de26f56e53be"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/ipad/06-collection.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/06-collection.png",
+      "bytes": 641509,
+      "sha256": "12bf2709fe1ed6d13914bb62426dbff8db4342cf8ec66a09b1dd7f83d576e110"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/ipad/02-hint.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/02-hint.png",
+      "bytes": 246930,
+      "sha256": "1961b434f65221b1d75cbd418a262dbc5fdb1a6f8a2d10a7e9c90978bbf72cfa"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/ipad/03-home.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/03-home.png",
+      "bytes": 1885199,
+      "sha256": "4be35d2fe7890c7cbe8b7217c3db6c2cd52a2978d448d99098cc0c2b986fe0f4"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/ipad/01-results.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/01-results.png",
+      "bytes": 399258,
+      "sha256": "ec3bdd47f335afaf1bd2bdb4f8ca728d574801af6a0bae92d06b25c46f6a9e3b"
+    },
+    {
+      "file": "/private/tmp/grammarlens-140-captures/tr/raw/ipad/04-question.png",
+      "target": "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/04-question.png",
+      "bytes": 207725,
+      "sha256": "5bdea479e5484617d25b6d69974dd7ab3f976e1c34b75a798a7d9ba4baafaf2c"
+    }
+  ],
+  "protected": {
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/ipad-13/05-review.png": "02322f555a7987717a260d48c205d0a45e887999135b1812386b1a4cf2392904",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/ipad-13/06-collection.png": "06691c033c943b090b057f7e720ac973c35a24f4ae579795c1f305821a65f68a",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/ipad-13/02-hint.png": "a6656e31b73a6df9be0949642cf4843aee351b4aeb2108d45479f1524eb26515",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/ipad-13/03-home.png": "d1d54ac63ddac2fcd59eaa200e5cc48a4bf2261b8922bdc7a901fed4cce915eb",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/ipad-13/01-results.png": "37129b0fafe9091ef2b844f205c28ea851e090165b56ff78269d176ba5257dee",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/ipad-13/04-question.png": "07e7bfe565c17268a02bbba1709750570cdb7ec400b479b84ec62f45fd50a1fc",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/05-review.png": "dd1d310e071abb988bef47e02e0638418202bb44c5066637fbe091603c28d2e6",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/06-collection.png": "38b3511a98f203a26f10a6280686340837f4d541dc23d3fb3b75f86e7165dced",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/07-onboarding.png": "ab3c085bad64d4b760afec63f48f26946887ef910aa805c362f534d44b6292e3",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/08-multi-blank.png": "7dea9068fed132a9a95a4857aa5d5ae47790801114db3a367f75df3a9722b6da",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/02-hint.png": "2f3f3aef3881e47b181f35ce4533228370d802028dc4376c6891674a80f06b4d",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/03-home.png": "f7e1d3e14863d9e3bd278656cd65b9194b9c47d9d630a0bbef04f0d3db406c4e",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/01-results.png": "1a215cb4dececa4da32fbed9ad7fae5651e8f8660a6adc54b2ec3a9c5ac9741b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/store/iphone-6.9/04-question.png": "3a71511d823110e6916a8a3595dacb58df45c07298aac8a4b1373df5fd7e5cac",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/ipad-13/05-review.png": "e0d5ab3991d2702ce49ac7495ecfb10f8f80a520dbd0f2f212d673f63f092e9b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/ipad-13/06-collection.png": "a9b40ee583dfffaa476e3b5b876259a804bd56e080c590118df61c2864108785",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/ipad-13/02-hint.png": "c6c463a30168046f3c1cfbaa0431f82dacec835f0b3d5fa4a6f69daef15364e9",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/ipad-13/03-home.png": "be076ab09f699fe4e4a0bdc07adc0f32a19c171863302884acc0401809956ec3",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/ipad-13/01-results.png": "14236cdb87435beddc674757fd62406a0ecea97e0bbb1d59a16be02c816c87d9",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/ipad-13/04-question.png": "5108d533b92fa7bf4b8a84153ff8a9889d748705970210f5646bd8256f405d5a",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/05-review.png": "b8ede0fbff18655f9b7934f00ff9b66f26c851fb9a0e6f86040aebc2571e6b8a",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/06-collection.png": "fa5111fba9afc8925e049b3a74147d619db3c4ba63a493f558ff61f854d5562a",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/07-onboarding.png": "066c731147c468ec218e68d56ec6283ee38d78fe6bcc6ce8e73eb55da3c688ab",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/08-multi-blank.png": "4f6ea0fbb32c903c9c47a1d22a10593244f9a7d86f9ea1dd94a18a4e272ec924",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/02-hint.png": "f4b51019ede24732735777e375f03219e4ee32a3e0a91bbaec4abac845214320",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/03-home.png": "c74a03a941eda00942a1814de5cb3bd23985d17b51fa843e83e8c26e4b6c5bb9",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/01-results.png": "bec0d738d182fea8b8a660291bd2361be93e3c7427cc8d55a80ae70923113945",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/store/iphone-6.9/04-question.png": "cbcffe1393700eb9a3816f0f8676eebbf36cd6b4fe53b609b57ea0af9f5d5de9",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/ipad-13/05-review.png": "ee171ac386392e82c7a502748f908837f20cc441638eff0d55b7988415a3331b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/ipad-13/06-collection.png": "13516a759af8ad97430d24b099aefc2cd53a2fe5dde1289dcfc9d47f77517a4c",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/ipad-13/02-hint.png": "0f41ce079056665842379d93621463325a2ccf3594947ed6e8dd1b2ec3b232f4",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/ipad-13/03-home.png": "82067d0cfdbf4330c460de385c3df3a6a101e00df122fdb2d1cb7e382bdd3c5f",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/ipad-13/01-results.png": "2636d2b5587b3e5f33f353feabfa5a203f72f12ea98d372f3f78aee00b473688",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/ipad-13/04-question.png": "63df3d114e1efa5029d9a508331da0d8f23fa3daacc3cc13368ddc4300b7bad3",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/05-review.png": "99026355b01b284cecd040a72636a95f902d02b78595c858848fd9fe0ff768ab",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/06-collection.png": "d6faa6bb70d2be84222f71b6140778dbcdaddbfbb871363b20f4f0f80c8ac979",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/07-onboarding.png": "cadc9139f78322348eba7a02382a499238b3b760929eea226dc7b6080dd8be56",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/08-multi-blank.png": "bcf24e912421f7a3ae68a92d495ccbb0d0ede689f1ebd452da5f50921882275d",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/02-hint.png": "ad027dbeae6ad1fb672e23566b8475d56e0999fbfd4949821f2c806384be20da",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/03-home.png": "bc5f74a857ae0e20cacadc075ba26d349fcf00e5ed7f5c51115f540801886d12",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/01-results.png": "76b760317a0b538c6d843b1138dbcb174ac47a236527fba95482cc25bfd5a620",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/store/iphone-6.9/04-question.png": "1162c0b2a61f4cf4bb2e192ab1a03c124674da556112ab41b3a1747fe805afd4",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/ipad-13/05-review.png": "1aa69d2c5e9cae77ceeeb4fc3706a8ac967564926dd52792fae4ad69bb6ffa11",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/ipad-13/06-collection.png": "21ea7c61b4768a6c51d62332701be34a99f02f7d65ecab4a091cd805fb65a548",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/ipad-13/02-hint.png": "a55d28b430679977a242f8c31d45e161c3845e5044b9964ff47e100e26302cc8",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/ipad-13/03-home.png": "912946461e18887cc064edfa4b652c2908ddeb0c77dedc4bf119782e200a5dc0",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/ipad-13/01-results.png": "b72515a33aa41cf8e807551379964fa0fcd647574695a131709b45243cdd6c8e",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/ipad-13/04-question.png": "bafa74e145d4a0d2fb24f4ebd4d785188bb60265e34d47b370d51efd812fc914",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/05-review.png": "da6235cc419a7d615c26fda821bd9f678d50ac27e09ae7fd35ef36ccdba91466",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/06-collection.png": "7aabc6cd79a5444e4886df4924f67703b8c675ce7287f701f887c8d61f0fe99a",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/07-onboarding.png": "f31bc99f634579b88229dce9c35e41767b1e7f36b9f6d2c0754531e11710e030",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/08-multi-blank.png": "46b45d81245bddb2b5448d74f3a81e66d149dc7d6fdd1fa13c49a359a088e956",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/02-hint.png": "537bf7f01047da0ee35a7f110af1c05f036c1ae748beb06b8d06e53b2f80ad4b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/03-home.png": "ec0d023ca3c43c809bd52fdf3e313e5f0b451384f02747378f75cb9da12d3244",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/01-results.png": "706007145bda319392a96208897d7b85d6d95eea9ba4651457ab3dee1d0035e9",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/store/iphone-6.9/04-question.png": "19bceee8f688f8e69a30d4f7c5feefd70c35e9bb735c6148bd749721fdd32af5",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/ipad-13/05-review.png": "53c121a34f311b45892086f458309601bc7a2cd13a7122e4764cb78df63f2bad",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/ipad-13/06-collection.png": "506a6b58e1dbbc342964a027021bc88971021fdf40a20ace548e446bab9e7c7b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/ipad-13/02-hint.png": "105e7992879208b4eac411ff2ba91dd2e48ded48be0f416da3eb02746e3c6241",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/ipad-13/03-home.png": "42fb903bddf4aac88e27ac8644e329967f22835b8fed60933989ed5243d2c312",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/ipad-13/01-results.png": "765207072bab1b7d8fa2bab89b59ba478829a48a2c907619db26477532c907e7",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/ipad-13/04-question.png": "fd81c5ff0171a6842f39f256a15f36405e93a755b91b5257d3a9a2f48b784079",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/05-review.png": "fc2a11b8e4ef452f2d024139aa5d91fbd74598ae42df3042f69ebcc76173000d",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/06-collection.png": "49b4923bb676fb14d6a72c1efac67e872581ec8dd5ab820e4b03584f342731ae",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/07-onboarding.png": "708e5b2663133c05a5779a244d4f533569f925dfe883a092d3462ec0893c8fef",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/08-multi-blank.png": "e7f657d5d544ca3a514e66638e5670ffd34199adfd9d374d494e4007c8fe8b1b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/02-hint.png": "85b84570a5e5a6736f86e8849d5a5efcdab1718ecd9ed71062ff2ea878caec93",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/03-home.png": "e3d55c89344bfaf2990534f906f35e2dde97f504a85eb3be2885d38db2e2376e",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/01-results.png": "930ef60a922c4ead5fdc46f6654882108b0046091b3a715e8740db6abfc5aac5",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/store/iphone-6.9/04-question.png": "0a065b69187cfcc1a4fc2f6261dda96157fad80e90f8a282088532a60fce1df2",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/ipad-13/05-review.png": "3f8abac02cf58e19eb7489196e5628124b5fc79481118943d01ad1156105f3b0",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/ipad-13/06-collection.png": "c3aa9748a9b8406e70674d7f067e506c54a7155e1788c47be41693f1077d56e4",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/ipad-13/02-hint.png": "28468afc8fc34882171fff5af10c6674b1cc4d0c9ff3c27e46e5e3bcd50602ed",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/ipad-13/03-home.png": "91d16aab444c766d5c9789eb1af131169b56f4d180de0614353af5d392b44208",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/ipad-13/01-results.png": "ca4960703c8ea5c053a7c89d9d7b711bda7ed6ee18f725061750cea051e2fdc0",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/ipad-13/04-question.png": "1381bd7f6da1732425bf895434bbf2c081aaa9eca9582718e2706fcdc2b49403",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/05-review.png": "f967e6644454dc122fc9320cfe434b49b11eebc690bb0b520a1c89c6d0a73de0",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/06-collection.png": "60cb4af7064ff8e6c1f6616b22dae6364ffb98a7cb1ed175eb1d8273e93f5405",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/07-onboarding.png": "ba62c5807d4e905f20e0b6f37f83501d62371356319714dc17f6dd4022f1f292",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/08-multi-blank.png": "7cba9b1209867214dc90d81d428a3564f0fc3df034a4a2bf7bae00966c7c6713",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/02-hint.png": "d840b9c65c17dc20692af0a53ceca6400c3d3c16c8f137266b1a148dfb4c49b7",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/03-home.png": "75c53bb8250146f1775c2ca5f6e310da5f1a4eadd04b58e6b846788293f0f078",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/01-results.png": "d22e968d4c21143b39e1e951dec3971848cef8a28dedb49d44138d49a2a8edf3",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/store/iphone-6.9/04-question.png": "6bce27b8b5fe0a8f8fa579edcafa621fe7337e47470abcd8f265af97cd6d8d89",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/ipad-13/05-review.png": "796f0c9504d657d0f5c34fa2bb46837fe31553942bcf046e722f75936a920bde",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/ipad-13/06-collection.png": "b3824f64a6b96daec9acb2cf379af7dce2fec383b93d427d657f7accc5db4e4c",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/ipad-13/02-hint.png": "23f4d87cfc7e11b15551a81564d149c1d2dd7572e0d0dbc46e83a0ab9ca82f46",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/ipad-13/03-home.png": "5b1faab6f7786b678a226a8be801228fcc8281bc5b586c90e2e9bf6e96a25c4d",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/ipad-13/01-results.png": "a86658c27244dc8cb02413a670087879b38d77cdfedb3cb783b9c28c16a0a194",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/ipad-13/04-question.png": "fc25d1f0814d97f0703557c0878588b94b1ea34fb05f0b4a97391e2ff8915189",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/05-review.png": "2b5f888f33dd21e381b8078b48e6a2fb7655edd5128286d20b0528e20dddcb76",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/06-collection.png": "ad9eae5381789623fb09181309780dc018b2b44b8cf86eff9a3b2c3d7d4fc7f5",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/07-onboarding.png": "92b7267363127c61c56f3a8ee92aff870334fbbfcddffc846403bd9c22c73ca2",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/08-multi-blank.png": "3c99393e639695714ae155e8e18fd47affd5ec083bc474f93e6741dcbece4d2f",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/02-hint.png": "d98d3dffbc025652af14dd9ee9e5a09115ded6755f820991eb4304679db048a2",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/03-home.png": "fdfb758ab0e10d18e169eac7c8f92cc6943adf811317de5fbca242926f797983",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/01-results.png": "94407e1f5eb401f8b0cb75b476dc6cccb28f2fec9c3edcb474e5aef9c199cb53",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/store/iphone-6.9/04-question.png": "5bda3f9ac0a60cd5a47e3766c708dd8117fa5409e4d951f88824bfe888085c3b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/ipad-13/05-review.png": "02fa882fe41ef0c0821330bffcee447a28b0993c77cf44748ccd161bc0f1b831",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/ipad-13/06-collection.png": "dbdf525a38318789d2cef6057c490447786c55ed7b6f0364a8937ed24abb2f68",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/ipad-13/02-hint.png": "92fa3771471ef402947dface25cdbe4be070d78c63d8520d69fe3b4c0b71d0a0",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/ipad-13/03-home.png": "930f531eae526fce23c0c2debc056e068f1cd3fe422a24a763952591f8a72c94",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/ipad-13/01-results.png": "aa8e984e64be2e7b83691de88c6e2421c5bc60e823bdad5d99537619fdef1245",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/ipad-13/04-question.png": "c869d477d7feb9f00cb74cb4b6f77e19e5bb5c3e771fa43253a927a7ad21717b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/05-review.png": "e7215b1efbb59c8368aa632201c1f1d04aeb489e9d43bd822e95d1613af4afca",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/06-collection.png": "583f2616a154af9395e9c92f90006bc3e5a070f864a0cf87273c54b758a30285",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/07-onboarding.png": "b12ffc795457504983e54125dd45c2f796bea4dd82826fade4c8f1d472686de2",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/08-multi-blank.png": "e889558bd27a090a68cb7f8598239ea2999a122bbdb92185fe5d5192e3adbdb1",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/02-hint.png": "27b599f2a3a973018555b78b8e1b6cdb21b0f467890d3341393eebdffbe35809",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/03-home.png": "2c058cefc33321030dcb25f272a24e215ac9aa5ef1ae9d20d40c7363dd3a1c4c",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/01-results.png": "20d74f8ba78d432c10c09a4dfa11a9626932157fb3485bbf68354a08898d163f",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/store/iphone-6.9/04-question.png": "be64084416b6fba2fa093f5eb3e9c4cf07bd053bee61a08660ebc6385d52b37a",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/overview-ipad.png": "eba59ec1b6631438eb163895701cfb9b8f60d62bce00474a5833b7faf887feda",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ja/overview-iphone.png": "d20a0a7c50351f696a4c0fe3433b8f5104c0a4ce9a4de6b0548374c5966d68d6",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/overview-ipad.png": "da6062250c7b45f7eb90f1454d6f3584b8029fb372cee04f55e16d3ac3c70fb2",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ar/overview-iphone.png": "1601c20d8b438246a56c4361854c76f9f3466de5227f9164c15043f5eea9abf6",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/overview-ipad.png": "5ec521408ee33399003046eac17ce5a0baa381af91ff0d4b74467a40b8eefb0b",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/pt-BR/overview-iphone.png": "9b0e2b4a6dd961ee73061f864f3f6c5c191316566d07bbe26944ba9cb26ea4d3",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/overview-ipad.png": "2e16466ed806419481127b816147e6a34985e91e2f007a8f2fefd443bc36c1c5",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/de/overview-iphone.png": "73ceda4cd4909d0553cbc7b917ca1280e59f776282e358b53e19da576a070461",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/overview-ipad.png": "fc32961c9c487dd21fdc3cf7ebfa6dd53c3cafa649f0c9e37727ba82b7421434",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/ko/overview-iphone.png": "179511439cccdd81247a212b2baea32813f19dc6f0c31d6d78008c9b36347ec4",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/overview-ipad.png": "88d81077cba81f9bac6e6365e33b57977f67cb619feea071f0ac5feec358a830",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/es/overview-iphone.png": "393a6cf7b6810703ac425b277d7e1a6aaa28d3552b0b36f94ec3437c34484461",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/overview-ipad.png": "3c06b2631894fdc7e2066a7688581ca3a4702b010feabb44b0bfa2715594b3fa",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/en/overview-iphone.png": "61218a309fe9467771ef77454bcbc162d43c206e2241996d1e31a8733de46431",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/overview-ipad.png": "6c07e93ce3619667deda3cad49029c745f305863960b5e3e095a2542122153a3",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/tr/overview-iphone.png": "67806f6e635708f23ef71e208ad250f1485cfec40be20d0a761e0680ae4ffde9",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header.png": "4292acd44747a5323c6ecdfc84eadace21843a560c3b5e102982a9683c73f109",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-A-balanced-v5.png": "4292acd44747a5323c6ecdfc84eadace21843a560c3b5e102982a9683c73f109",
+    "/Users/ahmet/GrammarLens/screenshots/1.4.0/product-page/header-device-comparison-v5.png": "4fb654aeb768d4f48a079cb89bef0c44cf8f26c72d2d3d6358abe8db217ce2a3",
+    "/Users/ahmet/GrammarLens/assets/icon/app_icon.png": "904b399b6a97bc9e8a979673b637dc45e38c2c59479ee1f69ba0c5fd1c411199",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/README.md": "47db0237188c5eaa5d5ffc397cccf08ac8ea60cabfea58ef605d4c5eaffadb18",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/manifest.json": "bf27c4f011509c7ddef1d27e050a1a009cdafdf1a9d71e97f84d983000de1346",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/05-review.png": "4c5bef01555355806e3fbfcaa44d0b30d81c85aeae501ec2ff681759f1d51f44",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/06-collection.png": "cdcde7dd577a3cf9002fcc8999c15c931fc1987c7208e516b82c95a6d93ce297",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/07-onboarding.png": "ad30860b0dcca17992194f912689b2357b690d46d0870231355d762381a26c63",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/08-multi-blank.png": "2cd5acc03842051c3a57181fd8d9eda625799a72cf91214812390719e9ca3d18",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/02-hint.png": "ba1c8b9a5731796c0c1f0271f7d37ca037d0ec2946e9ac1495c947ee9591251b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/03-home.png": "6d344930617125843cfbfc0f47b360fd8ca3946f1a8934248a3af02c913fa187",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/01-results.png": "d6736aaef29d8e7472eeab87e6696f6d349d52cb330c8a1ea8da557f21e5229c",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/locale-audit.json": "d80e7fcad85d86a805b0a0d4c684dc9faa28b6f4f82c0ee231c43075da9a8643",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/iphone/04-question.png": "097ae749e428326f5d228083628fda357fe6fcc4c9b3f392cd9128e3c9939fc2",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/05-review.png": "4bcd26beb0452a1cd340cb946ff5aafce8313eb74c4ff55ad67d01b2fc446fcd",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/06-collection.png": "3420dd72964621d9bb7e03ffaf296066a4e39fe525ef6d0c2f0c4609f708b6a7",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/02-hint.png": "4c704789b40e75e5d80c3198c5725697fa21b7b748d5b91136f8c4085d614d5a",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/03-home.png": "b93a0e395810214780551257cc7d9eb85548a570170560a6968ed36cfdc34477",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/01-results.png": "f15f3eabca2b7efc0dde1948a1f2e66d6c1f5f6455831d5be229c276bd678326",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/locale-audit.json": "d80e7fcad85d86a805b0a0d4c684dc9faa28b6f4f82c0ee231c43075da9a8643",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ja/ipad/04-question.png": "e980bc518ec9ca272ca4bb2e4a90395bd2c73792aec6c97067b93ade0cab7496",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/05-review.png": "5ed1bb0166e67e8b0dc3c9b17e6573247718849cc99cc6e1cb1bb6a8df674613",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/06-collection.png": "62568ac3508ed2dfa92de4de117aa0963bf7b7dc8bd5779a9d4f803812acb16a",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/07-onboarding.png": "697ccd38e2f2424f8bc73b1f84e59671687c8d7d303c198edc9fc0011d44d5fc",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/08-multi-blank.png": "41f30fc504bd9ad0929d04b482ee2ea59db04f0409fbc4f0b493bd912db2b24f",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/02-hint.png": "405c8d3793fb0f77797cbe271d37cee645d4cb6d01eb86b2f24f99199631ad2c",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/03-home.png": "9c5fe93d262a1d8621485d78a955b6e05aa4ec2c0b4e593f855ebb32bc518abe",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/01-results.png": "0a1751df03a0061cbe6e4cbe11fc496bab85669c37825d7f6a944157fc2447fb",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/locale-audit.json": "ac1a3e10cdbea390bda3f87f39aba30ae18a52001fc021a4c6c78da9ae823a93",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/iphone/04-question.png": "c09e49db1ee8e2af051417408806cb1b8da428e9a011ec50d7e2d5bb2dbb80c2",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/05-review.png": "249144d2f25038cdab770bfa401b4809964616b35e02d112c73c7970d9d7d385",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/06-collection.png": "d87c5f3369a69a60ae5b852b453a904ad2d0135dc2cb50a7cd1b1eb6e196adaf",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/02-hint.png": "8bb2b9c5a06ceb609f9b6688a95ab832c9dc65dd2fd14d0057bb503647a528a3",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/03-home.png": "84aa65bdcf29877f7fc4b44841729d35c04c2522f99941a237d2a5add20a499e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/01-results.png": "272c870a9b1e771b1739a7e9a8e47310c95bdb782a878899800c420384838074",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/locale-audit.json": "ac1a3e10cdbea390bda3f87f39aba30ae18a52001fc021a4c6c78da9ae823a93",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ar/ipad/04-question.png": "71c50bdc41367c4dd143150bfe1701ae444c27e7d67b818d790d6eddd877c9b4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/05-review.png": "80e4269d22bd92b392f1488c52ae5136a63dfefe6812d52fa400fa26b37e7dce",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/06-collection.png": "a04eb8b1825c3868d518a85ab8edd1384a4f850c4af7f3dafc3ffe0d4d02fe87",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/07-onboarding.png": "857982eb2651659bc54b3f77d33a74e02be1e97222f0eb8e4530ebb3094f1c8d",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/08-multi-blank.png": "bb6cbaf82716ddf7fc249f2115c7ccf2aa7a61d6ed4614f6e0f74cca6c28d488",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/02-hint.png": "06d3a5a36488f92a7d289ee1432190a10cc4fab93f4db841fff5d4d2f991b628",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/03-home.png": "ab013637385b78aef1b42cb6bcd236a0a511a3a816c0dcbe4f74c8e8ab518dec",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/01-results.png": "aea1542a19f2cb23a71d8ae9022aac0451dad1881b6052a75d5441095f7b74a9",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/locale-audit.json": "5b4a02fc5ad7caf9fd4fee867e75911bfd990b49a123e2883966031b2ae69749",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/iphone/04-question.png": "5358cdb3dbd0fd2b9d7cfb518921c42859d4ab1c4150c4ec8a59735d592310e3",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/05-review.png": "379dfead4b570673d3d909ebbfcf3d128e45271d7293daa4997a71c66e40cd64",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/06-collection.png": "8708616a47fd420fb7006246127e7b87fcd7c863ad20abe2896a9e3fe50e4aed",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/02-hint.png": "1b1d62a0b736ca79dd864352ff9aa2083d9ed817c11260dfe18db2bc112f1115",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/03-home.png": "727cbb083326a6d8743cf12bcb9ed5c54df4af50d86dfecf1708cf7cc6b2060d",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/01-results.png": "c07fc312cc9e5fe0002e536ccff52fdb68de2845736fcf32fb01fcdd35b6bd3b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/locale-audit.json": "5b4a02fc5ad7caf9fd4fee867e75911bfd990b49a123e2883966031b2ae69749",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/pt-BR/ipad/04-question.png": "2df6a660184722890db7fd1c40ed78ff2e032485fd2ba97e035920a68fcd3731",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/05-review.png": "62c280ac13d464fe04065197b89f0d52652180578e867d3f91e985ad0395b2a8",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/06-collection.png": "0169edb68aa57069dd284965b42e526d512a4b3b8122fd39a695659e9da67729",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/07-onboarding.png": "b7743ff0e2c08d03eca1fa026bbd0b0259b8e551d85bae39bf605c64896f3a85",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/08-multi-blank.png": "0c407ed31ec5df6e7bd155598419469a254058d1f9a82129a7f1b2c4974db38f",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/02-hint.png": "ad5565369ef353dfda03110413de6193f4285b6054b25e562cd697059a2ab655",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/03-home.png": "d07b25b3b4d3d6e97720311fdc76ab9333d2249d2d4138609444417705e3cec2",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/01-results.png": "22b38b8f4ffb6b0c5d90040f44ca33239213485666b99c3ffa4a8b0717ddc8e3",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/locale-audit.json": "e67eae19df5701334f8713610bbbeec71a3d83c1c0d621b41bf4a0e2f408e0b5",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/iphone/04-question.png": "efe5ecb88d47d5ba899e04534405259eb562a3e7629e700b325a495f0905a897",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/05-review.png": "e9155e625ebba48ed86d72154ce56fda606bbce7037cf9da36406f335a473807",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/06-collection.png": "c18dae7bc1065efa3ce8ac3aecb54ef16922bc84baf87f5dadde1e5a32a3721d",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/02-hint.png": "3d1c38202c74db2cbaabb59e9483bcf35379b1f0c7dbbf456ec3cc3d7bcfbc15",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/03-home.png": "3a55e52bb1f822625155ee42d1e9bcc1645a4fc2be1fc2bbd93c785e11867860",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/01-results.png": "af7e816f5e1752af0779517c3946f0ef2b2627dc5b7e1587489c677d9223add1",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/locale-audit.json": "e67eae19df5701334f8713610bbbeec71a3d83c1c0d621b41bf4a0e2f408e0b5",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/de/ipad/04-question.png": "ffa10bc269735642d79171c7eff8598f9e8fab4de090db78b1ee6ce024095b91",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/05-review.png": "58eeed0ac645709e3a726abbcf901d3be9709636708d09b330c4b5fe65d8671d",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/06-collection.png": "9baeb6dd07f549c135f1156faf746cad1765f860cf80fc44dc67a9f1564840e4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/07-onboarding.png": "46e166b68422d5bcec1e5036672bbf1fa9e6162958cc1404a139d885a7c115f5",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/08-multi-blank.png": "3dba60b2de81df10a0a2bc47b7868d822fec928401c6bdecf75ed58e96f8db34",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/02-hint.png": "fd0ac6628afe0fee6a8583c5fa8c848452bf9ac322a3f6e6a0e15cab4a9ea6ab",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/03-home.png": "35902b15e1fda1db666d44436432939d800c2cc6708513ba093210517391b1e3",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/01-results.png": "a021c5f86e09ac246aa3bf05218739e2462bc4a64507ed51794f855aa8fd70bd",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/locale-audit.json": "d67df167794f21d59572338399d2ebc01d703e1df897003536e6ccf7c272ab0b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/iphone/04-question.png": "74f2a5ac5c84f057d1ae25ed2f6a84675c1f602cade9dfc636a6929cc93362e9",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/05-review.png": "53dd6422f4d0a896ee3211b4af0e0ce78e2ff5cf40d33a9fe737cfad749b91e6",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/06-collection.png": "81b59b9e1679a0ec8e2b1a560762ef2880455b8cffb0f9bc531d7cee933560df",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/02-hint.png": "2922a71a859f38b82db58831ce1947a42ccc72c5e1b8894195ab2e472a89f047",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/03-home.png": "500ad3fe6e9cfec5f22261391063231c7a6e3fc127d4300d5f35b1a0de6eeed3",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/01-results.png": "867473778de7dc7114885276af07d4bf3d19f70d046c0e7f61fe87963d8504a6",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/locale-audit.json": "d67df167794f21d59572338399d2ebc01d703e1df897003536e6ccf7c272ab0b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/ko/ipad/04-question.png": "9469c71ece424ebb299c1efdf32a81c446ae38630f4098412bb272cb8f331764",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/05-review.png": "54d7ba6495a37a64d5498a8cae8965b174280bb700872a92239f2258392df9ec",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/06-collection.png": "b11c3e7154ca702426ba88f98475232e42f4748759faee29d6bde502e4471a8a",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/07-onboarding.png": "7bf171ac3bbc5464f854682d9cc8b927f7382ac23900682549250119ef477d30",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/08-multi-blank.png": "c55cf5745a69a9b75541264d917435229ae097080d3698720903bc6904d2393b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/02-hint.png": "e70a95c22bb372e3c39606ef55b1ee3eac17eeee855cdb7582af3a33afa7cc76",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/03-home.png": "91ff86035e700f0f83de91c019e655e597479160d7e3c9a39c281560e243741f",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/01-results.png": "25fb9e407fcbbfa64609d0146cecd271da9e46a2e63de8051a63a8691692cfac",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/locale-audit.json": "171255f78cb15a8ca19eaaf5b132c64086baec38a4d167faaa3ceee50053a8a8",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/iphone/04-question.png": "4ec7d24d6145d7d46194b0fd93096c30fdcdae203e216565999c57d5d0a55df7",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/05-review.png": "9eb6e2e767feba96af876fcafde10d3c191e0b73f9ad75fb200640b229f6f061",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/06-collection.png": "af51b1f54794fe33eb9478df9e96ca88d16df13b827605bf7c0ff0c3d258bdf1",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/02-hint.png": "f1212cfb861f5996d2f2ac82c7015729ad287c18b0d43200559f3bcd18ebb52b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/03-home.png": "c56e282fced250ba1d7513ef849e15e83569458bb04cd6d45f6a48d25defb7d7",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/01-results.png": "dc6ad0d7ce5d9e15341bc229e0c2933dfaf2df8ddab69e887501777ae62ce800",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/locale-audit.json": "171255f78cb15a8ca19eaaf5b132c64086baec38a4d167faaa3ceee50053a8a8",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/es/ipad/04-question.png": "0ad925f8c2027a9662d74455bc5584af411159f8c47140fc2d9a53eb263765a7",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/05-review.png": "d4869cdcc55e57030aed56bd31196b504569bf30632f02967a89084bf43597ff",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/06-collection.png": "c8ba4dca439d5a3c8548f13188a42f1efe2f37e77e9e0ff2753cc87b6a19ed57",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/07-onboarding.png": "da5a5a4760d8e59873a63eac9e2349c91c453e44ce022178dfa876d0f2f36539",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/08-multi-blank.png": "cc08fb4e44c515510c46ab25b06e26fc7d159b47549312e8e54318eef250b4de",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/02-hint.png": "5a5cb763a01421d5d9f912a4db94cbb25948b6ac8cd1961308b5e456957d7a28",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/03-home.png": "291dc975f7e6940c565a00d6c4935744a5ff7d069b2c1d83ee2983dc6e16dba4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/01-results.png": "b908c36ec0060e6d2dab74bf35c30b178af24cbb8044be8b641ebbc1032dd7b3",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/locale-audit.json": "e670431b16c9561d044cd92bd0f0dc94451728f197f49237a3ed4833684e6718",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/iphone/04-question.png": "1236f51c25a75c47efe16f2c0c9cc8dc340733e5204191bc46d609ad3a62e6d0",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/05-review.png": "e87456e6a83cdcb15410bb4bc48784370cf90af5ef97d343ca9f55dd13e2b80f",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/06-collection.png": "4cea9cec787cda95ef932eca0c298533fe99072e98ff8eb67e616b59457be512",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/02-hint.png": "78f30f7c4d473b0d6b78af8c69760dffd5a5991b17d6e81537d07283dd06ea00",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/03-home.png": "e4bb5651fb23fb1d5d0ce11e015c5c2d4d44bd92ed71f9f81872522a80dba22b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/01-results.png": "4aa973cd62676821c2b90f21a583d999d6a6c399f3b92bed5f7464b807597cbb",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/locale-audit.json": "18db4f47c1291e3ad3c84b0376756c2a151c9124b6242797051ad2f2bb5a344c",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/en/ipad/04-question.png": "11678606cdf7e21c774ead55d0a2f22d17af5d2bbaba398618693be643586e53",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/05-review.png": "c5fc9fc2eb9d52fcee024c32324969c40e09548bb742b114221835aa533ec755",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/06-collection.png": "745250b707fdde25f7acb69277364e2da5c421203a7f90fa294a51319dc3d6cc",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/07-onboarding.png": "7e438e635212498b390ffaea69f15847a5c4f4c8d80a139deab9f130a8664f8a",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/08-multi-blank.png": "1b51b0f51cb75997f97ab5cdfae1edfb39da014ec17933efbbc42eb8db6c275e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/02-hint.png": "e0103133da1ba290c290eb8257864d64d72f945299421629f8302cb87541a668",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/03-home.png": "81d2fbbd99d43735d1209130da87516e9bc7b7a18b588c7a96b867e944df7aee",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/01-results.png": "6b397dc70474e0dc6400e160d66e93970fd57593833465e08fe19f874b5f49cf",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/hint-state.json": "cf96b4b83aa8de2a5450934043885b52b81f2dfe917e3675b020f3174b0621d4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/locale-audit.json": "36d06ad9d02654f8b8397f00293ccddba6bb5c0936d791520f41eae3bd7ac8d3",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/iphone/04-question.png": "964eaa2caa443647a83f57416d09c2995681b8413f18d7c6ff6347e70578a44b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/05-review.png": "b3c4692cf8e37fbcac424328bcf0827d619938f342dae00435b8de26f56e53be",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/06-collection.png": "12bf2709fe1ed6d13914bb62426dbff8db4342cf8ec66a09b1dd7f83d576e110",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/02-hint.png": "1961b434f65221b1d75cbd418a262dbc5fdb1a6f8a2d10a7e9c90978bbf72cfa",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/03-home.png": "4be35d2fe7890c7cbe8b7217c3db6c2cd52a2978d448d99098cc0c2b986fe0f4",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/01-results.png": "ec3bdd47f335afaf1bd2bdb4f8ca728d574801af6a0bae92d06b25c46f6a9e3b",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/hint-state.json": "30d6a48405028ed419c1e8acf8e33642ea10567126425d635ce0817dc6c9ca8e",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/locale-audit.json": "825ba7ef4a66814729c9ceaca3480ab9ce23f543c0ae0f53cc8e387c6cef54c8",
+    "/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/tr/ipad/04-question.png": "5bdea479e5484617d25b6d69974dd7ab3f976e1c34b75a798a7d9ba4baafaf2c",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/07-collection.png": "583f2616a154af9395e9c92f90006bc3e5a070f864a0cf87273c54b758a30285",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/revised-four.png": "1239f05451bd003ce544c61abb300b48805e815288e1a52ad27030fea0fc7181",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/test-story.png": "c54d824d0fa7fb5577af566aaa2f2643f5970d025f8e76afadfa57d2e3e9e644",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/08-onboarding.png": "b12ffc795457504983e54125dd45c2f796bea4dd82826fade4c8f1d472686de2",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/overview.png": "3456fc4021a7f2fa3a8b892de2b44e6ef26994bdac9ce836e2253dc128a4c05a",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/03-hint.png": "27b599f2a3a973018555b78b8e1b6cdb21b0f467890d3341393eebdffbe35809",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/background-flow.png": "4bd43a3a7f1f91a73de6d97895cbfb1cebb3e76b7f822fdbc94c35f264e79163",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/README.md": "b105de679108dfc7acf9dd2ae3ed279cf35508c7caef7bd22b26bd38498fefca",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/flow-strip.png": "09816098a2092df6ee3defdd4621a51d68c4a8febfdc138c98dce0f5e5ed60af",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/01-results.png": "20d74f8ba78d432c10c09a4dfa11a9626932157fb3485bbf68354a08898d163f",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/manifest.json": "5f5b89bc1e003f0a52697dfc29f159fff950bf15066a49d7aafab146a2559eb1",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/verification.json": "d22ea41725502d4ef4c93ec8794662224913ce95fde38e5d23b40a23e7a47e4f",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/02-question.png": "be64084416b6fba2fa093f5eb3e9c4cf07bd053bee61a08660ebc6385d52b37a",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/04-multi-blank.png": "e889558bd27a090a68cb7f8598239ea2999a122bbdb92185fe5d5192e3adbdb1",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/06-review.png": "e7215b1efbb59c8368aa632201c1f1d04aeb489e9d43bd822e95d1613af4afca",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/05-home.png": "2c058cefc33321030dcb25f272a24e215ac9aa5ef1ae9d20d40c7363dd3a1c4c",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/07-collection.png": "7d4afa6709ff842a1a630ed47bcde487b96bb7ce8934615ac2265925842d2b02",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/08-onboarding.png": "2b2242aa67775024ae7888d2d66f8cf814f1184f13b04de0c35e01376ee2f167",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/03-hint.png": "aa2ead44b01daeeec42d6b84ebbfc7bbe97dd3b06c654720c10a5a408a5937cc",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/01-results.png": "64af278a3868605508d90e7d5560493514eec25e89d9a2949f6c98a377275303",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/02-question.png": "7734f4d9494e8f31cfd43ae16963d4c760fa6c5c7dce359d4e42c9ddb006aac2",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/04-multi-blank.png": "589ce23451cc92cfda68d82c3f1f6f9c2c9c4474a442e66e9c3528519521061f",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/06-review.png": "d5874b3336b82b32672dc25a71cff937797db8cab515d7205a1a14c0f79a6889",
+    "/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid/backgrounds/05-home.png": "e51bff46719783d0547f12a6836983a3c02133050c71da6c871102bca0f132ce"
+  },
+  "currentIconDecision": "Research closed; retain the existing app icon. Icon research files are outside this product-page cleanup scope.",
+  "headerGeneratorSource": "/private/tmp/grammarlens-header-balanced-v5.cjs",
+  "completedAt": "2026-11-05T18:54:44.855220+00:00",
+  "verification": "All 302 protected files retain their SHA-256 hashes, including 112 final screenshots, 112 permanent raw captures, current headers, overviews, approved vivid inputs, and the app icon. All temporary capture symlinks resolve to matching permanent originals.",
+  "removedLogicalBytes": 2598549598,
+  "note": "Local cleanup only. No ASC requests. Git history retained. Logical file bytes removed are reported; APFS snapshots, shared blocks and Git history may affect actual free-space change."
+}

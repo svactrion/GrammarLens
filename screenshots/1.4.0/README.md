@@ -1,5 +1,25 @@
 # 1.4.0 App Store screenshot assets
 
+## Local cleanup — 2026-11-05
+
+The owner closed the icon-change exploration and kept the existing app icon.
+Unused product-page renders (cozy v1–v5, mist fade, superseded headers and
+cancelled search-result art) were removed from the working filesystem.
+Historical descriptions below refer to those earlier experiments; their PNG
+outputs are no longer present. Tracked older headers remain in Git history.
+The approved `fade-vivid` inputs remain because the Turkish final compositor
+uses them. All 112 final screenshots, 16 overviews, permanent native originals,
+approved metadata, API logs and current balanced v5 header are preserved.
+
+Temporary native PNG copies now symlink to the identical permanent archive;
+existing verification paths still work. Rebuildable `build/` and
+`.dart_tool/flutter_build/` caches in the dedicated build-7 worktree were
+removed; the worktree and all its sources remain. A future capture rebuilds.
+The final header generator is retained at
+`tool/marketing/store_130/render_header_140.cjs` (run from repository root).
+See `cleanup-2026-11-05.json` for the exact inventory and retained-file hashes.
+No App Store Connect assets were changed by this cleanup.
+
 Checkpoint 4 completed on 2026-11-05: all eight localizations, 112 approved
 Canlı fade screenshots and the selected header A were uploaded and read back
 successfully. Version 1.4.0 stays PREPARE_FOR_SUBMISSION, build 7, MANUAL.
