@@ -1,0 +1,41 @@
+GrammarLens is an English grammar practice app. No account, no sign-up, no login. Open the app and start.
+
+ATTACHED
+A screen recording on iPhone (version 1.3.0, build 6) showing onboarding, the Daily Test with a topic hint, results, the AI consent screen, the subscription screen, the purchase sheet and Restore Purchases. The sandbox account used in the recording had already used its free trial, so the subscription screen shows the direct price; new users see the free-trial wording described below.
+
+FIRST LAUNCH
+Onboarding has two steps: a first name and a companion, then a learning goal (the goal can be skipped). It then gives a 5-question Daily Test that is bundled with the app (no network call). After the results, tapping "Start my climb" goes to the Home screen and the subscription screen is shown once.
+
+AI CONSENT SCREEN
+In practice sessions the app sends the answers a user types, with their questions, to Anthropic (Claude) to generate feedback. Before the first time this happens, a full-screen consent screen explains what is sent and asks for permission. The consent covers every practice session: the free weak-spot practice and Premium Topic Practice.
+
+To reach it: answer at least one Daily Test question wrongly (for example, leave it blank) so a weak spot is created, then Home > Review tab > tap the weak spot > "Start free practice". The consent screen appears before the practice session starts. Consent can be withdrawn at any time from Profile > Data.
+
+The Daily Test does not send any user-written text and does not require this consent.
+
+AI requests go only through our own server (api.ahmettayfur.com); the app contains no AI API key. The server does not store question or answer text. A random anonymous device ID is used only for daily limits; it is not sent to Anthropic and expires after 48 hours.
+
+FREE LIMITS
+A free user gets one Daily Test and one practice session per day. After the practice session is used, the results screen shows a Premium offer card. Topic Practice (from the Home screen) is a Premium feature. Premium allows up to 5 practice sessions a day (not unlimited).
+
+If the daily allowance is already spent during review, the limits reset at local midnight.
+
+SUBSCRIPTIONS
+Two auto-renewable subscriptions in one group: monthly ($5.99, 3-day free trial) and annual ($49.99, 7-day free trial). Prices and trial lengths are loaded live from the App Store through RevenueCat and are never hardcoded.
+
+To reach the subscription screen: on Home, tap Premium next to Topic practice (or open any Topic Practice topic). Restore Purchases is at the bottom of that screen.
+
+PRIVACY
+No account system. Name, avatar, practice history and progress stay on the device. Typed answers go to Anthropic only with consent. Firebase Analytics and Crashlytics collect anonymous usage and diagnostics; the learning goal chosen in onboarding is sent with these anonymous analytics, never with the user's name. RevenueCat handles subscription status. No IDFA, no tracking.
+
+The release build has no hidden, debug or developer features, no remote configuration and no promo or redeem codes.
+
+SUBSCRIPTION DISPLAY
+The total annual/monthly amount is the prominent price; any monthly equivalent is secondary. Trial length, post-trial charge, renewal terms, EULA and Privacy Policy links are shown on the subscription screen.
+
+Privacy policy: https://ahmettayfur.com/products/grammarlens/privacy/
+Terms: https://ahmettayfur.com/products/grammarlens/terms/
+Support: https://ahmettayfur.com/products/grammarlens/support/
+
+VERSION 1.4.0 (BUILD 7)
+Seven additional interface languages: Japanese, Korean, Spanish, Portuguese (Brazil), Turkish, Arabic and German. The interface follows the device language or Profile → Appearance → Language. Questions and AI feedback stay in English.

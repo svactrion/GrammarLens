@@ -1,0 +1,898 @@
+[
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "94407e1f5eb401f8b0cb75b476dc6cccb28f2fec9c3edcb474e5aef9c199cb53",
+    "md5": "c10534e39c5d0fdb710925688e674886",
+    "bytes": 1549679
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "5bda3f9ac0a60cd5a47e3766c708dd8117fa5409e4d951f88824bfe888085c3b",
+    "md5": "a9b8fd069fbdf66a1b3616df4a12eec4",
+    "bytes": 1980691
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "d98d3dffbc025652af14dd9ee9e5a09115ded6755f820991eb4304679db048a2",
+    "md5": "cae286e12dbc39a302fd5dd7cc8f0af0",
+    "bytes": 1926995
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "3c99393e639695714ae155e8e18fd47affd5ec083bc474f93e6741dcbece4d2f",
+    "md5": "1311f5d8683cad1d904913e31b717b0e",
+    "bytes": 1957655
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "fdfb758ab0e10d18e169eac7c8f92cc6943adf811317de5fbca242926f797983",
+    "md5": "ef4727f2b16a38e5b3bbec55ebae4c52",
+    "bytes": 3011229
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "2b5f888f33dd21e381b8078b48e6a2fb7655edd5128286d20b0528e20dddcb76",
+    "md5": "1a4035845693054c852ca1c63e945c2b",
+    "bytes": 1956596
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "ad9eae5381789623fb09181309780dc018b2b44b8cf86eff9a3b2c3d7d4fc7f5",
+    "md5": "521b8665178a105f0edae84e72972928",
+    "bytes": 2466314
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "92b7267363127c61c56f3a8ee92aff870334fbbfcddffc846403bd9c22c73ca2",
+    "md5": "7987fdd7912378ec3b98750001d406c6",
+    "bytes": 2235395
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "a86658c27244dc8cb02413a670087879b38d77cdfedb3cb783b9c28c16a0a194",
+    "md5": "462869029dc5a0ebc432b2f2bc474e22",
+    "bytes": 2104071
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "fc25d1f0814d97f0703557c0878588b94b1ea34fb05f0b4a97391e2ff8915189",
+    "md5": "6988dc376d04905894822add883b359f",
+    "bytes": 2626734
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "23f4d87cfc7e11b15551a81564d149c1d2dd7572e0d0dbc46e83a0ab9ca82f46",
+    "md5": "5e50f916ba5202720c610817db54ba4b",
+    "bytes": 2348318
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "5b1faab6f7786b678a226a8be801228fcc8281bc5b586c90e2e9bf6e96a25c4d",
+    "md5": "39bec717acdbb2522d1291a9ff5a8131",
+    "bytes": 3790526
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "796f0c9504d657d0f5c34fa2bb46837fe31553942bcf046e722f75936a920bde",
+    "md5": "32d0255a8736a9f863791e4956c4fbae",
+    "bytes": 2204578
+  },
+  {
+    "locale": "en-US",
+    "file": "screenshots/1.4.0/en/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "b3824f64a6b96daec9acb2cf379af7dce2fec383b93d427d657f7accc5db4e4c",
+    "md5": "7d8b674eb74cc3f83fe19421e12e4935",
+    "bytes": 3270773
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "20d74f8ba78d432c10c09a4dfa11a9626932157fb3485bbf68354a08898d163f",
+    "md5": "3e66918a6b077465aabc7c9b59f9bf19",
+    "bytes": 1559498
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "be64084416b6fba2fa093f5eb3e9c4cf07bd053bee61a08660ebc6385d52b37a",
+    "md5": "7c7f41a35801caf16c028688adace3b3",
+    "bytes": 1968056
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "27b599f2a3a973018555b78b8e1b6cdb21b0f467890d3341393eebdffbe35809",
+    "md5": "4163a1641de5afda63bfb6669f073359",
+    "bytes": 1921795
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "e889558bd27a090a68cb7f8598239ea2999a122bbdb92185fe5d5192e3adbdb1",
+    "md5": "f8c273a85ac0a38bcbce70642a372b84",
+    "bytes": 1962700
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "2c058cefc33321030dcb25f272a24e215ac9aa5ef1ae9d20d40c7363dd3a1c4c",
+    "md5": "5c1eeca56614ec1203669ce67d16e0cf",
+    "bytes": 2915944
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "e7215b1efbb59c8368aa632201c1f1d04aeb489e9d43bd822e95d1613af4afca",
+    "md5": "91f27f04c6480c4a4d103fbc5101339f",
+    "bytes": 1985041
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "583f2616a154af9395e9c92f90006bc3e5a070f864a0cf87273c54b758a30285",
+    "md5": "df13dce1f4355351bbb9c93f3f01f448",
+    "bytes": 2484067
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "b12ffc795457504983e54125dd45c2f796bea4dd82826fade4c8f1d472686de2",
+    "md5": "bfd83a37fc27913c4170eb7d6b69bf33",
+    "bytes": 2221062
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "aa8e984e64be2e7b83691de88c6e2421c5bc60e823bdad5d99537619fdef1245",
+    "md5": "84574a64f18bbd8e8cbd5c3ca828d91b",
+    "bytes": 2099826
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "c869d477d7feb9f00cb74cb4b6f77e19e5bb5c3e771fa43253a927a7ad21717b",
+    "md5": "daaa215980b7e99ff71d7b8bb866ce6d",
+    "bytes": 2613606
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "92fa3771471ef402947dface25cdbe4be070d78c63d8520d69fe3b4c0b71d0a0",
+    "md5": "598b1b790fffe4b91c6b95abac7dae7c",
+    "bytes": 2341830
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "930f531eae526fce23c0c2debc056e068f1cd3fe422a24a763952591f8a72c94",
+    "md5": "2301ced264cb75e04282701d125f955a",
+    "bytes": 3793928
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "02fa882fe41ef0c0821330bffcee447a28b0993c77cf44748ccd161bc0f1b831",
+    "md5": "f988262888f099e826a042e9bbe329cb",
+    "bytes": 2194004
+  },
+  {
+    "locale": "tr",
+    "file": "screenshots/1.4.0/tr/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "dbdf525a38318789d2cef6057c490447786c55ed7b6f0364a8937ed24abb2f68",
+    "md5": "86e4de31858b6bbb96a3bf3165f65713",
+    "bytes": 3259675
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "706007145bda319392a96208897d7b85d6d95eea9ba4651457ab3dee1d0035e9",
+    "md5": "e78ecbb1b4638c39f7a3739e03210f26",
+    "bytes": 1559220
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "19bceee8f688f8e69a30d4f7c5feefd70c35e9bb735c6148bd749721fdd32af5",
+    "md5": "62e4e5715f92e24a4f3de05c050bb976",
+    "bytes": 2000194
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "537bf7f01047da0ee35a7f110af1c05f036c1ae748beb06b8d06e53b2f80ad4b",
+    "md5": "4108692dcdbd8af888611795b33fc1e2",
+    "bytes": 1945610
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "46b45d81245bddb2b5448d74f3a81e66d149dc7d6fdd1fa13c49a359a088e956",
+    "md5": "8e42e7b794942f113eea613dcdfa2602",
+    "bytes": 1972090
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "ec0d023ca3c43c809bd52fdf3e313e5f0b451384f02747378f75cb9da12d3244",
+    "md5": "e59cc8cbfffe4c4542ca7cfe1dabdc77",
+    "bytes": 2999792
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "da6235cc419a7d615c26fda821bd9f678d50ac27e09ae7fd35ef36ccdba91466",
+    "md5": "24b73771f5fc7ab38c68af2385d07719",
+    "bytes": 1980146
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "7aabc6cd79a5444e4886df4924f67703b8c675ce7287f701f887c8d61f0fe99a",
+    "md5": "32f7f020bfacc638c220ddc930a91f07",
+    "bytes": 2479228
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "f31bc99f634579b88229dce9c35e41767b1e7f36b9f6d2c0754531e11710e030",
+    "md5": "09e552a23e08beded234b815d62f10ef",
+    "bytes": 2252537
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "b72515a33aa41cf8e807551379964fa0fcd647574695a131709b45243cdd6c8e",
+    "md5": "cac815f6f0a5a99aa46b9c65d329e657",
+    "bytes": 2106546
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "bafa74e145d4a0d2fb24f4ebd4d785188bb60265e34d47b370d51efd812fc914",
+    "md5": "bdd8d988e68dbad8f40173bd3cc0117b",
+    "bytes": 2639471
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "a55d28b430679977a242f8c31d45e161c3845e5044b9964ff47e100e26302cc8",
+    "md5": "542c0ad0a76a91fd8db9f6fcf1afbfaf",
+    "bytes": 2352927
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "912946461e18887cc064edfa4b652c2908ddeb0c77dedc4bf119782e200a5dc0",
+    "md5": "459cd3176548b7fb8d6a5180cb3b91b9",
+    "bytes": 3823222
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "1aa69d2c5e9cae77ceeeb4fc3706a8ac967564926dd52792fae4ad69bb6ffa11",
+    "md5": "a0350d9a210c545eac8037336f19659f",
+    "bytes": 2227693
+  },
+  {
+    "locale": "de-DE",
+    "file": "screenshots/1.4.0/de/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "21ea7c61b4768a6c51d62332701be34a99f02f7d65ecab4a091cd805fb65a548",
+    "md5": "3de8fcf5a955d142d43a83598d2b8de0",
+    "bytes": 3287718
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "d22e968d4c21143b39e1e951dec3971848cef8a28dedb49d44138d49a2a8edf3",
+    "md5": "6e2681666068fa99530f7154ce452654",
+    "bytes": 1560556
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "6bce27b8b5fe0a8f8fa579edcafa621fe7337e47470abcd8f265af97cd6d8d89",
+    "md5": "6881179aeabf90acd5ceac4ea3521068",
+    "bytes": 1997513
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "d840b9c65c17dc20692af0a53ceca6400c3d3c16c8f137266b1a148dfb4c49b7",
+    "md5": "6389430fe0d694c2a8b73802dbe94317",
+    "bytes": 1937984
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "7cba9b1209867214dc90d81d428a3564f0fc3df034a4a2bf7bae00966c7c6713",
+    "md5": "c789e524f9ebbbda2925061f961c35d4",
+    "bytes": 1974719
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "75c53bb8250146f1775c2ca5f6e310da5f1a4eadd04b58e6b846788293f0f078",
+    "md5": "699ec836241ec6b151e0960e2cb3dd20",
+    "bytes": 2911450
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "f967e6644454dc122fc9320cfe434b49b11eebc690bb0b520a1c89c6d0a73de0",
+    "md5": "0fa9eaf0110c434a7ee5184da3673433",
+    "bytes": 1961070
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "60cb4af7064ff8e6c1f6616b22dae6364ffb98a7cb1ed175eb1d8273e93f5405",
+    "md5": "cea6ff2fbf3c23831d5791db01476e5c",
+    "bytes": 2476421
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "ba62c5807d4e905f20e0b6f37f83501d62371356319714dc17f6dd4022f1f292",
+    "md5": "ee12bd0d6b74ccc2a7316e11ad7a4b81",
+    "bytes": 2255399
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "ca4960703c8ea5c053a7c89d9d7b711bda7ed6ee18f725061750cea051e2fdc0",
+    "md5": "49a90ba501217c804d5ed1392a0fe230",
+    "bytes": 2108449
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "1381bd7f6da1732425bf895434bbf2c081aaa9eca9582718e2706fcdc2b49403",
+    "md5": "cd3e9a1cbaa6a310d43626fda4d4cba4",
+    "bytes": 2646547
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "28468afc8fc34882171fff5af10c6674b1cc4d0c9ff3c27e46e5e3bcd50602ed",
+    "md5": "ddd57894e7e417dde195d27a31ead6ce",
+    "bytes": 2350267
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "91d16aab444c766d5c9789eb1af131169b56f4d180de0614353af5d392b44208",
+    "md5": "da5fdfe96568780c7c2aa82d148ceaf5",
+    "bytes": 3801334
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "3f8abac02cf58e19eb7489196e5628124b5fc79481118943d01ad1156105f3b0",
+    "md5": "87fbbe14d2a8ee98a165f96064bc7b7b",
+    "bytes": 2213224
+  },
+  {
+    "locale": "es-MX",
+    "file": "screenshots/1.4.0/es/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "c3aa9748a9b8406e70674d7f067e506c54a7155e1788c47be41693f1077d56e4",
+    "md5": "2c8384efb566c9e6da29cb8397ab8c44",
+    "bytes": 3272919
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "76b760317a0b538c6d843b1138dbcb174ac47a236527fba95482cc25bfd5a620",
+    "md5": "1ccacb022c43e36dd2cb80b5ce45d912",
+    "bytes": 1569166
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "1162c0b2a61f4cf4bb2e192ab1a03c124674da556112ab41b3a1747fe805afd4",
+    "md5": "aecf7f4af8497b2f06a3019f44ea711e",
+    "bytes": 1998424
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "ad027dbeae6ad1fb672e23566b8475d56e0999fbfd4949821f2c806384be20da",
+    "md5": "c9eec57302b1d8e27d49e906e7ba2dd8",
+    "bytes": 1938709
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "bcf24e912421f7a3ae68a92d495ccbb0d0ede689f1ebd452da5f50921882275d",
+    "md5": "1344a3c92831e1d36f78ada92e8d7312",
+    "bytes": 1971525
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "bc5f74a857ae0e20cacadc075ba26d349fcf00e5ed7f5c51115f540801886d12",
+    "md5": "9c7e5683ad24e54ed60ebc0726913707",
+    "bytes": 2979497
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "99026355b01b284cecd040a72636a95f902d02b78595c858848fd9fe0ff768ab",
+    "md5": "02a5075aa10e594c6fb2dffa6be78c81",
+    "bytes": 1974867
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "d6faa6bb70d2be84222f71b6140778dbcdaddbfbb871363b20f4f0f80c8ac979",
+    "md5": "685d09b3c9f97846ba30f2439f1a0282",
+    "bytes": 2477781
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "cadc9139f78322348eba7a02382a499238b3b760929eea226dc7b6080dd8be56",
+    "md5": "42d8eb0fa348886b88c1cddd622eab98",
+    "bytes": 2260160
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "2636d2b5587b3e5f33f353feabfa5a203f72f12ea98d372f3f78aee00b473688",
+    "md5": "dd26f50206a1d85ea64d7ac4ee9f54cd",
+    "bytes": 2120935
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "63df3d114e1efa5029d9a508331da0d8f23fa3daacc3cc13368ddc4300b7bad3",
+    "md5": "481637663086105d6a0e20305b49c55b",
+    "bytes": 2647833
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "0f41ce079056665842379d93621463325a2ccf3594947ed6e8dd1b2ec3b232f4",
+    "md5": "b2da1c6cefbc7a8c84a73c1a97944e2a",
+    "bytes": 2354149
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "82067d0cfdbf4330c460de385c3df3a6a101e00df122fdb2d1cb7e382bdd3c5f",
+    "md5": "17a2a77aa78c300a0d1f26259a5f82b0",
+    "bytes": 3793461
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "ee171ac386392e82c7a502748f908837f20cc441638eff0d55b7988415a3331b",
+    "md5": "ccfa98e9114ccfa04c8c49324cdd8112",
+    "bytes": 2224491
+  },
+  {
+    "locale": "pt-BR",
+    "file": "screenshots/1.4.0/pt-BR/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "13516a759af8ad97430d24b099aefc2cd53a2fe5dde1289dcfc9d47f77517a4c",
+    "md5": "ba49a3850313797d9cdaf42da5759b41",
+    "bytes": 3280164
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "1a215cb4dececa4da32fbed9ad7fae5651e8f8660a6adc54b2ec3a9c5ac9741b",
+    "md5": "15a813e2f1bcb4cd89c46113139e0ffb",
+    "bytes": 1567801
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "3a71511d823110e6916a8a3595dacb58df45c07298aac8a4b1373df5fd7e5cac",
+    "md5": "281449033fa1695087f5570eac0a9d0c",
+    "bytes": 1980895
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "2f3f3aef3881e47b181f35ce4533228370d802028dc4376c6891674a80f06b4d",
+    "md5": "2fe56cae1cc30579d131d0cdb51838a1",
+    "bytes": 1948208
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "7dea9068fed132a9a95a4857aa5d5ae47790801114db3a367f75df3a9722b6da",
+    "md5": "b5396f99ad6579cc5275b8b308dbd788",
+    "bytes": 1992051
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "f7e1d3e14863d9e3bd278656cd65b9194b9c47d9d630a0bbef04f0d3db406c4e",
+    "md5": "3394412931ff4d6cbe8f624689e863a5",
+    "bytes": 3006314
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "dd1d310e071abb988bef47e02e0638418202bb44c5066637fbe091603c28d2e6",
+    "md5": "6e7b8d4c5cdf8b85d7761f947d2032ca",
+    "bytes": 1983128
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "38b3511a98f203a26f10a6280686340837f4d541dc23d3fb3b75f86e7165dced",
+    "md5": "b8f8de489b9cab8c7de97be088ffe168",
+    "bytes": 2464415
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "ab3c085bad64d4b760afec63f48f26946887ef910aa805c362f534d44b6292e3",
+    "md5": "bd18a9a35406e4b7f29e96eac4c8744b",
+    "bytes": 2240403
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "37129b0fafe9091ef2b844f205c28ea851e090165b56ff78269d176ba5257dee",
+    "md5": "c1348fd1cfa884277b1cc3b8737e8a00",
+    "bytes": 2115560
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "07e7bfe565c17268a02bbba1709750570cdb7ec400b479b84ec62f45fd50a1fc",
+    "md5": "62c0500f5f3708ff19c81bf8e4efde44",
+    "bytes": 2617649
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "a6656e31b73a6df9be0949642cf4843aee351b4aeb2108d45479f1524eb26515",
+    "md5": "435fd756a60796281ec76c81ed999a4e",
+    "bytes": 2344137
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "d1d54ac63ddac2fcd59eaa200e5cc48a4bf2261b8922bdc7a901fed4cce915eb",
+    "md5": "2f897c831c7d6d89bdf8526b4e212f71",
+    "bytes": 3827557
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "02322f555a7987717a260d48c205d0a45e887999135b1812386b1a4cf2392904",
+    "md5": "36fc97e8fd6297655a54231eab53d9ce",
+    "bytes": 2212528
+  },
+  {
+    "locale": "ja",
+    "file": "screenshots/1.4.0/ja/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "06691c033c943b090b057f7e720ac973c35a24f4ae579795c1f305821a65f68a",
+    "md5": "e3544dc5be70a71b25a4c7d99b0487d7",
+    "bytes": 3261022
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "930ef60a922c4ead5fdc46f6654882108b0046091b3a715e8740db6abfc5aac5",
+    "md5": "f96aba93cc6a3cc2f8848660a89d27cc",
+    "bytes": 1520068
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "0a065b69187cfcc1a4fc2f6261dda96157fad80e90f8a282088532a60fce1df2",
+    "md5": "acfd686bcbb20c1836b53718f0b71f0e",
+    "bytes": 1977630
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "85b84570a5e5a6736f86e8849d5a5efcdab1718ecd9ed71062ff2ea878caec93",
+    "md5": "23a69d3790dac05daa65781367c69f68",
+    "bytes": 1919582
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "e7f657d5d544ca3a514e66638e5670ffd34199adfd9d374d494e4007c8fe8b1b",
+    "md5": "1ceeefae0237b293e16ec4290860b395",
+    "bytes": 1961061
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "e3d55c89344bfaf2990534f906f35e2dde97f504a85eb3be2885d38db2e2376e",
+    "md5": "1708a245c527f9e067e9dd1579eec746",
+    "bytes": 2965316
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "fc2a11b8e4ef452f2d024139aa5d91fbd74598ae42df3042f69ebcc76173000d",
+    "md5": "c7d3944373be5ce2cf793a4684d7245b",
+    "bytes": 1938720
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "49b4923bb676fb14d6a72c1efac67e872581ec8dd5ab820e4b03584f342731ae",
+    "md5": "f16418dda1a08032dc44020a3920d33a",
+    "bytes": 2419671
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "708e5b2663133c05a5779a244d4f533569f925dfe883a092d3462ec0893c8fef",
+    "md5": "46bca8876b4a74905da10988a5531319",
+    "bytes": 2199664
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "765207072bab1b7d8fa2bab89b59ba478829a48a2c907619db26477532c907e7",
+    "md5": "e81037730a63293cde89f76b5f61ab2a",
+    "bytes": 2053639
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "fd81c5ff0171a6842f39f256a15f36405e93a755b91b5257d3a9a2f48b784079",
+    "md5": "543e2b3ea0421346c3bb493c39ceedbd",
+    "bytes": 2593226
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "105e7992879208b4eac411ff2ba91dd2e48ded48be0f416da3eb02746e3c6241",
+    "md5": "29e6721a6a4d61eb81e30acd25eda059",
+    "bytes": 2313512
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "42fb903bddf4aac88e27ac8644e329967f22835b8fed60933989ed5243d2c312",
+    "md5": "fc24a60bf6798e424db5b7dadceab06e",
+    "bytes": 3762786
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "53c121a34f311b45892086f458309601bc7a2cd13a7122e4764cb78df63f2bad",
+    "md5": "f2828d33a43f855cdaf8898cc64189e5",
+    "bytes": 2143226
+  },
+  {
+    "locale": "ko",
+    "file": "screenshots/1.4.0/ko/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "506a6b58e1dbbc342964a027021bc88971021fdf40a20ace548e446bab9e7c7b",
+    "md5": "a5488e7933d05949cf46bbbb1089e0ad",
+    "bytes": 3211123
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/01-results.png",
+    "order": 1,
+    "sha256": "bec0d738d182fea8b8a660291bd2361be93e3c7427cc8d55a80ae70923113945",
+    "md5": "7344ae2ea1c03665f2685f2669d86bf1",
+    "bytes": 1523401
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/04-question.png",
+    "order": 2,
+    "sha256": "cbcffe1393700eb9a3816f0f8676eebbf36cd6b4fe53b609b57ea0af9f5d5de9",
+    "md5": "f804ebbe96678fe14d8409e396c06335",
+    "bytes": 1951583
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/02-hint.png",
+    "order": 3,
+    "sha256": "f4b51019ede24732735777e375f03219e4ee32a3e0a91bbaec4abac845214320",
+    "md5": "2ac53940d22094e39334a83987e646ff",
+    "bytes": 1910242
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/08-multi-blank.png",
+    "order": 4,
+    "sha256": "4f6ea0fbb32c903c9c47a1d22a10593244f9a7d86f9ea1dd94a18a4e272ec924",
+    "md5": "1803cec168b8ca9506730f15fdf1290a",
+    "bytes": 1960771
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/03-home.png",
+    "order": 5,
+    "sha256": "c74a03a941eda00942a1814de5cb3bd23985d17b51fa843e83e8c26e4b6c5bb9",
+    "md5": "8d1f2e2ba592a84ffe95c1a11db21558",
+    "bytes": 2998081
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/05-review.png",
+    "order": 6,
+    "sha256": "b8ede0fbff18655f9b7934f00ff9b66f26c851fb9a0e6f86040aebc2571e6b8a",
+    "md5": "835bf6d40f1c7d730eea92d9c2499847",
+    "bytes": 1885988
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/06-collection.png",
+    "order": 7,
+    "sha256": "fa5111fba9afc8925e049b3a74147d619db3c4ba63a493f558ff61f854d5562a",
+    "md5": "b20b66a8e75c771d6a087217b112066e",
+    "bytes": 2414625
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/iphone-6.9/07-onboarding.png",
+    "order": 8,
+    "sha256": "066c731147c468ec218e68d56ec6283ee38d78fe6bcc6ce8e73eb55da3c688ab",
+    "md5": "94c7d1e31804bc07a4e6344b09cfa038",
+    "bytes": 2199752
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/ipad-13/01-results.png",
+    "order": 1,
+    "sha256": "14236cdb87435beddc674757fd62406a0ecea97e0bbb1d59a16be02c816c87d9",
+    "md5": "1bd4f3d3d515703b315b15caf3fb65ee",
+    "bytes": 2074356
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/ipad-13/04-question.png",
+    "order": 2,
+    "sha256": "5108d533b92fa7bf4b8a84153ff8a9889d748705970210f5646bd8256f405d5a",
+    "md5": "f5dd7770f7f4887d791b3a31f06b9fab",
+    "bytes": 2584912
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/ipad-13/02-hint.png",
+    "order": 3,
+    "sha256": "c6c463a30168046f3c1cfbaa0431f82dacec835f0b3d5fa4a6f69daef15364e9",
+    "md5": "f89b2f6f22f0fa4248c32b66e9e52e59",
+    "bytes": 2349060
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/ipad-13/03-home.png",
+    "order": 4,
+    "sha256": "be076ab09f699fe4e4a0bdc07adc0f32a19c171863302884acc0401809956ec3",
+    "md5": "eba51667237ea2d78afab17f8f9c252e",
+    "bytes": 3802667
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/ipad-13/05-review.png",
+    "order": 5,
+    "sha256": "e0d5ab3991d2702ce49ac7495ecfb10f8f80a520dbd0f2f212d673f63f092e9b",
+    "md5": "5830824d7525aebae2fd0373c9e17141",
+    "bytes": 2096793
+  },
+  {
+    "locale": "ar-SA",
+    "file": "screenshots/1.4.0/ar/store/ipad-13/06-collection.png",
+    "order": 6,
+    "sha256": "a9b40ee583dfffaa476e3b5b876259a804bd56e080c590118df61c2864108785",
+    "md5": "4466dfc0bcf0c94896789e775c7131ae",
+    "bytes": 3305302
+  }
+]

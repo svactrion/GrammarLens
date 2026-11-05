@@ -1,0 +1,186 @@
+[
+  {
+    "locale": "en-US",
+    "subtitle": {
+      "characters": 29,
+      "utf8Bytes": 29
+    },
+    "description": {
+      "characters": 2437,
+      "utf8Bytes": 2445
+    },
+    "keywords": {
+      "characters": 94,
+      "utf8Bytes": 94
+    },
+    "whatsNew": {
+      "characters": 689,
+      "utf8Bytes": 707
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  },
+  {
+    "locale": "tr",
+    "subtitle": {
+      "characters": 28,
+      "utf8Bytes": 31
+    },
+    "description": {
+      "characters": 2351,
+      "utf8Bytes": 2543
+    },
+    "keywords": {
+      "characters": 82,
+      "utf8Bytes": 85
+    },
+    "whatsNew": {
+      "characters": 708,
+      "utf8Bytes": 783
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  },
+  {
+    "locale": "de-DE",
+    "subtitle": {
+      "characters": 29,
+      "utf8Bytes": 31
+    },
+    "description": {
+      "characters": 2566,
+      "utf8Bytes": 2603
+    },
+    "keywords": {
+      "characters": 85,
+      "utf8Bytes": 88
+    },
+    "whatsNew": {
+      "characters": 801,
+      "utf8Bytes": 837
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  },
+  {
+    "locale": "es-MX",
+    "subtitle": {
+      "characters": 28,
+      "utf8Bytes": 29
+    },
+    "description": {
+      "characters": 2542,
+      "utf8Bytes": 2599
+    },
+    "keywords": {
+      "characters": 86,
+      "utf8Bytes": 90
+    },
+    "whatsNew": {
+      "characters": 746,
+      "utf8Bytes": 780
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  },
+  {
+    "locale": "pt-BR",
+    "subtitle": {
+      "characters": 29,
+      "utf8Bytes": 31
+    },
+    "description": {
+      "characters": 2462,
+      "utf8Bytes": 2541
+    },
+    "keywords": {
+      "characters": 80,
+      "utf8Bytes": 84
+    },
+    "whatsNew": {
+      "characters": 717,
+      "utf8Bytes": 759
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  },
+  {
+    "locale": "ja",
+    "subtitle": {
+      "characters": 15,
+      "utf8Bytes": 45
+    },
+    "description": {
+      "characters": 1273,
+      "utf8Bytes": 3126
+    },
+    "keywords": {
+      "characters": 46,
+      "utf8Bytes": 112
+    },
+    "whatsNew": {
+      "characters": 346,
+      "utf8Bytes": 974
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  },
+  {
+    "locale": "ko",
+    "subtitle": {
+      "characters": 16,
+      "utf8Bytes": 38
+    },
+    "description": {
+      "characters": 1357,
+      "utf8Bytes": 2765
+    },
+    "keywords": {
+      "characters": 44,
+      "utf8Bytes": 106
+    },
+    "whatsNew": {
+      "characters": 359,
+      "utf8Bytes": 827
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  },
+  {
+    "locale": "ar-SA",
+    "subtitle": {
+      "characters": 26,
+      "utf8Bytes": 49
+    },
+    "description": {
+      "characters": 2057,
+      "utf8Bytes": 3480
+    },
+    "keywords": {
+      "characters": 80,
+      "utf8Bytes": 149
+    },
+    "whatsNew": {
+      "characters": 627,
+      "utf8Bytes": 1144
+    },
+    "promotionalText": {
+      "characters": 0,
+      "utf8Bytes": 0
+    }
+  }
+]
