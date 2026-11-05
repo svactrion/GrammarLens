@@ -34,6 +34,27 @@ void main() {
       expect(perMonth(15.999, 'KWD'), contains('1.333'));
     });
 
+    test('the lira is "₺", not intl 0.20.2\'s "TL", placed by the locale', () {
+      expect(perMonth(1999.99, 'TRY', 'tr_TR'), '₺166,67');
+      expect(perMonth(1999.99, 'TRY', 'de_DE'), '166,67\u00A0₺');
+      expect(twelve(249.99, 'TRY', 'tr_TR'), '₺2.999,88');
+      expect(twelve(249.99, 'TRY', 'de_DE'), '2.999,88\u00A0₺');
+      expect(perMonth(1999.99, ' try ', 'tr_TR'), '₺166,67');
+      for (final locale in ['tr_TR', 'de_DE', 'en_US', 'ja_JP', 'ar_SA']) {
+        expect(perMonth(1999.99, 'TRY', locale), isNot(contains('TL')));
+        expect(twelve(249.99, 'TRY', locale), isNot(contains('TL')));
+      }
+    });
+
+    test('other currencies keep intl\'s own symbol and placement', () {
+      expect(perMonth(49.99, 'USD', 'en_US'), '\$4.17');
+      expect(perMonth(49.99, 'USD', 'tr_TR'), '\$4,17');
+      expect(twelve(5.99, 'USD', 'en_US'), '\$71.88');
+      expect(perMonth(39.99, 'EUR', 'en_US'), '€3.33');
+      expect(perMonth(49.99, 'EUR', 'de_DE'), '4,17\u00A0€');
+      expect(twelve(5.99, 'EUR', 'de_DE'), '71,88\u00A0€');
+    });
+
     test('follows the locale\'s symbol position and separators', () {
       expect(perMonth(49.99, 'EUR', 'de_DE'), '4,17 €');
     });

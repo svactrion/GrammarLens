@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 /// with no decimals (JPY) is rounded to whole units. This is deliberately not
 /// RevenueCat's `pricePerMonthString`, which truncates (4.16) and so would
 /// disagree with the rounding used everywhere else on the paywall; the
-/// number of decimals is [NumberFormat.simpleCurrency]'s, never assumed.
+/// number of decimals is `intl`'s, never assumed.
 String? monthlyEquivalent({
   required double annualPrice,
   required String currencyCode,
@@ -41,6 +41,12 @@ String? twelveMonthsPrice({
       minorUnits: (minor) => minor * 12,
     );
 
+/// Symbols `intl` has wrong at the version this app can use, by currency code;
+/// any other currency keeps `intl`'s symbol. `flutter_localizations` pins
+/// `intl` to 0.20.2, which writes the lira as "TL" (0.20.3 has "₺"), beside the
+/// store's own "₺" price on the same card (build log 2026-11-05).
+const Map<String, String> _symbolOverrides = {'TRY': '₺'};
+
 String? _format({
   required double price,
   required String currencyCode,
@@ -55,10 +61,11 @@ String? _format({
       NumberFormat.localeExists,
       onFailure: (_) => 'en_US',
     );
-    final format = NumberFormat.simpleCurrency(
-      locale: resolved,
-      name: currencyCode.trim().toUpperCase(),
-    );
+    final code = currencyCode.trim().toUpperCase();
+    final symbol = _symbolOverrides[code];
+    final format = symbol == null
+        ? NumberFormat.simpleCurrency(locale: resolved, name: code)
+        : NumberFormat.currency(locale: resolved, name: code, symbol: symbol);
     final digits = format.decimalDigits ?? 2;
     var scale = 1;
     for (var i = 0; i < digits; i++) {

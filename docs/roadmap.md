@@ -11,6 +11,7 @@
 | 1.2.0 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; the paywall with trial eligibility; multiline answers. Carries all of 1.1.0 | **Never submitted (owner, 2026-10-12): replaced by 1.3.0 as the first update; everything in it ships in 1.3.0.** *(Kept as written:)* Version `1.2.0+5` (2026-10-07); device checks passed (2026-10-07); TestFlight build 5 uploaded (the trial check ran on TestFlight 1.2.0 (5), 2026-10-09). Checklist: "1.2.0 pre-release checklist" below; its open items carry over to 1.3.0 |
 | 1.3.0 | 1.2.0's redesign (all of it, with all of 1.1.0) plus the question screen work: the topic tag, the topic hint slider (Daily Test and Practice), multi-blank answer boxes with the "—" no-article button and tap-a-blank, and Skip discarding typed text (section "Question screen improvements") | Version `1.3.0+6` (2026-10-12); `question-screen` merged into `main`; device checks passed on the branch (2026-10-12). **The first public release (owner, 2026-10-16): build 6 is in App Store review; 1.0.0 will never be released.** *(Superseded, kept as written: "TestFlight build 6 not yet built or uploaded (owner). Goes to review as the first update once 1.0.0 is approved (plan 2026-10-12, replaces 2026-10-07).")* Proxy rule for the multi-blank boxes deployed (recorded 2026-10-16). **Released 2026-11-02 (owner): approved by App Review on 2026-11-02, Release pressed in App Store Connect the same day at 22:35 local (19:35 UTC; manual release). Build 6 (`1.3.0+6`), served by proxy Worker version `18d87c6b-5f7b-4290-a08b-f07a32565511` (deployed 2026-11-02 18:10 UTC: D3, D11, P14).** Smoke test on TestFlight build 6 passed before the release (build log 2026-11-02). Checklist: "1.3.0 release checklist" below |
 | 1.4.0 | Seven interface languages (ja, ko, es, pt-BR, tr, ar with RTL, de; English default and fallback; AI translation, no native review); questions and AI feedback stay English; language-neutral proxy prompts with a practice model measurement; the audit fixes and the hint card fix; partial answers on multi-blank questions with per-blank results (B8, replaces Q3), AI feedback formatted for reading (B9) and the word-level difference between "You wrote" and "Corrected" with the quote chip (B10; all three added 2026-10-31). P14 is deployed server side right after 1.3.0 is live. The home-screen widget moved to 1.5.0 (owner, 2026-11-02). Plan: [`docs/1.4.0-plan.md`](1.4.0-plan.md) | **Submitted for App Store review 2026-11-05, 20:3x local (owner): build 7 (`1.4.0+7`), release manual; not approved yet, not live.** Eight localizations and 112 screenshots uploaded by Codex through the App Store Connect API, with read-back (`screenshots/1.4.0/asc/read-back.md`, `header-v5-read-back.md`); age rating re-answered to 4+; Coarse Location added to App Privacy (Analytics, not linked, no tracking); Mac and Apple Vision availability kept; Notes for Review updated (build log 2026-11-05). *(Kept as written:)* In progress (scope decided by the owner, 2026-10-23; B1, B8, B9 and B10 built 2026-10-23/31; B9, B10, B10.1 and B10.2 checked on the owner's device 2026-10-31, B8's rows on a fresh multi-blank Practice and B1's device check still open; the rest planned, not started) |
+| 1.4.1 | Small fixes on `main`: the paywall's derived-price lira symbol and the storage reset gate fix (section "1.4.1 (planned)") | **Planned (owner, 2026-11-05): done on `main`, not shipped;** no version bump yet, not built |
 | 1.5.0 | The home-screen widget (WidgetKit): the avatar, this month's Monthly Climb step and whether today's Daily Test is done, no streak, its text in the seven languages (1.4.0 plan D5 and B7, carried over unchanged) | **Planned (owner, 2026-11-02): moved out of 1.4.0;** not started |
 
 The old "v3" label is retired: gamification shipped in 1.0.0, and the Home
@@ -311,6 +312,21 @@ update; 1.0.0 will never be released. Build 6 is in App Store review.)*
   wording. *(Split from the uploads item above, 2026-10-16.)* Live on the
   site (owner, 2026-10-16): "Last updated" 16 October 2026; site commits
   `e87b2f2`, `de5aa31`, `7e8ae6c`.
+
+#### 1.4.1 (planned)
+
+Opened by the owner on 2026-11-05. Done on `main`, **not shipped**: neither is
+in build 7. No version bump yet.
+
+- **Paywall derived-price lira symbol (`intl` 0.20.2).** B3 moved `intl` from
+  0.20.3 to 0.20.2, so 1.4.0's two derived lines (the monthly equivalent, the
+  struck twelve-month price) show "TL" where 1.3.0 shows "₺".
+  `lib/utils/monthly_equivalent.dart` now passes an explicit symbol for
+  currencies in a small map (TRY → "₺"); placement stays the locale's.
+  Unit tests only. **Not checked on a device.**
+- **Storage reset gate fix (`8d4183b`).** `close()` and the debug reset wait
+  for an open in flight. Test-only and debug-only paths; the shared first open
+  is behaviour-neutral (build log 2026-11-03).
 
 #### 1.4.0 (planned)
 

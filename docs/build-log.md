@@ -14192,3 +14192,9 @@ Docs only. Nothing is rewritten or deleted by this entry.
 ## 2026-11-05 (Paywall on the Turkish storefront: checked)
 
 - **[Device check — owner]** TestFlight 1.4.0 (7) showed a USD price on the paywall while Apple's purchase sheet showed TRY; the live 1.3.0 on the same iPhone shows TRY on the paywall. Sandbox storefront, not a formatting bug: `priceString` and `currencyCode` still come from the store product between `b7b89b8` (1.3.0) and `c37757a` (build 7), and the debug price fixture is not in the IPA. **One real difference found:** B3 moved `intl` from 0.20.3 to 0.20.2 (`flutter_localizations` pins it), so the two derived lines (the monthly equivalent, the struck twelve-month price) show "TL" in 1.4.0 where 1.3.0 shows "₺"; amounts and separators are the same. Run against both versions outside the repository, not seen on a device. Rule added to `docs/AGENTS.md`: TestFlight paywall prices come from the sandbox storefront; judge currency on the App Store build only.
+
+## 2026-11-05 (The paywall's lira symbol fixed on main, for 1.4.1; not in build 7)
+
+- **[Fix]** `lib/utils/monthly_equivalent.dart`: a small map of symbols `intl` has wrong at the version this app can use (TRY → "₺"); those currencies format through `NumberFormat.currency` with that symbol, every other currency stays on `NumberFormat.simpleCurrency`. Placement stays the locale's (`₺166,67` in `tr_TR`, `166,67 ₺` in `de_DE`). `intl` itself cannot move: `flutter_localizations` pins it.
+- **[Tests]** `test/monthly_equivalent_test.dart`: TRY in `tr_TR` and `de_DE` for both derived lines, no "TL" in five locales, USD and EUR unchanged. Without the map the test fails on `TL166,67`. `flutter analyze` clean; **2411 tests passed**. Not checked on a device.
+- **[Docs]** Roadmap: a 1.4.1 row and section, with this fix and the storage reset gate fix (`8d4183b`), both done on `main`, not shipped. No version bump yet.
