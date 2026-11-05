@@ -11,17 +11,6 @@
   },
   {
     "method": "PATCH",
-    "path": "/v1/appStoreVersions/23d20cb5-2df3-49c4-b3c6-841cd080a576/relationships/build",
-    "body": {
-      "data": {
-        "type": "builds",
-        "id": "de97920c-9700-40e8-a6a7-6d5089c74823"
-      }
-    },
-    "reason": "Build 7 VALID for 1.4.0, currently unattached"
-  },
-  {
-    "method": "PATCH",
     "path": "/v1/appStoreVersionLocalizations/207797dd-54bd-480e-be43-41ef1c6bac66",
     "body": {
       "data": {
