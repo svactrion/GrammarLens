@@ -538,7 +538,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "7f3464f833466a3b1e2d056b08e2926a908641c2d18d62608d940dece55a1983",
+      "sha256": "aa8e984e64be2e7b83691de88c6e2421c5bc60e823bdad5d99537619fdef1245",
       "text": [
         {
           "text": "Her cevap",
@@ -584,6 +584,16 @@
           "width": 387.859375,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "whole-error",
+          "screenCenterX": 1307.7422485351562,
+          "cardCenterX": 1307.7344360351562,
+          "delta": -0.0078125,
+          "left": 596.0032348632812,
+          "right": 2019.4656372070312
+        }
       ]
     },
     {
@@ -592,7 +602,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "688cbcd0ec2065b5a04ad9b50f197b39f17c189447144da99e51f3f9667a4f01",
+      "sha256": "f7bfcaf8704f42a68792bf200f414ba2522619a9fa81b7c56310e13b094e53cc",
       "text": [
         {
           "text": "Kendi cevabını",
@@ -638,6 +648,24 @@
           "width": 299.296875,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0704956054688,
+          "delta": -0.00439453125,
+          "left": 542.7283935546875,
+          "right": 2003.41259765625
+        },
+        {
+          "component": "lifted",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0820922851562,
+          "delta": 0.0072021484375,
+          "left": 597.421630859375,
+          "right": 1948.7425537109375
+        }
       ]
     },
     {
@@ -646,7 +674,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "4a8f3d56fc01875785b479b99a4c80513b86836393737d041d14d610732c8cfb",
+      "sha256": "5d1fa07f135b047f29b4bf3cd500f93493cd4ddbf7c3d9adeb939b884d8781c7",
       "text": [
         {
           "text": "Gramer kalıbını",
@@ -692,6 +720,24 @@
           "width": 333.65625,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "slider-float",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2100219726562,
+          "delta": -0.0018310546875,
+          "left": 532.2650146484375,
+          "right": 1964.155029296875
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2191162109375,
+          "delta": 0.00726318359375,
+          "left": 528.76171875,
+          "right": 1967.676513671875
+        }
       ]
     },
     {
@@ -700,7 +746,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "e1c6ea0c9c8cbeac4b5aa4d6ef7f7a2020275726e5b8ee590362a30dc1034503",
+      "sha256": "9edf6c7b18fd3d105d27471c6ef2de244d776f8f29bcde612fd02eee6246f698",
       "text": [
         {
           "text": "İlerlemenin",
@@ -746,7 +792,8 @@
           "width": 331.203125,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     },
     {
       "file": "store/ipad-13/05-review.png",
@@ -754,7 +801,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "b39b2408a6a95556155a5534cc8d78df45ff8db47fc9fa889121071a4a15d3b3",
+      "sha256": "ec66858b9dcc4547e7494b3f4bc7f9a16f2e1052c9bf575758422d819d84ed2b",
       "text": [
         {
           "text": "Zayıf noktaların,",
@@ -800,6 +847,24 @@
           "width": 396.609375,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        }
       ]
     },
     {
@@ -808,7 +873,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "a342d2931d939e1a7f204df4fe3077130f530f1c8cc39e5f06a8893590c9766d",
+      "sha256": "8ac4508354d77d97673a86b892fdafe0c2fab13f1464de09dbcc2f0d24e12b81",
       "text": [
         {
           "text": "Dağ koleksiyonunu",
@@ -854,7 +919,8 @@
           "width": 330.875,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     }
   ],
   "nativeGeometry": {

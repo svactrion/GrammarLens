@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "b6f2ce87136c654b9a73ab045f84a172f307aaf7531693faad240c30a2c4b07f",
+      "sha256": "765207072bab1b7d8fa2bab89b59ba478829a48a2c907619db26477532c907e7",
       "text": [
         {
           "text": "모든 답을",
@@ -488,6 +488,16 @@
           "width": 247.203125,
           "height": 79
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "whole-error",
+          "screenCenterX": 1307.7422485351562,
+          "cardCenterX": 1307.7344360351562,
+          "delta": -0.0078125,
+          "left": 596.0032348632812,
+          "right": 2019.4656372070312
+        }
       ]
     },
     {
@@ -496,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "5b8340f596f005dfac7d97739c61e6f1a76dba0c11b372fd51caf8f59bf9df6f",
+      "sha256": "342af6c29d61a34c1a547b18cc4f520c699b0250fb604866689d4fa297d3a57c",
       "text": [
         {
           "text": "자신의 답을",
@@ -542,6 +552,24 @@
           "width": 247.203125,
           "height": 79
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0704956054688,
+          "delta": -0.00439453125,
+          "left": 542.7283935546875,
+          "right": 2003.41259765625
+        },
+        {
+          "component": "lifted",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0684204101562,
+          "delta": -0.0064697265625,
+          "left": 597.375,
+          "right": 1948.7618408203125
+        }
       ]
     },
     {
@@ -550,7 +578,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "0be93d84c5d64355078399a4effed00edbfa303f3b8d6a354f6f2fea55d95732",
+      "sha256": "dc391f2b5ddf9504d3db754e9dfe74a691b872dbfa035c35b83fdf387094c9fd",
       "text": [
         {
           "text": "문법 패턴을",
@@ -595,6 +623,24 @@
           "y": 855,
           "width": 184.640625,
           "height": 79
+        }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "slider-float",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2100219726562,
+          "delta": -0.0018310546875,
+          "left": 532.2650146484375,
+          "right": 1964.155029296875
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2191162109375,
+          "delta": 0.00726318359375,
+          "left": 528.76171875,
+          "right": 1967.676513671875
         }
       ]
     },
@@ -650,7 +696,8 @@
           "width": 184.640625,
           "height": 79
         }
-      ]
+      ],
+      "foregroundAlignment": []
     },
     {
       "file": "store/ipad-13/05-review.png",
@@ -658,7 +705,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "e2b139cf870f8e6ded583d852537e4b4873360e6215e286d04cf2364b288ab00",
+      "sha256": "53c121a34f311b45892086f458309601bc7a2cd13a7122e4764cb78df63f2bad",
       "text": [
         {
           "text": "나의 약점을",
@@ -704,6 +751,24 @@
           "width": 184.640625,
           "height": 79
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        }
       ]
     },
     {
@@ -712,7 +777,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "ef567e883c0dfff0ea9377c7f3f291d93c890dc661a5a6c7d6e416026de3027c",
+      "sha256": "d7c08f0bd15ed6e8b67f7770ab84e3239f7a2984ea86ce982f401c08a21ef7ad",
       "text": [
         {
           "text": "산 컬렉션을",
@@ -758,7 +823,8 @@
           "width": 215.921875,
           "height": 79
         }
-      ]
+      ],
+      "foregroundAlignment": []
     }
   ],
   "nativeGeometry": {

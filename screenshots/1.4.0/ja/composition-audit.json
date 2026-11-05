@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "e337b8e5fb51f6f0d67b4960d19cf888cee6ecbc6350ddbeb1db248c46e1d5ef",
+      "sha256": "37129b0fafe9091ef2b844f205c28ea851e090165b56ff78269d176ba5257dee",
       "text": [
         {
           "text": "すべての答えに",
@@ -488,6 +488,16 @@
           "width": 491.328125,
           "height": 79
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "whole-error",
+          "screenCenterX": 1307.7422485351562,
+          "cardCenterX": 1307.7344360351562,
+          "delta": -0.0078125,
+          "left": 596.0032348632812,
+          "right": 2019.4656372070312
+        }
       ]
     },
     {
@@ -496,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "b87eecf415af006eef83e4b5692af6074e9cf5e4b2d613748b09259d01b34991",
+      "sha256": "f293f2fe3c1687099586c6b4d9c79c658654463bbd8e573f43cd5cde12873b19",
       "text": [
         {
           "text": "自分の答えを",
@@ -542,6 +552,24 @@
           "width": 288,
           "height": 79
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0704956054688,
+          "delta": -0.00439453125,
+          "left": 542.7283935546875,
+          "right": 2003.41259765625
+        },
+        {
+          "component": "lifted",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0684204101562,
+          "delta": -0.0064697265625,
+          "left": 597.375,
+          "right": 1948.7618408203125
+        }
       ]
     },
     {
@@ -550,7 +578,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "78dd061fbd28268a513920012fde3456f8afa7c11542c5b9b0f1401e25f993c0",
+      "sha256": "cebf26f06f1e9d70eb20e019d715647eb8e7128f80bd78a456906ea096c5233e",
       "text": [
         {
           "text": "文法パターンを",
@@ -595,6 +623,24 @@
           "y": 855,
           "width": 322,
           "height": 79
+        }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "slider-float",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2100219726562,
+          "delta": -0.0018310546875,
+          "left": 532.2650146484375,
+          "right": 1964.155029296875
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2191162109375,
+          "delta": 0.00726318359375,
+          "left": 528.76171875,
+          "right": 1967.676513671875
         }
       ]
     },
@@ -650,7 +696,8 @@
           "width": 186,
           "height": 79
         }
-      ]
+      ],
+      "foregroundAlignment": []
     },
     {
       "file": "store/ipad-13/05-review.png",
@@ -658,7 +705,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "05f4df14041be5021afd739eb4df9e210c3facd48dc2ae19af11124c583f777e",
+      "sha256": "02322f555a7987717a260d48c205d0a45e887999135b1812386b1a4cf2392904",
       "text": [
         {
           "text": "あなたの弱点を",
@@ -704,6 +751,24 @@
           "width": 254,
           "height": 79
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        }
       ]
     },
     {
@@ -712,7 +777,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "55c0326d2ce31760b25130b932c148dd24f721c37a330cd6ae01876409c99416",
+      "sha256": "f03c1b6e93e54905733a1ce9fd7ed57b3d92e50b2979e0ee6481d1002f8ac645",
       "text": [
         {
           "text": "山のコレクションを",
@@ -758,7 +823,8 @@
           "width": 390,
           "height": 79
         }
-      ]
+      ],
+      "foregroundAlignment": []
     }
   ],
   "nativeGeometry": {

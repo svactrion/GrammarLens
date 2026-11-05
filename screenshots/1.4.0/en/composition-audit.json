@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "cdbdf2e9a777681fd22ef1c5182c1d01427ccdb91c57c0417e8099891b848cc5",
+      "sha256": "a86658c27244dc8cb02413a670087879b38d77cdfedb3cb783b9c28c16a0a194",
       "text": [
         {
           "text": "Every answer",
@@ -488,6 +488,16 @@
           "width": 369.03125,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "whole-error",
+          "screenCenterX": 1307.7422485351562,
+          "cardCenterX": 1307.7344360351562,
+          "delta": -0.0078125,
+          "left": 596.0032348632812,
+          "right": 2019.4656372070312
+        }
       ]
     },
     {
@@ -496,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "410c7b51f5c34ca404b8a4263e03cfb2dad667911d4682241df30390106f6c50",
+      "sha256": "c6379b3f39c55f041dc6768cf6277ddfb3bdfed7c287ff193c2c4e373b3fab8b",
       "text": [
         {
           "text": "Write your",
@@ -542,6 +552,24 @@
           "width": 253.3125,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0704956054688,
+          "delta": -0.00439453125,
+          "left": 542.7283935546875,
+          "right": 2003.41259765625
+        },
+        {
+          "component": "lifted",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0820922851562,
+          "delta": 0.0072021484375,
+          "left": 597.421630859375,
+          "right": 1948.7425537109375
+        }
       ]
     },
     {
@@ -550,7 +578,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "c051e54b8baba29712326b2174b33367462d2158fb235b5a78e4105d4529f19c",
+      "sha256": "24f2c04a60877fef181ee4004334862d06904aa8e9fd1067b020bd7c8f39a700",
       "text": [
         {
           "text": "See the",
@@ -595,6 +623,24 @@
           "y": 855,
           "width": 279.234375,
           "height": 76
+        }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "slider-float",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2100219726562,
+          "delta": -0.0018310546875,
+          "left": 532.2650146484375,
+          "right": 1964.155029296875
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2191162109375,
+          "delta": 0.00726318359375,
+          "left": 528.76171875,
+          "right": 1967.676513671875
         }
       ]
     },
@@ -650,7 +696,8 @@
           "width": 500.53125,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     },
     {
       "file": "store/ipad-13/05-review.png",
@@ -658,7 +705,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "810f513b12c6c196135935c09e45c48c34b79570560bc0a44d0db8c3e457d760",
+      "sha256": "796f0c9504d657d0f5c34fa2bb46837fe31553942bcf046e722f75936a920bde",
       "text": [
         {
           "text": "Your weak spots,",
@@ -704,6 +751,24 @@
           "width": 401.078125,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        }
       ]
     },
     {
@@ -712,7 +777,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "094ad5f21cafa509920153bb5dc5f3501af6f460c30ddcdaa749a8819809a5a7",
+      "sha256": "45a25019dc00b47b94549b599a6b13feeda01043ad15b10070f7179d3489e3cf",
       "text": [
         {
           "text": "Build your",
@@ -758,7 +823,8 @@
           "width": 388.140625,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     }
   ],
   "nativeGeometry": {

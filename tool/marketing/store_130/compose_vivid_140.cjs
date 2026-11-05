@@ -240,12 +240,12 @@ async function tabletArt(i){
  b+=sub(c.subtitle,145,[1,6].includes(i)?780:720,1760);
  b+=`<div class="feature-tag" data-text-check data-copy="${esc(c.tag)}" style="top:${rtl?815:855}px;${rtl?'right':'left'}:145px">${esc(c.tag)}</div>`;
  b+=`<svg class="doodle" width="2064" height="2752" viewBox="0 0 2064 2752"><path d="M170 ${[1,6].includes(i)?725:655} Q680 ${[1,6].includes(i)?760:690} 1260 ${[1,6].includes(i)?715:645}" stroke="${i===1?'#BC5B3E':'#F6D37C'}" stroke-width="${i===1?13:35}" fill="none" stroke-linecap="round"/></svg>`;
- if(i===0){b+=tablet(p.source,660,960,1270);b+=place(`<div class="whole-error"><img src="${await crop(p.source,geometry.error)}"/></div>`,277,1330,1510,'z-index:5;transform:rotate(-2deg)');}
- if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),257,1270,1550,{rz:2,ry:3,pad:36,r:48});b+=lifted(await crop(p.source,geometry.input),307,1940,1450,{rz:2,ry:3,r:40});}
- if(i===2){b+=tablet(p.source,580,955,1310,-2);b+=await hintControl(267,1585,1530);b+=await component(p.source,inset(geometry.hint,12),267,1810,1530,{rz:-2,ry:-3,pad:36,r:48});}
+ if(i===0){b+=tablet(p.source,660,960,1270);b+=place(`<div class="whole-error"><img src="${await crop(p.source,geometry.error)}"/></div>`,595,1330,1400,'z-index:5;transform:rotate(-2deg)');}
+ if(i===1){b+=tablet(p.source,620,960,1300,2);b+=await component(p.source,inset(geometry.question,16),545,1270,1450,{rz:2,ry:3,pad:36,r:48});b+=lifted(await crop(p.source,geometry.input),595,1940,1350,{rz:2,ry:3,r:40});}
+ if(i===2){b+=tablet(p.source,580,955,1310,-2);b+=await hintControl(520,1585,1430);b+=await component(p.source,inset(geometry.hint,12),520,1810,1430,{rz:-2,ry:-3,pad:36,r:48});}
  if(i===4){b+=tablet(p.source,665,950,1300,5);b+=place(`<img class="fox" src="${fox}"/>`,-50,1630,880,'z-index:5;transform:rotate(-10deg)');}
- if(i===5){b+=tablet(p.source,190,970,1270,-5,1);b+=tablet('01-results',1540,1220,1080,9,0);b+=await component(p.source,inset(geometry.review[0],22),175,1560,1550,{rz:3,ry:4,pad:36,r:48});b+=await component(p.source,inset(geometry.review[1],22),120,2050,1550,{rz:3,ry:4,pad:36,r:48});}
- if(i===6){b+=tablet(p.source,630,1040,1260,-4);[[372,1050,420,-8],[822,1050,420,0],[1272,1050,420,8]].forEach(([x,y,w,r],j)=>b+=place(`<img class="medal" src="${medals[j]}"/>`,x,y,w,`z-index:6;transform:rotate(${r}deg)`));}
+ if(i===5){b+=tablet(p.source,190,970,1270,-5,1);b+=tablet('01-results',1540,1220,1080,9,0);b+=await component(p.source,inset(geometry.review[0],22),175,1560,1400,{rz:3,ry:4,pad:36,r:48});b+=await component(p.source,inset(geometry.review[1],22),120,2050,1400,{rz:3,ry:4,pad:36,r:48});}
+ if(i===6){b+=tablet(p.source,630,1040,1260,-4);[[655,1140,400,-12],[1005,1000,510,-3],[1455,1110,400,10]].forEach(([x,y,w,r],j)=>b+=place(`<img class="medal" src="${medals[j]}"/>`,x,y,w,`z-index:${j===1?7:6};transform:perspective(2200px) rotateY(${j===0?-10:j===2?10:0}deg) rotateZ(${r}deg)`));}
  return b;
 }
 const localeCss=`${localeFont}
@@ -294,6 +294,22 @@ async function fitCopy(page){
  return texts.map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {text:e.dataset.copy,fontFamily:c.fontFamily,fontWeight:c.fontWeight,fontSize:parseFloat(c.fontSize),direction:c.direction,x:r.x,y:r.y,width:r.width,height:r.height};});
  },{pad,rtl,latin,language});
 }
+async function alignTabletCards(page){
+ if(!pad)return null;
+ return page.evaluate(()=>{
+  const screen=document.querySelector('.tablet .screen');
+  if(!screen)return null;
+  const bounds=screen.getBoundingClientRect(),center=(bounds.left+bounds.right)/2;
+  const cards=[...document.querySelectorAll('.whole-error,.tile,.lifted,.slider-float')];
+  return cards.map(card=>{
+   const wrap=card.parentElement;
+   for(let pass=0;pass<2;pass++){const r=card.getBoundingClientRect();wrap.style.left=(parseFloat(wrap.style.left)+center-(r.left+r.right)/2)+'px';}
+   const r=card.getBoundingClientRect(),delta=(r.left+r.right)/2-center;
+   if(Math.abs(delta)>1||r.left<35||r.right>2029)throw Error('Tablet foreground alignment or bounds');
+   return {component:card.className,screenCenterX:center,cardCenterX:(r.left+r.right)/2,delta,left:r.left,right:r.right};
+  });
+ });
+}
 async function main(){
  const active=pad?[0,1,2,4,5,6]:[0,1,2,3,4,5,6,7];
  const archive=JSON.parse(fs.readFileSync('/Users/ahmet/Pictures/GrammarLens/1.4.0-raw/manifest.json'));
@@ -302,10 +318,10 @@ async function main(){
  fs.mkdirSync(path.join(OUT,'store',folder),{recursive:true});
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  const page=await browser.newPage({viewport:{width:W,height:H},deviceScaleFactor:1});const records=[];
- try{for(const [order,i]of active.entries()){displayIndex=order;const p=pages[i];let png,text;
+ try{for(const [order,i]of active.entries()){displayIndex=order;const p=pages[i];let png,text,foregroundAlignment;
  if(language==='tr'&&!pad){const base='/Users/ahmet/Pictures/GrammarLens/design-explorations/tr-iphone/fade-vivid';png=fs.readFileSync(path.join(base,p.file+'.png'));text=JSON.parse(fs.readFileSync(path.join(base,'manifest.json'))).records.find(x=>x.file===p.file+'.png').text;}
- else{await page.setContent(`<html lang="${language}"><meta charset="utf-8"><style>${css}${tileCss}${polishCss}${localeCss}</style><body data-slot="${p.key}"><div class="stage" style="--ink:${p.ink}">${pad?await tabletArt(i):await art(i)}</div></body></html>`);await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(x=>x.decode()));});text=await fitCopy(page);png=await sharp(await page.screenshot()).removeAlpha().toColourspace('srgb').png().toBuffer();}
- const file=`store/${folder}/${p.source}.png`;fs.writeFileSync(path.join(OUT,file),png);records.push({file,order:order+1,slot:p.key,width:W,height:H,sha256:crypto.createHash('sha256').update(png).digest('hex'),text});console.log('Rendered '+language+'/'+family+'/'+p.source);
+ else{await page.setContent(`<html lang="${language}"><meta charset="utf-8"><style>${css}${tileCss}${polishCss}${localeCss}</style><body data-slot="${p.key}"><div class="stage" style="--ink:${p.ink}">${pad?await tabletArt(i):await art(i)}</div></body></html>`);await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(x=>x.decode()));});text=await fitCopy(page);foregroundAlignment=await alignTabletCards(page);png=await sharp(await page.screenshot()).removeAlpha().toColourspace('srgb').png().toBuffer();}
+ const file=`store/${folder}/${p.source}.png`;fs.writeFileSync(path.join(OUT,file),png);records.push({file,order:order+1,slot:p.key,width:W,height:H,sha256:crypto.createHash('sha256').update(png).digest('hex'),text,...(foregroundAlignment?{foregroundAlignment}:{})});console.log('Rendered '+language+'/'+family+'/'+p.source);
  }
  const thumbs=await Promise.all(records.map(r=>sharp(path.join(OUT,r.file)).resize({width:pad?516:330}).png().toBuffer()));const columns=pad?3:4,tw=pad?516:330,th=pad?688:717;
  await sharp({create:{width:columns*tw,height:th*2,channels:3,background:'#fff'}}).composite(thumbs.map((input,i)=>({input,left:i%columns*tw,top:Math.floor(i/columns)*th}))).removeAlpha().png().toFile(path.join(OUT,`overview-${family}.png`));

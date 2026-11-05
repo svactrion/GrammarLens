@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "633a230f86c6c073d43aeed6b77e4f0ec4b69374c267b105bbc404b77918b292",
+      "sha256": "b72515a33aa41cf8e807551379964fa0fcd647574695a131709b45243cdd6c8e",
       "text": [
         {
           "text": "Jede Antwort",
@@ -488,6 +488,16 @@
           "width": 391.75,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "whole-error",
+          "screenCenterX": 1307.7422485351562,
+          "cardCenterX": 1307.7344360351562,
+          "delta": -0.0078125,
+          "left": 596.0032348632812,
+          "right": 2019.4656372070312
+        }
       ]
     },
     {
@@ -496,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "2605865e808c912c5ada9a88341f02cf2d10bcb757e77fe034e941cfff100147",
+      "sha256": "529963adbd360ee37e48beb3db83323d561c5cc6db9527751abb839e799ecf0a",
       "text": [
         {
           "text": "Schreib deine",
@@ -542,6 +552,24 @@
           "width": 255.046875,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0704956054688,
+          "delta": -0.00439453125,
+          "left": 542.7283935546875,
+          "right": 2003.41259765625
+        },
+        {
+          "component": "lifted",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0820922851562,
+          "delta": 0.0072021484375,
+          "left": 597.421630859375,
+          "right": 1948.7425537109375
+        }
       ]
     },
     {
@@ -550,7 +578,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "e0f17638aaa6c7230a5ebb979c6177a8612b547b2ecf27c1e1e0da5ba9583d1c",
+      "sha256": "baf7c3d74936a01d67643718e04bf9816a4fa4235665be8f39067ec5c055de0d",
       "text": [
         {
           "text": "Erkenne das",
@@ -596,6 +624,24 @@
           "width": 319.53125,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "slider-float",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2100219726562,
+          "delta": -0.0018310546875,
+          "left": 532.2650146484375,
+          "right": 1964.155029296875
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2191162109375,
+          "delta": 0.00726318359375,
+          "left": 528.76171875,
+          "right": 1967.676513671875
+        }
       ]
     },
     {
@@ -604,7 +650,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "cc4c5bd3677e449c13d06be5b60a02e11131257cba780c572ac300a19bd0bc2a",
+      "sha256": "b232ba095c5019f79a2b791bbb7d87d7f5c0f711c7935c499f93b4f31418896d",
       "text": [
         {
           "text": "Sieh deinen",
@@ -650,7 +696,8 @@
           "width": 241.0625,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     },
     {
       "file": "store/ipad-13/05-review.png",
@@ -658,7 +705,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "22c220696f97cc99faba3ab7a937f6f4d62661b0c113849d37f15f810b48af7f",
+      "sha256": "85e026f2fb1cfd8fa806361177a58fa9e81f3985c8b4a6fc9bb14f183708274a",
       "text": [
         {
           "text": "Deine Schwachstellen,",
@@ -704,6 +751,24 @@
           "width": 515.359375,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        }
       ]
     },
     {
@@ -712,7 +777,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "3d084f62311ef011c7231b903c86bbdee9d27fa8fa398feb2f69cba170676eab",
+      "sha256": "63bea2cad495cd396262217e78359fd8b44839e0f76f1721e9033dc4a4836660",
       "text": [
         {
           "text": "Baue deine",
@@ -758,7 +823,8 @@
           "width": 379.3125,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     }
   ],
   "nativeGeometry": {

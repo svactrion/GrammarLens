@@ -268,3 +268,16 @@ positions 02 and 06 are enlarged, with more vertical room for their
 underlines and subtitles. All eight iPad sheets were visually reviewed;
 all locale verification checks pass. iPhone images, native captures and
 caption wording are unchanged. Checkpoint 1 still awaits owner approval.
+
+### iPad device-centered follow-up (2026-11-05)
+
+The owner clarified that foreground cards must align with the device
+screen, not the page. Results, question/input, hint/control and review
+cards now align to the rendered primary tablet screen’s horizontal center.
+Their widths are adjusted to preserve the full cards inside the canvas.
+Measured centers and bounds are retained in `foregroundAlignment` for
+each composition record; verification requires less than one pixel of
+center deviation. The collection medals form a compact arch over the
+tablet: the central gold medal is larger and higher, with the two side
+medals angled inward as a balanced group. This supersedes the previous
+straight row. All eight iPad languages use the revision.

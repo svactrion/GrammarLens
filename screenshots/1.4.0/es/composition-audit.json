@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "c41fd20e772f5b06bc059fff0d662d31d3244f4acd41543dc0e7dc8781e2d14c",
+      "sha256": "ca4960703c8ea5c053a7c89d9d7b711bda7ed6ee18f725061750cea051e2fdc0",
       "text": [
         {
           "text": "Cada respuesta,",
@@ -488,6 +488,16 @@
           "width": 578.140625,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "whole-error",
+          "screenCenterX": 1307.7422485351562,
+          "cardCenterX": 1307.7344360351562,
+          "delta": -0.0078125,
+          "left": 596.0032348632812,
+          "right": 2019.4656372070312
+        }
       ]
     },
     {
@@ -496,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "0ccaeaca044389cd6a4ab439922db0d82bfa0ec0613b9b459072b5eeb4ed3518",
+      "sha256": "0ef2d8c3b892aef9049b9fd7b60ee0312ce3264118361cdc8c12ed98aac2ef67",
       "text": [
         {
           "text": "Escribe tu",
@@ -542,6 +552,24 @@
           "width": 278.859375,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0704956054688,
+          "delta": -0.00439453125,
+          "left": 542.7283935546875,
+          "right": 2003.41259765625
+        },
+        {
+          "component": "lifted",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0820922851562,
+          "delta": 0.0072021484375,
+          "left": 597.421630859375,
+          "right": 1948.7425537109375
+        }
       ]
     },
     {
@@ -550,7 +578,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "52472387543c113d902ef3f9e6adeb5ddc7e8ca655b671c4787a7503f45b6a5b",
+      "sha256": "56fc514ff1213cd19f1560624302d61e60ccbd3089b6346b3613e90b6bfb142f",
       "text": [
         {
           "text": "Ve el patrón",
@@ -596,6 +624,24 @@
           "width": 369.09375,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "slider-float",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2100219726562,
+          "delta": -0.0018310546875,
+          "left": 532.2650146484375,
+          "right": 1964.155029296875
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2191162109375,
+          "delta": 0.00726318359375,
+          "left": 528.76171875,
+          "right": 1967.676513671875
+        }
       ]
     },
     {
@@ -604,7 +650,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "ecfc465c74c45f5f7e5f7d76ae40212b13a5f5aed7544bdb717024299d23ff64",
+      "sha256": "6fb4ed26647b6cc3149c9c8d624218f1a02181a5bf55cf0fcac662857a55d2a8",
       "text": [
         {
           "text": "Mira cómo sube",
@@ -650,7 +696,8 @@
           "width": 573.125,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     },
     {
       "file": "store/ipad-13/05-review.png",
@@ -658,7 +705,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "0c7468d8d5198bab312fdf85a7cc7692828d203d3b8dc246b836afffb7f692da",
+      "sha256": "13c1de4273b19d7cb9d014cf21bd55d06c31280fb32dff14c6af3a0329d7f7d6",
       "text": [
         {
           "text": "Tus puntos débiles,",
@@ -704,6 +751,24 @@
           "width": 441.71875,
           "height": 76
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        }
       ]
     },
     {
@@ -712,7 +777,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "76864cce24c60f732a3d9d04cd1e3f7190ede1f05a009d441c44e188e018828e",
+      "sha256": "bef7ad03fee145eb2c4fdee13aba2d932d3e485ab286d517367def0903182d10",
       "text": [
         {
           "text": "Crea tu colección",
@@ -758,7 +823,8 @@
           "width": 317.34375,
           "height": 76
         }
-      ]
+      ],
+      "foregroundAlignment": []
     }
   ],
   "nativeGeometry": {

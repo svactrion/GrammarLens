@@ -442,7 +442,7 @@
       "slot": "results",
       "width": 2064,
       "height": 2752,
-      "sha256": "a0d1093574803351b0e29009c0cda1b03b49a286e8d897637fa746189d6e6bdc",
+      "sha256": "2139d9d796eddad3a09ab510553c239e2256878a107f6dc67b0b9245c47a515a",
       "text": [
         {
           "text": "كل إجابة",
@@ -488,6 +488,16 @@
           "width": 295.1875,
           "height": 102
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "whole-error",
+          "screenCenterX": 1307.7422485351562,
+          "cardCenterX": 1307.734375,
+          "delta": -0.00787353515625,
+          "left": 595.965087890625,
+          "right": 2019.503662109375
+        }
       ]
     },
     {
@@ -496,7 +506,7 @@
       "slot": "question",
       "width": 2064,
       "height": 2752,
-      "sha256": "f6724fbc43070895028bfc18277e208fddc3b93f5a5337000edb14b52b2d859e",
+      "sha256": "1e88a4d2c82dcdb1b304b7e8322f78426b34b8c12077fc56def121bf8458b48c",
       "text": [
         {
           "text": "اكتب إجابتك",
@@ -542,6 +552,24 @@
           "width": 260.78125,
           "height": 102
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0704956054688,
+          "delta": -0.00439453125,
+          "left": 542.7283935546875,
+          "right": 2003.41259765625
+        },
+        {
+          "component": "lifted",
+          "screenCenterX": 1273.0748901367188,
+          "cardCenterX": 1273.0684204101562,
+          "delta": -0.0064697265625,
+          "left": 597.375,
+          "right": 1948.7618408203125
+        }
       ]
     },
     {
@@ -550,7 +578,7 @@
       "slot": "hint",
       "width": 2064,
       "height": 2752,
-      "sha256": "ac3c2538222a37caba4de52a9a3ef4ea987cdbab218bc6dbb9f285b6ae3e7875",
+      "sha256": "6e27dad1c3bdc84a75ae0b0708ee31ad144cdfe4d507e42d9cb922eef2a3ee88",
       "text": [
         {
           "text": "شاهد النمط",
@@ -596,6 +624,24 @@
           "width": 314.453125,
           "height": 102
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "slider-float",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2100219726562,
+          "delta": -0.0018310546875,
+          "left": 532.2650146484375,
+          "right": 1964.155029296875
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 1248.2118530273438,
+          "cardCenterX": 1248.2191162109375,
+          "delta": 0.00726318359375,
+          "left": 528.76171875,
+          "right": 1967.676513671875
+        }
       ]
     },
     {
@@ -604,7 +650,7 @@
       "slot": "home",
       "width": 2064,
       "height": 2752,
-      "sha256": "be076ab09f699fe4e4a0bdc07adc0f32a19c171863302884acc0401809956ec3",
+      "sha256": "e9bf7bf899a1f48bc940d3537c2d53f265834fff6e5db1570a88347db8b69182",
       "text": [
         {
           "text": "شاهد تقدّمك",
@@ -650,7 +696,8 @@
           "width": 206.40625,
           "height": 102
         }
-      ]
+      ],
+      "foregroundAlignment": []
     },
     {
       "file": "store/ipad-13/05-review.png",
@@ -658,7 +705,7 @@
       "slot": "review",
       "width": 2064,
       "height": 2752,
-      "sha256": "6ba902049d4e91b5ab4655ac716ecb36069ad9f8d4ed7cf88921b3dc970c8bde",
+      "sha256": "e0d5ab3991d2702ce49ac7495ecfb10f8f80a520dbd0f2f212d673f63f092e9b",
       "text": [
         {
           "text": "نقاط ضعفك،",
@@ -704,6 +751,24 @@
           "width": 230.109375,
           "height": 102
         }
+      ],
+      "foregroundAlignment": [
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        },
+        {
+          "component": "tile",
+          "screenCenterX": 838.4639434814453,
+          "cardCenterX": 838.4668731689453,
+          "delta": 0.0029296875,
+          "left": 133.37306213378906,
+          "right": 1543.5606842041016
+        }
       ]
     },
     {
@@ -712,7 +777,7 @@
       "slot": "collection",
       "width": 2064,
       "height": 2752,
-      "sha256": "8d34d9a896e7f095fad35228a3b6d8917f7f543622f870f8325e508918c9ad06",
+      "sha256": "dd02e97cfde0cd316f4e04385596998364f06c6d3adb485f8f45f8c4fae19ca8",
       "text": [
         {
           "text": "ابنِ مجموعتك",
@@ -758,7 +823,8 @@
           "width": 197.03125,
           "height": 102
         }
-      ]
+      ],
+      "foregroundAlignment": []
     }
   ],
   "nativeGeometry": {

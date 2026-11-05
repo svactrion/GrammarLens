@@ -27,6 +27,11 @@ const names=['01-results','02-hint','03-home','04-question','05-review','06-coll
    assert(rm.width===w&&rm.height===h,'Wrong native capture size '+family+'/'+file);
    assert(audit.layout.some(r=>r.file===`store/${folder}/${file}`&&r.sha256===hash(b)),'Composition checksum differs '+file);
    const record=composed.find(r=>r.file===`store/${folder}/${file}`),caption=copy[file.slice(3,-4)];
+   if(family==='ipad'&&['01-results.png','04-question.png','02-hint.png','05-review.png'].includes(file)){
+    const aligned=record.foregroundAlignment;
+    assert(aligned?.length===(file==='01-results.png'?1:2),'Missing foreground alignment '+file);
+    for(const card of aligned)assert(Math.abs(card.cardCenterX-card.screenCenterX)<1&&card.left>=35&&card.right<=2029,'Foreground is not centered on the device screen '+file);
+   }
    const rendered=record.text.map(r=>normalize(r.text));
    for(const text of [caption.tag,...caption.title,caption.subtitle])assert(rendered.includes(normalize(text)),'Caption wording differs '+lang+'/'+file+': '+text);
    rows.push({set:folder,order:record.order,file,width:w,height:h,alpha:false,sha256:hash(b),rawSha256:hash(original)});
