@@ -9,11 +9,11 @@ Onboarding has two steps: a first name and a companion, then a learning goal (th
 AI CONSENT SCREEN
 In practice sessions the app sends the answers a user types, with their questions, to Anthropic (Claude) to generate feedback. Before the first time this happens, a full-screen consent screen explains what is sent and asks for permission. The consent covers every practice session: the free weak-spot practice and Premium Topic Practice.
 
-To reach it: answer at least one Daily Test question wrongly (for example, leave it blank) so a weak spot is created, then Home > Review tab > tap the weak spot > "Start free practice". The consent screen appears before the practice session starts. Consent can be withdrawn at any time from Profile > Data.
+To reach it: answer at least one Daily Test question wrongly (type any wrong word rather than skipping) so a weak spot is created, then Home > Review tab > tap the weak spot > "Start free practice". The consent screen appears before the practice session starts. Consent can be withdrawn at any time from Profile > Data.
 
 The Daily Test does not send any user-written text and does not require this consent.
 
-AI requests go only through our own server (api.ahmettayfur.com); the app contains no AI API key. The server does not store question or answer text. A random anonymous device ID is used only for daily limits; it is not sent to Anthropic and expires after 48 hours.
+AI requests go only through our own server (api.ahmettayfur.com); the app contains no AI API key. The server does not store question or answer text. A random anonymous device ID is used only for daily limits; the server keeps it only inside a quota counter that expires after 48 hours. It is never sent to Anthropic.
 
 FREE LIMITS
 A free user gets one Daily Test and one practice session per day. After the practice session is used, the results screen shows a Premium offer card. Topic Practice (from the Home screen) is a Premium feature. Premium allows up to 5 practice sessions a day (not unlimited).
