@@ -23,3 +23,8 @@ deletion, or any command that discards work; those stay with the owner.
 Commits stay small and single-purpose; `dart format` only on changed files,
 after `flutter pub get`. Code, comments, commit messages and docs in
 English.
+
+## Release checks
+
+TestFlight paywall prices come from the sandbox storefront; judge currency on
+the App Store build only.
