@@ -6,7 +6,7 @@
 
 GrammarLens turns your English mistakes into practice. Every day you get a short grammar test. When you finish, you don't just see a score — you see why each answer was right or wrong, written in plain language. It is built for people who learned English by speaking it, not by studying it.
 
-**Live on the App Store — 1.3.0 (2 Nov 2026). 1.4.0 (seven interface languages, question-flow improvements) submitted for review 5 Nov 2026.**
+**Live on the App Store — 1.4.0 (7 Nov 2026): seven interface languages, question-flow improvements. First public release: 1.3.0 (2 Nov 2026).**
 
 <p>
   <a href="https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346"><img src="https://img.shields.io/badge/App_Store-Download-black?logo=apple&logoColor=white" alt="Download on the App Store"></a>
@@ -21,13 +21,13 @@ GrammarLens turns your English mistakes into practice. Every day you get a short
   <img src="screenshots/1.4.0/readme/05-review.png" width="135" alt="Your weak spots, in one place: Review with saved weak spots by topic">
 </p>
 
-*Screenshots: the first six frames of the en-US 1.4.0 App Store set (build 7, in review; [`screenshots/1.4.0/`](screenshots/1.4.0/README.md)). The store shows 1.3.0's set until 1.4.0 is approved; it is under "Version history". The learner is made up ("Sam").*
+*Screenshots: the first six frames of the en-US 1.4.0 App Store set (build 7, live since 7 Nov 2026; [`screenshots/1.4.0/`](screenshots/1.4.0/README.md)). 1.3.0's set is under "Version history". The learner is made up ("Sam").*
 
 ## What it does
 
 - **Daily Test** (free): a fresh set of five questions every day. Fill in the blanks, correct the errors, and get an explanation for every answer. Everyone gets the same set on a given date, and it is graded on the device.
 - **Topic Practice** (Premium): focus on a specific area (Articles, Tense Selection, Modal Verbs, Modal Past Forms, Gerund vs. Infinitive) with sessions of 3, 5 or 10 questions, generated and scored by AI.
-- **Plain-language feedback:** instead of "wrong", you get the reasoning: which rule applies, why your answer doesn't fit, and what to remember next time. New in 1.4.0 (in review): marks per blank on multi-blank questions, and the words that changed between your answer and the correction highlighted.
+- **Plain-language feedback:** instead of "wrong", you get the reasoning: which rule applies, why your answer doesn't fit, and what to remember next time. New in 1.4.0: marks per blank on multi-blank questions, and the words that changed between your answer and the correction highlighted.
 - **Review:** built from your own wrong answers. The app remembers which grammar points you keep missing and collects them as weak spots, so you always know what to work on.
 - **Topic hints:** slide to see the grammar pattern for a question's topic: a reminder of the rule, never the answer.
 - **Mountain of Learning** (the Monthly Climb): every Daily Test takes your character one step up this month's mountain; a month's score earns a Bronze, Silver or Gold medal.
@@ -36,7 +36,7 @@ GrammarLens turns your English mistakes into practice. Every day you get a short
 
 ## Interface languages
 
-English, plus Turkish, German, Spanish, Portuguese, Japanese, Korean and Arabic in 1.4.0 (in review). 1.3.0, the live version, is English only.
+English, plus Turkish, German, Spanish, Portuguese, Japanese, Korean and Arabic since 1.4.0. 1.3.0 was English only.
 
 The English content is the same for everyone: questions, answers, AI feedback and topic names stay in English in every language. Only the interface is localized. The translations are AI-made and checked by a blind back-translation; no native speaker has reviewed them ([tables](docs/translations/)).
 
@@ -89,15 +89,15 @@ I made the product decisions, set scope and acceptance criteria, and tested on d
 | 1.0.0 | Sep 2026 | v2 plus Monthly Climb | Submitted to App Store review; never released |
 | 1.1.0 | Oct 2026 | Shared Daily Test; mountain themes, medals and collection; launch screen; new avatars; iPad layout | Skipped, never submitted; its content ships in 1.2.0 |
 | 1.2.0 | Oct 2026 | Redesigned Home, Review and Profile; two-step onboarding with a learning goal; new paywall with trial eligibility; multiline answers | Never submitted; its content ships in 1.3.0 |
-| 1.3.0 | Released 2 Nov 2026 | 1.2.0's redesign plus a new question screen: the topic on each question, a slide-to-reveal topic hint, one answer box per blank (with a "no article" button for articles), tap a blank to answer it, and Skip that really skips | **Live since 2026-11-02** (build 6); the first public release |
-| 1.4.0 | Submitted 5 Nov 2026 | Seven more interface languages; multi-blank questions accept a blank left empty and mark each blank; long feedback split into paragraphs; the words that changed highlighted; hints that no longer give the answer away | **In App Store review** (build 7); not live |
+| 1.3.0 | Released 2 Nov 2026 | 1.2.0's redesign plus a new question screen: the topic on each question, a slide-to-reveal topic hint, one answer box per blank (with a "no article" button for articles), tap a blank to answer it, and Skip that really skips | Released 2026-11-02 (build 6); the first public release; replaced by 1.4.0 on 2026-11-07 |
+| 1.4.0 | Released 7 Nov 2026 | Seven more interface languages; multi-blank questions accept a blank left empty and mark each blank; long feedback split into paragraphs; the words that changed highlighted; hints that no longer give the answer away | **Live since 2026-11-07** (build 7); submitted 5 Nov 2026, approved and released 7 Nov 2026 |
 
 **Research:** four short interviews (one a self-interview) and a 3-participant usability test on the MVP ([PRD](docs/prd.md) §2.1, §2.2); fewer testers than the original target of five, a deliberate call.
 
-**Not done yet:** Medium article 2; the home-screen widget (planned for 1.5.0); App Store approval of 1.4.0.
+**Not done yet:** Medium article 2; the home-screen widget (planned for 1.5.0).
 
 <details>
-<summary><strong>Live version: 1.3.0 screenshots</strong> (the App Store set, build 6)</summary>
+<summary><strong>Previous version: 1.3.0 screenshots</strong> (the App Store set, build 6)</summary>
 
 <p align="center">
   <img src="screenshots/1.3.0/readme/hero.png" width="820" alt="Three App Store frames: Every answer explained (Daily Test results); See the grammar pattern (the topic hint); Watch your progress climb (Home with this month's mountain)">
