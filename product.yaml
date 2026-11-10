@@ -1,0 +1,62 @@
+# product.yaml — product identity file. Feeds the studio dashboard and the website.
+schema_version: 1
+
+name: GrammarLens
+store_name: "GrammarLens: AI English Tutor"
+slug: grammarlens
+tagline: Daily practice, real feedback
+category: Education
+platform: [ios]
+stack: flutter
+
+status: live
+
+versions:
+  live: 1.4.0
+  in_review:
+  in_progress:
+
+recent:
+  - version: 1.4.0
+    date: 2026-11-07
+    notes: "Released on the App Store (build 7): seven more interface languages (ja, ko, es, pt-BR, tr, ar, de), partial answers and per-blank results on multi-blank questions, word-level difference between the answer and the correction, feedback formatted for reading, hint card fix."
+  - version:
+    date: 2026-11-05
+    notes: "Paywall fix: derived prices show the lira as ₺ again. On main, not shipped yet."
+  - version: 1.4.0
+    date: 2026-11-05
+    notes: "App Store screenshots and metadata for eight localizations (112 screenshots) uploaded to App Store Connect."
+  - version: 1.3.0
+    date: 2026-11-02
+    notes: "First public release on the App Store (build 6): redesigned Home, Review and Profile, two-step onboarding, new paywall, new question screen with topic hints and one answer box per blank."
+  - version:
+    date: 2026-11-02
+    notes: "Server update: practice answers scored by Claude Haiku 5.5; each new shared Daily Test set reviewed for other accepted answers."
+
+planned:
+  - "Ship the ₺ symbol fix and the storage reset fix (as 1.4.1 or inside 1.5.0, undecided)"
+  - "Home-screen widget (1.5.0)"
+  - "P15: outage detection"
+
+monetization:
+  model: subscription
+  provider: RevenueCat
+
+marketing:
+  screenshots_version: 1.4.0
+  locales: [en, tr, de, es, pt-BR, ja, ko, ar]
+  assets_path: screenshots/1.4.0/
+
+legal:
+  privacy_url: https://ahmettayfur.com/products/grammarlens/privacy/
+  terms_url: https://ahmettayfur.com/products/grammarlens/terms/
+  support_url: https://ahmettayfur.com/products/grammarlens/support/
+  data_collected: [usage_analytics, crash_data, purchase_history, user_content, device_id, coarse_location]
+  third_parties: [Firebase Analytics, Firebase Crashlytics, RevenueCat, Anthropic, Cloudflare]
+  last_reviewed: 2026-11-10
+
+links:
+  app_store: https://apps.apple.com/us/app/grammarlens-ai-english-tutor/id6811477346
+  site_page: https://ahmettayfur.com/products/grammarlens/
+
+updated_at: 2026-11-10
