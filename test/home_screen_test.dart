@@ -441,11 +441,16 @@ void main() {
       }
       await tester.pump();
       for (var i = 0; i < 4; i++) {
-        await tester
-            .tap(find.text(i == 0 && answer.isNotEmpty ? 'Next' : 'Skip'));
+        if (i == 0 && answer.isNotEmpty) {
+          await tester.tap(find.byKey(DailyTestScreen.checkKey));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(DailyTestScreen.continueKey));
+        } else {
+          await tester.tap(find.byKey(DailyTestScreen.skipKey));
+        }
         await tester.pumpAndSettle();
       }
-      await tester.tap(find.text('Skip'));
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.byType(DailyTestResultScreen), findsOneWidget);
@@ -505,10 +510,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'wrong');
     await tester.pump();
-    await tester.tap(find.text('Finish'));
+    // V07: the last question's "Finish" checks; the sheet's button goes on.
+    await tester.tap(find.byKey(DailyTestScreen.checkKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DailyTestScreen.continueKey));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    await tester.pageBack();
+    // V10 has no app bar; the system back gesture pops the route.
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
     await tester.pumpAndSettle();
     await pumpHome(tester, storageService: storage, active: false);
     storage.pendingCompletion!.complete();
@@ -557,18 +566,20 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField).first, 'wrong');
         await tester.pump();
-        await tester.tap(find.text('Finish'));
+        await tester.tap(find.byKey(DailyTestScreen.checkKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(DailyTestScreen.continueKey));
         await tester.pumpAndSettle();
         await tester.pump(const Duration(seconds: 2));
         expect(storage.steps, 9); // Persisted while results are still open.
         expect(tester.widget<MonthlyMountain>(mountain).completedDays, 8);
         expect(pawnTop(), oldTop); // No hidden animation.
         if (useButton) {
-          await tester.scrollUntilVisible(find.text('See your climb'), 250,
-              scrollable: find.byType(Scrollable).last);
+          // V10: the button sits in the screen's bottom slot.
           await tester.tap(find.text('See your climb'));
         } else {
-          await tester.pageBack();
+          // V10 has no app bar: the system back gesture pops the route.
+          tester.state<NavigatorState>(find.byType(Navigator)).pop();
         }
         // Observe the first frame that receives the committed target, rather
         // than pumpAndSettle (which would hide an already-consumed animation).
@@ -638,7 +649,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'wrong');
     await tester.pump();
-    await tester.tap(find.text('Finish'));
+    await tester.tap(find.byKey(DailyTestScreen.checkKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(DailyTestScreen.continueKey));
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
     expect(storage.steps, 9);
@@ -646,11 +659,11 @@ void main() {
     // confetti went with it.
     await closeCelebration(tester);
     expect(find.byType(ConfettiBurst), findsNothing);
-    expect(find.text('Start my climb'), findsOneWidget);
+    expect(find.text('Climb my first step'), findsOneWidget);
     expect(find.text('See your climb'), findsNothing);
 
     // N36: no confetti of its own; the results pop and Home steps.
-    await tester.tap(find.text('Start my climb'));
+    await tester.tap(find.text('Climb my first step'));
     await tester.pump();
     expect(find.byType(ConfettiBurst), findsNothing);
     for (var i = 0;
@@ -1128,7 +1141,7 @@ void main() {
       expect(find.byType(DailyTestScreen), findsNothing);
       // The real score, reconstructed from the persisted answers, not
       // recomputed from nothing.
-      expect(find.textContaining('2/5 correct'), findsOneWidget);
+      expect(find.text('2/5'), findsOneWidget); // V10's ring
     });
 
     testWidgets(

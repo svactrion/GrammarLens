@@ -212,6 +212,12 @@ Future<void> _skip(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// The bar under the question: the Practice footer, or the Daily Test's
+/// (UI polish V07: the buddy, Skip and Check).
+Finder get _footer => find.byType(PracticeStepFooter).evaluate().isNotEmpty
+    ? find.byType(PracticeStepFooter)
+    : find.byKey(DailyTestScreen.footerKey);
+
 /// Holds the knob down long enough for a long-press.
 Future<TestGesture> _press(WidgetTester tester) async {
   final gesture = await tester.startGesture(tester.getCenter(_knob));
@@ -284,7 +290,7 @@ Future<void> _pumpPractice(
 /// The open card's last line of text is whole: above the Skip/Next bar and
 /// inside the question area's clip. Returns the space under it.
 double _textClear(WidgetTester tester, TopicId topic) {
-  final footer = tester.getRect(find.byType(PracticeStepFooter));
+  final footer = tester.getRect(_footer);
   final lastLine = tester.getRect(find.descendant(
       of: _card, matching: find.text(kTopicHints[topic]!.last)));
   return math.min(footer.top, _clipBottom(tester)) - lastLine.bottom;
@@ -763,9 +769,11 @@ void main() {
       expect(daily.sink.events, eventsBefore);
       expect(daily.finished, isEmpty);
 
-      // Next keeps the answer (Skip would discard it); then Skip through
+      // Check keeps the answer (Skip would discard it); then Skip through
       // the rest, and Skip on the last question finishes.
-      await tester.tap(find.text('Next'));
+      await tester.tap(find.byKey(DailyTestScreen.checkKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(DailyTestScreen.continueKey));
       await tester.pumpAndSettle();
       for (var i = 1; i < kTopics.length; i++) {
         await _skip(tester);
@@ -801,7 +809,7 @@ void main() {
             final question = tester.getRect(_questionCard);
             final gesture = await _press(tester);
             final card = tester.getRect(_card);
-            final footer = tester.getRect(find.byType(PracticeStepFooter));
+            final footer = tester.getRect(_footer);
             expect(_shownHeight(tester),
                 moreOrLessEquals(_fullHeight(tester), epsilon: 0.5),
                 reason: topic.title(en));

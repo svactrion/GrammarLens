@@ -952,6 +952,8 @@ class _HomeScreenState extends State<HomeScreen>
     final result = await navigator.push<(DailyTestSet, Map<String, String>)>(
       MaterialPageRoute(
         builder: (_) => DailyTestScreen(
+          hero: widget.avatar,
+          userName: widget.userName,
           analyticsService: widget.analyticsService,
           onFinished: (set, answers) => navigator.pop((set, answers)),
           dailyTestService: _dailyTestService,
@@ -962,6 +964,8 @@ class _HomeScreenState extends State<HomeScreen>
     if (result != null) {
       final resultRoute = MaterialPageRoute<void>(
         builder: (_) => DailyTestResultScreen(
+          hero: widget.avatar,
+          userName: widget.userName,
           dailyTestSet: result.$1,
           answers: result.$2,
           analyticsService: widget.analyticsService,
@@ -993,6 +997,8 @@ class _HomeScreenState extends State<HomeScreen>
         .push(
           MaterialPageRoute(
             builder: (_) => DailyTestResultScreen(
+              hero: widget.avatar,
+              userName: widget.userName,
               dailyTestSet: set,
               answers: set.answers ?? const {},
               analyticsService: widget.analyticsService,

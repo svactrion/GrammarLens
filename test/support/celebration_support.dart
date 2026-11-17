@@ -4,12 +4,16 @@ import 'package:grammar_lens/widgets/medal_celebration.dart';
 /// The celebration layer over the result screen (Batch 5, N15, N28).
 final celebrationFinder = find.byType(MedalCelebration);
 
-/// Expects the celebration open with [title], closes it with one tap and
-/// lets it go: its close (a shrink and a fade) and its confetti.
+/// Expects the celebration open with a title starting with [title] (V11
+/// adds the name: "Welcome to the climb, Ada!"), closes it with one tap
+/// and lets it go: its close (a shrink and a fade) and its confetti.
 Future<void> closeCelebration(WidgetTester tester,
     {String title = 'Welcome to the climb'}) async {
   expect(celebrationFinder, findsOneWidget);
-  expect(find.descendant(of: celebrationFinder, matching: find.text(title)),
+  expect(
+      find.descendant(
+          of: celebrationFinder,
+          matching: find.textContaining(RegExp('^${RegExp.escape(title)}'))),
       findsOneWidget);
   await tester.tap(celebrationFinder);
   await tester.pump();

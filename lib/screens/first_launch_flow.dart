@@ -211,6 +211,8 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
         );
       case _Step.dailyTest:
         return DailyTestScreen(
+          hero: _profile?.avatar,
+          userName: _profile?.name,
           dailyTestService: _dailyTestService,
           analyticsService: widget.analyticsService,
           onFinished: _onDailyTestFinished,
@@ -222,6 +224,8 @@ class _FirstLaunchFlowState extends State<FirstLaunchFlow> {
         );
       case _Step.dailyTestResult:
         return DailyTestResultScreen(
+          hero: _profile?.avatar,
+          userName: _profile?.name,
           dailyTestSet: _dailyTestSet!,
           answers: _dailyTestAnswers,
           dailyTestService: _dailyTestService,

@@ -2,7 +2,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../app_colors.dart';
+import '../models/avatar.dart';
 import '../models/climb_theme.dart';
+import '../motion.dart';
+import '../utils/haptics.dart';
+import 'companion_view.dart';
+import 'pressable_button.dart';
+import 'rays.dart';
 import '../models/medal_tier.dart';
 import 'confetti_burst.dart';
 import 'medal_badge.dart';
@@ -34,6 +41,13 @@ class MedalCelebration extends StatefulWidget {
   final String subtitle;
   final VoidCallback onClose;
 
+  /// The small line above the title (V11 "BADGE EARNED", R05 "BRONZE
+  /// MEDAL"), in the tier's colour.
+  final String? eyebrow;
+
+  /// The companion that lifts the medal (V11, R05), in its cheer pose.
+  final Avatar? hero;
+
   const MedalCelebration({
     super.key,
     required this.medal,
@@ -41,7 +55,11 @@ class MedalCelebration extends StatefulWidget {
     required this.title,
     required this.subtitle,
     required this.onClose,
+    this.eyebrow,
+    this.hero,
   });
+
+  static const continueKey = ValueKey('medal_celebration_continue');
 
   /// The medal's disc in the layer (N28: large in the middle). Its canvas
   /// is 162 pt, 486 px at 3x, inside the 512 px assets (N23).
@@ -80,6 +98,9 @@ class MedalCelebration extends StatefulWidget {
 
   /// A tier's celebration (N15, N29): "{Tier} medal earned",
   /// "{Month} · {Theme}".
+  /// R05: the month's medal for [tier]; with [points], the title counts
+  /// them ("75 points in November!") and [nextTier] / [nextAt] say what is
+  /// next.
   static MedalCelebration tier({
     Key? key,
     required MedalTier tier,
@@ -87,31 +108,46 @@ class MedalCelebration extends StatefulWidget {
     required int month,
     required VoidCallback onClose,
     required AppLocalizations l10n,
+    Avatar? hero,
+    int? points,
+    MedalTier? nextTier,
+    int? nextAt,
   }) =>
       MedalCelebration(
         key: key,
         medal: MedalBadge.monthly(themeId: theme.id, tier: tier, disc: disc),
         glow: glowFor(tier),
-        title: l10n.medalEarnedTitle(tier.label(l10n)),
-        subtitle:
-            l10n.medalMonthTheme(monthName(month, l10n), theme.title(l10n)),
+        eyebrow: l10n.medalEyebrow(tier.label(l10n)).toUpperCase(),
+        title: points == null
+            ? l10n.medalEarnedTitle(tier.label(l10n))
+            : l10n.medalPointsTitle(points, monthName(month, l10n)),
+        subtitle: nextTier == null || nextAt == null
+            ? l10n.medalMonthTheme(monthName(month, l10n), theme.title(l10n))
+            : l10n.medalNextLine(
+                nextTier.label(l10n), nextAt, theme.title(l10n)),
+        hero: hero,
         onClose: onClose,
       );
 
-  /// The Welcome badge's celebration, with the copy of the card it
-  /// replaced, word for word: audience-neutral (no "first test" language),
-  /// since a pre-existing v2 user earns the same badge on their first Daily
-  /// Test after updating.
+  /// V11: the Welcome badge, lifted by the companion. The body keeps the
+  /// card's audience-neutral copy (no "first test" language): a v2 user
+  /// earns the same badge on their first Daily Test after updating.
   static MedalCelebration welcome(
           {Key? key,
           required VoidCallback onClose,
-          required AppLocalizations l10n}) =>
+          required AppLocalizations l10n,
+          Avatar? hero,
+          String? name}) =>
       MedalCelebration(
         key: key,
         medal: const MedalBadge.welcome(disc: disc),
         glow: glowFor(null),
-        title: l10n.medalWelcomeTitle,
+        eyebrow: l10n.badgeEarnedEyebrow,
+        title: name == null || name.isEmpty
+            ? l10n.medalWelcomeTitle
+            : l10n.badgeWelcomeName(name),
         subtitle: l10n.medalWelcomeBody,
+        hero: hero,
         onClose: onClose,
       );
 
@@ -212,74 +248,127 @@ class _MedalCelebrationState extends State<MedalCelebration>
           behavior: HitTestBehavior.opaque,
           onTap: _close,
           child: Material(
-            color: MedalCelebration.scrim,
+            color: AppColors.of(context).navyDeep,
             child: Stack(children: [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  // On a short screen, or with very large system text, the
-                  // whole group scales down rather than overflowing.
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: SizedBox(
-                      width: MedalCelebration.disc * 2,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox.square(
-                            dimension: MedalCelebration.disc * 2,
-                            child:
-                                Stack(alignment: Alignment.center, children: [
-                              // The glow and the rays behind the medal.
-                              Positioned.fill(
-                                child: AnimatedBuilder(
-                                  animation: _rays,
-                                  builder: (context, _) => CustomPaint(
-                                    painter: CelebrationRays(
-                                        colour: glow,
-                                        turn: Curves.easeOut
-                                                .transform(_rays.value) *
-                                            MedalCelebration.raysAngle),
-                                  ),
-                                ),
-                              ),
-                              KeyedSubtree(key: _medalKey, child: widget.medal),
-                            ]),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.title,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.titleLarge
-                                ?.withWeight(FontWeight.w800)
-                                .copyWith(color: Colors.white),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            widget.subtitle,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                                color: Colors.white.withValues(alpha: .86)),
-                          ),
-                          const SizedBox(height: 22),
-                          Text(
-                            context.l10n.medalTapToContinue,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.labelMedium
-                                ?.withWeight(FontWeight.w700)
-                                .copyWith(
-                                    color: Colors.white.withValues(alpha: .6)),
-                          ),
-                        ],
-                      ),
+              // V11 / R05: the navy page, the tier-coloured rays turning
+              // (one turn per 40 s), the medal over the companion's head.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.of(context).navyDeep,
+                        AppColors.of(context).navy,
+                      ],
                     ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                top: MediaQuery.sizeOf(context).height * .08,
+                child: Center(
+                  child: Rays(
+                    color: glow.withValues(alpha: .55),
+                    size: MediaQuery.sizeOf(context).width * 1.4,
+                  ),
+                ),
+              ),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: SizedBox(
+                            width: 320,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _MedalPop(
+                                  reduce: _reduceMotion,
+                                  child: KeyedSubtree(
+                                      key: _medalKey, child: widget.medal),
+                                ),
+                                if (widget.hero != null) ...[
+                                  const SizedBox(height: 4),
+                                  CompanionView(
+                                    hero: widget.hero!,
+                                    mood: CompanionMood.cheer,
+                                    size: 132,
+                                    showProp: false,
+                                  ),
+                                  Container(
+                                    width: 150,
+                                    height: 22,
+                                    margin: const EdgeInsets.only(top: 2),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.black.withValues(alpha: .22),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 22),
+                                if (widget.eyebrow != null)
+                                  Text(
+                                    widget.eyebrow!,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.labelMedium!
+                                        .withWeight(FontWeight.w900)
+                                        .copyWith(
+                                            color: glow, letterSpacing: 1.6),
+                                  ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  widget.title,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.headlineMedium!
+                                      .withWeight(FontWeight.w900)
+                                      .copyWith(
+                                          color: Colors.white,
+                                          letterSpacing: -.6),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  widget.subtitle,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodyLarge!.copyWith(
+                                      color:
+                                          Colors.white.withValues(alpha: .82)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      PressableButton(
+                        key: MedalCelebration.continueKey,
+                        label: context.l10n.commonContinue,
+                        tone: ButtonTone.outline,
+                        haptic: ButtonHaptic.light,
+                        onPressed: _close,
+                      ),
+                    ],
                   ),
                 ),
               ),
               if (from != null)
                 ConfettiBurst(
                   origin: from,
-                  colors: [glow, theme.colorScheme.primary, Colors.white],
+                  colors: [
+                    glow,
+                    AppColors.of(context).orange,
+                    AppColors.of(context).gold,
+                    Colors.white,
+                  ],
+                  length: const Duration(milliseconds: 2500),
                 ),
             ]),
           ),
@@ -339,4 +428,73 @@ class CelebrationRays extends CustomPainter {
   @override
   bool shouldRepaint(CelebrationRays old) =>
       old.colour != colour || old.turn != turn;
+}
+
+/// The medal pops (0 → 1.12 → 1, 900 ms) and then floats (±4 px, 3 s); a
+/// success haptic when it lands.
+class _MedalPop extends StatefulWidget {
+  final Widget child;
+  final bool reduce;
+  const _MedalPop({required this.child, required this.reduce});
+
+  @override
+  State<_MedalPop> createState() => _MedalPopState();
+}
+
+class _MedalPopState extends State<_MedalPop> with TickerProviderStateMixin {
+  late final AnimationController _pop;
+  AnimationController? _float;
+
+  @override
+  void initState() {
+    super.initState();
+    _pop = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900));
+    if (widget.reduce) {
+      _pop.value = 1;
+      HapticMap.success();
+    } else {
+      _pop.forward().whenComplete(() {
+        if (mounted) HapticMap.success();
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.loopsOn(context) && _float == null) {
+      _float =
+          AnimationController(vsync: this, duration: const Duration(seconds: 3))
+            ..repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pop.dispose();
+    _float?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_pop, if (_float != null) _float!]),
+      builder: (context, child) {
+        final p = _pop.value;
+        final scale = p < .65
+            ? Curves.easeOut.transform(p / .65) * 1.12
+            : 1.12 - .12 * Curves.easeInOut.transform((p - .65) / .35);
+        final f = _float == null
+            ? 0.0
+            : -4 * (1 - math.cos(2 * math.pi * _float!.value)) / 2;
+        return Transform.translate(
+          offset: Offset(0, f),
+          child: Transform.scale(scale: scale, child: child),
+        );
+      },
+      child: widget.child,
+    );
+  }
 }

@@ -22,6 +22,7 @@ import 'package:grammar_lens/services/daily_test_service.dart';
 import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
 
 /// The owner's button rule (2026-10-06, final screens Part A1): orange for
@@ -217,22 +218,26 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     }
 
+    // UI polish V10: the results' one button is the navy 3D button in
+    // every case (the board), replacing the owner's 1.2.0 orange/navy split
+    // for this screen.
     testWidgets(
-        '${brightness.name}: Daily Test results: "See your climb" '
-        'orange, "Back to Home" and "Continue" navy', (tester) async {
+        '${brightness.name}: Daily Test results: one navy button whatever it '
+        'says', (tester) async {
+      PressableButton primary() => tester.widget<PressableButton>(
+          find.byKey(DailyTestResultScreen.primaryKey));
       await pumpResult(tester, answers: const {'q1': 'an'});
-      expectOrange(tester, 'See your climb');
+      expect(primary().label, 'See your climb');
+      expect(primary().tone, ButtonTone.navy);
       await pumpResult(tester, answers: const {});
-      expectNavy(tester, 'Back to Home');
+      expect(primary().label, 'Back to Home');
+      expect(primary().tone, ButtonTone.navy);
       await pumpResult(tester, answers: const {'q1': 'an'}, isDay0: true);
-      expectNavy(tester, 'Continue');
-    });
-
-    testWidgets(
-        '${brightness.name}: Daily Test results: "Start my climb" '
-        'orange', (tester) async {
+      expect(primary().label, 'Continue');
+      expect(primary().tone, ButtonTone.navy);
       await pumpResult(tester, answers: const {'q1': 'an'}, welcome: true);
-      expectOrange(tester, 'Start my climb');
+      expect(primary().label, 'Climb my first step');
+      expect(primary().tone, ButtonTone.navy);
     });
 
     testWidgets(

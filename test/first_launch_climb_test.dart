@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/screens/daily_test_result_screen.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/screens/daily_test_screen.dart';
 import 'package:grammar_lens/screens/mountain_intro_screen.dart';
 import 'package:grammar_lens/screens/onboarding_screen.dart';
 import 'package:grammar_lens/widgets/buddy_picker.dart';
@@ -183,9 +186,11 @@ void main() {
       if (i == 0 && answerFirst) {
         await tester.enterText(find.byType(TextField).first, 'wrong');
         await tester.pump();
-        await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+        await tester.tap(find.byKey(DailyTestScreen.checkKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(DailyTestScreen.continueKey));
       } else {
-        await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+        await tester.tap(find.byKey(DailyTestScreen.skipKey));
       }
       await tester.pumpAndSettle();
     }
@@ -196,7 +201,8 @@ void main() {
   }
 
   final burst = find.byType(ConfettiBurst);
-  final resultsTitle = find.text('Daily Test Results');
+  // V10: the results screen, found by its one button.
+  final resultsTitle = find.byKey(DailyTestResultScreen.primaryKey);
 
   final mountain = find.byType(MonthlyMountain, skipOffstage: false);
 
@@ -241,7 +247,7 @@ void main() {
 
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       expect(burst, findsNothing);
 
@@ -272,7 +278,7 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
 
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       expect(burst, findsNothing);
       final seen = await observeHome(tester);
@@ -290,7 +296,7 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: false);
       expect(storage.steps, 0);
-      expect(find.text('Start my climb'), findsNothing);
+      expect(find.text('Climb my first step'), findsNothing);
 
       setReduceMotion(tester, false);
       await tester.pump();
@@ -316,9 +322,11 @@ void main() {
         if (i == 0) {
           await tester.enterText(find.byType(TextField).first, 'wrong');
           await tester.pump();
-          await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+          await tester.tap(find.byKey(DailyTestScreen.checkKey));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(DailyTestScreen.continueKey));
         } else {
-          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+          await tester.tap(find.byKey(DailyTestScreen.skipKey));
         }
         // The last tap opens the result screen, whose saving progress bar
         // never settles, so plain pumps from here on.
@@ -329,8 +337,9 @@ void main() {
       expect(storage.completionCalls, 1);
 
       // While saving the one button reads "Saving your results…" and is off.
-      final saving = find.widgetWithText(FilledButton, 'Saving your results…');
-      expect(tester.widget<FilledButton>(saving).onPressed, isNull);
+      final saving =
+          find.widgetWithText(PressableButton, 'Saving your results…');
+      expect(tester.widget<PressableButton>(saving).onPressed, isNull);
       await tester.tap(saving, warnIfMissed: false);
       await tester.pump(const Duration(milliseconds: 200));
       expect(resultsTitle, findsOneWidget);
@@ -342,8 +351,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       // The save landed: the Welcome celebration first (N15).
       await closeCelebration(tester);
-      final climb = find.widgetWithText(FilledButton, 'Start my climb');
-      expect(tester.widget<FilledButton>(climb).onPressed, isNotNull);
+      final climb = find.widgetWithText(PressableButton, 'Climb my first step');
+      expect(tester.widget<PressableButton>(climb).onPressed, isNotNull);
 
       setReduceMotion(tester, false);
       await tester.pump();
@@ -405,7 +414,7 @@ void main() {
       setReduceMotion(tester, false);
       await tester.pump();
 
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       // Not over the results, not over the confetti.
       await tester.pump(const Duration(milliseconds: 1500));
@@ -432,7 +441,7 @@ void main() {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await pumpUntil(tester, () => premium.evaluate().isNotEmpty);
       await tester.pumpAndSettle();
 
@@ -476,7 +485,7 @@ void main() {
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
 
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await pumpUntil(tester, () => premium.evaluate().isNotEmpty,
           limit: const Duration(seconds: 3));
       await tester.pumpAndSettle();
@@ -526,7 +535,7 @@ void main() {
       await takeDailyTest(tester, answerFirst: true);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await untilMountain(tester);
       expect(mtn(tester).zoom, isNotNull);
       expect(mtn(tester).zoom!.value, 0);
@@ -563,9 +572,11 @@ void main() {
         if (i == 0) {
           await tester.enterText(find.byType(TextField).first, 'wrong');
           await tester.pump();
-          await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+          await tester.tap(find.byKey(DailyTestScreen.checkKey));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(DailyTestScreen.continueKey));
         } else {
-          await tester.tap(find.widgetWithText(TextButton, 'Skip'));
+          await tester.tap(find.byKey(DailyTestScreen.skipKey));
         }
         await tester.pumpAndSettle();
       }
@@ -579,10 +590,10 @@ void main() {
       await closeCelebration(tester);
       // 2. The results, their button "Start my climb".
       expect(resultsTitle, findsOneWidget);
-      expect(
-          find.widgetWithText(FilledButton, 'Start my climb'), findsOneWidget);
+      expect(find.widgetWithText(PressableButton, 'Climb my first step'),
+          findsOneWidget);
       order.add('results');
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await tester.pump();
       // N36: one confetti on the first day, the layer's; none here.
       expect(burst, findsNothing);
@@ -625,7 +636,7 @@ void main() {
       await takeDailyTest(tester, answerFirst: true);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await untilMountain(tester);
       // Into the zoom (after the scroll and the pause).
       // Into the zoom: the scroll and the pause, frame by frame.
@@ -655,7 +666,7 @@ void main() {
       await takeDailyTest(tester, answerFirst: true);
       setReduceMotion(tester, false);
       await tester.pump();
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await untilMountain(tester);
       // Into the zoom: the scroll and the pause, frame by frame.
       for (var i = 0; i < 40; i++) {
@@ -671,7 +682,8 @@ void main() {
       expect(resultsTitle, findsOneWidget);
       expect(mtn(tester).zoom, isNull);
       expect(premium, findsNothing);
-      await tester.pageBack();
+      // V10 has no app bar: the result screen is left with its button.
+      await tester.tap(find.byKey(DailyTestResultScreen.primaryKey));
       for (var i = 0; i < 200 && premium.evaluate().isEmpty; i++) {
         await tester.pump(const Duration(milliseconds: 25));
       }
@@ -687,7 +699,7 @@ void main() {
       await pumpApp(tester);
       await completeOnboarding(tester);
       await takeDailyTest(tester, answerFirst: true);
-      await tester.tap(find.text('Start my climb'));
+      await tester.tap(find.text('Climb my first step'));
       await untilMountain(tester);
       var crossFaded = false;
       for (var i = 0; i < 120 && premium.evaluate().isEmpty; i++) {

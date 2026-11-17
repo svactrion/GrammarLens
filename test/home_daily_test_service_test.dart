@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/screens/daily_test_result_screen.dart';
+import 'package:grammar_lens/screens/daily_test_screen.dart';
 
 import 'package:grammar_lens/models/daily_test_question.dart';
 import 'package:grammar_lens/models/daily_test_set.dart';
@@ -171,13 +173,20 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'right0');
     await tester.pump();
     for (var i = 0; i < 4; i++) {
-      await tester.tap(find.text(i == 0 ? 'Next' : 'Skip'));
+      if (i == 0) {
+        // UI polish V07: an answer is checked, then the sheet goes on.
+        await tester.tap(find.byKey(DailyTestScreen.checkKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(DailyTestScreen.continueKey));
+      } else {
+        await tester.tap(find.byKey(DailyTestScreen.skipKey));
+      }
       await tester.pumpAndSettle();
     }
-    await tester.tap(find.text('Skip'));
+    await tester.tap(find.byKey(DailyTestScreen.skipKey));
     await tester.pumpAndSettle();
 
-    expect(find.text('Daily Test Results'), findsOneWidget);
+    expect(find.byKey(DailyTestResultScreen.primaryKey), findsOneWidget);
     expect(claude.readCalls, 2);
     expect(storage.sets.keys, containsAll(['2026-09-22', '2026-09-23']));
     expect(storage.sets['2026-09-22']!.isCompleted, isTrue);
@@ -192,7 +201,7 @@ void main() {
     await tester.tap(find.text('Start daily test'));
     await tester.pumpAndSettle();
     for (var i = 0; i < 5; i++) {
-      await tester.tap(find.text('Skip'));
+      await tester.tap(find.byKey(DailyTestScreen.skipKey));
       await tester.pumpAndSettle();
     }
     expect(claude.readCalls, 2);
@@ -203,7 +212,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Review results'));
     await tester.pumpAndSettle();
-    expect(find.text('Daily Test Results'), findsOneWidget);
+    expect(find.byKey(DailyTestResultScreen.primaryKey), findsOneWidget);
 
     expect(claude.readCalls, 2);
   });
