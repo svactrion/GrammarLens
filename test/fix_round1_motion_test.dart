@@ -2,9 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:grammar_lens/data/topics.dart';
+import 'package:grammar_lens/models/practice_item.dart';
+import 'package:grammar_lens/models/practice_set.dart';
+import 'package:grammar_lens/models/topic.dart';
 import 'package:grammar_lens/motion.dart';
+import 'package:grammar_lens/screens/practice_screen.dart';
+import 'package:grammar_lens/services/analytics_service.dart';
+import 'package:grammar_lens/services/claude_service.dart';
+import 'package:grammar_lens/services/storage_service.dart';
+import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/widgets/question_view.dart';
 import 'package:grammar_lens/widgets/topic_hint_card.dart';
+
+class _Storage extends StorageService {
+  @override
+  Future<String> getOrCreateDeviceId() async => 'test-device';
+}
 
 /// UI polish fix round 1: the motion details the first run left out (SPEC
 /// §5 motion notes). Ambient loops are off in tests
@@ -77,6 +91,61 @@ void main() {
       await pumpIn(tester, slider, reduceMotion: true);
       await tester.pump(const Duration(milliseconds: 2100));
       expect(knobShift(tester), 0);
+    });
+  });
+
+  group('Q04: the focused box\'s blank breathes once', () {
+    const two = PracticeItem(
+      id: 'two',
+      type: PracticeItemType.fillInBlank,
+      instruction: 'I saw ____ owl and ____ eagle.',
+    );
+
+    Future<void> pumpPractice(WidgetTester tester,
+        {bool reduceMotion = false}) async {
+      await pumpIn(
+        tester,
+        PracticeScreen(
+          topic: topicById(TopicId.articles),
+          practiceSet:
+              PracticeSet(topicId: TopicId.articles.name, items: const [two]),
+          claudeService: ClaudeService(),
+          storageService: _Storage(),
+          analyticsService: AnalyticsService(),
+          subscriptionService: SubscriptionService(),
+        ),
+        reduceMotion: reduceMotion,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    final breathe = find.byKey(const ValueKey('question_blank_breathe'));
+    double scale(WidgetTester tester) =>
+        tester.widget<Transform>(breathe).transform.getMaxScaleOnAxis();
+
+    testWidgets('1 → 1.06 → 1 in 200 ms, over its blank', (tester) async {
+      await pumpPractice(tester);
+      expect(breathe, findsNothing);
+      await tester.tap(find.byKey(QuestionView.blankBoxKey(1)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(scale(tester), closeTo(1.06, .005));
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(breathe, findsNothing);
+      // Another box: its blank.
+      await tester.tap(find.byKey(QuestionView.blankBoxKey(0)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(breathe, findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('not under Reduce Motion', (tester) async {
+      await pumpPractice(tester, reduceMotion: true);
+      await tester.tap(find.byKey(QuestionView.blankBoxKey(1)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(breathe, findsNothing);
     });
   });
 }

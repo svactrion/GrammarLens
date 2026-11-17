@@ -648,6 +648,10 @@ class _QuestionViewState extends State<QuestionView>
                 (key: _secondaryTextKey, text: item.instruction),
             ],
             onTapBlank: _focusBlank,
+            colors: widget.drafts.boxCount(item.id) > 1
+                ? blankColors(theme.brightness)
+                : null,
+            focusedBlank: _focusedBox,
             child: text,
           )
         : text;
@@ -1003,26 +1007,72 @@ class _BlankTapLayer extends StatefulWidget {
   final ValueChanged<int> onTapBlank;
   final Widget child;
 
+  /// Q04: on a multi-blank question, the blanks' colours and the blank
+  /// whose box has focus. When the focus moves to a box, its blank
+  /// "breathes" once (1 → 1.06 → 1, 200 ms) in its colour; not under
+  /// Reduce Motion.
+  final List<Color>? colors;
+  final int? focusedBlank;
+
   const _BlankTapLayer({
     required this.blocks,
     required this.onTapBlank,
     required this.child,
+    this.colors,
+    this.focusedBlank,
   });
 
   static const double minTarget = 44;
 
   static const blankTargetKeyPrefix = 'question_blank_target_';
+  static const breatheKey = ValueKey('question_blank_breathe');
+  static const breathe = Duration(milliseconds: 200);
 
   @override
   State<_BlankTapLayer> createState() => _BlankTapLayerState();
 }
 
-class _BlankTapLayerState extends State<_BlankTapLayer> {
+class _BlankTapLayerState extends State<_BlankTapLayer>
+    with SingleTickerProviderStateMixin {
   final GlobalKey _stackKey = GlobalKey();
 
   /// Each blank's tap areas (one per line it is on), in this layer's
   /// coordinates.
   List<({int blank, Rect rect})> _targets = const [];
+
+  /// Each blank's drawn boxes (one per line), for the breathe.
+  List<({int blank, Rect rect})> _drawn = const [];
+
+  late final AnimationController _breathe;
+
+  /// The blank breathing (the last one focused).
+  int? _breathing;
+
+  @override
+  void initState() {
+    super.initState();
+    _breathe =
+        AnimationController(vsync: this, duration: _BlankTapLayer.breathe);
+  }
+
+  @override
+  void didUpdateWidget(_BlankTapLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final focused = widget.focusedBlank;
+    if (focused != null &&
+        focused != oldWidget.focusedBlank &&
+        widget.colors != null &&
+        !AppMotion.reduced(context)) {
+      _breathing = focused;
+      _breathe.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _breathe.dispose();
+    super.dispose();
+  }
 
   void _measure() {
     if (!mounted) return;
@@ -1042,13 +1092,19 @@ class _BlankTapLayerState extends State<_BlankTapLayer> {
         for (final box in paragraph.getBoxesForSelection(
             TextSelection(baseOffset: match.start, extentOffset: match.end))) {
           final drawn = MatrixUtils.transformRect(toStack, box.toRect());
-          found.add((blank: blank, rect: _grow(drawn)));
+          found.add((blank: blank, rect: drawn));
         }
         blank++;
       }
     }
-    final targets = _split(found);
-    if (!_same(targets, _targets)) setState(() => _targets = targets);
+    final targets =
+        _split([for (final f in found) (blank: f.blank, rect: _grow(f.rect))]);
+    if (!_same(targets, _targets) || !_same(found, _drawn)) {
+      setState(() {
+        _targets = targets;
+        _drawn = found;
+      });
+    }
   }
 
   static Rect _grow(Rect drawn) => Rect.fromCenter(
@@ -1117,10 +1173,48 @@ class _BlankTapLayerState extends State<_BlankTapLayer> {
   @override
   Widget build(BuildContext context) {
     SchedulerBinding.instance.addPostFrameCallback((_) => _measure());
+    final colors = widget.colors;
+    final breathing = _breathing;
     return Stack(
       key: _stackKey,
       children: [
         widget.child,
+        if (colors != null && breathing != null)
+          for (final drawn in _drawn)
+            if (drawn.blank == breathing)
+              Positioned.fromRect(
+                rect: drawn.rect.inflate(2),
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _breathe,
+                    builder: (context, _) {
+                      final t = _breathe.value;
+                      if (!_breathe.isAnimating) return const SizedBox();
+                      final swell = math.sin(t * math.pi);
+                      final color = colors[breathing % colors.length];
+                      return Transform.scale(
+                        key: _BlankTapLayer.breatheKey,
+                        scale: 1 + .06 * swell,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: .22 * swell),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          // The blank's underline, swelling with it.
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: SizedBox(
+                              height: 3,
+                              width: double.infinity,
+                              child: ColoredBox(color: color),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
         for (final (i, target) in _targets.indexed)
           Positioned.fromRect(
             rect: target.rect,
