@@ -17,6 +17,8 @@ const _settleMs = <String, int>{
   'V10-Results': 3200,
   'V12-Climb': 5400,
   'R04-MonthCard': 3500,
+  'V13a-PaywallPlans': 2600,
+  'V13c-PaywallCompare': 2600,
   'R04b-NewMountain': 2800,
   'V14-Home': 2200,
   'V15-HomeNextDay': 2200,
@@ -74,6 +76,12 @@ final _scripts = <String, Script>{
     await _wait(1200);
     await d.tapNow('review_sort');
     await _wait(900);
+    await shot('');
+  },
+  'V13b-ExitReminder': (d, shot) async {
+    await _wait(1400);
+    await d.tapNow('premium_close');
+    await _wait(1000);
     await shot('');
   },
   'H03-HomeLoading': (d, shot) async {

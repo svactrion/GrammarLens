@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'dart:math';
+import 'package:grammar_lens/models/user_profile.dart';
+import 'package:grammar_lens/screens/premium_on_screen.dart';
+import 'package:grammar_lens/screens/premium_screen.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:grammar_lens/models/item_feedback.dart';
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/models/practice_set.dart';
@@ -312,6 +316,17 @@ final Map<String, WidgetBuilder> galleryBoards = {
   'P08-DailyLimit': (_) => _OnMount(
         (context) => showDailyLimitSheet(context, hero: Avatar.fox),
         child: const Scaffold(),
+      ),
+  // B8: the paywall (one scrolling page), with the debug fixture offering.
+  'V13-Paywall': (_) => _paywall(),
+  'V13a-PaywallPlans': (_) => _ScrollAfter(560, child: _paywall()),
+  'V13c-PaywallCompare': (_) => _ScrollAfter(1300, child: _paywall()),
+  'V13b-ExitReminder': (_) => _paywall(),
+  'PW05-PremiumOn': (_) => PremiumOnScreen(
+        hero: Avatar.fox,
+        topics: practiceTopics().length,
+        sessions: StorageService.dailySessionLimit,
+        trialEnds: DateTime(2026, 11, 24),
       ),
   'R11-Offline': (_) => Scaffold(
         body: Center(
@@ -1047,4 +1062,77 @@ class _GalleryPracticeStorage extends StorageService {
 
   @override
   Future<void> recordPracticeCompletion(String topicId, int count) async {}
+}
+
+Widget _paywall() => PremiumScreen(
+      storageService: _GalleryProfileStorage(),
+      analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+      analyticsSource: AnalyticsService.paywallSourceHome,
+      subscriptionService: _GalleryOffer(),
+      sourceContext: 'The With Superlatives',
+    );
+
+class _GalleryOffer extends SubscriptionService {
+  @override
+  Future<Offering?> getOfferings() async => buildDebugFixtureOffering();
+
+  @override
+  Future<Map<String, TrialEligibility>> checkTrialEligibility(
+          List<String> productIds) async =>
+      {for (final id in productIds) id: TrialEligibility.eligible};
+
+  @override
+  Future<bool> get hasFullAccess async => false;
+}
+
+/// Ada with Fox, for the paywall's headline and companions.
+class _GalleryProfileStorage extends StorageService {
+  @override
+  Future<UserProfile?> getUserProfile() async => const UserProfile(
+        name: 'Ada',
+        avatar: Avatar.fox,
+        learningGoal: LearningGoal.work,
+      );
+}
+
+/// Scrolls the first vertical list under it to [offset] once the page has
+/// loaded (gallery only: a board further down a scrolling page).
+class _ScrollAfter extends StatefulWidget {
+  final double offset;
+  final Widget child;
+  const _ScrollAfter(this.offset, {required this.child});
+
+  @override
+  State<_ScrollAfter> createState() => _ScrollAfterState();
+}
+
+class _ScrollAfterState extends State<_ScrollAfter> {
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(const Duration(milliseconds: 900), () {
+      if (!mounted) return;
+      ScrollableState? found;
+      void visit(Element e) {
+        if (found != null) return;
+        if (e is StatefulElement &&
+            e.state is ScrollableState &&
+            (e.state as ScrollableState).axisDirection == AxisDirection.down) {
+          found = e.state as ScrollableState;
+          return;
+        }
+        e.visitChildren(visit);
+      }
+
+      (context as Element).visitChildren(visit);
+      final position = found?.position;
+      position?.animateTo(
+          widget.offset.clamp(0, position.maxScrollExtent).toDouble(),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
