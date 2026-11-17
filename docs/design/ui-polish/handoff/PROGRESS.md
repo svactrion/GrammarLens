@@ -6,6 +6,78 @@ its fix rounds, and the integration with the widgets and reminders
 and how, decisions, open items. The final summary is below the Integration
 section.
 
+## Fix round 3 (owner's device test of the integrated build, 2026-11-18)
+
+`FIX3.md`, SPEC v11. The owner tested `ui-polish-widgets` on his iPhone 14
+Plus (release, iOS 26): an install over App Store 1.4.0 (data survived),
+then a fresh install. This round fixes what he found, on
+`ui-polish-widgets`. **Status: in progress.**
+
+### 0. Start
+
+Free space before: **8.5 GiB**. Deleted, as allowed: `flutter clean` in
+`~/GrammarLens` (`build/` 2.7 GB, `.dart_tool/` 591 MB) and its DerivedData
+folder `Runner-gqpsqce…` (WorkspacePath `~/GrammarLens/ios/Runner.xcworkspace`,
+2.8 GB). Xcode was open (the owner's session, left running) and re-indexes
+into that folder, so 727 MB of it came back during the delete; it was left
+alone (quitting the owner's Xcode is not this run's call). After: **11 GiB**.
+The end-of-run figure is under "Checks".
+
+`git pull --ff-only` (up to date); the task, SPEC v11 and the changed and
+new boards committed as "docs: fix round 3 task and SPEC v11" (`dd31c12`).
+
+### E1. The owner's Xcode change
+
+`ios/Runner.xcodeproj/project.pbxproj` had the owner's uncommitted change
+from the device test. It sets the team for the widget target, and Xcode
+rewrote four more lines when it saved the project. Every changed line:
+
+| Line (object) | Change |
+|---|---|
+| `B595896E… NunitoSans-Variable.ttf` (file reference) | `lastKnownFileType = file;` added |
+| `DFB0C932… OFL-NunitoSans.txt` (file reference) | `lastKnownFileType = text;` added |
+| the `Shared` group | `name = Shared;` removed (its `path` is `Shared`, so the shown name is the same) |
+| the `GrammarLensWidgets` group | `name = GrammarLensWidgets;` removed (same: `path` gives the name) |
+| `GrammarLensWidgets` Debug, Release, Profile build settings | `DEVELOPMENT_TEAM = 37U9L67C2J;` added (three lines) |
+
+No signing style, provisioning profile, bundle ID, entitlement or other
+target changed. The four extra lines are Xcode's normal rewrite of the
+script-made objects (`tool/ios/configure_xcode_project.rb` matches groups by
+their shown name and files by path, so it still finds them). Committed
+unedited as "chore(ios): development team for the widget target (owner,
+device test)".
+
+### A1. Day 0: the badge came before the results
+
+**What the owner saw:** after the Day 0 test the Welcome badge (V11) opened
+first; the results (V10) only after "Continue". SPEC §4: V10 → V11 → V12.
+(The integration's smoke walk saw the same order and recorded it as the
+flow's behaviour.)
+
+**Diagnosis.** Hypotheses:
+1. The first-launch flow pushes a badge route before the results: **ruled
+   out**, `first_launch_flow.dart` has no badge step at all
+   (dailyTest → dailyTestResult → firstClimb).
+2. The result screen pushes the badge when it opens: **ruled out**, it
+   pushes no route.
+3. The result screen opens the badge as a layer over itself when the save
+   lands: **supported.** `DailyTestResultScreen._saveCompletion` sets
+   `_celebration = _Celebration.welcome()` as soon as
+   `completeDailyTest` reports a live Welcome earn, and `build` stacks
+   `MedalCelebration.welcome` over the results. The save lands within a
+   frame or two of the screen opening, so the first thing the learner sees
+   is the badge; its Continue only closes the layer, revealing the results
+   and their "Climb my first step". This was Batch 5's N15 ("the
+   celebration opens over the results when the save lands"), which SPEC v11
+   §4 now overrides. Checked by reading the code and by the existing tests,
+   which asserted exactly this order (`first_launch_climb_test` "end to
+   end: the Welcome celebration over the results, then the results, …").
+
+**Later days with a medal (R05):** SPEC R05 says the medal "opens right
+after the Daily Test results when a tier is reached", and FIX3 keeps their
+current order unless SPEC says otherwise: the tier layer still opens over
+the results when the save lands and closes back to them (F3-1).
+
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 
 `INTEGRATE.md`: `ui-polish` (fix round 2, `7f38e21`) and
