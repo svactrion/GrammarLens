@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -247,6 +248,7 @@ void main() {
     bool reduceMotion = false,
     bool active = true,
     AppTextSize textSize = AppTextSize.medium,
+    ValueListenable<int>? dailyTestLinks,
   }) async {
     // A phone-realistic size so every card is actually reachable by taps.
     tester.view.physicalSize = size * 3.0;
@@ -280,6 +282,7 @@ void main() {
               subscriptionService ?? _FakeSubscriptionService(),
           onOpenProfile: onOpenProfile,
           onGoToReview: onGoToReview,
+          dailyTestLinks: dailyTestLinks,
           // Fixed at a mid-morning instant by default so the greeting text
           // this file asserts on doesn't depend on when the suite happens
           // to run — timeOfDayGreeting's own boundary tests live in
@@ -829,6 +832,50 @@ void main() {
   // card (Premium); the rest scene once every daily right is used. Home's
   // avatar, its weak spot list, the topic strip and the Review call-out are
   // gone (PROGRESS.md D5-1).
+  // TASK-widgets W1: a `grammarlens://daily-test` link (widget or reminder).
+  group('Daily Test link', () {
+    testWidgets('opens today\'s Daily Test when it is not done',
+        (tester) async {
+      final links = ValueNotifier(0);
+      addTearDown(links.dispose);
+      await pumpHome(tester,
+          storageService: _FakeStorageService(), dailyTestLinks: links);
+      expect(find.byType(DailyTestScreen), findsNothing);
+      links.value++;
+      await tester.pumpAndSettle();
+      expect(find.byType(DailyTestScreen), findsOneWidget);
+    });
+
+    testWidgets('stays on Home when today\'s test is done', (tester) async {
+      final links = ValueNotifier(0);
+      addTearDown(links.dispose);
+      final storage = _FakeStorageService()
+        ..steps = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
+      await pumpHome(tester, storageService: storage, dailyTestLinks: links);
+      links.value++;
+      await tester.pumpAndSettle();
+      expect(find.byType(DailyTestScreen), findsNothing);
+      expect(find.byType(DailyTestResultScreen), findsNothing);
+      expect(find.byKey(HomeScreen.dailyTestCardKey), findsOneWidget);
+    });
+
+    testWidgets('re-reads today\'s set first (a link right after midnight)',
+        (tester) async {
+      final links = ValueNotifier(0);
+      addTearDown(links.dispose);
+      final storage = _FakeStorageService()
+        ..steps = 1
+        ..todaysDailyTest = _completedDailyTestSet(correct: 3, total: 5);
+      await pumpHome(tester, storageService: storage, dailyTestLinks: links);
+      // The new day: no completed set any more.
+      storage.todaysDailyTest = null;
+      links.value++;
+      await tester.pumpAndSettle();
+      expect(find.byType(DailyTestScreen), findsOneWidget);
+    });
+  });
+
   group('Home, UI polish', () {
     testWidgets(
         'before the test: the card\'s line and "Start today’s test" opens '

@@ -13,8 +13,10 @@ import 'screens/home_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/analytics_service.dart';
+import 'services/app_link.dart';
 import 'services/claude_service.dart';
 import 'services/medal_finalization.dart';
+import 'services/native_bridge.dart';
 import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
 import 'theme.dart';
@@ -32,6 +34,9 @@ class GrammarLensApp extends StatefulWidget {
   final AnalyticsService? analyticsService;
   final ClaudeService? claudeService;
 
+  /// The iOS bridge (widgets, links, reminders); tests pass a fake.
+  final NativeBridge? nativeBridge;
+
   /// Test-only clock forwarded to [HomeScreen] (and the first-launch flow's
   /// month) so a day rollover can be driven end to end through the app's
   /// lifecycle handling.
@@ -42,6 +47,7 @@ class GrammarLensApp extends StatefulWidget {
     this.storageService,
     this.analyticsService,
     this.claudeService,
+    this.nativeBridge,
     this.clock,
   });
 
@@ -64,6 +70,22 @@ class _GrammarLensAppState extends State<GrammarLensApp>
   // override state is static regardless, but there's no reason for this
   // one to be the odd one out.
   final SubscriptionService _subscriptionService = SubscriptionService();
+  late final NativeBridge _bridge =
+      widget.nativeBridge ?? NativeBridge.instance;
+
+  /// Widget and reminder taps (`grammarlens://…`, DW0-3).
+  late final AppLinkRouter _linkRouter = AppLinkRouter(_bridge);
+
+  /// Whether the router is attached to the tab shell (null: not decided
+  /// yet, the profile is loading).
+  bool? _linksAttached;
+
+  /// The root navigator: a link is dropped while a route is pushed on it
+  /// (a Daily Test, practice, the paywall, a sheet), DW0-3.
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  /// Bumped by a `grammarlens://daily-test` link; Home opens the Daily Test.
+  final ValueNotifier<int> _dailyTestLinks = ValueNotifier(0);
   int _tabIndex = 0;
 
   /// The look of the last tab switch (`_switchTab`).
@@ -111,6 +133,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     _loadTextSize();
     _loadLanguage();
     _loadProfile();
+    unawaited(_linkRouter.start());
     if (kDebugMode && DebugTools.enabledForTesting) _loadDebugAccessOverride();
     if (ClimbDebugControls.available) {
       ClimbDebugControls.instance.addListener(_onDebugPlay);
@@ -123,7 +146,43 @@ class _GrammarLensAppState extends State<GrammarLensApp>
       ClimbDebugControls.instance.removeListener(_onDebugPlay);
     }
     WidgetsBinding.instance.removeObserver(this);
+    _linkRouter.dispose();
+    _dailyTestLinks.dispose();
     super.dispose();
+  }
+
+  /// Attaches the link router once the tab shell exists and detaches it
+  /// while onboarding runs (DW0-3). Called from [build]; acts after the
+  /// frame so Home is mounted when a waiting link arrives.
+  void _syncLinkRouter() {
+    if (_profileLoading) return;
+    final shell = _profile != null;
+    if (shell == _linksAttached) return;
+    _linksAttached = shell;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (shell) {
+        _linkRouter.attach(_openLink);
+      } else {
+        _linkRouter.detach();
+      }
+    });
+  }
+
+  /// A widget or reminder tap. Dropped while anything is pushed above the
+  /// tab shell, so a running flow is never thrown away (DW0-3).
+  void _openLink(AppLink link) {
+    if (!mounted || _profile == null) return;
+    if (_navigatorKey.currentState?.canPop() ?? false) return;
+    switch (link) {
+      case AppLink.home:
+        _switchTab(0);
+      case AppLink.review:
+        _switchTab(1);
+      case AppLink.dailyTest:
+        _switchTab(0);
+        _dailyTestLinks.value++;
+    }
   }
 
   // Resume work is split by owner, never duplicated: this observer runs the
@@ -341,7 +400,9 @@ class _GrammarLensAppState extends State<GrammarLensApp>
 
   @override
   Widget build(BuildContext context) {
+    _syncLinkRouter();
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'GrammarLens', // l10n-guard: the brand
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: AppMessenger.key,
@@ -418,6 +479,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
                 _firstRunZoom = false;
                 _firstRunZoomPlayed = false;
               },
+              dailyTestLinks: _dailyTestLinks,
               onOpenProfile: () => _switchTab(2),
               onGoToReview: () =>
                   _switchTab(1, transition: TabTransition.slide),

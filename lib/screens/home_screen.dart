@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 
@@ -77,6 +78,10 @@ class HomeScreen extends StatefulWidget {
   /// Switches to the Profile tab (the score capsule's tap: the month's
   /// progress, V14).
   final VoidCallback? onOpenProfile;
+
+  /// Bumped by a `grammarlens://daily-test` link (a widget or reminder
+  /// tap): Home opens today's Daily Test, or stays on Home when it is done.
+  final ValueListenable<int>? dailyTestLinks;
   // Test-only clock seam (defaults to the real DateTime.now) — the
   // time-of-day greeting's boundary tests need to construct exact
   // 04:59/05:00-style instants, not depend on whatever time the suite
@@ -127,6 +132,7 @@ class HomeScreen extends StatefulWidget {
     SubscriptionService? subscriptionService,
     this.onGoToReview,
     this.onOpenProfile,
+    this.dailyTestLinks,
     this.initialPendingClimb,
     this.onInitialPendingClimbTaken,
     this.offerDay0Paywall = false,
@@ -199,6 +205,9 @@ class _HomeScreenState extends State<HomeScreen>
   bool _climbLoadFailed = false;
   final _mountainKey = GlobalKey();
   bool _dailyFlowActive = false;
+
+  /// A Daily Test link waits for today's set to be read.
+  bool _dailyTestLinkPending = false;
   String? _pendingClimbDay;
 
   /// Steps the pending completion earned, known only when it arrived through
@@ -334,6 +343,7 @@ class _HomeScreenState extends State<HomeScreen>
     // [_checkAccess]'s one-shot read above (which only covers this
     // screen's own initial build).
     widget.subscriptionService.addAccessListener(_onAccessChanged);
+    widget.dailyTestLinks?.addListener(_onDailyTestLink);
     _loadTodaysDailyTest();
     _loadClimb();
     _loadWeakSpots();
@@ -349,6 +359,7 @@ class _HomeScreenState extends State<HomeScreen>
       ClimbDebugControls.instance.removeListener(_onDebugPlay);
     }
     WidgetsBinding.instance.removeObserver(this);
+    widget.dailyTestLinks?.removeListener(_onDailyTestLink);
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     _day0PaywallTimer?.cancel();
     _zoom.removeListener(_onZoomChanged);
@@ -392,6 +403,10 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didUpdateWidget(HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.dailyTestLinks != widget.dailyTestLinks) {
+      oldWidget.dailyTestLinks?.removeListener(_onDailyTestLink);
+      widget.dailyTestLinks?.addListener(_onDailyTestLink);
+    }
     if (!oldWidget.active && widget.active && _pendingClimbDay != null) {
       _loadClimb();
     }
@@ -942,6 +957,27 @@ class _HomeScreenState extends State<HomeScreen>
         _loadingToday = false;
       });
     }
+    _openDailyTestFromLink();
+  }
+
+  /// A `grammarlens://daily-test` link: today's set is read again (the
+  /// link may come right after midnight), then [_openDailyTestFromLink].
+  void _onDailyTestLink() {
+    if (!mounted) return;
+    _dailyTestLinkPending = true;
+    setState(() => _loadingToday = true);
+    _loadTodaysDailyTest();
+  }
+
+  /// Opens the Daily Test a link asked for, once today's set is known:
+  /// not when it is done (Home is the answer) or already open.
+  void _openDailyTestFromLink() {
+    if (!_dailyTestLinkPending || !mounted || _loadingToday) return;
+    _dailyTestLinkPending = false;
+    if (_dailyFlowActive || _todaysDailyTest?.isCompleted == true) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _openDailyTest(context);
+    });
   }
 
   /// The 2-3 most frequent weak spots (PRD v2 §13.5 item 4) — same
