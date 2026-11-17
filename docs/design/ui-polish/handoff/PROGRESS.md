@@ -322,3 +322,72 @@ Decisions:
 - **D3-7 R06 saves with the button.** The carousel's autosave is gone;
   "Save <Hero>" saves, Back leaves the buddy unchanged. The Hero flight
   from Home/Profile is dropped (the turntable has no single tile to fly).
+
+## B4 — Daily Test and rewards
+
+Status: **done**.
+
+Commits: `a879129` (strings), `95d1520` (on-device grading), `ea04792`
+(graded answer look, red button, highlighted step), `ead1918` (Daily
+Test V07–V09 / Q04 / Q05 / R10, results V10, badge V11, medal R05),
+`03dc9e6` (gallery).
+
+What was built:
+- `services/daily_test_grading.dart` (`QuestionCheck`): one answer graded
+  with the completion's own rules (`DailyTestAnswerResult.from`), points
+  by `MonthlyMedalRules` (display only; storing is unchanged, at the end
+  as before); per-blank results for multi-blank questions by splitting the
+  key at the template's fixed text.
+- `screens/daily_test_screen.dart`: header (close, 5 segments, points
+  chip with the clay star), the buddy and its bubble, Skip + Check
+  ("Finish" on the last question), the feedback sheet (V08 / V09), the
+  "+N" star flight, the R10 leave dialog.
+- `screens/daily_test_result_screen.dart` (V10): "Day N complete!", the
+  stepwise ring, strip, tiles, "Your answers" rows (open to the old card's
+  explanation logic, unchanged), the button in the bottom slot.
+- `widgets/medal_celebration.dart` (V11 / R05): navy page, turning rays,
+  the medal popping and floating over the cheering companion, eyebrow,
+  "N points in <month>!" and "<Next> is next at N. Keep climbing <mountain>."
+  (thresholds from `MonthlyMedalRules`), a Continue button.
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2454 passed**
+  (after the test updates below).
+- New tests: `daily_test_grading_test` (every check equals the
+  completion's result for the day-0 set and many answers; the shown total
+  equals `MonthlyMedalRules.score` of the completion; +2/+1/0; per-blank
+  split), `daily_test_check_test` (right: "Nice, Ada!", +2, success; wrong:
+  "Almost!", the key, +1, warning, read-only box; a whole test: the chip
+  counts the award and the answers handed over are the checked ones).
+- Simulator (gallery, real taps): V07, V08, V09, Q04 (typed and checked:
+  blanks green / orange / green), Q05, R10, V10, V11, R05.
+
+Decisions:
+- **D4-1 Skip stays** (a quiet text button next to Check): the board has
+  none, but skipping is an existing rule (a skipped question is not
+  wrong, 0 points) that SPEC §1 does not change.
+- **D4-2 No Back in the Daily Test.** With per-question feedback a
+  checked answer is final; the board's header has only close, the
+  segments and the points.
+- **D4-3 The last question** reads "Finish" (Q05) and still checks; the
+  sheet's button then reads "See results".
+- **D4-4 "Saved to your weak spots" → "This goes to your weak spots".**
+  Mistakes are written at the end of the test (unchanged); leaving the
+  test saves nothing, so "saved" would not be true yet.
+- **D4-5 The buddy's row under the question** sits above Check (not
+  directly under the answer box: `QuestionView`'s keyboard-safe layout is
+  unchanged) and is hidden with the keyboard up and on phones under 740 pt
+  tall, so the open hint card stays whole (`topic_hint_card_test` fit
+  checks).
+- **D4-6 The results' button is navy** in every case (V10), replacing the
+  1.2.0 orange/navy split for this screen; "Start my climb" reads "Climb
+  my first step".
+
+Not done / gaps:
+- V08's "+2" star flies on a fixed path (sheet → chip), not measured from
+  the chip's position; V09's book icon does not fly to the Review tab (the
+  test screen is a pushed route with no nav bar visible).
+- Q04's "breathe" of a tapped blank and the "—" fill animation keep the
+  existing 1.4.0 look.
+- V07's hint handle "nudge every 2.8 s" is not added (hint slider as in
+  the app today, SPEC V07).
