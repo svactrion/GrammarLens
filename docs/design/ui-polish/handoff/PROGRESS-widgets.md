@@ -19,7 +19,7 @@ marked done.
 | W2 Widget extension + SwiftUI views | done | see W2 |
 | W3 App-side payload | done | see W3 |
 | W4 Reminder engine | done | see W4 |
-| W5 UI (N01, N03, V24), captures | not started | |
+| W5 UI (N01, N03, V24), captures | done | see W5 |
 | W6 Final pass, merge, docs | not started | |
 
 ## Decisions
@@ -147,8 +147,39 @@ Format: what · options · choice · why. Numbered per step (DW0-1, DW1-1, …).
   day, id `gl.reminder.YYYY-MM-DD`, so two can never share a day; every
   schedule call first removes all pending `gl.reminder.*` requests.
 
+- **DW5-1 N03's switches do not go through N01.** Fixed decision 5 puts
+  our question before the iOS dialog; in N03 the user turns a reminder on
+  by hand, which is that choice. · Show N01 first vs. go to iOS. · **The
+  first switch turned on in N03 turns all four on and shows the iOS dialog**
+  (fixed decision 6). V24's switch does open N01 (fixed decision 7), also
+  after an earlier "Not now" (the user asked; only asking *on its own* is
+  over).
+- **DW5-2 Closing N01 counts as "Not now".** A swipe down or a tap outside
+  is an answer too; it is never asked again on its own.
+- **DW5-3 When N01 opens on its own.** The first rest scene, or Home after
+  a Daily Test flow when the first test on record is older than today (the
+  second test or later), only while Home is quiet (visible, no flow, no step
+  walking, no month card) and only if the stored answer was actually read.
+- **DW5-4 "Notifications" is the first row of Profile's "App information"
+  card** (N03 has no board for Profile itself); the page has no subtitle
+  (`PageHeader.subtitle` is now optional).
+- **DW5-5 The time wheel is a 24-hour `CupertinoDatePicker` in every
+  language**, like the times on N01, N03 and V24 ("20:00").
+- **DW5-6 N03's switches are navy and V24's is green**, as on the boards
+  (the app's default switch colour is orange).
+
 ## Blocked / not verified
 
+- **Tapping a delivered reminder on the simulator did not open the app**
+  (W5): from the lock screen and from Notification Center the simulator
+  kept the lock screen or the home screen. The tap goes through
+  `ReminderScheduler.didReceive` → `GrammarLensBridge.receive(link:)`, the
+  same path as a widget's link, which is verified cold and warm; the
+  reminder tap itself is **not verified** (owner, on a device).
+- **The companion picture (N02) is attached but not seen** (W5): iOS logged
+  "Copied attachment file into repository … Successfully resolved request"
+  for every reminder, but the simulator's lock-screen row showed no
+  thumbnail. **Not verified visually** (owner, on a device).
 - **Disk full (2026-11-17, W1).** The Mac's data volume reached 308 MB
   free during the first simulator build; a `flutter run` failed with "No
   space left on device" and the simulator shut down. Freed by deleting only
@@ -638,3 +669,72 @@ Verified:
 
 Not verified here: a reminder actually delivered (W5 does it on the
 simulator); on a device (owner).
+
+## W5 — UI: N01, N03, V24; captures; a real reminder
+
+Status: **done**.
+
+What was built:
+- `lib/services/reminder_controller.dart`: the settings as the UI changes
+  them (turn on → all four on + iOS dialog when iOS has not asked; not now;
+  one kind; the time; iOS permission refreshed on return from Settings);
+  shared by Home and Settings (`app.dart`).
+- N01 `lib/screens/reminder_soft_ask.dart` (companion + bubble, Morning
+  08:30 / Lunch break 12:30 / Evening 20:00 preselected / Pick a time,
+  the promise, "Turn on reminders", "Not now"; a snackbar with "Open
+  Settings" when iOS says no); opens on its own per DW5-3.
+- N03 `lib/screens/notification_settings_screen.dart` (four rows, the free
+  ticket only for free users, "Every day at 20:00" chip → wheel, the
+  promise, the iOS-denied card with "Open Settings"), from Profile →
+  Notifications.
+- V24 `lib/widgets/rest_reminder_row.dart` in the rest scene ("Remind me
+  tomorrow", the time chip → wheel, the switch).
+- `lib/widgets/time_wheel_picker.dart`; 27 new strings in all 8 languages.
+
+Verified:
+- `flutter analyze`: no issues; `flutter test`: 2601 passed.
+- `test/reminders_ui_test.dart` (17): N01 copy and preselection, our
+  question before iOS's, Turn on (all four, chosen time), Not now, closing,
+  Pick a time, iOS refusal → snackbar → Settings; N03 rows free / Premium,
+  first switch → all four + iOS, then one by one, the time chip and wheel,
+  the denied card, dark + largest text without overflow; V24 → N01 before
+  acceptance, the Daily Test switch after, one line at 320 pt with the
+  largest text, the time chip. `home_screen_test` (4 new): N01 on the first
+  rest scene and never again after "Not now", not when already answered,
+  after a second Daily Test, not after the first.
+- Simulator (iPhone 18 Pro, iOS 27.2; the real app from
+  `tool/widgets/seeded_app.dart`; captures in `build/widgets-captures/`, not
+  committed):
+  - The widget gallery lists GrammarLens with "Climb" (small, medium) and
+    "Tip" showing the app's own payload; all three added to the home screen
+    (`w5-home-widgets-waiting.png`); tapping the small widget opened the
+    Daily Test (`w5-widget-tap-daily-test.png`).
+  - N03 off (`N03-Settings-off.png`) → the Daily Test switch → the iOS
+    dialog (`w5-ios-permission.png`) → Allow → all four on
+    (`N03-Settings.png`).
+  - **A real reminder**: relaunched with the reminder time two minutes
+    ahead (`SEED_REMINDER_IN=2`), app in the background: at 18:16 the
+    banner "Fox is waiting at First Camp — Today’s 5 questions take about
+    2 minutes. Step 15 is one test away." (`w5-real-reminder.png`), and on
+    the lock screen (`N02-LockScreen-real.png`).
+  - Done state (`SEED_DONE`, `SEED_TICKET_USED`, `SEED_RESET_ASK`): the
+    rest scene opened N01 on its own (`N01-SoftAsk.png`); "Turn on
+    reminders" → V24 with the switch on (`V24-DayComplete-scrolled.png`);
+    the widgets turned to their done state (`w5-home-widgets-done.png`:
+    "Done today", "Step 15 of 30", "Next test in 6 h", ★ 149; medium
+    "See you tomorrow, Sam" in the evening tone; the tip's box "Done
+    today").
+
+### Board comparison
+
+| Board | Capture | Result | Note |
+|---|---|---|---|
+| W01 small, waiting | `w5-home-widgets-waiting.png`, `build/widget-snapshots/climb-small-waiting-*` | match | Orange, "DAILY TEST", two-line title, "5 questions · 2 min", step chip, avatar bottom right; system rounded type (DW2-1). |
+| W01 small, done | `w5-home-widgets-done.png`, `climb-small-done-*` | match | Check + "Done today", "Step N of 30", countdown, gold points chip. |
+| W01 medium A, waiting | `w5-home-widgets-waiting.png`, `climb-medium-waiting-*` | match | The month's mountain cropped around the avatar on its trail point, "Test waiting" chip, white "Start". |
+| W01 medium A, done | `w5-home-widgets-done.png`, `climb-medium-done-*` | match | Evening (dark) image, "See you tomorrow, <name>", countdown · progress, green chip, no button. |
+| W01 medium B (tip) | `w5-home-widgets-*.png`, `tip-medium-*` | match, one gap | Layout and box as on the board; the rule line is the hint's key highlighted inside the sentence, no separate example line (DW2-2). |
+| N01 | `N01-SoftAsk.png` | match | Companion + bubble, four choices with Evening selected, the promise, orange button, "Not now"; behind it the rest scene (the board shows a mountain). |
+| N02 | `w5-real-reminder.png`, `N02-LockScreen-real.png` | match, one gap | Title and text as on the board, from the app's state; the companion thumbnail is attached but not seen on the simulator (Blocked / not verified). |
+| N03 | `N03-Settings-off.png`, `N03-Settings.png` | match | Rows, lines, "Every day at 20:00", the promise with the companion. The captures show orange switches; they are navy since (DW5-6), recaptured in W6. |
+| V24 (switch) | `V24-DayComplete-scrolled.png` | match after a fix | The label wrapped to two lines; now one line, scaling down if needed (test at 320 pt, largest text); recaptured in W6. |
