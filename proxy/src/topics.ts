@@ -41,12 +41,61 @@ export const TOPICS: readonly TopicInfo[] = [
   },
 ];
 
-const BY_ID = new Map(TOPICS.map((t) => [t.id, t]));
+/**
+ * The first-wave practice topics (UI polish SPEC §1.11; mirrors
+ * `kFirstWaveTopics` in `lib/data/topics.dart`). Written but switched off:
+ * with {@link FIRST_WAVE_TOPICS_ENABLED} false the worker treats their ids
+ * as unknown, exactly as before they existed. They are practice topics
+ * only and never part of the shared Daily Test ({@link TOPICS} stays the
+ * five). Nothing here is deployed by this change.
+ */
+export const FIRST_WAVE_TOPICS: readonly TopicInfo[] = [
+  {
+    id: 'conditionals',
+    title: 'Conditionals',
+    description: 'If-sentences: real, unreal and past ("If it rains, we will stay").',
+  },
+  {
+    id: 'passiveVoice',
+    title: 'Passive Voice',
+    description: 'be + past participle when the action matters more than who did it.',
+  },
+  {
+    id: 'prepositions',
+    title: 'Prepositions',
+    description: 'At, on, in for time and place, and verbs that take a preposition.',
+  },
+  {
+    id: 'relativeClauses',
+    title: 'Relative Clauses',
+    description: 'Who, which, that, whose, where: joining two ideas in one sentence.',
+  },
+  {
+    id: 'comparativesSuperlatives',
+    title: 'Comparatives & Superlatives',
+    description: 'Taller, more useful, the best: comparing two or more things.',
+  },
+];
 
-export function topicById(id: string): TopicInfo | undefined {
-  return BY_ID.get(id);
+/** The first-wave topics' switch. Off until the question-quality check
+ *  and the owner's review (SPEC §1.11). */
+export const FIRST_WAVE_TOPICS_ENABLED = false;
+
+const BY_ID = new Map(TOPICS.map((t) => [t.id, t]));
+const FIRST_WAVE_BY_ID = new Map(FIRST_WAVE_TOPICS.map((t) => [t.id, t]));
+
+/** A practice topic by id: the five, plus the first wave when [firstWave]
+ *  (by default {@link FIRST_WAVE_TOPICS_ENABLED}). */
+export function topicById(
+  id: string,
+  firstWave: boolean = FIRST_WAVE_TOPICS_ENABLED,
+): TopicInfo | undefined {
+  return BY_ID.get(id) ?? (firstWave ? FIRST_WAVE_BY_ID.get(id) : undefined);
 }
 
-export function isKnownTopicId(id: unknown): id is string {
-  return typeof id === 'string' && BY_ID.has(id);
+export function isKnownTopicId(
+  id: unknown,
+  firstWave: boolean = FIRST_WAVE_TOPICS_ENABLED,
+): id is string {
+  return typeof id === 'string' && topicById(id, firstWave) !== undefined;
 }
