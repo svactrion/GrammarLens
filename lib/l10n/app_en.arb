@@ -419,15 +419,23 @@
   "@goalWork": {
     "description": "Learning goal (onboarding): English for work. Short title."
   },
-  "goalWorkDetail": "Emails, meetings and professional English",
+  "goalWorkDetail": "Emails, reports and professional English",
   "@goalWorkDetail": {
     "description": "Learning goal (onboarding): the line under 'Work'."
+  },
+  "goalSchool": "School & university",
+  "@goalSchool": {
+    "description": "V05's fourth goal (SPEC §1.14): learning English for school or university."
+  },
+  "goalSchoolDetail": "Homework, essays and academic writing",
+  "@goalSchoolDetail": {
+    "description": "V05: the School & university card's description."
   },
   "goalGeneral": "Everyday English",
   "@goalGeneral": {
     "description": "Learning goal: everyday English (onboarding V05, Profile)."
   },
-  "goalGeneralDetail": "Feel confident in daily conversations",
+  "goalGeneralDetail": "Write with confidence every day",
   "@goalGeneralDetail": {
     "description": "Learning goal 'Everyday English': its description on the goal card."
   },
@@ -3266,6 +3274,10 @@
   "@goalReactionWork": {
     "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
   },
+  "goalReactionSchool": "“School & university it is! Let’s ace it.”",
+  "@goalReactionSchool": {
+    "description": "V05: the companion's line when School & university is picked."
+  },
   "goalReactionGeneral": "“Everyday English it is! Let’s talk.”",
   "@goalReactionGeneral": {
     "description": "Onboarding goal step (V05): the buddy's reaction inside the chosen card, in quotes."
@@ -3305,6 +3317,10 @@
   "readyBubbleWork": "Work English, here we come!",
   "@readyBubbleWork": {
     "description": "Getting ready (V05b): the buddy's speech bubble for the goal 'Work'."
+  },
+  "readyBubbleSchool": "School English, here we come!",
+  "@readyBubbleSchool": {
+    "description": "V05b: the companion's bubble for the School & university goal."
   },
   "readyBubbleGeneral": "Everyday English, here we come!",
   "@readyBubbleGeneral": {
@@ -3349,6 +3365,10 @@
   "readyGoalWork": "Work English",
   "@readyGoalWork": {
     "description": "Getting ready (V05b): the goal chip for 'Work'."
+  },
+  "readyGoalSchool": "School & university",
+  "@readyGoalSchool": {
+    "description": "V05b: the 'Your climb' card's goal chip for School & university."
   },
   "readyGoalGeneral": "Everyday English",
   "@readyGoalGeneral": {

@@ -335,11 +335,13 @@ void main() {
     });
 
     test(
-        'learning_goal is a user property with one of four closed values, '
+        'learning_goal is a user property with one of five closed values '
+        '(school since fix round 2), '
         'and nothing else is written', () async {
       final values = <LearningGoal?, String>{
         LearningGoal.examPrep: 'exam_prep',
         LearningGoal.work: 'work',
+        LearningGoal.school: 'school',
         LearningGoal.general: 'general',
         null: 'skipped',
       };

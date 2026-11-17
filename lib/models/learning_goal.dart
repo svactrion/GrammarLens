@@ -4,11 +4,13 @@
 /// is reported as the `learning_goal` analytics user property
 /// (docs/analytics-plan.md §3). Optional: a skipped goal is stored as
 /// [learningGoalSkipped] and read back as null, never as [general].
-enum LearningGoal { examPrep, work, general }
+/// In the order V05 lists them (fix round 2 added [school], SPEC §1.14).
+enum LearningGoal { examPrep, work, school, general }
 
 /// The stored and reported value of a skipped goal: a fourth value in the
 /// `learning_goal` column (no schema change). Builds before 1.2.0 read it,
-/// like any unknown value, as [LearningGoal.general].
+/// like any unknown value, as [LearningGoal.general]; builds before fix
+/// round 2 read `school` the same way.
 const String learningGoalSkipped = 'skipped';
 
 extension LearningGoalInfo on LearningGoal {
@@ -18,6 +20,8 @@ extension LearningGoalInfo on LearningGoal {
         return LearningGoal.examPrep;
       case 'work':
         return LearningGoal.work;
+      case 'school':
+        return LearningGoal.school;
       case 'general':
       default:
         return LearningGoal.general;
@@ -35,6 +39,8 @@ extension LearningGoalInfo on LearningGoal {
         return 'exam_prep';
       case LearningGoal.work:
         return 'work';
+      case LearningGoal.school:
+        return 'school';
       case LearningGoal.general:
         return 'general';
     }

@@ -514,8 +514,9 @@ class AnalyticsService {
     return _setUserProperty('first_step_dom', dayOfMonth.toString());
   }
 
-  /// User property `learning_goal`: `exam_prep` / `work` / `general` /
-  /// `skipped`, the onboarding answer (1.2.0). Set once, as onboarding
+  /// User property `learning_goal`: `exam_prep` / `work` / `school` /
+  /// `general` / `skipped`, the onboarding answer (1.2.0; `school` added by
+  /// the UI polish fix round 2, SPEC §1.14). Set once, as onboarding
   /// completes and before `onboarding_completed`, so that event carries it.
   /// Not set for installs that finished onboarding earlier: their stored
   /// `general` cannot be told apart from a choice.

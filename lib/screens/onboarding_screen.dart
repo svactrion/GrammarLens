@@ -580,6 +580,8 @@ IconData _iconFor(LearningGoal goal) {
       return Icons.school_outlined;
     case LearningGoal.work:
       return Icons.work_outline_rounded;
+    case LearningGoal.school:
+      return Icons.menu_book_rounded;
     case LearningGoal.general:
       return Icons.chat_bubble_outline_rounded;
   }
@@ -614,11 +616,13 @@ class GoalCard extends StatelessWidget {
     final tilt = switch (goal) {
       LearningGoal.examPrep => -2.0,
       LearningGoal.work => 2.0,
+      LearningGoal.school => 1.5,
       LearningGoal.general => -1.5,
     };
     final (tile, tileFg) = switch (goal) {
       LearningGoal.examPrep => (c.cream, c.orangeDeep),
       LearningGoal.work => (c.sky, c.navy),
+      LearningGoal.school => (c.lilac, c.onLilac),
       LearningGoal.general => (c.greenSoft, c.greenDeep),
     };
     return Semantics(
@@ -643,9 +647,10 @@ class GoalCard extends StatelessWidget {
               children: [
                 AnimatedContainer(
                   duration: AppMotion.orInstant(context, AppMotion.fast),
-                  constraints: const BoxConstraints(minHeight: 88),
+                  // V05 v10 (four cards): 80 tall, 13 / 14 padding.
+                  constraints: const BoxConstraints(minHeight: 80),
                   padding: EdgeInsetsDirectional.fromSTEB(
-                      16, 16, selected ? 86 : 16, 16),
+                      14, 13, selected ? 86 : 14, 13),
                   decoration: lipCard(
                     c,
                     color: selected ? c.sky : c.card,
@@ -657,15 +662,15 @@ class GoalCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Container(
-                        width: 52,
-                        height: 52,
+                        width: 50,
+                        height: 50,
                         decoration: BoxDecoration(
                           color: selected ? c.card : tile,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(_iconFor(goal), color: tileFg, size: 26),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 13),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

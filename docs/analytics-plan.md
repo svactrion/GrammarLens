@@ -332,7 +332,7 @@ paywall funnel by `source` and `plan` (§5).
 |---|---|---|
 | `first_step_dom` | Day of month (`"1"`–`"31"`) on which the user earned their first ever step | Exactly once, at the moment E3 fires (`welcomeBadgeJustEarned`) |
 | `text_size` | `small` / `medium` / `large` | At startup after the stored value is loaded, and on each change (E6) |
-| `learning_goal` | `exam_prep` / `work` / `general` / `skipped` | **Added 1.2.0 (owner, 2026-10-05).** Once, as onboarding completes, just before `onboarding_completed` (so that event carries it). Not set for installs that finished onboarding earlier (see below) |
+| `learning_goal` | `exam_prep` / `work` / `school` / `general` / `skipped` | **Added 1.2.0 (owner, 2026-10-05); `school` added by the UI polish fix round 2 (SPEC §1.14, 2026-11-17, branch `ui-polish`).** Once, as onboarding completes, just before `onboarding_completed` (so that event carries it). Not set for installs that finished onboarding earlier (see below) |
 
 **`learning_goal` (1.2.0).** The onboarding goal question personalizes
 nothing; it is asked to understand who uses the app and to decide what to
@@ -749,7 +749,7 @@ uses 18, 2 and 8 (19 event-scoped once `set_date` is registered). Check the cons
 |---|---|---|---|
 | First step day of month | `first_step_dom` | User | `1`–`31` |
 | Text size | `text_size` | User | `small` / `medium` / `large` |
-| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `general` / `skipped` — **1.2.0, registered 2026-10-06** |
+| Learning goal | `learning_goal` | User | `exam_prep` / `work` / `school` / `general` / `skipped` — **1.2.0, registered 2026-10-06; `school` added on branch `ui-polish` (fix round 2), a new value of the registered property, nothing to register** |
 | Interface language | `ui_language` | User | `en` / `ja` / `ko` / `es` / `pt-BR` / `tr` / `ar` / `de` — **1.4.0; implemented 2026-11-02 (B3), not registered** (owner registers before 1.4.0 ships) |
 
 ### Event-scoped custom dimensions

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/models/learning_goal.dart';
@@ -195,7 +196,7 @@ void main() {
 
   group('step 3: the goal (V05)', () {
     testWidgets(
-        'greets by name, three cards with no preselection; Continue waits for '
+        'greets by name, four cards with no preselection; Continue waits for '
         'one; Skip is always there', (tester) async {
       await pump(tester);
       await toGoalStep(tester);
@@ -207,6 +208,65 @@ void main() {
       expect(enabled(tester, OnboardingScreen.startKey), isFalse);
       expect(enabled(tester, OnboardingScreen.skipGoalKey), isTrue);
     });
+
+    for (final size in [const Size(390, 844), const Size(428, 926)]) {
+      testWidgets(
+          'fix round 2 (SPEC §1.14): four goals in the board\'s order and copy; '
+          'School & university has the lilac tile and the book; all four and '
+          'Continue fit the first view at $size', (tester) async {
+        expect(LearningGoal.values, [
+          LearningGoal.examPrep,
+          LearningGoal.work,
+          LearningGoal.school,
+          LearningGoal.general,
+        ]);
+        expect(LearningGoal.school.toJson(), 'school');
+        expect(LearningGoalInfo.fromStored('school'), LearningGoal.school);
+        {
+          await pump(tester, size: size);
+          await toGoalStep(tester);
+          for (final (title, detail) in [
+            ('Exam prep', 'IELTS, TOEFL or another English exam'),
+            ('Work', 'Emails, reports and professional English'),
+            ('School & university', 'Homework, essays and academic writing'),
+            ('Everyday English', 'Write with confidence every day'),
+          ]) {
+            expect(find.text(title), findsOneWidget);
+            expect(find.text(detail), findsOneWidget);
+          }
+          final tops = [
+            for (final g in LearningGoal.values)
+              tester.getTopLeft(find.byKey(OnboardingScreen.goalKey(g))).dy
+          ];
+          expect(tops, orderedEquals([...tops]..sort()));
+          final school =
+              find.byKey(OnboardingScreen.goalKey(LearningGoal.school));
+          expect(
+              find.descendant(
+                  of: school, matching: find.byIcon(Icons.menu_book_rounded)),
+              findsOneWidget);
+          final c = AppColors.light;
+          final tile = tester.widget<Container>(find
+              .ancestor(
+                  of: find.descendant(
+                      of: school,
+                      matching: find.byIcon(Icons.menu_book_rounded)),
+                  matching: find.byType(Container))
+              .first);
+          expect((tile.decoration! as BoxDecoration).color, c.lilac);
+          final last = tester.getBottomLeft(
+              find.byKey(OnboardingScreen.goalKey(LearningGoal.general)));
+          expect(last.dy, lessThanOrEqualTo(size.height));
+          expect(tester.getBottomLeft(find.byKey(OnboardingScreen.startKey)).dy,
+              lessThanOrEqualTo(size.height));
+        }
+        await tester
+            .tap(find.byKey(OnboardingScreen.goalKey(LearningGoal.school)));
+        await tester.pumpAndSettle();
+        expect(find.text('“School & university it is! Let’s ace it.”'),
+            findsOneWidget);
+      });
+    }
 
     testWidgets('choosing a card shows the buddy\'s reaction inside it',
         (tester) async {

@@ -488,6 +488,7 @@ class _YourClimb extends StatelessWidget {
           switch (goal!) {
             LearningGoal.examPrep => l10n.readyGoalExam,
             LearningGoal.work => l10n.readyGoalWork,
+            LearningGoal.school => l10n.readyGoalSchool,
             LearningGoal.general => l10n.readyGoalGeneral,
           },
           c.sky,

@@ -674,6 +674,7 @@ void main() {
     final cases = <String, LearningGoal?>{
       'exam_prep': LearningGoal.examPrep,
       'work': LearningGoal.work,
+      'school': LearningGoal.school,
       'general': LearningGoal.general,
       'skipped': null,
     };

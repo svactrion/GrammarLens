@@ -21,12 +21,14 @@ extension LearningGoalLabels on LearningGoal {
   String label(AppLocalizations l10n) => switch (this) {
         LearningGoal.examPrep => l10n.goalExamPrep,
         LearningGoal.work => l10n.goalWork,
+        LearningGoal.school => l10n.goalSchool,
         LearningGoal.general => l10n.goalGeneral,
       };
 
   String description(AppLocalizations l10n) => switch (this) {
         LearningGoal.examPrep => l10n.goalExamPrepDetail,
         LearningGoal.work => l10n.goalWorkDetail,
+        LearningGoal.school => l10n.goalSchoolDetail,
         LearningGoal.general => l10n.goalGeneralDetail,
       };
 
@@ -34,6 +36,7 @@ extension LearningGoalLabels on LearningGoal {
   String reaction(AppLocalizations l10n) => switch (this) {
         LearningGoal.examPrep => l10n.goalReactionExam,
         LearningGoal.work => l10n.goalReactionWork,
+        LearningGoal.school => l10n.goalReactionSchool,
         LearningGoal.general => l10n.goalReactionGeneral,
       };
 
@@ -42,6 +45,7 @@ extension LearningGoalLabels on LearningGoal {
   String readyLine(AppLocalizations l10n) => switch (this) {
         LearningGoal.examPrep => l10n.readyBubbleExam,
         LearningGoal.work => l10n.readyBubbleWork,
+        LearningGoal.school => l10n.readyBubbleSchool,
         LearningGoal.general => l10n.readyBubbleGeneral,
       };
 }
