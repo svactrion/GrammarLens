@@ -78,6 +78,45 @@ after the Daily Test results when a tier is reached", and FIX3 keeps their
 current order unless SPEC says otherwise: the tier layer still opens over
 the results when the save lands and closes back to them (F3-1).
 
+### A2. N01 opened late
+
+**What the owner saw:** Day 0 test → Review → the free ticket used on a
+practice → back to Home: the rest scene (V24f) showed but N01 did not open;
+it opened only after another tab switch. SPEC §5.10: N01 opens as soon as
+the first rest scene is on screen.
+
+**Diagnosis.** Hypotheses, each checked with the whole app (its real tab
+shell, Home, Review) in `test/fix3_n01_trigger_test.dart` on the code before
+the fix:
+1. *The trigger runs only on Home's first build or `initState`*: **ruled
+   out.** The check sits in Home's `build` (every build, once-guarded by
+   `_restSceneSeen`); a cold start straight into the rest scene opens N01
+   (test (b) passed before the fix).
+2. *It reads the ticket state before the practice result was saved*:
+   **supported, in a stronger form.** Home reads today's free-ticket count
+   only in `initState`, on app resume and after its own Daily Test. A
+   practice started from Review records the ticket while Home is another
+   (kept-alive) tab, and Home never re-reads it when it is shown again: in
+   test (a) (Review, ticket used, back to Home) Home showed the ordinary
+   Home, not the rest scene at all. The rest scene then appears only after
+   some later refresh: on the phone, an app resume (iOS resumes an app
+   after any system overlay), which is how the owner got the rest scene
+   without N01.
+3. *It waits for an event that a tab switch does not send*: **supported.**
+   `_maybeShowSoftAsk` runs only inside `build` and declines while Home is
+   not "quiet" (`_homeVisible`: the active tab, the top route, not paused;
+   no step walking; no month card). When it declines, nothing calls it
+   again until Home happens to rebuild: a route above Home closing, the
+   pawn landing or the app resuming does not re-check, and a tab switch
+   rebuilds Home only by chance (that is what finally opened it on the
+   phone). A second blocker found on the way: when the rest scene replaces
+   the mountain while a step is still walking, the mountain never reports
+   the walk's end, so `_climbAnimating` stays true and N01 stays blocked.
+
+The exact moment on the phone (which refresh brought the rest scene while
+which condition said "not quiet") cannot be replayed without the phone;
+the two causes above are each enough to give the owner's symptom.
+
 ## Integration (branch `ui-polish-widgets`, 2026-11-17)
 
 `INTEGRATE.md`: `ui-polish` (fix round 2, `7f38e21`) and
