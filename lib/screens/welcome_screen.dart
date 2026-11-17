@@ -329,8 +329,9 @@ class _WatchCard extends StatelessWidget {
   }
 }
 
-/// Panda, Fox and Frog in their wave poses, floating and waving in turn
-/// (0.3 s apart).
+/// Panda, Fox and Frog in their wave poses (V02): the side ones float
+/// (`gl-float`, 8 px, 3.2 s, 0.3 s apart) over a shadow that follows them;
+/// Fox in the middle waves (`gl-wave`, CompanionView's own loop).
 class _Trio extends StatelessWidget {
   final Animation<double>? loop;
   const _Trio({required this.loop});
@@ -339,8 +340,9 @@ class _Trio extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     Widget hero(Avatar a, double size, int i, double t) {
+      final waving = i == 1;
       final phase = ((t - i * .3 / 3.2) % 1.0);
-      final lift = (1 - math.cos(2 * math.pi * phase)) / 2;
+      final lift = waving ? 0.0 : (1 - math.cos(2 * math.pi * phase)) / 2;
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -350,6 +352,7 @@ class _Trio extends StatelessWidget {
                 hero: a,
                 mood: CompanionMood.wave,
                 size: size,
+                ambient: waving ? CompanionAmbient.mood : CompanionAmbient.none,
                 decorative: true),
           ),
           Container(

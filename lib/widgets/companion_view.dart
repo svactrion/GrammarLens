@@ -16,32 +16,60 @@ extension on CompanionMood {
         CompanionMood.idle || CompanionMood.oops => null,
         _ => name,
       };
+}
 
-  /// The ambient loop's period.
-  Duration get period => switch (this) {
-        CompanionMood.idle => const Duration(milliseconds: 3000),
-        CompanionMood.wave => const Duration(milliseconds: 2400),
-        CompanionMood.cheer => const Duration(milliseconds: 3000),
-        CompanionMood.think => const Duration(milliseconds: 2400),
-        CompanionMood.inspect => const Duration(milliseconds: 3200),
-        CompanionMood.sad => const Duration(milliseconds: 2600),
-        CompanionMood.sleep => const Duration(milliseconds: 3000),
-        CompanionMood.oops => const Duration(milliseconds: 1800),
-      };
+/// What a companion does between its one-shot moments.
+enum CompanionAmbient {
+  /// The mood's own loop (SPEC §3.5).
+  mood,
+
+  /// `gl-hop`: a hop every 1.2 s (the Daily Test card, the paywall's middle
+  /// companion, PW05).
+  hop,
+
+  /// `gl-float`: up 8 px and back every 3.2 s (the paywall's side
+  /// companions).
+  float,
+
+  /// No loop of its own: a parent moves it (Welcome's trio).
+  none,
+}
+
+/// One frame of a companion's body motion: [dy] in points (negative is
+/// up), [turn] in degrees around the feet, and a scale.
+@immutable
+class CompanionFrame {
+  final double dy;
+  final double turn;
+  final double scaleX;
+  final double scaleY;
+
+  const CompanionFrame(
+      {this.dy = 0, this.turn = 0, this.scaleX = 1, this.scaleY = 1});
+
+  static const rest = CompanionFrame();
+
+  @override
+  String toString() =>
+      'CompanionFrame(dy: $dy, turn: $turn, scale: $scaleX × $scaleY)';
 }
 
 /// The one companion widget (V00-CompanionSystem, X01, X03): the hero in a
 /// mood, at [size] × [size]. Props sit at the top right of the head and may
 /// draw outside the square.
 ///
-/// Motion per mood (SPEC §3.5): idle breathes (scale 1 ↔ 1.04, 3 s); wave
-/// bobs; cheer hops twice (−14 px, 300 ms easeOut) then breathes, with
-/// sparkles 0 → 1.1 → 0; think tilts −6° (2.4 s); inspect tilts slowly; sad
-/// droops (±3°, 4 px down, 2.6 s; saturation 0.55); sleep breathes in Y
-/// (1 ↔ 1.03, 3 s; brightness 0.82); oops shakes its head ±8° twice in
-/// 360 ms while a sweat drop falls. Under Reduce Motion (and while loops are
-/// off) only the still pose and its prop show; the one-shot hops and shake
-/// are skipped.
+/// Motion per mood (SPEC §3.5 as minimums, the boards' keyframes; fix round
+/// 2 made every loop visible on a phone): idle breathes (scale 1 ↔ 1.04)
+/// and floats 6 px (±3), 3 s; wave sways like `gl-wave` (−9°, +7°, −6°,
+/// +3°, 2.2 s) and bobs 4 px; cheer hops twice (`gl-hop`, 16 px, 600 ms
+/// each) then breathes, every 2.4 s, with sparkles 0 → 1.1 → 0; think tilts
+/// +3° ↔ −6° (2.4 s); inspect tilts ±4° (`gl-tilt`, 2.4 s); sad droops (±3°,
+/// 4 px down, 2.6 s; saturation 0.55); sleep breathes (scale 1.02 × 1.05,
+/// 3.6 s; brightness 0.82) while its Zzz rises and fades (`gl-zz2`, 2.4 s);
+/// oops shakes its head ±8° twice in 360 ms while a sweat drop falls.
+/// [ambient] can replace the mood's loop (hop, float, none). Under Reduce
+/// Motion (and while loops are off) only the still pose and its prop show;
+/// the one-shot hops and shake are skipped under Reduce Motion.
 ///
 /// [replay] restarts the one-shot motion (a new hop) when it changes.
 class CompanionView extends StatefulWidget {
@@ -58,8 +86,12 @@ class CompanionView extends StatefulWidget {
   final bool decorative;
 
   /// Replaces the mood's ambient loop with a hop loop (`gl-hop`, 1.2 s):
-  /// the Daily Test card waiting for its test (X05, V15).
+  /// the Daily Test card waiting for its test (X05, V15). Same as
+  /// `ambient: CompanionAmbient.hop`.
   final bool hopping;
+
+  /// The loop between one-shot moments; [hopping] wins.
+  final CompanionAmbient ambient;
 
   const CompanionView({
     super.key,
@@ -71,7 +103,134 @@ class CompanionView extends StatefulWidget {
     this.semanticLabel,
     this.decorative = false,
     this.hopping = false,
+    this.ambient = CompanionAmbient.mood,
   });
+
+  /// The body's transform (tests read its motion).
+  static const bodyKey = ValueKey('companion_body');
+
+  /// The prop (tests read the Zzz and the sparkle).
+  static const propKey = ValueKey('companion_prop');
+
+  /// The loop's length for [mood] under [ambient].
+  static Duration periodOf(CompanionMood mood,
+          [CompanionAmbient ambient = CompanionAmbient.mood]) =>
+      switch (ambient) {
+        CompanionAmbient.hop => const Duration(milliseconds: 1200),
+        CompanionAmbient.float => const Duration(milliseconds: 3200),
+        CompanionAmbient.none => Duration.zero,
+        CompanionAmbient.mood => switch (mood) {
+            CompanionMood.idle => const Duration(milliseconds: 3000),
+            CompanionMood.wave => const Duration(milliseconds: 2200),
+            CompanionMood.cheer => const Duration(milliseconds: 2400),
+            CompanionMood.think => const Duration(milliseconds: 2400),
+            CompanionMood.inspect => const Duration(milliseconds: 2400),
+            CompanionMood.sad => const Duration(milliseconds: 2600),
+            // The 3.6 s breath twice, the 2.4 s Zzz three times.
+            CompanionMood.sleep => const Duration(milliseconds: 7200),
+            CompanionMood.oops => const Duration(milliseconds: 1800),
+          },
+      };
+
+  /// The body's frame at loop phase [t] (0–1 of [periodOf]) for a
+  /// companion of [size]; [once] is the one-shot's progress (cheer's hops,
+  /// oops's shake; 1 when done) and [looping] whether the loop runs.
+  static CompanionFrame frameAt(
+    CompanionMood mood,
+    double t, {
+    double size = 110,
+    CompanionAmbient ambient = CompanionAmbient.mood,
+    double once = 1,
+    bool looping = true,
+  }) {
+    // Distances follow the size above the boards' 110 pt, never below
+    // their points (fix round 2: visible on a phone).
+    final k = math.max(1.0, size / 110);
+    // 0 → 1 → 0 over [p], smooth (the CSS `ease-in-out` 0/50/100 %).
+    double swell(double p) => (1 - math.cos(2 * math.pi * p)) / 2;
+    final w = swell(t);
+
+    // The one-shots play whether or not the loop runs (not under Reduce
+    // Motion: the widget never starts them there).
+    if (once < 1) {
+      if (mood == CompanionMood.cheer) {
+        return _hop((once * 2) % 1.0, 16 * k);
+      }
+      if (mood == CompanionMood.oops) {
+        final local = (once * 2) % 1.0;
+        return CompanionFrame(
+            turn: 8 * math.sin(2 * math.pi * local) * (1 - local));
+      }
+    }
+    if (!looping) return CompanionFrame.rest;
+    switch (ambient) {
+      case CompanionAmbient.hop:
+        return _hop(t, 16 * k);
+      case CompanionAmbient.float:
+        return CompanionFrame(dy: -8 * k * w);
+      case CompanionAmbient.none:
+        return CompanionFrame.rest;
+      case CompanionAmbient.mood:
+        break;
+    }
+    switch (mood) {
+      case CompanionMood.idle:
+        return CompanionFrame(
+            dy: -6 * k * w, scaleX: 1 + .04 * w, scaleY: 1 + .04 * w);
+      case CompanionMood.wave:
+        return CompanionFrame(dy: -4 * k * w, turn: _waveTurn(t));
+      case CompanionMood.cheer:
+        // Two hops of 600 ms, then a 1.2 s breath.
+        if (t < .5) return _hop((t * 4) % 1.0, 16 * k);
+        final b = swell((t - .5) * 2);
+        return CompanionFrame(scaleX: 1 + .04 * b, scaleY: 1 + .04 * b);
+      case CompanionMood.think:
+        return CompanionFrame(dy: -2 * k * w, turn: 3 - 9 * w);
+      case CompanionMood.inspect:
+        return CompanionFrame(dy: -2 * k * w, turn: -4 + 8 * w);
+      case CompanionMood.sad:
+        return CompanionFrame(dy: (2 + 2 * w) * k, turn: -3 + 6 * w);
+      case CompanionMood.sleep:
+        final b = swell((t * 2) % 1.0);
+        return CompanionFrame(scaleX: 1 + .02 * b, scaleY: 1 + .05 * b);
+      case CompanionMood.oops:
+        return CompanionFrame.rest;
+    }
+  }
+
+  /// `gl-hop` at [p] (0–1): up [height] with a stretch by 30 %, down with a
+  /// squash by 50 %, still from 65 %.
+  static CompanionFrame _hop(double p, double height) {
+    if (p < .3) {
+      final k = Curves.easeOut.transform(p / .3);
+      return CompanionFrame(
+          dy: -height * k, scaleX: 1 - .04 * k, scaleY: 1 + .05 * k);
+    }
+    if (p < .5) {
+      final k = Curves.easeIn.transform((p - .3) / .2);
+      return CompanionFrame(
+          dy: -height * (1 - k), scaleX: .96 + .1 * k, scaleY: 1.05 - .13 * k);
+    }
+    if (p < .65) {
+      final k = (p - .5) / .15;
+      return CompanionFrame(scaleX: 1.06 - .06 * k, scaleY: .92 + .08 * k);
+    }
+    return CompanionFrame.rest;
+  }
+
+  /// `gl-wave`: 0, −9°, +7°, −6°, +3°, 0 at 0/15/30/45/60/75 %, then still.
+  static double _waveTurn(double t) {
+    const stops = [0.0, .15, .30, .45, .60, .75];
+    const turns = [0.0, -9.0, 7.0, -6.0, 3.0, 0.0];
+    for (var i = 1; i < stops.length; i++) {
+      if (t < stops[i]) {
+        final k = Curves.easeInOut
+            .transform((t - stops[i - 1]) / (stops[i] - stops[i - 1]));
+        return turns[i - 1] + (turns[i] - turns[i - 1]) * k;
+      }
+    }
+    return 0;
+  }
 
   /// The image a mood shows for [hero].
   static String assetFor(Avatar hero, CompanionMood mood) {
@@ -121,7 +280,9 @@ class _CompanionViewState extends State<CompanionView>
   @override
   void didUpdateWidget(CompanionView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.mood != widget.mood) {
+    if (oldWidget.mood != widget.mood ||
+        oldWidget.hopping != widget.hopping ||
+        oldWidget.ambient != widget.ambient) {
       _loop?.dispose();
       _loop = null;
       _syncLoop();
@@ -131,15 +292,14 @@ class _CompanionViewState extends State<CompanionView>
     }
   }
 
+  CompanionAmbient get _ambient =>
+      widget.hopping ? CompanionAmbient.hop : widget.ambient;
+
   void _syncLoop() {
-    final on = AppMotion.loopsOn(context);
+    final period = CompanionView.periodOf(widget.mood, _ambient);
+    final on = AppMotion.loopsOn(context) && period > Duration.zero;
     if (on && _loop == null) {
-      _loop = AnimationController(
-          vsync: this,
-          duration: widget.hopping
-              ? const Duration(milliseconds: 1200)
-              : widget.mood.period)
-        ..repeat();
+      _loop = AnimationController(vsync: this, duration: period)..repeat();
     } else if (!on && _loop != null) {
       _loop!.dispose();
       _loop = null;
@@ -148,6 +308,16 @@ class _CompanionViewState extends State<CompanionView>
 
   void _playOnce() {
     final d = _onceDuration(widget.mood);
+    // A running cheer loop starts with its two hops: restart it instead.
+    if (widget.mood == CompanionMood.cheer &&
+        _ambient == CompanionAmbient.mood &&
+        _loop != null) {
+      _once.value = 1;
+      _loop!
+        ..value = 0
+        ..repeat();
+      return;
+    }
     if (d == Duration.zero || AppMotion.reduced(context)) {
       _once.value = 1;
       return;
@@ -165,67 +335,12 @@ class _CompanionViewState extends State<CompanionView>
 
   /// The body's transform for loop phase [t] (0–1) and one-shot [o] (0–1).
   Matrix4 _body(double t, double o) {
-    final s = widget.size;
-    // 0 → 1 → 0 over one period, smooth (the CSS `ease-in-out` 0/50/100 %).
-    final wave = (1 - math.cos(2 * math.pi * t)) / 2;
-    final m = Matrix4.identity();
-    if (widget.hopping && _loop != null) {
-      // gl-hop: up 16 px (squash and stretch) in the first 65 %, then rest.
-      final p = t;
-      if (p < .3) {
-        final k = Curves.easeOut.transform(p / .3);
-        m
-          ..translateByDouble(0, -16 * k * s / 110, 0, 1)
-          ..scaleByDouble(1 - .04 * k, 1 + .05 * k, 1, 1);
-      } else if (p < .5) {
-        final k = (p - .3) / .2;
-        m
-          ..translateByDouble(0, -16 * (1 - k) * s / 110, 0, 1)
-          ..scaleByDouble(.96 + .1 * k, 1.05 - .13 * k, 1, 1);
-      } else if (p < .65) {
-        final k = (p - .5) / .15;
-        m.scaleByDouble(1.06 - .06 * k, .92 + .08 * k, 1, 1);
-      }
-      return m;
-    }
-    switch (widget.mood) {
-      case CompanionMood.idle:
-        final k = 1 + .04 * wave;
-        m.scaleByDouble(k, k, 1, 1);
-      case CompanionMood.wave:
-        m
-          ..translateByDouble(0, -4 * wave * s / 110, 0, 1)
-          ..rotateZ(_deg(-1 + 2 * wave));
-      case CompanionMood.cheer:
-        if (o < 1) {
-          // Two hops of 300 ms, easeOut up, back down.
-          final local = (o * 2) % 1.0;
-          final up = math.sin(math.pi * Curves.easeOut.transform(local));
-          m.translateByDouble(0, -14 * up * s / 110, 0, 1);
-        } else {
-          final k = 1 + .04 * wave;
-          m.scaleByDouble(k, k, 1, 1);
-        }
-      case CompanionMood.think:
-        m.rotateZ(_deg(-6 * wave));
-      case CompanionMood.inspect:
-        m
-          ..translateByDouble(0, -2 * wave * s / 110, 0, 1)
-          ..rotateZ(_deg(-2 * wave));
-      case CompanionMood.sad:
-        m
-          ..translateByDouble(0, (2 + 2 * wave) * s / 110, 0, 1)
-          ..rotateZ(_deg(-3 + 6 * wave));
-      case CompanionMood.sleep:
-        m.scaleByDouble(1, 1 + .03 * wave, 1, 1);
-      case CompanionMood.oops:
-        if (o < 1) {
-          // ±8°, twice, 360 ms each.
-          final local = (o * 2) % 1.0;
-          m.rotateZ(_deg(8 * math.sin(2 * math.pi * local) * (1 - local)));
-        }
-    }
-    return m;
+    final f = CompanionView.frameAt(widget.mood, t,
+        size: widget.size, ambient: _ambient, once: o, looping: _loop != null);
+    return Matrix4.identity()
+      ..translateByDouble(0, f.dy, 0, 1)
+      ..rotateZ(_deg(f.turn))
+      ..scaleByDouble(f.scaleX, f.scaleY, 1, 1);
   }
 
   static double _deg(double d) => d * math.pi / 180;
@@ -251,8 +366,8 @@ class _CompanionViewState extends State<CompanionView>
     switch (widget.mood) {
       case CompanionMood.cheer:
         if (moving) {
-          // gl-sparkle: 0 → 1.1 → .9 → 0.
-          final p = (t * 3000 / 1600) % 1.0;
+          // gl-sparkle: 0 → 1.1 → .9 → 0, twice per cheer loop.
+          final p = _ambient == CompanionAmbient.mood ? (t * 2) % 1.0 : t;
           if (p < .3) {
             scale = 1.1 * p / .3;
           } else if (p < .6) {
@@ -266,8 +381,17 @@ class _CompanionViewState extends State<CompanionView>
           turn = _deg(40 * p);
         }
       case CompanionMood.think:
-      case CompanionMood.sleep:
         if (moving) dy = -8 * wave * k;
+      case CompanionMood.sleep:
+        if (moving) {
+          // gl-zz2: rises 30 and drifts 14 (at 110 pt), grows .6 → 1.1,
+          // fades in by 30 % and out by the end; every 2.4 s.
+          final z = (t * 3) % 1.0;
+          dx = 14 * z * k;
+          dy = -30 * z * k;
+          scale = .6 + .5 * z;
+          opacity = z < .3 ? z / .3 : 1 - (z - .3) / .7;
+        }
       case CompanionMood.sad:
         if (moving) dx = (-3 + 6 * wave) * k;
       case CompanionMood.oops:
@@ -280,6 +404,7 @@ class _CompanionViewState extends State<CompanionView>
         break;
     }
     return Positioned(
+      key: CompanionView.propKey,
       left: rect.left + dx,
       top: rect.top + dy,
       width: rect.width,
@@ -355,6 +480,8 @@ class _CompanionViewState extends State<CompanionView>
           children: [
             Positioned.fill(
               child: Transform(
+                key: CompanionView.bodyKey,
+                // The boards' `transform-origin: 50% 92%`: the feet.
                 alignment: const Alignment(0, .84),
                 transform: _body(t, o),
                 child: child,

@@ -59,8 +59,13 @@ class CreditsScreen extends StatelessWidget {
             children: [
               FloatingTile(
                 index: 0,
+                // R09: FloatingTile floats it (gl-float); no loop of its
+                // own on top (fix round 2).
                 child: CompanionView(
-                    hero: Avatar.panda, size: 70, decorative: true),
+                    hero: Avatar.panda,
+                    size: 70,
+                    ambient: CompanionAmbient.none,
+                    decorative: true),
               ),
               SizedBox(width: 8),
               FloatingTile(
@@ -74,8 +79,13 @@ class CreditsScreen extends StatelessWidget {
               SizedBox(width: 8),
               FloatingTile(
                 index: 2,
+                // R09: FloatingTile floats it (gl-float); no loop of its
+                // own on top (fix round 2).
                 child: CompanionView(
-                    hero: Avatar.frog, size: 70, decorative: true),
+                    hero: Avatar.frog,
+                    size: 70,
+                    ambient: CompanionAmbient.none,
+                    decorative: true),
               ),
             ],
           ),
