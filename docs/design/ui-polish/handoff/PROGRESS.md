@@ -241,3 +241,84 @@ Decisions:
 - **D2-3 Snackbar.** SY02's capsule replaces the Material bar's look; the
   slide uses `ScaffoldMessenger`'s own entrance (250 ms, easeOutCubic),
   which fades and slides rather than moving from exactly 120 %.
+
+## B3 — Launch and onboarding
+
+Status: **done**.
+
+Commits: `7435559` (strings), `af5cbff` (BuddyPicker turntable, lucky
+wheel, SpeechBubble), `e6807b1` (onboarding V04–V05, getting ready V05b,
+mountain intro V06, R06 picker; the carousel removed), `fde5fe8`
+(Welcome V02), `51d38d6` (splash V01, launch image regenerated),
+`531a525` (dead strings removed), `3b70896` (gallery scripts), `de8bc02`
+(MountainScene, V06 on the whole mountain).
+
+What was built:
+- V01 `widgets/launch_splash.dart`: the app icon drawn from its shapes
+  (square pop, lens from the bottom right, lines, glint), wordmark rise
+  and a small lens scanning it; first launch 1.4 s (no profile yet, read
+  in `main.dart` before the first frame), later launches 600 ms; Reduce
+  Motion = one 150 ms fade; light haptic when the square lands. The iOS
+  static launch image (the first frame: the square at 50 %) regenerated
+  with `scripts/generate_launch_image.sh` (a local render, no network).
+- V02 `screens/welcome_screen.dart` (+ `data/welcome_demo.dart`, English
+  content).
+- V03 / R06 `widgets/buddy_picker.dart` (turntable), V03b
+  `screens/lucky_wheel_screen.dart` (`pickLuckyHero`: never the current
+  buddy, never the previous result), `screens/avatar_picker_screen.dart`.
+- V04 / V05 `screens/onboarding_screen.dart` (buddy → name → goal).
+- V05b `services/getting_ready.dart` (`GettingReadyModel`) +
+  `screens/getting_ready_screen.dart`; `screens/first_launch_flow.dart`
+  runs the three real tasks (save profile, today's set, resolve this
+  month's mountain).
+- V06 `screens/mountain_intro_screen.dart` on the new
+  `widgets/monthly_climb/mountain_scene.dart`.
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2443 passed**
+  (before the V06 rework; the V06 commit adds `mountain_scene_test`,
+  run on its own: pass).
+- New tests: `lucky_wheel_test` (400 seeds × every current × every
+  previous: never current, never previous; every other hero reachable),
+  `getting_ready_test` (never past a stop while its task runs; 1.8 s
+  minimum, done < 2.3 s for instant work; timeout at 8 s; retry keeps the
+  bar), `onboarding_screen_test` (rewritten), `avatar_picker_screen_test`
+  (rewritten), `mountain_scene_test` (cover: no empty band at any zoom).
+- Tests changed on purpose (said in the commits): onboarding / first
+  launch / climb / preview / widget tests walk the new steps; the profile
+  is saved before today's set (SPEC §1.6 order); launch tests follow V01's
+  timing; Welcome's wordmark test; Home's and Profile's picker tests use
+  "Save <Hero>".
+- Simulator (iPhone 18 Pro, light), through the gallery with real taps:
+  V01 (mid-assembly and final), V02, V03, V03b (ready and landed), V04,
+  V05 (Work chosen), V05b (mid-way and 100 %), V06, R06, R06s-B1
+  (resting, mid-turn, Panda in front), R06s-D (ready, spinning, landed).
+  Match: layout, colours, copy and states as on the boards. Gaps: V04 is
+  captured without the iOS keyboard (flutter_driver's text entry); V01's
+  wordmark scan lens is the brand loupe, not the board's navy outline
+  lens.
+
+Decisions:
+- **D3-1 Onboarding order.** V03 buddy → V04 name → V05 goal; the step
+  indicator counts 4 (buddy, name, goal, mountain) on every step; V05's
+  bar reads "3 of 4" (the board's "2 of 3" is sample data that contradicts
+  V03/V04's four dots).
+- **D3-2 Goal subtitle.** The board's "You can change it later in
+  Profile" is not true (Profile has no goal setting); the line is "Pick
+  one. It helps us decide what to improve next." (SPEC §1.12: no promise
+  of personalised content).
+- **D3-3 Privacy line on V05 kept.** The board shows none; the goal is
+  still reported as the `learning_goal` user property, so the existing
+  disclosure and the "Your data & AI" sheet stay, small, under the cards.
+- **D3-4 Getting ready's task order** follows its rows (profile, then the
+  Day-0 set, then the mountain). The old code wrote the set first; if the
+  app is killed between the two, the Daily Test fetches today's shared set
+  instead of the bundled Day-0 set (the old fallback path).
+- **D3-5 First launch for the splash** = no profile yet, read with one
+  local query started before the first frame; if it has not answered when
+  the lens would start (280 ms), the full assembly plays.
+- **D3-6 Turntable starts with Fox** (the board's "1 / 9"), not a random
+  buddy.
+- **D3-7 R06 saves with the button.** The carousel's autosave is gone;
+  "Save <Hero>" saves, Back leaves the buddy unchanged. The Hero flight
+  from Home/Profile is dropped (the turntable has no single tile to fly).
