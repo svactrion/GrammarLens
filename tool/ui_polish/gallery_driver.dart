@@ -23,6 +23,14 @@ const _settleMs = <String, int>{
   'V16b-TicketTear': 420,
 };
 
+/// Long system boards: extra captures scrolled down by these offsets.
+const _scrollShots = <String, List<int>>{
+  'X04-Ticket': [420],
+  'X05-DailyCard': [560],
+  'V00-CompanionSystem': [500],
+  'X03-HeroSet': [400],
+};
+
 Future<void> main() async {
   final udid = Platform.environment['CAPTURE_UDID']!;
   final out = Platform.environment['CAPTURE_OUT']!;
@@ -41,8 +49,7 @@ Future<void> main() async {
         continue;
       }
       final id = board.split(':').first;
-      await Future<void>.delayed(
-          Duration(milliseconds: _settleMs[id] ?? 1600));
+      await Future<void>.delayed(Duration(milliseconds: _settleMs[id] ?? 1600));
       final file = '$out/${board.replaceAll(':', '-')}.png';
       final r = await Process.run(
           'xcrun', ['simctl', 'io', udid, 'screenshot', '--type=png', file]);
@@ -50,6 +57,14 @@ Future<void> main() async {
         stdout.writeln('screenshot failed for $board: ${r.stderr}');
       } else {
         stdout.writeln('captured $file');
+      }
+      for (final offset in _scrollShots[id] ?? const <int>[]) {
+        await driver.requestData('scroll:$offset');
+        await Future<void>.delayed(const Duration(milliseconds: 900));
+        final more = '$out/${board.replaceAll(':', '-')}-$offset.png';
+        await Process.run(
+            'xcrun', ['simctl', 'io', udid, 'screenshot', '--type=png', more]);
+        stdout.writeln('captured $more');
       }
     }
   } finally {

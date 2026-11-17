@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_driver/driver_extension.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/utils/app_orientation.dart';
 
 import 'boards.dart';
@@ -29,6 +30,13 @@ Future<void> main() async {
   enableFlutterDriverExtension(handler: (request) async {
     if (request == null) return '';
     if (request == 'boards') return galleryBoards.keys.join(',');
+    if (request.startsWith('scroll:')) {
+      if (!galleryScroll.hasClients) return 'none';
+      final to = double.parse(request.substring(7));
+      galleryScroll.jumpTo(
+          to.clamp(0, galleryScroll.position.maxScrollExtent).toDouble());
+      return 'ok';
+    }
     if (request.startsWith('board:')) {
       final parts = request.substring(6).split(':');
       _board.value = (parts.first, parts.length > 1 && parts[1] == 'dark');
@@ -55,6 +63,7 @@ class _GalleryApp extends StatelessWidget {
           // A new key per board: every board starts from a fresh state.
           key: ValueKey('$id-$dark'),
           debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey: AppMessenger.key,
           theme: buildAppTheme(Brightness.light),
           darkTheme: buildAppTheme(Brightness.dark),
           themeMode: dark ? ThemeMode.dark : ThemeMode.light,

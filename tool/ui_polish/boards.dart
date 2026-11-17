@@ -5,8 +5,13 @@ import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'package:grammar_lens/models/avatar.dart';
 import 'package:grammar_lens/theme.dart';
+import 'package:grammar_lens/utils/app_messenger.dart';
+import 'package:grammar_lens/widgets/companion_dialog.dart';
 import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/daily_test_card.dart';
+import 'package:grammar_lens/widgets/error_state.dart';
 import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/widgets/ticket.dart';
 
 /// Every board the gallery can show, in SPEC order.
 final Map<String, WidgetBuilder> galleryBoards = {
@@ -14,7 +19,175 @@ final Map<String, WidgetBuilder> galleryBoards = {
   'V00-MotionSystem': (_) => const _MotionSystem(),
   'X01-ExpressionKit': (_) => const _ExpressionKit(),
   'X03-HeroSet': (_) => const _HeroSet(),
+  'X04-Ticket': (_) => const _TicketBoard(),
+  'X05-DailyCard': (_) => const _DailyCardBoard(),
+  'R10-Leave': (_) => const _OnMount(_openLeave, child: _QuestionBackdrop()),
+  'R11-Offline': (_) => Scaffold(
+        body: Center(
+          child: SingleChildScrollView(
+            child: ErrorState(
+                hero: Avatar.fox,
+                onRetry: () async {
+                  await Future<void>.delayed(const Duration(seconds: 1));
+                  return false;
+                }),
+          ),
+        ),
+      ),
+  'SY02-Snackbar': (_) => _OnMount(
+        (context) => AppMessenger.show('Name saved',
+            kind: MessageKind.success, actionLabel: 'Undo', onAction: () {}),
+        child: const _QuestionBackdrop(),
+      ),
 };
+
+/// Runs [action] once after the first frame (opens a dialog, a sheet, a
+/// snackbar over [child]).
+class _OnMount extends StatefulWidget {
+  final void Function(BuildContext context) action;
+  final Widget child;
+  const _OnMount(this.action, {required this.child});
+
+  @override
+  State<_OnMount> createState() => _OnMountState();
+}
+
+class _OnMountState extends State<_OnMount> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.action(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+void _openLeave(BuildContext context) => showCompanionDialog(
+      context: context,
+      hero: Avatar.fox,
+      title: context.l10n.dailyTestLeaveTitle,
+      body: context.l10n.leaveProgressBody(1, 5),
+      primaryLabel: context.l10n.leaveKeepGoing,
+      secondaryLabel: context.l10n.commonLeave,
+    );
+
+/// A plain page behind dialogs and messages.
+class _QuestionBackdrop extends StatelessWidget {
+  const _QuestionBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Scaffold(
+      backgroundColor: c.page,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(children: [
+            Container(height: 220, decoration: lipCard(c)),
+            const SizedBox(height: 20),
+            Container(height: 120, decoration: lipCard(c)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class _TicketBoard extends StatefulWidget {
+  const _TicketBoard();
+
+  @override
+  State<_TicketBoard> createState() => _TicketBoardState();
+}
+
+class _TicketBoardState extends State<_TicketBoard> {
+  TicketState _tearing = TicketState.free;
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _tearing = TicketState.tearing);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const next = Duration(hours: 20, minutes: 41);
+    return SystemBoard(
+        title: 'Ticket — one component, three states',
+        children: [
+          _label(context, '1 · FREE'),
+          const Ticket(
+              state: TicketState.free,
+              title: '1 free practice',
+              subtitle: 'Pick a weak spot below. AI feedback included.'),
+          _label(context, '2 · TEARING'),
+          Ticket(
+              state: _tearing,
+              title: '1 free practice',
+              subtitle: 'Pick a weak spot below. AI feedback included.'),
+          _label(context, '3 · USED'),
+          const Ticket(
+              state: TicketState.used,
+              title: '1 free practice',
+              subtitle: 'Nice work, Ada.',
+              nextIn: next),
+          _label(context, 'COMPACT · FREE (HOME)'),
+          const Ticket(
+              state: TicketState.free,
+              compact: true,
+              title: '1 free practice',
+              subtitle: 'Use it on: Articles'),
+          _label(context, 'COMPACT · USED'),
+          const Ticket(
+              state: TicketState.used,
+              compact: true,
+              title: '1 free practice',
+              subtitle: 'Nice work, Ada.',
+              nextIn: next),
+        ]);
+  }
+}
+
+class _DailyCardBoard extends StatelessWidget {
+  const _DailyCardBoard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SystemBoard(title: 'Daily Test card — one skeleton', children: [
+      _label(context, 'LOADING'),
+      const DailyTestCard(state: DailyTestCardState.loading, hero: Avatar.fox),
+      const SizedBox(height: 8),
+      _label(context, 'WAITING (ORANGE)'),
+      DailyTestCard(
+          state: DailyTestCardState.todo,
+          hero: Avatar.fox,
+          title: 'Your next step.',
+          subtitle: '5 questions · about 2 minutes',
+          buttonLabel: 'Start today’s test',
+          onPressed: () {}),
+      const SizedBox(height: 8),
+      _label(context, 'DONE (NAVY)'),
+      DailyTestCard(
+          state: DailyTestCardState.done,
+          hero: Avatar.fox,
+          title: 'Day 1 complete!',
+          subtitle: '+9 points · step 1 reached',
+          results: const [true, false, true, true, true],
+          buttonLabel: 'Review answers',
+          onPressed: () {}),
+    ]);
+  }
+}
+
+/// The scroll position of the board on screen, so the driver can capture
+/// the lower part of a long system board (`scroll:<px>`).
+final galleryScroll = ScrollController();
 
 /// A system board: a title and its content, scrolling.
 class SystemBoard extends StatelessWidget {
@@ -29,6 +202,7 @@ class SystemBoard extends StatelessWidget {
       backgroundColor: c.page,
       body: SafeArea(
         child: ListView(
+          controller: galleryScroll,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
             Text(title,
@@ -114,16 +288,21 @@ class _MotionSystem extends StatelessWidget {
         ]);
     return SystemBoard(title: 'Motion and touch system', children: [
       _label(context, 'BUTTONS: PRESSABLE 3D'),
-      PressableButton(label: 'Primary', onPressed: () {}, tone: ButtonTone.orange),
+      PressableButton(
+          label: 'Primary', onPressed: () {}, tone: ButtonTone.orange),
       const SizedBox(height: 10),
       PressableButton(label: 'Secondary', onPressed: () {}),
       const SizedBox(height: 10),
-      PressableButton(label: 'Correct', onPressed: () {}, tone: ButtonTone.green),
+      PressableButton(
+          label: 'Correct', onPressed: () {}, tone: ButtonTone.green),
       const SizedBox(height: 10),
       const PressableButton(label: 'Disabled', onPressed: null),
       const SizedBox(height: 10),
       PressableButton(
-          label: 'Shine', onPressed: () {}, tone: ButtonTone.orange, shine: true),
+          label: 'Shine',
+          onPressed: () {},
+          tone: ButtonTone.orange,
+          shine: true),
       const SizedBox(height: 10),
       PressableButton(
           label: 'Outline', onPressed: () {}, tone: ButtonTone.outline),
