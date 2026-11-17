@@ -138,9 +138,13 @@ Future<void> _answerAndSubmit(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+// UI polish SY02: the snackbar's content is the capsule (icon, message,
+// action); the message is its first Text.
 String _shownMessage(WidgetTester tester) {
-  final bar = tester.widget<SnackBar>(find.byType(SnackBar));
-  return (bar.content as Text).data!;
+  final text = tester.widget<Text>(find
+      .descendant(of: find.byType(SnackBar), matching: find.byType(Text))
+      .first);
+  return text.data!;
 }
 
 void main() {
