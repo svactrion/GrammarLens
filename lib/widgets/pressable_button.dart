@@ -16,6 +16,9 @@ enum ButtonTone {
   /// A correct-answer action (`greenDeep`).
   green,
 
+  /// A wrong-answer acknowledgement (V09's "Got it", `red`).
+  red,
+
   /// The secondary, outlined action: card fill, 2 px border, a lip.
   outline,
 
@@ -286,6 +289,7 @@ class _PressableButtonState extends State<PressableButton>
       ButtonTone.orange => (c.orange, c.orangeDeep, c.onOrange, null),
       ButtonTone.navy => (c.navy, c.navyDeep, c.onNavy, null),
       ButtonTone.green => (c.greenDeep, c.greenLip, c.onNavy, null),
+      ButtonTone.red => (c.red, c.redLip, c.onNavy, null),
       ButtonTone.outline => (c.card, c.lip, c.text, c.line),
       ButtonTone.text => (
           Colors.transparent,

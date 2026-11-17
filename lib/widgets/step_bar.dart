@@ -29,6 +29,11 @@ class StepBar extends StatefulWidget {
   /// segment).
   final ValueChanged<int>? onFilled;
 
+  /// An empty segment drawn in [highlightColor] instead of the track (the
+  /// question being answered, V07).
+  final int? highlight;
+  final Color? highlightColor;
+
   const StepBar({
     super.key,
     required this.segments,
@@ -38,6 +43,8 @@ class StepBar extends StatefulWidget {
     this.stagger = const Duration(milliseconds: 100),
     this.animateOnMount = false,
     this.onFilled,
+    this.highlight,
+    this.highlightColor,
   });
 
   @override
@@ -136,8 +143,12 @@ class _StepBarState extends State<StepBar> with SingleTickerProviderStateMixin {
             if (i > 0) SizedBox(width: widget.gap),
             Expanded(
               child: DecoratedBox(
-                decoration:
-                    BoxDecoration(color: widget.track, borderRadius: radius),
+                decoration: BoxDecoration(
+                    color:
+                        i == widget.highlight && widget.highlightColor != null
+                            ? widget.highlightColor
+                            : widget.track,
+                    borderRadius: radius),
                 child: widget.segments[i] == null
                     ? const SizedBox.expand()
                     : _segment(i, widget.segments[i]!, radius, rtl),

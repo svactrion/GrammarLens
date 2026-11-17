@@ -31,6 +31,9 @@ abstract final class HapticMap {
   /// Only the irreversible Reset confirmation.
   static void heavy() => _play(_Kind.heavy);
 
+  /// Two light taps 90 ms apart (Q04: a partly right answer).
+  static void lightTwice() => _play(_Kind.lightTwice);
+
   /// Tests: every haptic played, by name, instead of the platform call.
   @visibleForTesting
   static List<String>? log;
@@ -58,8 +61,12 @@ abstract final class HapticMap {
         unawaited(HapticFeedback.lightImpact());
         Timer(const Duration(milliseconds: 80),
             () => unawaited(HapticFeedback.lightImpact()));
+      case _Kind.lightTwice:
+        unawaited(HapticFeedback.lightImpact());
+        Timer(const Duration(milliseconds: 90),
+            () => unawaited(HapticFeedback.lightImpact()));
     }
   }
 }
 
-enum _Kind { selection, light, medium, success, warning, heavy }
+enum _Kind { selection, light, medium, success, warning, heavy, lightTwice }

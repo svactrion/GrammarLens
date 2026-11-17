@@ -39,6 +39,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color onGreenSoft;
   final Color red;
   final Color redSoft;
+
+  /// The lip under a red button.
+  final Color redLip;
   final Color onRedSoft;
   final Color gold;
   final Color goldDeep;
@@ -107,6 +110,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.onGreenSoft,
     required this.red,
     required this.redSoft,
+    required this.redLip,
     required this.onRedSoft,
     required this.gold,
     required this.goldDeep,
@@ -159,6 +163,7 @@ class AppColors extends ThemeExtension<AppColors> {
     onGreenSoft: Color(0xFF13734A),
     red: Color(0xFFB83232),
     redSoft: Color(0xFFFDE6E3),
+    redLip: Color(0xFF8E2222),
     onRedSoft: Color(0xFF8E2222),
     gold: Color(0xFFFFC23C),
     goldDeep: Color(0xFF8A5C00),
@@ -203,6 +208,7 @@ class AppColors extends ThemeExtension<AppColors> {
     onGreenSoft: Color(0xFFB7E4C9),
     red: Color(0xFFE05A5A),
     redSoft: Color(0xFF3F2121),
+    redLip: Color(0xFF8E2222),
     onRedSoft: Color(0xFFF4B8B4),
     gold: Color(0xFFFFC23C),
     goldDeep: Color(0xFF8A5C00),
@@ -291,6 +297,7 @@ class AppColors extends ThemeExtension<AppColors> {
       onGreenSoft: l(onGreenSoft, other.onGreenSoft),
       red: l(red, other.red),
       redSoft: l(redSoft, other.redSoft),
+      redLip: l(redLip, other.redLip),
       onRedSoft: l(onRedSoft, other.onRedSoft),
       gold: l(gold, other.gold),
       goldDeep: l(goldDeep, other.goldDeep),
