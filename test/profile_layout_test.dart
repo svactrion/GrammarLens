@@ -22,6 +22,7 @@ import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/widgets/floating_nav_shell.dart';
+import 'package:grammar_lens/widgets/medals_layer.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 import 'package:grammar_lens/widgets/section_title.dart';
 
@@ -261,38 +262,40 @@ void main() {
   });
 
   testWidgets(
-      'the medals from real data: the count, the running month first, the '
-      'Welcome badge last, then the progress card', (tester) async {
+      'V23: the medals from real data on the shelf, newest first, at most '
+      'three, in a card with "See all"; then the progress card',
+      (tester) async {
     await pump(tester, storage: _Storage(history: true, score: 80));
     // V23's stage is taller: the shelf is further down.
     await tester.scrollUntilVisible(
         find.byKey(MonthlyProgressCard.cardKey), 200,
         scrollable: find.byType(Scrollable).first);
-    // Welcome, Gold September, Silver August; the running month (80 points
-    // in October) is past Bronze; July has no medal.
+    // Gold September, Silver August; the running month (80 points in
+    // October) is past Bronze; July has no medal; the Welcome badge (July)
+    // is older than the three.
     final bronze = MonthlyMedalRules.threshold(2026, 10, MedalTier.bronze);
     expect(80 >= bronze, isTrue);
-    expect(tester.widget<Text>(find.byKey(SettingsScreen.earnedCountKey)).data,
-        '4 earned');
     double x(Key key) => tester.getTopLeft(find.byKey(key)).dx;
     final keys = [
       MonthlyMedalCollection.slotKey(2026, 10),
       MonthlyMedalCollection.slotKey(2026, 9),
       MonthlyMedalCollection.slotKey(2026, 8),
-      MonthlyMedalCollection.welcomeSlotKey,
     ];
     final xs = [for (final k in keys) x(k)];
     expect(xs, orderedEquals([...xs]..sort()));
     expect(find.byKey(MonthlyMedalCollection.slotKey(2026, 7)), findsNothing);
-    // The section title is the shared SectionTitle.
-    expect(
-        find.widgetWithText(SectionTitle, 'Medal collection'), findsOneWidget);
-    expect(
-        tester.getTopLeft(find.byKey(MonthlyProgressCard.cardKey)).dy,
-        greaterThan(tester
-                .getBottomLeft(find.byKey(MonthlyMedalCollection.stripKey))
-                .dy -
-            1));
+    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
+    // The title, "See all" and the shelf share one card.
+    final card = find.byKey(SettingsScreen.medalCardKey);
+    for (final inside in [
+      find.widgetWithText(SectionTitle, 'Medal collection'),
+      find.byKey(SettingsScreen.seeAllMedalsKey),
+      find.byKey(MonthlyMedalCollection.stripKey),
+    ]) {
+      expect(find.descendant(of: card, matching: inside), findsOneWidget);
+    }
+    expect(tester.getTopLeft(find.byKey(MonthlyProgressCard.cardKey)).dy,
+        greaterThan(tester.getBottomLeft(card).dy - 1));
   });
 
   testWidgets(
@@ -305,6 +308,25 @@ void main() {
     await tester.tap(seeAll);
     await tester.pumpAndSettle();
     expect(find.byType(BackdropFilter), findsOneWidget);
+    // The count moved here from Profile's header (V23 has none).
+    expect(tester.widget<Text>(find.byKey(MedalsLayer.earnedKey)).data,
+        '4 earned');
+    // Newest first: October (running), September, August; the Welcome
+    // badge last.
+    final order = [
+      MonthlyMedalCollection.slotKey(2026, 10),
+      MonthlyMedalCollection.slotKey(2026, 9),
+      MonthlyMedalCollection.slotKey(2026, 8),
+    ];
+    final xs = [
+      for (final k in order) tester.getTopLeft(find.byKey(k).last).dx
+    ];
+    expect(xs, orderedEquals([...xs]..sort()));
+    expect(
+        tester
+            .getTopLeft(find.byKey(MonthlyMedalCollection.welcomeSlotKey).last)
+            .dy,
+        greaterThan(tester.getTopLeft(find.byKey(order.first).last).dy));
     expect(find.byTooltip('Close'), findsWidgets);
     final september = find.byKey(MonthlyMedalCollection.slotKey(2026, 9));
     expect(september, findsWidgets);
@@ -386,15 +408,8 @@ void main() {
         expect(tester.takeException(), isNull);
         final scrollable = find.byType(Scrollable).first;
         for (var i = 0; i < 20; i++) {
-          // Nothing but the medal strip is wider than the screen.
+          // Nothing is wider than the screen.
           for (final e in find.byType(Text).evaluate()) {
-            final inStrip = find
-                .ancestor(
-                    of: find.byWidget(e.widget),
-                    matching: find.byKey(MonthlyMedalCollection.stripKey))
-                .evaluate()
-                .isNotEmpty;
-            if (inStrip) continue;
             final r = tester.getRect(find.byWidget(e.widget).first);
             expect(r.right, lessThanOrEqualTo(width + .01),
                 reason: (e.widget as Text).data);

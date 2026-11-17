@@ -165,9 +165,22 @@ void main() {
             'Monthly total: ${_UntouchedStorage.running.score} / '),
         findsOneWidget);
     expect(find.byType(MonthlyMedalCollection), findsOneWidget);
-    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsOneWidget);
+    // The shelf holds the newest three (V23); the collection holds the
+    // whole sample, for PF02.
+    final collection = tester
+        .widget<MonthlyMedalCollection>(find.byType(MonthlyMedalCollection));
+    expect(collection.welcomeBadge, isNotNull);
+    final months = {for (final m in collection.shelf()) (m.year, m.month)};
     for (final r in DebugSampleCollection.sample(now).results) {
-      expect(find.byKey(MonthlyMedalCollection.slotKey(r.year, r.month)),
+      if (r.tier != null) expect(months, contains((r.year, r.month)));
+    }
+    final slots = collection.shelfSlots();
+    expect(slots, hasLength(MonthlyMedalCollection.shelfMax));
+    for (final s in slots) {
+      expect(
+          find.byKey(s == null
+              ? MonthlyMedalCollection.welcomeSlotKey
+              : MonthlyMedalCollection.slotKey(s.year, s.month)),
           findsOneWidget);
     }
     expect(

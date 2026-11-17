@@ -13,13 +13,14 @@ import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 
 import 'support/l10n_support.dart';
 
-/// Batch 5 (N10, N33) and 1.2.0 Batch 7 (Q7, N9, N10): Profile's strip.
-/// The running month first, then the months newest to oldest, one medal
-/// each (the highest tier, in the month's theme), the Welcome badge last;
-/// the running month marked in progress, its theme's Bronze at .38 while it
-/// has no tier; no past month without a medal. A tap opens the medal's
-/// detail, a tap outside closes it. The running month's progress card takes
-/// every number from `MonthlyMedalRules`.
+/// Profile's medal shelf (V23, UI polish fix round 1; before it, Batch 5 and
+/// 1.2.0 Batch 7's strip): at most three medals standing on the shelf,
+/// newest first — the running month (a locked slot until it has a tier),
+/// then the past medals and the earned Welcome badge by month; one medal
+/// per month (the highest tier, in the month's theme); no past month
+/// without a medal. A tap opens the medal's detail (its medal flies in, its
+/// numbers count up), a tap outside closes it. The running month's
+/// progress card takes every number from `MonthlyMedalRules`.
 void main() {
   Future<void> pumpCollection(
     WidgetTester tester, {
@@ -31,11 +32,19 @@ void main() {
     List<MonthlyMedalResult> results = const [],
     Map<(int, int), String> themeIds = const {},
     bool reduceMotion = false,
+    bool settle = true,
   }) async {
     tester.view.physicalSize = Size(width, 568);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    if (reduceMotion) {
+      // Also for the routes the shelf opens, outside the MediaQuery below.
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    }
     await tester.pumpWidget(MaterialApp(
       theme: buildAppTheme(brightness, textSize: textSize),
       home: MediaQuery(
@@ -65,21 +74,33 @@ void main() {
         ),
       ),
     ));
-    await tester.pumpAndSettle();
+    if (settle) await tester.pumpAndSettle();
   }
 
-  /// The strip's medals, left to right, as (slot key, theme or 'welcome',
-  /// tier, earned).
+  bool isSlot(Widget w) =>
+      w.key is ValueKey<String> &&
+      (w.key! as ValueKey<String>).value.startsWith('medal_shelf_') &&
+      w.key != MonthlyMedalCollection.detailKey &&
+      w.key != MonthlyMedalCollection.lockedKey;
+
+  /// The shelf's slots, start to end, as (slot key, theme, 'welcome' or
+  /// 'locked', tier, earned).
   List<(String, String, MedalTier?, bool)> shelf(WidgetTester tester) {
-    final slots = find.byWidgetPredicate((w) =>
-        w.key is ValueKey<String> &&
-        (w.key! as ValueKey<String>).value.startsWith('medal_shelf_') &&
-        w.key != MonthlyMedalCollection.detailKey);
-    final out = <(String, String, MedalTier?, bool, Offset)>[];
-    for (final e in slots.evaluate()) {
+    final out = <(String, String, MedalTier?, bool, double)>[];
+    for (final e in find.byWidgetPredicate(isSlot).evaluate()) {
       final key = (e.widget.key! as ValueKey<String>).value;
-      final badge = tester.widget<MedalBadge>(find.descendant(
-          of: find.byKey(e.widget.key!), matching: find.byType(MedalBadge)));
+      final slot = find.byKey(e.widget.key!);
+      final x = tester.getTopLeft(slot).dx;
+      if (find
+          .descendant(
+              of: slot, matching: find.byKey(MonthlyMedalCollection.lockedKey))
+          .evaluate()
+          .isNotEmpty) {
+        out.add((key, 'locked', null, false, x));
+        continue;
+      }
+      final badge = tester.widget<MedalBadge>(
+          find.descendant(of: slot, matching: find.byType(MedalBadge)));
       final m = RegExp(r'medal_(\w+?)_(gold|silver|bronze)\.webp')
           .firstMatch(badge.asset);
       out.add((
@@ -87,30 +108,25 @@ void main() {
         m?.group(1) ?? 'welcome',
         m == null ? null : MedalTier.values.byName(m.group(2)!),
         badge.earned,
-        tester.getTopLeft(find.byKey(e.widget.key!)),
+        x,
       ));
     }
-    out.sort((a, b) => a.$5.dy != b.$5.dy
-        ? a.$5.dy.compareTo(b.$5.dy)
-        : a.$5.dx.compareTo(b.$5.dx));
+    out.sort((a, b) => a.$5.compareTo(b.$5));
     return [for (final s in out) (s.$1, s.$2, s.$3, s.$4)];
   }
 
   for (final brightness in Brightness.values) {
     for (final size in AppTextSize.values) {
-      testWidgets('only the running month fits 320 pt in $brightness at $size',
-          (tester) async {
+      testWidgets(
+          'the running month alone, and three of twelve months, fit 320 pt '
+          'in $brightness at $size; the detail too', (tester) async {
         await pumpCollection(tester,
             brightness: brightness,
             textSize: size,
             currentProgress: november(score: 0));
-        expect(shelf(tester), hasLength(2));
+        expect(shelf(tester), hasLength(1));
         expect(tester.takeException(), isNull);
-      });
 
-      testWidgets(
-          'twelve months and the Welcome badge fit 320 pt in $brightness at '
-          '$size on one scrolling strip, the detail too', (tester) async {
         await pumpCollection(
           tester,
           brightness: brightness,
@@ -120,18 +136,10 @@ void main() {
           results: twelveMonths,
           themeIds: storedThemes,
         );
-        expect(shelf(tester), hasLength(13));
+        expect(shelf(tester), hasLength(MonthlyMedalCollection.shelfMax));
         // One row: every slot at the same top.
         final tops = {
-          for (final e in find
-              .byWidgetPredicate((w) =>
-                  w.key is ValueKey<String> &&
-                  (w.key! as ValueKey<String>)
-                      .value
-                      .startsWith('medal_shelf_') &&
-                  w.key != MonthlyMedalCollection.detailKey &&
-                  w.key != MonthlyMedalCollection.stripKey)
-              .evaluate())
+          for (final e in find.byWidgetPredicate(isSlot).evaluate())
             tester.getTopLeft(find.byKey(e.widget.key!)).dy
         };
         expect(tops, hasLength(1));
@@ -144,12 +152,13 @@ void main() {
   }
 
   testWidgets(
-      'Q7: the running month first, then the months newest to oldest, the '
-      'Welcome badge last; each in its theme with its highest tier',
+      'V23: newest first, at most three: the running month, then the past '
+      'months newest to oldest; each in its theme with its highest tier',
       (tester) async {
     await pumpCollection(
       tester,
       width: 430,
+      // Earned in August: older than the three newest.
       welcomeBadge: welcomeBadgeFixture,
       currentProgress: november(score: 80),
       // Stored in any order.
@@ -161,76 +170,104 @@ void main() {
       ('medal_shelf_2026-10', 'red_canyon', MedalTier.gold, true),
       // Before themes were stored: Green Slope.
       ('medal_shelf_2026-9', 'green_slope', MedalTier.bronze, true),
-      ('medal_shelf_2026-7', 'green_slope', MedalTier.silver, true),
-      ('medal_shelf_welcome', 'welcome', null, true),
     ]);
+    expect(find.byKey(MonthlyMedalCollection.slotKey(2026, 7)), findsNothing);
+    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
   });
 
   testWidgets(
-      'the strip has no background: no card, disc or fill behind the medals',
-      (tester) async {
+      'the Welcome badge stands by the month it was earned in, after that '
+      "month's own medal", (tester) async {
     await pumpCollection(tester,
         width: 430,
         welcomeBadge: welcomeBadgeFixture,
-        currentProgress: november(score: 80),
-        results: [goldOctober]);
-    final strip = find.byKey(MonthlyMedalCollection.stripKey);
-    expect(
-        find.descendant(of: strip, matching: find.byType(Card)), findsNothing);
-    for (final box in tester.widgetList<DecoratedBox>(
-        find.descendant(of: strip, matching: find.byType(DecoratedBox)))) {
-      final d = box.decoration;
-      expect(
-          d is BoxDecoration && (d.color != null || d.shape == BoxShape.circle),
-          isFalse);
-    }
-    expect(find.descendant(of: strip, matching: find.byType(ColoredBox)),
-        findsNothing);
-  });
-
-  testWidgets('the running month is marked in progress, and only it',
-      (tester) async {
+        currentProgress: november(score: 0),
+        results: [goldOctober, silverJuly]);
+    expect(shelf(tester).map((s) => s.$1), [
+      'medal_shelf_2026-11',
+      'medal_shelf_2026-10',
+      'medal_shelf_welcome',
+    ]);
     await pumpCollection(tester,
         width: 430,
-        currentProgress: november(score: 80),
-        results: [goldOctober, bronzeSeptember],
-        themeIds: storedThemes);
-    expect(find.text(en.medalInProgress), findsOneWidget);
+        welcomeBadge: WelcomeBadge(
+            earnedAt: DateTime(2026, 9, 3), ruleVersion: 1, backfilled: false),
+        results: [bronzeSeptember, silverJuly]);
+    expect(shelf(tester).map((s) => s.$1), [
+      'medal_shelf_2026-9',
+      'medal_shelf_welcome',
+      'medal_shelf_2026-7',
+    ]);
+    // A new user: this month, then the badge.
+    await pumpCollection(tester,
+        width: 430,
+        welcomeBadge: WelcomeBadge(
+            earnedAt: DateTime(2026, 11, 2), ruleVersion: 1, backfilled: false),
+        currentProgress: november(score: 9));
+    expect(shelf(tester), [
+      ('medal_shelf_2026-11', 'locked', null, false),
+      ('medal_shelf_welcome', 'welcome', null, true),
+    ]);
     expect(
         find.descendant(
-            of: find.byKey(MonthlyMedalCollection.slotKey(2026, 11)),
-            matching: find.text(en.medalInProgress)),
-        findsOneWidget);
-    expect(
-        find.bySemanticsLabel(
-            'November 2026, Ember Peak, Bronze medal, in progress.'),
+            of: find.byKey(MonthlyMedalCollection.welcomeSlotKey),
+            matching: find.text('Nov 2026')),
         findsOneWidget);
   });
 
   testWidgets(
-      "Q7: with no tier yet, the running month shows its theme's Bronze at "
-      'about .38 opacity; its text is not faded', (tester) async {
-    final bronze = MonthlyMedalRules.threshold(2026, 11, MedalTier.bronze);
+      'the medals stand on the shelf image: their bottoms on its top surface, '
+      'the labels under its front face', (tester) async {
     await pumpCollection(tester,
-        currentProgress: november(score: bronze - 1), themeIds: storedThemes);
-    expect(shelf(tester).first,
-        ('medal_shelf_2026-11', 'ember_peak', MedalTier.bronze, false));
+        width: 390,
+        currentProgress: november(score: 80),
+        results: [goldOctober, bronzeSeptember],
+        themeIds: storedThemes);
+    final image = find.byWidgetPredicate((w) =>
+        w is Image &&
+        w.image is AssetImage &&
+        (w.image as AssetImage).assetName == MonthlyMedalCollection.shelfAsset);
+    expect(image, findsOneWidget);
+    final shelfRect = tester.getRect(image);
+    expect(shelfRect.width / shelfRect.height,
+        closeTo(MonthlyMedalCollection.shelfAspect, .01));
+    final slot = find.byKey(MonthlyMedalCollection.slotKey(2026, 10));
+    final medal = tester
+        .getRect(find.descendant(of: slot, matching: find.byType(MedalBadge)));
+    expect(
+        medal.bottom,
+        closeTo(
+            shelfRect.top + shelfRect.height * MonthlyMedalCollection.standAt,
+            .5));
+    final label = tester
+        .getRect(find.descendant(of: slot, matching: find.text('Oct 2026')));
+    expect(
+        label.top,
+        closeTo(
+            shelfRect.top + shelfRect.height * MonthlyMedalCollection.labelsAt,
+            .5));
+  });
+
+  testWidgets(
+      'the running month is a locked slot until its first tier, with the way '
+      'to it; then its medal, with the way to the next; Gold reads in '
+      'progress', (tester) async {
+    final bronze = MonthlyMedalRules.threshold(2026, 11, MedalTier.bronze);
+    final silver = MonthlyMedalRules.threshold(2026, 11, MedalTier.silver);
+    final gold = MonthlyMedalRules.threshold(2026, 11, MedalTier.gold);
+    await pumpCollection(tester,
+        currentProgress: november(score: bronze - 9), themeIds: storedThemes);
     final slot = find.byKey(MonthlyMedalCollection.slotKey(2026, 11));
-    final badge = tester.widget<MedalBadge>(
-        find.descendant(of: slot, matching: find.byType(MedalBadge)));
-    expect(badge.fadedOpacity, MonthlyMedalCollection.runningFade);
-    expect(MonthlyMedalCollection.runningFade, closeTo(.38, .001));
-    final filter = tester.widget<ColorFiltered>(
-        find.descendant(of: slot, matching: find.byType(ColorFiltered)));
-    expect(filter.colorFilter, ColorFilter.matrix(MedalBadge.fadedMatrix(.38)));
-    // The label and the mark are drawn in full: nothing fades them.
-    for (final text in ['Nov 2026', en.medalInProgress]) {
-      final label = find.descendant(of: slot, matching: find.text(text));
-      expect(find.ancestor(of: label, matching: find.byType(Opacity)),
-          findsNothing);
-      expect(find.ancestor(of: label, matching: find.byType(ColorFiltered)),
-          findsNothing);
-      expect(tester.widget<Text>(label).style!.color!.a, 1);
+    expect(
+        shelf(tester).single, ('medal_shelf_2026-11', 'locked', null, false));
+    expect(
+        find.descendant(
+            of: slot, matching: find.byIcon(Icons.lock_outline_rounded)),
+        findsOneWidget);
+    for (final text in ['Nov 2026', '9 pts to Bronze']) {
+      expect(
+          find.descendant(of: slot, matching: find.text(text)), findsOneWidget,
+          reason: text);
     }
     expect(
         find.bySemanticsLabel(
@@ -240,12 +277,35 @@ void main() {
     // The moment the score crosses Bronze, it lights (N8: certain).
     await pumpCollection(tester,
         currentProgress: november(score: bronze), themeIds: storedThemes);
-    expect(shelf(tester).first,
+    expect(shelf(tester).single,
         ('medal_shelf_2026-11', 'ember_peak', MedalTier.bronze, true));
+    expect(find.text('${silver - bronze} pts to Silver'), findsOneWidget);
+    expect(
+        find.bySemanticsLabel(
+            'November 2026, Ember Peak, Bronze medal, in progress.'),
+        findsOneWidget);
+
+    await pumpCollection(tester,
+        currentProgress: november(score: gold), themeIds: storedThemes);
+    expect(shelf(tester).single,
+        ('medal_shelf_2026-11', 'ember_peak', MedalTier.gold, true));
+    expect(find.text(en.medalInProgress), findsOneWidget);
+  });
+
+  testWidgets("a past month's line is its tier", (tester) async {
+    await pumpCollection(tester,
+        width: 430, results: [goldOctober, bronzeSeptember]);
+    for (final (key, tier) in [
+      (MonthlyMedalCollection.slotKey(2026, 10), 'Gold'),
+      (MonthlyMedalCollection.slotKey(2026, 9), 'Bronze'),
+    ]) {
+      expect(find.descendant(of: find.byKey(key), matching: find.text(tier)),
+          findsOneWidget);
+    }
   });
 
   testWidgets(
-      'a past month without a medal is not on the strip; a running month '
+      'a past month without a medal is not on the shelf; a running month '
       'passed as a result is not drawn twice', (tester) async {
     await pumpCollection(tester,
         width: 430,
@@ -258,7 +318,6 @@ void main() {
     expect(shelf(tester).map((s) => s.$1), [
       'medal_shelf_2026-11',
       'medal_shelf_2026-9',
-      'medal_shelf_welcome',
     ]);
     expect(find.byKey(MonthlyMedalCollection.slotKey(2026, 8)), findsNothing);
   });
@@ -273,10 +332,10 @@ void main() {
         ('medal_shelf_2026-9', 'green_slope', MedalTier.bronze, true));
   });
 
-  testWidgets('N10: the Welcome badge is faded while locked', (tester) async {
+  testWidgets('an unearned Welcome badge is not on the shelf (PF02 has it)',
+      (tester) async {
     await pumpCollection(tester, results: [bronzeSeptember]);
-    expect(shelf(tester).last, ('medal_shelf_welcome', 'welcome', null, false));
-    expect(find.bySemanticsLabel('Welcome badge, locked.'), findsOneWidget);
+    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
   });
 
   test('earnedCount: the Welcome badge and every month with a tier', () {
@@ -295,8 +354,44 @@ void main() {
 
   for (final reduceMotion in [false, true]) {
     testWidgets(
-        'N34: a tap opens the detail with the month, theme, tier, steps and '
-        'points; a tap outside closes it'
+        'V23: the medals settle on the shelf 80 ms apart'
+        '${reduceMotion ? ' (Reduce Motion: they are just there)' : ''}',
+        (tester) async {
+      await pumpCollection(tester,
+          width: 430,
+          reduceMotion: reduceMotion,
+          settle: false,
+          currentProgress: november(score: 80),
+          results: [goldOctober, bronzeSeptember],
+          themeIds: storedThemes);
+      double opacity(Key key) => tester
+          .widget<Opacity>(find
+              .ancestor(
+                  of: find.descendant(
+                      of: find.byKey(key), matching: find.byType(MedalBadge)),
+                  matching: find.byType(Opacity))
+              .first)
+          .opacity;
+      final keys = [
+        MonthlyMedalCollection.slotKey(2026, 11),
+        MonthlyMedalCollection.slotKey(2026, 10),
+        MonthlyMedalCollection.slotKey(2026, 9),
+      ];
+      await tester.pump(const Duration(milliseconds: 120));
+      final mid = [for (final k in keys) opacity(k)];
+      if (reduceMotion) {
+        expect(mid, [1, 1, 1]);
+      } else {
+        expect(mid[0], greaterThan(mid[1]));
+        expect(mid[1], greaterThan(mid[2]));
+      }
+      await tester.pumpAndSettle();
+      expect([for (final k in keys) opacity(k)], [1, 1, 1]);
+    });
+
+    testWidgets(
+        'N34 / PF03: a tap opens the detail with the month, theme, tier, '
+        'steps and points (counting up); a tap outside closes it'
         '${reduceMotion ? ' (Reduce Motion)' : ''}', (tester) async {
       await pumpCollection(tester,
           reduceMotion: reduceMotion,
@@ -306,6 +401,11 @@ void main() {
       expect(find.byKey(MonthlyMedalCollection.detailKey), findsNothing);
 
       await tester.tap(find.byKey(MonthlyMedalCollection.slotKey(2026, 10)));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      final counted = find.text('10 / 31 steps · 251 points');
+      expect(counted, reduceMotion ? findsOneWidget : findsNothing,
+          reason: 'the numbers count up unless motion is reduced');
       await tester.pumpAndSettle();
       final detail = find.byKey(MonthlyMedalCollection.detailKey);
       expect(detail, findsOneWidget);
@@ -323,6 +423,19 @@ void main() {
           find.descendant(of: detail, matching: find.byType(MedalBadge)));
       expect(big.disc, MonthlyMedalCollection.detailDisc);
       expect(big.asset, contains('medal_red_canyon_gold'));
+      // The medal flies in under the shelf slot's tag; not under Reduce
+      // Motion.
+      final hero = tester.widget<Hero>(
+          find.ancestor(of: find.byWidget(big), matching: find.byType(Hero)));
+      expect(hero.tag, MonthlyMedalCollection.heroTag(2026, 10));
+      expect(
+          tester
+              .widget<HeroMode>(find
+                  .ancestor(
+                      of: find.byWidget(big), matching: find.byType(HeroMode))
+                  .first)
+              .enabled,
+          !reduceMotion);
 
       // A tap outside the medal: the screen's corner.
       await tester.tapAt(const Offset(4, 4));
@@ -334,7 +447,8 @@ void main() {
   testWidgets('the running month and the Welcome badge have their details',
       (tester) async {
     await pumpCollection(tester,
-        welcomeBadge: welcomeBadgeFixture,
+        welcomeBadge: WelcomeBadge(
+            earnedAt: DateTime(2026, 11, 2), ruleVersion: 1, backfilled: false),
         currentProgress: november(score: 42),
         themeIds: storedThemes);
     await tester.tap(find.byKey(MonthlyMedalCollection.slotKey(2026, 11)));
@@ -358,7 +472,7 @@ void main() {
     detail = find.byKey(MonthlyMedalCollection.detailKey);
     expect(
         find.descendant(
-            of: detail, matching: find.text('Earned in August 2026')),
+            of: detail, matching: find.text('Earned in November 2026')),
         findsOneWidget);
   });
 
@@ -480,7 +594,7 @@ void main() {
           findsOneWidget);
     });
 
-    testWidgets('it sits under the strip, as a card of its own',
+    testWidgets('it sits under the shelf, as a card of its own',
         (tester) async {
       await pumpCollection(tester,
           width: 375,

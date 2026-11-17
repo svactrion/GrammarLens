@@ -104,7 +104,8 @@ class SettingsScreen extends StatefulWidget {
   /// The identity card, the saved name shown in it, and the medal count.
   static const identityCardKey = ValueKey('settings_identity_card');
   static const nameKey = ValueKey('settings_name');
-  static const earnedCountKey = ValueKey('settings_medals_earned');
+  /// V23's medal card: the title, "See all" and the shelf.
+  static const medalCardKey = ValueKey('settings_medal_card');
   static const seeAllMedalsKey = ValueKey('settings_medals_see_all');
   static const nameFieldKey = ValueKey('settings_name_field');
   static const saveNameKey = ValueKey('settings_save_name');
@@ -532,52 +533,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 23),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                  child: SectionTitle(context.l10n.settingsMedalCollection)),
-              if (!_medalsLoading && !_medalsFailed) ...[
-                const SizedBox(width: 10),
-                Text(
-                  context.l10n.settingsMedalsEarned(medals.earnedCount),
-                  key: SettingsScreen.earnedCountKey,
-                  style: theme.textTheme.labelMedium
-                      ?.withWeight(FontWeight.w400)
-                      .copyWith(color: colorScheme.onSurfaceVariant),
-                ),
-                // PF02: every medal over the blurred profile.
-                TextButton(
-                  key: SettingsScreen.seeAllMedalsKey,
-                  onPressed: () => showAllMedals(context, medals),
-                  child: Text(context.l10n.profileSeeAll),
-                ),
+          // V23: "Medal collection" and "See all" (→ PF02) on a card, the
+          // shelf with at most three medals under them.
+          Container(
+            key: SettingsScreen.medalCardKey,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            decoration: lipCard(AppColors.of(context)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  Expanded(
+                      child:
+                          SectionTitle(context.l10n.settingsMedalCollection)),
+                  if (!_medalsLoading && !_medalsFailed)
+                    TextButton(
+                      key: SettingsScreen.seeAllMedalsKey,
+                      onPressed: () => showAllMedals(context, medals),
+                      child: Text(context.l10n.profileSeeAll),
+                    ),
+                ]),
+                const SizedBox(height: 10),
+                if (_medalsLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_medalsFailed)
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      onPressed: _loadMedals,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: Text(context.l10n.settingsMedalsRetry),
+                    ),
+                  )
+                else
+                  medals,
               ],
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          if (_medalsLoading)
-            const Center(child: CircularProgressIndicator())
-          else if (_medalsFailed)
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TextButton.icon(
-                onPressed: _loadMedals,
-                icon: const Icon(Icons.refresh_rounded),
-                label: Text(context.l10n.settingsMedalsRetry),
-              ),
-            )
-          else ...[
-            medals,
-            if (progress != null) ...[
-              const SizedBox(height: 9),
-              MonthlyProgressCard(
-                progress: progress,
-                theme: MonthlyMedalCollection.themeFor(
-                    progress.year, progress.month, _medalThemeIds,
-                    running: true),
-              ),
-            ],
+          if (!_medalsLoading && !_medalsFailed && progress != null) ...[
+            const SizedBox(height: 14),
+            MonthlyProgressCard(
+              progress: progress,
+              theme: MonthlyMedalCollection.themeFor(
+                  progress.year, progress.month, _medalThemeIds,
+                  running: true),
+            ),
           ],
           const SizedBox(height: 23),
           SectionTitle(context.l10n.settingsAppearance),

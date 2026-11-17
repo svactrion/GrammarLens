@@ -28,7 +28,6 @@ import 'package:grammar_lens/utils/app_links.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/screens/debug_panel_screen.dart';
 
-import 'support/l10n_support.dart';
 
 import 'support/recording_analytics_sink.dart';
 
@@ -286,11 +285,13 @@ void main() {
     );
 
     expect(find.text('Medal collection'), findsOneWidget);
-    // Nothing earned yet (1.2.0: the count beside the title replaced the
-    // "Your medals will appear here once earned." caption); the strip holds
-    // the running month and the faded Welcome badge.
+    // Nothing earned yet: the shelf holds the running month's locked slot
+    // only (V23); PF02 says "0 earned" and has the faded Welcome badge.
+    expect(find.byKey(MonthlyMedalCollection.lockedKey), findsOneWidget);
+    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
+    await tester.tap(find.byKey(SettingsScreen.seeAllMedalsKey));
+    await tester.pumpAndSettle();
     expect(find.text('0 earned'), findsOneWidget);
-    expect(find.text(en.medalInProgress), findsOneWidget);
     expect(
       find.bySemanticsLabel('Welcome badge, locked.'),
       findsOneWidget,

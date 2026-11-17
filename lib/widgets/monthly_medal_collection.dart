@@ -1,34 +1,38 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import '../app_colors.dart';
 import '../models/climb_theme.dart';
 import '../models/medal_tier.dart';
 import '../models/monthly_medal.dart';
 import '../models/welcome_badge.dart';
+import '../motion.dart';
 import '../services/monthly_medal_rules.dart';
+import '../utils/haptics.dart';
 import 'medal_badge.dart';
 import 'medal_tier_color.dart';
 import '../theme.dart';
 import '../l10n/l10n.dart';
 
-/// Profile's medals (Batch 5, N10, N33; 1.2.0 Batch 7, Q7): a horizontal
-/// strip, the medals side by side with no card or disc behind them. The
-/// running month first, then the finalized months newest to oldest, one
-/// medal each (the highest tier reached, in that month's theme), and the
-/// Welcome badge last (Q7, which replaced N34's Welcome-first, oldest-first
-/// order). The running month is marked in progress; with no tier yet it
-/// shows its theme's Bronze at [runningFade]. A past month without a medal
-/// is not on the strip. Tapping a medal brings it forward, larger, with its
-/// month, theme, tier, steps and points; a tap anywhere closes it
-/// ([showMedalDetail], unchanged since Batch 5: the owner kept it, 1.2.0
-/// Batch 8).
+/// Profile's medals (V23, UI polish fix round 1): the thick shelf
+/// (`medal_shelf_v2`) with at most [shelfMax] medals standing on its top
+/// surface, newest first (the start of the line). The running month comes
+/// first, a locked slot (a dashed ring with a lock) until it reaches a
+/// tier and then its medal; then the finalized months with a medal and the
+/// earned Welcome badge, newest to oldest. Each slot has a title and a
+/// line under the shelf. A past month without a medal and an unearned
+/// Welcome badge are not on the shelf. Tapping a medal brings it forward,
+/// larger, with its month, theme, tier, steps and points ([showMedalDetail]);
+/// "See all" (Profile) opens every medal (PF02, `showAllMedals`), which
+/// reads [shelf] and [welcomeBadge].
 ///
-/// The running month's progress is a separate card under the strip,
-/// [MonthlyProgressCard] (N9). Profile heads the section "Medal collection"
-/// with [earnedCount].
+/// The running month's progress is a separate card under the shelf,
+/// [MonthlyProgressCard] (N9).
 class MonthlyMedalCollection extends StatelessWidget {
   /// A separate, one-time achievement — not a fourth tier
-  /// (docs/prd-gamification.md §M6.5): last on the strip, faded until
-  /// earned, never a month.
+  /// (docs/prd-gamification.md §M6.5): on the shelf by the month it was
+  /// earned, last in PF02, never a month.
   final WelcomeBadge? welcomeBadge;
   final MonthlyMedalProgress? currentProgress;
 
@@ -46,17 +50,29 @@ class MonthlyMedalCollection extends StatelessWidget {
     this.themeIds = const {},
   });
 
-  /// A medal's disc on the strip (the mockup's 86 pt art box, whose circle
-  /// crop shows a disc of about 92 % of it) and in its detail (the
-  /// celebration's, N28; the detail is as before 1.2.0 Batch 7).
+  /// A medal's disc on the shelf (the board's 78 pt) and in its detail
+  /// (the celebration's, N28).
   static const shelfDisc = 78.0;
   static const detailDisc = 144.0;
 
-  /// A slot's width (the mockup's 92 pt) and the gap between slots.
-  static const slotWidth = 92.0;
-  static const slotGap = 16.0;
+  /// The most medals on the shelf (V23); the rest are in PF02.
+  static const shelfMax = 3;
 
-  /// The running month's medal while it has no tier yet (Q7, the
+  /// The shelf image's size (ASSETS.md: 1170 × 240).
+  static const shelfAsset = 'assets/ui/medal_shelf_v2.webp';
+  static const shelfAspect = 1170 / 240;
+
+  /// Where a medal's bottom stands on the shelf image, and where the slot's
+  /// labels start, as shares of the image's height (the board: the medals
+  /// overlap the 65 pt image by 26 pt; the labels start 14 pt above its
+  /// bottom, under the shelf's front face).
+  static const standAt = 26 / 65;
+  static const labelsAt = 51 / 65;
+
+  /// The medals settle on the shelf one after another (V23).
+  static const settleStagger = Duration(milliseconds: 80);
+
+  /// The running month's medal while it has no tier yet in PF02 (Q7, the
   /// mockup's .38); other unearned medals keep [MedalBadge.unearnedOpacity].
   static const runningFade = .38;
 
@@ -66,8 +82,12 @@ class MonthlyMedalCollection extends StatelessWidget {
       ValueKey('medal_shelf_$year-$month');
   static const detailKey = ValueKey('medal_shelf_detail');
 
-  // The running month's mark: `medalInProgress`. Month names come from
-  // `DateFormat` in the interface language (1.4.0 B4.5).
+  /// The running month's locked slot (no tier yet).
+  static const lockedKey = ValueKey('medal_shelf_locked');
+
+  /// The Hero tag a medal flies under between the shelf, PF02 and PF03.
+  static String heroTag(int year, int month) => 'medal_hero_$year-$month';
+  static const welcomeHeroTag = 'medal_hero_welcome';
 
   /// The theme [year]/[month] is drawn in: its stored theme; otherwise
   /// the running month's calendar theme (Home records it on its first
@@ -83,8 +103,9 @@ class MonthlyMedalCollection extends StatelessWidget {
         : ClimbThemes.greenSlope;
   }
 
-  /// The strip's months, newest first (Q7): the running month, with or
-  /// without a tier, then every finalized month with a medal.
+  /// Every month with a place in the collection, newest first (Q7): the
+  /// running month, with or without a tier, then every finalized month
+  /// with a medal.
   List<ShelfMonth> shelf() {
     final current = currentProgress;
     final past = [
@@ -118,34 +139,66 @@ class MonthlyMedalCollection extends StatelessWidget {
     ];
   }
 
-  /// "N earned" beside the section title: the medals on the strip that are
-  /// earned, the Welcome badge included and the running month once it has
-  /// a tier.
+  /// The shelf's slots (V23), newest first, at most [shelfMax]: the
+  /// running month, then the past medals and the earned Welcome badge (a
+  /// null slot) by month. A month's medal is finalized at the month's end, so in the
+  /// month the badge was earned it comes before the badge.
+  List<ShelfMonth?> shelfSlots() {
+    final months = shelf();
+    final badge = welcomeBadge;
+    final slots = <ShelfMonth?>[...months];
+    if (badge != null) {
+      final at = badge.earnedAt.year * 12 + badge.earnedAt.month;
+      final i =
+          months.indexWhere((m) => !m.running && m.year * 12 + m.month < at);
+      slots.insert(i < 0 ? slots.length : i, null);
+    }
+    return slots.take(shelfMax).toList();
+  }
+
+  /// The medals earned: the Welcome badge and every month on [shelf] with
+  /// a tier (the running month once it has one). PF02's header.
   int get earnedCount =>
       (welcomeBadge != null ? 1 : 0) +
       shelf().where((m) => m.tier != null).length;
 
   @override
   Widget build(BuildContext context) {
-    final months = shelf();
-    return SingleChildScrollView(
-      key: stripKey,
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final m in months) ...[
-            _MonthSlot(month: m),
-            const SizedBox(width: slotGap),
-          ],
-          _WelcomeSlot(badge: welcomeBadge),
-        ],
-      ),
-    );
+    final slots = shelfSlots();
+    return LayoutBuilder(builder: (context, constraints) {
+      final shelfHeight = constraints.maxWidth / shelfAspect;
+      final box = MedalBadge.boxFor(shelfDisc);
+      final gap = shelfHeight * (labelsAt - standAt);
+      return Material(
+        type: MaterialType.transparency,
+        child: Stack(key: stripKey, clipBehavior: Clip.none, children: [
+          Positioned(
+            top: box.height - shelfHeight * standAt,
+            left: 0,
+            right: 0,
+            height: shelfHeight,
+            child: ExcludeSemantics(
+              child: Image.asset(shelfAsset, fit: BoxFit.fill),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final (i, slot) in slots.indexed)
+                Expanded(
+                  child: slot == null
+                      ? _WelcomeSlot(index: i, gap: gap, badge: welcomeBadge!)
+                      : _MonthSlot(index: i, gap: gap, month: slot),
+                ),
+            ],
+          ),
+        ]),
+      );
+    });
   }
 }
 
-/// One month on the strip.
+/// One month in the collection.
 @immutable
 class ShelfMonth {
   final int year, month;
@@ -175,14 +228,25 @@ class ShelfMonth {
   /// "October 2026".
   String name(AppLocalizations l10n) => monthYear(year, month, l10n);
 
-  /// The strip's label: "Sep 2026".
+  /// The shelf's label: "Sep 2026".
   String label(AppLocalizations l10n) => monthYearShort(year, month, l10n);
 
   String outcome(AppLocalizations l10n) =>
       tier == null ? l10n.medalNone : l10n.medalTierMedal(tier!.label(l10n));
 
-  /// The medal shown: the tier reached, or the theme's Bronze faded (on
-  /// the strip to [MonthlyMedalCollection.runningFade], in the detail to
+  /// The shelf's line under the label: a past month's tier; the running
+  /// month's way to its next medal ("66 pts to Bronze"), or "In progress"
+  /// once it has Gold.
+  String shelfLine(AppLocalizations l10n) {
+    if (!running) return tier!.label(l10n);
+    final next = MonthlyMedalRules.nextTier(year, month, score);
+    if (next == null) return l10n.medalInProgress;
+    return l10n.profileShelfToNext(
+        l10n.medalThresholdPoints(next.$2), next.$1.label(l10n));
+  }
+
+  /// The medal shown: the tier reached, or the theme's Bronze faded (in
+  /// PF02 to [MonthlyMedalCollection.runningFade], in the detail to
   /// [MedalBadge.unearnedOpacity], as before 1.2.0 Batch 7).
   MedalBadge medal(double disc,
           {double fadedOpacity = MedalBadge.unearnedOpacity}) =>
@@ -194,148 +258,291 @@ class ShelfMonth {
         fadedOpacity: fadedOpacity,
       );
 
-  /// The detail's lines under the medal (N34).
-  List<String> details(AppLocalizations l10n) => [
+  /// The detail's lines under the medal (N34). [t] counts the steps and
+  /// points up from 0 (PF03); 1 is the final value.
+  List<String> details(AppLocalizations l10n, {double t = 1}) => [
         name(l10n),
         theme.title(l10n),
         running ? l10n.medalOutcomeInProgress(outcome(l10n)) : outcome(l10n),
-        l10n.medalStepsPoints(steps, days, score),
+        l10n.medalStepsPoints((steps * t).round(), days, (score * t).round()),
       ];
+
+  /// Opens this month's detail (PF03); its medal flies from [heroTag]'s
+  /// place.
+  Future<void> showDetail(BuildContext context) {
+    final l10n = context.l10n;
+    return showMedalDetail(context,
+        medal: medal(MonthlyMedalCollection.detailDisc),
+        heroTag: MonthlyMedalCollection.heroTag(year, month),
+        linesAt: (t) => details(l10n, t: t));
+  }
 }
 
-/// A strip slot: the medal, its disc on a common baseline, the label under
-/// it and, for the running month, the in-progress mark. Tappable.
-class _Slot extends StatelessWidget {
+/// Opens the Welcome badge's detail (PF03).
+Future<void> showWelcomeDetail(BuildContext context, WelcomeBadge? badge) {
+  final l10n = context.l10n;
+  final at = badge?.earnedAt;
+  return showMedalDetail(
+    context,
+    medal: MedalBadge.welcome(
+        disc: MonthlyMedalCollection.detailDisc, earned: badge != null),
+    heroTag: MonthlyMedalCollection.welcomeHeroTag,
+    lines: [
+      l10n.medalWelcomeTitle,
+      at == null
+          ? l10n.medalWelcomeNotEarned
+          : l10n.medalWelcomeEarnedIn(monthYear(at.year, at.month, l10n)),
+    ],
+  );
+}
+
+/// A medal that flies between the shelf, PF02 and PF03 under [tag]; no
+/// flight under Reduce Motion.
+class MedalHero extends StatelessWidget {
+  final Object tag;
+  final Widget child;
+  const MedalHero({super.key, required this.tag, required this.child});
+
+  @override
+  Widget build(BuildContext context) => HeroMode(
+        enabled: !AppMotion.reduced(context),
+        child: Hero(tag: tag, child: child),
+      );
+}
+
+/// A shelf slot (V23): the medal standing on the shelf (it settles from
+/// above, [MonthlyMedalCollection.settleStagger] after the slot before
+/// it), then, under the shelf's front face, the title and a line.
+/// Tappable.
+class _ShelfSlot extends StatelessWidget {
+  final int index;
+
+  /// From the medal's bottom to the labels: the shelf's front face.
+  final double gap;
   final Widget medal;
-  final String label;
-  final String? mark;
+  final String title;
+  final String line;
   final String semantics;
   final VoidCallback onTap;
 
-  const _Slot({
+  const _ShelfSlot({
     super.key,
+    required this.index,
+    required this.gap,
     required this.medal,
-    required this.label,
+    required this.title,
+    required this.line,
     required this.semantics,
     required this.onTap,
-    this.mark,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final c = AppColors.of(context);
     final box = MedalBadge.boxFor(MonthlyMedalCollection.shelfDisc);
+    final reduced = AppMotion.reduced(context);
+    final delay = MonthlyMedalCollection.settleStagger * index;
+    final total = AppMotion.slow + delay;
     return Semantics(
       button: true,
       label: semantics,
       excludeSemantics: true,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: SizedBox(
-          width: MonthlyMedalCollection.slotWidth,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 5),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              SizedBox(
-                height: box.height,
-                child: Align(alignment: Alignment.bottomCenter, child: medal),
-              ),
-              const SizedBox(height: 8),
-              Text(label,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall
-                      ?.withWeight(FontWeight.w800)
-                      .copyWith(color: theme.colorScheme.onSurface)),
-              if (mark != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(mark!,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant)),
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          HapticMap.light();
+          onTap();
+        },
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          SizedBox(
+            height: box.height,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: reduced ? 1 : 0, end: 1),
+                duration: reduced ? Duration.zero : total,
+                curve: Interval(delay.inMilliseconds / total.inMilliseconds, 1,
+                    curve: AppMotion.pop),
+                builder: (context, t, child) => Opacity(
+                  opacity: t.clamp(0.0, 1.0),
+                  child: Transform.translate(
+                      offset: Offset(0, -14 * (1 - t)), child: child),
                 ),
+                child: medal,
+              ),
+            ),
+          ),
+          SizedBox(height: gap),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Column(children: [
+              Text(title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: theme.textTheme.bodySmall!
+                      .withWeight(FontWeight.w900)
+                      .copyWith(color: c.text)),
+              const SizedBox(height: 1),
+              Text(line,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: theme.textTheme.labelSmall!
+                      .withWeight(FontWeight.w700)
+                      .copyWith(color: c.muted)),
             ]),
           ),
-        ),
+          const SizedBox(height: 6),
+        ]),
       ),
     );
   }
 }
 
 class _WelcomeSlot extends StatelessWidget {
-  final WelcomeBadge? badge;
-  const _WelcomeSlot({required this.badge});
+  final int index;
+  final double gap;
+  final WelcomeBadge badge;
+  const _WelcomeSlot(
+      {required this.index, required this.gap, required this.badge});
 
   @override
   Widget build(BuildContext context) {
-    final earned = badge != null;
-    final at = badge?.earnedAt;
-    return _Slot(
+    final l10n = context.l10n;
+    final at = badge.earnedAt;
+    return _ShelfSlot(
       key: MonthlyMedalCollection.welcomeSlotKey,
-      medal: MedalBadge.welcome(
-          disc: MonthlyMedalCollection.shelfDisc, earned: earned),
-      label: context.l10n.medalWelcomeSlot,
-      semantics: earned
-          ? context.l10n.medalWelcomeEarned
-          : context.l10n.medalWelcomeLocked,
-      onTap: () => showMedalDetail(
-        context,
-        medal: MedalBadge.welcome(
-            disc: MonthlyMedalCollection.detailDisc, earned: earned),
-        lines: [
-          context.l10n.medalWelcomeTitle,
-          at == null
-              ? context.l10n.medalWelcomeNotEarned
-              : context.l10n.medalWelcomeEarnedIn(
-                  monthYear(at.year, at.month, context.l10n)),
-        ],
+      index: index,
+      gap: gap,
+      medal: const MedalHero(
+        tag: MonthlyMedalCollection.welcomeHeroTag,
+        child: MedalBadge.welcome(disc: MonthlyMedalCollection.shelfDisc),
       ),
+      title: l10n.medalWelcomeSlot,
+      line: monthYearShort(at.year, at.month, l10n),
+      semantics: l10n.medalWelcomeEarned,
+      onTap: () => showWelcomeDetail(context, badge),
     );
   }
 }
 
 class _MonthSlot extends StatelessWidget {
+  final int index;
+  final double gap;
   final ShelfMonth month;
-  const _MonthSlot({required this.month});
+  const _MonthSlot(
+      {required this.index, required this.gap, required this.month});
 
   @override
   Widget build(BuildContext context) {
     final m = month;
     final l10n = context.l10n;
-    return _Slot(
+    final locked = m.running && m.tier == null;
+    return _ShelfSlot(
       key: MonthlyMedalCollection.slotKey(m.year, m.month),
-      medal: m.medal(MonthlyMedalCollection.shelfDisc,
-          fadedOpacity: MonthlyMedalCollection.runningFade),
-      label: m.label(l10n),
-      mark: m.running ? l10n.medalInProgress : null,
+      index: index,
+      gap: gap,
+      medal: MedalHero(
+        tag: MonthlyMedalCollection.heroTag(m.year, m.month),
+        child: locked
+            ? const _LockedSlot(key: MonthlyMedalCollection.lockedKey)
+            : m.medal(MonthlyMedalCollection.shelfDisc),
+      ),
+      title: m.label(l10n),
+      line: m.shelfLine(l10n),
       semantics: m.running
           ? l10n.medalSlotSemanticsRunning(
               m.name(l10n), m.theme.title(l10n), m.outcome(l10n))
           : l10n.medalSlotSemantics(
               m.name(l10n), m.theme.title(l10n), m.outcome(l10n)),
-      onTap: () => showMedalDetail(context,
-          medal: m.medal(MonthlyMedalCollection.detailDisc),
-          lines: m.details(l10n)),
+      onTap: () => m.showDetail(context),
     );
   }
 }
 
-/// N10 / N34 (as before 1.2.0 Batch 7; the owner kept this detail): the
-/// medal brought forward, larger, over a darkened screen, with
-/// [lines] under it (the first as its title); a tap anywhere closes it. It
-/// grows in and out with a fade; under Reduce Motion it only fades.
+/// The running month's place before it has a medal (V23): a dashed ring
+/// with a lock, the size of a medal's disc.
+class _LockedSlot extends StatelessWidget {
+  const _LockedSlot({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    const disc = MonthlyMedalCollection.shelfDisc;
+    return SizedBox.square(
+      dimension: disc,
+      child: CustomPaint(
+        painter: _DashedRingPainter(color: c.line),
+        child: Icon(Icons.lock_outline_rounded, size: 22, color: c.muted),
+      ),
+    );
+  }
+}
+
+class _DashedRingPainter extends CustomPainter {
+  final Color color;
+  const _DashedRingPainter({required this.color});
+
+  static const _dashes = 18;
+  static const _stroke = 3.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _stroke
+      ..strokeCap = StrokeCap.round;
+    final rect = Offset.zero & size;
+    final ring = rect.deflate(_stroke / 2);
+    const step = 2 * math.pi / _dashes;
+    for (var i = 0; i < _dashes; i++) {
+      canvas.drawArc(ring, i * step, step * .55, false, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRingPainter old) => old.color != color;
+}
+
+/// N10 / N34 / PF03 (the owner kept this detail): the medal brought
+/// forward, larger, over a darkened screen, with its lines under it (the
+/// first as its title); a tap anywhere closes it. The medal flies from
+/// [heroTag]'s place (the shelf or PF02, 350 ms) and [linesAt] counts its
+/// numbers up ([lines] when they do not count). Under Reduce Motion it
+/// only fades, nothing flies or counts.
 Future<void> showMedalDetail(BuildContext context,
-    {required Widget medal, required List<String> lines}) {
-  final reduceMotion = MediaQuery.disableAnimationsOf(context);
-  return showGeneralDialog<void>(
-    context: context,
+    {required Widget medal,
+    List<String> lines = const [],
+    List<String> Function(double t)? linesAt,
+    Object? heroTag}) {
+  final reduceMotion = AppMotion.reduced(context);
+  return Navigator.of(context, rootNavigator: true).push(PageRouteBuilder<void>(
+    opaque: false,
     barrierDismissible: true,
     barrierLabel: context.l10n.commonClose,
     barrierColor: const Color(0xD9080A10),
-    transitionDuration: const Duration(milliseconds: 200),
+    transitionDuration: reduceMotion ? AppMotion.fast : _detailFlight,
+    reverseTransitionDuration: reduceMotion ? AppMotion.fast : _detailFlight,
     pageBuilder: (dialogContext, _, __) {
       final theme = Theme.of(dialogContext);
+      Widget body(List<String> lines) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final (i, line) in lines.indexed)
+                Padding(
+                  padding: EdgeInsets.only(top: i == 0 ? 0 : 4),
+                  child: Text(line,
+                      textAlign: TextAlign.center,
+                      style: i == 0
+                          ? theme.textTheme.titleLarge
+                              ?.withWeight(FontWeight.w800)
+                              .copyWith(color: Colors.white)
+                          : theme.textTheme.bodyLarge?.copyWith(
+                              color: Colors.white.withValues(alpha: .86))),
+                ),
+            ],
+          );
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => Navigator.of(dialogContext).pop(),
@@ -348,19 +555,19 @@ Future<void> showMedalDetail(BuildContext context,
                 key: MonthlyMedalCollection.detailKey,
                 width: MonthlyMedalCollection.detailDisc * 2,
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  medal,
+                  heroTag == null
+                      ? medal
+                      : MedalHero(tag: heroTag, child: medal),
                   const SizedBox(height: 16),
-                  for (final (i, line) in lines.indexed)
-                    Padding(
-                      padding: EdgeInsets.only(top: i == 0 ? 0 : 4),
-                      child: Text(line,
-                          textAlign: TextAlign.center,
-                          style: i == 0
-                              ? theme.textTheme.titleLarge
-                                  ?.withWeight(FontWeight.w800)
-                                  .copyWith(color: Colors.white)
-                              : theme.textTheme.bodyLarge?.copyWith(
-                                  color: Colors.white.withValues(alpha: .86))),
+                  if (linesAt == null)
+                    body(lines)
+                  else
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: reduceMotion ? 1 : 0, end: 1),
+                      duration:
+                          reduceMotion ? Duration.zero : AppMotion.celebrate,
+                      curve: AppMotion.enter,
+                      builder: (context, t, _) => body(linesAt(t)),
                     ),
                 ]),
               ),
@@ -369,7 +576,7 @@ Future<void> showMedalDetail(BuildContext context,
         ),
       );
     },
-    transitionBuilder: (context, animation, _, child) {
+    transitionsBuilder: (context, animation, _, child) {
       final faded = FadeTransition(opacity: animation, child: child);
       if (reduceMotion) return faded;
       return ScaleTransition(
@@ -378,10 +585,13 @@ Future<void> showMedalDetail(BuildContext context,
         child: faded,
       );
     },
-  );
+  ));
 }
 
-/// N9: the running month's progress, a card of its own under the strip.
+/// PF02 / PF03's Hero flight (SPEC: 350 ms).
+const _detailFlight = Duration(milliseconds: 350);
+
+/// N9: the running month's progress, a card of its own under the shelf.
 /// The month's points in an orange label; the next medal, the points
 /// towards it and its bar; how many points are left (never negative: the
 /// next tier comes from `MonthlyMedalRules.nextTier`, which is always above
