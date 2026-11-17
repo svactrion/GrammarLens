@@ -1317,6 +1317,19 @@ class StorageService {
     );
   }
 
+  /// When the first Daily Test on record was completed: the earliest
+  /// `completed_at` in `climb_daily_entries` (one row per completed test,
+  /// skipped-only tests included), or null with none. Profile's "since
+  /// <month year>" (V23, UI polish fix round 1); a plain read of what is
+  /// already stored.
+  Future<DateTime?> getFirstDailyTestCompletion() async {
+    final db = await _database;
+    final rows = await db
+        .rawQuery('SELECT MIN(completed_at) AS first FROM climb_daily_entries');
+    final first = rows.single['first'] as String?;
+    return first == null ? null : DateTime.parse(first);
+  }
+
   Future<MonthlyMedalProgress> _readMonthlyMedalProgress(
     DatabaseExecutor db,
     int year,

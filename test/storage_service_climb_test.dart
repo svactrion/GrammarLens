@@ -288,6 +288,21 @@ void main() {
     await inspect();
   });
 
+  test(
+      'getFirstDailyTestCompletion: null before any test, then the earliest '
+      'completion on record (V23 "since")', () async {
+    expect(await storage.getFirstDailyTestCompletion(), isNull);
+    final first = await storage.saveDailyTestSet(questions);
+    // Skipped only: still a completed test.
+    await saveCompletion(completion(first, {'q0': ''}));
+    StorageService.clockForTesting = () => DateTime(2026, 10, 3);
+    final later = await storage.saveDailyTestSet(questions);
+    await storage.completeDailyTest({'q0': 'cooking'}, const [],
+        day: later.day, completedAt: DateTime(2026, 10, 3, 9));
+    expect(await storage.getFirstDailyTestCompletion(),
+        DateTime(2026, 10, 1, 0, 3));
+  });
+
   group('Welcome badge earned via completeDailyTest', () {
     test(
         'the first step = 1 ledger entry ever written earns it, live (not '

@@ -26,6 +26,8 @@ import 'package:grammar_lens/widgets/medals_layer.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 import 'package:grammar_lens/widgets/section_title.dart';
 
+import 'support/l10n_support.dart';
+
 /// 1.2.0 Batch 7: Profile laid out as the mockup — the page header, the
 /// identity card with the name edited in place (N8), the medal strip (Q7)
 /// and its progress card (N9), the settings and App information cards.
@@ -33,7 +35,11 @@ class _Storage extends StorageService {
   final List<UserProfile> saved = [];
   final bool history;
   final int score;
-  _Storage({this.history = false, this.score = 7});
+  final DateTime? firstCompletion;
+  _Storage({this.history = false, this.score = 7, this.firstCompletion});
+
+  @override
+  Future<DateTime?> getFirstDailyTestCompletion() async => firstCompletion;
 
   @override
   Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async => const [];
@@ -198,6 +204,20 @@ void main() {
     await tester.tap(find.byKey(ProfileStage.changeKey));
     await tester.pumpAndSettle();
     expect(find.byType(AvatarPickerScreen), findsOneWidget);
+  });
+
+  testWidgets(
+      'D9-1: the ribbon adds "· since <month year>" from the first Daily '
+      'Test completed; without one it is left out', (tester) async {
+    await pump(tester);
+    final hero = Avatar.values[2].name(en);
+    expect(tester.widget<Text>(find.byKey(ProfileStage.climbingKey)).data,
+        'Climbing with $hero');
+
+    await pump(tester,
+        storage: _Storage(firstCompletion: DateTime(2026, 8, 14, 21, 5)));
+    expect(tester.widget<Text>(find.byKey(ProfileStage.climbingKey)).data,
+        'Climbing with $hero · since Aug 2026');
   });
 
   group('PF04: the name in a sheet', () {

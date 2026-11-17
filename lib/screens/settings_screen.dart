@@ -104,6 +104,7 @@ class SettingsScreen extends StatefulWidget {
   /// The identity card, the saved name shown in it, and the medal count.
   static const identityCardKey = ValueKey('settings_identity_card');
   static const nameKey = ValueKey('settings_name');
+
   /// V23's medal card: the title, "See all" and the shelf.
   static const medalCardKey = ValueKey('settings_medal_card');
   static const seeAllMedalsKey = ValueKey('settings_medals_see_all');
@@ -150,6 +151,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// The weak spots saved (V23's third tile); null until read.
   int? _weakSpotCount;
+
+  /// The first Daily Test's completion (V23's "since"); null until read,
+  /// with none, or if the read fails.
+  DateTime? _firstCompletion;
 
   /// Guards against `_loadMedals` calls overlapping and resolving out of
   /// order (mount + a fast repeated tab re-entry, both possible per
@@ -212,8 +217,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (_) {}
   }
 
+  Future<void> _loadFirstCompletion() async {
+    try {
+      final first = await widget.storageService.getFirstDailyTestCompletion();
+      if (mounted) setState(() => _firstCompletion = first);
+    } catch (_) {}
+  }
+
   Future<void> _loadMedals() async {
     unawaited(_loadWeakSpotCount());
+    unawaited(_loadFirstCompletion());
     final generation = ++_medalsGeneration;
     // P6: the debug panel's sample collection, instead of storage. Only the
     // running month's progress is read (so it matches Home); nothing is
@@ -530,6 +543,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               points: progress?.score,
               step: progress?.activeDays,
               weakSpots: _weakSpotCount,
+              since: _firstCompletion,
             ),
           ),
           const SizedBox(height: 23),

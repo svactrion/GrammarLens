@@ -168,6 +168,7 @@ final List<_Site> _sites = [
           points: 171,
           step: 22,
           weakSpots: 3,
+          since: DateTime(2026, 11, 2),
         ),
   ),
   (

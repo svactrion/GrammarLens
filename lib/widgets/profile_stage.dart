@@ -10,8 +10,8 @@ import 'pressable_button.dart';
 
 /// V23: the profile's top. The companion on its own coloured stage (it
 /// waves when tapped) with "Change" (→ R06); a ribbon under it, settling
-/// from 12 pt below, with the name, "Climbing with <Hero>" and a pencil
-/// (→ PF04); then three stat tiles.
+/// from 12 pt below, with the name, "Climbing with <Hero> · since <month
+/// year>" and a pencil (→ PF04); then three stat tiles.
 class ProfileStage extends StatefulWidget {
   final Avatar hero;
   final String name;
@@ -24,6 +24,10 @@ class ProfileStage extends StatefulWidget {
   final int? step;
   final int? weakSpots;
 
+  /// When the first Daily Test was completed; the ribbon's "· since
+  /// <month year>" is left out while null (none yet, or not read).
+  final DateTime? since;
+
   const ProfileStage({
     super.key,
     required this.hero,
@@ -33,11 +37,13 @@ class ProfileStage extends StatefulWidget {
     this.points,
     this.step,
     this.weakSpots,
+    this.since,
   });
 
   static const changeKey = ValueKey('profile_change_buddy');
   static const pencilKey = ValueKey('profile_edit_name');
   static const nameKey = ValueKey('settings_name');
+  static const climbingKey = ValueKey('profile_climbing_with');
 
   @override
   State<ProfileStage> createState() => _ProfileStageState();
@@ -53,6 +59,7 @@ class _ProfileStageState extends State<ProfileStage> {
     final theme = Theme.of(context);
     final stage = AppColors.stageFor(widget.hero.order, theme.brightness);
     const dash = '–'; // l10n-guard: a placeholder for an unknown number
+    final since = widget.since;
     Widget tile(String value, String label, IconData icon) => Expanded(
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -142,7 +149,13 @@ class _ProfileStageState extends State<ProfileStage> {
                             .copyWith(color: c.onNavy),
                       ),
                     ),
-                    Text(l10n.profileClimbingWith(widget.hero.name(l10n)),
+                    Text(
+                        key: ProfileStage.climbingKey,
+                        since == null
+                            ? l10n.profileClimbingWith(widget.hero.name(l10n))
+                            : l10n.profileClimbingWithSince(
+                                widget.hero.name(l10n),
+                                monthYearShort(since.year, since.month, l10n)),
                         style: theme.textTheme.labelMedium!
                             .withWeight(FontWeight.w700)
                             .copyWith(color: c.onNavyMuted)),
