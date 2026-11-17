@@ -110,13 +110,24 @@ class _CompanionDialog extends StatefulWidget {
 class _CompanionDialogState extends State<_CompanionDialog> {
   bool _leaving = false;
 
+  /// Set by the first press: a second tap while the card closes must not
+  /// pop the page under it.
+  bool _closed = false;
+
+  void _close(CompanionDialogResult result) {
+    if (_closed || !mounted) return;
+    _closed = true;
+    Navigator.of(context).pop(result);
+  }
+
   Future<void> _secondary() async {
+    if (_closed || _leaving) return;
     widget.secondaryHaptic();
     if (!AppMotion.reduced(context)) {
       setState(() => _leaving = true);
       await Future<void>.delayed(AppMotion.base);
     }
-    if (mounted) Navigator.of(context).pop(CompanionDialogResult.secondary);
+    _close(CompanionDialogResult.secondary);
   }
 
   @override
@@ -176,9 +187,9 @@ class _CompanionDialogState extends State<_CompanionDialog> {
                                   ? ButtonHaptic.light
                                   : ButtonHaptic.none,
                               onPressed: () {
+                                if (_closed) return;
                                 widget.primaryHaptic?.call();
-                                Navigator.of(context)
-                                    .pop(CompanionDialogResult.primary);
+                                _close(CompanionDialogResult.primary);
                               },
                             ),
                             const SizedBox(height: 4),

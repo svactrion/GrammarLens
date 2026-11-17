@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../motion.dart';
+import '../theme.dart';
+import '../utils/haptics.dart';
+import '../widgets/pressable_button.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/page_header.dart';
 
@@ -33,7 +38,6 @@ class LanguagePickerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     final hPad = MediaQuery.sizeOf(context).width < 360 ? 16.0 : 20.0;
     final options = choices ?? AppLanguage.available();
     final resolved = AppLanguage.forLocale(
@@ -53,33 +57,26 @@ class LanguagePickerScreen extends StatelessWidget {
           subtitle: l10n.languagePickerSubtitle,
         ),
         const SizedBox(height: 24),
-        Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              for (final (i, language) in options.indexed) ...[
-                if (i > 0)
-                  Divider(
-                      height: 1, thickness: 1, color: scheme.outlineVariant),
-                _Option(
-                  key: optionKey(language),
-                  title: language == AppLanguage.system
-                      ? l10n.settingsLanguageSystemDefault
-                      : language.endonym,
-                  detail: language == AppLanguage.system
-                      ? l10n.languagePickerSystemDetail(resolved.endonym)
-                      : null,
-                  selected: language == current,
-                  onTap: () {
-                    onSelected(language);
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ],
+        // R07: each language its own card in its own name; the selected
+        // one a navy card with a check.
+        for (final language in options) ...[
+          _Option(
+            key: optionKey(language),
+            title: language == AppLanguage.system
+                ? l10n.settingsLanguageSystemDefault
+                : language.endonym,
+            detail: language == AppLanguage.system
+                ? l10n.languagePickerSystemDetail(resolved.endonym)
+                : null,
+            selected: language == current,
+            onTap: () {
+              HapticMap.selection();
+              onSelected(language);
+              Navigator.of(context).pop();
+            },
           ),
-        ),
+          const SizedBox(height: 10),
+        ],
       ],
     );
   }
@@ -102,53 +99,62 @@ class _Option extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final c = AppColors.of(context);
     return Semantics(
       selected: selected,
       inMutuallyExclusiveGroup: true,
       button: true,
-      child: InkWell(
+      child: PressableCard(
         onTap: onTap,
-        child: ConstrainedBox(
+        child: AnimatedContainer(
+          duration: AppMotion.orInstant(context, AppMotion.fast),
           constraints: const BoxConstraints(minHeight: 56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+          padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
+          decoration: lipCard(c,
+              color: selected ? c.navy : c.card,
+              border: selected ? c.navy : c.line,
+              lip: selected ? c.navyDeep : c.lip,
+              radius: 18),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.labelLarge
+                          ?.withWeight(FontWeight.w800)
+                          .copyWith(color: selected ? c.onNavy : c.text),
+                    ),
+                    if (detail != null) ...[
+                      const SizedBox(height: 2),
                       Text(
-                        title,
-                        style: theme.textTheme.labelLarge
-                            ?.copyWith(color: scheme.onSurface),
+                        detail!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: selected ? c.onNavyMuted : c.muted),
                       ),
-                      if (detail != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          detail!,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                ExcludeSemantics(
+              ),
+              const SizedBox(width: 12),
+              ExcludeSemantics(
+                child: AnimatedScale(
+                  scale: selected ? 1 : .85,
+                  duration: AppMotion.orInstant(context, AppMotion.fast),
+                  curve: AppMotion.pop,
                   child: Icon(
                     selected
-                        ? Icons.radio_button_checked_rounded
+                        ? Icons.check_circle_rounded
                         : Icons.radio_button_unchecked_rounded,
-                    size: 20,
-                    color:
-                        selected ? scheme.secondary : scheme.onSurfaceVariant,
+                    size: 22,
+                    color: selected ? c.gold : c.muted,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

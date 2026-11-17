@@ -3,13 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../models/avatar.dart';
+import '../utils/haptics.dart';
+import '../widgets/companion_dialog.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/pressable_button.dart';
 import '../models/ai_consent.dart';
 import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../utils/app_messenger.dart';
 import '../theme.dart';
 import '../widgets/brand_scaffold.dart';
-import '../widgets/destructive_dialog_actions.dart';
 import '../widgets/page_header.dart';
 import 'ai_consent_screen.dart';
 
@@ -40,6 +44,8 @@ class DataScreen extends StatefulWidget {
   static const aiCardKey = ValueKey('data_ai_card');
   static const resetCardKey = ValueKey('data_reset_card');
   static const resetKey = ValueKey('data_reset');
+  static const keepKey = ValueKey('data_reset_keep');
+  static const resetConfirmKey = ValueKey('data_reset_confirm');
 
   @override
   State<DataScreen> createState() => _DataScreenState();
@@ -47,6 +53,9 @@ class DataScreen extends StatefulWidget {
 
 class _DataScreenState extends State<DataScreen> {
   bool _resetting = false;
+
+  /// The user's buddy, asking before a reset (R08).
+  Avatar? _hero;
 
   /// True while the confirmation is open, so a second tap cannot stack a
   /// second dialog.
@@ -61,6 +70,11 @@ class _DataScreenState extends State<DataScreen> {
   void initState() {
     super.initState();
     _loadAiConsent();
+    widget.storageService.getUserProfile().then((profile) {
+      if (mounted && profile?.avatar != null) {
+        setState(() => _hero = profile!.avatar);
+      }
+    }, onError: (_) {});
   }
 
   Future<void> _loadAiConsent() async {
@@ -128,30 +142,23 @@ class _DataScreenState extends State<DataScreen> {
     _confirming = true;
     final bool? confirmed;
     try {
-      confirmed = await showDialog<bool>(
+      // R08: the R10 pattern — the companion asks, keeping is the primary
+      // button, the reset is the quiet red one; a heavy haptic as it opens.
+      final result = await showCompanionDialog(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(dialogContext.l10n.dataResetDialogTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(dialogContext.l10n.dataResetDialogBody),
-              const SizedBox(height: 10),
-              Text(dialogContext.l10n.dataResetDialogKeeps),
-            ],
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            DestructiveDialogActions(
-              cancelLabel: dialogContext.l10n.dataResetKeep,
-              confirmLabel: dialogContext.l10n.dataResetConfirm,
-              onCancel: () => Navigator.of(dialogContext).pop(false),
-              onConfirm: () => Navigator.of(dialogContext).pop(true),
-            ),
-          ],
-        ),
+        hero: _hero ?? Avatar.fox,
+        mood: CompanionMood.sad,
+        title: context.l10n.dataResetDialogTitle,
+        body: '${context.l10n.dataResetDialogBody}\n\n'
+            '${context.l10n.dataResetDialogKeeps}',
+        primaryLabel: context.l10n.dataResetKeep,
+        secondaryLabel: context.l10n.dataResetConfirm,
+        primaryTone: ButtonTone.navy,
+        openHaptic: HapticMap.heavy,
+        primaryKey: DataScreen.keepKey,
+        secondaryKey: DataScreen.resetConfirmKey,
       );
+      confirmed = result == CompanionDialogResult.secondary;
     } finally {
       _confirming = false;
     }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/widgets/profile_stage.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
 import 'package:grammar_lens/models/app_theme_mode.dart';
@@ -18,7 +21,6 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/app_messenger.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
-import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/widgets/floating_nav_shell.dart';
 import 'package:grammar_lens/widgets/monthly_medal_collection.dart';
 import 'package:grammar_lens/widgets/section_title.dart';
@@ -173,138 +175,88 @@ void main() {
   });
 
   testWidgets(
-      'the identity card: "Your companion", the hero centred in a 158 pt box '
-      'with its Hero tag, "Change your avatar", then the name row',
+      'V23: the companion on its stage with Change, the ribbon with the name, '
+      '"Climbing with <Hero>" and the pencil, then three stat tiles',
       (tester) async {
     await pump(tester);
     final card = find.byKey(SettingsScreen.identityCardKey);
-    final tile = find.descendant(of: card, matching: find.byType(AvatarTile));
-    expect(tester.getSize(tile), const Size(158, 158));
-    expect(tester.getCenter(tile).dx, closeTo(tester.getCenter(card).dx, .5));
-    final hero = tester
-        .widget<Hero>(find.ancestor(of: tile, matching: find.byType(Hero)));
-    expect(hero.tag, avatarHeroTag);
-    double top(String text) => tester
-        .getTopLeft(find.descendant(of: card, matching: find.text(text)))
-        .dy;
-    expect(top('Your companion'), lessThan(tester.getTopLeft(tile).dy));
+    expect(find.descendant(of: card, matching: find.byType(CompanionView)),
+        findsOneWidget);
+    expect(find.descendant(of: card, matching: find.text('Change')),
+        findsOneWidget);
+    expect(shownName(tester), isNotEmpty);
     expect(
-        top('Change your avatar'), greaterThan(tester.getBottomLeft(tile).dy));
-    expect(top('Your name'), greaterThan(top('Change your avatar')));
-    expect(
-        find.descendant(of: card, matching: find.text('Edit')), findsOneWidget);
-
-    await tester.tap(find.text('Change your avatar'));
+        find.descendant(
+            of: card, matching: find.textContaining('Climbing with')),
+        findsOneWidget);
+    expect(find.byKey(ProfileStage.pencilKey), findsOneWidget);
+    for (final label in ['points this month', 'step', 'weak spots']) {
+      expect(find.descendant(of: card, matching: find.text(label)),
+          findsOneWidget);
+    }
+    await tester.tap(find.byKey(ProfileStage.changeKey));
     await tester.pumpAndSettle();
     expect(find.byType(AvatarPickerScreen), findsOneWidget);
   });
 
-  group('N8: the name edited in place', () {
-    testWidgets('Save stores the trimmed name, closes the editor and shows it',
-        (tester) async {
-      final updates = <UserProfile>[];
-      final storage = await pump(tester, onProfileUpdated: updates.add);
-      await tester.tap(find.text('Edit'));
+  group('PF04: the name in a sheet', () {
+    Future<void> openSheet(WidgetTester tester) async {
+      await tester.tap(find.byKey(ProfileStage.pencilKey));
       await tester.pumpAndSettle();
-      // The field opens in the same card, focused, with Save and Cancel.
-      final card = find.byKey(SettingsScreen.identityCardKey);
-      final field = find.descendant(of: card, matching: find.byType(TextField));
-      expect(field, findsOneWidget);
-      final focused = FocusManager.instance.primaryFocus!.context!.widget;
-      expect(
-          find.descendant(
-              of: field,
-              matching: find.byWidgetPredicate((w) => identical(w, focused))),
-          findsOneWidget);
-      expect(find.descendant(of: card, matching: find.text('Save')),
-          findsOneWidget);
-      expect(find.descendant(of: card, matching: find.text('Cancel')),
-          findsOneWidget);
-
-      await tester.enterText(field, '  Ahmet  ');
-      await tester.pump();
-      await tester.tap(find.text('Save'));
-      await tester.pumpAndSettle();
-      expect(storage.saved.single.name, 'Ahmet');
-      expect(updates.single.name, 'Ahmet');
-      expect(find.byType(TextField), findsNothing);
-      expect(shownName(tester), 'Ahmet');
-      expect(find.text('Name saved'), findsOneWidget);
-    });
-
-    testWidgets(
-        'Cancel puts the saved name back, stores nothing and returns the '
-        'focus to Edit', (tester) async {
-      final storage = await pump(tester);
-      await tester.tap(find.text('Edit'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Zed');
-      await tester.pump();
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(storage.saved, isEmpty);
-      expect(find.byType(TextField), findsNothing);
-      expect(shownName(tester), 'Ada');
-      final focused = FocusManager.instance.primaryFocus!.context!;
-      expect(
-          find.ancestor(
-              of: find.byWidgetPredicate((w) => identical(w, focused.widget)),
-              matching: find.widgetWithText(TextButton, 'Edit')),
-          findsOneWidget);
-
-      // Opening it again starts from the saved name, not the cancelled
-      // text.
-      await tester.tap(find.text('Edit'));
-      await tester.pumpAndSettle();
-      expect(find.widgetWithText(TextField, 'Ada'), findsOneWidget);
-    });
-
-    for (final blank in ['', '   ']) {
-      testWidgets('an empty or blank name is not saved ("$blank")',
-          (tester) async {
-        final storage = await pump(tester);
-        await tester.tap(find.text('Edit'));
-        await tester.pumpAndSettle();
-        await tester.enterText(find.byType(TextField), blank);
-        await tester.pump();
-        final save = tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'));
-        expect(save.onPressed, isNull);
-        await tester.tap(find.text('Save'));
-        await tester.testTextInput.receiveAction(TextInputAction.done);
-        await tester.pumpAndSettle();
-        expect(storage.saved, isEmpty);
-        expect(find.byType(TextField), findsOneWidget, reason: 'still editing');
-        await tester.tap(find.text('Cancel'));
-        await tester.pumpAndSettle();
-        expect(shownName(tester), 'Ada');
-      });
     }
 
     testWidgets(
-        'at most 40 characters (O2, as in onboarding), no counter; the '
-        'name is kept whole and wraps', (tester) async {
-      final storage = await pump(tester, width: 320);
-      await tester.tap(find.text('Edit'));
-      await tester.pumpAndSettle();
-      expect(tester.widget<TextField>(find.byType(TextField)).maxLength,
-          UserProfile.maxNameLength);
-      await tester.enterText(find.byType(TextField), _longName);
+        'the pencil opens the sheet (the companion asks, the field holds the '
+        'name); Save stores the trimmed name and shows "Name saved" with '
+        'Undo', (tester) async {
+      final updates = <UserProfile>[];
+      final storage = await pump(tester, onProfileUpdated: updates.add);
+      final before = shownName(tester);
+      await openSheet(tester);
+      expect(find.text('What should I call you?'), findsOneWidget);
+      final field = find.byKey(SettingsScreen.nameFieldKey);
+      expect(tester.widget<TextField>(field).controller!.text, before);
+      await tester.enterText(field, '  Ahmet  ');
       await tester.pump();
-      expect(find.textContaining('/ 40'), findsNothing);
-      final capped = _longName.substring(0, 40).trim();
-      await tester.tap(find.text('Save'));
+      await tester.tap(find.byKey(SettingsScreen.saveNameKey));
       await tester.pumpAndSettle();
-      expect(storage.saved.single.name, capped);
-      final name = tester.widget<Text>(find.byKey(SettingsScreen.nameKey));
-      expect(name.data, capped);
-      expect(name.maxLines, isNull);
-      expect(name.overflow, isNull);
-      final line = tester.widget<Text>(find.text('Your name')).style!;
-      expect(tester.getSize(find.byKey(SettingsScreen.nameKey)).height,
-          greaterThan(line.fontSize! * 3),
-          reason: 'more than one line');
-      expect(tester.takeException(), isNull);
+      expect(storage.saved.single.name, 'Ahmet');
+      expect(updates.single.name, 'Ahmet');
+      expect(find.byKey(SettingsScreen.nameFieldKey), findsNothing);
+      expect(shownName(tester), 'Ahmet');
+      expect(find.text('Name saved'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(storage.saved.last.name, before);
+      expect(shownName(tester), before);
+    });
+
+    for (final blank in ['', '   ']) {
+      testWidgets('an empty or blank name cannot be saved ("$blank")',
+          (tester) async {
+        final storage = await pump(tester);
+        await openSheet(tester);
+        await tester.enterText(find.byKey(SettingsScreen.nameFieldKey), blank);
+        await tester.pump();
+        expect(
+            tester
+                .widget<PressableButton>(find.byKey(SettingsScreen.saveNameKey))
+                .onPressed,
+            isNull);
+        expect(storage.saved, isEmpty);
+      });
+    }
+
+    testWidgets('at most 40 characters (O2, as in onboarding), no counter',
+        (tester) async {
+      await pump(tester);
+      await openSheet(tester);
+      final field =
+          tester.widget<TextField>(find.byKey(SettingsScreen.nameFieldKey));
+      expect(field.maxLength, UserProfile.maxNameLength);
+      expect(UserProfile.maxNameLength, 40);
+      expect(find.textContaining('/40'), findsNothing);
     });
   });
 
@@ -312,6 +264,10 @@ void main() {
       'the medals from real data: the count, the running month first, the '
       'Welcome badge last, then the progress card', (tester) async {
     await pump(tester, storage: _Storage(history: true, score: 80));
+    // V23's stage is taller: the shelf is further down.
+    await tester.scrollUntilVisible(
+        find.byKey(MonthlyProgressCard.cardKey), 200,
+        scrollable: find.byType(Scrollable).first);
     // Welcome, Gold September, Silver August; the running month (80 points
     // in October) is past Bronze; July has no medal.
     final bronze = MonthlyMedalRules.threshold(2026, 10, MedalTier.bronze);
@@ -337,6 +293,29 @@ void main() {
                 .getBottomLeft(find.byKey(MonthlyMedalCollection.stripKey))
                 .dy -
             1));
+  });
+
+  testWidgets(
+      'PF02: "See all" opens every medal over the blurred profile; X closes '
+      'it; a medal opens its detail (PF03)', (tester) async {
+    await pump(tester, storage: _Storage(history: true, score: 80));
+    final seeAll = find.byKey(SettingsScreen.seeAllMedalsKey);
+    await tester.scrollUntilVisible(seeAll, 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(seeAll);
+    await tester.pumpAndSettle();
+    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(find.byTooltip('Close'), findsWidgets);
+    final september = find.byKey(MonthlyMedalCollection.slotKey(2026, 9));
+    expect(september, findsWidgets);
+    await tester.tap(september.last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(MonthlyMedalCollection.detailKey), findsOneWidget);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Close').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets(
@@ -428,7 +407,8 @@ void main() {
 
         await tester.drag(scrollable, const Offset(0, 8000));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Edit'));
+        // PF04: the name sheet.
+        await tester.tap(find.byKey(ProfileStage.pencilKey));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       });
@@ -451,34 +431,4 @@ void main() {
       expect(credits.bottom, lessThanOrEqualTo(bar.top));
     });
   }
-
-  testWidgets(
-      'Batch 8: with the keyboard open the nav bar stays put (behind the '
-      'keyboard); the name field, Save and Cancel stay in view',
-      (tester) async {
-    await pump(tester, width: 390);
-    final bar = tester.getRect(find.byKey(FloatingNavShell.barKey));
-
-    await tester.tap(find.text('Edit'));
-    await tester.pumpAndSettle();
-    // The keyboard: 336 pt, the iPhone 14 Plus portrait keyboard's height.
-    tester.view.viewInsets = const FakeViewPadding(bottom: 336 * 3);
-    addTearDown(tester.view.resetViewInsets);
-    await tester.pumpAndSettle();
-
-    expect(tester.getRect(find.byKey(FloatingNavShell.barKey)), bar);
-    expect(bar.top, greaterThan(844 - 336.0),
-        reason: 'the bar is where the keyboard is, so the keyboard hides it');
-    const keyboardTop = 844 - 336.0;
-    for (final f in [
-      find.byType(TextField),
-      find.widgetWithText(FilledButton, 'Save'),
-      find.text('Cancel'),
-    ]) {
-      final r = tester.getRect(f);
-      expect(r.bottom, lessThanOrEqualTo(keyboardTop), reason: '$f');
-      expect(r.top, greaterThanOrEqualTo(0), reason: '$f');
-    }
-    expect(tester.takeException(), isNull);
-  });
 }

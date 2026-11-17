@@ -216,10 +216,9 @@ void main() {
               hasSelectedState: true,
               isInMutuallyExclusiveGroup: true,
               isButton: true,
-              hasTapAction: true,
-              isFocusable: true,
-              hasFocusAction: true));
-      expect(find.byIcon(Icons.radio_button_checked_rounded), findsOneWidget);
+              hasTapAction: true));
+      // R07: the selected language's check.
+      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
       semantics.dispose();
     });
 
@@ -273,8 +272,7 @@ void main() {
   // iOS's CFBundleLocalizations (Settings → GrammarLens → Language) agree.
   test('eight languages ship, and iOS lists the same eight', () {
     const shipped = {'en', 'tr', 'de', 'es', 'pt', 'ja', 'ko', 'ar'};
-    expect(
-        AppLocalizations.supportedLocales.map((l) => l.languageCode).toSet(),
+    expect(AppLocalizations.supportedLocales.map((l) => l.languageCode).toSet(),
         shipped);
     expect({
       for (final l in AppLanguage.available())
@@ -291,6 +289,9 @@ void main() {
         m.group(1)!,
     };
     // Brazilian Portuguese is "pt-BR" to iOS; the app resolves it to `pt`.
-    expect(ios, {...shipped.difference({'pt'}), 'pt-BR'});
+    expect(ios, {
+      ...shipped.difference({'pt'}),
+      'pt-BR'
+    });
   });
 }

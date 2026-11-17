@@ -4,6 +4,14 @@ import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../utils/haptics.dart';
+import '../widgets/app_sheet.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/medals_layer.dart';
+import '../widgets/pressable_button.dart';
+import '../widgets/profile_stage.dart';
+import '../widgets/speech_bubble.dart';
 import '../models/app_theme_mode.dart';
 import '../models/app_text_size.dart';
 import '../models/avatar.dart';
@@ -19,7 +27,6 @@ import '../utils/app_messenger.dart';
 import '../utils/debug_sample_collection.dart';
 import '../utils/debug_tools.dart';
 import '../widgets/app_segmented_button.dart';
-import '../widgets/avatar_tile.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/legal_link.dart';
 import '../widgets/section_title.dart';
@@ -98,6 +105,9 @@ class SettingsScreen extends StatefulWidget {
   static const identityCardKey = ValueKey('settings_identity_card');
   static const nameKey = ValueKey('settings_name');
   static const earnedCountKey = ValueKey('settings_medals_earned');
+  static const seeAllMedalsKey = ValueKey('settings_medals_see_all');
+  static const nameFieldKey = ValueKey('settings_name_field');
+  static const saveNameKey = ValueKey('settings_save_name');
 
   SettingsScreen({
     super.key,
@@ -124,12 +134,9 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
-  bool _savingProfile = false;
 
   /// N8: the name row is open for editing (the field with Save / Cancel).
   /// UI state only; the name is stored by Save, as before.
-  bool _editingName = false;
-  final _editButtonFocus = FocusNode(debugLabel: 'Edit name');
   bool _resettingOnboarding = false;
   late _DebugAccessChoice _debugAccessChoice;
   late bool _previewPaywallPricing;
@@ -139,6 +146,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Map<(int, int), String> _medalThemeIds = const {};
   bool _medalsLoading = true;
   bool _medalsFailed = false;
+
+  /// The weak spots saved (V23's third tile); null until read.
+  int? _weakSpotCount;
 
   /// Guards against `_loadMedals` calls overlapping and resolving out of
   /// order (mount + a fast repeated tab re-entry, both possible per
@@ -192,7 +202,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ));
   }
 
+  Future<void> _loadWeakSpotCount() async {
+    try {
+      final stats = await widget.storageService.getTopicStats();
+      final count =
+          stats.values.fold<int>(0, (sum, s) => sum + s.weakSpotCount);
+      if (mounted) setState(() => _weakSpotCount = count);
+    } catch (_) {}
+  }
+
   Future<void> _loadMedals() async {
+    unawaited(_loadWeakSpotCount());
     final generation = ++_medalsGeneration;
     // P6: the debug panel's sample collection, instead of storage. Only the
     // running month's progress is read (so it matches Home); nothing is
@@ -309,50 +329,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _editButtonFocus.dispose();
     super.dispose();
   }
 
   /// N8: opens the name for editing, starting from the saved name.
-  void _startEditingName() {
-    _nameController.text = widget.profile.name;
-    setState(() => _editingName = true);
-  }
-
-  /// N8: closes the editor and puts the text back to the saved name; the
-  /// focus returns to Edit.
-  void _cancelEditingName() {
-    _nameController.text = widget.profile.name;
-    setState(() => _editingName = false);
-    _editButtonFocus.requestFocus();
-  }
-
-  bool get _canSaveProfile => _nameController.text.trim().isNotEmpty;
-
-  Future<void> _saveProfile() async {
-    if (!_canSaveProfile) return;
-    // Avatar is deliberately not part of this form any more — the
-    // carousel picker autosaves on its own (see _changeAvatar below), so
-    // this Save button only ever touches the fields still shown above it.
-    final updated = widget.profile.copyWith(
-      name: _nameController.text.trim(),
-    );
-
-    setState(() => _savingProfile = true);
-    try {
-      await widget.storageService.saveUserProfile(updated);
-      widget.onProfileUpdated(updated);
-      if (!mounted) return;
-      setState(() => _editingName = false);
-      AppMessenger.show(context.l10n.settingsNameSaved);
-    } catch (e) {
-      if (!mounted) return;
-      AppMessenger.show(context.l10n.settingsProfileSaveFailed('$e'));
-    } finally {
-      if (mounted) setState(() => _savingProfile = false);
-    }
-  }
-
   /// The picker's own silent autosave (debounced inside
   /// `AvatarPickerScreen` itself) — deliberately no snackbar, no
   /// `_savingProfile` flag: this is a background update, not a user
@@ -472,6 +452,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// PF04: the name in a sheet above the keyboard; the companion asks.
+  Future<void> _openNameSheet() async {
+    HapticMap.light();
+    _nameController.text = widget.profile.name;
+    final name = await showAppSheet<String>(
+      context: context,
+      builder: (sheetContext) => _NameSheet(
+        hero: widget.profile.avatar ?? _fallbackAvatar,
+        controller: _nameController,
+      ),
+    );
+    if (name == null || !mounted) return;
+    await _saveName(name, undoable: true);
+  }
+
+  /// Saves [name]; "Name saved" with Undo (SY02) puts the previous one
+  /// back the same way.
+  Future<void> _saveName(String name, {required bool undoable}) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || trimmed == widget.profile.name) return;
+    final previous = widget.profile.name;
+    final updated = widget.profile.copyWith(name: trimmed);
+    try {
+      await widget.storageService.saveUserProfile(updated);
+      widget.onProfileUpdated(updated);
+      if (!mounted) return;
+      AppMessenger.show(
+        context.l10n.settingsNameSaved,
+        kind: MessageKind.success,
+        actionLabel: undoable ? context.l10n.commonUndo : null,
+        onAction: undoable ? () => _saveName(previous, undoable: false) : null,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppMessenger.show(context.l10n.settingsProfileSaveFailed('$e'),
+          kind: MessageKind.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -498,25 +517,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _header(theme),
           const SizedBox(height: 20),
-          _IdentityCard(
-            avatar: Hero(
-              tag: avatarHeroTag,
-              child: AvatarTile(
-                avatar: widget.profile.avatar ?? _fallbackAvatar,
-                radius: _IdentityCard.heroSize / 2,
-              ),
+          // V23: the companion's stage, the ribbon with the name and the
+          // pencil (→ PF04), the three stat tiles.
+          KeyedSubtree(
+            key: SettingsScreen.identityCardKey,
+            child: ProfileStage(
+              hero: widget.profile.avatar ?? _fallbackAvatar,
+              name: widget.profile.name,
+              onChange: _openAvatarPicker,
+              onEditName: _openNameSheet,
+              points: progress?.score,
+              step: progress?.activeDays,
+              weakSpots: _weakSpotCount,
             ),
-            onChangeAvatar: _openAvatarPicker,
-            name: widget.profile.name,
-            editing: _editingName,
-            controller: _nameController,
-            editButtonFocus: _editButtonFocus,
-            saving: _savingProfile,
-            canSave: _canSaveProfile,
-            onEdit: _startEditingName,
-            onChanged: () => setState(() {}),
-            onSave: _saveProfile,
-            onCancel: _cancelEditingName,
           ),
           const SizedBox(height: 23),
           Row(
@@ -532,6 +545,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: theme.textTheme.labelMedium
                       ?.withWeight(FontWeight.w400)
                       .copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                // PF02: every medal over the blurred profile.
+                TextButton(
+                  key: SettingsScreen.seeAllMedalsKey,
+                  onPressed: () => showAllMedals(context, medals),
+                  child: Text(context.l10n.profileSeeAll),
                 ),
               ],
             ],
@@ -1037,203 +1056,81 @@ class _SettingLabel extends StatelessWidget {
   }
 }
 
-/// The identity card (1.2.0 mockup): "Your companion", the hero large and
-/// centred (158 pt), "Change your avatar"; under a rule, "Your name", the
-/// name and Edit. Edit opens the name in place (N8): the field, Save and
-/// Cancel. Save is off while the name is empty or only spaces; Cancel puts
-/// the saved name back. The hero ([avatar]) carries the `Hero` the picker
-/// flies to and from.
-class _IdentityCard extends StatelessWidget {
-  final Widget avatar;
-  final VoidCallback onChangeAvatar;
-  final String name;
-  final bool editing;
+/// PF04: the name sheet. The companion asks; Save (light haptic) pops the
+/// trimmed name; the field starts with the current one.
+class _NameSheet extends StatefulWidget {
+  final Avatar hero;
   final TextEditingController controller;
-  final FocusNode editButtonFocus;
-  final bool saving;
-  final bool canSave;
-  final VoidCallback onEdit;
-  final VoidCallback onChanged;
-  final VoidCallback onSave;
-  final VoidCallback onCancel;
-
-  const _IdentityCard({
-    required this.avatar,
-    required this.onChangeAvatar,
-    required this.name,
-    required this.editing,
-    required this.controller,
-    required this.editButtonFocus,
-    required this.saving,
-    required this.canSave,
-    required this.onEdit,
-    required this.onChanged,
-    required this.onSave,
-    required this.onCancel,
-  });
-
-  /// The hero's box (the brief: 158 × 158).
-  static const heroSize = 158.0;
+  const _NameSheet({required this.hero, required this.controller});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final link = theme.textTheme.labelLarge
-        ?.withWeight(FontWeight.w800)
-        .copyWith(color: scheme.secondary);
-    final caption = theme.textTheme.labelSmall
-        ?.withWeight(FontWeight.w400)
-        .copyWith(color: scheme.onSurfaceVariant);
+  State<_NameSheet> createState() => _NameSheetState();
+}
 
-    return Card(
-      key: SettingsScreen.identityCardKey,
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
+class _NameSheetState extends State<_NameSheet> {
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
+    final canSave = widget.controller.text.trim().isNotEmpty;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          20, 4, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 22, 18, 13),
-            child: Column(
-              children: [
-                Text(
-                  context.l10n.settingsCompanion,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: scheme.onSurface, letterSpacing: -.2),
-                ),
-                const SizedBox(height: 3),
-                // The picture itself opens the picker too; the labelled
-                // control for assistive technology is the button below.
-                ExcludeSemantics(
-                  child: GestureDetector(
-                    onTap: onChangeAvatar,
-                    child: SizedBox.square(dimension: heroSize, child: avatar),
-                  ),
-                ),
-                TextButton(
-                  onPressed: onChangeAvatar,
-                  style: TextButton.styleFrom(
-                    foregroundColor: scheme.secondary,
-                    minimumSize: const Size(44, 44),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(context.l10n.settingsChangeAvatar,
-                            textAlign: TextAlign.center, style: link),
-                      ),
-                      const SizedBox(width: 5),
-                      const Icon(Icons.chevron_right_rounded, size: 19),
-                    ],
-                  ),
-                ),
-              ],
+          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            CompanionView(
+                hero: widget.hero,
+                mood: CompanionMood.think,
+                size: 64,
+                decorative: true),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SpeechBubble(
+                text: l10n.onboardingNameQuestion,
+                pointer: BubblePointer.start,
+                compact: true,
+              ),
             ),
+          ]),
+          const SizedBox(height: 14),
+          TextField(
+            key: SettingsScreen.nameFieldKey,
+            controller: widget.controller,
+            autofocus: true,
+            maxLength: UserProfile.maxNameLength,
+            buildCounter: (_,
+                    {required currentLength, required isFocused, maxLength}) =>
+                null,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(hintText: l10n.settingsNameLabel),
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) {
+              if (canSave) {
+                Navigator.of(context).pop(widget.controller.text.trim());
+              }
+            },
           ),
-          Divider(height: 1, thickness: 1, color: scheme.outlineVariant),
-          if (!editing)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 13),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(context.l10n.settingsNameLabel, style: caption),
-                        const SizedBox(height: 2),
-                        Text(
-                          name,
-                          key: SettingsScreen.nameKey,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(color: scheme.onSurface),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  TextButton.icon(
-                    focusNode: editButtonFocus,
-                    onPressed: onEdit,
-                    style: TextButton.styleFrom(
-                      foregroundColor: scheme.secondary,
-                      minimumSize: const Size(44, 44),
-                    ),
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: Text(context.l10n.commonEdit,
-                        style: theme.textTheme.bodySmall
-                            ?.withWeight(FontWeight.w800)
-                            .copyWith(color: scheme.secondary)),
-                  ),
-                ],
-              ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.fromLTRB(17, 14, 17, 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(context.l10n.settingsNameLabel,
-                      style: theme.textTheme.labelMedium
-                          ?.copyWith(color: scheme.onSurface)),
-                  const SizedBox(height: 7),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: controller,
-                          autofocus: true,
-                          // When the keyboard opens the list scrolls the
-                          // field into view; the extra bottom room brings
-                          // the Cancel row under it into view too.
-                          scrollPadding:
-                              const EdgeInsets.fromLTRB(20, 20, 20, 88),
-                          textCapitalization: TextCapitalization.words,
-                          textInputAction: TextInputAction.done,
-                          // The same limit as onboarding (O2), no counter.
-                          maxLength: UserProfile.maxNameLength,
-                          buildCounter: (_,
-                                  {required currentLength,
-                                  required isFocused,
-                                  required maxLength}) =>
-                              null,
-                          decoration: InputDecoration(
-                              hintText: context.l10n.settingsNameLabel),
-                          onChanged: (_) => onChanged(),
-                          onSubmitted: (_) {
-                            if (canSave && !saving) onSave();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        // The theme's buttons are full width; this one sits
-                        // beside the field.
-                        style: FilledButton.styleFrom(
-                            minimumSize: const Size(64, 48)),
-                        onPressed: canSave && !saving ? onSave : null,
-                        child: Text(saving
-                            ? context.l10n.commonSaving
-                            : context.l10n.commonSave),
-                      ),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: saving ? null : onCancel,
-                    style: TextButton.styleFrom(
-                      foregroundColor: scheme.secondary,
-                      minimumSize: const Size(44, 44),
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: Text(context.l10n.commonCancel, style: link),
-                  ),
-                ],
-              ),
-            ),
+          const SizedBox(height: 8),
+          PressableButton(
+            key: SettingsScreen.saveNameKey,
+            label: l10n.commonSave,
+            tone: ButtonTone.navy,
+            haptic: ButtonHaptic.light,
+            onPressed: canSave
+                ? () => Navigator.of(context).pop(widget.controller.text.trim())
+                : null,
+          ),
+          const SizedBox(height: 4),
+          Text(l10n.onboardingNameNote,
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall!
+                  .copyWith(color: c.muted)),
         ],
       ),
     );

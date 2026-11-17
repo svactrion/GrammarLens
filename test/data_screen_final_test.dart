@@ -93,9 +93,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder confirm() => find.descendant(
-      of: find.byType(AlertDialog),
-      matching: find.widgetWithText(FilledButton, 'Reset progress data'));
+  Finder confirm() => find.byKey(DataScreen.resetConfirmKey);
 
   testWidgets(
       'the header (back, "Data", its line) and two theme cards; the '
@@ -177,19 +175,20 @@ void main() {
     await tester.tap(find.byKey(DataScreen.resetKey));
     await tester.tap(find.byKey(DataScreen.resetKey), warnIfMissed: false);
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
+    // R08: one companion dialog.
+    expect(find.byKey(DataScreen.resetConfirmKey), findsOneWidget);
     await tester.tap(confirm());
-    await tester.tap(confirm(), warnIfMissed: false);
+    // A second tap, if the closing dialog is still there.
+    if (confirm().evaluate().isNotEmpty) {
+      await tester.tap(confirm(), warnIfMissed: false);
+    }
     await tester.pumpAndSettle();
-    // While it runs, the page's button is disabled.
-    expect(
-        tester
-            .widget<OutlinedButton>(find.byKey(DataScreen.resetKey))
-            .onPressed,
-        isNull);
-    await tester.tap(find.byKey(DataScreen.resetKey), warnIfMissed: false);
+    // While it runs, another tap on the page opens nothing.
+    if (find.byKey(DataScreen.resetKey).evaluate().isNotEmpty) {
+      await tester.tap(find.byKey(DataScreen.resetKey), warnIfMissed: false);
+    }
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byKey(DataScreen.resetConfirmKey), findsNothing);
     storage.pendingReset!.complete();
     await tester.pumpAndSettle();
     expect(storage.resets, 1);

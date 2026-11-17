@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
+import 'package:grammar_lens/widgets/profile_stage.dart';
 import 'package:grammar_lens/widgets/buddy_picker.dart';
 
 import 'package:grammar_lens/models/app_theme_mode.dart';
@@ -23,7 +26,6 @@ import 'package:grammar_lens/services/storage_service.dart';
 import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/utils/app_links.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
-import 'package:grammar_lens/widgets/avatar_tile.dart';
 import 'package:grammar_lens/screens/debug_panel_screen.dart';
 
 import 'support/l10n_support.dart';
@@ -184,8 +186,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// PF04: the pencil opens the name sheet.
   Future<void> tapEdit(WidgetTester tester) async {
-    await tester.tap(find.text('Edit'));
+    await tester.tap(find.byKey(ProfileStage.pencilKey));
     await tester.pumpAndSettle();
   }
 
@@ -386,8 +389,8 @@ void main() {
   testWidgets('Save is disabled once the name is cleared', (tester) async {
     await pumpSettings(tester);
     await tapEdit(tester);
-    FilledButton saveButton() =>
-        tester.widget(find.widgetWithText(FilledButton, 'Save'));
+    PressableButton saveButton() =>
+        tester.widget(find.byKey(SettingsScreen.saveNameKey));
 
     expect(saveButton().onPressed, isNotNull);
 
@@ -406,21 +409,21 @@ void main() {
         learningGoal: LearningGoal.work,
       ).copyWith(avatar: koala),
     );
-    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(tile.avatar, koala);
+    final stage = tester.widget<ProfileStage>(find.byType(ProfileStage));
+    expect(stage.hero, koala);
   });
 
   testWidgets(
       'a legacy profile with no avatar yet still shows a real one, not the '
       'placeholder — the picker has no empty state either', (tester) async {
     await pumpSettings(tester); // default profile has avatar: null
-    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(tile.avatar, isNotNull);
+    final stage = tester.widget<ProfileStage>(find.byType(ProfileStage));
+    expect(Avatar.values, contains(stage.hero));
   });
 
   testWidgets('tapping the avatar row opens the avatar picker', (tester) async {
     await pumpSettings(tester);
-    await tester.tap(find.byType(AvatarTile));
+    await tester.tap(find.byKey(ProfileStage.changeKey));
     await tester.pumpAndSettle();
     expect(find.byType(AvatarPickerScreen), findsOneWidget);
   });
@@ -470,7 +473,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(AvatarTile));
+    await tester.tap(find.byKey(ProfileStage.changeKey));
     await tester.pumpAndSettle();
 
     // UI polish R06: turn the ring one step and save with "Save <Hero>"
@@ -487,12 +490,12 @@ void main() {
     // the name row is still closed, showing the saved name.
     expect(find.byType(TextField), findsNothing);
     expect(tester.widget<Text>(find.byKey(SettingsScreen.nameKey)).data, 'Ada');
-    final tile = tester.widget<AvatarTile>(find.byType(AvatarTile));
-    expect(tile.avatar, saved!.avatar);
+    final stage = tester.widget<ProfileStage>(find.byType(ProfileStage));
+    expect(stage.hero, saved!.avatar);
   });
 
   testWidgets(
-      'sections appear in order: avatar, name, medals, progress, appearance, '
+      'sections appear in order: companion, name, stats, medals, progress, appearance, '
       'data, credits, developer', (tester) async {
     await pumpSettings(tester);
     // Tall enough that the lazy list builds every section at once, so their
@@ -506,9 +509,9 @@ void main() {
     }
 
     final ordered = [
-      top(find.text('Your companion')),
-      top(find.text('Change your avatar')),
-      top(find.text('Your name')),
+      top(find.byType(CompanionView).first),
+      top(find.byKey(SettingsScreen.nameKey)),
+      top(find.text('points this month')),
       top(find.text('Medal collection')),
       top(find.byKey(MonthlyProgressCard.cardKey)),
       top(find.text('Appearance')),
