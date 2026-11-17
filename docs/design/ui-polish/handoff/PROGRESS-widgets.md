@@ -12,15 +12,89 @@ commits, no new package, no deploy, no paid API, no merge into `main`, never
 touch `~/GrammarLens` or the `ui-polish` branch. Nothing unverified is
 marked done.
 
+## Summary
+
+**Status: W0–W6 done** on branch `widgets-notifications` (pushed). Not
+merged into `ui-polish` or `main`, not shipped, **not checked on a device**.
+
 | Step | Status | Commits |
 |---|---|---|
-| W0 Plan | done | see W0 |
-| W1 Bridge, URL scheme, routing | done | see W1 |
-| W2 Widget extension + SwiftUI views | done | see W2 |
-| W3 App-side payload | done | see W3 |
-| W4 Reminder engine | done | see W4 |
-| W5 UI (N01, N03, V24), captures | done | see W5 |
-| W6 Final pass, merge, docs | not started | |
+| W0 Plan | done | `2cacae0` |
+| W1 Bridge, URL scheme, routing | done | `8f55b36`, `28dff82`, `5dc2524` |
+| W2 Widget extension + SwiftUI views | done | `9a54674`, `eeec68f`, `6fb1203` |
+| W3 App-side payload | done | `5e114bd`, `975b882`, `4f933fa`, `077ecd7` |
+| W4 Reminder engine | done | `d49b1c1`, `ac6ee6b`, `dfc0810`, `ad30068`, `fa77769` |
+| W5 UI (N01, N03, V24), captures | done | `a290231`, `ab895bf`, `f2d285f`, `fc4a32d`, `b840785`, `2d7e8c8` |
+| W6 Final pass, merge, docs | done | `f9002b7` (merge), `88b0b01`, `3e27dd5`, `0d71690`, and the docs commit that records them |
+
+**Done.** The "Climb" widget (small, medium A) and the "Tip" widget
+(medium B) from a WidgetKit extension fed only by the app (texts in the
+app's language, images the app scaled down, no network); the
+`grammarlens://daily-test | home | review` links, cold and warm; one
+reminder a day at the user's time, picked (a) new mountain → (b) close to a
+medal → (c) Daily Test → (d) free ticket, seven days ahead and rebuilt on
+every change; N01 asked once before the iOS dialog, N03 under Profile →
+Notifications, V24's "Remind me tomorrow". Our own `MethodChannel`: no new
+package, no new third party, nothing leaves the device, no new analytics
+event, no version change.
+
+**Verified** (after the last code change, `88b0b01`–`0d71690`):
+`flutter analyze` no issues; `flutter test` **2605 passed**; `xcodebuild
+build` of Runner + `GrammarLensWidgets` for the iPhone 18 Pro simulator
+**BUILD SUCCEEDED**; `xcodebuild test` RunnerTests **21 passed, 0 failed**
+(bridge, payload, timeline, reminder requests, the `ImageRenderer`
+snapshots of every widget and state from both the Swift samples and the
+Dart builder's six fixtures: 50 PNGs in `build/widget-snapshots/`). On the
+simulator: every widget size and state on the home screen, N01, N02 (a real
+reminder), N03, V24, in English light and in Arabic + dark + the largest
+text; the board comparison is in W5 and W6.
+
+**Not verified.** Anything on a device. On the simulator: a delivered
+reminder's tap (the lock screen did not hand it to the app) and the
+companion thumbnail (attached, not shown). See "Blocked / not verified".
+
+**Decisions to review:** DW0-2 (a third link for Review), DW0-3 (links
+dropped while a flow is open), DW2-1 (system rounded type in widgets),
+DW2-2 (the tip's highlight instead of an example line), DW3-2 (translated
+mountain and month names), DW5-1 (N03 goes straight to iOS), DW5-3 (when
+N01 opens), DW6-1 (V24f after the merge).
+
+## Owner steps
+
+1. **Signing (Xcode, Runner project).** Select the team for the new
+   `GrammarLensWidgets` target (Signing & Capabilities), like Runner's; its
+   bundle ID is `com.ahmettayfur.grammarlens.widgets`. No signing setting
+   was written by this run.
+2. **App Group.** In the Apple Developer portal register
+   `group.com.ahmettayfur.grammarlens` and enable App Groups (with that
+   group) for both App IDs, `com.ahmettayfur.grammarlens` and
+   `com.ahmettayfur.grammarlens.widgets`; with automatic signing Xcode
+   offers to do this when the capability shows red. Push Notifications are
+   **not** needed (reminders are local).
+3. **Build for the device** with `flutter run` / Xcode as usual. On this
+   Mac `flutter build ios --simulator` fails before any code (Flutter
+   3.44.6 vs. Xcode 27.2's `lipo -verify_arch`); single-simulator and device
+   builds are not affected.
+4. **Widgets on the phone.** Open the app once (it writes the payload),
+   then long-press the home screen → Edit → Add Widget → GrammarLens: add
+   "Climb" small and medium and "Tip". Check: waiting state before today's
+   test, done state after it (countdown in hours), the medium mountain at
+   your step, a tap on each widget (Daily Test / Home), dark mode, Arabic.
+5. **Reminders on the phone.** Finish a Daily Test on a second day or reach
+   the rest scene: N01 should open once. Turn reminders on and allow iOS's
+   dialog; in Profile → Notifications set the time a few minutes ahead and
+   leave the app: one reminder should arrive, with the companion's picture,
+   and a tap should open the Daily Test (or Review for "Free ticket is
+   back"). Also check "Don't Allow" → Profile → Notifications shows the
+   "Notifications are off" card and "Open Settings" works.
+6. **Merging with `ui-polish`.** Its fix round 2 (SPEC v10, merged here as
+   docs only) adds V24f, the free users' rest scene, whose board also has
+   "Remind me tomorrow": when V24f is built, put `RestReminderRow` into it
+   as `RestScene.reminder` is today (DW6-1).
+7. **Legal and store.** `product.yaml` `legal` is unchanged (no new third
+   party, no data collected). Before release, the App Store "App Privacy"
+   answers stay as they are; the review notes may mention the widgets and
+   the optional reminders.
 
 ## Decisions
 
@@ -167,6 +241,19 @@ Format: what · options · choice · why. Numbered per step (DW0-1, DW1-1, …).
   language**, like the times on N01, N03 and V24 ("20:00").
 - **DW5-6 N03's switches are navy and V24's is green**, as on the boards
   (the app's default switch colour is orange).
+
+- **DW6-1 V24f will need the reminder row too.** `origin/ui-polish` gained
+  SPEC v10 and the fix round 2 task (docs only, merged here as `f9002b7`,
+  no conflict): free users get a new rest scene V24f whose board ends with
+  "Remind me tomorrow · 20:00" and says the row "belongs to the separate
+  notifications task". V24f is not built yet on either branch. · Build V24f
+  here vs. leave it to fix round 2. · **Leave it; `RestReminderRow` is a
+  self-contained widget that V24f can take as `RestScene.reminder` does**
+  (Owner steps 6). · Building another branch's screen here would collide
+  with fix round 2.
+- **DW6-2 The small done widget's title stays on one line** (W01) and
+  scales down; the countdown may take two lines; the tip box's "Done today"
+  scales down further (German "Heute erledigt").
 
 ## Blocked / not verified
 
@@ -738,3 +825,32 @@ Verified:
 | N02 | `w5-real-reminder.png`, `N02-LockScreen-real.png` | match, one gap | Title and text as on the board, from the app's state; the companion thumbnail is attached but not seen on the simulator (Blocked / not verified). |
 | N03 | `N03-Settings-off.png`, `N03-Settings.png` | match | Rows, lines, "Every day at 20:00", the promise with the companion. The captures show orange switches; they are navy since (DW5-6), recaptured in W6. |
 | V24 (switch) | `V24-DayComplete-scrolled.png` | match after a fix | The label wrapped to two lines; now one line, scaling down if needed (test at 320 pt, largest text); recaptured in W6. |
+
+## W6 — Final pass, merge, docs
+
+Status: **done**.
+
+- **Merge.** `git fetch origin ui-polish`: one new commit, `ca3a847`
+  ("docs: SPEC v10 and fix round 2 task", docs and boards only). Merged
+  with `git merge --no-ff` (no rebase) as `f9002b7`, no conflict. DW6-1.
+- **Arabic, dark, largest text** (the app's Large text size, simulator in
+  dark mode, `SEED_LANGUAGE=ar`, `SEED_TEXT_SIZE=large`; captures in
+  `build/widgets-captures/`):
+
+| Board | Capture | Result | Note |
+|---|---|---|---|
+| N01 | `N01-ar-dark-large.png` | match | Mirrored: companion and text on the right, the button's arrow flipped; times in Western digits; nothing clipped. |
+| V24 (switch) | `V24-ar-dark-large.png` | match | Bell, label, time chip and switch mirrored; the label on one line (the W5 fix). |
+| N03 | `N03-ar-dark-large.png` | match | Switches on the left, navy; time chip; the promise. |
+| W01 (all three) | `W01-ar-dark-done.png` | fixed | The small done widget wrapped "Step 15 of 30" and cut the countdown; fixed (DW6-2), checked again in the snapshots `climb-small-done-ar_done_late-dark.png` and `tip-medium-done-de_done-dark.png`. |
+
+- Tests added: N01 and N03 in Arabic, dark, largest text (`reminders_ui_test`,
+  19 cases now); two more Dart fixtures (Arabic and German, step 15), so
+  the Swift snapshot test renders them.
+- Final gate (after the last code change): `flutter analyze` no issues;
+  `flutter test` 2605 passed; Runner + extension `xcodebuild build` BUILD
+  SUCCEEDED; RunnerTests 21 passed, 0 failed.
+- Docs: `docs/build-log.md` (entry for this task), `docs/roadmap.md` (1.5.0
+  row and the UI polish split-out note), `product.yaml` (the widgets /
+  reminders `planned` line, a `recent` entry, `recent` trimmed to five;
+  `legal`, `status` and `versions` unchanged; `updated_at` 2026-11-17).
