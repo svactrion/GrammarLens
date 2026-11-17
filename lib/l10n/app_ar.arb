@@ -551,5 +551,6 @@
   "mountainIntroEyebrow": "{month} · {mountain}",
   "mountainIntroTitle": "جبل هذا الشهر",
   "mountainIntroBody": "جبل جديد كل شهر. الاختبار اليومي يرفعك خطوة في كل مرة.",
-  "mountainIntroStart": "اخطُ خطوتي الأولى"
+  "mountainIntroStart": "اخطُ خطوتي الأولى",
+  "mountainIntroSummit": "القمة · الخطوة {count}"
 }

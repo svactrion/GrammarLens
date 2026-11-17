@@ -3360,5 +3360,15 @@
   "mountainIntroStart": "Take my first step",
   "@mountainIntroStart": {
     "description": "This month's mountain (V06): the button that starts the first Daily Test."
+  },
+  "mountainIntroSummit": "Summit · step {count}",
+  "@mountainIntroSummit": {
+    "description": "This month's mountain (V06): the label next to the summit flag; {count} is the last step (the days in the month).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
   }
 }

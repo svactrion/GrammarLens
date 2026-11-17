@@ -32,7 +32,9 @@ final Map<String, WidgetBuilder> galleryBoards = {
   'X03-HeroSet': (_) => const _HeroSet(),
   'X04-Ticket': (_) => const _TicketBoard(),
   'X05-DailyCard': (_) => const _DailyCardBoard(),
-  'V01-Splash': (_) => const LaunchSplash(),
+  // Under a Material, as in the app (the splash sits outside MaterialApp
+  // there, where text has no debug underline).
+  'V01-Splash': (_) => const Material(child: LaunchSplash()),
   'V02-Welcome': (_) => WelcomeScreen(onGetStarted: () {}),
   'V03-Meet': (_) => OnboardingScreen(onComplete: (_) {}),
   // Reached by the driver from V03 (taps): V03b, V04, V05.

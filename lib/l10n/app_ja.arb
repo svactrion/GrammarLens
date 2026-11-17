@@ -551,5 +551,6 @@
   "mountainIntroEyebrow": "{month} · {mountain}",
   "mountainIntroTitle": "今月の山",
   "mountainIntroBody": "毎月新しい山。デイリーテスト1回で1ステップ登ります。",
-  "mountainIntroStart": "最初の一歩を踏み出す"
+  "mountainIntroStart": "最初の一歩を踏み出す",
+  "mountainIntroSummit": "山頂 · ステップ{count}"
 }

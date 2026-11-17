@@ -23,7 +23,7 @@ class GettingReadyModel {
 
   /// How far into its own third a running task's bar may go (it stays
   /// visibly short of the stop).
-  static const double runningShare = .85;
+  static const double runningShare = .7;
 
   /// Tasks finished so far, 0–3.
   int get done => _done;

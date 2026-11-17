@@ -551,5 +551,6 @@
   "mountainIntroEyebrow": "{month} · {mountain}",
   "mountainIntroTitle": "Bu ayın dağı",
   "mountainIntroBody": "Her ay yeni bir dağ. Her Günlük Test bir adım yukarı.",
-  "mountainIntroStart": "İlk adımımı at"
+  "mountainIntroStart": "İlk adımımı at",
+  "mountainIntroSummit": "Zirve · {count}. adım"
 }

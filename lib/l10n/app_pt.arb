@@ -551,5 +551,6 @@
   "mountainIntroEyebrow": "{month} · {mountain}",
   "mountainIntroTitle": "A montanha deste mês",
   "mountainIntroBody": "Uma montanha nova todo mês. Cada Teste diário é um passo acima.",
-  "mountainIntroStart": "Dar meu primeiro passo"
+  "mountainIntroStart": "Dar meu primeiro passo",
+  "mountainIntroSummit": "Topo · passo {count}"
 }

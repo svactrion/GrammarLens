@@ -551,5 +551,6 @@
   "mountainIntroEyebrow": "{month} · {mountain}",
   "mountainIntroTitle": "이번 달의 산",
   "mountainIntroBody": "매달 새로운 산. 데일리 테스트 한 번이 한 걸음이에요.",
-  "mountainIntroStart": "첫 걸음 내딛기"
+  "mountainIntroStart": "첫 걸음 내딛기",
+  "mountainIntroSummit": "정상 · {count}단계"
 }
