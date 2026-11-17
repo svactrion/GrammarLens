@@ -4,6 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'dart:math';
+import 'package:grammar_lens/models/app_text_size.dart';
+import 'package:grammar_lens/models/app_theme_mode.dart';
+import 'package:grammar_lens/models/monthly_medal.dart';
+import 'package:grammar_lens/models/welcome_badge.dart';
+import 'package:grammar_lens/screens/credits_screen.dart';
+import 'package:grammar_lens/screens/data_screen.dart';
+import 'package:grammar_lens/screens/language_picker_screen.dart';
+import 'package:grammar_lens/screens/settings_screen.dart';
+import 'package:grammar_lens/services/monthly_medal_rules.dart';
 import 'package:grammar_lens/models/user_profile.dart';
 import 'package:grammar_lens/screens/premium_on_screen.dart';
 import 'package:grammar_lens/screens/premium_screen.dart';
@@ -328,6 +337,15 @@ final Map<String, WidgetBuilder> galleryBoards = {
         sessions: StorageService.dailySessionLimit,
         trialEnds: DateTime(2026, 11, 24),
       ),
+  // B9: Profile and settings (the real screens with fixed data).
+  'V23-Profile': (_) => _profile(),
+  'PF02-Medals': (_) => _profile(),
+  'PF03-MedalDetail': (_) => _profile(),
+  'PF04-EditName': (_) => _profile(),
+  'R07-Language': (_) =>
+      LanguagePickerScreen(current: AppLanguage.en, onSelected: (_) {}),
+  'R08-Data': (_) => DataScreen(storageService: _GalleryProfileStorage()),
+  'R09-Credits': (_) => const CreditsScreen(),
   'R11-Offline': (_) => Scaffold(
         body: Center(
           child: SingleChildScrollView(
@@ -1135,4 +1153,108 @@ class _ScrollAfterState extends State<_ScrollAfter> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+Widget _profile() => Builder(builder: (context) {
+      final l10n = context.l10n;
+      return FloatingNavShell(
+        body: PrimaryScrollController(
+          controller: galleryScroll,
+          child: SettingsScreen(
+            active: true,
+            themeMode: AppThemeMode.system,
+            onSelectThemeMode: (_) {},
+            textSize: AppTextSize.medium,
+            onSelectTextSize: (_) {},
+            language: AppLanguage.en,
+            profile: const UserProfile(
+              name: 'Ada',
+              avatar: Avatar.fox,
+              learningGoal: LearningGoal.work,
+            ),
+            storageService: _GalleryMedalStorage(),
+            onProfileUpdated: (_) {},
+            subscriptionService: _GallerySubs(false),
+            analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+            onResetOnboarding: () {},
+          ),
+        ),
+        tabs: [
+          NavShellTab(
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
+              label: l10n.navHome),
+          NavShellTab(
+              icon: Icons.history_outlined,
+              activeIcon: Icons.history,
+              label: l10n.featureReview),
+          NavShellTab(
+              icon: Icons.person_outline_rounded,
+              activeIcon: Icons.person_rounded,
+              label: l10n.navProfile),
+        ],
+        selectedIndex: 2,
+        onTabChange: (_) {},
+      );
+    });
+
+/// The profile's medals: Bronze in September and Silver in October, the
+/// Welcome badge, November running; three weak spots.
+class _GalleryMedalStorage extends StorageService {
+  @override
+  Future<List<MonthlyMedalResult>> finalizePastMedalMonths() async => const [];
+
+  @override
+  Future<MonthlyMedalProgress> getCurrentMonthlyMedalProgress() async =>
+      MonthlyMedalProgress(
+        year: 2026,
+        month: 11,
+        score: 47,
+        maxScore: MonthlyMedalRules.maxScore(2026, 11),
+        activeDays: 6,
+        correct: 0,
+        wrong: 0,
+        skipped: 0,
+      );
+
+  @override
+  Future<List<MonthlyMedalResult>> getMonthlyMedalResults() async => [
+        for (final (m, tier) in [
+          (9, MedalTier.bronze),
+          (10, MedalTier.silver),
+        ])
+          MonthlyMedalResult(
+            year: 2026,
+            month: m,
+            score: tier == MedalTier.bronze ? 92 : 171,
+            maxScore: MonthlyMedalRules.maxScore(2026, m),
+            activeDays: tier == MedalTier.bronze ? 14 : 22,
+            correct: 0,
+            wrong: 0,
+            skipped: 0,
+            tier: tier,
+            ruleVersion: 1,
+            finalizedAt: DateTime(2026, m + 1, 1),
+          ),
+      ];
+
+  @override
+  Future<WelcomeBadge?> getWelcomeBadge() async => WelcomeBadge(
+      earnedAt: DateTime(2026, 9, 2), ruleVersion: 1, backfilled: false);
+
+  @override
+  Future<Map<(int, int), String>> getClimbMonthThemes() async => const {
+        (2026, 9): 'green_slope',
+        (2026, 10): 'green_slope',
+        (2026, 11): 'ember_peak',
+      };
+
+  @override
+  Future<Map<String, TopicStats>> getTopicStats() async => const {
+        'articles': TopicStats(practiced: 3, weakSpotCount: 2),
+        'modalVerbs': TopicStats(practiced: 1, weakSpotCount: 1),
+      };
+
+  @override
+  Future<void> saveUserProfile(UserProfile profile) async {}
 }

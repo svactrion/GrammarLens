@@ -31,6 +31,7 @@ const _settleMs = <String, int>{
 
 /// Long system boards: extra captures scrolled down by these offsets.
 const _scrollShots = <String, List<int>>{
+  'V23-Profile': [420],
   'V14-Home': [520],
   'H04-HomePremium': [520],
   'X04-Ticket': [420],
@@ -82,6 +83,30 @@ final _scripts = <String, Script>{
     await _wait(1400);
     await d.tapNow('premium_close');
     await _wait(1000);
+    await shot('');
+  },
+  'PF02-Medals': (d, shot) async {
+    await _wait(1400);
+    await d.runUnsynchronized(() => d.requestData('scroll:420'));
+    await _wait(700);
+    await d.tapNow('settings_medals_see_all');
+    await _wait(900);
+    await shot('');
+  },
+  'PF03-MedalDetail': (d, shot) async {
+    await _wait(1400);
+    await d.runUnsynchronized(() => d.requestData('scroll:420'));
+    await _wait(700);
+    await d.tapNow('settings_medals_see_all');
+    await _wait(900);
+    await d.tapNow('medal_shelf_2026-10');
+    await _wait(900);
+    await shot('');
+  },
+  'PF04-EditName': (d, shot) async {
+    await _wait(1400);
+    await d.tapNow('profile_edit_name');
+    await _wait(1200);
     await shot('');
   },
   'H03-HomeLoading': (d, shot) async {
