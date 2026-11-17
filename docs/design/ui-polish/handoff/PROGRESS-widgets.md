@@ -16,7 +16,7 @@ marked done.
 |---|---|---|
 | W0 Plan | done | see W0 |
 | W1 Bridge, URL scheme, routing | done | see W1 |
-| W2 Widget extension + SwiftUI views | not started | |
+| W2 Widget extension + SwiftUI views | done | see W2 |
 | W3 App-side payload | not started | |
 | W4 Reminder engine | not started | |
 | W5 UI (N01, N03, V24), captures | not started | |
@@ -72,6 +72,31 @@ Format: what · options · choice · why. Numbered per step (DW0-1, DW1-1, …).
   runs the real app with the App Store screenshot learner (`Sam`, from
   `tool/screenshots/seed.dart`), no Firebase or RevenueCat, analytics
   dropped; nothing in `lib/` imports it (the existing import guard test).
+
+- **DW2-1 System rounded type in the widgets.** The boards use Nunito
+  Sans, an app asset; fixed decision 3 says no app asset is copied into the
+  extension. · Copy the font vs. the system font. · **SF Pro Rounded at
+  heavy/bold weights** (`WidgetFont`). · Keeps the rule; the look stays close
+  (rounded, heavy).
+- **DW2-2 The tip's key words are a highlight inside the rule line.** W01
+  shows "Use **the** with superlatives." with "the" in a green chip and an
+  example line. The app's hint data (`kTopicHints`) has one line per hint,
+  "key: explanation", and no examples. · Invent example lines vs. use the
+  line as it is. · **The part before ": " is the green highlight, the rest
+  follows in the same sentence** (an `AttributedString` background, iOS 15);
+  a line without ": " is shown plain. No example line. · The hint text stays
+  the owner's verbatim (SPEC §3.7: hints stay English).
+- **DW2-3 Runner compiles the widget views too.** The snapshot tests run
+  in RunnerTests (`@testable import Runner`). · Compile the view files into
+  RunnerTests vs. into Runner. · **Runner** (the extension's `@main` bundle
+  stays in the extension only): one copy of each type, so the tests' App
+  Group override reaches the same `AppGroupStore` the views read. The app
+  never shows these views; the cost is a few kilobytes.
+- **DW2-4 Before the first payload** (a fresh install, the widget gallery):
+  the widget shows the brand only ("GrammarLens" and the lens symbol, on
+  orange) and opens Home; it has no text to translate. The gallery's own
+  names ("Climb", "Tip") and descriptions are fixed English in the extension
+  (the extension cannot read the app's language before the app has run).
 
 ## Blocked / not verified
 
@@ -217,11 +242,11 @@ All strings final and in the app's language; the extension formats nothing.
 ```json
 {
   "schema": 1,
-  "writtenAt": "2026-11-18T09:12:00+03:00",
+  "writtenAt": 1795504320,
   "rtl": false,
   "entries": [
     {
-      "validFrom": "2026-11-18T09:12:00+03:00",
+      "validFrom": 1795504320,
       "climb": {
         "state": "waiting",
         "url": "grammarlens://daily-test",
@@ -236,13 +261,13 @@ All strings final and in the app's language; the extension formats nothing.
         "chip": "Test waiting",
         "button": "Start",
         "countdown": {},
+        "countdownMedium": {},
         "images": {
           "avatar": "avatar.png",
           "mountainLight": "mountain_2026-11_light.png",
           "mountainDark": "mountain_2026-11_dark.png"
         },
-        "avatarPoint": [0.42, 0.61],
-        "evening": false
+        "avatarPoint": [0.42, 0.61]
       },
       "tip": {
         "url": "grammarlens://daily-test",
@@ -255,7 +280,7 @@ All strings final and in the app's language; the extension formats nothing.
         "done": false
       }
     },
-    { "validFrom": "2026-11-19T00:00:00+03:00", "climb": { "…": "waiting" }, "tip": { "…": "tomorrow's tip" } }
+    { "validFrom": 1795554000, "climb": { "…": "waiting" }, "tip": { "…": "tomorrow's tip" } }
   ]
 }
 ```
@@ -263,9 +288,11 @@ All strings final and in the app's language; the extension formats nothing.
 - `entries[0]` is now; `entries[1]` starts at the next local midnight
   (always the waiting state, with the next day's tip; if midnight starts a
   new month it points at that month's images and step 1).
-- In the done state `climb.countdown` maps whole hours left to text
-  (`{"10": "Next test in 10 h", …, "0": "Next test in < 1 h"}`, DW0-4); the
-  provider adds an entry at each top of the hour until `entries[1]`.
+- Times are seconds since 1970 (no date strings to parse).
+- In the done state `climb.countdown` maps whole hours left, rounded up,
+  1…24, to the small widget's line (`{"10": "Next test in 10 h", …}`) and
+  `countdownMedium` to the medium one (`"Next test in 10 h · 1/30"`), DW0-4;
+  the provider adds an entry at each top of the hour until `entries[1]`.
 - `avatarPoint` is the avatar's trail point inside the cropped mountain
   image (0–1, from `climbTrail` and the crop), so the extension only places
   it. Waiting uses the light image in light mode and the dark one in dark
@@ -409,3 +436,51 @@ Verified:
   w1-warm-review.png`, `w1-cold-daily-test.png` (not committed).
 
 Not verified: on a device (signing with the App Group is the owner's step).
+
+## W2 — Widget extension and SwiftUI views
+
+Status: **done**.
+
+What was built:
+- Target `GrammarLensWidgets` (app extension, bundle ID
+  `com.ahmettayfur.grammarlens.widgets`, iOS 15.0, Flutter's xcconfigs so
+  its version follows the app's, entitlements with the App Group), embedded
+  in Runner by an "Embed Foundation Extensions" phase placed right after
+  "Embed Frameworks", before Flutter's "Thin Binary" and the Crashlytics
+  script (no build cycle). Added by `tool/ios/configure_xcode_project.rb`
+  (now idempotent for array settings too); no team, signing style or
+  provisioning setting on the new target, so it inherits the project's.
+- `ios/Shared/WidgetPayload.swift` (Codable schema 1, `entry(at:)`,
+  countdown lines), `GrammarLensWidgets/WidgetTimeline.swift` (provider:
+  current entry, hourly countdown entries when done, the midnight waiting
+  entry; policy `.never`, the app reloads), `WidgetViews.swift` (small
+  waiting/done, medium A waiting/done, medium B tip, the empty state,
+  RTL from the payload), `WidgetStyle.swift` (W01 palette, light and dark),
+  `GrammarLensWidgets.swift` (`@main` bundle: "Climb" small + medium, "Tip"
+  medium; content margins off on iOS 17 so the mountain fills the widget).
+
+Verified:
+- `xcodebuild build` (Runner + extension, Debug, iPhone 18 Pro simulator):
+  BUILD SUCCEEDED; the `.appex` is in `Runner.app/PlugIns/` with version
+  1.4.0 and `com.apple.widgetkit-extension`; its simulated entitlements
+  carry the App Group.
+- `xcodebuild test` (RunnerTests: `AppGroupStoreTests` 5,
+  `WidgetTimelineTests` 6, `WidgetSnapshotTests` 4 + 1 skipped until W3's
+  Dart fixtures exist): TEST SUCCEEDED.
+- Snapshots in `build/widget-snapshots/` (not committed): small, medium A
+  and the tip, waiting and done, light and dark, the general tip and the
+  empty state, from a hand-written sample payload in the board's data and
+  the app's own avatar and Ember Peak images.
+- Comparison with W01 (by eye, sample data): small waiting — match (orange,
+  label, two-line title, subtitle, "1/30" chip, avatar bottom right);
+  small done — match (check + "Done today", "Step 2 of 30", countdown, gold
+  points chip); medium A waiting — match (title, subtitle, "Test waiting"
+  chip, avatar on the trail, white "Start" button), medium A done — match
+  (evening image, "See you tomorrow, Ada", countdown · 1/30, green chip,
+  no button); medium B — layout match, the rule line differs by DW2-2;
+  type is the system rounded face (DW2-1).
+
+- Flutter gate: `flutter analyze` no issues; `flutter test` 2516 passed.
+
+Not verified here: the widgets on a real home screen (W5 adds them on the
+simulator), on a device (owner).
