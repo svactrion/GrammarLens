@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../app_colors.dart';
@@ -93,6 +95,9 @@ class PressableButton extends StatefulWidget {
   static const double pressedLip = 1;
   static const double travel = 4;
   static const double radius = 18;
+
+  /// The shine band's layer (tests).
+  static const shineKey = ValueKey('pressable_button_shine');
 
   @override
   State<PressableButton> createState() => _PressableButtonState();
@@ -224,15 +229,26 @@ class _PressableButtonState extends State<PressableButton>
       ),
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (widget.shine && _loop != null && _enabled)
-            Positioned.fill(child: _Shine(animation: _loop!)),
-          content,
-        ],
-      ),
+      child: content,
     );
+    // The shine over the whole face (not the label's box), clipped to it.
+    if (widget.shine && _loop != null && _enabled) {
+      face = Stack(
+        children: [
+          face,
+          Positioned.fill(
+            child: Transform.translate(
+              offset: Offset(0, dy),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(PressableButton.radius),
+                child: ButtonShine(
+                    key: PressableButton.shineKey, animation: _loop!),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     if (widget.pulse && _loop != null && _enabled) {
       face = Stack(
@@ -307,40 +323,73 @@ class _PressableButtonState extends State<PressableButton>
   }
 }
 
-/// A light band that sweeps across the button (V00: `gl-shine`, 3 s loop:
-/// the sweep takes the first 55 %).
-class _Shine extends StatelessWidget {
+/// The shine every shining button uses (SPEC §3.2, v11; one shared
+/// implementation, fix round 3, B4): a diagonal band the full height of the
+/// button, 38 % of its width, skewed −20°, white 0 → 50 % → 0, travelling
+/// from −140 % to +320 % of its own width in the first 55 % of [animation]
+/// (a 3 s loop), then resting out of view. It fills its parent, which must
+/// be the whole button face; the caller clips it to the button's shape.
+/// Never a small square (the device build drew one on V05 and V06: the band
+/// was laid out in the label's box).
+class ButtonShine extends StatelessWidget {
   final Animation<double> animation;
-  const _Shine({super.key, required this.animation});
+  const ButtonShine({super.key, required this.animation});
+
+  /// The band's width, a share of the button's.
+  static const widthShare = .38;
+
+  /// The skew, in degrees (negative leans the top to the right).
+  static const skewDegrees = -20.0;
+
+  /// The band's peak opacity.
+  static const peak = .5;
+
+  /// Where the band's left edge starts and ends, in band widths, and the
+  /// share of the loop the sweep takes.
+  static const from = -1.4, to = 3.2, sweep = .55;
+
+  /// The band's left edge for a loop value [t], in points, on a button
+  /// [width] wide.
+  static double leftAt(double t, double width) {
+    final u = (t / sweep).clamp(0.0, 1.0);
+    return (from + (to - from) * u) * width * widthShare;
+  }
 
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: animation,
-        builder: (context, _) {
-          final t = (animation.value / .55).clamp(0.0, 1.0);
-          return FractionalTranslation(
-            translation: Offset(-1.4 + 4.6 * t, 0),
-            child: FractionallySizedBox(
-              widthFactor: .3,
-              alignment: Alignment.centerLeft,
-              child: Transform(
-                transform: Matrix4.skewX(-.35),
-                child: const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [
-                      Color(0x00FFFFFF),
-                      Color(0x66FFFFFF),
-                      Color(0x00FFFFFF),
-                    ]),
-                  ),
-                ),
+      child: LayoutBuilder(builder: (context, box) {
+        final w = box.maxWidth;
+        final band = w * widthShare;
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) => Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              Positioned(
+                left: leftAt(animation.value, w),
+                top: 0,
+                bottom: 0,
+                width: band,
+                child: child!,
+              ),
+            ],
+          ),
+          child: Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.skewX(skewDegrees * math.pi / 180),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  Colors.white.withValues(alpha: 0),
+                  Colors.white.withValues(alpha: peak),
+                  Colors.white.withValues(alpha: 0),
+                ]),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      }),
     );
   }
 }
@@ -431,7 +480,7 @@ class _CtaGlowState extends State<CtaGlow> with TickerProviderStateMixin {
         Positioned.fill(
           child: ClipRRect(
             borderRadius: radius,
-            child: _Shine(key: CtaGlow.shineKey, animation: shine),
+            child: ButtonShine(key: CtaGlow.shineKey, animation: shine),
           ),
         ),
       ],
