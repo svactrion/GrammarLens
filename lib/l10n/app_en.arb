@@ -2601,9 +2601,15 @@
   "@paywallRowDailyTest": {
     "description": "Comparison table row. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
   },
-  "paywallRowTopicPractice": "Topic Practice, all five topics",
+  "paywallRowTopicPractice": "Topic Practice, all {count} topics",
   "@paywallRowTopicPractice": {
-    "description": "Comparison table row. Feature names (Daily Test, Topic Practice, Review, Monthly Climb) are translated, the same word every time (owner, 2026-11-02); only the brand stays: GrammarLens, Premium."
+    "description": "Paywall comparison row; {count} is the real number of topics. 'Topic Practice' is the feature name.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
   },
   "paywallRowWeakSpots": "Practice your weak spots",
   "@paywallRowWeakSpots": {
@@ -4176,5 +4182,153 @@
         "example": "5"
       }
     }
+  },
+  "paywallHeadlineName": "Turn today’s mistake into progress, {name}.",
+  "@paywallHeadlineName": {
+    "description": "Paywall (V13): the headline with the user's name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "paywallSeePlans": "See plans",
+  "@paywallSeePlans": {
+    "description": "Paywall (V13): scrolls down to the plans."
+  },
+  "paywallSelectedPlan": "{plan} plan",
+  "@paywallSelectedPlan": {
+    "description": "Paywall (V13c): the selected plan's name above the pinned button once the plans have scrolled away.",
+    "placeholders": {
+      "plan": {
+        "type": "String",
+        "example": "Annual"
+      }
+    }
+  },
+  "paywallTimelineTitle": "How your free trial works",
+  "@paywallTimelineTitle": {
+    "description": "Paywall: the trial timeline's heading."
+  },
+  "paywallTimelineToday": "Today: everything in Premium unlocks. Nothing to pay.",
+  "@paywallTimelineToday": {
+    "description": "Paywall trial timeline: the first step."
+  },
+  "paywallTimelineEnd": "Day {days}: the trial ends and the plan starts. Cancel before then to pay nothing.",
+  "@paywallTimelineEnd": {
+    "description": "Paywall trial timeline: the last step; {days} is the trial's length in days.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "paywallExitTitle": "Leaving already, {name}?",
+  "@paywallExitTitle": {
+    "description": "Paywall exit pop-up (V13b): the title, once per session.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "paywallExitTitleNoName": "Leaving already?",
+  "@paywallExitTitleNoName": {
+    "description": "Paywall exit pop-up (V13b): the title when no name is known."
+  },
+  "paywallExitBody": "Your weak spots are waiting. Premium turns each one into practice with AI feedback.",
+  "@paywallExitBody": {
+    "description": "Paywall exit pop-up (V13b): the line under the title. No discount."
+  },
+  "paywallExitContinueFree": "Continue with free",
+  "@paywallExitContinueFree": {
+    "description": "Paywall exit pop-up (V13b): the secondary button; closes the paywall."
+  },
+  "paywallOnTitle": "Premium is on!",
+  "@paywallOnTitle": {
+    "description": "After a purchase or trial start (PW05): the title."
+  },
+  "paywallOnTopics": "All {count} topics in Topic Practice",
+  "@paywallOnTopics": {
+    "description": "PW05: the first unlocked thing. 'Topic Practice' is the feature name.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "paywallOnSessions": "Up to {count} practice sessions a day",
+  "@paywallOnSessions": {
+    "description": "PW05: the second unlocked thing.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "paywallOnFeedback": "AI feedback on every weak spot",
+  "@paywallOnFeedback": {
+    "description": "PW05: the third unlocked thing."
+  },
+  "paywallOnTrialEnds": "Your free trial ends on {date}.",
+  "@paywallOnTrialEnds": {
+    "description": "PW05: the trial's end date, written plainly.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "24 November 2026"
+      }
+    }
+  },
+  "profileChange": "Change",
+  "@profileChange": {
+    "description": "Profile (V23): the button on the companion's stage (→ change your buddy)."
+  },
+  "profileClimbingWith": "Climbing with {hero}",
+  "@profileClimbingWith": {
+    "description": "Profile (V23): under the name on the ribbon.",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      }
+    }
+  },
+  "settingsEditName": "Edit your name",
+  "@settingsEditName": {
+    "description": "Profile (V23): the pencil's VoiceOver label (→ PF04)."
+  },
+  "profileStatPoints": "points this month",
+  "@profileStatPoints": {
+    "description": "Profile (V23): a stat tile's label under this month's points."
+  },
+  "profileStatStep": "step",
+  "@profileStatStep": {
+    "description": "Profile (V23): a stat tile's label under this month's step."
+  },
+  "profileStatWeakSpots": "weak spots",
+  "@profileStatWeakSpots": {
+    "description": "Profile (V23): a stat tile's label under the number of weak spots."
+  },
+  "profileSeeAll": "See all",
+  "@profileSeeAll": {
+    "description": "Profile (V23): opens every medal (PF02)."
+  },
+  "profileMedalsClose": "Close",
+  "@profileMedalsClose": {
+    "description": "The medals layer (PF02): the close button's label."
+  },
+  "profileMedalThisMonth": "This month",
+  "@profileMedalThisMonth": {
+    "description": "The medals layer (PF02): the current month's grey slot."
+  },
+  "commonUndo": "Undo",
+  "@commonUndo": {
+    "description": "A snackbar's undo action (SY02), e.g. after 'Name saved'."
   }
 }

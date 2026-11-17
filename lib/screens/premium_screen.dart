@@ -3,6 +3,13 @@ import 'package:flutter/rendering.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../motion.dart';
+import '../utils/haptics.dart';
+import '../widgets/companion_dialog.dart';
+import '../widgets/companion_view.dart';
+import '../widgets/pressable_button.dart';
+import 'premium_on_screen.dart';
 import '../data/topics.dart';
 import '../models/avatar.dart';
 import '../models/practice_length.dart';
@@ -82,6 +89,18 @@ class PremiumScreen extends StatefulWidget {
   static const ctaKey = ValueKey('premium_cta');
   static const restoreKey = ValueKey('premium_restore');
   static const heroKey = ValueKey('premium_hero');
+  static const seePlansKey = ValueKey('premium_see_plans');
+  static const closeKey = ValueKey('premium_close');
+  static const exitStartKey = ValueKey('premium_exit_start');
+  static const exitContinueFreeKey = ValueKey('premium_exit_continue_free');
+  static const selectedPlanKey = ValueKey('premium_selected_plan');
+  static const timelineKey = ValueKey('premium_trial_timeline');
+  static const compareKey = ValueKey('premium_compare');
+
+  /// For tests: lets the next close show V13b (once per session) again.
+  @visibleForTesting
+  static void resetExitReminder() =>
+      _PremiumScreenState._exitReminderShown = false;
 
   @override
   State<PremiumScreen> createState() => _PremiumScreenState();
@@ -105,7 +124,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
   bool _purchasedTrial = false;
   bool _restoring = false;
   String? _restoreMessage;
-  bool _compareOpen = false;
 
   // Picked once per visit: a legacy profile with no avatar (or an unknown
   // id) still shows a real companion, the same one on every rebuild.
@@ -116,12 +134,94 @@ class _PremiumScreenState extends State<PremiumScreen> {
   // button's exit from a system back gesture.
   bool _exitHandled = false;
 
+  /// The user's name, for the headline and the exit pop-up (V13, V13b).
+  String _userName = '';
+
+  /// V13b opens once per app session, on the first close.
+  static bool _exitReminderShown = false;
+
+  final _scroll = ScrollController();
+  final _plansKey = GlobalKey();
+
+  /// The plans have scrolled up out of view (V13c): their name sits above
+  /// the pinned button.
+  bool _plansPassed = false;
+
   @override
   void initState() {
     super.initState();
     widget.analyticsService.paywallViewed(widget.analyticsSource);
     _loadOffer();
     _loadAvatar();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final plans = _plansKey.currentContext?.findRenderObject() as RenderBox?;
+    final body = context.findRenderObject() as RenderBox?;
+    if (plans == null || !plans.hasSize || body == null) return;
+    final bottom = plans.localToGlobal(Offset(0, plans.size.height)).dy;
+    final passed = bottom < MediaQuery.paddingOf(context).top + 60;
+    if (passed != _plansPassed) setState(() => _plansPassed = passed);
+  }
+
+  /// "See plans" (V13): the plans scroll into view.
+  void _seePlans() {
+    final plans = _plansKey.currentContext;
+    if (plans == null) return;
+    Scrollable.ensureVisible(plans,
+        alignment: .05,
+        duration: AppMotion.orInstant(context, AppMotion.slow),
+        curve: AppMotion.enter);
+  }
+
+  /// The close button: the first time in an app session, V13b asks once
+  /// (no discount); otherwise, and on "Continue with free", the paywall
+  /// closes as before.
+  Future<void> _onClose() async {
+    final terms = _offeringsAvailable && _selectedPackage != null
+        ? _termsFor(_selectedPackage!,
+            _selectedPeriod == _PlanPeriod.annual ? 'Annual' : 'Monthly')
+        : null;
+    if (_exitReminderShown ||
+        terms == null ||
+        _purchaseState == _PurchaseState.purchasing ||
+        _purchaseState == _PurchaseState.success) {
+      _dismiss(dismissMethod: AnalyticsService.paywallDismissCloseButton);
+      return;
+    }
+    _exitReminderShown = true;
+    HapticMap.light();
+    final l10n = context.l10n;
+    final result = await showCompanionDialog(
+      context: context,
+      hero: _userAvatar,
+      mood: CompanionMood.sad,
+      title: _userName.trim().isEmpty
+          ? l10n.paywallExitTitleNoName
+          : l10n.paywallExitTitle(_userName.trim()),
+      body: l10n.paywallExitBody,
+      primaryLabel: terms.cta,
+      primaryTone: ButtonTone.orange,
+      secondaryLabel: l10n.paywallExitContinueFree,
+      primaryKey: PremiumScreen.exitStartKey,
+      secondaryKey: PremiumScreen.exitContinueFreeKey,
+    );
+    if (!mounted) return;
+    switch (result) {
+      case CompanionDialogResult.primary:
+        await _startPurchase();
+      case CompanionDialogResult.secondary:
+        _dismiss(dismissMethod: AnalyticsService.paywallDismissCloseButton);
+      case null:
+        break;
+    }
   }
 
   Future<void> _loadOffer() async {
@@ -150,7 +250,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
       // Decorative: falls back to the random companion above.
     }
     if (!mounted) return;
-    setState(() => _userAvatar = profile?.avatar ?? _fallbackAvatar);
+    setState(() {
+      _userAvatar = profile?.avatar ?? _fallbackAvatar;
+      _userName = profile?.name ?? '';
+    });
   }
 
   /// Both plans must exist for the picker to mean anything; one alone is
@@ -216,6 +319,31 @@ class _PremiumScreenState extends State<PremiumScreen> {
       PurchaseOutcome.pending => 'pending',
     };
     widget.analyticsService.purchaseResult(plan: plan, outcome: outcomeId);
+    if (outcome == PurchaseOutcome.success && mounted) {
+      await _showPremiumOn(terms);
+    }
+  }
+
+  /// PW05: the celebration after a purchase or trial start; its Continue
+  /// closes the paywall as the footer's Continue does.
+  Future<void> _showPremiumOn(_PlanTerms terms) async {
+    final trialDays = _trialDays(terms.trial);
+    final done = await Navigator.of(context).push<bool>(
+      PageRouteBuilder(
+        transitionDuration: AppMotion.orInstant(context, AppMotion.slow),
+        pageBuilder: (_, __, ___) => PremiumOnScreen(
+          hero: _userAvatar,
+          topics: practiceTopics().length,
+          sessions: StorageService.dailySessionLimit,
+          trialEnds: trialDays == null
+              ? null
+              : DateTime.now().add(Duration(days: trialDays)),
+        ),
+        transitionsBuilder: (_, a, __, child) =>
+            FadeTransition(opacity: a, child: child),
+      ),
+    );
+    if (done == true && mounted) _dismiss();
   }
 
   Future<void> _restore() async {
@@ -301,12 +429,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
           children: [
             _TopBar(
               horizontalPadding: ContentWidth.sidePaddingOf(context, base: 17),
-              onClose: () => _dismiss(
-                dismissMethod: AnalyticsService.paywallDismissCloseButton,
-              ),
+              onClose: _onClose,
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scroll,
                 padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 16),
                 child: Column(
                   key: const Key('premiumBody'),
@@ -323,7 +450,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Semantics(
                       header: true,
                       child: Text(
-                        context.l10n.paywallHeadline,
+                        _userName.trim().isEmpty
+                            ? context.l10n.paywallHeadline
+                            : context.l10n
+                                .paywallHeadlineName(_userName.trim()),
                         textAlign: TextAlign.center,
                         style: _headlineStyle(theme, size.width),
                       ),
@@ -332,17 +462,27 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     _SupportingLine(text: _supportingText),
                     const SizedBox(height: 21),
                     const _BenefitsCard(),
-                    const SizedBox(height: 4),
-                    _CompareToggle(
-                      open: _compareOpen,
-                      onTap: () => setState(() => _compareOpen = !_compareOpen),
+                    const SizedBox(height: 8),
+                    // V13: no price boxes on the first view; "See plans"
+                    // scrolls to them (13 → 13a → 13c on one page).
+                    Center(
+                      child: TextButton(
+                        key: PremiumScreen.seePlansKey,
+                        onPressed: _seePlans,
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Text(context.l10n.paywallSeePlans,
+                              style: theme.textTheme.titleSmall
+                                  ?.withWeight(FontWeight.w900)
+                                  .copyWith(color: colorScheme.secondary)),
+                          const SizedBox(width: 6),
+                          Icon(Icons.arrow_downward_rounded,
+                              size: 18, color: colorScheme.secondary),
+                        ]),
+                      ),
                     ),
-                    if (_compareOpen) ...[
-                      _ComparisonTable(theme: theme, colorScheme: colorScheme),
-                      const SizedBox(height: 16),
-                    ] else
-                      const SizedBox(height: 13),
+                    const SizedBox(height: 18),
                     Semantics(
+                      key: _plansKey,
                       header: true,
                       child: Text(
                         context.l10n.paywallChoosePlan,
@@ -380,6 +520,17 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         onChanged: (period) =>
                             setState(() => _selectedPeriod = period),
                       ),
+                    // V13c: Free vs Premium, then the trial timeline.
+                    const SizedBox(height: 22),
+                    KeyedSubtree(
+                      key: PremiumScreen.compareKey,
+                      child: _ComparisonTable(
+                          theme: theme, colorScheme: colorScheme),
+                    ),
+                    if (_trialDays(selectedTerms?.trial) case final days?) ...[
+                      const SizedBox(height: 18),
+                      _TrialTimeline(days: days),
+                    ],
                     if (!linksInFooter) ...[
                       const SizedBox(height: 12),
                       Center(
@@ -395,6 +546,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
             ),
             _PremiumFooter(
               key: const Key('premiumFooter'),
+              planLabel: _plansPassed && selectedTerms != null
+                  ? context.l10n.paywallSelectedPlan(selectedTerms.label)
+                  : null,
               loading: _loadingOffer,
               offeringsReady: offeringsReady,
               purchaseState: _purchaseState,
@@ -700,6 +854,7 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           IconButton(
+            key: PremiumScreen.closeKey,
             icon: const Icon(Icons.close_rounded, size: 22),
             tooltip: context.l10n.paywallClose,
             color: colorScheme.onSurface,
@@ -828,8 +983,8 @@ class _BenefitsCard extends StatelessWidget {
       (
         Icons.menu_book_rounded,
         l10n.paywallBenefitTopicsTitle,
-        l10n.paywallBenefitTopicsBody(
-            kTopics.length, lengthText, StorageService.dailySessionLimit),
+        l10n.paywallBenefitTopicsBody(practiceTopics().length, lengthText,
+            StorageService.dailySessionLimit),
       ),
     ];
   }
@@ -904,46 +1059,6 @@ class _BenefitsCard extends StatelessWidget {
 
 /// "Compare Free & Premium": opens and closes the comparison table below
 /// it. A 44 pt target; screen readers hear whether it is open.
-class _CompareToggle extends StatelessWidget {
-  final bool open;
-  final VoidCallback onTap;
-
-  const _CompareToggle({required this.open, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return MergeSemantics(
-      child: Semantics(
-        expanded: open,
-        child: TextButton(
-          key: PremiumScreen.compareToggleKey,
-          onPressed: onTap,
-          style: TextButton.styleFrom(
-            minimumSize: const Size.fromHeight(44),
-            foregroundColor: colorScheme.secondary,
-            textStyle: theme.textTheme.labelMedium?.withWeight(FontWeight.w800),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: Text(context.l10n.paywallCompare)),
-              const SizedBox(width: 6),
-              Icon(
-                open
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                size: 17,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Restore Purchases, Terms of Service and Privacy Policy on one row,
 /// wrapping when narrow; each a 44 pt target.
 class _FooterLinks extends StatelessWidget {
@@ -1111,6 +1226,9 @@ class _RenderRowTapArea extends RenderProxyBox {
 ///   without a price; the links and "Maybe later". The retry is in the
 ///   body.
 class _PremiumFooter extends StatelessWidget {
+  /// V13c: the selected plan's name above the button once the plans have
+  /// scrolled away.
+  final String? planLabel;
   final bool loading;
   final bool offeringsReady;
   final _PurchaseState purchaseState;
@@ -1140,6 +1258,7 @@ class _PremiumFooter extends StatelessWidget {
 
   const _PremiumFooter({
     super.key,
+    this.planLabel,
     required this.loading,
     required this.offeringsReady,
     required this.purchaseState,
@@ -1196,6 +1315,19 @@ class _PremiumFooter extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                 ] else if (offeringsReady && terms != null) ...[
+                  if (planLabel != null &&
+                      purchaseState != _PurchaseState.success) ...[
+                    Center(
+                      child: Text(
+                        planLabel!,
+                        key: PremiumScreen.selectedPlanKey,
+                        style: theme.textTheme.labelMedium
+                            ?.withWeight(FontWeight.w900)
+                            .copyWith(color: colorScheme.secondary),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                   _Cta(
                     onPressed: switch (purchaseState) {
                       _PurchaseState.purchasing => null,
@@ -1435,7 +1567,7 @@ List<_ComparisonRow> _buildComparisonRows(
         premium: true,
       ),
       _ComparisonRow(
-        label: l10n.paywallRowTopicPractice,
+        label: l10n.paywallRowTopicPractice(practiceTopics().length),
         free: false,
         premium: true,
       ),
@@ -2478,6 +2610,15 @@ class _PlanCardsSkeleton extends StatelessWidget {
 /// display-only and never touches [_parseSubscriptionPeriod] (the
 /// separate renewal-period text), which has its own independent input
 /// (the product's ISO subscription period, not the introductory offer).
+/// A trial's length in days when it is counted in days or weeks; null for
+/// a month or longer (the timeline and the end date are then left out
+/// rather than guessed).
+int? _trialDays(_Period? trial) => switch (trial?.unit) {
+      PeriodUnit.day => trial!.count,
+      PeriodUnit.week => trial!.count * 7,
+      _ => null,
+    };
+
 _Period _trialDurationInDays(IntroductoryPrice trial) {
   if (trial.periodUnit == PeriodUnit.week) {
     return (count: trial.periodNumberOfUnits * 7, unit: PeriodUnit.day);
@@ -2501,4 +2642,66 @@ _Period? _parseSubscriptionPeriod(String? iso) {
   };
   if (unit == null) return null;
   return (count: int.parse(match.group(1)!), unit: unit);
+}
+
+/// The trial timeline (V13a, V13c): today everything unlocks with nothing
+/// to pay; on the last day the plan starts unless cancelled before.
+class _TrialTimeline extends StatelessWidget {
+  final int days;
+  const _TrialTimeline({required this.days});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    Widget step(IconData icon, Color color, String text, {bool line = true}) =>
+        IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Column(children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                child: Icon(icon, size: 16, color: Colors.white),
+              ),
+              if (line)
+                Expanded(
+                  child: Container(width: 3, color: c.line),
+                ),
+            ]),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 5, bottom: 14),
+                child: Text(text,
+                    style: theme.textTheme.bodyMedium!
+                        .withWeight(FontWeight.w700)
+                        .copyWith(color: c.text)),
+              ),
+            ),
+          ]),
+        );
+    return Container(
+      key: PremiumScreen.timelineKey,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      decoration: lipCard(c, radius: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(l10n.paywallTimelineTitle,
+                style: theme.textTheme.titleSmall!
+                    .withWeight(FontWeight.w900)
+                    .copyWith(color: c.text)),
+          ),
+          const SizedBox(height: 12),
+          step(Icons.lock_open_rounded, c.green, l10n.paywallTimelineToday),
+          step(Icons.event_rounded, c.navy, l10n.paywallTimelineEnd(days),
+              line: false),
+        ],
+      ),
+    );
+  }
 }

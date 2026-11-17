@@ -181,11 +181,11 @@ final _sites = <_Site>[
           _Subscriptions(offering: buildDebugFixtureOffering()),
     ),
     after: (tester) async {
-      // The prices loaded: both plan cards, then the comparison table open.
+      // The prices loaded: both plan cards, then the comparison table (on
+      // the page since the UI polish, V13c).
       expect(find.byKey(const ValueKey('planCard_Annual')), findsOneWidget);
       expect(find.byKey(const ValueKey('planCard_Monthly')), findsOneWidget);
-      await tester.tap(find.byKey(PremiumScreen.compareToggleKey));
-      await tester.pumpAndSettle();
+      expect(find.byKey(PremiumScreen.compareKey), findsOneWidget);
       // At 320 pt the table is the stacked layout (no strip header): its
       // first row, in this language, is on screen.
       final l10n = tester.element(find.byType(PremiumScreen)).l10n;

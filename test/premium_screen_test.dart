@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderParagraph;
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/utils/haptics.dart';
+import 'package:grammar_lens/screens/premium_on_screen.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import 'package:grammar_lens/models/app_text_size.dart';
@@ -385,7 +388,7 @@ void main() {
     expect(find.text('PREMIUM'), findsOneWidget);
 
     expect(find.text('Daily Test, refreshed every day'), findsOneWidget);
-    expect(find.text('Topic Practice, all five topics'), findsOneWidget);
+    expect(find.text('Topic Practice, all 5 topics'), findsOneWidget);
     // "Questions from your own mistakes" and "Targeted weak-spot practice"
     // used to be two separate rows, both wrongly showing free as "—" —
     // merged into one, with the real per-day quota
@@ -800,8 +803,12 @@ void main() {
       await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
       expect(service.purchaseCalls, 1);
+      // PW05 opens over the paywall, which keeps its success state.
+      expect(find.byType(PremiumOnScreen), findsOneWidget);
+      expect(find.text('Premium is on!'), findsOneWidget);
       expect(
-        find.textContaining('Trial started — Topic Practice is unlocked'),
+        find.textContaining('Trial started — Topic Practice is unlocked',
+            skipOffstage: false),
         findsOneWidget,
       );
     });
@@ -853,14 +860,17 @@ void main() {
 
       await scrollAndTap(tester, find.byKey(PremiumScreen.ctaKey));
 
-      expect(find.text('Continue'), findsOneWidget);
+      // PW05: the celebration, with the trial's end date written plainly.
+      expect(find.byType(PremiumOnScreen), findsOneWidget);
+      expect(find.textContaining('Your free trial ends on'), findsOneWidget);
       expect(find.text('Start my 7-day free trial'), findsNothing);
-      // Redundant with "Continue" once a trial has actually started.
       expect(find.text('Maybe later'), findsNothing);
 
-      await scrollAndTap(tester, find.text('Continue'));
+      await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+      await tester.pumpAndSettle();
 
       expect(doneCalled, isTrue);
+      expect(find.byType(PremiumOnScreen), findsNothing);
       expect(find.byType(PremiumScreen), findsNothing);
     });
   });
@@ -1428,6 +1438,68 @@ void main() {
     });
 
     testWidgets(
+        'V13b: the first close of a session asks once (the sad companion, no '
+        'discount); "Continue with free" closes with close_button',
+        (tester) async {
+      PremiumScreen.resetExitReminder();
+      final analytics = _FakeAnalyticsService();
+      await pumpPremiumPushed(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+        analyticsService: analytics,
+      );
+      HapticMap.log = [];
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(HapticMap.log, contains('light'));
+      expect(find.byKey(PremiumScreen.exitStartKey), findsOneWidget);
+      expect(find.text('Continue with free'), findsOneWidget);
+      // No discount: the pop-up's line is about the weak spots only.
+      expect(
+          find.text('Your weak spots are waiting. Premium turns each one into '
+              'practice with AI feedback.'),
+          findsOneWidget);
+      final companion =
+          tester.widgetList<CompanionView>(find.byType(CompanionView)).last;
+      expect(companion.mood, CompanionMood.sad);
+      expect(
+          analytics.calls.where((c) => c.name == 'paywall_dismissed'), isEmpty);
+
+      await tester.tap(find.byKey(PremiumScreen.exitContinueFreeKey));
+      await tester.pumpAndSettle();
+      expect(find.byType(PremiumScreen), findsNothing);
+      final dismissed =
+          analytics.calls.where((c) => c.name == 'paywall_dismissed').toList();
+      expect(dismissed.single.parameters['method'],
+          AnalyticsService.paywallDismissCloseButton);
+
+      // Once per session: the next paywall closes at once.
+      await pumpPremiumPushed(
+        tester,
+        _FakeSubscriptionService(offering: _offeringWithBothPlans()),
+      );
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(PremiumScreen.exitStartKey), findsNothing);
+      expect(find.byType(PremiumScreen), findsNothing);
+    });
+
+    testWidgets('V13b: its primary button starts the purchase', (tester) async {
+      PremiumScreen.resetExitReminder();
+      final service = _FakeSubscriptionService(
+        offering: _offeringWithBothPlans(),
+        purchaseOutcome: PurchaseOutcome.cancelled,
+      );
+      await pumpPremiumPushed(tester, service);
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(PremiumScreen.exitStartKey));
+      await tester.pumpAndSettle();
+      expect(service.purchaseCalls, 1);
+      expect(find.byType(PremiumScreen), findsOneWidget);
+    });
+
+    testWidgets(
         'tapping "Maybe later" logs paywall_dismissed with method '
         'maybe_later', (tester) async {
       final analytics = _FakeAnalyticsService();
@@ -1498,7 +1570,8 @@ void main() {
       expect(result.parameters['plan'], AnalyticsService.planAnnual);
       expect(result.parameters['outcome'], 'success');
 
-      await scrollAndTap(tester, find.text('Continue'));
+      await tester.tap(find.byKey(PremiumOnScreen.continueKey));
+      await tester.pumpAndSettle();
       expect(
         analytics.calls.where((c) => c.name == 'paywall_dismissed'),
         isEmpty,
@@ -1721,24 +1794,19 @@ void main() {
   });
 
   testWidgets(
-      '"Compare Free & Premium" opens and closes the comparison table; it '
-      'starts closed and says so to screen readers', (tester) async {
-    final semantics = tester.ensureSemantics();
-    await pumpPremium(tester, _FakeSubscriptionService(offering: null));
-    final toggle = find.byKey(PremiumScreen.compareToggleKey);
-    expect(find.byKey(const Key('comparisonTable')), findsNothing);
-    expect(tester.getSemantics(toggle),
-        isSemantics(hasExpandedState: true, isExpanded: false, isButton: true));
-
-    await openComparison(tester);
-    expect(find.byKey(const Key('comparisonTable')), findsOneWidget);
-    expect(tester.getSemantics(toggle),
-        isSemantics(hasExpandedState: true, isExpanded: true, isButton: true));
-
-    await tester.tap(toggle);
+      'V13c: Free vs Premium is on the page, after the plans, with no '
+      'toggle; "See plans" scrolls to the plans', (tester) async {
+    await pumpPremium(
+        tester, _FakeSubscriptionService(offering: _offeringWithBothPlans()));
+    expect(find.byKey(PremiumScreen.compareToggleKey), findsNothing);
+    final table = find.byKey(PremiumScreen.compareKey);
+    expect(table, findsOneWidget);
+    final plansTitle = find.text('Choose your plan');
+    expect(tester.getTopLeft(table).dy,
+        greaterThan(tester.getTopLeft(plansTitle).dy));
+    await tester.tap(find.byKey(PremiumScreen.seePlansKey));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('comparisonTable')), findsNothing);
-    semantics.dispose();
+    expect(tester.getTopLeft(plansTitle).dy, lessThan(200));
   });
 
   group(
@@ -2276,7 +2344,7 @@ void main() {
 
     const labels = [
       'Daily Test, refreshed every day',
-      'Topic Practice, all five topics',
+      'Topic Practice, all 5 topics',
       'Practice your weak spots',
       'Sessions of 3, 5 or 10 questions',
     ];
@@ -2712,8 +2780,12 @@ void main() {
               purchaseOutcome: PurchaseOutcome.success));
       await tester.tap(find.byKey(PremiumScreen.ctaKey));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Premium is active'), findsOneWidget);
-      expect(find.textContaining('Trial started'), findsNothing);
+      expect(find.textContaining('Premium is active', skipOffstage: false),
+          findsOneWidget);
+      expect(find.textContaining('Trial started', skipOffstage: false),
+          findsNothing);
+      // PW05 names no trial end date without a trial.
+      expect(find.textContaining('Your free trial ends'), findsNothing);
     });
 
     for (final restored in [true, false]) {
