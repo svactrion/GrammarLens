@@ -187,10 +187,13 @@ class PracticeCard extends StatelessWidget {
             label: l10n.homeSessionsSemantics(sessionsToday, sessionLimit),
             excludeSemantics: true,
             child: Row(children: [
-              Text(l10n.homeSessionsToday,
-                  style: theme.textTheme.labelLarge!
-                      .withWeight(FontWeight.w800)
-                      .copyWith(color: c.muted)),
+              Flexible(
+                child: Text(l10n.homeSessionsToday,
+                    maxLines: 2,
+                    style: theme.textTheme.labelLarge!
+                        .withWeight(FontWeight.w800)
+                        .copyWith(color: c.muted)),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: StepBar(

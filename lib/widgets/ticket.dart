@@ -90,13 +90,20 @@ class _TicketState extends State<Ticket> with TickerProviderStateMixin {
       if (s == AnimationStatus.completed) widget.onTorn?.call();
     });
     if (widget.state == TicketState.used) _stamp.value = 0;
-    if (widget.state == TicketState.tearing) _startTear();
     if (widget.state != TicketState.used) _restore.value = 1;
   }
+
+  /// A ticket built already tearing starts its tear once its dependencies
+  /// (Reduce Motion) can be read.
+  bool _tearChecked = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (!_tearChecked) {
+      _tearChecked = true;
+      if (widget.state == TicketState.tearing) _startTear();
+    }
     _syncGlint();
     if (widget.state == TicketState.used && _stamp.value == 0) {
       // The stamp pops once on entry (V22).

@@ -30,6 +30,7 @@ import 'package:grammar_lens/widgets/confetti_burst.dart';
 import 'package:grammar_lens/widgets/monthly_climb/climb_score_bar.dart';
 import 'package:grammar_lens/widgets/monthly_climb/monthly_mountain.dart';
 import 'package:grammar_lens/widgets/score_capsule.dart';
+import 'package:grammar_lens/widgets/error_state.dart';
 import 'package:grammar_lens/widgets/home_greeting.dart';
 import 'package:grammar_lens/widgets/home_practice.dart';
 
@@ -747,7 +748,10 @@ void main() {
     expect(find.text('Couldn’t load your monthly progress.'), findsOneWidget);
     storage.failProgress = false;
     storage.steps = 4;
-    await tester.tap(find.text('Retry progress'));
+    // R11: the shared error state's "Try again".
+    await tester.ensureVisible(find.byKey(ErrorState.retryKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ErrorState.retryKey));
     await tester.pumpAndSettle();
     expect(
         tester

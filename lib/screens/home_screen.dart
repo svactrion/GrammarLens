@@ -38,6 +38,7 @@ import '../widgets/month_card_sheet.dart';
 import '../widgets/monthly_climb/climb_card.dart';
 import '../widgets/monthly_climb/climb_camera.dart';
 import '../widgets/skeleton.dart';
+import '../widgets/error_state.dart';
 import '../widgets/monthly_climb/climb_debug_month_card.dart';
 import '../widgets/monthly_climb/climb_zoom.dart';
 import '../widgets/monthly_climb/monthly_mountain.dart';
@@ -1396,11 +1397,18 @@ class _HomeScreenState extends State<HomeScreen>
         if (_loadingClimb && _climbSteps != null)
           LinearProgressIndicator(
               semanticsLabel: context.l10n.homeClimbLoading),
-        if (_climbLoadFailed) ...[
-          Text(context.l10n.homeClimbFailed, textAlign: TextAlign.center),
-          TextButton(
-              onPressed: _loadClimb, child: Text(context.l10n.homeClimbRetry)),
-        ],
+        // R11: one language for a load error — the sad companion, a calm
+        // line, "Try again" with dots while it retries.
+        if (_climbLoadFailed)
+          ErrorState(
+            hero: widget.avatar ?? Avatar.values.first,
+            kind: ErrorKind.server,
+            message: context.l10n.homeClimbFailed,
+            onRetry: () async {
+              await _loadClimb();
+              return !_climbLoadFailed;
+            },
+          ),
       ],
     );
   }

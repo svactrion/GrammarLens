@@ -90,71 +90,91 @@ class _PremiumOnScreenState extends State<PremiumOnScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Spacer(),
-                Center(
-                  child: CompanionView(
-                      hero: widget.hero,
-                      mood: CompanionMood.cheer,
-                      size: 150,
-                      hopping: true,
-                      decorative: true),
-                ),
-                const SizedBox(height: 14),
-                Semantics(
-                  header: true,
-                  child: Text(l10n.paywallOnTitle,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium!
-                          .withWeight(FontWeight.w900)
-                          .copyWith(color: c.onNavy)),
-                ),
-                const SizedBox(height: 18),
-                for (final (i, (icon, text)) in items.indexed)
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: reduced ? 1 : 0, end: 1),
-                    duration: AppMotion.orInstant(context,
-                        AppMotion.slow + Duration(milliseconds: 120 * (i + 1))),
-                    curve: Interval(
-                        (120 * (i + 1)) /
-                            (AppMotion.slow.inMilliseconds + 120 * (i + 1)),
-                        1,
-                        curve: AppMotion.enter),
-                    builder: (context, t, child) => Opacity(
-                      opacity: t,
-                      child: Transform.translate(
-                          offset: Offset(-40 * (1 - t), 0), child: child),
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .08),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(children: [
-                        Icon(icon, color: c.gold),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(text,
-                              style: theme.textTheme.titleSmall!
-                                  .withWeight(FontWeight.w800)
-                                  .copyWith(color: c.onNavy)),
+                Expanded(
+                  // Scrolls on a short screen; the button stays below.
+                  child: LayoutBuilder(
+                    builder: (context, box) => SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: box.maxHeight),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Center(
+                              child: CompanionView(
+                                  hero: widget.hero,
+                                  mood: CompanionMood.cheer,
+                                  size: 150,
+                                  hopping: true,
+                                  decorative: true),
+                            ),
+                            const SizedBox(height: 14),
+                            Semantics(
+                              header: true,
+                              child: Text(l10n.paywallOnTitle,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.headlineMedium!
+                                      .withWeight(FontWeight.w900)
+                                      .copyWith(color: c.onNavy)),
+                            ),
+                            const SizedBox(height: 18),
+                            for (final (i, (icon, text)) in items.indexed)
+                              TweenAnimationBuilder<double>(
+                                tween: Tween(begin: reduced ? 1 : 0, end: 1),
+                                duration: AppMotion.orInstant(
+                                    context,
+                                    AppMotion.slow +
+                                        Duration(milliseconds: 120 * (i + 1))),
+                                curve: Interval(
+                                    (120 * (i + 1)) /
+                                        (AppMotion.slow.inMilliseconds +
+                                            120 * (i + 1)),
+                                    1,
+                                    curve: AppMotion.enter),
+                                builder: (context, t, child) => Opacity(
+                                  opacity: t,
+                                  child: Transform.translate(
+                                      offset: Offset(-40 * (1 - t), 0),
+                                      child: child),
+                                ),
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: .08),
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: Row(children: [
+                                    Icon(icon, color: c.gold),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(text,
+                                          style: theme.textTheme.titleSmall!
+                                              .withWeight(FontWeight.w800)
+                                              .copyWith(color: c.onNavy)),
+                                    ),
+                                  ]),
+                                ),
+                              ),
+                            if (ends != null) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n.paywallOnTrialEnds(DateFormat.yMMMMd(
+                                        Localizations.localeOf(context)
+                                            .toLanguageTag())
+                                    .format(ends)),
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium!
+                                    .copyWith(color: c.onNavyMuted),
+                              ),
+                            ],
+                          ],
                         ),
-                      ]),
+                      ),
                     ),
                   ),
-                if (ends != null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.paywallOnTrialEnds(DateFormat.yMMMMd(
-                            Localizations.localeOf(context).toLanguageTag())
-                        .format(ends)),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium!
-                        .copyWith(color: c.onNavyMuted),
-                  ),
-                ],
-                const Spacer(),
+                ),
+                const SizedBox(height: 12),
                 PressableButton(
                   key: PremiumOnScreen.continueKey,
                   label: l10n.commonContinue,
