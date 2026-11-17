@@ -687,5 +687,16 @@
   "profileSeeAll": "Tümünü gör",
   "profileMedalsClose": "Kapat",
   "profileMedalThisMonth": "Bu ay",
-  "commonUndo": "Geri al"
+  "commonUndo": "Geri al",
+  "widgetStepWaiting": "{step}. adım seni bekliyor",
+  "widgetTestLength": "{count} soru · {minutes} dk",
+  "widgetDoneToday": "Bugün tamam",
+  "widgetNextTestIn": "Sonraki test {hours} sa sonra",
+  "widgetStepOneTestAway": "{step}. adıma bir test kaldı",
+  "widgetTestWaiting": "Test bekliyor",
+  "widgetStart": "Başla",
+  "widgetTipLabel": "SANA ÖZEL İPUCU · {topic}",
+  "widgetTipLabelGeneral": "GÜNÜN İPUCU · {topic}",
+  "widgetTipFooter": "Zayıf noktalarından · her gün yeni ipucu",
+  "widgetTipFooterGeneral": "Her gün yeni bir ipucu"
 }

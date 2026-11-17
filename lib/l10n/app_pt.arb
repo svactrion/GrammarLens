@@ -687,5 +687,16 @@
   "profileSeeAll": "Ver tudo",
   "profileMedalsClose": "Fechar",
   "profileMedalThisMonth": "Este mês",
-  "commonUndo": "Desfazer"
+  "commonUndo": "Desfazer",
+  "widgetStepWaiting": "O passo {step} está esperando",
+  "widgetTestLength": "{count} perguntas · {minutes} min",
+  "widgetDoneToday": "Feito hoje",
+  "widgetNextTestIn": "Próximo teste em {hours} h",
+  "widgetStepOneTestAway": "O passo {step} está a um teste",
+  "widgetTestWaiting": "Teste esperando",
+  "widgetStart": "Começar",
+  "widgetTipLabel": "DICA PARA VOCÊ · {topic}",
+  "widgetTipLabelGeneral": "DICA DO DIA · {topic}",
+  "widgetTipFooter": "Dos seus pontos fracos · uma dica nova por dia",
+  "widgetTipFooterGeneral": "Uma dica nova todo dia"
 }

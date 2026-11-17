@@ -687,5 +687,16 @@
   "profileSeeAll": "모두 보기",
   "profileMedalsClose": "닫기",
   "profileMedalThisMonth": "이번 달",
-  "commonUndo": "실행 취소"
+  "commonUndo": "실행 취소",
+  "widgetStepWaiting": "{step}단계가 기다리고 있어요",
+  "widgetTestLength": "{count}문제 · {minutes}분",
+  "widgetDoneToday": "오늘 완료",
+  "widgetNextTestIn": "다음 테스트까지 {hours}시간",
+  "widgetStepOneTestAway": "{step}단계까지 테스트 하나 남았어요",
+  "widgetTestWaiting": "테스트 대기 중",
+  "widgetStart": "시작",
+  "widgetTipLabel": "나를 위한 팁 · {topic}",
+  "widgetTipLabelGeneral": "오늘의 팁 · {topic}",
+  "widgetTipFooter": "약점에서 골랐어요 · 매일 새 팁",
+  "widgetTipFooterGeneral": "매일 새로운 팁"
 }

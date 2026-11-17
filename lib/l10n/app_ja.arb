@@ -687,5 +687,16 @@
   "profileSeeAll": "すべて見る",
   "profileMedalsClose": "閉じる",
   "profileMedalThisMonth": "今月",
-  "commonUndo": "元に戻す"
+  "commonUndo": "元に戻す",
+  "widgetStepWaiting": "ステップ{step}が待っています",
+  "widgetTestLength": "{count}問 · {minutes}分",
+  "widgetDoneToday": "今日は完了",
+  "widgetNextTestIn": "次のテストまで{hours}時間",
+  "widgetStepOneTestAway": "ステップ{step}まであと1テスト",
+  "widgetTestWaiting": "テスト待ち",
+  "widgetStart": "始める",
+  "widgetTipLabel": "あなたへのヒント · {topic}",
+  "widgetTipLabelGeneral": "今日のヒント · {topic}",
+  "widgetTipFooter": "あなたの苦手から · 毎日新しいヒント",
+  "widgetTipFooterGeneral": "毎日新しいヒント"
 }

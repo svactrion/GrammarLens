@@ -687,5 +687,16 @@
   "profileSeeAll": "Alle ansehen",
   "profileMedalsClose": "Schließen",
   "profileMedalThisMonth": "Diesen Monat",
-  "commonUndo": "Rückgängig"
+  "commonUndo": "Rückgängig",
+  "widgetStepWaiting": "Schritt {step} wartet",
+  "widgetTestLength": "{count} Fragen · {minutes} Min.",
+  "widgetDoneToday": "Heute erledigt",
+  "widgetNextTestIn": "Nächster Test in {hours} Std.",
+  "widgetStepOneTestAway": "Schritt {step} ist nur einen Test entfernt",
+  "widgetTestWaiting": "Test wartet",
+  "widgetStart": "Los",
+  "widgetTipLabel": "TIPP FÜR DICH · {topic}",
+  "widgetTipLabelGeneral": "TIPP DES TAGES · {topic}",
+  "widgetTipFooter": "Aus deinen Schwachstellen · täglich ein neuer Tipp",
+  "widgetTipFooterGeneral": "Jeden Tag ein neuer Tipp"
 }

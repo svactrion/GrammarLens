@@ -4358,5 +4358,89 @@
   "commonUndo": "Undo",
   "@commonUndo": {
     "description": "A snackbar's undo action (SY02), e.g. after 'Name saved'."
+  },
+  "widgetStepWaiting": "Step {step} is waiting",
+  "@widgetStepWaiting": {
+    "description": "Home-screen widget, small, Daily Test not done (W01): the title. {step} is the step today's test reaches.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetTestLength": "{count} questions · {minutes} min",
+  "@widgetTestLength": {
+    "description": "Home-screen widget, small, Daily Test not done (W01): how long today's test is.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetDoneToday": "Done today",
+  "@widgetDoneToday": {
+    "description": "Home-screen widgets (W01): today's Daily Test is done (the small widget's label, the medium widget's chip, the tip's box)."
+  },
+  "widgetNextTestIn": "Next test in {hours} h",
+  "@widgetNextTestIn": {
+    "description": "Home-screen widgets, test done (W01): whole hours until the next Daily Test (local midnight), rounded up, 1 to 24. 'h' is the short form of hours.",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "widgetStepOneTestAway": "Step {step} is one test away",
+  "@widgetStepOneTestAway": {
+    "description": "Home-screen widget, medium mountain (W01), test not done: the title.",
+    "placeholders": {
+      "step": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "widgetTestWaiting": "Test waiting",
+  "@widgetTestWaiting": {
+    "description": "Home-screen widget, medium mountain (W01), test not done: the status chip."
+  },
+  "widgetStart": "Start",
+  "@widgetStart": {
+    "description": "Home-screen widgets (W01): the button that opens today's Daily Test."
+  },
+  "widgetTipLabel": "TIP FOR YOU · {topic}",
+  "@widgetTipLabel": {
+    "description": "Home-screen tip widget (W01): the label above a tip picked from the user's weak spot. {topic} is the topic's English name in capitals (topic names stay English).",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "ARTICLES"
+      }
+    }
+  },
+  "widgetTipLabelGeneral": "TIP OF THE DAY · {topic}",
+  "@widgetTipLabelGeneral": {
+    "description": "Home-screen tip widget (W01): the label when the user has no weak spot yet (a general topic tip). {topic} is the topic's English name in capitals.",
+    "placeholders": {
+      "topic": {
+        "type": "String",
+        "example": "ARTICLES"
+      }
+    }
+  },
+  "widgetTipFooter": "From your weak spots · new tip daily",
+  "@widgetTipFooter": {
+    "description": "Home-screen tip widget (W01): the line at the bottom when the tip comes from a weak spot."
+  },
+  "widgetTipFooterGeneral": "A new tip every day",
+  "@widgetTipFooterGeneral": {
+    "description": "Home-screen tip widget (W01): the line at the bottom of a general tip (no weak spot yet)."
   }
 }

@@ -687,5 +687,16 @@
   "profileSeeAll": "عرض الكل",
   "profileMedalsClose": "إغلاق",
   "profileMedalThisMonth": "هذا الشهر",
-  "commonUndo": "تراجع"
+  "commonUndo": "تراجع",
+  "widgetStepWaiting": "الخطوة {step} بانتظارك",
+  "widgetTestLength": "{count} أسئلة · {minutes} دقيقة",
+  "widgetDoneToday": "تم اليوم",
+  "widgetNextTestIn": "الاختبار التالي بعد {hours} س",
+  "widgetStepOneTestAway": "الخطوة {step} على بُعد اختبار واحد",
+  "widgetTestWaiting": "الاختبار بانتظارك",
+  "widgetStart": "ابدأ",
+  "widgetTipLabel": "نصيحة لك · {topic}",
+  "widgetTipLabelGeneral": "نصيحة اليوم · {topic}",
+  "widgetTipFooter": "من نقاط ضعفك · نصيحة جديدة كل يوم",
+  "widgetTipFooterGeneral": "نصيحة جديدة كل يوم"
 }
