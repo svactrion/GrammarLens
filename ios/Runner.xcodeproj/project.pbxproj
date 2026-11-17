@@ -114,9 +114,9 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB6E9CD9AD85443489C6D611 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */ = {isa = PBXFileReference; includeInIndex = 1; name = "NunitoSans-Variable.ttf"; path = "../assets/fonts/NunitoSans-Variable.ttf"; sourceTree = SOURCE_ROOT; };
+		B595896EE8D0D0675707117D /* NunitoSans-Variable.ttf */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file; name = "NunitoSans-Variable.ttf"; path = "../assets/fonts/NunitoSans-Variable.ttf"; sourceTree = SOURCE_ROOT; };
 		BCA4A54BE51636B812F5A033 /* GrammarLensBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GrammarLensBridge.swift; sourceTree = "<group>"; };
-		DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */ = {isa = PBXFileReference; includeInIndex = 1; name = "OFL-NunitoSans.txt"; path = "../assets/fonts/OFL-NunitoSans.txt"; sourceTree = SOURCE_ROOT; };
+		DFB0C9321791F091D70A54BE /* OFL-NunitoSans.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "OFL-NunitoSans.txt"; path = "../assets/fonts/OFL-NunitoSans.txt"; sourceTree = SOURCE_ROOT; };
 		E11D516013A7A996D4364F2B /* GrammarLensWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = GrammarLensWidgets.entitlements; sourceTree = "<group>"; };
 		EFDF51E8A274C36D14BD0CFC /* WidgetTimeline.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTimeline.swift; sourceTree = "<group>"; };
 		FE8217CEDB49E3020D723CF2 /* WidgetTimelineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetTimelineTests.swift; sourceTree = "<group>"; };
@@ -148,7 +148,6 @@
 				8A5D91A0CF48BE89C9DE1D05 /* AppGroupStore.swift */,
 				3D686D48EFA888B8679E9639 /* WidgetPayload.swift */,
 			);
-			name = Shared;
 			path = Shared;
 			sourceTree = "<group>";
 		};
@@ -191,7 +190,6 @@
 				E11D516013A7A996D4364F2B /* GrammarLensWidgets.entitlements */,
 				E9414A94EAD2D8B66E3BFF06 /* Fonts */,
 			);
-			name = GrammarLensWidgets;
 			path = GrammarLensWidgets;
 			sourceTree = "<group>";
 		};
@@ -542,6 +540,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = GrammarLensWidgets/GrammarLensWidgets.entitlements;
+				DEVELOPMENT_TEAM = 37U9L67C2J;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = GrammarLensWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -693,6 +692,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = GrammarLensWidgets/GrammarLensWidgets.entitlements;
+				DEVELOPMENT_TEAM = 37U9L67C2J;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = GrammarLensWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -876,6 +876,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = GrammarLensWidgets/GrammarLensWidgets.entitlements;
+				DEVELOPMENT_TEAM = 37U9L67C2J;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = GrammarLensWidgets/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
