@@ -482,3 +482,74 @@ Not done / gaps:
   shared DailyTestCard / Home load paths (no new timeout added).
 - R04's trail dots light in order (60 ms apart) but the bar's medal lines
   glow by scale only.
+
+## B6 — Review
+
+Status: **done**.
+
+Commits: `20afb23` (strings), `4f4e250` (Review, weak spot, tests), `1bf37c4` (gallery).
+
+What was built:
+- Review (`screens/review_screen.dart`, V16 / V16b / V22 / RV05 / R12):
+  the title (with the Premium chip for Premium) and "Your mistakes, turned
+  into practice."; for a free user the shared Ticket on top — free ("Pick
+  a weak spot below…"), tearing ("Ticket used!"), used ("Used today",
+  "Nice work, <name>.", the next ticket's countdown to local midnight,
+  updated every minute) or waiting for the first weak spot (RV05); for
+  Premium the navy Suggested Focus. "Weak spots" with its count and the
+  sort button; each weak spot as a card with its topic, a "new" chip
+  (saved once), "N times · when", its title and its latest mistake inline
+  (`widgets/review_parts.dart`, `InlineMistake`: wrong words struck through
+  in red, the correction in green, from the stored answer and correction
+  through `diffAnswer`). "Practice with my ticket" on the first card tears
+  the ticket (medium haptic) and then starts the weak spot's practice
+  through `launchPracticeSet` (AI permission, quota and generation as
+  before; the free count changes only when a set is made). Used: "Want more
+  practice today? Premium: up to 5 sessions a day" → the paywall
+  (`review_quota`).
+- RV05: the ticket waiting, the cheering companion (two hops), "No weak
+  spots yet!", "Take today's Daily Test" (navy, as the board).
+- RV06: the sort sheet (`showReviewSortSheet`): two big options, the
+  selected one a navy card with a check; the list cross-fades to the new
+  order.
+- R03 (`screens/weak_spot_detail_screen.dart`): topic eyebrow, title,
+  "N times · last seen …", the buddy saying the stored rule ("Remember:
+  …"), "Your mistake" with the latest mistake inline and its explanation,
+  and today's ticket ("Use today's ticket", tears, then practice) for a
+  free user, "Practice this" for Premium; the used state keeps "Practice
+  with Premium" and the used-today message.
+
+Verified:
+- `flutter analyze`: no issues. Full `flutter test`: **2421 passed** (the
+  free practice card's tests were replaced by ticket tests).
+- Tests: `review_screen_test` rewritten (ticket states, the countdown at
+  03:19 → 20 h 41 min, the tear then the AI permission, the inline line,
+  the sort sheet, the empty state, Premium); `review_suggested_focus_test`,
+  `weak_spot_detail_screen_test`, `button_rule_test`,
+  `practice_launch_*_test` and `tab_switcher_test` follow the new controls.
+- Simulator (gallery): V16, V16b (mid-tear and the AI permission that
+  follows), V22, RV05, RV06, R03, R12.
+
+Decisions:
+- **D6-1 No mastery strips** (R03 "0/3", R12, V22). The app stores no
+  per-weak-spot count of correct practice sessions and SPEC §1 defines no
+  mastery rule; adding one would be a new business rule and new stored
+  data. Left out; the layouts keep their spacing without them. Easy to add
+  with a stored count later.
+- **D6-2 "new" chip** = a weak spot saved once (`frequency == 1`); the
+  boards' "practiced today" chip is left out (no per-weak-spot practice
+  record).
+- **D6-3 The free practice card (1.2.0) is replaced by the Ticket** on
+  Review and R03; its "See Premium" moves to V22's "Want more practice
+  today?" card (same paywall source).
+- **D6-4 RV05's button is navy** (the board), replacing the 1.2.0
+  "forward actions are orange" rule for this one button.
+- **D6-5 R03 shows the latest mistake only** (the board's "Your mistake");
+  the older "Recent mistakes" list and the separate "Saved feedback" panel
+  are folded into that one card.
+
+Not done / gaps:
+- V22's "new stub slides in at midnight" plays only if Review is open at
+  midnight (the state is re-read when the tab is shown again).
+- R12's focus card glint and the weak spot cards' mastery fill are not
+  drawn (D6-1).
