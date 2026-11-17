@@ -18,7 +18,7 @@ marked done.
 | W1 Bridge, URL scheme, routing | done | see W1 |
 | W2 Widget extension + SwiftUI views | done | see W2 |
 | W3 App-side payload | done | see W3 |
-| W4 Reminder engine | not started | |
+| W4 Reminder engine | done | see W4 |
 | W5 UI (N01, N03, V24), captures | not started | |
 | W6 Final pass, merge, docs | not started | |
 
@@ -121,6 +121,31 @@ Format: what · options · choice · why. Numbered per step (DW0-1, DW1-1, …).
 - **DW3-5 Images are written once per key.** File names carry what they
   depend on (`avatar_14.png`, `mountain_<theme>_d<days>_s<step>_<mode>.png`);
   a run renders only missing files and deletes the ones no entry uses.
+
+- **DW4-1 "Close to a medal" is the month card's near-miss rule**
+  (`MonthlyMedalRules.nearMiss`: the next tier 1–5 points away), so the
+  reminder and the app never disagree about "close".
+- **DW4-2 The Daily Test reminder's place.** N02 says "Fox is waiting at
+  First Camp". · Always the mountain vs. the place reached. · **The last save
+  point reached this month ("at First Camp"), else the mountain ("on Ember
+  Peak")**; names translated as the app shows them.
+- **DW4-3 Days ahead assume no more tests.** The plan is rebuilt whenever
+  a test or practice finishes, a setting changes, the app opens or comes
+  back, and when Premium starts or ends (the free ticket); so a day ahead is
+  planned as "test not done", which makes (d) possible only today.
+- **DW4-4 One table for the settings** (`reminder_settings`, DB v26 → v27):
+  four switches, the time, and whether our question was asked
+  (`not_asked` / `declined` / `accepted`). It is a setting, not progress, so
+  "Reset progress" leaves it; nothing is sent anywhere.
+- **DW4-5 The companion picture works.** `UNNotificationAttachment` with the
+  widgets' `avatar_<n>.png` from the App Group, a fresh copy per request
+  (iOS moves the file when the request is added); verified by
+  `ReminderSchedulerTests` on the simulator. Without the file the reminder
+  goes without a picture.
+- **DW4-6 Times are local wall-clock dates** (`UNCalendarNotificationTrigger`,
+  year/month/day/hour/minute, no time zone, not repeating): one request per
+  day, id `gl.reminder.YYYY-MM-DD`, so two can never share a day; every
+  schedule call first removes all pending `gl.reminder.*` requests.
 
 ## Blocked / not verified
 
@@ -560,3 +585,56 @@ Verified:
   (`xcrun simctl get_app_container … group.com.ahmettayfur.grammarlens`):
   "Step 15 is waiting", "Glacier Peak · November · 14/30", "TIP FOR YOU ·
   MODAL VERBS".
+
+## W4 — Reminder engine
+
+Status: **done**.
+
+What was built:
+- `lib/models/reminder_settings.dart` (four kinds, time, `ReminderAsk`;
+  `turnedOn` switches all four on, fixed decision 6) and storage
+  (`getReminderSettings` / `setReminderSettings`, DB v27, DW4-4).
+- `lib/services/reminder_plan.dart`: the pure `planReminders` (7 days, at
+  most one a day, (a) new mountain → (b) close to a medal → (c) Daily Test →
+  (d) free ticket; nothing unless accepted).
+- `lib/services/reminder_sync.dart`: the pure `reminderMessage` (N02 copy,
+  links: the Daily Test, or Review for the ticket) and `ReminderSync`
+  (reads the state, checks iOS permission, schedules or cancels), the second
+  `DeviceSync` job after `WidgetSync`; Premium changes also trigger it.
+- Bridge: `notifications.status / request / schedule / cancelAll /
+  pending`, `settings.openNotifications`; Swift `ReminderScheduler`
+  (calendar triggers, the companion attachment, nothing shown in front,
+  taps → `GrammarLensBridge.receive(link:)`, which also covers a tap that
+  launched the app).
+- ARB: 10 `reminder*` keys in all 8 languages (topic names stay English).
+
+Verified:
+- `test/reminder_plan_test.dart` (18): not accepted / all off → nothing;
+  seven days, one id per day; today's time passed (and exactly now) → from
+  tomorrow; (c) by default; (a) before (b) and (c) on the 1st (December from
+  0 points, step 1); (a) today; (b) before (c) with tier and gap; (d) only
+  today, only after the test, only for free users with the ticket unused; a
+  switched-off kind falls through; 5 points close, 6 not, reached Bronze →
+  Silver far; Silver named, Gold none; the test finishing turns today into
+  (d) or cancels it, a close medal no longer counts today, tomorrow's step
+  follows; the step never passes the month's days.
+- `test/reminder_sync_test.dart` (10): every kind's English copy (place vs.
+  mountain, 1 point vs. N points, ticket with and without a weak spot, the
+  new month's mountain), every language has every string, seven requests
+  with the picture and links, the test finishing → today's ticket / today
+  cancelled / none in Premium, Turkish copy, cancel when not accepted, all
+  off, denied, not determined or no profile.
+- Migration test v26 → v27 added; three tests that pinned DB version 26 now
+  say 27 (the schema change is intentional).
+- Swift `ReminderSchedulerTests` (4, simulator): one non-repeating local
+  calendar trigger at the right date and time, the link in `userInfo`, the
+  companion attached from the App Group (and none when the file is
+  missing), incomplete or foreign items dropped, status names.
+
+- Gate: `flutter analyze` no issues; `flutter test` 2580 passed (the
+  first run caught `reminderMedalBody` translated as plain text where the
+  English is a plural; `l10n_completeness_test` requires plurals to stay
+  plurals, so all seven translations are plurals now).
+
+Not verified here: a reminder actually delivered (W5 does it on the
+simulator); on a device (owner).
