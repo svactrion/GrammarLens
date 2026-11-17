@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/medals_layer.dart';
 import 'package:grammar_lens/widgets/companion_view.dart';
 import 'package:grammar_lens/widgets/pressable_button.dart';
 import 'package:grammar_lens/widgets/profile_stage.dart';
@@ -27,7 +28,6 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/utils/app_links.dart';
 import 'package:grammar_lens/utils/debug_tools.dart';
 import 'package:grammar_lens/screens/debug_panel_screen.dart';
-
 
 import 'support/recording_analytics_sink.dart';
 
@@ -286,16 +286,21 @@ void main() {
 
     expect(find.text('Medal collection'), findsOneWidget);
     // Nothing earned yet: the shelf holds the running month's locked slot
-    // only (V23); PF02 says "0 earned" and has the faded Welcome badge.
+    // only (V23). PF02 (fix round 2, item 6): the tier counters read 0 and
+    // an unearned Welcome badge has no cell (it sits at the month it is
+    // earned).
     expect(find.byKey(MonthlyMedalCollection.lockedKey), findsOneWidget);
     expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
     await tester.tap(find.byKey(SettingsScreen.seeAllMedalsKey));
     await tester.pumpAndSettle();
-    expect(find.text('0 earned'), findsOneWidget);
-    expect(
-      find.bySemanticsLabel('Welcome badge, locked.'),
-      findsOneWidget,
-    );
+    for (final chip in ['0 Gold', '0 Silver', '0 Bronze', '0 Welcome']) {
+      expect(
+          find.descendant(
+              of: find.byKey(MedalsLayer.countersKey),
+              matching: find.text(chip)),
+          findsOneWidget);
+    }
+    expect(find.byKey(MonthlyMedalCollection.welcomeSlotKey), findsNothing);
   });
 
   testWidgets(

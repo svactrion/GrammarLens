@@ -354,8 +354,9 @@ final Map<String, WidgetBuilder> galleryBoards = {
   // B8: the paywall (one scrolling page), with the debug fixture offering.
   'V13-Paywall': (_) => _paywall(),
   'V13a-PaywallPlans': (_) => _ScrollAfter(560, child: _paywall()),
-  // Fix round 2: the board's heading with the companion is in view.
-  'V13c-PaywallCompare': (_) => _ScrollAfter(1040, child: _paywall()),
+  // Fix round 2: 110 pt above the page's end, so the board's heading with
+  // the companion is in view.
+  'V13c-PaywallCompare': (_) => _ScrollAfter(-110, child: _paywall()),
   'V13b-ExitReminder': (_) => _paywall(),
   'V13r-PaywallRest': (_) => PremiumScreen(
         storageService: _GalleryProfileStorage(),
@@ -1200,8 +1201,13 @@ class _ScrollAfterState extends State<_ScrollAfter> {
 
       (context as Element).visitChildren(visit);
       final position = found?.position;
-      position?.animateTo(
-          widget.offset.clamp(0, position.maxScrollExtent).toDouble(),
+      // A negative offset counts back from the end (V13c, fix round 2).
+      final to = widget.offset < 0
+          ? position == null
+              ? 0.0
+              : position.maxScrollExtent + widget.offset
+          : widget.offset;
+      position?.animateTo(to.clamp(0, position.maxScrollExtent).toDouble(),
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeOutCubic);
     });
