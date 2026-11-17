@@ -116,8 +116,10 @@ void main() {
     });
 
     test('an unknown or empty id is no topic', () {
-      expect(topicByName('passiveVoice'), isNull);
+      expect(topicByName('notATopic'), isNull);
       expect(topicByName(''), isNull);
+      // UI polish §1.11: a first-wave id is a known (switched-off) topic.
+      expect(topicByName('passiveVoice')?.id, TopicId.passiveVoice);
     });
   });
 

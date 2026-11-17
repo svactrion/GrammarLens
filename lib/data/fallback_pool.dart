@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../models/daily_test_question.dart';
 import '../models/practice_item.dart';
-import '../models/topic.dart';
+import 'topics.dart';
 import '../utils/answer_matching.dart';
 import '../utils/blanks.dart' as blanks;
 import 'day_zero_daily_test.dart';
@@ -126,7 +126,8 @@ class FallbackPool {
     if (questions.length != questionCount) return 'wrong_question_count';
     final ids = questions.map((q) => q.item.id).toSet();
     if (ids.length != questions.length) return 'duplicate_id';
-    final topics = TopicId.values.map((t) => t.name).toSet();
+    // The Daily Test's own topics: never the first-wave ones (§1.11).
+    final topics = kTopics.map((t) => t.id.name).toSet();
     if (!topics.containsAll(questions.map((q) => q.topicId)) ||
         questions.map((q) => q.topicId).toSet().length != questions.length) {
       return 'topic_mismatch';

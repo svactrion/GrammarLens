@@ -308,7 +308,11 @@ void main() {
     });
 
     test("are the owner's, verbatim (2026-10-12)", () {
-      expect(kTopicHints, {
+      // The five Daily Test topics' cards; the first-wave topics' cards
+      // (switched off, UI polish §1.11) are checked for shape below.
+      expect({
+        for (final t in kTopics) t.id: kTopicHints[t.id],
+      }, {
         TopicId.gerundVsInfinitive: [
           '+ -ing: enjoy, avoid, finish, keep',
           '+ to: want, decide, hope, plan',
@@ -340,6 +344,18 @@ void main() {
           'No article: general plural or uncountable',
         ],
       });
+    });
+
+    test(
+        'the first-wave topics have cards of the same shape: four short '
+        'lines', () {
+      for (final t in kFirstWaveTopics) {
+        final lines = kTopicHints[t.id]!;
+        expect(lines, hasLength(4), reason: t.id.name);
+        for (final line in lines) {
+          expect(line.length, lessThanOrEqualTo(44), reason: line);
+        }
+      }
     });
   });
 

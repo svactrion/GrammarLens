@@ -220,6 +220,12 @@ const _sameEverywhere = {
   'topicModalPastTitle',
   'topicTenseTitle',
   'topicArticlesTitle',
+  // The first-wave topics (switched off, UI polish §1.11), the same way.
+  'topicConditionalsTitle',
+  'topicPassiveTitle',
+  'topicPrepositionsTitle',
+  'topicRelativeTitle',
+  'topicComparativesTitle',
 };
 
 /// Per language: keys where the feature's word cannot appear as a plain

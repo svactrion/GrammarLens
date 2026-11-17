@@ -362,6 +362,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => TopicPracticeScreen(
+            hero: widget.hero,
             claudeService: widget.claudeService,
             storageService: widget.storageService,
             analyticsService: widget.analyticsService,
@@ -498,6 +499,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
           style: theme.textTheme.headlineMedium?.copyWith(color: c.text),
         ),
         message: l10n.weakSpotPreparing,
+        topic: _tearingFor == null ? null : _topicOf(_tearingFor!),
+        hero: widget.hero,
       );
     }
 

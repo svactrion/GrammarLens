@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/home_practice.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/models/ai_consent.dart';
@@ -20,7 +22,6 @@ import 'package:grammar_lens/services/subscription_service.dart';
 import 'package:grammar_lens/theme.dart';
 import 'package:grammar_lens/utils/text_format.dart';
 import 'package:grammar_lens/widgets/locked_premium_pill.dart';
-import 'package:grammar_lens/widgets/section_title.dart';
 
 import 'support/l10n_support.dart';
 
@@ -131,46 +132,46 @@ void main() {
   final scrollable = find.byType(Scrollable).first;
 
   testWidgets(
-      'the header: back, "Premium access", the title (32 / 900 / 1.10 / -1.0 '
-      'at Small, where the brief\'s sizes are since the final pass) and its '
-      'line', (tester) async {
+      'the header (R01): back, the Premium chip, the title and its line',
+      (tester) async {
     await pump(tester, textSize: AppTextSize.small);
     expect(find.byType(BackButton), findsOneWidget);
-    expect(find.text('Premium access'), findsOneWidget);
+    expect(find.byKey(TopicPracticeScreen.accessLabelKey), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(TopicPracticeScreen.accessLabelKey),
+            matching: find.byType(PremiumChip)),
+        findsOneWidget);
     final title = tester.widget<Text>(find.text('Topic Practice'));
-    expect(title.style!.fontSize, 32);
     expect(title.style!.fontWeight, FontWeight.w900);
-    expect(title.style!.height, 1.10);
-    expect(title.style!.letterSpacing, -1.0);
-    expect(find.text('Choose a topic to work on.'), findsOneWidget);
+    expect(find.text('Pick a topic. AI reviews every answer.'), findsOneWidget);
     // No app bar title: the title is in the page.
     expect(
         find.descendant(of: find.byType(AppBar), matching: find.byType(Text)),
         findsNothing);
   });
 
-  testWidgets('every topic of kTopics is listed, in order, with the real count',
+  testWidgets('every topic of kTopics has a card, in order, two a row (R01)',
       (tester) async {
     await pump(tester, textSize: AppTextSize.small);
-    expect(find.widgetWithText(SectionTitle, 'Grammar topics'), findsOneWidget);
-    expect(
-        tester.widget<Text>(find.byKey(TopicPracticeScreen.topicCountKey)).data,
-        '${kTopics.length} topics');
-    // Tall enough for the whole list at once, so the cards' places compare
-    // in one frame.
+    // Tall enough for the whole grid at once.
     tester.view.physicalSize = const Size(390, 2400) * 3;
     await tester.pumpAndSettle();
-    double? last;
-    for (final topic in kTopics) {
+    Offset? last;
+    for (final (i, topic) in kTopics.indexed) {
       final card = find.byKey(TopicPracticeScreen.cardKey(topic));
       expect(find.descendant(of: card, matching: find.text(topic.title(en))),
           findsOneWidget);
-      expect(
-          find.descendant(of: card, matching: find.text(topic.description(en))),
-          findsOneWidget);
-      final top = tester.getTopLeft(card).dy;
-      if (last != null) expect(top, greaterThan(last));
-      last = top;
+      final at = tester.getTopLeft(card);
+      if (last != null) {
+        if (i.isOdd) {
+          expect(at.dy, closeTo(last.dy, 1));
+          expect(at.dx, greaterThan(last.dx));
+        } else {
+          expect(at.dy, greaterThan(last.dy));
+        }
+      }
+      last = at;
     }
   });
 
@@ -208,8 +209,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     await pump(tester);
     final card = find.byKey(TopicPracticeScreen.cardKey(kTopics.first));
-    expect(find.descendant(of: card, matching: find.byType(InkWell)),
-        findsOneWidget);
+    expect(tester.widget(card), isA<PressableCard>());
     expect(find.descendant(of: card, matching: find.byType(ButtonStyleButton)),
         findsNothing);
     semantics.dispose();

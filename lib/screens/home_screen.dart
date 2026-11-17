@@ -1046,6 +1046,7 @@ class _HomeScreenState extends State<HomeScreen>
         .push(
           MaterialPageRoute(
             builder: (_) => TopicPracticeScreen(
+              hero: widget.avatar,
               claudeService: widget.claudeService,
               storageService: widget.storageService,
               analyticsService: widget.analyticsService,

@@ -279,7 +279,7 @@ void main() {
     // batch. `_FakeStorageService.getPracticeLength` returns `.standard`,
     // so the picker's confirm button reads its question count (5).
     expect(find.text('How many questions?'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Start 5 questions'));
+    await tester.tap(find.text('Start 5 questions'));
     await tester.pumpAndSettle();
 
     expect(find.byType(PremiumScreen), findsNothing);

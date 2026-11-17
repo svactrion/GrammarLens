@@ -18,6 +18,11 @@ import 'step_bar.dart';
       TopicId.modalPastForms => (c.greenSoft, c.onGreenSoft),
       TopicId.tenseSelection => (c.lilac, c.onLilac),
       TopicId.articles => (c.goldSoft, c.goldDeep),
+      TopicId.conditionals => (c.sky, c.onSky),
+      TopicId.passiveVoice => (c.lilac, c.onLilac),
+      TopicId.prepositions => (c.greenSoft, c.onGreenSoft),
+      TopicId.relativeClauses => (c.cream, c.orangeDeep),
+      TopicId.comparativesSuperlatives => (c.goldSoft, c.goldDeep),
     };
 
 /// The free user's topic showcase on Home (V14): "Topic practice" with the
@@ -125,7 +130,7 @@ class TopicShowcase extends StatelessWidget {
           const SizedBox(height: 14),
           PressableButton(
             key: unlockKey,
-            label: l10n.homeUnlockTopics(kTopics.length),
+            label: l10n.homeUnlockTopics(practiceTopics().length),
             tone: ButtonTone.orange,
             trailingIcon: Directionality.of(context) == TextDirection.rtl
                 ? Icons.arrow_back_rounded
@@ -161,7 +166,7 @@ class PracticeCard extends StatelessWidget {
     final c = AppColors.of(context);
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final shown = kTopics.take(4).toList();
+    final shown = practiceTopics().take(4).toList();
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: lipCard(c, radius: 28),

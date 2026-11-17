@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/practice_reviewing.dart';
 import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/models/ai_consent.dart';
@@ -607,7 +608,8 @@ void main() {
       await tester.pump();
       await tester.tap(_primary);
       await tester.pump();
-      expect(find.text('Reviewing your answers…'), findsOneWidget);
+      // V20: the AI wait (the inspecting companion and the checklist).
+      expect(find.byType(PracticeReviewing), findsOneWidget);
 
       claude.pending!.completeError(Exception('offline'));
       await tester.pumpAndSettle();

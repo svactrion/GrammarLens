@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../motion.dart';
+import '../widgets/pressable_button.dart';
 import '../models/ai_consent.dart';
 import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
@@ -62,20 +65,39 @@ class AiConsentScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(context.l10n.aiConsentIntro, style: body),
+                  // V17: the same text, each section a card with its icon,
+                  // appearing 40 ms apart.
                   _Section(
+                    index: 0,
+                    icon: Icons.upload_rounded,
                     heading: context.l10n.aiConsentSentHeading,
                     text: context.l10n.aiConsentSentBody,
                   ),
                   _Section(
+                    index: 1,
+                    icon: Icons.dns_outlined,
                     heading: context.l10n.aiConsentRecipientHeading,
                     text: context.l10n.aiConsentRecipientBody,
                   ),
                   _Section(
+                    index: 2,
+                    icon: Icons.block_rounded,
                     heading: context.l10n.aiConsentNeverHeading,
                     text: context.l10n.aiConsentNeverBody,
                   ),
                   const SizedBox(height: 16),
-                  Text(context.l10n.aiConsentPersonalDetails, style: body),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline_rounded,
+                          size: 18, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(context.l10n.aiConsentPersonalDetails,
+                            style: body),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     context.l10n.aiConsentChangeLater,
@@ -101,29 +123,69 @@ class AiConsentScreen extends StatelessWidget {
 }
 
 class _Section extends StatelessWidget {
+  final int index;
+  final IconData icon;
   final String heading;
   final String text;
 
-  const _Section({required this.heading, required this.text});
+  const _Section({
+    required this.index,
+    required this.icon,
+    required this.heading,
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final c = AppColors.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Semantics(
-            header: true,
-            child: Text(
-              heading,
-              style: theme.textTheme.titleSmall?.withWeight(FontWeight.w700),
-            ),
+      padding: const EdgeInsets.only(top: 12),
+      // Each card fades in 40 ms after the one above (one tween each, no
+      // timers).
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: AppMotion.reduced(context) ? 1 : 0, end: 1),
+        duration: AppMotion.orInstant(
+            context, AppMotion.base + Duration(milliseconds: 40 * index)),
+        curve: Interval(
+            (40 * index) / (AppMotion.base.inMilliseconds + 40 * index), 1),
+        builder: (context, t, child) => Opacity(opacity: t, child: child),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: lipCard(c, radius: 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: c.sky,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 19, color: c.onSky),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        heading,
+                        style: theme.textTheme.titleSmall
+                            ?.withWeight(FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(text, style: theme.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(text, style: theme.textTheme.bodyMedium),
-        ],
+        ),
       ),
     );
   }
@@ -154,12 +216,11 @@ class _ConsentFooter extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: Text(context.l10n.aiConsentAgree),
-                ),
+              PressableButton(
+                label: context.l10n.aiConsentAgree,
+                tone: ButtonTone.navy,
+                haptic: ButtonHaptic.medium,
+                onPressed: () => Navigator.of(context).pop(true),
               ),
               const SizedBox(height: 4),
               TextButton(

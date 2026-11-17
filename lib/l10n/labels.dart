@@ -67,6 +67,11 @@ extension TopicLabels on Topic {
         TopicId.modalPastForms => l10n.topicModalPastTitle,
         TopicId.tenseSelection => l10n.topicTenseTitle,
         TopicId.articles => l10n.topicArticlesTitle,
+        TopicId.conditionals => l10n.topicConditionalsTitle,
+        TopicId.passiveVoice => l10n.topicPassiveTitle,
+        TopicId.prepositions => l10n.topicPrepositionsTitle,
+        TopicId.relativeClauses => l10n.topicRelativeTitle,
+        TopicId.comparativesSuperlatives => l10n.topicComparativesTitle,
       };
 
   String description(AppLocalizations l10n) => switch (id) {
@@ -75,6 +80,11 @@ extension TopicLabels on Topic {
         TopicId.modalPastForms => l10n.topicModalPastDescription,
         TopicId.tenseSelection => l10n.topicTenseDescription,
         TopicId.articles => l10n.topicArticlesDescription,
+        TopicId.conditionals => l10n.topicConditionalsDescription,
+        TopicId.passiveVoice => l10n.topicPassiveDescription,
+        TopicId.prepositions => l10n.topicPrepositionsDescription,
+        TopicId.relativeClauses => l10n.topicRelativeDescription,
+        TopicId.comparativesSuperlatives => l10n.topicComparativesDescription,
       };
 }
 

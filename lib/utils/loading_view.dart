@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../models/avatar.dart';
+import '../models/topic.dart';
+import '../widgets/practice_preparing.dart';
 import '../theme.dart';
 import '../widgets/brand_scaffold.dart';
 import 'content_width.dart';
@@ -105,11 +109,18 @@ class PageLoading extends StatelessWidget {
   final Widget header;
   final String message;
 
+  /// V18: the practice being prepared for [topic] (the thinking companion,
+  /// question skeletons and the topic's hint cards) instead of a spinner.
+  final Topic? topic;
+  final Avatar? hero;
+
   const PageLoading({
     super.key,
     this.appBar,
     required this.header,
     required this.message,
+    this.topic,
+    this.hero,
   });
 
   @override
@@ -124,7 +135,12 @@ class PageLoading extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             header,
-            Expanded(child: LoadingView(message: message)),
+            Expanded(
+              child: topic == null
+                  ? LoadingView(message: message)
+                  : PracticePreparing(
+                      topic: topic!, hero: hero, message: message),
+            ),
           ],
         ),
       ),

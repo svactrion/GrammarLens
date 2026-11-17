@@ -177,6 +177,8 @@ class _WeakSpotDetailScreenState extends State<WeakSpotDetailScreen> {
               ?.copyWith(color: colorScheme.onSurface),
         ),
         message: context.l10n.weakSpotPreparing,
+        topic: widget.topic,
+        hero: widget.hero,
       );
     }
     // R03 (UI polish): the topic as an eyebrow, the weak spot as the

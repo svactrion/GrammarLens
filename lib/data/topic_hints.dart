@@ -40,6 +40,38 @@ const Map<TopicId, List<String>> kTopicHints = {
     'the: specific, known, or the only one',
     'No article: general plural or uncountable',
   ],
+  // The first-wave topics (switched off, SPEC §1.11): the same shape, four
+  // short lines; reviewed with the topics before they ship.
+  TopicId.conditionals: [
+    'If + present, will + verb: real future',
+    'If + past, would + verb: unreal now',
+    'If + had + p.p., would have + p.p.: past',
+    'No "will" or "would" in the if-part',
+  ],
+  TopicId.passiveVoice: [
+    'be + past participle: is made, was built',
+    'The tense lives in "be": is / was / has been',
+    'by + doer, only when it matters',
+    'Modal passive: can be done, must be paid',
+  ],
+  TopicId.prepositions: [
+    'at: a point (at 5, at the door)',
+    'on: a surface or a day (on Monday)',
+    'in: inside or a period (in May, in 2020)',
+    'Verb + preposition: depend on, listen to',
+  ],
+  TopicId.relativeClauses: [
+    'who: people · which: things · that: both',
+    'whose: belonging (the man whose car…)',
+    'where / when: places and times',
+    'Commas: extra info, no "that"',
+  ],
+  TopicId.comparativesSuperlatives: [
+    'Short: -er / the -est (tall, the tallest)',
+    'Long: more / the most (more useful)',
+    'Irregular: good → better → the best',
+    'than after a comparative; the before -est',
+  ],
 };
 
 /// B2 (1.4.0; owner, 2026-11-02): the lines of a card that list example

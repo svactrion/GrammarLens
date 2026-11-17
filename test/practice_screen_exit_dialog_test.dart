@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/widgets/companion_view.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/models/practice_item.dart';
 import 'package:grammar_lens/models/practice_set.dart';
@@ -28,12 +30,6 @@ void main() {
     ],
   );
 
-  Color? fill(ButtonStyleButton b) =>
-      b.style?.backgroundColor?.resolve(const {});
-  Color? label(ButtonStyleButton b) =>
-      b.style?.foregroundColor?.resolve(const {});
-  Color? border(ButtonStyleButton b) => b.style?.side?.resolve(const {})?.color;
-
   for (final brightness in Brightness.values) {
     group('"Leave practice?" dialog ($brightness)', () {
       Future<void> openDialog(WidgetTester tester) async {
@@ -59,31 +55,25 @@ void main() {
         await tester.tap(find.byIcon(Icons.close_rounded));
         await tester.pumpAndSettle();
         expect(find.text('Leave practice?'), findsOneWidget);
-        expect(find.text('Your progress will be lost.'), findsOneWidget);
+        // R10: the companion asks; how far the session got (none yet).
+        expect(find.byType(CompanionView), findsWidgets);
+        expect(find.text('Keep going'), findsOneWidget);
       }
 
-      testWidgets('Leave is destructive, Cancel is neutral and not primary',
+      testWidgets(
+          'R10: "Keep going" is the primary button, "Leave" the quiet one',
           (tester) async {
         await openDialog(tester);
-        final scheme = buildAppTheme(brightness).colorScheme;
-
-        final leave = tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Leave'));
-        expect(fill(leave), scheme.destructive);
-        expect(label(leave), scheme.onDestructive);
-
-        final cancel = tester.widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Cancel'));
-        expect(label(cancel), scheme.onSurface);
-        expect(label(cancel), isNot(scheme.primary));
-        expect(border(cancel), scheme.onSurfaceVariant);
-        expect(border(cancel), isNot(scheme.primary));
-        expect(fill(cancel), isNull);
+        final keep = tester
+            .widget<PressableButton>(find.byKey(PracticeScreen.keepGoingKey));
+        expect(keep.label, 'Keep going');
+        expect(find.byKey(PracticeScreen.leaveKey), findsOneWidget);
+        expect(find.text('Leave'), findsOneWidget);
       });
 
-      testWidgets('Cancel keeps the session open', (tester) async {
+      testWidgets('Keep going keeps the session open', (tester) async {
         await openDialog(tester);
-        await tester.tap(find.text('Cancel'));
+        await tester.tap(find.byKey(PracticeScreen.keepGoingKey));
         await tester.pumpAndSettle();
 
         expect(find.text('Leave practice?'), findsNothing);

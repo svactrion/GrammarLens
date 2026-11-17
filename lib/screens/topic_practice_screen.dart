@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../models/review_sort_order.dart';
+import '../widgets/home_practice.dart';
+import '../widgets/pressable_button.dart';
 import '../data/topics.dart';
+import '../models/avatar.dart';
 import '../models/topic.dart';
 import '../models/topic_stats.dart';
 import '../services/analytics_service.dart';
@@ -13,7 +18,6 @@ import '../utils/text_format.dart';
 import '../theme.dart';
 import '../widgets/brand_scaffold.dart';
 import '../widgets/page_header.dart';
-import '../widgets/section_title.dart';
 import 'practice_launch.dart';
 
 /// The MVP's original core loop, now one mode reached from the v2 Home
@@ -25,18 +29,28 @@ class TopicPracticeScreen extends StatefulWidget {
   final AnalyticsService analyticsService;
   final SubscriptionService subscriptionService;
 
+  /// Whether the first-wave topics show (SPEC §1.11); by default the
+  /// switch, [kFirstWaveTopicsEnabled] (off). Tests set both states.
+  final bool firstWaveTopics;
+
+  /// The user's buddy, thinking while questions are prepared (V18).
+  final Avatar? hero;
+
   const TopicPracticeScreen({
     super.key,
     required this.claudeService,
     required this.storageService,
     required this.analyticsService,
     required this.subscriptionService,
+    this.firstWaveTopics = kFirstWaveTopicsEnabled,
+    this.hero,
   });
 
   /// The topic count beside "Grammar topics", the "Premium access" label,
   /// and each topic's card and status line.
   static const topicCountKey = ValueKey('topic_practice_count');
   static const accessLabelKey = ValueKey('topic_practice_access');
+  static const pickedKey = ValueKey('topic_practice_picked');
   static ValueKey<String> cardKey(Topic topic) =>
       ValueKey('topic_card_${topic.id.name}');
   static ValueKey<String> statusKey(Topic topic) =>
@@ -48,12 +62,28 @@ class TopicPracticeScreen extends StatefulWidget {
 
 class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
   bool _generating = false;
+  Topic? _preparing;
   late Future<Map<String, TopicStats>> _statsFuture;
+
+  /// The topic of the most repeated weak spot ("Picked for you"), or null.
+  Topic? _picked;
 
   @override
   void initState() {
     super.initState();
     _statsFuture = widget.storageService.getTopicStats();
+    _loadPicked();
+  }
+
+  Future<void> _loadPicked() async {
+    try {
+      final spots = await widget.storageService
+          .getWeakSpots(limit: 1, sortOrder: ReviewSortOrder.frequent);
+      if (!mounted || spots.isEmpty) return;
+      final topic = topicByName(spots.first.topicId);
+      if (topic == null) return;
+      setState(() => _picked = topic);
+    } catch (_) {}
   }
 
   void _reloadStats() {
@@ -63,6 +93,7 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
   }
 
   Future<void> _startPractice(Topic topic) {
+    _preparing = topic;
     return launchPracticeSet(
       context: context,
       topic: topic,
@@ -96,42 +127,61 @@ class _TopicPracticeScreenState extends State<TopicPracticeScreen> {
         appBar: _statusBarOnly,
         header: _Header(theme: theme),
         message: context.l10n.weakSpotPreparing,
+        topic: _preparing,
+        hero: widget.hero,
       );
     }
+    final topics = practiceTopics(firstWave: widget.firstWaveTopics);
+    final picked = _picked != null && topics.contains(_picked) ? _picked : null;
+    final others = [
+      for (final t in topics)
+        if (t != picked) t
+    ];
     return FutureBuilder<Map<String, TopicStats>>(
       future: _statsFuture,
       builder: (context, snapshot) {
         final statsByTopic = snapshot.data ?? const <String, TopicStats>{};
+        TopicStats statsOf(Topic t) =>
+            statsByTopic[t.id.name] ?? TopicStats.empty;
         return BrandScaffold(
           // The status bar's height only: the back button, the title and
-          // its line are in the page (the 1.2.0 mockup), as on Review.
+          // its line are in the page (R01).
           appBar: _statusBarOnly,
           children: [
             _Header(theme: theme),
-            const SizedBox(height: 22),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                    child: SectionTitle(context.l10n.topicPracticeHeading)),
-                const SizedBox(width: 10),
-                Text(
-                  context.l10n.topicPracticeCount(kTopics.length),
-                  key: TopicPracticeScreen.topicCountKey,
-                  style: theme.textTheme.labelSmall
-                      ?.withWeight(FontWeight.w400)
-                      .copyWith(color: theme.colorScheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            for (final topic in kTopics) ...[
-              _TopicCard(
-                topic: topic,
-                stats: statsByTopic[topic.id.name] ?? TopicStats.empty,
-                onTap: () => _startPractice(topic),
+            const SizedBox(height: 18),
+            if (picked != null) ...[
+              _PickedCard(
+                topic: picked,
+                onTap: () => _startPractice(picked),
               ),
-              if (topic != kTopics.last) const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
+            // Two topics a row, each row as tall as its taller card.
+            for (var r = 0; r < others.length; r += 2) ...[
+              if (r > 0) const SizedBox(height: 12),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = r; i < r + 2; i++) ...[
+                      if (i > r) const SizedBox(width: 12),
+                      Expanded(
+                        child: i < others.length
+                            ? FloatingTile(
+                                index: i,
+                                child: _TopicCard(
+                                  topic: others[i],
+                                  stats: statsOf(others[i]),
+                                  onTap: () => _startPractice(others[i]),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ],
         );
@@ -158,7 +208,10 @@ class _Header extends StatelessWidget {
           children: [
             PageBackButton(),
             Spacer(),
-            _AccessLabel(),
+            KeyedSubtree(
+              key: TopicPracticeScreen.accessLabelKey,
+              child: PremiumChip(check: true),
+            ),
           ],
         ),
         const SizedBox(height: 18),
@@ -182,45 +235,71 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// "Premium access" (N19): a status, not a call to action. Nothing here
-/// reacts to a tap, and the screen shows no paywall or lock: who may open
-/// it is decided before it opens (Home's guard), not by this label.
-class _AccessLabel extends StatelessWidget {
-  const _AccessLabel();
+/// "Picked for you" (R01): the topic of the user's most repeated weak
+/// spot, full width, navy.
+class _PickedCard extends StatelessWidget {
+  final Topic topic;
+  final VoidCallback onTap;
+  const _PickedCard({required this.topic, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l10n = context.l10n;
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Container(
-      key: TopicPracticeScreen.accessLabelKey,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: scheme.primary,
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_rounded, size: 14, color: scheme.onPrimary),
-          const SizedBox(width: 6),
-          Text(
-            context.l10n.topicPracticePremiumAccess,
-            style: theme.textTheme.labelSmall
-                ?.withWeight(FontWeight.w800)
-                .copyWith(color: scheme.onPrimary),
+    return PressableCard(
+      key: TopicPracticeScreen.pickedKey,
+      onTap: onTap,
+      haptic: ButtonHaptic.light,
+      semanticLabel:
+          '${l10n.homePickedForYou}. ${topic.title(l10n)}. ${l10n.homePickedLine}',
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: lipCard(c,
+            color: c.navy, border: c.navy, lip: c.navyDeep, radius: 22),
+        child: Row(children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .14),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(topic.icon, color: c.gold),
           ),
-        ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.homePickedForYou.toUpperCase(),
+                    style: theme.textTheme.labelSmall!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: c.gold, letterSpacing: 1.1)),
+                Text(topic.title(l10n),
+                    style: theme.textTheme.titleMedium!
+                        .withWeight(FontWeight.w900)
+                        .copyWith(color: c.onNavy)),
+                Text(l10n.homePickedLine,
+                    style: theme.textTheme.labelMedium!
+                        .copyWith(color: c.onNavyMuted)),
+              ],
+            ),
+          ),
+          Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? Icons.arrow_back_rounded
+                  : Icons.arrow_forward_rounded,
+              color: c.onNavy),
+        ]),
       ),
     );
   }
 }
 
-/// A topic (1.2.0 mockup): one tap target holding the 38 pt icon tile, the
-/// title (17 / 800), the description (13 / 400), the status line (11 / 600)
-/// and a chevron. Padding 17 × 15, radius 22. The status is the real one:
-/// "Not started yet" with no history, otherwise
-/// [formatTopicStatsLine] (N18). Q8: no activity bar.
+/// A topic (R01): its colour, its icon, the title and the real status
+/// ("Not started yet", or [formatTopicStatsLine], N18). One tap target that
+/// presses 2 pt (light haptic), then the length step.
 class _TopicCard extends StatelessWidget {
   final Topic topic;
   final TopicStats stats;
@@ -232,103 +311,44 @@ class _TopicCard extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _radius = 22.0;
-
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final muted = scheme.onSurfaceVariant;
-    final cardShape = theme.cardTheme.shape;
-    return Card(
+    final (bg, fg) = topicTileColors(c, topic.id);
+    final status = stats.isStarted
+        ? formatTopicStatsLine(
+            stats.practiced, stats.weakSpotCount, context.l10n)
+        : context.l10n.topicPracticeNotStarted;
+    return PressableCard(
       key: TopicPracticeScreen.cardKey(topic),
-      margin: EdgeInsets.zero,
-      shape: cardShape is RoundedRectangleBorder
-          ? cardShape.copyWith(borderRadius: BorderRadius.circular(_radius))
-          : RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_radius)),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
-          // Top-aligned (docs/design-audit.md, Batch 0 item 9): the icon
-          // sits by the title, not the middle of three lines; the chevron
-          // is centred on the whole card, as in the mockup.
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(topic.icon, size: 20, color: scheme.secondary),
-                  ),
-                ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 1),
-                      Text(
-                        topic.title(context.l10n),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                            color: scheme.onSurface, letterSpacing: -.25),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        topic.description(context.l10n),
-                        style:
-                            theme.textTheme.bodySmall?.copyWith(color: muted),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Icon(
-                              stats.isStarted
-                                  ? Icons.check_circle_outline_rounded
-                                  : Icons.circle_outlined,
-                              size: 12,
-                              color: muted,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              stats.isStarted
-                                  ? formatTopicStatsLine(stats.practiced,
-                                      stats.weakSpotCount, context.l10n)
-                                  : context.l10n.topicPracticeNotStarted,
-                              key: TopicPracticeScreen.statusKey(topic),
-                              style: theme.textTheme.labelSmall
-                                  ?.copyWith(color: muted),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 11),
-                Center(
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    size: 20,
-                    color: scheme.secondary,
-                  ),
-                ),
-              ],
+      onTap: onTap,
+      haptic: ButtonHaptic.light,
+      semanticLabel: '${topic.title(context.l10n)}. $status',
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+        decoration: lipCard(c, color: bg, border: bg, lip: c.lip, radius: 22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(topic.icon, color: fg, size: 24),
+            const SizedBox(height: 12),
+            const Spacer(),
+            Text(
+              topic.title(context.l10n),
+              style: theme.textTheme.titleSmall!
+                  .withWeight(FontWeight.w900)
+                  .copyWith(color: c.text),
             ),
-          ),
+            const SizedBox(height: 4),
+            Text(
+              status,
+              key: TopicPracticeScreen.statusKey(topic),
+              style: theme.textTheme.labelSmall!
+                  .withWeight(FontWeight.w700)
+                  .copyWith(color: c.muted),
+            ),
+          ],
         ),
       ),
     );

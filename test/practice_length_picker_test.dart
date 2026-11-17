@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grammar_lens/utils/haptics.dart';
+import 'package:grammar_lens/widgets/pressable_button.dart';
 
 import 'package:grammar_lens/models/practice_length.dart';
 import 'package:grammar_lens/screens/practice_length_picker.dart';
@@ -55,7 +56,7 @@ void main() {
     expect(find.text('Extended'), findsOneWidget);
     expect(find.text('A deep, thorough workout'), findsOneWidget);
     expect(
-      find.widgetWithText(FilledButton, 'Start 10 questions'),
+      find.widgetWithText(PressableButton, 'Start 10 questions'),
       findsOneWidget,
     );
   });
@@ -74,11 +75,11 @@ void main() {
 
     expect(find.text('Quick'), findsOneWidget);
     expect(
-      find.widgetWithText(FilledButton, 'Start 3 questions'),
+      find.widgetWithText(PressableButton, 'Start 3 questions'),
       findsOneWidget,
     );
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Start 3 questions'));
+    await tester.tap(find.widgetWithText(PressableButton, 'Start 3 questions'));
     await tester.pumpAndSettle();
 
     expect(harness.resolved, isTrue);
@@ -97,31 +98,19 @@ void main() {
     expect(harness.result, isNull);
   });
 
-  testWidgets('changing the slider stop fires a selection-click haptic once',
+  testWidgets('changing the slider stop fires a selection haptic once',
       (tester) async {
-    final hapticCalls = <MethodCall>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'HapticFeedback.vibrate') hapticCalls.add(call);
-        return null;
-      },
-    );
-    addTearDown(() {
-      tester.binding.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, null);
-    });
-
     await _openPicker(tester, initial: PracticeLength.standard);
+    HapticMap.log = [];
 
     tester.widget<Slider>(find.byType(Slider)).onChanged!(2); // -> Extended
     await tester.pump();
-    expect(hapticCalls, hasLength(1));
+    expect(HapticMap.log, ['selection']);
 
     // Re-reporting the same stop is not a change and must not re-fire it.
     tester.widget<Slider>(find.byType(Slider)).onChanged!(2);
     await tester.pump();
-    expect(hapticCalls, hasLength(1));
+    expect(HapticMap.log, ['selection']);
   });
 
   testWidgets('semanticFormatterCallback reports the count and name',

@@ -1,9 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../l10n/l10n.dart';
+import '../app_colors.dart';
+import '../utils/haptics.dart';
+import '../widgets/app_sheet.dart';
+import '../widgets/pressable_button.dart';
 import '../models/practice_length.dart';
 import '../spacing.dart';
 import '../theme.dart';
@@ -57,19 +60,10 @@ Future<PracticeLength?> showPracticeLengthPicker({
   required BuildContext context,
   required PracticeLength initial,
 }) {
-  final colorScheme = Theme.of(context).colorScheme;
-  return showModalBottomSheet<PracticeLength>(
+  // R02: the shared sheet (card colour, scrim, 450 ms easeOutCubic).
+  return showAppSheet<PracticeLength>(
     context: context,
-    isScrollControlled: true,
-    // The palette's card surface (final screens A3; was pure white).
-    backgroundColor: colorScheme.surfaceContainerHigh,
-    // A pure black scrim over the orange page reads as a muddy brown
-    // (docs/design-audit.md §2) — tinted off the page's own foreground
-    // color instead, at a mid opacity.
-    barrierColor: colorScheme.onSurface.withValues(alpha: 0.42),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
+    showGrabber: false,
     builder: (sheetContext) => _PracticeLengthSheet(initial: initial),
   );
 }
@@ -96,7 +90,7 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
   void _onSliderChanged(double value) {
     final next = PracticeLength.values[value.round()];
     if (next == _selected) return;
-    HapticFeedback.selectionClick();
+    HapticMap.selection();
     setState(() => _selected = next);
   }
 
@@ -141,18 +135,17 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
               data: SliderThemeData(
                 trackHeight: 8,
                 trackShape: const RoundedRectSliderTrackShape(),
-                activeTrackColor: colorScheme.secondary,
+                // R02: the orange knob and filled track, dots at the stops.
+                activeTrackColor: AppColors.of(context).orange,
                 // The empty part of the track (final screens A3): `outline`,
-                // 3.32:1 on the light sheet and 4.50:1 on the dark one (it
-                // was the sheet's own colour, 1.03:1). Its stop dots take
-                // the sheet colour, the same contrast the other way round.
+                // 3.32:1 on the light sheet and 4.50:1 on the dark one.
                 inactiveTrackColor: colorScheme.outline,
-                thumbColor: colorScheme.secondary,
-                activeTickMarkColor: colorScheme.onSecondary,
-                inactiveTickMarkColor: colorScheme.surfaceContainerHigh,
+                thumbColor: AppColors.of(context).orange,
+                activeTickMarkColor: AppColors.of(context).onOrange,
+                inactiveTickMarkColor: AppColors.of(context).card,
                 thumbShape: _DragHandleThumbShape(
                   radius: _kSliderThumbRadius,
-                  chevronColor: colorScheme.onSecondary,
+                  chevronColor: AppColors.of(context).onOrange,
                 ),
                 overlayShape: SliderComponentShape.noOverlay,
                 // The selection card above already shows the picked value
@@ -182,14 +175,12 @@ class _PracticeLengthSheetState extends State<_PracticeLengthSheet> {
                   ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: Spacing.xl),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: forwardButtonStyle(context),
-                onPressed: () => Navigator.of(context).pop(_selected),
-                child: Text(
-                    context.l10n.lengthPickerStart(_selected.questionCount)),
-              ),
+            PressableButton(
+              label: context.l10n.lengthPickerStart(_selected.questionCount),
+              tone: ButtonTone.orange,
+              haptic: ButtonHaptic.medium,
+              crossFadeLabel: true,
+              onPressed: () => Navigator.of(context).pop(_selected),
             ),
           ],
         ),
