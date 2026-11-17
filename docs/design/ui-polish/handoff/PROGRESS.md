@@ -194,7 +194,9 @@ it, and never shuts it down. No simulator was created, erased or deleted
 Commit `dba8f4c` (this record).
 
 Free space (`df -h ~`): **before 6.5 GiB** (97 % used), **after 11 GiB**
-(95 % used).
+(95 % used). At the end of the round, after the simulator builds and
+captures, 6.9 GiB were free (the new `build/` and this repo's DerivedData
+are regenerable; `flutter clean` frees them again).
 
 Deleted (only what §0 allows):
 - `flutter clean` in `~/GrammarLens`: `build/` (3.1 GB: `build/ios` 2.8 GB,
