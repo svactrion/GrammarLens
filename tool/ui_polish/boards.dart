@@ -1,6 +1,7 @@
 // The UI polish board gallery's boards: id → the real widget or screen with
 // fixed sample data. See gallery_app.dart.
 import 'package:flutter/material.dart';
+import 'package:grammar_lens/models/reminder_settings.dart';
 import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'dart:math';
@@ -188,6 +189,17 @@ final Map<String, WidgetBuilder> galleryBoards = {
       freeUsed: 1,
       weakSpot: true,
       spotType: 'the_with_superlatives'),
+  // INTEGRATE §4: N01 opens by itself over the first rest scene (here
+  // V24f; reminders never asked).
+  'N01-OverRest': (_) => _home(
+      steps: 3,
+      correct: 13,
+      wrong: 2,
+      doneToday: true,
+      freeUsed: 1,
+      weakSpot: true,
+      spotType: 'the_with_superlatives',
+      reminders: const ReminderSettings()),
   // V24s: the driver taps "Wake Fox up" and captures the wake-up and the
   // paywall rising (V13r).
   'V24s-RestToPremium': (_) => _home(
@@ -839,6 +851,10 @@ Widget _home({
   int sessions = 0,
   bool loading = false,
   String spotType = 'missing_article',
+  // The rest scenes' "Remind me tomorrow" as on V24 / V24f: accepted, the
+  // Daily Test reminder on at 20:00 (no question opens by itself).
+  ReminderSettings reminders =
+      const ReminderSettings(ask: ReminderAsk.accepted, dailyTest: true),
 }) =>
     Builder(builder: (context) {
       final l10n = context.l10n;
@@ -861,6 +877,7 @@ Widget _home({
               sessions: sessions,
               loading: loading,
               spotType: spotType,
+              reminders: reminders,
             ),
             analyticsService: AnalyticsService(sink: const _NoAnalytics()),
             subscriptionService: _GallerySubs(premium),
@@ -909,8 +926,10 @@ class _GalleryHomeStorage extends StorageService {
   final int steps, correct, wrong, freeUsed, sessions;
   final bool doneToday, weakSpot, loading;
   final String spotType;
+  ReminderSettings reminders;
   _GalleryHomeStorage({
     this.spotType = 'missing_article',
+    this.reminders = const ReminderSettings(),
     required this.steps,
     required this.correct,
     required this.wrong,
@@ -922,6 +941,13 @@ class _GalleryHomeStorage extends StorageService {
   });
 
   Future<T> _never<T>() => Completer<T>().future;
+
+  @override
+  Future<ReminderSettings> getReminderSettings() async => reminders;
+
+  @override
+  Future<void> setReminderSettings(ReminderSettings settings) async =>
+      reminders = settings;
 
   @override
   Future<({int steps, int correct, int wrong, int skipped})> getClimbProgress(

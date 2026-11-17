@@ -25,6 +25,7 @@ const _settleMs = <String, int>{
   'H04-HomePremium': 2200,
   'V24-DayComplete': 2000,
   'V24f-RestFree': 2000,
+  'N01-OverRest': 2600,
   'V13r-PaywallRest': 1800,
   'PW05r-PremiumOnRest': 2200,
   'V11-Badge': 2200,
@@ -44,6 +45,10 @@ const _scrollShots = <String, List<int>>{
   'X05-DailyCard': [560],
   'V00-CompanionSystem': [500],
   'X03-HeroSet': [400],
+  // INTEGRATE 3a: "Remind me tomorrow" under the Premium card, scrolled
+  // into view where it is below the first view.
+  'V24f-RestFree': [400],
+  'V24-DayComplete': [400],
 };
 
 /// Fix round 2, item 1: a second capture this long after the first, to
