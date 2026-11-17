@@ -20,6 +20,7 @@ import '../models/user_profile.dart';
 import '../models/welcome_badge.dart';
 import '../services/analytics_service.dart';
 import '../services/medal_finalization.dart';
+import '../services/reminder_controller.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../utils/app_links.dart';
@@ -34,6 +35,7 @@ import '../widgets/monthly_medal_collection.dart';
 import 'avatar_picker_screen.dart';
 import 'credits_screen.dart';
 import 'data_screen.dart';
+import 'notification_settings_screen.dart';
 import 'language_picker_screen.dart';
 import 'theme_preview_screen.dart';
 import 'debug_panel_screen.dart';
@@ -93,6 +95,13 @@ class SettingsScreen extends StatefulWidget {
   /// panel, which a release build does not have.
   final Future<void> Function()? onResetLocalData;
 
+  /// The reminder settings (N03); the screen makes its own when none is
+  /// given.
+  final ReminderController? reminders;
+
+  /// The "Notifications" row (N03).
+  static const notificationsRowKey = ValueKey('settings_notifications_row');
+
   /// The "Debug" row (N27).
   static const debugRowKey = ValueKey('settings_debug_row');
 
@@ -125,6 +134,7 @@ class SettingsScreen extends StatefulWidget {
     required this.onProfileUpdated,
     required this.onResetOnboarding,
     this.onResetLocalData,
+    this.reminders,
     SubscriptionService? subscriptionService,
     AnalyticsService? analyticsService,
   })  : subscriptionService = subscriptionService ?? SubscriptionService(),
@@ -343,6 +353,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    if (widget.reminders == null) _reminders.dispose();
     super.dispose();
   }
 
@@ -394,6 +405,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (_) => LanguagePickerScreen(
           current: widget.language,
           onSelected: (language) => widget.onSelectLanguage?.call(language),
+        ),
+      ),
+    );
+  }
+
+  late final ReminderController _reminders =
+      widget.reminders ?? ReminderController(storage: widget.storageService);
+
+  void _openNotifications() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotificationSettingsScreen(
+          controller: _reminders,
+          hero: widget.profile.avatar ?? Avatar.values.first,
+          subscriptionService: widget.subscriptionService,
         ),
       ),
     );
@@ -696,6 +722,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
+                _NavRow.icon(
+                  key: SettingsScreen.notificationsRowKey,
+                  icon: Icons.notifications_none_rounded,
+                  label: context.l10n.notifTitle,
+                  onTap: _openNotifications,
+                ),
+                Divider(
+                    height: 1, thickness: 1, color: colorScheme.outlineVariant),
                 _NavRow.icon(
                   icon: Icons.storage_rounded,
                   label: context.l10n.settingsDataRow,

@@ -28,9 +28,11 @@ class PageBackButton extends StatelessWidget {
 /// as a heading, and its line.
 class PageHeader extends StatelessWidget {
   final String title;
-  final String subtitle;
 
-  const PageHeader({super.key, required this.title, required this.subtitle});
+  /// The line under the title; none on pages whose board has none (N03).
+  final String? subtitle;
+
+  const PageHeader({super.key, required this.title, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -50,12 +52,14 @@ class PageHeader extends StatelessWidget {
                 theme.textTheme.displaySmall?.copyWith(color: scheme.onSurface),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          subtitle,
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: scheme.onSurfaceVariant),
-        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            subtitle!,
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
       ],
     );
   }

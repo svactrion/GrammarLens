@@ -26,7 +26,8 @@ Duration timeToMidnight(DateTime now) =>
 /// base in the middle of the pile), warm ground light, rising sparks — the
 /// companion asleep with its Zzz, "See you tomorrow, <name>", and a
 /// countdown to the next Daily Test (local midnight), updated every minute.
-/// The reminder switch on the board is out of this run (SPEC §1.10).
+/// The board's reminder switch comes in through [reminder] (TASK-widgets
+/// fixed decision 7).
 class RestScene extends StatefulWidget {
   final ClimbTheme theme;
   final int days;
@@ -41,6 +42,10 @@ class RestScene extends StatefulWidget {
 
   /// The score capsule, top right over the scene.
   final Widget? capsule;
+
+  /// V24's "Remind me tomorrow" row (TASK-widgets fixed decision 7), under
+  /// the countdown; none in previews.
+  final Widget? reminder;
   final DateTime Function() clock;
 
   const RestScene({
@@ -54,6 +59,7 @@ class RestScene extends StatefulWidget {
     required this.practiceLine,
     required this.clock,
     this.capsule,
+    this.reminder,
   });
 
   static const sceneHeight = 470.0;
@@ -279,6 +285,10 @@ class _RestSceneState extends State<RestScene> {
                   ),
                 ]),
               ),
+              if (widget.reminder != null) ...[
+                const SizedBox(height: 10),
+                widget.reminder!,
+              ],
             ],
           ),
         ),

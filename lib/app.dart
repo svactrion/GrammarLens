@@ -18,6 +18,7 @@ import 'services/claude_service.dart';
 import 'services/device_sync.dart';
 import 'services/medal_finalization.dart';
 import 'services/native_bridge.dart';
+import 'services/reminder_controller.dart';
 import 'services/reminder_sync.dart';
 import 'services/storage_service.dart';
 import 'services/subscription_service.dart';
@@ -109,6 +110,10 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     ).run,
   ]);
 
+  /// The reminder settings, shared by Home (N01, V24) and Settings (N03).
+  late final ReminderController _reminders =
+      ReminderController(storage: _storageService, bridge: _bridge);
+
   /// The locale the interface shows now (the widgets and reminders use it).
   Locale _interfaceLocale() => effectiveAppLocale(
       _language, WidgetsBinding.instance.platformDispatcher.locales);
@@ -179,6 +184,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
     _linkRouter.dispose();
     _dailyTestLinks.dispose();
     _subscriptionService.removeAccessListener(_onAccessChanged);
+    _reminders.dispose();
     if (identical(DeviceSync.current, _deviceSync)) {
       DeviceSync.current = null;
       StorageService.onChanged = null;
@@ -530,6 +536,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
                 _firstRunZoomPlayed = false;
               },
               dailyTestLinks: _dailyTestLinks,
+              reminders: _reminders,
               onOpenProfile: () => _switchTab(2),
               onGoToReview: () =>
                   _switchTab(1, transition: TabTransition.slide),
@@ -569,6 +576,7 @@ class _GrammarLensAppState extends State<GrammarLensApp>
               // invoked unless that section rendered in the first place.
               onResetOnboarding: () => setState(() => _profile = null),
               onResetLocalData: _resetLocalData,
+              reminders: _reminders,
             ),
           ];
 

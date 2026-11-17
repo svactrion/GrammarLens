@@ -10,6 +10,7 @@ import '../models/daily_test_completion.dart';
 import '../utils/haptics.dart';
 import '../widgets/daily_test_card.dart';
 import '../widgets/home_practice.dart';
+import '../widgets/rest_reminder_row.dart';
 import '../widgets/rest_scene.dart';
 import '../widgets/score_capsule.dart';
 import '../widgets/ticket.dart';
@@ -26,6 +27,8 @@ import '../services/claude_service.dart';
 import '../services/daily_test_service.dart';
 import '../services/month_transition.dart';
 import '../services/monthly_medal_rules.dart';
+import '../services/reminder_controller.dart';
+import 'reminder_soft_ask.dart';
 import '../services/storage_service.dart';
 import '../services/subscription_service.dart';
 import '../theme.dart';
@@ -82,6 +85,10 @@ class HomeScreen extends StatefulWidget {
   /// Bumped by a `grammarlens://daily-test` link (a widget or reminder
   /// tap): Home opens today's Daily Test, or stays on Home when it is done.
   final ValueListenable<int>? dailyTestLinks;
+
+  /// The reminder settings (N01, V24's switch); Home makes its own when
+  /// none is given.
+  final ReminderController? reminders;
   // Test-only clock seam (defaults to the real DateTime.now) — the
   // time-of-day greeting's boundary tests need to construct exact
   // 04:59/05:00-style instants, not depend on whatever time the suite
@@ -133,6 +140,7 @@ class HomeScreen extends StatefulWidget {
     this.onGoToReview,
     this.onOpenProfile,
     this.dailyTestLinks,
+    this.reminders,
     this.initialPendingClimb,
     this.onInitialPendingClimbTaken,
     this.offerDay0Paywall = false,
@@ -208,6 +216,14 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// A Daily Test link waits for today's set to be read.
   bool _dailyTestLinkPending = false;
+
+  late final ReminderController _reminders =
+      widget.reminders ?? ReminderController(storage: widget.storageService);
+
+  /// N01 should open once Home is quiet (TASK-widgets fixed decision 5):
+  /// the rest scene appeared, or a second Daily Test was finished.
+  bool _softAskQueued = false;
+  bool _restSceneSeen = false;
   String? _pendingClimbDay;
 
   /// Steps the pending completion earned, known only when it arrived through
@@ -344,6 +360,8 @@ class _HomeScreenState extends State<HomeScreen>
     // screen's own initial build).
     widget.subscriptionService.addAccessListener(_onAccessChanged);
     widget.dailyTestLinks?.addListener(_onDailyTestLink);
+    _reminders.addListener(_onRemindersChanged);
+    _reminders.load();
     _loadTodaysDailyTest();
     _loadClimb();
     _loadWeakSpots();
@@ -360,6 +378,8 @@ class _HomeScreenState extends State<HomeScreen>
     }
     WidgetsBinding.instance.removeObserver(this);
     widget.dailyTestLinks?.removeListener(_onDailyTestLink);
+    _reminders.removeListener(_onRemindersChanged);
+    if (widget.reminders == null) _reminders.dispose();
     widget.subscriptionService.removeAccessListener(_onAccessChanged);
     _day0PaywallTimer?.cancel();
     _zoom.removeListener(_onZoomChanged);
@@ -894,6 +914,45 @@ class _HomeScreenState extends State<HomeScreen>
     _loadClimb();
     _loadWeakSpots();
     _loadPracticeUsage();
+    _queueSoftAskAfterSecondTest();
+  }
+
+  void _onRemindersChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// N01 after the second Daily Test: the first one on record was finished
+  /// before today.
+  Future<void> _queueSoftAskAfterSecondTest() async {
+    try {
+      if (!_reminders.mayAsk) return;
+      final today = await widget.storageService.getDailyTestSetForToday();
+      if (today?.isCompleted != true) return;
+      final first = await widget.storageService.getFirstDailyTestCompletion();
+      final now = widget.clock();
+      if (first == null ||
+          !first.isBefore(DateTime(now.year, now.month, now.day))) {
+        return;
+      }
+      if (mounted) setState(() => _softAskQueued = true);
+    } catch (_) {
+      // Storage unavailable: asked another time.
+    }
+  }
+
+  /// Opens N01 when it is queued and Home is quiet: visible, no flow, no
+  /// step walking.
+  void _maybeShowSoftAsk() {
+    if (!_softAskQueued || !_reminders.mayAsk) return;
+    if (!_homeVisible || _climbAnimating || _monthCardShowing) return;
+    _softAskQueued = false;
+    _reminders.askOpened();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _reminders.askClosed();
+      if (!mounted || !_reminders.mayAsk) return;
+      await showReminderSoftAsk(context,
+          controller: _reminders, hero: widget.avatar ?? Avatar.values.first);
+    });
   }
 
   /// Today's free practices and practice sessions (best effort: a failed
@@ -1198,11 +1257,21 @@ class _HomeScreenState extends State<HomeScreen>
       onTap: widget.onOpenProfile,
     );
     final hero = widget.avatar ?? Avatar.values.first;
+    _maybeShowSoftAsk();
 
     // V24 (SPEC §1.8): once every daily right is used, the rest scene
     // replaces Home's content.
     if (_restDay && _climbSteps != null && completion != null) {
       final days = DateTime(_climbMonth.year, _climbMonth.month + 1, 0).day;
+      // N01 the first time the rest scene is shown (once the stored answer
+      // is known).
+      if (!_restSceneSeen && _reminders.loaded) {
+        _restSceneSeen = true;
+        if (_reminders.mayAsk) {
+          _softAskQueued = true;
+          _maybeShowSoftAsk();
+        }
+      }
       return BrandScaffold(
         isTabRoot: true,
         appBar: AppBar(
@@ -1220,6 +1289,7 @@ class _HomeScreenState extends State<HomeScreen>
             name: widget.userName,
             clock: widget.clock,
             capsule: capsule,
+            reminder: RestReminderRow(controller: _reminders, hero: hero),
             testLine: l10n.restTestLine(completion.correct,
                 completion.results.length, todayPoints ?? 0),
             practiceLine: _hasFullAccess
