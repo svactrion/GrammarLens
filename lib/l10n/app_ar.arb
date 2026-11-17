@@ -678,6 +678,8 @@
   "paywallOnTrialEnds": "تنتهي تجربتك المجانية في {date}.",
   "profileChange": "تغيير",
   "profileClimbingWith": "تتسلّق مع {hero}",
+  "profileClimbingWithSince": "تتسلّق مع {hero} · منذ {date}",
+  "profileShelfToNext": "تبقّى {points} على {tier}",
   "settingsEditName": "تعديل اسمك",
   "profileStatPoints": "نقاط هذا الشهر",
   "profileStatStep": "الخطوة",

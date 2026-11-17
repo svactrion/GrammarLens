@@ -678,6 +678,8 @@
   "paywallOnTrialEnds": "Dein Gratistest endet am {date}.",
   "profileChange": "Ändern",
   "profileClimbingWith": "Kletterst mit {hero}",
+  "profileClimbingWithSince": "Kletterst mit {hero} · seit {date}",
+  "profileShelfToNext": "noch {points} bis {tier}",
   "settingsEditName": "Namen bearbeiten",
   "profileStatPoints": "Punkte diesen Monat",
   "profileStatStep": "Stufe",

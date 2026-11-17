@@ -678,6 +678,8 @@
   "paywallOnTrialEnds": "Ücretsiz denemen {date} tarihinde biter.",
   "profileChange": "Değiştir",
   "profileClimbingWith": "{hero} ile tırmanıyor",
+  "profileClimbingWithSince": "{hero} ile tırmanıyor · {date} tarihinden beri",
+  "profileShelfToNext": "{tier} için {points}",
   "settingsEditName": "Adını düzenle",
   "profileStatPoints": "bu ayki puan",
   "profileStatStep": "adım",

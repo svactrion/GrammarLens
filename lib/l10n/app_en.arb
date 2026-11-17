@@ -4299,6 +4299,34 @@
       }
     }
   },
+  "profileClimbingWithSince": "Climbing with {hero} · since {date}",
+  "@profileClimbingWithSince": {
+    "description": "Profile (V23): under the name on the ribbon once a Daily Test has been completed; {date} is the month of the first completion, short (\"Nov 2026\").",
+    "placeholders": {
+      "hero": {
+        "type": "String",
+        "example": "Fox"
+      },
+      "date": {
+        "type": "String",
+        "example": "Nov 2026"
+      }
+    }
+  },
+  "profileShelfToNext": "{points} to {tier}",
+  "@profileShelfToNext": {
+    "description": "Profile (V23): the medal shelf's line under the running month; {points} is medalThresholdPoints (\"66 pts\"), {tier} the next medal.",
+    "placeholders": {
+      "points": {
+        "type": "String",
+        "example": "66 pts"
+      },
+      "tier": {
+        "type": "String",
+        "example": "Bronze"
+      }
+    }
+  },
   "settingsEditName": "Edit your name",
   "@settingsEditName": {
     "description": "Profile (V23): the pencil's VoiceOver label (→ PF04)."

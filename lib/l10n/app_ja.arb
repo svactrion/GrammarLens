@@ -678,6 +678,8 @@
   "paywallOnTrialEnds": "無料トライアルは{date}に終わります。",
   "profileChange": "変更",
   "profileClimbingWith": "{hero}と登っています",
+  "profileClimbingWithSince": "{hero}と登っています · {date}から",
+  "profileShelfToNext": "{tier}まであと{points}",
   "settingsEditName": "名前を編集",
   "profileStatPoints": "今月のポイント",
   "profileStatStep": "ステップ",

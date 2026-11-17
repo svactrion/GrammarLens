@@ -678,6 +678,8 @@
   "paywallOnTrialEnds": "무료 체험은 {date}에 끝나요.",
   "profileChange": "변경",
   "profileClimbingWith": "{hero}와 함께 오르는 중",
+  "profileClimbingWithSince": "{hero}와 함께 오르는 중 · {date}부터",
+  "profileShelfToNext": "{tier}까지 {points}",
   "settingsEditName": "이름 수정",
   "profileStatPoints": "이번 달 포인트",
   "profileStatStep": "단계",
