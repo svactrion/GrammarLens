@@ -464,7 +464,8 @@ keyboard is often hidden, so it did not show there.
 
 ### 6. All medals (PF02)
 
-Commit `fc8efe3`.
+Commits `fc8efe3`, `3145097` (the empty-collection test follows the new
+layer).
 
 **Diagnosis.**
 - Year and month order were already newest first: `shelf()` sorts by
