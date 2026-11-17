@@ -385,6 +385,64 @@ void main() {
     });
   });
 
+  // W6: Arabic (right to left), the dark theme and the largest text.
+  group('Arabic, dark, largest text', () {
+    Future<void> pumpLocalized(WidgetTester tester, Widget child) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      tester.view.physicalSize = const Size(375, 667) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(MaterialApp(
+        theme: buildAppTheme(Brightness.dark),
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        scaffoldMessengerKey: AppMessenger.key,
+        home: child,
+      ));
+      await tester.pumpAndSettle();
+    }
+
+    final ar = lookupAppLocalizations(const Locale('ar'));
+
+    testWidgets('N01 mirrors and nothing overflows', (tester) async {
+      await pumpLocalized(tester, const _AskHost());
+      await _controller.load();
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text(ar.softAskTitle), findsOneWidget);
+      expect(Directionality.of(tester.element(find.text(ar.softAskTitle))),
+          TextDirection.rtl);
+      // Times keep Western digits.
+      expect(find.text('20:00'), findsOneWidget);
+      // The companion sits on the reading side: right in Arabic.
+      final bubble = tester.getCenter(find.text(ar.softAskBubble));
+      final title = tester.getTopRight(find.text(ar.softAskTitle));
+      expect(title.dx, greaterThan(bubble.dx));
+    });
+
+    testWidgets('N03 in Arabic: rows, the time chip, no overflow',
+        (tester) async {
+      _storage.settings = const ReminderSettings().turnedOn();
+      await pumpLocalized(
+          tester,
+          NotificationSettingsScreen(
+              controller: _controller,
+              hero: Avatar.fox,
+              subscriptionService: _Subscription(false)));
+      expect(tester.takeException(), isNull);
+      expect(find.text(ar.notifDailyTime('20:00')), findsOneWidget);
+      final title = tester.getRect(find.text(ar.notifDailyTitle));
+      final toggle = tester.getRect(find
+          .byKey(NotificationSettingsScreen.switchKey(ReminderKind.dailyTest)));
+      expect(toggle.center.dx, lessThan(title.center.dx),
+          reason: 'the switch is on the left in Arabic');
+    });
+  });
+
   test('reminderTimeLabel: 24-hour, two digits', () {
     expect(reminderTimeLabel(0), '00:00');
     expect(reminderTimeLabel(8 * 60 + 5), '08:05');
