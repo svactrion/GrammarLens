@@ -4,6 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:grammar_lens/app_colors.dart';
 import 'package:grammar_lens/l10n/l10n.dart';
 import 'dart:math';
+import 'package:grammar_lens/models/item_feedback.dart';
+import 'package:grammar_lens/models/practice_length.dart';
+import 'package:grammar_lens/models/practice_set.dart';
+import 'package:grammar_lens/models/scoring_result.dart';
+import 'package:grammar_lens/screens/ai_consent_screen.dart';
+import 'package:grammar_lens/screens/practice_launch.dart';
+import 'package:grammar_lens/screens/practice_length_picker.dart';
+import 'package:grammar_lens/screens/practice_screen.dart';
+import 'package:grammar_lens/screens/results_screen.dart';
+import 'package:grammar_lens/screens/topic_practice_screen.dart';
+import 'package:grammar_lens/utils/loading_view.dart';
+import 'package:grammar_lens/widgets/practice_reviewing.dart';
 import 'package:grammar_lens/data/topics.dart';
 import 'package:grammar_lens/screens/review_screen.dart';
 import 'package:grammar_lens/screens/weak_spot_detail_screen.dart';
@@ -212,6 +224,95 @@ final Map<String, WidgetBuilder> galleryBoards = {
             errorType: 'past_simple_vs_present_perfect',
             frequency: 1),
       ]),
+  // B7: Practice (the real screens with fixed data).
+  'R01-Topics': (_) => TopicPracticeScreen(
+        hero: Avatar.fox,
+        claudeService: ClaudeService(),
+        storageService: _GalleryPracticeStorage(),
+        analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+        subscriptionService: _GallerySubs(true),
+      ),
+  'R02-Length': (_) => _OnMount(
+        (context) => showPracticeLengthPicker(
+            context: context, initial: PracticeLength.standard),
+        child: TopicPracticeScreen(
+          hero: Avatar.fox,
+          claudeService: ClaudeService(),
+          storageService: _GalleryPracticeStorage(),
+          analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+          subscriptionService: _GallerySubs(true),
+        ),
+      ),
+  'V17-Consent': (_) => const AiConsentScreen(),
+  'V18-Preparing': (context) => PageLoading(
+        header: const SizedBox.shrink(),
+        message: context.l10n.weakSpotPreparing,
+        topic: kTopics.firstWhere((t) => t.id.name == 'articles'),
+        hero: Avatar.fox,
+      ),
+  'V19-PracticeQuestion': (_) => PracticeScreen(
+        topic: kTopics.firstWhere((t) => t.id.name == 'articles'),
+        practiceSet: _galleryPracticeSet,
+        claudeService: ClaudeService(),
+        storageService: _GalleryPracticeStorage(),
+        analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+        subscriptionService: _GallerySubs(false),
+      ),
+  'V20-Reviewing': (_) => const Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: PracticeReviewing(
+              topic: 'Articles',
+              hero: Avatar.fox,
+              answers: [
+                'This is the best pizza in town.',
+                'Mount Everest is a highest mountain.',
+                'It was the easiest test I’ve taken.',
+              ],
+            ),
+          ),
+        ),
+      ),
+  'V21-PracticeResults': (_) => ResultsScreen(
+        topic: kTopics.firstWhere((t) => t.id.name == 'articles'),
+        result: const ScoringResult(topicId: 'articles', feedback: [
+          ItemFeedback(
+              itemId: 'g1',
+              isCorrect: true,
+              isSkipped: false,
+              correctedAnswer: 'This is the best pizza in town.',
+              explanation: ''),
+          ItemFeedback(
+              itemId: 'g2',
+              isCorrect: false,
+              isSkipped: false,
+              errorType: 'the_with_superlatives',
+              correctedAnswer:
+                  'Mount Everest is the highest mountain in the world.',
+              explanation: '“Highest” is a superlative: there is only one, '
+                  'so use “the”.'),
+          ItemFeedback(
+              itemId: 'g3',
+              isCorrect: true,
+              isSkipped: false,
+              correctedAnswer: 'It was the easiest test I have ever taken.',
+              explanation: ''),
+        ]),
+        practiceSet: _galleryPracticeSet,
+        answers: const {
+          'g1': 'This is the best pizza in town.',
+          'g2': 'Mount Everest is a highest mountain in the world.',
+          'g3': 'It was the easiest test I have ever taken.',
+        },
+        storageService: _GalleryPracticeStorage(freeUsed: 1),
+        analyticsService: AnalyticsService(sink: const _NoAnalytics()),
+        subscriptionService: _GallerySubs(false),
+      ),
+  'P08-DailyLimit': (_) => _OnMount(
+        (context) => showDailyLimitSheet(context, hero: Avatar.fox),
+        child: const Scaffold(),
+      ),
   'R11-Offline': (_) => Scaffold(
         body: Center(
           child: SingleChildScrollView(
@@ -895,4 +996,55 @@ class _GalleryReviewStorage extends StorageService {
           rule: 'one of a kind takes the',
         ),
       ];
+}
+
+const _galleryPracticeSet = PracticeSet(topicId: 'articles', items: [
+  PracticeItem(
+    id: 'g1',
+    type: PracticeItemType.fillInBlank,
+    context: 'This is ____ best pizza in town.',
+    instruction: 'Fill in the blank with a, an or the, or tap — for no '
+        'article.',
+  ),
+  PracticeItem(
+    id: 'g2',
+    type: PracticeItemType.fillInBlank,
+    context: 'Mount Everest is ____ highest mountain in the world.',
+    instruction: 'Fill in the blank with a, an or the, or tap — for no '
+        'article.',
+  ),
+  PracticeItem(
+    id: 'g3',
+    type: PracticeItemType.fillInBlank,
+    context: 'It was ____ easiest test I have ever taken.',
+    instruction: 'Fill in the blank with a, an or the, or tap — for no '
+        'article.',
+  ),
+]);
+
+/// Practice's reads with fixed data; writes nothing.
+class _GalleryPracticeStorage extends StorageService {
+  final int freeUsed;
+  _GalleryPracticeStorage({this.freeUsed = 0});
+
+  @override
+  Future<Map<String, TopicStats>> getTopicStats() async => const {
+        'modalVerbs': TopicStats(practiced: 12, weakSpotCount: 1),
+        'tenseSelection': TopicStats(practiced: 5, weakSpotCount: 0),
+      };
+
+  @override
+  Future<List<WeakSpot>> getWeakSpots(
+          {int limit = 10,
+          ReviewSortOrder sortOrder = ReviewSortOrder.recent}) async =>
+      [_gallerySpot()];
+
+  @override
+  Future<int> getFreePracticeCountForToday() async => freeUsed;
+
+  @override
+  Future<void> insertErrors(List<ErrorEntry> entries) async {}
+
+  @override
+  Future<void> recordPracticeCompletion(String topicId, int count) async {}
 }
